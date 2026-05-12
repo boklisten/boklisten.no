@@ -510,6 +510,30 @@ const routes = {
     tokens: [{"old":"/rapid-handout","type":0,"val":"rapid-handout","end":""}],
     types: placeholder as Registry['rapid_handout.handout']['types'],
   },
+  'reports.get_customer_items_report': {
+    methods: ["GET","HEAD"],
+    pattern: '/reports/customer_items',
+    tokens: [{"old":"/reports/customer_items","type":0,"val":"reports","end":""},{"old":"/reports/customer_items","type":0,"val":"customer_items","end":""}],
+    types: placeholder as Registry['reports.get_customer_items_report']['types'],
+  },
+  'reports.get_orders_report': {
+    methods: ["GET","HEAD"],
+    pattern: '/reports/orders',
+    tokens: [{"old":"/reports/orders","type":0,"val":"reports","end":""},{"old":"/reports/orders","type":0,"val":"orders","end":""}],
+    types: placeholder as Registry['reports.get_orders_report']['types'],
+  },
+  'reports.get_payments_report': {
+    methods: ["GET","HEAD"],
+    pattern: '/reports/payments',
+    tokens: [{"old":"/reports/payments","type":0,"val":"reports","end":""},{"old":"/reports/payments","type":0,"val":"payments","end":""}],
+    types: placeholder as Registry['reports.get_payments_report']['types'],
+  },
+  'reports.get_user_details_report': {
+    methods: ["GET","HEAD"],
+    pattern: '/reports/user_details',
+    tokens: [{"old":"/reports/user_details","type":0,"val":"reports","end":""},{"old":"/reports/user_details","type":0,"val":"user_details","end":""}],
+    types: placeholder as Registry['reports.get_user_details_report']['types'],
+  },
   'collection.branches.getId': {
     methods: ["GET","HEAD"],
     pattern: '/branches/:id',

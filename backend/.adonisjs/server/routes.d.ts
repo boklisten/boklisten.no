@@ -88,6 +88,10 @@ export type ScannedRoutes = {
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'rapid_handout.handout': { paramsTuple?: []; params?: {} }
+    'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }
+    'reports.get_orders_report': { paramsTuple?: []; params?: {} }
+    'reports.get_payments_report': { paramsTuple?: []; params?: {} }
+    'reports.get_user_details_report': { paramsTuple?: []; params?: {} }
     'collection.branches.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branches.getAll': { paramsTuple?: []; params?: {} }
     'collection.branches.post': { paramsTuple?: []; params?: {} }
@@ -185,6 +189,10 @@ export type ScannedRoutes = {
     'items.get': { paramsTuple?: []; params?: {} }
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
+    'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }
+    'reports.get_orders_report': { paramsTuple?: []; params?: {} }
+    'reports.get_payments_report': { paramsTuple?: []; params?: {} }
+    'reports.get_user_details_report': { paramsTuple?: []; params?: {} }
     'collection.branches.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branches.getAll': { paramsTuple?: []; params?: {} }
     'collection.branchitems.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -250,6 +258,10 @@ export type ScannedRoutes = {
     'items.get': { paramsTuple?: []; params?: {} }
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
+    'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }
+    'reports.get_orders_report': { paramsTuple?: []; params?: {} }
+    'reports.get_payments_report': { paramsTuple?: []; params?: {} }
+    'reports.get_user_details_report': { paramsTuple?: []; params?: {} }
     'collection.branches.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branches.getAll': { paramsTuple?: []; params?: {} }
     'collection.branchitems.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

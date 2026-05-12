@@ -152,6 +152,12 @@ export interface ApiDefinition {
   rapidHandout: {
     handout: typeof routes['rapid_handout.handout']
   }
+  reports: {
+    getCustomerItemsReport: typeof routes['reports.get_customer_items_report']
+    getOrdersReport: typeof routes['reports.get_orders_report']
+    getPaymentsReport: typeof routes['reports.get_payments_report']
+    getUserDetailsReport: typeof routes['reports.get_user_details_report']
+  }
   collection: {
     branches: {
       getId: typeof routes['collection.branches.getId']

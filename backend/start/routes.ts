@@ -265,6 +265,14 @@ router.post("/dispatch", [controllers.Dispatch, "createDispatch"]);
 router.post("/rapid-handout", [controllers.RapidHandout, "handout"]);
 
 /**
+ * Reports
+ */
+router.get("/reports/customer_items", [controllers.Reports, "getCustomerItemsReport"]);
+router.get("/reports/orders", [controllers.Reports, "getOrdersReport"]);
+router.get("/reports/payments", [controllers.Reports, "getPaymentsReport"]);
+router.get("/reports/user_details", [controllers.Reports, "getUserDetailsReport"]);
+
+/**
  * Generate legacy bl-collection endpoints
  */
 for (const collection of BlCollections) {

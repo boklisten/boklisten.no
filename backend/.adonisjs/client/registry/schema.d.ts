@@ -1015,6 +1015,54 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/rapid_handout_controller').default['handout']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'reports.get_customer_items_report': {
+    methods: ["GET","HEAD"]
+    pattern: '/reports/customer_items'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/report').customerItemsReportValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['getCustomerItemsReport']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['getCustomerItemsReport']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'reports.get_orders_report': {
+    methods: ["GET","HEAD"]
+    pattern: '/reports/orders'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/report').ordersReportValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['getOrdersReport']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['getOrdersReport']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'reports.get_payments_report': {
+    methods: ["GET","HEAD"]
+    pattern: '/reports/payments'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/report').paymentsReportValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['getPaymentsReport']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['getPaymentsReport']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'reports.get_user_details_report': {
+    methods: ["GET","HEAD"]
+    pattern: '/reports/user_details'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/report').userDetailsReportValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['getUserDetailsReport']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['getUserDetailsReport']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'collection.branches.getId': {
     methods: ["GET","HEAD"]
     pattern: '/branches/:id'

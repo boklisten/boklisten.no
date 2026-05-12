@@ -34,6 +34,7 @@ export const controllers = {
   QuestionsAndAnswers: () => import('#controllers/questions_and_answers_controller'),
   RapidHandout: () => import('#controllers/rapid_handout_controller'),
   Reminders: () => import('#controllers/reminders_controller'),
+  Reports: () => import('#controllers/reports_controller'),
   Signatures: () => import('#controllers/signatures_controller'),
   Subjects: () => import('#controllers/subjects_controller'),
   UniqueIds: () => import('#controllers/unique_ids_controller'),
