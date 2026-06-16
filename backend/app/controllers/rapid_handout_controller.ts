@@ -1,5 +1,8 @@
 import type { HttpContext } from "@adonisjs/core/http";
+import { ObjectId } from "mongodb";
 import { BlError } from "#shared/bl-error";
+import { MatchLockService } from "#services/match_lock_service";
+import type { UserMatch } from "#shared/match/user-match";
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
 import type { Order } from "#shared/order/order";
 import type { UniqueItem } from "#shared/unique-item";
@@ -21,7 +24,7 @@ const blidNotActiveFeedback =
 export default class RapidHandoutController {
   async handout(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
-    const { blid, customerId } = await ctx.request.validateUsing(rapidHandoutValidator);
+    const { blid, customerId, force } = await ctx.request.validateUsing(rapidHandoutValidator);
 
     if (!BlidService.isValidBlid(blid)) {
       return { feedback: "Denne bliden er ikke gyldig." };
@@ -33,10 +36,54 @@ export default class RapidHandoutController {
     if (typeof uniqueItemOrFeedback === "string")
       return { feedback: uniqueItemOrFeedback, connectBlid: true };
 
+    // A book the customer is supposed to receive from another student should not normally be
+    // handed out at the stand. If the match is locked it is impossible; otherwise the employee
+    // must confirm (force) before we hand it out.
+    const peerReceive = await this.findPeerReceiveSource(uniqueItemOrFeedback.item, customerId);
+    if (peerReceive) {
+      if (peerReceive.locked) {
+        return {
+          feedback: `Denne boka er låst til overlevering. Eleven får den fra ${peerReceive.deliverFromName}. Lås opp matchen i brukerdetaljer for å dele ut på stand.`,
+          deliverFromName: peerReceive.deliverFromName,
+        };
+      }
+      if (!force) {
+        return {
+          feedback: "",
+          requiresConfirmation: true,
+          deliverFromName: peerReceive.deliverFromName,
+        };
+      }
+    }
+
     const placedRentOrder = await this.placeRentOrder(blid, uniqueItemOrFeedback.item, customerId);
     await this.createCustomerItem(placedRentOrder);
 
     return { feedback: "" };
+  }
+
+  /**
+   * If the customer is expected to receive this item from another student via a UserMatch, returns
+   * the sender's name and whether that match is locked (and thus impossible to hand out at stand).
+   */
+  private async findPeerReceiveSource(
+    itemId: string,
+    customerId: string,
+  ): Promise<{ locked: boolean; deliverFromName: string } | null> {
+    const userMatches = (await StorageService.UserMatches.aggregate([
+      {
+        $match: {
+          $or: [{ customerA: new ObjectId(customerId) }, { customerB: new ObjectId(customerId) }],
+        },
+      },
+    ])) as UserMatch[];
+
+    const match = MatchLockService.findReceivingUserMatch(customerId, itemId, userMatches);
+    if (!match) return null;
+
+    const senderId = MatchLockService.getMatchCounterpartCustomerId(customerId, match);
+    const sender = await StorageService.UserDetails.getOrNull(senderId);
+    return { locked: match.itemsLockedToMatch, deliverFromName: sender?.name ?? "en annen elev" };
   }
 
   private async createCustomerItem(placedReceiverOrder: Order): Promise<void> {

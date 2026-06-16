@@ -50,7 +50,15 @@ export interface UserMatchStatus {
   };
 }
 
-export function calculateUserMatchStatus(userMatch: UserMatchWithDetails): UserMatchStatus {
+/**
+ * Computes a user match from one participant's perspective. Defaults to the logged-in user (from
+ * the access token), but an explicit `currentUserDetailsId` can be passed so an employee can view
+ * the match from a given customer's perspective (e.g. the rapid handout stand view).
+ */
+export function calculateUserMatchStatus(
+  userMatch: UserMatchWithDetails,
+  currentUserDetailsId?: string,
+): UserMatchStatus {
   const customerA = {
     deliveredItems: [] as string[],
     receivedItems: [] as string[],
@@ -84,10 +92,10 @@ export function calculateUserMatchStatus(userMatch: UserMatchWithDetails): UserM
       customerB.receivedItems.push(receivedItem);
     }
   }
-  const decodedAccessToken = decodeToken<AccessToken>(
-    localStorage.getItem(BL_CONFIG.token.accessToken) ?? "",
-  );
-  const currentUserIsCustomerA = userMatch.customerA === decodedAccessToken?.details;
+  const perspectiveDetailsId =
+    currentUserDetailsId ??
+    decodeToken<AccessToken>(localStorage.getItem(BL_CONFIG.token.accessToken) ?? "")?.details;
+  const currentUserIsCustomerA = userMatch.customerA === perspectiveDetailsId;
   return {
     currentUser: {
       items: currentUserIsCustomerA ? userMatch.expectedAToBItems : userMatch.expectedBToAItems,

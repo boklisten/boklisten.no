@@ -150,6 +150,7 @@ router.post("/matches/generate", [controllers.Matches, "generate"]);
 router.post("/matches/notify", [controllers.Matches, "notify"]);
 router.post("/user_matches/lock", [controllers.Matches, "lock"]);
 router.get("/matches/me", [controllers.Matches, "getMyMatches"]);
+router.get("/matches/customer/:customerId", [controllers.Matches, "getMatchesForCustomer"]);
 router.post("/matches/transfer_item", [controllers.Matches, "transferItem"]);
 
 /**

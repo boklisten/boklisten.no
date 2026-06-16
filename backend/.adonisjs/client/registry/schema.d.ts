@@ -535,6 +535,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['getMyMatches']>>>
     }
   }
+  'matches.get_matches_for_customer': {
+    methods: ["GET","HEAD"]
+    pattern: '/matches/customer/:customerId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { customerId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['getMatchesForCustomer']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['getMatchesForCustomer']>>>
+    }
+  }
   'matches.transfer_item': {
     methods: ["POST"]
     pattern: '/matches/transfer_item'

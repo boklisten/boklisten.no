@@ -39,6 +39,13 @@ export default class MatchesController {
     return await getMatches(detailsId);
   }
 
+  /** Employee-facing: the matches of a given customer, used by the rapid handout stand view. */
+  async getMatchesForCustomer(ctx: HttpContext) {
+    PermissionService.authenticate(ctx, USER_PERMISSION.EMPLOYEE);
+    const customerId = ctx.request.param("customerId");
+    return await getMatches(customerId);
+  }
+
   async transferItem(ctx: HttpContext) {
     const { detailsId } = PermissionService.authenticate(ctx);
     const transferData = await ctx.request.validateUsing(matchTransferValidator);

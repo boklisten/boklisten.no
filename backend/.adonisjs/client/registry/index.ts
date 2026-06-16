@@ -270,6 +270,12 @@ const routes = {
     tokens: [{"old":"/matches/me","type":0,"val":"matches","end":""},{"old":"/matches/me","type":0,"val":"me","end":""}],
     types: placeholder as Registry['matches.get_my_matches']['types'],
   },
+  'matches.get_matches_for_customer': {
+    methods: ["GET","HEAD"],
+    pattern: '/matches/customer/:customerId',
+    tokens: [{"old":"/matches/customer/:customerId","type":0,"val":"matches","end":""},{"old":"/matches/customer/:customerId","type":0,"val":"customer","end":""},{"old":"/matches/customer/:customerId","type":1,"val":"customerId","end":""}],
+    types: placeholder as Registry['matches.get_matches_for_customer']['types'],
+  },
   'matches.transfer_item': {
     methods: ["POST"],
     pattern: '/matches/transfer_item',

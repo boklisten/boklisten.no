@@ -1,3 +1,4 @@
+import { itemsAreEquivalent } from "#shared/item-equivalence";
 import { UserMatch } from "#shared/match/user-match";
 
 /**
@@ -40,6 +41,37 @@ function findMatchRecipientCustomerId(
 }
 
 /**
+ * Returns the UserMatch (if any) in which the given customer is expected to *receive* an item
+ * equivalent to the given one from the other student. Used by rapid handout to detect books that
+ * should come from a peer rather than be handed out at the stand. Returns null when no such match
+ * exists. The returned match's `itemsLockedToMatch` tells whether stand handout is blocked.
+ */
+function findReceivingUserMatch(
+  customer: string,
+  item: string,
+  userMatches: UserMatch[],
+): UserMatch | null {
+  return (
+    userMatches.find((userMatch) => {
+      if (userMatch.customerA === customer) {
+        return userMatch.expectedBToAItems.some((expected) => itemsAreEquivalent(expected, item));
+      }
+      if (userMatch.customerB === customer) {
+        return userMatch.expectedAToBItems.some((expected) => itemsAreEquivalent(expected, item));
+      }
+      return false;
+    }) ?? null
+  );
+}
+
+/**
+ * The id of the other student in a UserMatch, i.e. the one the given customer interacts with.
+ */
+function getMatchCounterpartCustomerId(customer: string, userMatch: UserMatch): string {
+  return userMatch.customerA === customer ? userMatch.customerB : userMatch.customerA;
+}
+
+/**
  * Returns the subset of the given customerItems that are locked to one of their owner's UserMatches.
  */
 function findCustomerItemsLockedToMatch<T extends { customer: string; item: string }>(
@@ -54,5 +86,7 @@ function findCustomerItemsLockedToMatch<T extends { customer: string; item: stri
 export const MatchLockService = {
   isItemLockedToMatch,
   findMatchRecipientCustomerId,
+  findReceivingUserMatch,
+  getMatchCounterpartCustomerId,
   findCustomerItemsLockedToMatch,
 };

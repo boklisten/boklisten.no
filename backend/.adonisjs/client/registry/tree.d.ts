@@ -77,6 +77,7 @@ export interface ApiDefinition {
     notify: typeof routes['matches.notify']
     lock: typeof routes['matches.lock']
     getMyMatches: typeof routes['matches.get_my_matches']
+    getMatchesForCustomer: typeof routes['matches.get_matches_for_customer']
     transferItem: typeof routes['matches.transfer_item']
   }
   userDetail: {
