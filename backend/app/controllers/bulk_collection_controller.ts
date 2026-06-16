@@ -85,6 +85,20 @@ export default class BulkCollectionController {
     }
 
     const itemsMap = await this.getItemsMap(customerItems.map((customerItem) => customerItem.item));
+
+    // Every order item requires a title; bail out with an actionable message rather than letting
+    // the order fail validation with a generic 500 if an item could not be resolved.
+    const itemsMissingTitle = customerItems.filter(
+      (customerItem) => !itemsMap.get(customerItem.item)?.title,
+    );
+    if (itemsMissingTitle.length > 0) {
+      const blids = itemsMissingTitle.map((customerItem) => customerItem.blid).join(", ");
+      return {
+        success: false,
+        feedback: `Fant ikke boktittel for én eller flere bøker (BL-ID: ${blids}). Kontakt en administrator.`,
+      };
+    }
+
     // The employee's user id is not used when placing pure return/buyback orders (no new customer
     // items are generated), so the detailsId is sufficient for the place operation.
     const user = { id: detailsId, details: detailsId, permission };
@@ -206,8 +220,15 @@ export default class BulkCollectionController {
   }
 
   private async getItemsMap(itemIds: string[]): Promise<Map<string, Item>> {
-    const items = await StorageService.Items.getMany([...new Set(itemIds)]);
-    return new Map(items.map((item) => [item.id, item]));
+    const uniqueIds = [...new Set(itemIds)];
+    // Use getOrNull (findById, which ignores the `active` flag) rather than getMany: a book that
+    // a customer physically possesses must be returnable even if its catalog Item was deactivated.
+    // getMany filters on `active: true` for non-admin employees and would silently drop such items,
+    // leaving an empty title that fails the required-field validation when placing the order.
+    const items = await Promise.all(uniqueIds.map((id) => StorageService.Items.getOrNull(id)));
+    return new Map(
+      items.filter((item): item is Item => item !== null).map((item) => [item.id, item]),
+    );
   }
 
   private async getUserMatchesForCustomers(customerIds: string[]): Promise<UserMatch[]> {

@@ -2,7 +2,7 @@ import type {
   CustomerCollectionReceipt,
   ScannedBook,
 } from "@boklisten/backend/shared/bulk-collection/bulk-collection-dtos";
-import { Button, Container, InputLabel, Stack, Switch, Title } from "@mantine/core";
+import { Box, Button, Container, InputLabel, Stack, Switch, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { IconForms, IconObjectScan } from "@tabler/icons-react";
@@ -11,7 +11,7 @@ import { useState } from "react";
 
 import CollectionReceipt from "@/features/bulk-collection/CollectionReceipt";
 import { isOverdue } from "@/features/bulk-collection/deadline";
-import ScannedBooksTable from "@/features/bulk-collection/ScannedBooksTable";
+import ScannedBooksList from "@/features/bulk-collection/ScannedBooksList";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import BlidScanner from "@/shared/components/scanner/BlidScanner";
@@ -22,6 +22,10 @@ import { showErrorNotification, showInfoNotification } from "@/shared/utils/noti
 
 const manualModalId = "bulk-collection-manual";
 
+function bookCountLabel(count: number): string {
+  return `${count} ${count === 1 ? "bok" : "bøker"}`;
+}
+
 export default function BulkCollectionPage() {
   const { client } = useApiClient();
   const [showCamera, { toggle: toggleCamera }] = useDisclosure(true);
@@ -29,6 +33,8 @@ export default function BulkCollectionPage() {
   const [receipt, setReceipt] = useState<CustomerCollectionReceipt[] | null>(null);
 
   const unlockedBooks = scannedBooks.filter((book) => !book.lockedToMatch);
+  const lockedBooks = scannedBooks.filter((book) => book.lockedToMatch);
+  const overdueBooks = unlockedBooks.filter((book) => isOverdue(book.deadline));
 
   const lookupMutation = useMutation({
     mutationFn: (blid: string) => client.api.bulkCollection.lookup({ params: { blid } }),
@@ -131,7 +137,11 @@ export default function BulkCollectionPage() {
         <Title>Hurtiginnsamling</Title>
 
         <Switch checked={showCamera} onChange={toggleCamera} label={"Vis kamera"} />
-        {showCamera && <BlidScanner onResult={registerBlid} />}
+        {showCamera && (
+          <Box maw={420} w={"100%"} mx={"auto"}>
+            <BlidScanner onResult={registerBlid} />
+          </Box>
+        )}
 
         <Button variant={"outline"} leftSection={<IconForms />} onClick={openManualEntry}>
           Skriv inn BL-ID manuelt
@@ -142,8 +152,24 @@ export default function BulkCollectionPage() {
         ) : (
           <Stack>
             <InputLabel>Bøker som skal leveres</InputLabel>
-            <ScannedBooksTable books={scannedBooks} onRemove={removeBook} />
+            <ScannedBooksList books={scannedBooks} onRemove={removeBook} />
           </Stack>
+        )}
+
+        {(lockedBooks.length > 0 || overdueBooks.length > 0) && (
+          <WarningAlert title={"Sjekk bøkene før levering"}>
+            <Stack gap={4}>
+              {lockedBooks.length > 0 && (
+                <Text>
+                  {bookCountLabel(lockedBooks.length)} er låst til overlevering og kan ikke leveres
+                  her.
+                </Text>
+              )}
+              {overdueBooks.length > 0 && (
+                <Text>{bookCountLabel(overdueBooks.length)} har utløpt frist.</Text>
+              )}
+            </Stack>
+          </WarningAlert>
         )}
 
         <Button

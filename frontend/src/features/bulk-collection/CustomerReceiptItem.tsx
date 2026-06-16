@@ -3,6 +3,7 @@ import {
   AccordionControl,
   AccordionItem,
   AccordionPanel,
+  Group,
   Stack,
   Table,
   Text,
@@ -20,26 +21,34 @@ export default function CustomerReceiptItem({ receipt }: { receipt: CustomerColl
       <AccordionPanel>
         <Stack>
           <Title order={4}>Leverte bøker</Title>
-          <Table striped>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Tidspunkt</Table.Th>
-                <Table.Th>Ordrenummer</Table.Th>
-                <Table.Th>Tittel</Table.Th>
-                <Table.Th>Frist</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {receipt.collectedBooks.map((book, index) => (
-                <Table.Tr key={`${book.orderId}-${index}`}>
-                  <Table.Td>{book.time}</Table.Td>
-                  <Table.Td>{book.orderId}</Table.Td>
-                  <Table.Td>{book.title}</Table.Td>
-                  <Table.Td>{formatDeadline(book.deadline)}</Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
+          <Stack gap={0}>
+            {receipt.collectedBooks.map((book, index) => (
+              <Stack
+                key={`${book.orderId}-${index}`}
+                gap={2}
+                py={"xs"}
+                style={{
+                  borderTop:
+                    index === 0 ? undefined : "1px solid var(--mantine-color-default-border)",
+                }}
+              >
+                <Text fw={500} size={"sm"}>
+                  {book.title}
+                </Text>
+                <Group gap={"md"}>
+                  <Text size={"xs"} c={"dimmed"}>
+                    Kl. {book.time}
+                  </Text>
+                  <Text size={"xs"} c={"dimmed"}>
+                    Ordre {book.orderId}
+                  </Text>
+                  <Text size={"xs"} c={"dimmed"}>
+                    Frist {formatDeadline(book.deadline)}
+                  </Text>
+                </Group>
+              </Stack>
+            ))}
+          </Stack>
 
           <Title order={4}>Gjenværende bøker</Title>
           {receipt.remainingBooks.length === 0 ? (
