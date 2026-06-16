@@ -1,6 +1,6 @@
 import type { UserMatchWithDetails } from "@boklisten/backend/shared/match/match-dtos";
-import { Button, Stack, Text, Title } from "@mantine/core";
-import { modals } from "@mantine/modals";
+import { Button, Modal, Stack, Text, Title } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { IconObjectScan } from "@tabler/icons-react";
 import { Activity, useState } from "react";
 
@@ -33,6 +33,7 @@ const UserMatchDetail = ({
   handleItemTransferred?: (() => void) | undefined;
 }) => {
   const { client } = useApiClient();
+  const [opened, { open, close }] = useDisclosure(false);
   const [redirectCountdownStarted, setRedirectCountdownStarted] = useState(false);
   const userMatchStatus = calculateUserMatchStatus(userMatch);
   const { currentUser, otherUser } = userMatchStatus;
@@ -128,39 +129,31 @@ const UserMatchDetail = ({
           <MatchHeader>Når du skal motta bøker</MatchHeader>
           <Text>For å motta bøker må du scanne dem</Text>
           <ScannerTutorial />
-          <Button
-            color={"green"}
-            leftSection={<IconObjectScan />}
-            onClick={() =>
-              modals.open({
-                title: "Skann bøker",
-                children: (
-                  <ScannerModal
-                    allowManualRegistration
-                    onScan={async (blid) => {
-                      const response = await client.api.matches.transferItem({ body: { blid } });
-                      return [{ feedback: response.feedback ?? "" }];
-                    }}
-                    onSuccessfulScan={() => {
-                      handleItemTransferred?.();
-                      if (isCurrentUserFulfilled) {
-                        setRedirectCountdownStarted(true);
-                        modals.closeAll();
-                      }
-                    }}
-                  >
-                    <MatchScannerContent
-                      itemStatuses={itemStatuses}
-                      expectedItems={currentUser.wantedItems}
-                      fulfilledItems={currentUser.receivedItems}
-                    />
-                  </ScannerModal>
-                ),
-              })
-            }
-          >
+          <Button color={"green"} leftSection={<IconObjectScan />} onClick={open}>
             Scan bøker
           </Button>
+          <Modal opened={opened} onClose={close} title={"Skann bøker"}>
+            <ScannerModal
+              allowManualRegistration
+              onScan={async (blid) => {
+                const response = await client.api.matches.transferItem({ body: { blid } });
+                return [{ feedback: response.feedback ?? "" }];
+              }}
+              onSuccessfulScan={() => {
+                handleItemTransferred?.();
+                if (isCurrentUserFulfilled) {
+                  setRedirectCountdownStarted(true);
+                  close();
+                }
+              }}
+            >
+              <MatchScannerContent
+                itemStatuses={itemStatuses}
+                expectedItems={currentUser.wantedItems}
+                fulfilledItems={currentUser.receivedItems}
+              />
+            </ScannerModal>
+          </Modal>
         </Stack>
       </Activity>
       <Activity mode={currentUser.wantedItems.length > 0 ? "visible" : "hidden"}>
