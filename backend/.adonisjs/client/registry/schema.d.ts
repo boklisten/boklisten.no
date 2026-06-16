@@ -1015,6 +1015,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/rapid_handout_controller').default['handout']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'bulk_collection.lookup': {
+    methods: ["GET","HEAD"]
+    pattern: '/bulk-collection/lookup/:blid'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { blid: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['lookup']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['lookup']>>>
+    }
+  }
+  'bulk_collection.collect': {
+    methods: ["POST"]
+    pattern: '/bulk-collection/collect'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/bulk_collection_validator').bulkCollectionCollectValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/bulk_collection_validator').bulkCollectionCollectValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['collect']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['collect']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'reports.get_customer_items_report': {
     methods: ["GET","HEAD"]
     pattern: '/reports/customer_items'

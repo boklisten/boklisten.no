@@ -265,6 +265,12 @@ router.post("/dispatch", [controllers.Dispatch, "createDispatch"]);
 router.post("/rapid-handout", [controllers.RapidHandout, "handout"]);
 
 /**
+ * Bulk collection (Hurtiginnsamling)
+ */
+router.get("/bulk-collection/lookup/:blid", [controllers.BulkCollection, "lookup"]);
+router.post("/bulk-collection/collect", [controllers.BulkCollection, "collect"]);
+
+/**
  * Reports
  */
 router.get("/reports/customer_items", [controllers.Reports, "getCustomerItemsReport"]);

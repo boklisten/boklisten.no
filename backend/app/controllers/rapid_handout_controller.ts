@@ -12,6 +12,7 @@ import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { rapidHandoutValidator } from "#validators/rapid_handout_validator";
 import { PermissionService } from "#services/permission_service";
+import BlidService from "#services/blid_service";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
 
 const blidNotActiveFeedback =
@@ -22,7 +23,7 @@ export default class RapidHandoutController {
     PermissionService.employeeOrFail(ctx);
     const { blid, customerId } = await ctx.request.validateUsing(rapidHandoutValidator);
 
-    if (!this.isValidBlid(blid)) {
+    if (!BlidService.isValidBlid(blid)) {
       return { feedback: "Denne bliden er ikke gyldig." };
     }
     const userFeedback = await this.verifyBlidNotActive(blid, customerId);
@@ -179,16 +180,5 @@ export default class RapidHandoutController {
     } catch {
       return blidNotActiveFeedback;
     }
-  }
-
-  private isValidBlid(scannedText: string): boolean {
-    if (Number.isNaN(Number(scannedText))) {
-      if (scannedText.length === 12) {
-        return true;
-      }
-    } else if (scannedText.length === 8) {
-      return true;
-    }
-    return false;
   }
 }

@@ -1,3 +1,7 @@
+import {
+  ITEMS_LOCKED_TO_MATCH_RETURN_FEEDBACK,
+  MatchLockService,
+} from "#services/match_lock_service";
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
 import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
 import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
@@ -153,21 +157,8 @@ export class OrderPlaceOperation implements Operation {
     customerItems: CustomerItem[],
     userMatches: UserMatch[],
   ) {
-    for (const customerItem of customerItems) {
-      const { customer, item } = customerItem;
-      if (
-        userMatches.some(
-          (userMatch) =>
-            userMatch.itemsLockedToMatch &&
-            (userMatch.customerA === customer || userMatch.customerB === customer) &&
-            (userMatch.expectedAToBItems.includes(item) ||
-              userMatch.expectedBToAItems.includes(item)),
-        )
-      ) {
-        throw new BlError(
-          "Ordren inneholder bøker som er låst til en UserMatch; kunden må overlevere de låste bøkene til en annen elev",
-        ).code(802);
-      }
+    if (MatchLockService.findCustomerItemsLockedToMatch(customerItems, userMatches).length > 0) {
+      throw new BlError(ITEMS_LOCKED_TO_MATCH_RETURN_FEEDBACK).code(802);
     }
   }
 

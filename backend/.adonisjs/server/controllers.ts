@@ -17,6 +17,7 @@ export const controllers = {
     BranchUpload: () => import('#controllers/branches/branch_upload_controller'),
     Branches: () => import('#controllers/branches/branches_controller'),
   },
+  BulkCollection: () => import('#controllers/bulk_collection_controller'),
   Checkout: () => import('#controllers/checkout_controller'),
   Companies: () => import('#controllers/companies_controller'),
   CustomerItems: () => import('#controllers/customer_items_controller'),

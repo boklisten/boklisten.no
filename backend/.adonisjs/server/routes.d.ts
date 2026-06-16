@@ -88,6 +88,8 @@ export type ScannedRoutes = {
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'rapid_handout.handout': { paramsTuple?: []; params?: {} }
+    'bulk_collection.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'bulk_collection.collect': { paramsTuple?: []; params?: {} }
     'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }
     'reports.get_orders_report': { paramsTuple?: []; params?: {} }
     'reports.get_payments_report': { paramsTuple?: []; params?: {} }
@@ -189,6 +191,7 @@ export type ScannedRoutes = {
     'items.get': { paramsTuple?: []; params?: {} }
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
+    'bulk_collection.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }
     'reports.get_orders_report': { paramsTuple?: []; params?: {} }
     'reports.get_payments_report': { paramsTuple?: []; params?: {} }
@@ -258,6 +261,7 @@ export type ScannedRoutes = {
     'items.get': { paramsTuple?: []; params?: {} }
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
+    'bulk_collection.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }
     'reports.get_orders_report': { paramsTuple?: []; params?: {} }
     'reports.get_payments_report': { paramsTuple?: []; params?: {} }
@@ -329,6 +333,7 @@ export type ScannedRoutes = {
     'opening_hours.add': { paramsTuple?: []; params?: {} }
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'rapid_handout.handout': { paramsTuple?: []; params?: {} }
+    'bulk_collection.collect': { paramsTuple?: []; params?: {} }
     'collection.branches.post': { paramsTuple?: []; params?: {} }
     'collection.branchitems.post': { paramsTuple?: []; params?: {} }
     'collection.customeritems.post': { paramsTuple?: []; params?: {} }

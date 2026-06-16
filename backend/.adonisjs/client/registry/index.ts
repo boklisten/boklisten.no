@@ -510,6 +510,18 @@ const routes = {
     tokens: [{"old":"/rapid-handout","type":0,"val":"rapid-handout","end":""}],
     types: placeholder as Registry['rapid_handout.handout']['types'],
   },
+  'bulk_collection.lookup': {
+    methods: ["GET","HEAD"],
+    pattern: '/bulk-collection/lookup/:blid',
+    tokens: [{"old":"/bulk-collection/lookup/:blid","type":0,"val":"bulk-collection","end":""},{"old":"/bulk-collection/lookup/:blid","type":0,"val":"lookup","end":""},{"old":"/bulk-collection/lookup/:blid","type":1,"val":"blid","end":""}],
+    types: placeholder as Registry['bulk_collection.lookup']['types'],
+  },
+  'bulk_collection.collect': {
+    methods: ["POST"],
+    pattern: '/bulk-collection/collect',
+    tokens: [{"old":"/bulk-collection/collect","type":0,"val":"bulk-collection","end":""},{"old":"/bulk-collection/collect","type":0,"val":"collect","end":""}],
+    types: placeholder as Registry['bulk_collection.collect']['types'],
+  },
   'reports.get_customer_items_report': {
     methods: ["GET","HEAD"],
     pattern: '/reports/customer_items',

@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import RedirectToBlAdmin from "@/features/auth-linker/RedirectToBlAdmin";
+
+import BulkCollectionPage from "@/features/bulk-collection/BulkCollectionPage";
 
 export const Route = createFileRoute("/(administrasjon)/admin/hurtiginnsamling")({
+  head: () => ({
+    meta: [{ title: "Hurtiginnsamling | bl-admin" }],
+  }),
   component: BulkCollectionPage,
 });
-
-function BulkCollectionPage() {
-  return <RedirectToBlAdmin path={"bulk"} />;
-}

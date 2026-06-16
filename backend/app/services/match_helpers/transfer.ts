@@ -2,6 +2,7 @@ import { Infer } from "@vinejs/vine/types";
 import moment from "moment-timezone";
 import { ObjectId } from "mongodb";
 
+import BlidService from "#services/blid_service";
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
 import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
@@ -140,7 +141,7 @@ const wrongSenderFeedback = `Boken du skannet tilhørte en annen elev enn den so
 export async function transfer(detailsId: string, { blid }: Infer<typeof matchTransferSchema>) {
   let userFeedback;
 
-  if (!isValidBlid(blid)) {
+  if (!BlidService.isValidBlid(blid)) {
     return {
       feedback: "Feil strekkode. Bruk bokas unike ID. Se instruksjoner for hjelp",
     };
@@ -203,17 +204,6 @@ export async function transfer(detailsId: string, { blid }: Infer<typeof matchTr
   await updateSenderMatches(customerItem, senderUserMatch, senderStandMatch);
 
   return { feedback: userFeedback };
-}
-
-function isValidBlid(scannedText: string): boolean {
-  if (Number.isNaN(Number(scannedText))) {
-    if (scannedText.length === 12) {
-      return true;
-    }
-  } else if (scannedText.length === 8) {
-    return true;
-  }
-  return false;
 }
 
 async function updateSenderMatches(
