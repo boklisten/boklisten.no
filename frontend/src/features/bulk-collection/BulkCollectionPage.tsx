@@ -5,7 +5,7 @@ import type {
 import { Box, Button, Container, InputLabel, Stack, Switch, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
-import { IconForms, IconObjectScan } from "@tabler/icons-react";
+import { IconForms, IconPackageImport } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -174,7 +174,7 @@ export default function BulkCollectionPage() {
 
         <Button
           color={"green"}
-          leftSection={<IconObjectScan />}
+          leftSection={<IconPackageImport />}
           disabled={unlockedBooks.length === 0}
           loading={collectMutation.isPending}
           onClick={handleDeliverClick}

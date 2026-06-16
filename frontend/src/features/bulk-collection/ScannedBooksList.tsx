@@ -1,6 +1,6 @@
 import type { ScannedBook } from "@boklisten/backend/shared/bulk-collection/bulk-collection-dtos";
 import { Badge, Button, Card, Group, Stack, Text, ThemeIcon, Tooltip } from "@mantine/core";
-import { IconAlertTriangle, IconLock } from "@tabler/icons-react";
+import { IconAlertTriangle, IconArrowRight, IconLock } from "@tabler/icons-react";
 
 import { formatDeadline, isOverdue } from "@/features/bulk-collection/deadline";
 
@@ -85,6 +85,16 @@ export default function ScannedBooksList({
                       Utløpt frist
                     </Badge>
                   )}
+                </Group>
+              )}
+
+              {book.lockedToMatch && (
+                <Group gap={6} wrap={"nowrap"} align={"center"} c={"red"}>
+                  <IconArrowRight size={18} />
+                  <Text size={"sm"} fw={600}>
+                    Skal ikke leveres her – eleven må gi boka til{" "}
+                    {book.deliverToName ?? "en annen elev"}
+                  </Text>
                 </Group>
               )}
 

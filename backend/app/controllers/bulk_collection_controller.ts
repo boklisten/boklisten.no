@@ -154,6 +154,15 @@ export default class BulkCollectionController {
       this.getUserMatchesForCustomers([customerItem.customer]),
     ]);
 
+    const recipientCustomerId = MatchLockService.findMatchRecipientCustomerId(
+      customerItem.customer,
+      customerItem.item,
+      userMatches,
+    );
+    const deliverTo = recipientCustomerId
+      ? await StorageService.UserDetails.getOrNull(recipientCustomerId)
+      : null;
+
     return {
       customerItemId: customerItem.id,
       blid: customerItem.blid ?? "",
@@ -163,11 +172,8 @@ export default class BulkCollectionController {
       deadline: this.toIsoDeadline(customerItem.deadline),
       customerId: customerItem.customer,
       customerName: customerDetail.name,
-      lockedToMatch: MatchLockService.isItemLockedToMatch(
-        customerItem.customer,
-        customerItem.item,
-        userMatches,
-      ),
+      lockedToMatch: recipientCustomerId !== null,
+      deliverToName: deliverTo?.name,
     };
   }
 

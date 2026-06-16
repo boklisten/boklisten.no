@@ -20,6 +20,11 @@ export interface ScannedBook {
   customerName: string;
   /** Whether the book is locked to a UserMatch and therefore cannot be collected at a stand. */
   lockedToMatch: boolean;
+  /**
+   * When locked to a match, the name of the student this book must be handed over to. Undefined
+   * when the book is not locked or the recipient could not be resolved.
+   */
+  deliverToName?: string;
 }
 
 /** A book that was collected in the current session, shown in the receipt. */

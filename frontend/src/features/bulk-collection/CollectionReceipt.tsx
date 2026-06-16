@@ -29,7 +29,8 @@ export default function CollectionReceipt({
           <Stack gap={4}>
             {skippedLockedBooks.map((book) => (
               <Text key={book.blid}>
-                {book.title} ({book.customerName})
+                {book.title} ({book.customerName}) – må gis til{" "}
+                {book.deliverToName ?? "en annen elev"}
               </Text>
             ))}
           </Stack>

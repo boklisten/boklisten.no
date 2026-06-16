@@ -20,6 +20,26 @@ function isItemLockedToMatch(customer: string, item: string, userMatches: UserMa
 }
 
 /**
+ * For a customer holding an item locked to a UserMatch, returns the id of the other customer in
+ * that match — the student the book must be handed over to. Returns null if the item is not locked
+ * to any of the customer's matches.
+ */
+function findMatchRecipientCustomerId(
+  customer: string,
+  item: string,
+  userMatches: UserMatch[],
+): string | null {
+  const match = userMatches.find(
+    (userMatch) =>
+      userMatch.itemsLockedToMatch &&
+      (userMatch.customerA === customer || userMatch.customerB === customer) &&
+      (userMatch.expectedAToBItems.includes(item) || userMatch.expectedBToAItems.includes(item)),
+  );
+  if (!match) return null;
+  return match.customerA === customer ? match.customerB : match.customerA;
+}
+
+/**
  * Returns the subset of the given customerItems that are locked to one of their owner's UserMatches.
  */
 function findCustomerItemsLockedToMatch<T extends { customer: string; item: string }>(
@@ -33,5 +53,6 @@ function findCustomerItemsLockedToMatch<T extends { customer: string; item: stri
 
 export const MatchLockService = {
   isItemLockedToMatch,
+  findMatchRecipientCustomerId,
   findCustomerItemsLockedToMatch,
 };
