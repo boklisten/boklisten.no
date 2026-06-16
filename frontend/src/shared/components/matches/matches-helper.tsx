@@ -1,4 +1,5 @@
 import type { AccessToken } from "@boklisten/backend/shared/access-token";
+import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import {
   StandMatchWithDetails,
   UserMatchWithDetails,
@@ -129,7 +130,7 @@ export function calculateItemStatuses<T extends UserMatchWithDetails | StandMatc
     .map((item) => ({
       id: item.id,
       title: item.title,
-      fulfilled: fulfilledItems.includes(item.id),
+      fulfilled: fulfilledItems.some((fulfilledId) => itemsAreEquivalent(fulfilledId, item.id)),
     }));
 }
 

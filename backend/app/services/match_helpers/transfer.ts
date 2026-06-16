@@ -16,6 +16,7 @@ import { StandMatch } from "#shared/match/stand-match";
 import { UserMatch } from "#shared/match/user-match";
 import { Order } from "#shared/order/order";
 import { OrderItem } from "#shared/order/order-item/order-item";
+import { getEquivalentItemIds, itemsAreEquivalent } from "#shared/item-equivalence";
 import { matchTransferSchema } from "#validators/matches";
 
 async function createMatchReceiveOrder(
@@ -40,7 +41,7 @@ async function createMatchReceiveOrder(
       relevantOrderItem: order.orderItems.find(
         (orderItem) =>
           orderActive.isOrderItemActive(orderItem) &&
-          orderItem.item === customerItem.item &&
+          itemsAreEquivalent(orderItem.item, customerItem.item) &&
           orderItem.type === "rent",
       ),
     }))
@@ -183,7 +184,7 @@ export async function transfer(detailsId: string, { blid }: Infer<typeof matchTr
       relevantOrderItem: order.orderItems.find(
         (orderItem) =>
           orderActive.isOrderItemActive(orderItem) &&
-          orderItem.item === customerItem.item &&
+          itemsAreEquivalent(orderItem.item, customerItem.item) &&
           orderItem.type === "rent",
       ),
     }))
@@ -254,12 +255,13 @@ async function findReceiverUserMatch(
   receiverUserDetailId: string,
   customerItem: CustomerItem,
 ): Promise<{ success: true; receiverUserMatch: UserMatch } | { success: false; feedback: string }> {
+  const equivalentItemIds = getEquivalentItemIds(customerItem.item);
   const receiverUserMatch = (await getUserMatchesForCustomer(receiverUserDetailId)).find(
     (userMatch) =>
       (userMatch.customerA === receiverUserDetailId &&
-        userMatch.expectedBToAItems.includes(customerItem.item)) ||
+        userMatch.expectedBToAItems.some((id) => equivalentItemIds.includes(id))) ||
       (userMatch.customerB === receiverUserDetailId &&
-        userMatch.expectedAToBItems.includes(customerItem.item)),
+        userMatch.expectedAToBItems.some((id) => equivalentItemIds.includes(id))),
   );
 
   if (!receiverUserMatch) {
@@ -297,18 +299,19 @@ async function findSenderMatch(customerItem: CustomerItem): Promise<{
   senderUserMatch: UserMatch | undefined;
   senderStandMatch: StandMatch | undefined;
 }> {
+  const equivalentItemIds = getEquivalentItemIds(customerItem.item);
   const senderUserMatches = await getUserMatchesForCustomer(customerItem.customer);
   const senderUserMatch = senderUserMatches.find(
     (userMatch) =>
       (userMatch.customerB === customerItem.customer &&
-        userMatch.expectedBToAItems.includes(customerItem.item)) ||
+        userMatch.expectedBToAItems.some((id) => equivalentItemIds.includes(id))) ||
       (userMatch.customerA === customerItem.customer &&
-        userMatch.expectedAToBItems.includes(customerItem.item)),
+        userMatch.expectedAToBItems.some((id) => equivalentItemIds.includes(id))),
   );
 
   const potentialSenderStandMatch = await getStandMatchForCustomer(customerItem.customer);
-  const senderStandMatch = potentialSenderStandMatch?.expectedHandoffItems.includes(
-    customerItem.item,
+  const senderStandMatch = potentialSenderStandMatch?.expectedHandoffItems.some((id) =>
+    equivalentItemIds.includes(id),
   )
     ? potentialSenderStandMatch
     : undefined;

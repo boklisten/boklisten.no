@@ -12,6 +12,7 @@ import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { rapidHandoutValidator } from "#validators/rapid_handout_validator";
 import { PermissionService } from "#services/permission_service";
+import { itemsAreEquivalent } from "#shared/item-equivalence";
 
 const blidNotActiveFeedback =
   "Denne bliden er ikke tilknyttet noen bok. Registrer den i bl-admin for å dele den ut.";
@@ -66,7 +67,6 @@ export default class RapidHandoutController {
       order: Order;
       relevantOrderItem: OrderItem | undefined;
     }
-    const tempEquivalentItemIds = ["5b6441c6d2e733002fae89eb", "5b6441c1d2e733002fae8960"];
     const orderActive = new OrderActive();
     const customerOrder: OriginalOrderInfo | undefined = (
       await orderActive.getActiveOrders(customerId)
@@ -78,9 +78,7 @@ export default class RapidHandoutController {
             !orderItem.handout &&
             !orderItem.delivered &&
             !orderItem.movedToOrder &&
-            (tempEquivalentItemIds.includes(itemId)
-              ? tempEquivalentItemIds.includes(orderItem.item)
-              : orderItem.item === itemId) &&
+            itemsAreEquivalent(itemId, orderItem.item) &&
             (orderItem.type === "rent" || orderItem.type === "partly-payment"),
         ),
       }))
