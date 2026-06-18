@@ -3,30 +3,32 @@ import dayjs from "dayjs";
 
 import { useFieldContext } from "@/shared/hooks/form";
 
+const COMMON_DEADLINES = [
+  { month: 6, day: 1 }, // July 1st
+  { month: 8, day: 1 }, // September 1st
+  { month: 11, day: 20 }, // December 20th
+];
+
 function calculateDeadlineOptions() {
-  const today = new Date();
-  const summerDeadline = new Date(today.getFullYear(), 6, 1);
-  const winterDeadline = new Date(today.getFullYear(), 11, 20);
-  // Continue to show the deadline for a month afterward, with warning
-  const summerDeadlinePlusGracePeriod = new Date(summerDeadline.getFullYear(), 7, 1);
-  const winterDeadlinePlusGracePeriod = new Date(winterDeadline.getFullYear() + 1, 0, 20);
+  const today = dayjs();
+  const earliest = today.subtract(1, "months");
+  const latest = today.add(2, "years");
 
-  if (today > summerDeadlinePlusGracePeriod) {
-    summerDeadline.setFullYear(today.getFullYear() + 1);
-  }
-  if (today > winterDeadlinePlusGracePeriod) {
-    winterDeadline.setFullYear(today.getFullYear() + 1);
-  }
-
-  let usualDates = [summerDeadline, winterDeadline];
-  if (summerDeadline > winterDeadline) {
-    usualDates = [winterDeadline, summerDeadline];
-  }
-
-  return usualDates.map((option) => ({
-    value: dayjs(option).format("YYYY-MM-DD"),
-    label: dayjs(option).format("DD/MM/YYYY"),
-  }));
+  return Array.from(
+    { length: latest.year() - earliest.year() + 1 },
+    (_, index) => earliest.year() + index,
+  )
+    .flatMap((year) =>
+      COMMON_DEADLINES.map(({ month, day }) =>
+        dayjs().year(year).month(month).date(day).startOf("day"),
+      ),
+    )
+    .filter((date) => !date.isBefore(earliest) && !date.isAfter(latest))
+    .sort((a, b) => a.valueOf() - b.valueOf())
+    .map((date) => ({
+      value: date.format("YYYY-MM-DD"),
+      label: date.format("DD/MM/YYYY"),
+    }));
 }
 
 export default function DeadlinePickerField(props: DatePickerInputProps) {
