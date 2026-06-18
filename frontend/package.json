@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@boklisten/backend": "workspace:*",
+    "@mantine/charts": "^9.3.1",
     "@mantine/core": "^9.3.1",
     "@mantine/dates": "^9.3.1",
     "@mantine/hooks": "^9.3.1",
@@ -40,6 +41,7 @@
     "react-jwt": "^2.1.1",
     "react-password-strength-bar": "^0.4.1",
     "react-signature-canvas": "1.1.0-alpha.2",
+    "recharts": "^3.8.1",
     "validator": "^13.15.35"
   },
   "devDependencies": {

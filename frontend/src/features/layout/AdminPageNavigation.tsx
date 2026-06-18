@@ -6,6 +6,7 @@ import {
   IconBuildings,
   IconBuildingStore,
   IconChartBar,
+  IconChartHistogram,
   IconChecklist,
   IconDatabase,
   IconEdit,
@@ -106,6 +107,16 @@ export default function AdminPageNavigation({
             to={"/admin/scanner"}
             active={pathname === "/admin/scanner"}
             leftSection={<IconBarcode />}
+            underline={"never"}
+            c={"black"}
+            component={TanStackAnchor}
+            onClick={onNavigate}
+          />
+          <NavLink
+            label={"Innsikt"}
+            to={"/admin/innsikt"}
+            active={pathname === "/admin/innsikt"}
+            leftSection={<IconChartHistogram />}
             underline={"never"}
             c={"black"}
             component={TanStackAnchor}

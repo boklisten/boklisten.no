@@ -559,6 +559,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['transferItem']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'match_statistics.get_statistics': {
+    methods: ["GET","HEAD"]
+    pattern: '/matches/statistics'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_statistics_controller').default['getStatistics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_statistics_controller').default['getStatistics']>>>
+    }
+  }
   'user_detail.get_by_id': {
     methods: ["GET","HEAD"]
     pattern: '/v2/user_details/id/:detailsId'

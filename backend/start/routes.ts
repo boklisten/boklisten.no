@@ -152,6 +152,7 @@ router.post("/user_matches/lock", [controllers.Matches, "lock"]);
 router.get("/matches/me", [controllers.Matches, "getMyMatches"]);
 router.get("/matches/customer/:customerId", [controllers.Matches, "getMatchesForCustomer"]);
 router.post("/matches/transfer_item", [controllers.Matches, "transferItem"]);
+router.get("/matches/statistics", [controllers.MatchStatistics, "getStatistics"]);
 
 /**
  * user detail

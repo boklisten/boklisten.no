@@ -80,6 +80,9 @@ export interface ApiDefinition {
     getMatchesForCustomer: typeof routes['matches.get_matches_for_customer']
     transferItem: typeof routes['matches.transfer_item']
   }
+  matchStatistics: {
+    getStatistics: typeof routes['match_statistics.get_statistics']
+  }
   userDetail: {
     getById: typeof routes['user_detail.get_by_id']
     search: typeof routes['user_detail.search']

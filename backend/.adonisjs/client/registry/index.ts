@@ -282,6 +282,12 @@ const routes = {
     tokens: [{"old":"/matches/transfer_item","type":0,"val":"matches","end":""},{"old":"/matches/transfer_item","type":0,"val":"transfer_item","end":""}],
     types: placeholder as Registry['matches.transfer_item']['types'],
   },
+  'match_statistics.get_statistics': {
+    methods: ["GET","HEAD"],
+    pattern: '/matches/statistics',
+    tokens: [{"old":"/matches/statistics","type":0,"val":"matches","end":""},{"old":"/matches/statistics","type":0,"val":"statistics","end":""}],
+    types: placeholder as Registry['match_statistics.get_statistics']['types'],
+  },
   'user_detail.get_by_id': {
     methods: ["GET","HEAD"],
     pattern: '/v2/user_details/id/:detailsId',

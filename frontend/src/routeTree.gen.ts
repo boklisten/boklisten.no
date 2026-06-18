@@ -52,6 +52,7 @@ import { Route as administrasjonAdminVentelisteRouteImport } from './routes/(adm
 import { Route as administrasjonAdminUserSettingsRouteImport } from './routes/(administrasjon)/admin/user-settings'
 import { Route as administrasjonAdminScannerRouteImport } from './routes/(administrasjon)/admin/scanner'
 import { Route as administrasjonAdminOrdreoversiktRouteImport } from './routes/(administrasjon)/admin/ordreoversikt'
+import { Route as administrasjonAdminInnsiktRouteImport } from './routes/(administrasjon)/admin/innsikt'
 import { Route as administrasjonAdminHurtigutdelingRouteImport } from './routes/(administrasjon)/admin/hurtigutdeling'
 import { Route as administrasjonAdminHurtiginnsamlingRouteImport } from './routes/(administrasjon)/admin/hurtiginnsamling'
 import { Route as administrasjonAdminHandlekurvRouteImport } from './routes/(administrasjon)/admin/handlekurv'
@@ -310,6 +311,12 @@ const administrasjonAdminOrdreoversiktRoute =
     path: '/ordreoversikt',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
+const administrasjonAdminInnsiktRoute =
+  administrasjonAdminInnsiktRouteImport.update({
+    id: '/innsikt',
+    path: '/innsikt',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
 const administrasjonAdminHurtigutdelingRoute =
   administrasjonAdminHurtigutdelingRouteImport.update({
     id: '/hurtigutdeling',
@@ -520,6 +527,7 @@ export interface FileRoutesByFullPath {
   '/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/admin/hurtiginnsamling': typeof administrasjonAdminHurtiginnsamlingRoute
   '/admin/hurtigutdeling': typeof administrasjonAdminHurtigutdelingRoute
+  '/admin/innsikt': typeof administrasjonAdminInnsiktRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/scanner': typeof administrasjonAdminScannerRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
@@ -594,6 +602,7 @@ export interface FileRoutesByTo {
   '/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/admin/hurtiginnsamling': typeof administrasjonAdminHurtiginnsamlingRoute
   '/admin/hurtigutdeling': typeof administrasjonAdminHurtigutdelingRoute
+  '/admin/innsikt': typeof administrasjonAdminInnsiktRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/scanner': typeof administrasjonAdminScannerRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
@@ -672,6 +681,7 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/(administrasjon)/admin/hurtiginnsamling': typeof administrasjonAdminHurtiginnsamlingRoute
   '/(administrasjon)/admin/hurtigutdeling': typeof administrasjonAdminHurtigutdelingRoute
+  '/(administrasjon)/admin/innsikt': typeof administrasjonAdminInnsiktRoute
   '/(administrasjon)/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/(administrasjon)/admin/scanner': typeof administrasjonAdminScannerRoute
   '/(administrasjon)/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
@@ -750,6 +760,7 @@ export interface FileRouteTypes {
     | '/admin/handlekurv'
     | '/admin/hurtiginnsamling'
     | '/admin/hurtigutdeling'
+    | '/admin/innsikt'
     | '/admin/ordreoversikt'
     | '/admin/scanner'
     | '/admin/user-settings'
@@ -824,6 +835,7 @@ export interface FileRouteTypes {
     | '/admin/handlekurv'
     | '/admin/hurtiginnsamling'
     | '/admin/hurtigutdeling'
+    | '/admin/innsikt'
     | '/admin/ordreoversikt'
     | '/admin/scanner'
     | '/admin/user-settings'
@@ -901,6 +913,7 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/handlekurv'
     | '/(administrasjon)/admin/hurtiginnsamling'
     | '/(administrasjon)/admin/hurtigutdeling'
+    | '/(administrasjon)/admin/innsikt'
     | '/(administrasjon)/admin/ordreoversikt'
     | '/(administrasjon)/admin/scanner'
     | '/(administrasjon)/admin/user-settings'
@@ -1275,6 +1288,13 @@ declare module '@tanstack/react-router' {
       path: '/ordreoversikt'
       fullPath: '/admin/ordreoversikt'
       preLoaderRoute: typeof administrasjonAdminOrdreoversiktRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/innsikt': {
+      id: '/(administrasjon)/admin/innsikt'
+      path: '/innsikt'
+      fullPath: '/admin/innsikt'
+      preLoaderRoute: typeof administrasjonAdminInnsiktRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
     '/(administrasjon)/admin/hurtigutdeling': {
@@ -1653,6 +1673,7 @@ interface administrasjonAdminRouteRouteChildren {
   administrasjonAdminHandlekurvRoute: typeof administrasjonAdminHandlekurvRoute
   administrasjonAdminHurtiginnsamlingRoute: typeof administrasjonAdminHurtiginnsamlingRoute
   administrasjonAdminHurtigutdelingRoute: typeof administrasjonAdminHurtigutdelingRoute
+  administrasjonAdminInnsiktRoute: typeof administrasjonAdminInnsiktRoute
   administrasjonAdminOrdreoversiktRoute: typeof administrasjonAdminOrdreoversiktRoute
   administrasjonAdminScannerRoute: typeof administrasjonAdminScannerRoute
   administrasjonAdminUserSettingsRoute: typeof administrasjonAdminUserSettingsRoute
@@ -1678,6 +1699,7 @@ const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildr
       administrasjonAdminHurtiginnsamlingRoute,
     administrasjonAdminHurtigutdelingRoute:
       administrasjonAdminHurtigutdelingRoute,
+    administrasjonAdminInnsiktRoute: administrasjonAdminInnsiktRoute,
     administrasjonAdminOrdreoversiktRoute:
       administrasjonAdminOrdreoversiktRoute,
     administrasjonAdminScannerRoute: administrasjonAdminScannerRoute,
