@@ -1,5 +1,5 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 
 import { DateService } from "#services/legacy/date.service";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
@@ -9,27 +9,26 @@ import { Branch } from "#shared/branch";
 import { CustomerItemStatus } from "#shared/customer-item/actionable_customer_item";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 
-function calculateDeadlineDateWithGracePeriod(deadline: Date): string {
-  const now = moment();
-  const month = now.format("MM");
-
-  if (month === "12") {
-    const nextYear = now.add(1, "year").format("YYYY");
-    return `${nextYear}-01-01`;
-  }
-
-  return moment(deadline).format("YYYY-MM-DD");
-}
-
 function isHandedOutWithinTheLastTwoWeeks(customerItem: CustomerItem) {
-  return moment().isSameOrBefore(moment(customerItem.creationTime).add(2, "weeks"));
+  const handedOutAt = customerItem.creationTime
+    ? DateTime.fromJSDate(customerItem.creationTime)
+    : DateTime.now();
+  return DateTime.now() <= handedOutAt.plus({ weeks: 2 });
 }
 
 function isDeadlineWithGracePeriodExpired(customerItem: CustomerItem) {
-  return (
-    new Date().getTime() >
-    new Date(calculateDeadlineDateWithGracePeriod(customerItem.deadline)).getTime()
-  );
+  const now = DateTime.now().setZone("Europe/Oslo");
+
+  // December grace period: allow buyout/extension through the holidays until Jan 1 next year.
+  const graceDeadline =
+    now.month === 12
+      ? DateTime.fromObject(
+          { year: now.year + 1, month: 1, day: 1 },
+          { zone: "Europe/Oslo" },
+        ).startOf("day")
+      : DateTime.fromJSDate(customerItem.deadline).setZone("Europe/Oslo").endOf("day");
+
+  return now > graceDeadline;
 }
 
 function branchHasExtensionsInTheFuture(originalDeadline: Date, branch: Branch): boolean {

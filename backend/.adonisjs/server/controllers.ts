@@ -26,6 +26,7 @@ export const controllers = {
   EmailVerification: () => import('#controllers/email_verification_controller'),
   Items: () => import('#controllers/items_controller'),
   KustomCheckout: () => import('#controllers/kustom_checkout_controller'),
+  MatchStatistics: () => import('#controllers/match_statistics_controller'),
   Matches: () => import('#controllers/matches_controller'),
   OpeningHours: () => import('#controllers/opening_hours_controller'),
   OrderHistory: () => import('#controllers/order_history_controller'),
@@ -43,5 +44,4 @@ export const controllers = {
   UserDetail: () => import('#controllers/user_detail_controller'),
   UserProvisioning: () => import('#controllers/user_provisioning_controller'),
   WaitingListCustomer: () => import('#controllers/waiting_list_customer_controller'),
-  MatchStatistics: () => import('#controllers/match_statistics_controller'),
 }
