@@ -1,7 +1,15 @@
+import { DateTime } from "luxon";
+
 import { StorageService } from "#services/storage_service";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { Item } from "#shared/item";
 import { OrderItem } from "#shared/order/order-item/order-item";
+
+function isSameDeadlineDay(a: Date, b: Date): boolean {
+  return DateTime.fromJSDate(a)
+    .setZone("Europe/Oslo")
+    .hasSame(DateTime.fromJSDate(b).setZone("Europe/Oslo"), "day");
+}
 
 export const OrderItemService = {
   async createBuyoutOrderItem(customerItem: CustomerItem, item: Item) {
@@ -30,8 +38,8 @@ export const OrderItemService = {
 
   async createExtendOrderItem(customerItem: CustomerItem, item: Item, to: Date) {
     const branch = await StorageService.Branches.get(customerItem.handoutInfo?.handoutById);
-    const extendPeriod = branch.paymentInfo?.extendPeriods.find(
-      (extendPeriod) => extendPeriod.date.getMilliseconds() === to.getMilliseconds(),
+    const extendPeriod = branch.paymentInfo?.extendPeriods.find((extendPeriod) =>
+      isSameDeadlineDay(extendPeriod.date, to),
     );
     if (!extendPeriod)
       throw new Error(
@@ -71,8 +79,8 @@ export const OrderItemService = {
   },
   async createRentOrderItem(item: Item, branchId: string, to: Date) {
     const branch = await StorageService.Branches.get(branchId);
-    const rentPeriod = branch.paymentInfo?.rentPeriods.find(
-      (rentPeriod) => rentPeriod.date.getMilliseconds() === to.getMilliseconds(),
+    const rentPeriod = branch.paymentInfo?.rentPeriods.find((rentPeriod) =>
+      isSameDeadlineDay(rentPeriod.date, to),
     );
     if (!rentPeriod)
       throw new Error(
@@ -98,7 +106,7 @@ export const OrderItemService = {
   async createPartlyPaymentOrderItem(item: Item, branchId: string, to: Date) {
     const branch = await StorageService.Branches.get(branchId);
     const partlyPaymentPeriod = branch.paymentInfo?.partlyPaymentPeriods?.find(
-      (partlyPaymentPeriod) => partlyPaymentPeriod.date.getMilliseconds() === to.getMilliseconds(),
+      (partlyPaymentPeriod) => isSameDeadlineDay(partlyPaymentPeriod.date, to),
     );
     if (!partlyPaymentPeriod)
       throw new Error(
