@@ -60,7 +60,9 @@ import { Route as administrasjonAdminFakturaRouteImport } from './routes/(admini
 import { Route as administrasjonAdminBlidRouteImport } from './routes/(administrasjon)/admin/blid'
 import { Route as offentligInfoPoliciesRouteRouteImport } from './routes/(offentlig)/info/policies/route'
 import { Route as offentligInfoBranchRouteRouteImport } from './routes/(offentlig)/info/branch/route'
+import { Route as administrasjonAdminOverleveringerRouteRouteImport } from './routes/(administrasjon)/admin/overleveringer/route'
 import { Route as offentligKasseBetalingIndexRouteImport } from './routes/(offentlig)/kasse/betaling/index'
+import { Route as administrasjonAdminOverleveringerIndexRouteImport } from './routes/(administrasjon)/admin/overleveringer/index'
 import { Route as offentligOverleveringerUserUserMatchIdRouteImport } from './routes/(offentlig)/overleveringer/user.$userMatchId'
 import { Route as offentligOverleveringerStandStandMatchIdRouteImport } from './routes/(offentlig)/overleveringer/stand.$standMatchId'
 import { Route as offentligKasseBetalingStatusRouteImport } from './routes/(offentlig)/kasse/betaling/status'
@@ -85,6 +87,8 @@ import { Route as administrasjonAdminDatabaseDynamisk_innholdRouteImport } from 
 import { Route as administrasjonAdminDatabaseBokerRouteImport } from './routes/(administrasjon)/admin/database/boker'
 import { Route as offentligKasseBetalingV2OrderIdRouteImport } from './routes/(offentlig)/kasse/betaling/v2.$orderId'
 import { Route as offentligAuthEmailVerifyVerificationIdRouteImport } from './routes/(offentlig)/auth/email.verify.$verificationId'
+import { Route as administrasjonAdminOverleveringerUserUserMatchIdRouteImport } from './routes/(administrasjon)/admin/overleveringer/user.$userMatchId'
+import { Route as administrasjonAdminOverleveringerStandStandMatchIdRouteImport } from './routes/(administrasjon)/admin/overleveringer/stand.$standMatchId'
 
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
@@ -358,11 +362,23 @@ const offentligInfoBranchRouteRoute =
     path: '/branch',
     getParentRoute: () => offentligInfoRouteRoute,
   } as any)
+const administrasjonAdminOverleveringerRouteRoute =
+  administrasjonAdminOverleveringerRouteRouteImport.update({
+    id: '/overleveringer',
+    path: '/overleveringer',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
 const offentligKasseBetalingIndexRoute =
   offentligKasseBetalingIndexRouteImport.update({
     id: '/kasse/betaling/',
     path: '/kasse/betaling/',
     getParentRoute: () => offentligRouteRoute,
+  } as any)
+const administrasjonAdminOverleveringerIndexRoute =
+  administrasjonAdminOverleveringerIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => administrasjonAdminOverleveringerRouteRoute,
   } as any)
 const offentligOverleveringerUserUserMatchIdRoute =
   offentligOverleveringerUserUserMatchIdRouteImport.update({
@@ -505,6 +521,18 @@ const offentligAuthEmailVerifyVerificationIdRoute =
     path: '/auth/email/verify/$verificationId',
     getParentRoute: () => offentligRouteRoute,
   } as any)
+const administrasjonAdminOverleveringerUserUserMatchIdRoute =
+  administrasjonAdminOverleveringerUserUserMatchIdRouteImport.update({
+    id: '/user/$userMatchId',
+    path: '/user/$userMatchId',
+    getParentRoute: () => administrasjonAdminOverleveringerRouteRoute,
+  } as any)
+const administrasjonAdminOverleveringerStandStandMatchIdRoute =
+  administrasjonAdminOverleveringerStandStandMatchIdRouteImport.update({
+    id: '/stand/$standMatchId',
+    path: '/stand/$standMatchId',
+    getParentRoute: () => administrasjonAdminOverleveringerRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -520,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/order-history': typeof offentligOrderHistoryRoute
   '/sjekk': typeof offentligSjekkRoute
   '/user-settings': typeof offentligUserSettingsRoute
+  '/admin/overleveringer': typeof administrasjonAdminOverleveringerRouteRouteWithChildren
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/admin/blid': typeof administrasjonAdminBlidRoute
@@ -579,7 +608,10 @@ export interface FileRoutesByFullPath {
   '/kasse/betaling/status': typeof offentligKasseBetalingStatusRoute
   '/overleveringer/stand/$standMatchId': typeof offentligOverleveringerStandStandMatchIdRoute
   '/overleveringer/user/$userMatchId': typeof offentligOverleveringerUserUserMatchIdRoute
+  '/admin/overleveringer/': typeof administrasjonAdminOverleveringerIndexRoute
   '/kasse/betaling/': typeof offentligKasseBetalingIndexRoute
+  '/admin/overleveringer/stand/$standMatchId': typeof administrasjonAdminOverleveringerStandStandMatchIdRoute
+  '/admin/overleveringer/user/$userMatchId': typeof administrasjonAdminOverleveringerUserUserMatchIdRoute
   '/auth/email/verify/$verificationId': typeof offentligAuthEmailVerifyVerificationIdRoute
   '/kasse/betaling/v2/$orderId': typeof offentligKasseBetalingV2OrderIdRoute
 }
@@ -654,7 +686,10 @@ export interface FileRoutesByTo {
   '/kasse/betaling/status': typeof offentligKasseBetalingStatusRoute
   '/overleveringer/stand/$standMatchId': typeof offentligOverleveringerStandStandMatchIdRoute
   '/overleveringer/user/$userMatchId': typeof offentligOverleveringerUserUserMatchIdRoute
+  '/admin/overleveringer': typeof administrasjonAdminOverleveringerIndexRoute
   '/kasse/betaling': typeof offentligKasseBetalingIndexRoute
+  '/admin/overleveringer/stand/$standMatchId': typeof administrasjonAdminOverleveringerStandStandMatchIdRoute
+  '/admin/overleveringer/user/$userMatchId': typeof administrasjonAdminOverleveringerUserUserMatchIdRoute
   '/auth/email/verify/$verificationId': typeof offentligAuthEmailVerifyVerificationIdRoute
   '/kasse/betaling/v2/$orderId': typeof offentligKasseBetalingV2OrderIdRoute
 }
@@ -674,6 +709,7 @@ export interface FileRoutesById {
   '/(offentlig)/order-history': typeof offentligOrderHistoryRoute
   '/(offentlig)/sjekk': typeof offentligSjekkRoute
   '/(offentlig)/user-settings': typeof offentligUserSettingsRoute
+  '/(administrasjon)/admin/overleveringer': typeof administrasjonAdminOverleveringerRouteRouteWithChildren
   '/(offentlig)/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/(offentlig)/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/(administrasjon)/admin/blid': typeof administrasjonAdminBlidRoute
@@ -733,7 +769,10 @@ export interface FileRoutesById {
   '/(offentlig)/kasse/betaling/status': typeof offentligKasseBetalingStatusRoute
   '/(offentlig)/overleveringer/stand/$standMatchId': typeof offentligOverleveringerStandStandMatchIdRoute
   '/(offentlig)/overleveringer/user/$userMatchId': typeof offentligOverleveringerUserUserMatchIdRoute
+  '/(administrasjon)/admin/overleveringer/': typeof administrasjonAdminOverleveringerIndexRoute
   '/(offentlig)/kasse/betaling/': typeof offentligKasseBetalingIndexRoute
+  '/(administrasjon)/admin/overleveringer/stand/$standMatchId': typeof administrasjonAdminOverleveringerStandStandMatchIdRoute
+  '/(administrasjon)/admin/overleveringer/user/$userMatchId': typeof administrasjonAdminOverleveringerUserUserMatchIdRoute
   '/(offentlig)/auth/email/verify/$verificationId': typeof offentligAuthEmailVerifyVerificationIdRoute
   '/(offentlig)/kasse/betaling/v2/$orderId': typeof offentligKasseBetalingV2OrderIdRoute
 }
@@ -753,6 +792,7 @@ export interface FileRouteTypes {
     | '/order-history'
     | '/sjekk'
     | '/user-settings'
+    | '/admin/overleveringer'
     | '/info/branch'
     | '/info/policies'
     | '/admin/blid'
@@ -812,7 +852,10 @@ export interface FileRouteTypes {
     | '/kasse/betaling/status'
     | '/overleveringer/stand/$standMatchId'
     | '/overleveringer/user/$userMatchId'
+    | '/admin/overleveringer/'
     | '/kasse/betaling/'
+    | '/admin/overleveringer/stand/$standMatchId'
+    | '/admin/overleveringer/user/$userMatchId'
     | '/auth/email/verify/$verificationId'
     | '/kasse/betaling/v2/$orderId'
   fileRoutesByTo: FileRoutesByTo
@@ -887,7 +930,10 @@ export interface FileRouteTypes {
     | '/kasse/betaling/status'
     | '/overleveringer/stand/$standMatchId'
     | '/overleveringer/user/$userMatchId'
+    | '/admin/overleveringer'
     | '/kasse/betaling'
+    | '/admin/overleveringer/stand/$standMatchId'
+    | '/admin/overleveringer/user/$userMatchId'
     | '/auth/email/verify/$verificationId'
     | '/kasse/betaling/v2/$orderId'
   id:
@@ -906,6 +952,7 @@ export interface FileRouteTypes {
     | '/(offentlig)/order-history'
     | '/(offentlig)/sjekk'
     | '/(offentlig)/user-settings'
+    | '/(administrasjon)/admin/overleveringer'
     | '/(offentlig)/info/branch'
     | '/(offentlig)/info/policies'
     | '/(administrasjon)/admin/blid'
@@ -965,7 +1012,10 @@ export interface FileRouteTypes {
     | '/(offentlig)/kasse/betaling/status'
     | '/(offentlig)/overleveringer/stand/$standMatchId'
     | '/(offentlig)/overleveringer/user/$userMatchId'
+    | '/(administrasjon)/admin/overleveringer/'
     | '/(offentlig)/kasse/betaling/'
+    | '/(administrasjon)/admin/overleveringer/stand/$standMatchId'
+    | '/(administrasjon)/admin/overleveringer/user/$userMatchId'
     | '/(offentlig)/auth/email/verify/$verificationId'
     | '/(offentlig)/kasse/betaling/v2/$orderId'
   fileRoutesById: FileRoutesById
@@ -1346,12 +1396,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligInfoBranchRouteRouteImport
       parentRoute: typeof offentligInfoRouteRoute
     }
+    '/(administrasjon)/admin/overleveringer': {
+      id: '/(administrasjon)/admin/overleveringer'
+      path: '/overleveringer'
+      fullPath: '/admin/overleveringer'
+      preLoaderRoute: typeof administrasjonAdminOverleveringerRouteRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
     '/(offentlig)/kasse/betaling/': {
       id: '/(offentlig)/kasse/betaling/'
       path: '/kasse/betaling'
       fullPath: '/kasse/betaling/'
       preLoaderRoute: typeof offentligKasseBetalingIndexRouteImport
       parentRoute: typeof offentligRouteRoute
+    }
+    '/(administrasjon)/admin/overleveringer/': {
+      id: '/(administrasjon)/admin/overleveringer/'
+      path: '/'
+      fullPath: '/admin/overleveringer/'
+      preLoaderRoute: typeof administrasjonAdminOverleveringerIndexRouteImport
+      parentRoute: typeof administrasjonAdminOverleveringerRouteRoute
     }
     '/(offentlig)/overleveringer/user/$userMatchId': {
       id: '/(offentlig)/overleveringer/user/$userMatchId'
@@ -1521,6 +1585,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligAuthEmailVerifyVerificationIdRouteImport
       parentRoute: typeof offentligRouteRoute
     }
+    '/(administrasjon)/admin/overleveringer/user/$userMatchId': {
+      id: '/(administrasjon)/admin/overleveringer/user/$userMatchId'
+      path: '/user/$userMatchId'
+      fullPath: '/admin/overleveringer/user/$userMatchId'
+      preLoaderRoute: typeof administrasjonAdminOverleveringerUserUserMatchIdRouteImport
+      parentRoute: typeof administrasjonAdminOverleveringerRouteRoute
+    }
+    '/(administrasjon)/admin/overleveringer/stand/$standMatchId': {
+      id: '/(administrasjon)/admin/overleveringer/stand/$standMatchId'
+      path: '/stand/$standMatchId'
+      fullPath: '/admin/overleveringer/stand/$standMatchId'
+      preLoaderRoute: typeof administrasjonAdminOverleveringerStandStandMatchIdRouteImport
+      parentRoute: typeof administrasjonAdminOverleveringerRouteRoute
+    }
   }
 }
 
@@ -1667,7 +1745,29 @@ const offentligRouteRouteWithChildren = offentligRouteRoute._addFileChildren(
   offentligRouteRouteChildren,
 )
 
+interface administrasjonAdminOverleveringerRouteRouteChildren {
+  administrasjonAdminOverleveringerIndexRoute: typeof administrasjonAdminOverleveringerIndexRoute
+  administrasjonAdminOverleveringerStandStandMatchIdRoute: typeof administrasjonAdminOverleveringerStandStandMatchIdRoute
+  administrasjonAdminOverleveringerUserUserMatchIdRoute: typeof administrasjonAdminOverleveringerUserUserMatchIdRoute
+}
+
+const administrasjonAdminOverleveringerRouteRouteChildren: administrasjonAdminOverleveringerRouteRouteChildren =
+  {
+    administrasjonAdminOverleveringerIndexRoute:
+      administrasjonAdminOverleveringerIndexRoute,
+    administrasjonAdminOverleveringerStandStandMatchIdRoute:
+      administrasjonAdminOverleveringerStandStandMatchIdRoute,
+    administrasjonAdminOverleveringerUserUserMatchIdRoute:
+      administrasjonAdminOverleveringerUserUserMatchIdRoute,
+  }
+
+const administrasjonAdminOverleveringerRouteRouteWithChildren =
+  administrasjonAdminOverleveringerRouteRoute._addFileChildren(
+    administrasjonAdminOverleveringerRouteRouteChildren,
+  )
+
 interface administrasjonAdminRouteRouteChildren {
+  administrasjonAdminOverleveringerRouteRoute: typeof administrasjonAdminOverleveringerRouteRouteWithChildren
   administrasjonAdminBlidRoute: typeof administrasjonAdminBlidRoute
   administrasjonAdminFakturaRoute: typeof administrasjonAdminFakturaRoute
   administrasjonAdminHandlekurvRoute: typeof administrasjonAdminHandlekurvRoute
@@ -1692,6 +1792,8 @@ interface administrasjonAdminRouteRouteChildren {
 
 const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildren =
   {
+    administrasjonAdminOverleveringerRouteRoute:
+      administrasjonAdminOverleveringerRouteRouteWithChildren,
     administrasjonAdminBlidRoute: administrasjonAdminBlidRoute,
     administrasjonAdminFakturaRoute: administrasjonAdminFakturaRoute,
     administrasjonAdminHandlekurvRoute: administrasjonAdminHandlekurvRoute,

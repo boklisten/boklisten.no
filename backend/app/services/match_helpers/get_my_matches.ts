@@ -1,6 +1,5 @@
 import { ObjectId } from "mongodb";
 
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Item } from "#shared/item";
@@ -14,10 +13,11 @@ import { StandMatch } from "#shared/match/stand-match";
 import { UserMatch } from "#shared/match/user-match";
 import { UserDetail } from "#shared/user-detail";
 
-function selectMatchRelevantUserDetails(userDetail?: UserDetail): MatchRelevantUserDetails {
+export function selectMatchRelevantUserDetails(userDetail?: UserDetail): MatchRelevantUserDetails {
   return {
     name: userDetail?.name ?? "",
     phone: userDetail?.phone ?? "",
+    email: userDetail?.email ?? "",
   };
 }
 
@@ -36,7 +36,7 @@ function mapBlIdsToItemIds(
   );
 }
 
-function mapItemIdsToItemDetails(
+export function mapItemIdsToItemDetails(
   itemIds: string[],
   itemsMap: Map<string, Item>,
 ): Record<string, MatchRelevantItemDetails> {
@@ -87,16 +87,32 @@ function addDetailsToMatch(
   };
 }
 
-async function addDetailsToUserMatches(userMatches: UserMatch[]): Promise<UserMatchWithDetails[]> {
-  const customers = Array.from(
+// Aggregate rather than getMany so inactive user details are still returned (getMany filters active).
+export async function getUserDetailsMap(customerIds: string[]): Promise<Map<string, UserDetail>> {
+  if (customerIds.length === 0) return new Map();
+  const userDetails = (await StorageService.UserDetails.aggregate([
+    { $match: { _id: { $in: customerIds.map((id) => new ObjectId(id)) } } },
+  ])) as UserDetail[];
+  return new Map(userDetails.map((detail) => [detail.id, detail]));
+}
+
+async function getBlIdToItemIdMap(blIds: string[]): Promise<Map<string, string>> {
+  const blIdToItemIdMap = new Map(blIds.map((blId): [string, string] => [blId, ""]));
+  if (blIds.length === 0) return blIdToItemIdMap;
+  const uniqueItems = (await StorageService.UniqueItems.aggregate([
+    { $match: { blid: { $in: blIds } } },
+  ])) as { blid: string; item?: string }[];
+  for (const uniqueItem of uniqueItems) {
+    blIdToItemIdMap.set(uniqueItem.blid, uniqueItem.item ?? "");
+  }
+  return blIdToItemIdMap;
+}
+
+export async function addDetailsToUserMatches(
+  userMatches: UserMatch[],
+): Promise<UserMatchWithDetails[]> {
+  const customerIds = Array.from(
     new Set(userMatches.flatMap((userMatch) => [userMatch.customerA, userMatch.customerB])),
-  );
-  const userDetailsMap = new Map(
-    await Promise.all(
-      customers.map((id) =>
-        StorageService.UserDetails.get(id).then((detail): [string, UserDetail] => [id, detail]),
-      ),
-    ),
   );
 
   const blIds = Array.from(
@@ -112,28 +128,20 @@ async function addDetailsToUserMatches(userMatches: UserMatch[]): Promise<UserMa
     ),
   );
 
-  const items = Array.from(
-    new Set(
-      userMatches.flatMap((userMatch) =>
-        [userMatch.expectedAToBItems, userMatch.expectedBToAItems].flat(),
-      ),
-    ),
+  const expectedItemIds = userMatches.flatMap((userMatch) =>
+    [userMatch.expectedAToBItems, userMatch.expectedBToAItems].flat(),
   );
 
-  const blIdsToItemIdMap = new Map(
-    await Promise.all(
-      blIds.map((blId) => {
-        const uniqueItemQuery = new SEDbQuery();
-        uniqueItemQuery.stringFilters = [{ fieldName: "blid", value: blId }];
-        return StorageService.UniqueItems.getByQuery(uniqueItemQuery).then(
-          (uniqueItems): [string, string] => [blId, uniqueItems[0]?.item ?? ""],
-        );
-      }),
-    ),
+  const [userDetailsMap, blIdsToItemIdMap] = await Promise.all([
+    getUserDetailsMap(customerIds),
+    getBlIdToItemIdMap(blIds),
+  ]);
+
+  const allItemIds = Array.from(
+    new Set([...expectedItemIds, ...blIdsToItemIdMap.values()].filter(Boolean)),
   );
-  const allItems = Array.from(new Set([...items, ...blIdsToItemIdMap.values()]));
   const itemsMap = new Map(
-    (await StorageService.Items.getMany(allItems)).map((item) => [item.id, item]),
+    (await StorageService.Items.getMany(allItemIds)).map((item) => [item.id, item]),
   );
 
   return userMatches.map((userMatch) =>

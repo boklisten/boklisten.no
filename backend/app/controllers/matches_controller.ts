@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import { generateMatches } from "#services/match_helpers/generate";
+import { getAllMatches } from "#services/match_helpers/get_all_matches";
 import { getMatches } from "#services/match_helpers/get_my_matches";
 import { lock } from "#services/match_helpers/lock";
 import { notify } from "#services/match_helpers/notify";
@@ -44,6 +45,11 @@ export default class MatchesController {
     PermissionService.authenticate(ctx, USER_PERMISSION.EMPLOYEE);
     const customerId = ctx.request.param("customerId");
     return await getMatches(customerId);
+  }
+
+  async getAllMatches(ctx: HttpContext) {
+    PermissionService.authenticate(ctx, USER_PERMISSION.EMPLOYEE);
+    return await getAllMatches();
   }
 
   async transferItem(ctx: HttpContext) {

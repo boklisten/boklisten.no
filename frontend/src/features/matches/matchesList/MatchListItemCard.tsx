@@ -7,21 +7,25 @@ export default function MatchListItemCard({
   finished,
   matchId,
   matchType,
+  admin = false,
   children,
 }: {
   finished: boolean;
   matchId: string;
   matchType: "stand" | "user";
+  admin?: boolean;
   children: ReactNode;
 }) {
+  const userTo = admin
+    ? "/admin/overleveringer/user/$userMatchId"
+    : "/overleveringer/user/$userMatchId";
+  const standTo = admin
+    ? "/admin/overleveringer/stand/$standMatchId"
+    : "/overleveringer/stand/$standMatchId";
   return (
     <TanStackAnchor
       underline={"never"}
-      to={
-        matchType === "user"
-          ? "/overleveringer/user/$userMatchId"
-          : "/overleveringer/stand/$standMatchId"
-      }
+      to={matchType === "user" ? userTo : standTo}
       params={matchType === "user" ? { userMatchId: matchId } : { standMatchId: matchId }}
     >
       <Card

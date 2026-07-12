@@ -276,6 +276,12 @@ const routes = {
     tokens: [{"old":"/matches/customer/:customerId","type":0,"val":"matches","end":""},{"old":"/matches/customer/:customerId","type":0,"val":"customer","end":""},{"old":"/matches/customer/:customerId","type":1,"val":"customerId","end":""}],
     types: placeholder as Registry['matches.get_matches_for_customer']['types'],
   },
+  'matches.get_all_matches': {
+    methods: ["GET","HEAD"],
+    pattern: '/matches',
+    tokens: [{"old":"/matches","type":0,"val":"matches","end":""}],
+    types: placeholder as Registry['matches.get_all_matches']['types'],
+  },
   'matches.transfer_item': {
     methods: ["POST"],
     pattern: '/matches/transfer_item',

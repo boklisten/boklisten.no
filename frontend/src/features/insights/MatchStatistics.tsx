@@ -12,7 +12,7 @@ import dayjs from "dayjs";
 import ChartCard from "@/features/insights/ChartCard";
 import DataFreshness from "@/features/insights/DataFreshness";
 import DonutWithLegend from "@/features/insights/DonutWithLegend";
-import StatTile from "@/features/insights/StatTile";
+import StatTile from "@/shared/components/StatTile";
 import SunburstChart from "@/features/insights/SunburstChart";
 import useReportDownload from "@/features/reports/useReportDownload";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";

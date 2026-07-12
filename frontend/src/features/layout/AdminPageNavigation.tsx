@@ -1,5 +1,6 @@
 import { Divider, NavLink, ScrollArea, Stack } from "@mantine/core";
 import {
+  IconArrowsExchange,
   IconBarcode,
   IconBell,
   IconBooks,
@@ -117,6 +118,16 @@ export default function AdminPageNavigation({
             to={"/admin/innsikt"}
             active={pathname === "/admin/innsikt"}
             leftSection={<IconChartHistogram />}
+            underline={"never"}
+            c={"black"}
+            component={TanStackAnchor}
+            onClick={onNavigate}
+          />
+          <NavLink
+            label={"Overleveringer"}
+            to={"/admin/overleveringer"}
+            active={pathname.includes("/admin/overleveringer")}
+            leftSection={<IconArrowsExchange />}
             underline={"never"}
             c={"black"}
             component={TanStackAnchor}

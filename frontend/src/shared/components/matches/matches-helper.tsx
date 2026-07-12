@@ -142,6 +142,22 @@ export function calculateItemStatuses<T extends UserMatchWithDetails | StandMatc
     }));
 }
 
+export function calculateUserMatchWholeProgress(userMatch: UserMatchWithDetails): {
+  transferred: number;
+  total: number;
+} {
+  const { currentUser, otherUser } = calculateUserMatchStatus(userMatch, userMatch.customerA);
+  return {
+    total: currentUser.items.length + otherUser.items.length,
+    transferred: currentUser.deliveredItems.length + otherUser.deliveredItems.length,
+  };
+}
+
+export function isUserMatchFullyFulfilled(userMatch: UserMatchWithDetails): boolean {
+  const { transferred, total } = calculateUserMatchWholeProgress(userMatch);
+  return transferred >= total;
+}
+
 export function isStandMatchFulfilled(standMatch: StandMatchWithDetails | undefined) {
   if (!standMatch) return false;
 
