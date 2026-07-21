@@ -52,7 +52,7 @@
     "@sendgrid/client": "^8.1.6",
     "@sendgrid/mail": "^8.1.6",
     "@sentry/cli": "^3.6.0",
-    "@sentry/node": "^10.64.0",
+    "@sentry/node": "^10.66.0",
     "@tuyau/core": "^1.2.2",
     "@tuyau/superjson": "^1.0.0",
     "@vinejs/vine": "^4.4.0",
