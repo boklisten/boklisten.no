@@ -9,90 +9,94 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
-import { Route as HealthRouteImport } from './routes/health'
-import { Route as offentligRouteRouteImport } from './routes/(offentlig)/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as offentligUserSettingsRouteImport } from './routes/(offentlig)/user-settings'
-import { Route as offentligSjekkRouteImport } from './routes/(offentlig)/sjekk'
-import { Route as offentligOrderHistoryRouteImport } from './routes/(offentlig)/order-history'
-import { Route as offentligOppgaverRouteImport } from './routes/(offentlig)/oppgaver'
-import { Route as offentligItemsRouteImport } from './routes/(offentlig)/items'
-import { Route as offentligHandlekurvRouteImport } from './routes/(offentlig)/handlekurv'
-import { Route as legacyWelcomeRouteImport } from './routes/(legacy)/welcome'
-import { Route as offentligOverleveringerRouteRouteImport } from './routes/(offentlig)/overleveringer/route'
-import { Route as offentligInfoRouteRouteImport } from './routes/(offentlig)/info/route'
+import { Route as offentligRouteRouteImport } from './routes/(offentlig)/route'
+import { Route as HealthRouteImport } from './routes/health'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as administrasjonAdminRouteRouteImport } from './routes/(administrasjon)/admin/route'
-import { Route as offentligOverleveringerIndexRouteImport } from './routes/(offentlig)/overleveringer/index'
-import { Route as offentligKasseIndexRouteImport } from './routes/(offentlig)/kasse/index'
-import { Route as offentligBestillingIndexRouteImport } from './routes/(offentlig)/bestilling/index'
+import { Route as legacyWelcomeRouteImport } from './routes/(legacy)/welcome'
+import { Route as offentligHandlekurvRouteImport } from './routes/(offentlig)/handlekurv'
+import { Route as offentligInfoRouteRouteImport } from './routes/(offentlig)/info/route'
+import { Route as offentligItemsRouteImport } from './routes/(offentlig)/items'
+import { Route as offentligOppgaverRouteImport } from './routes/(offentlig)/oppgaver'
+import { Route as offentligOrderHistoryRouteImport } from './routes/(offentlig)/order-history'
+import { Route as offentligOverleveringerRouteRouteImport } from './routes/(offentlig)/overleveringer/route'
+import { Route as offentligSjekkRouteImport } from './routes/(offentlig)/sjekk'
+import { Route as offentligUserSettingsRouteImport } from './routes/(offentlig)/user-settings'
 import { Route as administrasjonAdminIndexRouteImport } from './routes/(administrasjon)/admin/index'
-import { Route as offentligSigneringUserDetailIdRouteImport } from './routes/(offentlig)/signering.$userDetailId'
-import { Route as offentligKasseV2RouteImport } from './routes/(offentlig)/kasse/v2'
-import { Route as offentligKasseBekreftRouteImport } from './routes/(offentlig)/kasse/bekreft'
-import { Route as offentligInfoPupilsRouteImport } from './routes/(offentlig)/info/pupils'
-import { Route as offentligInfoGeneralRouteImport } from './routes/(offentlig)/info/general'
-import { Route as offentligInfoFaqRouteImport } from './routes/(offentlig)/info/faq'
-import { Route as offentligInfoContactRouteImport } from './routes/(offentlig)/info/contact'
-import { Route as offentligInfoCompaniesRouteImport } from './routes/(offentlig)/info/companies'
-import { Route as offentligInfoBuybackRouteImport } from './routes/(offentlig)/info/buyback'
-import { Route as offentligInfoAboutRouteImport } from './routes/(offentlig)/info/about'
-import { Route as offentligBestillingBranchIdRouteImport } from './routes/(offentlig)/bestilling/$branchId'
-import { Route as offentligAuthTokenRouteImport } from './routes/(offentlig)/auth/token'
-import { Route as offentligAuthRegisterRouteImport } from './routes/(offentlig)/auth/register'
-import { Route as offentligAuthLogoutRouteImport } from './routes/(offentlig)/auth/logout'
-import { Route as offentligAuthLoginRouteImport } from './routes/(offentlig)/auth/login'
-import { Route as offentligAuthForgotRouteImport } from './routes/(offentlig)/auth/forgot'
-import { Route as offentligAuthFailureRouteImport } from './routes/(offentlig)/auth/failure'
-import { Route as legacyUEditRouteImport } from './routes/(legacy)/u.edit'
-import { Route as legacyDatabaseCompaniesRouteImport } from './routes/(legacy)/database.companies'
-import { Route as legacyAuthSuccessRouteImport } from './routes/(legacy)/auth/success'
-import { Route as legacyAuthMenuRouteImport } from './routes/(legacy)/auth/menu'
-import { Route as administrasjonAdminVentelisteRouteImport } from './routes/(administrasjon)/admin/venteliste'
-import { Route as administrasjonAdminUserSettingsRouteImport } from './routes/(administrasjon)/admin/user-settings'
-import { Route as administrasjonAdminScannerRouteImport } from './routes/(administrasjon)/admin/scanner'
-import { Route as administrasjonAdminOrdreoversiktRouteImport } from './routes/(administrasjon)/admin/ordreoversikt'
-import { Route as administrasjonAdminInnsiktRouteImport } from './routes/(administrasjon)/admin/innsikt'
-import { Route as administrasjonAdminHurtigutdelingRouteImport } from './routes/(administrasjon)/admin/hurtigutdeling'
-import { Route as administrasjonAdminHurtiginnsamlingRouteImport } from './routes/(administrasjon)/admin/hurtiginnsamling'
-import { Route as administrasjonAdminHandlekurvRouteImport } from './routes/(administrasjon)/admin/handlekurv'
-import { Route as administrasjonAdminFakturaRouteImport } from './routes/(administrasjon)/admin/faktura'
 import { Route as administrasjonAdminBlidRouteImport } from './routes/(administrasjon)/admin/blid'
-import { Route as offentligInfoPoliciesRouteRouteImport } from './routes/(offentlig)/info/policies/route'
-import { Route as offentligInfoBranchRouteRouteImport } from './routes/(offentlig)/info/branch/route'
+import { Route as administrasjonAdminFakturaRouteImport } from './routes/(administrasjon)/admin/faktura'
+import { Route as administrasjonAdminHandlekurvRouteImport } from './routes/(administrasjon)/admin/handlekurv'
+import { Route as administrasjonAdminHurtiginnsamlingRouteImport } from './routes/(administrasjon)/admin/hurtiginnsamling'
+import { Route as administrasjonAdminHurtigutdelingRouteImport } from './routes/(administrasjon)/admin/hurtigutdeling'
+import { Route as administrasjonAdminInnsiktRouteImport } from './routes/(administrasjon)/admin/innsikt'
+import { Route as administrasjonAdminOrdreoversiktRouteImport } from './routes/(administrasjon)/admin/ordreoversikt'
 import { Route as administrasjonAdminOverleveringerRouteRouteImport } from './routes/(administrasjon)/admin/overleveringer/route'
-import { Route as offentligKasseBetalingIndexRouteImport } from './routes/(offentlig)/kasse/betaling/index'
-import { Route as administrasjonAdminOverleveringerIndexRouteImport } from './routes/(administrasjon)/admin/overleveringer/index'
-import { Route as offentligOverleveringerUserUserMatchIdRouteImport } from './routes/(offentlig)/overleveringer/user.$userMatchId'
-import { Route as offentligOverleveringerStandStandMatchIdRouteImport } from './routes/(offentlig)/overleveringer/stand.$standMatchId'
-import { Route as offentligKasseBetalingStatusRouteImport } from './routes/(offentlig)/kasse/betaling/status'
-import { Route as offentligInfoPoliciesTermsRouteImport } from './routes/(offentlig)/info/policies/terms'
-import { Route as offentligInfoPoliciesPrivacyRouteImport } from './routes/(offentlig)/info/policies/privacy'
-import { Route as offentligInfoPoliciesConditionsRouteImport } from './routes/(offentlig)/info/policies/conditions'
-import { Route as offentligInfoBranchBranchIdRouteImport } from './routes/(offentlig)/info/branch/$branchId'
-import { Route as offentligAuthResetIdRouteImport } from './routes/(offentlig)/auth/reset.$id'
-import { Route as offentligAuthPermissionDeniedRouteImport } from './routes/(offentlig)/auth/permission.denied'
-import { Route as legacyDatabaseBranchesEditRouteImport } from './routes/(legacy)/database.branches.edit'
-import { Route as legacyAuthSocialFailureRouteImport } from './routes/(legacy)/auth/social.failure'
-import { Route as legacyAuthRegisterDetailRouteImport } from './routes/(legacy)/auth/register.detail'
-import { Route as legacyAuthLoginForgotRouteImport } from './routes/(legacy)/auth/login.forgot'
-import { Route as administrasjonAdminKommunikasjonUtsendelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/utsendelser'
-import { Route as administrasjonAdminKommunikasjonPaminnelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/paminnelser'
-import { Route as administrasjonAdminDatabaseUnik_idRouteImport } from './routes/(administrasjon)/admin/database/unik_id'
-import { Route as administrasjonAdminDatabaseSelskapRouteImport } from './routes/(administrasjon)/admin/database/selskap'
-import { Route as administrasjonAdminDatabaseRapporterRouteImport } from './routes/(administrasjon)/admin/database/rapporter'
-import { Route as administrasjonAdminDatabaseLag_brukereRouteImport } from './routes/(administrasjon)/admin/database/lag_brukere'
-import { Route as administrasjonAdminDatabaseFilialerRouteImport } from './routes/(administrasjon)/admin/database/filialer'
-import { Route as administrasjonAdminDatabaseDynamisk_innholdRouteImport } from './routes/(administrasjon)/admin/database/dynamisk_innhold'
+import { Route as administrasjonAdminScannerRouteImport } from './routes/(administrasjon)/admin/scanner'
+import { Route as administrasjonAdminUserSettingsRouteImport } from './routes/(administrasjon)/admin/user-settings'
+import { Route as administrasjonAdminVentelisteRouteImport } from './routes/(administrasjon)/admin/venteliste'
+import { Route as legacyAuthMenuRouteImport } from './routes/(legacy)/auth/menu'
+import { Route as legacyAuthSuccessRouteImport } from './routes/(legacy)/auth/success'
+import { Route as legacyDatabaseCompaniesRouteImport } from './routes/(legacy)/database.companies'
+import { Route as legacyUEditRouteImport } from './routes/(legacy)/u.edit'
+import { Route as offentligAuthFailureRouteImport } from './routes/(offentlig)/auth/failure'
+import { Route as offentligAuthForgotRouteImport } from './routes/(offentlig)/auth/forgot'
+import { Route as offentligAuthLoginRouteImport } from './routes/(offentlig)/auth/login'
+import { Route as offentligAuthLogoutRouteImport } from './routes/(offentlig)/auth/logout'
+import { Route as offentligAuthRegisterRouteImport } from './routes/(offentlig)/auth/register'
+import { Route as offentligAuthTokenRouteImport } from './routes/(offentlig)/auth/token'
+import { Route as offentligBestillingIndexRouteImport } from './routes/(offentlig)/bestilling/index'
+import { Route as offentligBestillingBranchIdRouteImport } from './routes/(offentlig)/bestilling/$branchId'
+import { Route as offentligInfoAboutRouteImport } from './routes/(offentlig)/info/about'
+import { Route as offentligInfoBranchRouteRouteImport } from './routes/(offentlig)/info/branch/route'
+import { Route as offentligInfoBuybackRouteImport } from './routes/(offentlig)/info/buyback'
+import { Route as offentligInfoCompaniesRouteImport } from './routes/(offentlig)/info/companies'
+import { Route as offentligInfoContactRouteImport } from './routes/(offentlig)/info/contact'
+import { Route as offentligInfoFaqRouteImport } from './routes/(offentlig)/info/faq'
+import { Route as offentligInfoGeneralRouteImport } from './routes/(offentlig)/info/general'
+import { Route as offentligInfoPoliciesRouteRouteImport } from './routes/(offentlig)/info/policies/route'
+import { Route as offentligInfoPupilsRouteImport } from './routes/(offentlig)/info/pupils'
+import { Route as offentligKasseIndexRouteImport } from './routes/(offentlig)/kasse/index'
+import { Route as offentligKasseBekreftRouteImport } from './routes/(offentlig)/kasse/bekreft'
+import { Route as offentligKasseV2RouteImport } from './routes/(offentlig)/kasse/v2'
+import { Route as offentligOverleveringerIndexRouteImport } from './routes/(offentlig)/overleveringer/index'
+import { Route as offentligSigneringUserDetailIdRouteImport } from './routes/(offentlig)/signering.$userDetailId'
 import { Route as administrasjonAdminDatabaseBokerRouteImport } from './routes/(administrasjon)/admin/database/boker'
-import { Route as offentligKasseBetalingV2OrderIdRouteImport } from './routes/(offentlig)/kasse/betaling/v2.$orderId'
-import { Route as offentligAuthEmailVerifyVerificationIdRouteImport } from './routes/(offentlig)/auth/email.verify.$verificationId'
-import { Route as administrasjonAdminOverleveringerUserUserMatchIdRouteImport } from './routes/(administrasjon)/admin/overleveringer/user.$userMatchId'
+import { Route as administrasjonAdminDatabaseDynamisk_innholdRouteImport } from './routes/(administrasjon)/admin/database/dynamisk_innhold'
+import { Route as administrasjonAdminDatabaseFilialerRouteImport } from './routes/(administrasjon)/admin/database/filialer'
+import { Route as administrasjonAdminDatabaseLag_brukereRouteImport } from './routes/(administrasjon)/admin/database/lag_brukere'
+import { Route as administrasjonAdminDatabaseRapporterRouteImport } from './routes/(administrasjon)/admin/database/rapporter'
+import { Route as administrasjonAdminDatabaseSelskapRouteImport } from './routes/(administrasjon)/admin/database/selskap'
+import { Route as administrasjonAdminDatabaseUnik_idRouteImport } from './routes/(administrasjon)/admin/database/unik_id'
+import { Route as administrasjonAdminKommunikasjonPaminnelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/paminnelser'
+import { Route as administrasjonAdminKommunikasjonUtsendelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/utsendelser'
+import { Route as administrasjonAdminOverleveringerIndexRouteImport } from './routes/(administrasjon)/admin/overleveringer/index'
+import { Route as legacyAuthLoginForgotRouteImport } from './routes/(legacy)/auth/login.forgot'
+import { Route as legacyAuthRegisterDetailRouteImport } from './routes/(legacy)/auth/register.detail'
+import { Route as legacyAuthSocialFailureRouteImport } from './routes/(legacy)/auth/social.failure'
+import { Route as legacyDatabaseBranchesEditRouteImport } from './routes/(legacy)/database.branches.edit'
+import { Route as offentligAuthPermissionDeniedRouteImport } from './routes/(offentlig)/auth/permission.denied'
+import { Route as offentligAuthResetIdRouteImport } from './routes/(offentlig)/auth/reset.$id'
+import { Route as offentligInfoBranchBranchIdRouteImport } from './routes/(offentlig)/info/branch/$branchId'
+import { Route as offentligInfoPoliciesConditionsRouteImport } from './routes/(offentlig)/info/policies/conditions'
+import { Route as offentligInfoPoliciesPrivacyRouteImport } from './routes/(offentlig)/info/policies/privacy'
+import { Route as offentligInfoPoliciesTermsRouteImport } from './routes/(offentlig)/info/policies/terms'
+import { Route as offentligKasseBetalingIndexRouteImport } from './routes/(offentlig)/kasse/betaling/index'
+import { Route as offentligKasseBetalingStatusRouteImport } from './routes/(offentlig)/kasse/betaling/status'
+import { Route as offentligOverleveringerStandStandMatchIdRouteImport } from './routes/(offentlig)/overleveringer/stand.$standMatchId'
+import { Route as offentligOverleveringerUserUserMatchIdRouteImport } from './routes/(offentlig)/overleveringer/user.$userMatchId'
 import { Route as administrasjonAdminOverleveringerStandStandMatchIdRouteImport } from './routes/(administrasjon)/admin/overleveringer/stand.$standMatchId'
+import { Route as administrasjonAdminOverleveringerUserUserMatchIdRouteImport } from './routes/(administrasjon)/admin/overleveringer/user.$userMatchId'
+import { Route as offentligAuthEmailVerifyVerificationIdRouteImport } from './routes/(offentlig)/auth/email.verify.$verificationId'
+import { Route as offentligKasseBetalingV2OrderIdRouteImport } from './routes/(offentlig)/kasse/betaling/v2.$orderId'
 
-const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
-  id: '/robots.txt',
-  path: '/robots.txt',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const offentligRouteRoute = offentligRouteRouteImport.update({
+  id: '/(offentlig)',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HealthRoute = HealthRouteImport.update({
@@ -100,60 +104,10 @@ const HealthRoute = HealthRouteImport.update({
   path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
-const offentligRouteRoute = offentligRouteRouteImport.update({
-  id: '/(offentlig)',
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const offentligUserSettingsRoute = offentligUserSettingsRouteImport.update({
-  id: '/user-settings',
-  path: '/user-settings',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligSjekkRoute = offentligSjekkRouteImport.update({
-  id: '/sjekk',
-  path: '/sjekk',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligOrderHistoryRoute = offentligOrderHistoryRouteImport.update({
-  id: '/order-history',
-  path: '/order-history',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligOppgaverRoute = offentligOppgaverRouteImport.update({
-  id: '/oppgaver',
-  path: '/oppgaver',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligItemsRoute = offentligItemsRouteImport.update({
-  id: '/items',
-  path: '/items',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligHandlekurvRoute = offentligHandlekurvRouteImport.update({
-  id: '/handlekurv',
-  path: '/handlekurv',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const legacyWelcomeRoute = legacyWelcomeRouteImport.update({
-  id: '/(legacy)/welcome',
-  path: '/welcome',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const offentligOverleveringerRouteRoute =
-  offentligOverleveringerRouteRouteImport.update({
-    id: '/overleveringer',
-    path: '/overleveringer',
-    getParentRoute: () => offentligRouteRoute,
-  } as any)
-const offentligInfoRouteRoute = offentligInfoRouteRouteImport.update({
-  id: '/info',
-  path: '/info',
-  getParentRoute: () => offentligRouteRoute,
 } as any)
 const administrasjonAdminRouteRoute =
   administrasjonAdminRouteRouteImport.update({
@@ -161,176 +115,67 @@ const administrasjonAdminRouteRoute =
     path: '/admin',
     getParentRoute: () => rootRouteImport,
   } as any)
-const offentligOverleveringerIndexRoute =
-  offentligOverleveringerIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => offentligOverleveringerRouteRoute,
-  } as any)
-const offentligKasseIndexRoute = offentligKasseIndexRouteImport.update({
-  id: '/kasse/',
-  path: '/kasse/',
+const legacyWelcomeRoute = legacyWelcomeRouteImport.update({
+  id: '/(legacy)/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const offentligHandlekurvRoute = offentligHandlekurvRouteImport.update({
+  id: '/handlekurv',
+  path: '/handlekurv',
   getParentRoute: () => offentligRouteRoute,
 } as any)
-const offentligBestillingIndexRoute =
-  offentligBestillingIndexRouteImport.update({
-    id: '/bestilling/',
-    path: '/bestilling/',
+const offentligInfoRouteRoute = offentligInfoRouteRouteImport.update({
+  id: '/info',
+  path: '/info',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligItemsRoute = offentligItemsRouteImport.update({
+  id: '/items',
+  path: '/items',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligOppgaverRoute = offentligOppgaverRouteImport.update({
+  id: '/oppgaver',
+  path: '/oppgaver',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligOrderHistoryRoute = offentligOrderHistoryRouteImport.update({
+  id: '/order-history',
+  path: '/order-history',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligOverleveringerRouteRoute =
+  offentligOverleveringerRouteRouteImport.update({
+    id: '/overleveringer',
+    path: '/overleveringer',
     getParentRoute: () => offentligRouteRoute,
   } as any)
+const offentligSjekkRoute = offentligSjekkRouteImport.update({
+  id: '/sjekk',
+  path: '/sjekk',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligUserSettingsRoute = offentligUserSettingsRouteImport.update({
+  id: '/user-settings',
+  path: '/user-settings',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
 const administrasjonAdminIndexRoute =
   administrasjonAdminIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const offentligSigneringUserDetailIdRoute =
-  offentligSigneringUserDetailIdRouteImport.update({
-    id: '/signering/$userDetailId',
-    path: '/signering/$userDetailId',
-    getParentRoute: () => offentligRouteRoute,
-  } as any)
-const offentligKasseV2Route = offentligKasseV2RouteImport.update({
-  id: '/kasse/v2',
-  path: '/kasse/v2',
-  getParentRoute: () => offentligRouteRoute,
+const administrasjonAdminBlidRoute = administrasjonAdminBlidRouteImport.update({
+  id: '/blid',
+  path: '/blid',
+  getParentRoute: () => administrasjonAdminRouteRoute,
 } as any)
-const offentligKasseBekreftRoute = offentligKasseBekreftRouteImport.update({
-  id: '/kasse/bekreft',
-  path: '/kasse/bekreft',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligInfoPupilsRoute = offentligInfoPupilsRouteImport.update({
-  id: '/pupils',
-  path: '/pupils',
-  getParentRoute: () => offentligInfoRouteRoute,
-} as any)
-const offentligInfoGeneralRoute = offentligInfoGeneralRouteImport.update({
-  id: '/general',
-  path: '/general',
-  getParentRoute: () => offentligInfoRouteRoute,
-} as any)
-const offentligInfoFaqRoute = offentligInfoFaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => offentligInfoRouteRoute,
-} as any)
-const offentligInfoContactRoute = offentligInfoContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => offentligInfoRouteRoute,
-} as any)
-const offentligInfoCompaniesRoute = offentligInfoCompaniesRouteImport.update({
-  id: '/companies',
-  path: '/companies',
-  getParentRoute: () => offentligInfoRouteRoute,
-} as any)
-const offentligInfoBuybackRoute = offentligInfoBuybackRouteImport.update({
-  id: '/buyback',
-  path: '/buyback',
-  getParentRoute: () => offentligInfoRouteRoute,
-} as any)
-const offentligInfoAboutRoute = offentligInfoAboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => offentligInfoRouteRoute,
-} as any)
-const offentligBestillingBranchIdRoute =
-  offentligBestillingBranchIdRouteImport.update({
-    id: '/bestilling/$branchId',
-    path: '/bestilling/$branchId',
-    getParentRoute: () => offentligRouteRoute,
-  } as any)
-const offentligAuthTokenRoute = offentligAuthTokenRouteImport.update({
-  id: '/auth/token',
-  path: '/auth/token',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligAuthRegisterRoute = offentligAuthRegisterRouteImport.update({
-  id: '/auth/register',
-  path: '/auth/register',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligAuthLogoutRoute = offentligAuthLogoutRouteImport.update({
-  id: '/auth/logout',
-  path: '/auth/logout',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligAuthLoginRoute = offentligAuthLoginRouteImport.update({
-  id: '/auth/login',
-  path: '/auth/login',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligAuthForgotRoute = offentligAuthForgotRouteImport.update({
-  id: '/auth/forgot',
-  path: '/auth/forgot',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligAuthFailureRoute = offentligAuthFailureRouteImport.update({
-  id: '/auth/failure',
-  path: '/auth/failure',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const legacyUEditRoute = legacyUEditRouteImport.update({
-  id: '/(legacy)/u/edit',
-  path: '/u/edit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const legacyDatabaseCompaniesRoute = legacyDatabaseCompaniesRouteImport.update({
-  id: '/(legacy)/database/companies',
-  path: '/database/companies',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const legacyAuthSuccessRoute = legacyAuthSuccessRouteImport.update({
-  id: '/(legacy)/auth/success',
-  path: '/auth/success',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const legacyAuthMenuRoute = legacyAuthMenuRouteImport.update({
-  id: '/(legacy)/auth/menu',
-  path: '/auth/menu',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const administrasjonAdminVentelisteRoute =
-  administrasjonAdminVentelisteRouteImport.update({
-    id: '/venteliste',
-    path: '/venteliste',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminUserSettingsRoute =
-  administrasjonAdminUserSettingsRouteImport.update({
-    id: '/user-settings',
-    path: '/user-settings',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminScannerRoute =
-  administrasjonAdminScannerRouteImport.update({
-    id: '/scanner',
-    path: '/scanner',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminOrdreoversiktRoute =
-  administrasjonAdminOrdreoversiktRouteImport.update({
-    id: '/ordreoversikt',
-    path: '/ordreoversikt',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminInnsiktRoute =
-  administrasjonAdminInnsiktRouteImport.update({
-    id: '/innsikt',
-    path: '/innsikt',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminHurtigutdelingRoute =
-  administrasjonAdminHurtigutdelingRouteImport.update({
-    id: '/hurtigutdeling',
-    path: '/hurtigutdeling',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminHurtiginnsamlingRoute =
-  administrasjonAdminHurtiginnsamlingRouteImport.update({
-    id: '/hurtiginnsamling',
-    path: '/hurtiginnsamling',
+const administrasjonAdminFakturaRoute =
+  administrasjonAdminFakturaRouteImport.update({
+    id: '/faktura',
+    path: '/faktura',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
 const administrasjonAdminHandlekurvRoute =
@@ -339,28 +184,29 @@ const administrasjonAdminHandlekurvRoute =
     path: '/handlekurv',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminFakturaRoute =
-  administrasjonAdminFakturaRouteImport.update({
-    id: '/faktura',
-    path: '/faktura',
+const administrasjonAdminHurtiginnsamlingRoute =
+  administrasjonAdminHurtiginnsamlingRouteImport.update({
+    id: '/hurtiginnsamling',
+    path: '/hurtiginnsamling',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminBlidRoute = administrasjonAdminBlidRouteImport.update({
-  id: '/blid',
-  path: '/blid',
-  getParentRoute: () => administrasjonAdminRouteRoute,
-} as any)
-const offentligInfoPoliciesRouteRoute =
-  offentligInfoPoliciesRouteRouteImport.update({
-    id: '/policies',
-    path: '/policies',
-    getParentRoute: () => offentligInfoRouteRoute,
+const administrasjonAdminHurtigutdelingRoute =
+  administrasjonAdminHurtigutdelingRouteImport.update({
+    id: '/hurtigutdeling',
+    path: '/hurtigutdeling',
+    getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const offentligInfoBranchRouteRoute =
-  offentligInfoBranchRouteRouteImport.update({
-    id: '/branch',
-    path: '/branch',
-    getParentRoute: () => offentligInfoRouteRoute,
+const administrasjonAdminInnsiktRoute =
+  administrasjonAdminInnsiktRouteImport.update({
+    id: '/innsikt',
+    path: '/innsikt',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
+const administrasjonAdminOrdreoversiktRoute =
+  administrasjonAdminOrdreoversiktRouteImport.update({
+    id: '/ordreoversikt',
+    path: '/ordreoversikt',
+    getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
 const administrasjonAdminOverleveringerRouteRoute =
   administrasjonAdminOverleveringerRouteRouteImport.update({
@@ -368,133 +214,164 @@ const administrasjonAdminOverleveringerRouteRoute =
     path: '/overleveringer',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const offentligKasseBetalingIndexRoute =
-  offentligKasseBetalingIndexRouteImport.update({
-    id: '/kasse/betaling/',
-    path: '/kasse/betaling/',
-    getParentRoute: () => offentligRouteRoute,
+const administrasjonAdminScannerRoute =
+  administrasjonAdminScannerRouteImport.update({
+    id: '/scanner',
+    path: '/scanner',
+    getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminOverleveringerIndexRoute =
-  administrasjonAdminOverleveringerIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => administrasjonAdminOverleveringerRouteRoute,
+const administrasjonAdminUserSettingsRoute =
+  administrasjonAdminUserSettingsRouteImport.update({
+    id: '/user-settings',
+    path: '/user-settings',
+    getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const offentligOverleveringerUserUserMatchIdRoute =
-  offentligOverleveringerUserUserMatchIdRouteImport.update({
-    id: '/user/$userMatchId',
-    path: '/user/$userMatchId',
-    getParentRoute: () => offentligOverleveringerRouteRoute,
+const administrasjonAdminVentelisteRoute =
+  administrasjonAdminVentelisteRouteImport.update({
+    id: '/venteliste',
+    path: '/venteliste',
+    getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const offentligOverleveringerStandStandMatchIdRoute =
-  offentligOverleveringerStandStandMatchIdRouteImport.update({
-    id: '/stand/$standMatchId',
-    path: '/stand/$standMatchId',
-    getParentRoute: () => offentligOverleveringerRouteRoute,
-  } as any)
-const offentligKasseBetalingStatusRoute =
-  offentligKasseBetalingStatusRouteImport.update({
-    id: '/kasse/betaling/status',
-    path: '/kasse/betaling/status',
-    getParentRoute: () => offentligRouteRoute,
-  } as any)
-const offentligInfoPoliciesTermsRoute =
-  offentligInfoPoliciesTermsRouteImport.update({
-    id: '/terms',
-    path: '/terms',
-    getParentRoute: () => offentligInfoPoliciesRouteRoute,
-  } as any)
-const offentligInfoPoliciesPrivacyRoute =
-  offentligInfoPoliciesPrivacyRouteImport.update({
-    id: '/privacy',
-    path: '/privacy',
-    getParentRoute: () => offentligInfoPoliciesRouteRoute,
-  } as any)
-const offentligInfoPoliciesConditionsRoute =
-  offentligInfoPoliciesConditionsRouteImport.update({
-    id: '/conditions',
-    path: '/conditions',
-    getParentRoute: () => offentligInfoPoliciesRouteRoute,
-  } as any)
-const offentligInfoBranchBranchIdRoute =
-  offentligInfoBranchBranchIdRouteImport.update({
-    id: '/$branchId',
-    path: '/$branchId',
-    getParentRoute: () => offentligInfoBranchRouteRoute,
-  } as any)
-const offentligAuthResetIdRoute = offentligAuthResetIdRouteImport.update({
-  id: '/auth/reset/$id',
-  path: '/auth/reset/$id',
+const legacyAuthMenuRoute = legacyAuthMenuRouteImport.update({
+  id: '/(legacy)/auth/menu',
+  path: '/auth/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const legacyAuthSuccessRoute = legacyAuthSuccessRouteImport.update({
+  id: '/(legacy)/auth/success',
+  path: '/auth/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const legacyDatabaseCompaniesRoute = legacyDatabaseCompaniesRouteImport.update({
+  id: '/(legacy)/database/companies',
+  path: '/database/companies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const legacyUEditRoute = legacyUEditRouteImport.update({
+  id: '/(legacy)/u/edit',
+  path: '/u/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const offentligAuthFailureRoute = offentligAuthFailureRouteImport.update({
+  id: '/auth/failure',
+  path: '/auth/failure',
   getParentRoute: () => offentligRouteRoute,
 } as any)
-const offentligAuthPermissionDeniedRoute =
-  offentligAuthPermissionDeniedRouteImport.update({
-    id: '/auth/permission/denied',
-    path: '/auth/permission/denied',
+const offentligAuthForgotRoute = offentligAuthForgotRouteImport.update({
+  id: '/auth/forgot',
+  path: '/auth/forgot',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligAuthLoginRoute = offentligAuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligAuthLogoutRoute = offentligAuthLogoutRouteImport.update({
+  id: '/auth/logout',
+  path: '/auth/logout',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligAuthRegisterRoute = offentligAuthRegisterRouteImport.update({
+  id: '/auth/register',
+  path: '/auth/register',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligAuthTokenRoute = offentligAuthTokenRouteImport.update({
+  id: '/auth/token',
+  path: '/auth/token',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligBestillingIndexRoute =
+  offentligBestillingIndexRouteImport.update({
+    id: '/bestilling/',
+    path: '/bestilling/',
     getParentRoute: () => offentligRouteRoute,
   } as any)
-const legacyDatabaseBranchesEditRoute =
-  legacyDatabaseBranchesEditRouteImport.update({
-    id: '/(legacy)/database/branches/edit',
-    path: '/database/branches/edit',
-    getParentRoute: () => rootRouteImport,
+const offentligBestillingBranchIdRoute =
+  offentligBestillingBranchIdRouteImport.update({
+    id: '/bestilling/$branchId',
+    path: '/bestilling/$branchId',
+    getParentRoute: () => offentligRouteRoute,
   } as any)
-const legacyAuthSocialFailureRoute = legacyAuthSocialFailureRouteImport.update({
-  id: '/(legacy)/auth/social/failure',
-  path: '/auth/social/failure',
-  getParentRoute: () => rootRouteImport,
+const offentligInfoAboutRoute = offentligInfoAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => offentligInfoRouteRoute,
 } as any)
-const legacyAuthRegisterDetailRoute =
-  legacyAuthRegisterDetailRouteImport.update({
-    id: '/(legacy)/auth/register/detail',
-    path: '/auth/register/detail',
-    getParentRoute: () => rootRouteImport,
+const offentligInfoBranchRouteRoute =
+  offentligInfoBranchRouteRouteImport.update({
+    id: '/branch',
+    path: '/branch',
+    getParentRoute: () => offentligInfoRouteRoute,
   } as any)
-const legacyAuthLoginForgotRoute = legacyAuthLoginForgotRouteImport.update({
-  id: '/(legacy)/auth/login/forgot',
-  path: '/auth/login/forgot',
-  getParentRoute: () => rootRouteImport,
+const offentligInfoBuybackRoute = offentligInfoBuybackRouteImport.update({
+  id: '/buyback',
+  path: '/buyback',
+  getParentRoute: () => offentligInfoRouteRoute,
 } as any)
-const administrasjonAdminKommunikasjonUtsendelserRoute =
-  administrasjonAdminKommunikasjonUtsendelserRouteImport.update({
-    id: '/kommunikasjon/utsendelser',
-    path: '/kommunikasjon/utsendelser',
-    getParentRoute: () => administrasjonAdminRouteRoute,
+const offentligInfoCompaniesRoute = offentligInfoCompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => offentligInfoRouteRoute,
+} as any)
+const offentligInfoContactRoute = offentligInfoContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => offentligInfoRouteRoute,
+} as any)
+const offentligInfoFaqRoute = offentligInfoFaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => offentligInfoRouteRoute,
+} as any)
+const offentligInfoGeneralRoute = offentligInfoGeneralRouteImport.update({
+  id: '/general',
+  path: '/general',
+  getParentRoute: () => offentligInfoRouteRoute,
+} as any)
+const offentligInfoPoliciesRouteRoute =
+  offentligInfoPoliciesRouteRouteImport.update({
+    id: '/policies',
+    path: '/policies',
+    getParentRoute: () => offentligInfoRouteRoute,
   } as any)
-const administrasjonAdminKommunikasjonPaminnelserRoute =
-  administrasjonAdminKommunikasjonPaminnelserRouteImport.update({
-    id: '/kommunikasjon/paminnelser',
-    path: '/kommunikasjon/paminnelser',
-    getParentRoute: () => administrasjonAdminRouteRoute,
+const offentligInfoPupilsRoute = offentligInfoPupilsRouteImport.update({
+  id: '/pupils',
+  path: '/pupils',
+  getParentRoute: () => offentligInfoRouteRoute,
+} as any)
+const offentligKasseIndexRoute = offentligKasseIndexRouteImport.update({
+  id: '/kasse/',
+  path: '/kasse/',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligKasseBekreftRoute = offentligKasseBekreftRouteImport.update({
+  id: '/kasse/bekreft',
+  path: '/kasse/bekreft',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligKasseV2Route = offentligKasseV2RouteImport.update({
+  id: '/kasse/v2',
+  path: '/kasse/v2',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligOverleveringerIndexRoute =
+  offentligOverleveringerIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => offentligOverleveringerRouteRoute,
   } as any)
-const administrasjonAdminDatabaseUnik_idRoute =
-  administrasjonAdminDatabaseUnik_idRouteImport.update({
-    id: '/database/unik_id',
-    path: '/database/unik_id',
-    getParentRoute: () => administrasjonAdminRouteRoute,
+const offentligSigneringUserDetailIdRoute =
+  offentligSigneringUserDetailIdRouteImport.update({
+    id: '/signering/$userDetailId',
+    path: '/signering/$userDetailId',
+    getParentRoute: () => offentligRouteRoute,
   } as any)
-const administrasjonAdminDatabaseSelskapRoute =
-  administrasjonAdminDatabaseSelskapRouteImport.update({
-    id: '/database/selskap',
-    path: '/database/selskap',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminDatabaseRapporterRoute =
-  administrasjonAdminDatabaseRapporterRouteImport.update({
-    id: '/database/rapporter',
-    path: '/database/rapporter',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminDatabaseLag_brukereRoute =
-  administrasjonAdminDatabaseLag_brukereRouteImport.update({
-    id: '/database/lag_brukere',
-    path: '/database/lag_brukere',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminDatabaseFilialerRoute =
-  administrasjonAdminDatabaseFilialerRouteImport.update({
-    id: '/database/filialer',
-    path: '/database/filialer',
+const administrasjonAdminDatabaseBokerRoute =
+  administrasjonAdminDatabaseBokerRouteImport.update({
+    id: '/database/boker',
+    path: '/database/boker',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
 const administrasjonAdminDatabaseDynamisk_innholdRoute =
@@ -503,23 +380,140 @@ const administrasjonAdminDatabaseDynamisk_innholdRoute =
     path: '/database/dynamisk_innhold',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminDatabaseBokerRoute =
-  administrasjonAdminDatabaseBokerRouteImport.update({
-    id: '/database/boker',
-    path: '/database/boker',
+const administrasjonAdminDatabaseFilialerRoute =
+  administrasjonAdminDatabaseFilialerRouteImport.update({
+    id: '/database/filialer',
+    path: '/database/filialer',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const offentligKasseBetalingV2OrderIdRoute =
-  offentligKasseBetalingV2OrderIdRouteImport.update({
-    id: '/kasse/betaling/v2/$orderId',
-    path: '/kasse/betaling/v2/$orderId',
+const administrasjonAdminDatabaseLag_brukereRoute =
+  administrasjonAdminDatabaseLag_brukereRouteImport.update({
+    id: '/database/lag_brukere',
+    path: '/database/lag_brukere',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
+const administrasjonAdminDatabaseRapporterRoute =
+  administrasjonAdminDatabaseRapporterRouteImport.update({
+    id: '/database/rapporter',
+    path: '/database/rapporter',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
+const administrasjonAdminDatabaseSelskapRoute =
+  administrasjonAdminDatabaseSelskapRouteImport.update({
+    id: '/database/selskap',
+    path: '/database/selskap',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
+const administrasjonAdminDatabaseUnik_idRoute =
+  administrasjonAdminDatabaseUnik_idRouteImport.update({
+    id: '/database/unik_id',
+    path: '/database/unik_id',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
+const administrasjonAdminKommunikasjonPaminnelserRoute =
+  administrasjonAdminKommunikasjonPaminnelserRouteImport.update({
+    id: '/kommunikasjon/paminnelser',
+    path: '/kommunikasjon/paminnelser',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
+const administrasjonAdminKommunikasjonUtsendelserRoute =
+  administrasjonAdminKommunikasjonUtsendelserRouteImport.update({
+    id: '/kommunikasjon/utsendelser',
+    path: '/kommunikasjon/utsendelser',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
+const administrasjonAdminOverleveringerIndexRoute =
+  administrasjonAdminOverleveringerIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => administrasjonAdminOverleveringerRouteRoute,
+  } as any)
+const legacyAuthLoginForgotRoute = legacyAuthLoginForgotRouteImport.update({
+  id: '/(legacy)/auth/login/forgot',
+  path: '/auth/login/forgot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const legacyAuthRegisterDetailRoute =
+  legacyAuthRegisterDetailRouteImport.update({
+    id: '/(legacy)/auth/register/detail',
+    path: '/auth/register/detail',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const legacyAuthSocialFailureRoute = legacyAuthSocialFailureRouteImport.update({
+  id: '/(legacy)/auth/social/failure',
+  path: '/auth/social/failure',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const legacyDatabaseBranchesEditRoute =
+  legacyDatabaseBranchesEditRouteImport.update({
+    id: '/(legacy)/database/branches/edit',
+    path: '/database/branches/edit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const offentligAuthPermissionDeniedRoute =
+  offentligAuthPermissionDeniedRouteImport.update({
+    id: '/auth/permission/denied',
+    path: '/auth/permission/denied',
     getParentRoute: () => offentligRouteRoute,
   } as any)
-const offentligAuthEmailVerifyVerificationIdRoute =
-  offentligAuthEmailVerifyVerificationIdRouteImport.update({
-    id: '/auth/email/verify/$verificationId',
-    path: '/auth/email/verify/$verificationId',
+const offentligAuthResetIdRoute = offentligAuthResetIdRouteImport.update({
+  id: '/auth/reset/$id',
+  path: '/auth/reset/$id',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
+const offentligInfoBranchBranchIdRoute =
+  offentligInfoBranchBranchIdRouteImport.update({
+    id: '/$branchId',
+    path: '/$branchId',
+    getParentRoute: () => offentligInfoBranchRouteRoute,
+  } as any)
+const offentligInfoPoliciesConditionsRoute =
+  offentligInfoPoliciesConditionsRouteImport.update({
+    id: '/conditions',
+    path: '/conditions',
+    getParentRoute: () => offentligInfoPoliciesRouteRoute,
+  } as any)
+const offentligInfoPoliciesPrivacyRoute =
+  offentligInfoPoliciesPrivacyRouteImport.update({
+    id: '/privacy',
+    path: '/privacy',
+    getParentRoute: () => offentligInfoPoliciesRouteRoute,
+  } as any)
+const offentligInfoPoliciesTermsRoute =
+  offentligInfoPoliciesTermsRouteImport.update({
+    id: '/terms',
+    path: '/terms',
+    getParentRoute: () => offentligInfoPoliciesRouteRoute,
+  } as any)
+const offentligKasseBetalingIndexRoute =
+  offentligKasseBetalingIndexRouteImport.update({
+    id: '/kasse/betaling/',
+    path: '/kasse/betaling/',
     getParentRoute: () => offentligRouteRoute,
+  } as any)
+const offentligKasseBetalingStatusRoute =
+  offentligKasseBetalingStatusRouteImport.update({
+    id: '/kasse/betaling/status',
+    path: '/kasse/betaling/status',
+    getParentRoute: () => offentligRouteRoute,
+  } as any)
+const offentligOverleveringerStandStandMatchIdRoute =
+  offentligOverleveringerStandStandMatchIdRouteImport.update({
+    id: '/stand/$standMatchId',
+    path: '/stand/$standMatchId',
+    getParentRoute: () => offentligOverleveringerRouteRoute,
+  } as any)
+const offentligOverleveringerUserUserMatchIdRoute =
+  offentligOverleveringerUserUserMatchIdRouteImport.update({
+    id: '/user/$userMatchId',
+    path: '/user/$userMatchId',
+    getParentRoute: () => offentligOverleveringerRouteRoute,
+  } as any)
+const administrasjonAdminOverleveringerStandStandMatchIdRoute =
+  administrasjonAdminOverleveringerStandStandMatchIdRouteImport.update({
+    id: '/stand/$standMatchId',
+    path: '/stand/$standMatchId',
+    getParentRoute: () => administrasjonAdminOverleveringerRouteRoute,
   } as any)
 const administrasjonAdminOverleveringerUserUserMatchIdRoute =
   administrasjonAdminOverleveringerUserUserMatchIdRouteImport.update({
@@ -527,11 +521,17 @@ const administrasjonAdminOverleveringerUserUserMatchIdRoute =
     path: '/user/$userMatchId',
     getParentRoute: () => administrasjonAdminOverleveringerRouteRoute,
   } as any)
-const administrasjonAdminOverleveringerStandStandMatchIdRoute =
-  administrasjonAdminOverleveringerStandStandMatchIdRouteImport.update({
-    id: '/stand/$standMatchId',
-    path: '/stand/$standMatchId',
-    getParentRoute: () => administrasjonAdminOverleveringerRouteRoute,
+const offentligAuthEmailVerifyVerificationIdRoute =
+  offentligAuthEmailVerifyVerificationIdRouteImport.update({
+    id: '/auth/email/verify/$verificationId',
+    path: '/auth/email/verify/$verificationId',
+    getParentRoute: () => offentligRouteRoute,
+  } as any)
+const offentligKasseBetalingV2OrderIdRoute =
+  offentligKasseBetalingV2OrderIdRouteImport.update({
+    id: '/kasse/betaling/v2/$orderId',
+    path: '/kasse/betaling/v2/$orderId',
+    getParentRoute: () => offentligRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -1039,18 +1039,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/robots.txt': {
-      id: '/robots.txt'
-      path: '/robots.txt'
-      fullPath: '/robots.txt'
-      preLoaderRoute: typeof RobotsDottxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/health': {
-      id: '/health'
-      path: '/health'
-      fullPath: '/health'
-      preLoaderRoute: typeof HealthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(offentlig)': {
@@ -1060,54 +1053,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(offentlig)/user-settings': {
-      id: '/(offentlig)/user-settings'
-      path: '/user-settings'
-      fullPath: '/user-settings'
-      preLoaderRoute: typeof offentligUserSettingsRouteImport
-      parentRoute: typeof offentligRouteRoute
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/(offentlig)/sjekk': {
-      id: '/(offentlig)/sjekk'
-      path: '/sjekk'
-      fullPath: '/sjekk'
-      preLoaderRoute: typeof offentligSjekkRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/order-history': {
-      id: '/(offentlig)/order-history'
-      path: '/order-history'
-      fullPath: '/order-history'
-      preLoaderRoute: typeof offentligOrderHistoryRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/oppgaver': {
-      id: '/(offentlig)/oppgaver'
-      path: '/oppgaver'
-      fullPath: '/oppgaver'
-      preLoaderRoute: typeof offentligOppgaverRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/items': {
-      id: '/(offentlig)/items'
-      path: '/items'
-      fullPath: '/items'
-      preLoaderRoute: typeof offentligItemsRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/handlekurv': {
-      id: '/(offentlig)/handlekurv'
-      path: '/handlekurv'
-      fullPath: '/handlekurv'
-      preLoaderRoute: typeof offentligHandlekurvRouteImport
-      parentRoute: typeof offentligRouteRoute
+    '/(administrasjon)/admin': {
+      id: '/(administrasjon)/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof administrasjonAdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/(legacy)/welcome': {
       id: '/(legacy)/welcome'
@@ -1116,11 +1081,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof legacyWelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(offentlig)/overleveringer': {
-      id: '/(offentlig)/overleveringer'
-      path: '/overleveringer'
-      fullPath: '/overleveringer'
-      preLoaderRoute: typeof offentligOverleveringerRouteRouteImport
+    '/(offentlig)/handlekurv': {
+      id: '/(offentlig)/handlekurv'
+      path: '/handlekurv'
+      fullPath: '/handlekurv'
+      preLoaderRoute: typeof offentligHandlekurvRouteImport
       parentRoute: typeof offentligRouteRoute
     }
     '/(offentlig)/info': {
@@ -1130,32 +1095,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligInfoRouteRouteImport
       parentRoute: typeof offentligRouteRoute
     }
-    '/(administrasjon)/admin': {
-      id: '/(administrasjon)/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof administrasjonAdminRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(offentlig)/overleveringer/': {
-      id: '/(offentlig)/overleveringer/'
-      path: '/'
-      fullPath: '/overleveringer/'
-      preLoaderRoute: typeof offentligOverleveringerIndexRouteImport
-      parentRoute: typeof offentligOverleveringerRouteRoute
-    }
-    '/(offentlig)/kasse/': {
-      id: '/(offentlig)/kasse/'
-      path: '/kasse'
-      fullPath: '/kasse/'
-      preLoaderRoute: typeof offentligKasseIndexRouteImport
+    '/(offentlig)/items': {
+      id: '/(offentlig)/items'
+      path: '/items'
+      fullPath: '/items'
+      preLoaderRoute: typeof offentligItemsRouteImport
       parentRoute: typeof offentligRouteRoute
     }
-    '/(offentlig)/bestilling/': {
-      id: '/(offentlig)/bestilling/'
-      path: '/bestilling'
-      fullPath: '/bestilling/'
-      preLoaderRoute: typeof offentligBestillingIndexRouteImport
+    '/(offentlig)/oppgaver': {
+      id: '/(offentlig)/oppgaver'
+      path: '/oppgaver'
+      fullPath: '/oppgaver'
+      preLoaderRoute: typeof offentligOppgaverRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/order-history': {
+      id: '/(offentlig)/order-history'
+      path: '/order-history'
+      fullPath: '/order-history'
+      preLoaderRoute: typeof offentligOrderHistoryRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/overleveringer': {
+      id: '/(offentlig)/overleveringer'
+      path: '/overleveringer'
+      fullPath: '/overleveringer'
+      preLoaderRoute: typeof offentligOverleveringerRouteRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/sjekk': {
+      id: '/(offentlig)/sjekk'
+      path: '/sjekk'
+      fullPath: '/sjekk'
+      preLoaderRoute: typeof offentligSjekkRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/user-settings': {
+      id: '/(offentlig)/user-settings'
+      path: '/user-settings'
+      fullPath: '/user-settings'
+      preLoaderRoute: typeof offentligUserSettingsRouteImport
       parentRoute: typeof offentligRouteRoute
     }
     '/(administrasjon)/admin/': {
@@ -1165,207 +1144,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminIndexRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(offentlig)/signering/$userDetailId': {
-      id: '/(offentlig)/signering/$userDetailId'
-      path: '/signering/$userDetailId'
-      fullPath: '/signering/$userDetailId'
-      preLoaderRoute: typeof offentligSigneringUserDetailIdRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/kasse/v2': {
-      id: '/(offentlig)/kasse/v2'
-      path: '/kasse/v2'
-      fullPath: '/kasse/v2'
-      preLoaderRoute: typeof offentligKasseV2RouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/kasse/bekreft': {
-      id: '/(offentlig)/kasse/bekreft'
-      path: '/kasse/bekreft'
-      fullPath: '/kasse/bekreft'
-      preLoaderRoute: typeof offentligKasseBekreftRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/info/pupils': {
-      id: '/(offentlig)/info/pupils'
-      path: '/pupils'
-      fullPath: '/info/pupils'
-      preLoaderRoute: typeof offentligInfoPupilsRouteImport
-      parentRoute: typeof offentligInfoRouteRoute
-    }
-    '/(offentlig)/info/general': {
-      id: '/(offentlig)/info/general'
-      path: '/general'
-      fullPath: '/info/general'
-      preLoaderRoute: typeof offentligInfoGeneralRouteImport
-      parentRoute: typeof offentligInfoRouteRoute
-    }
-    '/(offentlig)/info/faq': {
-      id: '/(offentlig)/info/faq'
-      path: '/faq'
-      fullPath: '/info/faq'
-      preLoaderRoute: typeof offentligInfoFaqRouteImport
-      parentRoute: typeof offentligInfoRouteRoute
-    }
-    '/(offentlig)/info/contact': {
-      id: '/(offentlig)/info/contact'
-      path: '/contact'
-      fullPath: '/info/contact'
-      preLoaderRoute: typeof offentligInfoContactRouteImport
-      parentRoute: typeof offentligInfoRouteRoute
-    }
-    '/(offentlig)/info/companies': {
-      id: '/(offentlig)/info/companies'
-      path: '/companies'
-      fullPath: '/info/companies'
-      preLoaderRoute: typeof offentligInfoCompaniesRouteImport
-      parentRoute: typeof offentligInfoRouteRoute
-    }
-    '/(offentlig)/info/buyback': {
-      id: '/(offentlig)/info/buyback'
-      path: '/buyback'
-      fullPath: '/info/buyback'
-      preLoaderRoute: typeof offentligInfoBuybackRouteImport
-      parentRoute: typeof offentligInfoRouteRoute
-    }
-    '/(offentlig)/info/about': {
-      id: '/(offentlig)/info/about'
-      path: '/about'
-      fullPath: '/info/about'
-      preLoaderRoute: typeof offentligInfoAboutRouteImport
-      parentRoute: typeof offentligInfoRouteRoute
-    }
-    '/(offentlig)/bestilling/$branchId': {
-      id: '/(offentlig)/bestilling/$branchId'
-      path: '/bestilling/$branchId'
-      fullPath: '/bestilling/$branchId'
-      preLoaderRoute: typeof offentligBestillingBranchIdRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/auth/token': {
-      id: '/(offentlig)/auth/token'
-      path: '/auth/token'
-      fullPath: '/auth/token'
-      preLoaderRoute: typeof offentligAuthTokenRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/auth/register': {
-      id: '/(offentlig)/auth/register'
-      path: '/auth/register'
-      fullPath: '/auth/register'
-      preLoaderRoute: typeof offentligAuthRegisterRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/auth/logout': {
-      id: '/(offentlig)/auth/logout'
-      path: '/auth/logout'
-      fullPath: '/auth/logout'
-      preLoaderRoute: typeof offentligAuthLogoutRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/auth/login': {
-      id: '/(offentlig)/auth/login'
-      path: '/auth/login'
-      fullPath: '/auth/login'
-      preLoaderRoute: typeof offentligAuthLoginRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/auth/forgot': {
-      id: '/(offentlig)/auth/forgot'
-      path: '/auth/forgot'
-      fullPath: '/auth/forgot'
-      preLoaderRoute: typeof offentligAuthForgotRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/auth/failure': {
-      id: '/(offentlig)/auth/failure'
-      path: '/auth/failure'
-      fullPath: '/auth/failure'
-      preLoaderRoute: typeof offentligAuthFailureRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(legacy)/u/edit': {
-      id: '/(legacy)/u/edit'
-      path: '/u/edit'
-      fullPath: '/u/edit'
-      preLoaderRoute: typeof legacyUEditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/database/companies': {
-      id: '/(legacy)/database/companies'
-      path: '/database/companies'
-      fullPath: '/database/companies'
-      preLoaderRoute: typeof legacyDatabaseCompaniesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/auth/success': {
-      id: '/(legacy)/auth/success'
-      path: '/auth/success'
-      fullPath: '/auth/success'
-      preLoaderRoute: typeof legacyAuthSuccessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/auth/menu': {
-      id: '/(legacy)/auth/menu'
-      path: '/auth/menu'
-      fullPath: '/auth/menu'
-      preLoaderRoute: typeof legacyAuthMenuRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(administrasjon)/admin/venteliste': {
-      id: '/(administrasjon)/admin/venteliste'
-      path: '/venteliste'
-      fullPath: '/admin/venteliste'
-      preLoaderRoute: typeof administrasjonAdminVentelisteRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/user-settings': {
-      id: '/(administrasjon)/admin/user-settings'
-      path: '/user-settings'
-      fullPath: '/admin/user-settings'
-      preLoaderRoute: typeof administrasjonAdminUserSettingsRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/scanner': {
-      id: '/(administrasjon)/admin/scanner'
-      path: '/scanner'
-      fullPath: '/admin/scanner'
-      preLoaderRoute: typeof administrasjonAdminScannerRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/ordreoversikt': {
-      id: '/(administrasjon)/admin/ordreoversikt'
-      path: '/ordreoversikt'
-      fullPath: '/admin/ordreoversikt'
-      preLoaderRoute: typeof administrasjonAdminOrdreoversiktRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/innsikt': {
-      id: '/(administrasjon)/admin/innsikt'
-      path: '/innsikt'
-      fullPath: '/admin/innsikt'
-      preLoaderRoute: typeof administrasjonAdminInnsiktRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/hurtigutdeling': {
-      id: '/(administrasjon)/admin/hurtigutdeling'
-      path: '/hurtigutdeling'
-      fullPath: '/admin/hurtigutdeling'
-      preLoaderRoute: typeof administrasjonAdminHurtigutdelingRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/hurtiginnsamling': {
-      id: '/(administrasjon)/admin/hurtiginnsamling'
-      path: '/hurtiginnsamling'
-      fullPath: '/admin/hurtiginnsamling'
-      preLoaderRoute: typeof administrasjonAdminHurtiginnsamlingRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/handlekurv': {
-      id: '/(administrasjon)/admin/handlekurv'
-      path: '/handlekurv'
-      fullPath: '/admin/handlekurv'
-      preLoaderRoute: typeof administrasjonAdminHandlekurvRouteImport
+    '/(administrasjon)/admin/blid': {
+      id: '/(administrasjon)/admin/blid'
+      path: '/blid'
+      fullPath: '/admin/blid'
+      preLoaderRoute: typeof administrasjonAdminBlidRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
     '/(administrasjon)/admin/faktura': {
@@ -1375,18 +1158,158 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminFakturaRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(administrasjon)/admin/blid': {
-      id: '/(administrasjon)/admin/blid'
-      path: '/blid'
-      fullPath: '/admin/blid'
-      preLoaderRoute: typeof administrasjonAdminBlidRouteImport
+    '/(administrasjon)/admin/handlekurv': {
+      id: '/(administrasjon)/admin/handlekurv'
+      path: '/handlekurv'
+      fullPath: '/admin/handlekurv'
+      preLoaderRoute: typeof administrasjonAdminHandlekurvRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(offentlig)/info/policies': {
-      id: '/(offentlig)/info/policies'
-      path: '/policies'
-      fullPath: '/info/policies'
-      preLoaderRoute: typeof offentligInfoPoliciesRouteRouteImport
+    '/(administrasjon)/admin/hurtiginnsamling': {
+      id: '/(administrasjon)/admin/hurtiginnsamling'
+      path: '/hurtiginnsamling'
+      fullPath: '/admin/hurtiginnsamling'
+      preLoaderRoute: typeof administrasjonAdminHurtiginnsamlingRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/hurtigutdeling': {
+      id: '/(administrasjon)/admin/hurtigutdeling'
+      path: '/hurtigutdeling'
+      fullPath: '/admin/hurtigutdeling'
+      preLoaderRoute: typeof administrasjonAdminHurtigutdelingRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/innsikt': {
+      id: '/(administrasjon)/admin/innsikt'
+      path: '/innsikt'
+      fullPath: '/admin/innsikt'
+      preLoaderRoute: typeof administrasjonAdminInnsiktRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/ordreoversikt': {
+      id: '/(administrasjon)/admin/ordreoversikt'
+      path: '/ordreoversikt'
+      fullPath: '/admin/ordreoversikt'
+      preLoaderRoute: typeof administrasjonAdminOrdreoversiktRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/overleveringer': {
+      id: '/(administrasjon)/admin/overleveringer'
+      path: '/overleveringer'
+      fullPath: '/admin/overleveringer'
+      preLoaderRoute: typeof administrasjonAdminOverleveringerRouteRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/scanner': {
+      id: '/(administrasjon)/admin/scanner'
+      path: '/scanner'
+      fullPath: '/admin/scanner'
+      preLoaderRoute: typeof administrasjonAdminScannerRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/user-settings': {
+      id: '/(administrasjon)/admin/user-settings'
+      path: '/user-settings'
+      fullPath: '/admin/user-settings'
+      preLoaderRoute: typeof administrasjonAdminUserSettingsRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/venteliste': {
+      id: '/(administrasjon)/admin/venteliste'
+      path: '/venteliste'
+      fullPath: '/admin/venteliste'
+      preLoaderRoute: typeof administrasjonAdminVentelisteRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(legacy)/auth/menu': {
+      id: '/(legacy)/auth/menu'
+      path: '/auth/menu'
+      fullPath: '/auth/menu'
+      preLoaderRoute: typeof legacyAuthMenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(legacy)/auth/success': {
+      id: '/(legacy)/auth/success'
+      path: '/auth/success'
+      fullPath: '/auth/success'
+      preLoaderRoute: typeof legacyAuthSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(legacy)/database/companies': {
+      id: '/(legacy)/database/companies'
+      path: '/database/companies'
+      fullPath: '/database/companies'
+      preLoaderRoute: typeof legacyDatabaseCompaniesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(legacy)/u/edit': {
+      id: '/(legacy)/u/edit'
+      path: '/u/edit'
+      fullPath: '/u/edit'
+      preLoaderRoute: typeof legacyUEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(offentlig)/auth/failure': {
+      id: '/(offentlig)/auth/failure'
+      path: '/auth/failure'
+      fullPath: '/auth/failure'
+      preLoaderRoute: typeof offentligAuthFailureRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/auth/forgot': {
+      id: '/(offentlig)/auth/forgot'
+      path: '/auth/forgot'
+      fullPath: '/auth/forgot'
+      preLoaderRoute: typeof offentligAuthForgotRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/auth/login': {
+      id: '/(offentlig)/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof offentligAuthLoginRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/auth/logout': {
+      id: '/(offentlig)/auth/logout'
+      path: '/auth/logout'
+      fullPath: '/auth/logout'
+      preLoaderRoute: typeof offentligAuthLogoutRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/auth/register': {
+      id: '/(offentlig)/auth/register'
+      path: '/auth/register'
+      fullPath: '/auth/register'
+      preLoaderRoute: typeof offentligAuthRegisterRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/auth/token': {
+      id: '/(offentlig)/auth/token'
+      path: '/auth/token'
+      fullPath: '/auth/token'
+      preLoaderRoute: typeof offentligAuthTokenRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/bestilling/': {
+      id: '/(offentlig)/bestilling/'
+      path: '/bestilling'
+      fullPath: '/bestilling/'
+      preLoaderRoute: typeof offentligBestillingIndexRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/bestilling/$branchId': {
+      id: '/(offentlig)/bestilling/$branchId'
+      path: '/bestilling/$branchId'
+      fullPath: '/bestilling/$branchId'
+      preLoaderRoute: typeof offentligBestillingBranchIdRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/info/about': {
+      id: '/(offentlig)/info/about'
+      path: '/about'
+      fullPath: '/info/about'
+      preLoaderRoute: typeof offentligInfoAboutRouteImport
       parentRoute: typeof offentligInfoRouteRoute
     }
     '/(offentlig)/info/branch': {
@@ -1396,165 +1319,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligInfoBranchRouteRouteImport
       parentRoute: typeof offentligInfoRouteRoute
     }
-    '/(administrasjon)/admin/overleveringer': {
-      id: '/(administrasjon)/admin/overleveringer'
-      path: '/overleveringer'
-      fullPath: '/admin/overleveringer'
-      preLoaderRoute: typeof administrasjonAdminOverleveringerRouteRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
+    '/(offentlig)/info/buyback': {
+      id: '/(offentlig)/info/buyback'
+      path: '/buyback'
+      fullPath: '/info/buyback'
+      preLoaderRoute: typeof offentligInfoBuybackRouteImport
+      parentRoute: typeof offentligInfoRouteRoute
     }
-    '/(offentlig)/kasse/betaling/': {
-      id: '/(offentlig)/kasse/betaling/'
-      path: '/kasse/betaling'
-      fullPath: '/kasse/betaling/'
-      preLoaderRoute: typeof offentligKasseBetalingIndexRouteImport
+    '/(offentlig)/info/companies': {
+      id: '/(offentlig)/info/companies'
+      path: '/companies'
+      fullPath: '/info/companies'
+      preLoaderRoute: typeof offentligInfoCompaniesRouteImport
+      parentRoute: typeof offentligInfoRouteRoute
+    }
+    '/(offentlig)/info/contact': {
+      id: '/(offentlig)/info/contact'
+      path: '/contact'
+      fullPath: '/info/contact'
+      preLoaderRoute: typeof offentligInfoContactRouteImport
+      parentRoute: typeof offentligInfoRouteRoute
+    }
+    '/(offentlig)/info/faq': {
+      id: '/(offentlig)/info/faq'
+      path: '/faq'
+      fullPath: '/info/faq'
+      preLoaderRoute: typeof offentligInfoFaqRouteImport
+      parentRoute: typeof offentligInfoRouteRoute
+    }
+    '/(offentlig)/info/general': {
+      id: '/(offentlig)/info/general'
+      path: '/general'
+      fullPath: '/info/general'
+      preLoaderRoute: typeof offentligInfoGeneralRouteImport
+      parentRoute: typeof offentligInfoRouteRoute
+    }
+    '/(offentlig)/info/policies': {
+      id: '/(offentlig)/info/policies'
+      path: '/policies'
+      fullPath: '/info/policies'
+      preLoaderRoute: typeof offentligInfoPoliciesRouteRouteImport
+      parentRoute: typeof offentligInfoRouteRoute
+    }
+    '/(offentlig)/info/pupils': {
+      id: '/(offentlig)/info/pupils'
+      path: '/pupils'
+      fullPath: '/info/pupils'
+      preLoaderRoute: typeof offentligInfoPupilsRouteImport
+      parentRoute: typeof offentligInfoRouteRoute
+    }
+    '/(offentlig)/kasse/': {
+      id: '/(offentlig)/kasse/'
+      path: '/kasse'
+      fullPath: '/kasse/'
+      preLoaderRoute: typeof offentligKasseIndexRouteImport
       parentRoute: typeof offentligRouteRoute
     }
-    '/(administrasjon)/admin/overleveringer/': {
-      id: '/(administrasjon)/admin/overleveringer/'
+    '/(offentlig)/kasse/bekreft': {
+      id: '/(offentlig)/kasse/bekreft'
+      path: '/kasse/bekreft'
+      fullPath: '/kasse/bekreft'
+      preLoaderRoute: typeof offentligKasseBekreftRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/kasse/v2': {
+      id: '/(offentlig)/kasse/v2'
+      path: '/kasse/v2'
+      fullPath: '/kasse/v2'
+      preLoaderRoute: typeof offentligKasseV2RouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/overleveringer/': {
+      id: '/(offentlig)/overleveringer/'
       path: '/'
-      fullPath: '/admin/overleveringer/'
-      preLoaderRoute: typeof administrasjonAdminOverleveringerIndexRouteImport
-      parentRoute: typeof administrasjonAdminOverleveringerRouteRoute
-    }
-    '/(offentlig)/overleveringer/user/$userMatchId': {
-      id: '/(offentlig)/overleveringer/user/$userMatchId'
-      path: '/user/$userMatchId'
-      fullPath: '/overleveringer/user/$userMatchId'
-      preLoaderRoute: typeof offentligOverleveringerUserUserMatchIdRouteImport
+      fullPath: '/overleveringer/'
+      preLoaderRoute: typeof offentligOverleveringerIndexRouteImport
       parentRoute: typeof offentligOverleveringerRouteRoute
     }
-    '/(offentlig)/overleveringer/stand/$standMatchId': {
-      id: '/(offentlig)/overleveringer/stand/$standMatchId'
-      path: '/stand/$standMatchId'
-      fullPath: '/overleveringer/stand/$standMatchId'
-      preLoaderRoute: typeof offentligOverleveringerStandStandMatchIdRouteImport
-      parentRoute: typeof offentligOverleveringerRouteRoute
-    }
-    '/(offentlig)/kasse/betaling/status': {
-      id: '/(offentlig)/kasse/betaling/status'
-      path: '/kasse/betaling/status'
-      fullPath: '/kasse/betaling/status'
-      preLoaderRoute: typeof offentligKasseBetalingStatusRouteImport
+    '/(offentlig)/signering/$userDetailId': {
+      id: '/(offentlig)/signering/$userDetailId'
+      path: '/signering/$userDetailId'
+      fullPath: '/signering/$userDetailId'
+      preLoaderRoute: typeof offentligSigneringUserDetailIdRouteImport
       parentRoute: typeof offentligRouteRoute
     }
-    '/(offentlig)/info/policies/terms': {
-      id: '/(offentlig)/info/policies/terms'
-      path: '/terms'
-      fullPath: '/info/policies/terms'
-      preLoaderRoute: typeof offentligInfoPoliciesTermsRouteImport
-      parentRoute: typeof offentligInfoPoliciesRouteRoute
-    }
-    '/(offentlig)/info/policies/privacy': {
-      id: '/(offentlig)/info/policies/privacy'
-      path: '/privacy'
-      fullPath: '/info/policies/privacy'
-      preLoaderRoute: typeof offentligInfoPoliciesPrivacyRouteImport
-      parentRoute: typeof offentligInfoPoliciesRouteRoute
-    }
-    '/(offentlig)/info/policies/conditions': {
-      id: '/(offentlig)/info/policies/conditions'
-      path: '/conditions'
-      fullPath: '/info/policies/conditions'
-      preLoaderRoute: typeof offentligInfoPoliciesConditionsRouteImport
-      parentRoute: typeof offentligInfoPoliciesRouteRoute
-    }
-    '/(offentlig)/info/branch/$branchId': {
-      id: '/(offentlig)/info/branch/$branchId'
-      path: '/$branchId'
-      fullPath: '/info/branch/$branchId'
-      preLoaderRoute: typeof offentligInfoBranchBranchIdRouteImport
-      parentRoute: typeof offentligInfoBranchRouteRoute
-    }
-    '/(offentlig)/auth/reset/$id': {
-      id: '/(offentlig)/auth/reset/$id'
-      path: '/auth/reset/$id'
-      fullPath: '/auth/reset/$id'
-      preLoaderRoute: typeof offentligAuthResetIdRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/auth/permission/denied': {
-      id: '/(offentlig)/auth/permission/denied'
-      path: '/auth/permission/denied'
-      fullPath: '/auth/permission/denied'
-      preLoaderRoute: typeof offentligAuthPermissionDeniedRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(legacy)/database/branches/edit': {
-      id: '/(legacy)/database/branches/edit'
-      path: '/database/branches/edit'
-      fullPath: '/database/branches/edit'
-      preLoaderRoute: typeof legacyDatabaseBranchesEditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/auth/social/failure': {
-      id: '/(legacy)/auth/social/failure'
-      path: '/auth/social/failure'
-      fullPath: '/auth/social/failure'
-      preLoaderRoute: typeof legacyAuthSocialFailureRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/auth/register/detail': {
-      id: '/(legacy)/auth/register/detail'
-      path: '/auth/register/detail'
-      fullPath: '/auth/register/detail'
-      preLoaderRoute: typeof legacyAuthRegisterDetailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/auth/login/forgot': {
-      id: '/(legacy)/auth/login/forgot'
-      path: '/auth/login/forgot'
-      fullPath: '/auth/login/forgot'
-      preLoaderRoute: typeof legacyAuthLoginForgotRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(administrasjon)/admin/kommunikasjon/utsendelser': {
-      id: '/(administrasjon)/admin/kommunikasjon/utsendelser'
-      path: '/kommunikasjon/utsendelser'
-      fullPath: '/admin/kommunikasjon/utsendelser'
-      preLoaderRoute: typeof administrasjonAdminKommunikasjonUtsendelserRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/kommunikasjon/paminnelser': {
-      id: '/(administrasjon)/admin/kommunikasjon/paminnelser'
-      path: '/kommunikasjon/paminnelser'
-      fullPath: '/admin/kommunikasjon/paminnelser'
-      preLoaderRoute: typeof administrasjonAdminKommunikasjonPaminnelserRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/database/unik_id': {
-      id: '/(administrasjon)/admin/database/unik_id'
-      path: '/database/unik_id'
-      fullPath: '/admin/database/unik_id'
-      preLoaderRoute: typeof administrasjonAdminDatabaseUnik_idRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/database/selskap': {
-      id: '/(administrasjon)/admin/database/selskap'
-      path: '/database/selskap'
-      fullPath: '/admin/database/selskap'
-      preLoaderRoute: typeof administrasjonAdminDatabaseSelskapRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/database/rapporter': {
-      id: '/(administrasjon)/admin/database/rapporter'
-      path: '/database/rapporter'
-      fullPath: '/admin/database/rapporter'
-      preLoaderRoute: typeof administrasjonAdminDatabaseRapporterRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/database/lag_brukere': {
-      id: '/(administrasjon)/admin/database/lag_brukere'
-      path: '/database/lag_brukere'
-      fullPath: '/admin/database/lag_brukere'
-      preLoaderRoute: typeof administrasjonAdminDatabaseLag_brukereRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/database/filialer': {
-      id: '/(administrasjon)/admin/database/filialer'
-      path: '/database/filialer'
-      fullPath: '/admin/database/filialer'
-      preLoaderRoute: typeof administrasjonAdminDatabaseFilialerRouteImport
+    '/(administrasjon)/admin/database/boker': {
+      id: '/(administrasjon)/admin/database/boker'
+      path: '/database/boker'
+      fullPath: '/admin/database/boker'
+      preLoaderRoute: typeof administrasjonAdminDatabaseBokerRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
     '/(administrasjon)/admin/database/dynamisk_innhold': {
@@ -1564,26 +1417,166 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminDatabaseDynamisk_innholdRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(administrasjon)/admin/database/boker': {
-      id: '/(administrasjon)/admin/database/boker'
-      path: '/database/boker'
-      fullPath: '/admin/database/boker'
-      preLoaderRoute: typeof administrasjonAdminDatabaseBokerRouteImport
+    '/(administrasjon)/admin/database/filialer': {
+      id: '/(administrasjon)/admin/database/filialer'
+      path: '/database/filialer'
+      fullPath: '/admin/database/filialer'
+      preLoaderRoute: typeof administrasjonAdminDatabaseFilialerRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(offentlig)/kasse/betaling/v2/$orderId': {
-      id: '/(offentlig)/kasse/betaling/v2/$orderId'
-      path: '/kasse/betaling/v2/$orderId'
-      fullPath: '/kasse/betaling/v2/$orderId'
-      preLoaderRoute: typeof offentligKasseBetalingV2OrderIdRouteImport
+    '/(administrasjon)/admin/database/lag_brukere': {
+      id: '/(administrasjon)/admin/database/lag_brukere'
+      path: '/database/lag_brukere'
+      fullPath: '/admin/database/lag_brukere'
+      preLoaderRoute: typeof administrasjonAdminDatabaseLag_brukereRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/database/rapporter': {
+      id: '/(administrasjon)/admin/database/rapporter'
+      path: '/database/rapporter'
+      fullPath: '/admin/database/rapporter'
+      preLoaderRoute: typeof administrasjonAdminDatabaseRapporterRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/database/selskap': {
+      id: '/(administrasjon)/admin/database/selskap'
+      path: '/database/selskap'
+      fullPath: '/admin/database/selskap'
+      preLoaderRoute: typeof administrasjonAdminDatabaseSelskapRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/database/unik_id': {
+      id: '/(administrasjon)/admin/database/unik_id'
+      path: '/database/unik_id'
+      fullPath: '/admin/database/unik_id'
+      preLoaderRoute: typeof administrasjonAdminDatabaseUnik_idRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/kommunikasjon/paminnelser': {
+      id: '/(administrasjon)/admin/kommunikasjon/paminnelser'
+      path: '/kommunikasjon/paminnelser'
+      fullPath: '/admin/kommunikasjon/paminnelser'
+      preLoaderRoute: typeof administrasjonAdminKommunikasjonPaminnelserRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/kommunikasjon/utsendelser': {
+      id: '/(administrasjon)/admin/kommunikasjon/utsendelser'
+      path: '/kommunikasjon/utsendelser'
+      fullPath: '/admin/kommunikasjon/utsendelser'
+      preLoaderRoute: typeof administrasjonAdminKommunikasjonUtsendelserRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/overleveringer/': {
+      id: '/(administrasjon)/admin/overleveringer/'
+      path: '/'
+      fullPath: '/admin/overleveringer/'
+      preLoaderRoute: typeof administrasjonAdminOverleveringerIndexRouteImport
+      parentRoute: typeof administrasjonAdminOverleveringerRouteRoute
+    }
+    '/(legacy)/auth/login/forgot': {
+      id: '/(legacy)/auth/login/forgot'
+      path: '/auth/login/forgot'
+      fullPath: '/auth/login/forgot'
+      preLoaderRoute: typeof legacyAuthLoginForgotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(legacy)/auth/register/detail': {
+      id: '/(legacy)/auth/register/detail'
+      path: '/auth/register/detail'
+      fullPath: '/auth/register/detail'
+      preLoaderRoute: typeof legacyAuthRegisterDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(legacy)/auth/social/failure': {
+      id: '/(legacy)/auth/social/failure'
+      path: '/auth/social/failure'
+      fullPath: '/auth/social/failure'
+      preLoaderRoute: typeof legacyAuthSocialFailureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(legacy)/database/branches/edit': {
+      id: '/(legacy)/database/branches/edit'
+      path: '/database/branches/edit'
+      fullPath: '/database/branches/edit'
+      preLoaderRoute: typeof legacyDatabaseBranchesEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(offentlig)/auth/permission/denied': {
+      id: '/(offentlig)/auth/permission/denied'
+      path: '/auth/permission/denied'
+      fullPath: '/auth/permission/denied'
+      preLoaderRoute: typeof offentligAuthPermissionDeniedRouteImport
       parentRoute: typeof offentligRouteRoute
     }
-    '/(offentlig)/auth/email/verify/$verificationId': {
-      id: '/(offentlig)/auth/email/verify/$verificationId'
-      path: '/auth/email/verify/$verificationId'
-      fullPath: '/auth/email/verify/$verificationId'
-      preLoaderRoute: typeof offentligAuthEmailVerifyVerificationIdRouteImport
+    '/(offentlig)/auth/reset/$id': {
+      id: '/(offentlig)/auth/reset/$id'
+      path: '/auth/reset/$id'
+      fullPath: '/auth/reset/$id'
+      preLoaderRoute: typeof offentligAuthResetIdRouteImport
       parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/info/branch/$branchId': {
+      id: '/(offentlig)/info/branch/$branchId'
+      path: '/$branchId'
+      fullPath: '/info/branch/$branchId'
+      preLoaderRoute: typeof offentligInfoBranchBranchIdRouteImport
+      parentRoute: typeof offentligInfoBranchRouteRoute
+    }
+    '/(offentlig)/info/policies/conditions': {
+      id: '/(offentlig)/info/policies/conditions'
+      path: '/conditions'
+      fullPath: '/info/policies/conditions'
+      preLoaderRoute: typeof offentligInfoPoliciesConditionsRouteImport
+      parentRoute: typeof offentligInfoPoliciesRouteRoute
+    }
+    '/(offentlig)/info/policies/privacy': {
+      id: '/(offentlig)/info/policies/privacy'
+      path: '/privacy'
+      fullPath: '/info/policies/privacy'
+      preLoaderRoute: typeof offentligInfoPoliciesPrivacyRouteImport
+      parentRoute: typeof offentligInfoPoliciesRouteRoute
+    }
+    '/(offentlig)/info/policies/terms': {
+      id: '/(offentlig)/info/policies/terms'
+      path: '/terms'
+      fullPath: '/info/policies/terms'
+      preLoaderRoute: typeof offentligInfoPoliciesTermsRouteImport
+      parentRoute: typeof offentligInfoPoliciesRouteRoute
+    }
+    '/(offentlig)/kasse/betaling/': {
+      id: '/(offentlig)/kasse/betaling/'
+      path: '/kasse/betaling'
+      fullPath: '/kasse/betaling/'
+      preLoaderRoute: typeof offentligKasseBetalingIndexRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/kasse/betaling/status': {
+      id: '/(offentlig)/kasse/betaling/status'
+      path: '/kasse/betaling/status'
+      fullPath: '/kasse/betaling/status'
+      preLoaderRoute: typeof offentligKasseBetalingStatusRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/overleveringer/stand/$standMatchId': {
+      id: '/(offentlig)/overleveringer/stand/$standMatchId'
+      path: '/stand/$standMatchId'
+      fullPath: '/overleveringer/stand/$standMatchId'
+      preLoaderRoute: typeof offentligOverleveringerStandStandMatchIdRouteImport
+      parentRoute: typeof offentligOverleveringerRouteRoute
+    }
+    '/(offentlig)/overleveringer/user/$userMatchId': {
+      id: '/(offentlig)/overleveringer/user/$userMatchId'
+      path: '/user/$userMatchId'
+      fullPath: '/overleveringer/user/$userMatchId'
+      preLoaderRoute: typeof offentligOverleveringerUserUserMatchIdRouteImport
+      parentRoute: typeof offentligOverleveringerRouteRoute
+    }
+    '/(administrasjon)/admin/overleveringer/stand/$standMatchId': {
+      id: '/(administrasjon)/admin/overleveringer/stand/$standMatchId'
+      path: '/stand/$standMatchId'
+      fullPath: '/admin/overleveringer/stand/$standMatchId'
+      preLoaderRoute: typeof administrasjonAdminOverleveringerStandStandMatchIdRouteImport
+      parentRoute: typeof administrasjonAdminOverleveringerRouteRoute
     }
     '/(administrasjon)/admin/overleveringer/user/$userMatchId': {
       id: '/(administrasjon)/admin/overleveringer/user/$userMatchId'
@@ -1592,12 +1585,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminOverleveringerUserUserMatchIdRouteImport
       parentRoute: typeof administrasjonAdminOverleveringerRouteRoute
     }
-    '/(administrasjon)/admin/overleveringer/stand/$standMatchId': {
-      id: '/(administrasjon)/admin/overleveringer/stand/$standMatchId'
-      path: '/stand/$standMatchId'
-      fullPath: '/admin/overleveringer/stand/$standMatchId'
-      preLoaderRoute: typeof administrasjonAdminOverleveringerStandStandMatchIdRouteImport
-      parentRoute: typeof administrasjonAdminOverleveringerRouteRoute
+    '/(offentlig)/auth/email/verify/$verificationId': {
+      id: '/(offentlig)/auth/email/verify/$verificationId'
+      path: '/auth/email/verify/$verificationId'
+      fullPath: '/auth/email/verify/$verificationId'
+      preLoaderRoute: typeof offentligAuthEmailVerifyVerificationIdRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
+    '/(offentlig)/kasse/betaling/v2/$orderId': {
+      id: '/(offentlig)/kasse/betaling/v2/$orderId'
+      path: '/kasse/betaling/v2/$orderId'
+      fullPath: '/kasse/betaling/v2/$orderId'
+      preLoaderRoute: typeof offentligKasseBetalingV2OrderIdRouteImport
+      parentRoute: typeof offentligRouteRoute
     }
   }
 }
