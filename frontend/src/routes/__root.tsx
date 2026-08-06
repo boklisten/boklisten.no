@@ -3,12 +3,13 @@ import "@mantine/dates/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/tiptap/styles.css";
 import "@mantine/charts/styles.css";
-import "mantine-react-table/styles.css";
 
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router";
+import { AllCommunityModule } from "ag-grid-community";
+import { AgGridProvider } from "ag-grid-react";
 
 import theme from "@/shared/utils/theme";
 import { DatesProvider } from "@mantine/dates";
@@ -62,8 +63,10 @@ function RootLayout() {
           <DatesProvider settings={{ locale: "nb" }}>
             <QueryClientProvider client={rootQueryClient}>
               <ModalsProvider>
-                <Outlet />
-                <Scripts />
+                <AgGridProvider modules={[AllCommunityModule]}>
+                  <Outlet />
+                  <Scripts />
+                </AgGridProvider>
               </ModalsProvider>
               <ReactQueryDevtools />
             </QueryClientProvider>

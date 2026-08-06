@@ -1,15 +1,13 @@
-// MRT does not support React Compiler yet
-"use no memo";
+import { Button, Box } from "@mantine/core";
+import { modals } from "@mantine/modals";
+import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
+import type { ICellRendererParams } from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
+import { Route } from "@tuyau/core/types";
 
-import { Button, Group } from "@mantine/core";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { MantineReactTable, useMantineReactTable } from "mantine-react-table";
-// @ts-expect-error MRT has bad types, hopefully they fix this in the future
-import { MRT_Localization_NO } from "mantine-react-table/locales/no";
+import MoveBranchMemberModal from "@/features/branches/MoveBranchMemberModal";
 
-import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
-import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
+type BranchMember = Route.Response<"branch_membership.get_members">["directMembers"][number];
 
 export default function BranchMembersTable({
   branchId,
@@ -17,65 +15,52 @@ export default function BranchMembersTable({
   isLoading,
 }: {
   branchId: string;
-  members: { id: string; name: string; yearOfBirth: string }[];
+  members: BranchMember[];
   isLoading: boolean;
 }) {
-  const { api } = useApiClient();
-  const queryClient = useQueryClient();
-  const updateBranchMembershipMutation = useMutation(
-    api.branchMembership.updateMembership.mutationOptions({
-      onSuccess: () => showSuccessNotification("Medlemsskapet ble endret!"),
-      onError: () => showErrorNotification("Klarte ikke endre medlemsskap!"),
-      onSettled: () =>
-        queryClient.invalidateQueries({
-          queryKey: api.branchMembership.getMembers.queryKey({ params: { branchId } }),
-        }),
-    }),
+  return (
+    <Box h={500}>
+      <AgGridReact<BranchMember>
+        rowData={members}
+        columnDefs={[
+          { field: "name", headerName: "Navn" },
+          { field: "yearOfBirth", headerName: "Fødselsår" },
+          {
+            headerName: "Handlinger",
+            pinned: "right",
+            width: 110,
+            sortable: false,
+            filter: false,
+            resizable: false,
+            cellRenderer: ({ data }: ICellRendererParams<BranchMember>) =>
+              data && (
+                <Button
+                  variant={"subtle"}
+                  onClick={() => {
+                    const modalId = modals.open({
+                      title: `Flytt ${data.name}`,
+                      children: (
+                        <MoveBranchMemberModal
+                          branchId={branchId}
+                          memberId={data.id}
+                          onClose={() => modals.close(modalId)}
+                        />
+                      ),
+                    });
+                  }}
+                >
+                  Flytt
+                </Button>
+              ),
+          },
+        ]}
+        defaultColDef={{ flex: 1, sortable: true, filter: true }}
+        getRowId={({ data }) => data.id}
+        localeText={AG_GRID_LOCALE_NO}
+        loading={isLoading}
+        pagination
+        paginationPageSize={20}
+      />
+    </Box>
   );
-  const table = useMantineReactTable({
-    columns: [
-      {
-        accessorKey: "name",
-        header: "Navn",
-      },
-      {
-        accessorKey: "yearOfBirth",
-        header: "Fødselsår",
-      },
-    ],
-    data: members,
-    enableEditing: true,
-    state: {
-      isLoading,
-    },
-    getRowId: (waitingListEntry) => waitingListEntry.id,
-    renderRowActions: function Render({ row }) {
-      const form = useAppForm({
-        defaultValues: {
-          branchMembership: branchId,
-        },
-        onSubmit: ({ value }) =>
-          updateBranchMembershipMutation.mutate({
-            body: {
-              detailsId: row.id,
-              branchMembership: value.branchMembership,
-            },
-          }),
-      });
-      return (
-        <Group>
-          <form.AppField name={"branchMembership"}>
-            {(field) => <field.SelectBranchField perspective={"administrate"} />}
-          </form.AppField>
-          <Button onClick={form.handleSubmit} bg={"green"}>
-            Lagre
-          </Button>
-        </Group>
-      );
-    },
-    positionActionsColumn: "last",
-    localization: MRT_Localization_NO,
-  });
-
-  return <MantineReactTable table={table} />;
 }

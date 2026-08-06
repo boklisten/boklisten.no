@@ -1,66 +1,36 @@
 import type { Branch } from "@boklisten/backend/shared/branch";
-import { NavLink, Stack, Title, Tree, type TreeNodeData } from "@mantine/core";
+import { NavLink, Stack, Title, Tree } from "@mantine/core";
 import { IconChevronRight } from "@tabler/icons-react";
 import { Activity, useState } from "react";
 
-function toTreeNodeData(branches: Branch[]) {
-  const branchById = new Map(branches.map((b) => [b.id, b]));
-
-  const toNode = (branch: Branch) => ({
-    value: branch.id,
-    label: branch.localName ?? branch.name,
-    children: createChildren(branch),
-  });
-
-  function createChildren(branch: Branch): TreeNodeData[] {
-    return (branch.childBranches ?? [])
-      .map((childBranchId) => branchById.get(childBranchId))
-      .filter((childBranch) => childBranch !== undefined)
-      .map(toNode)
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }
-
-  return branches
-    .filter((branch) => !branch.parentBranch)
-    .map(toNode)
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
+import { getBranchNodeShortLabel, toBranchTreeNodeData } from "@/shared/utils/branchTree";
 
 export default function SelectBranchTreeView({
   label,
   branches,
   onSelect,
-  onlyLeafs,
 }: {
   label: string;
   branches: Branch[];
   onSelect: (branchId: string) => void;
-  onlyLeafs?: boolean;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   return (
     <Stack>
       <Title order={3}>{label}</Title>
       <Tree
-        data={toTreeNodeData(branches)}
+        data={toBranchTreeNodeData(branches)}
         renderNode={({ node, expanded, hasChildren, elementProps }) => (
           <NavLink
             {...elementProps}
-            label={node.label}
+            label={getBranchNodeShortLabel(node)}
             onClick={(event) => {
               elementProps.onClick(event);
-              if (onlyLeafs && (node.children?.length ?? 0) > 0) return;
               setSelected(node.value);
               onSelect(node.value);
             }}
             leftSection={
-              <Activity
-                mode={
-                  (hasChildren && !onlyLeafs) || (hasChildren && onlyLeafs && expanded)
-                    ? "visible"
-                    : "hidden"
-                }
-              >
+              <Activity mode={hasChildren ? "visible" : "hidden"}>
                 <IconChevronRight
                   size={18}
                   style={{

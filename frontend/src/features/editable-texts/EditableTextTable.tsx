@@ -1,13 +1,11 @@
-// MRT does not support React Compiler yet
-"use no memo";
-
-import { ActionIcon, Button, Tooltip } from "@mantine/core";
+import { ActionIcon, Box, Button, Group, Stack, Tooltip } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MantineReactTable, useMantineReactTable } from "mantine-react-table";
-// @ts-expect-error MRT has bad types, hopefully they fix this in the future
-import { MRT_Localization_NO } from "mantine-react-table/locales/no";
+import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
+import type { ICellRendererParams } from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
+import { Route } from "@tuyau/core/types";
 
 import EditableTextEditor from "@/features/editable-texts/EditableTextEditor";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
@@ -15,11 +13,23 @@ import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
+type EditableText = Route.Response<"editable_texts.get_all">[number];
+
+function openEditorModal(editableText?: EditableText) {
+  const modalId = modals.open({
+    title: editableText === undefined ? "Legg til dynamisk innhold" : "Endre dynamisk innhold",
+    size: "xl",
+    children: (
+      <EditableTextEditor editableText={editableText} onClose={() => modals.close(modalId)} />
+    ),
+  });
+}
+
 export default function EditableTextTable() {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
 
-  const destroyEditableTextMutation = useMutation(
+  const { mutate: destroyEditableText, isPending: isDestroying } = useMutation(
     api.editableTexts.destroy.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
@@ -36,67 +46,6 @@ export default function EditableTextTable() {
     error,
   } = useQuery(api.editableTexts.getAll.queryOptions({}));
 
-  const table = useMantineReactTable({
-    columns: [
-      {
-        accessorKey: "id",
-        header: "Unik nøkkel",
-      },
-    ],
-    data: editableTexts ?? [],
-    enableEditing: true,
-    state: {
-      isLoading: isLoading || destroyEditableTextMutation.isPending,
-    },
-    getRowId: (editableText) => editableText.id,
-    renderRowActions: ({ row, table }) => (
-      <>
-        <Tooltip key={`edit-${row.id}`} label={"Endre"}>
-          <ActionIcon variant={"subtle"} onClick={() => table.setEditingRow(row)}>
-            <IconEdit />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip key={`delete-${row.id}`} label={"Slett"}>
-          <ActionIcon
-            variant={"subtle"}
-            color={"red"}
-            onClick={async () => {
-              modals.openConfirmModal({
-                title: "Bekreft sletting av dynamisk innhold",
-                children:
-                  "Hvis du sletter dette innholdet, vil sider som bruker denne teksten slutte å fungere. Sjekk at ingen sider er avhengige av denne nøkkelen før du fortsetter.",
-                confirmProps: { color: "red" },
-                labels: { cancel: "Avbryt", confirm: "Slett" },
-                onConfirm: () => destroyEditableTextMutation.mutate({ params: { id: row.id } }),
-              });
-            }}
-          >
-            <IconTrash />
-          </ActionIcon>
-        </Tooltip>
-      </>
-    ),
-    renderTopToolbarCustomActions: () => (
-      <Button onClick={() => table.setCreatingRow(true)}>Legg til</Button>
-    ),
-    mantineCreateRowModalProps: {
-      size: "xl",
-    },
-    mantineEditRowModalProps: {
-      size: "xl",
-    },
-    renderCreateRowModalContent: ({ table }) => (
-      <EditableTextEditor onClose={() => table.setCreatingRow(null)} />
-    ),
-    renderEditRowModalContent: ({ table, row }) => (
-      <EditableTextEditor
-        editableText={editableTexts?.find((editableText) => editableText.id === row.id)}
-        onClose={() => table.setEditingRow(null)}
-      />
-    ),
-    localization: MRT_Localization_NO,
-  });
-
   if (error) {
     return (
       <ErrorAlert title={"Klarte ikke laste inn dynamisk innhold"}>
@@ -105,5 +54,62 @@ export default function EditableTextTable() {
     );
   }
 
-  return <MantineReactTable table={table} />;
+  return (
+    <Stack>
+      <Group>
+        <Button onClick={() => openEditorModal()}>Legg til</Button>
+      </Group>
+      <Box h={500}>
+        <AgGridReact<EditableText>
+          rowData={editableTexts ?? []}
+          columnDefs={[
+            { field: "id", headerName: "Unik nøkkel" },
+            {
+              headerName: "Handlinger",
+              pinned: "right",
+              width: 110,
+              sortable: false,
+              filter: false,
+              resizable: false,
+              flex: 0,
+              cellRenderer: ({ data }: ICellRendererParams<EditableText>) =>
+                data && (
+                  <Group gap={"xs"} h={"100%"} align={"center"} wrap={"nowrap"}>
+                    <Tooltip label={"Endre"}>
+                      <ActionIcon variant={"subtle"} onClick={() => openEditorModal(data)}>
+                        <IconEdit />
+                      </ActionIcon>
+                    </Tooltip>
+                    <Tooltip label={"Slett"}>
+                      <ActionIcon
+                        variant={"subtle"}
+                        color={"red"}
+                        onClick={() =>
+                          modals.openConfirmModal({
+                            title: "Bekreft sletting av dynamisk innhold",
+                            children:
+                              "Hvis du sletter dette innholdet, vil sider som bruker denne teksten slutte å fungere. Sjekk at ingen sider er avhengige av denne nøkkelen før du fortsetter.",
+                            confirmProps: { color: "red" },
+                            labels: { cancel: "Avbryt", confirm: "Slett" },
+                            onConfirm: () => destroyEditableText({ params: { id: data.id } }),
+                          })
+                        }
+                      >
+                        <IconTrash />
+                      </ActionIcon>
+                    </Tooltip>
+                  </Group>
+                ),
+            },
+          ]}
+          defaultColDef={{ flex: 1, sortable: true, filter: true }}
+          getRowId={({ data }) => data.id}
+          localeText={AG_GRID_LOCALE_NO}
+          loading={isLoading || isDestroying}
+          pagination
+          paginationPageSize={20}
+        />
+      </Box>
+    </Stack>
+  );
 }

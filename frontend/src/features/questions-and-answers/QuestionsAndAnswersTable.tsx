@@ -1,12 +1,11 @@
-// MRT does not support React Compiler yet
-"use no memo";
-
-import { ActionIcon, Button, Tooltip } from "@mantine/core";
+import type { QuestionAndAnswer } from "@boklisten/backend/shared/question-and-answer";
+import { ActionIcon, Button, Group, Stack, Tooltip, Box } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MantineReactTable, useMantineReactTable } from "mantine-react-table";
-// @ts-expect-error MRT has bad types, hopefully they fix this in the future
-import { MRT_Localization_NO } from "mantine-react-table/locales/no";
+import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
 
 import QuestionAndAnswerEditor from "@/features/questions-and-answers/QuestionAndAnswerEditor";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
@@ -14,11 +13,25 @@ import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
+const defaultColDef: ColDef = { flex: 1, sortable: true, filter: true };
+function openEditorModal(questionAndAnswer?: QuestionAndAnswer) {
+  const modalId = modals.open({
+    title: questionAndAnswer === undefined ? "Legg til spørsmål og svar" : "Endre spørsmål og svar",
+    size: "xl",
+    children: (
+      <QuestionAndAnswerEditor
+        questionAndAnswer={questionAndAnswer}
+        onClose={() => modals.close(modalId)}
+      />
+    ),
+  });
+}
+
 export default function QuestionsAndAnswersTable() {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
 
-  const destroyQuestionAndAnswerMutation = useMutation(
+  const { mutate: destroyQuestionAndAnswer, isPending: isDestroying } = useMutation(
     api.questionsAndAnswers.destroy.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
@@ -35,66 +48,6 @@ export default function QuestionsAndAnswersTable() {
     error,
   } = useQuery(api.questionsAndAnswers.getAll.queryOptions({}));
 
-  const table = useMantineReactTable({
-    columns: [
-      {
-        accessorKey: "question",
-        header: "Spørsmål",
-      },
-      {
-        accessorKey: "answer",
-        header: "Svar",
-      },
-    ],
-    data: questionsAndAnswers ?? [],
-    enableEditing: true,
-    state: {
-      isLoading: isLoading || destroyQuestionAndAnswerMutation.isPending,
-    },
-    getRowId: (questionAndAnswer) => questionAndAnswer.id,
-    renderRowActions: ({ row, table }) => (
-      <>
-        <Tooltip key={`edit-${row.id}`} label={"Endre"}>
-          <ActionIcon variant={"subtle"} onClick={() => table.setEditingRow(row)}>
-            <IconEdit />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip key={`delete-${row.id}`} label={"Slett"}>
-          <ActionIcon
-            variant={"subtle"}
-            color={"red"}
-            onClick={async () =>
-              destroyQuestionAndAnswerMutation.mutate({ params: { id: row.id } })
-            }
-          >
-            <IconTrash />
-          </ActionIcon>
-        </Tooltip>
-      </>
-    ),
-    renderTopToolbarCustomActions: () => (
-      <Button onClick={() => table.setCreatingRow(true)}>Legg til</Button>
-    ),
-    mantineCreateRowModalProps: {
-      size: "xl",
-    },
-    mantineEditRowModalProps: {
-      size: "xl",
-    },
-    renderCreateRowModalContent: ({ table }) => (
-      <QuestionAndAnswerEditor onClose={() => table.setCreatingRow(null)} />
-    ),
-    renderEditRowModalContent: ({ table, row }) => (
-      <QuestionAndAnswerEditor
-        questionAndAnswer={questionsAndAnswers?.find(
-          (questionAndAnswer) => questionAndAnswer.id === row.id,
-        )}
-        onClose={() => table.setEditingRow(null)}
-      />
-    ),
-    localization: MRT_Localization_NO,
-  });
-
   if (error) {
     return (
       <ErrorAlert title={"Klarte ikke laste inn spørsmål og svar"}>
@@ -103,5 +56,54 @@ export default function QuestionsAndAnswersTable() {
     );
   }
 
-  return <MantineReactTable table={table} />;
+  return (
+    <Stack>
+      <Group>
+        <Button onClick={() => openEditorModal()}>Legg til</Button>
+      </Group>
+      <Box h={500}>
+        <AgGridReact<QuestionAndAnswer>
+          rowData={questionsAndAnswers ?? []}
+          columnDefs={[
+            { field: "question", headerName: "Spørsmål" },
+            { field: "answer", headerName: "Svar" },
+            {
+              headerName: "Handlinger",
+              pinned: "right",
+              width: 110,
+              sortable: false,
+              filter: false,
+              resizable: false,
+              flex: 0,
+              cellRenderer: ({ data }: ICellRendererParams<QuestionAndAnswer>) =>
+                data && (
+                  <Group gap={"xs"} h={"100%"} align={"center"} wrap={"nowrap"}>
+                    <Tooltip label={"Endre"}>
+                      <ActionIcon variant={"subtle"} onClick={() => openEditorModal(data)}>
+                        <IconEdit />
+                      </ActionIcon>
+                    </Tooltip>
+                    <Tooltip label={"Slett"}>
+                      <ActionIcon
+                        variant={"subtle"}
+                        color={"red"}
+                        onClick={() => destroyQuestionAndAnswer({ params: { id: data.id } })}
+                      >
+                        <IconTrash />
+                      </ActionIcon>
+                    </Tooltip>
+                  </Group>
+                ),
+            },
+          ]}
+          defaultColDef={defaultColDef}
+          getRowId={({ data }) => data.id}
+          localeText={AG_GRID_LOCALE_NO}
+          loading={isLoading || isDestroying}
+          pagination
+          paginationPageSize={20}
+        />
+      </Box>
+    </Stack>
+  );
 }
