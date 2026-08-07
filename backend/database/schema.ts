@@ -66,7 +66,7 @@ export class PasswordResetSchema extends BaseModel {
 }
 
 export class QuestionAndAnswerSchema extends BaseModel {
-  static $columns = ['answer', 'createdAt', 'id', 'question', 'updatedAt'] as const
+  static $columns = ['answer', 'createdAt', 'id', 'position', 'question', 'updatedAt'] as const
   $columns = QuestionAndAnswerSchema.$columns
   @column()
   declare answer: string
@@ -74,6 +74,8 @@ export class QuestionAndAnswerSchema extends BaseModel {
   declare createdAt: DateTime | null
   @column({ isPrimary: true })
   declare id: number
+  @column()
+  declare position: number
   @column()
   declare question: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })

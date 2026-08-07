@@ -216,6 +216,12 @@ const routes = {
     tokens: [{"old":"/questions_and_answers","type":0,"val":"questions_and_answers","end":""}],
     types: placeholder as Registry['questions_and_answers.store']['types'],
   },
+  'questions_and_answers.update_order': {
+    methods: ["PATCH"],
+    pattern: '/questions_and_answers/order',
+    tokens: [{"old":"/questions_and_answers/order","type":0,"val":"questions_and_answers","end":""},{"old":"/questions_and_answers/order","type":0,"val":"order","end":""}],
+    types: placeholder as Registry['questions_and_answers.update_order']['types'],
+  },
   'questions_and_answers.update': {
     methods: ["PATCH"],
     pattern: '/questions_and_answers/:id',

@@ -62,6 +62,7 @@ export interface ApiDefinition {
   questionsAndAnswers: {
     getAll: typeof routes['questions_and_answers.get_all']
     store: typeof routes['questions_and_answers.store']
+    updateOrder: typeof routes['questions_and_answers.update_order']
     update: typeof routes['questions_and_answers.update']
     destroy: typeof routes['questions_and_answers.destroy']
   }

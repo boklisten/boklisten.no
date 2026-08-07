@@ -427,6 +427,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/questions_and_answers_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'questions_and_answers.update_order': {
+    methods: ["PATCH"]
+    pattern: '/questions_and_answers/order'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/questions_and_answers_validator').questionsAndAnswersOrderValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/questions_and_answers_validator').questionsAndAnswersOrderValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/questions_and_answers_controller').default['updateOrder']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/questions_and_answers_controller').default['updateOrder']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'questions_and_answers.update': {
     methods: ["PATCH"]
     pattern: '/questions_and_answers/:id'

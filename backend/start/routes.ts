@@ -127,6 +127,8 @@ router.get("/questions_and_answers", [controllers.QuestionsAndAnswers, "getAll"]
 
 router.post("/questions_and_answers", [controllers.QuestionsAndAnswers, "store"]);
 
+router.patch("/questions_and_answers/order", [controllers.QuestionsAndAnswers, "updateOrder"]);
+
 router.patch("/questions_and_answers/:id", [controllers.QuestionsAndAnswers, "update"]);
 
 router.delete("/questions_and_answers/:id", [controllers.QuestionsAndAnswers, "destroy"]);

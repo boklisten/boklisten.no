@@ -6,3 +6,9 @@ export const questionsAndAnswersValidator = vine.create(
     answer: vine.string(),
   }),
 );
+
+export const questionsAndAnswersOrderValidator = vine.create(
+  vine.object({
+    ids: vine.array(vine.number()),
+  }),
+);

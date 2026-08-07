@@ -39,6 +39,7 @@ export type ScannedRoutes = {
     'editable_texts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'questions_and_answers.get_all': { paramsTuple?: []; params?: {} }
     'questions_and_answers.store': { paramsTuple?: []; params?: {} }
+    'questions_and_answers.update_order': { paramsTuple?: []; params?: {} }
     'questions_and_answers.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'questions_and_answers.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'email_verification.send': { paramsTuple?: []; params?: {} }
@@ -378,6 +379,7 @@ export type ScannedRoutes = {
     'branches.update': { paramsTuple?: []; params?: {} }
     'branch_relationship.update': { paramsTuple?: []; params?: {} }
     'branch_membership.update_membership': { paramsTuple?: []; params?: {} }
+    'questions_and_answers.update_order': { paramsTuple?: []; params?: {} }
     'questions_and_answers.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branches.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branchitems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
