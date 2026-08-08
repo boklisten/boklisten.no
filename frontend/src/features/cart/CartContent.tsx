@@ -1,15 +1,4 @@
-import {
-  ActionIcon,
-  Button,
-  Card,
-  Grid,
-  Group,
-  SegmentedControl,
-  Select,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
+import { ActionIcon, Button, Card, Grid, Group, Select, Stack, Text, Title } from "@mantine/core";
 import { IconBook, IconCashRegister, IconShoppingCart, IconX } from "@tabler/icons-react";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { Activity } from "react";
@@ -17,6 +6,7 @@ import { Activity } from "react";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import useCart from "@/shared/hooks/useCart";
 import useAuth from "@/shared/hooks/useAuth";
+import SegmentedControlWithLabel from "@/shared/components/SegmentedControlWithLabel";
 
 export default function CartContent() {
   const cart = useCart();
@@ -66,7 +56,8 @@ export default function CartContent() {
                 <Group justify={"space-between"}>
                   <Group gap={5}>
                     <Activity mode={cartItem.options.length > 1 ? "visible" : "hidden"}>
-                      <SegmentedControl
+                      <SegmentedControlWithLabel
+                        label={"Handling"}
                         visibleFrom={"sm"}
                         value={cartItem.selectedOptionIndex.toString()}
                         data={cartItem.options.map((option, index) => ({
