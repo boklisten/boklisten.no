@@ -10,46 +10,48 @@ import {
   userDetailsReportValidator,
 } from "#validators/report";
 
+function dateRangeFilter(field: string, after: string | undefined, before: string | undefined) {
+  const limiter: Record<string, Date> = {};
+  if (after) {
+    limiter["$gte"] = new Date(after);
+  }
+  if (before) {
+    limiter["$lte"] = new Date(before);
+  }
+  return Object.keys(limiter).length > 0 ? { [field]: limiter } : {};
+}
+
+function branchFieldFilter(field: string, branchFilter: string[] | undefined) {
+  return branchFilter && branchFilter.length > 0
+    ? { [field]: { $in: branchFilter.map((id) => new ObjectId(id)) } }
+    : {};
+}
+
+function firstOrNull(path: string) {
+  return { $ifNull: [{ $first: path }, null] };
+}
+
 export default class ReportsController {
   async getCustomerItemsReport(ctx: HttpContext) {
     PermissionService.adminOrFail(ctx);
-    const { branchFilter, createdAfter, createdBefore, deadlineAfter, deadlineBefore } =
-      await ctx.request.validateUsing(customerItemsReportValidator);
-
-    const filterByHandoutBranchIfPresent = branchFilter
-      ? {
-          "handoutInfo.handoutById": {
-            $in: branchFilter.map((id) => new ObjectId(id)),
-          },
-        }
-      : {};
-
-    const creationTimeLimiter: Record<string, Date> = {};
-    if (createdAfter) {
-      creationTimeLimiter["$gte"] = new Date(createdAfter);
-    }
-    if (createdBefore) {
-      creationTimeLimiter["$lte"] = new Date(createdBefore);
-    }
-    const creationTimeFilter =
-      Object.keys(creationTimeLimiter).length > 0 ? { creationTime: creationTimeLimiter } : {};
-
-    const deadlineLimiter: Record<string, Date> = {};
-    if (deadlineAfter) {
-      deadlineLimiter["$gte"] = new Date(deadlineAfter);
-    }
-    if (deadlineBefore) {
-      deadlineLimiter["$lte"] = new Date(deadlineBefore);
-    }
-    const deadlineFilter =
-      Object.keys(deadlineLimiter).length > 0 ? { deadline: deadlineLimiter } : {};
+    const {
+      branchFilter,
+      createdAfter,
+      createdBefore,
+      deadlineAfter,
+      deadlineBefore,
+      includeReturned,
+      includeBuyout,
+    } = await ctx.request.validateUsing(customerItemsReportValidator);
 
     return await StorageService.CustomerItems.aggregate([
       {
         $match: {
-          ...filterByHandoutBranchIfPresent,
-          ...creationTimeFilter,
-          ...deadlineFilter,
+          ...branchFieldFilter("handoutInfo.handoutById", branchFilter),
+          ...dateRangeFilter("creationTime", createdAfter, createdBefore),
+          ...dateRangeFilter("deadline", deadlineAfter, deadlineBefore),
+          ...(includeReturned ? {} : { returned: false }),
+          ...(includeBuyout ? {} : { buyout: false }),
         },
       },
       {
@@ -93,21 +95,25 @@ export default class ReportsController {
       },
       {
         $project: {
-          handoutBranch: { $first: "$branchInfo.name" },
+          _id: 0,
+          id: { $toString: "$_id" },
+          handoutBranch: firstOrNull("$branchInfo.name"),
           handoutTime: "$handoutInfo.time",
           lastUpdated: 1,
           deadline: 1,
+          returned: 1,
+          buyout: 1,
           blid: 1,
-          title: { $first: "$itemInfo.title" },
+          title: firstOrNull("$itemInfo.title"),
           isbn: { $toString: { $first: "$itemInfo.info.isbn" } },
-          name: { $first: "$customerInfo.name" },
-          email: { $first: "$customerInfo.email" },
-          phone: { $first: "$customerInfo.phone" },
-          dob: { $first: "$customerInfo.dob" },
-          guardianEmail: { $first: "$customerInfo.guardian.email" },
-          guardianPhone: { $first: "$customerInfo.guardian.phone" },
-          guardianName: { $first: "$customerInfo.guardian.name" },
-          handoutEmployee: { $first: "$employeeInfo.name" },
+          name: firstOrNull("$customerInfo.name"),
+          email: firstOrNull("$customerInfo.email"),
+          phone: firstOrNull("$customerInfo.phone"),
+          dob: firstOrNull("$customerInfo.dob"),
+          guardianEmail: firstOrNull("$customerInfo.guardian.email"),
+          guardianPhone: firstOrNull("$customerInfo.guardian.phone"),
+          guardianName: firstOrNull("$customerInfo.guardian.name"),
+          handoutEmployee: firstOrNull("$employeeInfo.name"),
           pivot: "1",
         },
       },
@@ -119,30 +125,31 @@ export default class ReportsController {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(ordersReportValidator);
 
-    const filterByBranchIfPresent = branchFilter
-      ? {
-          branch: {
-            $in: branchFilter.map((id) => new ObjectId(id)),
-          },
-        }
-      : {};
-
-    const creationTimeLimiter: Record<string, Date> = {};
-    if (createdAfter) {
-      creationTimeLimiter["$gte"] = new Date(createdAfter);
-    }
-    if (createdBefore) {
-      creationTimeLimiter["$lte"] = new Date(createdBefore);
-    }
-    const creationTimeFilter =
-      Object.keys(creationTimeLimiter).length > 0 ? { creationTime: creationTimeLimiter } : {};
-
     return await StorageService.Orders.aggregate([
       {
         $match: {
           placed: true,
-          ...filterByBranchIfPresent,
-          ...creationTimeFilter,
+          ...branchFieldFilter("branch", branchFilter),
+          ...dateRangeFilter("creationTime", createdAfter, createdBefore),
+        },
+      },
+      {
+        $lookup: {
+          from: "payments",
+          let: {
+            paymentIds: {
+              $map: {
+                input: { $ifNull: ["$payments", []] },
+                as: "paymentId",
+                in: { $convert: { input: "$$paymentId", to: "objectId", onError: null } },
+              },
+            },
+          },
+          pipeline: [
+            { $match: { $expr: { $in: ["$_id", "$$paymentIds"] } } },
+            { $project: { confirmed: 1 } },
+          ],
+          as: "paymentInfo",
         },
       },
       { $unwind: "$orderItems" },
@@ -185,22 +192,31 @@ export default class ReportsController {
       },
       {
         $project: {
+          _id: 0,
           ordreID: { $toString: "$_id" },
           filialID: { $toString: "$branch" },
-          filialNavn: { $first: "$branchInfo.name" },
-          employeeNavn: { $first: "$employeeInfo.name" },
-          customerName: { $first: "$customerInfo.name" },
+          filialNavn: firstOrNull("$branchInfo.name"),
+          employeeNavn: firstOrNull("$employeeInfo.name"),
+          customerName: firstOrNull("$customerInfo.name"),
           title: "$orderItems.title",
           ISBN: { $toString: { $first: "$itemInfo.info.isbn" } },
           amount: "$orderItems.amount",
           type: "$orderItems.type",
           payed: {
-            $and: [
-              { $eq: ["$placed", true] },
+            $or: [
+              { $eq: ["$amount", 0] },
               {
-                $or: [
-                  { $eq: ["$amount", 0] },
-                  { $gt: [{ $size: { $ifNull: ["$payments", []] } }, 0] },
+                $gt: [
+                  {
+                    $size: {
+                      $filter: {
+                        input: "$paymentInfo",
+                        as: "payment",
+                        cond: { $eq: ["$$payment.confirmed", true] },
+                      },
+                    },
+                  },
+                  0,
                 ],
               },
             ],
@@ -217,29 +233,11 @@ export default class ReportsController {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(paymentsReportValidator);
 
-    const filterByBranchIfPresent = branchFilter
-      ? {
-          branch: {
-            $in: branchFilter.map((id) => new ObjectId(id)),
-          },
-        }
-      : {};
-
-    const creationTimeLimiter: Record<string, Date> = {};
-    if (createdAfter) {
-      creationTimeLimiter["$gte"] = new Date(createdAfter);
-    }
-    if (createdBefore) {
-      creationTimeLimiter["$lte"] = new Date(createdBefore);
-    }
-    const creationTimeFilter =
-      Object.keys(creationTimeLimiter).length > 0 ? { creationTime: creationTimeLimiter } : {};
-
     return await StorageService.Payments.aggregate([
       {
         $match: {
-          ...filterByBranchIfPresent,
-          ...creationTimeFilter,
+          ...branchFieldFilter("branch", branchFilter),
+          ...dateRangeFilter("creationTime", createdAfter, createdBefore),
         },
       },
       {
@@ -265,11 +263,13 @@ export default class ReportsController {
       },
       {
         $project: {
+          _id: 0,
           id: { $toString: "$_id" },
           method: 1,
           amount: 1,
-          customerName: { $first: "$customerInfo.name" },
-          branchName: { $first: "$branchInfo.name" },
+          confirmed: { $ifNull: ["$confirmed", false] },
+          customerName: firstOrNull("$customerInfo.name"),
+          branchName: firstOrNull("$branchInfo.name"),
           creationTime: 1,
           pivot: "1",
         },
@@ -281,18 +281,10 @@ export default class ReportsController {
     PermissionService.adminOrFail(ctx);
     const { branchFilter } = await ctx.request.validateUsing(userDetailsReportValidator);
 
-    const filterByBranchMembershipIfPresent = branchFilter
-      ? {
-          branchMembership: {
-            $in: branchFilter.map((id) => new ObjectId(id)),
-          },
-        }
-      : {};
-
     return await StorageService.UserDetails.aggregate([
       {
         $match: {
-          ...filterByBranchMembershipIfPresent,
+          ...branchFieldFilter("branchMembership", branchFilter),
         },
       },
       {
@@ -304,7 +296,16 @@ export default class ReportsController {
         },
       },
       {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "userDetail",
+          as: "userInfo",
+        },
+      },
+      {
         $project: {
+          _id: 0,
           id: { $toString: "$_id" },
           email: 1,
           name: 1,
@@ -313,7 +314,8 @@ export default class ReportsController {
           postCity: 1,
           postCode: 1,
           dob: 1,
-          branchMembership: { $ifNull: [{ $first: "$branchInfo.name" }, null] },
+          permission: firstOrNull("$userInfo.permission"),
+          branchMembership: firstOrNull("$branchInfo.name"),
           creationTime: 1,
           pivot: "1",
         },

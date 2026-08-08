@@ -1,3 +1,4 @@
+import { Switch } from "@mantine/core";
 import dayjs from "dayjs";
 import { useState } from "react";
 
@@ -18,6 +19,8 @@ interface CustomerItemsReportQuery {
   createdBefore?: string;
   deadlineAfter?: string;
   deadlineBefore?: string;
+  includeReturned?: boolean;
+  includeBuyout?: boolean;
 }
 
 export default function CustomerItemsReport() {
@@ -26,6 +29,8 @@ export default function CustomerItemsReport() {
   const [branchFilter, setBranchFilter] = useState<string[]>([]);
   const [creationRange, setCreationRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
   const [deadlineRange, setDeadlineRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
+  const [includeReturned, setIncludeReturned] = useState(false);
+  const [includeBuyout, setIncludeBuyout] = useState(false);
 
   const { download, isLoading } = useReportDownload({
     fetchRows: async () => {
@@ -37,6 +42,8 @@ export default function CustomerItemsReport() {
         ...(created.to && { createdBefore: created.to.toISOString() }),
         ...(deadline.from && { deadlineAfter: deadline.from.toISOString() }),
         ...(deadline.to && { deadlineBefore: deadline.to.toISOString() }),
+        ...(includeReturned && { includeReturned }),
+        ...(includeBuyout && { includeBuyout }),
       };
       const rows = await client.api.reports.getCustomerItemsReport({ query });
       return (rows ?? []) as Record<string, unknown>[];
@@ -54,6 +61,16 @@ export default function CustomerItemsReport() {
       <BranchMultiSelect value={branchFilter} onChange={setBranchFilter} />
       <DateRangePresetField label={"Opprettet"} value={creationRange} onChange={setCreationRange} />
       <DateRangePresetField label={"Frist"} value={deadlineRange} onChange={setDeadlineRange} />
+      <Switch
+        label={"Inkluder returnerte bøker"}
+        checked={includeReturned}
+        onChange={(event) => setIncludeReturned(event.currentTarget.checked)}
+      />
+      <Switch
+        label={"Inkluder utkjøpte bøker"}
+        checked={includeBuyout}
+        onChange={(event) => setIncludeBuyout(event.currentTarget.checked)}
+      />
     </ReportCard>
   );
 }

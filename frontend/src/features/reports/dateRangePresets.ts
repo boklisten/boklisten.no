@@ -19,7 +19,7 @@ export interface DateRangeValue {
 }
 
 export const DEFAULT_DATE_RANGE: DateRangeValue = {
-  preset: "all-time",
+  preset: "semester",
   customRange: [null, null],
 };
 

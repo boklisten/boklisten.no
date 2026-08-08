@@ -4,6 +4,15 @@ import DispatchService from "#services/dispatch_service";
 import { UserDetailService } from "#services/user_detail_service";
 import { EMAIL_TEMPLATES } from "#types/email_templates";
 
+export const parsableDate = vine.createRule((value, options, field) => {
+  if (typeof value !== "string") {
+    return;
+  }
+  if (Number.isNaN(Date.parse(value))) {
+    field.report(`${value} er ikke en gyldig dato`, "parsable_date", field);
+  }
+});
+
 export const uniqueEmail = vine.createRule(async (value, options, field) => {
   if (typeof value !== "string") {
     return;
