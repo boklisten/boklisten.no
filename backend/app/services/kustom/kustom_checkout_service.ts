@@ -7,6 +7,7 @@ import { TranslationService } from "#services/translation_service";
 import { DateService } from "#services/legacy/date.service";
 import { DateTime } from "luxon";
 import { BringService } from "#services/bring/bring_service";
+import { DeliveryService } from "#services/delivery_service";
 
 const KUSTOM_BASE_URL =
   env.get("API_ENV") === "production"
@@ -27,17 +28,11 @@ async function createShippingOptions(order: Order, toPostalCode: string, isDeliv
   );
   if (!needShipping) return [];
 
-  const items = await Promise.all(order.orderItems.map((oi) => StorageService.Items.get(oi.item)));
-  const weightInGrams = order.orderItems.reduce((sum, orderItem) => {
-    const weight =
-      Math.round(Number(items.find((item) => item.id === orderItem.item)?.info.weight) * 1000) ||
-      1000;
-    return sum + weight;
-  }, 0);
+  const weightInGrams = await DeliveryService.calculateOrderWeightInGrams(order);
 
   const shippingInfo = await BringService.getShippingInfo({
     toPostalCode,
-    isPostal: weightInGrams < 3000 || items.length <= 3,
+    isPostal: DeliveryService.isPostal(weightInGrams, order.orderItems.length),
     weightInGrams,
   });
 

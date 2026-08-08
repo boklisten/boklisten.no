@@ -94,6 +94,6 @@ export const APP_CONFIG = {
       )
         ? 3
         : 7,
-    maxWeightLetter: 4800,
+    maxWeightLetter: 3000,
   },
 } as const;

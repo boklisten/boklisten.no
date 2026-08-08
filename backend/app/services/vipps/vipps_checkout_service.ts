@@ -2,6 +2,7 @@ import logger from "@adonisjs/core/services/logger";
 import moment from "moment-timezone";
 
 import { APP_CONFIG } from "#services/legacy/application-config";
+import { DeliveryService } from "#services/delivery_service";
 import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
 import { DateService } from "#services/legacy/date.service";
 import { StorageService } from "#services/storage_service";
@@ -40,14 +41,9 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
   );
   if (!needLogistics) return null;
 
-  let totalWeightInGrams = 0;
-  for (const orderItem of order.orderItems) {
-    const item = await StorageService.Items.get(orderItem.item);
-    const weightField = Number(item.info.weight);
-    totalWeightInGrams += (isNaN(weightField) ? 1 : weightField) * 1000;
-  }
+  const totalWeightInGrams = await DeliveryService.calculateOrderWeightInGrams(order);
 
-  const needPickupPoint = Math.ceil(totalWeightInGrams) > APP_CONFIG.delivery.maxWeightLetter;
+  const needPickupPoint = !DeliveryService.isPostal(totalWeightInGrams, order.orderItems.length);
 
   const deliveryPrice = Math.ceil((totalWeightInGrams / 1000) * 20) + (needPickupPoint ? 150 : 75);
 
