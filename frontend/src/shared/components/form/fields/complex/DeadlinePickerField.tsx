@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { useFieldContext } from "@/shared/hooks/form";
 
 const COMMON_DEADLINES = [
+  { month: 1, day: 1 }, // February 1st
   { month: 6, day: 1 }, // July 1st
   { month: 8, day: 1 }, // September 1st
   { month: 11, day: 20 }, // December 20th
