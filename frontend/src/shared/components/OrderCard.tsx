@@ -1,11 +1,11 @@
 import type { OrderItem } from "@boklisten/backend/shared/order/order-item/order-item";
 import { Card, Group, Stack, Text, Title } from "@mantine/core";
 import { IconCheck, IconExclamationMark, IconQrcode, IconSignature } from "@tabler/icons-react";
-import dayjs from "dayjs";
 import { Activity } from "react";
 
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import OrderItemTypeIcon from "@/shared/components/OrderItemTypeIcon";
+import { norwegianTime } from "@/shared/utils/dayjs";
 
 export default function OrderCard({
   id,
@@ -32,7 +32,7 @@ export default function OrderCard({
           <Title order={5} c={"dimmed"}>
             #{id}
           </Title>
-          <Text>{dayjs(creationTime).format("DD/MM/YYYY HH:mm:ss")}</Text>
+          <Text>{norwegianTime(creationTime).format("DD/MM/YYYY HH:mm:ss")}</Text>
         </Group>
         <Activity mode={pendingSignature ? "visible" : "hidden"}>
           <WarningAlert title={"Denne orderen krever gyldig signatur"}>
@@ -76,7 +76,7 @@ export default function OrderCard({
                   >
                     til
                     <Text size={"sm"} fw={"bold"}>
-                      {dayjs(orderItem.info?.to).format("DD/MM/YYYY")}
+                      {norwegianTime(orderItem.info?.to).format("DD/MM/YYYY")}
                     </Text>
                   </Activity>
                 </Group>

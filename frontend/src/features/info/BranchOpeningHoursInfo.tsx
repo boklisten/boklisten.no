@@ -1,11 +1,11 @@
 import { Skeleton, Stack, Table } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import ContactInfo from "@/shared/components/ContactInfo";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
+import { formatOpeningHour } from "@/shared/utils/dates";
 import { publicApi } from "@/shared/utils/publicApiClient";
 import { Route } from "@tuyau/core/types";
 
@@ -14,17 +14,11 @@ const OpeningHourRow = ({
 }: {
   openingHour: Route.Response<"opening_hours.get">[number];
 }) => {
-  const fromDate = dayjs(openingHour.from).locale("nb");
-  const toDate = dayjs(openingHour.to).locale("nb");
-  const weekday = fromDate.format("dddd");
-  const date = fromDate.format("DD.MM.YYYY");
-  const fromTime = fromDate.format("HH:mm");
-  const toTime = toDate.format("HH:mm");
-  const capitalize = (s: string) => s.length > 0 && s[0]?.toUpperCase() + s.slice(1);
+  const { weekday, date, fromTime, toTime } = formatOpeningHour(openingHour);
   return (
     <Table.Tr key={openingHour.id}>
       <Table.Td>
-        {capitalize(weekday)} {date}
+        {weekday} {date}
       </Table.Td>
       <Table.Td>{fromTime}</Table.Td>
       <Table.Td>{toTime}</Table.Td>

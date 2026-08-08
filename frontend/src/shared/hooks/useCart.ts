@@ -1,7 +1,8 @@
 import type { CartItem, CartItemOption } from "@boklisten/backend/shared/cart_item";
 import type { OrderItemType } from "@boklisten/backend/shared/order/order-item/order-item-type";
 import { useSessionStorage } from "@mantine/hooks";
-import dayjs from "dayjs";
+
+import { norwegianTime } from "@/shared/utils/dayjs";
 
 const translations = {
   rent: "lån til",
@@ -52,7 +53,7 @@ export default function useCart() {
 
   function getOptionLabel(option?: CartItemOption) {
     if (!option) throw new Error("Invalid cart item option!");
-    return `${translations[option.type]} ${option.to ? dayjs(option.to).format("DD/MM/YYYY") : ""}`;
+    return `${translations[option.type]} ${option.to ? norwegianTime(option.to).format("DD/MM/YYYY") : ""}`;
   }
   return {
     get: () => cart,

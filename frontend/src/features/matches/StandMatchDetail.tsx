@@ -20,6 +20,7 @@ import {
 import MatchItemTable from "@/shared/components/matches/MatchItemTable";
 import ProgressBar from "@/shared/components/ProgressBar";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
+import { norwegianTime } from "@/shared/utils/dayjs";
 
 function useMeetingStatus(meetingTime?: string | Date) {
   const [isTooEarly, setIsTooEarly] = useState(dayjs().isBefore(dayjs(meetingTime)));
@@ -111,7 +112,9 @@ const StandMatchDetail = ({ standMatch }: { standMatch: StandMatchWithDetails })
               children: (
                 <Stack align={"center"} w={"100%"}>
                   <QRCodeSVG value={standMatch.customer} />
-                  <Title>Oppmøte {dayjs(standMatch.meetingInfo?.date).format("HH:mm")}</Title>
+                  <Title>
+                    Oppmøte {norwegianTime(standMatch.meetingInfo?.date).format("HH:mm")}
+                  </Title>
                   <Activity mode={tooEarly ? "visible" : "hidden"}>
                     <InfoAlert title={"For tidlig ute"}>
                       Din oppmøtetid har ikke kommet enda. Vent med å stille deg i kø til

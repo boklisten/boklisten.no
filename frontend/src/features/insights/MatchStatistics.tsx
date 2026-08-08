@@ -7,7 +7,6 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
 
 import ChartCard from "@/features/insights/ChartCard";
 import DataFreshness from "@/features/insights/DataFreshness";
@@ -18,6 +17,7 @@ import useReportDownload from "@/features/reports/useReportDownload";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
+import { norwegianTime } from "@/shared/utils/dayjs";
 
 const REFRESH_INTERVAL_MS = 30_000;
 
@@ -48,7 +48,7 @@ function percent(part: number, whole: number) {
 }
 
 function slotLabel(date: string | null) {
-  return date ? dayjs(date).format("DD.MM HH:mm") : "Uten tidspunkt";
+  return date ? norwegianTime(date).format("DD.MM HH:mm") : "Uten tidspunkt";
 }
 
 function compareSlots(a: string | null, b: string | null) {

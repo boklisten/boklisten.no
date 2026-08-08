@@ -2,12 +2,12 @@ import type { CartItem } from "@boklisten/backend/shared/cart_item";
 import { Loader, Title } from "@mantine/core";
 import { useMounted } from "@mantine/hooks";
 import { useMutation } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import { useState } from "react";
 
 import useApiClient from "@/shared/hooks/useApiClient";
 import useCart from "@/shared/hooks/useCart";
 import { showErrorNotification } from "@/shared/utils/notifications";
+import { norwegianTime } from "@/shared/utils/dayjs";
 import { useNavigate } from "@tanstack/react-router";
 
 export default function CheckoutHandler() {
@@ -28,7 +28,7 @@ export default function CheckoutHandler() {
               branchId: cartItem.branchId,
               type: selectedOption.type,
               price: selectedOption.price,
-              to: dayjs(selectedOption.to).format("YYYY-MM-DD"),
+              to: norwegianTime(selectedOption.to).format("YYYY-MM-DD"),
             };
           }),
         },

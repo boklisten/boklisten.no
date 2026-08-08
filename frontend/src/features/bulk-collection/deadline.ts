@@ -1,8 +1,10 @@
 import dayjs from "dayjs";
 
+import { norwegianTime } from "@/shared/utils/dayjs";
+
 /** Formats an ISO deadline as DD/MM/YYYY (the convention used across the app). */
 export function formatDeadline(isoDeadline: string): string {
-  return dayjs(isoDeadline).format("DD/MM/YYYY");
+  return norwegianTime(isoDeadline).format("DD/MM/YYYY");
 }
 
 /**

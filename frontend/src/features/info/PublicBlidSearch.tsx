@@ -2,12 +2,12 @@ import type { PublicBlidLookupResult } from "@boklisten/backend/shared/public_bl
 import { ActionIcon, Card, Group, Stack, Table, Text, Title, Tooltip } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconMail, IconObjectScan, IconPhone } from "@tabler/icons-react";
-import dayjs from "dayjs";
 import { useState } from "react";
 
 import ScannerModal from "@/shared/components/scanner/ScannerModal";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
+import { norwegianTime } from "@/shared/utils/dayjs";
 
 export default function PublicBlidSearch() {
   const { client } = useApiClient();
@@ -123,11 +123,13 @@ export default function PublicBlidSearch() {
                   </Table.Tr>
                   <Table.Tr>
                     <Table.Th>Utdelt den</Table.Th>
-                    <Table.Td>{dayjs(searchResult.handoutTime).format("DD/MM/YYYY")}</Table.Td>
+                    <Table.Td>
+                      {norwegianTime(searchResult.handoutTime).format("DD/MM/YYYY")}
+                    </Table.Td>
                   </Table.Tr>
                   <Table.Tr>
                     <Table.Th>Frist</Table.Th>
-                    <Table.Td>{dayjs(searchResult.deadline).format("DD/MM/YYYY")}</Table.Td>
+                    <Table.Td>{norwegianTime(searchResult.deadline).format("DD/MM/YYYY")}</Table.Td>
                   </Table.Tr>
                 </Table.Tbody>
               </Table>

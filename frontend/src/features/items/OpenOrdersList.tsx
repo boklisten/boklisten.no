@@ -2,11 +2,11 @@ import { Box, Button, Table, Tooltip } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconShoppingCart } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import { Activity } from "react";
 
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
+import { norwegianTime } from "@/shared/utils/dayjs";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -51,7 +51,7 @@ export default function OpenOrdersList({
             {openOrderItems?.map((orderItem) => (
               <Table.Tr key={orderItem.orderId + orderItem.itemId}>
                 <Table.Td>{orderItem.title}</Table.Td>
-                <Table.Td>{dayjs(orderItem.deadline).format("DD/MM/YYYY")}</Table.Td>
+                <Table.Td>{norwegianTime(orderItem.deadline).format("DD/MM/YYYY")}</Table.Td>
                 <Table.Td>
                   <Tooltip
                     disabled={orderItem.cancelable}

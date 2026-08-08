@@ -14,6 +14,7 @@ import dayjs from "dayjs";
 import { Activity, type ReactNode } from "react";
 
 import useCart from "@/shared/hooks/useCart";
+import { norwegianTime } from "@/shared/utils/dayjs";
 import { Route } from "@tuyau/core/types";
 
 function InfoEntry({
@@ -84,13 +85,15 @@ export default function CustomerItemCard({
         <InfoEntry
           label={"Utdelingstidspunkt"}
           startIcon={<IconHourglassHigh />}
-          text={dayjs(actionableCustomerItem.handoutAt).format("DD/MM/YYYY")}
+          text={norwegianTime(actionableCustomerItem.handoutAt).format("DD/MM/YYYY")}
         />
         <Divider />
         <Group>
           <IconCalendarEvent />
           <Text>Frist: </Text>
-          <Text fw={"bold"}>{dayjs(actionableCustomerItem.deadline).format("DD/MM/YYYY")}</Text>
+          <Text fw={"bold"}>
+            {norwegianTime(actionableCustomerItem.deadline).format("DD/MM/YYYY")}
+          </Text>
         </Group>
         <Activity
           mode={

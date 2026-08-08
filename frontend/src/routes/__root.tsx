@@ -3,6 +3,7 @@ import "@mantine/dates/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/tiptap/styles.css";
 import "@mantine/charts/styles.css";
+import "@/shared/utils/dayjs";
 
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
@@ -13,8 +14,6 @@ import { AgGridProvider } from "ag-grid-react";
 
 import theme from "@/shared/utils/theme";
 import { DatesProvider } from "@mantine/dates";
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
@@ -49,8 +48,6 @@ export const Route = createRootRoute({
 });
 
 function RootLayout() {
-  dayjs.extend(customParseFormat);
-  dayjs.locale("nb");
   return (
     <html lang="no" {...mantineHtmlProps}>
       <head>

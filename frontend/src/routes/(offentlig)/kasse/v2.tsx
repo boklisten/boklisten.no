@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { Container, Loader, Stack, Title } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import { showErrorNotification } from "@/shared/utils/notifications";
+import { norwegianTime } from "@/shared/utils/dayjs";
 import type { CartItem } from "@boklisten/backend/shared/cart_item";
 import useCart from "@/shared/hooks/useCart";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -32,7 +32,7 @@ function RouteComponent() {
               branchId: cartItem.branchId,
               type: selectedOption.type,
               price: selectedOption.price,
-              to: dayjs(selectedOption.to).format("YYYY-MM-DD"),
+              to: norwegianTime(selectedOption.to).format("YYYY-MM-DD"),
             };
           }),
         },

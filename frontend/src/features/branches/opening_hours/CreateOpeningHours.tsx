@@ -4,10 +4,11 @@ import dayjs from "dayjs";
 
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
+import { parseNorwegianTime } from "@/shared/utils/dayjs";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 function combineDateAndTime(date: string, time: string) {
-  return dayjs(`${date}T${time}`).toISOString();
+  return parseNorwegianTime(date, time).toISOString();
 }
 
 export default function CreateOpeningHours({ branchId }: { branchId: string }) {
