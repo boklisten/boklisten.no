@@ -76,9 +76,27 @@ export interface UserAttendanceSlot {
   people: number;
 }
 
+export interface HandoverVerdictBreakdown {
+  asPlanned: number;
+  /** The receiver got their book, but from someone other than their matched peer. */
+  fromUnexpectedSender: number;
+  /** The sender's copy went to someone other than their matched peer. */
+  toUnexpectedRecipient: number;
+  /** A book moved with no matching obligation on either side. */
+  outsideAnyMatch: number;
+}
+
+export interface SenderLiability {
+  studentsStillResponsible: number;
+  copiesOutstanding: number;
+}
+
 export interface MatchStatistics {
   /** ISO timestamp of when the statistics were computed. */
   generatedAt: string;
+  /** The round these statistics describe. Empty when no round has been generated yet. */
+  roundId: string;
+  roundName: string;
   userMatchCount: number;
   standMatchCount: number;
   studentReach: StudentReachSummary;
@@ -99,4 +117,6 @@ export interface MatchStatistics {
   standAttendance: StandAttendanceSlot[];
   /** Sorted by location, then chronologically; the "no time" bucket comes last. */
   userAttendance: UserAttendanceSlot[];
+  handoverVerdicts: HandoverVerdictBreakdown;
+  senderLiability: SenderLiability;
 }

@@ -288,6 +288,18 @@ const routes = {
     tokens: [{"old":"/matches","type":0,"val":"matches","end":""}],
     types: placeholder as Registry['matches.get_all_matches']['types'],
   },
+  'matches.get_matches_for_round': {
+    methods: ["GET","HEAD"],
+    pattern: '/matches/round/:roundId',
+    tokens: [{"old":"/matches/round/:roundId","type":0,"val":"matches","end":""},{"old":"/matches/round/:roundId","type":0,"val":"round","end":""},{"old":"/matches/round/:roundId","type":1,"val":"roundId","end":""}],
+    types: placeholder as Registry['matches.get_matches_for_round']['types'],
+  },
+  'matches.get_match_by_id': {
+    methods: ["GET","HEAD"],
+    pattern: '/matches/id/:matchId',
+    tokens: [{"old":"/matches/id/:matchId","type":0,"val":"matches","end":""},{"old":"/matches/id/:matchId","type":0,"val":"id","end":""},{"old":"/matches/id/:matchId","type":1,"val":"matchId","end":""}],
+    types: placeholder as Registry['matches.get_match_by_id']['types'],
+  },
   'matches.transfer_item': {
     methods: ["POST"],
     pattern: '/matches/transfer_item',
@@ -299,6 +311,30 @@ const routes = {
     pattern: '/matches/statistics',
     tokens: [{"old":"/matches/statistics","type":0,"val":"matches","end":""},{"old":"/matches/statistics","type":0,"val":"statistics","end":""}],
     types: placeholder as Registry['match_statistics.get_statistics']['types'],
+  },
+  'match_statistics.get_statistics_for_round': {
+    methods: ["GET","HEAD"],
+    pattern: '/matches/statistics/round/:roundId',
+    tokens: [{"old":"/matches/statistics/round/:roundId","type":0,"val":"matches","end":""},{"old":"/matches/statistics/round/:roundId","type":0,"val":"statistics","end":""},{"old":"/matches/statistics/round/:roundId","type":0,"val":"round","end":""},{"old":"/matches/statistics/round/:roundId","type":1,"val":"roundId","end":""}],
+    types: placeholder as Registry['match_statistics.get_statistics_for_round']['types'],
+  },
+  'match_rounds.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/match_rounds',
+    tokens: [{"old":"/match_rounds","type":0,"val":"match_rounds","end":""}],
+    types: placeholder as Registry['match_rounds.index']['types'],
+  },
+  'match_rounds.update': {
+    methods: ["PATCH"],
+    pattern: '/match_rounds/:id',
+    tokens: [{"old":"/match_rounds/:id","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['match_rounds.update']['types'],
+  },
+  'match_rounds.destroy': {
+    methods: ["DELETE"],
+    pattern: '/match_rounds/:id',
+    tokens: [{"old":"/match_rounds/:id","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['match_rounds.destroy']['types'],
   },
   'user_detail.get_by_id': {
     methods: ["GET","HEAD"],

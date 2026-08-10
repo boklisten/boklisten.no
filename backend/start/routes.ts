@@ -154,8 +154,17 @@ router.post("/user_matches/lock", [controllers.Matches, "lock"]);
 router.get("/matches/me", [controllers.Matches, "getMyMatches"]);
 router.get("/matches/customer/:customerId", [controllers.Matches, "getMatchesForCustomer"]);
 router.get("/matches", [controllers.Matches, "getAllMatches"]);
+router.get("/matches/round/:roundId", [controllers.Matches, "getMatchesForRound"]);
+router.get("/matches/id/:matchId", [controllers.Matches, "getMatchById"]);
 router.post("/matches/transfer_item", [controllers.Matches, "transferItem"]);
 router.get("/matches/statistics", [controllers.MatchStatistics, "getStatistics"]);
+router.get("/matches/statistics/round/:roundId", [
+  controllers.MatchStatistics,
+  "getStatisticsForRound",
+]);
+router.get("/match_rounds", [controllers.MatchRounds, "index"]);
+router.patch("/match_rounds/:id", [controllers.MatchRounds, "update"]);
+router.delete("/match_rounds/:id", [controllers.MatchRounds, "destroy"]);
 
 /**
  * user detail

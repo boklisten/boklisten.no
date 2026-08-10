@@ -7,6 +7,33 @@
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
+export class BookHandoverSchema extends BaseModel {
+  static $columns = ['blid', 'createdAt', 'dischargesReceiverObligationId', 'dischargesSenderObligationId', 'fromUserDetailId', 'id', 'itemId', 'occurredAt', 'orderId', 'toUserDetailId', 'updatedAt'] as const
+  $columns = BookHandoverSchema.$columns
+  @column()
+  declare blid: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare dischargesReceiverObligationId: number | null
+  @column()
+  declare dischargesSenderObligationId: number | null
+  @column()
+  declare fromUserDetailId: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare itemId: string
+  @column.dateTime()
+  declare occurredAt: DateTime
+  @column()
+  declare orderId: string | null
+  @column()
+  declare toUserDetailId: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class EditableTextSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'text', 'updatedAt'] as const
   $columns = EditableTextSchema.$columns
@@ -31,6 +58,78 @@ export class EmailVerificationSchema extends BaseModel {
   declare updatedAt: DateTime | null
   @column()
   declare userDetailId: string
+}
+
+export class MatchObligationSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'itemId', 'lockedToMatch', 'matchId', 'receiverParticipantId', 'senderParticipantId', 'updatedAt'] as const
+  $columns = MatchObligationSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare itemId: string
+  @column()
+  declare lockedToMatch: boolean
+  @column()
+  declare matchId: number
+  @column()
+  declare receiverParticipantId: number
+  @column()
+  declare senderParticipantId: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class MatchParticipantSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'matchId', 'updatedAt', 'userDetailId'] as const
+  $columns = MatchParticipantSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare matchId: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userDetailId: string | null
+}
+
+export class MatchRoundSchema extends BaseModel {
+  static $columns = ['createdAt', 'generatedAt', 'id', 'name', 'standLocation', 'status', 'updatedAt'] as const
+  $columns = MatchRoundSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column.dateTime()
+  declare generatedAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare name: string
+  @column()
+  declare standLocation: string
+  @column()
+  declare status: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class MatchSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'meetingLocation', 'meetingTime', 'roundId', 'updatedAt'] as const
+  $columns = MatchSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare meetingLocation: string
+  @column.dateTime()
+  declare meetingTime: DateTime | null
+  @column()
+  declare roundId: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
 }
 
 export class OpeningHourSchema extends BaseModel {

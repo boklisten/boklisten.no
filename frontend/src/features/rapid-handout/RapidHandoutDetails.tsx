@@ -1,5 +1,5 @@
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
-import type { UserMatchWithDetails } from "@boklisten/backend/shared/match/match-dtos";
+import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
 import type { Order } from "@boklisten/backend/shared/order/order";
 import type { OrderItem } from "@boklisten/backend/shared/order/order-item/order-item";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
@@ -10,15 +10,12 @@ import { IconObjectScan } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
+import { forViewer, partyName } from "@/features/matches/forViewer";
 import PeerTransferList, { type PeerBook } from "@/features/rapid-handout/PeerTransferList";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import {
-  calculateItemStatuses,
-  calculateUserMatchStatus,
-  ItemStatus,
-} from "@/shared/components/matches/matches-helper";
-import MatchItemTable from "@/shared/components/matches/MatchItemTable";
-import MatchScannerContent from "@/shared/components/matches/MatchScannerContent";
+import { ItemStatus } from "@/shared/components/matches/matches-helper";
+import { ItemStatusTable } from "@/shared/components/matches/MatchItemTable";
+import { StandScannerProgress } from "@/shared/components/matches/MatchScannerContent";
 import { determineScannedTextType } from "@/shared/components/scanner/BlidScanner";
 import ScannerModal from "@/shared/components/scanner/ScannerModal";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -44,31 +41,22 @@ function mapOrdersToItemStatuses(orders: Order[]): ItemStatus[] {
   }));
 }
 
-/**
- * Splits the customer's user matches into books they receive from / deliver to other students,
- * seen from this customer's perspective. Books received from a peer should not be handed out at
- * the stand; books delivered to a peer are shown as a reminder.
- */
-function buildPeerBooks(userMatches: UserMatchWithDetails[], customerId: string) {
+function buildPeerBooks(matches: MatchDto[], customerId: string) {
   const receiveBooks: PeerBook[] = [];
   const giveBooks: PeerBook[] = [];
-  for (const userMatch of userMatches) {
-    const status = calculateUserMatchStatus(userMatch, customerId);
-    const toPeerBooks = (itemIds: string[], fulfilledIds: string[]): PeerBook[] => {
-      try {
-        return calculateItemStatuses(userMatch, () => itemIds, fulfilledIds).map((itemStatus) => ({
-          ...itemStatus,
-          personName: status.otherUser.name,
-          locked: userMatch.itemsLockedToMatch,
-        }));
-      } catch {
-        return [];
-      }
-    };
-    receiveBooks.push(
-      ...toPeerBooks(status.currentUser.wantedItems, status.currentUser.receivedItems),
-    );
-    giveBooks.push(...toPeerBooks(status.currentUser.items, status.currentUser.deliveredItems));
+  for (const match of matches) {
+    if (match.isStandMatch) continue;
+    const { toDeliver, toReceive } = forViewer(match, customerId);
+    const toPeerBooks = (obligations: typeof toDeliver): PeerBook[] =>
+      obligations.map((obligation) => ({
+        id: obligation.itemId,
+        title: obligation.title,
+        fulfilled: obligation.fulfilled,
+        personName: partyName(obligation.expected),
+        locked: obligation.lockedToMatch,
+      }));
+    receiveBooks.push(...toPeerBooks(toReceive));
+    giveBooks.push(...toPeerBooks(toDeliver));
   }
   return { receiveBooks, giveBooks };
 }
@@ -124,7 +112,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
     updateFulfilledOrderItems();
   }, [orders]);
 
-  const { receiveBooks, giveBooks } = buildPeerBooks(matchData?.userMatches ?? [], customer.id);
+  const { receiveBooks, giveBooks } = buildPeerBooks(matchData ?? [], customer.id);
   // Books the customer receives from a peer are not handed out at the stand, so keep them out of
   // the stand list (edition-tolerant comparison).
   const standStatuses = itemStatuses.filter(
@@ -153,7 +141,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
       {standStatuses.length > 0 && (
         <Stack gap={"xs"}>
           <Title order={2}>{standTitle}</Title>
-          <MatchItemTable itemStatuses={standStatuses} isSender={true} />
+          <ItemStatusTable itemStatuses={standStatuses} isSender={true} />
         </Stack>
       )}
 
@@ -177,7 +165,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
         <PeerTransferList title={"Leveres til andre elever"} direction={"give"} books={giveBooks} />
       )}
 
-      <Modal opened={opened} onClose={close} title={"Scann bøker"}>
+      <Modal opened={opened} onClose={close} title={"Skann bøker"}>
         <ScannerModal
           allowManualRegistration
           disableValidation={true}
@@ -244,13 +232,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
           }}
           onSuccessfulScan={invalidate}
         >
-          <MatchScannerContent
-            itemStatuses={standStatuses}
-            expectedItems={standStatuses.map((itemStatus) => itemStatus.id)}
-            fulfilledItems={standStatuses
-              .filter((itemStatus) => itemStatus.fulfilled)
-              .map((itemStatus) => itemStatus.id)}
-          />
+          <StandScannerProgress itemStatuses={standStatuses} />
           {receiveBooks.length > 0 && (
             <InfoAlert title={"Fås fra andre elever – ikke del ut her"}>
               <Stack gap={2}>

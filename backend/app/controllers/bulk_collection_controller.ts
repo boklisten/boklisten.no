@@ -1,16 +1,12 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import { DateTime } from "luxon";
-import { ObjectId } from "mongodb";
 
 import BlidService from "#services/blid_service";
 import { CustomerItemActive } from "#services/legacy/collections/customer-item/helpers/customer-item-active";
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { OrderPlaceOperation } from "#services/legacy/collections/order/operations/place/order-place.operation";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
-import {
-  ITEMS_LOCKED_TO_MATCH_RETURN_FEEDBACK,
-  MatchLockService,
-} from "#services/match_lock_service";
+import { ITEMS_LOCKED_TO_MATCH_RETURN_FEEDBACK, MatchLock } from "#services/matches/match_lock";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import type {
@@ -22,7 +18,6 @@ import type {
 } from "#shared/bulk-collection/bulk-collection-dtos";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { Item } from "#shared/item";
-import { UserMatch } from "#shared/match/user-match";
 import { OrderItem } from "#shared/order/order-item/order-item";
 import { bulkCollectionCollectValidator } from "#validators/bulk_collection_validator";
 
@@ -76,11 +71,8 @@ export default class BulkCollectionController {
       };
     }
 
-    const customerIds = [...new Set(customerItems.map((customerItem) => customerItem.customer))];
-    const userMatches = await this.getUserMatchesForCustomers(customerIds);
-
     // Safety guard – the frontend only submits unlocked books, but re-check in case of a race.
-    if (MatchLockService.findCustomerItemsLockedToMatch(customerItems, userMatches).length > 0) {
+    if ((await MatchLock.findCustomerItemsLockedToMatch(customerItems)).length > 0) {
       return { success: false, feedback: ITEMS_LOCKED_TO_MATCH_RETURN_FEEDBACK };
     }
 
@@ -147,18 +139,12 @@ export default class BulkCollectionController {
 
   private async resolveScannedBook(customerItem: CustomerItem): Promise<ScannedBook> {
     const branchId = customerItem.handoutInfo?.handoutById;
-    const [item, branch, customerDetail, userMatches] = await Promise.all([
+    const [item, branch, customerDetail, recipientCustomerId] = await Promise.all([
       StorageService.Items.get(customerItem.item),
       branchId ? StorageService.Branches.get(branchId) : Promise.resolve(undefined),
       StorageService.UserDetails.get(customerItem.customer),
-      this.getUserMatchesForCustomers([customerItem.customer]),
+      MatchLock.findLockedRecipient(customerItem.customer, customerItem.item),
     ]);
-
-    const recipientCustomerId = MatchLockService.findMatchRecipientCustomerId(
-      customerItem.customer,
-      customerItem.item,
-      userMatches,
-    );
     const deliverTo = recipientCustomerId
       ? await StorageService.UserDetails.getOrNull(recipientCustomerId)
       : null;
@@ -235,18 +221,6 @@ export default class BulkCollectionController {
     return new Map(
       items.filter((item): item is Item => item !== null).map((item) => [item.id, item]),
     );
-  }
-
-  private async getUserMatchesForCustomers(customerIds: string[]): Promise<UserMatch[]> {
-    if (customerIds.length === 0) return [];
-    const objectIds = customerIds.map((id) => new ObjectId(id));
-    return (await StorageService.UserMatches.aggregate([
-      {
-        $match: {
-          $or: [{ customerA: { $in: objectIds } }, { customerB: { $in: objectIds } }],
-        },
-      },
-    ])) as UserMatch[];
   }
 
   private toIsoDeadline(deadline: Date): string {

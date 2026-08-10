@@ -1,6 +1,8 @@
-import { MatchableUser } from "#services/match_helpers/match-finder/match-types";
-import { CandidateStandMatch } from "#shared/match/stand-match";
-import { CandidateUserMatch } from "#shared/match/user-match";
+import {
+  CandidateStandMatch,
+  CandidateUserMatch,
+  MatchableUser,
+} from "#services/match_helpers/match-finder/match-types";
 
 /**
  * Create a sorted deep copy of the input users
@@ -28,9 +30,10 @@ export function sortUsers(
   users: MatchableUser[],
   standMatches: CandidateStandMatch[],
 ): MatchableUser[] {
+  const customersWithStandMatch = new Set(standMatches.map((standMatch) => standMatch.customer));
   return users.toSorted((a, b) => {
-    const aHasStandMatch = standMatches.some((standMatch) => standMatch.customer === a.id);
-    const bHasStandMatch = standMatches.some((standMatch) => standMatch.customer === b.id);
+    const aHasStandMatch = customersWithStandMatch.has(a.id);
+    const bHasStandMatch = customersWithStandMatch.has(b.id);
 
     if (aHasStandMatch && !bHasStandMatch) return 1;
     if (!aHasStandMatch && bHasStandMatch) return -1;

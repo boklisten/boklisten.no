@@ -10,9 +10,7 @@ export const BlSchemaName = {
   Orders: "orders",
   Payments: "payments",
   Signatures: "signatures",
-  StandMatches: "stand_matches",
   UniqueItems: "uniqueitems",
   Users: "users",
   UserDetails: "userdetails",
-  UserMatches: "user_matches",
 } as const satisfies Record<string, string>;

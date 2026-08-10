@@ -44,7 +44,7 @@ export default function UserDetailSearchField({
             variant={"subtle"}
             onClick={() => {
               modals.open({
-                title: "Scann kundeID",
+                title: "Skann kundeID",
                 children: (
                   <ScannerModal
                     onScan={async (scannedText) => {
