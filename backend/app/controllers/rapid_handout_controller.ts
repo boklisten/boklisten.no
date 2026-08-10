@@ -1,8 +1,8 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import { ObjectId } from "mongodb";
+import { DateTime } from "luxon";
 import { BlError } from "#shared/bl-error";
-import { MatchLockService } from "#services/match_lock_service";
-import type { UserMatch } from "#shared/match/user-match";
+import { MatchLock } from "#services/matches/match_lock";
+import { MatchRepository } from "#services/matches/match_repository";
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
 import type { Order } from "#shared/order/order";
 import type { UniqueItem } from "#shared/unique-item";
@@ -63,27 +63,18 @@ export default class RapidHandoutController {
   }
 
   /**
-   * If the customer is expected to receive this item from another student via a UserMatch, returns
-   * the sender's name and whether that match is locked (and thus impossible to hand out at stand).
+   * If the customer is due to receive this item from another student, returns the sender's name and
+   * whether that handover is locked (and thus impossible to hand out at stand).
    */
   private async findPeerReceiveSource(
     itemId: string,
     customerId: string,
   ): Promise<{ locked: boolean; deliverFromName: string } | null> {
-    const userMatches = (await StorageService.UserMatches.aggregate([
-      {
-        $match: {
-          $or: [{ customerA: new ObjectId(customerId) }, { customerB: new ObjectId(customerId) }],
-        },
-      },
-    ])) as UserMatch[];
+    const peer = await MatchLock.findPeerSender(customerId, itemId);
+    if (!peer) return null;
 
-    const match = MatchLockService.findReceivingUserMatch(customerId, itemId, userMatches);
-    if (!match) return null;
-
-    const senderId = MatchLockService.getMatchCounterpartCustomerId(customerId, match);
-    const sender = await StorageService.UserDetails.getOrNull(senderId);
-    return { locked: match.itemsLockedToMatch, deliverFromName: sender?.name ?? "en annen elev" };
+    const sender = await StorageService.UserDetails.getOrNull(peer.senderCustomerId);
+    return { locked: peer.lockedToMatch, deliverFromName: sender?.name ?? "en annen elev" };
   }
 
   private async createCustomerItem(placedReceiverOrder: Order): Promise<void> {
@@ -186,18 +177,23 @@ export default class RapidHandoutController {
     const orderMovedToHandler = new OrderItemMovedFromOrderHandler();
     await orderMovedToHandler.updateOrderItems(placedHandoutOrder);
 
-    const databaseQuery = new SEDbQuery();
-    databaseQuery.objectIdFilters = [{ fieldName: "customer", value: customerId }];
-    const standMatches = await StorageService.StandMatches.getByQueryOrNull(databaseQuery);
-    const standMatch = standMatches?.[0] ?? null;
-    if (standMatch) {
-      await StorageService.StandMatches.update(standMatch.id, {
-        receivedItems: [
-          ...standMatch.receivedItems,
-          customerOrder.relevantOrderItem?.item ?? itemId,
-        ],
-      });
-    }
+    // The stand is a party to the handover in its own right, so this is recorded like any other
+    // movement: it settles the customer's receiver half if they were due the book from anyone.
+    const handedOutItemId = customerOrder.relevantOrderItem?.item ?? itemId;
+    const receiverObligation = await MatchRepository.findReceiverObligation(
+      customerId,
+      handedOutItemId,
+    );
+    await MatchRepository.recordHandover({
+      blid,
+      itemId: handedOutItemId,
+      fromUserDetailId: null,
+      toUserDetailId: customerId,
+      occurredAt: DateTime.now(),
+      orderId: placedHandoutOrder.id,
+      dischargesSenderObligationId: null,
+      dischargesReceiverObligationId: receiverObligation?.id ?? null,
+    });
 
     return placedHandoutOrder;
   }

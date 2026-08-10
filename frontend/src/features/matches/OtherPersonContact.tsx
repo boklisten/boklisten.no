@@ -1,26 +1,21 @@
-import type { AccessToken } from "@boklisten/backend/shared/access-token";
-import type { UserMatchWithDetails } from "@boklisten/backend/shared/match/match-dtos";
+import type { HandoverParty } from "@boklisten/backend/shared/match/match-dto";
 import { Anchor, Group, Text } from "@mantine/core";
 import { IconPhone } from "@tabler/icons-react";
-import { decodeToken } from "react-jwt";
 
-import BL_CONFIG from "@/shared/utils/bl-config";
-
-const OtherPersonContact = ({ userMatch }: { userMatch: UserMatchWithDetails }) => {
-  const decodedAccessToken = decodeToken<AccessToken>(
-    localStorage.getItem(BL_CONFIG.token.accessToken) ?? "",
-  );
-  const otherPerson =
-    userMatch.customerA === decodedAccessToken?.details
-      ? userMatch.customerBDetails
-      : userMatch.customerADetails;
+const OtherPersonContact = ({ party }: { party: HandoverParty }) => {
+  if (party.kind === "stand") {
+    return (
+      <Group gap={5}>
+        <Text>Boklisten sin stand</Text>
+      </Group>
+    );
+  }
 
   return (
     <Group gap={5}>
       <IconPhone />
       <Text>
-        {otherPerson.name},{" "}
-        <Anchor href={`tel:${otherPerson.phone}`}>{formatPhoneNumber(otherPerson.phone)}</Anchor>
+        {party.name}, <Anchor href={`tel:${party.phone}`}>{formatPhoneNumber(party.phone)}</Anchor>
       </Text>
     </Group>
   );

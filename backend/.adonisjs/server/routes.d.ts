@@ -51,8 +51,14 @@ export type ScannedRoutes = {
     'matches.get_my_matches': { paramsTuple?: []; params?: {} }
     'matches.get_matches_for_customer': { paramsTuple: [ParamValue]; params: {'customerId': ParamValue} }
     'matches.get_all_matches': { paramsTuple?: []; params?: {} }
+    'matches.get_matches_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
+    'matches.get_match_by_id': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'matches.transfer_item': { paramsTuple?: []; params?: {} }
     'match_statistics.get_statistics': { paramsTuple?: []; params?: {} }
+    'match_statistics.get_statistics_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
+    'match_rounds.index': { paramsTuple?: []; params?: {} }
+    'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'match_rounds.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'user_detail.get_by_id': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'user_detail.search': { paramsTuple?: []; params?: {} }
     'user_detail.get_my_details': { paramsTuple?: []; params?: {} }
@@ -178,7 +184,11 @@ export type ScannedRoutes = {
     'matches.get_my_matches': { paramsTuple?: []; params?: {} }
     'matches.get_matches_for_customer': { paramsTuple: [ParamValue]; params: {'customerId': ParamValue} }
     'matches.get_all_matches': { paramsTuple?: []; params?: {} }
+    'matches.get_matches_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
+    'matches.get_match_by_id': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'match_statistics.get_statistics': { paramsTuple?: []; params?: {} }
+    'match_statistics.get_statistics_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
+    'match_rounds.index': { paramsTuple?: []; params?: {} }
     'user_detail.get_by_id': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'user_detail.get_my_details': { paramsTuple?: []; params?: {} }
     'customer_items.get_customer_items': { paramsTuple?: []; params?: {} }
@@ -251,7 +261,11 @@ export type ScannedRoutes = {
     'matches.get_my_matches': { paramsTuple?: []; params?: {} }
     'matches.get_matches_for_customer': { paramsTuple: [ParamValue]; params: {'customerId': ParamValue} }
     'matches.get_all_matches': { paramsTuple?: []; params?: {} }
+    'matches.get_matches_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
+    'matches.get_match_by_id': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'match_statistics.get_statistics': { paramsTuple?: []; params?: {} }
+    'match_statistics.get_statistics_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
+    'match_rounds.index': { paramsTuple?: []; params?: {} }
     'user_detail.get_by_id': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'user_detail.get_my_details': { paramsTuple?: []; params?: {} }
     'customer_items.get_customer_items': { paramsTuple?: []; params?: {} }
@@ -365,6 +379,7 @@ export type ScannedRoutes = {
     'branch_membership.remove_indirect_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'editable_texts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'questions_and_answers.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'match_rounds.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'companies.delete_company': { paramsTuple: [ParamValue]; params: {'companyId': ParamValue} }
     'opening_hours.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branchitems.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -381,6 +396,7 @@ export type ScannedRoutes = {
     'branch_membership.update_membership': { paramsTuple?: []; params?: {} }
     'questions_and_answers.update_order': { paramsTuple?: []; params?: {} }
     'questions_and_answers.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branches.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branchitems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.customeritems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

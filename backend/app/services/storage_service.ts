@@ -12,12 +12,10 @@ import { MessageSchema } from "#models/mongoose/message.schema";
 import { OrderSchema } from "#models/mongoose/order.schema";
 import { PaymentSchema } from "#models/mongoose/payment.schema";
 import { SignatureSchema } from "#models/mongoose/signature.schema";
-import { StandMatchSchema } from "#models/mongoose/stand-match.schema";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { MongodbHandler } from "#models/mongoose/storage/mongodb-handler";
 import { UniqueItemSchema } from "#models/mongoose/unique-item.schema";
 import { UserDetailSchema } from "#models/mongoose/user-detail.schema";
-import { UserMatchSchema } from "#models/mongoose/user-match.schema";
 import { UserSchema } from "#models/mongoose/user.schema";
 
 export type BlSchema<T> = Schema<ToSchema<T>>;
@@ -34,11 +32,9 @@ export const StorageService = {
   Orders: new MongodbHandler(OrderSchema, BlSchemaName.Orders),
   Payments: new MongodbHandler(PaymentSchema, BlSchemaName.Payments),
   Signatures: new MongodbHandler(SignatureSchema, BlSchemaName.Signatures),
-  StandMatches: new MongodbHandler(StandMatchSchema, BlSchemaName.StandMatches),
   UniqueItems: new MongodbHandler(UniqueItemSchema, BlSchemaName.UniqueItems),
   Users: new MongodbHandler(UserSchema, BlSchemaName.Users),
   UserDetails: new MongodbHandler(UserDetailSchema, BlSchemaName.UserDetails),
-  UserMatches: new MongodbHandler(UserMatchSchema, BlSchemaName.UserMatches),
 } as const;
 
 export type BlStorageHandler = (typeof StorageService)[keyof typeof StorageService];

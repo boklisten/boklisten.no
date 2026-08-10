@@ -26,6 +26,7 @@ export default function useAuth() {
     : -1;
 
   return {
+    detailsId: decodedAccessToken?.details ?? null,
     isLoading: accessToken === null,
     isLoggedIn: permissionLevel >= PERMISSION_LEVELS.customer,
     isEmployee: permissionLevel >= PERMISSION_LEVELS.employee,

@@ -401,12 +401,12 @@ test.group("Faulty data checks", async () => {
     }, "Found duplicates in this.users");
   });
 
-  test("should throw an error if a user wants any items that they already have", async ({
-    assert,
-  }) => {
+  test("accepts a user who wants an item they already have", async ({ assert }) => {
+    // A student can legitimately hold one copy of a title and be owed another — two subjects
+    // sharing a book, or a retake year. MatchFinder used to reject this outright.
     const userX = createFakeMatchableUser("userX", ["book1", "book2"], ["book2"]);
-    assert.throws(() => {
+    assert.doesNotThrow(() => {
       new MatchFinder([userX]);
-    }, "Users cannot want items that they already have");
+    });
   });
 });

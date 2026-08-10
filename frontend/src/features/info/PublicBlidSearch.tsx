@@ -58,7 +58,7 @@ export default function PublicBlidSearch() {
                   variant={"subtle"}
                   onClick={() => {
                     modals.open({
-                      title: "Scann unik ID",
+                      title: "Skann unik ID",
                       children: (
                         <ScannerModal
                           onScan={async (blid) => {

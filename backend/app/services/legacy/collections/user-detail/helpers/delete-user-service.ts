@@ -1,3 +1,5 @@
+import BookHandover from "#models/book_handover";
+import MatchParticipant from "#models/match_participant";
 import { StorageService } from "#services/storage_service";
 import { UserService } from "#services/user_service";
 
@@ -50,19 +52,9 @@ export class DeleteUserService {
         },
         { customer: toUser },
       ),
-      StorageService.StandMatches.updateMany({ customer: fromUser }, { customer: toUser }),
-      StorageService.UserMatches.updateMany(
-        {
-          customerA: fromUser,
-        },
-        { customerA: toUser },
-      ),
-      StorageService.UserMatches.updateMany(
-        {
-          customerB: fromUser,
-        },
-        { customerB: toUser },
-      ),
+      MatchParticipant.query().where("userDetailId", fromUser).update({ userDetailId: toUser }),
+      BookHandover.query().where("fromUserDetailId", fromUser).update({ fromUserDetailId: toUser }),
+      BookHandover.query().where("toUserDetailId", fromUser).update({ toUserDetailId: toUser }),
     ]);
   }
 }

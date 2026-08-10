@@ -1,7 +1,9 @@
-import { Button, Card, Divider, Stack, Text, Title } from "@mantine/core";
+import { Button, Divider, Stack, Text, Timeline } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconHelp } from "@tabler/icons-react";
 import { Image } from "@unpic/react";
+
+import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 
 const ScannerTutorial = () => {
   return (
@@ -9,15 +11,15 @@ const ScannerTutorial = () => {
       leftSection={<IconHelp />}
       onClick={() =>
         modals.open({
-          title: "Hvordan scanne bøker",
+          title: "Hvordan skanne bøker",
           size: "lg",
           children: (
-            <Stack>
-              <Card withBorder>
+            <Timeline active={-1} bulletSize={30} lineWidth={2}>
+              <Timeline.Item bullet={1} title={"Finn bokas unike ID"}>
                 <Stack gap={"xs"}>
-                  <Title order={4}>
-                    1. Scan eller skriv inn en bok sin unike ID, som ser slik ut:
-                  </Title>
+                  <Text c={"dimmed"} fz={"sm"}>
+                    Den ser slik ut:
+                  </Text>
                   <Image
                     src={"/ullernUID.png"}
                     alt={"Ullern VGS unik ID"}
@@ -26,25 +28,29 @@ const ScannerTutorial = () => {
                   />
                   <Divider label={"Eller"} />
                   <Image src={"/blid.jpg"} alt={"BLID"} width={300} height={150} />
-                  <Text fs={"italic"}>
+                  <Text c={"dimmed"} fz={"sm"} fs={"italic"}>
                     Sliter du med å finne IDen? Sjekk innsiden av boka, eller be om hjelp fra
-                    kontaktelev eller stand
+                    kontaktelev eller stand.
                   </Text>
                 </Stack>
-              </Card>
+              </Timeline.Item>
 
-              <Card withBorder>
-                <Title order={4}>2. Gjenta til du har scannet alle bøkene du skal ha</Title>
-              </Card>
+              <Timeline.Item bullet={2} title={"Skann eller skriv inn IDen"}>
+                <Text c={"dimmed"} fz={"sm"}>
+                  Gjenta til du har skannet alle bøkene du skal ha.
+                </Text>
+              </Timeline.Item>
 
-              <Card withBorder>
-                <Title order={4}>
-                  3. VIKTIG: Sjekk at både du og den som ga deg bøkene har fått det grønne
-                  merket{" "}
-                </Title>
-                <Image src={"/ok_check.png"} alt={"OK Checkmark"} width={300} height={150} />
-              </Card>
-            </Stack>
+              <Timeline.Item bullet={3} title={"Sjekk at alt er registrert"}>
+                <Stack gap={"xs"}>
+                  <Text c={"dimmed"} fz={"sm"}>
+                    Når du har skannet alle bøkene, får du denne bekreftelsen. Sjekk at den som ga
+                    deg bøkene også har fått grønt merke.
+                  </Text>
+                  <SuccessAlert>Du har skannet alle bøkene for denne overleveringen.</SuccessAlert>
+                </Stack>
+              </Timeline.Item>
+            </Timeline>
           ),
         })
       }

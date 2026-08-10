@@ -2,64 +2,31 @@ import { Skeleton, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { Activity } from "react";
 
+import { forViewer, isFullyFulfilled } from "@/features/matches/forViewer";
 import MatchListItemGroups from "@/features/matches/matchesList/MatchListItemGroups";
+import { sortByMeeting } from "@/features/matches/sortByMeeting";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import {
-  calculateUserMatchStatus,
-  isStandMatchFulfilled,
-} from "@/shared/components/matches/matches-helper";
 import ProgressBar from "@/shared/components/ProgressBar";
 import useApiClient from "@/shared/hooks/useApiClient";
+import useAuth from "@/shared/hooks/useAuth";
 
 export default function MatchList() {
   const { api } = useApiClient();
+  const { detailsId } = useAuth();
   const { data, error, isLoading } = useQuery(
-    api.matches.getMyMatches.queryOptions(
-      {},
-      {
-        staleTime: 5000,
-      },
-    ),
+    api.matches.getMyMatches.queryOptions({}, { staleTime: 5000 }),
   );
 
   if (isLoading) {
     return <Skeleton height={110} />;
   }
 
-  if (error || !data) {
+  if (error || !data || !detailsId) {
     return <ErrorAlert title={"Klarte ikke laste inn dine overleveringer"}></ErrorAlert>;
   }
 
-  const sortedUserMatches = data.userMatches.sort((a, b) => {
-    if (!a.meetingInfo.date) {
-      return b.meetingInfo.date ? 1 : 0;
-    } else if (!b.meetingInfo.date) {
-      return -1;
-    }
-
-    if (a.meetingInfo.date > b.meetingInfo.date) return 1;
-    if (a.meetingInfo.date < b.meetingInfo.date) return -1;
-
-    return 0;
-  });
-
-  const unfulfilledUserMatches = sortedUserMatches.filter((userMatch) => {
-    const { currentUser } = calculateUserMatchStatus(userMatch);
-    const currentUserExpectedItemCount = currentUser.items.length + currentUser.wantedItems.length;
-    const currentUserActualItemCount =
-      currentUser.deliveredItems.length + currentUser.receivedItems.length;
-    return currentUserActualItemCount < currentUserExpectedItemCount;
-  });
-  const fulfilledUserMatches = sortedUserMatches.filter((userMatch) => {
-    const { currentUser } = calculateUserMatchStatus(userMatch);
-    const currentUserExpectedItemCount = currentUser.items.length + currentUser.wantedItems.length;
-    const currentUserActualItemCount =
-      currentUser.deliveredItems.length + currentUser.receivedItems.length;
-    return currentUserActualItemCount >= currentUserExpectedItemCount;
-  });
-
-  if (data.userMatches.length === 0 && data.standMatch === undefined) {
+  if (data.length === 0) {
     return (
       <InfoAlert title={"Du har ingen overleveringer :)"}>
         <Stack gap={"xs"}>
@@ -72,32 +39,27 @@ export default function MatchList() {
     );
   }
 
-  const standMatch = data.standMatch;
-  const showMatchList = unfulfilledUserMatches.length > 0 || standMatch !== undefined;
+  const viewerMatches = sortByMeeting(data.map((match) => forViewer(match, detailsId)));
+
+  const unfinished = viewerMatches.filter((viewerMatch) => !isFullyFulfilled(viewerMatch));
+  const finished = viewerMatches.filter(isFullyFulfilled);
 
   return (
     <Stack gap={"xl"}>
       <ProgressBar
-        percentComplete={
-          (100 * (fulfilledUserMatches.length + (isStandMatchFulfilled(standMatch) ? 1 : 0))) /
-          (data.userMatches.length + (standMatch !== undefined ? 1 : 0))
-        }
+        percentComplete={(100 * finished.length) / viewerMatches.length}
         subtitle={
           <span>
-            Fullført {fulfilledUserMatches.length + (isStandMatchFulfilled(standMatch) ? 1 : 0)} av{" "}
-            {data.userMatches.length + (standMatch !== undefined ? 1 : 0)} overleveringer
+            Fullført {finished.length} av {viewerMatches.length} overleveringer
           </span>
         }
       />
 
-      <Activity mode={showMatchList ? "visible" : "hidden"}>
-        <MatchListItemGroups userMatches={unfulfilledUserMatches} standMatch={standMatch} />
+      <Activity mode={unfinished.length > 0 ? "visible" : "hidden"}>
+        <MatchListItemGroups viewerMatches={unfinished} />
       </Activity>
-      <Activity mode={fulfilledUserMatches.length > 0 ? "visible" : "hidden"}>
-        <MatchListItemGroups
-          userMatches={fulfilledUserMatches}
-          heading="Fullførte overleveringer"
-        />
+      <Activity mode={finished.length > 0 ? "visible" : "hidden"}>
+        <MatchListItemGroups viewerMatches={finished} heading="Fullførte overleveringer" />
       </Activity>
     </Stack>
   );

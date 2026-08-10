@@ -22,7 +22,7 @@ function PublicBlidSearchPage() {
         <Title ta={"center"}>Boksøk</Title>
         <Text ta={"center"}>
           Skriv inn en bok sin unike ID (8 eller 12 siffer) for å se hvem den tilhører. Du kan også
-          scanne bokas unike ID med kamera.
+          skanne bokas unike ID med kamera.
         </Text>
         <AuthGuard>
           <PublicBlidSearch />

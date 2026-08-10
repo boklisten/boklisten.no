@@ -80,10 +80,18 @@ export interface ApiDefinition {
     getMyMatches: typeof routes['matches.get_my_matches']
     getMatchesForCustomer: typeof routes['matches.get_matches_for_customer']
     getAllMatches: typeof routes['matches.get_all_matches']
+    getMatchesForRound: typeof routes['matches.get_matches_for_round']
+    getMatchById: typeof routes['matches.get_match_by_id']
     transferItem: typeof routes['matches.transfer_item']
   }
   matchStatistics: {
     getStatistics: typeof routes['match_statistics.get_statistics']
+    getStatisticsForRound: typeof routes['match_statistics.get_statistics_for_round']
+  }
+  matchRounds: {
+    index: typeof routes['match_rounds.index']
+    update: typeof routes['match_rounds.update']
+    destroy: typeof routes['match_rounds.destroy']
   }
   userDetail: {
     getById: typeof routes['user_detail.get_by_id']

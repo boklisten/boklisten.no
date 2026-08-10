@@ -14,9 +14,11 @@ import {
   updateItemImbalances,
 } from "#services/match_helpers/match-finder/match-utils";
 import { BlError } from "#shared/bl-error";
-import { CandidateStandMatch } from "#shared/match/stand-match";
-import { CandidateUserMatch } from "#shared/match/user-match";
-import type { MatchableUser } from "#services/match_helpers/match-finder/match-types";
+import type {
+  CandidateStandMatch,
+  CandidateUserMatch,
+  MatchableUser,
+} from "#services/match_helpers/match-finder/match-types";
 
 /**
  * ****Some useful terms****
@@ -83,8 +85,18 @@ export class MatchFinder {
       this.createMatches(tryFindTwoWayMatch, users);
       this.logMatchingStatus(`Created TwoWayMatches for ${groupId}`);
     }
+    const ratioCache = new Map<string, { successRate: number; numberOfMatches: number }>();
+    const fingerprint = (users: MatchableUser[]) => {
+      let items = 0;
+      let wantedItems = 0;
+      for (const user of users) {
+        items += user.items.size;
+        wantedItems += user.wantedItems.size;
+      }
+      return `${users.length}:${items}:${wantedItems}`;
+    };
     while (this.userGroups.size > 1) {
-      const iterableUserGroups = this.userGroups.values().toArray();
+      const iterableUserGroups = this.userGroups.entries().toArray();
       let bestGrouping: {
         groupA: string;
         groupB: string;
@@ -93,20 +105,23 @@ export class MatchFinder {
       } | null = null;
       for (let i = 0; i < this.userGroups.size - 1; i++) {
         for (let j = i + 1; j < this.userGroups.size; j++) {
-          const { successRate, numberOfMatches } = this.evaluateTwoWayMatchRatio([
-            ...(iterableUserGroups[i] ?? []),
-            ...(iterableUserGroups[j] ?? []),
-          ]);
+          const [groupA, usersA] = iterableUserGroups[i] ?? [];
+          const [groupB, usersB] = iterableUserGroups[j] ?? [];
+          if (!groupA || !groupB || !usersA || !usersB) {
+            throw new BlError("group A and B cannot be undefined");
+          }
+          const cacheKey = `${groupA}(${fingerprint(usersA)})|${groupB}(${fingerprint(usersB)})`;
+          let ratio = ratioCache.get(cacheKey);
+          if (!ratio) {
+            ratio = this.evaluateTwoWayMatchRatio([...usersA, ...usersB]);
+            ratioCache.set(cacheKey, ratio);
+          }
+          const { successRate, numberOfMatches } = ratio;
           if (
             bestGrouping === null ||
             (successRate > bestGrouping.successRate &&
               numberOfMatches >= bestGrouping.numberOfMatches)
           ) {
-            const groupA = iterableUserGroups[i]?.[0]?.groupMembership;
-            const groupB = iterableUserGroups[j]?.[0]?.groupMembership;
-            if (!groupA || !groupB) {
-              throw new BlError("group A and B cannot be undefined");
-            }
             bestGrouping = {
               groupA,
               groupB,
@@ -161,7 +176,7 @@ export class MatchFinder {
 
       if (user.items.intersection(user.wantedItems).size > 0) {
         // fixme: we might want to ignore this, since we intend to let people have two of the same item sometimes
-        throw new BlError("Users cannot want items that they already have");
+        // throw new BlError("Users cannot want items that they already have");
       }
     }
   }

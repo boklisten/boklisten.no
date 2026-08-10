@@ -1,8 +1,7 @@
-import type { StandMatchWithDetails } from "@boklisten/backend/shared/match/match-dtos";
 import { Group, Text } from "@mantine/core";
-import { IconChevronsLeft, IconChevronsRight, IconSwitchHorizontal } from "@tabler/icons-react";
+import { IconChevronsRight, IconSwitchHorizontal } from "@tabler/icons-react";
 
-import { UserMatchStatus } from "@/shared/components/matches/matches-helper";
+import { partyName, type ViewerMatch } from "@/features/matches/forViewer";
 
 export function formatActionsString(handoffItems: number, pickupItems: number) {
   const hasHandoffItems = handoffItems > 0;
@@ -55,85 +54,46 @@ export const FormattedDatetime = ({ date }: { date: Date }) => {
   );
 };
 
-export const UserMatchTitle = ({ userMatchStatus }: { userMatchStatus: UserMatchStatus }) => {
-  const { currentUser, otherUser } = userMatchStatus;
-  if (currentUser.items.length > 0 && otherUser.items.length === 0) {
+export const MatchTitle = ({ viewerMatch }: { viewerMatch: ViewerMatch }) => {
+  const other = viewerMatch.counterparty ? partyName(viewerMatch.counterparty) : "stand";
+  const otherLabel = other === "stand" ? "Stand" : other;
+  const delivers = viewerMatch.toDeliver.length > 0;
+  const receives = viewerMatch.toReceive.length > 0;
+
+  const me = (
+    <Text c={"dimmed"} fz={"inherit"}>
+      Meg
+    </Text>
+  );
+  const them = (
+    <Text fw={"bold"} fz={"inherit"}>
+      {otherLabel}
+    </Text>
+  );
+
+  if (delivers && !receives) {
     return (
       <Group gap={2}>
-        <Text c={"dimmed"} fz={"inherit"}>
-          Meg
-        </Text>
+        {me}
         <IconChevronsRight />
-        <Text fw={"bold"} fz={"inherit"}>
-          {otherUser.name}
-        </Text>
+        {them}
       </Group>
     );
   }
-  if (currentUser.wantedItems.length > 0 && otherUser.wantedItems.length === 0) {
+  if (receives && !delivers) {
     return (
       <Group gap={2}>
-        <Text fw={"bold"} fz={"inherit"}>
-          {otherUser.name}
-        </Text>
+        {them}
         <IconChevronsRight />
-        <Text c={"dimmed"} fz={"inherit"}>
-          Meg
-        </Text>
+        {me}
       </Group>
     );
   }
   return (
     <Group gap={2}>
-      <Text c={"dimmed"} fz={"inherit"}>
-        Meg
-      </Text>
+      {me}
       <IconSwitchHorizontal size={20} />
-      <Text fw={"bold"} fz={"inherit"}>
-        {otherUser.name}
-      </Text>
-    </Group>
-  );
-};
-
-export const StandMatchTitle = ({ standMatch }: { standMatch: StandMatchWithDetails }) => {
-  const hasHandoffItems = standMatch.expectedHandoffItems.length > 0;
-  const hasPickupItems = standMatch.expectedPickupItems.length > 0;
-
-  const isMeFirst = hasPickupItems ? hasHandoffItems : true;
-
-  const left = isMeFirst ? (
-    <Text c={"dimmed"} fz={"inherit"}>
-      Meg
-    </Text>
-  ) : (
-    <Text fw={"bold"} fz={"inherit"}>
-      Stand
-    </Text>
-  );
-  const right = isMeFirst ? (
-    <Text fw={"bold"} fz={"inherit"}>
-      Stand
-    </Text>
-  ) : (
-    <Text c={"dimmed"} fz={"inherit"}>
-      Meg
-    </Text>
-  );
-  const arrow = hasHandoffItems ? (
-    hasPickupItems ? (
-      <IconSwitchHorizontal size={20} />
-    ) : (
-      <IconChevronsLeft />
-    )
-  ) : (
-    <IconChevronsRight />
-  );
-  return (
-    <Group gap={2}>
-      {left}
-      {arrow}
-      {right}
+      {them}
     </Group>
   );
 };

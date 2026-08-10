@@ -8,7 +8,7 @@ const MeetingInfo = ({
   meetingTime,
   meetingLocation,
 }: {
-  meetingTime?: Date | undefined;
+  meetingTime: string | null;
   meetingLocation: string;
 }) => {
   return (

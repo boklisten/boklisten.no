@@ -571,6 +571,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['getAllMatches']>>>
     }
   }
+  'matches.get_matches_for_round': {
+    methods: ["GET","HEAD"]
+    pattern: '/matches/round/:roundId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { roundId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['getMatchesForRound']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['getMatchesForRound']>>>
+    }
+  }
+  'matches.get_match_by_id': {
+    methods: ["GET","HEAD"]
+    pattern: '/matches/id/:matchId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { matchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['getMatchById']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['getMatchById']>>>
+    }
+  }
   'matches.transfer_item': {
     methods: ["POST"]
     pattern: '/matches/transfer_item'
@@ -593,6 +617,54 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_statistics_controller').default['getStatistics']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_statistics_controller').default['getStatistics']>>>
+    }
+  }
+  'match_statistics.get_statistics_for_round': {
+    methods: ["GET","HEAD"]
+    pattern: '/matches/statistics/round/:roundId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { roundId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_statistics_controller').default['getStatisticsForRound']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_statistics_controller').default['getStatisticsForRound']>>>
+    }
+  }
+  'match_rounds.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/match_rounds'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>>
+    }
+  }
+  'match_rounds.update': {
+    methods: ["PATCH"]
+    pattern: '/match_rounds/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/matches').matchRoundPatchValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchRoundPatchValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'match_rounds.destroy': {
+    methods: ["DELETE"]
+    pattern: '/match_rounds/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroy']>>>
     }
   }
   'user_detail.get_by_id': {

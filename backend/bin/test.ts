@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { Ignitor, prettyPrintError } from "@adonisjs/core";
+import { dbAssertions } from "@adonisjs/lucid/plugins/db";
 import { apiClient } from "@japa/api-client";
 import { assert } from "@japa/assert";
 import { pluginAdonisJS } from "@japa/plugin-adonisjs";
@@ -26,7 +27,13 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
     processCLIArgs(process.argv.splice(2));
     configure({
       ...app.rcFile.tests,
-      plugins: [assert(), apiClient(), pluginAdonisJS(app)],
+      plugins: [assert(), apiClient(), pluginAdonisJS(app), dbAssertions(app)],
+      teardown: [
+        async () => {
+          const { default: db } = await import("@adonisjs/lucid/services/db");
+          await db.manager.closeAll();
+        },
+      ],
     });
   })
   .run(() => run())

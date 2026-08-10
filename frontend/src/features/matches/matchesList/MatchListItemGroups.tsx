@@ -1,28 +1,21 @@
-import {
-  StandMatchWithDetails,
-  UserMatchWithDetails,
-} from "@boklisten/backend/shared/match/match-dtos";
 import { Stack, Title } from "@mantine/core";
 
-import StandMatchListItem from "@/features/matches/matchesList/StandMatchListItem";
-import UserMatchListItem from "@/features/matches/matchesList/UserMatchListItem";
+import type { ViewerMatch } from "@/features/matches/forViewer";
+import MatchListItem from "@/features/matches/matchesList/MatchListItem";
 
 export default function MatchListItemGroups({
-  userMatches,
-  standMatch,
+  viewerMatches,
   heading,
 }: {
-  userMatches: UserMatchWithDetails[];
-  standMatch?: StandMatchWithDetails | undefined;
+  viewerMatches: ViewerMatch[];
   heading?: string;
 }) {
   return (
     <Stack>
       {heading && <Title order={2}>{heading}</Title>}
-      {userMatches.map((match) => (
-        <UserMatchListItem key={match.id} userMatch={match} />
+      {viewerMatches.map((viewerMatch) => (
+        <MatchListItem key={viewerMatch.id} viewerMatch={viewerMatch} />
       ))}
-      {standMatch && <StandMatchListItem standMatch={standMatch} />}
     </Stack>
   );
 }

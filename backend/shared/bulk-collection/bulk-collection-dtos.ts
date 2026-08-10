@@ -18,7 +18,7 @@ export interface ScannedBook {
   customerId: string;
   /** Name of the customer who currently possesses the book. */
   customerName: string;
-  /** Whether the book is locked to a UserMatch and therefore cannot be collected at a stand. */
+  /** Whether the book is locked to a student handover and cannot be collected at a stand. */
   lockedToMatch: boolean;
   /**
    * When locked to a match, the name of the student this book must be handed over to. Undefined

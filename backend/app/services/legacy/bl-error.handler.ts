@@ -115,7 +115,7 @@ function requestErrorResponse(code: number): BlapiErrorResponse {
     }
     case 802: {
       blapiErrorResponse.msg =
-        "Ordren inneholder bøker som er låst til en UserMatch; kunden må overlevere de låste bøkene til en annen elev";
+        "Ordren inneholder bøker som er låst til en overlevering; kunden må overlevere de låste bøkene til en annen elev";
       blapiErrorResponse.httpStatus = 409;
       break;
     }
@@ -141,7 +141,7 @@ function requestErrorResponse(code: number): BlapiErrorResponse {
     }
     case 807: {
       blapiErrorResponse.msg =
-        "Ordren inneholder bøker som er låst til en UserMatch; kunden må motta de låste bøkene fra en annen elev";
+        "Ordren inneholder bøker som er låst til en overlevering; kunden må motta de låste bøkene fra en annen elev";
       blapiErrorResponse.httpStatus = 409;
       break;
     }

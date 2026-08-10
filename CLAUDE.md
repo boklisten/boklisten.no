@@ -22,7 +22,7 @@ Run from the repo root unless noted:
 bun install          # Install all workspace dependencies
 bun dev              # Start frontend (:3000) and backend (:3333) concurrently
 bun build            # Build all workspaces
-bun test             # Run tests in all workspaces (only backend has real tests)
+bun test             # Run backend tests (the only workspace with tests)
 bun lint             # oxlint across all workspaces
 bun lint:fix         # Auto-fix lint issues
 bun format           # oxfmt formatter
