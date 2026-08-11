@@ -3,16 +3,15 @@ import { Center, Container, Divider, Stack, Title } from "@mantine/core";
 import LocalSignIn from "@/features/auth/LocalSignIn";
 import VippsButton from "@/features/auth/VippsButton";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/auth/login")({
-  head: () => ({
-    meta: [
-      { title: "Logg inn | Boklisten.no" },
-      {
-        description: "Logg inn for bestille bøker, samt se status på nåvårende bøker.",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Logg inn | Boklisten.no",
+      description:
+        "Logg inn på Boklisten for å bestille pensumbøker, se status på bøkene du har, og finne ordrehistorikken din.",
+    }),
   validateSearch: (search): { redirect?: string; caller?: string } => ({
     redirect: (search["redirect"] as string) || "",
     caller: (search["caller"] as string) || "",

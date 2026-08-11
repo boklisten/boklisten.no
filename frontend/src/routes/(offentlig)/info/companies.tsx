@@ -2,20 +2,18 @@ import EditableTextReadOnly, {
   editableTextQueryOptions,
 } from "@/shared/components/EditableTextReadOnly";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/info/companies")({
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(editableTextQueryOptions("for_skolekunder"));
   },
-  head: () => ({
-    meta: [
-      { title: "For skolekunder | Boklisten.no" },
-      {
-        description:
-          "Er du ansvarlig for en videregående eller privatist-skole? Vi tilbyr en rekke nyttige tjenester til dere! Les om våre tilbud til skoler, hvordan utlånsordningen fungrer og hvordan dere kan kjøpe bøker fra skyvearkivet.",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "For skolekunder | Boklisten.no",
+      description:
+        "Boklisten administrerer skolens utlånsordning, selger nye og brukte lærebøker, henter inn utgåtte bøker og tilbyr rimelige lærebøker fra skyvearkivet.",
+    }),
   component: CompaniesPage,
 });
 

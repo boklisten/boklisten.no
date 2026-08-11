@@ -2,11 +2,13 @@ import { Container, Stack, Title } from "@mantine/core";
 
 import ConfirmOrder from "@/features/checkout/ConfirmOrder";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/kasse/bekreft")({
-  head: () => ({
-    meta: [{ title: "Bekreft bestilling | Boklisten.no" }],
-  }),
+  head: () =>
+    seo({
+      title: "Bekreft bestilling | Boklisten.no",
+    }),
   component: CheckoutConfirmPage,
   validateSearch: (search) => ({
     orderId: (search["orderId"] as string) || "",

@@ -13,29 +13,38 @@ import { AllCommunityModule } from "ag-grid-community";
 import { AgGridProvider } from "ag-grid-react";
 
 import theme from "@/shared/utils/theme";
+import { jsonLdScript, urlDependentHead } from "@/shared/utils/seo";
+import { organizationSchema, websiteSchema } from "@/shared/utils/structuredData";
 import { DatesProvider } from "@mantine/dates";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      { title: "Boklisten.no" },
-    ],
-    scripts: [
-      {
-        src: "https://checkout.vipps.no/checkout-button/v1/vipps-checkout-button.js",
-      },
-      {
-        src: "https://checkout.vipps.no/vippsCheckoutSDK.js",
-      },
-    ],
-  }),
+  head: (ctx) => {
+    const { meta, links } = urlDependentHead(ctx);
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1",
+        },
+        { title: "Boklisten.no" },
+        ...meta,
+      ],
+      links,
+      scripts: [
+        {
+          src: "https://checkout.vipps.no/checkout-button/v1/vipps-checkout-button.js",
+        },
+        {
+          src: "https://checkout.vipps.no/vippsCheckoutSDK.js",
+        },
+        jsonLdScript(organizationSchema()),
+        jsonLdScript(websiteSchema()),
+      ],
+    };
+  },
   component: RootLayout,
 });
 

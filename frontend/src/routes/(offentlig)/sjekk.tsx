@@ -2,16 +2,14 @@ import { Container, Stack, Title, Text } from "@mantine/core";
 import AuthGuard from "@/features/auth/AuthGuard";
 import PublicBlidSearch from "@/features/info/PublicBlidSearch";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/sjekk")({
-  head: () => ({
-    meta: [
-      { title: "Boksøk | Boklisten.no" },
-      {
-        description: "Sjekk hvem bøker utdelt fra Boklisten tilhører",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Boksøk | Boklisten.no",
+      description: "Sjekk hvem bøker utdelt fra Boklisten tilhører",
+    }),
   component: PublicBlidSearchPage,
 });
 

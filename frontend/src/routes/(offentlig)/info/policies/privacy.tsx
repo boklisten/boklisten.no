@@ -2,20 +2,18 @@ import EditableTextReadOnly, {
   editableTextQueryOptions,
 } from "@/shared/components/EditableTextReadOnly";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/info/policies/privacy")({
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(editableTextQueryOptions("personvernavtale"));
   },
-  head: () => ({
-    meta: [
-      { title: "Personvernavtale | Boklisten.no" },
-      {
-        description:
-          "Vi tar personvern på alvor. Derfor har vi laget et dokument som viser en oversikt over hvordan din data bir behandlet hos oss.",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Personvernavtale | Boklisten.no",
+      description:
+        "Slik behandler Boklisten personopplysningene dine: hvilke opplysninger vi lagrer, hva de brukes til, hvem vi deler dem med, og hvilke rettigheter du har.",
+    }),
   component: PrivacyPage,
 });
 

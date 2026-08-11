@@ -1,6 +1,7 @@
 import { Container, Group, Skeleton, Stack, Tabs, Title } from "@mantine/core";
 import { IconChartHistogram, IconListSearch } from "@tabler/icons-react";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 import AdminMatchOverview from "@/features/matches/adminOverview/AdminMatchOverview";
 import { validateAdminMatchListSearch } from "@/features/matches/adminOverview/adminMatchListSearch";
@@ -13,9 +14,10 @@ import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 
 export const Route = createFileRoute("/(administrasjon)/admin/overleveringer/")({
   validateSearch: validateAdminMatchListSearch,
-  head: () => ({
-    meta: [{ title: "Overleveringer | bl-admin" }],
-  }),
+  head: () =>
+    seo({
+      title: "Overleveringer | bl-admin",
+    }),
   component: AdminMatchesPage,
 });
 

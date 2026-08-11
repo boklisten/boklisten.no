@@ -26,12 +26,15 @@ const OpeningHourRow = ({
   );
 };
 
+export const branchOpeningHoursQueryOptions = (branchId: string) =>
+  publicApi.openingHours.get.queryOptions({ params: { branchId } });
+
 export default function BranchOpeningHours({ branchId }: { branchId: string }) {
   const {
     data: openingHours,
     isLoading: isLoadingOpeningHours,
     isError: isErrorOpeningHours,
-  } = useQuery(publicApi.openingHours.get.queryOptions({ params: { branchId } }));
+  } = useQuery(branchOpeningHoursQueryOptions(branchId));
 
   if (isLoadingOpeningHours) {
     return (

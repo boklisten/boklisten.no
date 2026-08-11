@@ -1,11 +1,13 @@
 import { Container, Stack, Title, Text } from "@mantine/core";
 import Reminders from "@/features/reminders/Reminders";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/paminnelser")({
-  head: () => ({
-    meta: [{ title: "Påminnelser | bl-admin" }],
-  }),
+  head: () =>
+    seo({
+      title: "Påminnelser | bl-admin",
+    }),
   component: RemindersPage,
 });
 

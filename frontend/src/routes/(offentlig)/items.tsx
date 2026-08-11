@@ -3,16 +3,14 @@ import AuthGuard from "@/features/auth/AuthGuard";
 import AffixCartIndicator from "@/features/cart/AffixCartIndicator";
 import CustomerItemsOverview from "@/features/items/CustomerItemsOverview";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/items")({
-  head: () => ({
-    meta: [
-      { title: "Dine bøker | Boklisten.no" },
-      {
-        description: "Se og administrer dine nåværende, bestilte og tidligere bøker",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Dine bøker | Boklisten.no",
+      description: "Se og administrer dine nåværende, bestilte og tidligere bøker",
+    }),
   component: YourItemsPage,
 });
 

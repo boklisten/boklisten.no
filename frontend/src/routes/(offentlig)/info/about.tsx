@@ -2,20 +2,18 @@ import EditableTextReadOnly, {
   editableTextQueryOptions,
 } from "@/shared/components/EditableTextReadOnly";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/info/about")({
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(editableTextQueryOptions("om_oss"));
   },
-  head: () => ({
-    meta: [
-      { title: "Om oss | Boklisten.no" },
-      {
-        description:
-          "Boklisten har mange års erfaring med kjøp og salg av pensumbøker. Les om vår historie, hvem vi er, og hva vi tilbyr.",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Om oss | Boklisten.no",
+      description:
+        "Boklisten.no, tidligere Søraas Bok, har kjøpt og solgt skolebøker siden 1990. Les om historien vår, hvem vi er, og hva vi gjør i dag.",
+    }),
   component: AboutPage,
 });
 

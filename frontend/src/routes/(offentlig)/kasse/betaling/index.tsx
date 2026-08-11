@@ -4,12 +4,14 @@ import { showErrorNotification } from "@/shared/utils/notifications";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/(offentlig)/kasse/betaling/")({
-  head: () => ({
-    meta: [{ title: "Betaling | Boklisten.no" }],
-  }),
+  head: () =>
+    seo({
+      title: "Betaling | Boklisten.no",
+    }),
   validateSearch: (search) => ({
     checkoutFrontendUrl: (search["checkoutFrontendUrl"] as string) || "",
     token: (search["token"] as string) || "",

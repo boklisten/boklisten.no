@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 import { USER_PERMISSION } from "@boklisten/backend/shared/user-permission";
 import { AppShell, AppShellHeader, AppShellMain, AppShellNavbar } from "@mantine/core";
 import AuthGuard from "@/features/auth/AuthGuard";
@@ -6,9 +7,10 @@ import AdminPageHeader from "@/features/layout/AdminPageHeader";
 import AdminPageNavigation from "@/features/layout/AdminPageNavigation";
 
 export const Route = createFileRoute("/(administrasjon)/admin")({
-  head: () => ({
-    meta: [{ title: "bl-admin" }],
-  }),
+  head: () =>
+    seo({
+      title: "bl-admin",
+    }),
   component: AdminPageLayout,
 });
 

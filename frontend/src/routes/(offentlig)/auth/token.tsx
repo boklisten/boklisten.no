@@ -1,20 +1,18 @@
 import { Container, Loader, Stack, Title } from "@mantine/core";
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuthLinker from "@/shared/hooks/useAuthLinker";
 import { useEffect, useEffectEvent } from "react";
 import { login } from "@/shared/hooks/useAuth";
 
 export const Route = createFileRoute("/(offentlig)/auth/token")({
-  head: () => ({
-    meta: [
-      { title: "Logger inn... | Boklisten.no" },
-      {
-        description: "Du blir nå logget inn. Vennligst vent.",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Logger inn... | Boklisten.no",
+      description: "Du blir nå logget inn. Vennligst vent.",
+    }),
   validateSearch: (search) => ({
     refreshToken: (search["refresh_token"] as string) || "",
     accessToken: (search["access_token"] as string) || "",

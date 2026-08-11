@@ -2,19 +2,17 @@ import { Select, Stack, Text, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet, useParams } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 import { useEffect } from "react";
 
 import { publicApi } from "@/shared/utils/publicApiClient";
 
 export const Route = createFileRoute("/(offentlig)/info/branch")({
-  head: () => ({
-    meta: [
-      { title: "Skoler og åpningstider | Boklisten.no" },
-      {
-        description: "Skal du hente eller levere bøker? Finn ut når vi står på stand på din skole.",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Skoler og åpningstider | Boklisten.no",
+      description: "Skal du hente eller levere bøker? Finn ut når vi står på stand på din skole.",
+    }),
   component: BranchInfoPageLayout,
 });
 

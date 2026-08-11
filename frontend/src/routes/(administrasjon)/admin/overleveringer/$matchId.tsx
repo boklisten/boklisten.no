@@ -1,5 +1,6 @@
 import { Container, Skeleton, Stack } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -12,7 +13,10 @@ import useApiClient from "@/shared/hooks/useApiClient";
 
 export const Route = createFileRoute("/(administrasjon)/admin/overleveringer/$matchId")({
   validateSearch: validateAdminMatchListSearch,
-  head: () => ({ meta: [{ title: "Overlevering | bl-admin" }] }),
+  head: () =>
+    seo({
+      title: "Overlevering | bl-admin",
+    }),
   component: AdminMatchDetailPage,
 });
 

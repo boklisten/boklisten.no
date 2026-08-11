@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { Container, Loader, Stack, Title } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
@@ -11,6 +12,10 @@ import { useMounted } from "@mantine/hooks";
 import { useState } from "react";
 
 export const Route = createFileRoute("/(offentlig)/kasse/v2")({
+  head: () =>
+    seo({
+      title: "Kasse | Boklisten.no",
+    }),
   component: RouteComponent,
 });
 

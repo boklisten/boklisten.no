@@ -1,16 +1,14 @@
 import { Container, Stack, Text, Title } from "@mantine/core";
 import ForgotPasswordForm from "@/features/auth/ForgotPasswordForm";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/auth/forgot")({
-  head: () => ({
-    meta: [
-      { title: "Glemt passord | Boklisten.no" },
-      {
-        description: "Har du glemt passordet ditt? Få hjelp til å opprette et nytt!",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Glemt passord | Boklisten.no",
+      description: "Har du glemt passordet ditt? Få hjelp til å opprette et nytt!",
+    }),
   component: ForgotPage,
 });
 

@@ -2,11 +2,13 @@ import { Container, Stack, Title } from "@mantine/core";
 
 import VippsCheckoutStatus from "@/features/payment/VippsCheckoutStatus";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/kasse/betaling/status")({
-  head: () => ({
-    meta: [{ title: "Kvittering | Boklisten.no" }],
-  }),
+  head: () =>
+    seo({
+      title: "Kvittering | Boklisten.no",
+    }),
   component: CheckoutStatusPage,
   validateSearch: (search) => ({
     orderId: (search["orderId"] as string) || "",

@@ -1,16 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 import MatchDetail from "@/features/matches/MatchDetail";
 
 export const Route = createFileRoute("/(offentlig)/overleveringer/$matchId")({
-  head: () => ({
-    meta: [
-      { title: "Overlevering av bøker | Boklisten.no" },
-      {
-        description: "Overleveringer av bøker",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Overlevering av bøker | Boklisten.no",
+      description: "Overleveringer av bøker",
+    }),
   component: MatchDetailPage,
 });
 

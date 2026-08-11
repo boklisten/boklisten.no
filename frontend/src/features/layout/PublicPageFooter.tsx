@@ -3,6 +3,7 @@ import { IconCopyright } from "@tabler/icons-react";
 import dayjs from "dayjs";
 
 import ContactInfo from "@/shared/components/ContactInfo";
+import { ORGANIZATION_NUMBER } from "@/shared/utils/constants";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { Image } from "@unpic/react";
 
@@ -17,7 +18,7 @@ export default function PublicPageFooter() {
         {" | "}
         <TanStackAnchor to={"/info/policies/privacy"}>Personvernserklæring</TanStackAnchor>
       </Group>
-      <Text>Organisasjonsnummer: 912047385 MVA</Text>
+      <Text>Organisasjonsnummer: {ORGANIZATION_NUMBER} MVA</Text>
       <Group gap={"xs"}>
         <Text>Boklisten.no AS</Text>
         <IconCopyright />

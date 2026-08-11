@@ -1,17 +1,15 @@
 import { Container, Stack, Title } from "@mantine/core";
 import SelectSubjects from "@/features/subjects/SelectSubjects";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/bestilling/$branchId")({
-  head: () => ({
-    meta: [
-      { title: "Bestill bøker | Boklisten.no" },
-      {
-        description:
-          "Velg hvilken skole og hvilke fag du tar, så finner vi bøkene du trenger for deg!",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Bestill bøker | Boklisten.no",
+      description:
+        "Velg fagene du tar, så finner vi pensumbøkene som hører til. Du henter bøkene på stand ved skolen din, eller får dem tilsendt i posten.",
+    }),
   component: SelectSubjectsPage,
 });
 

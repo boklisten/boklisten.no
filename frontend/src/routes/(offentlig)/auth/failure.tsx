@@ -4,16 +4,14 @@ import AuthFailureReasonAlert from "@/features/auth/AuthFailureReasonAlert";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/auth/failure")({
-  head: () => ({
-    meta: [
-      { title: "Klarte ikke logge inn | Boklisten.no" },
-      {
-        description: `Vi klarte ikke å logge deg inn. ${PLEASE_TRY_AGAIN_TEXT}`,
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Klarte ikke logge inn | Boklisten.no",
+      description: `Vi klarte ikke å logge deg inn. ${PLEASE_TRY_AGAIN_TEXT}`,
+    }),
   validateSearch: (search): { reason?: string } => ({
     reason: (search["reason"] as string) || "",
   }),

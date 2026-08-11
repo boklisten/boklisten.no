@@ -8,17 +8,15 @@ import QuickButtons from "@/features/frontpage/QuickButtons";
 import PublicLayout from "@/features/PublicLayout";
 
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Boklisten.no" },
-      {
-        description:
-          "Vi i Boklisten.no er veldig opptatt av lærebøker, derfor vil vi gjøre det så enkelt som mulig for deg å få tak i dem.",
-      },
-    ],
-  }),
+  head: () =>
+    seo({
+      title: "Boklisten.no – pensumbøker til videregående og privatister",
+      description:
+        "Bestill pensumbøkene du trenger: velg skolen din og fagene du tar, så finner vi bøkene. Hent dem på stand ved skolen eller i posten, og lever eller få dem kjøpt tilbake når du er ferdig.",
+    }),
   component: Frontpage,
 });
 

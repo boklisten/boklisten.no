@@ -3,11 +3,13 @@ import { Container, Stack, Title } from "@mantine/core";
 import AuthLogoutComponent from "@/features/auth/AuthLogoutComponent";
 import CountdownToRedirect from "@/shared/components/CountdownToRedirect";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/auth/logout")({
-  head: () => ({
-    meta: [{ title: "Du er nå logget ut | Boklisten.no" }],
-  }),
+  head: () =>
+    seo({
+      title: "Du er nå logget ut | Boklisten.no",
+    }),
   component: LogoutPage,
 });
 

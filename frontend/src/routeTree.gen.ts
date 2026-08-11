@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as offentligRouteRouteImport } from './routes/(offentlig)/route'
 import { Route as HealthRouteImport } from './routes/health'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as administrasjonAdminRouteRouteImport } from './routes/(administrasjon)/admin/route'
 import { Route as legacyWelcomeRouteImport } from './routes/(legacy)/welcome'
 import { Route as offentligHandlekurvRouteImport } from './routes/(offentlig)/handlekurv'
@@ -101,9 +103,19 @@ const HealthRoute = HealthRouteImport.update({
   path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
   path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const administrasjonAdminRouteRoute =
@@ -516,7 +528,9 @@ const offentligKasseBetalingV2OrderIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof administrasjonAdminRouteRouteWithChildren
   '/info': typeof offentligInfoRouteRouteWithChildren
   '/overleveringer': typeof offentligOverleveringerRouteRouteWithChildren
@@ -594,7 +608,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/info': typeof offentligInfoRouteRouteWithChildren
   '/welcome': typeof legacyWelcomeRoute
   '/handlekurv': typeof offentligHandlekurvRoute
@@ -671,7 +687,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/(offentlig)': typeof offentligRouteRouteWithChildren
   '/health': typeof HealthRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/(administrasjon)/admin': typeof administrasjonAdminRouteRouteWithChildren
   '/(offentlig)/info': typeof offentligInfoRouteRouteWithChildren
   '/(offentlig)/overleveringer': typeof offentligOverleveringerRouteRouteWithChildren
@@ -751,7 +769,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/health'
+    | '/llms.txt'
     | '/robots.txt'
+    | '/sitemap.xml'
     | '/admin'
     | '/info'
     | '/overleveringer'
@@ -829,7 +849,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/health'
+    | '/llms.txt'
     | '/robots.txt'
+    | '/sitemap.xml'
     | '/info'
     | '/welcome'
     | '/handlekurv'
@@ -905,7 +927,9 @@ export interface FileRouteTypes {
     | '/'
     | '/(offentlig)'
     | '/health'
+    | '/llms.txt'
     | '/robots.txt'
+    | '/sitemap.xml'
     | '/(administrasjon)/admin'
     | '/(offentlig)/info'
     | '/(offentlig)/overleveringer'
@@ -985,7 +1009,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   offentligRouteRoute: typeof offentligRouteRouteWithChildren
   HealthRoute: typeof HealthRoute
+  LlmsDottxtRoute: typeof LlmsDottxtRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   administrasjonAdminRouteRoute: typeof administrasjonAdminRouteRouteWithChildren
   legacyWelcomeRoute: typeof legacyWelcomeRoute
   legacyAuthMenuRoute: typeof legacyAuthMenuRoute
@@ -1021,11 +1047,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/robots.txt': {
       id: '/robots.txt'
       path: '/robots.txt'
       fullPath: '/robots.txt'
       preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(administrasjon)/admin': {
@@ -1768,7 +1808,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   offentligRouteRoute: offentligRouteRouteWithChildren,
   HealthRoute: HealthRoute,
+  LlmsDottxtRoute: LlmsDottxtRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   administrasjonAdminRouteRoute: administrasjonAdminRouteRouteWithChildren,
   legacyWelcomeRoute: legacyWelcomeRoute,
   legacyAuthMenuRoute: legacyAuthMenuRoute,

@@ -10,11 +10,13 @@ import AdministrateUserForm from "@/features/user/AdministrateUserForm";
 import AdministrateUserSignatures from "@/features/signatures/AdministrateUserSignatures";
 import RapidHandoutDetails from "@/features/rapid-handout/RapidHandoutDetails";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(administrasjon)/admin/hurtigutdeling")({
-  head: () => ({
-    meta: [{ title: "Hurtigutdeling | bl-admin" }],
-  }),
+  head: () =>
+    seo({
+      title: "Hurtigutdeling | bl-admin",
+    }),
   component: RapidHandoutPage,
 });
 

@@ -1,11 +1,13 @@
 import { Container, Stack, Text, Title } from "@mantine/core";
 import DispatchManager from "@/features/dispatches/DispatchManager";
 import { createFileRoute } from "@tanstack/react-router";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/utsendelser")({
-  head: () => ({
-    meta: [{ title: "Utsendelser | bl-admin" }],
-  }),
+  head: () =>
+    seo({
+      title: "Utsendelser | bl-admin",
+    }),
   component: DispatchPage,
 });
 
