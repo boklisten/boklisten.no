@@ -1,4 +1,5 @@
 import logger from "@adonisjs/core/services/logger";
+import * as Sentry from "@sentry/node";
 import moment from "moment-timezone";
 
 import { APP_CONFIG } from "#services/legacy/application-config";
@@ -209,5 +210,11 @@ export const VippsCheckoutService = {
     });
 
     await new OrderPlacedHandler().placeOrder(order, order.customer);
+
+    try {
+      await VippsPaymentService.payment.capture(order.id, (order.amount + deliveryPrice) * 100);
+    } catch (error) {
+      Sentry.captureException(error);
+    }
   },
 };

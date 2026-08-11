@@ -49,6 +49,24 @@ export const VippsPaymentService = {
       return info.data;
     },
   },
+  payment: {
+    capture: async (reference: string, amountInMinorUnits: number) => {
+      const accessToken = await client.auth.getToken(vippsEnv.clientId, vippsEnv.clientSecret);
+      if (!accessToken.ok) {
+        throw new Error(JSON.stringify(accessToken.error));
+      }
+      const capture = await client.payment.capture(accessToken.data.access_token, reference, {
+        modificationAmount: {
+          currency: "NOK",
+          value: amountInMinorUnits,
+        },
+      });
+      if (!capture.ok) {
+        throw new Error(JSON.stringify(capture.error));
+      }
+      return capture.data;
+    },
+  },
   token: {
     issue: () => encryption.encrypt(string.random(32), "1 day", callbackTokenPurpose),
     verify: (token: string) => !!encryption.decrypt(token, callbackTokenPurpose),
