@@ -1,7 +1,6 @@
 import { Container, Stack, Title } from "@mantine/core";
 import SelectOrderBranch from "@/features/order/SelectOrderBranch";
 import { createFileRoute } from "@tanstack/react-router";
-import { rootQueryClient } from "@/routes/__root";
 import { queryOptions } from "@tanstack/react-query";
 import { publicApi } from "@/shared/utils/publicApiClient";
 
@@ -15,8 +14,10 @@ export const Route = createFileRoute("/(offentlig)/bestilling/")({
       },
     ],
   }),
-  loader: async () => {
-    void rootQueryClient.prefetchQuery(queryOptions(publicApi.branches.getPublic.queryOptions()));
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(
+      queryOptions(publicApi.branches.getPublic.queryOptions()),
+    );
   },
   component: OrderPage,
 });

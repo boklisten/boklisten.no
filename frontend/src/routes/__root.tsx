@@ -8,24 +8,16 @@ import "@/shared/utils/dayjs";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
-import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router";
+import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { AllCommunityModule } from "ag-grid-community";
 import { AgGridProvider } from "ag-grid-react";
 
 import theme from "@/shared/utils/theme";
 import { DatesProvider } from "@mantine/dates";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-export const rootQueryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,
-    },
-  },
-});
-
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -58,15 +50,13 @@ function RootLayout() {
         <MantineProvider theme={theme}>
           <Notifications />
           <DatesProvider settings={{ locale: "nb" }}>
-            <QueryClientProvider client={rootQueryClient}>
-              <ModalsProvider>
-                <AgGridProvider modules={[AllCommunityModule]}>
-                  <Outlet />
-                  <Scripts />
-                </AgGridProvider>
-              </ModalsProvider>
-              <ReactQueryDevtools />
-            </QueryClientProvider>
+            <ModalsProvider>
+              <AgGridProvider modules={[AllCommunityModule]}>
+                <Outlet />
+                <Scripts />
+              </AgGridProvider>
+            </ModalsProvider>
+            <ReactQueryDevtools />
           </DatesProvider>
         </MantineProvider>
       </body>
