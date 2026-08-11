@@ -45,7 +45,8 @@
     "react-password-strength-bar": "^0.4.1",
     "react-signature-canvas": "1.1.0-alpha.2",
     "recharts": "^3.10.1",
-    "validator": "^13.15.35"
+    "validator": "^13.15.35",
+    "xss": "^1.0.15"
   },
   "devDependencies": {
     "@babel/core": "^8.0.1",

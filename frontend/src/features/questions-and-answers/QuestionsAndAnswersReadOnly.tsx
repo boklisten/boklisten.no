@@ -11,13 +11,14 @@ import { Activity } from "react";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import RichTextEditorReadOnly from "@/shared/components/RichTextEditorReadOnly";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { publicApi } from "@/shared/utils/publicApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
-export default function QuestionsAndAnswersReadOnly() {
-  const { api } = useApiClient();
+export const questionsAndAnswersQueryOptions = () =>
+  publicApi.questionsAndAnswers.getAll.queryOptions();
 
-  const { data, isLoading, isError } = useQuery(api.questionsAndAnswers.getAll.queryOptions());
+export default function QuestionsAndAnswersReadOnly() {
+  const { data, isLoading } = useQuery(questionsAndAnswersQueryOptions());
 
   if (isLoading && data === undefined) {
     return (
@@ -28,7 +29,7 @@ export default function QuestionsAndAnswersReadOnly() {
       </>
     );
   }
-  if (isError || data === undefined) {
+  if (data === undefined) {
     return (
       <ErrorAlert title={"Klarte ikke laste inn spørsmål og svar"}>
         {PLEASE_TRY_AGAIN_TEXT}
@@ -41,7 +42,7 @@ export default function QuestionsAndAnswersReadOnly() {
       <Activity mode={data.length === 0 ? "visible" : "hidden"}>
         <InfoAlert>Ingen spørsmål og svar er publisert enda</InfoAlert>
       </Activity>
-      <Accordion>
+      <Accordion keepMounted keepMountedMode={"display-none"}>
         {data.map((questionAndAnswer) => (
           <AccordionItem key={questionAndAnswer.id} value={questionAndAnswer.id}>
             <AccordionControl>

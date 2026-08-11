@@ -1,7 +1,12 @@
-import EditableTextReadOnly from "@/shared/components/EditableTextReadOnly";
+import EditableTextReadOnly, {
+  editableTextQueryOptions,
+} from "@/shared/components/EditableTextReadOnly";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/(offentlig)/info/policies/conditions")({
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(editableTextQueryOptions("betingelser"));
+  },
   head: () => ({
     meta: [
       { title: "Betingelser | Boklisten.no" },

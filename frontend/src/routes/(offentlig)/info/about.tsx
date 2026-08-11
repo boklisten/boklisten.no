@@ -1,7 +1,12 @@
-import EditableTextReadOnly from "@/shared/components/EditableTextReadOnly";
+import EditableTextReadOnly, {
+  editableTextQueryOptions,
+} from "@/shared/components/EditableTextReadOnly";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/(offentlig)/info/about")({
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(editableTextQueryOptions("om_oss"));
+  },
   head: () => ({
     meta: [
       { title: "Om oss | Boklisten.no" },

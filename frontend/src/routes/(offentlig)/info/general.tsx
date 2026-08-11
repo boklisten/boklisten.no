@@ -1,7 +1,12 @@
-import EditableTextReadOnly from "@/shared/components/EditableTextReadOnly";
+import EditableTextReadOnly, {
+  editableTextQueryOptions,
+} from "@/shared/components/EditableTextReadOnly";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/(offentlig)/info/general")({
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(editableTextQueryOptions("generell_informasjon"));
+  },
   head: () => ({
     meta: [
       { title: "Generell informasjon | Boklisten.no" },

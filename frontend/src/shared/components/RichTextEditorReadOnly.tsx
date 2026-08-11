@@ -1,19 +1,17 @@
-import { RichTextEditor, Link } from "@mantine/tiptap";
-import { useEditor } from "@tiptap/react";
-import { StarterKit } from "@tiptap/starter-kit";
+import { Typography } from "@mantine/core";
+import { FilterXSS, getDefaultWhiteList } from "xss";
+
+const sanitizer = new FilterXSS({
+  whiteList: {
+    ...getDefaultWhiteList(),
+    a: [...(getDefaultWhiteList().a ?? []), "rel"],
+  },
+});
 
 export default function RichTextEditorReadOnly({ content }: { content: string }) {
-  const editor = useEditor({
-    shouldRerenderOnTransaction: true,
-    immediatelyRender: false,
-    editable: false,
-    extensions: [StarterKit.configure({ link: false }), Link],
-    content,
-  });
-
   return (
-    <RichTextEditor editor={editor} style={{ border: "none" }}>
-      <RichTextEditor.Content />
-    </RichTextEditor>
+    <Typography>
+      <div dangerouslySetInnerHTML={{ __html: sanitizer.process(content) }} />
+    </Typography>
   );
 }

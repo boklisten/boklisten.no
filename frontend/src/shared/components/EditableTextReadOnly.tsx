@@ -5,10 +5,16 @@ import RichTextEditorReadOnly from "@/shared/components/RichTextEditorReadOnly";
 import { Skeleton, Stack } from "@mantine/core";
 import { publicApi } from "@/shared/utils/publicApiClient";
 
+/**
+ * Shared by the component and by route loaders, so both always hit the same
+ * cache entry. A key mismatch would leave the client refetching data the server
+ * already rendered, which shows up as a hydration error.
+ */
+export const editableTextQueryOptions = (dataKey: string) =>
+  publicApi.editableTexts.get.queryOptions({ params: { id: dataKey } });
+
 export default function EditableTextReadOnly({ dataKey }: { dataKey: string }) {
-  const { data, isLoading } = useQuery(
-    publicApi.editableTexts.get.queryOptions({ params: { id: dataKey } }),
-  );
+  const { data, isLoading } = useQuery(editableTextQueryOptions(dataKey));
 
   if (isLoading)
     return (
