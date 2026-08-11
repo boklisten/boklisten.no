@@ -4,11 +4,11 @@ import * as Sentry from "@sentry/node";
 
 export default class HttpExceptionHandler extends ExceptionHandler {
   protected override debug = !app.inProduction;
-  override async handle(error: unknown, ctx: HttpContext) {
-    return super.handle(error, ctx);
-  }
+
   override async report(error: unknown, ctx: HttpContext) {
-    Sentry.captureException(error);
+    if (this.shouldReport(this.toHttpError(error))) {
+      Sentry.captureException(error);
+    }
     return super.report(error, ctx);
   }
 }
