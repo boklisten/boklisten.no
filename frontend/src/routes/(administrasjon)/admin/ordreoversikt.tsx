@@ -6,5 +6,5 @@ export const Route = createFileRoute("/(administrasjon)/admin/ordreoversikt")({
 });
 
 function OrderManagerPage() {
-  return <RedirectToBlAdmin path={"scanner"} />;
+  return <RedirectToBlAdmin path={"order-manager"} />;
 }
