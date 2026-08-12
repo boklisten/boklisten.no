@@ -158,6 +158,7 @@ export interface ApiDefinition {
   items: {
     get: typeof routes['items.get']
     getBuybackItems: typeof routes['items.get_buyback_items']
+    getByIsbn: typeof routes['items.get_by_isbn']
   }
   dispatch: {
     getEmailTemplates: typeof routes['dispatch.get_email_templates']

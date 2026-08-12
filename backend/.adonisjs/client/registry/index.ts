@@ -552,6 +552,12 @@ const routes = {
     tokens: [{"old":"/v2/items/buyback","type":0,"val":"v2","end":""},{"old":"/v2/items/buyback","type":0,"val":"items","end":""},{"old":"/v2/items/buyback","type":0,"val":"buyback","end":""}],
     types: placeholder as Registry['items.get_buyback_items']['types'],
   },
+  'items.get_by_isbn': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/items/by_isbn/:isbn',
+    tokens: [{"old":"/v2/items/by_isbn/:isbn","type":0,"val":"v2","end":""},{"old":"/v2/items/by_isbn/:isbn","type":0,"val":"items","end":""},{"old":"/v2/items/by_isbn/:isbn","type":0,"val":"by_isbn","end":""},{"old":"/v2/items/by_isbn/:isbn","type":1,"val":"isbn","end":""}],
+    types: placeholder as Registry['items.get_by_isbn']['types'],
+  },
   'dispatch.get_email_templates': {
     methods: ["GET","HEAD"],
     pattern: '/dispatch/email_templates',

@@ -2,6 +2,7 @@ import type {
   CustomerCollectionReceipt,
   ScannedBook,
 } from "@boklisten/backend/shared/bulk-collection/bulk-collection-dtos";
+import type { IScannerError } from "@yudiel/react-qr-scanner";
 import { Box, Button, Container, InputLabel, Stack, Switch, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
@@ -14,8 +15,9 @@ import { isOverdue } from "@/features/bulk-collection/deadline";
 import ScannedBooksList from "@/features/bulk-collection/ScannedBooksList";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
-import BlidScanner from "@/shared/components/scanner/BlidScanner";
-import ManualBlidSearchModal from "@/shared/components/scanner/ManualBlidSearchModal";
+import CameraErrorAlert from "@/shared/components/scanner/CameraErrorAlert";
+import CameraScanner from "@/shared/components/scanner/CameraScanner";
+import ManualCodeEntry from "@/shared/components/scanner/ManualCodeEntry";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showInfoNotification } from "@/shared/utils/notifications";
@@ -31,6 +33,8 @@ export default function BulkCollectionPage() {
   const [showCamera, { toggle: toggleCamera }] = useDisclosure(true);
   const [scannedBooks, setScannedBooks] = useState<ScannedBook[]>([]);
   const [receipt, setReceipt] = useState<CustomerCollectionReceipt[] | null>(null);
+  const [cameraError, setCameraError] = useState<IScannerError | null>(null);
+  const [cameraAttempt, setCameraAttempt] = useState(0);
 
   const unlockedBooks = scannedBooks.filter((book) => !book.lockedToMatch);
   const lockedBooks = scannedBooks.filter((book) => book.lockedToMatch);
@@ -82,7 +86,8 @@ export default function BulkCollectionPage() {
       modalId: manualModalId,
       title: "Manuell registrering",
       children: (
-        <ManualBlidSearchModal
+        <ManualCodeEntry
+          accepts={["blid"]}
           onSubmit={(blid) => {
             modals.close(manualModalId);
             void registerBlid(blid);
@@ -139,7 +144,22 @@ export default function BulkCollectionPage() {
         <Switch checked={showCamera} onChange={toggleCamera} label={"Vis kamera"} />
         {showCamera && (
           <Box maw={420} w={"100%"} mx={"auto"}>
-            <BlidScanner onResult={registerBlid} />
+            {cameraError === null ? (
+              <CameraScanner
+                key={cameraAttempt}
+                accepts={["blid"]}
+                onCode={registerBlid}
+                onCameraError={setCameraError}
+              />
+            ) : (
+              <CameraErrorAlert
+                error={cameraError}
+                onRetry={() => {
+                  setCameraError(null);
+                  setCameraAttempt((attempt) => attempt + 1);
+                }}
+              />
+            )}
           </Box>
         )}
 

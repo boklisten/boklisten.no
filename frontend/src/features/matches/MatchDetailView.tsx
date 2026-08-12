@@ -23,7 +23,7 @@ import { MatchHeader } from "@/shared/components/matches/matches-helper";
 import MatchItemTable from "@/shared/components/matches/MatchItemTable";
 import MatchScannerContent from "@/shared/components/matches/MatchScannerContent";
 import ProgressBar from "@/shared/components/ProgressBar";
-import ScannerModal from "@/shared/components/scanner/ScannerModal";
+import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
 import ScannerTutorial from "@/shared/components/scanner/ScannerTutorial";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
@@ -166,16 +166,18 @@ export default function MatchDetailView({
             Skann bøker
           </Button>
           <Modal opened={opened} onClose={close} title={"Skann bøker"}>
-            <ScannerModal
-              allowManualRegistration
+            <ScannerPanel
+              allowManualEntry
+              accepts={["blid"]}
+              successMessage={"Boken har blitt registrert!"}
               onScan={async (blid) => {
                 const response = await client.api.matches.transferItem({ body: { blid } });
-                return [{ feedback: response.feedback ?? "" }];
+                return response.feedback ? { message: response.feedback } : undefined;
               }}
-              onSuccessfulScan={() => onItemTransferred?.()}
+              onSuccess={onItemTransferred}
             >
               <MatchScannerContent obligations={toReceive} />
-            </ScannerModal>
+            </ScannerPanel>
           </Modal>
         </Stack>
       </Activity>

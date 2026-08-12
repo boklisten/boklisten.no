@@ -1099,6 +1099,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/items_controller').default['getBuybackItems']>>>
     }
   }
+  'items.get_by_isbn': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/items/by_isbn/:isbn'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { isbn: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/items_controller').default['getByIsbn']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/items_controller').default['getByIsbn']>>>
+    }
+  }
   'dispatch.get_email_templates': {
     methods: ["GET","HEAD"]
     pattern: '/dispatch/email_templates'

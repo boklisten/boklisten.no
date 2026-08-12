@@ -5,10 +5,9 @@ import type { OrderItem } from "@boklisten/backend/shared/order/order-item/order
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import { Box, Button, Modal, Stack, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { modals } from "@mantine/modals";
 import { IconObjectScan } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { forViewer, partyName } from "@/features/matches/forViewer";
 import PeerTransferList, { type PeerBook } from "@/features/rapid-handout/PeerTransferList";
@@ -16,10 +15,13 @@ import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { ItemStatus } from "@/shared/components/matches/matches-helper";
 import { ItemStatusTable } from "@/shared/components/matches/MatchItemTable";
 import { StandScannerProgress } from "@/shared/components/matches/MatchScannerContent";
-import { determineScannedTextType } from "@/shared/components/scanner/BlidScanner";
-import ScannerModal from "@/shared/components/scanner/ScannerModal";
+import ScannerPanel, { type ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import useApiClient from "@/shared/hooks/useApiClient";
-import { TextType } from "@/shared/utils/types";
+import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
+
+// Above the scanner's manual-entry modal (300) so a decision is always reachable, and below its
+// notice modal (400), which only appears once a decision has been made.
+const CONFIRM_Z_INDEX = 350;
 
 function calculateUnfulfilledOrderItems(orders: Order[]): OrderItem[] {
   return orders
@@ -80,10 +82,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
   );
   const [opened, { open, close }] = useDisclosure(false);
   const [itemStatuses, setItemStatuses] = useState<ItemStatus[]>([]);
-  const tempBlidRef = useRef<string | null>(null);
-  const setTempBlid = (v: string | null) => {
-    tempBlidRef.current = v;
-  };
+  const [pendingBlid, setPendingBlid] = useState<string | null>(null);
 
   useEffect(() => {
     client.api.orders
@@ -134,6 +133,92 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
     });
   };
 
+  async function handOutBlid(blid: string): Promise<ScanNotice | void> {
+    const response = await client.api.rapidHandout.handout({
+      body: { blid, customerId: customer.id },
+    });
+
+    if (response.connectBlid) {
+      setPendingBlid(blid);
+      return {
+        title: "Mangler kobling",
+        message: `${response.feedback} Skann ISBN-en på boka for å koble den.`,
+      };
+    }
+
+    if (response.requiresConfirmation) {
+      const confirmed = await asyncConfirmModal({
+        title: "Skal mottas fra en annen elev",
+        children: (
+          <Text>
+            Denne boka skal {customer.name} få fra{" "}
+            <Text span fw={700}>
+              {response.deliverFromName}
+            </Text>
+            , ikke på stand. Er du sikker på at du vil dele den ut på stand likevel?
+          </Text>
+        ),
+        confirmLabel: "Del ut likevel",
+        confirmColor: "red",
+        zIndex: CONFIRM_Z_INDEX,
+      });
+      if (!confirmed) {
+        return { message: "Boka ble ikke delt ut." };
+      }
+      const forced = await client.api.rapidHandout.handout({
+        body: { blid, customerId: customer.id, force: true },
+      });
+      if (forced.feedback) {
+        return { message: forced.feedback };
+      }
+      return;
+    }
+
+    if (response.feedback) {
+      return { message: response.feedback };
+    }
+  }
+
+  async function connectThenHandOut(blid: string, isbn: string): Promise<ScanNotice | void> {
+    const item = await client.api.items.getByIsbn({ params: { isbn } });
+    if (!item) {
+      return {
+        title: "Ukjent ISBN",
+        message: `Fant ingen bok med ISBN ${isbn}. Sjekk at du skannet riktig strekkode.`,
+      };
+    }
+
+    const confirmed = await asyncConfirmModal({
+      title: "Bekreft kobling",
+      children: (
+        <Text>
+          Unik ID{" "}
+          <Text span fw={700}>
+            {blid}
+          </Text>{" "}
+          blir koblet til{" "}
+          <Text span fw={700}>
+            «{item.title}»
+          </Text>
+          . Er dette riktig?
+        </Text>
+      ),
+      confirmLabel: "Koble til",
+      zIndex: CONFIRM_Z_INDEX,
+    });
+    if (!confirmed) {
+      return { message: "Boka ble ikke koblet. Skann ISBN-en på nytt for å prøve igjen." };
+    }
+
+    const connection = await client.api.uniqueItems.add({ body: { blid, isbn } });
+    setPendingBlid(null);
+    if (connection.feedback) {
+      return { message: connection.feedback };
+    }
+
+    return handOutBlid(blid);
+  }
+
   return (
     <Stack gap={"lg"}>
       {nothingToShow && <InfoAlert>Denne kunden har for øyeblikket ingen bestilte bøker</InfoAlert>}
@@ -165,72 +250,29 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
         <PeerTransferList title={"Leveres til andre elever"} direction={"give"} books={giveBooks} />
       )}
 
-      <Modal opened={opened} onClose={close} title={"Skann bøker"}>
-        <ScannerModal
-          allowManualRegistration
-          disableValidation={true}
-          onScan={async (scannedText) => {
-            const scannedType = determineScannedTextType(scannedText);
-            const tempBlid = tempBlidRef.current;
-
-            if (tempBlid) {
-              if (scannedType !== TextType.ISBN) {
-                return [{ feedback: `Du må skanne ISBN til ${scannedText}` }];
-              }
-              await client.api.uniqueItems.add({
-                body: { blid: tempBlid, isbn: scannedText },
-              });
-              setTempBlid(null);
-            } else if (scannedType !== TextType.BLID) {
-              return [{ feedback: "Feil strekkode. Vennligst skann bokas unike ID" }];
-            }
-
-            const blidToHandout = tempBlid ?? scannedText;
-            const response = await client.api.rapidHandout.handout({
-              body: { blid: blidToHandout, customerId: customer.id },
-            });
-
-            if (response.connectBlid) {
-              setTempBlid(scannedText);
-              return [
-                { feedback: "Denne boken er ikke knyttet til noen unik ID. Skann bokas ISBN" },
-              ];
-            }
-
-            if (response.requiresConfirmation) {
-              const confirmed = await new Promise<boolean>((resolve) => {
-                modals.openConfirmModal({
-                  title: "Skal mottas fra en annen elev",
-                  children: (
-                    <Text>
-                      Denne boka skal {customer.name} få fra{" "}
-                      <Text span fw={700}>
-                        {response.deliverFromName}
-                      </Text>
-                      , ikke på stand. Er du sikker på at du vil dele den ut på stand likevel?
-                    </Text>
-                  ),
-                  labels: { confirm: "Del ut likevel", cancel: "Avbryt" },
-                  confirmProps: { color: "red" },
-                  onConfirm: () => resolve(true),
-                  onCancel: () => resolve(false),
-                  // Dismissing via X / overlay / escape only fires onClose; resolve there too so
-                  // the awaited scan never hangs (the first resolve wins).
-                  onClose: () => resolve(false),
-                });
-              });
-              if (!confirmed) {
-                return [{ feedback: "Boka ble ikke delt ut." }];
-              }
-              const forced = await client.api.rapidHandout.handout({
-                body: { blid: blidToHandout, customerId: customer.id, force: true },
-              });
-              return [{ feedback: forced.feedback }];
-            }
-
-            return [{ feedback: response.feedback }];
-          }}
-          onSuccessfulScan={invalidate}
+      <Modal
+        opened={opened}
+        onClose={() => {
+          close();
+          setPendingBlid(null);
+        }}
+        title={"Skann bøker"}
+      >
+        <ScannerPanel
+          allowManualEntry
+          accepts={pendingBlid === null ? ["blid"] : ["isbn"]}
+          instruction={
+            pendingBlid === null
+              ? null
+              : {
+                  text: `Skann ISBN-en på boka for å koble den til unik ID ${pendingBlid}`,
+                  illustrate: "isbn",
+                }
+          }
+          onScan={(code) =>
+            pendingBlid === null ? handOutBlid(code) : connectThenHandOut(pendingBlid, code)
+          }
+          onSuccess={invalidate}
         >
           <StandScannerProgress itemStatuses={standStatuses} />
           {receiveBooks.length > 0 && (
@@ -245,7 +287,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
               </Stack>
             </InfoAlert>
           )}
-        </ScannerModal>
+        </ScannerPanel>
       </Modal>
     </Stack>
   );

@@ -95,6 +95,7 @@ export type ScannedRoutes = {
     'opening_hours.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'items.get': { paramsTuple?: []; params?: {} }
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
+    'items.get_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'rapid_handout.handout': { paramsTuple?: []; params?: {} }
@@ -207,6 +208,7 @@ export type ScannedRoutes = {
     'opening_hours.get': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'items.get': { paramsTuple?: []; params?: {} }
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
+    'items.get_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'bulk_collection.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }
@@ -284,6 +286,7 @@ export type ScannedRoutes = {
     'opening_hours.get': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'items.get': { paramsTuple?: []; params?: {} }
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
+    'items.get_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'bulk_collection.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }

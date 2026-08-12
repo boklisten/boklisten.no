@@ -1,10 +1,9 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import { ActionIcon, Autocomplete, type ComboboxItem, Group, Stack, Text } from "@mantine/core";
-import { modals } from "@mantine/modals";
 import { IconMail, IconObjectScan, IconPhone, IconUser } from "@tabler/icons-react";
 import { useState } from "react";
 
-import ScannerModal from "@/shared/components/scanner/ScannerModal";
+import openScannerModal from "@/shared/components/scanner/openScannerModal";
 import useApiClient from "@/shared/hooks/useApiClient";
 
 export default function UserDetailSearchField({
@@ -43,22 +42,19 @@ export default function UserDetailSearchField({
           <ActionIcon
             variant={"subtle"}
             onClick={() => {
-              modals.open({
+              openScannerModal({
                 title: "Skann kundeID",
-                children: (
-                  <ScannerModal
-                    onScan={async (scannedText) => {
-                      const userDetail = await client.api.userDetail.getById({
-                        params: { detailsId: scannedText },
-                      });
-                      setSearchValue(userDetail?.name ?? "");
-                      onSelectedResult(userDetail);
-                      return [{ feedback: "" }];
-                    }}
-                    onSuccessfulScan={modals.closeAll}
-                    disableValidation
-                  />
-                ),
+                onScan: async (scannedText) => {
+                  const userDetail = await client.api.userDetail.getById({
+                    params: { detailsId: scannedText },
+                  });
+                  if (!userDetail) {
+                    return { message: `Fant ingen kunde med kundeID ${scannedText}.` };
+                  }
+                  setSearchValue(userDetail.name);
+                  onSelectedResult(userDetail);
+                  return undefined;
+                },
               });
             }}
           >

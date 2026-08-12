@@ -1,10 +1,9 @@
 import type { PublicBlidLookupResult } from "@boklisten/backend/shared/public_blid_lookup";
 import { ActionIcon, Card, Group, Stack, Table, Text, Title, Tooltip } from "@mantine/core";
-import { modals } from "@mantine/modals";
 import { IconMail, IconObjectScan, IconPhone } from "@tabler/icons-react";
 import { useState } from "react";
 
-import ScannerModal from "@/shared/components/scanner/ScannerModal";
+import openScannerModal from "@/shared/components/scanner/openScannerModal";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
@@ -57,17 +56,12 @@ export default function PublicBlidSearch() {
                 <ActionIcon
                   variant={"subtle"}
                   onClick={() => {
-                    modals.open({
+                    openScannerModal({
                       title: "Skann unik ID",
-                      children: (
-                        <ScannerModal
-                          onScan={async (blid) => {
-                            field.setValue(blid);
-                            return [{ feedback: "" }] as [{ feedback: string }];
-                          }}
-                          onSuccessfulScan={modals.closeAll}
-                        />
-                      ),
+                      accepts: ["blid"],
+                      onScan: (blid) => {
+                        field.setValue(blid);
+                      },
                     });
                   }}
                 >

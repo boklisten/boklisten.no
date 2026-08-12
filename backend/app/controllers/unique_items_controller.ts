@@ -1,6 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { findItemByIsbn, findUniqueItemByBlid } from "#services/item_lookup";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { uniqueItemsValidator } from "#validators/unique_item";
@@ -9,16 +9,20 @@ export default class UniqueItemsController {
   async add(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
     const { blid, isbn } = await ctx.request.validateUsing(uniqueItemsValidator);
-    const databaseQuery = new SEDbQuery();
-    databaseQuery.stringFilters = [{ fieldName: "info.isbn", value: isbn }];
-    const [item] = await StorageService.Items.getByQuery(databaseQuery);
-    if (!item) {
-      throw new Error("Item not found.");
+
+    const alreadyConnected = await findUniqueItemByBlid(blid);
+    if (alreadyConnected) {
+      return {
+        feedback: `Unik ID ${blid} er allerede koblet til «${alreadyConnected.title}».`,
+      };
     }
-    return await StorageService.UniqueItems.add({
-      blid,
-      item: item.id,
-      title: item.title,
-    });
+
+    const item = await findItemByIsbn(isbn);
+    if (!item) {
+      return { feedback: `Fant ingen bok med ISBN ${isbn}.` };
+    }
+
+    await StorageService.UniqueItems.add({ blid, item: item.id, title: item.title });
+    return { feedback: "" };
   }
 }

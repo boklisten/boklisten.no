@@ -11,15 +11,14 @@ import type { OrderItem } from "#shared/order/order-item/order-item";
 import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
 import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
 import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
+import { findUniqueItemByBlid } from "#services/item_lookup";
 import { rapidHandoutValidator } from "#validators/rapid_handout_validator";
 import { PermissionService } from "#services/permission_service";
 import BlidService from "#services/blid_service";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
 
-const blidNotActiveFeedback =
-  "Denne bliden er ikke tilknyttet noen bok. Registrer den i bl-admin for å dele den ut.";
+const blidNotActiveFeedback = "Denne unike IDen er ikke koblet til noen bok.";
 
 export default class RapidHandoutController {
   async handout(ctx: HttpContext) {
@@ -57,6 +56,11 @@ export default class RapidHandoutController {
     }
 
     const placedRentOrder = await this.placeRentOrder(blid, uniqueItemOrFeedback.item, customerId);
+    if (placedRentOrder === null) {
+      return {
+        feedback: `«${uniqueItemOrFeedback.title}» er ikke blant bøkene denne kunden har bestilt.`,
+      };
+    }
     await this.createCustomerItem(placedRentOrder);
 
     return { feedback: "" };
@@ -96,7 +100,11 @@ export default class RapidHandoutController {
     });
   }
 
-  private async placeRentOrder(blid: string, itemId: string, customerId: string): Promise<Order> {
+  private async placeRentOrder(
+    blid: string,
+    itemId: string,
+    customerId: string,
+  ): Promise<Order | null> {
     const item = await StorageService.Items.get(itemId);
     if (!item) {
       throw new BlError("Failed to get item");
@@ -124,7 +132,7 @@ export default class RapidHandoutController {
       .find(({ relevantOrderItem }) => relevantOrderItem !== undefined);
 
     if (!customerOrder) {
-      throw new BlError("No customer order for rapid handout item").code(805);
+      return null;
     }
     const branch = await StorageService.Branches.get(customerOrder.order.branch);
 
@@ -214,14 +222,6 @@ export default class RapidHandoutController {
   }
 
   private async verifyUniqueItemPresent(blid: string): Promise<string | UniqueItem> {
-    const uniqueItemQuery = new SEDbQuery();
-    uniqueItemQuery.stringFilters = [{ fieldName: "blid", value: blid }];
-    try {
-      const uniqueItems = await StorageService.UniqueItems.getByQuery(uniqueItemQuery);
-      if (uniqueItems.length === 0) return blidNotActiveFeedback;
-      return uniqueItems[0] ?? "";
-    } catch {
-      return blidNotActiveFeedback;
-    }
+    return (await findUniqueItemByBlid(blid)) ?? blidNotActiveFeedback;
   }
 }
