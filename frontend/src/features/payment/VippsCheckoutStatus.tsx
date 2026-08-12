@@ -71,6 +71,12 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
 
   const onPaymentSuccessful = useEffectEvent(() => {
     cart.clear();
+    // Ordering a loan makes the backend demand a signature, so refresh the tasks while the user
+    // is still on the receipt; otherwise AuthGuard reads a pre-order cache and skips the signing
+    // page when they move on
+    void queryClient.invalidateQueries({
+      queryKey: api.userDetail.getMyDetails.pathKey(),
+    });
   });
 
   useEffect(() => {

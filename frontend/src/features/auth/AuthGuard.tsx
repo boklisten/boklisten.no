@@ -1,9 +1,15 @@
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
-import { Activity, type ReactNode, useEffect, useEffectEvent, useState } from "react";
+import { Button, Stack } from "@mantine/core";
+import { Activity, type ReactNode, useEffect, useEffectEvent } from "react";
 
+import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
+import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
+
+const PATHS_ALLOWED_WITH_PENDING_TASKS = ["oppgaver", "user-settings", "logout"];
 
 /**
  *
@@ -19,10 +25,27 @@ export default function AuthGuard({
   const pathname = useLocation({ select: (location) => location.pathname });
   const navigate = useNavigate();
   const { isLoading, isLoggedIn, canAccess } = useAuth();
-  const { client } = useApiClient();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { api } = useApiClient();
 
-  const onAuthChange = useEffectEvent(async () => {
+  const isPermitted = isLoggedIn && (!requiredPermission || canAccess(requiredPermission));
+
+  const {
+    data: userDetail,
+    errorUpdateCount,
+    isFetching,
+    refetch,
+  } = useQuery({
+    ...api.userDetail.getMyDetails.queryOptions(),
+    enabled: !isLoading && isPermitted,
+  });
+
+  const hasPendingTasks =
+    (userDetail?.tasks?.confirmDetails || userDetail?.tasks?.signAgreement) ?? false;
+  const isOnAllowedPath = PATHS_ALLOWED_WITH_PENDING_TASKS.some((allowed) =>
+    pathname.includes(allowed),
+  );
+
+  const onAuthChange = useEffectEvent(() => {
     if (!isLoggedIn) {
       void navigate({ to: "/auth/login", search: { redirect: pathname.slice(1) } });
       return;
@@ -33,22 +56,31 @@ export default function AuthGuard({
       return;
     }
 
-    const userDetail = await client.api.userDetail.getMyDetails({});
-    if (
-      !pathname.includes("oppgaver") &&
-      !pathname.includes("user-settings") &&
-      (userDetail?.tasks?.confirmDetails || userDetail?.tasks?.signAgreement)
-    ) {
+    if (hasPendingTasks && !isOnAllowedPath) {
       void navigate({ to: "/oppgaver", search: { redirect: pathname.slice(1) } });
-      return;
     }
-    setIsAuthenticated(true);
   });
 
   useEffect(() => {
     if (isLoading) return;
-    void onAuthChange();
-  }, [isLoading, isLoggedIn]);
+    onAuthChange();
+  }, [isLoading, isLoggedIn, requiredPermission, hasPendingTasks, isOnAllowedPath]);
+
+  if (errorUpdateCount > 0 && userDetail === undefined) {
+    return (
+      <Stack align={"center"}>
+        <ErrorAlert title={"Klarte ikke laste inn brukeren din"}>
+          {PLEASE_TRY_AGAIN_TEXT}
+        </ErrorAlert>
+        <Button loading={isFetching} onClick={() => void refetch()}>
+          Prøv igjen
+        </Button>
+      </Stack>
+    );
+  }
+
+  const isAuthenticated =
+    isPermitted && userDetail !== undefined && !(hasPendingTasks && !isOnAllowedPath);
 
   return <Activity mode={isAuthenticated ? "visible" : "hidden"}>{children}</Activity>;
 }

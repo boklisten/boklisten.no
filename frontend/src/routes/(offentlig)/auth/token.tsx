@@ -1,10 +1,12 @@
-import { Container, Loader, Stack, Title } from "@mantine/core";
+import { Button, Container, Loader, Stack, Title } from "@mantine/core";
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
+import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuthLinker from "@/shared/hooks/useAuthLinker";
-import { useEffect, useEffectEvent } from "react";
+import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
+import { useEffect, useEffectEvent, useState } from "react";
 import { login } from "@/shared/hooks/useAuth";
 
 export const Route = createFileRoute("/(offentlig)/auth/token")({
@@ -25,6 +27,8 @@ function TokenPage() {
   const { redirectToCaller } = useAuthLinker();
   const { refreshToken, accessToken } = Route.useSearch();
   const navigate = useNavigate();
+  const [attempt, setAttempt] = useState(0);
+  const [hasFailed, setHasFailed] = useState(false);
 
   const onLogin = useEffectEvent(async (tokens: { accessToken: string; refreshToken: string }) => {
     const success = login(tokens);
@@ -32,7 +36,14 @@ function TokenPage() {
       void navigate({ to: "/auth/failure" });
       return;
     }
-    const userDetail = await client.api.userDetail.getMyDetails({});
+    let userDetail;
+    try {
+      userDetail = await client.api.userDetail.getMyDetails({});
+    } catch {
+      // Typically a dropped connection; leave the user a way out instead of spinning forever
+      setHasFailed(true);
+      return;
+    }
     if (userDetail?.tasks?.confirmDetails || userDetail?.tasks?.signAgreement) {
       void navigate({ to: "/oppgaver" });
     } else {
@@ -43,7 +54,28 @@ function TokenPage() {
     if (accessToken && refreshToken) {
       void onLogin({ accessToken, refreshToken });
     }
-  }, [accessToken, refreshToken]);
+  }, [accessToken, refreshToken, attempt]);
+
+  if (hasFailed) {
+    return (
+      <Container size={"xs"}>
+        <Stack align={"center"}>
+          <ErrorAlert title={"Klarte ikke fullføre innloggingen"}>
+            {PLEASE_TRY_AGAIN_TEXT}
+          </ErrorAlert>
+          <Button
+            onClick={() => {
+              setHasFailed(false);
+              setAttempt((previous) => previous + 1);
+            }}
+          >
+            Prøv igjen
+          </Button>
+        </Stack>
+      </Container>
+    );
+  }
+
   return (
     <Container size={"xs"}>
       <Stack align={"center"}>
