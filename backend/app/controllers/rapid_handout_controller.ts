@@ -61,6 +61,9 @@ export default class RapidHandoutController {
         feedback: `«${uniqueItemOrFeedback.title}» er ikke blant bøkene denne kunden har bestilt.`,
       };
     }
+    if (typeof placedRentOrder === "string") {
+      return { feedback: placedRentOrder };
+    }
     await this.createCustomerItem(placedRentOrder);
 
     return { feedback: "" };
@@ -104,7 +107,7 @@ export default class RapidHandoutController {
     blid: string,
     itemId: string,
     customerId: string,
-  ): Promise<Order | null> {
+  ): Promise<Order | string | null> {
     const item = await StorageService.Items.get(itemId);
     if (!item) {
       throw new BlError("Failed to get item");
@@ -151,6 +154,13 @@ export default class RapidHandoutController {
     // This is necessary because it's not actually a date in the database, and thus the type is wrong.
     // It might be solved in the future by Zod or some other strict parser/validation.
     deadline = new Date(deadline);
+
+    if (deadline.getTime() <= Date.now()) {
+      const formattedDeadline = DateTime.fromJSDate(deadline)
+        .setLocale("nb")
+        .toFormat("d. MMMM yyyy");
+      return `«${item.title}» kan ikke deles ut fordi fristen på bestillingen gikk ut ${formattedDeadline}. Kanseller bestillingen og legg den inn på nytt for å få en gyldig frist.`;
+    }
 
     const placedHandoutOrder = await StorageService.Orders.add({
       placed: true,
