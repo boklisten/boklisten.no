@@ -1,6 +1,6 @@
 import { Box, Button, Skeleton } from "@mantine/core";
 import { IconArrowLeft } from "@tabler/icons-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { forViewer } from "@/features/matches/forViewer";
 import MatchDetailView from "@/features/matches/MatchDetailView";
@@ -13,7 +13,6 @@ import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/consta
 const MatchDetail = ({ matchId }: { matchId: string }) => {
   const { api } = useApiClient();
   const { detailsId } = useAuth();
-  const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery(
     api.matches.getMyMatches.queryOptions({}, { staleTime: 5000 }),
@@ -42,13 +41,7 @@ const MatchDetail = ({ matchId }: { matchId: string }) => {
         </TanStackAnchor>
       </Box>
 
-      <MatchDetailView
-        viewerMatch={forViewer(match, detailsId)}
-        viewerCustomerId={detailsId}
-        onItemTransferred={() =>
-          queryClient.invalidateQueries({ queryKey: api.matches.getMyMatches.queryKey() })
-        }
-      />
+      <MatchDetailView viewerMatch={forViewer(match, detailsId)} viewerCustomerId={detailsId} />
     </>
   );
 };

@@ -5,6 +5,7 @@ import { IconObjectScan, IconQrcode } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import { QRCodeSVG } from "qrcode.react";
 import { Activity, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   allObligations,
@@ -45,13 +46,12 @@ function useIsTooEarly(meetingTime: string | null) {
 export default function MatchDetailView({
   viewerMatch,
   viewerCustomerId,
-  onItemTransferred,
 }: {
   viewerMatch: ViewerMatch;
   viewerCustomerId: string;
-  onItemTransferred?: (() => void) | undefined;
 }) {
-  const { client } = useApiClient();
+  const queryClient = useQueryClient();
+  const { client, api } = useApiClient();
   const [opened, { open, close }] = useDisclosure(false);
   const [redirectCountdownStarted, setRedirectCountdownStarted] = useState(false);
   const tooEarly = useIsTooEarly(viewerMatch.meetingTime);
@@ -172,9 +172,11 @@ export default function MatchDetailView({
               successMessage={"Boken har blitt registrert!"}
               onScan={async (blid) => {
                 const response = await client.api.matches.transferItem({ body: { blid } });
+                await queryClient.invalidateQueries({
+                  queryKey: api.matches.getMyMatches.queryKey(),
+                });
                 return response.feedback ? { message: response.feedback } : undefined;
               }}
-              onSuccess={onItemTransferred}
             >
               <MatchScannerContent obligations={toReceive} />
             </ScannerPanel>

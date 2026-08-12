@@ -5,15 +5,18 @@ import { determineScanCodeType, type ScanCodeType } from "@/shared/utils/scanCod
 
 const DECODED_FORMATS = ["qr_code", "code_128", "ean_8", "ean_13"] as const;
 
-function pickRelevantCode(
+function relevantCodes(
   detectedCodes: IDetectedBarcode[],
   accepts: ScanCodeType[] | undefined,
-): string | undefined {
-  const values = detectedCodes.map((code) => code.rawValue).filter((value) => value.length > 0);
+): string[] {
+  const values = [...new Set(detectedCodes.map((code) => code.rawValue))].filter(
+    (value) => value.length > 0,
+  );
   if (accepts === undefined) {
-    return values[0];
+    return values;
   }
-  return values.find((value) => accepts.includes(determineScanCodeType(value))) ?? values[0];
+  const accepted = values.filter((value) => accepts.includes(determineScanCodeType(value)));
+  return accepted.length > 0 ? accepted : values.slice(0, 1);
 }
 
 export default function CameraScanner({
@@ -45,16 +48,23 @@ export default function CameraScanner({
     if (!activeRef.current || busyRef.current) {
       return;
     }
-    const code = pickRelevantCode(detectedCodes, acceptsRef.current);
-    if (code === undefined) {
+    const codes = relevantCodes(detectedCodes, acceptsRef.current);
+    if (codes.length === 0) {
       return;
     }
     busyRef.current = true;
     try {
-      await onCodeRef.current(code);
-    } catch (error) {
-      // onCode owns its own error reporting; this only stops an unhandled rejection.
-      console.error("Failed to handle scanned code", error);
+      for (const code of codes) {
+        if (!activeRef.current) {
+          break;
+        }
+        try {
+          await onCodeRef.current(code);
+        } catch (error) {
+          // onCode owns its own error reporting; this only stops an unhandled rejection.
+          console.error("Failed to handle scanned code", error);
+        }
+      }
     } finally {
       busyRef.current = false;
     }
