@@ -23,6 +23,8 @@ import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 // notice modal (400), which only appears once a decision has been made.
 const CONFIRM_Z_INDEX = 350;
 
+const POLL_INTERVAL_MS = 5000;
+
 function calculateUnfulfilledOrderItems(orders: Order[]): OrderItem[] {
   return orders
     .filter((order) => order.byCustomer && !order.handoutByDelivery)
@@ -33,14 +35,6 @@ function calculateUnfulfilledOrderItems(orders: Order[]): OrderItem[] {
         !orderItem.handout &&
         (orderItem.type === "rent" || orderItem.type === "partly-payment"),
     );
-}
-
-function mapOrdersToItemStatuses(orders: Order[]): ItemStatus[] {
-  return calculateUnfulfilledOrderItems(orders).map((oi) => ({
-    id: oi.item,
-    title: oi.title,
-    fulfilled: false,
-  }));
 }
 
 function buildPeerBooks(matches: MatchDto[], customerId: string) {
@@ -70,14 +64,14 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
     api.orders.getPlacedOrders.queryOptions(
       { params: { detailsId: customer.id } },
       {
-        staleTime: 5000,
+        refetchInterval: POLL_INTERVAL_MS,
       },
     ),
   );
   const { data: matchData } = useQuery(
     api.matches.getMatchesForCustomer.queryOptions(
       { params: { customerId: customer.id } },
-      { staleTime: 5000 },
+      { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
   const [opened, { open, close }] = useDisclosure(false);
@@ -85,30 +79,30 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
   const [pendingBlid, setPendingBlid] = useState<string | null>(null);
 
   useEffect(() => {
-    client.api.orders
-      .getPlacedOrders({ params: { detailsId: customer.id } })
-      .then((originalOrders) => {
-        return setItemStatuses(mapOrdersToItemStatuses(originalOrders));
-      })
-      .catch((error) => {
-        console.error("Failed to fetch original orders, error:", error);
-      });
-  }, [client, customer.id]);
-
-  useEffect(() => {
-    function updateFulfilledOrderItems() {
-      if (!orders) {
-        return;
-      }
-      const unfulfilledOrderItems = calculateUnfulfilledOrderItems(orders);
-      setItemStatuses((previousState) =>
-        previousState.map((itemStatus) => ({
-          ...itemStatus,
-          fulfilled: !unfulfilledOrderItems.some((orderItem) => orderItem.item === itemStatus.id),
-        })),
-      );
+    if (!orders) {
+      return;
     }
-    updateFulfilledOrderItems();
+    const unfulfilledOrderItems = calculateUnfulfilledOrderItems(orders);
+    setItemStatuses((previousState) => {
+      const refreshed = previousState.map((itemStatus) => ({
+        ...itemStatus,
+        fulfilled: !unfulfilledOrderItems.some((orderItem) => orderItem.item === itemStatus.id),
+      }));
+      const knownItems = new Set(refreshed.map((itemStatus) => itemStatus.id));
+      const added = unfulfilledOrderItems
+        .filter((orderItem) => !knownItems.has(orderItem.item))
+        .map((orderItem) => ({ id: orderItem.item, title: orderItem.title, fulfilled: false }));
+
+      const unchanged =
+        added.length === 0 &&
+        refreshed.every(
+          (itemStatus, index) => itemStatus.fulfilled === previousState[index]?.fulfilled,
+        );
+      if (unchanged) {
+        return previousState;
+      }
+      return [...refreshed, ...added];
+    });
   }, [orders]);
 
   const { receiveBooks, giveBooks } = buildPeerBooks(matchData ?? [], customer.id);

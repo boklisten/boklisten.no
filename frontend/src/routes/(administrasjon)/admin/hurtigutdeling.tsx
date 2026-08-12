@@ -63,7 +63,7 @@ function RapidHandoutPage() {
               </Button>
             </Box>
           )}
-          {data && <RapidHandoutDetails customer={data} />}
+          {data && <RapidHandoutDetails key={data.id} customer={data} />}
         </Stack>
       </Stack>
     </Container>
