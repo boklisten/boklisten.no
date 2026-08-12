@@ -1,7 +1,11 @@
 import { Stack, Table, Text, Tooltip } from "@mantine/core";
 import { IconAlertSquareFilled, IconSquareCheckFilled } from "@tabler/icons-react";
 
-import { describeObligation, type ViewerObligation } from "@/features/matches/forViewer";
+import {
+  describeObligation,
+  isObligationSettled,
+  type ViewerObligation,
+} from "@/features/matches/forViewer";
 import type { ItemStatus } from "@/shared/components/matches/matches-helper";
 
 function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: string }) {
@@ -32,20 +36,46 @@ function TableFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * A row's status, and what the tick claims: the reader's own half of the book on the student
+ * pages, the whole book on the admin pages — where every book appears exactly once and the tick
+ * has to agree with the "N av M bøker overlevert" count above it.
+ */
+function rowStatus(obligation: ViewerObligation, wholeBook: boolean) {
+  if (wholeBook) {
+    const settled = isObligationSettled(obligation);
+    return {
+      fulfilled: settled,
+      label: settled ? "Denne boken er overlevert" : "Denne boken er ikke overlevert enda",
+    };
+  }
+  const verb = obligation.side === "deliver" ? "levert" : "mottatt";
+  return {
+    fulfilled: obligation.fulfilled,
+    label: obligation.fulfilled
+      ? `Denne boken er registrert som ${verb}`
+      : `Denne boken har ikke blitt registrert som ${verb}`,
+  };
+}
+
 export default function MatchItemTable({
   obligations,
   viewerName,
 }: {
   obligations: ViewerObligation[];
+  /**
+   * Set on the admin pages: notes speak *about* this party by name instead of saying "du", and
+   * ticks mean whole books rather than the reader's own half.
+   */
   viewerName?: string;
 }) {
   return (
     <TableFrame>
       {[...obligations]
+        .map((obligation) => ({ obligation, ...rowStatus(obligation, viewerName !== undefined) }))
         .sort((a, b) => Number(a.fulfilled) - Number(b.fulfilled))
-        .map((obligation) => {
+        .map(({ obligation, fulfilled, label }) => {
           const note = describeObligation(obligation, viewerName);
-          const verb = obligation.side === "deliver" ? "levert" : "mottatt";
           return (
             <Table.Tr key={obligation.id}>
               <Table.Td>
@@ -58,14 +88,7 @@ export default function MatchItemTable({
                   )}
                 </Stack>
               </Table.Td>
-              <StatusIcon
-                fulfilled={obligation.fulfilled}
-                label={
-                  obligation.fulfilled
-                    ? `Denne boken er registrert som ${verb}`
-                    : `Denne boken har ikke blitt registrert som ${verb}`
-                }
-              />
+              <StatusIcon fulfilled={fulfilled} label={label} />
             </Table.Tr>
           );
         })}

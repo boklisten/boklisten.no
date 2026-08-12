@@ -17,7 +17,7 @@ import MatchItemTable from "@/shared/components/matches/MatchItemTable";
 import ProgressBar from "@/shared/components/ProgressBar";
 
 export default function AdminMatchDetail({ match }: { match: MatchDto }) {
-  const { settled, total } = matchProgress(match);
+  const progress = matchProgress(match);
   const finished = isMatchFinished(match);
   const parties = orderedParties(match);
 
@@ -28,14 +28,7 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
           <AdminMatchTitle match={match} />
         </Title>
         {finished && <SuccessAlert>Alle bøkene i denne overleveringen er overlevert.</SuccessAlert>}
-        <ProgressBar
-          percentComplete={total > 0 ? (settled * 100) / total : 100}
-          subtitle={
-            <>
-              Fullført {settled} av {total} leveringer og mottak
-            </>
-          }
-        />
+        <ProgressBar percentComplete={progress.percent} subtitle={progress.label} />
       </Stack>
 
       <Stack gap={"xs"}>

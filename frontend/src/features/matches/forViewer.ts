@@ -1,5 +1,4 @@
 import type {
-  HandoverDto,
   HandoverParty,
   MatchDto,
   MatchObligationDto,
@@ -19,32 +18,20 @@ export function isSameParty(a: HandoverParty, b: HandoverParty): boolean {
 
 export type ObligationSide = "deliver" | "receive";
 
-export interface ViewerObligation {
-  id: string;
-  itemId: string;
-  title: string;
+export interface ViewerObligation extends MatchObligationDto {
   side: ObligationSide;
   /** The party the viewer was set up to deal with for this book. */
   expected: HandoverParty;
-  /** The party they actually dealt with, once the book moved. Null while nothing has happened. */
-  actual: HandoverParty | null;
-  lockedToMatch: boolean;
-  /** The handover that settles the viewer's own half, if it has happened. */
-  handover: HandoverDto | null;
-  /** Whether the viewer's own half is settled. Never a prediction — only a recorded event. */
+  /** Whether the viewer has done their part. */
   fulfilled: boolean;
-  /** The book moved, but not with the party the viewer was set up with. */
-  wentElsewhere: boolean;
-  /**
-   * Deliver side only: the receiver has already been served by somebody else, so the viewer still
-   * owes their own copy even though the book the receiver wanted has arrived.
-   */
-  otherHalfSettled: boolean;
-  /**
-   * Deliver side only: whoever actually served the expected receiver, when that has happened.
-   * This is who "noen andre" turned out to be, and every party gets to see the name.
-   */
-  otherHalfParty: HandoverParty | null;
+}
+
+/** Whether the whole book is done — both parties' halves. The stand owes nothing either way. */
+export function isObligationSettled(obligation: MatchObligationDto): boolean {
+  return (
+    (obligation.sender.kind === "stand" || obligation.senderHandover !== null) &&
+    (obligation.receiver.kind === "stand" || obligation.receiverHandover !== null)
+  );
 }
 
 export interface ViewerMatch {
@@ -63,23 +50,17 @@ function toViewerObligation(
   side: ObligationSide,
 ): ViewerObligation {
   const deliver = side === "deliver";
-  const handover = deliver ? obligation.senderHandover : obligation.receiverHandover;
-  const expected = deliver ? obligation.receiver : obligation.sender;
-  const actual = handover ? (deliver ? handover.to : handover.from) : null;
+  const viewer = deliver ? obligation.sender : obligation.receiver;
+  const ownHalf = deliver ? obligation.senderHandover : obligation.receiverHandover;
+  const otherHalf = deliver ? obligation.receiverHandover : obligation.senderHandover;
 
   return {
-    id: obligation.id,
-    itemId: obligation.itemId,
-    title: obligation.title,
+    ...obligation,
     side,
-    expected,
-    actual,
-    lockedToMatch: obligation.lockedToMatch,
-    handover,
-    fulfilled: handover !== null,
-    wentElsewhere: actual !== null && !isSameParty(actual, expected),
-    otherHalfSettled: deliver && handover === null && obligation.receiverHandover !== null,
-    otherHalfParty: deliver ? (obligation.receiverHandover?.from ?? null) : null,
+    expected: deliver ? obligation.receiver : obligation.sender,
+    // A stand half never gets its own handover, so it is settled by the other half's event:
+    // handing a book out at the stand *is* the student receiving it.
+    fulfilled: (viewer.kind === "stand" ? otherHalf : ownHalf) !== null,
   };
 }
 
@@ -130,66 +111,101 @@ export function isBegun(viewerMatch: ViewerMatch): boolean {
   return countFulfilled(allObligations(viewerMatch)) > 0;
 }
 
+/**
+ * "1 av 2 bøker mottatt" — the viewer's own progress. The verb names the outcome, not the act:
+ * books handed out at the stand are scanned by the staff, so a student can be fully fulfilled
+ * without ever touching a scanner.
+ */
+export function viewerProgress(viewerMatch: ViewerMatch): { percent: number; label: string } {
+  const obligations = allObligations(viewerMatch);
+  const fulfilled = countFulfilled(obligations);
+  const verb =
+    viewerMatch.toReceive.length === 0
+      ? "levert"
+      : viewerMatch.toDeliver.length === 0
+        ? "mottatt"
+        : "utvekslet";
+  const noun = obligations.length === 1 ? "bok" : "bøker";
+  return {
+    percent: obligations.length === 0 ? 100 : (fulfilled * 100) / obligations.length,
+    label: `${fulfilled} av ${obligations.length} ${noun} ${verb}`,
+  };
+}
+
 /** How a party reads in the middle of a sentence — the stand gets an article, customers a name. */
 function partyLabel(party: HandoverParty): string {
   return party.kind === "stand" ? "standen" : party.name || "en annen elev";
 }
 
+function capitalized(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 /** partyLabel at the start of a sentence ("Standen", "En annen elev"). */
 function partyLabelCapitalized(party: HandoverParty): string {
-  const label = partyLabel(party);
-  return label.charAt(0).toUpperCase() + label.slice(1);
+  return capitalized(partyLabel(party));
 }
 
 /**
- * The book named by whose copy it was: "Ole sin «Pasos 2020»", or "«Pasos 2020» fra standen" —
- * the stand holds a pile, not a particular student's copy.
+ * What to tell the reader about one book, beyond the ticks in the table. Built from one fragment
+ * per half; a half that went as planned contributes nothing, and neither does a book nobody has
+ * moved, so the note is null in the happy path.
  *
- * A wrong-party handover is usually two students mixing up physical copies, so the notes talk
- * about whose book ended up where rather than implying a deliberate delivery from a stranger.
- */
-function copyFrom(owner: HandoverParty, title: string): string {
-  return owner.kind === "stand" ? `«${title}» fra standen` : `${partyLabel(owner)} sin «${title}»`;
-}
-
-/**
- * What to tell the viewer about one book, beyond the tick in the table.
- *
- * Returns null when there is nothing to add — including for every book that has not moved yet. A
- * pending obligation is pending, and that is all we know: claiming a book will never arrive would
- * mean claiming to know what somebody is physically holding.
- *
- * Without `viewerName` the note speaks to the obligation's own party ("du"). With it, the note
- * speaks *about* them by name — the admin pages show every party's books at once, so "du" there
- * would point at nobody.
+ * Without `viewerName` the note speaks to the obligation's own party ("du"); with it, the note
+ * speaks *about* them by name, for the admin pages. That also decides whose outstanding side is
+ * stated: a student is only told what they themselves still owe, an admin is told both.
  */
 export function describeObligation(
   obligation: ViewerObligation,
   viewerName?: string,
 ): string | null {
-  const { title, expected, actual } = obligation;
-  const subject = viewerName ?? "Du";
+  const { title, sender, receiver, senderHandover, receiverHandover } = obligation;
 
-  if (obligation.side === "receive") {
-    if (obligation.wentElsewhere && actual) {
-      return `${subject} har skannet ${copyFrom(actual, title)}. Boka er registrert.`;
+  const watchingBothParties = viewerName !== undefined;
+  const viewerIsSender = obligation.side === "deliver";
+  const speakingToSender = viewerIsSender && !watchingBothParties;
+  const senderLabel = viewerIsSender ? (viewerName ?? "Du") : partyLabelCapitalized(sender);
+  const receiverLabel = viewerIsSender ? partyLabelCapitalized(receiver) : (viewerName ?? "Du");
+  const sendersCopy = speakingToSender ? `din «${title}»` : `${partyLabel(sender)} sin «${title}»`;
+
+  // Facts first, open obligations last, so the note ends on the open question.
+  const happened: string[] = [];
+  const outstanding: string[] = [];
+
+  // The stand owes no copy of its own and is owed none, so its side never has anything to report.
+  if (sender.kind !== "stand") {
+    if (senderHandover === null) {
+      if (receiverHandover !== null && (watchingBothParties || viewerIsSender)) {
+        outstanding.push(
+          `${senderLabel} er fortsatt ansvarlig for å levere ${speakingToSender ? "din" : "sin"} opprinnelige bok.`,
+        );
+      }
+    } else if (!isSameParty(senderHandover.to, receiver)) {
+      happened.push(
+        senderHandover.to.kind === "stand"
+          ? // Passive on purpose: the record shows whose book moved, never who carried it.
+            `${capitalized(sendersCopy)} ble levert på stand.`
+          : `${partyLabelCapitalized(senderHandover.to)} skannet ${sendersCopy}.`,
+      );
     }
-    return null;
   }
 
-  if (obligation.wentElsewhere && actual) {
-    return viewerName
-      ? `${partyLabelCapitalized(actual)} har skannet ${subject} sin «${title}». Boka er registrert som levert.`
-      : `${partyLabelCapitalized(actual)} har skannet din «${title}». Boka er registrert som levert.`;
+  if (receiver.kind !== "stand") {
+    if (receiverHandover === null) {
+      // Only once the sender's copy has demonstrably gone elsewhere — a plain pending book stays
+      // silent, since the tick already says "not yet".
+      if (senderHandover !== null && (watchingBothParties || !viewerIsSender)) {
+        outstanding.push(`${receiverLabel} har ikke fått noen bok enda.`);
+      }
+    } else if (!isSameParty(receiverHandover.from, sender)) {
+      happened.push(
+        receiverHandover.from.kind === "stand"
+          ? `${receiverLabel} fikk «${title}» fra standen.`
+          : `${receiverLabel} skannet ${partyLabel(receiverHandover.from)} sin «${title}».`,
+      );
+    }
   }
-  if (obligation.otherHalfSettled) {
-    const source = obligation.otherHalfParty;
-    const received = source
-      ? `${partyLabelCapitalized(expected)} har skannet ${copyFrom(source, title)}.`
-      : `${partyLabelCapitalized(expected)} har allerede skannet noen andre sin «${title}».`;
-    return viewerName
-      ? `${received} ${subject} er fortsatt ansvarlig for å levere sin opprinnelige bok.`
-      : `${received} Du er fortsatt ansvarlig for å levere din opprinnelige bok.`;
-  }
-  return null;
+
+  const note = [...happened, ...outstanding].join(" ");
+  return note === "" ? null : note;
 }

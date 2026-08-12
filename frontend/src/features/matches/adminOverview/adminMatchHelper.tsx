@@ -2,31 +2,27 @@ import type { HandoverParty, MatchDto } from "@boklisten/backend/shared/match/ma
 import { Group, Text } from "@mantine/core";
 import { IconChevronsRight, IconSwitchHorizontal } from "@tabler/icons-react";
 
-import { isSameParty, partyName } from "@/features/matches/forViewer";
+import { isObligationSettled, isSameParty, partyName } from "@/features/matches/forViewer";
 
-export function matchProgress(match: MatchDto): { settled: number; total: number } {
-  let settled = 0;
-  let total = 0;
-  for (const obligation of match.obligations) {
-    if (obligation.sender.kind === "customer") {
-      total++;
-      if (obligation.senderHandover) settled++;
-    }
-    if (obligation.receiver.kind === "customer") {
-      total++;
-      if (obligation.receiverHandover) settled++;
-    }
-  }
-  return { settled, total };
+/** "1 av 2 bøker overlevert" — progress in whole books; a peer scan settles both halves at once. */
+export function matchProgress(match: MatchDto): { percent: number; label: string } {
+  const settled = match.obligations.filter(isObligationSettled).length;
+  const total = match.obligations.length;
+  return {
+    percent: total > 0 ? (settled * 100) / total : 100,
+    label: `${settled} av ${total} ${total === 1 ? "bok" : "bøker"} overlevert`,
+  };
 }
 
 export function isMatchFinished(match: MatchDto): boolean {
-  const { settled, total } = matchProgress(match);
-  return settled >= total;
+  return match.obligations.every(isObligationSettled);
 }
 
 export function isMatchBegun(match: MatchDto): boolean {
-  return matchProgress(match).settled > 0;
+  // Any recorded handover counts, even one that settled only half a book.
+  return match.obligations.some(
+    (obligation) => obligation.senderHandover !== null || obligation.receiverHandover !== null,
+  );
 }
 
 export function orderedParties(match: MatchDto): HandoverParty[] {

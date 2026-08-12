@@ -8,11 +8,10 @@ import { Activity, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {
-  allObligations,
-  countFulfilled,
   isFullyFulfilled,
   partyName,
   type ViewerMatch,
+  viewerProgress,
 } from "@/features/matches/forViewer";
 import { MatchTitle } from "@/features/matches/matchesList/helper";
 import MeetingInfo from "@/features/matches/MeetingInfo";
@@ -57,8 +56,7 @@ export default function MatchDetailView({
   const tooEarly = useIsTooEarly(viewerMatch.meetingTime);
 
   const { toDeliver, toReceive, isStandMatch, counterparty } = viewerMatch;
-  const obligations = allObligations(viewerMatch);
-  const fulfilled = countFulfilled(obligations);
+  const progress = viewerProgress(viewerMatch);
   const finished = isFullyFulfilled(viewerMatch);
 
   // Completion is observed on the refetched match rather than in the scan callback, which only
@@ -71,13 +69,6 @@ export default function MatchDetailView({
     }
   }, [finished, opened, close]);
 
-  const statusText =
-    toDeliver.length > 0 && toReceive.length === 0
-      ? "levert"
-      : toReceive.length > 0 && toDeliver.length === 0
-        ? "skannet"
-        : "utvekslet";
-
   const canScan = !isStandMatch && toReceive.length > 0;
 
   return (
@@ -88,20 +79,13 @@ export default function MatchDetailView({
         </Title>
 
         <Activity mode={finished ? "visible" : "hidden"}>
-          <SuccessAlert>Du har {statusText} alle bøkene for denne overleveringen.</SuccessAlert>
+          <SuccessAlert>Du er ferdig med denne overleveringen.</SuccessAlert>
           <Activity mode={redirectCountdownStarted ? "visible" : "hidden"}>
             <CountdownToRedirect path={"/overleveringer"} seconds={5} />
           </Activity>
         </Activity>
 
-        <ProgressBar
-          percentComplete={obligations.length === 0 ? 100 : (fulfilled * 100) / obligations.length}
-          subtitle={
-            <>
-              {fulfilled} av {obligations.length} bøker {statusText}
-            </>
-          }
-        />
+        <ProgressBar percentComplete={progress.percent} subtitle={progress.label} />
       </Stack>
 
       <Activity mode={finished ? "hidden" : "visible"}>
@@ -157,7 +141,7 @@ export default function MatchDetailView({
         </Stack>
       </Activity>
 
-      <Activity mode={canScan && fulfilled < obligations.length ? "visible" : "hidden"}>
+      <Activity mode={canScan && !finished ? "visible" : "hidden"}>
         <Stack gap={"xs"}>
           <MatchHeader>Når du skal motta bøker</MatchHeader>
           <Text>For å motta bøker må du skanne dem</Text>

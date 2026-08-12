@@ -13,7 +13,7 @@ import MeetingInfo from "@/features/matches/MeetingInfo";
 import ProgressBar from "@/shared/components/ProgressBar";
 
 export default function AdminMatchListItem({ match }: { match: MatchDto }) {
-  const { settled, total } = matchProgress(match);
+  const progress = matchProgress(match);
   const finished = isMatchFinished(match);
   const started = isMatchBegun(match);
 
@@ -24,12 +24,8 @@ export default function AdminMatchListItem({ match }: { match: MatchDto }) {
       </Title>
       <Activity mode={started && !finished ? "visible" : "hidden"}>
         <ProgressBar
-          percentComplete={total > 0 ? (settled * 100) / total : 100}
-          subtitle={
-            <Text size={"sm"}>
-              Fullført {settled} av {total} leveringer og mottak
-            </Text>
-          }
+          percentComplete={progress.percent}
+          subtitle={<Text size={"sm"}>{progress.label}</Text>}
         />
       </Activity>
       <Activity mode={!finished ? "visible" : "hidden"}>
