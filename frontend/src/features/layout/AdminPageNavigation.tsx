@@ -28,7 +28,7 @@ function AdminNavItem({
       active={isAdminNavLinkActive(link, pathname)}
       leftSection={<LinkIcon />}
       underline={"never"}
-      c={"black"}
+      c={"var(--mantine-color-text)"}
       component={TanStackAnchor}
       onClick={onNavigate}
     />
@@ -67,7 +67,7 @@ export default function AdminPageNavigation({
                     label={group.label}
                     leftSection={<GroupIcon />}
                     active={group.links.some((link) => isAdminNavLinkActive(link, pathname))}
-                    c={"black"}
+                    c={"var(--mantine-color-text)"}
                     component={"button"}
                   >
                     {group.links.map((link) => (
@@ -95,7 +95,7 @@ export default function AdminPageNavigation({
           leftSection={<IconUserEdit />}
           variant={"subtle"}
           underline={"never"}
-          c={"black"}
+          c={"var(--mantine-color-text)"}
           component={TanStackAnchor}
           onClick={onNavigate}
         />

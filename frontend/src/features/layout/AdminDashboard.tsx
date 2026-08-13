@@ -11,11 +11,17 @@ import {
 } from "@mantine/core";
 import { useFocusWithin, useHover, useMergedRef, useReducedMotion } from "@mantine/hooks";
 import { IconArrowRight } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
 
 import { type AdminNavLink, visibleAdminNavSections } from "@/features/layout/adminNavigation";
+import ColorSchemeSelector from "@/features/user/ColorSchemeSelector";
+import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+
+const BOOK_SERIF =
+  '"Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif';
 
 function AdminNavCard({ link }: { link: AdminNavLink }) {
   const LinkIcon = link.icon;
@@ -49,17 +55,17 @@ function AdminNavCard({ link }: { link: AdminNavLink }) {
       }
       component={TanStackAnchor}
       underline={"never"}
-      c={"black"}
+      c={"var(--mantine-color-text)"}
       styles={{
         root: {
-          border: `1px solid var(--mantine-color-${active ? "brand-9" : "gray-3"})`,
+          border: `1px solid var(--mantine-color-${active ? "brand-text" : "default-border"})`,
           borderRadius: "var(--mantine-radius-md)",
           backgroundColor: "var(--mantine-color-body)",
           boxShadow: active ? "var(--mantine-shadow-xs)" : "none",
           transition: ease && `box-shadow ${ease}, border-color ${ease}`,
         },
-        label: { fontWeight: 600, color: active ? "var(--mantine-color-brand-9)" : undefined },
-        description: { color: "var(--mantine-color-gray-7)" },
+        label: { fontWeight: 600, color: active ? "var(--mantine-color-brand-text)" : undefined },
+        description: { color: "var(--mantine-color-dimmed)" },
       }}
     />
   );
@@ -77,24 +83,35 @@ function AdminNavGrid({ links }: { links: AdminNavLink[] }) {
 
 export default function AdminDashboard() {
   const { isAdmin } = useAuth();
+  const { api } = useApiClient();
+  const { data: userDetail } = useQuery(api.userDetail.getMyDetails.queryOptions());
+  const firstName = userDetail?.name.trim().split(" ")[0];
+
   return (
     <Container size={"lg"} py={"xl"}>
       <Stack gap={50}>
-        <Stack align={"center"} gap={"xs"}>
+        <Stack align={"center"} gap={0}>
           <Image src={"/boklisten_logo_blue.png"} width={64} height={64} alt={"Boklisten.no"} />
-          <Title order={1} ta={"center"} style={{ fontFamily: "serif" }} c={"brand.9"}>
-            Velkommen til <span style={{ whiteSpace: "nowrap" }}>bl-admin</span>
+          <Title
+            order={1}
+            mt={"xs"}
+            ta={"center"}
+            style={{ fontFamily: BOOK_SERIF }}
+            c={"var(--mantine-color-brand-text)"}
+          >
+            Velkommen{firstName ? `, ${firstName}` : ""}
           </Title>
-          <Text c={"gray.7"} ta={"center"} maw={"46ch"}>
+          <Text mt={"sm"} c={"dimmed"} ta={"center"} maw={"46ch"}>
             Her er verktøyene du trenger for å dele ut, samle inn og holde orden på bøkene.
           </Text>
+          <ColorSchemeSelector />
         </Stack>
 
         {visibleAdminNavSections(isAdmin).map((section) => (
           <Stack key={section.label} gap={"lg"}>
             <Divider
               label={
-                <Title order={2} size={"xs"} tt={"uppercase"} lts={"0.08em"} c={"gray.7"}>
+                <Title order={2} size={"xs"} tt={"uppercase"} lts={"0.08em"} c={"dimmed"}>
                   {section.label}
                 </Title>
               }
@@ -105,7 +122,7 @@ export default function AdminDashboard() {
               const GroupIcon = group.icon;
               return (
                 <Stack key={group.label} gap={"sm"}>
-                  <Group gap={6} c={"brand.9"}>
+                  <Group gap={6} c={"var(--mantine-color-brand-text)"}>
                     <GroupIcon size={18} aria-hidden />
                     <Title order={3} size={"sm"}>
                       {group.label}

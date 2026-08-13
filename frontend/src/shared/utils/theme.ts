@@ -1,4 +1,4 @@
-import { createTheme } from "@mantine/core";
+import { type CSSVariablesResolver, createTheme } from "@mantine/core";
 
 const theme = createTheme({
   colors: {
@@ -17,6 +17,17 @@ const theme = createTheme({
   },
   primaryColor: "brand",
   primaryShade: 9,
+});
+
+export const cssVariablesResolver: CSSVariablesResolver = (mantineTheme) => ({
+  variables: {},
+  light: {},
+  dark: Object.fromEntries(
+    Object.keys(mantineTheme.colors).map((color) => [
+      `--mantine-color-${color}-light-color`,
+      `var(--mantine-color-${color}-text)`,
+    ]),
+  ),
 });
 
 export default theme;

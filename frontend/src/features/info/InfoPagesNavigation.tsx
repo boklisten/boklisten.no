@@ -33,7 +33,12 @@ const InfoPagesNavigation = () => {
         <Tabs value={tabs.find((tab) => pathname.includes(tab.value))?.value ?? pathname}>
           <TabsList justify={"center"}>
             {tabs.map((tab) => (
-              <TanStackAnchor underline={"never"} c={"dark"} key={tab.value} to={tab.value}>
+              <TanStackAnchor
+                underline={"never"}
+                c={"var(--mantine-color-text)"}
+                key={tab.value}
+                to={tab.value}
+              >
                 <TabsTab value={tab.value}>{tab.label}</TabsTab>
               </TanStackAnchor>
             ))}

@@ -72,7 +72,7 @@ export default function PublicBlidSearch() {
           />
         )}
       </form.AppField>
-      <Text c={"gray"} size={"sm"} ta={"center"}>
+      <Text c={"dimmed"} size={"sm"} ta={"center"}>
         {searchResult === "inactive" && "Denne boken er ikke registrert som utdelt."}
         {((searchResult === null &&
           form.state.values.seach.length !== 8 &&

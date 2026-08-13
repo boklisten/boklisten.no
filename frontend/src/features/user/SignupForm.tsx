@@ -163,7 +163,7 @@ export default function SignupForm() {
                     vilkår
                   </TanStackAnchor>
                 </Text>
-                <Text size={"sm"} c={"#fa5252"}>
+                <Text size={"sm"} c={"var(--mantine-color-error)"}>
                   *
                 </Text>
               </Group>

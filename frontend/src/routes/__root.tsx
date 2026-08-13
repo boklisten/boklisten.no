@@ -13,7 +13,8 @@ import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanst
 import { AllCommunityModule } from "ag-grid-community";
 import { AgGridProvider } from "ag-grid-react";
 
-import theme from "@/shared/utils/theme";
+import AgGridColorSchemeSync from "@/shared/components/AgGridColorSchemeSync";
+import theme, { cssVariablesResolver } from "@/shared/utils/theme";
 import { jsonLdScript, urlDependentHead } from "@/shared/utils/seo";
 import { organizationSchema, websiteSchema } from "@/shared/utils/structuredData";
 import { DatesProvider } from "@mantine/dates";
@@ -57,7 +58,11 @@ function RootLayout() {
         <HeadContent />
       </head>
       <body>
-        <MantineProvider theme={theme}>
+        <MantineProvider
+          theme={theme}
+          cssVariablesResolver={cssVariablesResolver}
+        >
+          <AgGridColorSchemeSync />
           <Notifications />
           <DatesProvider settings={{ locale: "nb" }}>
             <ModalsProvider>

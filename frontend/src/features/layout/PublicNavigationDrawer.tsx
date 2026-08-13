@@ -50,7 +50,7 @@ export default function PublicNavigationDrawer() {
             to={"/bestilling"}
             active={pathname.includes("/bestilling")}
             underline={"never"}
-            c={"black"}
+            c={"var(--mantine-color-text)"}
             leftSection={<IconShoppingCart />}
             component={TanStackAnchor}
             onClick={close}
@@ -62,7 +62,7 @@ export default function PublicNavigationDrawer() {
               to={"/items"}
               active={pathname.includes("/items")}
               underline={"never"}
-              c={"black"}
+              c={"var(--mantine-color-text)"}
               leftSection={<IconBook />}
               component={TanStackAnchor}
               onClick={close}
@@ -72,7 +72,7 @@ export default function PublicNavigationDrawer() {
               to={"/order-history"}
               active={pathname.includes("/order-history")}
               underline={"never"}
-              c={"black"}
+              c={"var(--mantine-color-text)"}
               leftSection={<IconReceipt />}
               component={TanStackAnchor}
               onClick={close}
@@ -82,7 +82,7 @@ export default function PublicNavigationDrawer() {
               to={"/overleveringer"}
               active={pathname.includes("/overleveringer")}
               underline={"never"}
-              c={"black"}
+              c={"var(--mantine-color-text)"}
               leftSection={<IconHeartHandshake />}
               component={TanStackAnchor}
               onClick={close}
@@ -95,7 +95,7 @@ export default function PublicNavigationDrawer() {
               to={"/sjekk"}
               active={pathname.includes("/sjekk")}
               underline={"never"}
-              c={"black"}
+              c={"var(--mantine-color-text)"}
               leftSection={<IconSearch />}
               component={TanStackAnchor}
               onClick={close}
@@ -108,7 +108,7 @@ export default function PublicNavigationDrawer() {
             active={pathname.includes("/info/general")}
             variant={"subtle"}
             underline={"never"}
-            c={"black"}
+            c={"var(--mantine-color-text)"}
             leftSection={<IconInfoCircle />}
             component={TanStackAnchor}
             onClick={close}
@@ -119,7 +119,7 @@ export default function PublicNavigationDrawer() {
             active={pathname.includes("/info/branch")}
             variant={"subtle"}
             underline={"never"}
-            c={"black"}
+            c={"var(--mantine-color-text)"}
             leftSection={<IconClock />}
             component={TanStackAnchor}
             onClick={close}
@@ -130,7 +130,7 @@ export default function PublicNavigationDrawer() {
             active={pathname.includes("/info/contact")}
             variant={"subtle"}
             underline={"never"}
-            c={"black"}
+            c={"var(--mantine-color-text)"}
             leftSection={<IconMail />}
             component={TanStackAnchor}
             onClick={close}
@@ -144,7 +144,7 @@ export default function PublicNavigationDrawer() {
               to={"/user-settings"}
               active={pathname.includes("/user-settings")}
               underline={"never"}
-              c={"black"}
+              c={"var(--mantine-color-text)"}
               leftSection={<IconUserEdit />}
               component={TanStackAnchor}
               onClick={close}
