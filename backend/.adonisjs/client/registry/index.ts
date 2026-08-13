@@ -324,6 +324,12 @@ const routes = {
     tokens: [{"old":"/match_rounds","type":0,"val":"match_rounds","end":""}],
     types: placeholder as Registry['match_rounds.store']['types'],
   },
+  'match_rounds.plan_metrics': {
+    methods: ["GET","HEAD"],
+    pattern: '/match_rounds/:id/plan_metrics',
+    tokens: [{"old":"/match_rounds/:id/plan_metrics","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/plan_metrics","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/plan_metrics","type":0,"val":"plan_metrics","end":""}],
+    types: placeholder as Registry['match_rounds.plan_metrics']['types'],
+  },
   'match_rounds.update': {
     methods: ["PATCH"],
     pattern: '/match_rounds/:id',

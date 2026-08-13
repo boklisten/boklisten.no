@@ -57,6 +57,7 @@ export type ScannedRoutes = {
     'match_statistics.get_statistics_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
     'match_rounds.index': { paramsTuple?: []; params?: {} }
     'match_rounds.store': { paramsTuple?: []; params?: {} }
+    'match_rounds.plan_metrics': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.generate': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.destroy_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -192,6 +193,7 @@ export type ScannedRoutes = {
     'match_statistics.get_statistics': { paramsTuple?: []; params?: {} }
     'match_statistics.get_statistics_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
     'match_rounds.index': { paramsTuple?: []; params?: {} }
+    'match_rounds.plan_metrics': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'user_detail.get_by_id': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'user_detail.get_my_details': { paramsTuple?: []; params?: {} }
     'customer_items.get_customer_items': { paramsTuple?: []; params?: {} }
@@ -270,6 +272,7 @@ export type ScannedRoutes = {
     'match_statistics.get_statistics': { paramsTuple?: []; params?: {} }
     'match_statistics.get_statistics_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
     'match_rounds.index': { paramsTuple?: []; params?: {} }
+    'match_rounds.plan_metrics': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'user_detail.get_by_id': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'user_detail.get_my_details': { paramsTuple?: []; params?: {} }
     'customer_items.get_customer_items': { paramsTuple?: []; params?: {} }

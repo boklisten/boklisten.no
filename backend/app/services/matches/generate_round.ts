@@ -2,7 +2,6 @@ import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
 import MatchRound from "#models/match_round";
-import { deadlineWindow } from "#services/deadline_window";
 import { MatchFinder } from "#services/match_helpers/match-finder/match-finder";
 import { MatchableUser } from "#services/match_helpers/match-finder/match-types";
 import {
@@ -14,102 +13,10 @@ import {
   type MatchDraft,
   type ObligationDraft,
 } from "#services/matches/match_repository";
+import { getHeldItems, getWantedItems } from "#services/matches/round_scope";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { UserDetail } from "#shared/user-detail";
-
-async function getHeldItems(
-  branchIds: string[],
-  deadline: DateTime,
-  includeItemsFromOtherBranches: boolean,
-): Promise<Map<string, Set<string>>> {
-  const groupByCustomer = {
-    $group: {
-      _id: "$customer",
-      id: { $first: "$customer" },
-      items: { $addToSet: "$item" },
-    },
-  };
-
-  const { after, before } = deadlineWindow(deadline);
-  const baseMatch = {
-    returned: false,
-    buyout: false,
-    cancel: false,
-    buyback: false,
-    deadline: { $gt: after, $lt: before },
-  };
-
-  let aggregated = (await StorageService.CustomerItems.aggregate([
-    {
-      $match: {
-        ...baseMatch,
-        "handoutInfo.handoutBy": "branch",
-        "handoutInfo.handoutById": { $in: branchIds.map((id) => new ObjectId(id)) },
-      },
-    },
-    groupByCustomer,
-  ])) as { id: string; items: string[] }[];
-
-  if (includeItemsFromOtherBranches) {
-    aggregated = (await StorageService.CustomerItems.aggregate([
-      {
-        $match: {
-          ...baseMatch,
-          customer: { $in: aggregated.map((sender) => new ObjectId(sender.id)) },
-        },
-      },
-      groupByCustomer,
-    ])) as { id: string; items: string[] }[];
-  }
-
-  return new Map(
-    aggregated.map((sender) => [String(sender.id), new Set(sender.items.map(String))]),
-  );
-}
-
-async function getWantedItems(branchIds: string[]): Promise<Map<string, Set<string>>> {
-  const aggregated = (await StorageService.Orders.aggregate([
-    {
-      $match: {
-        placed: true,
-        byCustomer: true,
-        handoutByDelivery: { $ne: true },
-        branch: { $in: branchIds.map((id) => new ObjectId(id)) },
-      },
-    },
-    {
-      $addFields: {
-        orderItems: {
-          $filter: {
-            input: "$orderItems",
-            as: "orderItem",
-            cond: {
-              $and: [
-                { $not: "$$orderItem.handout" },
-                { $not: "$$orderItem.movedToOrder" },
-                { $in: ["$$orderItem.type", ["rent", "partly-payment"]] },
-              ],
-            },
-          },
-        },
-      },
-    },
-    { $match: { $expr: { $gt: [{ $size: "$orderItems" }, 0] } } },
-    { $unwind: "$orderItems" },
-    {
-      $group: {
-        _id: "$customer",
-        id: { $first: "$customer" },
-        wantedItems: { $addToSet: "$orderItems.item" },
-      },
-    },
-  ])) as { id: string; wantedItems: string[] }[];
-
-  return new Map(
-    aggregated.map((receiver) => [String(receiver.id), new Set(receiver.wantedItems.map(String))]),
-  );
-}
 
 async function getGroupMemberships(customerIds: string[]): Promise<Map<string, string>> {
   if (customerIds.length === 0) return new Map();

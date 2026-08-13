@@ -1,9 +1,9 @@
 import { Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { IconTrash } from "@tabler/icons-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
-import type { Round } from "@/features/matches/rounds/useRounds";
+import { useRefreshRounds, type Round } from "@/features/matches/rounds/useRounds";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -19,7 +19,7 @@ export default function DeleteRoundModal({
   onDeleted: () => void;
 }) {
   const { api } = useApiClient();
-  const queryClient = useQueryClient();
+  const refreshRounds = useRefreshRounds();
   const [confirmation, setConfirmation] = useState("");
 
   function close() {
@@ -31,7 +31,7 @@ export default function DeleteRoundModal({
     api.matchRounds.destroy.mutationOptions({
       onSuccess: () => {
         showSuccessNotification("Runden ble slettet");
-        void queryClient.invalidateQueries({ queryKey: api.matchRounds.index.queryKey() });
+        refreshRounds();
         onDeleted();
         close();
       },

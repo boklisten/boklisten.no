@@ -1,8 +1,8 @@
 import { Alert, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { IconAlertTriangle, IconTrash } from "@tabler/icons-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 
-import type { Round } from "@/features/matches/rounds/useRounds";
+import { useRefreshRounds, type Round } from "@/features/matches/rounds/useRounds";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -16,13 +16,13 @@ export default function DeleteMatchesModal({
   onClose: () => void;
 }) {
   const { api } = useApiClient();
-  const queryClient = useQueryClient();
+  const refreshRounds = useRefreshRounds();
 
   const deleteMutation = useMutation(
     api.matchRounds.destroyMatches.mutationOptions({
       onSuccess: () => {
         showSuccessNotification("Overleveringene ble slettet. Runden er planlagt igjen.");
-        void queryClient.invalidateQueries({ queryKey: api.matchRounds.index.queryKey() });
+        refreshRounds();
         onClose();
       },
       onError: () => showErrorNotification("Klarte ikke slette overleveringene"),

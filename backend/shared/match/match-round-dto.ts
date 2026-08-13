@@ -41,3 +41,14 @@ export interface MatchRoundDto extends MatchRoundPlan {
   /** Handovers that have already discharged one of this round's obligations. */
   handoverCount: number;
 }
+
+export interface BookTally {
+  books: number;
+  students: number;
+}
+
+export interface MatchRoundPlanMetrics {
+  branchMembers: number;
+  activeBooks: BookTally;
+  orderedBooks: BookTally;
+}

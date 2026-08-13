@@ -643,6 +643,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'match_rounds.plan_metrics': {
+    methods: ["GET","HEAD"]
+    pattern: '/match_rounds/:id/plan_metrics'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['planMetrics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['planMetrics']>>>
+    }
+  }
   'match_rounds.update': {
     methods: ["PATCH"]
     pattern: '/match_rounds/:id'

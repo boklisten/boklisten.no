@@ -1,12 +1,12 @@
 import { Button, Card, Fieldset, Group, Modal, Stack, Text } from "@mantine/core";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Activity, useState } from "react";
 
 import { SLOT_TIME_PATTERN } from "@boklisten/backend/shared/match/match-round-dto";
 
-import type { Round } from "@/features/matches/rounds/useRounds";
+import { useRefreshRounds, type Round } from "@/features/matches/rounds/useRounds";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -89,8 +89,8 @@ export default function PlanRoundModal({
   onClose: () => void;
   onSaved: (roundId: string) => void;
 }) {
-  const { client, api } = useApiClient();
-  const queryClient = useQueryClient();
+  const { client } = useApiClient();
+  const refreshRounds = useRefreshRounds();
   const [apiError, setApiError] = useState<string | null>(null);
   const editing = round !== undefined;
 
@@ -128,7 +128,7 @@ export default function PlanRoundModal({
           ? "Planen ble lagret"
           : "Runden ble planlagt. Generer overleveringene når du er klar.",
       );
-      void queryClient.invalidateQueries({ queryKey: api.matchRounds.index.queryKey() });
+      refreshRounds();
       onSaved(result.id);
       onClose();
     },

@@ -4,11 +4,13 @@ import type { ReactNode } from "react";
 export default function StatTile({
   label,
   value,
+  caption,
   icon,
   color,
 }: {
   label: string;
   value: number;
+  caption?: string;
   icon: ReactNode;
   color: string;
 }) {
@@ -23,6 +25,11 @@ export default function StatTile({
             {label}
           </Text>
           <Title order={2}>{value.toLocaleString("nb-NO")}</Title>
+          {caption && (
+            <Text size={"xs"} c={"dimmed"}>
+              {caption}
+            </Text>
+          )}
         </div>
       </Group>
     </Card>

@@ -4,6 +4,7 @@ import { IconCalendarEvent, IconEdit, IconSparkles } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
+import PlanMetrics from "@/features/matches/rounds/PlanMetrics";
 import type { Round } from "@/features/matches/rounds/useRounds";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
@@ -133,6 +134,8 @@ export default function PlannedRoundCard({
             Ingen overleveringer er laget ennå. Se over planen, og generer når den stemmer.
           </Text>
         </Stack>
+
+        <PlanMetrics roundId={round.id} />
 
         {/* Sized to the timeline: the hour axis has a fixed scale, so a full-width card would
             leave the schedule stranded against its left edge on a wide screen. */}

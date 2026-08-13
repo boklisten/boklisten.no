@@ -163,6 +163,7 @@ router.get("/matches/statistics/round/:roundId", [
 ]);
 router.get("/match_rounds", [controllers.MatchRounds, "index"]);
 router.post("/match_rounds", [controllers.MatchRounds, "store"]);
+router.get("/match_rounds/:id/plan_metrics", [controllers.MatchRounds, "planMetrics"]);
 router.patch("/match_rounds/:id", [controllers.MatchRounds, "update"]);
 router.post("/match_rounds/:id/generate", [controllers.MatchRounds, "generate"]);
 router.delete("/match_rounds/:id/matches", [controllers.MatchRounds, "destroyMatches"]);

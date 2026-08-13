@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import MatchRound from "#models/match_round";
 import { generateRound } from "#services/matches/generate_round";
 import { MatchRepository } from "#services/matches/match_repository";
+import { roundPlanMetrics } from "#services/matches/round_plan_metrics";
 import { PermissionService } from "#services/permission_service";
 import { BlError } from "#shared/bl-error";
 import MatchRoundTransformer from "#transformers/match_round_transformer";
@@ -83,6 +84,12 @@ export default class MatchRoundsController {
       .save();
 
     return this.serializeRound(ctx, round);
+  }
+
+  async planMetrics(ctx: HttpContext) {
+    PermissionService.employeeOrFail(ctx);
+    const round = await MatchRound.findOrFail(roundIdParameter(ctx));
+    return ctx.serialize(await roundPlanMetrics(round));
   }
 
   async generate(ctx: HttpContext) {

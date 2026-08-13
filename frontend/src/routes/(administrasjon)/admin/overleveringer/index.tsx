@@ -1,6 +1,6 @@
 import { Button, Container, Group, Skeleton, Stack, Tabs, Title } from "@mantine/core";
 import { IconChartHistogram, IconListSearch, IconPlus } from "@tabler/icons-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { seo } from "@/shared/utils/seo";
@@ -12,7 +12,12 @@ import MatchStatistics from "@/features/matches/insights/MatchStatistics";
 import PlanRoundModal from "@/features/matches/rounds/PlanRoundModal";
 import PlannedRoundCard from "@/features/matches/rounds/PlannedRoundCard";
 import RoundToolbar from "@/features/matches/rounds/RoundToolbar";
-import { isPlanned, useRounds, type Round } from "@/features/matches/rounds/useRounds";
+import {
+  isPlanned,
+  useRefreshRounds,
+  useRounds,
+  type Round,
+} from "@/features/matches/rounds/useRounds";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
@@ -40,9 +45,9 @@ function PageSkeleton() {
 function AdminMatchesPage() {
   const { runde, fane } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { client, api } = useApiClient();
+  const { client } = useApiClient();
   const { isAdmin } = useAuth();
-  const queryClient = useQueryClient();
+  const refreshRounds = useRefreshRounds();
   const { data, isLoading, error } = useRounds();
   const [planning, setPlanning] = useState<{ round?: Round } | null>(null);
   const rounds = data ?? [];
@@ -62,7 +67,7 @@ function AdminMatchesPage() {
       showSuccessNotification(
         `Laget ${result.userMatchCount} elevoverleveringer og ${result.standMatchCount} standoverleveringer. Runden er et utkast – skru den på når den ser riktig ut.`,
       );
-      void queryClient.invalidateQueries({ queryKey: api.matchRounds.index.queryKey() });
+      refreshRounds();
     },
     onError: (mutationError: Error) =>
       showErrorNotification(mutationError.message || "Klarte ikke generere overleveringene"),

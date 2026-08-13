@@ -2,14 +2,14 @@ import { ActionIcon, Button, Card, Group, Menu, Switch, TextInput, Tooltip } fro
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { IconDotsVertical, IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
 import DeleteMatchesModal from "@/features/matches/rounds/DeleteMatchesModal";
 import DeleteRoundModal from "@/features/matches/rounds/DeleteRoundModal";
 import NotifyRoundButton from "@/features/matches/rounds/NotifyRoundButton";
 import RoundSelector from "@/features/matches/rounds/RoundSelector";
-import { isPlanned, type Round } from "@/features/matches/rounds/useRounds";
+import { isPlanned, useRefreshRounds, type Round } from "@/features/matches/rounds/useRounds";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -50,9 +50,9 @@ export default function RoundToolbar({
   onNewRound: () => void;
   onEditPlan: () => void;
 }) {
-  const { client, api } = useApiClient();
+  const { client } = useApiClient();
   const { isAdmin } = useAuth();
-  const queryClient = useQueryClient();
+  const refreshRounds = useRefreshRounds();
   const [deleteOpened, deleteModal] = useDisclosure(false);
   const [deleteMatchesOpened, deleteMatchesModal] = useDisclosure(false);
 
@@ -71,7 +71,7 @@ export default function RoundToolbar({
       }),
     onSuccess: () => {
       showSuccessNotification("Runden ble oppdatert");
-      void queryClient.invalidateQueries({ queryKey: api.matchRounds.index.queryKey() });
+      refreshRounds();
     },
     onError: () => showErrorNotification("Klarte ikke oppdatere runden"),
   });

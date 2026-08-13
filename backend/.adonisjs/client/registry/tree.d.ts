@@ -90,6 +90,7 @@ export interface ApiDefinition {
   matchRounds: {
     index: typeof routes['match_rounds.index']
     store: typeof routes['match_rounds.store']
+    planMetrics: typeof routes['match_rounds.plan_metrics']
     update: typeof routes['match_rounds.update']
     generate: typeof routes['match_rounds.generate']
     destroyMatches: typeof routes['match_rounds.destroy_matches']
