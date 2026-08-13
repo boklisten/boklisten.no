@@ -6,7 +6,7 @@ import sinon, { createSandbox } from "sinon";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import MatchRound from "#models/match_round";
+import { createTestRound } from "#tests/matches/match-testing-utils";
 import { MatchRepository } from "#services/matches/match_repository";
 import { getMatchesForCustomer, getMatchesForRound } from "#services/matches/read_matches";
 import { StorageService } from "#services/storage_service";
@@ -42,7 +42,7 @@ test.group("read matches", (group) => {
 
   async function seed() {
     // Explicitly active: students only see rounds that are switched on.
-    const round = await MatchRound.create({
+    const round = await createTestRound({
       name: "Round",
       standLocation: "Kantina",
       status: "active",
@@ -117,14 +117,14 @@ test.group("read matches", (group) => {
   test("defaults to the newest active round when none is named", async ({ assert }) => {
     stubMongo();
     await seed();
-    const newer = await MatchRound.create({
+    const newer = await createTestRound({
       name: "Newer",
       standLocation: "Kantina",
       status: "active",
     });
     await Match.create({ roundId: newer.id, meetingLocation: "Nyeste" });
     // Newer still, but a draft — being newest must not make an unchecked round the default.
-    const draft = await MatchRound.create({ name: "Draft", standLocation: "Kantina" });
+    const draft = await createTestRound({ name: "Draft", standLocation: "Kantina" });
     await Match.create({ roundId: draft.id, meetingLocation: "Utkastet" });
 
     const matches = await getMatchesForRound();
@@ -136,7 +136,7 @@ test.group("read matches", (group) => {
   test("returns the named round rather than the newest", async ({ assert }) => {
     stubMongo();
     const { round } = await seed();
-    const newer = await MatchRound.create({ name: "Newer", standLocation: "Kantina" });
+    const newer = await createTestRound({ name: "Newer", standLocation: "Kantina" });
     await Match.create({ roundId: newer.id, meetingLocation: "Nyeste" });
 
     const matches = await getMatchesForRound(round.id);

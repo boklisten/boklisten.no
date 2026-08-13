@@ -9,7 +9,7 @@ import BookHandover from "#models/book_handover";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import MatchRound from "#models/match_round";
+import { createTestRound } from "#tests/matches/match-testing-utils";
 import { Signature } from "#models/mongoose/signature.schema";
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
 import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
@@ -197,7 +197,7 @@ test.group("OrderPlaceOperation", (group) => {
   /** One obligation between the customer and the stand, in the direction given. */
   async function seedStandObligation(direction: "delivers" | "collects", lockedToMatch = false) {
     // Discharges only land on active rounds; a defaulted "draft" round would hide the obligation.
-    const round = await MatchRound.create({
+    const round = await createTestRound({
       name: "Round",
       standLocation: "Kantina",
       status: "active",

@@ -1,7 +1,8 @@
-import { Infer } from "@vinejs/vine/types";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
+import MatchRound from "#models/match_round";
+import { deadlineWindow } from "#services/deadline_window";
 import { MatchFinder } from "#services/match_helpers/match-finder/match-finder";
 import { MatchableUser } from "#services/match_helpers/match-finder/match-types";
 import {
@@ -16,11 +17,10 @@ import {
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { UserDetail } from "#shared/user-detail";
-import { matchGenerateSchema } from "#validators/matches";
 
 async function getHeldItems(
   branchIds: string[],
-  deadlineBefore: Date,
+  deadline: DateTime,
   includeItemsFromOtherBranches: boolean,
 ): Promise<Map<string, Set<string>>> {
   const groupByCustomer = {
@@ -31,12 +31,13 @@ async function getHeldItems(
     },
   };
 
+  const { after, before } = deadlineWindow(deadline);
   const baseMatch = {
     returned: false,
     buyout: false,
     cancel: false,
     buyback: false,
-    deadline: { $gt: new Date(), $lte: deadlineBefore },
+    deadline: { $gt: after, $lt: before },
   };
 
   let aggregated = (await StorageService.CustomerItems.aggregate([
@@ -145,19 +146,27 @@ function obligation(
   return { senderCustomerId, receiverCustomerId, itemId, lockedToMatch };
 }
 
-export async function generateRound({
-  name,
-  standLocation,
-  branches,
-  deadlineBefore,
-  includeCustomerItemsFromOtherBranches,
-  meetingDate,
-  userMeetingWindow,
-  standWindow,
-  userMatchLocations,
-}: Infer<typeof matchGenerateSchema>) {
-  const userSlots = buildSlots(meetingDate, userMeetingWindow);
-  const standSlots = buildSlots(meetingDate, standWindow);
+export async function generateRound(round: MatchRound) {
+  const {
+    id,
+    standLocation,
+    branches,
+    deadline,
+    includeCustomerItemsFromOtherBranches,
+    meetingDate,
+    userMatchLocations,
+  } = round;
+
+  if (deadline.startOf("day") < DateTime.now().startOf("day")) {
+    throw new BlError("Fristen for runden har allerede passert").code(200);
+  }
+
+  const meetingDay = meetingDate.toISODate()!;
+  const userSlots = buildSlots(meetingDay, {
+    from: round.userMeetingFrom,
+    to: round.userMeetingTo,
+  });
+  const standSlots = buildSlots(meetingDay, { from: round.standFrom, to: round.standTo });
   if (userSlots.length === 0) {
     throw new BlError("Elevenes møtevindu må vare i minst ti minutter").code(200);
   }
@@ -165,10 +174,8 @@ export async function generateRound({
     throw new BlError("Standens åpningstid må vare i minst ti minutter").code(200);
   }
 
-  const paddedDeadline = DateTime.fromJSDate(deadlineBefore).plus({ days: 2 }).toJSDate();
-
   const [heldByCustomer, wantedByCustomer] = await Promise.all([
-    getHeldItems(branches, paddedDeadline, includeCustomerItemsFromOtherBranches),
+    getHeldItems(branches, deadline, includeCustomerItemsFromOtherBranches),
     getWantedItems(branches),
   ]);
 
@@ -233,13 +240,10 @@ export async function generateRound({
     }),
   ];
 
-  const round = await MatchRepository.createRound(
-    { name, standLocation, generatedAt: DateTime.now() },
-    drafts,
-  );
+  const generated = await MatchRepository.attachMatches(id, drafts);
 
   return {
-    roundId: String(round.id),
+    roundId: String(generated.id),
     userMatchCount: candidateUserMatches.length,
     standMatchCount: candidateStandMatches.length,
   };

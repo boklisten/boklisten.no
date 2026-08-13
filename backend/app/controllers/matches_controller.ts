@@ -1,6 +1,5 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
-import { generateRound } from "#services/matches/generate_round";
 import {
   getMatchById,
   getMatchesForCustomer as readMatchesForCustomer,
@@ -13,19 +12,12 @@ import { PermissionService } from "#services/permission_service";
 import { BlError } from "#shared/bl-error";
 import { USER_PERMISSION } from "#shared/user-permission";
 import {
-  matchGenerateValidator,
   matchLockValidator,
   matchNotifyValidator,
   matchTransferValidator,
 } from "#validators/matches";
 
 export default class MatchesController {
-  async generate(ctx: HttpContext) {
-    PermissionService.authenticate(ctx, USER_PERMISSION.ADMIN);
-    const matchConfiguration = await ctx.request.validateUsing(matchGenerateValidator);
-    return await generateRound(matchConfiguration);
-  }
-
   async notify(ctx: HttpContext) {
     PermissionService.authenticate(ctx, USER_PERMISSION.ADMIN);
     const matchNotifyConfiguration = await ctx.request.validateUsing(matchNotifyValidator);

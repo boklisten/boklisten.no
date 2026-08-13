@@ -6,7 +6,7 @@ import { DateTime } from "luxon";
 import BookHandover from "#models/book_handover";
 import Match from "#models/match";
 import MatchParticipant from "#models/match_participant";
-import MatchRound from "#models/match_round";
+import { createTestRound } from "#tests/matches/match-testing-utils";
 import { DeleteUserService } from "#services/legacy/collections/user-detail/helpers/delete-user-service";
 import { StorageService } from "#services/storage_service";
 
@@ -34,7 +34,7 @@ test.group("DeleteUserService match merge", (group) => {
   group.each.teardown(() => sandbox.restore());
 
   async function seedMatch(customerIds: string[]) {
-    const round = await MatchRound.create({ name: "Round", standLocation: "Kantina" });
+    const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     await MatchParticipant.createMany(
       customerIds.map((userDetailId) => ({ matchId: match.id, userDetailId })),

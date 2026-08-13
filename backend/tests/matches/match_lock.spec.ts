@@ -7,6 +7,7 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import MatchRound from "#models/match_round";
+import { createTestRound } from "#tests/matches/match-testing-utils";
 import { MatchLock } from "#services/matches/match_lock";
 import { MatchRepository } from "#services/matches/match_repository";
 
@@ -23,7 +24,7 @@ test.group("MatchLock", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     // Explicitly active: a round is born a draft, and a draft's locks are inert by design.
-    round = await MatchRound.create({ name: "Round", standLocation: "Kantina", status: "active" });
+    round = await createTestRound({ name: "Round", standLocation: "Kantina", status: "active" });
   });
 
   async function seedObligation(
@@ -87,7 +88,7 @@ test.group("MatchLock", (group) => {
   });
 
   test("a draft round locks nothing", async ({ assert }) => {
-    const old = await MatchRound.create({
+    const old = await createTestRound({
       name: "Last term",
       standLocation: "Kantina",
       status: "draft",
@@ -188,7 +189,7 @@ test.group("MatchLock", (group) => {
   });
 
   test("locking a customer leaves draft rounds alone", async ({ assert }) => {
-    const old = await MatchRound.create({
+    const old = await createTestRound({
       name: "Old",
       standLocation: "Kantina",
       status: "draft",

@@ -1,3 +1,13 @@
-import { MatchRoundSchema } from "#database/schema";
+import { hasMany } from "@adonisjs/lucid/orm";
+import type { HasMany } from "@adonisjs/lucid/types/relations";
 
-export default class MatchRound extends MatchRoundSchema {}
+import { MatchRoundSchema } from "#database/schema";
+import Match from "#models/match";
+
+export default class MatchRound extends MatchRoundSchema {
+  declare branches: string[];
+  declare userMatchLocations: string[];
+
+  @hasMany(() => Match, { foreignKey: "roundId" })
+  declare matches: HasMany<typeof Match>;
+}

@@ -1,7 +1,8 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
+import { deadlineWindow } from "#services/deadline_window";
 import DispatchService from "#services/dispatch_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
@@ -25,6 +26,7 @@ async function aggregateCustomersToRemind(
   branchIDs: string[],
   deadlineISO: string,
 ) {
+  const { after, before } = deadlineWindow(new Date(deadlineISO));
   return (await StorageService.CustomerItems.aggregate([
     {
       $match: {
@@ -35,10 +37,7 @@ async function aggregateCustomersToRemind(
         "handoutInfo.handoutById": {
           $in: branchIDs.map((branchID) => new ObjectId(branchID)),
         },
-        deadline: {
-          $gt: moment(deadlineISO).subtract(2, "days").toDate(),
-          $lt: moment(deadlineISO).add(2, "days").toDate(),
-        },
+        deadline: { $gt: after, $lt: before },
       },
     },
     {
@@ -95,6 +94,18 @@ async function aggregateCustomersToRemind(
   ])) as ReminderCustomer[];
 }
 
+/**
+ * The deadline as it should read in an email.
+ *
+ * fixme: the added day compensates for a time zone issue — deadlines are picked as calendar dates
+ * but stored as instants, so one written in a zone ahead of the server sits late on the previous
+ * day (the same drift `deadlineWindow` pads around). Formatting the stored instant in the zone it
+ * was written in would fix this properly, but that zone is not recorded.
+ */
+function formatDeadline(deadline: string) {
+  return DateTime.fromJSDate(new Date(deadline)).plus({ days: 1 }).toFormat("dd/MM/yyyy");
+}
+
 async function sendReminderEmail(
   emailTemplateId: string,
   customers: ReminderCustomer[],
@@ -116,9 +127,7 @@ async function sendReminderEmail(
         name: customer.name?.split(" ")?.[0] ?? "",
         items: customer.customerItems.map((customerItem) => ({
           ...customerItem,
-          deadline: moment(customerItem.deadline)
-            .add(1, "day") // fixme: we need to add one day to get the correct date due to a time zone issue
-            .format("DD/MM/YYYY"),
+          deadline: formatDeadline(customerItem.deadline),
         })),
       },
     })),

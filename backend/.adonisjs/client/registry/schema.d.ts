@@ -499,18 +499,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/public_blid_lookup_controller').default['lookup']>>>
     }
   }
-  'matches.generate': {
-    methods: ["POST"]
-    pattern: '/matches/generate'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/matches').matchGenerateValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchGenerateValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['generate']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['generate']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
   'matches.notify': {
     methods: ["POST"]
     pattern: '/matches/notify'
@@ -643,6 +631,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>>
     }
   }
+  'match_rounds.store': {
+    methods: ["POST"]
+    pattern: '/match_rounds'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/matches').matchRoundCreateValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchRoundCreateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'match_rounds.update': {
     methods: ["PATCH"]
     pattern: '/match_rounds/:id'
@@ -653,6 +653,30 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchRoundPatchValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['update']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'match_rounds.generate': {
+    methods: ["POST"]
+    pattern: '/match_rounds/:id/generate'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['generate']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['generate']>>>
+    }
+  }
+  'match_rounds.destroy_matches': {
+    methods: ["DELETE"]
+    pattern: '/match_rounds/:id/matches'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroyMatches']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroyMatches']>>>
     }
   }
   'match_rounds.destroy': {

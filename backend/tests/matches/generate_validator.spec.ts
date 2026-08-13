@@ -1,49 +1,51 @@
 import { test } from "@japa/runner";
 
-import { matchGenerateValidator } from "#validators/matches";
+import { matchRoundCreateValidator } from "#validators/matches";
 
 /**
- * Pins the formats the admin generate form sends.
+ * Pins the formats the admin plan form sends.
  *
- * `vine.date()` parses a fixed list of formats, so a payload that looks obviously fine — an ISO
- * timestamp straight out of `Date.toISOString()` — can still be rejected. The meeting date and
- * times are therefore plain regex-validated strings; only `deadlineBefore` stays a vine date.
- * The form is the only caller, so this is the contract between the two.
+ * Every date is a plain `YYYY-MM-DD` string rather than a vine date: the plan describes calendar
+ * days, and letting an instant through here is what would reintroduce the timezone drift the
+ * deadline padding exists to absorb. The form is the only caller, so this is the contract between
+ * the two.
  */
 const base = {
   name: "Ullern Vår 2026",
   branches: ["5d765db5fc8c47001c408b01"],
   standLocation: "Kantina",
+  deadline: "2026-07-01",
   meetingDate: "2026-06-01",
-  userMeetingWindow: { from: "12:00", to: "14:00" },
-  standWindow: { from: "12:00", to: "16:00" },
+  userMeetingFrom: "12:00",
+  userMeetingTo: "14:00",
+  standFrom: "12:00",
+  standTo: "16:00",
   userMatchLocations: ["Biblioteket"],
-  deadlineBefore: "2026-07-01",
   includeCustomerItemsFromOtherBranches: false,
 };
 
 async function rejection(payload: object): Promise<Error | null> {
-  return matchGenerateValidator.validate(payload).then(
+  return matchRoundCreateValidator.validate(payload).then(
     () => null,
     (error: Error) => error,
   );
 }
 
-test.group("matchGenerateValidator", () => {
+test.group("matchRoundCreateValidator", () => {
   test("accepts the formats the form sends", async ({ assert }) => {
-    const result = await matchGenerateValidator.validate(base);
+    const result = await matchRoundCreateValidator.validate(base);
 
-    assert.instanceOf(result.deadlineBefore, Date);
+    assert.equal(result.deadline, "2026-07-01");
     assert.equal(result.meetingDate, "2026-06-01");
-    assert.deepEqual(result.userMeetingWindow, { from: "12:00", to: "14:00" });
-    assert.deepEqual(result.standWindow, { from: "12:00", to: "16:00" });
+    assert.equal(result.userMeetingFrom, "12:00");
+    assert.equal(result.standTo, "16:00");
     assert.deepEqual(result.userMatchLocations, ["Biblioteket"]);
   });
 
   test("rejects an ISO timestamp deadline", async ({ assert }) => {
-    // `Date.toISOString()` output is *not* accepted, which is why the form formats explicitly
-    // rather than passing whatever the date picker hands it.
-    assert.isNotNull(await rejection({ ...base, deadlineBefore: "2026-07-01T00:00:00.000Z" }));
+    // A deadline is a calendar day. Accepting an instant would let the caller's zone decide which
+    // day it meant.
+    assert.isNotNull(await rejection({ ...base, deadline: "2026-07-01T00:00:00.000Z" }));
   });
 
   test("rejects a meeting date with a time attached", async ({ assert }) => {
@@ -51,10 +53,33 @@ test.group("matchGenerateValidator", () => {
   });
 
   test("rejects a time off the ten-minute grid", async ({ assert }) => {
-    assert.isNotNull(await rejection({ ...base, standWindow: { from: "12:05", to: "14:00" } }));
+    assert.isNotNull(await rejection({ ...base, standFrom: "12:05" }));
   });
 
   test("rejects an empty location list", async ({ assert }) => {
     assert.isNotNull(await rejection({ ...base, userMatchLocations: [] }));
+  });
+
+  test("rejects a round with no branches", async ({ assert }) => {
+    // The old generate endpoint let this through and relied on the form to catch it.
+    assert.isNotNull(await rejection({ ...base, branches: [] }));
+  });
+
+  test("rejects a date that does not exist", async ({ assert }) => {
+    // `Date.parse` quietly rolls the 30th of February into March; the validator must not.
+    assert.isNotNull(await rejection({ ...base, deadline: "2026-02-30" }));
+  });
+
+  test("rejects a window that ends before it starts", async ({ assert }) => {
+    assert.isNotNull(
+      await rejection({ ...base, userMeetingFrom: "14:00", userMeetingTo: "12:00" }),
+    );
+    assert.isNotNull(await rejection({ ...base, standFrom: "16:00", standTo: "12:00" }));
+  });
+
+  test("rejects a window with no length", async ({ assert }) => {
+    assert.isNotNull(
+      await rejection({ ...base, userMeetingFrom: "12:00", userMeetingTo: "12:00" }),
+    );
   });
 });

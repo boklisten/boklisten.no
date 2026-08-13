@@ -148,7 +148,6 @@ router.get("/public_blid_lookup/:blid", [controllers.PublicBlidLookup, "lookup"]
 /**
  * matches
  */
-router.post("/matches/generate", [controllers.Matches, "generate"]);
 router.post("/matches/notify", [controllers.Matches, "notify"]);
 router.post("/user_matches/lock", [controllers.Matches, "lock"]);
 router.get("/matches/me", [controllers.Matches, "getMyMatches"]);
@@ -163,7 +162,10 @@ router.get("/matches/statistics/round/:roundId", [
   "getStatisticsForRound",
 ]);
 router.get("/match_rounds", [controllers.MatchRounds, "index"]);
+router.post("/match_rounds", [controllers.MatchRounds, "store"]);
 router.patch("/match_rounds/:id", [controllers.MatchRounds, "update"]);
+router.post("/match_rounds/:id/generate", [controllers.MatchRounds, "generate"]);
+router.delete("/match_rounds/:id/matches", [controllers.MatchRounds, "destroyMatches"]);
 router.delete("/match_rounds/:id", [controllers.MatchRounds, "destroy"]);
 
 /**

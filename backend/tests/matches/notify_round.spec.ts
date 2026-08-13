@@ -4,7 +4,7 @@ import sinon, { createSandbox } from "sinon";
 
 import Match from "#models/match";
 import MatchParticipant from "#models/match_participant";
-import MatchRound from "#models/match_round";
+import { createTestRound } from "#tests/matches/match-testing-utils";
 import DispatchService from "#services/dispatch_service";
 import { notify } from "#services/matches/notify_round";
 import { StorageService } from "#services/storage_service";
@@ -32,7 +32,7 @@ test.group("notify", (group) => {
   group.each.teardown(() => sandbox.restore());
 
   async function seedRoundWithUserMatch(customerIds: string[], status = "active") {
-    const round = await MatchRound.create({ name: "Round", standLocation: "Kantina", status });
+    const round = await createTestRound({ name: "Round", standLocation: "Kantina", status });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     await MatchParticipant.createMany(
       customerIds.map((userDetailId) => ({ matchId: match.id, userDetailId })),

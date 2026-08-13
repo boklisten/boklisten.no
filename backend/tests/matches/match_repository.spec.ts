@@ -7,6 +7,7 @@ import Match from "#models/match";
 import MatchParticipant from "#models/match_participant";
 import MatchObligation from "#models/match_obligation";
 import MatchRound from "#models/match_round";
+import { createTestRound } from "#tests/matches/match-testing-utils";
 import { isDischargeConflict, MatchRepository } from "#services/matches/match_repository";
 
 const A = "5d765db5fc8c47001c408d81";
@@ -18,7 +19,7 @@ test.group("match rounds", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
   test("stores a round", async ({ assert }) => {
-    const round = await MatchRound.create({
+    const round = await createTestRound({
       name: "Ullern Vår 2026",
       standLocation: "Kantina",
       status: "active",
@@ -32,12 +33,12 @@ test.group("match rounds", (group) => {
   });
 
   test("defaults a new round to draft", async ({ assert }) => {
-    const round = await MatchRound.create({ name: "New", standLocation: "Kantina" });
+    const round = await createTestRound({ name: "New", standLocation: "Kantina" });
     assert.equal((await MatchRound.findOrFail(round.id)).status, "draft");
   });
 
   test("rejects an unknown status", async () => {
-    await MatchRound.create({ name: "Bad", standLocation: "Kantina", status: "sometime" }).then(
+    await createTestRound({ name: "Bad", standLocation: "Kantina", status: "sometime" }).then(
       () => {
         throw new Error("expected the status check constraint to reject 'sometime'");
       },
@@ -50,7 +51,7 @@ test.group("match participants", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
   async function createRound() {
-    return MatchRound.create({ name: "Round", standLocation: "Kantina" });
+    return createTestRound({ name: "Round", standLocation: "Kantina" });
   }
 
   test("a user match has two customer participants", async ({ assert }) => {
@@ -140,7 +141,7 @@ test.group("match obligations", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
   async function createUserMatch() {
-    const round = await MatchRound.create({ name: "Round", standLocation: "Kantina" });
+    const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const [a, b] = await MatchParticipant.createMany([
       { matchId: match.id, userDetailId: A },
@@ -280,7 +281,7 @@ test.group("book handovers", (group) => {
   });
 
   test("refuses to discharge the same obligation half twice", async ({ assert }) => {
-    const round = await MatchRound.create({ name: "Round", standLocation: "Kantina" });
+    const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const [a, b] = await MatchParticipant.createMany([
       { matchId: match.id, userDetailId: A },
@@ -324,7 +325,7 @@ test.group("MatchRepository", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
   async function seedUserMatch() {
-    const round = await MatchRound.create({
+    const round = await createTestRound({
       name: "Round",
       standLocation: "Kantina",
       status: "active",
@@ -433,7 +434,7 @@ test.group("MatchRepository", (group) => {
 
   /** The same match shape as `seedUserMatch`, but in a round that is switched off. */
   async function seedDraftUserMatch() {
-    const round = await MatchRound.create({
+    const round = await createTestRound({
       name: "Old round",
       standLocation: "Kantina",
       status: "draft",
@@ -476,12 +477,12 @@ test.group("MatchRepository", (group) => {
   });
 
   test("prefers the newest active round as the default", async ({ assert }) => {
-    const active = await MatchRound.create({
+    const active = await createTestRound({
       name: "Live",
       standLocation: "Kantina",
       status: "active",
     });
-    await MatchRound.create({
+    await createTestRound({
       name: "Newer but still a draft",
       standLocation: "Kantina",
       status: "draft",
@@ -491,8 +492,8 @@ test.group("MatchRepository", (group) => {
   });
 
   test("falls back to the newest round when no round is active", async ({ assert }) => {
-    await MatchRound.create({ name: "First", standLocation: "Kantina", status: "draft" });
-    const last = await MatchRound.create({
+    await createTestRound({ name: "First", standLocation: "Kantina", status: "draft" });
+    const last = await createTestRound({
       name: "Last",
       standLocation: "Kantina",
       status: "draft",

@@ -128,21 +128,29 @@ export interface MatchDraft {
 }
 
 /**
- * Writes a whole generated round in one transaction: the round, its matches, their participants,
- * and every obligation. A partial round is worse than no round — students would be told to meet
- * for books that were never recorded — so this is all-or-nothing.
+ * Writes every match of a generated round in one transaction: the matches, their participants, and
+ * every obligation, finishing by stamping the round as generated. A partial round is worse than no
+ * round — students would be told to meet for books that were never recorded — so this is
+ * all-or-nothing.
  *
- * The round is born a draft: an admin switches it on once they have looked it over, and until
- * then students see nothing and locks and discharges ignore it.
+ * A round may be generated only once. The round row is locked for the length of the transaction and
+ * re-read inside it, so two admins pressing the button at the same moment cannot both get past the
+ * check and leave the round with two overlapping sets of matches. Deleting the matches clears the
+ * stamp and makes the round generatable again.
  *
+ * The round stays a draft: an admin switches it on once they have looked it over, and until then
+ * students see nothing and locks and discharges ignore it.
  */
-async function createRound(
-  round: { name: string; standLocation: string; generatedAt: DateTime },
-  matches: MatchDraft[],
-): Promise<MatchRound> {
+async function attachMatches(roundId: number, matches: MatchDraft[]): Promise<MatchRound> {
   return db.transaction(async (trx) => {
-    const createdRound = await MatchRound.create({ ...round, status: "draft" }, { client: trx });
-    if (matches.length === 0) return createdRound;
+    const round = await MatchRound.query({ client: trx })
+      .where("id", roundId)
+      .forUpdate()
+      .firstOrFail();
+
+    if (round.generatedAt !== null) {
+      throw new BlError("Runden har allerede overleveringer").code(200);
+    }
 
     // The models would fill these via their autoCreate hooks; raw inserts must say so themselves.
     const now = DateTime.now().toJSDate();
@@ -151,7 +159,7 @@ async function createRound(
       .table("matches")
       .insert(
         matches.map((draft) => ({
-          round_id: createdRound.id,
+          round_id: round.id,
           meeting_location: draft.meetingLocation,
           meeting_time: draft.meetingTime?.toJSDate() ?? null,
           created_at: now,
@@ -216,8 +224,94 @@ async function createRound(
       }),
     );
 
-    return createdRound;
+    round.generatedAt = DateTime.now();
+    await round.save();
+    return round;
   });
+}
+
+/**
+ * Throws away a round's matches and returns it to the planned state it was generated from.
+ *
+ * The plan survives, so the round can be regenerated once whatever was wrong with it — a missing
+ * branch, the wrong deadline — has been corrected. Participants and obligations cascade from the
+ * matches; recorded handovers keep their rows and lose only their link to the obligations, which is
+ * how the physical chain of custody survives an admin changing their mind.
+ *
+ * The round is forced back to a draft as well: an active round with no matches would show students
+ * an empty round for as long as it took to regenerate.
+ */
+async function deleteMatches(roundId: number): Promise<void> {
+  await db.transaction(async (trx) => {
+    await trx.from("matches").where("round_id", roundId).delete();
+    await trx.from("match_rounds").where("id", roundId).update({
+      generated_at: null,
+      status: "draft",
+      updated_at: DateTime.now().toJSDate(),
+    });
+  });
+}
+
+/** How much has been built on top of a round. Counted across rounds, not known by one. */
+export interface RoundCounts {
+  matches: number;
+  handovers: number;
+}
+
+interface CountRow {
+  round_id: number;
+  total: string | number;
+}
+
+const toCountMap = (rows: CountRow[]) =>
+  new Map(rows.map((row) => [Number(row.round_id), Number(row.total)]));
+
+/**
+ * How many matches each round has, and how many of their obligations have already been settled by
+ * a handover.
+ *
+ * Grouped rather than counted per round, because the listing needs both numbers for every round at
+ * once: to tell a planned round from a generated one, and to warn before matches are thrown away.
+ * Pass `roundId` when only one round is being rendered. A handover can discharge both halves of a
+ * pair of obligations in the same round, so it is counted once.
+ */
+async function roundCounts(roundId?: number): Promise<Map<number, RoundCounts>> {
+  const matchQuery = db
+    .from("matches")
+    .groupBy("matches.round_id")
+    .select("matches.round_id")
+    .count("* as total");
+
+  const handoverQuery = db
+    .from("book_handovers")
+    .join("match_obligations", (join) => {
+      void join
+        .on("match_obligations.id", "book_handovers.discharges_sender_obligation_id")
+        .orOn("match_obligations.id", "book_handovers.discharges_receiver_obligation_id");
+    })
+    .join("matches", "matches.id", "match_obligations.match_id")
+    .groupBy("matches.round_id")
+    .select("matches.round_id")
+    .countDistinct("book_handovers.id as total");
+
+  if (roundId !== undefined) {
+    void matchQuery.where("matches.round_id", roundId);
+    void handoverQuery.where("matches.round_id", roundId);
+  }
+
+  const [matchRows, handoverRows] = (await Promise.all([matchQuery, handoverQuery])) as [
+    CountRow[],
+    CountRow[],
+  ];
+  const matches = toCountMap(matchRows);
+  const handovers = toCountMap(handoverRows);
+
+  return new Map(
+    [...new Set([...matches.keys(), ...handovers.keys()])].map((id) => [
+      id,
+      { matches: matches.get(id) ?? 0, handovers: handovers.get(id) ?? 0 },
+    ]),
+  );
 }
 
 export function requireHandoverBlid(blid: string | null | undefined): string {
@@ -334,7 +428,9 @@ async function hasReceivedTitle(customerId: string, itemId: string): Promise<boo
 }
 
 export const MatchRepository = {
-  createRound,
+  attachMatches,
+  deleteMatches,
+  roundCounts,
   findById,
   findForCustomer,
   findForRound,

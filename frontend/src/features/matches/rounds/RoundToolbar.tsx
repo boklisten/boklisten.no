@@ -1,15 +1,15 @@
 import { ActionIcon, Button, Card, Group, Menu, Switch, TextInput, Tooltip } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
-import { IconDotsVertical, IconPencil, IconTrash } from "@tabler/icons-react";
+import { IconDotsVertical, IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import DeleteMatchesModal from "@/features/matches/rounds/DeleteMatchesModal";
 import DeleteRoundModal from "@/features/matches/rounds/DeleteRoundModal";
-import GenerateRoundButton from "@/features/matches/rounds/GenerateRoundButton";
 import NotifyRoundButton from "@/features/matches/rounds/NotifyRoundButton";
 import RoundSelector from "@/features/matches/rounds/RoundSelector";
-import type { Round } from "@/features/matches/rounds/useRounds";
+import { isPlanned, type Round } from "@/features/matches/rounds/useRounds";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -41,18 +41,24 @@ export default function RoundToolbar({
   rounds,
   selectedRoundId,
   onSelect,
+  onNewRound,
+  onEditPlan,
 }: {
   rounds: Round[];
   selectedRoundId: string | null;
   onSelect: (roundId: string | null) => void;
+  onNewRound: () => void;
+  onEditPlan: () => void;
 }) {
   const { client, api } = useApiClient();
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [deleteOpened, deleteModal] = useDisclosure(false);
+  const [deleteMatchesOpened, deleteMatchesModal] = useDisclosure(false);
 
   const selected = rounds.find((round) => round.id === selectedRoundId);
   const active = selected?.status === "active";
+  const planned = selected !== undefined && isPlanned(selected);
 
   const patchMutation = useMutation({
     mutationFn: async (patch: { id: string; name?: string; status?: "draft" | "active" }) =>
@@ -78,16 +84,18 @@ export default function RoundToolbar({
           {isAdmin && selected && (
             <Tooltip
               label={
-                active
-                  ? "Elevene ser runden, og bøkene i den er låst til overleveringer"
-                  : "Utkast – skjult for elevene, låser ingen bøker"
+                planned
+                  ? "Runden må genereres før elevene kan se den"
+                  : active
+                    ? "Elevene ser runden, og bøkene i den er låst til overleveringer"
+                    : "Utkast – skjult for elevene, låser ingen bøker"
               }
               refProp={"rootRef"}
             >
               <Switch
                 label={"Synlig for elever"}
                 checked={active}
-                disabled={patchMutation.isPending}
+                disabled={patchMutation.isPending || planned}
                 onChange={(event) =>
                   patchMutation.mutate({
                     id: selected.id,
@@ -100,7 +108,9 @@ export default function RoundToolbar({
         </Group>
         <Group gap={"xs"} wrap={"wrap"}>
           <NotifyRoundButton roundId={selectedRoundId} disabled={!active} />
-          <GenerateRoundButton onGenerated={onSelect} />
+          <Button variant={"default"} leftSection={<IconPlus size={16} />} onClick={onNewRound}>
+            Ny runde
+          </Button>
           {isAdmin && selected && (
             <>
               <Menu position={"bottom-end"} withArrow>
@@ -126,7 +136,21 @@ export default function RoundToolbar({
                   >
                     Gi nytt navn
                   </Menu.Item>
+                  {planned && (
+                    <Menu.Item leftSection={<IconPencil size={16} />} onClick={onEditPlan}>
+                      Rediger planen
+                    </Menu.Item>
+                  )}
                   <Menu.Divider />
+                  {!planned && (
+                    <Menu.Item
+                      color={"red"}
+                      leftSection={<IconTrash size={16} />}
+                      onClick={deleteMatchesModal.open}
+                    >
+                      Slett overleveringene
+                    </Menu.Item>
+                  )}
                   <Menu.Item
                     color={"red"}
                     leftSection={<IconTrash size={16} />}
@@ -136,6 +160,11 @@ export default function RoundToolbar({
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
+              <DeleteMatchesModal
+                round={selected}
+                opened={deleteMatchesOpened}
+                onClose={deleteMatchesModal.close}
+              />
               <DeleteRoundModal
                 round={selected}
                 opened={deleteOpened}

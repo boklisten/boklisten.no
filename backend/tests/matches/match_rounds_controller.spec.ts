@@ -7,13 +7,15 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import MatchRound from "#models/match_round";
+import { MatchRepository } from "#services/matches/match_repository";
+import { TEST_DEADLINE, createTestRound } from "#tests/matches/match-testing-utils";
 
 test.group("match round management", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
   test("lists rounds newest first", async ({ assert }) => {
-    await MatchRound.create({ name: "Høst 2025", standLocation: "Kantina" });
-    await MatchRound.create({ name: "Vår 2026", standLocation: "Biblioteket" });
+    await createTestRound({ name: "Høst 2025", standLocation: "Kantina" });
+    await createTestRound({ name: "Vår 2026", standLocation: "Biblioteket" });
 
     const rounds = await MatchRound.query().orderBy("id", "desc");
 
@@ -24,7 +26,7 @@ test.group("match round management", (group) => {
   });
 
   test("renames a round", async ({ assert }) => {
-    const round = await MatchRound.create({ name: "Feilstavet", standLocation: "Kantina" });
+    const round = await createTestRound({ name: "Feilstavet", standLocation: "Kantina" });
 
     await round.merge({ name: "Ullern Vår 2026" }).save();
 
@@ -32,7 +34,7 @@ test.group("match round management", (group) => {
   });
 
   test("switches a round off again", async ({ assert }) => {
-    const round = await MatchRound.create({
+    const round = await createTestRound({
       name: "Ferdig",
       standLocation: "Kantina",
       status: "active",
@@ -46,7 +48,7 @@ test.group("match round management", (group) => {
   test("deleting a round takes its matches, participants and obligations with it, but keeps handover history", async ({
     assert,
   }) => {
-    const round = await MatchRound.create({ name: "Slettes", standLocation: "Kantina" });
+    const round = await createTestRound({ name: "Slettes", standLocation: "Kantina" });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const sender = await MatchParticipant.create({
       matchId: match.id,
@@ -108,5 +110,100 @@ test.group("match round management", (group) => {
     assert.deepEqual(await matchRoundPatchValidator.validate({ status: "active" }), {
       status: "active",
     });
+  });
+
+  test("deleting the matches returns the round to its planned state, plan intact", async ({
+    assert,
+  }) => {
+    const round = await createTestRound({
+      name: "Angrer",
+      status: "active",
+      generatedAt: DateTime.now(),
+      userMatchLocations: ["Biblioteket", "Aulaen"],
+    });
+    const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
+    await MatchParticipant.create({ matchId: match.id, userDetailId: "5d765db5fc8c47001c408d81" });
+
+    await MatchRepository.deleteMatches(round.id);
+
+    assert.isEmpty(await Match.query().where("roundId", round.id));
+
+    const planned = await MatchRound.findOrFail(round.id);
+    assert.isNull(planned.generatedAt, "the round is planned again");
+    assert.equal(planned.status, "draft", "an emptied round must not stay visible to students");
+    // The point of keeping the plan is that the round can be generated again from it.
+    assert.deepEqual(planned.userMatchLocations, ["Biblioteket", "Aulaen"]);
+    assert.equal(planned.deadline.toISODate(), TEST_DEADLINE.toISODate());
+  });
+
+  test("deleting the matches keeps the handovers that already happened", async ({ assert }) => {
+    const round = await createTestRound({ name: "Halvveis", generatedAt: DateTime.now() });
+    const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
+    const sender = await MatchParticipant.create({
+      matchId: match.id,
+      userDetailId: "5d765db5fc8c47001c408d81",
+    });
+    const receiver = await MatchParticipant.create({
+      matchId: match.id,
+      userDetailId: "5d765db5fc8c47001c408d82",
+    });
+    const obligation = await MatchObligation.create({
+      matchId: match.id,
+      senderParticipantId: sender.id,
+      receiverParticipantId: receiver.id,
+      itemId: "5b6441c4d2e733002fae89a6",
+    });
+    const handover = await BookHandover.create({
+      blid: "BL0001234567",
+      itemId: "5b6441c4d2e733002fae89a6",
+      fromUserDetailId: "5d765db5fc8c47001c408d81",
+      toUserDetailId: "5d765db5fc8c47001c408d82",
+      occurredAt: DateTime.now(),
+      dischargesSenderObligationId: obligation.id,
+    });
+
+    await MatchRepository.deleteMatches(round.id);
+
+    const survivor = await BookHandover.findOrFail(handover.id);
+    assert.isNull(survivor.dischargesSenderObligationId, "only the link to the obligation goes");
+  });
+
+  test("counts the handovers a round would lose, once per handover", async ({ assert }) => {
+    const round = await createTestRound({ name: "Teller", generatedAt: DateTime.now() });
+    const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
+    const sender = await MatchParticipant.create({
+      matchId: match.id,
+      userDetailId: "5d765db5fc8c47001c408d81",
+    });
+    const receiver = await MatchParticipant.create({
+      matchId: match.id,
+      userDetailId: "5d765db5fc8c47001c408d82",
+    });
+    const outgoing = await MatchObligation.create({
+      matchId: match.id,
+      senderParticipantId: sender.id,
+      receiverParticipantId: receiver.id,
+      itemId: "5b6441c4d2e733002fae89a6",
+    });
+    const incoming = await MatchObligation.create({
+      matchId: match.id,
+      senderParticipantId: receiver.id,
+      receiverParticipantId: sender.id,
+      itemId: "5b6441c4d2e733002fae89a7",
+    });
+    // One physical handover settling both halves must not be counted twice.
+    await BookHandover.create({
+      blid: "BL0001234567",
+      itemId: "5b6441c4d2e733002fae89a6",
+      fromUserDetailId: "5d765db5fc8c47001c408d81",
+      toUserDetailId: "5d765db5fc8c47001c408d82",
+      occurredAt: DateTime.now(),
+      dischargesSenderObligationId: outgoing.id,
+      dischargesReceiverObligationId: incoming.id,
+    });
+
+    const counts = await MatchRepository.roundCounts();
+
+    assert.deepEqual(counts.get(round.id), { matches: 1, handovers: 1 });
   });
 });

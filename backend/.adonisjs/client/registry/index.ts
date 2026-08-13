@@ -252,12 +252,6 @@ const routes = {
     tokens: [{"old":"/public_blid_lookup/:blid","type":0,"val":"public_blid_lookup","end":""},{"old":"/public_blid_lookup/:blid","type":1,"val":"blid","end":""}],
     types: placeholder as Registry['public_blid_lookup.lookup']['types'],
   },
-  'matches.generate': {
-    methods: ["POST"],
-    pattern: '/matches/generate',
-    tokens: [{"old":"/matches/generate","type":0,"val":"matches","end":""},{"old":"/matches/generate","type":0,"val":"generate","end":""}],
-    types: placeholder as Registry['matches.generate']['types'],
-  },
   'matches.notify': {
     methods: ["POST"],
     pattern: '/matches/notify',
@@ -324,11 +318,29 @@ const routes = {
     tokens: [{"old":"/match_rounds","type":0,"val":"match_rounds","end":""}],
     types: placeholder as Registry['match_rounds.index']['types'],
   },
+  'match_rounds.store': {
+    methods: ["POST"],
+    pattern: '/match_rounds',
+    tokens: [{"old":"/match_rounds","type":0,"val":"match_rounds","end":""}],
+    types: placeholder as Registry['match_rounds.store']['types'],
+  },
   'match_rounds.update': {
     methods: ["PATCH"],
     pattern: '/match_rounds/:id',
     tokens: [{"old":"/match_rounds/:id","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['match_rounds.update']['types'],
+  },
+  'match_rounds.generate': {
+    methods: ["POST"],
+    pattern: '/match_rounds/:id/generate',
+    tokens: [{"old":"/match_rounds/:id/generate","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/generate","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/generate","type":0,"val":"generate","end":""}],
+    types: placeholder as Registry['match_rounds.generate']['types'],
+  },
+  'match_rounds.destroy_matches': {
+    methods: ["DELETE"],
+    pattern: '/match_rounds/:id/matches',
+    tokens: [{"old":"/match_rounds/:id/matches","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/matches","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/matches","type":0,"val":"matches","end":""}],
+    types: placeholder as Registry['match_rounds.destroy_matches']['types'],
   },
   'match_rounds.destroy': {
     methods: ["DELETE"],

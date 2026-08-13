@@ -97,22 +97,40 @@ export class MatchParticipantSchema extends BaseModel {
 }
 
 export class MatchRoundSchema extends BaseModel {
-  static $columns = ['createdAt', 'generatedAt', 'id', 'name', 'standLocation', 'status', 'updatedAt'] as const
+  static $columns = ['branches', 'createdAt', 'deadline', 'generatedAt', 'id', 'includeCustomerItemsFromOtherBranches', 'meetingDate', 'name', 'standFrom', 'standLocation', 'standTo', 'status', 'updatedAt', 'userMatchLocations', 'userMeetingFrom', 'userMeetingTo'] as const
   $columns = MatchRoundSchema.$columns
+  @column()
+  declare branches: any
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime | null
+  @column.date()
+  declare deadline: DateTime
   @column.dateTime()
   declare generatedAt: DateTime | null
   @column({ isPrimary: true })
   declare id: number
   @column()
+  declare includeCustomerItemsFromOtherBranches: boolean
+  @column.date()
+  declare meetingDate: DateTime
+  @column()
   declare name: string
   @column()
+  declare standFrom: string
+  @column()
   declare standLocation: string
+  @column()
+  declare standTo: string
   @column()
   declare status: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+  @column()
+  declare userMatchLocations: any
+  @column()
+  declare userMeetingFrom: string
+  @column()
+  declare userMeetingTo: string
 }
 
 export class MatchSchema extends BaseModel {

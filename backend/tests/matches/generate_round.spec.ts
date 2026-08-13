@@ -1,5 +1,6 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
+import { DateTime } from "luxon";
 import sinon, { createSandbox } from "sinon";
 
 import Match from "#models/match";
@@ -7,6 +8,11 @@ import MatchObligation from "#models/match_obligation";
 import MatchRound from "#models/match_round";
 import { generateRound } from "#services/matches/generate_round";
 import { StorageService } from "#services/storage_service";
+import {
+  TEST_DEADLINE,
+  TEST_MEETING_DATE,
+  createTestRound,
+} from "#tests/matches/match-testing-utils";
 
 /** chai-as-promised is not registered in this suite, so assert rejections explicitly. */
 async function expectRejection(promise: Promise<unknown>, pattern: RegExp) {
@@ -26,17 +32,9 @@ const ITEM_X = "5d765db5fc8c47001c408e01";
 const ITEM_Y = "5d765db5fc8c47001c408e02";
 const BRANCH = "5d765db5fc8c47001c408b01";
 
-const config = {
-  name: "Ullern Vår 2026",
-  branches: [BRANCH],
-  standLocation: "Kantina",
-  meetingDate: "2026-06-01",
-  userMeetingWindow: { from: "12:00", to: "14:00" },
-  standWindow: { from: "12:00", to: "16:00" },
-  userMatchLocations: ["Biblioteket"],
-  deadlineBefore: new Date("2026-07-01T00:00:00Z"),
-  includeCustomerItemsFromOtherBranches: false,
-};
+/** A planned round with the shape these tests assert against. */
+const plannedRound = () =>
+  createTestRound({ name: "Ullern Vår 2026", branches: [BRANCH], standLocation: "Kantina" });
 
 /** One aggregated `{ id, items }` row as `getHeldItems` expects it back from Mongo. */
 function heldBy(customerId: string, itemIds: string[]) {
@@ -73,7 +71,7 @@ test.group("generateRound", (group) => {
       ],
     );
 
-    const result = await generateRound(config);
+    const result = await generateRound(await plannedRound());
 
     const round = await MatchRound.findOrFail(Number(result.roundId));
     assert.equal(round.name, "Ullern Vår 2026");
@@ -94,7 +92,7 @@ test.group("generateRound", (group) => {
   test("every match has exactly two participants", async ({ assert }) => {
     stubMongo([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
 
-    await generateRound(config);
+    await generateRound(await plannedRound());
 
     const matches = await Match.query().preload("participants");
     assert.isNotEmpty(matches);
@@ -107,7 +105,7 @@ test.group("generateRound", (group) => {
     // B wants X and nobody holds it, so it can only come from the stand.
     stubMongo([], [{ id: B, wantedItems: [ITEM_X] }]);
 
-    await generateRound(config);
+    await generateRound(await plannedRound());
 
     const obligations = await MatchObligation.query().preload("sender").preload("receiver");
     const pickup = obligations.find((o) => o.sender.userDetailId === null);
@@ -119,7 +117,7 @@ test.group("generateRound", (group) => {
     // A holds X and nobody wants it, so it goes back to the stand.
     stubMongo([heldBy(A, [ITEM_X])], []);
 
-    await generateRound(config);
+    await generateRound(await plannedRound());
 
     const obligations = await MatchObligation.query().preload("sender").preload("receiver");
     const handoff = obligations.find((o) => o.receiver.userDetailId === null);
@@ -130,7 +128,7 @@ test.group("generateRound", (group) => {
   test("reports when there is nobody to match", async () => {
     stubMongo([], []);
 
-    await expectRejection(generateRound(config), /Fant ingen elever/);
+    await expectRejection(generateRound(await plannedRound()), /Fant ingen elever/);
   });
 
   test("user matches get a slot and location inside the meeting window", async ({ assert }) => {
@@ -142,7 +140,7 @@ test.group("generateRound", (group) => {
       ],
     );
 
-    await generateRound(config);
+    await generateRound(await plannedRound());
 
     const matches = await Match.query().preload("participants");
     const userMatches = matches.filter((match) =>
@@ -153,7 +151,7 @@ test.group("generateRound", (group) => {
       assert.equal(match.meetingLocation, "Biblioteket");
       assert.isNotNull(match.meetingTime);
       const oslo = match.meetingTime!.setZone("Europe/Oslo");
-      assert.equal(oslo.toISODate(), "2026-06-01");
+      assert.equal(oslo.toISODate(), TEST_MEETING_DATE.toISODate());
       assert.isTrue(oslo.hour >= 12 && oslo.hour < 14, "inside the 12:00–14:00 window");
       assert.equal(oslo.minute % 10, 0, "on a ten-minute tick");
     }
@@ -165,7 +163,7 @@ test.group("generateRound", (group) => {
     // A holds X and nobody wants it: a pure stand handoff.
     stubMongo([heldBy(A, [ITEM_X])], []);
 
-    await generateRound(config);
+    await generateRound(await plannedRound());
 
     const matches = await Match.query().preload("participants");
     const standMatches = matches.filter((match) =>
@@ -181,20 +179,65 @@ test.group("generateRound", (group) => {
     }
   });
 
-  test("queries held books with two days of deadline padding", async ({ assert }) => {
+  test("looks for books due on the deadline, give or take two days", async ({ assert }) => {
     const aggregateStub = sandbox
       .stub(StorageService.CustomerItems, "aggregate")
       .resolves([heldBy(A, [ITEM_X])] as never);
     sandbox.stub(StorageService.Orders, "aggregate").resolves([] as never);
     sandbox.stub(StorageService.UserDetails, "aggregate").resolves([] as never);
 
-    await generateRound(config);
+    await generateRound(await plannedRound());
 
-    const pipeline = aggregateStub.firstCall.args[0] as [{ $match: { deadline: { $lte: Date } } }];
+    const pipeline = aggregateStub.firstCall.args[0] as [
+      { $match: { deadline: { $gt: Date; $lt: Date } } },
+    ];
+    const { $gt, $lt } = pipeline[0].$match.deadline;
     assert.equal(
-      pipeline[0].$match.deadline.$lte.toISOString(),
-      "2026-07-03T00:00:00.000Z",
-      "deadlineBefore + 2 days, covering timezone drift in stored deadlines",
+      $gt.toISOString(),
+      TEST_DEADLINE.minus({ days: 2 }).toJSDate().toISOString(),
+      "two days before the deadline, covering timezone drift in stored deadlines",
     );
+    assert.equal(
+      $lt.toISOString(),
+      TEST_DEADLINE.plus({ days: 2 }).toJSDate().toISOString(),
+      "two days after the deadline",
+    );
+  });
+
+  test("refuses to generate a round twice", async () => {
+    stubMongo([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
+    const round = await plannedRound();
+
+    await generateRound(round);
+
+    await expectRejection(
+      generateRound(await MatchRound.findOrFail(round.id)),
+      /allerede overleveringer/,
+    );
+  });
+
+  test("refuses a round whose deadline has already passed", async () => {
+    stubMongo([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
+    const round = await createTestRound({
+      branches: [BRANCH],
+      deadline: DateTime.now().minus({ days: 1 }),
+    });
+
+    await expectRejection(generateRound(round), /Fristen for runden har allerede passert/);
+  });
+
+  test("stamps the round as generated, which is what ends its planned state", async ({
+    assert,
+  }) => {
+    stubMongo([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
+    const round = await plannedRound();
+    assert.isNull(
+      (await MatchRound.findOrFail(round.id)).generatedAt,
+      "a freshly planned round has not been generated",
+    );
+
+    await generateRound(round);
+
+    assert.isNotNull((await MatchRound.findOrFail(round.id)).generatedAt);
   });
 });

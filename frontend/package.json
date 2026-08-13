@@ -19,6 +19,7 @@
     "@mantine/hooks": "^9.5.1",
     "@mantine/modals": "^9.5.1",
     "@mantine/notifications": "^9.5.1",
+    "@mantine/schedule": "^9.5.1",
     "@mantine/tiptap": "^9.5.1",
     "@sentry/tanstackstart-react": "^10.69.0",
     "@tabler/icons-react": "^3.46.0",

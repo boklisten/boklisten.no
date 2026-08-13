@@ -8,6 +8,7 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import MatchRound from "#models/match_round";
+import { createTestRound } from "#tests/matches/match-testing-utils";
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
 import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
@@ -78,7 +79,7 @@ test.group("recordTransfer", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     // Explicitly active: transfers only discharge obligations in rounds that are switched on.
-    round = await MatchRound.create({ name: "Round", standLocation: "Kantina", status: "active" });
+    round = await createTestRound({ name: "Round", standLocation: "Kantina", status: "active" });
   });
 
   /**

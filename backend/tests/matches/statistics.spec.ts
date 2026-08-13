@@ -7,6 +7,7 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import MatchRound from "#models/match_round";
+import { createTestRound } from "#tests/matches/match-testing-utils";
 import { MatchRepository } from "#services/matches/match_repository";
 import { computeMatchStatistics } from "#services/matches/statistics";
 import { StorageService } from "#services/storage_service";
@@ -36,7 +37,7 @@ test.group("computeMatchStatistics", (group) => {
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
-    round = await MatchRound.create({
+    round = await createTestRound({
       name: "Round",
       standLocation: "Kantina",
       generatedAt: DateTime.now().minus({ days: 1 }),
@@ -195,7 +196,7 @@ test.group("computeMatchStatistics", (group) => {
 
   test("reports on the named round rather than the newest", async ({ assert }) => {
     await seedObligation(A, B);
-    const newer = await MatchRound.create({ name: "Newer", standLocation: "Kantina" });
+    const newer = await createTestRound({ name: "Newer", standLocation: "Kantina" });
     await seedObligation(A, C, newer.id);
     await seedObligation(B, C, newer.id);
 

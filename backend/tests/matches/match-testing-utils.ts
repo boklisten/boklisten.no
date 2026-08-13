@@ -1,9 +1,45 @@
 // mulberry32 PRNG: https://stackoverflow.com/a/47593316
+import { DateTime } from "luxon";
+
 import {
   CandidateStandMatch,
   CandidateUserMatch,
   MatchableUser,
 } from "#services/match_helpers/match-finder/match-types";
+import MatchRound from "#models/match_round";
+
+/**
+ * Dates are relative to today rather than fixed, because a round refuses to generate once its
+ * deadline has passed — a fixed date would quietly turn the whole suite red on the day it went by.
+ */
+export const TEST_MEETING_DATE = DateTime.now().plus({ weeks: 2 }).startOf("day");
+export const TEST_DEADLINE = DateTime.now().plus({ months: 1 }).startOf("day");
+
+/**
+ * A complete, valid plan. Every plan column is required, so tests that only care about one field
+ * still have to supply the rest; this keeps that noise out of them.
+ */
+export function testRoundPlan(overrides: Partial<MatchRound> = {}) {
+  return {
+    name: "Vår 2026",
+    standLocation: "Kantina",
+    branches: ["5b6442eb1f4f9d0013e0dcbf"],
+    deadline: TEST_DEADLINE,
+    meetingDate: TEST_MEETING_DATE,
+    userMeetingFrom: "12:00",
+    userMeetingTo: "14:00",
+    standFrom: "12:00",
+    standTo: "16:00",
+    includeCustomerItemsFromOtherBranches: false,
+    userMatchLocations: ["Biblioteket"],
+    ...overrides,
+  };
+}
+
+/** A planned round: plan filled in, no matches yet. */
+export function createTestRound(overrides: Partial<MatchRound> = {}) {
+  return MatchRound.create(testRoundPlan(overrides));
+}
 
 export function seededRandom(seed: number) {
   return function () {

@@ -45,7 +45,6 @@ export type ScannedRoutes = {
     'email_verification.send': { paramsTuple?: []; params?: {} }
     'email_verification.verify': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'public_blid_lookup.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
-    'matches.generate': { paramsTuple?: []; params?: {} }
     'matches.notify': { paramsTuple?: []; params?: {} }
     'matches.lock': { paramsTuple?: []; params?: {} }
     'matches.get_my_matches': { paramsTuple?: []; params?: {} }
@@ -57,7 +56,10 @@ export type ScannedRoutes = {
     'match_statistics.get_statistics': { paramsTuple?: []; params?: {} }
     'match_statistics.get_statistics_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
     'match_rounds.index': { paramsTuple?: []; params?: {} }
+    'match_rounds.store': { paramsTuple?: []; params?: {} }
     'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'match_rounds.generate': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'match_rounds.destroy_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'user_detail.get_by_id': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'user_detail.search': { paramsTuple?: []; params?: {} }
@@ -338,10 +340,11 @@ export type ScannedRoutes = {
     'orders.cancel_order_item': { paramsTuple?: []; params?: {} }
     'questions_and_answers.store': { paramsTuple?: []; params?: {} }
     'email_verification.send': { paramsTuple?: []; params?: {} }
-    'matches.generate': { paramsTuple?: []; params?: {} }
     'matches.notify': { paramsTuple?: []; params?: {} }
     'matches.lock': { paramsTuple?: []; params?: {} }
     'matches.transfer_item': { paramsTuple?: []; params?: {} }
+    'match_rounds.store': { paramsTuple?: []; params?: {} }
+    'match_rounds.generate': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'user_detail.search': { paramsTuple?: []; params?: {} }
     'user_detail.update_as_customer': { paramsTuple?: []; params?: {} }
     'user_detail.update_as_employee': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
@@ -382,6 +385,7 @@ export type ScannedRoutes = {
     'branch_membership.remove_indirect_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'editable_texts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'questions_and_answers.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'match_rounds.destroy_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'companies.delete_company': { paramsTuple: [ParamValue]; params: {'companyId': ParamValue} }
     'opening_hours.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

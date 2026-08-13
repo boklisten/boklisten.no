@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import MatchRound from "#models/match_round";
+import { createTestRound } from "#tests/matches/match-testing-utils";
 import { MatchRepository } from "#services/matches/match_repository";
 import { toMatchDtos, type MatchLookups } from "#transformers/match_transformer";
 
@@ -40,7 +40,7 @@ test.group("toMatchDtos", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
   async function seedUserMatch() {
-    const round = await MatchRound.create({ name: "Round", standLocation: "Kantina" });
+    const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
     const match = await Match.create({
       roundId: round.id,
       meetingLocation: "Biblioteket",
@@ -87,7 +87,7 @@ test.group("toMatchDtos", (group) => {
   });
 
   test("renders the stand as a party rather than a missing customer", async ({ assert }) => {
-    const round = await MatchRound.create({ name: "Round", standLocation: "Kantina" });
+    const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Kantina" });
     const [customer, stand] = await MatchParticipant.createMany([
       { matchId: match.id, userDetailId: A },
@@ -166,7 +166,7 @@ test.group("toMatchDtos", (group) => {
 
   test("renders an unknown customer as blank rather than throwing", async ({ assert }) => {
     // getAllMatches must keep working for deleted or inactive user details.
-    const round = await MatchRound.create({ name: "Round", standLocation: "Kantina" });
+    const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const [a, b] = await MatchParticipant.createMany([
       { matchId: match.id, userDetailId: "5d765db5fc8c47001c408dff" },
