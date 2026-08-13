@@ -106,74 +106,76 @@ export default function RoundToolbar({
             </Tooltip>
           )}
         </Group>
-        <Group gap={"xs"} wrap={"wrap"}>
-          <NotifyRoundButton roundId={selectedRoundId} disabled={!active} />
-          <Button variant={"default"} leftSection={<IconPlus size={16} />} onClick={onNewRound}>
-            Ny runde
-          </Button>
-          {isAdmin && selected && (
-            <>
-              <Menu position={"bottom-end"} withArrow>
-                <Menu.Target>
-                  <ActionIcon variant={"default"} size={36} aria-label={"Flere valg for runden"}>
-                    <IconDotsVertical size={18} />
-                  </ActionIcon>
-                </Menu.Target>
-                <Menu.Dropdown>
-                  <Menu.Item
-                    leftSection={<IconPencil size={16} />}
-                    onClick={() =>
-                      modals.open({
-                        title: "Gi runden nytt navn",
-                        children: (
-                          <RenameForm
-                            round={selected}
-                            onRename={(name) => patchMutation.mutate({ id: selected.id, name })}
-                          />
-                        ),
-                      })
-                    }
-                  >
-                    Gi nytt navn
-                  </Menu.Item>
-                  {planned && (
-                    <Menu.Item leftSection={<IconPencil size={16} />} onClick={onEditPlan}>
-                      Rediger planen
+        {isAdmin && (
+          <Group gap={"xs"} wrap={"wrap"}>
+            <NotifyRoundButton roundId={selectedRoundId} disabled={!active} />
+            <Button variant={"default"} leftSection={<IconPlus size={16} />} onClick={onNewRound}>
+              Ny runde
+            </Button>
+            {selected && (
+              <>
+                <Menu position={"bottom-end"} withArrow>
+                  <Menu.Target>
+                    <ActionIcon variant={"default"} size={36} aria-label={"Flere valg for runden"}>
+                      <IconDotsVertical size={18} />
+                    </ActionIcon>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Item
+                      leftSection={<IconPencil size={16} />}
+                      onClick={() =>
+                        modals.open({
+                          title: "Gi runden nytt navn",
+                          children: (
+                            <RenameForm
+                              round={selected}
+                              onRename={(name) => patchMutation.mutate({ id: selected.id, name })}
+                            />
+                          ),
+                        })
+                      }
+                    >
+                      Gi nytt navn
                     </Menu.Item>
-                  )}
-                  <Menu.Divider />
-                  {!planned && (
+                    {planned && (
+                      <Menu.Item leftSection={<IconPencil size={16} />} onClick={onEditPlan}>
+                        Rediger planen
+                      </Menu.Item>
+                    )}
+                    <Menu.Divider />
+                    {!planned && (
+                      <Menu.Item
+                        color={"red"}
+                        leftSection={<IconTrash size={16} />}
+                        onClick={deleteMatchesModal.open}
+                      >
+                        Slett overleveringene
+                      </Menu.Item>
+                    )}
                     <Menu.Item
                       color={"red"}
                       leftSection={<IconTrash size={16} />}
-                      onClick={deleteMatchesModal.open}
+                      onClick={deleteModal.open}
                     >
-                      Slett overleveringene
+                      Slett runden
                     </Menu.Item>
-                  )}
-                  <Menu.Item
-                    color={"red"}
-                    leftSection={<IconTrash size={16} />}
-                    onClick={deleteModal.open}
-                  >
-                    Slett runden
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
-              <DeleteMatchesModal
-                round={selected}
-                opened={deleteMatchesOpened}
-                onClose={deleteMatchesModal.close}
-              />
-              <DeleteRoundModal
-                round={selected}
-                opened={deleteOpened}
-                onClose={deleteModal.close}
-                onDeleted={() => onSelect(null)}
-              />
-            </>
-          )}
-        </Group>
+                  </Menu.Dropdown>
+                </Menu>
+                <DeleteMatchesModal
+                  round={selected}
+                  opened={deleteMatchesOpened}
+                  onClose={deleteMatchesModal.close}
+                />
+                <DeleteRoundModal
+                  round={selected}
+                  opened={deleteOpened}
+                  onClose={deleteModal.close}
+                  onDeleted={() => onSelect(null)}
+                />
+              </>
+            )}
+          </Group>
+        )}
       </Group>
     </Card>
   );

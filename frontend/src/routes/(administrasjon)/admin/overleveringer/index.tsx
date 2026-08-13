@@ -15,6 +15,7 @@ import RoundToolbar from "@/features/matches/rounds/RoundToolbar";
 import { isPlanned, useRounds, type Round } from "@/features/matches/rounds/useRounds";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
+import useAuth from "@/shared/hooks/useAuth";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 export const Route = createFileRoute("/(administrasjon)/admin/overleveringer/")({
@@ -40,6 +41,7 @@ function AdminMatchesPage() {
   const { runde, fane } = Route.useSearch();
   const navigate = Route.useNavigate();
   const { client, api } = useApiClient();
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const { data, isLoading, error } = useRounds();
   const [planning, setPlanning] = useState<{ round?: Round } | null>(null);
@@ -83,11 +85,13 @@ function AdminMatchesPage() {
           <ErrorAlert title={"Klarte ikke laste inn runder"} />
         ) : rounds.length === 0 ? (
           <Stack gap={"lg"}>
-            <Group>
-              <Button leftSection={<IconPlus size={16} />} onClick={() => setPlanning({})}>
-                Ny runde
-              </Button>
-            </Group>
+            {isAdmin && (
+              <Group>
+                <Button leftSection={<IconPlus size={16} />} onClick={() => setPlanning({})}>
+                  Ny runde
+                </Button>
+              </Group>
+            )}
             <OverviewEmptyState filtered={false} />
           </Stack>
         ) : (

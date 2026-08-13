@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 
 import type { Round } from "@/features/matches/rounds/useRounds";
 import useApiClient from "@/shared/hooks/useApiClient";
+import useAuth from "@/shared/hooks/useAuth";
 // The month and weekday names below read Norwegian only because the shared dayjs setup registered
 // the locale. Imported here so the card carries that dependency itself rather than relying on
 // whatever else happened to load it. The dates are plain `YYYY-MM-DD` calendar days, so they are
@@ -115,6 +116,7 @@ export default function PlannedRoundCard({
   generating: boolean;
 }) {
   const { api } = useApiClient();
+  const { isAdmin } = useAuth();
   const { data: branches } = useQuery(api.branches.getAll.queryOptions());
 
   const meetingDay = dayjs(round.meetingDate);
@@ -190,23 +192,25 @@ export default function PlannedRoundCard({
           </Detail>
         </Group>
 
-        <Group justify={"flex-end"} gap={"sm"}>
-          <Button
-            variant={"default"}
-            leftSection={<IconEdit size={16} />}
-            onClick={onEdit}
-            disabled={generating}
-          >
-            Rediger planen
-          </Button>
-          <Button
-            leftSection={<IconSparkles size={16} />}
-            onClick={onGenerate}
-            loading={generating}
-          >
-            Generer overleveringer
-          </Button>
-        </Group>
+        {isAdmin && (
+          <Group justify={"flex-end"} gap={"sm"}>
+            <Button
+              variant={"default"}
+              leftSection={<IconEdit size={16} />}
+              onClick={onEdit}
+              disabled={generating}
+            >
+              Rediger planen
+            </Button>
+            <Button
+              leftSection={<IconSparkles size={16} />}
+              onClick={onGenerate}
+              loading={generating}
+            >
+              Generer overleveringer
+            </Button>
+          </Group>
+        )}
       </Stack>
     </Card>
   );
