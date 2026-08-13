@@ -3,7 +3,7 @@ import { MessageMethod } from "@boklisten/backend/shared/message/message-method/
 import { Button, Grid, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconMailFast, IconSend } from "@tabler/icons-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Activity } from "react";
 
@@ -37,7 +37,6 @@ const defaultValues: RemindersFormData = {
 export default function Reminders() {
   const { api } = useApiClient();
 
-  const { data: branches } = useQuery(api.branches.getPublic.queryOptions());
   const countRecipientsMutation = useMutation(
     api.reminders.countRecipients.mutationOptions({
       onError: () => showErrorNotification("Klarte ikke beregne antall mottakere"),
@@ -100,18 +99,7 @@ export default function Reminders() {
           onChange: ({ value }) => (value.length === 0 ? "Du må velge minst en filial" : null),
         }}
       >
-        {(field) => (
-          <field.MultiSelectField
-            label={"Filialer"}
-            placeholder={"Velg filialer"}
-            data={(branches ?? []).map((branch) => ({
-              value: branch.id,
-              label: branch.name,
-            }))}
-            clearable
-            searchable
-          />
-        )}
+        {(field) => <field.SelectBranchesField />}
       </form.AppField>
       <form.AppField
         name={"deadline"}

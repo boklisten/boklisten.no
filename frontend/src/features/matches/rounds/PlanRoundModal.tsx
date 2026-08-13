@@ -1,6 +1,6 @@
 import { Button, Card, Fieldset, Group, Modal, Stack, Text } from "@mantine/core";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Activity, useState } from "react";
 
@@ -92,7 +92,6 @@ export default function PlanRoundModal({
   const { client, api } = useApiClient();
   const queryClient = useQueryClient();
   const [apiError, setApiError] = useState<string | null>(null);
-  const { data: branches } = useQuery(api.branches.getAll.queryOptions());
   const editing = round !== undefined;
 
   const saveMutation = useMutation({
@@ -177,19 +176,7 @@ export default function PlanRoundModal({
             onBlur: ({ value }) => (value.length === 0 ? "Velg minst én filial" : null),
           }}
         >
-          {(field) => (
-            <field.MultiSelectField
-              required
-              searchable
-              label={"Filialer"}
-              placeholder={"Velg filialer"}
-              nothingFoundMessage={"Fant ingen filialer"}
-              data={(branches ?? []).map((branch) => ({
-                value: branch.id,
-                label: branch.name,
-              }))}
-            />
-          )}
+          {(field) => <field.SelectBranchesField required />}
         </form.AppField>
 
         <form.AppField name={"deadline"}>

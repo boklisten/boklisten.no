@@ -4,6 +4,12 @@ import type { TreeNodeData } from "@mantine/core";
 export function toBranchTreeNodeData(branches: Branch[]) {
   const branchById = new Map(branches.map((b) => [b.id, b]));
 
+  const claimed = new Set(
+    branches.flatMap((branch) =>
+      (branch.childBranches ?? []).filter((childBranchId) => branchById.has(childBranchId)),
+    ),
+  );
+
   const toNode = (branch: Branch) => ({
     value: branch.id,
     label: branch.name,
@@ -20,7 +26,7 @@ export function toBranchTreeNodeData(branches: Branch[]) {
   }
 
   return branches
-    .filter((branch) => !branch.parentBranch)
+    .filter((branch) => !claimed.has(branch.id))
     .map(toNode)
     .sort(byShortLabel);
 }
