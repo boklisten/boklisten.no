@@ -58,10 +58,7 @@ function RootLayout() {
         <HeadContent />
       </head>
       <body>
-        <MantineProvider
-          theme={theme}
-          cssVariablesResolver={cssVariablesResolver}
-        >
+        <MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver}>
           <AgGridColorSchemeSync />
           <Notifications />
           <DatesProvider settings={{ locale: "nb" }}>
