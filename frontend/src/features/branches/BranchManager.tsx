@@ -1,17 +1,21 @@
 import { Box, Button, Divider, Grid, Stack, Tabs, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import {
+  IconBook2,
   IconBooks,
   IconBuildingStore,
   IconCashRegister,
   IconClock,
   IconHierarchy3,
   IconPlus,
+  IconShoppingCart,
   IconUsers,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import ActiveBooksTab from "@/features/branches/branch-books/ActiveBooksTab";
+import OrderedBooksTab from "@/features/branches/branch-books/OrderedBooksTab";
 import BranchGeneralSettings from "@/features/branches/BranchGeneralSettings";
 import BranchItemSettings from "@/features/branches/BranchItemSettings";
 import BranchMembers from "@/features/branches/BranchMembers";
@@ -91,6 +95,12 @@ export default function BranchManager() {
                   <Tabs.Tab value={"members"} leftSection={<IconUsers />}>
                     Elever
                   </Tabs.Tab>
+                  <Tabs.Tab value={"active-books"} leftSection={<IconBook2 />}>
+                    Aktive bøker
+                  </Tabs.Tab>
+                  <Tabs.Tab value={"ordered-books"} leftSection={<IconShoppingCart />}>
+                    Bestilte bøker
+                  </Tabs.Tab>
                 </Tabs.List>
                 <Tabs.Panel value={"general"}>
                   <BranchGeneralSettings key={selectedBranchId} existingBranch={selectedBranch} />
@@ -113,6 +123,12 @@ export default function BranchManager() {
                     <UploadClassMemberships branchId={selectedBranch.id} />
                     <UploadSubjectChoices branchId={selectedBranch.id} />
                   </Stack>
+                </Tabs.Panel>
+                <Tabs.Panel value={"active-books"}>
+                  <ActiveBooksTab key={selectedBranch.id} branchId={selectedBranch.id} />
+                </Tabs.Panel>
+                <Tabs.Panel value={"ordered-books"}>
+                  <OrderedBooksTab key={selectedBranch.id} branchId={selectedBranch.id} />
                 </Tabs.Panel>
               </Tabs>
             </Stack>

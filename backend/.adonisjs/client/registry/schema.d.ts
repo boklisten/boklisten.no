@@ -319,6 +319,78 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_membership_controller').default['removeIndirectMembers']>>>
     }
   }
+  'branch_books.get_active_books': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/branches/:branchId/active_books'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['getActiveBooks']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['getActiveBooks']>>>
+    }
+  }
+  'branch_books.get_active_book_details': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/branches/:branchId/active_books/details'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/branch_books').branchBooksDetailsValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['getActiveBookDetails']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['getActiveBookDetails']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'branch_books.bulk_update_active_books': {
+    methods: ["PATCH"]
+    pattern: '/v2/branches/:branchId/active_books'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/branch_books').activeBooksBulkUpdateValidator)>>
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/branch_books').activeBooksBulkUpdateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['bulkUpdateActiveBooks']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['bulkUpdateActiveBooks']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'branch_books.get_ordered_books': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/branches/:branchId/ordered_books'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['getOrderedBooks']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['getOrderedBooks']>>>
+    }
+  }
+  'branch_books.get_ordered_book_details': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/branches/:branchId/ordered_books/details'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/branch_books').branchBooksDetailsValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['getOrderedBookDetails']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['getOrderedBookDetails']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'branch_books.bulk_update_ordered_books': {
+    methods: ["PATCH"]
+    pattern: '/v2/branches/:branchId/ordered_books'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/branch_books').orderedBooksBulkUpdateValidator)>>
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/branch_books').orderedBooksBulkUpdateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['bulkUpdateOrderedBooks']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['bulkUpdateOrderedBooks']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'orders.get_open_orders': {
     methods: ["GET","HEAD"]
     pattern: '/v2/orders/open_orders'

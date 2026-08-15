@@ -52,6 +52,7 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
       type: Schema.Types.ObjectId,
       ref: BlSchemaName.Branches,
       required: true,
+      index: true,
     },
     handoutEmployee: {
       type: Schema.Types.ObjectId,

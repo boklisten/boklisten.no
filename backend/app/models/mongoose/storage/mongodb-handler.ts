@@ -3,6 +3,7 @@ import {
   SchemaType,
   QueryFilter,
   Model,
+  MongooseUpdateQueryOptions,
   PipelineStage,
   Types,
   UpdateQuery,
@@ -199,10 +200,11 @@ export class MongodbHandler<T extends BlDocument> {
   }
 
   public async updateMany(
-    filter: QueryFilter<T>,
+    filter: QueryFilter<T> | Record<string, unknown>,
     update: UpdateWithAggregationPipeline | UpdateQuery<T>,
+    options?: MongooseUpdateQueryOptions,
   ): Promise<UpdateWriteOpResult> {
-    return this.mongooseModel.updateMany(filter, update);
+    return this.mongooseModel.updateMany(filter as QueryFilter<T>, update, options);
   }
 
   public async put(id: string, data: T): Promise<void> {

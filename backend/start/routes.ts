@@ -106,6 +106,34 @@ router.delete("/branches/memberships/indirect/:branchId", [
 ]);
 
 /**
+ * branch books (active and ordered books per branch)
+ */
+router.get("/v2/branches/:branchId/active_books", [
+  controllers.branches.BranchBooks,
+  "getActiveBooks",
+]);
+router.get("/v2/branches/:branchId/active_books/details", [
+  controllers.branches.BranchBooks,
+  "getActiveBookDetails",
+]);
+router.patch("/v2/branches/:branchId/active_books", [
+  controllers.branches.BranchBooks,
+  "bulkUpdateActiveBooks",
+]);
+router.get("/v2/branches/:branchId/ordered_books", [
+  controllers.branches.BranchBooks,
+  "getOrderedBooks",
+]);
+router.get("/v2/branches/:branchId/ordered_books/details", [
+  controllers.branches.BranchBooks,
+  "getOrderedBookDetails",
+]);
+router.patch("/v2/branches/:branchId/ordered_books", [
+  controllers.branches.BranchBooks,
+  "bulkUpdateOrderedBooks",
+]);
+
+/**
  * orders
  */
 router.get("/v2/orders/open_orders", [controllers.Orders, "getOpenOrders"]);

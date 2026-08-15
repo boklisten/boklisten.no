@@ -74,6 +74,7 @@ export const OrderSchema: BlSchema<Order> = new Schema({
     type: Schema.Types.ObjectId,
     ref: BlSchemaName.Branches,
     required: true,
+    index: true,
   },
   customer: {
     type: Schema.Types.ObjectId,

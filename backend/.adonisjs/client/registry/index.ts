@@ -162,6 +162,42 @@ const routes = {
     tokens: [{"old":"/branches/memberships/indirect/:branchId","type":0,"val":"branches","end":""},{"old":"/branches/memberships/indirect/:branchId","type":0,"val":"memberships","end":""},{"old":"/branches/memberships/indirect/:branchId","type":0,"val":"indirect","end":""},{"old":"/branches/memberships/indirect/:branchId","type":1,"val":"branchId","end":""}],
     types: placeholder as Registry['branch_membership.remove_indirect_members']['types'],
   },
+  'branch_books.get_active_books': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/branches/:branchId/active_books',
+    tokens: [{"old":"/v2/branches/:branchId/active_books","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/active_books","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/active_books","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/active_books","type":0,"val":"active_books","end":""}],
+    types: placeholder as Registry['branch_books.get_active_books']['types'],
+  },
+  'branch_books.get_active_book_details': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/branches/:branchId/active_books/details',
+    tokens: [{"old":"/v2/branches/:branchId/active_books/details","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/active_books/details","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/active_books/details","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/active_books/details","type":0,"val":"active_books","end":""},{"old":"/v2/branches/:branchId/active_books/details","type":0,"val":"details","end":""}],
+    types: placeholder as Registry['branch_books.get_active_book_details']['types'],
+  },
+  'branch_books.bulk_update_active_books': {
+    methods: ["PATCH"],
+    pattern: '/v2/branches/:branchId/active_books',
+    tokens: [{"old":"/v2/branches/:branchId/active_books","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/active_books","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/active_books","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/active_books","type":0,"val":"active_books","end":""}],
+    types: placeholder as Registry['branch_books.bulk_update_active_books']['types'],
+  },
+  'branch_books.get_ordered_books': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/branches/:branchId/ordered_books',
+    tokens: [{"old":"/v2/branches/:branchId/ordered_books","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/ordered_books","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/ordered_books","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/ordered_books","type":0,"val":"ordered_books","end":""}],
+    types: placeholder as Registry['branch_books.get_ordered_books']['types'],
+  },
+  'branch_books.get_ordered_book_details': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/branches/:branchId/ordered_books/details',
+    tokens: [{"old":"/v2/branches/:branchId/ordered_books/details","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/ordered_books/details","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/ordered_books/details","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/ordered_books/details","type":0,"val":"ordered_books","end":""},{"old":"/v2/branches/:branchId/ordered_books/details","type":0,"val":"details","end":""}],
+    types: placeholder as Registry['branch_books.get_ordered_book_details']['types'],
+  },
+  'branch_books.bulk_update_ordered_books': {
+    methods: ["PATCH"],
+    pattern: '/v2/branches/:branchId/ordered_books',
+    tokens: [{"old":"/v2/branches/:branchId/ordered_books","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/ordered_books","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/ordered_books","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/ordered_books","type":0,"val":"ordered_books","end":""}],
+    types: placeholder as Registry['branch_books.bulk_update_ordered_books']['types'],
+  },
   'orders.get_open_orders': {
     methods: ["GET","HEAD"],
     pattern: '/v2/orders/open_orders',

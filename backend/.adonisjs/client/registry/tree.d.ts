@@ -48,6 +48,14 @@ export interface ApiDefinition {
     removeDirectMembers: typeof routes['branch_membership.remove_direct_members']
     removeIndirectMembers: typeof routes['branch_membership.remove_indirect_members']
   }
+  branchBooks: {
+    getActiveBooks: typeof routes['branch_books.get_active_books']
+    getActiveBookDetails: typeof routes['branch_books.get_active_book_details']
+    bulkUpdateActiveBooks: typeof routes['branch_books.bulk_update_active_books']
+    getOrderedBooks: typeof routes['branch_books.get_ordered_books']
+    getOrderedBookDetails: typeof routes['branch_books.get_ordered_book_details']
+    bulkUpdateOrderedBooks: typeof routes['branch_books.bulk_update_ordered_books']
+  }
   orders: {
     getOpenOrders: typeof routes['orders.get_open_orders']
     getPlacedOrders: typeof routes['orders.get_placed_orders']
