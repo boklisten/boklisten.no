@@ -763,6 +763,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['generate']>>>
     }
   }
+  'match_rounds.unlock_matches': {
+    methods: ["POST"]
+    pattern: '/match_rounds/:id/unlock_matches'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['unlockMatches']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['unlockMatches']>>>
+    }
+  }
   'match_rounds.destroy_matches': {
     methods: ["DELETE"]
     pattern: '/match_rounds/:id/matches'
@@ -1289,6 +1301,18 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/bulk_collection_validator').bulkCollectionCollectValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['collect']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['collect']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'bulk_collection.unlock': {
+    methods: ["POST"]
+    pattern: '/bulk-collection/unlock'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/bulk_collection_validator').bulkCollectionUnlockValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/bulk_collection_validator').bulkCollectionUnlockValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['unlock']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['unlock']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'reports.get_customer_items_report': {

@@ -198,6 +198,7 @@ router.post("/match_rounds", [controllers.MatchRounds, "store"]);
 router.get("/match_rounds/:id/plan_metrics", [controllers.MatchRounds, "planMetrics"]);
 router.patch("/match_rounds/:id", [controllers.MatchRounds, "update"]);
 router.post("/match_rounds/:id/generate", [controllers.MatchRounds, "generate"]);
+router.post("/match_rounds/:id/unlock_matches", [controllers.MatchRounds, "unlockMatches"]);
 router.delete("/match_rounds/:id/matches", [controllers.MatchRounds, "destroyMatches"]);
 router.delete("/match_rounds/:id", [controllers.MatchRounds, "destroy"]);
 
@@ -319,6 +320,7 @@ router.post("/rapid-handout", [controllers.RapidHandout, "handout"]);
  */
 router.get("/bulk-collection/lookup/:blid", [controllers.BulkCollection, "lookup"]);
 router.post("/bulk-collection/collect", [controllers.BulkCollection, "collect"]);
+router.post("/bulk-collection/unlock", [controllers.BulkCollection, "unlock"]);
 
 /**
  * Reports

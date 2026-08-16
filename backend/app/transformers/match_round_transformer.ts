@@ -4,7 +4,7 @@ import MatchRound from "#models/match_round";
 import type { RoundCounts } from "#services/matches/match_repository";
 import type { MatchRoundDto } from "#shared/match/match-round-dto";
 
-const NOTHING_GENERATED: RoundCounts = { matches: 0, handovers: 0 };
+const NOTHING_GENERATED: RoundCounts = { matches: 0, handovers: 0, locked: 0 };
 
 export default class MatchRoundTransformer extends BaseTransformer<MatchRound> {
   private counts: Map<number, RoundCounts>;
@@ -15,7 +15,7 @@ export default class MatchRoundTransformer extends BaseTransformer<MatchRound> {
   }
 
   toObject(): MatchRoundDto {
-    const { matches, handovers } = this.counts.get(this.resource.id) ?? NOTHING_GENERATED;
+    const { matches, handovers, locked } = this.counts.get(this.resource.id) ?? NOTHING_GENERATED;
 
     return {
       ...this.pick(this.resource, [
@@ -37,6 +37,7 @@ export default class MatchRoundTransformer extends BaseTransformer<MatchRound> {
       generatedAt: this.resource.generatedAt?.toISO() ?? null,
       matchCount: matches,
       handoverCount: handovers,
+      lockedCount: locked,
     };
   }
 }

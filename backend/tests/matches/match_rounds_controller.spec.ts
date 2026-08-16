@@ -204,6 +204,48 @@ test.group("match round management", (group) => {
 
     const counts = await MatchRepository.roundCounts();
 
-    assert.deepEqual(counts.get(round.id), { matches: 1, handovers: 1 });
+    assert.deepEqual(counts.get(round.id), { matches: 1, handovers: 1, locked: 2 });
+  });
+
+  test("counts only user-match obligations as locked", async ({ assert }) => {
+    const round = await createTestRound({ name: "Låst", generatedAt: DateTime.now() });
+    const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
+    const [sender, receiver] = await MatchParticipant.createMany([
+      { matchId: match.id, userDetailId: "5d765db5fc8c47001c408d81" },
+      { matchId: match.id, userDetailId: "5d765db5fc8c47001c408d82" },
+    ]);
+    await MatchObligation.createMany([
+      {
+        matchId: match.id,
+        senderParticipantId: sender!.id,
+        receiverParticipantId: receiver!.id,
+        itemId: "5b6441c4d2e733002fae89a6",
+        lockedToMatch: true,
+      },
+      {
+        matchId: match.id,
+        senderParticipantId: receiver!.id,
+        receiverParticipantId: sender!.id,
+        itemId: "5b6441c4d2e733002fae89a7",
+        lockedToMatch: false,
+      },
+    ]);
+    // A stand match's obligations never count as locked, even with the flag set.
+    const standMatch = await Match.create({ roundId: round.id, meetingLocation: "Kantina" });
+    const [standSender, standParticipant] = await MatchParticipant.createMany([
+      { matchId: standMatch.id, userDetailId: "5d765db5fc8c47001c408d83" },
+      { matchId: standMatch.id, userDetailId: null },
+    ]);
+    await MatchObligation.create({
+      matchId: standMatch.id,
+      senderParticipantId: standSender!.id,
+      receiverParticipantId: standParticipant!.id,
+      itemId: "5b6441c4d2e733002fae89a8",
+      lockedToMatch: true,
+    });
+
+    const counts = await MatchRepository.roundCounts();
+
+    assert.equal(counts.get(round.id)?.locked, 1);
   });
 });

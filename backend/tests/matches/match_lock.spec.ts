@@ -188,6 +188,52 @@ test.group("MatchLock", (group) => {
     );
   });
 
+  test("unlocking a single book releases only that title for that customer", async ({ assert }) => {
+    const target = await seedObligation(A, B);
+    const otherTitle = await seedObligation(A, B, { itemId: GYMNOS_2009 });
+    const otherCustomer = await seedObligation(C, B);
+
+    await MatchLock.unlockCustomerItem(A, ITEM_X);
+
+    await Promise.all([target.refresh(), otherTitle.refresh(), otherCustomer.refresh()]);
+    assert.isFalse(target.lockedToMatch);
+    assert.isTrue(otherTitle.lockedToMatch, "the customer's other locked books stay locked");
+    assert.isTrue(otherCustomer.lockedToMatch, "another student's copy of the title stays locked");
+  });
+
+  test("unlocking a single book covers equivalent editions", async ({ assert }) => {
+    const obligation = await seedObligation(A, B, { itemId: GYMNOS_2009 });
+
+    await MatchLock.unlockCustomerItem(A, GYMNOS_2012);
+
+    await obligation.refresh();
+    assert.isFalse(obligation.lockedToMatch);
+  });
+
+  test("unlocking a round opens its user matches but not stand matches or other rounds", async ({
+    assert,
+  }) => {
+    const userObligation = await seedObligation(A, B);
+    const standObligation = await seedObligation(A, null);
+    const otherRound = await createTestRound({
+      name: "Other",
+      standLocation: "Kantina",
+      status: "active",
+    });
+    const otherRoundObligation = await seedObligation(A, B, { roundId: otherRound.id });
+
+    await MatchLock.unlockAllForRound(round.id);
+
+    await Promise.all([
+      userObligation.refresh(),
+      standObligation.refresh(),
+      otherRoundObligation.refresh(),
+    ]);
+    assert.isFalse(userObligation.lockedToMatch);
+    assert.isTrue(standObligation.lockedToMatch, "stand matches are exempt from the lock system");
+    assert.isTrue(otherRoundObligation.lockedToMatch, "only the given round is opened");
+  });
+
   test("locking a customer leaves draft rounds alone", async ({ assert }) => {
     const old = await createTestRound({
       name: "Old",

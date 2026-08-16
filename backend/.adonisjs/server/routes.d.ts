@@ -67,6 +67,7 @@ export type ScannedRoutes = {
     'match_rounds.plan_metrics': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.generate': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'match_rounds.unlock_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.destroy_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'user_detail.get_by_id': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
@@ -111,6 +112,7 @@ export type ScannedRoutes = {
     'rapid_handout.handout': { paramsTuple?: []; params?: {} }
     'bulk_collection.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'bulk_collection.collect': { paramsTuple?: []; params?: {} }
+    'bulk_collection.unlock': { paramsTuple?: []; params?: {} }
     'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }
     'reports.get_orders_report': { paramsTuple?: []; params?: {} }
     'reports.get_payments_report': { paramsTuple?: []; params?: {} }
@@ -364,6 +366,7 @@ export type ScannedRoutes = {
     'matches.transfer_item': { paramsTuple?: []; params?: {} }
     'match_rounds.store': { paramsTuple?: []; params?: {} }
     'match_rounds.generate': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'match_rounds.unlock_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'user_detail.search': { paramsTuple?: []; params?: {} }
     'user_detail.update_as_customer': { paramsTuple?: []; params?: {} }
     'user_detail.update_as_employee': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
@@ -383,6 +386,7 @@ export type ScannedRoutes = {
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'rapid_handout.handout': { paramsTuple?: []; params?: {} }
     'bulk_collection.collect': { paramsTuple?: []; params?: {} }
+    'bulk_collection.unlock': { paramsTuple?: []; params?: {} }
     'collection.branches.post': { paramsTuple?: []; params?: {} }
     'collection.branchitems.post': { paramsTuple?: []; params?: {} }
     'collection.customeritems.post': { paramsTuple?: []; params?: {} }

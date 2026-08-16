@@ -20,7 +20,11 @@ import CameraScanner from "@/shared/components/scanner/CameraScanner";
 import ManualCodeEntry from "@/shared/components/scanner/ManualCodeEntry";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
-import { showErrorNotification, showInfoNotification } from "@/shared/utils/notifications";
+import {
+  showErrorNotification,
+  showInfoNotification,
+  showSuccessNotification,
+} from "@/shared/utils/notifications";
 
 const manualModalId = "bulk-collection-manual";
 
@@ -71,6 +75,39 @@ export default function BulkCollectionPage() {
     },
     onError: () => showErrorNotification(GENERIC_ERROR_TEXT),
   });
+
+  const unlockMutation = useMutation({
+    mutationFn: (customerItemId: string) =>
+      client.api.bulkCollection.unlock({ body: { customerItemId } }),
+    onSuccess: (result) => {
+      if (!result.success) {
+        showErrorNotification(result.feedback);
+        return;
+      }
+      setScannedBooks((previous) =>
+        previous.map((book) => (book.blid === result.book.blid ? result.book : book)),
+      );
+      showSuccessNotification("Boka ble låst opp og kan leveres her.");
+    },
+    onError: () => showErrorNotification(GENERIC_ERROR_TEXT),
+  });
+
+  const confirmUnlock = (book: ScannedBook) => {
+    modals.openConfirmModal({
+      title: "Lås opp bok?",
+      children: (
+        <Stack gap={"xs"}>
+          <Text size={"sm"}>
+            Denne boka er låst fordi {book.customerName} skal overlevere den til{" "}
+            {book.deliverToName ?? "en annen elev"}.
+          </Text>
+          <Text size={"sm"}>Hvis du låser den opp, kan boka leveres på stand nå.</Text>
+        </Stack>
+      ),
+      labels: { confirm: "Lås opp", cancel: "Avbryt" },
+      onConfirm: () => unlockMutation.mutate(book.customerItemId),
+    });
+  };
 
   const registerBlid = async (blid: string) => {
     if (scannedBooks.some((book) => book.blid === blid)) {
@@ -172,7 +209,12 @@ export default function BulkCollectionPage() {
         ) : (
           <Stack>
             <InputLabel>Bøker som skal leveres</InputLabel>
-            <ScannedBooksList books={scannedBooks} onRemove={removeBook} />
+            <ScannedBooksList
+              books={scannedBooks}
+              onRemove={removeBook}
+              onUnlock={confirmUnlock}
+              unlockingCustomerItemId={unlockMutation.isPending ? unlockMutation.variables : null}
+            />
           </Stack>
         )}
 

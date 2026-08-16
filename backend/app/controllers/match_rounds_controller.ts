@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 
 import MatchRound from "#models/match_round";
 import { generateRound } from "#services/matches/generate_round";
+import { MatchLock } from "#services/matches/match_lock";
 import { MatchRepository } from "#services/matches/match_repository";
 import { roundPlanMetrics } from "#services/matches/round_plan_metrics";
 import { PermissionService } from "#services/permission_service";
@@ -96,6 +97,17 @@ export default class MatchRoundsController {
     PermissionService.adminOrFail(ctx);
     const round = await MatchRound.findOrFail(roundIdParameter(ctx));
     return await generateRound(round);
+  }
+
+  /**
+   * One-way: opens every user-match obligation in the round, so stands may collect books that
+   * were meant to pass between students. There is no way to re-lock — see MatchLock.
+   */
+  async unlockMatches(ctx: HttpContext) {
+    PermissionService.adminOrFail(ctx);
+    const round = await MatchRound.findOrFail(roundIdParameter(ctx));
+    await MatchLock.unlockAllForRound(round.id);
+    return this.serializeRound(ctx, round);
   }
 
   async destroyMatches(ctx: HttpContext) {

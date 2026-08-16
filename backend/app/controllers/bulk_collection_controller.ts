@@ -19,7 +19,10 @@ import type {
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { Item } from "#shared/item";
 import { OrderItem } from "#shared/order/order-item/order-item";
-import { bulkCollectionCollectValidator } from "#validators/bulk_collection_validator";
+import {
+  bulkCollectionCollectValidator,
+  bulkCollectionUnlockValidator,
+} from "#validators/bulk_collection_validator";
 
 export default class BulkCollectionController {
   private queryBuilder = new SEDbQueryBuilder();
@@ -135,6 +138,21 @@ export default class BulkCollectionController {
     }
 
     return { success: true, receipt: await this.buildReceipt(collectedByCustomer) };
+  }
+
+  /**
+   * Release the match lock on a single scanned book, so it can be collected at the stand after
+   * all. Returns the re-resolved book, giving the frontend fresh lock state from the source of
+   * truth rather than an optimistic guess.
+   */
+  async unlock(ctx: HttpContext): Promise<BulkCollectionLookupResponse> {
+    PermissionService.employeeOrFail(ctx);
+    const { customerItemId } = await ctx.request.validateUsing(bulkCollectionUnlockValidator);
+
+    const customerItem = await StorageService.CustomerItems.get(customerItemId);
+    await MatchLock.unlockCustomerItem(customerItem.customer, customerItem.item);
+
+    return { success: true, book: await this.resolveScannedBook(customerItem) };
   }
 
   private async resolveScannedBook(customerItem: CustomerItem): Promise<ScannedBook> {

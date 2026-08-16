@@ -256,6 +256,8 @@ async function deleteMatches(roundId: number): Promise<void> {
 export interface RoundCounts {
   matches: number;
   handovers: number;
+  /** User-match obligations still locked to their handover. */
+  locked: number;
 }
 
 interface CountRow {
@@ -294,22 +296,45 @@ async function roundCounts(roundId?: number): Promise<Map<number, RoundCounts>> 
     .select("matches.round_id")
     .countDistinct("book_handovers.id as total");
 
+  // Stand matches are skipped for the same reason MatchLock never locks them: a lock means "hand
+  // this to a student, not the stand".
+  const lockedQuery = db
+    .from("match_obligations")
+    .join("matches", "matches.id", "match_obligations.match_id")
+    .where("match_obligations.locked_to_match", true)
+    .whereNotExists((participants) => {
+      void participants
+        .from("match_participants")
+        .whereRaw("match_participants.match_id = matches.id")
+        .whereNull("match_participants.user_detail_id");
+    })
+    .groupBy("matches.round_id")
+    .select("matches.round_id")
+    .count("* as total");
+
   if (roundId !== undefined) {
     void matchQuery.where("matches.round_id", roundId);
     void handoverQuery.where("matches.round_id", roundId);
+    void lockedQuery.where("matches.round_id", roundId);
   }
 
-  const [matchRows, handoverRows] = (await Promise.all([matchQuery, handoverQuery])) as [
-    CountRow[],
-    CountRow[],
-  ];
+  const [matchRows, handoverRows, lockedRows] = (await Promise.all([
+    matchQuery,
+    handoverQuery,
+    lockedQuery,
+  ])) as [CountRow[], CountRow[], CountRow[]];
   const matches = toCountMap(matchRows);
   const handovers = toCountMap(handoverRows);
+  const locked = toCountMap(lockedRows);
 
   return new Map(
     [...new Set([...matches.keys(), ...handovers.keys()])].map((id) => [
       id,
-      { matches: matches.get(id) ?? 0, handovers: handovers.get(id) ?? 0 },
+      {
+        matches: matches.get(id) ?? 0,
+        handovers: handovers.get(id) ?? 0,
+        locked: locked.get(id) ?? 0,
+      },
     ]),
   );
 }

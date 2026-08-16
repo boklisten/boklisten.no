@@ -1,6 +1,6 @@
 import type { ScannedBook } from "@boklisten/backend/shared/bulk-collection/bulk-collection-dtos";
 import { Badge, Button, Card, Group, Stack, Text, ThemeIcon, Tooltip } from "@mantine/core";
-import { IconAlertTriangle, IconArrowRight, IconLock } from "@tabler/icons-react";
+import { IconAlertTriangle, IconArrowRight, IconLock, IconLockOpen } from "@tabler/icons-react";
 
 import { formatDeadline, isOverdue } from "@/features/bulk-collection/deadline";
 
@@ -31,9 +31,13 @@ function DetailItem({
 export default function ScannedBooksList({
   books,
   onRemove,
+  onUnlock,
+  unlockingCustomerItemId,
 }: {
   books: ScannedBook[];
   onRemove: (blid: string) => void;
+  onUnlock: (book: ScannedBook) => void;
+  unlockingCustomerItemId: string | null;
 }) {
   return (
     <Stack gap={"sm"}>
@@ -89,12 +93,24 @@ export default function ScannedBooksList({
               )}
 
               {book.lockedToMatch && (
-                <Group gap={6} wrap={"nowrap"} align={"center"} c={"red"}>
-                  <IconArrowRight size={18} />
-                  <Text size={"sm"} fw={600}>
-                    Skal ikke leveres her – eleven må gi boka til{" "}
-                    {book.deliverToName ?? "en annen elev"}
-                  </Text>
+                <Group justify={"space-between"} gap={"xs"}>
+                  <Group gap={6} wrap={"nowrap"} align={"center"} c={"red"}>
+                    <IconArrowRight size={18} />
+                    <Text size={"sm"} fw={600}>
+                      Skal ikke leveres her – eleven må gi boka til{" "}
+                      {book.deliverToName ?? "en annen elev"}
+                    </Text>
+                  </Group>
+                  <Button
+                    variant={"outline"}
+                    color={"red"}
+                    size={"compact-sm"}
+                    leftSection={<IconLockOpen size={16} />}
+                    loading={unlockingCustomerItemId === book.customerItemId}
+                    onClick={() => onUnlock(book)}
+                  >
+                    Lås opp
+                  </Button>
                 </Group>
               )}
 

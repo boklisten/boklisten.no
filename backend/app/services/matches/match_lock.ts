@@ -143,10 +143,42 @@ async function setLockedForCustomer(customerId: string, locked: boolean): Promis
     .update({ lockedToMatch: locked });
 }
 
+/**
+ * Unlocks the handover of a single book the customer holds, so the stand may collect it after
+ * all. Scoped like `findCustomerItemsLockedToMatch` — sender side, equivalent editions count as
+ * the same title — so exactly the obligations that flagged the book as locked are released. The
+ * receiver's half of those obligations opens with it: one row describes the whole handover, and a
+ * book collected at the stand can no longer reach them through the match.
+ */
+async function unlockCustomerItem(customerId: string, itemId: string): Promise<void> {
+  await liveLocks()
+    .whereIn("itemId", getEquivalentItemIds(itemId))
+    .whereHas("sender", (sender) => sender.where("userDetailId", customerId))
+    .update({ lockedToMatch: false });
+}
+
+/**
+ * One-way unlock of every user-match obligation in the round, letting the stand collect books
+ * that were meant to pass between students. Stand matches are exempt for the same reason as in
+ * `setLockedForCustomer`. There is deliberately no way to re-lock a round: once stands may have
+ * collected locked books, the locks no longer describe reality.
+ */
+async function unlockAllForRound(roundId: number): Promise<void> {
+  await MatchObligation.query()
+    .whereHas("match", (match) => {
+      void match
+        .where("roundId", roundId)
+        .whereDoesntHave("participants", (participant) => participant.whereNull("userDetailId"));
+    })
+    .update({ lockedToMatch: false });
+}
+
 export const MatchLock = {
   findCustomerItemsLockedToMatch,
   findItemsLockedForReceiver,
   findLockedRecipient,
   findPeerSender,
   setLockedForCustomer,
+  unlockCustomerItem,
+  unlockAllForRound,
 };

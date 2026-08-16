@@ -40,6 +40,8 @@ export interface MatchRoundDto extends MatchRoundPlan {
   matchCount: number;
   /** Handovers that have already discharged one of this round's obligations. */
   handoverCount: number;
+  /** User-match obligations still locked to their handover; 0 once every handover is open. */
+  lockedCount: number;
 }
 
 export interface BookTally {
