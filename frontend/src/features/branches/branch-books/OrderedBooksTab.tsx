@@ -3,6 +3,8 @@ import { modals } from "@mantine/modals";
 import { IconSum } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { bookCountLabel } from "@/features/branches/branch-books/bookCountLabel";
+import BranchBooksCancelModal from "@/features/branches/branch-books/BranchBooksCancelModal";
 import BranchBooksDetailsTable from "@/features/branches/branch-books/BranchBooksDetailsTable";
 import BranchBooksEditModal from "@/features/branches/branch-books/BranchBooksEditModal";
 import BranchBooksTree from "@/features/branches/branch-books/BranchBooksTree";
@@ -15,7 +17,11 @@ import {
 import BranchScopeMetrics from "@/shared/components/BranchScopeMetrics";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
-import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
+import {
+  showErrorNotification,
+  showInfoNotification,
+  showSuccessNotification,
+} from "@/shared/utils/notifications";
 
 const BRANCH_MOVE_NOTE =
   "Hele ordren flyttes til den nye filialen, også eventuelle andre bøker i samme ordre.";
@@ -60,6 +66,7 @@ function OrderedBookDetails({
       columns={COLUMNS}
       leafLabel={"Bestilt på denne filialen"}
       emptyLabel={"Ingen av disse bøkene er bestilt direkte fra denne filialen."}
+      allowCancel
       rowKey={(row) => row.orderItemId}
       onEditRow={onEditRow}
     />
@@ -85,8 +92,58 @@ export default function OrderedBooksTab({ branchId }: { branchId: string }) {
         ]),
     }),
   );
+  const cancelMutation = useMutation(
+    api.branchBooks.cancelOrderedBooks.mutationOptions({
+      onSuccess: (result) => {
+        if (!result) return;
+        if (result.cancelledBooks > 0) {
+          showSuccessNotification(`Avbestilte ${bookCountLabel(result.cancelledBooks)}`);
+        }
+        if (result.skippedBooks > 0) {
+          showInfoNotification(
+            `${bookCountLabel(result.skippedBooks)} ble ikke avbestilt fordi bestillingen er betalt`,
+          );
+        }
+      },
+      onError: () => showErrorNotification("Klarte ikke avbestille bestillingene"),
+      onSettled: () =>
+        Promise.all([
+          queryClient.invalidateQueries({ queryKey: api.branchBooks.getOrderedBooks.pathKey() }),
+          queryClient.invalidateQueries({
+            queryKey: api.branchBooks.getOrderedBookDetails.pathKey(),
+          }),
+        ]),
+    }),
+  );
+
+  function bulkFilter(target: BranchBooksEditTarget, includeDescendants: boolean) {
+    return {
+      ...(target.filter.deadlines && { deadlines: target.filter.deadlines }),
+      ...(target.filter.itemId && { itemId: target.filter.itemId }),
+      ...(target.filter.ids && { orderItemIds: target.filter.ids }),
+      includeDescendants,
+    };
+  }
 
   function openEdit(kind: BranchBooksEditKind, target: BranchBooksEditTarget) {
+    if (kind === "cancel") {
+      const modalId = modals.open({
+        title: "Avbestill bestillinger",
+        children: (
+          <BranchBooksCancelModal
+            target={target}
+            onClose={() => modals.close(modalId)}
+            onSubmit={({ notifyCustomers, includeDescendants }) =>
+              cancelMutation.mutateAsync({
+                params: { branchId },
+                body: { filter: bulkFilter(target, includeDescendants), notifyCustomers },
+              })
+            }
+          />
+        ),
+      });
+      return;
+    }
     const modalId = modals.open({
       title: kind === "deadline" ? "Endre frist" : "Flytt til annen filial",
       children: (
@@ -99,15 +156,7 @@ export default function OrderedBooksTab({ branchId }: { branchId: string }) {
           onSubmit={(update, includeDescendants) =>
             bulkUpdateMutation.mutateAsync({
               params: { branchId },
-              body: {
-                filter: {
-                  ...(target.filter.deadlines && { deadlines: target.filter.deadlines }),
-                  ...(target.filter.itemId && { itemId: target.filter.itemId }),
-                  ...(target.filter.ids && { orderItemIds: target.filter.ids }),
-                  includeDescendants,
-                },
-                update,
-              },
+              body: { filter: bulkFilter(target, includeDescendants), update },
             })
           }
         />
@@ -132,6 +181,7 @@ export default function OrderedBooksTab({ branchId }: { branchId: string }) {
         isError={summaryQuery.isError}
         treeLabel={"Bestilte bøker etter frist"}
         emptyLabel={"Ingen bestilte bøker på denne filialen."}
+        allowCancel
         onEdit={openEdit}
         renderDetails={(deadlines, itemId, enabled) => (
           <OrderedBookDetails

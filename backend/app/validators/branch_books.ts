@@ -47,3 +47,13 @@ export const orderedBooksBulkUpdateValidator = vine.create(
     }),
   }),
 );
+
+export const orderedBooksCancelValidator = vine.create({
+  filter: vine.object({
+    deadlines: vine.array(deadlineString()).minLength(1).optional(),
+    itemId: objectIdString().optional(),
+    orderItemIds: vine.array(objectIdString()).minLength(1).optional(),
+    includeDescendants: vine.boolean(),
+  }),
+  notifyCustomers: vine.boolean(),
+});

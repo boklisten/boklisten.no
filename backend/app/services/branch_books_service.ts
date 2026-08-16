@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import { DEADLINE_PADDING_DAYS } from "#services/deadline_window";
+import { OrderCancellationService } from "#services/order_cancellation_service";
 import { StorageService } from "#services/storage_service";
 
 export interface BranchBooksTitle {
@@ -476,5 +477,77 @@ export const BranchBooksService = {
       { updatePipeline: true },
     );
     return { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount };
+  },
+
+  async bulkCancelOrderedBooks({
+    branchId,
+    filter,
+    notifyCustomers,
+    employeeDetailsId,
+  }: {
+    branchId: string;
+    filter: BranchBooksFilter & { orderItemIds?: string[] };
+    notifyCustomers: boolean;
+    employeeDetailsId: string;
+  }) {
+    const { branchObjectId, scopeObjectIds } = await resolveScope(branchId);
+    const condition = openOrderItemCondition({
+      deadlines: filter.deadlines?.map((deadline) => new Date(deadline)),
+      itemObjectId: filter.itemId ? new ObjectId(filter.itemId) : undefined,
+      orderItemObjectIds: filter.orderItemIds?.map((id) => new ObjectId(id)),
+    });
+    const candidates = (await StorageService.Orders.aggregate([
+      {
+        $match: {
+          placed: true,
+          branch: { $in: filter.includeDescendants ? scopeObjectIds : [branchObjectId] },
+        },
+      },
+      {
+        $addFields: {
+          cancelItems: { $filter: { input: "$orderItems", as: "orderItem", cond: condition } },
+        },
+      },
+      { $match: { $expr: { $gt: [{ $size: "$cancelItems" }, 0] } } },
+      {
+        $project: {
+          _id: 0,
+          orderId: { $toString: "$_id" },
+          branch: { $toString: "$branch" },
+          customer: { $toString: "$customer" },
+          amount: 1,
+          cancelItems: {
+            $map: {
+              input: "$cancelItems",
+              as: "orderItem",
+              in: { item: { $toString: "$$orderItem.item" }, title: "$$orderItem.title" },
+            },
+          },
+        },
+      },
+    ])) as {
+      orderId: string;
+      branch: string;
+      customer: string;
+      amount: number;
+      cancelItems: { item: string; title: string }[];
+    }[];
+
+    // Orders with money on them are skipped: cancelling those means refunds, which are handled manually
+    const cancellable = candidates.filter((order) => order.amount === 0);
+    const skipped = candidates.filter((order) => order.amount !== 0);
+    for (const order of cancellable) {
+      await OrderCancellationService.cancelOrderItems({
+        originalOrder: { id: order.orderId, branch: order.branch, customer: order.customer },
+        orderItems: order.cancelItems,
+        employeeDetailsId,
+        notifyCustomer: notifyCustomers,
+      });
+    }
+    return {
+      cancelledOrders: cancellable.length,
+      cancelledBooks: cancellable.reduce((sum, order) => sum + order.cancelItems.length, 0),
+      skippedBooks: skipped.reduce((sum, order) => sum + order.cancelItems.length, 0),
+    };
   },
 };

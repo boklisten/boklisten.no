@@ -57,6 +57,7 @@ export default function BranchBooksTree({
   isError,
   treeLabel,
   emptyLabel,
+  allowCancel,
   onEdit,
   renderDetails,
 }: {
@@ -66,6 +67,8 @@ export default function BranchBooksTree({
   /** e.g. "Aktive bøker etter frist" — names what the expandable top level is grouped by */
   treeLabel: string;
   emptyLabel: string;
+  /** Adds the destructive "Avbestill" entry to every edit menu; only ordered books can be cancelled */
+  allowCancel?: boolean;
   onEdit: (kind: BranchBooksEditKind, target: BranchBooksEditTarget) => void;
   renderDetails: (deadlines: string[], itemId: string, enabled: boolean) => ReactNode;
 }) {
@@ -155,6 +158,7 @@ export default function BranchBooksTree({
               </Accordion.Control>
               <BranchBooksEditMenu
                 label={`Endre bøker med frist ${formatDeadlineLabel(group.deadline)}`}
+                allowCancel={allowCancel}
                 onEdit={(kind) => onEdit(kind, groupTarget(group))}
               />
             </Group>
@@ -187,6 +191,7 @@ export default function BranchBooksTree({
                       </Accordion.Control>
                       <BranchBooksEditMenu
                         label={`Endre ${title.title}`}
+                        allowCancel={allowCancel}
                         onEdit={(kind) => onEdit(kind, titleTarget(group, title))}
                       />
                     </Group>

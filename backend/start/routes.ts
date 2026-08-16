@@ -132,6 +132,10 @@ router.patch("/v2/branches/:branchId/ordered_books", [
   controllers.branches.BranchBooks,
   "bulkUpdateOrderedBooks",
 ]);
+router.post("/v2/branches/:branchId/ordered_books/cancel", [
+  controllers.branches.BranchBooks,
+  "cancelOrderedBooks",
+]);
 
 /**
  * orders

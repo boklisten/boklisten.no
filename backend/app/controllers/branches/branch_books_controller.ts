@@ -6,6 +6,7 @@ import {
   activeBooksBulkUpdateValidator,
   branchBooksDetailsValidator,
   orderedBooksBulkUpdateValidator,
+  orderedBooksCancelValidator,
 } from "#validators/branch_books";
 
 function hasExactlyOneUpdate(update: BranchBooksUpdate) {
@@ -66,6 +67,22 @@ export default class BranchBooksController {
       branchId: ctx.request.param("branchId"),
       filter,
       update,
+    });
+  }
+
+  async cancelOrderedBooks(ctx: HttpContext) {
+    const { detailsId } = PermissionService.adminOrFail(ctx);
+    const { filter, notifyCustomers } = await ctx.request.validateUsing(
+      orderedBooksCancelValidator,
+    );
+    if (!filter.deadlines && !filter.orderItemIds) {
+      return ctx.response.badRequest();
+    }
+    return BranchBooksService.bulkCancelOrderedBooks({
+      branchId: ctx.request.param("branchId"),
+      filter,
+      notifyCustomers,
+      employeeDetailsId: detailsId,
     });
   }
 }

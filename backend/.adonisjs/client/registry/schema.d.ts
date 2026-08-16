@@ -391,6 +391,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['bulkUpdateOrderedBooks']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'branch_books.cancel_ordered_books': {
+    methods: ["POST"]
+    pattern: '/v2/branches/:branchId/ordered_books/cancel'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/branch_books').orderedBooksCancelValidator)>>
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/branch_books').orderedBooksCancelValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['cancelOrderedBooks']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['cancelOrderedBooks']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'orders.get_open_orders': {
     methods: ["GET","HEAD"]
     pattern: '/v2/orders/open_orders'

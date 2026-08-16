@@ -198,6 +198,12 @@ const routes = {
     tokens: [{"old":"/v2/branches/:branchId/ordered_books","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/ordered_books","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/ordered_books","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/ordered_books","type":0,"val":"ordered_books","end":""}],
     types: placeholder as Registry['branch_books.bulk_update_ordered_books']['types'],
   },
+  'branch_books.cancel_ordered_books': {
+    methods: ["POST"],
+    pattern: '/v2/branches/:branchId/ordered_books/cancel',
+    tokens: [{"old":"/v2/branches/:branchId/ordered_books/cancel","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/ordered_books/cancel","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/ordered_books/cancel","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/ordered_books/cancel","type":0,"val":"ordered_books","end":""},{"old":"/v2/branches/:branchId/ordered_books/cancel","type":0,"val":"cancel","end":""}],
+    types: placeholder as Registry['branch_books.cancel_ordered_books']['types'],
+  },
   'orders.get_open_orders': {
     methods: ["GET","HEAD"],
     pattern: '/v2/orders/open_orders',

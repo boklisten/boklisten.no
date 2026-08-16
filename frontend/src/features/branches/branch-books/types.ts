@@ -7,7 +7,7 @@ export type BranchBooksTitle = BranchBooksGroup["titles"][number];
 export type ActiveBookDetail = Route.Response<"branch_books.get_active_book_details">[number];
 export type OrderedBookDetail = Route.Response<"branch_books.get_ordered_book_details">[number];
 
-export type BranchBooksEditKind = "deadline" | "branch";
+export type BranchBooksEditKind = "deadline" | "branch" | "cancel";
 
 export interface BranchBooksEditTarget {
   description: string;

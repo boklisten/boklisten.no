@@ -3,16 +3,13 @@ import { IconInfoCircle } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { bookCountLabel } from "@/features/branches/branch-books/bookCountLabel";
 import { BranchBooksEditKind, BranchBooksEditTarget } from "@/features/branches/branch-books/types";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 import { norwegianTime } from "@/shared/utils/dayjs";
-
-function bookCountLabel(count: number) {
-  return count === 1 ? "1 bok" : `${count} bøker`;
-}
 
 /**
  * Shared mass-edit form for both branch-book pages: pick a new deadline or a new branch, choose
@@ -26,7 +23,7 @@ export default function BranchBooksEditModal({
   onSubmit,
   onClose,
 }: {
-  kind: BranchBooksEditKind;
+  kind: Exclude<BranchBooksEditKind, "cancel">;
   target: BranchBooksEditTarget;
   branchId: string;
   /** Extra warning shown for branch moves, e.g. that whole orders are moved */

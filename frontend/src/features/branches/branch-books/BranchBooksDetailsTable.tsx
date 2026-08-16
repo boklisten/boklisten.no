@@ -19,6 +19,7 @@ export default function BranchBooksDetailsTable<TDetail>({
   columns,
   leafLabel,
   emptyLabel,
+  allowCancel,
   rowKey,
   onEditRow,
 }: {
@@ -30,6 +31,8 @@ export default function BranchBooksDetailsTable<TDetail>({
   leafLabel: string;
   /** Shown when every book in the group belongs to descendant branches */
   emptyLabel: string;
+  /** Adds the destructive "Avbestill" entry to the row menus; only ordered books can be cancelled */
+  allowCancel?: boolean;
   rowKey: (row: TDetail) => string;
   onEditRow: (kind: BranchBooksEditKind, row: TDetail) => void;
 }): ReactNode {
@@ -86,6 +89,7 @@ export default function BranchBooksDetailsTable<TDetail>({
                 <Table.Td align={"right"}>
                   <BranchBooksEditMenu
                     label={"Endre bok"}
+                    allowCancel={allowCancel}
                     onEdit={(kind) => onEditRow(kind, row)}
                   />
                 </Table.Td>

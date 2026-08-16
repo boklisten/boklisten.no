@@ -1,7 +1,7 @@
 import { HttpContext } from "@adonisjs/core/http";
 import { ObjectId } from "mongodb";
 
-import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
+import { OrderCancellationService } from "#services/order_cancellation_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { OrderItem } from "#shared/order/order-item/order-item";
@@ -83,9 +83,10 @@ export default class OrdersController {
   }
 
   async cancelOrderItem(ctx: HttpContext) {
+    const { detailsId } = PermissionService.authenticate(ctx);
     const { orderId, itemId } = await ctx.request.validateUsing(cancelOrderItemValidator);
     const order = await StorageService.Orders.get(orderId);
-    if (!order) {
+    if (!order || order.customer !== detailsId) {
       return ctx.response.notFound();
     }
     const findOrderItem = (oi: OrderItem) =>
@@ -96,30 +97,10 @@ export default class OrdersController {
       return ctx.response.notFound();
     }
 
-    const cancelOrder = await StorageService.Orders.add({
-      placed: true,
-      payments: [],
-      amount: 0,
-      branch: order.branch,
-      customer: order.customer,
-      byCustomer: true,
-      pendingSignature: false,
-      orderItems: [
-        {
-          movedFromOrder: order.id,
-          delivered: true,
-          item: itemId,
-          title: orderItem.title,
-          type: "cancel",
-          amount: 0,
-          unitPrice: 0,
-        },
-      ],
+    return OrderCancellationService.cancelOrderItems({
+      originalOrder: order,
+      orderItems: [{ item: itemId, title: orderItem.title }],
+      notifyCustomer: true,
     });
-
-    const orderMovedToHandler = new OrderItemMovedFromOrderHandler();
-    await orderMovedToHandler.updateOrderItems(cancelOrder);
-
-    return cancelOrder;
   }
 }

@@ -55,6 +55,7 @@ export interface ApiDefinition {
     getOrderedBooks: typeof routes['branch_books.get_ordered_books']
     getOrderedBookDetails: typeof routes['branch_books.get_ordered_book_details']
     bulkUpdateOrderedBooks: typeof routes['branch_books.bulk_update_ordered_books']
+    cancelOrderedBooks: typeof routes['branch_books.cancel_ordered_books']
   }
   orders: {
     getOpenOrders: typeof routes['orders.get_open_orders']

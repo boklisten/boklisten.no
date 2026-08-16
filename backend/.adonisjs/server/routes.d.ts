@@ -36,6 +36,7 @@ export type ScannedRoutes = {
     'branch_books.get_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_ordered_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.bulk_update_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_books.cancel_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'orders.get_open_orders': { paramsTuple?: []; params?: {} }
     'orders.get_placed_orders': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'orders.cancel_order_item': { paramsTuple?: []; params?: {} }
@@ -354,6 +355,7 @@ export type ScannedRoutes = {
     'branches.add': { paramsTuple?: []; params?: {} }
     'branch_upload.upload_memberships': { paramsTuple?: []; params?: {} }
     'branch_upload.upload_subject_choices': { paramsTuple?: []; params?: {} }
+    'branch_books.cancel_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'orders.cancel_order_item': { paramsTuple?: []; params?: {} }
     'questions_and_answers.store': { paramsTuple?: []; params?: {} }
     'email_verification.send': { paramsTuple?: []; params?: {} }
