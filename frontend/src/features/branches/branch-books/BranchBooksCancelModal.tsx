@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import { bookCountLabel } from "@/features/branches/branch-books/bookCountLabel";
 import { BranchBooksEditTarget } from "@/features/branches/branch-books/types";
-import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 
 export default function BranchBooksCancelModal({
   target,
@@ -27,16 +26,6 @@ export default function BranchBooksCancelModal({
 
   async function submit() {
     if (isSubmitting) return;
-    const confirmed = await asyncConfirmModal({
-      title: "Bekreft avbestilling",
-      children: `Avbestiller ${target.description}. Dette gjelder opptil ${bookCountLabel(
-        affectedCount,
-      )} og kan ikke angres.`,
-      confirmLabel: "Avbestill",
-      confirmColor: "red",
-      zIndex: 1000,
-    });
-    if (!confirmed) return;
     setIsSubmitting(true);
     try {
       await onSubmit({ notifyCustomers, includeDescendants });
@@ -64,7 +53,8 @@ export default function BranchBooksCancelModal({
         onChange={(event) => setNotifyCustomers(event.currentTarget.checked)}
       />
       <Alert icon={<IconInfoCircle />} color={"yellow"}>
-        Betalte bestillinger blir ikke avbestilt må håndteres manuelt.
+        Avbestillingen kan ikke angres. Betalte bestillinger blir ikke avbestilt og må håndteres
+        manuelt.
       </Alert>
       <Group justify={"flex-end"}>
         <Button variant={"default"} onClick={onClose}>

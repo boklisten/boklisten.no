@@ -85,6 +85,7 @@ export default function ActiveBooksTab({ branchId }: { branchId: string }) {
   );
 
   function openEdit(kind: BranchBooksEditKind, target: BranchBooksEditTarget) {
+    if (kind === "cancel") return; // Active books cannot be cancelled
     const modalId = modals.open({
       title: kind === "deadline" ? "Endre frist" : "Flytt til annen filial",
       children: (
