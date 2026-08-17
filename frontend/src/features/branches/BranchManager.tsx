@@ -121,14 +121,20 @@ export default function BranchManager() {
                   <Stack>
                     <BranchMembers key={selectedBranch.id} branchId={selectedBranch.id} />
                     <UploadBranchUsers branchId={selectedBranch.id} />
-                    <UploadSubjectChoices branchId={selectedBranch.id} />
                   </Stack>
                 </Tabs.Panel>
                 <Tabs.Panel value={"active-books"}>
                   <ActiveBooksTab key={selectedBranch.id} branchId={selectedBranch.id} />
                 </Tabs.Panel>
                 <Tabs.Panel value={"ordered-books"}>
-                  <OrderedBooksTab key={selectedBranch.id} branchId={selectedBranch.id} />
+                  <Stack>
+                    <OrderedBooksTab key={selectedBranch.id} branchId={selectedBranch.id} />
+                    <UploadSubjectChoices
+                      key={selectedBranch.id}
+                      branchId={selectedBranch.id}
+                      branchName={selectedBranch.name}
+                    />
+                  </Stack>
                 </Tabs.Panel>
               </Tabs>
             </Stack>

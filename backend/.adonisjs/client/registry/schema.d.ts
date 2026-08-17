@@ -235,13 +235,25 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'branch_upload.upload_subject_choices': {
+  'branch_upload.evaluate_subject_choices': {
     methods: ["POST"]
-    pattern: '/v2/branches/subject_choices'
+    pattern: '/v2/branches/:branchId/subject_choices/evaluate'
     types: {
       body: ExtractBody<InferInput<(typeof import('#validators/subject_choices').subjectChoicesValidator)>>
-      paramsTuple: []
-      params: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/subject_choices').subjectChoicesValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_upload_controller').default['evaluateSubjectChoices']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_upload_controller').default['evaluateSubjectChoices']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'branch_upload.upload_subject_choices': {
+    methods: ["POST"]
+    pattern: '/v2/branches/:branchId/subject_choices/upload'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/subject_choices').subjectChoicesValidator)>>
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
       query: ExtractQuery<InferInput<(typeof import('#validators/subject_choices').subjectChoicesValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_upload_controller').default['uploadSubjectChoices']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_upload_controller').default['uploadSubjectChoices']>>> | { status: 422; response: { errors: SimpleError[] } }

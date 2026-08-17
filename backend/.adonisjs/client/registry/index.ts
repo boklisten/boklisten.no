@@ -120,10 +120,16 @@ const routes = {
     tokens: [{"old":"/v2/branches","type":0,"val":"v2","end":""},{"old":"/v2/branches","type":0,"val":"branches","end":""}],
     types: placeholder as Registry['branches.update']['types'],
   },
+  'branch_upload.evaluate_subject_choices': {
+    methods: ["POST"],
+    pattern: '/v2/branches/:branchId/subject_choices/evaluate',
+    tokens: [{"old":"/v2/branches/:branchId/subject_choices/evaluate","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/subject_choices/evaluate","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/subject_choices/evaluate","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/subject_choices/evaluate","type":0,"val":"subject_choices","end":""},{"old":"/v2/branches/:branchId/subject_choices/evaluate","type":0,"val":"evaluate","end":""}],
+    types: placeholder as Registry['branch_upload.evaluate_subject_choices']['types'],
+  },
   'branch_upload.upload_subject_choices': {
     methods: ["POST"],
-    pattern: '/v2/branches/subject_choices',
-    tokens: [{"old":"/v2/branches/subject_choices","type":0,"val":"v2","end":""},{"old":"/v2/branches/subject_choices","type":0,"val":"branches","end":""},{"old":"/v2/branches/subject_choices","type":0,"val":"subject_choices","end":""}],
+    pattern: '/v2/branches/:branchId/subject_choices/upload',
+    tokens: [{"old":"/v2/branches/:branchId/subject_choices/upload","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/subject_choices/upload","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/subject_choices/upload","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/subject_choices/upload","type":0,"val":"subject_choices","end":""},{"old":"/v2/branches/:branchId/subject_choices/upload","type":0,"val":"upload","end":""}],
     types: placeholder as Registry['branch_upload.upload_subject_choices']['types'],
   },
   'branch_relationship.update': {

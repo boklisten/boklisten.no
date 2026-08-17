@@ -73,7 +73,11 @@ router.patch("/v2/branches", [controllers.branches.Branches, "update"]);
 /**
  * branch upload
  */
-router.post("/v2/branches/subject_choices", [
+router.post("/v2/branches/:branchId/subject_choices/evaluate", [
+  controllers.branches.BranchUpload,
+  "evaluateSubjectChoices",
+]);
+router.post("/v2/branches/:branchId/subject_choices/upload", [
   controllers.branches.BranchUpload,
   "uploadSubjectChoices",
 ]);

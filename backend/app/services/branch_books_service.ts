@@ -54,14 +54,14 @@ export interface SummaryRow {
 
 const DEADLINE_PADDING_MS = DEADLINE_PADDING_DAYS * 24 * 60 * 60 * 1000;
 
-const ACTIVE_CUSTOMER_ITEM_MATCH = {
+export const ACTIVE_CUSTOMER_ITEM_MATCH = {
   returned: false,
   buyout: false,
   cancel: false,
   handout: true,
 };
 
-const OPEN_ORDER_ITEM_MATCH = {
+export const OPEN_ORDER_ITEM_MATCH = {
   "orderItems.type": { $in: ["rent", "partly-payment"] },
   "orderItems.handout": { $ne: true },
   "orderItems.delivered": { $ne: true },

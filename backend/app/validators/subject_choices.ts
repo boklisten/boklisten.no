@@ -1,13 +1,14 @@
 import vine from "@vinejs/vine";
 
-export const subjectChoicesValidator = vine.create(
-  vine.object({
-    branchId: vine.string(),
-    subjectChoices: vine.array(
+export const subjectChoicesValidator = vine.create({
+  rows: vine
+    .array(
       vine.object({
-        subjects: vine.array(vine.string()),
-        phone: vine.string(),
+        name: vine.string().trim().minLength(1),
+        localName: vine.string().trim().minLength(1),
+        subject: vine.string().trim().minLength(1),
+        deadline: vine.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       }),
-    ),
-  }),
-);
+    )
+    .minLength(1),
+});
