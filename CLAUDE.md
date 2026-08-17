@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working Rules
+
+These rules override default agent behavior — follow them on every task:
+
+1. **Interview before starting.** Before any task that is not a trivial, fully-specified fix, interview the user about scope, assumptions, and direction. Ask as many questions as you need (use `AskUserQuestion` or plain questions) and keep asking until the task is unambiguous. Do not start implementing on guessed requirements.
+2. **Never create git branches, never commit, and never create documentation files** (README, *.md, docs/) unless the user explicitly asks for that specific action in this session. Editing the working tree is fine.
+3. **Use the `frontend-design` skill whenever designing new UI or reshaping existing UI.**
+4. **Verify your changes with Playwright** (the MCP browser) whenever it makes sense. The browser is already logged in with an admin account on `localhost:3000`. You may create additional users through the UI and modify the database directly to set permission levels when a test needs a different role.
+5. **The staging databases are yours to modify.** `backend/.env.local` points at the Railway staging DBs; change whatever data you need — staging resets every night.
+6. **Finish every task by running `bun fix`** (lint:fix + typecheck + format) and resolving everything it reports before declaring the task done.
+
 ## Project Overview
 
 `boklisten.no` is a monorepo for a library and book management service for upper secondary schools. It unifies what were previously separate `bl-web` and `bl-admin` projects into a single customer-facing site with integrated administration.
@@ -22,7 +33,7 @@ Run from the repo root unless noted:
 bun install          # Install all workspace dependencies
 bun dev              # Start frontend (:3000) and backend (:3333) concurrently
 bun build            # Build all workspaces
-bun test             # Run backend tests (the only workspace with tests)
+bun run test         # Run backend tests (the only workspace with tests; bare `bun test` invokes Bun's own runner and fails)
 bun lint             # oxlint across all workspaces
 bun lint:fix         # Auto-fix lint issues
 bun format           # oxfmt formatter
@@ -32,6 +43,8 @@ bun fix              # Runs lint:fix + typecheck + format sequentially
 bun ace              # AdonisJS CLI (e.g. bun ace make:controller Foo)
 bun migrate:backend  # Run Lucid Postgres migrations (--force; also runs in Railway predeploy)
 ```
+
+Backend commands (tests, lint, `bun fix`) require **Node 24** (`backend/.nvmrc`), but non-interactive shells here default to v22 with cryptic `.ts`-extension errors — prefix with `fnm exec --using=24 <cmd>` if `node -v` disagrees.
 
 **Run a single backend test file:**
 
@@ -92,6 +105,10 @@ TanStack Start uses file-based routing:
 - `src/shared/` — Cross-feature hooks, utilities, and components
 
 Data fetching uses TanStack React Query v5 wrapped around the Tuyau RPC client (`src/shared/utils/publicApiClient.ts` builds it from `@boklisten/backend/registry`). Forms use TanStack React Form v1.
+
+## Testing
+
+Write Japa specs (`backend/tests/*.spec.ts`, Chai + Sinon) for new backend business logic. The frontend has no automated tests — verify UI changes manually with Playwright instead (see Working Rules).
 
 ## CI/CD & Branches
 
