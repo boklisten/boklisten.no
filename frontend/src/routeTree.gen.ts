@@ -66,7 +66,6 @@ import { Route as offentligSigneringUserDetailIdRouteImport } from './routes/(of
 import { Route as administrasjonAdminDatabaseBokerRouteImport } from './routes/(administrasjon)/admin/database/boker'
 import { Route as administrasjonAdminDatabaseDynamisk_innholdRouteImport } from './routes/(administrasjon)/admin/database/dynamisk_innhold'
 import { Route as administrasjonAdminDatabaseFilialerRouteImport } from './routes/(administrasjon)/admin/database/filialer'
-import { Route as administrasjonAdminDatabaseLag_brukereRouteImport } from './routes/(administrasjon)/admin/database/lag_brukere'
 import { Route as administrasjonAdminDatabaseRapporterRouteImport } from './routes/(administrasjon)/admin/database/rapporter'
 import { Route as administrasjonAdminDatabaseSelskapRouteImport } from './routes/(administrasjon)/admin/database/selskap'
 import { Route as administrasjonAdminDatabaseUnik_idRouteImport } from './routes/(administrasjon)/admin/database/unik_id'
@@ -395,12 +394,6 @@ const administrasjonAdminDatabaseFilialerRoute =
     path: '/database/filialer',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminDatabaseLag_brukereRoute =
-  administrasjonAdminDatabaseLag_brukereRouteImport.update({
-    id: '/database/lag_brukere',
-    path: '/database/lag_brukere',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
 const administrasjonAdminDatabaseRapporterRoute =
   administrasjonAdminDatabaseRapporterRouteImport.update({
     id: '/database/rapporter',
@@ -582,7 +575,6 @@ export interface FileRoutesByFullPath {
   '/admin/database/boker': typeof administrasjonAdminDatabaseBokerRoute
   '/admin/database/dynamisk_innhold': typeof administrasjonAdminDatabaseDynamisk_innholdRoute
   '/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
-  '/admin/database/lag_brukere': typeof administrasjonAdminDatabaseLag_brukereRoute
   '/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
   '/admin/database/selskap': typeof administrasjonAdminDatabaseSelskapRoute
   '/admin/database/unik_id': typeof administrasjonAdminDatabaseUnik_idRoute
@@ -659,7 +651,6 @@ export interface FileRoutesByTo {
   '/admin/database/boker': typeof administrasjonAdminDatabaseBokerRoute
   '/admin/database/dynamisk_innhold': typeof administrasjonAdminDatabaseDynamisk_innholdRoute
   '/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
-  '/admin/database/lag_brukere': typeof administrasjonAdminDatabaseLag_brukereRoute
   '/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
   '/admin/database/selskap': typeof administrasjonAdminDatabaseSelskapRoute
   '/admin/database/unik_id': typeof administrasjonAdminDatabaseUnik_idRoute
@@ -741,7 +732,6 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/database/boker': typeof administrasjonAdminDatabaseBokerRoute
   '/(administrasjon)/admin/database/dynamisk_innhold': typeof administrasjonAdminDatabaseDynamisk_innholdRoute
   '/(administrasjon)/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
-  '/(administrasjon)/admin/database/lag_brukere': typeof administrasjonAdminDatabaseLag_brukereRoute
   '/(administrasjon)/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
   '/(administrasjon)/admin/database/selskap': typeof administrasjonAdminDatabaseSelskapRoute
   '/(administrasjon)/admin/database/unik_id': typeof administrasjonAdminDatabaseUnik_idRoute
@@ -823,7 +813,6 @@ export interface FileRouteTypes {
     | '/admin/database/boker'
     | '/admin/database/dynamisk_innhold'
     | '/admin/database/filialer'
-    | '/admin/database/lag_brukere'
     | '/admin/database/rapporter'
     | '/admin/database/selskap'
     | '/admin/database/unik_id'
@@ -900,7 +889,6 @@ export interface FileRouteTypes {
     | '/admin/database/boker'
     | '/admin/database/dynamisk_innhold'
     | '/admin/database/filialer'
-    | '/admin/database/lag_brukere'
     | '/admin/database/rapporter'
     | '/admin/database/selskap'
     | '/admin/database/unik_id'
@@ -981,7 +969,6 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/database/boker'
     | '/(administrasjon)/admin/database/dynamisk_innhold'
     | '/(administrasjon)/admin/database/filialer'
-    | '/(administrasjon)/admin/database/lag_brukere'
     | '/(administrasjon)/admin/database/rapporter'
     | '/(administrasjon)/admin/database/selskap'
     | '/(administrasjon)/admin/database/unik_id'
@@ -1425,13 +1412,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminDatabaseFilialerRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(administrasjon)/admin/database/lag_brukere': {
-      id: '/(administrasjon)/admin/database/lag_brukere'
-      path: '/database/lag_brukere'
-      fullPath: '/admin/database/lag_brukere'
-      preLoaderRoute: typeof administrasjonAdminDatabaseLag_brukereRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
     '/(administrasjon)/admin/database/rapporter': {
       id: '/(administrasjon)/admin/database/rapporter'
       path: '/database/rapporter'
@@ -1754,7 +1734,6 @@ interface administrasjonAdminRouteRouteChildren {
   administrasjonAdminDatabaseBokerRoute: typeof administrasjonAdminDatabaseBokerRoute
   administrasjonAdminDatabaseDynamisk_innholdRoute: typeof administrasjonAdminDatabaseDynamisk_innholdRoute
   administrasjonAdminDatabaseFilialerRoute: typeof administrasjonAdminDatabaseFilialerRoute
-  administrasjonAdminDatabaseLag_brukereRoute: typeof administrasjonAdminDatabaseLag_brukereRoute
   administrasjonAdminDatabaseRapporterRoute: typeof administrasjonAdminDatabaseRapporterRoute
   administrasjonAdminDatabaseSelskapRoute: typeof administrasjonAdminDatabaseSelskapRoute
   administrasjonAdminDatabaseUnik_idRoute: typeof administrasjonAdminDatabaseUnik_idRoute
@@ -1785,8 +1764,6 @@ const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildr
       administrasjonAdminDatabaseDynamisk_innholdRoute,
     administrasjonAdminDatabaseFilialerRoute:
       administrasjonAdminDatabaseFilialerRoute,
-    administrasjonAdminDatabaseLag_brukereRoute:
-      administrasjonAdminDatabaseLag_brukereRoute,
     administrasjonAdminDatabaseRapporterRoute:
       administrasjonAdminDatabaseRapporterRoute,
     administrasjonAdminDatabaseSelskapRoute:

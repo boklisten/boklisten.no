@@ -13,6 +13,7 @@
   "dependencies": {
     "@ag-grid-community/locale": "^36.0.2",
     "@boklisten/backend": "workspace:*",
+    "@importcsv/react": "0.6.1",
     "@mantine/charts": "^9.5.1",
     "@mantine/core": "^9.5.1",
     "@mantine/dates": "^9.5.1",

@@ -955,16 +955,28 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['downloadUniqueIdPdf']>>>
     }
   }
-  'user_provisioning.create_users': {
+  'user_provisioning.evaluate': {
     methods: ["POST"]
-    pattern: '/users/create'
+    pattern: '/v2/branches/:branchId/users/evaluate'
     types: {
       body: ExtractBody<InferInput<(typeof import('#validators/user_provisioning').userProvisioningValidator)>>
-      paramsTuple: []
-      params: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
       query: ExtractQuery<InferInput<(typeof import('#validators/user_provisioning').userProvisioningValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_provisioning_controller').default['createUsers']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_provisioning_controller').default['createUsers']>>> | { status: 422; response: { errors: SimpleError[] } }
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_provisioning_controller').default['evaluate']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_provisioning_controller').default['evaluate']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'user_provisioning.provision': {
+    methods: ["POST"]
+    pattern: '/v2/branches/:branchId/users/provision'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/user_provisioning').userProvisioningValidator)>>
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/user_provisioning').userProvisioningValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_provisioning_controller').default['provision']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_provisioning_controller').default['provision']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'unique_items.add': {

@@ -241,7 +241,8 @@ router.get("/unique_ids/download_pdf/:token", [controllers.UniqueIds, "downloadU
 /**
  * User Provisioning
  */
-router.post("/users/create", [controllers.UserProvisioning, "createUsers"]);
+router.post("/v2/branches/:branchId/users/evaluate", [controllers.UserProvisioning, "evaluate"]);
+router.post("/v2/branches/:branchId/users/provision", [controllers.UserProvisioning, "provision"]);
 
 /**
  * Unique Items

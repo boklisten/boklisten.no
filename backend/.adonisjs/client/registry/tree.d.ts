@@ -128,7 +128,8 @@ export interface ApiDefinition {
     downloadUniqueIdPdf: typeof routes['unique_ids.download_unique_id_pdf']
   }
   userProvisioning: {
-    createUsers: typeof routes['user_provisioning.create_users']
+    evaluate: typeof routes['user_provisioning.evaluate']
+    provision: typeof routes['user_provisioning.provision']
   }
   uniqueItems: {
     add: typeof routes['unique_items.add']

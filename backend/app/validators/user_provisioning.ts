@@ -6,10 +6,10 @@ export const userProvisioningValidator = vine.create(
   vine.object({
     userCandidates: vine.array(
       vine.object({
-        name: vine.string(),
+        name: vine.string().trim(),
         phone: phoneField.clone(),
         email: emailField.clone(),
-        branchName: vine.string(),
+        localName: vine.string().trim(),
 
         address: vine.string().optional(),
         postalCode: postalCodeField.clone().optional(),

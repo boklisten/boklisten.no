@@ -480,11 +480,17 @@ const routes = {
     tokens: [{"old":"/unique_ids/download_pdf/:token","type":0,"val":"unique_ids","end":""},{"old":"/unique_ids/download_pdf/:token","type":0,"val":"download_pdf","end":""},{"old":"/unique_ids/download_pdf/:token","type":1,"val":"token","end":""}],
     types: placeholder as Registry['unique_ids.download_unique_id_pdf']['types'],
   },
-  'user_provisioning.create_users': {
+  'user_provisioning.evaluate': {
     methods: ["POST"],
-    pattern: '/users/create',
-    tokens: [{"old":"/users/create","type":0,"val":"users","end":""},{"old":"/users/create","type":0,"val":"create","end":""}],
-    types: placeholder as Registry['user_provisioning.create_users']['types'],
+    pattern: '/v2/branches/:branchId/users/evaluate',
+    tokens: [{"old":"/v2/branches/:branchId/users/evaluate","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/users/evaluate","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/users/evaluate","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/users/evaluate","type":0,"val":"users","end":""},{"old":"/v2/branches/:branchId/users/evaluate","type":0,"val":"evaluate","end":""}],
+    types: placeholder as Registry['user_provisioning.evaluate']['types'],
+  },
+  'user_provisioning.provision': {
+    methods: ["POST"],
+    pattern: '/v2/branches/:branchId/users/provision',
+    tokens: [{"old":"/v2/branches/:branchId/users/provision","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/users/provision","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/users/provision","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/users/provision","type":0,"val":"users","end":""},{"old":"/v2/branches/:branchId/users/provision","type":0,"val":"provision","end":""}],
+    types: placeholder as Registry['user_provisioning.provision']['types'],
   },
   'unique_items.add': {
     methods: ["POST"],

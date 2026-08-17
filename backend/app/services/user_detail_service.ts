@@ -1,7 +1,6 @@
 import { Infer } from "@vinejs/vine/types";
 
 import BlidService from "#services/blid_service";
-import { BranchService } from "#services/branch_service";
 import CryptoService from "#services/crypto_service";
 import DispatchService from "#services/dispatch_service";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
@@ -83,18 +82,19 @@ export const UserDetailService = {
 
     return userDetail;
   },
-  async createProvisionedUserDetail({
-    name,
-    phone,
-    email,
-    address,
-    postalCity,
-    postalCode,
-    dob,
-    branchName,
-  }: Infer<typeof userProvisioningValidator>["userCandidates"][number]) {
+  async createProvisionedUserDetail(
+    {
+      name,
+      phone,
+      email,
+      address,
+      postalCity,
+      postalCode,
+      dob,
+    }: Infer<typeof userProvisioningValidator>["userCandidates"][number],
+    branchMembership: string,
+  ) {
     const blid = BlidService.createUserBlid("local", CryptoService.random());
-    const branch = await BranchService.getByName(branchName);
     return await StorageService.UserDetails.add(
       {
         blid,
@@ -106,7 +106,7 @@ export const UserDetailService = {
         postCode: postalCode,
         postCity: postalCity,
         emailConfirmed: true,
-        branchMembership: branch?.id,
+        branchMembership,
         tasks: {
           confirmDetails: true,
           signAgreement: true,

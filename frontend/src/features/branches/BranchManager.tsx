@@ -22,6 +22,7 @@ import BranchMembers from "@/features/branches/BranchMembers";
 import BranchPaymentSettings from "@/features/branches/BranchPaymentSettings";
 import BranchRelationshipSettings from "@/features/branches/BranchRelationshipSettings";
 import OpeningHoursSettings from "@/features/branches/opening_hours/OpeningHoursSettings";
+import UploadBranchUsers from "@/features/branches/UploadBranchUsers";
 import UploadClassMemberships from "@/features/branches/UploadClassMemberships";
 import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
@@ -120,6 +121,7 @@ export default function BranchManager() {
                 <Tabs.Panel value={"members"}>
                   <Stack>
                     <BranchMembers key={selectedBranch.id} branchId={selectedBranch.id} />
+                    <UploadBranchUsers branchId={selectedBranch.id} />
                     <UploadClassMemberships branchId={selectedBranch.id} />
                     <UploadSubjectChoices branchId={selectedBranch.id} />
                   </Stack>

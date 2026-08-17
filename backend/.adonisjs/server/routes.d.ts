@@ -83,7 +83,8 @@ export type ScannedRoutes = {
     'signatures.sign': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'unique_ids.get_token': { paramsTuple?: []; params?: {} }
     'unique_ids.download_unique_id_pdf': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
-    'user_provisioning.create_users': { paramsTuple?: []; params?: {} }
+    'user_provisioning.evaluate': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'user_provisioning.provision': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'unique_items.add': { paramsTuple?: []; params?: {} }
     'order_history.get_my_order': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'order_history.get_my_orders': { paramsTuple?: []; params?: {} }
@@ -373,7 +374,8 @@ export type ScannedRoutes = {
     'signatures.send_signature_link': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'signatures.send_signature_link_as_customer': { paramsTuple?: []; params?: {} }
     'signatures.sign': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
-    'user_provisioning.create_users': { paramsTuple?: []; params?: {} }
+    'user_provisioning.evaluate': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'user_provisioning.provision': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'unique_items.add': { paramsTuple?: []; params?: {} }
     'checkout.initialize_checkout': { paramsTuple?: []; params?: {} }
     'kustom_checkout.initialize_checkout': { paramsTuple?: []; params?: {} }

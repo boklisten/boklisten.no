@@ -18,7 +18,6 @@ import {
   IconSearch,
   IconSend,
   IconShoppingCart,
-  IconUserPlus,
 } from "@tabler/icons-react";
 import type { LinkProps } from "@tanstack/react-router";
 
@@ -163,12 +162,6 @@ export const ADMIN_NAV_SECTIONS = [
             description: "Lag utskriftsklar PDF med unike IDer",
             to: "/admin/database/unik_id",
             icon: IconQrcode,
-          },
-          {
-            label: "Lag brukere",
-            description: "Opprett brukere for en gruppe elever",
-            to: "/admin/database/lag_brukere",
-            icon: IconUserPlus,
           },
         ],
       },

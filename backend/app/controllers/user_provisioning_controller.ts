@@ -5,10 +5,19 @@ import { UserProvisioningService } from "#services/user_provisioning_service";
 import { userProvisioningValidator } from "#validators/user_provisioning";
 
 export default class UserProvisioningController {
-  async createUsers(ctx: HttpContext) {
+  async evaluate(ctx: HttpContext) {
     PermissionService.adminOrFail(ctx);
+    const branchId = ctx.request.param("branchId");
     const { userCandidates } = await ctx.request.validateUsing(userProvisioningValidator);
 
-    await UserProvisioningService.createUsers(userCandidates);
+    return await UserProvisioningService.evaluate(branchId, userCandidates);
+  }
+
+  async provision(ctx: HttpContext) {
+    PermissionService.adminOrFail(ctx);
+    const branchId = ctx.request.param("branchId");
+    const { userCandidates } = await ctx.request.validateUsing(userProvisioningValidator);
+
+    return await UserProvisioningService.provision(branchId, userCandidates);
   }
 }

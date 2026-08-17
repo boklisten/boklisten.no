@@ -1,6 +1,39 @@
+import { ObjectId } from "mongodb";
+
+import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { StorageService } from "#services/storage_service";
 
 export const BranchRelationshipService = {
+  async getLeafDescendants(branchId: string): Promise<{ id: string; name: string }[]> {
+    return (await StorageService.Branches.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(branchId),
+        },
+      },
+      {
+        $graphLookup: {
+          from: BlSchemaName.Branches,
+          startWith: new ObjectId(branchId),
+          connectFromField: "childBranches",
+          connectToField: "_id",
+          as: "childBranches",
+        },
+      },
+      { $unwind: "$childBranches" },
+      {
+        $match: {
+          "childBranches.childBranches": { $eq: [] },
+        },
+      },
+      {
+        $project: {
+          _id: "$childBranches._id",
+          name: "$childBranches.name",
+        },
+      },
+    ])) as { id: string; name: string }[];
+  },
   async getNestedChildBranchIds(parentId: string) {
     const result: string[] = [];
     const visited = [parentId];
@@ -18,24 +51,6 @@ export const BranchRelationshipService = {
         stack.push(childId);
       }
     }
-    return result;
-  },
-  async getParentBranchIds(branchId: string) {
-    const result: string[] = [];
-    const visited = [branchId];
-    let currentId: string | undefined = branchId;
-
-    while (currentId) {
-      const branch = await StorageService.Branches.get(currentId);
-      const parentId: string | undefined = branch.parentBranch;
-
-      if (!parentId || visited.includes(parentId)) break;
-
-      visited.push(parentId);
-      result.push(parentId);
-      currentId = parentId;
-    }
-
     return result;
   },
 };

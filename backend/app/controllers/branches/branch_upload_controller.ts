@@ -1,7 +1,6 @@
 import { HttpContext } from "@adonisjs/core/http";
-import { ObjectId } from "mongodb";
 
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
+import { BranchRelationshipService } from "#services/branch_relationship_service";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { PermissionService } from "#services/permission_service";
@@ -25,34 +24,7 @@ async function applyMembershipData(
   branchId: string,
   membershipData: { branch: string; phone: string }[],
 ) {
-  const childBranches = (await StorageService.Branches.aggregate([
-    {
-      $match: {
-        _id: new ObjectId(branchId),
-      },
-    },
-    {
-      $graphLookup: {
-        from: BlSchemaName.Branches,
-        startWith: new ObjectId(branchId),
-        connectFromField: "childBranches",
-        connectToField: "_id",
-        as: "childBranches",
-      },
-    },
-    { $unwind: "$childBranches" },
-    {
-      $match: {
-        "childBranches.childBranches": { $eq: [] },
-      },
-    },
-    {
-      $project: {
-        _id: "$childBranches._id",
-        name: "$childBranches.name",
-      },
-    },
-  ])) as { id: string; name: string }[];
+  const childBranches = await BranchRelationshipService.getLeafDescendants(branchId);
 
   const status = {
     unknownBranches: new Set<string>(),
