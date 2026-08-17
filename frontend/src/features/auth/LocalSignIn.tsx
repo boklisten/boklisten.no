@@ -1,6 +1,6 @@
 import { Button, Group } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
-import { Activity, useEffect, useState } from "react";
+import { Activity, useEffect, useEffectEvent, useState } from "react";
 import validator from "validator";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
@@ -15,7 +15,7 @@ import { publicApi } from "@/shared/utils/publicApiClient";
 export default function LocalSignIn() {
   const [apiError, setApiError] = useState<string | null>(null);
   const { isLoggedIn } = useAuth();
-  const { redirectToCaller } = useAuthLinker();
+  const { redirectAfterLogin } = useAuthLinker();
 
   const signInMutation = useMutation(
     publicApi.local.login.mutationOptions({
@@ -24,7 +24,7 @@ export default function LocalSignIn() {
         setApiError(message ?? null);
         if (tokens) {
           login(tokens);
-          redirectToCaller();
+          void redirectAfterLogin();
         }
       },
       onError: (error) => {
@@ -45,12 +45,14 @@ export default function LocalSignIn() {
     onSubmit: ({ value }) => signInMutation.mutate({ body: value }),
   });
 
+  const onAlreadyLoggedIn = useEffectEvent(() => void redirectAfterLogin());
   useEffect(() => {
-    // Next might have valid tokens, even though bl-admin might not. If so, the user is redirected automatically
-    if (isLoggedIn) {
-      redirectToCaller();
+    // We might have valid tokens, even though bl-admin might not. If so, the user is redirected automatically.
+    // isIdle guards against double-redirecting after a sign-in, which onSuccess already handles.
+    if (isLoggedIn && signInMutation.isIdle) {
+      onAlreadyLoggedIn();
     }
-  }, [redirectToCaller, isLoggedIn]);
+  }, [isLoggedIn, signInMutation.isIdle]);
 
   return (
     <>

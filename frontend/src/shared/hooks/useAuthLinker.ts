@@ -1,11 +1,14 @@
+import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import BL_CONFIG from "@/shared/utils/bl-config";
+import { hasPendingTasks } from "@/shared/utils/tasks";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
 export default function useAuthLinker() {
   const { search, searchStr } = useLocation();
   const navigate = useNavigate();
   const { isLoading, isLoggedIn } = useAuth();
+  const { client } = useApiClient();
 
   function redirectToBlAdmin(path: string, retainHistory?: boolean) {
     if (isLoading) return;
@@ -44,5 +47,24 @@ export default function useAuthLinker() {
     redirectToBlAdmin(`auth/gateway?redirect=${redirect}`);
   }
 
-  return { redirectToBlAdmin, redirectToCaller };
+  async function redirectAfterLogin() {
+    let userDetail;
+    try {
+      userDetail = await client.api.userDetail.getMyDetails({});
+    } catch {
+      redirectToCaller();
+      return;
+    }
+    if (hasPendingTasks(userDetail)) {
+      // Persist caller/redirect so the handoff survives the detour to /oppgaver
+      const { localStorageKeys } = BL_CONFIG.login;
+      if (search.caller) localStorage.setItem(localStorageKeys.caller, search.caller);
+      if (search.redirect) localStorage.setItem(localStorageKeys.redirect, search.redirect);
+      void navigate({ to: "/oppgaver" });
+    } else {
+      redirectToCaller();
+    }
+  }
+
+  return { redirectToBlAdmin, redirectToCaller, redirectAfterLogin };
 }

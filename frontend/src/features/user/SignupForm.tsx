@@ -45,7 +45,7 @@ const defaultValues: SignupFormValues = {
 };
 
 export default function SignupForm() {
-  const { redirectToCaller } = useAuthLinker();
+  const { redirectAfterLogin } = useAuthLinker();
   const form = useAppForm({
     defaultValues,
     onSubmit: () => registerMutation.mutate(),
@@ -106,7 +106,7 @@ export default function SignupForm() {
       setServerErrors([]);
       if (data) {
         login(data);
-        redirectToCaller();
+        void redirectAfterLogin();
       }
     },
   });

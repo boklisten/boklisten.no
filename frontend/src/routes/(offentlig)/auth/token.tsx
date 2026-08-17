@@ -6,6 +6,7 @@ import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuthLinker from "@/shared/hooks/useAuthLinker";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
+import { hasPendingTasks } from "@/shared/utils/tasks";
 import { useEffect, useEffectEvent, useState } from "react";
 import { login } from "@/shared/hooks/useAuth";
 
@@ -44,7 +45,7 @@ function TokenPage() {
       setHasFailed(true);
       return;
     }
-    if (userDetail?.tasks?.confirmDetails || userDetail?.tasks?.signAgreement) {
+    if (hasPendingTasks(userDetail)) {
       void navigate({ to: "/oppgaver" });
     } else {
       redirectToCaller();
