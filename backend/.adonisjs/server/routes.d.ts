@@ -23,7 +23,6 @@ export type ScannedRoutes = {
     'branches.get_by_id': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branches.add': { paramsTuple?: []; params?: {} }
     'branches.update': { paramsTuple?: []; params?: {} }
-    'branch_upload.upload_memberships': { paramsTuple?: []; params?: {} }
     'branch_upload.upload_subject_choices': { paramsTuple?: []; params?: {} }
     'branch_relationship.update': { paramsTuple?: []; params?: {} }
     'branch_membership.get_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -356,7 +355,6 @@ export type ScannedRoutes = {
     'reminders.count_recipients': { paramsTuple?: []; params?: {} }
     'reminders.remind': { paramsTuple?: []; params?: {} }
     'branches.add': { paramsTuple?: []; params?: {} }
-    'branch_upload.upload_memberships': { paramsTuple?: []; params?: {} }
     'branch_upload.upload_subject_choices': { paramsTuple?: []; params?: {} }
     'branch_books.cancel_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'orders.cancel_order_item': { paramsTuple?: []; params?: {} }

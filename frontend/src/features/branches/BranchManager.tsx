@@ -23,7 +23,6 @@ import BranchPaymentSettings from "@/features/branches/BranchPaymentSettings";
 import BranchRelationshipSettings from "@/features/branches/BranchRelationshipSettings";
 import OpeningHoursSettings from "@/features/branches/opening_hours/OpeningHoursSettings";
 import UploadBranchUsers from "@/features/branches/UploadBranchUsers";
-import UploadClassMemberships from "@/features/branches/UploadClassMemberships";
 import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -122,7 +121,6 @@ export default function BranchManager() {
                   <Stack>
                     <BranchMembers key={selectedBranch.id} branchId={selectedBranch.id} />
                     <UploadBranchUsers branchId={selectedBranch.id} />
-                    <UploadClassMemberships branchId={selectedBranch.id} />
                     <UploadSubjectChoices branchId={selectedBranch.id} />
                   </Stack>
                 </Tabs.Panel>

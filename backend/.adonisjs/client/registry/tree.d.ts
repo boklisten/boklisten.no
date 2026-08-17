@@ -36,7 +36,6 @@ export interface ApiDefinition {
     update: typeof routes['branches.update']
   }
   branchUpload: {
-    uploadMemberships: typeof routes['branch_upload.upload_memberships']
     uploadSubjectChoices: typeof routes['branch_upload.upload_subject_choices']
   }
   branchRelationship: {

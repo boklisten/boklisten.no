@@ -120,12 +120,6 @@ const routes = {
     tokens: [{"old":"/v2/branches","type":0,"val":"v2","end":""},{"old":"/v2/branches","type":0,"val":"branches","end":""}],
     types: placeholder as Registry['branches.update']['types'],
   },
-  'branch_upload.upload_memberships': {
-    methods: ["POST"],
-    pattern: '/v2/branches/memberships',
-    tokens: [{"old":"/v2/branches/memberships","type":0,"val":"v2","end":""},{"old":"/v2/branches/memberships","type":0,"val":"branches","end":""},{"old":"/v2/branches/memberships","type":0,"val":"memberships","end":""}],
-    types: placeholder as Registry['branch_upload.upload_memberships']['types'],
-  },
   'branch_upload.upload_subject_choices': {
     methods: ["POST"],
     pattern: '/v2/branches/subject_choices',

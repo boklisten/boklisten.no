@@ -73,8 +73,6 @@ router.patch("/v2/branches", [controllers.branches.Branches, "update"]);
 /**
  * branch upload
  */
-router.post("/v2/branches/memberships", [controllers.branches.BranchUpload, "uploadMemberships"]);
-
 router.post("/v2/branches/subject_choices", [
   controllers.branches.BranchUpload,
   "uploadSubjectChoices",

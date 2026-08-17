@@ -235,18 +235,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'branch_upload.upload_memberships': {
-    methods: ["POST"]
-    pattern: '/v2/branches/memberships'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/branch_membership').branchMembershipValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/branch_membership').branchMembershipValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_upload_controller').default['uploadMemberships']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_upload_controller').default['uploadMemberships']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
   'branch_upload.upload_subject_choices': {
     methods: ["POST"]
     pattern: '/v2/branches/subject_choices'
