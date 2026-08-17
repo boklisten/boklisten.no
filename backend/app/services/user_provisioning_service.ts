@@ -17,6 +17,12 @@ export interface BranchMapping {
   localName: string;
   status: "matched" | "unmatched" | "ambiguous";
   branch: BranchSummary | null;
+  candidates: BranchSummary[];
+}
+
+export interface BranchResolution {
+  localName: string;
+  branchId: string;
 }
 
 function normalizeBranchName(name: string) {
@@ -34,14 +40,41 @@ export function buildBranchMappings(
   return [...new Set(localNames)]
     .sort((a, b) => a.localeCompare(b))
     .map((localName) => {
-      const matches = branches.filter((branch) =>
-        normalizeBranchName(branch.name).includes(normalizeBranchName(localName)),
-      );
-      if (matches.length === 1 && matches[0]) {
-        return { localName, status: "matched", branch: matches[0] };
+      const candidates = branches
+        .filter((branch) =>
+          normalizeBranchName(branch.name).includes(normalizeBranchName(localName)),
+        )
+        .sort(
+          (a, b) =>
+            normalizeBranchName(a.name).length - normalizeBranchName(b.name).length ||
+            a.name.localeCompare(b.name),
+        );
+      if (candidates.length === 1 && candidates[0]) {
+        return { localName, status: "matched", branch: candidates[0], candidates };
       }
-      return { localName, status: matches.length === 0 ? "unmatched" : "ambiguous", branch: null };
+      return {
+        localName,
+        status: candidates.length === 0 ? "unmatched" : "ambiguous",
+        branch: null,
+        candidates,
+      };
     });
+}
+
+export function applyBranchResolutions(
+  mappings: BranchMapping[],
+  resolutions: BranchResolution[],
+): BranchMapping[] {
+  const resolvedBranchIds = new Map(
+    resolutions.map((resolution) => [resolution.localName, resolution.branchId]),
+  );
+  return mappings.map((mapping) => {
+    if (mapping.status !== "ambiguous") return mapping;
+    const branch = mapping.candidates.find(
+      (candidate) => candidate.id === resolvedBranchIds.get(mapping.localName),
+    );
+    return branch ? { ...mapping, status: "matched", branch } : mapping;
+  });
 }
 
 export function mergeCandidateIntoUserDetail(
@@ -138,8 +171,16 @@ export const UserProvisioningService = {
     };
   },
 
-  async provision(branchId: string, userCandidates: UserCandidate[]) {
-    const { mappings, existingUsers } = await evaluateCandidates(branchId, userCandidates);
+  async provision(
+    branchId: string,
+    userCandidates: UserCandidate[],
+    branchResolutions: BranchResolution[] = [],
+  ) {
+    const { mappings: unresolvedMappings, existingUsers } = await evaluateCandidates(
+      branchId,
+      userCandidates,
+    );
+    const mappings = applyBranchResolutions(unresolvedMappings, branchResolutions);
     const unmatchedLocalNames = mappings
       .filter((mapping) => mapping.status !== "matched")
       .map((mapping) => mapping.localName);

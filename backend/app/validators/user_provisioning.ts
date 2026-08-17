@@ -17,5 +17,13 @@ export const userProvisioningValidator = vine.create(
         dob: vine.date().optional(),
       }),
     ),
+    branchResolutions: vine
+      .array(
+        vine.object({
+          localName: vine.string().trim(),
+          branchId: vine.string(),
+        }),
+      )
+      .optional(),
   }),
 );

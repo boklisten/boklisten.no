@@ -1,7 +1,19 @@
 import { CSVImporter, type Column, type ImportResult } from "@importcsv/react";
-import { Alert, Badge, Button, Group, List, Modal, Stack, Table, Text, Title } from "@mantine/core";
+import {
+  Alert,
+  Badge,
+  Button,
+  Group,
+  List,
+  Modal,
+  Select,
+  Stack,
+  Table,
+  Text,
+  Title,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { IconAlertTriangle, IconArrowRight, IconUserUp } from "@tabler/icons-react";
+import { IconAlertTriangle, IconArrowRight, IconInfoCircle, IconUserUp } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -145,6 +157,7 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
   const queryClient = useQueryClient();
   const [importerOpen, setImporterOpen] = useState(false);
   const [candidates, setCandidates] = useState<UserCandidate[] | null>(null);
+  const [branchSelections, setBranchSelections] = useState<Record<string, string>>({});
 
   const evaluateMutation = useMutation({
     mutationFn: async (userCandidates: UserCandidate[]) =>
@@ -159,10 +172,16 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
   });
 
   const provisionMutation = useMutation({
-    mutationFn: async (userCandidates: UserCandidate[]) =>
+    mutationFn: async ({
+      userCandidates,
+      branchResolutions,
+    }: {
+      userCandidates: UserCandidate[];
+      branchResolutions: { localName: string; branchId: string }[];
+    }) =>
       client.api.userProvisioning.provision({
         params: { branchId },
-        body: { userCandidates },
+        body: { userCandidates, branchResolutions },
       }),
     onSuccess: (summary) => {
       closeEvaluation();
@@ -185,12 +204,31 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
 
   function closeEvaluation() {
     setCandidates(null);
+    setBranchSelections({});
     evaluateMutation.reset();
   }
 
   const evaluation = evaluateMutation.data;
-  const unmatchedMappings = evaluation?.mappings.filter((mapping) => mapping.status !== "matched");
+  const ambiguousMappings =
+    evaluation?.mappings.filter((mapping) => mapping.status === "ambiguous") ?? [];
+  const unmatchedMappings = evaluation?.mappings.filter(
+    (mapping) => mapping.status === "unmatched",
+  );
   const confirmBlocked = (unmatchedMappings?.length ?? 0) > 0;
+
+  function selectedBranchId(mapping: (typeof ambiguousMappings)[number]) {
+    return branchSelections[mapping.localName] ?? mapping.candidates[0]?.id ?? null;
+  }
+
+  function confirmProvisioning(userCandidates: UserCandidate[]) {
+    provisionMutation.mutate({
+      userCandidates,
+      branchResolutions: ambiguousMappings.flatMap((mapping) => {
+        const branchId = selectedBranchId(mapping);
+        return branchId ? [{ localName: mapping.localName, branchId }] : [];
+      }),
+    });
+  }
 
   return (
     <Stack gap={"xs"}>
@@ -222,6 +260,7 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
             return;
           }
           setCandidates(userCandidates);
+          setBranchSelections({});
           evaluateMutation.mutate(userCandidates);
         }}
       />
@@ -254,11 +293,28 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
                         <IconArrowRight size={16} />
                       </Table.Td>
                       <Table.Td>
-                        {mapping.status === "matched" ? (
-                          mapping.branch?.name
-                        ) : (
+                        {mapping.status === "matched" && mapping.branch?.name}
+                        {mapping.status === "ambiguous" && (
+                          <Select
+                            aria-label={`Velg filial for ${mapping.localName}`}
+                            data={mapping.candidates.map((candidate) => ({
+                              value: candidate.id,
+                              label: candidate.name,
+                            }))}
+                            value={selectedBranchId(mapping)}
+                            onChange={(branchId) =>
+                              branchId &&
+                              setBranchSelections((selections) => ({
+                                ...selections,
+                                [mapping.localName]: branchId,
+                              }))
+                            }
+                            allowDeselect={false}
+                          />
+                        )}
+                        {mapping.status === "unmatched" && (
                           <Badge color={"red"} variant={"light"}>
-                            {mapping.status === "ambiguous" ? "Flere treff" : "Ikke funnet"}
+                            Ikke funnet
                           </Badge>
                         )}
                       </Table.Td>
@@ -267,14 +323,24 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
                 </Table.Tbody>
               </Table>
             </Table.ScrollContainer>
+            {ambiguousMappings.length > 0 && (
+              <Alert
+                color={"blue"}
+                icon={<IconInfoCircle />}
+                title={"Noen klasser passer med flere filialer"}
+              >
+                Vi har foreslått den filialen som ligner mest. Kontroller at valgene i tabellen
+                stemmer før du bekrefter.
+              </Alert>
+            )}
             {confirmBlocked && (
               <Alert
                 color={"red"}
                 icon={<IconAlertTriangle />}
                 title={"Noen klasser mangler filial"}
               >
-                Hver klasse i filen må samsvare med nøyaktig én filial under denne filialen. Rett
-                opp klassenavnene i filen eller filialstrukturen, og last opp listen på nytt.
+                Noen av klassene i filen passer ikke med noen filial under denne filialen. Rett opp
+                klassenavnene i filen eller filialstrukturen, og last opp listen på nytt.
               </Alert>
             )}
             <Group justify={"flex-end"}>
@@ -284,7 +350,7 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
               <Button
                 disabled={confirmBlocked}
                 loading={provisionMutation.isPending}
-                onClick={() => provisionMutation.mutate(candidates)}
+                onClick={() => confirmProvisioning(candidates)}
               >
                 Bekreft opplasting
               </Button>

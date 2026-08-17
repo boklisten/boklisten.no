@@ -16,8 +16,9 @@ export default class UserProvisioningController {
   async provision(ctx: HttpContext) {
     PermissionService.adminOrFail(ctx);
     const branchId = ctx.request.param("branchId");
-    const { userCandidates } = await ctx.request.validateUsing(userProvisioningValidator);
+    const { userCandidates, branchResolutions } =
+      await ctx.request.validateUsing(userProvisioningValidator);
 
-    return await UserProvisioningService.provision(branchId, userCandidates);
+    return await UserProvisioningService.provision(branchId, userCandidates, branchResolutions);
   }
 }

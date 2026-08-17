@@ -1,6 +1,7 @@
 import { test } from "@japa/runner";
 
 import {
+  applyBranchResolutions,
   buildBranchMappings,
   computeTasks,
   mergeCandidateIntoUserDetail,
@@ -21,6 +22,7 @@ test.group("UserProvisioningService.buildBranchMappings()", () => {
       localName: "1STA",
       status: "matched",
       branch: { id: "sta", name: "Ullern Oslo VG1 STA" },
+      candidates: [{ id: "sta", name: "Ullern Oslo VG1 STA" }],
     });
   });
 
@@ -32,7 +34,12 @@ test.group("UserProvisioningService.buildBranchMappings()", () => {
 
   test("reports a localName matching no branches as unmatched", ({ assert }) => {
     const [mapping] = buildBranchMappings(["2KDA"], BRANCHES);
-    assert.deepEqual(mapping, { localName: "2KDA", status: "unmatched", branch: null });
+    assert.deepEqual(mapping, {
+      localName: "2KDA",
+      status: "unmatched",
+      branch: null,
+      candidates: [],
+    });
   });
 
   test("reports a localName matching multiple branches as ambiguous", ({ assert }) => {
@@ -41,12 +48,61 @@ test.group("UserProvisioningService.buildBranchMappings()", () => {
     assert.isNull(mapping?.branch);
   });
 
+  test("lists all ambiguous candidates with the closest branch name first", ({ assert }) => {
+    const [mapping] = buildBranchMappings(
+      ["3APO"],
+      [
+        { id: "apovok", name: "Ullern Oslo VG3 APOVOK" },
+        { id: "apo", name: "Ullern Oslo VG3 APO" },
+      ],
+    );
+    assert.equal(mapping?.status, "ambiguous");
+    assert.deepEqual(
+      mapping?.candidates.map((candidate) => candidate.id),
+      ["apo", "apovok"],
+    );
+  });
+
   test("deduplicates localNames and sorts mappings alphabetically", ({ assert }) => {
     const mappings = buildBranchMappings(["1STB", "1STA", "1STB"], BRANCHES);
     assert.deepEqual(
       mappings.map((mapping) => mapping.localName),
       ["1STA", "1STB"],
     );
+  });
+});
+
+test.group("UserProvisioningService.applyBranchResolutions()", () => {
+  const AMBIGUOUS_BRANCHES = [
+    { id: "apo", name: "Ullern Oslo VG3 APO" },
+    { id: "apovok", name: "Ullern Oslo VG3 APOVOK" },
+  ];
+
+  test("resolves an ambiguous mapping to the selected candidate", ({ assert }) => {
+    const mappings = buildBranchMappings(["3APO"], AMBIGUOUS_BRANCHES);
+    const [resolved] = applyBranchResolutions(mappings, [
+      { localName: "3APO", branchId: "apovok" },
+    ]);
+    assert.equal(resolved?.status, "matched");
+    assert.deepEqual(resolved?.branch, { id: "apovok", name: "Ullern Oslo VG3 APOVOK" });
+  });
+
+  test("keeps an ambiguous mapping when the selected branch is not a candidate", ({ assert }) => {
+    const mappings = buildBranchMappings(["3APO"], AMBIGUOUS_BRANCHES);
+    const [resolved] = applyBranchResolutions(mappings, [
+      { localName: "3APO", branchId: "unrelated" },
+    ]);
+    assert.equal(resolved?.status, "ambiguous");
+    assert.isNull(resolved?.branch);
+  });
+
+  test("leaves matched and unmatched mappings untouched", ({ assert }) => {
+    const mappings = buildBranchMappings(["1STA", "2KDA"], BRANCHES);
+    const resolved = applyBranchResolutions(mappings, [
+      { localName: "1STA", branchId: "stb" },
+      { localName: "2KDA", branchId: "sta" },
+    ]);
+    assert.deepEqual(resolved, mappings);
   });
 });
 
