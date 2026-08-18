@@ -4,6 +4,7 @@ import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpe
 import { userHasValidSignature } from "#services/legacy/signature.helper";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
+import { UserDetailService } from "#services/user_detail_service";
 import { UserService } from "#services/user_service";
 import {
   customerUpdateUserDetailsValidator,
@@ -41,7 +42,7 @@ export default class UserDetailsController {
   async search(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
     const { searchStr } = await ctx.request.validateUsing(userDetailSearchValidator);
-    return await StorageService.UserDetails.search(searchStr);
+    return UserDetailService.search(searchStr);
   }
   async updateAsCustomer(ctx: HttpContext) {
     const { detailsId } = PermissionService.authenticate(ctx);

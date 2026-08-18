@@ -246,21 +246,18 @@ export class MongodbHandler<T extends BlDocument> {
       throw new BlError(`document with id ${id} does not exist`).code(702);
     }
   }
-  public async search(searchStr: string): Promise<T[]> {
+  public async search(searchStr: string, excludedPaths: string[] = []): Promise<T[]> {
     const normalized = searchStr.trim();
 
     if (!normalized) {
       return [];
     }
 
+    const excluded = new Set(["_id", "__v", ...excludedPaths]);
     const searchPaths: string[] = [];
 
     this.mongooseModel.schema.eachPath((path: string, schemaType: SchemaType) => {
-      if (["_id", "__v"].includes(path)) {
-        return;
-      }
-
-      if (schemaType.instance === "String") {
+      if (!excluded.has(path) && schemaType.instance === "String") {
         searchPaths.push(path);
       }
     });

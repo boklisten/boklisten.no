@@ -1,18 +1,26 @@
-import { Box, Button, Container, Stack, Title } from "@mantine/core";
-import { useState } from "react";
+import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import { Container, Skeleton, Stack, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import useApiClient from "@/shared/hooks/useApiClient";
-import { modals } from "@mantine/modals";
-import UserDetailSearchField from "@/features/rapid-handout/UserDetailSearchField";
-import { IconUserEdit } from "@tabler/icons-react";
-import UnlockUserMatchesButton from "@/features/matches/UnlockUserMatchesButton";
-import AdministrateUserForm from "@/features/user/AdministrateUserForm";
-import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
-import RapidHandoutDetails from "@/features/rapid-handout/RapidHandoutDetails";
 import { createFileRoute } from "@tanstack/react-router";
+
+import CustomerPicker from "@/features/rapid-handout/CustomerPicker";
+import CustomerSearchSpotlight from "@/features/rapid-handout/CustomerSearchSpotlight";
+import RapidHandoutDetails from "@/features/rapid-handout/RapidHandoutDetails";
+import SelectedCustomerCard from "@/features/rapid-handout/SelectedCustomerCard";
+import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
+import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
+import useApiClient from "@/shared/hooks/useApiClient";
 import { seo } from "@/shared/utils/seo";
 
+type RapidHandoutSearch = {
+  kunde?: string;
+};
+
 export const Route = createFileRoute("/(administrasjon)/admin/hurtigutdeling")({
+  validateSearch: (search: Record<string, unknown>): RapidHandoutSearch => ({
+    kunde:
+      typeof search["kunde"] === "string" && search["kunde"] !== "" ? search["kunde"] : undefined,
+  }),
   head: () =>
     seo({
       title: "Hurtigutdeling | bl-admin",
@@ -21,50 +29,53 @@ export const Route = createFileRoute("/(administrasjon)/admin/hurtigutdeling")({
 });
 
 function RapidHandoutPage() {
-  const [userDetailsId, setUserDetailsId] = useState<string | null>(null);
+  const { kunde } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
-  const { client, api } = useApiClient();
-  const { data } = useQuery({
-    queryKey: api.userDetail.getById.queryKey({ params: { detailsId: userDetailsId ?? "" } }),
-    queryFn: async () =>
-      userDetailsId
-        ? client.api.userDetail.getById({ params: { detailsId: userDetailsId ?? "" } })
-        : null,
-  });
+  const { api } = useApiClient();
+  const {
+    data: customer,
+    isPending,
+    isError,
+  } = useQuery(
+    api.userDetail.getById.queryOptions(
+      { params: { detailsId: kunde ?? "" } },
+      { enabled: kunde !== undefined },
+    ),
+  );
+
+  const deselect = () => void navigate({ search: {} });
+  const selectCustomer = (userDetail: UserDetail) =>
+    void navigate({ search: { kunde: userDetail.id } });
+
+  const loading = kunde !== undefined && !isError && isPending;
+  const notFound = kunde !== undefined && !isPending && (isError || !customer);
 
   return (
     <Container>
       <Stack>
         <Title>Hurtigutdeling</Title>
-        <Stack>
-          <UserDetailSearchField
-            onSelectedResult={(userDetail) => {
-              setUserDetailsId(userDetail?.id ?? null);
-            }}
-          />
-          {data && <SignatureStatusBanner userDetail={data} />}
-          {data && (
-            <Box>
-              <Button
-                leftSection={<IconUserEdit />}
-                onClick={() =>
-                  modals.open({
-                    title: "Rediger brukerdetaljer",
-                    children: (
-                      <Stack>
-                        <UnlockUserMatchesButton userDetailId={userDetailsId ?? ""} />
-                        <AdministrateUserForm userDetail={data} />
-                      </Stack>
-                    ),
-                  })
-                }
-              >
-                Rediger brukerdetaljer
-              </Button>
-            </Box>
-          )}
-          {data && <RapidHandoutDetails key={data.id} customer={data} />}
-        </Stack>
+        <CustomerSearchSpotlight onSelect={selectCustomer} />
+        {kunde === undefined && <CustomerPicker onSelect={selectCustomer} />}
+        {loading && (
+          <Stack>
+            <Skeleton height={110} radius={"md"} />
+            <Skeleton height={200} radius={"md"} />
+          </Stack>
+        )}
+        {notFound && (
+          <>
+            <ErrorAlert>Fant ikke kunden. Velg en annen kunde for å fortsette.</ErrorAlert>
+            <CustomerPicker onSelect={selectCustomer} />
+          </>
+        )}
+        {kunde !== undefined && customer && (
+          <Stack>
+            <SelectedCustomerCard customer={customer} onDeselect={deselect} />
+            <SignatureStatusBanner userDetail={customer} />
+            <RapidHandoutDetails key={customer.id} customer={customer} />
+          </Stack>
+        )}
       </Stack>
     </Container>
   );

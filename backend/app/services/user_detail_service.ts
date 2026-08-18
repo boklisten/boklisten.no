@@ -1,4 +1,5 @@
 import { Infer } from "@vinejs/vine/types";
+import { ObjectId } from "mongodb";
 
 import BlidService from "#services/blid_service";
 import CryptoService from "#services/crypto_service";
@@ -6,12 +7,55 @@ import DispatchService from "#services/dispatch_service";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { StorageService } from "#services/storage_service";
 import { UserDetail } from "#shared/user-detail";
+import { UserPermission } from "#shared/user-permission";
 import { VippsUser } from "#types/user";
 import { registerSchema } from "#validators/auth_validators";
 import { userProvisioningValidator } from "#validators/user_provisioning";
 import EmailVerification from "#models/email_verification";
 
 export const UserDetailService = {
+  async search(searchStr: string): Promise<(UserDetail & { permission: UserPermission })[]> {
+    // blid is a random identifier, so matching against it only produces confusing results.
+    const userDetails = await StorageService.UserDetails.search(searchStr, ["blid"]);
+    const users = (await StorageService.Users.aggregate([
+      {
+        $match: {
+          userDetail: { $in: userDetails.map((userDetail) => new ObjectId(userDetail.id)) },
+        },
+      },
+      { $project: { userDetail: 1, permission: 1 } },
+    ])) as { userDetail: ObjectId; permission: UserPermission }[];
+    const permissions = new Map(users.map((user) => [String(user.userDetail), user.permission]));
+
+    const escaped = searchStr.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const matcher = new RegExp(escaped, "i");
+    return (
+      userDetails
+        .map((userDetail) => ({
+          userDetail: {
+            ...userDetail,
+            permission: permissions.get(userDetail.id) ?? ("customer" satisfies UserPermission),
+          },
+          // Customers matched on their own identity fields rank above those matched only via
+          // guardian or address fields.
+          matchesOwnInfo: [userDetail.name, userDetail.phone, userDetail.email].some(
+            (field) => field !== undefined && matcher.test(field),
+          ),
+          // Documents created before Mongoose timestamps were enabled lack creationTime; the
+          // ObjectId embeds the creation timestamp, so fall back to that.
+          createdAt: userDetail.creationTime
+            ? new Date(userDetail.creationTime).getTime()
+            : new ObjectId(userDetail.id).getTimestamp().getTime(),
+        }))
+        // Own-info matches first, then newest customers first within each group.
+        .sort((a, b) =>
+          a.matchesOwnInfo === b.matchesOwnInfo
+            ? b.createdAt - a.createdAt
+            : Number(b.matchesOwnInfo) - Number(a.matchesOwnInfo),
+        )
+        .map(({ userDetail }) => userDetail)
+    );
+  },
   async getByPhoneNumber(phone: string): Promise<UserDetail | null> {
     const databaseQuery = new SEDbQuery();
     databaseQuery.stringFilters = [{ fieldName: "phone", value: phone }];
