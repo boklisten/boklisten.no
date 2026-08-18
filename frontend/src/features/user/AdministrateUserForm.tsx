@@ -24,8 +24,10 @@ type AdministrateUserFormValues = {
 
 export default function AdministrateUserForm({
   userDetail,
+  onSaved,
 }: {
   userDetail: UserDetail & { permission: UserPermission };
+  onSaved?: (() => void) | undefined;
 }) {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -110,6 +112,7 @@ export default function AdministrateUserForm({
       } else {
         showSuccessNotification("Brukerdetaljene ble oppdatert!");
         setServerErrors([]);
+        onSaved?.();
       }
     },
   });

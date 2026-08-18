@@ -1,8 +1,9 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import { Container, Skeleton, Stack, Title } from "@mantine/core";
+import { Container, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
+import CustomerActionBar from "@/features/rapid-handout/CustomerActionBar";
 import CustomerPicker from "@/features/rapid-handout/CustomerPicker";
 import CustomerSearchSpotlight from "@/features/rapid-handout/CustomerSearchSpotlight";
 import RapidHandoutDetails from "@/features/rapid-handout/RapidHandoutDetails";
@@ -71,7 +72,13 @@ function RapidHandoutPage() {
         )}
         {kunde !== undefined && customer && (
           <Stack>
-            <SelectedCustomerCard customer={customer} onDeselect={deselect} />
+            <CustomerActionBar onSelect={selectCustomer} />
+            <Stack gap={6}>
+              <Text fz={"sm"} fw={500} c={"dimmed"}>
+                Valgt kunde
+              </Text>
+              <SelectedCustomerCard customer={customer} onDeselect={deselect} />
+            </Stack>
             <SignatureStatusBanner userDetail={customer} />
             <RapidHandoutDetails key={customer.id} customer={customer} />
           </Stack>

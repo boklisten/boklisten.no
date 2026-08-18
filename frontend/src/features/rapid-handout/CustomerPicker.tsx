@@ -3,34 +3,17 @@ import { Button, Group, Kbd, Stack, Text } from "@mantine/core";
 import { useOs } from "@mantine/hooks";
 import { IconObjectScan, IconSearch } from "@tabler/icons-react";
 
-import { customerSearch } from "@/features/rapid-handout/CustomerSearchSpotlight";
-import openScannerModal from "@/shared/components/scanner/openScannerModal";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { openCustomerSearch } from "@/features/rapid-handout/CustomerSearchSpotlight";
+import useCustomerScanner from "@/features/rapid-handout/useCustomerScanner";
 
 export default function CustomerPicker({
   onSelect,
 }: {
   onSelect: (userDetail: UserDetail) => void;
 }) {
-  const { client } = useApiClient();
   const os = useOs();
   const desktop = os === "macos" || os === "windows" || os === "linux";
-
-  function openCustomerScanner() {
-    openScannerModal({
-      title: "Skann kundeID",
-      onScan: async (scannedText) => {
-        const userDetail = await client.api.userDetail.getById({
-          params: { detailsId: scannedText },
-        });
-        if (!userDetail) {
-          return { message: `Fant ingen kunde med kundeID ${scannedText}.` };
-        }
-        onSelect(userDetail);
-        return undefined;
-      },
-    });
-  }
+  const openCustomerScanner = useCustomerScanner(onSelect);
 
   return (
     <Stack align={"center"} gap={"md"} py={"xl"}>
@@ -49,7 +32,7 @@ export default function CustomerPicker({
         variant={"subtle"}
         color={"gray"}
         leftSection={<IconSearch size={18} aria-hidden />}
-        onClick={customerSearch.open}
+        onClick={openCustomerSearch}
       >
         Søk manuelt
       </Button>

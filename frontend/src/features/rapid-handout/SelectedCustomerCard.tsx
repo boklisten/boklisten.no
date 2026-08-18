@@ -4,7 +4,6 @@ import {
   ActionIcon,
   Avatar,
   Badge,
-  Button,
   Group,
   Paper,
   Stack,
@@ -13,20 +12,16 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { IconMail, IconPhone, IconUserEdit, IconUserX } from "@tabler/icons-react";
+import { IconMail, IconPencil, IconPhone, IconX } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
 import UnlockUserMatchesButton from "@/features/matches/UnlockUserMatchesButton";
+import initials from "@/features/rapid-handout/initials";
 import PermissionBadge from "@/features/rapid-handout/PermissionBadge";
 import AdministrateUserForm from "@/features/user/AdministrateUserForm";
 import useApiClient from "@/shared/hooks/useApiClient";
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? (parts.at(-1)?.[0] ?? "") : "";
-  return (first + last).toUpperCase();
-}
+const ADMINISTRATE_USER_MODAL_ID = "administrate-user";
 
 export default function SelectedCustomerCard({
   customer,
@@ -44,15 +39,15 @@ export default function SelectedCustomerCard({
   );
 
   return (
-    <Paper withBorder radius={"md"} p={"lg"}>
-      <Stack gap={"md"}>
-        <Group justify={"space-between"} align={"flex-start"} wrap={"nowrap"} gap={"md"}>
-          <Group gap={"md"} align={"center"} wrap={"nowrap"}>
-            <Avatar color={"brand"} radius={"xl"} size={"lg"}>
+    <Paper withBorder radius={"md"} p={"md"}>
+      <Stack gap={"sm"}>
+        <Group justify={"space-between"} align={"flex-start"} wrap={"nowrap"} gap={"xs"}>
+          <Group gap={"sm"} align={"center"} wrap={"nowrap"} miw={0}>
+            <Avatar color={"brand"} radius={"xl"}>
               {initials(customer.name)}
             </Avatar>
-            <Stack gap={6}>
-              <Title order={2} size={"h3"} lh={1.2}>
+            <Stack gap={4} miw={0}>
+              <Title order={2} size={"h4"} lh={1.2}>
                 {customer.name}
               </Title>
               {(branch || customer.permission !== "customer") && (
@@ -63,27 +58,44 @@ export default function SelectedCustomerCard({
               )}
             </Stack>
           </Group>
-          <Tooltip label={"Rediger brukerdetaljer"}>
-            <ActionIcon
-              variant={"subtle"}
-              color={"gray"}
-              size={"lg"}
-              aria-label={"Rediger brukerdetaljer"}
-              onClick={() =>
-                modals.open({
-                  title: "Rediger brukerdetaljer",
-                  children: (
-                    <Stack>
-                      <UnlockUserMatchesButton userDetailId={customer.id} />
-                      <AdministrateUserForm userDetail={customer} />
-                    </Stack>
-                  ),
-                })
-              }
-            >
-              <IconUserEdit size={20} aria-hidden />
-            </ActionIcon>
-          </Tooltip>
+          <Group gap={4} wrap={"nowrap"}>
+            <Tooltip label={"Rediger brukerdetaljer"}>
+              <ActionIcon
+                variant={"subtle"}
+                color={"gray"}
+                size={"lg"}
+                aria-label={"Rediger brukerdetaljer"}
+                onClick={() =>
+                  modals.open({
+                    modalId: ADMINISTRATE_USER_MODAL_ID,
+                    title: "Rediger brukerdetaljer",
+                    children: (
+                      <Stack>
+                        <UnlockUserMatchesButton userDetailId={customer.id} />
+                        <AdministrateUserForm
+                          userDetail={customer}
+                          onSaved={() => modals.close(ADMINISTRATE_USER_MODAL_ID)}
+                        />
+                      </Stack>
+                    ),
+                  })
+                }
+              >
+                <IconPencil size={20} aria-hidden />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={"Fjern valgt kunde"}>
+              <ActionIcon
+                variant={"subtle"}
+                color={"gray"}
+                size={"lg"}
+                aria-label={"Fjern valgt kunde"}
+                onClick={onDeselect}
+              >
+                <IconX size={20} aria-hidden />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
         </Group>
         <Group gap={"md"} c={"dimmed"} style={{ rowGap: 4 }}>
           {customer.phone && (
@@ -101,16 +113,6 @@ export default function SelectedCustomerCard({
             </Group>
           )}
         </Group>
-        <Button
-          variant={"light"}
-          color={"gray"}
-          leftSection={<IconUserX size={18} aria-hidden />}
-          onClick={onDeselect}
-          w={{ base: "100%", sm: "auto" }}
-          style={{ alignSelf: "flex-start" }}
-        >
-          Fjern valgt kunde
-        </Button>
       </Stack>
     </Paper>
   );
