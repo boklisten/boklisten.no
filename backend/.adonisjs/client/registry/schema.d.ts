@@ -259,6 +259,66 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_upload_controller').default['uploadSubjectChoices']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'branch_subjects.get_subjects': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/branches/:branchId/subjects'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['getSubjects']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['getSubjects']>>>
+    }
+  }
+  'branch_subjects.create_subject': {
+    methods: ["POST"]
+    pattern: '/v2/branches/:branchId/subjects'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/branch_subjects').branchSubjectValidator)>>
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/branch_subjects').branchSubjectValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['createSubject']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['createSubject']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'branch_subjects.update_subject': {
+    methods: ["PUT"]
+    pattern: '/v2/branches/:branchId/subjects/:subjectId'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/branch_subjects').branchSubjectValidator)>>
+      paramsTuple: [ParamValue, ParamValue]
+      params: { branchId: ParamValue; subjectId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/branch_subjects').branchSubjectValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['updateSubject']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['updateSubject']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'branch_subjects.delete_subject': {
+    methods: ["DELETE"]
+    pattern: '/v2/branches/:branchId/subjects/:subjectId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { branchId: ParamValue; subjectId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['deleteSubject']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['deleteSubject']>>>
+    }
+  }
+  'branch_subjects.import_subjects': {
+    methods: ["POST"]
+    pattern: '/v2/branches/:branchId/subjects/import'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['importSubjects']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['importSubjects']>>>
+    }
+  }
   'branch_relationship.update': {
     methods: ["PATCH"]
     pattern: '/v2/branches/relationships'

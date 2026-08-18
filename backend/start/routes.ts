@@ -83,6 +83,27 @@ router.post("/v2/branches/:branchId/subject_choices/upload", [
 ]);
 
 /**
+ * branch subjects
+ */
+router.get("/v2/branches/:branchId/subjects", [controllers.branches.BranchSubjects, "getSubjects"]);
+router.post("/v2/branches/:branchId/subjects", [
+  controllers.branches.BranchSubjects,
+  "createSubject",
+]);
+router.put("/v2/branches/:branchId/subjects/:subjectId", [
+  controllers.branches.BranchSubjects,
+  "updateSubject",
+]);
+router.delete("/v2/branches/:branchId/subjects/:subjectId", [
+  controllers.branches.BranchSubjects,
+  "deleteSubject",
+]);
+router.post("/v2/branches/:branchId/subjects/import", [
+  controllers.branches.BranchSubjects,
+  "importSubjects",
+]);
+
+/**
  * branch relationships
  */
 router.patch("/v2/branches/relationships", [controllers.branches.BranchRelationship, "update"]);

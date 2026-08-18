@@ -82,13 +82,19 @@ test.group("SubjectChoicesService.resolveSubjectItems()", () => {
     ["branch-st", "branch-vg1"],
     ["branch-vg1", "branch-school"],
   ]);
-  const branchItemsByBranchId = new Map([
-    ["branch-st", [{ itemId: "item-kjemi", title: "Kjemien stemmer", categories: ["Kjemi 2"] }]],
+  const subjectsByBranchId = new Map([
+    [
+      "branch-st",
+      [{ externalName: "Kjemi 2", books: [{ itemId: "item-kjemi", title: "Kjemien stemmer" }] }],
+    ],
     [
       "branch-vg1",
       [
-        { itemId: "item-kjemi-old", title: "Gammel kjemibok", categories: ["Kjemi 2"] },
-        { itemId: "item-norsk", title: "Norskboka", categories: ["Norsk"] },
+        {
+          externalName: "Kjemi 2",
+          books: [{ itemId: "item-kjemi-old", title: "Gammel kjemibok" }],
+        },
+        { externalName: "Norsk", books: [{ itemId: "item-norsk", title: "Norskboka" }] },
       ],
     ],
   ]);
@@ -99,7 +105,7 @@ test.group("SubjectChoicesService.resolveSubjectItems()", () => {
       uploadBranchId: "branch-school",
       subject: "Kjemi 2",
       parentByBranchId,
-      branchItemsByBranchId,
+      subjectsByBranchId,
     });
     assert.deepEqual(
       resolved?.items.map((item) => item.itemId),
@@ -113,7 +119,7 @@ test.group("SubjectChoicesService.resolveSubjectItems()", () => {
       uploadBranchId: "branch-school",
       subject: "Norsk",
       parentByBranchId,
-      branchItemsByBranchId,
+      subjectsByBranchId,
     });
     assert.deepEqual(
       resolved?.items.map((item) => item.itemId),
@@ -127,12 +133,26 @@ test.group("SubjectChoicesService.resolveSubjectItems()", () => {
       uploadBranchId: "branch-school",
       subject: " kjemi 2 ",
       parentByBranchId,
-      branchItemsByBranchId,
+      subjectsByBranchId,
     });
     assert.deepEqual(
       resolved?.items.map((item) => item.itemId),
       ["item-kjemi"],
     );
+  });
+
+  test("resolves a subject with no books to an empty item list, not null", ({ assert }) => {
+    const resolved = resolveSubjectItems({
+      startBranchId: "branch-a",
+      uploadBranchId: "branch-school",
+      subject: "Gym",
+      parentByBranchId,
+      subjectsByBranchId: new Map([
+        ...subjectsByBranchId,
+        ["branch-school", [{ externalName: "Gym", books: [] }]],
+      ]),
+    });
+    assert.deepEqual(resolved, { branchId: "branch-school", items: [] });
   });
 
   test("returns null when the subject is not found anywhere in the chain", ({ assert }) => {
@@ -141,7 +161,7 @@ test.group("SubjectChoicesService.resolveSubjectItems()", () => {
       uploadBranchId: "branch-school",
       subject: "Religion",
       parentByBranchId,
-      branchItemsByBranchId,
+      subjectsByBranchId,
     });
     assert.isNull(resolved);
   });
@@ -151,11 +171,11 @@ test.group("SubjectChoicesService.resolveSubjectItems()", () => {
       startBranchId: "branch-a",
       uploadBranchId: "branch-vg1",
       parentByBranchId: new Map([...parentByBranchId, ["branch-school", "branch-global"]]),
-      branchItemsByBranchId: new Map([
-        ...branchItemsByBranchId,
+      subjectsByBranchId: new Map([
+        ...subjectsByBranchId,
         [
           "branch-global",
-          [{ itemId: "item-global", title: "Global bok", categories: ["Religion"] }],
+          [{ externalName: "Religion", books: [{ itemId: "item-global", title: "Global bok" }] }],
         ],
       ]),
     };
@@ -190,13 +210,18 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
     ],
     klasseBranchIdByLocalName: new Map([["3STA", "branch-3sta"]]),
     parentByBranchId: new Map([["branch-3sta", "branch-school"]]),
-    branchItemsByBranchId: new Map([
+    subjectsByBranchId: new Map([
       [
         "branch-school",
         [
-          { itemId: "item-kjemi", title: "Kjemien stemmer", categories: ["Kjemi 2"] },
-          { itemId: "item-kjemi-2", title: "Kjemien stemmer arbeidsbok", categories: ["Kjemi 2"] },
-          { itemId: "item-fysikk", title: "Fysikkboka", categories: ["Fysikk 2"] },
+          {
+            externalName: "Kjemi 2",
+            books: [
+              { itemId: "item-kjemi", title: "Kjemien stemmer" },
+              { itemId: "item-kjemi-2", title: "Kjemien stemmer arbeidsbok" },
+            ],
+          },
+          { externalName: "Fysikk 2", books: [{ itemId: "item-fysikk", title: "Fysikkboka" }] },
         ],
       ],
     ]),
@@ -256,10 +281,13 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
   }) => {
     const plan = planSubjectChoices({
       ...baseInput,
-      branchItemsByBranchId: new Map([
+      subjectsByBranchId: new Map([
         [
           "branch-school",
-          [{ itemId: "item-shared", title: "Delt bok", categories: ["Kjemi 2", "Fysikk 2"] }],
+          [
+            { externalName: "Kjemi 2", books: [{ itemId: "item-shared", title: "Delt bok" }] },
+            { externalName: "Fysikk 2", books: [{ itemId: "item-shared", title: "Delt bok" }] },
+          ],
         ],
       ]),
       rows: [
@@ -283,6 +311,38 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
     });
     assert.deepEqual(plan.unknownSubjects, [{ subject: "Religion", studentCount: 2 }]);
     assert.lengthOf(plan.orders, 0);
+  });
+
+  test("counts choices that match a subject without books instead of warning about them", ({
+    assert,
+  }) => {
+    const plan = planSubjectChoices({
+      ...baseInput,
+      subjectsByBranchId: new Map([
+        [
+          "branch-school",
+          [
+            { externalName: "Gym", books: [] },
+            {
+              externalName: "Kjemi 2",
+              books: [{ itemId: "item-kjemi", title: "Kjemien stemmer" }],
+            },
+          ],
+        ],
+      ]),
+      rows: [
+        { name: "Kari Nordmann", localName: "3STA", subject: "Gym", deadline: "2027-07-01" },
+        { name: "Kari Nordmann", localName: "3STA", subject: "Kjemi 2", deadline: "2027-07-01" },
+        { name: "Ola Hansen", localName: "3STA", subject: "Gym", deadline: "2027-07-01" },
+      ],
+    });
+    assert.equal(plan.metrics.choicesWithoutBooks, 2);
+    assert.deepEqual(plan.unknownSubjects, []);
+    assert.lengthOf(plan.orders, 1);
+    assert.deepEqual(
+      plan.orders[0]?.orderItems.map((orderItem) => orderItem.itemId),
+      ["item-kjemi"],
+    );
   });
 
   test("reports students that could not be matched", ({ assert }) => {
@@ -328,10 +388,15 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
   test("assigns each order to the branch where its subjects were resolved", ({ assert }) => {
     const plan = planSubjectChoices({
       ...baseInput,
-      branchItemsByBranchId: new Map([
+      subjectsByBranchId: new Map([
         [
           "branch-3sta",
-          [{ itemId: "item-kjemi", title: "Kjemien stemmer", categories: ["Kjemi 2"] }],
+          [
+            {
+              externalName: "Kjemi 2",
+              books: [{ itemId: "item-kjemi", title: "Kjemien stemmer" }],
+            },
+          ],
         ],
       ]),
       rows: [
@@ -376,14 +441,19 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
   test("splits a student's books into separate orders per resolving branch", ({ assert }) => {
     const plan = planSubjectChoices({
       ...baseInput,
-      branchItemsByBranchId: new Map([
+      subjectsByBranchId: new Map([
         [
           "branch-3sta",
-          [{ itemId: "item-kjemi", title: "Kjemien stemmer", categories: ["Kjemi 2"] }],
+          [
+            {
+              externalName: "Kjemi 2",
+              books: [{ itemId: "item-kjemi", title: "Kjemien stemmer" }],
+            },
+          ],
         ],
         [
           "branch-school",
-          [{ itemId: "item-fysikk", title: "Fysikkboka", categories: ["Fysikk 2"] }],
+          [{ externalName: "Fysikk 2", books: [{ itemId: "item-fysikk", title: "Fysikkboka" }] }],
         ],
       ]),
       rows: [

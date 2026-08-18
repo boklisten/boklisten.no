@@ -8,6 +8,7 @@ import {
   IconClock,
   IconHierarchy3,
   IconPlus,
+  IconSchool,
   IconShoppingCart,
   IconUsers,
 } from "@tabler/icons-react";
@@ -22,6 +23,7 @@ import BranchMembers from "@/features/branches/BranchMembers";
 import BranchPaymentSettings from "@/features/branches/BranchPaymentSettings";
 import BranchRelationshipSettings from "@/features/branches/BranchRelationshipSettings";
 import OpeningHoursSettings from "@/features/branches/opening_hours/OpeningHoursSettings";
+import BranchSubjectSettings from "@/features/branches/subjects/BranchSubjectSettings";
 import UploadBranchUsers from "@/features/branches/UploadBranchUsers";
 import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
@@ -89,6 +91,9 @@ export default function BranchManager() {
                   <Tabs.Tab value={"books"} leftSection={<IconBooks />}>
                     Bøker
                   </Tabs.Tab>
+                  <Tabs.Tab value={"subjects"} leftSection={<IconSchool />}>
+                    Fag
+                  </Tabs.Tab>
                   <Tabs.Tab value={"hours"} leftSection={<IconClock />}>
                     Åpningstider
                   </Tabs.Tab>
@@ -113,6 +118,9 @@ export default function BranchManager() {
                 </Tabs.Panel>
                 <Tabs.Panel value={"books"}>
                   <BranchItemSettings key={selectedBranchId} branchId={selectedBranch.id} />
+                </Tabs.Panel>
+                <Tabs.Panel value={"subjects"}>
+                  <BranchSubjectSettings key={selectedBranchId} branchId={selectedBranch.id} />
                 </Tabs.Panel>
                 <Tabs.Panel value={"hours"}>
                   <OpeningHoursSettings key={selectedBranchId} branchId={selectedBranch.id} />

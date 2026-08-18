@@ -39,6 +39,13 @@ export interface ApiDefinition {
     evaluateSubjectChoices: typeof routes['branch_upload.evaluate_subject_choices']
     uploadSubjectChoices: typeof routes['branch_upload.upload_subject_choices']
   }
+  branchSubjects: {
+    getSubjects: typeof routes['branch_subjects.get_subjects']
+    createSubject: typeof routes['branch_subjects.create_subject']
+    updateSubject: typeof routes['branch_subjects.update_subject']
+    deleteSubject: typeof routes['branch_subjects.delete_subject']
+    importSubjects: typeof routes['branch_subjects.import_subjects']
+  }
   branchRelationship: {
     update: typeof routes['branch_relationship.update']
   }

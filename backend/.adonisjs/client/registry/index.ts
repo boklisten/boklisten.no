@@ -132,6 +132,36 @@ const routes = {
     tokens: [{"old":"/v2/branches/:branchId/subject_choices/upload","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/subject_choices/upload","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/subject_choices/upload","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/subject_choices/upload","type":0,"val":"subject_choices","end":""},{"old":"/v2/branches/:branchId/subject_choices/upload","type":0,"val":"upload","end":""}],
     types: placeholder as Registry['branch_upload.upload_subject_choices']['types'],
   },
+  'branch_subjects.get_subjects': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/branches/:branchId/subjects',
+    tokens: [{"old":"/v2/branches/:branchId/subjects","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/subjects","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/subjects","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/subjects","type":0,"val":"subjects","end":""}],
+    types: placeholder as Registry['branch_subjects.get_subjects']['types'],
+  },
+  'branch_subjects.create_subject': {
+    methods: ["POST"],
+    pattern: '/v2/branches/:branchId/subjects',
+    tokens: [{"old":"/v2/branches/:branchId/subjects","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/subjects","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/subjects","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/subjects","type":0,"val":"subjects","end":""}],
+    types: placeholder as Registry['branch_subjects.create_subject']['types'],
+  },
+  'branch_subjects.update_subject': {
+    methods: ["PUT"],
+    pattern: '/v2/branches/:branchId/subjects/:subjectId',
+    tokens: [{"old":"/v2/branches/:branchId/subjects/:subjectId","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/subjects/:subjectId","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/subjects/:subjectId","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/subjects/:subjectId","type":0,"val":"subjects","end":""},{"old":"/v2/branches/:branchId/subjects/:subjectId","type":1,"val":"subjectId","end":""}],
+    types: placeholder as Registry['branch_subjects.update_subject']['types'],
+  },
+  'branch_subjects.delete_subject': {
+    methods: ["DELETE"],
+    pattern: '/v2/branches/:branchId/subjects/:subjectId',
+    tokens: [{"old":"/v2/branches/:branchId/subjects/:subjectId","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/subjects/:subjectId","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/subjects/:subjectId","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/subjects/:subjectId","type":0,"val":"subjects","end":""},{"old":"/v2/branches/:branchId/subjects/:subjectId","type":1,"val":"subjectId","end":""}],
+    types: placeholder as Registry['branch_subjects.delete_subject']['types'],
+  },
+  'branch_subjects.import_subjects': {
+    methods: ["POST"],
+    pattern: '/v2/branches/:branchId/subjects/import',
+    tokens: [{"old":"/v2/branches/:branchId/subjects/import","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/subjects/import","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/subjects/import","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/subjects/import","type":0,"val":"subjects","end":""},{"old":"/v2/branches/:branchId/subjects/import","type":0,"val":"import","end":""}],
+    types: placeholder as Registry['branch_subjects.import_subjects']['types'],
+  },
   'branch_relationship.update': {
     methods: ["PATCH"],
     pattern: '/v2/branches/relationships',

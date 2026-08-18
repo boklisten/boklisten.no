@@ -338,6 +338,13 @@ export default function UploadSubjectChoices({
                 label={"elever har alt fra før"}
                 labelSingular={"elev har alt fra før"}
               />
+              {evaluation.metrics.choicesWithoutBooks > 0 && (
+                <Metric
+                  value={evaluation.metrics.choicesWithoutBooks}
+                  label={"fagvalg gjelder fag uten bøker"}
+                  labelSingular={"fagvalg gjelder fag uten bøker"}
+                />
+              )}
             </SimpleGrid>
             <ReportProblems report={evaluation} />
             {evaluation.metrics.studentsWithOrders === 0 && (
@@ -392,6 +399,13 @@ export default function UploadSubjectChoices({
                 label={"elever hadde alt fra før"}
                 labelSingular={"elev hadde alt fra før"}
               />
+              {result.metrics.choicesWithoutBooks > 0 && (
+                <Metric
+                  value={result.metrics.choicesWithoutBooks}
+                  label={"fagvalg gjaldt fag uten bøker"}
+                  labelSingular={"fagvalg gjaldt fag uten bøker"}
+                />
+              )}
             </SimpleGrid>
             <ReportProblems report={result} />
             {result.errors.length > 0 && (

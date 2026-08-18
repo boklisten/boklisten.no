@@ -1,9 +1,13 @@
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { ACTIVE_CUSTOMER_ITEM_MATCH, OPEN_ORDER_ITEM_MATCH } from "#services/branch_books_service";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
+import {
+  fetchSubjectsForUpload,
+  normalizeSubjectName,
+  SubjectForUpload,
+} from "#services/branch_subjects_service";
 import { StorageService } from "#services/storage_service";
 import { buildBranchMappings } from "#services/user_provisioning_service";
 import { Period } from "#shared/period";
@@ -22,12 +26,6 @@ export interface MemberSummary {
   branchMembership: string | null;
 }
 
-export interface SubjectBranchItem {
-  itemId: string;
-  title: string;
-  categories: string[];
-}
-
 interface SubjectChoiceGroup {
   name: string;
   localName: string;
@@ -37,7 +35,7 @@ interface SubjectChoiceGroup {
 export interface PlannedOrder {
   customerId: string;
   customerName: string;
-  /** The branch whose branchItems resolved the order's subjects */
+  /** The branch whose subjects resolved the order's books */
   branchId: string;
   orderItems: {
     itemId: string;
@@ -54,6 +52,8 @@ export interface SubjectChoicesPlan {
     totalBooks: number;
     skippedAlreadyOwned: number;
     studentsAlreadyCovered: number;
+    /** Choices that matched a subject with no books: recognized, but nothing to order */
+    choicesWithoutBooks: number;
   };
   unknownSubjects: { subject: string; studentCount: number }[];
   unknownUsers: { name: string; localName: string }[];
@@ -119,24 +119,24 @@ export function resolveSubjectItems({
   uploadBranchId,
   subject,
   parentByBranchId,
-  branchItemsByBranchId,
+  subjectsByBranchId,
 }: {
   startBranchId: string;
   uploadBranchId: string;
   subject: string;
   parentByBranchId: Map<string, string>;
-  branchItemsByBranchId: Map<string, SubjectBranchItem[]>;
+  subjectsByBranchId: Map<string, SubjectForUpload[]>;
 }): { branchId: string; items: { itemId: string; title: string }[] } | null {
-  const normalizedSubject = normalizeCompact(subject);
+  const normalizedSubject = normalizeSubjectName(subject);
   const visited = new Set<string>();
   let branchId: string | undefined = startBranchId;
   while (branchId && !visited.has(branchId)) {
     visited.add(branchId);
-    const items = (branchItemsByBranchId.get(branchId) ?? []).filter((branchItem) =>
-      branchItem.categories.some((category) => normalizeCompact(category) === normalizedSubject),
+    const match = (subjectsByBranchId.get(branchId) ?? []).find(
+      (branchSubject) => normalizeSubjectName(branchSubject.externalName) === normalizedSubject,
     );
-    if (items.length > 0) {
-      return { branchId, items: items.map(({ itemId, title }) => ({ itemId, title })) };
+    if (match) {
+      return { branchId, items: match.books };
     }
     if (branchId === uploadBranchId) return null;
     branchId = parentByBranchId.get(branchId);
@@ -171,7 +171,7 @@ export function planSubjectChoices({
   members,
   klasseBranchIdByLocalName,
   parentByBranchId,
-  branchItemsByBranchId,
+  subjectsByBranchId,
   ownedItemKeys,
   now,
 }: {
@@ -180,7 +180,7 @@ export function planSubjectChoices({
   members: MemberSummary[];
   klasseBranchIdByLocalName: Map<string, string | null>;
   parentByBranchId: Map<string, string>;
-  branchItemsByBranchId: Map<string, SubjectBranchItem[]>;
+  subjectsByBranchId: Map<string, SubjectForUpload[]>;
   ownedItemKeys: Set<string>;
   now: Date;
 }): SubjectChoicesPlan {
@@ -191,6 +191,7 @@ export function planSubjectChoices({
       totalBooks: 0,
       skippedAlreadyOwned: 0,
       studentsAlreadyCovered: 0,
+      choicesWithoutBooks: 0,
     },
     unknownSubjects: [],
     unknownUsers: [],
@@ -245,7 +246,7 @@ export function planSubjectChoices({
         uploadBranchId,
         subject: choice.subject,
         parentByBranchId,
-        branchItemsByBranchId,
+        subjectsByBranchId,
       });
       if (!resolved) {
         const key = normalizeCompact(choice.subject);
@@ -255,6 +256,10 @@ export function planSubjectChoices({
         };
         entry.students.add(member.id);
         unknownSubjectStudents.set(key, entry);
+        continue;
+      }
+      if (resolved.items.length === 0) {
+        plan.metrics.choicesWithoutBooks++;
         continue;
       }
       for (const item of resolved.items) {
@@ -333,41 +338,6 @@ async function fetchMembers(scopeIds: string[]): Promise<MemberSummary[]> {
   }));
 }
 
-async function fetchBranchItems(scopeIds: string[]) {
-  const branchItems = (await StorageService.BranchItems.aggregate([
-    { $match: { branch: { $in: scopeIds.map((id) => new ObjectId(id)) } } },
-    {
-      $lookup: {
-        from: BlSchemaName.Items,
-        localField: "item",
-        foreignField: "_id",
-        as: "item",
-      },
-    },
-    { $unwind: "$item" },
-    {
-      $project: {
-        branch: 1,
-        categories: { $ifNull: ["$categories", []] },
-        itemId: { $toString: "$item._id" },
-        title: "$item.title",
-      },
-    },
-  ])) as { branch: string; categories: string[]; itemId: string; title: string }[];
-  const branchItemsByBranchId = new Map<string, SubjectBranchItem[]>();
-  for (const branchItem of branchItems) {
-    const branchId = String(branchItem.branch);
-    const items = branchItemsByBranchId.get(branchId) ?? [];
-    items.push({
-      itemId: branchItem.itemId,
-      title: branchItem.title,
-      categories: branchItem.categories,
-    });
-    branchItemsByBranchId.set(branchId, items);
-  }
-  return branchItemsByBranchId;
-}
-
 async function fetchOwnedItemKeys(customerIds: string[]): Promise<Set<string>> {
   if (customerIds.length === 0) return new Set();
   const customerObjectIds = customerIds.map((id) => new ObjectId(id));
@@ -395,9 +365,9 @@ async function fetchOwnedItemKeys(customerIds: string[]): Promise<Set<string>> {
 
 async function buildPlan(branchId: string, rows: SubjectChoiceRow[]): Promise<SubjectChoicesPlan> {
   const { scopeIds, branches } = await fetchScopeBranches(branchId);
-  const [members, branchItemsByBranchId] = await Promise.all([
+  const [members, subjectsByBranchId] = await Promise.all([
     fetchMembers(scopeIds),
-    fetchBranchItems(scopeIds),
+    fetchSubjectsForUpload(scopeIds),
   ]);
 
   const parentByBranchId = new Map<string, string>();
@@ -430,7 +400,7 @@ async function buildPlan(branchId: string, rows: SubjectChoiceRow[]): Promise<Su
     members,
     klasseBranchIdByLocalName,
     parentByBranchId,
-    branchItemsByBranchId,
+    subjectsByBranchId,
     ownedItemKeys,
     now: new Date(),
   });

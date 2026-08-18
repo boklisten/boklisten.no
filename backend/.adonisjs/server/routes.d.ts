@@ -25,6 +25,11 @@ export type ScannedRoutes = {
     'branches.update': { paramsTuple?: []; params?: {} }
     'branch_upload.evaluate_subject_choices': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_upload.upload_subject_choices': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_subjects.get_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_subjects.create_subject': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_subjects.update_subject': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
+    'branch_subjects.delete_subject': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
+    'branch_subjects.import_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_relationship.update': { paramsTuple?: []; params?: {} }
     'branch_membership.get_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_membership.update_membership': { paramsTuple?: []; params?: {} }
@@ -187,6 +192,7 @@ export type ScannedRoutes = {
     'branches.get_public': { paramsTuple?: []; params?: {} }
     'branches.get_all': { paramsTuple?: []; params?: {} }
     'branches.get_by_id': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_subjects.get_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_membership.get_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -270,6 +276,7 @@ export type ScannedRoutes = {
     'branches.get_public': { paramsTuple?: []; params?: {} }
     'branches.get_all': { paramsTuple?: []; params?: {} }
     'branches.get_by_id': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_subjects.get_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_membership.get_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -358,6 +365,8 @@ export type ScannedRoutes = {
     'branches.add': { paramsTuple?: []; params?: {} }
     'branch_upload.evaluate_subject_choices': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_upload.upload_subject_choices': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_subjects.create_subject': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_subjects.import_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.cancel_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'orders.cancel_order_item': { paramsTuple?: []; params?: {} }
     'questions_and_answers.store': { paramsTuple?: []; params?: {} }
@@ -406,6 +415,7 @@ export type ScannedRoutes = {
   }
   DELETE: {
     'waiting_list_customer.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'branch_subjects.delete_subject': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
     'branch_membership.remove_direct_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_membership.remove_indirect_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'editable_texts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -444,6 +454,7 @@ export type ScannedRoutes = {
     'collection.companies.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   PUT: {
+    'branch_subjects.update_subject': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
     'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }

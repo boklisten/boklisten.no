@@ -34,6 +34,50 @@ export class BookHandoverSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class BranchSubjectBookSchema extends BaseModel {
+  static $columns = ['branchSubjectId', 'buy', 'buyAtBranch', 'createdAt', 'id', 'itemId', 'partlyPayment', 'partlyPaymentAtBranch', 'rent', 'rentAtBranch', 'updatedAt'] as const
+  $columns = BranchSubjectBookSchema.$columns
+  @column()
+  declare branchSubjectId: number
+  @column()
+  declare buy: boolean
+  @column()
+  declare buyAtBranch: boolean
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare itemId: string
+  @column()
+  declare partlyPayment: boolean
+  @column()
+  declare partlyPaymentAtBranch: boolean
+  @column()
+  declare rent: boolean
+  @column()
+  declare rentAtBranch: boolean
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class BranchSubjectSchema extends BaseModel {
+  static $columns = ['branchId', 'createdAt', 'externalName', 'id', 'name', 'updatedAt'] as const
+  $columns = BranchSubjectSchema.$columns
+  @column()
+  declare branchId: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare externalName: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class EditableTextSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'text', 'updatedAt'] as const
   $columns = EditableTextSchema.$columns

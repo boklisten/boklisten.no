@@ -2,6 +2,7 @@ import { createFormHookContexts, createFormHook } from "@tanstack/react-form";
 
 import ErrorSummary from "@/shared/components/form/ErrorSummary";
 import CheckboxField from "@/shared/components/form/fields/basic/CheckboxField";
+import ChipsField from "@/shared/components/form/fields/basic/ChipsField";
 import DateField from "@/shared/components/form/fields/basic/DateField";
 import DateTimePickerField from "@/shared/components/form/fields/basic/DateTimePickerField";
 import MultiSelectField from "@/shared/components/form/fields/basic/MultiSelectField";
@@ -47,6 +48,7 @@ const { useAppForm, withFieldGroup } = createFormHook({
     SelectField,
     MultiSelectField,
     CheckboxField,
+    ChipsField,
     SwitchField,
     TagsField,
     CsvFileField,
