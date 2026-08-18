@@ -34,7 +34,6 @@ test.group("VippsCheckoutService.update", (group) => {
       branch: "branch1",
       customer: "customer1",
       byCustomer: true,
-      pendingSignature: false,
     } as unknown as Order;
 
     sandbox = createSandbox();

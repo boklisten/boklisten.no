@@ -1,14 +1,14 @@
+import logger from "@adonisjs/core/services/logger";
+
 import DispatchService from "#services/dispatch_service";
 import { CustomerItemHandler } from "#services/legacy/collections/customer-item/helpers/customer-item-handler";
 import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
 import { PaymentHandler } from "#services/legacy/collections/payment/helpers/payment-handler";
 import { OrderEmailHandler } from "#services/legacy/order_email_handler";
-import { userHasValidSignature } from "#services/legacy/signature.helper";
+import { reconcileSignatureTask } from "#services/legacy/signature.helper";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
-import { OrderItemType } from "#shared/order/order-item/order-item-type";
 import { UserDetail } from "#shared/user-detail";
 
 export class OrderPlacedHandler {
@@ -31,8 +31,6 @@ export class OrderPlacedHandler {
 
   public async placeOrder(order: Order, detailsId: string): Promise<Order> {
     try {
-      const pendingSignature = await this.isSignaturePending(order);
-
       const payments = await this.paymentHandler.confirmPayments(order);
 
       const paymentIds = payments.map((payment) => payment.id);
@@ -40,18 +38,29 @@ export class OrderPlacedHandler {
       const placedOrder = await StorageService.Orders.update(order.id, {
         placed: true,
         payments: paymentIds,
-        pendingSignature,
       });
 
       await this.updateCustomerItemsIfPresent(placedOrder, detailsId);
       await this.orderItemMovedFromOrderHandler.updateOrderItems(placedOrder);
       await this.updateUserDetailWithPlacedOrder(placedOrder);
+      await this.updateSignatureTask(placedOrder);
       await this.sendOrderConfirmationMail(placedOrder);
 
       return placedOrder;
     } catch (error) {
       // @ts-expect-error fixme: auto ignored
       throw new BlError("could not update order: " + error).add(error);
+    }
+  }
+
+  private async updateSignatureTask(order: Order): Promise<void> {
+    try {
+      if (!order?.customer) return;
+      const userDetail = await StorageService.UserDetails.getOrNull(order.customer);
+      if (!userDetail) return;
+      await reconcileSignatureTask(userDetail);
+    } catch (error) {
+      logger.error(`could not update signature task for order ${order.id}: ${error}`);
     }
   }
 
@@ -164,46 +173,4 @@ export class OrderPlacedHandler {
       await OrderEmailHandler.sendOrderReceipt(customerDetail, order);
     }
   }
-
-  /**
-   * Find out whether an order will require signature to become valid
-   *
-   * @throws BlError if an orderItem is a handout without a valid signature, which happens if the customer does not
-   * have a signature currently and the original order for the item is pending signature.
-   */
-  public async isSignaturePending(order: Order): Promise<boolean> {
-    const userDetail = await StorageService.UserDetails.get(order.customer);
-
-    const hasValidSignature = await userHasValidSignature(userDetail);
-    if (hasValidSignature) {
-      return false;
-    }
-
-    for (const orderItem of this.orderItemsWhichRequireSignature(order)) {
-      if (orderItem.handout) {
-        if (orderItem.movedFromOrder) {
-          const originalOrder = await StorageService.Orders.get(orderItem.movedFromOrder);
-          if (!originalOrder.pendingSignature) continue;
-        }
-        // fixme: remove this return and uncomment throw to enforce signature
-        //       requirement on handout
-        return true;
-        // throw new BlError(
-        //   "Tried to hand out item without active signature",
-        // ).code(811);
-      } else {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private orderItemsWhichRequireSignature(order: Order): OrderItem[] {
-    return order.orderItems.filter((orderItem) =>
-      orderItemTypesWhichRequireSignature.has(orderItem.type),
-    );
-  }
 }
-
-const orderItemTypesWhichRequireSignature = new Set<OrderItemType>(["rent", "loan"]);

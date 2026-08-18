@@ -105,10 +105,6 @@ export const OrderSchema: BlSchema<Order> = new Schema({
   notification: {
     email: Boolean,
   },
-  pendingSignature: {
-    type: Boolean,
-    required: true,
-  },
   checkoutState: String,
   kustomCheckoutId: String,
 });

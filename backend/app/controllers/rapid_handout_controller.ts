@@ -180,7 +180,6 @@ export default class RapidHandoutController {
       customer: customerId,
       byCustomer: false,
       employee: employeeId,
-      pendingSignature: false,
       orderItems: [
         {
           movedFromOrder,

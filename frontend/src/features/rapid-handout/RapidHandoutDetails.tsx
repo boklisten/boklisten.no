@@ -80,7 +80,6 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
-  const hasValidSignature = signatureStatus?.isSignatureValid === true;
   const [opened, { open, close }] = useDisclosure(false);
   const [itemStatuses, setItemStatuses] = useState<ItemStatus[]>([]);
   const [pendingBlid, setPendingBlid] = useState<string | null>(null);
@@ -237,7 +236,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
             color={"green"}
             leftSection={<IconObjectScan />}
             onClick={open}
-            disabled={!hasValidSignature}
+            disabled={signatureStatus?.signatureRequired}
           >
             Scan bøker
           </Button>

@@ -62,7 +62,6 @@ test.group("DeliveryValidator", (group) => {
       customer: "customer1",
       byCustomer: true,
       orderItems: [],
-      pendingSignature: false,
     };
   });
   group.each.teardown(() => {

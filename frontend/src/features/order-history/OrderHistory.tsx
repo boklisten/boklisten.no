@@ -44,7 +44,6 @@ export default function OrderHistory() {
           key={order.id}
           id={order.id}
           creationTime={order.creationTime}
-          pendingSignature={order.pendingSignature}
           orderItems={order.orderItems}
           payments={order.payments ?? []}
           branchName={order.branchName}

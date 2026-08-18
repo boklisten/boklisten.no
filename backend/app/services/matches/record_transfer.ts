@@ -148,7 +148,6 @@ async function createMatchReceiveOrder(
     branch: branch.id,
     customer: userDetailId,
     byCustomer: true,
-    pendingSignature: false,
     orderItems: [
       {
         movedFromOrder,
@@ -191,7 +190,6 @@ async function createMatchDeliverOrder(
     branch: branch.id,
     customer: userDetailId,
     byCustomer: true,
-    pendingSignature: false,
     orderItems: [
       {
         item: item.id,

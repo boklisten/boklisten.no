@@ -89,7 +89,6 @@ test.group("OrderPlaceOperation", (group) => {
     placed: false,
     payments: ["payment1"],
     delivery: "delivery1",
-    pendingSignature: false,
   };
 
   const userDetailWithSignatures: UserDetail = {

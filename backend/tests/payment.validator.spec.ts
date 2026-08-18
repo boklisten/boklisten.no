@@ -41,7 +41,6 @@ test.group("PaymentValidator", (group) => {
       branch: "branch1",
       orderItems: [],
       byCustomer: true,
-      pendingSignature: false,
     };
 
     testDelivery = {

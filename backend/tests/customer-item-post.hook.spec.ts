@@ -92,7 +92,6 @@ test.group("CustomerItemPostHook", (group) => {
       employee: "employee1",
       placed: true,
       payments: [],
-      pendingSignature: false,
     };
 
     validateCustomerItem = true;

@@ -120,7 +120,6 @@ export default class BulkCollectionController {
         customer,
         byCustomer: false,
         payments: [],
-        pendingSignature: false,
       });
 
       await placeOperation.run({ documentId: order.id, user });

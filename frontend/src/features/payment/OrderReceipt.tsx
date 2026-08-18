@@ -27,7 +27,6 @@ export default function OrderReceipt({ orderId }: { orderId: string }) {
     <OrderCard
       id={data.id}
       creationTime={data.creationTime}
-      pendingSignature={data.pendingSignature}
       orderItems={data.orderItems}
       payments={data.payments}
       branchName={data.branchName}

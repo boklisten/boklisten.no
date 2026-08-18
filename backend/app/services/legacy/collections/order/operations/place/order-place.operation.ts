@@ -220,8 +220,6 @@ export class OrderPlaceOperation implements Operation {
       throw new ReferenceError(`order "${blApiRequest.documentId}" not found`);
     }
 
-    const pendingSignature = await this.orderPlacedHandler.isSignaturePending(order);
-
     if (order.byCustomer) {
       const orderContainsActiveCustomerItems = await this.hasOpenOrderWithOrderItems(order);
       if (orderContainsActiveCustomerItems) {
@@ -266,7 +264,6 @@ export class OrderPlaceOperation implements Operation {
         order.id,
         {
           orderItems: order.orderItems,
-          pendingSignature,
         },
         // @ts-expect-error // fixme: bad enums
         blApiRequest.user,

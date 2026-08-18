@@ -1,7 +1,7 @@
 import { HttpContext } from "@adonisjs/core/http";
 
 import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpers/user-detail.helper";
-import { userHasValidSignature } from "#services/legacy/signature.helper";
+import { reconcileSignatureTask } from "#services/legacy/signature.helper";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { UserDetailService } from "#services/user_detail_service";
@@ -21,11 +21,7 @@ async function getUserDetail(detailsId: string) {
       "tasks.confirmDetails": true,
     });
   }
-  if (await userHasValidSignature(userDetail)) {
-    userDetail = await StorageService.UserDetails.update(detailsId, {
-      "tasks.signAgreement": false,
-    });
-  }
+  userDetail = await reconcileSignatureTask(userDetail);
   const user = await UserService.getByUserDetailsId(detailsId);
   return { ...userDetail, permission: user?.permission ?? "customer" };
 }

@@ -129,7 +129,6 @@ test.group("OrderPlacedHandler", (group) => {
       placed: true,
       payments: [],
       delivery: "delivery1",
-      pendingSignature: false,
       notification: { email: false },
     };
 
@@ -199,7 +198,7 @@ test.group("OrderPlacedHandler", (group) => {
       await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details);
     } catch (e) {
       // @ts-expect-error fixme: auto ignored
-      expect(e.errorStack[0].getMsg()).to.eq("user detail not found");
+      expect(e.errorStack[0].getMsg()).to.eq('customer "notFoundUserDetails" not found');
     }
   });
 

@@ -25,7 +25,7 @@ export default function SignatureStatusBanner({ userDetail }: { userDetail: User
   );
 
   if (isPending) {
-    return <Skeleton height={54} radius={"md"} />;
+    return null;
   }
   if (!data || isError) {
     return (
@@ -77,6 +77,10 @@ export default function SignatureStatusBanner({ userDetail }: { userDetail: User
         </Paper>
       </UnstyledButton>
     );
+  }
+
+  if (!data.signatureRequired) {
+    return null;
   }
 
   return (

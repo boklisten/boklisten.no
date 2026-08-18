@@ -34,7 +34,6 @@ test.group("PaymentPostHook", (group) => {
       customer: "customer1",
       byCustomer: true,
       payments: [],
-      pendingSignature: false,
     };
 
     testPayment = {

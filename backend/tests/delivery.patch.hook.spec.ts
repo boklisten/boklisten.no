@@ -34,7 +34,6 @@ test.group("DeliveryPatchHook", (group) => {
       customer: "customer1",
       byCustomer: true,
       delivery: "delivery1",
-      pendingSignature: false,
     };
 
     deliveryValidated = true;

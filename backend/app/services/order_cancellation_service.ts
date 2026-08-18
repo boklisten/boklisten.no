@@ -30,7 +30,6 @@ export const OrderCancellationService = {
       customer: originalOrder.customer,
       byCustomer: !employeeDetailsId,
       ...(employeeDetailsId && { employee: employeeDetailsId }),
-      pendingSignature: false,
       notification: { email: notifyCustomer },
       orderItems: orderItems.map((orderItem) => ({
         movedFromOrder: originalOrder.id,

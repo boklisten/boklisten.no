@@ -62,7 +62,6 @@ test.group("OrderPatchHook", (group) => {
       customer: "customer1",
       byCustomer: true,
       placed: false,
-      pendingSignature: false,
     };
 
     testAccessToken = {

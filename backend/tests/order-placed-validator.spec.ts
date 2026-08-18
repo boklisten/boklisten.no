@@ -46,7 +46,6 @@ test.group("OrderPlacedValidator", (group) => {
       branch: "b1",
       byCustomer: true,
       payments: ["payment1"],
-      pendingSignature: false,
     };
 
     testOrder.placed = true;

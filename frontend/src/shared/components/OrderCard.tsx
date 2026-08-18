@@ -1,7 +1,6 @@
 import type { OrderItem } from "@boklisten/backend/shared/order/order-item/order-item";
 import {
   ActionIcon,
-  Badge,
   Card,
   Collapse,
   CopyButton,
@@ -20,14 +19,12 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 
-import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import OrderItemTypeIcon from "@/shared/components/OrderItemTypeIcon";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
 export default function OrderCard({
   id,
   creationTime,
-  pendingSignature,
   orderItems,
   payments,
   branchName,
@@ -35,7 +32,6 @@ export default function OrderCard({
 }: {
   id: string;
   creationTime: Date | undefined;
-  pendingSignature: boolean;
   orderItems: (OrderItem & { typeLabel: string })[];
   payments: {
     id: string;
@@ -59,15 +55,7 @@ export default function OrderCard({
     .join(" · ");
 
   return (
-    <Card
-      shadow="sm"
-      padding={0}
-      radius="md"
-      withBorder
-      style={
-        pendingSignature ? { borderLeft: "4px solid var(--mantine-color-yellow-6)" } : undefined
-      }
-    >
+    <Card shadow="sm" padding={0} radius="md" withBorder>
       <UnstyledButton
         onClick={() => setExpanded((previous) => !previous)}
         aria-expanded={expanded}
@@ -89,11 +77,6 @@ export default function OrderCard({
               <Text fw={600} truncate>
                 {branchName ?? "Bestilling"}
               </Text>
-              {pendingSignature && (
-                <Badge color="yellow" variant="light" flex="none">
-                  Venter på signatur
-                </Badge>
-              )}
             </Group>
             <Text size="sm" c="dimmed" truncate>
               {bookSummary}
@@ -117,12 +100,6 @@ export default function OrderCard({
       <Collapse expanded={expanded}>
         <Divider />
         <Stack p="md" gap="sm">
-          {pendingSignature && (
-            <WarningAlert title="Denne ordren krever gyldig signatur">
-              Du må ha en gyldig signatur før du kan motta disse bøkene. Sjekk dine oppgaver for mer
-              informasjon
-            </WarningAlert>
-          )}
           <Stack gap="sm">
             {orderItems.map((orderItem, index) => (
               <Stack gap="sm" key={orderItem.title + orderItem.blid}>

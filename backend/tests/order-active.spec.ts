@@ -40,7 +40,6 @@ test.group("OrderActive", (group) => {
       customer: testUserId,
       byCustomer: true,
       placed: false,
-      pendingSignature: false,
     };
 
     getOrderByQueryStub.resolves([nonActiveOrder]);
@@ -57,7 +56,6 @@ test.group("OrderActive", (group) => {
       customer: testUserId,
       byCustomer: true,
       placed: false,
-      pendingSignature: false,
     };
 
     const activeOrder: Order = {
@@ -78,7 +76,6 @@ test.group("OrderActive", (group) => {
       customer: testUserId,
       byCustomer: true,
       placed: true,
-      pendingSignature: false,
     };
 
     getOrderByQueryStub.resolves([nonActiveOrder, activeOrder]);
@@ -105,7 +102,6 @@ test.group("OrderActive", (group) => {
       customer: testUserId,
       byCustomer: true,
       placed: true,
-      pendingSignature: false,
     };
 
     const nonActiveOrder2: Order = {
@@ -126,7 +122,6 @@ test.group("OrderActive", (group) => {
       customer: testUserId,
       byCustomer: true,
       placed: true,
-      pendingSignature: false,
     };
 
     getOrderByQueryStub.resolves([nonActiveOrder, nonActiveOrder2]);

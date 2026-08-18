@@ -452,7 +452,6 @@ export const SubjectChoicesService = {
           byCustomer: true,
           placed: true,
           payments: [],
-          pendingSignature: false,
         });
         summary.ordersCreated++;
         summary.booksOrdered += order.orderItems.length;

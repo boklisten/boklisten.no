@@ -141,7 +141,6 @@ export const OrderService = {
       customer: customerId,
       placed: false,
       byCustomer: true,
-      pendingSignature: false,
     });
   },
 };

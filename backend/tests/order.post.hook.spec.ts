@@ -75,7 +75,6 @@ test.group("OrderPostHook", (group) => {
       },
       lastUpdated: new Date(),
       creationTime: new Date(),
-      pendingSignature: false,
     };
 
     sandbox = createSandbox();

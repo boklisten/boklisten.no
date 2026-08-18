@@ -79,7 +79,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
       payments: [],
       delivery: "delivery1",
       creationTime: today,
-      pendingSignature: false,
     };
 
     const expectedResult = [
@@ -170,7 +169,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
       payments: [],
       delivery: "delivery1",
       creationTime: today,
-      pendingSignature: false,
     };
 
     const expectedResult = [
@@ -291,7 +289,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
       payments: [],
       delivery: "delivery1",
       creationTime: today,
-      pendingSignature: false,
     };
 
     const result = generator.generate(order);
@@ -328,7 +325,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
       payments: [],
       delivery: "delivery1",
       creationTime: today,
-      pendingSignature: false,
     };
 
     const expectedResult = [
@@ -413,7 +409,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
       payments: [],
       delivery: "delivery1",
       creationTime: today,
-      pendingSignature: false,
     };
 
     const expectedResult = [
@@ -528,7 +523,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
       payments: [],
       delivery: "delivery1",
       creationTime: today,
-      pendingSignature: false,
     };
 
     const expectedResult = [
@@ -673,7 +667,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
       payments: [],
       delivery: "delivery1",
       creationTime: today,
-      pendingSignature: false,
     };
 
     const expectedResult = [

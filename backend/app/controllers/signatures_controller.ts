@@ -7,7 +7,7 @@ import { DateService } from "#services/legacy/date.service";
 import {
   getValidUserSignature,
   isUnderage,
-  signOrders,
+  reconcileSignatureTask,
   userHasValidSignature,
 } from "#services/legacy/signature.helper";
 import { PermissionService } from "#services/permission_service";
@@ -20,14 +20,16 @@ export default class SignaturesController {
     PermissionService.employeeOrFail(ctx);
 
     const detailsId = ctx.request.param("detailsId");
-    const userDetail = await StorageService.UserDetails.getOrNull(detailsId);
+    let userDetail = await StorageService.UserDetails.getOrNull(detailsId);
     if (!userDetail) return null;
 
+    userDetail = await reconcileSignatureTask(userDetail);
     const validSignature = await getValidUserSignature(userDetail);
     if (validSignature) {
       return {
         image: validSignature.image,
         isSignatureValid: true,
+        signatureRequired: false,
         signedByGuardian: validSignature.signedByGuardian,
         signingName: validSignature.signingName,
         signedAtText:
@@ -43,6 +45,7 @@ export default class SignaturesController {
 
     return {
       isSignatureValid: false,
+      signatureRequired: userDetail.tasks?.signAgreement === true,
     };
   }
   async sendSignatureLink(ctx: HttpContext) {
@@ -120,6 +123,5 @@ export default class SignaturesController {
       signatures: [...userDetail.signatures, writtenSignature.id],
       "tasks.signAgreement": false,
     });
-    await signOrders(userDetail);
   }
 }
