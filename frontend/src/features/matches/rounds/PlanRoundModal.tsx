@@ -6,6 +6,7 @@ import { Activity, useState } from "react";
 
 import { SLOT_TIME_PATTERN } from "@boklisten/backend/shared/match/match-round-dto";
 
+import ExcludedCustomersField from "@/features/matches/rounds/ExcludedCustomersField";
 import { useRefreshRounds, type Round } from "@/features/matches/rounds/useRounds";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { useAppForm } from "@/shared/hooks/form";
@@ -36,6 +37,7 @@ interface PlanFields {
   standFrom: string;
   standTo: string;
   userMatchLocations: { name: string }[];
+  excludedCustomerIds: string[];
 }
 
 const emptyPlan: PlanFields = {
@@ -50,6 +52,7 @@ const emptyPlan: PlanFields = {
   standFrom: "",
   standTo: "",
   userMatchLocations: [{ name: "" }],
+  excludedCustomerIds: [],
 };
 
 function planOf(round: Round): PlanFields {
@@ -65,6 +68,7 @@ function planOf(round: Round): PlanFields {
     standFrom: round.standFrom,
     standTo: round.standTo,
     userMatchLocations: round.userMatchLocations.map((name) => ({ name })),
+    excludedCustomerIds: round.excludedCustomerIds,
   };
 }
 
@@ -116,6 +120,7 @@ export default function PlanRoundModal({
         standFrom: values.standFrom,
         standTo: values.standTo,
         userMatchLocations: locations,
+        excludedCustomerIds: values.excludedCustomerIds,
       };
 
       return round
@@ -192,6 +197,19 @@ export default function PlanRoundModal({
         <form.AppField name={"includeCustomerItemsFromOtherBranches"}>
           {(field) => <field.CheckboxField label={"Ta med bøker delt ut ved andre filialer"} />}
         </form.AppField>
+
+        <Fieldset legend={"Ekskluderte elever"}>
+          <Stack>
+            <Text size={"sm"} c={"dimmed"}>
+              Disse elevene holdes helt utenfor runden og får ingen overleveringer.
+            </Text>
+            <form.AppField name={"excludedCustomerIds"}>
+              {(field) => (
+                <ExcludedCustomersField value={field.state.value} onChange={field.setValue} />
+              )}
+            </form.AppField>
+          </Stack>
+        </Fieldset>
 
         <form.AppField
           name={"meetingDate"}

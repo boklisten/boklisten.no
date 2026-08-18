@@ -22,6 +22,7 @@ const base = {
   standTo: "16:00",
   userMatchLocations: ["Biblioteket"],
   includeCustomerItemsFromOtherBranches: false,
+  excludedCustomerIds: [],
 };
 
 async function rejection(payload: object): Promise<Error | null> {
@@ -40,6 +41,20 @@ test.group("matchRoundCreateValidator", () => {
     assert.equal(result.userMeetingFrom, "12:00");
     assert.equal(result.standTo, "16:00");
     assert.deepEqual(result.userMatchLocations, ["Biblioteket"]);
+  });
+
+  test("keeps the excluded customer list, empty or not", async ({ assert }) => {
+    const excluded = await matchRoundCreateValidator.validate({
+      ...base,
+      excludedCustomerIds: ["5d765db5fc8c47001c408d81"],
+    });
+    assert.deepEqual(excluded.excludedCustomerIds, ["5d765db5fc8c47001c408d81"]);
+
+    const nobody = await matchRoundCreateValidator.validate({
+      ...base,
+      excludedCustomerIds: [],
+    });
+    assert.deepEqual(nobody.excludedCustomerIds, []);
   });
 
   test("rejects an ISO timestamp deadline", async ({ assert }) => {

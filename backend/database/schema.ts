@@ -141,7 +141,7 @@ export class MatchParticipantSchema extends BaseModel {
 }
 
 export class MatchRoundSchema extends BaseModel {
-  static $columns = ['branches', 'createdAt', 'deadline', 'generatedAt', 'id', 'includeCustomerItemsFromOtherBranches', 'meetingDate', 'name', 'standFrom', 'standLocation', 'standTo', 'status', 'updatedAt', 'userMatchLocations', 'userMeetingFrom', 'userMeetingTo'] as const
+  static $columns = ['branches', 'createdAt', 'deadline', 'excludedCustomerIds', 'generatedAt', 'id', 'includeCustomerItemsFromOtherBranches', 'meetingDate', 'name', 'standFrom', 'standLocation', 'standTo', 'status', 'updatedAt', 'userMatchLocations', 'userMeetingFrom', 'userMeetingTo'] as const
   $columns = MatchRoundSchema.$columns
   @column()
   declare branches: any
@@ -149,6 +149,8 @@ export class MatchRoundSchema extends BaseModel {
   declare createdAt: DateTime | null
   @column.date()
   declare deadline: DateTime
+  @column()
+  declare excludedCustomerIds: any
   @column.dateTime()
   declare generatedAt: DateTime | null
   @column({ isPrimary: true })

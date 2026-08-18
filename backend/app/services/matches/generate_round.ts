@@ -62,6 +62,7 @@ export async function generateRound(round: MatchRound) {
     includeCustomerItemsFromOtherBranches,
     meetingDate,
     userMatchLocations,
+    excludedCustomerIds,
   } = round;
 
   if (deadline.startOf("day") < DateTime.now().startOf("day")) {
@@ -85,6 +86,11 @@ export async function generateRound(round: MatchRound) {
     getHeldItems(branches, deadline, includeCustomerItemsFromOtherBranches),
     getWantedItems(branches),
   ]);
+
+  for (const excludedId of excludedCustomerIds) {
+    heldByCustomer.delete(excludedId);
+    wantedByCustomer.delete(excludedId);
+  }
 
   const groupMemberships = await getGroupMemberships([
     ...new Set([...heldByCustomer.keys(), ...wantedByCustomer.keys()]),

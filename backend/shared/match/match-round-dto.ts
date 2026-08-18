@@ -22,6 +22,8 @@ export interface MatchRoundPlan {
   includeCustomerItemsFromOtherBranches: boolean;
   /** Where students meet each other, in the order an admin listed them. */
   userMatchLocations: string[];
+  /** Mongo userDetail ids the match finder skips entirely: no matches, books go via the stand. */
+  excludedCustomerIds: string[];
 }
 
 /**

@@ -32,6 +32,7 @@ export function testRoundPlan(overrides: Partial<MatchRound> = {}) {
     standTo: "16:00",
     includeCustomerItemsFromOtherBranches: false,
     userMatchLocations: ["Biblioteket"],
+    excludedCustomerIds: [],
     ...overrides,
   };
 }

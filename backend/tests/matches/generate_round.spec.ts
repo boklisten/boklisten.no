@@ -125,6 +125,37 @@ test.group("generateRound", (group) => {
     assert.equal(handoff!.sender.userDetailId, A);
   });
 
+  test("an excluded customer gets no matches, and their books come from the stand", async ({
+    assert,
+  }) => {
+    // A and B could swap X for Y, but A is excluded — so B must go through the stand instead.
+    stubMongo(
+      [heldBy(A, [ITEM_X]), heldBy(B, [ITEM_Y])],
+      [
+        { id: A, wantedItems: [ITEM_Y] },
+        { id: B, wantedItems: [ITEM_X] },
+      ],
+    );
+    const round = await createTestRound({ branches: [BRANCH], excludedCustomerIds: [A] });
+
+    await generateRound(round);
+
+    const obligations = await MatchObligation.query().preload("sender").preload("receiver");
+    assert.isNotEmpty(obligations);
+    for (const o of obligations) {
+      assert.notEqual(o.sender.userDetailId, A, "an excluded customer must never send");
+      assert.notEqual(o.receiver.userDetailId, A, "an excluded customer must never receive");
+    }
+
+    const pickup = obligations.find((o) => o.receiver.userDetailId === B && o.itemId === ITEM_X);
+    assert.isDefined(pickup, "B still gets the book they wanted");
+    assert.isNull(pickup!.sender.userDetailId, "…but from the stand, not from A");
+
+    const handoff = obligations.find((o) => o.sender.userDetailId === B && o.itemId === ITEM_Y);
+    assert.isDefined(handoff, "B still returns their book");
+    assert.isNull(handoff!.receiver.userDetailId, "…but to the stand, not to A");
+  });
+
   test("reports when there is nobody to match", async () => {
     stubMongo([], []);
 

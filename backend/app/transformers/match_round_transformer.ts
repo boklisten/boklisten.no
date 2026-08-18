@@ -29,6 +29,7 @@ export default class MatchRoundTransformer extends BaseTransformer<MatchRound> {
         "standTo",
         "includeCustomerItemsFromOtherBranches",
         "userMatchLocations",
+        "excludedCustomerIds",
       ]),
       id: String(this.resource.id),
       // NOT NULL date columns holding real dates, so `toISODate` cannot fail here.

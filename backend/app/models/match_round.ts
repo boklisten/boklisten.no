@@ -7,6 +7,7 @@ import Match from "#models/match";
 export default class MatchRound extends MatchRoundSchema {
   declare branches: string[];
   declare userMatchLocations: string[];
+  declare excludedCustomerIds: string[];
 
   @hasMany(() => Match, { foreignKey: "roundId" })
   declare matches: HasMany<typeof Match>;

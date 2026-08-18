@@ -55,6 +55,7 @@ const planFields = {
   standTo: () => slotTime().use(laterThan("standFrom")),
   includeCustomerItemsFromOtherBranches: () => vine.boolean(),
   userMatchLocations: () => vine.array(vine.string().minLength(1)).minLength(1),
+  excludedCustomerIds: () => vine.array(vine.string().minLength(1)),
 };
 type PlanFields = typeof planFields;
 
