@@ -3,6 +3,7 @@ import { seo } from "@/shared/utils/seo";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { Container, Loader, Stack, Title } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
+import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification } from "@/shared/utils/notifications";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import type { CartItem } from "@boklisten/backend/shared/cart_item";
@@ -60,8 +61,8 @@ function RouteComponent() {
           throw new Error("Unknown checkout step");
       }
     },
-    onError: () => {
-      showErrorNotification("Noe gikk galt under genererering av betaling!");
+    onError: (error) => {
+      showErrorNotification(errorMessage(error, "Noe gikk galt under genererering av betaling!"));
       void navigate({ to: "/handlekurv" });
     },
   });

@@ -1,4 +1,7 @@
-type CartItemType = "rent" | "partly-payment" | "buy" | "extend" | "buyout";
+export type CartItemType = "rent" | "partly-payment" | "buy" | "extend" | "buyout";
+
+// Order item types that hand out a new copy, as opposed to acting on one the customer already has
+export const ACQUISITION_CART_ITEM_TYPES: CartItemType[] = ["rent", "partly-payment", "buy"];
 
 export interface CartItemOption {
   type: CartItemType;

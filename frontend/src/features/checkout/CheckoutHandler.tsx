@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import useApiClient from "@/shared/hooks/useApiClient";
 import useCart from "@/shared/hooks/useCart";
+import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification } from "@/shared/utils/notifications";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import { useNavigate } from "@tanstack/react-router";
@@ -49,8 +50,8 @@ export default function CheckoutHandler() {
           throw new Error("Unknown checkout step");
       }
     },
-    onError: () => {
-      showErrorNotification("Noe gikk galt under genererering av betaling!");
+    onError: (error) => {
+      showErrorNotification(errorMessage(error, "Noe gikk galt under genererering av betaling!"));
       void navigate({ to: "/handlekurv" });
     },
   });

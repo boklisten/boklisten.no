@@ -1,11 +1,79 @@
+import { ObjectId } from "mongodb";
+
+import BadRequestException from "#exceptions/bad_request_exception";
 import { CustomerItemService } from "#services/customer_item_service";
 import { OrderItemService } from "#services/order_item_service";
 import { StorageService } from "#services/storage_service";
-import { CheckoutCartItem } from "#shared/cart_item";
+import { ACQUISITION_CART_ITEM_TYPES, CartItemType, CheckoutCartItem } from "#shared/cart_item";
 import { OrderItem } from "#shared/order/order-item/order-item";
 
 export const OrderService = {
+  async getOpenOrderItems(customerId: string, types: CartItemType[] = ["rent", "partly-payment"]) {
+    return (await StorageService.Orders.aggregate([
+      {
+        $match: {
+          customer: new ObjectId(customerId),
+          placed: true,
+          byCustomer: true,
+        },
+      },
+      {
+        $unwind: {
+          path: "$orderItems",
+        },
+      },
+      {
+        $match: {
+          "orderItems.type": { $in: types },
+          "orderItems.movedToOrder": null,
+          "orderItems.movedFromOrder": null,
+        },
+      },
+      {
+        $lookup: {
+          from: "items",
+          localField: "orderItems.item",
+          foreignField: "_id",
+          as: "item",
+        },
+      },
+      {
+        $unwind: {
+          path: "$item",
+        },
+      },
+      {
+        $project: {
+          orderId: "$_id",
+          itemId: "$orderItems.item",
+          title: "$item.title",
+          deadline: "$orderItems.info.to",
+          cancelable: { $eq: ["$amount", 0] },
+        },
+      },
+    ])) as {
+      orderId: string;
+      itemId: string;
+      title: string;
+      deadline: string;
+      cancelable: boolean;
+    }[];
+  },
+
   async createFromCart(customerId: string, cartItems: CheckoutCartItem[]) {
+    if (new Set(cartItems.map((cartItem) => cartItem.id)).size !== cartItems.length)
+      throw new BadRequestException("Du kan ikke bestille flere av samme bok");
+
+    const openOrderItemIds = cartItems.some((cartItem) =>
+      ACQUISITION_CART_ITEM_TYPES.includes(cartItem.type),
+    )
+      ? new Set(
+          (await OrderService.getOpenOrderItems(customerId, ACQUISITION_CART_ITEM_TYPES)).map(
+            (row) => String(row.itemId),
+          ),
+        )
+      : new Set<string>();
+
     let total = 0;
     const orderItems: OrderItem[] = [];
 
@@ -17,6 +85,11 @@ export const OrderService = {
           itemId: cartItem.id,
         }),
       ]);
+      if (ACQUISITION_CART_ITEM_TYPES.includes(cartItem.type)) {
+        if (customerItem) throw new BadRequestException(`Du har allerede «${item.title}»`);
+        if (openOrderItemIds.has(cartItem.id))
+          throw new BadRequestException(`Du har allerede bestilt «${item.title}»`);
+      }
       let orderItem: OrderItem;
       switch (cartItem.type) {
         case "buyout": {

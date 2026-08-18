@@ -1,7 +1,7 @@
 import { HttpContext } from "@adonisjs/core/http";
-import { ObjectId } from "mongodb";
 
 import { OrderCancellationService } from "#services/order_cancellation_service";
+import { OrderService } from "#services/order_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { OrderItem } from "#shared/order/order-item/order-item";
@@ -12,55 +12,7 @@ export default class OrdersController {
   async getOpenOrders(ctx: HttpContext) {
     const { detailsId } = PermissionService.authenticate(ctx);
 
-    return (await StorageService.Orders.aggregate([
-      {
-        $match: {
-          customer: new ObjectId(detailsId),
-          placed: true,
-          byCustomer: true,
-        },
-      },
-      {
-        $unwind: {
-          path: "$orderItems",
-        },
-      },
-      {
-        $match: {
-          "orderItems.type": { $in: ["rent", "partly-payment"] },
-          "orderItems.movedToOrder": null,
-          "orderItems.movedFromOrder": null,
-        },
-      },
-      {
-        $lookup: {
-          from: "items",
-          localField: "orderItems.item",
-          foreignField: "_id",
-          as: "item",
-        },
-      },
-      {
-        $unwind: {
-          path: "$item",
-        },
-      },
-      {
-        $project: {
-          orderId: "$_id",
-          itemId: "$orderItems.item",
-          title: "$item.title",
-          deadline: "$orderItems.info.to",
-          cancelable: { $eq: ["$amount", 0] },
-        },
-      },
-    ])) as {
-      orderId: string;
-      itemId: string;
-      title: string;
-      deadline: string;
-      cancelable: boolean;
-    }[];
+    return await OrderService.getOpenOrderItems(detailsId);
   }
 
   async getPlacedOrders(ctx: HttpContext) {

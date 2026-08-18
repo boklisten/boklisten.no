@@ -77,6 +77,12 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
     void queryClient.invalidateQueries({
       queryKey: api.userDetail.getMyDetails.pathKey(),
     });
+    void queryClient.invalidateQueries({
+      queryKey: api.orders.getOpenOrders.pathKey(),
+    });
+    void queryClient.invalidateQueries({
+      queryKey: api.customerItems.getCustomerItems.pathKey(),
+    });
   });
 
   useEffect(() => {

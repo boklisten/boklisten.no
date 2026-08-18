@@ -22,6 +22,12 @@ export default function ConfirmOrder({ orderId }: { orderId: string }) {
         await queryClient.invalidateQueries({
           queryKey: api.userDetail.getMyDetails.pathKey(),
         });
+        void queryClient.invalidateQueries({
+          queryKey: api.orders.getOpenOrders.pathKey(),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: api.customerItems.getCustomerItems.pathKey(),
+        });
         void navigate({ to: "/order-history" });
       },
     }),

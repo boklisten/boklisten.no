@@ -1,16 +1,80 @@
-import { ActionIcon, Button, Card, Grid, Group, Select, Stack, Text, Title } from "@mantine/core";
+import { ACQUISITION_CART_ITEM_TYPES, type CartItem } from "@boklisten/backend/shared/cart_item";
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Card,
+  Grid,
+  Group,
+  Select,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { IconBook, IconCashRegister, IconShoppingCart, IconX } from "@tabler/icons-react";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import { useQuery } from "@tanstack/react-query";
 import { Activity } from "react";
 
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
+import WarningAlert from "@/shared/components/alerts/WarningAlert";
+import useApiClient from "@/shared/hooks/useApiClient";
 import useCart from "@/shared/hooks/useCart";
 import useAuth from "@/shared/hooks/useAuth";
 import SegmentedControlWithLabel from "@/shared/components/SegmentedControlWithLabel";
 
+function CheckoutButton({ to, label, blocked }: { to: string; label: string; blocked: boolean }) {
+  if (blocked) {
+    return (
+      <Button leftSection={<IconCashRegister />} size={"md"} disabled>
+        {label}
+      </Button>
+    );
+  }
+  return (
+    <Button
+      component={TanStackAnchor}
+      to={to}
+      leftSection={<IconCashRegister />}
+      size={"md"}
+      bg={"green"}
+      underline={"never"}
+    >
+      {label}
+    </Button>
+  );
+}
+
 export default function CartContent() {
   const cart = useCart();
-  const { isEmployee } = useAuth();
+  const { isEmployee, isLoggedIn } = useAuth();
+  const { api } = useApiClient();
+  // The conflict flags must reflect orders placed seconds ago, so bypass the global staleTime
+  const { data: openOrderItems } = useQuery({
+    ...api.orders.getOpenOrders.queryOptions(),
+    enabled: isLoggedIn,
+    staleTime: 0,
+  });
+  const { data: customerItems } = useQuery({
+    ...api.customerItems.getCustomerItems.queryOptions(),
+    enabled: isLoggedIn,
+    staleTime: 0,
+  });
+
+  const ownedItemIds = new Set(
+    customerItems
+      ?.filter((customerItem) => ["active", "overdue"].includes(customerItem.status.type))
+      .map((customerItem) => customerItem.item.id),
+  );
+  const orderedItemIds = new Set(openOrderItems?.map((orderItem) => orderItem.itemId));
+
+  function getConflict(cartItem: CartItem): "owned" | "ordered" | null {
+    if (!ACQUISITION_CART_ITEM_TYPES.includes(cart.getSelectedOption(cartItem).type)) return null;
+    if (ownedItemIds.has(cartItem.id)) return "owned";
+    if (orderedItemIds.has(cartItem.id)) return "ordered";
+    return null;
+  }
+  const hasConflicts = cart.get().some((cartItem) => getConflict(cartItem) !== null);
   if (cart.isEmpty()) {
     return (
       <>
@@ -34,6 +98,7 @@ export default function CartContent() {
       <Stack>
         {cart.get().map((cartItem) => {
           const selectedOption = cart.getSelectedOption(cartItem);
+          const conflict = getConflict(cartItem);
           return (
             <Card withBorder shadow={"md"} key={cartItem.id}>
               <Stack>
@@ -99,6 +164,22 @@ export default function CartContent() {
                     </Activity>
                   </Group>
                 </Group>
+                <Activity mode={conflict ? "visible" : "hidden"}>
+                  <WarningAlert
+                    title={
+                      conflict === "owned"
+                        ? "Du har allerede denne boken"
+                        : "Du har allerede bestilt denne boken"
+                    }
+                  >
+                    <Text size={"sm"}>
+                      {conflict === "owned"
+                        ? "Boken er registrert på deg og ligger under «Dine bøker»."
+                        : "Bestillingen din ligger under «Dine bøker»."}{" "}
+                      Fjern boken fra handlekurven for å gå videre.
+                    </Text>
+                  </WarningAlert>
+                </Activity>
               </Stack>
             </Card>
           );
@@ -117,27 +198,21 @@ export default function CartContent() {
             </Text>
           </Activity>
         </Stack>
-        <Button
-          component={TanStackAnchor}
-          to={"/kasse"}
-          leftSection={<IconCashRegister />}
-          size={"md"}
-          bg={"green"}
-          underline={"never"}
-        >
-          Gå til kassen
-        </Button>
+        <Activity mode={hasConflicts ? "visible" : "hidden"}>
+          <Box maw={400}>
+            <Text size={"sm"} c={"dimmed"} ta={"center"}>
+              Du kan ikke bestille flere av samme bok. Fjern bøkene du allerede har for å gå til
+              kassen.
+            </Text>
+          </Box>
+        </Activity>
+        <CheckoutButton to={"/kasse"} label={"Gå til kassen"} blocked={hasConflicts} />
         <Activity mode={isEmployee ? "visible" : "hidden"}>
-          <Button
-            component={TanStackAnchor}
+          <CheckoutButton
             to={"/kasse/v2"}
-            leftSection={<IconCashRegister />}
-            size={"md"}
-            bg={"green"}
-            underline={"never"}
-          >
-            Gå til kassen (Kustom)
-          </Button>
+            label={"Gå til kassen (Kustom)"}
+            blocked={hasConflicts}
+          />
         </Activity>
       </Stack>
       <Activity
