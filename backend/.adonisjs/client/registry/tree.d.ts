@@ -46,6 +46,9 @@ export interface ApiDefinition {
     deleteSubject: typeof routes['branch_subjects.delete_subject']
     importSubjects: typeof routes['branch_subjects.import_subjects']
   }
+  branchSignatureStatus: {
+    getStatus: typeof routes['branch_signature_status.get_status']
+  }
   branchRelationship: {
     update: typeof routes['branch_relationship.update']
   }

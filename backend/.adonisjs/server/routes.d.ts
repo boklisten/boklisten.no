@@ -30,6 +30,7 @@ export type ScannedRoutes = {
     'branch_subjects.update_subject': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
     'branch_subjects.delete_subject': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
     'branch_subjects.import_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_signature_status.get_status': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_relationship.update': { paramsTuple?: []; params?: {} }
     'branch_membership.get_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_membership.update_membership': { paramsTuple?: []; params?: {} }
@@ -193,6 +194,7 @@ export type ScannedRoutes = {
     'branches.get_all': { paramsTuple?: []; params?: {} }
     'branches.get_by_id': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.get_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_signature_status.get_status': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_membership.get_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -277,6 +279,7 @@ export type ScannedRoutes = {
     'branches.get_all': { paramsTuple?: []; params?: {} }
     'branches.get_by_id': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.get_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_signature_status.get_status': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_membership.get_members': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }

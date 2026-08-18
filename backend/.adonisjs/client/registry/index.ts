@@ -162,6 +162,12 @@ const routes = {
     tokens: [{"old":"/v2/branches/:branchId/subjects/import","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/subjects/import","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/subjects/import","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/subjects/import","type":0,"val":"subjects","end":""},{"old":"/v2/branches/:branchId/subjects/import","type":0,"val":"import","end":""}],
     types: placeholder as Registry['branch_subjects.import_subjects']['types'],
   },
+  'branch_signature_status.get_status': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/branches/:branchId/signature_status',
+    tokens: [{"old":"/v2/branches/:branchId/signature_status","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/signature_status","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/signature_status","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/signature_status","type":0,"val":"signature_status","end":""}],
+    types: placeholder as Registry['branch_signature_status.get_status']['types'],
+  },
   'branch_relationship.update': {
     methods: ["PATCH"],
     pattern: '/v2/branches/relationships',

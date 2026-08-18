@@ -10,6 +10,7 @@ import {
   IconPlus,
   IconSchool,
   IconShoppingCart,
+  IconSignature,
   IconUsers,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +23,7 @@ import BranchItemSettings from "@/features/branches/BranchItemSettings";
 import BranchMembers from "@/features/branches/BranchMembers";
 import BranchPaymentSettings from "@/features/branches/BranchPaymentSettings";
 import BranchRelationshipSettings from "@/features/branches/BranchRelationshipSettings";
+import BranchSignatureStatus from "@/features/branches/BranchSignatureStatus";
 import OpeningHoursSettings from "@/features/branches/opening_hours/OpeningHoursSettings";
 import BranchSubjectSettings from "@/features/branches/subjects/BranchSubjectSettings";
 import UploadBranchUsers from "@/features/branches/UploadBranchUsers";
@@ -100,6 +102,9 @@ export default function BranchManager() {
                   <Tabs.Tab value={"members"} leftSection={<IconUsers />}>
                     Elever
                   </Tabs.Tab>
+                  <Tabs.Tab value={"signatures"} leftSection={<IconSignature />}>
+                    Signering
+                  </Tabs.Tab>
                   <Tabs.Tab value={"active-books"} leftSection={<IconBook2 />}>
                     Aktive bøker
                   </Tabs.Tab>
@@ -130,6 +135,9 @@ export default function BranchManager() {
                     <BranchMembers key={selectedBranch.id} branchId={selectedBranch.id} />
                     <UploadBranchUsers branchId={selectedBranch.id} />
                   </Stack>
+                </Tabs.Panel>
+                <Tabs.Panel value={"signatures"}>
+                  <BranchSignatureStatus key={selectedBranch.id} branchId={selectedBranch.id} />
                 </Tabs.Panel>
                 <Tabs.Panel value={"active-books"}>
                   <ActiveBooksTab key={selectedBranch.id} branchId={selectedBranch.id} />

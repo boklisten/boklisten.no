@@ -319,6 +319,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['importSubjects']>>>
     }
   }
+  'branch_signature_status.get_status': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/branches/:branchId/signature_status'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_signature_status_controller').default['getStatus']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_signature_status_controller').default['getStatus']>>>
+    }
+  }
   'branch_relationship.update': {
     methods: ["PATCH"]
     pattern: '/v2/branches/relationships'

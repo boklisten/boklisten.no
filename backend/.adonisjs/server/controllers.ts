@@ -15,6 +15,7 @@ export const controllers = {
     BranchBooks: () => import('#controllers/branches/branch_books_controller'),
     BranchMembership: () => import('#controllers/branches/branch_membership_controller'),
     BranchRelationship: () => import('#controllers/branches/branch_relationship_controller'),
+    BranchSignatureStatus: () => import('#controllers/branches/branch_signature_status_controller'),
     BranchSubjects: () => import('#controllers/branches/branch_subjects_controller'),
     BranchUpload: () => import('#controllers/branches/branch_upload_controller'),
     Branches: () => import('#controllers/branches/branches_controller'),

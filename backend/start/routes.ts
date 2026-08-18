@@ -104,6 +104,14 @@ router.post("/v2/branches/:branchId/subjects/import", [
 ]);
 
 /**
+ * branch signature status
+ */
+router.get("/v2/branches/:branchId/signature_status", [
+  controllers.branches.BranchSignatureStatus,
+  "getStatus",
+]);
+
+/**
  * branch relationships
  */
 router.patch("/v2/branches/relationships", [controllers.branches.BranchRelationship, "update"]);
