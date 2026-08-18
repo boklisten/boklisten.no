@@ -23,7 +23,7 @@ const blidNotActiveFeedback = "Denne unike IDen er ikke koblet til noen bok.";
 
 export default class RapidHandoutController {
   async handout(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
+    const { detailsId: employeeId } = PermissionService.employeeOrFail(ctx);
     const { blid, customerId, force } = await ctx.request.validateUsing(rapidHandoutValidator);
 
     if (!BlidService.isValidBlid(blid)) {
@@ -59,7 +59,12 @@ export default class RapidHandoutController {
       }
     }
 
-    const placedRentOrder = await this.placeRentOrder(blid, uniqueItemOrFeedback.item, customerId);
+    const placedRentOrder = await this.placeRentOrder(
+      blid,
+      uniqueItemOrFeedback.item,
+      customerId,
+      employeeId,
+    );
     if (placedRentOrder === null) {
       return {
         feedback: `«${uniqueItemOrFeedback.title}» er ikke blant bøkene denne kunden har bestilt.`,
@@ -111,6 +116,7 @@ export default class RapidHandoutController {
     blid: string,
     itemId: string,
     customerId: string,
+    employeeId: string,
   ): Promise<Order | string | null> {
     const item = await StorageService.Items.get(itemId);
     if (!item) {
@@ -173,6 +179,7 @@ export default class RapidHandoutController {
       branch: branch.id,
       customer: customerId,
       byCustomer: false,
+      employee: employeeId,
       pendingSignature: false,
       orderItems: [
         {
