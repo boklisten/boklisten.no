@@ -40,6 +40,17 @@ export default class UserDetailsController {
     const { searchStr } = await ctx.request.validateUsing(userDetailSearchValidator);
     return UserDetailService.search(searchStr);
   }
+  /** For when the customer has verbally confirmed their address to an employee at the stand. */
+  async confirmEmail(ctx: HttpContext) {
+    PermissionService.employeeOrFail(ctx);
+    const detailsId = ctx.request.param("detailsId");
+    const userDetail = await StorageService.UserDetails.getOrNull(detailsId);
+    if (!userDetail) {
+      return ctx.response.notFound();
+    }
+    await StorageService.UserDetails.update(detailsId, { emailConfirmed: true });
+    return { emailConfirmed: true };
+  }
   async updateAsCustomer(ctx: HttpContext) {
     const { detailsId } = PermissionService.authenticate(ctx);
     const { phoneNumber, name, address, postalCode, postalCity, dob, branchMembership, guardian } =

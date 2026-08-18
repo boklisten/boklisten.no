@@ -71,6 +71,7 @@ export interface ApiDefinition {
     getOpenOrders: typeof routes['orders.get_open_orders']
     getPlacedOrders: typeof routes['orders.get_placed_orders']
     cancelOrderItem: typeof routes['orders.cancel_order_item']
+    cancelOrderItemAsEmployee: typeof routes['orders.cancel_order_item_as_employee']
   }
   editableTexts: {
     get: typeof routes['editable_texts.get']
@@ -122,6 +123,7 @@ export interface ApiDefinition {
     getMyDetails: typeof routes['user_detail.get_my_details']
     updateAsCustomer: typeof routes['user_detail.update_as_customer']
     updateAsEmployee: typeof routes['user_detail.update_as_employee']
+    confirmEmail: typeof routes['user_detail.confirm_email']
   }
   customerItems: {
     getCustomerItems: typeof routes['customer_items.get_customer_items']

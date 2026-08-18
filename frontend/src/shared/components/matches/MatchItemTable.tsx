@@ -22,13 +22,14 @@ function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: string })
   );
 }
 
-function TableFrame({ children }: { children: React.ReactNode }) {
+function TableFrame({ children, hasActions }: { children: React.ReactNode; hasActions?: boolean }) {
   return (
     <Table>
       <Table.Thead>
         <Table.Tr>
           <Table.Th>Tittel</Table.Th>
           <Table.Th>Status</Table.Th>
+          {hasActions && <Table.Th>Handling</Table.Th>}
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>{children}</Table.Tbody>
@@ -99,13 +100,16 @@ export default function MatchItemTable({
 export function ItemStatusTable({
   itemStatuses,
   isSender,
+  renderAction,
 }: {
   itemStatuses: ItemStatus[];
   isSender: boolean;
+  /** Adds a "Handling" column with the returned node per row. */
+  renderAction?: (item: ItemStatus) => React.ReactNode;
 }) {
   const verb = isSender ? "levert" : "mottatt";
   return (
-    <TableFrame>
+    <TableFrame hasActions={renderAction !== undefined}>
       {[...itemStatuses]
         .sort((a, b) => Number(a.fulfilled) - Number(b.fulfilled))
         .map((item) => (
@@ -119,6 +123,7 @@ export function ItemStatusTable({
                   : `Denne boken har ikke blitt registrert som ${verb}`
               }
             />
+            {renderAction && <Table.Td>{renderAction(item)}</Table.Td>}
           </Table.Tr>
         ))}
     </TableFrame>

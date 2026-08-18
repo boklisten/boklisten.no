@@ -258,6 +258,12 @@ const routes = {
     tokens: [{"old":"/v2/orders/cancel_order_item","type":0,"val":"v2","end":""},{"old":"/v2/orders/cancel_order_item","type":0,"val":"orders","end":""},{"old":"/v2/orders/cancel_order_item","type":0,"val":"cancel_order_item","end":""}],
     types: placeholder as Registry['orders.cancel_order_item']['types'],
   },
+  'orders.cancel_order_item_as_employee': {
+    methods: ["POST"],
+    pattern: '/v2/orders/cancel_order_item_as_employee',
+    tokens: [{"old":"/v2/orders/cancel_order_item_as_employee","type":0,"val":"v2","end":""},{"old":"/v2/orders/cancel_order_item_as_employee","type":0,"val":"orders","end":""},{"old":"/v2/orders/cancel_order_item_as_employee","type":0,"val":"cancel_order_item_as_employee","end":""}],
+    types: placeholder as Registry['orders.cancel_order_item_as_employee']['types'],
+  },
   'editable_texts.get': {
     methods: ["GET","HEAD"],
     pattern: '/editable_texts/:id',
@@ -467,6 +473,12 @@ const routes = {
     pattern: '/v2/employee/user_details/:detailsId',
     tokens: [{"old":"/v2/employee/user_details/:detailsId","type":0,"val":"v2","end":""},{"old":"/v2/employee/user_details/:detailsId","type":0,"val":"employee","end":""},{"old":"/v2/employee/user_details/:detailsId","type":0,"val":"user_details","end":""},{"old":"/v2/employee/user_details/:detailsId","type":1,"val":"detailsId","end":""}],
     types: placeholder as Registry['user_detail.update_as_employee']['types'],
+  },
+  'user_detail.confirm_email': {
+    methods: ["POST"],
+    pattern: '/v2/employee/user_details/:detailsId/confirm_email',
+    tokens: [{"old":"/v2/employee/user_details/:detailsId/confirm_email","type":0,"val":"v2","end":""},{"old":"/v2/employee/user_details/:detailsId/confirm_email","type":0,"val":"employee","end":""},{"old":"/v2/employee/user_details/:detailsId/confirm_email","type":0,"val":"user_details","end":""},{"old":"/v2/employee/user_details/:detailsId/confirm_email","type":1,"val":"detailsId","end":""},{"old":"/v2/employee/user_details/:detailsId/confirm_email","type":0,"val":"confirm_email","end":""}],
+    types: placeholder as Registry['user_detail.confirm_email']['types'],
   },
   'customer_items.get_customer_items': {
     methods: ["GET","HEAD"],

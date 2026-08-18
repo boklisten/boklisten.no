@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { forViewer, partyName } from "@/features/matches/forViewer";
+import CancelOrderItemButton from "@/features/rapid-handout/CancelOrderItemButton";
 import PeerTransferList, { type PeerBook } from "@/features/rapid-handout/PeerTransferList";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { ItemStatus } from "@/shared/components/matches/matches-helper";
@@ -25,16 +26,33 @@ const CONFIRM_Z_INDEX = 350;
 
 const POLL_INTERVAL_MS = 5000;
 
+function isOpenCustomerOrder(order: Order) {
+  return order.byCustomer && !order.handoutByDelivery;
+}
+
+function isOpenOrderItem(orderItem: OrderItem) {
+  return (
+    !orderItem.movedToOrder &&
+    !orderItem.handout &&
+    (orderItem.type === "rent" || orderItem.type === "partly-payment")
+  );
+}
+
 function calculateUnfulfilledOrderItems(orders: Order[]): OrderItem[] {
   return orders
-    .filter((order) => order.byCustomer && !order.handoutByDelivery)
-    .flatMap((order) => order.orderItems)
-    .filter(
-      (orderItem) =>
-        !orderItem.movedToOrder &&
-        !orderItem.handout &&
-        (orderItem.type === "rent" || orderItem.type === "partly-payment"),
-    );
+    .filter(isOpenCustomerOrder)
+    .flatMap((order) => order.orderItems.filter(isOpenOrderItem));
+}
+
+/** The open order behind each unfulfilled item, and whether the customer has paid for it. */
+function buildOpenOrderInfo(orders: Order[]): Map<string, { orderId: string; paid: boolean }> {
+  const openOrderInfo = new Map<string, { orderId: string; paid: boolean }>();
+  for (const order of orders.filter(isOpenCustomerOrder)) {
+    for (const orderItem of order.orderItems.filter(isOpenOrderItem)) {
+      openOrderInfo.set(orderItem.item, { orderId: order.id, paid: order.amount !== 0 });
+    }
+  }
+  return openOrderInfo;
 }
 
 function buildPeerBooks(matches: MatchDto[], customerId: string) {
@@ -133,6 +151,41 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
     });
   };
 
+  const openOrderInfo = buildOpenOrderInfo(orders ?? []);
+  // Items a user match depends on may never be cancelled, locked or not (edition-tolerant)
+  const userMatchItemIds = (matchData ?? [])
+    .filter((match) => !match.isStandMatch)
+    .flatMap((match) => match.obligations.map((obligation) => obligation.itemId));
+  const isInUserMatch = (itemId: string) =>
+    userMatchItemIds.some((matchItemId) => itemsAreEquivalent(matchItemId, itemId));
+
+  function renderCancelAction(itemStatus: ItemStatus) {
+    if (itemStatus.fulfilled) return null;
+    const orderInfo = openOrderInfo.get(itemStatus.id);
+    if (!orderInfo) return null;
+    const disabledReason = isInUserMatch(itemStatus.id)
+      ? "Boka er en del av en overlevering med en annen elev og kan ikke avbestilles"
+      : orderInfo.paid
+        ? "Bestillingen er betalt og kan ikke avbestilles her"
+        : null;
+    return (
+      <CancelOrderItemButton
+        itemStatus={itemStatus}
+        orderId={orderInfo.orderId}
+        disabledReason={disabledReason}
+        customer={customer}
+        onCancelled={() =>
+          // A cancelled item is gone, not handed out, so drop it instead of letting the
+          // fulfilled-refresh mark it with a green tick
+          setItemStatuses((previousState) =>
+            previousState.filter((previousItem) => previousItem.id !== itemStatus.id),
+          )
+        }
+        onSettled={invalidate}
+      />
+    );
+  }
+
   async function handOutBlid(blid: string): Promise<ScanNotice | void> {
     const response = await client.api.rapidHandout.handout({
       body: { blid, customerId: customer.id },
@@ -226,7 +279,11 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
       {standStatuses.length > 0 && (
         <Stack gap={"xs"}>
           <Title order={2}>{standTitle}</Title>
-          <ItemStatusTable itemStatuses={standStatuses} isSender={true} />
+          <ItemStatusTable
+            itemStatuses={standStatuses}
+            isSender={true}
+            renderAction={renderCancelAction}
+          />
         </Stack>
       )}
 

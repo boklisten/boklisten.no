@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import { CustomerItemService } from "#services/customer_item_service";
+import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
 import { OrderItemService } from "#services/order_item_service";
 import { StorageService } from "#services/storage_service";
 import { ACQUISITION_CART_ITEM_TYPES, CartItemType, CheckoutCartItem } from "#shared/cart_item";
@@ -9,7 +10,7 @@ import { OrderItem } from "#shared/order/order-item/order-item";
 
 export const OrderService = {
   async getOpenOrderItems(customerId: string, types: CartItemType[] = ["rent", "partly-payment"]) {
-    return (await StorageService.Orders.aggregate([
+    const openOrderItems = (await StorageService.Orders.aggregate([
       {
         $match: {
           customer: new ObjectId(customerId),
@@ -58,6 +59,14 @@ export const OrderService = {
       deadline: string;
       cancelable: boolean;
     }[];
+
+    // An item a user match depends on is never cancelable, regardless of match lock
+    const blockedItemIds = await itemIdsInActiveUserMatches(customerId);
+    return openOrderItems.map((openOrderItem) =>
+      blockedItemIds.has(String(openOrderItem.itemId))
+        ? { ...openOrderItem, cancelable: false }
+        : openOrderItem,
+    );
   },
 
   async createFromCart(customerId: string, cartItems: CheckoutCartItem[]) {

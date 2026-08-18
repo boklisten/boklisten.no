@@ -46,6 +46,7 @@ export type ScannedRoutes = {
     'orders.get_open_orders': { paramsTuple?: []; params?: {} }
     'orders.get_placed_orders': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'orders.cancel_order_item': { paramsTuple?: []; params?: {} }
+    'orders.cancel_order_item_as_employee': { paramsTuple?: []; params?: {} }
     'editable_texts.get': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'editable_texts.get_all': { paramsTuple?: []; params?: {} }
     'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -81,6 +82,7 @@ export type ScannedRoutes = {
     'user_detail.get_my_details': { paramsTuple?: []; params?: {} }
     'user_detail.update_as_customer': { paramsTuple?: []; params?: {} }
     'user_detail.update_as_employee': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
+    'user_detail.confirm_email': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'customer_items.get_customer_items': { paramsTuple?: []; params?: {} }
     'signatures.send_signature_link': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'signatures.send_signature_link_as_customer': { paramsTuple?: []; params?: {} }
@@ -372,6 +374,7 @@ export type ScannedRoutes = {
     'branch_subjects.import_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.cancel_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'orders.cancel_order_item': { paramsTuple?: []; params?: {} }
+    'orders.cancel_order_item_as_employee': { paramsTuple?: []; params?: {} }
     'questions_and_answers.store': { paramsTuple?: []; params?: {} }
     'email_verification.send': { paramsTuple?: []; params?: {} }
     'matches.notify': { paramsTuple?: []; params?: {} }
@@ -383,6 +386,7 @@ export type ScannedRoutes = {
     'user_detail.search': { paramsTuple?: []; params?: {} }
     'user_detail.update_as_customer': { paramsTuple?: []; params?: {} }
     'user_detail.update_as_employee': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
+    'user_detail.confirm_email': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'signatures.send_signature_link': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'signatures.send_signature_link_as_customer': { paramsTuple?: []; params?: {} }
     'signatures.sign': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }

@@ -6,6 +6,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import CustomerActionBar from "@/features/rapid-handout/CustomerActionBar";
 import CustomerPicker from "@/features/rapid-handout/CustomerPicker";
 import CustomerSearchSpotlight from "@/features/rapid-handout/CustomerSearchSpotlight";
+import EmailConfirmationWarning from "@/features/rapid-handout/EmailConfirmationWarning";
 import RapidHandoutDetails from "@/features/rapid-handout/RapidHandoutDetails";
 import SelectedCustomerCard from "@/features/rapid-handout/SelectedCustomerCard";
 import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
@@ -79,6 +80,7 @@ function RapidHandoutPage() {
               </Text>
               <SelectedCustomerCard customer={customer} onDeselect={deselect} />
             </Stack>
+            <EmailConfirmationWarning customer={customer} />
             <SignatureStatusBanner userDetail={customer} />
             <RapidHandoutDetails key={customer.id} customer={customer} />
           </Stack>

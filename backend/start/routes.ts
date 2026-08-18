@@ -174,6 +174,10 @@ router.post("/v2/branches/:branchId/ordered_books/cancel", [
 router.get("/v2/orders/open_orders", [controllers.Orders, "getOpenOrders"]);
 router.get("/v2/orders/placed_orders/:detailsId", [controllers.Orders, "getPlacedOrders"]);
 router.post("/v2/orders/cancel_order_item", [controllers.Orders, "cancelOrderItem"]);
+router.post("/v2/orders/cancel_order_item_as_employee", [
+  controllers.Orders,
+  "cancelOrderItemAsEmployee",
+]);
 
 /**
  * editable texts
@@ -244,6 +248,10 @@ router.get("/v2/user_details/me", [controllers.UserDetail, "getMyDetails"]);
 router.post("/v2/user_details", [controllers.UserDetail, "updateAsCustomer"]);
 
 router.post("/v2/employee/user_details/:detailsId", [controllers.UserDetail, "updateAsEmployee"]);
+router.post("/v2/employee/user_details/:detailsId/confirm_email", [
+  controllers.UserDetail,
+  "confirmEmail",
+]);
 
 /**
  * customer items

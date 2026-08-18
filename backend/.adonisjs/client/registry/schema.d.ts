@@ -511,6 +511,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['cancelOrderItem']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'orders.cancel_order_item_as_employee': {
+    methods: ["POST"]
+    pattern: '/v2/orders/cancel_order_item_as_employee'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/cancel_order_item_validator').cancelOrderItemValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/cancel_order_item_validator').cancelOrderItemValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['cancelOrderItemAsEmployee']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['cancelOrderItemAsEmployee']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'editable_texts.get': {
     methods: ["GET","HEAD"]
     pattern: '/editable_texts/:id'
@@ -929,6 +941,18 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/user_detail').employeeUpdateUserDetailsValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_detail_controller').default['updateAsEmployee']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_detail_controller').default['updateAsEmployee']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'user_detail.confirm_email': {
+    methods: ["POST"]
+    pattern: '/v2/employee/user_details/:detailsId/confirm_email'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { detailsId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_detail_controller').default['confirmEmail']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_detail_controller').default['confirmEmail']>>>
     }
   }
   'customer_items.get_customer_items': {
