@@ -1,5 +1,5 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import { Group, Paper, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Group, Paper, Stack, Text, UnstyledButton } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import {
   IconAlertTriangleFilled,
