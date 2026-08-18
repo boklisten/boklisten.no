@@ -7,7 +7,7 @@ import UserDetailSearchField from "@/features/rapid-handout/UserDetailSearchFiel
 import { IconUserEdit } from "@tabler/icons-react";
 import UnlockUserMatchesButton from "@/features/matches/UnlockUserMatchesButton";
 import AdministrateUserForm from "@/features/user/AdministrateUserForm";
-import AdministrateUserSignatures from "@/features/signatures/AdministrateUserSignatures";
+import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
 import RapidHandoutDetails from "@/features/rapid-handout/RapidHandoutDetails";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
@@ -42,6 +42,7 @@ function RapidHandoutPage() {
               setUserDetailsId(userDetail?.id ?? null);
             }}
           />
+          {data && <SignatureStatusBanner userDetail={data} />}
           {data && (
             <Box>
               <Button
@@ -53,7 +54,6 @@ function RapidHandoutPage() {
                       <Stack>
                         <UnlockUserMatchesButton userDetailId={userDetailsId ?? ""} />
                         <AdministrateUserForm userDetail={data} />
-                        <AdministrateUserSignatures userDetail={data} />
                       </Stack>
                     ),
                   })

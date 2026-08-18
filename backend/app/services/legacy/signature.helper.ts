@@ -21,6 +21,14 @@ export async function userHasValidSignature(userDetail: UserDetail): Promise<boo
   return (await getValidUserSignature(userDetail)) != null;
 }
 
+export async function verifyCustomerSignature(customerId: string): Promise<string | null> {
+  const userDetail = await StorageService.UserDetails.getOrNull(customerId);
+  if (userDetail && (await userHasValidSignature(userDetail))) {
+    return null;
+  }
+  return "Kunden mangler gyldig signatur, og kan derfor ikke få utdelt bøker. Be kunden signere først.";
+}
+
 function signatureIsValidForUser(userDetail: UserDetail, signature: SignatureMetadata): boolean {
   if (isSignatureExpired(signature)) {
     return false;

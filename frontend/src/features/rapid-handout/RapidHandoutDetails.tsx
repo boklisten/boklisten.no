@@ -74,6 +74,13 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
+  const { data: signatureStatus } = useQuery(
+    api.signatures.getSignature.queryOptions(
+      { params: { detailsId: customer.id } },
+      { refetchInterval: POLL_INTERVAL_MS },
+    ),
+  );
+  const hasValidSignature = signatureStatus?.isSignatureValid === true;
   const [opened, { open, close }] = useDisclosure(false);
   const [itemStatuses, setItemStatuses] = useState<ItemStatus[]>([]);
   const [pendingBlid, setPendingBlid] = useState<string | null>(null);
@@ -226,7 +233,12 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
 
       {(standStatuses.length > 0 || receiveBooks.length > 0) && (
         <Box>
-          <Button color={"green"} leftSection={<IconObjectScan />} onClick={open}>
+          <Button
+            color={"green"}
+            leftSection={<IconObjectScan />}
+            onClick={open}
+            disabled={!hasValidSignature}
+          >
             Scan bøker
           </Button>
         </Box>

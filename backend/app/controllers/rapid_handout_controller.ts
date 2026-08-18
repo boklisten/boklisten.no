@@ -13,6 +13,7 @@ import { OrderValidator } from "#services/legacy/collections/order/helpers/order
 import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { findUniqueItemByBlid } from "#services/item_lookup";
+import { verifyCustomerSignature } from "#services/legacy/signature.helper";
 import { rapidHandoutValidator } from "#validators/rapid_handout_validator";
 import { PermissionService } from "#services/permission_service";
 import BlidService from "#services/blid_service";
@@ -28,6 +29,9 @@ export default class RapidHandoutController {
     if (!BlidService.isValidBlid(blid)) {
       return { feedback: "Denne bliden er ikke gyldig." };
     }
+    const signatureFeedback = await verifyCustomerSignature(customerId);
+    if (signatureFeedback) return { feedback: signatureFeedback };
+
     const userFeedback = await this.verifyBlidNotActive(blid, customerId);
     if (userFeedback) return { feedback: userFeedback };
 

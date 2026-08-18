@@ -1,5 +1,5 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import { Box, Button, CopyButton, Group, Skeleton, Stack, Title } from "@mantine/core";
+import { Box, Button, CopyButton, Group, Skeleton, Stack } from "@mantine/core";
 import { IconCopy, IconSend } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
@@ -32,7 +32,6 @@ export default function AdministrateUserSignatures({ userDetail }: { userDetail:
   if (data.isSignatureValid) {
     return (
       <Stack align="center">
-        <Title order={2}>Signatur</Title>
         <Box style={{ border: "1px solid #ccc", borderRadius: 2, p: 1 }}>
           <Image
             src={`data:image/webp;base64,${data.image}`}
@@ -54,7 +53,6 @@ export default function AdministrateUserSignatures({ userDetail }: { userDetail:
 
   return (
     <Stack align="center">
-      <Title order={2}>Signatur</Title>
       <WarningAlert title={"Denne kunden har ikke gyldig signatur"}>
         <Group>
           <CopyButton value={`${window.location.origin}/signering/${userDetail.id}`}>
