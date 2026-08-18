@@ -28,7 +28,7 @@ interface UserCandidate {
   name: string;
   phone: string;
   email: string;
-  localName: string;
+  localName?: string;
   address?: string;
   postalCode?: string;
   postalCity?: string;
@@ -68,8 +68,7 @@ const IMPORT_COLUMNS: Column[] = [
   {
     id: "localName",
     label: "Klasse",
-    description: "F.eks. 1STA",
-    validators: [{ type: "required", message: "Klasse er påkrevd" }],
+    description: "Valgfri. F.eks. 1STA",
     transformations: [{ type: "trim" }],
   },
   {
@@ -115,7 +114,7 @@ function toUserCandidates(result: ImportResult): UserCandidate[] {
     name: cell(row, "name"),
     phone: cell(row, "phone"),
     email: cell(row, "email"),
-    localName: cell(row, "localName"),
+    localName: cell(row, "localName") || undefined,
     address: cell(row, "address") || undefined,
     postalCode: cell(row, "postalCode") || undefined,
     postalCity: cell(row, "postalCity") || undefined,
@@ -205,6 +204,8 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
     (mapping) => mapping.status === "unmatched",
   );
   const confirmBlocked = (unmatchedMappings?.length ?? 0) > 0;
+  const candidatesWithoutClass =
+    candidates?.filter((candidate) => !candidate.localName).length ?? 0;
 
   function selectedBranchId(mapping: (typeof ambiguousMappings)[number]) {
     return branchSelections[mapping.localName] ?? mapping.candidates[0]?.id ?? null;
@@ -265,54 +266,63 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
             <Text>
               {`${evaluation.createCount} ${evaluation.createCount === 1 ? "ny elev" : "nye elever"} opprettes og ${evaluation.updateCount} ${evaluation.updateCount === 1 ? "eksisterende elev" : "eksisterende elever"} oppdateres.`}
             </Text>
-            <Title order={5}>Klassene i filen blir til disse filialene</Title>
-            <Table.ScrollContainer minWidth={350}>
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Klasse i filen</Table.Th>
-                    <Table.Th />
-                    <Table.Th>Filial</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {evaluation.mappings.map((mapping) => (
-                    <Table.Tr key={mapping.localName}>
-                      <Table.Td>{mapping.localName}</Table.Td>
-                      <Table.Td>
-                        <IconArrowRight size={16} />
-                      </Table.Td>
-                      <Table.Td>
-                        {mapping.status === "matched" && mapping.branch?.name}
-                        {mapping.status === "ambiguous" && (
-                          <Select
-                            aria-label={`Velg filial for ${mapping.localName}`}
-                            data={mapping.candidates.map((candidate) => ({
-                              value: candidate.id,
-                              label: candidate.name,
-                            }))}
-                            value={selectedBranchId(mapping)}
-                            onChange={(branchId) =>
-                              branchId &&
-                              setBranchSelections((selections) => ({
-                                ...selections,
-                                [mapping.localName]: branchId,
-                              }))
-                            }
-                            allowDeselect={false}
-                          />
-                        )}
-                        {mapping.status === "unmatched" && (
-                          <Badge color={"red"} variant={"light"}>
-                            Ikke funnet
-                          </Badge>
-                        )}
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </Table.ScrollContainer>
+            {candidatesWithoutClass > 0 && (
+              <Text size={"sm"} c={"dimmed"}>
+                {`${candidatesWithoutClass} ${candidatesWithoutClass === 1 ? "elev" : "elever"} mangler klasse i filen og lastes opp uten klasse. Eksisterende elever beholder klassen sin.`}
+              </Text>
+            )}
+            {evaluation.mappings.length > 0 && (
+              <>
+                <Title order={5}>Klassene i filen blir til disse filialene</Title>
+                <Table.ScrollContainer minWidth={350}>
+                  <Table>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>Klasse i filen</Table.Th>
+                        <Table.Th />
+                        <Table.Th>Filial</Table.Th>
+                      </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {evaluation.mappings.map((mapping) => (
+                        <Table.Tr key={mapping.localName}>
+                          <Table.Td>{mapping.localName}</Table.Td>
+                          <Table.Td>
+                            <IconArrowRight size={16} />
+                          </Table.Td>
+                          <Table.Td>
+                            {mapping.status === "matched" && mapping.branch?.name}
+                            {mapping.status === "ambiguous" && (
+                              <Select
+                                aria-label={`Velg filial for ${mapping.localName}`}
+                                data={mapping.candidates.map((candidate) => ({
+                                  value: candidate.id,
+                                  label: candidate.name,
+                                }))}
+                                value={selectedBranchId(mapping)}
+                                onChange={(branchId) =>
+                                  branchId &&
+                                  setBranchSelections((selections) => ({
+                                    ...selections,
+                                    [mapping.localName]: branchId,
+                                  }))
+                                }
+                                allowDeselect={false}
+                              />
+                            )}
+                            {mapping.status === "unmatched" && (
+                              <Badge color={"red"} variant={"light"}>
+                                Ikke funnet
+                              </Badge>
+                            )}
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </Table.ScrollContainer>
+              </>
+            )}
             {ambiguousMappings.length > 0 && (
               <Alert
                 color={"blue"}

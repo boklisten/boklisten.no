@@ -70,6 +70,14 @@ test.group("UserProvisioningService.buildBranchMappings()", () => {
       ["1STA", "1STB"],
     );
   });
+
+  test("skips missing localNames instead of mapping them", ({ assert }) => {
+    const mappings = buildBranchMappings(["1STA", undefined, ""], BRANCHES);
+    assert.deepEqual(
+      mappings.map((mapping) => mapping.localName),
+      ["1STA"],
+    );
+  });
 });
 
 test.group("UserProvisioningService.applyBranchResolutions()", () => {
@@ -160,6 +168,19 @@ test.group("UserProvisioningService.mergeCandidateIntoUserDetail()", () => {
     assert.equal(update.postCode, "0501");
     assert.equal(update.postCity, "Oslo");
     assert.deepEqual(update.dob, new Date("2010-04-01"));
+  });
+
+  test("leaves branchMembership out of the update when no branch is given", ({ assert }) => {
+    const update = mergeCandidateIntoUserDetail(
+      {
+        name: "Ola Nordmann",
+        phone: "12345678",
+        email: "ola@example.com",
+      },
+      EXISTING_USER,
+      undefined,
+    );
+    assert.notProperty(update, "branchMembership");
   });
 });
 

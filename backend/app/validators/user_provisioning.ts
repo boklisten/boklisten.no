@@ -9,7 +9,7 @@ export const userProvisioningValidator = vine.create(
         name: vine.string().trim(),
         phone: phoneField.clone(),
         email: emailField.clone(),
-        localName: vine.string().trim(),
+        localName: vine.string().trim().optional(),
 
         address: vine.string().optional(),
         postalCode: postalCodeField.clone().optional(),

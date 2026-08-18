@@ -136,7 +136,7 @@ export const UserDetailService = {
       postalCode,
       dob,
     }: Infer<typeof userProvisioningValidator>["userCandidates"][number],
-    branchMembership: string,
+    branchMembership: string | undefined,
   ) {
     const blid = BlidService.createUserBlid("local", CryptoService.random());
     return await StorageService.UserDetails.add(

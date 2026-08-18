@@ -34,10 +34,10 @@ export function normalizePhone(phone: string) {
 }
 
 export function buildBranchMappings(
-  localNames: string[],
+  localNames: (string | undefined)[],
   branches: BranchSummary[],
 ): BranchMapping[] {
-  return [...new Set(localNames)]
+  return [...new Set(localNames.filter((localName): localName is string => !!localName))]
     .sort((a, b) => a.localeCompare(b))
     .map((localName) => {
       const candidates = branches
@@ -80,7 +80,7 @@ export function applyBranchResolutions(
 export function mergeCandidateIntoUserDetail(
   candidate: UserCandidate,
   existingUser: UserDetail,
-  branchId: string,
+  branchId: string | undefined,
 ) {
   return {
     name: candidate.name,
@@ -90,7 +90,7 @@ export function mergeCandidateIntoUserDetail(
     postCode: candidate.postalCode ?? existingUser.postCode,
     postCity: candidate.postalCity ?? existingUser.postCity,
     dob: candidate.dob ?? existingUser.dob,
-    branchMembership: branchId,
+    branchMembership: branchId ?? existingUser.branchMembership,
   };
 }
 
@@ -122,7 +122,7 @@ async function findExistingUsers(userCandidates: UserCandidate[]): Promise<(User
 async function updateExistingUser(
   candidate: UserCandidate,
   existingUser: UserDetail,
-  branchId: string,
+  branchId: string | undefined,
 ) {
   const update = mergeCandidateIntoUserDetail(candidate, existingUser, branchId);
   const mergedUser = {
@@ -134,10 +134,14 @@ async function updateExistingUser(
   await StorageService.UserDetails.update(existingUser.id, { ...update, tasks });
 }
 
-async function createNewUser(candidate: UserCandidate, branch: BranchSummary) {
+async function createNewUser(
+  candidate: UserCandidate,
+  branchMembershipId: string | undefined,
+  branchName: string,
+) {
   const userDetail = await UserDetailService.createProvisionedUserDetail(
     { ...candidate, phone: normalizePhone(candidate.phone) },
-    branch.id,
+    branchMembershipId,
   );
   await StorageService.Users.add({
     userDetail: userDetail.id,
@@ -146,7 +150,7 @@ async function createNewUser(candidate: UserCandidate, branch: BranchSummary) {
   });
   await DispatchService.sendOnboardingMessage({
     userDetail,
-    branchName: branch.name,
+    branchName,
   });
 }
 
@@ -193,6 +197,7 @@ export const UserProvisioningService = {
     const branchByLocalName = new Map(
       mappings.map((mapping) => [mapping.localName, mapping.branch]),
     );
+    const uploadBranch = await StorageService.Branches.get(branchId);
 
     const summary = {
       createdCount: 0,
@@ -200,15 +205,15 @@ export const UserProvisioningService = {
       errors: [] as { name: string; email: string; message: string }[],
     };
     async function processCandidate(candidate: UserCandidate, index: number) {
-      const branch = branchByLocalName.get(candidate.localName);
-      if (!branch) return;
+      const branch = candidate.localName ? branchByLocalName.get(candidate.localName) : null;
+      if (candidate.localName && !branch) return;
       try {
         const existingUser = existingUsers[index];
         if (existingUser) {
-          await updateExistingUser(candidate, existingUser, branch.id);
+          await updateExistingUser(candidate, existingUser, branch?.id);
           summary.updatedCount++;
         } else {
-          await createNewUser(candidate, branch);
+          await createNewUser(candidate, branch?.id, branch?.name ?? uploadBranch.name);
           summary.createdCount++;
         }
       } catch (error) {
