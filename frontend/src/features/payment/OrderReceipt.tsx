@@ -30,6 +30,8 @@ export default function OrderReceipt({ orderId }: { orderId: string }) {
       pendingSignature={data.pendingSignature}
       orderItems={data.orderItems}
       payments={data.payments}
+      branchName={data.branchName}
+      defaultExpanded
     />
   );
 }

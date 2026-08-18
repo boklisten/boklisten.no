@@ -15,7 +15,7 @@ export default function OrderHistory() {
     return (
       <>
         {[0, 1, 2, 3].map((index) => (
-          <Skeleton h={300} key={`skeleton-${index}`} />
+          <Skeleton h={80} radius="md" key={`skeleton-${index}`} />
         ))}
       </>
     );
@@ -47,6 +47,7 @@ export default function OrderHistory() {
           pendingSignature={order.pendingSignature}
           orderItems={order.orderItems}
           payments={order.payments ?? []}
+          branchName={order.branchName}
         />
       ))}
     </>

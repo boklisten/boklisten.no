@@ -1,7 +1,24 @@
 import type { OrderItem } from "@boklisten/backend/shared/order/order-item/order-item";
-import { Card, Group, Stack, Text, Title } from "@mantine/core";
-import { IconCheck, IconExclamationMark, IconQrcode, IconSignature } from "@tabler/icons-react";
-import { Activity } from "react";
+import {
+  ActionIcon,
+  Badge,
+  Card,
+  Collapse,
+  CopyButton,
+  Divider,
+  Group,
+  Stack,
+  Text,
+  UnstyledButton,
+} from "@mantine/core";
+import {
+  IconCheck,
+  IconChevronDown,
+  IconCopy,
+  IconExclamationCircle,
+  IconQrcode,
+} from "@tabler/icons-react";
+import { useState } from "react";
 
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import OrderItemTypeIcon from "@/shared/components/OrderItemTypeIcon";
@@ -13,6 +30,8 @@ export default function OrderCard({
   pendingSignature,
   orderItems,
   payments,
+  branchName,
+  defaultExpanded = false,
 }: {
   id: string;
   creationTime: Date | undefined;
@@ -24,95 +43,175 @@ export default function OrderCard({
     amount: number;
     confirmed: boolean;
   }[];
+  branchName?: string;
+  defaultExpanded?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const created = norwegianTime(creationTime);
+  const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+  const bookCount = orderItems.length;
+  const bookSummary = [
+    bookCount === 1 ? "1 bok" : `${bookCount} bøker`,
+    orderItems[0]?.title,
+    bookCount > 2 ? `+${bookCount - 1} til` : orderItems[1]?.title,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <Card shadow="sm" padding="md" radius="md" withBorder>
-      <Stack>
-        <Group justify={"space-between"}>
-          <Title order={5} c={"dimmed"}>
-            #{id}
-          </Title>
-          <Text>{norwegianTime(creationTime).format("DD/MM/YYYY HH:mm:ss")}</Text>
+    <Card
+      shadow="sm"
+      padding={0}
+      radius="md"
+      withBorder
+      style={
+        pendingSignature ? { borderLeft: "4px solid var(--mantine-color-yellow-6)" } : undefined
+      }
+    >
+      <UnstyledButton
+        onClick={() => setExpanded((previous) => !previous)}
+        aria-expanded={expanded}
+        p="md"
+        w="100%"
+      >
+        <Group wrap="nowrap" gap="md">
+          <Stack gap={0} align="center" miw={52}>
+            <Text fz={26} fw={700} lh={1.1}>
+              {created.format("D")}
+            </Text>
+            <Text size="xs" c="dimmed" fw={600} tt="uppercase">
+              {created.format("MMM YYYY")}
+            </Text>
+          </Stack>
+          <Divider orientation="vertical" />
+          <Stack gap={2} flex={1} miw={0}>
+            <Group gap="xs" wrap="nowrap">
+              <Text fw={600} truncate>
+                {branchName ?? "Bestilling"}
+              </Text>
+              {pendingSignature && (
+                <Badge color="yellow" variant="light" flex="none">
+                  Venter på signatur
+                </Badge>
+              )}
+            </Group>
+            <Text size="sm" c="dimmed" truncate>
+              {bookSummary}
+            </Text>
+          </Stack>
+          {totalPaid !== 0 && (
+            <Text fw={600} flex="none">
+              {totalPaid < 0 ? `−${Math.abs(totalPaid)}` : totalPaid} kr
+            </Text>
+          )}
+          <IconChevronDown
+            size={20}
+            style={{
+              transform: expanded ? "rotate(180deg)" : undefined,
+              transition: "transform 150ms ease",
+              flex: "none",
+            }}
+          />
         </Group>
-        <Activity mode={pendingSignature ? "visible" : "hidden"}>
-          <WarningAlert title={"Denne orderen krever gyldig signatur"}>
-            Du må ha en gyldig signatur før du kan motta disse bøkene. Sjekk dine oppgaver for mer
-            informasjon
-          </WarningAlert>
-        </Activity>
-        <Activity mode={!pendingSignature ? "visible" : "hidden"}>
-          <Group gap={5}>
-            <IconSignature />
-            <Text c={"dimmed"}>Denne orderen krever ikke signering</Text>
-          </Group>
-        </Activity>
-        <Stack gap={"xs"}>
-          <Title order={5}>Bøker</Title>
-          {orderItems.map((orderItem) => (
-            <Card withBorder key={orderItem.title + orderItem.blid}>
-              <Stack gap={5}>
-                <Group justify={"space-between"}>
-                  <Title order={6}>{orderItem.title}</Title>
-                  <Activity mode={orderItem.amount ? "visible" : "hidden"}>
-                    <Text>{Math.abs(orderItem.unitPrice)} kr</Text>
-                  </Activity>
-                </Group>
-                <Activity mode={orderItem.blid ? "visible" : "hidden"}>
-                  <Group gap={2}>
-                    <IconQrcode size={18} />
-                    <Text>{orderItem.blid}</Text>
-                  </Group>
-                </Activity>
-                <Group gap={2}>
-                  <OrderItemTypeIcon type={orderItem.type} />
-                  <Text>{orderItem.typeLabel}</Text>
-                  <Activity
-                    mode={
-                      ["rent", "partly-payment", "loan", "extend"].includes(orderItem.type) &&
-                      orderItem.info?.to
-                        ? "visible"
-                        : "hidden"
-                    }
-                  >
-                    til
-                    <Text size={"sm"} fw={"bold"}>
-                      {norwegianTime(orderItem.info?.to).format("DD/MM/YYYY")}
+      </UnstyledButton>
+      <Collapse expanded={expanded}>
+        <Divider />
+        <Stack p="md" gap="sm">
+          {pendingSignature && (
+            <WarningAlert title="Denne ordren krever gyldig signatur">
+              Du må ha en gyldig signatur før du kan motta disse bøkene. Sjekk dine oppgaver for mer
+              informasjon
+            </WarningAlert>
+          )}
+          <Stack gap="sm">
+            {orderItems.map((orderItem, index) => (
+              <Stack gap="sm" key={orderItem.title + orderItem.blid}>
+                {index > 0 && <Divider />}
+                <Group justify="space-between" wrap="nowrap" align="flex-start">
+                  <Stack gap={2}>
+                    <Text fw={500}>{orderItem.title}</Text>
+                    <Group gap={5}>
+                      <OrderItemTypeIcon type={orderItem.type} />
+                      <Text size="sm" c="dimmed">
+                        {orderItem.typeLabel}
+                        {["rent", "partly-payment", "loan", "extend"].includes(orderItem.type) &&
+                          orderItem.info?.to &&
+                          ` til ${norwegianTime(orderItem.info.to).format("D. MMM YYYY")}`}
+                      </Text>
+                    </Group>
+                    {orderItem.blid && (
+                      <Group gap={4}>
+                        <IconQrcode size={14} />
+                        <Text size="xs" c="dimmed">
+                          {orderItem.blid}
+                        </Text>
+                      </Group>
+                    )}
+                    {orderItem.movedToOrder && (
+                      <Text size="xs" c="dimmed">
+                        Denne boken har blitt flyttet til en annen ordre
+                      </Text>
+                    )}
+                  </Stack>
+                  {orderItem.amount !== 0 && (
+                    <Text fw={500} flex="none">
+                      {Math.abs(orderItem.unitPrice)} kr
                     </Text>
-                  </Activity>
+                  )}
                 </Group>
-                <Activity mode={orderItem.movedToOrder ? "visible" : "hidden"}>
-                  <Text c={"dimmed"}>Denne boken har blitt flyttet til en annen ordre.</Text>
-                </Activity>
               </Stack>
-            </Card>
-          ))}
-        </Stack>
-        <Activity mode={payments.length > 0 ? "visible" : "hidden"}>
-          <Stack gap={5}>
-            <Title order={5}>Betaling</Title>
-            {payments.map((payment) => (
-              <Card withBorder key={payment.id}>
-                <Group justify={"space-between"}>
-                  <Text key={payment.id}>
-                    {payment.amount > 0 ? "Betalt" : "Refundert"} {Math.abs(payment.amount)} kr med{" "}
-                    {payment.methodLabel}
-                  </Text>
-                  <Group gap={5}>
-                    <Activity mode={payment.confirmed ? "visible" : "hidden"}>
-                      <IconCheck color={"green"} />
-                      <Text c={"green"}>Bekreftet</Text>
-                    </Activity>
-                    <Activity mode={!payment.confirmed ? "visible" : "hidden"}>
-                      <IconExclamationMark />
-                      <Text>Bekreftet</Text>
-                    </Activity>
-                  </Group>
-                </Group>
-              </Card>
             ))}
           </Stack>
-        </Activity>
-      </Stack>
+          {payments.length > 0 && (
+            <>
+              <Divider />
+              <Stack gap={5}>
+                {payments.map((payment) => (
+                  <Group justify="space-between" key={payment.id}>
+                    <Text size="sm">
+                      {payment.amount > 0 ? "Betalt" : "Refundert"} {Math.abs(payment.amount)} kr
+                      med {payment.methodLabel}
+                    </Text>
+                    {payment.confirmed ? (
+                      <Group gap={4}>
+                        <IconCheck size={16} color="var(--mantine-color-green-7)" />
+                        <Text size="xs" c="green">
+                          Bekreftet
+                        </Text>
+                      </Group>
+                    ) : (
+                      <Group gap={4}>
+                        <IconExclamationCircle size={16} color="var(--mantine-color-yellow-7)" />
+                        <Text size="xs" c="dimmed">
+                          Ikke bekreftet
+                        </Text>
+                      </Group>
+                    )}
+                  </Group>
+                ))}
+              </Stack>
+            </>
+          )}
+          <Group gap={4}>
+            <Text size="xs" c="dimmed">
+              Ordre-ID: {id}
+            </Text>
+            <CopyButton value={id}>
+              {({ copied, copy }) => (
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="xs"
+                  onClick={copy}
+                  aria-label="Kopier ordre-ID"
+                >
+                  {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+                </ActionIcon>
+              )}
+            </CopyButton>
+          </Group>
+        </Stack>
+      </Collapse>
     </Card>
   );
 }
