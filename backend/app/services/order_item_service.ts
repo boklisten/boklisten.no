@@ -68,13 +68,14 @@ export const OrderItemService = {
     } as const satisfies OrderItem;
   },
   createBuyOrderItem(item: Item) {
+    const price = Math.floor(item.price / 10) * 10;
     return {
       type: "buy",
       item: item.id,
       title: item.title,
       delivered: false,
-      amount: item.price,
-      unitPrice: item.price,
+      amount: price,
+      unitPrice: price,
     } as const satisfies OrderItem;
   },
   async createRentOrderItem(item: Item, branchId: string, to: Date) {

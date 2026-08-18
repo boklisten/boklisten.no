@@ -40,7 +40,7 @@ export const CartService = {
     if (branchItem.buy) {
       options.push({
         type: "buy",
-        price: branch.paymentInfo?.responsible ? 0 : Math.ceil(item.price),
+        price: branch.paymentInfo?.responsible ? 0 : Math.floor(item.price / 10) * 10,
       });
     }
 

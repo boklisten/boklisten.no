@@ -90,7 +90,7 @@ export function mergeCandidateIntoUserDetail(
     postCode: candidate.postalCode ?? existingUser.postCode,
     postCity: candidate.postalCity ?? existingUser.postCity,
     dob: candidate.dob ?? existingUser.dob,
-    branchMembership: branchId ?? existingUser.branchMembership,
+    ...(branchId ? { branchMembership: branchId } : {}),
   };
 }
 
