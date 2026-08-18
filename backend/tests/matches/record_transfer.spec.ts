@@ -104,7 +104,7 @@ test.group("recordTransfer", (group) => {
   }
 
   /** Stubs every Mongo-side collaborator; the Postgres side stays real. */
-  function stubMongo(customerItem: CustomerItem | null) {
+  function stubMongo(customerItem: CustomerItem | null, options: { orderedItem?: string } = {}) {
     sandbox
       .stub(CustomerItemActiveBlid.prototype, "getActiveCustomerItems")
       .resolves(customerItem ? [customerItem] : []);
@@ -118,7 +118,7 @@ test.group("recordTransfer", (group) => {
         orderItems: [
           {
             type: "rent",
-            item: customerItem?.item ?? ITEM_X,
+            item: options.orderedItem ?? customerItem?.item ?? ITEM_X,
             title: "Matematikk R1",
             amount: 0,
             unitPrice: 0,
@@ -161,7 +161,11 @@ test.group("recordTransfer", (group) => {
       .stub(OrderToCustomerItemGenerator.prototype, "generate")
       .resolves([{ id: "generated-customer-item" }] as never);
     sandbox.stub(OrderValidator.prototype, "validate").resolves();
-    sandbox.stub(OrderItemMovedFromOrderHandler.prototype, "updateOrderItems").resolves();
+    return {
+      movedHandlerStub: sandbox
+        .stub(OrderItemMovedFromOrderHandler.prototype, "updateOrderItems")
+        .resolves(),
+    };
   }
 
   test("a peer's own copy discharges both halves with one handover", async ({ assert }) => {
@@ -226,6 +230,26 @@ test.group("recordTransfer", (group) => {
     const [handover] = await BookHandover.all();
     assert.equal(handover!.itemId, GYMNOS_2012);
     assert.equal(handover!.dischargesReceiverObligationId, mine.id);
+  });
+
+  test("receiving an equivalent edition closes the order for the edition the receiver ordered", async ({
+    assert,
+  }) => {
+    // A ordered GYMNOS 2009 but receives B's GYMNOS 2012 copy. The receive order must record the
+    // 2012 edition A actually got, and hand the 2009 order to the moved-order handler — which
+    // closes equivalent editions — so A's original order does not stay open.
+    await seedObligation(B, A, GYMNOS_2009);
+    const { movedHandlerStub } = stubMongo(activeCopy({ customer: B, item: GYMNOS_2012 }), {
+      orderedItem: GYMNOS_2009,
+    });
+
+    const { feedback } = await recordTransfer(A, { blid: BLID });
+
+    assert.isUndefined(feedback);
+    assert.equal(movedHandlerStub.callCount, 1);
+    const receiveOrder = movedHandlerStub.firstCall.args[0];
+    assert.equal(receiveOrder.orderItems[0]?.item, GYMNOS_2012);
+    assert.equal(receiveOrder.orderItems[0]?.movedFromOrder, "receiver-rent-order");
   });
 
   test("scanning the same book twice records only one handover", async ({ assert }) => {

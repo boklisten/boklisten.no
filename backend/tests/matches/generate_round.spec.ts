@@ -31,6 +31,9 @@ const B = "5d765db5fc8c47001c408d82";
 const ITEM_X = "5d765db5fc8c47001c408e01";
 const ITEM_Y = "5d765db5fc8c47001c408e02";
 const BRANCH = "5d765db5fc8c47001c408b01";
+/** The two GYMNOS editions customers order interchangeably. */
+const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
+const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
 
 /** A planned round with the shape these tests assert against. */
 const plannedRound = () =>
@@ -111,6 +114,53 @@ test.group("generateRound", (group) => {
     const pickup = obligations.find((o) => o.sender.userDetailId === null);
     assert.isDefined(pickup);
     assert.equal(pickup!.receiver.userDetailId, B);
+  });
+
+  test("matches equivalent editions between students, naming the sender's edition", async ({
+    assert,
+  }) => {
+    // A holds the 2009 edition; B ordered the 2012 edition. The editions are interchangeable, so
+    // the two should meet — and the obligation must name the copy that will actually move: A's.
+    stubMongo(
+      [heldBy(A, [GYMNOS_2009]), heldBy(B, [ITEM_Y])],
+      [
+        { id: A, wantedItems: [ITEM_Y] },
+        { id: B, wantedItems: [GYMNOS_2012] },
+      ],
+    );
+
+    await generateRound(await plannedRound());
+
+    const obligations = await MatchObligation.query().preload("sender").preload("receiver");
+    const fromA = obligations.find((o) => o.sender.userDetailId === A);
+    assert.equal(fromA?.receiver.userDetailId, B, "the two students are matched with each other");
+    assert.equal(fromA?.itemId, GYMNOS_2009, "the obligation names the edition A actually holds");
+  });
+
+  test("a cross-edition stand pickup names the edition the receiver ordered", async ({
+    assert,
+  }) => {
+    // Nobody holds any GYMNOS; B ordered the 2012 edition. The pickup must say 2012, not the
+    // equivalence group's canonical id.
+    stubMongo([], [{ id: B, wantedItems: [GYMNOS_2012] }]);
+
+    await generateRound(await plannedRound());
+
+    const obligations = await MatchObligation.query().preload("sender").preload("receiver");
+    const pickup = obligations.find((o) => o.sender.userDetailId === null);
+    assert.equal(pickup?.receiver.userDetailId, B);
+    assert.equal(pickup?.itemId, GYMNOS_2012);
+  });
+
+  test("a cross-edition stand handoff names the edition the sender holds", async ({ assert }) => {
+    stubMongo([heldBy(A, [GYMNOS_2012])], []);
+
+    await generateRound(await plannedRound());
+
+    const obligations = await MatchObligation.query().preload("sender").preload("receiver");
+    const handoff = obligations.find((o) => o.receiver.userDetailId === null);
+    assert.equal(handoff?.sender.userDetailId, A);
+    assert.equal(handoff?.itemId, GYMNOS_2012);
   });
 
   test("a stand handoff records the customer as sender", async ({ assert }) => {

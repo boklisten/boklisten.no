@@ -184,7 +184,9 @@ export default class RapidHandoutController {
         {
           movedFromOrder,
           handout: true,
-          item: customerOrder.relevantOrderItem?.item ?? itemId,
+          // The scanned copy's own item: an order for one edition may be fulfilled with an
+          // equivalent edition, and the record must say which book the customer actually got.
+          item: itemId,
           title: item.title,
           blid,
           type: customerOrder.relevantOrderItem?.type ?? "rent",
@@ -207,14 +209,10 @@ export default class RapidHandoutController {
 
     // The stand is a party to the handover in its own right, so this is recorded like any other
     // movement: it settles the customer's receiver half if they were due the book from anyone.
-    const handedOutItemId = customerOrder.relevantOrderItem?.item ?? itemId;
-    const receiverObligation = await MatchRepository.findReceiverObligation(
-      customerId,
-      handedOutItemId,
-    );
+    const receiverObligation = await MatchRepository.findReceiverObligation(customerId, itemId);
     await MatchRepository.recordHandover({
       blid,
-      itemId: handedOutItemId,
+      itemId,
       fromUserDetailId: null,
       toUserDetailId: customerId,
       occurredAt: DateTime.now(),

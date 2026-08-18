@@ -25,3 +25,12 @@ export function getEquivalentItemIds(itemId: string): string[] {
 export function itemsAreEquivalent(a: string, b: string): boolean {
   return getEquivalentItemIds(a).includes(b);
 }
+
+/**
+ * A stable representative for the item's equivalence group — the same id for every member, so it
+ * can key maps and sets that must treat equivalent editions as one title. For an id outside any
+ * group, the id itself.
+ */
+export function canonicalItemId(itemId: string): string {
+  return getEquivalentItemIds(itemId)[0] ?? itemId;
+}

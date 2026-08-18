@@ -4,6 +4,7 @@ import { isNotNullish } from "#services/legacy/typescript-helpers";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { BranchPaymentInfo } from "#shared/branch-payment-info";
+import { itemsAreEquivalent } from "#shared/item-equivalence";
 import { Order } from "#shared/order/order";
 import { OrderItem } from "#shared/order/order-item/order-item";
 import { Period } from "#shared/period";
@@ -140,6 +141,13 @@ export class OrderItemRentPeriodValidator {
   private getOrderItemFromOrder(itemId: string, order: Order): OrderItem {
     for (const orderItem of order.orderItems) {
       if (orderItem.item.toString() === itemId.toString()) {
+        return orderItem;
+      }
+    }
+
+    // A moved order item may carry an equivalent edition of the originally ordered item.
+    for (const orderItem of order.orderItems) {
+      if (itemsAreEquivalent(orderItem.item.toString(), itemId.toString())) {
         return orderItem;
       }
     }

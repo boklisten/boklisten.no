@@ -299,6 +299,76 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
     assert.equal(plan.orders[0]?.orderItems[0]?.deadline, "2026-12-20");
   });
 
+  /** The two GYMNOS editions customers order interchangeably. */
+  const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
+  const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
+
+  test("skips a book when the student possesses or ordered an equivalent edition", ({ assert }) => {
+    const plan = planSubjectChoices({
+      ...baseInput,
+      subjectsByBranchId: new Map([
+        [
+          "branch-school",
+          [
+            {
+              externalName: "Kroppsøving",
+              books: [{ itemId: GYMNOS_2012, title: "Gymnos 2012" }],
+            },
+          ],
+        ],
+      ]),
+      ownedItemKeys: new Set([`kari:${GYMNOS_2009}`]),
+      rows: [
+        {
+          name: "Kari Nordmann",
+          localName: "3STA",
+          subject: "Kroppsøving",
+          deadline: "2027-07-01",
+        },
+      ],
+    });
+    assert.lengthOf(plan.orders, 0);
+    assert.equal(plan.metrics.skippedAlreadyOwned, 1);
+    assert.equal(plan.metrics.studentsAlreadyCovered, 1);
+  });
+
+  test("orders one edition only when subjects resolve to equivalent editions", ({ assert }) => {
+    const plan = planSubjectChoices({
+      ...baseInput,
+      subjectsByBranchId: new Map([
+        [
+          "branch-school",
+          [
+            {
+              externalName: "Kroppsøving",
+              books: [{ itemId: GYMNOS_2009, title: "Gymnos 2009" }],
+            },
+            {
+              externalName: "Toppidrett",
+              books: [{ itemId: GYMNOS_2012, title: "Gymnos 2012" }],
+            },
+          ],
+        ],
+      ]),
+      rows: [
+        {
+          name: "Kari Nordmann",
+          localName: "3STA",
+          subject: "Kroppsøving",
+          deadline: "2027-07-01",
+        },
+        { name: "Kari Nordmann", localName: "3STA", subject: "Toppidrett", deadline: "2026-12-20" },
+      ],
+    });
+    assert.deepEqual(
+      plan.orders[0]?.orderItems.map((orderItem) => orderItem.itemId),
+      [GYMNOS_2009],
+      "the first edition encountered is the one ordered",
+    );
+    assert.equal(plan.orders[0]?.orderItems[0]?.deadline, "2026-12-20");
+    assert.equal(plan.metrics.totalBooks, 1);
+  });
+
   test("reports subjects that could not be resolved with how many students they affect", ({
     assert,
   }) => {

@@ -82,9 +82,9 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
     getOrderStub.withArgs(testMovedFromOrderId).resolves(testMovedFromOrder);
     updateOrderStub.resolves(testMovedFromOrder);
 
-    void oiMovedFromOrderHandler.updateOrderItems(order).then(() => {
-      return expect(updateOrderStub).to.have.been.called;
-    });
+    await oiMovedFromOrderHandler.updateOrderItems(order);
+
+    expect(updateOrderStub.callCount).to.equal(1);
   });
 
   test('should reject if original order item already have "movedToOrder"', async () => {
@@ -97,5 +97,93 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
       BlError,
       /orderItem has "movedToOrder" already set/,
     );
+  });
+
+  /** The two GYMNOS editions customers order interchangeably. */
+  const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
+  const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
+
+  /** An original order for one item and a new order that moves `movedItemId` out of it. */
+  function ordersWithItems(originalItemId: string, movedItemId: string) {
+    const originalOrder = {
+      id: "originalOrder1",
+      amount: 0,
+      orderItems: [{ type: "rent", item: originalItemId, amount: 0, unitPrice: 0 }],
+    } as Order;
+    const newOrder = {
+      id: "newOrder1",
+      amount: 0,
+      orderItems: [
+        {
+          type: "rent",
+          item: movedItemId,
+          amount: 0,
+          unitPrice: 0,
+          movedFromOrder: originalOrder.id,
+        },
+      ],
+    } as Order;
+    getOrderStub.withArgs(originalOrder.id).resolves(originalOrder);
+    updateOrderStub.resolves(originalOrder);
+    return { originalOrder, newOrder };
+  }
+
+  /** The orderItems the handler wrote back to the original order. */
+  function updatedOrderItems(): { item: string; movedToOrder?: string }[] {
+    expect(updateOrderStub.callCount).to.equal(1);
+    return updateOrderStub.firstCall.args[1].orderItems;
+  }
+
+  test('marks an equivalent edition\'s order item with "movedToOrder"', async () => {
+    // The customer ordered GYMNOS 2009 but received a GYMNOS 2012 copy.
+    const { originalOrder, newOrder } = ordersWithItems(GYMNOS_2009, GYMNOS_2012);
+
+    await oiMovedFromOrderHandler.updateOrderItems(newOrder);
+
+    expect(updateOrderStub.firstCall.args[0]).to.equal(originalOrder.id);
+    expect(updatedOrderItems()).to.deep.equal([
+      { type: "rent", item: GYMNOS_2009, amount: 0, unitPrice: 0, movedToOrder: newOrder.id },
+    ]);
+  });
+
+  test("prefers the exact item over an equivalent edition", async () => {
+    const originalOrder = {
+      id: "originalOrder1",
+      amount: 0,
+      orderItems: [
+        { type: "rent", item: GYMNOS_2009, amount: 0, unitPrice: 0 },
+        { type: "rent", item: GYMNOS_2012, amount: 0, unitPrice: 0 },
+      ],
+    } as Order;
+    const newOrder = {
+      id: "newOrder1",
+      amount: 0,
+      orderItems: [
+        {
+          type: "rent",
+          item: GYMNOS_2012,
+          amount: 0,
+          unitPrice: 0,
+          movedFromOrder: originalOrder.id,
+        },
+      ],
+    } as Order;
+    getOrderStub.withArgs(originalOrder.id).resolves(originalOrder);
+    updateOrderStub.resolves(originalOrder);
+
+    await oiMovedFromOrderHandler.updateOrderItems(newOrder);
+
+    const [gymnos2009Item, gymnos2012Item] = updatedOrderItems();
+    expect(gymnos2009Item?.movedToOrder).to.equal(undefined);
+    expect(gymnos2012Item?.movedToOrder).to.equal(newOrder.id);
+  });
+
+  test("leaves an unrelated item untouched", async () => {
+    const { newOrder } = ordersWithItems("someOtherItem", GYMNOS_2012);
+
+    await oiMovedFromOrderHandler.updateOrderItems(newOrder);
+
+    const [unrelatedItem] = updatedOrderItems();
+    expect(unrelatedItem?.movedToOrder).to.equal(undefined);
   });
 });

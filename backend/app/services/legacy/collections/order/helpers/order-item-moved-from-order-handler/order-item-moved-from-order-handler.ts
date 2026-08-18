@@ -1,6 +1,7 @@
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
+import { itemsAreEquivalent } from "#shared/item-equivalence";
 import { Order } from "#shared/order/order";
 
 interface OrderItemToUpdate {
@@ -39,13 +40,23 @@ export class OrderItemMovedFromOrderHandler {
   private async updateOrderItem(orderItemToUpdate: OrderItemToUpdate): Promise<boolean> {
     const originalOrder = await StorageService.Orders.get(orderItemToUpdate.originalOrderId);
 
-    for (const orderItem of originalOrder.orderItems) {
-      if (orderItem.item === orderItemToUpdate.itemId) {
-        if (!orderItem.movedToOrder) {
-          orderItem.movedToOrder = orderItemToUpdate.newOrderId;
-        } else if (orderItem.movedToOrder !== orderItemToUpdate.newOrderId) {
-          throw new BlError(`orderItem has "movedToOrder" already set`);
-        }
+    // An order for one edition may have been fulfilled with an equivalent edition; the exact item
+    // is preferred, and only when the ordered id itself is absent is a single still-open
+    // equivalent closed instead.
+    const exactMatches = originalOrder.orderItems.filter(
+      (orderItem) => orderItem.item === orderItemToUpdate.itemId,
+    );
+    const openEquivalent = originalOrder.orderItems.find(
+      (orderItem) =>
+        !orderItem.movedToOrder && itemsAreEquivalent(orderItem.item, orderItemToUpdate.itemId),
+    );
+    const matches = exactMatches.length > 0 ? exactMatches : openEquivalent ? [openEquivalent] : [];
+
+    for (const orderItem of matches) {
+      if (!orderItem.movedToOrder) {
+        orderItem.movedToOrder = orderItemToUpdate.newOrderId;
+      } else if (orderItem.movedToOrder !== orderItemToUpdate.newOrderId) {
+        throw new BlError(`orderItem has "movedToOrder" already set`);
       }
     }
 

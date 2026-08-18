@@ -16,6 +16,7 @@ import {
 import { getHeldItems, getWantedItems } from "#services/matches/round_scope";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
+import { canonicalItemId } from "#shared/item-equivalence";
 import type { UserDetail } from "#shared/user-detail";
 
 async function getGroupMemberships(customerIds: string[]): Promise<Map<string, string>> {
@@ -42,6 +43,33 @@ function toMatchableUsers(
     wantedItems: wantedByCustomer.get(id) ?? new Set(),
     groupMembership: groupMemberships.get(id) ?? "unknown",
   }));
+}
+
+/**
+ * Collapses each customer's item set to the equivalence groups' canonical ids, so the finder pairs
+ * a student holding one edition with a student who ordered another. The actual edition each
+ * canonical id stood in for is remembered per customer, letting the drafts name the real book.
+ */
+function canonicalizeItems(byCustomer: Map<string, Set<string>>): {
+  canonicalByCustomer: Map<string, Set<string>>;
+  actualByCustomer: Map<string, Map<string, string>>;
+} {
+  const canonicalByCustomer = new Map<string, Set<string>>();
+  const actualByCustomer = new Map<string, Map<string, string>>();
+  for (const [customerId, itemIds] of byCustomer) {
+    const canonicalIds = new Set<string>();
+    const actualByCanonical = new Map<string, string>();
+    for (const itemId of itemIds) {
+      const canonicalId = canonicalItemId(itemId);
+      canonicalIds.add(canonicalId);
+      if (!actualByCanonical.has(canonicalId)) {
+        actualByCanonical.set(canonicalId, itemId);
+      }
+    }
+    canonicalByCustomer.set(customerId, canonicalIds);
+    actualByCustomer.set(customerId, actualByCanonical);
+  }
+  return { canonicalByCustomer, actualByCustomer };
 }
 
 function obligation(
@@ -95,7 +123,19 @@ export async function generateRound(round: MatchRound) {
   const groupMemberships = await getGroupMemberships([
     ...new Set([...heldByCustomer.keys(), ...wantedByCustomer.keys()]),
   ]);
-  const matchableUsers = toMatchableUsers(heldByCustomer, wantedByCustomer, groupMemberships);
+  const held = canonicalizeItems(heldByCustomer);
+  const wanted = canonicalizeItems(wantedByCustomer);
+  // The obligations name the physical book: the edition the sender holds for handovers to a
+  // student or the stand, and the edition the receiver ordered for pure stand pickups.
+  const heldEdition = (customerId: string, itemId: string) =>
+    held.actualByCustomer.get(customerId)?.get(itemId) ?? itemId;
+  const wantedEdition = (customerId: string, itemId: string) =>
+    wanted.actualByCustomer.get(customerId)?.get(itemId) ?? itemId;
+  const matchableUsers = toMatchableUsers(
+    held.canonicalByCustomer,
+    wanted.canonicalByCustomer,
+    groupMemberships,
+  );
   if (matchableUsers.length === 0) {
     throw new BlError("Fant ingen elever å lage overleveringer for").code(200);
   }
@@ -127,10 +167,10 @@ export async function generateRound(round: MatchRound) {
         participantCustomerIds: [customerA, customerB],
         obligations: [
           ...[...candidate.expectedAToBItems].map((itemId) =>
-            obligation(customerA, customerB, itemId, true),
+            obligation(customerA, customerB, heldEdition(customerA, itemId), true),
           ),
           ...[...candidate.expectedBToAItems].map((itemId) =>
-            obligation(customerB, customerA, itemId, true),
+            obligation(customerB, customerA, heldEdition(customerB, itemId), true),
           ),
         ],
       };
@@ -143,10 +183,10 @@ export async function generateRound(round: MatchRound) {
         participantCustomerIds: [customer, null],
         obligations: [
           ...[...candidate.expectedHandoffItems].map((itemId) =>
-            obligation(customer, null, itemId, false),
+            obligation(customer, null, heldEdition(customer, itemId), false),
           ),
           ...[...candidate.expectedPickupItems].map((itemId) =>
-            obligation(null, customer, itemId, false),
+            obligation(null, customer, wantedEdition(customer, itemId), false),
           ),
         ],
       };

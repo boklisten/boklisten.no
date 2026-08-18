@@ -10,6 +10,7 @@ import {
 } from "#services/branch_subjects_service";
 import { StorageService } from "#services/storage_service";
 import { buildBranchMappings } from "#services/user_provisioning_service";
+import { canonicalItemId, getEquivalentItemIds } from "#shared/item-equivalence";
 import { Period } from "#shared/period";
 
 export interface SubjectChoiceRow {
@@ -235,6 +236,8 @@ export function planSubjectChoices({
   }
 
   for (const { member, choices } of choicesByMemberId.values()) {
+    // Keyed by the equivalence group's canonical id, so two subjects that resolve to different
+    // editions of the same title still yield a single order item (the first edition encountered).
     const orderItemByItemId = new Map<
       string,
       PlannedOrder["orderItems"][number] & { branchId: string }
@@ -263,11 +266,14 @@ export function planSubjectChoices({
         continue;
       }
       for (const item of resolved.items) {
-        if (ownedItemKeys.has(`${member.id}:${item.itemId}`)) {
+        const alreadyOwned = getEquivalentItemIds(item.itemId).some((equivalentItemId) =>
+          ownedItemKeys.has(`${member.id}:${equivalentItemId}`),
+        );
+        if (alreadyOwned) {
           skippedForStudent++;
           continue;
         }
-        const existing = orderItemByItemId.get(item.itemId);
+        const existing = orderItemByItemId.get(canonicalItemId(item.itemId));
         if (existing) {
           if (choice.deadline < existing.deadline) {
             existing.deadline = choice.deadline;
@@ -275,7 +281,7 @@ export function planSubjectChoices({
           }
           continue;
         }
-        orderItemByItemId.set(item.itemId, {
+        orderItemByItemId.set(canonicalItemId(item.itemId), {
           itemId: item.itemId,
           title: item.title,
           deadline: choice.deadline,
