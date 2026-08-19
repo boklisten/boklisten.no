@@ -1,18 +1,7 @@
 import { Badge, Card, Group, Stack, Text, ThemeIcon, Title } from "@mantine/core";
 import { IconArrowRight, IconCircleCheck, IconLock } from "@tabler/icons-react";
 
-/** A book the customer exchanges with another student (received from / delivered to a peer). */
-export interface PeerBook {
-  /** Item id. */
-  id: string;
-  title: string;
-  /** Whether the transfer has already happened. */
-  fulfilled: boolean;
-  /** Name of the other student in the match. */
-  personName: string;
-  /** Whether the match is locked, making stand handout impossible. */
-  locked: boolean;
-}
+import type { PeerBook } from "@/features/rapid-handout/handoutBooks";
 
 /**
  * A calm, informational list of books that are exchanged with other students rather than handed

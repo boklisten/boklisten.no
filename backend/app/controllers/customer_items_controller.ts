@@ -1,13 +1,16 @@
-import type { HttpContext } from "@adonisjs/core/http";
-import { DateTime } from "luxon";
+import type {HttpContext} from "@adonisjs/core/http";
+import {DateTime} from "luxon";
+import {ObjectId} from "mongodb";
 
-import { DateService } from "#services/legacy/date.service";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
-import { PermissionService } from "#services/permission_service";
-import { StorageService } from "#services/storage_service";
-import { Branch } from "#shared/branch";
-import { CustomerItemStatus } from "#shared/customer-item/actionable_customer_item";
-import { CustomerItem } from "#shared/customer-item/customer-item";
+import {BlSchemaName} from "#models/mongoose/storage/bl-schema-names";
+import {DateService} from "#services/legacy/date.service";
+import {SEDbQuery} from "#services/legacy/query/se.db-query";
+import {PermissionService} from "#services/permission_service";
+import {StorageService} from "#services/storage_service";
+import {Branch} from "#shared/branch";
+import {ActiveCustomerItem} from "#shared/customer-item/active-customer-item";
+import {CustomerItemStatus} from "#shared/customer-item/actionable_customer_item";
+import {CustomerItem} from "#shared/customer-item/customer-item";
 
 function isHandedOutWithinTheLastTwoWeeks(customerItem: CustomerItem) {
   const handedOutAt = customerItem.creationTime
@@ -187,5 +190,49 @@ export default class CustomerItemsController {
         } as const;
       }),
     );
+  }
+
+  /**
+   * The books a given customer is currently holding, for employees working the stand.
+   * Separate from getCustomerItems because that one is scoped to the caller's own token and
+   * leaves out the rental type.
+   */
+  async getActiveCustomerItemsForCustomer(ctx: HttpContext) {
+    PermissionService.employeeOrFail(ctx);
+    const detailsId = ctx.request.param("detailsId") as string;
+    if (!ObjectId.isValid(detailsId)) return [];
+
+    return (await StorageService.CustomerItems.aggregate([
+      {
+        $match: {
+          returned: {$ne: true},
+          buyout: {$ne: true},
+          cancel: {$ne: true},
+          buyback: {$ne: true},
+          handout: true,
+          customer: new ObjectId(detailsId),
+        },
+      },
+      {
+        $lookup: {
+          from: BlSchemaName.Items,
+          localField: "item",
+          foreignField: "_id",
+          as: "item",
+        },
+      },
+      {$unwind: {path: "$item", preserveNullAndEmptyArrays: true}},
+      {
+        $project: {
+          _id: 0,
+          id: {$toString: "$_id"},
+          title: {$ifNull: ["$item.title", "Ukjent bok"]},
+          blid: {$ifNull: ["$blid", null]},
+          type: {$ifNull: ["$type", null]},
+          deadline: "$deadline",
+        },
+      },
+      {$sort: {deadline: 1, title: 1}},
+    ])) as ActiveCustomerItem[];
   }
 }

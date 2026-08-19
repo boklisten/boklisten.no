@@ -1,7 +1,4 @@
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
-import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
-import type { Order } from "@boklisten/backend/shared/order/order";
-import type { OrderItem } from "@boklisten/backend/shared/order/order-item/order-item";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import { Box, Button, Modal, Stack, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -9,9 +6,13 @@ import { IconObjectScan } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import { forViewer, partyName } from "@/features/matches/forViewer";
 import CancelOrderItemButton from "@/features/rapid-handout/CancelOrderItemButton";
-import PeerTransferList, { type PeerBook } from "@/features/rapid-handout/PeerTransferList";
+import {
+  buildOpenOrderInfo,
+  buildPeerBooks,
+  calculateUnfulfilledOrderItems,
+} from "@/features/rapid-handout/handoutBooks";
+import PeerTransferList from "@/features/rapid-handout/PeerTransferList";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { ItemStatus } from "@/shared/components/matches/matches-helper";
 import { ItemStatusTable } from "@/shared/components/matches/MatchItemTable";
@@ -25,55 +26,6 @@ import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 const CONFIRM_Z_INDEX = 350;
 
 const POLL_INTERVAL_MS = 5000;
-
-function isOpenCustomerOrder(order: Order) {
-  return order.byCustomer && !order.handoutByDelivery;
-}
-
-function isOpenOrderItem(orderItem: OrderItem) {
-  return (
-    !orderItem.movedToOrder &&
-    !orderItem.handout &&
-    (orderItem.type === "rent" || orderItem.type === "partly-payment")
-  );
-}
-
-function calculateUnfulfilledOrderItems(orders: Order[]): OrderItem[] {
-  return orders
-    .filter(isOpenCustomerOrder)
-    .flatMap((order) => order.orderItems.filter(isOpenOrderItem));
-}
-
-/** The open order behind each unfulfilled item, and whether the customer has paid for it. */
-function buildOpenOrderInfo(orders: Order[]): Map<string, { orderId: string; paid: boolean }> {
-  const openOrderInfo = new Map<string, { orderId: string; paid: boolean }>();
-  for (const order of orders.filter(isOpenCustomerOrder)) {
-    for (const orderItem of order.orderItems.filter(isOpenOrderItem)) {
-      openOrderInfo.set(orderItem.item, { orderId: order.id, paid: order.amount !== 0 });
-    }
-  }
-  return openOrderInfo;
-}
-
-function buildPeerBooks(matches: MatchDto[], customerId: string) {
-  const receiveBooks: PeerBook[] = [];
-  const giveBooks: PeerBook[] = [];
-  for (const match of matches) {
-    if (match.isStandMatch) continue;
-    const { toDeliver, toReceive } = forViewer(match, customerId);
-    const toPeerBooks = (obligations: typeof toDeliver): PeerBook[] =>
-      obligations.map((obligation) => ({
-        id: obligation.itemId,
-        title: obligation.title,
-        fulfilled: obligation.fulfilled,
-        personName: partyName(obligation.expected),
-        locked: obligation.lockedToMatch,
-      }));
-    receiveBooks.push(...toPeerBooks(toReceive));
-    giveBooks.push(...toPeerBooks(toDeliver));
-  }
-  return { receiveBooks, giveBooks };
-}
 
 export default function RapidHandoutDetails({ customer }: { customer: UserDetail }) {
   const { api, client } = useApiClient();
@@ -138,7 +90,10 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
   const hasPeerBooks = receiveBooks.length > 0 || giveBooks.length > 0;
   const standTitle = hasPeerBooks ? "Del ut på stand" : "Bestilte bøker";
   const nothingToShow =
-    standStatuses.length === 0 && receiveBooks.length === 0 && giveBooks.length === 0;
+    orders !== undefined &&
+    standStatuses.length === 0 &&
+    receiveBooks.length === 0 &&
+    giveBooks.length === 0;
 
   const invalidate = () => {
     void queryClient.invalidateQueries({
@@ -147,6 +102,12 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
     void queryClient.invalidateQueries({
       queryKey: api.matches.getMatchesForCustomer.queryKey({
         params: { customerId: customer.id },
+      }),
+    });
+    // A handed-out book becomes one of the customer's active books, so that list is stale now too.
+    void queryClient.invalidateQueries({
+      queryKey: api.customerItems.getActiveCustomerItemsForCustomer.queryKey({
+        params: { detailsId: customer.id },
       }),
     });
   };

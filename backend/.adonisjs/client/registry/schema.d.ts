@@ -967,6 +967,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['getCustomerItems']>>>
     }
   }
+  'customer_items.get_active_customer_items_for_customer': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/employee/user_details/:detailsId/customer_items'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { detailsId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['getActiveCustomerItemsForCustomer']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['getActiveCustomerItemsForCustomer']>>>
+    }
+  }
   'signatures.send_signature_link': {
     methods: ["POST"]
     pattern: '/signatures/send/:detailsId'

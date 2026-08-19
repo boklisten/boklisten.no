@@ -258,6 +258,11 @@ router.post("/v2/employee/user_details/:detailsId/confirm_email", [
  */
 router.get("/v2/customer_items", [controllers.CustomerItems, "getCustomerItems"]);
 
+router.get("/v2/employee/user_details/:detailsId/customer_items", [
+  controllers.CustomerItems,
+  "getActiveCustomerItemsForCustomer",
+]);
+
 /**
  * signatures
  */

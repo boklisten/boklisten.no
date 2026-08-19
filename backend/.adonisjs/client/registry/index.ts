@@ -486,6 +486,12 @@ const routes = {
     tokens: [{"old":"/v2/customer_items","type":0,"val":"v2","end":""},{"old":"/v2/customer_items","type":0,"val":"customer_items","end":""}],
     types: placeholder as Registry['customer_items.get_customer_items']['types'],
   },
+  'customer_items.get_active_customer_items_for_customer': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/employee/user_details/:detailsId/customer_items',
+    tokens: [{"old":"/v2/employee/user_details/:detailsId/customer_items","type":0,"val":"v2","end":""},{"old":"/v2/employee/user_details/:detailsId/customer_items","type":0,"val":"employee","end":""},{"old":"/v2/employee/user_details/:detailsId/customer_items","type":0,"val":"user_details","end":""},{"old":"/v2/employee/user_details/:detailsId/customer_items","type":1,"val":"detailsId","end":""},{"old":"/v2/employee/user_details/:detailsId/customer_items","type":0,"val":"customer_items","end":""}],
+    types: placeholder as Registry['customer_items.get_active_customer_items_for_customer']['types'],
+  },
   'signatures.send_signature_link': {
     methods: ["POST"],
     pattern: '/signatures/send/:detailsId',

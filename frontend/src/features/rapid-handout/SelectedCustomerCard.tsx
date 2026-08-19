@@ -15,7 +15,6 @@ import { modals } from "@mantine/modals";
 import { IconMail, IconPencil, IconPhone, IconX } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
-import UnlockUserMatchesButton from "@/features/matches/UnlockUserMatchesButton";
 import initials from "@/features/rapid-handout/initials";
 import PermissionBadge from "@/features/rapid-handout/PermissionBadge";
 import AdministrateUserForm from "@/features/user/AdministrateUserForm";
@@ -70,13 +69,10 @@ export default function SelectedCustomerCard({
                     modalId: ADMINISTRATE_USER_MODAL_ID,
                     title: "Rediger brukerdetaljer",
                     children: (
-                      <Stack>
-                        <UnlockUserMatchesButton userDetailId={customer.id} />
-                        <AdministrateUserForm
-                          userDetail={customer}
-                          onSaved={() => modals.close(ADMINISTRATE_USER_MODAL_ID)}
-                        />
-                      </Stack>
+                      <AdministrateUserForm
+                        userDetail={customer}
+                        onSaved={() => modals.close(ADMINISTRATE_USER_MODAL_ID)}
+                      />
                     ),
                   })
                 }

@@ -7,7 +7,10 @@ import CustomerActionBar from "@/features/rapid-handout/CustomerActionBar";
 import CustomerPicker from "@/features/rapid-handout/CustomerPicker";
 import CustomerSearchSpotlight from "@/features/rapid-handout/CustomerSearchSpotlight";
 import EmailConfirmationWarning from "@/features/rapid-handout/EmailConfirmationWarning";
-import RapidHandoutDetails from "@/features/rapid-handout/RapidHandoutDetails";
+import RapidHandoutTabs, {
+  RAPID_HANDOUT_TABS,
+  type RapidHandoutTab,
+} from "@/features/rapid-handout/RapidHandoutTabs";
 import SelectedCustomerCard from "@/features/rapid-handout/SelectedCustomerCard";
 import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
@@ -16,12 +19,20 @@ import { seo } from "@/shared/utils/seo";
 
 type RapidHandoutSearch = {
   kunde?: string;
+  visning?: RapidHandoutTab;
 };
+
+function parseTab(value: unknown): RapidHandoutTab | undefined {
+  return RAPID_HANDOUT_TABS.includes(value as RapidHandoutTab)
+    ? (value as RapidHandoutTab)
+    : undefined;
+}
 
 export const Route = createFileRoute("/(administrasjon)/admin/hurtigutdeling")({
   validateSearch: (search: Record<string, unknown>): RapidHandoutSearch => ({
     kunde:
       typeof search["kunde"] === "string" && search["kunde"] !== "" ? search["kunde"] : undefined,
+    visning: parseTab(search["visning"]),
   }),
   head: () =>
     seo({
@@ -31,7 +42,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/hurtigutdeling")({
 });
 
 function RapidHandoutPage() {
-  const { kunde } = Route.useSearch();
+  const { kunde, visning } = Route.useSearch();
   const navigate = Route.useNavigate();
 
   const { api } = useApiClient();
@@ -49,6 +60,11 @@ function RapidHandoutPage() {
   const deselect = () => void navigate({ search: {} });
   const selectCustomer = (userDetail: UserDetail) =>
     void navigate({ search: { kunde: userDetail.id } });
+  const selectTab = (tab: RapidHandoutTab) =>
+    void navigate({
+      search: (previous) => ({ ...previous, visning: tab === "bestillinger" ? undefined : tab }),
+      replace: true,
+    });
 
   const loading = kunde !== undefined && !isError && isPending;
   const notFound = kunde !== undefined && !isPending && (isError || !customer);
@@ -82,7 +98,12 @@ function RapidHandoutPage() {
             </Stack>
             <EmailConfirmationWarning customer={customer} />
             <SignatureStatusBanner userDetail={customer} />
-            <RapidHandoutDetails key={customer.id} customer={customer} />
+            <RapidHandoutTabs
+              key={customer.id}
+              customer={customer}
+              activeTab={visning ?? "bestillinger"}
+              onTabChange={selectTab}
+            />
           </Stack>
         )}
       </Stack>

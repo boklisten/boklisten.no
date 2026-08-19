@@ -84,6 +84,7 @@ export type ScannedRoutes = {
     'user_detail.update_as_employee': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'user_detail.confirm_email': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'customer_items.get_customer_items': { paramsTuple?: []; params?: {} }
+    'customer_items.get_active_customer_items_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'signatures.send_signature_link': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'signatures.send_signature_link_as_customer': { paramsTuple?: []; params?: {} }
     'signatures.has_valid_signature': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
@@ -221,6 +222,7 @@ export type ScannedRoutes = {
     'user_detail.get_by_id': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'user_detail.get_my_details': { paramsTuple?: []; params?: {} }
     'customer_items.get_customer_items': { paramsTuple?: []; params?: {} }
+    'customer_items.get_active_customer_items_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'signatures.has_valid_signature': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'signatures.get_signature': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'unique_ids.get_token': { paramsTuple?: []; params?: {} }
@@ -306,6 +308,7 @@ export type ScannedRoutes = {
     'user_detail.get_by_id': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'user_detail.get_my_details': { paramsTuple?: []; params?: {} }
     'customer_items.get_customer_items': { paramsTuple?: []; params?: {} }
+    'customer_items.get_active_customer_items_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'signatures.has_valid_signature': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'signatures.get_signature': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'unique_ids.get_token': { paramsTuple?: []; params?: {} }
