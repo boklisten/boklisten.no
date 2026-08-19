@@ -75,12 +75,12 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
       <Activity mode={!existingBranch.type ? "visible" : "hidden"}>
         <Fieldset legend={"Perioder"}>
           <InfoAlert title={"Ingen filialtype valgt"}>
-            Du må velge filialtype for å kunne legge inn leie- eller delbetalingsperioder
+            Du må velge filialtype for å kunne legge inn låne- eller delbetalingsperioder
           </InfoAlert>
         </Fieldset>
       </Activity>
       <Activity mode={existingBranch.type === "VGS" ? "visible" : "hidden"}>
-        <Fieldset legend={"Leieperioder"}>
+        <Fieldset legend={"Låneperioder"}>
           <Stack align={"center"}>
             <form.AppField name="paymentInfo.rentPeriods" mode="array">
               {(field) => (

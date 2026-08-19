@@ -9,7 +9,7 @@ import useApiClient from "@/shared/hooks/useApiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
 const TYPE_LABELS: Record<CustomerItemType, string> = {
-  rent: "Leie",
+  rent: "Lån",
   "partly-payment": "Delbetaling",
   loan: "Lån",
 };

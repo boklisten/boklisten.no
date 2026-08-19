@@ -1,5 +1,5 @@
 export const PAYMENT_OPTIONS = [
-  { value: "rent", label: "Leie" },
+  { value: "rent", label: "Lån" },
   { value: "partlyPayment", label: "Delbetaling" },
   { value: "buy", label: "Salg" },
 ] as const;

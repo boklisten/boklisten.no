@@ -130,7 +130,7 @@ export default function BranchItemSettings({ branchId }: { branchId: string }) {
                   <Stack>
                     <Title order={4}>Bestilling</Title>
                     <form.AppField name={`branchItems[${i}].rent`}>
-                      {(subField) => <subField.SwitchField label={"Leie"} />}
+                      {(subField) => <subField.SwitchField label={"Lån"} />}
                     </form.AppField>
                     <form.AppField name={`branchItems[${i}].partlyPayment`}>
                       {(subField) => <subField.SwitchField label={"Delbetaling"} />}
@@ -142,7 +142,7 @@ export default function BranchItemSettings({ branchId }: { branchId: string }) {
                   <Stack>
                     <Title order={4}>På filial</Title>
                     <form.AppField name={`branchItems[${i}].rentAtBranch`}>
-                      {(subField) => <subField.SwitchField label={"Leie"} />}
+                      {(subField) => <subField.SwitchField label={"Lån"} />}
                     </form.AppField>
                     <form.AppField name={`branchItems[${i}].partlyPaymentAtBranch`}>
                       {(subField) => <subField.SwitchField label={"Delbetaling"} />}

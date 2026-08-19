@@ -75,7 +75,7 @@ export function BranchItemCreationModal({
         <Stack>
           <Title order={4}>Bestilling</Title>
           <form.AppField name={"rent"}>
-            {(field) => <field.SwitchField label={"Leie"} />}
+            {(field) => <field.SwitchField label={"Lån"} />}
           </form.AppField>
           <form.AppField name={"partlyPayment"}>
             {(field) => <field.SwitchField label={"Delbetaling"} />}
@@ -87,7 +87,7 @@ export function BranchItemCreationModal({
         <Stack>
           <Title order={4}>På filial</Title>
           <form.AppField name={"rentAtBranch"}>
-            {(field) => <field.SwitchField label={"Leie"} />}
+            {(field) => <field.SwitchField label={"Lån"} />}
           </form.AppField>
           <form.AppField name={"partlyPaymentAtBranch"}>
             {(field) => <field.SwitchField label={"Delbetaling"} />}

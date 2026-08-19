@@ -1,16 +1,16 @@
-import type {HttpContext} from "@adonisjs/core/http";
-import {DateTime} from "luxon";
-import {ObjectId} from "mongodb";
+import type { HttpContext } from "@adonisjs/core/http";
+import { DateTime } from "luxon";
+import { ObjectId } from "mongodb";
 
-import {BlSchemaName} from "#models/mongoose/storage/bl-schema-names";
-import {DateService} from "#services/legacy/date.service";
-import {SEDbQuery} from "#services/legacy/query/se.db-query";
-import {PermissionService} from "#services/permission_service";
-import {StorageService} from "#services/storage_service";
-import {Branch} from "#shared/branch";
-import {ActiveCustomerItem} from "#shared/customer-item/active-customer-item";
-import {CustomerItemStatus} from "#shared/customer-item/actionable_customer_item";
-import {CustomerItem} from "#shared/customer-item/customer-item";
+import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
+import { DateService } from "#services/legacy/date.service";
+import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { PermissionService } from "#services/permission_service";
+import { StorageService } from "#services/storage_service";
+import { Branch } from "#shared/branch";
+import { ActiveCustomerItem } from "#shared/customer-item/active-customer-item";
+import { CustomerItemStatus } from "#shared/customer-item/actionable_customer_item";
+import { CustomerItem } from "#shared/customer-item/customer-item";
 
 function isHandedOutWithinTheLastTwoWeeks(customerItem: CustomerItem) {
   const handedOutAt = customerItem.creationTime
@@ -205,10 +205,10 @@ export default class CustomerItemsController {
     return (await StorageService.CustomerItems.aggregate([
       {
         $match: {
-          returned: {$ne: true},
-          buyout: {$ne: true},
-          cancel: {$ne: true},
-          buyback: {$ne: true},
+          returned: { $ne: true },
+          buyout: { $ne: true },
+          cancel: { $ne: true },
+          buyback: { $ne: true },
           handout: true,
           customer: new ObjectId(detailsId),
         },
@@ -221,18 +221,18 @@ export default class CustomerItemsController {
           as: "item",
         },
       },
-      {$unwind: {path: "$item", preserveNullAndEmptyArrays: true}},
+      { $unwind: { path: "$item", preserveNullAndEmptyArrays: true } },
       {
         $project: {
           _id: 0,
-          id: {$toString: "$_id"},
-          title: {$ifNull: ["$item.title", "Ukjent bok"]},
-          blid: {$ifNull: ["$blid", null]},
-          type: {$ifNull: ["$type", null]},
+          id: { $toString: "$_id" },
+          title: { $ifNull: ["$item.title", "Ukjent bok"] },
+          blid: { $ifNull: ["$blid", null] },
+          type: { $ifNull: ["$type", null] },
           deadline: "$deadline",
         },
       },
-      {$sort: {deadline: 1, title: 1}},
+      { $sort: { deadline: 1, title: 1 } },
     ])) as ActiveCustomerItem[];
   }
 }
