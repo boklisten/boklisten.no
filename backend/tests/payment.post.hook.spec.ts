@@ -103,4 +103,26 @@ test.group("PaymentPostHook", (group) => {
       paymentPostHook.after([testPayment], testAccessToken),
     ).to.be.rejectedWith(BlError, /payment could not be validated/);
   });
+
+  test("should add payment id to order.payments", async () => {
+    const orderUpdateStub = StorageService.Orders.update as sinon.SinonStub;
+
+    // @ts-expect-error fixme: auto ignored
+    await paymentPostHook.after([testPayment], testAccessToken);
+
+    expect(orderUpdateStub.callCount).to.equal(1);
+    expect(orderUpdateStub.firstCall.args[0]).to.equal(testOrder.id);
+    expect(orderUpdateStub.firstCall.args[1]).to.deep.equal({
+      payments: [testPayment.id],
+    });
+  });
+
+  test("should reject if order.payments already includes the payment id", async () => {
+    testOrder.payments = [testPayment.id];
+
+    return expect(
+      // @ts-expect-error fixme: auto ignored
+      paymentPostHook.after([testPayment], testAccessToken),
+    ).to.be.rejectedWith(BlError, /order.payments already includes payment/);
+  });
 });
