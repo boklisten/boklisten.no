@@ -42,7 +42,7 @@ export default class OrdersController {
         value: detailsId,
       },
     ];
-    return await StorageService.Orders.getByQuery(databaseQuery);
+    return (await StorageService.Orders.getByQueryOrNull(databaseQuery)) ?? [];
   }
 
   async cancelOrderItem(ctx: HttpContext) {
