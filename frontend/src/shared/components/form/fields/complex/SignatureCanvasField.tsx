@@ -59,6 +59,7 @@ export default function SignatureCanvasField(props: { label: string }) {
         />
         <Tooltip label={"Tøm"}>
           <ActionIcon
+            aria-label={"Tøm"}
             color={"dark"}
             variant={"subtle"}
             pos={"absolute"}

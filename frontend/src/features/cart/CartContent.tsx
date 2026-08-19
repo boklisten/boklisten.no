@@ -111,7 +111,11 @@ export default function CartContent() {
                     </Grid.Col>
                     <Grid.Col span={2}>
                       <Stack align={"end"}>
-                        <ActionIcon color={"red"} onClick={() => cart.remove(cartItem.id)}>
+                        <ActionIcon
+                          aria-label={"Fjern fra handlekurv"}
+                          color={"red"}
+                          onClick={() => cart.remove(cartItem.id)}
+                        >
                           <IconX />
                         </ActionIcon>
                       </Stack>

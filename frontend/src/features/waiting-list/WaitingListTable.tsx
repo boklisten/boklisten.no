@@ -86,6 +86,7 @@ export default function WaitingListTable({
                   <Group gap={"xs"} h={"100%"} align={"center"} wrap={"nowrap"}>
                     <Tooltip label={"Slett"}>
                       <ActionIcon
+                        aria-label={"Slett"}
                         variant={"subtle"}
                         color={"red"}
                         onClick={() => destroyWaitingListEntry({ params: { id: data.id } })}

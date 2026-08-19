@@ -54,6 +54,7 @@ export default function PublicBlidSearch() {
             rightSection={
               <Tooltip label={"Åpne scanner"}>
                 <ActionIcon
+                  aria-label={"Åpne scanner"}
                   variant={"subtle"}
                   onClick={() => {
                     openScannerModal({

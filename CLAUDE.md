@@ -110,6 +110,21 @@ Data fetching uses TanStack React Query v5 wrapped around the Tuyau RPC client (
 
 Write Japa specs (`backend/tests/*.spec.ts`, Chai + Sinon) for new backend business logic. The frontend has no automated tests — verify UI changes manually with Playwright instead (see Working Rules).
 
+### Playwright playbook (token efficiency — follow these on every browser session)
+
+**Login programmatically, never through the form.** `cd backend && fnm exec --using=24 node ace mint:login-url <email-or-phone>` prints a ready `http://localhost:3000/auth/token?...` URL — navigate to it once and you are logged in (works for any staging user/role; refuses production). The UI login endpoint is throttled at 10 req/min on a **global** key, so form logins in a loop hit 429 for everyone. Auth is localStorage-only (`bl-access-token`, `bl-refresh-token`); logout is `localStorage.clear()`. Known staging admin: `adrian@boklisten.no`.
+
+**Minimize snapshot tokens.** Full-page accessibility snapshots are the dominant cost:
+
+- Prefer `browser_find` (text/regex search over the tree) to locate elements instead of `browser_snapshot`.
+- When you do snapshot, pass `target` (scope to an element) and/or `depth`; for huge pages pass `filename` to write the snapshot to disk and grep it.
+- Batch multi-step flows and assertions into one `browser_run_code_unsafe` call that returns a small result object, instead of click → snapshot → click → snapshot.
+- Screenshots only when the question is visual layout; never for locating elements.
+
+**Deep-link instead of clicking through.** URL-addressable state: `/admin/hurtigutdeling?kunde=<detailsId>&visning=<tab>`, `/admin/overleveringer?runde=&fane=&sok=&type=`, `/admin/database/filialer?filial=<branchId>&filialFane=<general|relationships|payment|books|subjects|hours|members|signatures|active-books|ordered-books>`. When adding search params, pick names no other route uses — TanStack unions param types across routes and collisions break unrelated routes.
+
+**Gotchas.** Pages known to produce enormous snapshots (`/admin/overleveringer?fane=liste` renders up to 200 match cards; branch "Bøker" tab is unbounded) — use `browser_find`/targeted snapshots there. A user with pending tasks (confirm details / sign agreement) is force-redirected to `/oppgaver` from almost every route. Scanner/camera components log getUserMedia errors in browsers without a camera. These admin routes redirect to the legacy bl-admin app on another origin: `blid`, `handlekurv`, `ordreoversikt`, `scanner`, `faktura`, `database/boker`.
+
 ## CI/CD & Branches
 
 - `main` → auto-deploys to **staging**

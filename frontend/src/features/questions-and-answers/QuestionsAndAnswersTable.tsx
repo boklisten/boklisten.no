@@ -86,12 +86,17 @@ export default function QuestionsAndAnswersTable() {
                 data && (
                   <Group gap={"xs"} h={"100%"} align={"center"} wrap={"nowrap"}>
                     <Tooltip label={"Endre"}>
-                      <ActionIcon variant={"subtle"} onClick={() => openEditorModal(data)}>
+                      <ActionIcon
+                        aria-label={"Endre"}
+                        variant={"subtle"}
+                        onClick={() => openEditorModal(data)}
+                      >
                         <IconEdit />
                       </ActionIcon>
                     </Tooltip>
                     <Tooltip label={"Slett"}>
                       <ActionIcon
+                        aria-label={"Slett"}
                         variant={"subtle"}
                         color={"red"}
                         onClick={() => destroyQuestionAndAnswer({ params: { id: data.id } })}

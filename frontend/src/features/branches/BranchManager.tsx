@@ -14,7 +14,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { getRouteApi } from "@tanstack/react-router";
 
 import ActiveBooksTab from "@/features/branches/branch-books/ActiveBooksTab";
 import OrderedBooksTab from "@/features/branches/branch-books/OrderedBooksTab";
@@ -31,11 +31,39 @@ import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import useApiClient from "@/shared/hooks/useApiClient";
 
+export const BRANCH_MANAGER_TABS = [
+  "general",
+  "relationships",
+  "payment",
+  "books",
+  "subjects",
+  "hours",
+  "members",
+  "signatures",
+  "active-books",
+  "ordered-books",
+] as const;
+export type BranchManagerTab = (typeof BRANCH_MANAGER_TABS)[number];
+
+export function parseBranchManagerTab(value: unknown): BranchManagerTab | undefined {
+  return BRANCH_MANAGER_TABS.includes(value as BranchManagerTab)
+    ? (value as BranchManagerTab)
+    : undefined;
+}
+
+const route = getRouteApi("/(administrasjon)/admin/database/filialer");
+
 export default function BranchManager() {
   const { api } = useApiClient();
   const { data: branches } = useQuery(api.branches.getAll.queryOptions());
 
-  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+  const { filial: selectedBranchId, filialFane } = route.useSearch();
+  const navigate = route.useNavigate();
+  const setSelectedBranchId = (branchId: string | null) =>
+    void navigate({
+      search: (previous) => ({ ...previous, filial: branchId ?? undefined }),
+      replace: true,
+    });
   const selectedBranch = branches?.find((branch) => branch.id === selectedBranchId);
 
   const createBranchModalId = "create-branch-modal";
@@ -79,7 +107,19 @@ export default function BranchManager() {
           {selectedBranch && (
             <Stack>
               <Title>{selectedBranch.name}</Title>
-              <Tabs defaultValue={"general"}>
+              <Tabs
+                value={filialFane ?? "general"}
+                onChange={(value) =>
+                  void navigate({
+                    search: (previous) => ({
+                      ...previous,
+                      filialFane: parseBranchManagerTab(value),
+                    }),
+                    replace: true,
+                  })
+                }
+                keepMounted={false}
+              >
                 <Tabs.List mb={"md"}>
                   <Tabs.Tab value={"general"} leftSection={<IconBuildingStore />}>
                     Generelt
