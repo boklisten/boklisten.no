@@ -36,16 +36,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         ...meta,
       ],
       links,
-      scripts: [
-        {
-          src: "https://checkout.vipps.no/checkout-button/v1/vipps-checkout-button.js",
-        },
-        {
-          src: "https://checkout.vipps.no/vippsCheckoutSDK.js",
-        },
-        jsonLdScript(organizationSchema()),
-        jsonLdScript(websiteSchema()),
-      ],
+      scripts: [jsonLdScript(organizationSchema()), jsonLdScript(websiteSchema())],
     };
   },
   component: RootLayout,

@@ -1,12 +1,18 @@
 import { Center } from "@mantine/core";
+import { useEffect } from "react";
 
 import BL_CONFIG from "@/shared/utils/bl-config";
+import loadScriptOnce from "@/shared/utils/loadScriptOnce";
 import { publicApiClient } from "@/shared/utils/publicApiClient";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
 export default function VippsButton({ verb }: { verb: "login" | "register" }) {
   const navigate = useNavigate();
   const search = useLocation({ select: (location) => location.search });
+
+  useEffect(() => {
+    loadScriptOnce("https://cdn.vippsmobilepay.com/js/button/button.js").catch(console.error);
+  }, []);
 
   return (
     <Center
@@ -23,7 +29,7 @@ export default function VippsButton({ verb }: { verb: "login" | "register" }) {
       }}
     >
       {/* @ts-expect-error official Vipps button */}
-      <vipps-mobilepay-button rounded="true" branded="true" verb={verb} />
+      <vipps-mobilepay-button rounded="true" verb={verb} />
     </Center>
   );
 }
