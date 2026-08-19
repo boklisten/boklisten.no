@@ -91,7 +91,12 @@ export default function AdminDashboard() {
     <Container size={"lg"} py={"xl"}>
       <Stack gap={50}>
         <Stack align={"center"} gap={0}>
-          <Image src={"/boklisten_logo_blue.png"} width={64} height={64} alt={"Boklisten.no"} />
+          <Image
+            src={"/images/boklisten_logo_blue.png"}
+            width={64}
+            height={64}
+            alt={"Boklisten.no"}
+          />
           <Title
             order={1}
             mt={"xs"}

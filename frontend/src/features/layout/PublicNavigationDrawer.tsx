@@ -33,11 +33,21 @@ export default function PublicNavigationDrawer() {
     <>
       <Activity mode={isLoggedIn ? "visible" : "hidden"}>
         <TasksIndicator>
-          <Burger color={"white"} opened={opened} onClick={toggle} />
+          <Burger
+            color={"white"}
+            opened={opened}
+            onClick={toggle}
+            aria-label={opened ? "Lukk meny" : "Åpne meny"}
+          />
         </TasksIndicator>
       </Activity>
       <Activity mode={!isLoggedIn ? "visible" : "hidden"}>
-        <Burger color={"white"} opened={opened} onClick={toggle} />
+        <Burger
+          color={"white"}
+          opened={opened}
+          onClick={toggle}
+          aria-label={opened ? "Lukk meny" : "Åpne meny"}
+        />
       </Activity>
 
       <Drawer opened={opened} onClose={close} position={"right"} title={"Velg side"}>

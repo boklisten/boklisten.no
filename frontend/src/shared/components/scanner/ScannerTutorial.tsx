@@ -21,13 +21,13 @@ const ScannerTutorial = () => {
                     Den ser slik ut:
                   </Text>
                   <Image
-                    src={"/ullernUID.png"}
+                    src={"/images/ullernUID.png"}
                     alt={"Ullern VGS unik ID"}
                     width={300}
                     height={150}
                   />
                   <Divider label={"Eller"} />
-                  <Image src={"/blid.jpg"} alt={"BLID"} width={300} height={150} />
+                  <Image src={"/images/blid.jpg"} alt={"BLID"} width={300} height={150} />
                   <Text c={"dimmed"} fz={"sm"} fs={"italic"}>
                     Sliter du med å finne IDen? Sjekk innsiden av boka, eller be om hjelp fra
                     kontaktelev eller stand.

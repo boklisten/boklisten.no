@@ -25,7 +25,7 @@ export default function PublicPageFooter() {
         {dayjs().format("YYYY")}
       </Group>
       <Text fw={"bold"}>Støttet av</Text>
-      <Image src={"/skattefunn.jpg"} width={146} height={82} />
+      <Image src={"/images/skattefunn.jpg"} alt={"SkatteFUNN"} width={146} height={82} />
     </Stack>
   );
 }

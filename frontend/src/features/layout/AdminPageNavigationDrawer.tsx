@@ -8,7 +8,12 @@ export default function AdminPageNavigationDrawer() {
 
   return (
     <Box hiddenFrom={"xs"}>
-      <Burger color={"white"} opened={opened} onClick={toggle} />
+      <Burger
+        color={"white"}
+        opened={opened}
+        onClick={toggle}
+        aria-label={opened ? "Lukk meny" : "Åpne meny"}
+      />
 
       <Drawer opened={opened} onClose={close} position={"right"} title={"Velg side"}>
         <AdminPageNavigation onNavigate={close} />

@@ -11,7 +11,18 @@ export default defineConfig({
   },
   plugins: [
     tanstackStart(),
-    nitro({ preset: "bun" }),
+    nitro({
+      preset: "bun",
+      routeRules: {
+        // Static images are not content-hashed, so cache them for a day and
+        // serve stale while revalidating instead of caching forever.
+        "/images/**": {
+          headers: {
+            "cache-control": "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        },
+      },
+    }),
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     sentryTanstackStart({

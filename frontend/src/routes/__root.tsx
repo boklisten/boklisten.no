@@ -11,10 +11,7 @@ import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/c
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
-import { AllCommunityModule } from "ag-grid-community";
-import { AgGridProvider } from "ag-grid-react";
 
-import AgGridColorSchemeSync from "@/shared/components/AgGridColorSchemeSync";
 import theme, { cssVariablesResolver } from "@/shared/utils/theme";
 import { jsonLdScript, urlDependentHead } from "@/shared/utils/seo";
 import { organizationSchema, websiteSchema } from "@/shared/utils/structuredData";
@@ -51,14 +48,11 @@ function RootLayout() {
       </head>
       <body>
         <MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver}>
-          <AgGridColorSchemeSync />
           <Notifications />
           <DatesProvider settings={{ locale: "nb" }}>
             <ModalsProvider>
-              <AgGridProvider modules={[AllCommunityModule]}>
-                <Outlet />
-                <Scripts />
-              </AgGridProvider>
+              <Outlet />
+              <Scripts />
             </ModalsProvider>
             <ReactQueryDevtools />
           </DatesProvider>

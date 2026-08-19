@@ -29,7 +29,7 @@ export function organizationSchema() {
     // The former name is kept so searches for it resolve to the same entity
     alternateName: [SITE_NAME, "Søraas Bok"],
     url: SITE_URL,
-    logo: `${SITE_URL}/boklisten_logo_blue.png`,
+    logo: `${SITE_URL}/images/boklisten_logo_blue.png`,
     email: CONTACT_INFO.email,
     telephone: `+47${CONTACT_INFO.phone}`,
     vatID: `NO${ORGANIZATION_NUMBER}MVA`,

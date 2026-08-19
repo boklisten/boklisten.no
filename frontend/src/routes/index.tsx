@@ -36,7 +36,7 @@ function Frontpage() {
                 </Title>
               </Box>
               <HowToCard
-                image={"/select_items.png"}
+                image={"/images/select_items.png"}
                 title={"Velg"}
                 description={
                   "Lag deg en bruker og velg den skolen du går på. Deretter er det bare å velge de bøkene du trenger til de fagene du tar."
@@ -44,7 +44,7 @@ function Frontpage() {
               />
 
               <HowToCard
-                image={"/get_items.png"}
+                image={"/images/get_items.png"}
                 title={"Hent"}
                 description={
                   "Etter at du har bestilt så er det bare å hente bøkene. Dette kan du gjøre når vi har stand på din skole."
@@ -52,13 +52,13 @@ function Frontpage() {
               />
 
               <HowToCard
-                image={"/read_items.png"}
+                image={"/images/read_items.png"}
                 title={"Les"}
                 description={"Nå er det bare å sette seg ned for å studere."}
               />
 
               <HowToCard
-                image={"/deliver_items.png"}
+                image={"/images/deliver_items.png"}
                 title={"LEVER"}
                 description={
                   "Når du har lest deg ferdig og fristen begynner å nærme seg må elever levere tilbake bøkene. Vi har stands på slutten av semesteret på de fleste skoler. Vi vil kunne kjøpe tilbake de fleste bøkene dine hvis du er privatist. Hvis vi kjøper boken din slipper du å betale siste avdrag. Levering og salg av bøker med post er mulig om det ikke passer å møte opp."
