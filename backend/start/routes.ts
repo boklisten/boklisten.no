@@ -223,6 +223,7 @@ router.get("/matches", [controllers.Matches, "getAllMatches"]);
 router.get("/matches/round/:roundId", [controllers.Matches, "getMatchesForRound"]);
 router.get("/matches/id/:matchId", [controllers.Matches, "getMatchById"]);
 router.post("/matches/transfer_item", [controllers.Matches, "transferItem"]);
+router.post("/matches/:matchId/send_to_stand", [controllers.Matches, "sendToStand"]);
 router.get("/matches/statistics", [controllers.MatchStatistics, "getStatistics"]);
 router.get("/matches/statistics/round/:roundId", [
   controllers.MatchStatistics,

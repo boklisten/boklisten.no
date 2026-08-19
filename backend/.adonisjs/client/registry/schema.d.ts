@@ -763,6 +763,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['transferItem']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'matches.send_to_stand': {
+    methods: ["POST"]
+    pattern: '/matches/:matchId/send_to_stand'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { matchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['sendToStand']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['sendToStand']>>>
+    }
+  }
   'match_statistics.get_statistics': {
     methods: ["GET","HEAD"]
     pattern: '/matches/statistics'

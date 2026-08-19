@@ -384,6 +384,12 @@ const routes = {
     tokens: [{"old":"/matches/transfer_item","type":0,"val":"matches","end":""},{"old":"/matches/transfer_item","type":0,"val":"transfer_item","end":""}],
     types: placeholder as Registry['matches.transfer_item']['types'],
   },
+  'matches.send_to_stand': {
+    methods: ["POST"],
+    pattern: '/matches/:matchId/send_to_stand',
+    tokens: [{"old":"/matches/:matchId/send_to_stand","type":0,"val":"matches","end":""},{"old":"/matches/:matchId/send_to_stand","type":1,"val":"matchId","end":""},{"old":"/matches/:matchId/send_to_stand","type":0,"val":"send_to_stand","end":""}],
+    types: placeholder as Registry['matches.send_to_stand']['types'],
+  },
   'match_statistics.get_statistics': {
     methods: ["GET","HEAD"],
     pattern: '/matches/statistics',

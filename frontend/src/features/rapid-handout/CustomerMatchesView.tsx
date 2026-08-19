@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import { isMatchFinished, matchProgress } from "@/features/matches/adminOverview/adminMatchHelper";
 import AdminMatchContact from "@/features/matches/adminOverview/AdminMatchContact";
+import SendMatchToStandButton from "@/features/matches/adminOverview/SendMatchToStandButton";
 import { forViewer, partyName } from "@/features/matches/forViewer";
 import MeetingInfo from "@/features/matches/MeetingInfo";
 import { sortByMeeting } from "@/features/matches/sortByMeeting";
@@ -57,6 +58,8 @@ function MatchPanel({ match, customerId }: { match: MatchDto; customerId: string
 
   return (
     <Stack gap={"lg"}>
+      <SendMatchToStandButton match={match} />
+
       <PanelSection label={"Møtested"}>
         <MeetingInfo meetingLocation={match.meetingLocation} meetingTime={match.meetingTime} />
       </PanelSection>

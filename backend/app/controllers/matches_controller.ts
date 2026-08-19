@@ -8,6 +8,7 @@ import {
 import { MatchLock } from "#services/matches/match_lock";
 import { notify } from "#services/matches/notify_round";
 import { recordTransfer } from "#services/matches/record_transfer";
+import { sendMatchToStand } from "#services/matches/send_to_stand";
 import { PermissionService } from "#services/permission_service";
 import { BlError } from "#shared/bl-error";
 import { USER_PERMISSION } from "#shared/user-permission";
@@ -64,6 +65,16 @@ export default class MatchesController {
       throw new BlError("Ugyldig overlevering-ID").code(701);
     }
     return ctx.serialize(await getMatchById(matchId));
+  }
+
+  async sendToStand(ctx: HttpContext) {
+    PermissionService.authenticate(ctx, USER_PERMISSION.ADMIN);
+    const matchId = Number(ctx.request.param("matchId"));
+    if (!Number.isInteger(matchId)) {
+      throw new BlError("Ugyldig overlevering-ID").code(701);
+    }
+    await sendMatchToStand(matchId);
+    return { sentToStand: true };
   }
 
   async transferItem(ctx: HttpContext) {

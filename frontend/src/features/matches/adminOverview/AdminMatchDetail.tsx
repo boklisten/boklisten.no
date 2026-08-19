@@ -1,8 +1,10 @@
 import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
 import { Stack, Text, Title } from "@mantine/core";
+import { useNavigate } from "@tanstack/react-router";
 
 import { forParty, partyKey } from "@/features/matches/forViewer";
 import AdminMatchContact from "@/features/matches/adminOverview/AdminMatchContact";
+import SendMatchToStandButton from "@/features/matches/adminOverview/SendMatchToStandButton";
 import {
   AdminMatchTitle,
   displayName,
@@ -20,6 +22,7 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
   const progress = matchProgress(match);
   const finished = isMatchFinished(match);
   const parties = orderedParties(match);
+  const navigate = useNavigate();
 
   return (
     <Stack gap={"xl"}>
@@ -30,6 +33,13 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
         {finished && <SuccessAlert>Alle bøkene i denne overleveringen er overlevert.</SuccessAlert>}
         <ProgressBar percentComplete={progress.percent} subtitle={progress.label} />
       </Stack>
+
+      <SendMatchToStandButton
+        match={match}
+        onSent={() =>
+          void navigate({ to: "/admin/overleveringer", search: (previous) => previous })
+        }
+      />
 
       <Stack gap={"xs"}>
         <MatchHeader>Møtested</MatchHeader>

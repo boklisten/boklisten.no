@@ -67,6 +67,7 @@ export type ScannedRoutes = {
     'matches.get_matches_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
     'matches.get_match_by_id': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'matches.transfer_item': { paramsTuple?: []; params?: {} }
+    'matches.send_to_stand': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'match_statistics.get_statistics': { paramsTuple?: []; params?: {} }
     'match_statistics.get_statistics_for_round': { paramsTuple: [ParamValue]; params: {'roundId': ParamValue} }
     'match_rounds.index': { paramsTuple?: []; params?: {} }
@@ -383,6 +384,7 @@ export type ScannedRoutes = {
     'matches.notify': { paramsTuple?: []; params?: {} }
     'matches.lock': { paramsTuple?: []; params?: {} }
     'matches.transfer_item': { paramsTuple?: []; params?: {} }
+    'matches.send_to_stand': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'match_rounds.store': { paramsTuple?: []; params?: {} }
     'match_rounds.generate': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.unlock_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

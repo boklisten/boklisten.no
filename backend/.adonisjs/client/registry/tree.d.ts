@@ -102,6 +102,7 @@ export interface ApiDefinition {
     getMatchesForRound: typeof routes['matches.get_matches_for_round']
     getMatchById: typeof routes['matches.get_match_by_id']
     transferItem: typeof routes['matches.transfer_item']
+    sendToStand: typeof routes['matches.send_to_stand']
   }
   matchStatistics: {
     getStatistics: typeof routes['match_statistics.get_statistics']
