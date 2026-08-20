@@ -9,7 +9,6 @@ import { Activity, useState } from "react";
 
 import UserInfoFields, { UserInfoFieldValues } from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import ShowCustomerIdButton from "@/shared/components/ShowCustomerIdButton";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
@@ -152,9 +151,6 @@ export default function UserSettingsForm({
           )}
         </form.AppField>
       </Activity>
-      <Stack align={"center"} w={"100%"}>
-        <ShowCustomerIdButton customerId={userDetail.id} />
-      </Stack>
       <Space />
       <UserInfoFields perspective={"personal"} fields={createFieldMap(defaultValues)} form={form} />
       <form.AppForm>
