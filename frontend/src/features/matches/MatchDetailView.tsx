@@ -1,9 +1,7 @@
 import { Button, Modal, Stack, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { modals } from "@mantine/modals";
-import { IconObjectScan, IconQrcode } from "@tabler/icons-react";
+import { IconObjectScan } from "@tabler/icons-react";
 import dayjs from "dayjs";
-import { QRCodeSVG } from "qrcode.react";
 import { Activity, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -25,6 +23,7 @@ import MatchScannerContent from "@/shared/components/matches/MatchScannerContent
 import ProgressBar from "@/shared/components/ProgressBar";
 import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
 import ScannerTutorial from "@/shared/components/scanner/ScannerTutorial";
+import ShowCustomerIdButton from "@/shared/components/ShowCustomerIdButton";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
@@ -112,32 +111,22 @@ export default function MatchDetailView({
 
       <Activity mode={isStandMatch ? "visible" : "hidden"}>
         <Stack align={"center"} w={"100%"}>
-          <Button
-            leftSection={<IconQrcode />}
-            onClick={() =>
-              modals.open({
-                title: "Kunde-ID",
-                children: (
-                  <Stack align={"center"} w={"100%"}>
-                    <QRCodeSVG value={viewerCustomerId} />
-                    <Activity mode={viewerMatch.meetingTime ? "visible" : "hidden"}>
-                      <Title>
-                        Oppmøte {norwegianTime(viewerMatch.meetingTime).format("HH:mm")}
-                      </Title>
-                    </Activity>
-                    <Activity mode={tooEarly ? "visible" : "hidden"}>
-                      <InfoAlert title={"For tidlig ute"}>
-                        Din oppmøtetid har ikke kommet enda. Vent med å stille deg i kø til
-                        tidspunktet du har fått tildelt.
-                      </InfoAlert>
-                    </Activity>
-                  </Stack>
-                ),
-              })
+          <ShowCustomerIdButton
+            customerId={viewerCustomerId}
+            extraContent={
+              <>
+                <Activity mode={viewerMatch.meetingTime ? "visible" : "hidden"}>
+                  <Title>Oppmøte {norwegianTime(viewerMatch.meetingTime).format("HH:mm")}</Title>
+                </Activity>
+                <Activity mode={tooEarly ? "visible" : "hidden"}>
+                  <InfoAlert title={"For tidlig ute"}>
+                    Din oppmøtetid har ikke kommet enda. Vent med å stille deg i kø til tidspunktet
+                    du har fått tildelt.
+                  </InfoAlert>
+                </Activity>
+              </>
             }
-          >
-            Vis kunde-ID
-          </Button>
+          />
         </Stack>
       </Activity>
 

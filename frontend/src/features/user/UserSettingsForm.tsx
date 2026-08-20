@@ -1,8 +1,7 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
 import { Button, Space, Stack, TextInput, Tooltip } from "@mantine/core";
-import { modals } from "@mantine/modals";
-import { IconCheck, IconInfoCircleFilled, IconMailFast, IconQrcode } from "@tabler/icons-react";
+import { IconCheck, IconInfoCircleFilled, IconMailFast } from "@tabler/icons-react";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
@@ -10,6 +9,7 @@ import { Activity, useState } from "react";
 
 import UserInfoFields, { UserInfoFieldValues } from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
+import ShowCustomerIdButton from "@/shared/components/ShowCustomerIdButton";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
@@ -18,7 +18,6 @@ import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import { QRCodeSVG } from "qrcode.react";
 import { Route } from "@tuyau/core/types";
 
 export default function UserSettingsForm({
@@ -154,21 +153,7 @@ export default function UserSettingsForm({
         </form.AppField>
       </Activity>
       <Stack align={"center"} w={"100%"}>
-        <Button
-          leftSection={<IconQrcode />}
-          onClick={() =>
-            modals.open({
-              title: `Kunde-ID for ${userDetail.name}`,
-              children: (
-                <Stack align={"center"}>
-                  <QRCodeSVG value={userDetail.id} />
-                </Stack>
-              ),
-            })
-          }
-        >
-          Vis kunde-ID
-        </Button>
+        <ShowCustomerIdButton customerId={userDetail.id} />
       </Stack>
       <Space />
       <UserInfoFields perspective={"personal"} fields={createFieldMap(defaultValues)} form={form} />
