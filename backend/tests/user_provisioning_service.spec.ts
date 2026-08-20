@@ -122,6 +122,9 @@ test.group("UserProvisioningService.normalizePhone()", () => {
   });
 });
 
+const today = new Date();
+const UNDERAGE_DOB = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate());
+
 const EXISTING_USER = {
   id: "existing-id",
   name: "Ola Nordmann",
@@ -130,7 +133,12 @@ const EXISTING_USER = {
   address: "Gamleveien 1",
   postCode: "0501",
   postCity: "Oslo",
-  dob: new Date("2010-04-01"),
+  dob: UNDERAGE_DOB,
+  guardian: {
+    name: "Kari Nordmann",
+    email: "kari@example.com",
+    phone: "87654321",
+  },
 } as UserDetail;
 
 test.group("UserProvisioningService.mergeCandidateIntoUserDetail()", () => {
@@ -167,7 +175,7 @@ test.group("UserProvisioningService.mergeCandidateIntoUserDetail()", () => {
     assert.equal(update.address, "Gamleveien 1");
     assert.equal(update.postCode, "0501");
     assert.equal(update.postCity, "Oslo");
-    assert.deepEqual(update.dob, new Date("2010-04-01"));
+    assert.deepEqual(update.dob, UNDERAGE_DOB);
   });
 
   test("leaves branchMembership out of the update when no branch is given", ({ assert }) => {

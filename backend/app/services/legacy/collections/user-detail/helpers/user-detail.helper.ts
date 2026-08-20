@@ -1,3 +1,4 @@
+import { isUnderage } from "#services/legacy/signature.helper";
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { UserDetail } from "#shared/user-detail";
 
@@ -48,6 +49,18 @@ export class UserDetailHelper {
 
     if (isNullish(userDetail.dob)) {
       invalidFields.push("dob");
+    } else if (isUnderage(userDetail)) {
+      if (isNullish(userDetail.guardian?.name) || userDetail.guardian.name.length <= 0) {
+        invalidFields.push("guardian.name");
+      }
+
+      if (isNullish(userDetail.guardian?.email) || userDetail.guardian.email.length <= 0) {
+        invalidFields.push("guardian.email");
+      }
+
+      if (isNullish(userDetail.guardian?.phone) || userDetail.guardian.phone.length <= 0) {
+        invalidFields.push("guardian.phone");
+      }
     }
 
     return invalidFields;

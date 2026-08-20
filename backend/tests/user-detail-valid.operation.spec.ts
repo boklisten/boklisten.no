@@ -134,6 +134,51 @@ test.group("UserDetailValidOperation", (group) => {
     assert.deepEqual(response, expected);
   });
 
+  test("should resolve with valid false with guardian fields if user is underage and guardian is missing", async ({
+    assert,
+  }) => {
+    const now = new Date();
+    testUserDetail.dob = new Date(now.getFullYear() - 16, now.getMonth(), now.getDate());
+    const blApiRequest: BlApiRequest = {
+      documentId: "userDetail1",
+    };
+    const expected = new BlapiResponse([
+      { valid: false, invalidFields: ["guardian.name", "guardian.email", "guardian.phone"] },
+    ]);
+
+    const response = await userDetailValidOperation.run(
+      blApiRequest,
+      // @ts-expect-error fixme: auto ignored
+      null,
+      null,
+    );
+    assert.deepEqual(response, expected);
+  });
+
+  test("should resolve with valid true if user is underage and guardian is filled in", async ({
+    assert,
+  }) => {
+    const now = new Date();
+    testUserDetail.dob = new Date(now.getFullYear() - 16, now.getMonth(), now.getDate());
+    testUserDetail.guardian = {
+      name: "Guardian Mercury",
+      email: "guardian@blapi.co",
+      phone: "87654321",
+    };
+    const blApiRequest: BlApiRequest = {
+      documentId: "userDetail1",
+    };
+    const expected = new BlapiResponse([{ valid: true }]);
+
+    const response = await userDetailValidOperation.run(
+      blApiRequest,
+      // @ts-expect-error fixme: auto ignored
+      null,
+      null,
+    );
+    assert.deepEqual(response, expected);
+  });
+
   test("should resolve with valid false if dob is not defined", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testUserDetail.dob = undefined;
