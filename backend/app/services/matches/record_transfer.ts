@@ -1,11 +1,9 @@
 import * as Sentry from "@sentry/node";
 import { Infer } from "@vinejs/vine/types";
 import { DateTime } from "luxon";
-import moment from "moment-timezone";
 
 import BlidService from "#services/blid_service";
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
-import { DateService } from "#services/legacy/date.service";
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
 import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
 import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
@@ -32,36 +30,10 @@ const alreadyYoursFeedback = "Denne boka er allerede registrert på deg.";
 const alreadyReceivedFeedback = "Du har allerede skannet denne boka.";
 const notOrderedFeedback =
   "Du har ikke bestilt boken du skannet. Vennligst kom på stand dersom du faktisk skal ha boka.";
-const genericDeadlineTooFarFeedback =
-  "Boka du har skannet har frist for langt frem i tid. Du skal ikke ta den i mot. Ta kontakt med stand for spørsmål.";
 const noActiveOrderFeedback =
   "Du har ingen aktiv bestilling for denne boka. Ta kontakt med stand for spørsmål.";
 const genericUnexpectedSenderFeedback =
   "Boka du skannet tilhørte en annen elev enn den du var satt opp med. Du skal beholde den, men eleven du var satt opp med er fortsatt ansvarlig for å levere sin opprinnelige bok.";
-
-/**
- * The receiver keeps the book — any copy of the title from anyone satisfies them — but the peer
- * they were set up with is credited for nothing, because the copy that moved was not theirs.
- *
- * Names both students, matching the notes under the books in the match list. The transfer has
- * already happened when this runs, so a failed name lookup falls back to the generic wording
- * rather than failing the scan.
- */
-/**
- * Tells the receiver which book they scanned wrong: whose copy it is and when its deadline runs
- * out. The scan is rejected either way, so a failed name lookup falls back to the generic wording
- * rather than failing with an error.
- */
-async function deadlineTooFarFeedback(customerItem: CustomerItem): Promise<string> {
-  const deadline = DateService.toPrintFormat(customerItem.deadline, "Europe/Oslo");
-  const ownerName = await StorageService.UserDetails.get(customerItem.customer)
-    .then((detail) => detail.name)
-    .catch(() => null);
-  if (!ownerName) {
-    return genericDeadlineTooFarFeedback;
-  }
-  return `Boka du har skannet har frist for langt frem i tid (${deadline}), og tilhører ${ownerName}. Du skal ikke ta den i mot. Ta kontakt med stand for spørsmål.`;
-}
 
 async function unexpectedSenderFeedback(
   actualSenderId: string,
@@ -297,10 +269,6 @@ export async function recordTransfer(
         ? alreadyReceivedFeedback
         : notOrderedFeedback,
     };
-  }
-
-  if (moment(customerItem.deadline).isAfter(moment().add(3, "months"))) {
-    return { feedback: await deadlineTooFarFeedback(customerItem) };
   }
 
   if (!(await findReceiverRentOrder(detailsId, customerItem.item))) {
