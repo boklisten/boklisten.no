@@ -47,7 +47,7 @@ function CheckoutButton({ to, label, blocked }: { to: string; label: string; blo
 
 export default function CartContent() {
   const cart = useCart();
-  const { isEmployee, isLoggedIn } = useAuth();
+  const { isLoggedIn } = useAuth();
   const { api } = useApiClient();
   // The conflict flags must reflect orders placed seconds ago, so bypass the global staleTime
   const { data: openOrderItems } = useQuery({
@@ -211,13 +211,6 @@ export default function CartContent() {
           </Box>
         </Activity>
         <CheckoutButton to={"/kasse"} label={"Gå til kassen"} blocked={hasConflicts} />
-        <Activity mode={isEmployee ? "visible" : "hidden"}>
-          <CheckoutButton
-            to={"/kasse/v2"}
-            label={"Gå til kassen (Kustom)"}
-            blocked={hasConflicts}
-          />
-        </Activity>
       </Stack>
       <Activity
         mode={

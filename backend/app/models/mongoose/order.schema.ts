@@ -106,5 +106,4 @@ export const OrderSchema: BlSchema<Order> = new Schema({
     email: Boolean,
   },
   checkoutState: String,
-  kustomCheckoutId: String,
 });

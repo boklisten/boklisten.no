@@ -600,24 +600,6 @@ const routes = {
     tokens: [{"old":"/checkout","type":0,"val":"checkout","end":""}],
     types: placeholder as Registry['checkout.initialize_checkout']['types'],
   },
-  'kustom_checkout.initialize_checkout': {
-    methods: ["POST"],
-    pattern: '/v2/checkout',
-    tokens: [{"old":"/v2/checkout","type":0,"val":"v2","end":""},{"old":"/v2/checkout","type":0,"val":"checkout","end":""}],
-    types: placeholder as Registry['kustom_checkout.initialize_checkout']['types'],
-  },
-  'kustom_checkout.get_snippet': {
-    methods: ["GET","HEAD"],
-    pattern: '/v2/checkout/snippet/:orderId',
-    tokens: [{"old":"/v2/checkout/snippet/:orderId","type":0,"val":"v2","end":""},{"old":"/v2/checkout/snippet/:orderId","type":0,"val":"checkout","end":""},{"old":"/v2/checkout/snippet/:orderId","type":0,"val":"snippet","end":""},{"old":"/v2/checkout/snippet/:orderId","type":1,"val":"orderId","end":""}],
-    types: placeholder as Registry['kustom_checkout.get_snippet']['types'],
-  },
-  'kustom_checkout.receive_push': {
-    methods: ["POST"],
-    pattern: '/v2/checkout/push',
-    tokens: [{"old":"/v2/checkout/push","type":0,"val":"v2","end":""},{"old":"/v2/checkout/push","type":0,"val":"checkout","end":""},{"old":"/v2/checkout/push","type":0,"val":"push","end":""}],
-    types: placeholder as Registry['kustom_checkout.receive_push']['types'],
-  },
   'checkout.confirm_checkout': {
     methods: ["POST"],
     pattern: '/checkout/confirm/:orderId',

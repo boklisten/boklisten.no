@@ -39,7 +39,6 @@ export default await Env.create(new URL("../", import.meta.url), {
   VIPPS_MT_CLIENT_ID: Env.schema.string(),
   VIPPS_MT_SECRET: Env.schema.string(),
   VIPPS_MT_SUBSCRIPTION_KEY: Env.schema.string(),
-  KUSTOM_KEY: Env.schema.secret(),
   SENDGRID_API_KEY: Env.schema.string(),
   TWILIO_SMS_AUTH_TOKEN: Env.schema.string(),
   TWILIO_SMS_SID: Env.schema.string(),

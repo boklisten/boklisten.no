@@ -17,5 +17,4 @@ export interface Order extends BlDocument {
   };
   // Legacy –Used for Vipps Checkout
   checkoutState?: string;
-  kustomCheckoutId?: string;
 }

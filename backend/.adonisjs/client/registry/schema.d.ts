@@ -1195,42 +1195,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout_controller').default['initializeCheckout']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'kustom_checkout.initialize_checkout': {
-    methods: ["POST"]
-    pattern: '/v2/checkout'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/checkout_validators').initializeCheckoutValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/checkout_validators').initializeCheckoutValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/kustom_checkout_controller').default['initializeCheckout']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/kustom_checkout_controller').default['initializeCheckout']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'kustom_checkout.get_snippet': {
-    methods: ["GET","HEAD"]
-    pattern: '/v2/checkout/snippet/:orderId'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { orderId: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/kustom_checkout_controller').default['getSnippet']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/kustom_checkout_controller').default['getSnippet']>>>
-    }
-  }
-  'kustom_checkout.receive_push': {
-    methods: ["POST"]
-    pattern: '/v2/checkout/push'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/kustom_checkout_controller').default['receivePush']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/kustom_checkout_controller').default['receivePush']>>>
-    }
-  }
   'checkout.confirm_checkout': {
     methods: ["POST"]
     pattern: '/checkout/confirm/:orderId'

@@ -314,9 +314,6 @@ router.get("/order_history/me", [controllers.OrderHistory, "getMyOrders"]);
  * Checkout
  */
 router.post("/checkout", [controllers.Checkout, "initializeCheckout"]);
-router.post("/v2/checkout", [controllers.KustomCheckout, "initializeCheckout"]);
-router.get("/v2/checkout/snippet/:orderId", [controllers.KustomCheckout, "getSnippet"]);
-router.post("/v2/checkout/push", [controllers.KustomCheckout, "receivePush"]);
 router.post("/checkout/confirm/:orderId", [controllers.Checkout, "confirmCheckout"]);
 
 router.post("/checkout/vipps/callback", [controllers.Checkout, "handleVippsCallback"]);
