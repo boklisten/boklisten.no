@@ -34,7 +34,8 @@
     "typescript": "7.0.2"
   },
   "overrides": {
-    "@adonisjs/assembler": "^8.4.0"
+    "@adonisjs/assembler": "^8.4.0",
+    "rolldown": "1.2.1"
   },
   "packageManager": "bun@1.4"
 }
