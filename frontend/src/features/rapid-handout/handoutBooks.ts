@@ -14,8 +14,6 @@ export interface PeerBook {
   fulfilled: boolean;
   /** Name of the other student in the match. */
   personName: string;
-  /** Whether the match is locked, making stand handout impossible. */
-  locked: boolean;
 }
 
 function isOpenCustomerOrder(order: Order) {
@@ -61,7 +59,6 @@ export function buildPeerBooks(matches: MatchDto[], customerId: string) {
         title: obligation.title,
         fulfilled: obligation.fulfilled,
         personName: partyName(obligation.expected),
-        locked: obligation.lockedToMatch,
       }));
     receiveBooks.push(...toPeerBooks(toReceive));
     giveBooks.push(...toPeerBooks(toDeliver));

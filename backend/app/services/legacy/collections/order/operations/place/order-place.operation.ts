@@ -6,7 +6,6 @@ import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/o
 import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { isNotNullish } from "#services/legacy/typescript-helpers";
-import { ITEMS_LOCKED_TO_MATCH_RETURN_FEEDBACK, MatchLock } from "#services/matches/match_lock";
 import { MatchRepository } from "#services/matches/match_repository";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
@@ -242,14 +241,6 @@ export class OrderPlaceOperation implements Operation {
       (orderItem) => orderItem.handout && orderItem.type === "rent",
     );
 
-    if (!order.byCustomer) {
-      await this.verifyCompatibilityWithMatches(
-        returnOrderItems,
-        handoutOrderItems,
-        order.customer,
-      );
-    }
-
     let customerItems = await this.orderToCustomerItemGenerator.generate(order);
 
     if (customerItems && customerItems.length > 0) {
@@ -302,38 +293,6 @@ export class OrderPlaceOperation implements Operation {
       } catch {}
     }
     return new BlapiResponse([order]);
-  }
-
-  /**
-   * Verify that the order does not try to hand out or in a book locked to a student handover
-   * @param returnOrderItems the orderItems that will be handed in
-   * @param handoutOrderItems the orderItems that will be handed out
-   * @param customerId the customer the order belongs to
-   * @throws if the order tries to hand out or in a book locked to a handover
-   * @private
-   */
-  private async verifyCompatibilityWithMatches(
-    returnOrderItems: OrderItem[],
-    handoutOrderItems: OrderItem[],
-    customerId: string,
-  ) {
-    const returnCustomerItems = await StorageService.CustomerItems.getMany(
-      returnOrderItems.map((orderItem) => orderItem.customerItem).filter(isNotNullish),
-    );
-
-    if ((await MatchLock.findCustomerItemsLockedToMatch(returnCustomerItems)).length > 0) {
-      throw new BlError(ITEMS_LOCKED_TO_MATCH_RETURN_FEEDBACK).code(802);
-    }
-
-    const lockedHandouts = await MatchLock.findItemsLockedForReceiver(
-      handoutOrderItems.map((orderItem) => orderItem.item),
-      customerId,
-    );
-    if (lockedHandouts.length > 0) {
-      throw new BlError(
-        "Ordren inneholder bøker som er låst til en overlevering; kunden må motta de låste bøkene fra en annen elev",
-      ).code(807);
-    }
   }
 
   private async addCustomerItems(

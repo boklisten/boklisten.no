@@ -76,9 +76,8 @@ function obligation(
   senderCustomerId: string | null,
   receiverCustomerId: string | null,
   itemId: string,
-  lockedToMatch: boolean,
 ): ObligationDraft {
-  return { senderCustomerId, receiverCustomerId, itemId, lockedToMatch };
+  return { senderCustomerId, receiverCustomerId, itemId };
 }
 
 export async function generateRound(round: MatchRound) {
@@ -167,10 +166,10 @@ export async function generateRound(round: MatchRound) {
         participantCustomerIds: [customerA, customerB],
         obligations: [
           ...[...candidate.expectedAToBItems].map((itemId) =>
-            obligation(customerA, customerB, heldEdition(customerA, itemId), true),
+            obligation(customerA, customerB, heldEdition(customerA, itemId)),
           ),
           ...[...candidate.expectedBToAItems].map((itemId) =>
-            obligation(customerB, customerA, heldEdition(customerB, itemId), true),
+            obligation(customerB, customerA, heldEdition(customerB, itemId)),
           ),
         ],
       };
@@ -183,10 +182,10 @@ export async function generateRound(round: MatchRound) {
         participantCustomerIds: [customer, null],
         obligations: [
           ...[...candidate.expectedHandoffItems].map((itemId) =>
-            obligation(customer, null, heldEdition(customer, itemId), false),
+            obligation(customer, null, heldEdition(customer, itemId)),
           ),
           ...[...candidate.expectedPickupItems].map((itemId) =>
-            obligation(null, customer, wantedEdition(customer, itemId), false),
+            obligation(null, customer, wantedEdition(customer, itemId)),
           ),
         ],
       };

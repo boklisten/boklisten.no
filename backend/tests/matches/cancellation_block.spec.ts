@@ -39,7 +39,6 @@ async function createUserMatch({
     itemIds.map((itemId) => ({
       matchId: match.id,
       itemId,
-      lockedToMatch: false,
       senderParticipantId: senderParticipant!.id,
       receiverParticipantId: receiverParticipant!.id,
     })),
@@ -65,7 +64,6 @@ async function createStandMatch({
     itemIds.map((itemId) => ({
       matchId: match.id,
       itemId,
-      lockedToMatch: false,
       senderParticipantId: standParticipant!.id,
       receiverParticipantId: customerParticipant!.id,
     })),

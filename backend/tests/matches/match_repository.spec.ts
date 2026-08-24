@@ -157,7 +157,6 @@ test.group("match obligations", (group) => {
       senderParticipantId: a.id,
       receiverParticipantId: b.id,
       itemId: ITEM_X,
-      lockedToMatch: true,
     });
 
     const loaded = await MatchObligation.query()
@@ -167,7 +166,6 @@ test.group("match obligations", (group) => {
     assert.equal(loaded.itemId, ITEM_X);
     assert.equal(loaded.sender.userDetailId, A);
     assert.equal(loaded.receiver.userDetailId, B);
-    assert.isTrue(loaded.lockedToMatch);
   });
 
   test("allows two rows for two copies of the same title", async ({ assert }) => {

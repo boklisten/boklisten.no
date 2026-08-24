@@ -105,7 +105,7 @@ export class EmailVerificationSchema extends BaseModel {
 }
 
 export class MatchObligationSchema extends BaseModel {
-  static $columns = ['createdAt', 'id', 'itemId', 'lockedToMatch', 'matchId', 'receiverParticipantId', 'senderParticipantId', 'updatedAt'] as const
+  static $columns = ['createdAt', 'id', 'itemId', 'matchId', 'receiverParticipantId', 'senderParticipantId', 'updatedAt'] as const
   $columns = MatchObligationSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime | null
@@ -113,8 +113,6 @@ export class MatchObligationSchema extends BaseModel {
   declare id: number
   @column()
   declare itemId: string
-  @column()
-  declare lockedToMatch: boolean
   @column()
   declare matchId: number
   @column()

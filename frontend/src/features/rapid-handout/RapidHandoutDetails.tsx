@@ -1,6 +1,6 @@
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import { Box, Button, Modal, Stack, Text, Title } from "@mantine/core";
+import { Box, Button, Modal, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconObjectScan } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,9 @@ import {
   buildPeerBooks,
   calculateUnfulfilledOrderItems,
 } from "@/features/rapid-handout/handoutBooks";
+import NoOrderHandoutModal, {
+  type NoOrderChoice,
+} from "@/features/rapid-handout/NoOrderHandoutModal";
 import PeerTransferList from "@/features/rapid-handout/PeerTransferList";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { ItemStatus } from "@/shared/components/matches/matches-helper";
@@ -53,6 +56,11 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
   const [opened, { open, close }] = useDisclosure(false);
   const [itemStatuses, setItemStatuses] = useState<ItemStatus[]>([]);
   const [pendingBlid, setPendingBlid] = useState<string | null>(null);
+  const [noOrderRequest, setNoOrderRequest] = useState<{
+    blid: string;
+    title: string;
+    resolve: (choice: NoOrderChoice | null) => void;
+  } | null>(null);
 
   useEffect(() => {
     if (!orders) {
@@ -82,18 +90,30 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
   }, [orders]);
 
   const { receiveBooks, giveBooks } = buildPeerBooks(matchData ?? [], customer.id);
-  // Books the customer receives from a peer are not handed out at the stand, so keep them out of
-  // the stand list (edition-tolerant comparison).
-  const standStatuses = itemStatuses.filter(
-    (itemStatus) => !receiveBooks.some((book) => itemsAreEquivalent(book.id, itemStatus.id)),
+  // One list for everything the customer is due to get: unmarked rows are ordinary stand
+  // handouts, rows due from another student carry that student's name (edition-tolerant match).
+  // Peer books nobody ordered still belong in the list, ticked once the transfer has happened.
+  // Stand books sort first — they are the ones this page hands out — and the table's stable
+  // fulfilled-first sort keeps that order within each group.
+  const bookRows: ItemStatus[] = [
+    ...itemStatuses.map((itemStatus) => {
+      const peer = receiveBooks.find((book) => itemsAreEquivalent(book.id, itemStatus.id));
+      return peer === undefined ? itemStatus : { ...itemStatus, receiveFromName: peer.personName };
+    }),
+    ...receiveBooks
+      .filter(
+        (book) => !itemStatuses.some((itemStatus) => itemsAreEquivalent(book.id, itemStatus.id)),
+      )
+      .map((book) => ({
+        id: book.id,
+        title: book.title,
+        fulfilled: book.fulfilled,
+        receiveFromName: book.personName,
+      })),
+  ].sort(
+    (a, b) => Number(a.receiveFromName !== undefined) - Number(b.receiveFromName !== undefined),
   );
-  const hasPeerBooks = receiveBooks.length > 0 || giveBooks.length > 0;
-  const standTitle = hasPeerBooks ? "Del ut på stand" : "Bestilte bøker";
-  const nothingToShow =
-    orders !== undefined &&
-    standStatuses.length === 0 &&
-    receiveBooks.length === 0 &&
-    giveBooks.length === 0;
+  const nothingToShow = orders !== undefined && bookRows.length === 0 && giveBooks.length === 0;
 
   const invalidate = () => {
     void queryClient.invalidateQueries({
@@ -147,49 +167,94 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
     );
   }
 
-  async function handOutBlid(blid: string): Promise<ScanNotice | void> {
-    const response = await client.api.rapidHandout.handout({
-      body: { blid, customerId: customer.id },
+  function askNoOrderChoice(blid: string, title: string): Promise<NoOrderChoice | null> {
+    return new Promise((resolve) => setNoOrderRequest({ blid, title, resolve }));
+  }
+
+  async function confirmPeerMatch(deliverFromName: string): Promise<boolean> {
+    return await asyncConfirmModal({
+      title: "Skal mottas fra en annen elev",
+      children: (
+        <Text>
+          Denne boka skal {customer.name} få fra{" "}
+          <Text span fw={700}>
+            {deliverFromName}
+          </Text>{" "}
+          Er du sikker på at du vil dele den ut på stand likevel?
+        </Text>
+      ),
+      confirmLabel: "Del ut likevel",
+      confirmColor: "red",
+      zIndex: CONFIRM_Z_INDEX,
     });
+  }
 
-    if (response.connectBlid) {
-      setPendingBlid(blid);
-      return {
-        title: "Mangler kobling",
-        message: `${response.feedback} Skann ISBN-en på boka for å koble den.`,
-      };
-    }
+  async function handOutBlid(blid: string): Promise<ScanNotice | void> {
+    let body: {
+      blid: string;
+      customerId: string;
+      force?: boolean;
+      branchId?: string;
+      deadline?: string;
+    } = { blid, customerId: customer.id };
+    let noOrderTitle: string | null = null;
+    // Each obstacle is confirmed at most once per scan; a reason coming back after its flag was
+    // sent means the backend cannot honor it, so bail out instead of looping.
+    const confirmedReasons = new Set<string>();
 
-    if (response.requiresConfirmation) {
-      const confirmed = await asyncConfirmModal({
-        title: "Skal mottas fra en annen elev",
-        children: (
-          <Text>
-            Denne boka skal {customer.name} få fra{" "}
-            <Text span fw={700}>
-              {response.deliverFromName}
-            </Text>
-            , ikke på stand. Er du sikker på at du vil dele den ut på stand likevel?
-          </Text>
-        ),
-        confirmLabel: "Del ut likevel",
-        confirmColor: "red",
-        zIndex: CONFIRM_Z_INDEX,
-      });
-      if (!confirmed) {
-        return { message: "Boka ble ikke delt ut." };
+    for (;;) {
+      const response = await client.api.rapidHandout.handout({ body });
+
+      if ("connectBlid" in response && response.connectBlid) {
+        setPendingBlid(blid);
+        return {
+          title: "Mangler kobling",
+          message: `${response.feedback} Skann ISBN-en på boka for å koble den.`,
+        };
       }
-      const forced = await client.api.rapidHandout.handout({
-        body: { blid, customerId: customer.id, force: true },
-      });
-      if (forced.feedback) {
-        return { message: forced.feedback };
+
+      if ("requiresConfirmation" in response && response.requiresConfirmation) {
+        if (confirmedReasons.has(response.reason)) {
+          return { message: "Noe gikk galt under utdelingen. Prøv å skanne boka på nytt." };
+        }
+        confirmedReasons.add(response.reason);
+
+        if (response.reason === "peer-match") {
+          const confirmed = await confirmPeerMatch(response.deliverFromName);
+          if (!confirmed) return { message: "Boka ble ikke delt ut." };
+          body = { ...body, force: true };
+          continue;
+        }
+
+        const choice = await askNoOrderChoice(blid, response.title);
+        if (!choice) return { message: "Boka ble ikke delt ut." };
+        noOrderTitle = response.title;
+        body = { ...body, branchId: choice.branchId, deadline: choice.deadline };
+        continue;
+      }
+
+      if (response.feedback) {
+        return { message: response.feedback };
+      }
+
+      if ("handedOutWithoutOrder" in response && response.handedOutWithoutOrder) {
+        // The orders poll will never list a book that was handed out without an order, so it is
+        // recorded directly. A second no-order copy of the same title gets a blid-suffixed id so
+        // the rows do not collide.
+        const title = noOrderTitle ?? "";
+        const itemId = response.itemId;
+        setItemStatuses((previousState) => [
+          ...previousState,
+          {
+            id: previousState.some((itemStatus) => itemStatus.id === itemId)
+              ? `${itemId}:${blid}`
+              : itemId,
+            title,
+            fulfilled: true,
+          },
+        ]);
       }
       return;
-    }
-
-    if (response.feedback) {
-      return { message: response.feedback };
     }
   }
 
@@ -237,40 +302,27 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
     <Stack gap={"lg"}>
       {nothingToShow && <InfoAlert>Denne kunden har for øyeblikket ingen bestilte bøker</InfoAlert>}
 
-      {standStatuses.length > 0 && (
-        <Stack gap={"xs"}>
-          <Title order={2}>{standTitle}</Title>
-          <ItemStatusTable
-            itemStatuses={standStatuses}
-            isSender={true}
-            renderAction={renderCancelAction}
-          />
-        </Stack>
-      )}
-
-      {(standStatuses.length > 0 || receiveBooks.length > 0) && (
-        <Box>
-          <Button
-            color={"green"}
-            leftSection={<IconObjectScan />}
-            onClick={open}
-            disabled={signatureStatus?.signatureRequired}
-          >
-            Scan bøker
-          </Button>
-        </Box>
-      )}
-
-      {receiveBooks.length > 0 && (
-        <PeerTransferList
-          title={"Mottas fra andre elever"}
-          direction={"receive"}
-          books={receiveBooks}
+      {bookRows.length > 0 && (
+        <ItemStatusTable
+          itemStatuses={bookRows}
+          isSender={true}
+          renderAction={renderCancelAction}
         />
       )}
 
+      <Box>
+        <Button
+          color={"green"}
+          leftSection={<IconObjectScan />}
+          onClick={open}
+          disabled={signatureStatus?.signatureRequired}
+        >
+          Scan bøker
+        </Button>
+      </Box>
+
       {giveBooks.length > 0 && (
-        <PeerTransferList title={"Leveres til andre elever"} direction={"give"} books={giveBooks} />
+        <PeerTransferList title={"Leveres til andre elever"} books={giveBooks} />
       )}
 
       <Modal
@@ -297,21 +349,25 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
           }
           onSuccess={invalidate}
         >
-          <StandScannerProgress itemStatuses={standStatuses} />
-          {receiveBooks.length > 0 && (
-            <InfoAlert title={"Fås fra andre elever – ikke del ut her"}>
-              <Stack gap={2}>
-                {receiveBooks.map((book) => (
-                  <Text key={`${book.id}-${book.personName}`} size={"sm"}>
-                    {book.title} – fra {book.personName}
-                    {book.locked ? " (låst)" : ""}
-                  </Text>
-                ))}
-              </Stack>
+          {bookRows.length === 0 ? (
+            <InfoAlert mt={"xs"}>
+              Denne kunden har ingen bestilte bøker. Bøker du skanner blir delt ut uten bestilling.
             </InfoAlert>
+          ) : (
+            <StandScannerProgress itemStatuses={bookRows} />
           )}
         </ScannerPanel>
       </Modal>
+
+      <NoOrderHandoutModal
+        request={noOrderRequest}
+        customer={customer}
+        zIndex={CONFIRM_Z_INDEX}
+        onClose={(choice) => {
+          noOrderRequest?.resolve(choice);
+          setNoOrderRequest(null);
+        }}
+      />
     </Stack>
   );
 }

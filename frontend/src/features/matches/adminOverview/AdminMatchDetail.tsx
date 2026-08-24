@@ -65,7 +65,7 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
             <MatchHeader>
               {displayName(party)} leverer disse{other ? ` til ${displayName(other)}` : ""}
             </MatchHeader>
-            <MatchItemTable obligations={toDeliver} viewerName={displayName(party)} />
+            <MatchItemTable obligations={toDeliver} adminView />
           </Stack>
         );
       })}

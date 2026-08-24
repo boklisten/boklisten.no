@@ -151,21 +151,19 @@ function partyLabelCapitalized(party: HandoverParty): string {
  * per half; a half that went as planned contributes nothing, and neither does a book nobody has
  * moved, so the note is null in the happy path.
  *
- * Without `viewerName` the note speaks to the obligation's own party ("du"); with it, the note
- * speaks *about* them by name, for the admin pages. That also decides whose outstanding side is
- * stated: a student is only told what they themselves still owe, an admin is told both.
+ * On the student pages the note speaks to the obligation's own party ("du"); with `adminView` it
+ * speaks *about* both parties by their own names from the obligation. That also decides whose
+ * outstanding side is stated: a student is only told what they themselves still owe, an admin is
+ * told both.
  */
-export function describeObligation(
-  obligation: ViewerObligation,
-  viewerName?: string,
-): string | null {
+export function describeObligation(obligation: ViewerObligation, adminView = false): string | null {
   const { title, sender, receiver, senderHandover, receiverHandover } = obligation;
 
-  const watchingBothParties = viewerName !== undefined;
   const viewerIsSender = obligation.side === "deliver";
-  const speakingToSender = viewerIsSender && !watchingBothParties;
-  const senderLabel = viewerIsSender ? (viewerName ?? "Du") : partyLabelCapitalized(sender);
-  const receiverLabel = viewerIsSender ? partyLabelCapitalized(receiver) : (viewerName ?? "Du");
+  const speakingToSender = viewerIsSender && !adminView;
+  const speakingToReceiver = !viewerIsSender && !adminView;
+  const senderLabel = speakingToSender ? "Du" : partyLabelCapitalized(sender);
+  const receiverLabel = speakingToReceiver ? "Du" : partyLabelCapitalized(receiver);
   const sendersCopy = speakingToSender ? `din «${title}»` : `${partyLabel(sender)} sin «${title}»`;
 
   // Facts first, open obligations last, so the note ends on the open question.
@@ -175,7 +173,7 @@ export function describeObligation(
   // The stand owes no copy of its own and is owed none, so its side never has anything to report.
   if (sender.kind !== "stand") {
     if (senderHandover === null) {
-      if (receiverHandover !== null && (watchingBothParties || viewerIsSender)) {
+      if (receiverHandover !== null && (adminView || viewerIsSender)) {
         outstanding.push(
           `${senderLabel} er fortsatt ansvarlig for å levere ${speakingToSender ? "din" : "sin"} opprinnelige bok.`,
         );
@@ -194,7 +192,7 @@ export function describeObligation(
     if (receiverHandover === null) {
       // Only once the sender's copy has demonstrably gone elsewhere — a plain pending book stays
       // silent, since the tick already says "not yet".
-      if (senderHandover !== null && (watchingBothParties || !viewerIsSender)) {
+      if (senderHandover !== null && (adminView || !viewerIsSender)) {
         outstanding.push(`${receiverLabel} har ikke fått noen bok enda.`);
       }
     } else if (!isSameParty(receiverHandover.from, sender)) {

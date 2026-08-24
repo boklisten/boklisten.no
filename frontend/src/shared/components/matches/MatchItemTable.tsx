@@ -1,5 +1,5 @@
-import { Stack, Table, Text, Tooltip } from "@mantine/core";
-import { IconAlertSquareFilled, IconSquareCheckFilled } from "@tabler/icons-react";
+import { Badge, Stack, Table, Text, Tooltip } from "@mantine/core";
+import { IconAlertSquareFilled, IconSquareCheckFilled, IconUsers } from "@tabler/icons-react";
 
 import {
   describeObligation,
@@ -61,22 +61,22 @@ function rowStatus(obligation: ViewerObligation, wholeBook: boolean) {
 
 export default function MatchItemTable({
   obligations,
-  viewerName,
+  adminView = false,
 }: {
   obligations: ViewerObligation[];
   /**
-   * Set on the admin pages: notes speak *about* this party by name instead of saying "du", and
+   * Set on the admin pages: notes speak *about* the parties by name instead of saying "du", and
    * ticks mean whole books rather than the reader's own half.
    */
-  viewerName?: string;
+  adminView?: boolean;
 }) {
   return (
     <TableFrame>
       {[...obligations]
-        .map((obligation) => ({ obligation, ...rowStatus(obligation, viewerName !== undefined) }))
+        .map((obligation) => ({ obligation, ...rowStatus(obligation, adminView) }))
         .sort((a, b) => Number(a.fulfilled) - Number(b.fulfilled))
         .map(({ obligation, fulfilled, label }) => {
-          const note = describeObligation(obligation, viewerName);
+          const note = describeObligation(obligation, adminView);
           return (
             <Table.Tr key={obligation.id}>
               <Table.Td>
@@ -114,7 +114,28 @@ export function ItemStatusTable({
         .sort((a, b) => Number(a.fulfilled) - Number(b.fulfilled))
         .map((item) => (
           <Table.Tr key={item.id}>
-            <Table.Td>{item.title}</Table.Td>
+            <Table.Td>
+              {item.receiveFromName === undefined ? (
+                item.title
+              ) : (
+                <Stack gap={2} align={"flex-start"}>
+                  <Text size={"sm"}>{item.title}</Text>
+                  <Badge
+                    variant={"light"}
+                    color={"blue"}
+                    tt={"none"}
+                    leftSection={<IconUsers size={12} />}
+                    // Student names must survive 375px, so the label wraps instead of truncating
+                    styles={{
+                      root: { height: "auto" },
+                      label: { whiteSpace: "normal", lineHeight: 1.3 },
+                    }}
+                  >
+                    Mottas fra {item.receiveFromName}
+                  </Badge>
+                </Stack>
+              )}
+            </Table.Td>
             <StatusIcon
               fulfilled={item.fulfilled}
               label={

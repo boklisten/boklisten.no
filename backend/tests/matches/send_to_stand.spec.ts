@@ -49,7 +49,6 @@ test.group("sendMatchToStand", (group) => {
     senderId: string,
     receiverId: string,
     itemIds: string[] = [ITEM_X],
-    { locked = false }: { locked?: boolean } = {},
   ): Promise<SeededMatch> {
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const [sender, receiver] = await MatchParticipant.createMany([
@@ -62,7 +61,6 @@ test.group("sendMatchToStand", (group) => {
         senderParticipantId: sender!.id,
         receiverParticipantId: receiver!.id,
         itemId,
-        lockedToMatch: locked,
       })),
     );
     return { match, sender: sender!, receiver: receiver!, obligations };
@@ -149,18 +147,6 @@ test.group("sendMatchToStand", (group) => {
     const mayaStand = await findStandMatch(MAYA);
     assert.isNotNull(mayaStand);
     assert.lengthOf(mayaStand!.obligations, 2);
-  });
-
-  test("unlocks locked obligations on the way to the stand", async ({ assert }) => {
-    const { match } = await seedUserMatch(PETTER, MAYA, [ITEM_X], { locked: true });
-
-    await sendMatchToStand(match.id);
-
-    const standObligations = await MatchObligation.all();
-    assert.lengthOf(standObligations, 2);
-    for (const obligation of standObligations) {
-      assert.isFalse(obligation.lockedToMatch);
-    }
   });
 
   test("re-points a discharging handover so the delivered half stays settled", async ({

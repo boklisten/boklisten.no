@@ -83,13 +83,6 @@ export const matchNotifySchema = vine.object({
 });
 export const matchNotifyValidator = vine.create(matchNotifySchema);
 
-export const matchLockSchema = vine.object({
-  customerId: vine.string(),
-  userMatchesLocked: vine.boolean(),
-});
-
-export const matchLockValidator = vine.create(matchLockSchema);
-
 export const matchTransferSchema = vine.object({
   blid: vine.string(),
 });

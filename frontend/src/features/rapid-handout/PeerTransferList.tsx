@@ -1,48 +1,24 @@
-import { Badge, Card, Group, Stack, Text, ThemeIcon, Title } from "@mantine/core";
-import { IconArrowRight, IconCircleCheck, IconLock } from "@tabler/icons-react";
+import { Card, Group, Stack, Text, ThemeIcon, Title } from "@mantine/core";
+import { IconArrowRight, IconCircleCheck } from "@tabler/icons-react";
 
 import type { PeerBook } from "@/features/rapid-handout/handoutBooks";
 
 /**
- * A calm, informational list of books that are exchanged with other students rather than handed
- * out at the stand. Only the locked state gets a red/warning treatment, signalling the book cannot
- * be handed out at the stand until the match is unlocked.
+ * A list of books the customer gives to other students rather than delivering
+ * at the stand.
  */
-export default function PeerTransferList({
-  title,
-  direction,
-  books,
-}: {
-  title: string;
-  direction: "receive" | "give";
-  books: PeerBook[];
-}) {
-  const verb = direction === "receive" ? "Eleven får denne fra" : "Eleven gir denne til";
-  const lockedLabel =
-    direction === "receive" ? "Låst – kan ikke deles ut på stand" : "Låst til overlevering";
-
+export default function PeerTransferList({ title, books }: { title: string; books: PeerBook[] }) {
   return (
     <Stack gap={"xs"}>
       <Title order={2}>{title}</Title>
       <Stack gap={"sm"}>
         {books.map((book) => (
-          <Card
-            key={`${book.id}-${book.personName}`}
-            withBorder
-            radius={"md"}
-            padding={"sm"}
-            style={book.locked ? { borderColor: "var(--mantine-color-red-5)" } : undefined}
-          >
+          <Card key={`${book.id}-${book.personName}`} withBorder radius={"md"} padding={"sm"}>
             <Stack gap={"xs"}>
               <Group justify={"space-between"} wrap={"nowrap"} align={"flex-start"}>
                 <Group gap={"sm"} wrap={"nowrap"} align={"center"} miw={0}>
-                  <ThemeIcon
-                    color={book.locked ? "red" : "gray"}
-                    variant={"light"}
-                    size={"lg"}
-                    radius={"xl"}
-                  >
-                    {book.locked ? <IconLock size={22} /> : <IconArrowRight size={22} />}
+                  <ThemeIcon color={"gray"} variant={"light"} size={"lg"} radius={"xl"}>
+                    <IconArrowRight size={22} />
                   </ThemeIcon>
                   <Text fw={600}>{book.title}</Text>
                 </Group>
@@ -54,17 +30,11 @@ export default function PeerTransferList({
               </Group>
 
               <Text size={"sm"} c={"dimmed"}>
-                {verb}{" "}
-                <Text span fw={600} c={book.locked ? "red" : undefined}>
+                Eleven gir denne til{" "}
+                <Text span fw={600}>
                   {book.personName}
                 </Text>
               </Text>
-
-              {book.locked && (
-                <Badge color={"red"} variant={"light"} leftSection={<IconLock size={12} />}>
-                  {lockedLabel}
-                </Badge>
-              )}
             </Stack>
           </Card>
         ))}

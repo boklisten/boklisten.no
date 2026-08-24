@@ -6,7 +6,7 @@ import { CustomerItemActive } from "#services/legacy/collections/customer-item/h
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { OrderPlaceOperation } from "#services/legacy/collections/order/operations/place/order-place.operation";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
-import { ITEMS_LOCKED_TO_MATCH_RETURN_FEEDBACK, MatchLock } from "#services/matches/match_lock";
+import { PeerObligations } from "#services/matches/peer_obligations";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import type {
@@ -19,10 +19,7 @@ import type {
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { Item } from "#shared/item";
 import { OrderItem } from "#shared/order/order-item/order-item";
-import {
-  bulkCollectionCollectValidator,
-  bulkCollectionUnlockValidator,
-} from "#validators/bulk_collection_validator";
+import { bulkCollectionCollectValidator } from "#validators/bulk_collection_validator";
 
 export default class BulkCollectionController {
   private queryBuilder = new SEDbQueryBuilder();
@@ -72,11 +69,6 @@ export default class BulkCollectionController {
         success: false,
         feedback: "En eller flere av bøkene mangler informasjon om hvor de ble delt ut.",
       };
-    }
-
-    // Safety guard – the frontend only submits unlocked books, but re-check in case of a race.
-    if ((await MatchLock.findCustomerItemsLockedToMatch(customerItems)).length > 0) {
-      return { success: false, feedback: ITEMS_LOCKED_TO_MATCH_RETURN_FEEDBACK };
     }
 
     const itemsMap = await this.getItemsMap(customerItems.map((customerItem) => customerItem.item));
@@ -139,28 +131,13 @@ export default class BulkCollectionController {
     return { success: true, receipt: await this.buildReceipt(collectedByCustomer) };
   }
 
-  /**
-   * Release the match lock on a single scanned book, so it can be collected at the stand after
-   * all. Returns the re-resolved book, giving the frontend fresh lock state from the source of
-   * truth rather than an optimistic guess.
-   */
-  async unlock(ctx: HttpContext): Promise<BulkCollectionLookupResponse> {
-    PermissionService.employeeOrFail(ctx);
-    const { customerItemId } = await ctx.request.validateUsing(bulkCollectionUnlockValidator);
-
-    const customerItem = await StorageService.CustomerItems.get(customerItemId);
-    await MatchLock.unlockCustomerItem(customerItem.customer, customerItem.item);
-
-    return { success: true, book: await this.resolveScannedBook(customerItem) };
-  }
-
   private async resolveScannedBook(customerItem: CustomerItem): Promise<ScannedBook> {
     const branchId = customerItem.handoutInfo?.handoutById;
     const [item, branch, customerDetail, recipientCustomerId] = await Promise.all([
       StorageService.Items.get(customerItem.item),
       branchId ? StorageService.Branches.get(branchId) : Promise.resolve(undefined),
       StorageService.UserDetails.get(customerItem.customer),
-      MatchLock.findLockedRecipient(customerItem.customer, customerItem.item),
+      PeerObligations.findPeerRecipient(customerItem.customer, customerItem.item),
     ]);
     const deliverTo = recipientCustomerId
       ? await StorageService.UserDetails.getOrNull(recipientCustomerId)
@@ -175,8 +152,7 @@ export default class BulkCollectionController {
       deadline: this.toIsoDeadline(customerItem.deadline),
       customerId: customerItem.customer,
       customerName: customerDetail.name,
-      lockedToMatch: recipientCustomerId !== null,
-      deliverToName: deliverTo?.name,
+      deliverToName: deliverTo?.name ?? (recipientCustomerId ? "en annen elev" : undefined),
     };
   }
 

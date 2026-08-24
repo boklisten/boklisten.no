@@ -1,7 +1,8 @@
 import type { HttpContext } from "@adonisjs/core/http";
+import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 import { BlError } from "#shared/bl-error";
-import { MatchLock } from "#services/matches/match_lock";
+import { PeerObligations } from "#services/matches/peer_obligations";
 import { MatchRepository } from "#services/matches/match_repository";
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
 import type { Order } from "#shared/order/order";
@@ -18,13 +19,15 @@ import { rapidHandoutValidator } from "#validators/rapid_handout_validator";
 import { PermissionService } from "#services/permission_service";
 import BlidService from "#services/blid_service";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
+import { findFutureRentPeriod } from "#shared/rent-periods";
 
 const blidNotActiveFeedback = "Denne unike IDen er ikke koblet til noen bok.";
 
 export default class RapidHandoutController {
   async handout(ctx: HttpContext) {
     const { detailsId: employeeId } = PermissionService.employeeOrFail(ctx);
-    const { blid, customerId, force } = await ctx.request.validateUsing(rapidHandoutValidator);
+    const { blid, customerId, force, branchId, deadline } =
+      await ctx.request.validateUsing(rapidHandoutValidator);
 
     if (!BlidService.isValidBlid(blid)) {
       return { feedback: "Denne bliden er ikke gyldig." };
@@ -40,23 +43,16 @@ export default class RapidHandoutController {
       return { feedback: uniqueItemOrFeedback, connectBlid: true };
 
     // A book the customer is supposed to receive from another student should not normally be
-    // handed out at the stand. If the match is locked it is impossible; otherwise the employee
-    // must confirm (force) before we hand it out.
+    // handed out at the stand, so the employee must confirm (force) before we hand it out. The
+    // handover is recorded either way, so the peer is freed of their obligation.
     const peerReceive = await this.findPeerReceiveSource(uniqueItemOrFeedback.item, customerId);
-    if (peerReceive) {
-      if (peerReceive.locked) {
-        return {
-          feedback: `Denne boka er låst til overlevering. Eleven får den fra ${peerReceive.deliverFromName}. Lås opp matchen i brukerdetaljer for å dele ut på stand.`,
-          deliverFromName: peerReceive.deliverFromName,
-        };
-      }
-      if (!force) {
-        return {
-          feedback: "",
-          requiresConfirmation: true,
-          deliverFromName: peerReceive.deliverFromName,
-        };
-      }
+    if (peerReceive && !force) {
+      return {
+        feedback: "",
+        requiresConfirmation: true,
+        reason: "peer-match" as const,
+        deliverFromName: peerReceive.deliverFromName,
+      };
     }
 
     const placedRentOrder = await this.placeRentOrder(
@@ -65,32 +61,56 @@ export default class RapidHandoutController {
       customerId,
       employeeId,
     );
-    if (placedRentOrder === null) {
-      return {
-        feedback: `«${uniqueItemOrFeedback.title}» er ikke blant bøkene denne kunden har bestilt.`,
-      };
-    }
     if (typeof placedRentOrder === "string") {
       return { feedback: placedRentOrder };
     }
-    await this.createCustomerItem(placedRentOrder);
+    if (placedRentOrder !== null) {
+      await this.recordStandHandover(blid, uniqueItemOrFeedback.item, customerId, placedRentOrder);
+      await this.createCustomerItem(placedRentOrder);
+      return { feedback: "" };
+    }
 
-    return { feedback: "" };
+    // Not ordered: the employee must confirm and pick which branch deadline the book is handed
+    // out on. An order placed in the meantime wins over the picked deadline, since the ordered
+    // path above is always tried first.
+    if (!branchId || !deadline) {
+      return {
+        feedback: "",
+        requiresConfirmation: true,
+        reason: "not-ordered" as const,
+        title: uniqueItemOrFeedback.title,
+      };
+    }
+    const noOrderResult = await this.placeNoOrderHandout(
+      blid,
+      uniqueItemOrFeedback.item,
+      customerId,
+      employeeId,
+      branchId,
+      deadline,
+    );
+    if (typeof noOrderResult === "string") {
+      return { feedback: noOrderResult };
+    }
+    await this.recordStandHandover(blid, uniqueItemOrFeedback.item, customerId, noOrderResult);
+    await this.createCustomerItem(noOrderResult);
+    // Tells the frontend the ordered path did not win after all, so only then does it add a
+    // synthetic row for a book the orders poll will never list.
+    return { feedback: "", handedOutWithoutOrder: true, itemId: uniqueItemOrFeedback.item };
   }
 
   /**
-   * If the customer is due to receive this item from another student, returns the sender's name and
-   * whether that handover is locked (and thus impossible to hand out at stand).
+   * If the customer is due to receive this item from another student, returns the sender's name.
    */
   private async findPeerReceiveSource(
     itemId: string,
     customerId: string,
-  ): Promise<{ locked: boolean; deliverFromName: string } | null> {
-    const peer = await MatchLock.findPeerSender(customerId, itemId);
-    if (!peer) return null;
+  ): Promise<{ deliverFromName: string } | null> {
+    const senderCustomerId = await PeerObligations.findPeerSender(customerId, itemId);
+    if (!senderCustomerId) return null;
 
-    const sender = await StorageService.UserDetails.getOrNull(peer.senderCustomerId);
-    return { locked: peer.lockedToMatch, deliverFromName: sender?.name ?? "en annen elev" };
+    const sender = await StorageService.UserDetails.getOrNull(senderCustomerId);
+    return { deliverFromName: sender?.name ?? "en annen elev" };
   }
 
   private async createCustomerItem(placedReceiverOrder: Order): Promise<void> {
@@ -207,21 +227,93 @@ export default class RapidHandoutController {
     const orderMovedToHandler = new OrderItemMovedFromOrderHandler();
     await orderMovedToHandler.updateOrderItems(placedHandoutOrder);
 
-    // The stand is a party to the handover in its own right, so this is recorded like any other
-    // movement: it settles the customer's receiver half if they were due the book from anyone.
-    const receiverObligation = await MatchRepository.findReceiverObligation(customerId, itemId);
-    await MatchRepository.recordHandover({
-      blid,
-      itemId,
-      fromUserDetailId: null,
-      toUserDetailId: customerId,
-      occurredAt: DateTime.now(),
-      orderId: placedHandoutOrder.id,
-      dischargesSenderObligationId: null,
-      dischargesReceiverObligationId: receiverObligation?.id ?? null,
+    return placedHandoutOrder;
+  }
+
+  /**
+   * Hands out a book the customer never ordered, on a deadline the employee picked from the given
+   * branch's future rent periods. Returns feedback when the pick no longer holds.
+   */
+  private async placeNoOrderHandout(
+    blid: string,
+    itemId: string,
+    customerId: string,
+    employeeId: string,
+    branchId: string,
+    deadline: Date,
+  ): Promise<Order | string> {
+    const item = await StorageService.Items.get(itemId);
+    if (!item) {
+      throw new BlError("Failed to get item");
+    }
+    const branch = await StorageService.Branches.getOrNull(branchId);
+    if (!branch) {
+      return "Fant ikke filialen. Prøv å skanne boka på nytt.";
+    }
+    const period = findFutureRentPeriod(branch, deadline, new Date());
+    if (!period) {
+      return "Fristen er ikke lenger gyldig for denne filialen. Prøv å skanne boka på nytt.";
+    }
+
+    const placedHandoutOrder = await StorageService.Orders.add({
+      placed: true,
+      payments: [],
+      amount: 0,
+      branch: branch.id,
+      customer: customerId,
+      byCustomer: false,
+      employee: employeeId,
+      orderItems: [
+        {
+          handout: true,
+          item: itemId,
+          title: item.title,
+          blid,
+          type: "rent",
+          amount: 0,
+          unitPrice: 0,
+          info: {
+            from: new Date(),
+            to: new Date(period.date),
+            numberOfPeriods: 1,
+            periodType: period.type,
+          },
+        },
+      ],
     });
 
+    await new OrderValidator().validate(placedHandoutOrder, false);
+
     return placedHandoutOrder;
+  }
+
+  /**
+   * The stand is a party to the handover in its own right, so this is recorded like any other
+   * movement: it settles the customer's receiver half if they were due the book from anyone.
+   * Recording must never undo a handout that already happened, so failures are reported to Sentry
+   * instead of thrown — a drifted obligation is caught by the confirmation dialogs on later scans.
+   */
+  private async recordStandHandover(
+    blid: string,
+    itemId: string,
+    customerId: string,
+    placedHandoutOrder: Order,
+  ): Promise<void> {
+    try {
+      const receiverObligation = await MatchRepository.findReceiverObligation(customerId, itemId);
+      await MatchRepository.recordHandover({
+        blid,
+        itemId,
+        fromUserDetailId: null,
+        toUserDetailId: customerId,
+        occurredAt: DateTime.now(),
+        orderId: placedHandoutOrder.id,
+        dischargesSenderObligationId: null,
+        dischargesReceiverObligationId: receiverObligation?.id ?? null,
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+    }
   }
 
   private async verifyBlidNotActive(blid: string, customerId: string): Promise<string | null> {

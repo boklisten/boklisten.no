@@ -20,11 +20,7 @@ import CameraScanner from "@/shared/components/scanner/CameraScanner";
 import ManualCodeEntry from "@/shared/components/scanner/ManualCodeEntry";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
-import {
-  showErrorNotification,
-  showInfoNotification,
-  showSuccessNotification,
-} from "@/shared/utils/notifications";
+import { showErrorNotification, showInfoNotification } from "@/shared/utils/notifications";
 
 const manualModalId = "bulk-collection-manual";
 
@@ -40,9 +36,33 @@ export default function BulkCollectionPage() {
   const [cameraError, setCameraError] = useState<IScannerError | null>(null);
   const [cameraAttempt, setCameraAttempt] = useState(0);
 
-  const unlockedBooks = scannedBooks.filter((book) => !book.lockedToMatch);
-  const lockedBooks = scannedBooks.filter((book) => book.lockedToMatch);
-  const overdueBooks = unlockedBooks.filter((book) => isOverdue(book.deadline));
+  const overdueBooks = scannedBooks.filter((book) => isOverdue(book.deadline));
+
+  const addBook = (book: ScannedBook) => {
+    setScannedBooks((previous) =>
+      previous.some((existing) => existing.blid === book.blid) ? previous : [book, ...previous],
+    );
+  };
+
+  // A book the customer is supposed to give to another student may still be collected here, but
+  // only after the employee has confirmed it.
+  const confirmPeerBook = (book: ScannedBook) => {
+    modals.openConfirmModal({
+      title: "Skal overleveres til en annen elev",
+      children: (
+        <Text size={"sm"}>
+          Denne boka skal {book.customerName} egentlig overlevere til{" "}
+          <Text span fw={600}>
+            {book.deliverToName}
+          </Text>{" "}
+          Er du sikker på at du vil ta den imot her?
+        </Text>
+      ),
+      labels: { confirm: "Ta imot likevel", cancel: "Avbryt" },
+      confirmProps: { color: "red" },
+      onConfirm: () => addBook(book),
+    });
+  };
 
   const lookupMutation = useMutation({
     mutationFn: (blid: string) => client.api.bulkCollection.lookup({ params: { blid } }),
@@ -51,11 +71,11 @@ export default function BulkCollectionPage() {
         showErrorNotification(result.feedback);
         return;
       }
-      setScannedBooks((previous) =>
-        previous.some((book) => book.blid === result.book.blid)
-          ? previous
-          : [result.book, ...previous],
-      );
+      if (result.book.deliverToName !== undefined) {
+        confirmPeerBook(result.book);
+        return;
+      }
+      addBook(result.book);
     },
     onError: () => showErrorNotification(GENERIC_ERROR_TEXT),
   });
@@ -75,39 +95,6 @@ export default function BulkCollectionPage() {
     },
     onError: () => showErrorNotification(GENERIC_ERROR_TEXT),
   });
-
-  const unlockMutation = useMutation({
-    mutationFn: (customerItemId: string) =>
-      client.api.bulkCollection.unlock({ body: { customerItemId } }),
-    onSuccess: (result) => {
-      if (!result.success) {
-        showErrorNotification(result.feedback);
-        return;
-      }
-      setScannedBooks((previous) =>
-        previous.map((book) => (book.blid === result.book.blid ? result.book : book)),
-      );
-      showSuccessNotification("Boka ble låst opp og kan leveres her.");
-    },
-    onError: () => showErrorNotification(GENERIC_ERROR_TEXT),
-  });
-
-  const confirmUnlock = (book: ScannedBook) => {
-    modals.openConfirmModal({
-      title: "Lås opp bok?",
-      children: (
-        <Stack gap={"xs"}>
-          <Text size={"sm"}>
-            Denne boka er låst fordi {book.customerName} skal overlevere den til{" "}
-            {book.deliverToName ?? "en annen elev"}.
-          </Text>
-          <Text size={"sm"}>Hvis du låser den opp, kan boka leveres på stand nå.</Text>
-        </Stack>
-      ),
-      labels: { confirm: "Lås opp", cancel: "Avbryt" },
-      onConfirm: () => unlockMutation.mutate(book.customerItemId),
-    });
-  };
 
   const registerBlid = async (blid: string) => {
     if (scannedBooks.some((book) => book.blid === blid)) {
@@ -135,11 +122,11 @@ export default function BulkCollectionPage() {
   };
 
   const deliver = () => {
-    collectMutation.mutate(unlockedBooks.map((book) => book.customerItemId));
+    collectMutation.mutate(scannedBooks.map((book) => book.customerItemId));
   };
 
   const handleDeliverClick = () => {
-    if (unlockedBooks.some((book) => isOverdue(book.deadline))) {
+    if (overdueBooks.length > 0) {
       modals.openConfirmModal({
         title: "Utløpt frist",
         children: "Noen av bøkene har utløpt frist! Er du sikker på at du vil levere?",
@@ -156,19 +143,14 @@ export default function BulkCollectionPage() {
   };
 
   const scanMore = () => {
-    // Keep books that are locked to a match — they could not be delivered here.
-    setScannedBooks((previous) => previous.filter((book) => book.lockedToMatch));
+    setScannedBooks([]);
     setReceipt(null);
   };
 
   if (receipt) {
     return (
       <Container>
-        <CollectionReceipt
-          receipt={receipt}
-          skippedLockedBooks={scannedBooks.filter((book) => book.lockedToMatch)}
-          onScanMore={scanMore}
-        />
+        <CollectionReceipt receipt={receipt} onScanMore={scanMore} />
       </Container>
     );
   }
@@ -209,39 +191,24 @@ export default function BulkCollectionPage() {
         ) : (
           <Stack>
             <InputLabel>Bøker som skal leveres</InputLabel>
-            <ScannedBooksList
-              books={scannedBooks}
-              onRemove={removeBook}
-              onUnlock={confirmUnlock}
-              unlockingCustomerItemId={unlockMutation.isPending ? unlockMutation.variables : null}
-            />
+            <ScannedBooksList books={scannedBooks} onRemove={removeBook} />
           </Stack>
         )}
 
-        {(lockedBooks.length > 0 || overdueBooks.length > 0) && (
+        {overdueBooks.length > 0 && (
           <WarningAlert title={"Sjekk bøkene før levering"}>
-            <Stack gap={4}>
-              {lockedBooks.length > 0 && (
-                <Text>
-                  {bookCountLabel(lockedBooks.length)} er låst til overlevering og kan ikke leveres
-                  her.
-                </Text>
-              )}
-              {overdueBooks.length > 0 && (
-                <Text>{bookCountLabel(overdueBooks.length)} har utløpt frist.</Text>
-              )}
-            </Stack>
+            <Text>{bookCountLabel(overdueBooks.length)} har utløpt frist.</Text>
           </WarningAlert>
         )}
 
         <Button
           color={"green"}
           leftSection={<IconPackageImport />}
-          disabled={unlockedBooks.length === 0}
+          disabled={scannedBooks.length === 0}
           loading={collectMutation.isPending}
           onClick={handleDeliverClick}
         >
-          Lever {unlockedBooks.length} bøker
+          Lever {scannedBooks.length} bøker
         </Button>
       </Stack>
     </Container>

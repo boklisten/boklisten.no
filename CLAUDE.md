@@ -12,6 +12,7 @@ These rules override default agent behavior — follow them on every task:
 4. **Verify your changes with Playwright** (the MCP browser) whenever it makes sense. The browser is already logged in with an admin account on `localhost:3000`. You may create additional users through the UI and modify the database directly to set permission levels when a test needs a different role.
 5. **The staging databases are yours to modify.** `backend/.env.local` points at the Railway staging DBs; change whatever data you need — staging resets every night.
 6. **Finish every task by running `bun fix`** (lint:fix + typecheck + format) and resolving everything it reports before declaring the task done.
+7. **Never spawn sub-agents** (Agent tool, background forks, workflows, or skills that launch agents) without explicit consent from the user in the current session. Do all work inline by default.
 
 ## Project Overview
 

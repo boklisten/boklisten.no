@@ -95,7 +95,6 @@ export interface ApiDefinition {
   }
   matches: {
     notify: typeof routes['matches.notify']
-    lock: typeof routes['matches.lock']
     getMyMatches: typeof routes['matches.get_my_matches']
     getMatchesForCustomer: typeof routes['matches.get_matches_for_customer']
     getAllMatches: typeof routes['matches.get_all_matches']
@@ -114,7 +113,6 @@ export interface ApiDefinition {
     planMetrics: typeof routes['match_rounds.plan_metrics']
     update: typeof routes['match_rounds.update']
     generate: typeof routes['match_rounds.generate']
-    unlockMatches: typeof routes['match_rounds.unlock_matches']
     destroyMatches: typeof routes['match_rounds.destroy_matches']
     destroy: typeof routes['match_rounds.destroy']
   }
@@ -198,7 +196,6 @@ export interface ApiDefinition {
   bulkCollection: {
     lookup: typeof routes['bulk_collection.lookup']
     collect: typeof routes['bulk_collection.collect']
-    unlock: typeof routes['bulk_collection.unlock']
   }
   reports: {
     getCustomerItemsReport: typeof routes['reports.get_customer_items_report']

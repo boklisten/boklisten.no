@@ -33,8 +33,6 @@ export interface MatchObligationDto {
   sender: HandoverParty;
   /** The party expected to receive it. */
   receiver: HandoverParty;
-  /** When true, this book may not be handed in at the stand — it must go to the other student. */
-  lockedToMatch: boolean;
   /** The delivery of one of the sender's own copies, if it has happened. */
   senderHandover: HandoverDto | null;
   /** The delivery that satisfied the receiver, if it has happened. */

@@ -1,11 +1,8 @@
 import type { ScannedBook } from "@boklisten/backend/shared/bulk-collection/bulk-collection-dtos";
-import { Badge, Button, Card, Group, Stack, Text, ThemeIcon, Tooltip } from "@mantine/core";
-import { IconAlertTriangle, IconArrowRight, IconLock, IconLockOpen } from "@tabler/icons-react";
+import { Badge, Button, Card, Group, Stack, Text } from "@mantine/core";
+import { IconAlertTriangle, IconUsers } from "@tabler/icons-react";
 
 import { formatDeadline, isOverdue } from "@/features/bulk-collection/deadline";
-
-const LOCKED_TOOLTIP =
-  "Denne boka er låst til en overlevering og kan ikke leveres på stand — eleven må overlevere den til en annen elev.";
 
 function DetailItem({
   label,
@@ -31,38 +28,19 @@ function DetailItem({
 export default function ScannedBooksList({
   books,
   onRemove,
-  onUnlock,
-  unlockingCustomerItemId,
 }: {
   books: ScannedBook[];
   onRemove: (blid: string) => void;
-  onUnlock: (book: ScannedBook) => void;
-  unlockingCustomerItemId: string | null;
 }) {
   return (
     <Stack gap={"sm"}>
       {books.map((book) => {
         const overdue = isOverdue(book.deadline);
         return (
-          <Card
-            key={book.blid}
-            withBorder
-            radius={"md"}
-            padding={"sm"}
-            style={book.lockedToMatch ? { borderColor: "var(--mantine-color-red-5)" } : undefined}
-          >
+          <Card key={book.blid} withBorder radius={"md"} padding={"sm"}>
             <Stack gap={"xs"}>
               <Group justify={"space-between"} wrap={"nowrap"} align={"flex-start"}>
-                <Group gap={"sm"} wrap={"nowrap"} align={"center"} miw={0}>
-                  {book.lockedToMatch && (
-                    <Tooltip label={LOCKED_TOOLTIP} multiline w={260}>
-                      <ThemeIcon color={"red"} variant={"light"} size={"lg"} radius={"xl"}>
-                        <IconLock size={22} />
-                      </ThemeIcon>
-                    </Tooltip>
-                  )}
-                  <Text fw={600}>{book.title}</Text>
-                </Group>
+                <Text fw={600}>{book.title}</Text>
                 <Button
                   variant={"subtle"}
                   color={"red"}
@@ -73,11 +51,21 @@ export default function ScannedBooksList({
                 </Button>
               </Group>
 
-              {(book.lockedToMatch || overdue) && (
+              {(book.deliverToName !== undefined || overdue) && (
                 <Group gap={"xs"}>
-                  {book.lockedToMatch && (
-                    <Badge color={"red"} variant={"light"} leftSection={<IconLock size={12} />}>
-                      Låst til overlevering
+                  {book.deliverToName !== undefined && (
+                    <Badge
+                      color={"blue"}
+                      variant={"light"}
+                      tt={"none"}
+                      leftSection={<IconUsers size={12} />}
+                      // Student names must survive 375px, so the label wraps instead of truncating
+                      styles={{
+                        root: { height: "auto" },
+                        label: { whiteSpace: "normal", lineHeight: 1.3 },
+                      }}
+                    >
+                      Skulle egentlig til {book.deliverToName}
                     </Badge>
                   )}
                   {overdue && (
@@ -89,28 +77,6 @@ export default function ScannedBooksList({
                       Utløpt frist
                     </Badge>
                   )}
-                </Group>
-              )}
-
-              {book.lockedToMatch && (
-                <Group justify={"space-between"} gap={"xs"}>
-                  <Group gap={6} wrap={"nowrap"} align={"center"} c={"red"}>
-                    <IconArrowRight size={18} />
-                    <Text size={"sm"} fw={600}>
-                      Skal ikke leveres her – eleven må gi boka til{" "}
-                      {book.deliverToName ?? "en annen elev"}
-                    </Text>
-                  </Group>
-                  <Button
-                    variant={"outline"}
-                    color={"red"}
-                    size={"compact-sm"}
-                    leftSection={<IconLockOpen size={16} />}
-                    loading={unlockingCustomerItemId === book.customerItemId}
-                    onClick={() => onUnlock(book)}
-                  >
-                    Lås opp
-                  </Button>
                 </Group>
               )}
 

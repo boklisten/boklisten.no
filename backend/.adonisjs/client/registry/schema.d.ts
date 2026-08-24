@@ -679,18 +679,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['notify']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'matches.lock': {
-    methods: ["POST"]
-    pattern: '/user_matches/lock'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/matches').matchLockValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchLockValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['lock']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['lock']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
   'matches.get_my_matches': {
     methods: ["GET","HEAD"]
     pattern: '/matches/me'
@@ -857,18 +845,6 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['generate']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['generate']>>>
-    }
-  }
-  'match_rounds.unlock_matches': {
-    methods: ["POST"]
-    pattern: '/match_rounds/:id/unlock_matches'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['unlockMatches']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['unlockMatches']>>>
     }
   }
   'match_rounds.destroy_matches': {
@@ -1433,18 +1409,6 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/bulk_collection_validator').bulkCollectionCollectValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['collect']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['collect']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'bulk_collection.unlock': {
-    methods: ["POST"]
-    pattern: '/bulk-collection/unlock'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/bulk_collection_validator').bulkCollectionUnlockValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/bulk_collection_validator').bulkCollectionUnlockValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['unlock']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/bulk_collection_controller').default['unlock']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'reports.get_customer_items_report': {

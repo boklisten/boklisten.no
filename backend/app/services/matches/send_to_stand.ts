@@ -130,7 +130,6 @@ export async function sendMatchToStand(matchId: number): Promise<void> {
           senderParticipantId: participantIn(senderStand, senderId).id,
           receiverParticipantId: participantIn(senderStand, null).id,
           itemId: obligation.itemId,
-          lockedToMatch: false,
         },
         { client: trx },
       );
@@ -140,7 +139,6 @@ export async function sendMatchToStand(matchId: number): Promise<void> {
           senderParticipantId: participantIn(receiverStand, null).id,
           receiverParticipantId: participantIn(receiverStand, receiverId).id,
           itemId: obligation.itemId,
-          lockedToMatch: false,
         },
         { client: trx },
       );

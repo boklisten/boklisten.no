@@ -67,7 +67,6 @@ function toObligationDto(
     title: lookups.titles.get(obligation.itemId) ?? "Ukjent bok",
     sender: toParty(obligation.sender.userDetailId, lookups),
     receiver: toParty(obligation.receiver.userDetailId, lookups),
-    lockedToMatch: obligation.lockedToMatch,
     senderHandover: senderHandover ? toHandoverDto(senderHandover, lookups) : null,
     receiverHandover: receiverHandover ? toHandoverDto(receiverHandover, lookups) : null,
   };

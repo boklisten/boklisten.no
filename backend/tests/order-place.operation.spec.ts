@@ -194,7 +194,7 @@ test.group("OrderPlaceOperation", (group) => {
   const BLID = "BL0001234567";
 
   /** One obligation between the customer and the stand, in the direction given. */
-  async function seedStandObligation(direction: "delivers" | "collects", lockedToMatch = false) {
+  async function seedStandObligation(direction: "delivers" | "collects") {
     // Discharges only land on active rounds; a defaulted "draft" round would hide the obligation.
     const round = await createTestRound({
       name: "Round",
@@ -211,7 +211,6 @@ test.group("OrderPlaceOperation", (group) => {
       senderParticipantId: direction === "delivers" ? customer!.id : stand!.id,
       receiverParticipantId: direction === "delivers" ? stand!.id : customer!.id,
       itemId: ITEM,
-      lockedToMatch,
     });
   }
 
@@ -283,17 +282,6 @@ test.group("OrderPlaceOperation", (group) => {
     const handovers = await BookHandover.all();
     assert.lengthOf(handovers, 1, "the chain of custody records it even with no obligation");
     assert.isNull(handovers[0]!.dischargesSenderObligationId);
-  });
-
-  test("refuses to take back a book locked to a student handover", async ({ assert }) => {
-    await seedStandObligation("delivers", true);
-    const order = stubStandOrder(
-      { type: "return", customerItem: "ci1" },
-      { id: "ci1", customer: CUSTOMER, item: ITEM, blid: BLID },
-    );
-
-    await assert.rejects(() => orderPlaceOperation.run({ documentId: order.id, user: asAdmin }));
-    assert.isEmpty(await BookHandover.all());
   });
 
   test("records a stand return for a legacy book with no BL-ID", async ({ assert }) => {

@@ -9,7 +9,6 @@ import SendMatchToStandButton from "@/features/matches/adminOverview/SendMatchTo
 import { forViewer, partyName } from "@/features/matches/forViewer";
 import MeetingInfo from "@/features/matches/MeetingInfo";
 import { sortByMeeting } from "@/features/matches/sortByMeeting";
-import UnlockUserMatchesButton from "@/features/matches/UnlockUserMatchesButton";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import MatchItemTable from "@/shared/components/matches/MatchItemTable";
@@ -73,13 +72,13 @@ function MatchPanel({ match, customerId }: { match: MatchDto; customerId: string
 
       {toDeliver.length > 0 && (
         <PanelSection label={`Leverer til ${peer}`}>
-          <MatchItemTable obligations={toDeliver} viewerName={peer} />
+          <MatchItemTable obligations={toDeliver} adminView />
         </PanelSection>
       )}
 
       {toReceive.length > 0 && (
         <PanelSection label={`Får fra ${peer}`}>
-          <MatchItemTable obligations={toReceive} viewerName={peer} />
+          <MatchItemTable obligations={toReceive} adminView />
         </PanelSection>
       )}
     </Stack>
@@ -116,14 +115,11 @@ export default function CustomerMatchesView({ customerId }: { customerId: string
 
   return (
     <Stack gap={"sm"}>
-      <Group justify={"space-between"} align={"center"} wrap={"wrap"} gap={"xs"}>
-        <Text size={"sm"} c={"dimmed"}>
-          {visibleMatches.length === 1
-            ? "1 overlevering med andre elever"
-            : `${visibleMatches.length} overleveringer med andre elever`}
-        </Text>
-        <UnlockUserMatchesButton userDetailId={customerId} variant={"default"} size={"xs"} />
-      </Group>
+      <Text size={"sm"} c={"dimmed"}>
+        {visibleMatches.length === 1
+          ? "1 overlevering med andre elever"
+          : `${visibleMatches.length} overleveringer med andre elever`}
+      </Text>
 
       {visibleMatches.length === 0 ? (
         <InfoAlert>Kunden har ingen overleveringer med andre elever.</InfoAlert>

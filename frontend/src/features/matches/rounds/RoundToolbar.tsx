@@ -1,25 +1,7 @@
-import {
-  ActionIcon,
-  Badge,
-  Button,
-  Card,
-  Group,
-  Menu,
-  Switch,
-  Text,
-  TextInput,
-  Tooltip,
-} from "@mantine/core";
+import { ActionIcon, Button, Card, Group, Menu, Switch, TextInput, Tooltip } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
-import {
-  IconDotsVertical,
-  IconLock,
-  IconLockOpen,
-  IconPencil,
-  IconPlus,
-  IconTrash,
-} from "@tabler/icons-react";
+import { IconDotsVertical, IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -68,7 +50,7 @@ export default function RoundToolbar({
   onNewRound: () => void;
   onEditPlan: () => void;
 }) {
-  const { api, client } = useApiClient();
+  const { client } = useApiClient();
   const { isAdmin } = useAuth();
   const refreshRounds = useRefreshRounds();
   const [deleteOpened, deleteModal] = useDisclosure(false);
@@ -94,32 +76,6 @@ export default function RoundToolbar({
     onError: () => showErrorNotification("Klarte ikke oppdatere runden"),
   });
 
-  const unlockAllMutation = useMutation(
-    api.matchRounds.unlockMatches.mutationOptions({
-      onSuccess: () => {
-        showSuccessNotification("Alle overleveringene i runden ble låst opp");
-        refreshRounds();
-      },
-      onError: () => showErrorNotification("Klarte ikke låse opp overleveringene"),
-    }),
-  );
-
-  const confirmUnlockAll = (round: Round) => {
-    modals.openConfirmModal({
-      title: "Lås opp alle overleveringer?",
-      children: (
-        <Text size={"sm"}>
-          Da kan standen samle inn bøker som en elev egentlig skulle fått overlevert fra en annen
-          elev. Dette gjelder alle overleveringene i <Text span fw={600}>{`«${round.name}»`}</Text>{" "}
-          og kan ikke angres.
-        </Text>
-      ),
-      labels: { confirm: "Lås opp alle", cancel: "Avbryt" },
-      confirmProps: { color: "red", leftSection: <IconLockOpen size={16} /> },
-      onConfirm: () => unlockAllMutation.mutate({ params: { id: round.id } }),
-    });
-  };
-
   return (
     <Card withBorder radius={"md"} padding={"sm"}>
       <Group justify={"space-between"} gap={"sm"} wrap={"wrap"}>
@@ -131,8 +87,8 @@ export default function RoundToolbar({
                 planned
                   ? "Runden må genereres før elevene kan se den"
                   : active
-                    ? "Elevene ser runden, og bøkene i den er låst til overleveringer"
-                    : "Utkast – skjult for elevene, låser ingen bøker"
+                    ? "Elevene ser runden og overleveringene sine"
+                    : "Utkast – skjult for elevene"
               }
               refProp={"rootRef"}
             >
@@ -149,39 +105,6 @@ export default function RoundToolbar({
               />
             </Tooltip>
           )}
-          {selected &&
-            active &&
-            (selected.lockedCount > 0 ? (
-              <Group gap={"xs"} wrap={"nowrap"}>
-                <Tooltip
-                  label={
-                    "Bøkene i runden er låst til overleveringer mellom elever – standen kan ikke samle dem inn."
-                  }
-                  multiline
-                  w={280}
-                >
-                  <Badge color={"red"} variant={"light"} leftSection={<IconLock size={12} />}>
-                    Overleveringer låst
-                  </Badge>
-                </Tooltip>
-                {isAdmin && (
-                  <Button
-                    variant={"default"}
-                    leftSection={<IconLockOpen size={16} />}
-                    loading={unlockAllMutation.isPending}
-                    onClick={() => confirmUnlockAll(selected)}
-                  >
-                    Lås opp alle
-                  </Button>
-                )}
-              </Group>
-            ) : (
-              <Tooltip label={"Standen kan samle inn alle bøkene i runden."}>
-                <Badge color={"green"} variant={"light"} leftSection={<IconLockOpen size={12} />}>
-                  Alle overleveringer er åpne
-                </Badge>
-              </Tooltip>
-            ))}
         </Group>
         {isAdmin && (
           <Group gap={"xs"} wrap={"wrap"}>

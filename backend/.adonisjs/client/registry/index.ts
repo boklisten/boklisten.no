@@ -342,12 +342,6 @@ const routes = {
     tokens: [{"old":"/matches/notify","type":0,"val":"matches","end":""},{"old":"/matches/notify","type":0,"val":"notify","end":""}],
     types: placeholder as Registry['matches.notify']['types'],
   },
-  'matches.lock': {
-    methods: ["POST"],
-    pattern: '/user_matches/lock',
-    tokens: [{"old":"/user_matches/lock","type":0,"val":"user_matches","end":""},{"old":"/user_matches/lock","type":0,"val":"lock","end":""}],
-    types: placeholder as Registry['matches.lock']['types'],
-  },
   'matches.get_my_matches': {
     methods: ["GET","HEAD"],
     pattern: '/matches/me',
@@ -431,12 +425,6 @@ const routes = {
     pattern: '/match_rounds/:id/generate',
     tokens: [{"old":"/match_rounds/:id/generate","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/generate","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/generate","type":0,"val":"generate","end":""}],
     types: placeholder as Registry['match_rounds.generate']['types'],
-  },
-  'match_rounds.unlock_matches': {
-    methods: ["POST"],
-    pattern: '/match_rounds/:id/unlock_matches',
-    tokens: [{"old":"/match_rounds/:id/unlock_matches","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/unlock_matches","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/unlock_matches","type":0,"val":"unlock_matches","end":""}],
-    types: placeholder as Registry['match_rounds.unlock_matches']['types'],
   },
   'match_rounds.destroy_matches': {
     methods: ["DELETE"],
@@ -719,12 +707,6 @@ const routes = {
     pattern: '/bulk-collection/collect',
     tokens: [{"old":"/bulk-collection/collect","type":0,"val":"bulk-collection","end":""},{"old":"/bulk-collection/collect","type":0,"val":"collect","end":""}],
     types: placeholder as Registry['bulk_collection.collect']['types'],
-  },
-  'bulk_collection.unlock': {
-    methods: ["POST"],
-    pattern: '/bulk-collection/unlock',
-    tokens: [{"old":"/bulk-collection/unlock","type":0,"val":"bulk-collection","end":""},{"old":"/bulk-collection/unlock","type":0,"val":"unlock","end":""}],
-    types: placeholder as Registry['bulk_collection.unlock']['types'],
   },
   'reports.get_customer_items_report': {
     methods: ["GET","HEAD"],

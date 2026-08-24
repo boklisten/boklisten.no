@@ -5,31 +5,19 @@ import {
   getMatchesForCustomer as readMatchesForCustomer,
   getMatchesForRound,
 } from "#services/matches/read_matches";
-import { MatchLock } from "#services/matches/match_lock";
 import { notify } from "#services/matches/notify_round";
 import { recordTransfer } from "#services/matches/record_transfer";
 import { sendMatchToStand } from "#services/matches/send_to_stand";
 import { PermissionService } from "#services/permission_service";
 import { BlError } from "#shared/bl-error";
 import { USER_PERMISSION } from "#shared/user-permission";
-import {
-  matchLockValidator,
-  matchNotifyValidator,
-  matchTransferValidator,
-} from "#validators/matches";
+import { matchNotifyValidator, matchTransferValidator } from "#validators/matches";
 
 export default class MatchesController {
   async notify(ctx: HttpContext) {
     PermissionService.authenticate(ctx, USER_PERMISSION.ADMIN);
     const matchNotifyConfiguration = await ctx.request.validateUsing(matchNotifyValidator);
     return await notify(matchNotifyConfiguration);
-  }
-
-  async lock(ctx: HttpContext) {
-    PermissionService.authenticate(ctx, USER_PERMISSION.EMPLOYEE);
-    const { customerId, userMatchesLocked } = await ctx.request.validateUsing(matchLockValidator);
-    await MatchLock.setLockedForCustomer(customerId, userMatchesLocked);
-    return { userMatchesLocked };
   }
 
   async getMyMatches(ctx: HttpContext) {
