@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderFieldValidator } from "#services/legacy/collections/order/helpers/order-validator/order-field-validator/order-field-validator";
@@ -13,8 +11,6 @@ import { BlError } from "#shared/bl-error";
 import { Branch } from "#shared/branch";
 import { Item } from "#shared/item";
 import { Order } from "#shared/order/order";
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderItemValidator", (group) => {
   const orderItemFieldValidator = new OrderFieldValidator();
@@ -122,35 +118,37 @@ test.group("OrderItemValidator", (group) => {
     sandbox.restore();
   });
 
-  test("should reject with error whe the order.branch is not found", async () => {
-    testOrder.branch = "notFoundBranch";
-  });
-
-  test("should reject with error when order.amount is 500 and total of orderItems is 250", async () => {
+  test("should reject with error when order.amount is 500 and total of orderItems is 250", async ({
+    assert,
+  }) => {
     testOrder.amount = 500;
 
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].amount = 250;
 
-    return expect(orderItemValidator.validate(testBranch, testOrder, false)).to.be.rejectedWith(
+    return assert.rejects(
+      () => orderItemValidator.validate(testBranch, testOrder, false),
       BlError,
       /order.amount is "500" but total of orderItems amount is "250"/,
     );
   });
 
-  test("should reject with error when order.amount is 100 and total of orderItems is 780", async () => {
+  test("should reject with error when order.amount is 100 and total of orderItems is 780", async ({
+    assert,
+  }) => {
     testOrder.amount = 100;
 
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].amount = 780;
 
-    return expect(orderItemValidator.validate(testBranch, testOrder, false)).to.be.rejectedWith(
+    return assert.rejects(
+      () => orderItemValidator.validate(testBranch, testOrder, false),
       BlError,
       /order.amount is "100" but total of orderItems amount is "780"/,
     );
   });
 
-  test("should resolve if price amount is valid", async () => {
+  test("should resolve if price amount is valid", async ({ assert }) => {
     testOrder.orderItems = [
       {
         type: "rent",
@@ -166,10 +164,10 @@ test.group("OrderItemValidator", (group) => {
 
     testOrder.amount = 100;
 
-    return expect(orderItemValidator.validate(testBranch, testOrder, false)).to.be.fulfilled;
+    return assert.doesNotReject(() => orderItemValidator.validate(testBranch, testOrder, false));
   });
 
-  test("should reject if deadline is in the past and user is not admin", async () => {
+  test("should reject if deadline is in the past and user is not admin", async ({ assert }) => {
     testOrder.orderItems = [
       {
         type: "rent",
@@ -183,12 +181,16 @@ test.group("OrderItemValidator", (group) => {
       },
     ];
     testOrder.amount = 100;
-    return expect(
-      orderItemValidator.validate(testBranch, testOrder, false),
-    ).to.eventually.be.rejectedWith(BlError, /orderItem deadlines must be in the future/);
+    return assert.rejects(
+      () => orderItemValidator.validate(testBranch, testOrder, false),
+      BlError,
+      /orderItem deadlines must be in the future/,
+    );
   });
 
-  test("should reject if deadline is more than four years into the future and user is not admin", async () => {
+  test("should reject if deadline is more than four years into the future and user is not admin", async ({
+    assert,
+  }) => {
     const deadline = new Date();
     deadline.setFullYear(deadline.getFullYear() + 4);
     deadline.setDate(deadline.getDate() + 1);
@@ -205,15 +207,14 @@ test.group("OrderItemValidator", (group) => {
       },
     ];
     testOrder.amount = 100;
-    return expect(
-      orderItemValidator.validate(testBranch, testOrder, false),
-    ).to.eventually.be.rejectedWith(
+    return assert.rejects(
+      () => orderItemValidator.validate(testBranch, testOrder, false),
       BlError,
       /orderItem deadlines must less than two years into the future/,
     );
   });
 
-  test("should fulfill if deadline is in the past and user is admin", async () => {
+  test("should fulfill if deadline is in the past and user is admin", async ({ assert }) => {
     testOrder.orderItems = [
       {
         type: "rent",
@@ -227,11 +228,12 @@ test.group("OrderItemValidator", (group) => {
       },
     ];
     testOrder.amount = 100;
-    return expect(orderItemValidator.validate(testBranch, testOrder, true)).to.eventually.be
-      .fulfilled;
+    return assert.doesNotReject(() => orderItemValidator.validate(testBranch, testOrder, true));
   });
 
-  test("should fulfill if deadline is more than four years into the future and user is admin", async () => {
+  test("should fulfill if deadline is more than four years into the future and user is admin", async ({
+    assert,
+  }) => {
     const deadline = new Date();
     deadline.setFullYear(deadline.getFullYear() + 4);
     deadline.setDate(deadline.getDate() + 1);
@@ -248,7 +250,6 @@ test.group("OrderItemValidator", (group) => {
       },
     ];
     testOrder.amount = 100;
-    return expect(orderItemValidator.validate(testBranch, testOrder, true)).to.eventually.be
-      .fulfilled;
+    return assert.doesNotReject(() => orderItemValidator.validate(testBranch, testOrder, true));
   });
 });

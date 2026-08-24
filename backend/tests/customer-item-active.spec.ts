@@ -1,5 +1,4 @@
 import { test } from "@japa/runner";
-import { expect } from "chai";
 
 import { CustomerItemActive } from "#services/legacy/collections/customer-item/helpers/customer-item-active";
 import { CustomerItem } from "#shared/customer-item/customer-item";
@@ -7,7 +6,7 @@ import { CustomerItem } from "#shared/customer-item/customer-item";
 test.group("CustomerItemActive", async () => {
   const customerItemActive = new CustomerItemActive();
 
-  test("should resolve false if customerItem.returned is set to true", async () => {
+  test("should resolve false if customerItem.returned is set to true", async ({ assert }) => {
     const customerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
@@ -20,10 +19,10 @@ test.group("CustomerItemActive", async () => {
     };
 
     // oxlint-disable-next-line no-unused-expressions
-    expect(customerItemActive.isActive(customerItem)).false;
+    assert.isFalse(customerItemActive.isActive(customerItem));
   });
 
-  test("should resolve false if customerItem.buyout is set to true", async () => {
+  test("should resolve false if customerItem.buyout is set to true", async ({ assert }) => {
     const customerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
@@ -36,10 +35,10 @@ test.group("CustomerItemActive", async () => {
     };
 
     // oxlint-disable-next-line no-unused-expressions
-    expect(customerItemActive.isActive(customerItem)).false;
+    assert.isFalse(customerItemActive.isActive(customerItem));
   });
 
-  test("should resolve false if customerItem.cancel is set to true", async () => {
+  test("should resolve false if customerItem.cancel is set to true", async ({ assert }) => {
     const customerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
@@ -53,10 +52,10 @@ test.group("CustomerItemActive", async () => {
     };
 
     // oxlint-disable-next-line no-unused-expressions
-    expect(customerItemActive.isActive(customerItem)).false;
+    assert.isFalse(customerItemActive.isActive(customerItem));
   });
 
-  test("should resolve false if customerItem.buyback is set to true", async () => {
+  test("should resolve false if customerItem.buyback is set to true", async ({ assert }) => {
     const customerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
@@ -71,10 +70,10 @@ test.group("CustomerItemActive", async () => {
     };
 
     // oxlint-disable-next-line no-unused-expressions
-    expect(customerItemActive.isActive(customerItem)).false;
+    assert.isFalse(customerItemActive.isActive(customerItem));
   });
 
-  test("should resolve true if customerItem is active", async () => {
+  test("should resolve true if customerItem is active", async ({ assert }) => {
     const customerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
@@ -87,6 +86,6 @@ test.group("CustomerItemActive", async () => {
     };
 
     // oxlint-disable-next-line no-unused-expressions
-    expect(customerItemActive.isActive(customerItem)).true;
+    assert.isTrue(customerItemActive.isActive(customerItem));
   });
 });

@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import mongoose from "mongoose";
 import sinon, { createSandbox } from "sinon";
 
@@ -11,9 +9,6 @@ import { BlError } from "#shared/bl-error";
 import { Branch } from "#shared/branch";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { OrderItem } from "#shared/order/order-item/order-item";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("CustomerItemHandler", (group) => {
   const customerItemHandler = new CustomerItemHandler();
@@ -44,7 +39,7 @@ test.group("CustomerItemHandler", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if returned is true", async () => {
+  test("should reject if returned is true", async ({ assert }) => {
     const customerItem = {
       deadline: new Date(),
       handout: true,
@@ -55,12 +50,14 @@ test.group("CustomerItemHandler", (group) => {
 
     const orderItem = {} as OrderItem;
 
-    return expect(
-      customerItemHandler.extend("customerItem1", orderItem, "branch1", "order1"),
-    ).to.be.rejectedWith(BlError, /can not extend when returned is true/);
+    return assert.rejects(
+      () => customerItemHandler.extend("customerItem1", orderItem, "branch1", "order1"),
+      BlError,
+      /can not extend when returned is true/,
+    );
   });
 
-  test("should reject if orderItem.type is not extend", async () => {
+  test("should reject if orderItem.type is not extend", async ({ assert }) => {
     const customerItem = {
       deadline: new Date(),
       handout: true,
@@ -73,12 +70,14 @@ test.group("CustomerItemHandler", (group) => {
       type: "rent",
     } as OrderItem;
 
-    return expect(
-      customerItemHandler.extend("customerItem1", orderItem, "branch1", "order1"),
-    ).to.be.rejectedWith(BlError, /orderItem.type is not "extend"/);
+    return assert.rejects(
+      () => customerItemHandler.extend("customerItem1", orderItem, "branch1", "order1"),
+      BlError,
+      /orderItem.type is not "extend"/,
+    );
   });
 
-  test("should reject if branch does not have the extend period", async () => {
+  test("should reject if branch does not have the extend period", async ({ assert }) => {
     const customerItem = {
       deadline: new Date(),
       handout: true,
@@ -113,49 +112,61 @@ test.group("CustomerItemHandler", (group) => {
 
     getBranchStub.withArgs("branch1").resolves(branch);
 
-    return expect(
-      customerItemHandler.extend("customerItem1", orderItem, "branch1", "order1"),
-    ).to.be.rejectedWith(BlError, /extend period "year" is not present on branch/);
+    return assert.rejects(
+      () => customerItemHandler.extend("customerItem1", orderItem, "branch1", "order1"),
+      BlError,
+      /extend period "year" is not present on branch/,
+    );
   });
 
-  test('should reject if orderItem.type is not "buyout"', async () => {
+  // These three paths throw a plain string, which assert.rejects cannot match on, so compare the
+  // rejection reason directly.
+  test('should reject if orderItem.type is not "buyout"', async ({ assert }) => {
     const orderItem = {
       type: "rent",
     } as OrderItem;
-    return expect(
-      customerItemHandler.buyout("customerItem1", "order1", orderItem),
-    ).to.be.rejectedWith('orderItem.type is not "buyout"');
+    const reason = await customerItemHandler.buyout("customerItem1", "order1", orderItem).then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+    assert.equal(reason, 'orderItem.type is not "buyout"');
   });
 
-  test('should reject if orderItem.type is not "return"', async () => {
+  test('should reject if orderItem.type is not "return"', async ({ assert }) => {
     const orderItem = {
       type: "rent",
     } as OrderItem;
-    return expect(
-      customerItemHandler.return("customerItem1", "order1", orderItem, "branch1", "employee1"),
-    ).to.be.rejectedWith('orderItem.type is not "return"');
+    const reason = await customerItemHandler
+      .return("customerItem1", "order1", orderItem, "branch1", "employee1")
+      .then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+    assert.equal(reason, 'orderItem.type is not "return"');
   });
 
-  test('should reject if orderItem.type is not "buyout"', async () => {
+  test('should reject if orderItem.type is not "buyback"', async ({ assert }) => {
     const orderItem = {
       type: "rent",
     } as OrderItem;
-    return expect(
-      customerItemHandler.buyback("customerItem1", "order1", orderItem),
-    ).to.be.rejectedWith('orderItem.type is not "buyback"');
+    const reason = await customerItemHandler.buyback("customerItem1", "order1", orderItem).then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+    assert.equal(reason, 'orderItem.type is not "buyback"');
   });
 
-  test("should return emtpy array if there are no customerItems", async () => {
+  test("should return emtpy array if there are no customerItems", async ({ assert }) => {
     getByQueryCustomerItemStub.onFirstCall().resolves([]);
 
-    void customerItemHandler
-      .getNotReturned("5c33b6137eab87644f7e75e2", new Date(2012, 1, 1))
-      .then((notReturnedCustomerItems) => {
-        return expect(notReturnedCustomerItems).to.eql([]);
-      });
+    const notReturnedCustomerItems = await customerItemHandler.getNotReturned(
+      "5c33b6137eab87644f7e75e2",
+      new Date(2012, 1, 1),
+    );
+    assert.deepEqual(notReturnedCustomerItems, []);
   });
 
-  test("should ask db with correct query", async () => {
+  test("should ask db with correct query", async ({ assert }) => {
     const expectedQuery = new SEDbQuery();
 
     const before = new Date(2018, 11, 18);
@@ -189,16 +200,17 @@ test.group("CustomerItemHandler", (group) => {
 
     getByQueryCustomerItemStub.withArgs(expectedQuery).resolves([]);
 
-    void customerItemHandler.getNotReturned("5c33b6137eab87644f7e75e2", deadline).then(() => {
-      const queryArg = getByQueryCustomerItemStub.getCall(0).args[0];
+    await customerItemHandler.getNotReturned("5c33b6137eab87644f7e75e2", deadline);
+    const queryArg = getByQueryCustomerItemStub.getCall(0).args[0];
 
-      expect(queryArg.booleanFilters).to.be.eql(expectedQuery.booleanFilters);
+    assert.deepEqual(queryArg.booleanFilters, expectedQuery.booleanFilters);
 
-      expect(queryArg.objectIdFilters).to.be.eql(expectedQuery.objectIdFilters);
-    });
+    assert.deepEqual(queryArg.objectIdFilters, expectedQuery.objectIdFilters);
   });
 
-  test("should return customerItems not returned with the specified deadline", async () => {
+  test("should return customerItems not returned with the specified deadline", async ({
+    assert,
+  }) => {
     const customerItems = [
       {
         id: "1",
@@ -214,20 +226,21 @@ test.group("CustomerItemHandler", (group) => {
       },
     ] as CustomerItem[];
 
-    getByQueryCustomerItemStub.returns(new Promise((resolve) => resolve(customerItems)));
+    getByQueryCustomerItemStub.resolves(customerItems);
 
-    void customerItemHandler
-      .getNotReturned("5c33b6137eab87644f7e75e2", new Date(2018, 11, 20))
-      .then((result) => {
-        return expect(result).to.eql(customerItems);
-      });
+    const result = await customerItemHandler.getNotReturned(
+      "5c33b6137eab87644f7e75e2",
+      new Date(2018, 11, 20),
+    );
+    assert.deepEqual(result, customerItems);
   });
 
-  test("should reject if BlStorage.CustomerItems rejects", async () => {
+  test("should reject if BlStorage.CustomerItems rejects", async ({ assert }) => {
     getByQueryCustomerItemStub.rejects(new BlError("someting wrong"));
 
-    return expect(
-      customerItemHandler.getNotReturned("5c33b6137eab87644f7e75e2", new Date()),
-    ).to.be.rejectedWith(BlError);
+    return assert.rejects(
+      () => customerItemHandler.getNotReturned("5c33b6137eab87644f7e75e2", new Date()),
+      BlError,
+    );
   });
 });

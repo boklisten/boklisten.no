@@ -1,15 +1,10 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { CustomerHaveActiveCustomerItems } from "#services/legacy/collections/customer-item/helpers/customer-have-active-customer-items";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { CustomerItem } from "#shared/customer-item/customer-item";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("CustomerHaveActiveCustomerItems", (group) => {
   const customerHaveActiveCustomerItems = new CustomerHaveActiveCustomerItems();
@@ -26,14 +21,13 @@ test.group("CustomerHaveActiveCustomerItems", (group) => {
     sandbox.restore();
   });
 
-  test("should resolve with false if no customerItems is found", async () => {
+  test("should resolve with false if no customerItems is found", async ({ assert }) => {
     customerItemByQueryStub.rejects(new BlError("not found").code(702));
 
-    return expect(customerHaveActiveCustomerItems.haveActiveCustomerItems(testUserId)).to.eventually
-      .be.false;
+    assert.isFalse(await customerHaveActiveCustomerItems.haveActiveCustomerItems(testUserId));
   });
 
-  test("should resolve with false if no customerItems was active", async () => {
+  test("should resolve with false if no customerItems was active", async ({ assert }) => {
     const nonActiveCustomerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
@@ -45,11 +39,10 @@ test.group("CustomerHaveActiveCustomerItems", (group) => {
 
     customerItemByQueryStub.resolves([nonActiveCustomerItem]);
 
-    return expect(customerHaveActiveCustomerItems.haveActiveCustomerItems(testUserId)).to.eventually
-      .be.false;
+    assert.isFalse(await customerHaveActiveCustomerItems.haveActiveCustomerItems(testUserId));
   });
 
-  test("should resolve with true if at least one customerItem was active", async () => {
+  test("should resolve with true if at least one customerItem was active", async ({ assert }) => {
     const nonActiveCustomerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
@@ -70,7 +63,6 @@ test.group("CustomerHaveActiveCustomerItems", (group) => {
 
     customerItemByQueryStub.resolves([nonActiveCustomerItem, activeCustomerItem]);
 
-    return expect(customerHaveActiveCustomerItems.haveActiveCustomerItems(testUserId)).to.eventually
-      .be.true;
+    assert.isTrue(await customerHaveActiveCustomerItems.haveActiveCustomerItems(testUserId));
   });
 });

@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { DeliveryHandler } from "#services/legacy/collections/delivery/helpers/deliveryHandler/delivery-handler";
@@ -12,9 +10,6 @@ import { BlError } from "#shared/bl-error";
 import { Delivery } from "#shared/delivery/delivery";
 import { Item } from "#shared/item";
 import { Order } from "#shared/order/order";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("DeliveryPostHook", (group) => {
   const deliveryValidator = new DeliveryValidator();
@@ -132,32 +127,38 @@ test.group("DeliveryPostHook", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if deliveryIds is empty or undefined", async () => {
-    deliveryPostHook.after([]).catch((blError) => {
-      return expect(blError.getMsg()).to.contain("deliveries is empty or undefined");
-    });
+  test("should reject if deliveryIds is empty or undefined", async ({ assert }) => {
+    return assert.rejects(
+      () => deliveryPostHook.after([]),
+      BlError,
+      /deliveries is empty or undefined/,
+    );
   });
 
-  test("should reject if delivery.order is not found", async () => {
+  test("should reject if delivery.order is not found", async ({ assert }) => {
     testDelivery.order = "notFoundOrder";
 
-    deliveryPostHook.after([testDelivery], testAccessToken).catch((blError: BlError) => {
-      expect(blError.getCode()).to.be.eql(702);
-
-      return expect(blError.getMsg()).to.contain(`not found`);
-    });
+    const blError = await deliveryPostHook.after([testDelivery], testAccessToken).then(
+      () => null,
+      (caught: BlError) => caught,
+    );
+    assert.instanceOf(blError, BlError);
+    assert.equal(blError?.getCode(), 702);
+    assert.include(blError?.getMsg() ?? "", "not found");
   });
-  test("should reject if deliveryValidator.validate rejects", async () => {
+  test("should reject if deliveryValidator.validate rejects", async ({ assert }) => {
     deliveryValidated = false;
 
-    return expect(deliveryPostHook.after([testDelivery], testAccessToken)).to.be.rejectedWith(
+    return assert.rejects(
+      () => deliveryPostHook.after([testDelivery], testAccessToken),
       BlError,
       /delivery could not be validated/,
     );
   });
 
-  test("should reject if DeliveryHandler.updateOrderBasedOnMethod rejects", async () => {
-    return expect(deliveryPostHook.after([testDelivery], testAccessToken)).to.be.rejectedWith(
+  test("should reject if DeliveryHandler.updateOrderBasedOnMethod rejects", async ({ assert }) => {
+    return assert.rejects(
+      () => deliveryPostHook.after([testDelivery], testAccessToken),
       BlError,
       /order could not be updated/,
     );

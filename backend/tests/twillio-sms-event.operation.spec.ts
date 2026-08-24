@@ -1,14 +1,9 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { TwilioSmsEventOperation } from "#services/legacy/collections/message/operations/twillio-sms-event.operation";
 import { StorageService } from "#services/storage_service";
 import { Message } from "#shared/message/message";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("TwilioSmsEventOperation", (group) => {
   const twilioSmsEventOperation = new TwilioSmsEventOperation();
@@ -31,15 +26,15 @@ test.group("TwilioSmsEventOperation", (group) => {
     sandbox.restore();
   });
 
-  test("should be rejected if blApiRequest.data is empty or undefined", async () => {
+  test("should be rejected if blApiRequest.data is empty or undefined", async ({ assert }) => {
     const blApiRequest = {
       data: null,
     };
 
-    return expect(twilioSmsEventOperation.run(blApiRequest)).to.be.rejected;
+    return assert.rejects(() => twilioSmsEventOperation.run(blApiRequest));
   });
 
-  test("should be rejected if blApiRequest.query is empty or undefined", async () => {
+  test("should be rejected if blApiRequest.query is empty or undefined", async ({ assert }) => {
     const blApiRequest = {
       data: {
         status: "sent",
@@ -49,10 +44,10 @@ test.group("TwilioSmsEventOperation", (group) => {
       },
     };
 
-    return expect(twilioSmsEventOperation.run(blApiRequest)).to.be.rejected;
+    return assert.rejects(() => twilioSmsEventOperation.run(blApiRequest));
   });
 
-  test("should get correct message based on query parameter", async () => {
+  test("should get correct message based on query parameter", async ({ assert }) => {
     const twilioSmsEvent = {
       status: "sent",
       price: -0.0075,
@@ -69,14 +64,11 @@ test.group("TwilioSmsEventOperation", (group) => {
 
     messageStorageGetIdStub.withArgs("blMessage1").resolves({ id: "blMessage1" } as Message);
 
-    void twilioSmsEventOperation.run(blApiRequest).then(() => {
-      const arg = messageStorageGetIdStub.lastCall.args[0];
-
-      return expect(arg).to.eq("blMessage1");
-    });
+    await twilioSmsEventOperation.run(blApiRequest);
+    assert.equal(messageStorageGetIdStub.lastCall.args[0], "blMessage1");
   });
 
-  test("should update correct message with sendgrid event", async () => {
+  test("should update correct message with sendgrid event", async ({ assert }) => {
     const twilioSmsEvent = {
       status: "sent",
       price: -0.0075,
@@ -93,10 +85,9 @@ test.group("TwilioSmsEventOperation", (group) => {
 
     messageStorageUpdateStub.resolves({} as Message);
 
-    void twilioSmsEventOperation.run(blApiRequest).then(() => {
-      const args = messageStorageUpdateStub.lastCall.args;
-      expect(args[0]).to.eq("blMessage1");
-      return expect(args[1]).to.eql({ smsEvents: [twilioSmsEvent] });
-    });
+    await twilioSmsEventOperation.run(blApiRequest);
+    const args = messageStorageUpdateStub.lastCall.args;
+    assert.equal(args[0], "blMessage1");
+    assert.deepEqual(args[1], { smsEvents: [twilioSmsEvent] });
   });
 });

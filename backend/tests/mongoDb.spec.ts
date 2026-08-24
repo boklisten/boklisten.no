@@ -1,15 +1,10 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import { ObjectId } from "mongodb";
 
 import { MongooseModelCreator } from "#models/mongoose/storage/mongoose-schema-creator";
 
-chaiUse(chaiAsPromised);
-should();
-
 test.group("MongooseModelCreator", async () => {
-  test("should convert objectIDs in objects to strings", async () => {
+  test("should convert objectIDs in objects to strings", async ({ assert }) => {
     const input = {
       _id: new ObjectId(),
       user: new ObjectId(),
@@ -21,36 +16,38 @@ test.group("MongooseModelCreator", async () => {
       items: input.items.map((item) => item.toString()),
     };
     MongooseModelCreator.transformObject(input, undefined);
-    expect(input).to.deep.eq(expectedOutput);
+    assert.deepEqual(input, expectedOutput);
   });
 
-  test("should convert objectIDs in an array to strings", async () => {
+  test("should convert objectIDs in an array to strings", async ({ assert }) => {
     const input = [new ObjectId(), new ObjectId()];
     const expectedOutput = input.map((item) => item.toString());
     MongooseModelCreator.transformObject(input, undefined);
-    expect(input).to.deep.eq(expectedOutput);
+    assert.deepEqual(input, expectedOutput);
   });
 
-  test("should convert objectIDs not named 'id' in nested objects to string", async () => {
+  test("should convert objectIDs not named 'id' in nested objects to string", async ({
+    assert,
+  }) => {
     const input = { orderItems: [{ item: new ObjectId() }] };
     const expectedOutput = {
       orderItems: [{ item: input.orderItems[0]?.item.toString() }],
     };
     MongooseModelCreator.transformObject(input, undefined);
-    expect(input).to.deep.eq(expectedOutput);
+    assert.deepEqual(input, expectedOutput);
   });
 
-  test("should rename '_id'-keys to 'id'", async () => {
+  test("should rename '_id'-keys to 'id'", async ({ assert }) => {
     const input = { orderItems: [{ _id: "hello" }] };
     const expectedOutput = { orderItems: [{ id: "hello" }] };
     MongooseModelCreator.transformObject(input, undefined);
-    expect(input).to.deep.eq(expectedOutput);
+    assert.deepEqual(input, expectedOutput);
   });
 
-  test("should not replace existing 'id'-values with '_id'-values", async () => {
+  test("should not replace existing 'id'-values with '_id'-values", async ({ assert }) => {
     const input = { orderItems: [{ _id: "hello", id: "you" }] };
     const expectedOutput = { orderItems: [{ id: "you" }] };
     MongooseModelCreator.transformObject(input, undefined);
-    expect(input).to.deep.eq(expectedOutput);
+    assert.deepEqual(input, expectedOutput);
   });
 });

@@ -10,18 +10,6 @@ import MatchRound from "#models/match_round";
 import { createTestRound } from "#tests/matches/match-testing-utils";
 import { sendMatchToStand } from "#services/matches/send_to_stand";
 
-/** chai-as-promised is not registered in this suite, so assert rejections explicitly. */
-async function expectRejection(promise: Promise<unknown>, pattern: RegExp) {
-  const error = await promise.then(
-    () => null,
-    (caught: Error) => caught,
-  );
-  if (error === null) throw new Error(`expected a rejection matching ${pattern}`);
-  if (!pattern.test(error.message)) {
-    throw new Error(`expected "${error.message}" to match ${pattern}`);
-  }
-}
-
 const PETTER = "5d765db5fc8c47001c408d81";
 const MAYA = "5d765db5fc8c47001c408d82";
 const ITEM_X = "5d765db5fc8c47001c408e01";
@@ -219,7 +207,7 @@ test.group("sendMatchToStand", (group) => {
   test("refuses a stand match", async ({ assert }) => {
     const standMatch = await seedStandMatch(PETTER);
 
-    await expectRejection(sendMatchToStand(standMatch.id), /allerede en standoverlevering/);
+    await assert.rejects(() => sendMatchToStand(standMatch.id), /allerede en standoverlevering/);
     assert.isNotNull(await Match.find(standMatch.id));
   });
 
@@ -236,11 +224,11 @@ test.group("sendMatchToStand", (group) => {
       dischargesReceiverObligationId: obligations[0]!.id,
     });
 
-    await expectRejection(sendMatchToStand(match.id), /allerede fullført/);
+    await assert.rejects(() => sendMatchToStand(match.id), /allerede fullført/);
     assert.isNotNull(await Match.find(match.id));
   });
 
-  test("refuses an unknown match id", async () => {
-    await expectRejection(sendMatchToStand(999_999), /finnes ikke/);
+  test("refuses an unknown match id", async ({ assert }) => {
+    await assert.rejects(() => sendMatchToStand(999_999), /finnes ikke/);
   });
 });

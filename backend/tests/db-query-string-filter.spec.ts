@@ -1,45 +1,45 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 
 import { DbQueryStringFilter } from "#services/legacy/query/db-query-string-filter";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("DbQueryStringFilter", async () => {
   const dbQueryStringFilter: DbQueryStringFilter = new DbQueryStringFilter();
 
-  test("should return empty array if query is valid and validStringParams is empty", async () => {
-    expect(dbQueryStringFilter.getStringFilters({ name: "testerman" }, [])).to.eql([]);
+  test("should return empty array if query is valid and validStringParams is empty", async ({
+    assert,
+  }) => {
+    assert.deepEqual(dbQueryStringFilter.getStringFilters({ name: "testerman" }, []), []);
   });
 
-  test("should throw TypeError if query is empty", async () => {
-    expect(() => {
+  test("should throw TypeError if query is empty", async ({ assert }) => {
+    assert.throws(() => {
       dbQueryStringFilter.getStringFilters({}, ["name"]);
-    }).to.throw(TypeError);
+    }, TypeError);
   });
 
-  test("should throw error when both query and validParams are empty ", async () => {
-    expect(() => {
+  test("should throw error when both query and validParams are empty ", async ({ assert }) => {
+    assert.throws(() => {
       dbQueryStringFilter.getStringFilters({}, []);
-    }).to.throw(TypeError);
+    }, TypeError);
   });
 
-  test("should throw TypeError if parameter is not a valid string", async () => {
-    expect(() => {
+  test("should throw TypeError if parameter is not a valid string", async ({ assert }) => {
+    assert.throws(() => {
       dbQueryStringFilter.getStringFilters({ name: { test: {} } }, ["name"]);
-    }).to.throw(TypeError);
+    }, TypeError);
   });
 
-  test("should not change values in query that are not in ValidStringParams", async () => {
+  test("should not change values in query that are not in ValidStringParams", async ({
+    assert,
+  }) => {
     const result = [{ fieldName: "name", value: "albert" }];
-    expect(dbQueryStringFilter.getStringFilters({ name: "albert", phone: "123" }, ["name"])).to.eql(
+    assert.deepEqual(
+      dbQueryStringFilter.getStringFilters({ name: "albert", phone: "123" }, ["name"]),
       result,
     );
   });
 
-  test("should return correct array given valid input", async () => {
+  test("should return correct array given valid input", async ({ assert }) => {
     const query = {
       name: "billy bob",
       desc: "hello there this is bob",
@@ -52,7 +52,8 @@ test.group("DbQueryStringFilter", async () => {
       { fieldName: "branch", value: ["123", "83ax"] },
     ];
 
-    expect(dbQueryStringFilter.getStringFilters(query, ["name", "desc", "title", "branch"])).to.eql(
+    assert.deepEqual(
+      dbQueryStringFilter.getStringFilters(query, ["name", "desc", "title", "branch"]),
       result,
     );
   });

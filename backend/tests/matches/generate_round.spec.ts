@@ -14,18 +14,6 @@ import {
   createTestRound,
 } from "#tests/matches/match-testing-utils";
 
-/** chai-as-promised is not registered in this suite, so assert rejections explicitly. */
-async function expectRejection(promise: Promise<unknown>, pattern: RegExp) {
-  const error = await promise.then(
-    () => null,
-    (caught: Error) => caught,
-  );
-  if (error === null) throw new Error(`expected a rejection matching ${pattern}`);
-  if (!pattern.test(error.message)) {
-    throw new Error(`expected "${error.message}" to match ${pattern}`);
-  }
-}
-
 const A = "5d765db5fc8c47001c408d81";
 const B = "5d765db5fc8c47001c408d82";
 const ITEM_X = "5d765db5fc8c47001c408e01";
@@ -206,10 +194,10 @@ test.group("generateRound", (group) => {
     assert.isNull(handoff!.receiver.userDetailId, "…but to the stand, not to A");
   });
 
-  test("reports when there is nobody to match", async () => {
+  test("reports when there is nobody to match", async ({ assert }) => {
     stubMongo([], []);
 
-    await expectRejection(generateRound(await plannedRound()), /Fant ingen elever/);
+    await assert.rejects(async () => generateRound(await plannedRound()), /Fant ingen elever/);
   });
 
   test("user matches get a slot and location inside the meeting window", async ({ assert }) => {
@@ -285,26 +273,26 @@ test.group("generateRound", (group) => {
     );
   });
 
-  test("refuses to generate a round twice", async () => {
+  test("refuses to generate a round twice", async ({ assert }) => {
     stubMongo([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
     const round = await plannedRound();
 
     await generateRound(round);
 
-    await expectRejection(
-      generateRound(await MatchRound.findOrFail(round.id)),
+    await assert.rejects(
+      async () => generateRound(await MatchRound.findOrFail(round.id)),
       /allerede overleveringer/,
     );
   });
 
-  test("refuses a round whose deadline has already passed", async () => {
+  test("refuses a round whose deadline has already passed", async ({ assert }) => {
     stubMongo([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
     const round = await createTestRound({
       branches: [BRANCH],
       deadline: DateTime.now().minus({ days: 1 }),
     });
 
-    await expectRejection(generateRound(round), /Fristen for runden har allerede passert/);
+    await assert.rejects(() => generateRound(round), /Fristen for runden har allerede passert/);
   });
 
   test("stamps the round as generated, which is what ends its planned state", async ({

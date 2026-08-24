@@ -1,5 +1,4 @@
 import { test } from "@japa/runner";
-import { expect } from "chai";
 import sinon, { createSandbox } from "sinon";
 
 import { reconcileSignatureTask } from "#services/legacy/signature.helper";
@@ -106,7 +105,7 @@ test.group("reconcileSignatureTask", (group) => {
     sandbox.restore();
   });
 
-  test("clears the task when the user has a valid signature", async () => {
+  test("clears the task when the user has a valid signature", async ({ assert }) => {
     const userDetail = makeUserDetail({
       signatures: [SIGNATURE_ID],
       tasks: { signAgreement: true },
@@ -114,30 +113,34 @@ test.group("reconcileSignatureTask", (group) => {
 
     const result = await reconcileSignatureTask(userDetail);
 
-    expect(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": false })).to.equal(true);
-    expect(result.tasks?.signAgreement).to.equal(false);
+    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": false }), true);
+    assert.equal(result.tasks?.signAgreement, false);
   });
 
-  test("does not write when the user has a valid signature and no task set", async () => {
+  test("does not write when the user has a valid signature and no task set", async ({ assert }) => {
     const userDetail = makeUserDetail({ signatures: [SIGNATURE_ID] });
 
     const result = await reconcileSignatureTask(userDetail);
 
-    expect(updateStub.called).to.equal(false);
-    expect(result.tasks?.signAgreement ?? false).to.equal(false);
+    assert.equal(updateStub.called, false);
+    assert.equal(result.tasks?.signAgreement ?? false, false);
   });
 
-  test("sets the task when an open rent order exists and no valid signature", async () => {
+  test("sets the task when an open rent order exists and no valid signature", async ({
+    assert,
+  }) => {
     orders = [makeRentOrder()];
     const userDetail = makeUserDetail();
 
     const result = await reconcileSignatureTask(userDetail);
 
-    expect(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true })).to.equal(true);
-    expect(result.tasks?.signAgreement).to.equal(true);
+    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
+    assert.equal(result.tasks?.signAgreement, true);
   });
 
-  test("does not set the task for orders with only partly-payment or buy items", async () => {
+  test("does not set the task for orders with only partly-payment or buy items", async ({
+    assert,
+  }) => {
     orders = [
       makeRentOrder({
         orderItems: [
@@ -150,10 +153,10 @@ test.group("reconcileSignatureTask", (group) => {
 
     await reconcileSignatureTask(userDetail);
 
-    expect(updateStub.called).to.equal(false);
+    assert.equal(updateStub.called, false);
   });
 
-  test("does not set the task when the rent order items are all handed out", async () => {
+  test("does not set the task when the rent order items are all handed out", async ({ assert }) => {
     orders = [
       makeRentOrder({
         orderItems: [
@@ -165,29 +168,29 @@ test.group("reconcileSignatureTask", (group) => {
 
     await reconcileSignatureTask(userDetail);
 
-    expect(updateStub.called).to.equal(false);
+    assert.equal(updateStub.called, false);
   });
 
-  test("sets the task when the customer possesses an active rent item", async () => {
+  test("sets the task when the customer possesses an active rent item", async ({ assert }) => {
     customerItems = [makeCustomerItem()];
     const userDetail = makeUserDetail();
 
     const result = await reconcileSignatureTask(userDetail);
 
-    expect(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true })).to.equal(true);
-    expect(result.tasks?.signAgreement).to.equal(true);
+    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
+    assert.equal(result.tasks?.signAgreement, true);
   });
 
-  test("treats customer items without a type as rent", async () => {
+  test("treats customer items without a type as rent", async ({ assert }) => {
     customerItems = [makeCustomerItem({ type: undefined })];
     const userDetail = makeUserDetail();
 
     await reconcileSignatureTask(userDetail);
 
-    expect(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true })).to.equal(true);
+    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
   });
 
-  test("ignores returned, bought out and not handed out customer items", async () => {
+  test("ignores returned, bought out and not handed out customer items", async ({ assert }) => {
     customerItems = [
       makeCustomerItem({ returned: true }),
       makeCustomerItem({ id: "customerItem2", buyout: true }),
@@ -198,24 +201,26 @@ test.group("reconcileSignatureTask", (group) => {
 
     await reconcileSignatureTask(userDetail);
 
-    expect(updateStub.called).to.equal(false);
+    assert.equal(updateStub.called, false);
   });
 
-  test("keeps a requested task when there is no signature and no other trigger", async () => {
+  test("keeps a requested task when there is no signature and no other trigger", async ({
+    assert,
+  }) => {
     const userDetail = makeUserDetail({ tasks: { signAgreement: true } });
 
     const result = await reconcileSignatureTask(userDetail);
 
-    expect(updateStub.called).to.equal(false);
-    expect(result.tasks?.signAgreement).to.equal(true);
+    assert.equal(updateStub.called, false);
+    assert.equal(result.tasks?.signAgreement, true);
   });
 
-  test("leaves an unset task untouched when there are no triggers", async () => {
+  test("leaves an unset task untouched when there are no triggers", async ({ assert }) => {
     const userDetail = makeUserDetail();
 
     const result = await reconcileSignatureTask(userDetail);
 
-    expect(updateStub.called).to.equal(false);
-    expect(result.tasks?.signAgreement ?? false).to.equal(false);
+    assert.equal(updateStub.called, false);
+    assert.equal(result.tasks?.signAgreement ?? false, false);
   });
 });

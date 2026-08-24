@@ -1,15 +1,10 @@
 import { test } from "@japa/runner";
-import { use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon from "sinon";
 
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { UniqueItemActiveOperation } from "#services/legacy/collections/unique-item/operations/unique-item-active.operation";
 import { StorageService } from "#services/storage_service";
 import { UniqueItem } from "#shared/unique-item";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("UniqueItemActiveOperation", (group) => {
   const customerItemActiveBlid = new CustomerItemActiveBlid();
@@ -35,7 +30,7 @@ test.group("UniqueItemActiveOperation", (group) => {
 
     getActiveCustomerItemsStub.resolves([]);
 
-    void assert.doesNotReject(() =>
+    return assert.doesNotReject(() =>
       uniqueItemActiveOperation.run({
         documentId: "uniqueItem1",
       }),

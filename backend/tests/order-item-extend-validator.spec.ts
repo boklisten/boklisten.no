@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderItemExtendValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-extend-validator/order-item-extend-validator";
@@ -9,9 +7,6 @@ import { BlError } from "#shared/bl-error";
 import { Branch } from "#shared/branch";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { Order } from "#shared/order/order";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderItemExtendValidator", (group) => {
   const orderItemExtendValidator = new OrderItemExtendValidator();
@@ -115,16 +110,21 @@ test.group("OrderItemExtendValidator", (group) => {
     sandbox.restore();
   });
 
-  test('should reject if orderItem.type is not "extend"', async () => {
+  test('should reject if orderItem.type is not "extend"', async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].type = "rent";
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
-    ).to.be.rejectedWith(BlError, /orderItem.type "rent" is not "extend"/);
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
+      BlError,
+      /orderItem.type "rent" is not "extend"/,
+    );
   });
 
-  test("should reject if orderItem.info.periodType is not allowed at branch", async () => {
+  test("should reject if orderItem.info.periodType is not allowed at branch", async ({
+    assert,
+  }) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].info["periodType"] = "year";
 
@@ -138,10 +138,10 @@ test.group("OrderItemExtendValidator", (group) => {
       },
     ];
 
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
-    ).to.be.rejectedWith(
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
       BlError,
       /orderItem.info.periodType is "year" but it is not allowed by branch/,
     );
@@ -162,27 +162,33 @@ test.group("OrderItemExtendValidator", (group) => {
     ];
   });
 
-  test("should reject if orderItem.info is not defined", async () => {
+  test("should reject if orderItem.info is not defined", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].info = null;
 
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
-    ).to.be.rejectedWith(BlError, /orderItem.info is not defined/);
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
+      BlError,
+      /orderItem.info is not defined/,
+    );
   });
 
-  test("should reject if orderItem.customerItem is not defined", async () => {
+  test("should reject if orderItem.customerItem is not defined", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].info.customerItem = null;
 
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
-    ).to.be.rejectedWith(BlError, /orderItem.info.customerItem is not defined/);
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
+      BlError,
+      /orderItem.info.customerItem is not defined/,
+    );
   });
 
-  test("should reject when customerItem have been extended to many times", async () => {
+  test("should reject when customerItem have been extended to many times", async ({ assert }) => {
     testCustomerItem.id = "maxExtendedCustomerItem";
 
     // @ts-expect-error fixme: auto ignored
@@ -212,9 +218,12 @@ test.group("OrderItemExtendValidator", (group) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].info.customerItem = "maxExtendedCustomerItem";
 
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
-    ).to.be.rejectedWith(BlError, /orderItem can not be extended any more times/);
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
+      BlError,
+      /orderItem can not be extended any more times/,
+    );
   });
 });

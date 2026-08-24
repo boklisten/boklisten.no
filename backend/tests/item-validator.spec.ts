@@ -1,14 +1,9 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 
 import { ItemValidator } from "#services/legacy/collections/order/helpers/order-validator/item-validator/item-validator";
 import { BlError } from "#shared/bl-error";
 import { Item } from "#shared/item";
 import { OrderItem } from "#shared/order/order-item/order-item";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("ItemValidator", (group) => {
   let testItem: Item;
@@ -45,25 +40,31 @@ test.group("ItemValidator", (group) => {
     };
   });
 
-  test("should return true when using valid orderItem and valid item", async () => {
+  test("should return true when using valid orderItem and valid item", async ({ assert }) => {
     // oxlint-disable-next-line no-unused-expressions
-    expect(itemValidator.validateItemInOrder(testItem, testOrderItem)).to.be.true;
+    assert.isTrue(itemValidator.validateItemInOrder(testItem, testOrderItem));
   });
 
-  test("should throw BlError when orderItem.item is not the same as item.id", async () => {
+  test("should throw BlError when orderItem.item is not the same as item.id", async ({
+    assert,
+  }) => {
     testItem.id = "notarealId";
     testOrderItem.item = "i4";
 
-    expect(() => {
+    assert.throws(() => {
       itemValidator.validateItemInOrder(testItem, testOrderItem);
-    }).to.throw(BlError);
+    }, BlError);
   });
 
-  test("should throw error when item.actve is false", async () => {
+  test("should throw error when item.actve is false", async ({ assert }) => {
     testItem.active = false;
 
-    expect(() => {
-      itemValidator.validateItemInOrder(testItem, testOrderItem);
-    }).to.throw(BlError, /item.active is false/);
+    assert.throws(
+      () => {
+        itemValidator.validateItemInOrder(testItem, testOrderItem);
+      },
+      BlError,
+      /item.active is false/,
+    );
   });
 });

@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderItemRentPeriodValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-rent-validator/order-item-rent-period-validator/order-item-rent-period-validator";
@@ -9,35 +7,11 @@ import { BlError } from "#shared/bl-error";
 import { BranchPaymentInfo } from "#shared/branch-payment-info";
 import { OrderItem } from "#shared/order/order-item/order-item";
 
-chaiUse(chaiAsPromised);
-should();
-
 test.group("OrderItemRentPeriodValidator", (group) => {
   const orderItemRentPeriodValidator = new OrderItemRentPeriodValidator();
   let orderStorageGetStub: sinon.SinonStub;
   let sandbox: sinon.SinonSandbox;
   let branchPaymentInfo: any;
-  const orderB = {
-    id: "orderB",
-    amount: 200,
-    orderItems: [
-      {
-        type: "rent",
-        item: "itemA",
-        amount: 100,
-        unitPrice: 100,
-        info: {
-          to: new Date(),
-          from: new Date(),
-          numberOfPeriods: 1,
-          periodType: "semester",
-        },
-      },
-    ],
-    payments: ["paymentA"],
-    placed: true,
-  } as any;
-  //important to remember, if payments is set and placed is true, that means that the payments are also confirmed
 
   group.each.setup(() => {
     branchPaymentInfo = {
@@ -50,7 +24,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if period is not found in branchPaymentInfo", async () => {
+  test("should reject if period is not found in branchPaymentInfo", async ({ assert }) => {
     const branchPaymentInfo = {
       rentPeriods: [{ type: "year" }],
     };
@@ -62,177 +36,178 @@ test.group("OrderItemRentPeriodValidator", (group) => {
       },
     };
 
-    return expect(
-      orderItemRentPeriodValidator.validate(
-        orderItem as OrderItem,
-        branchPaymentInfo as BranchPaymentInfo,
-        100,
-      ),
-    ).to.be.rejectedWith(BlError, /rent period "semester" is not valid on branch/);
+    return assert.rejects(
+      () =>
+        orderItemRentPeriodValidator.validate(
+          orderItem as OrderItem,
+          branchPaymentInfo as BranchPaymentInfo,
+          100,
+        ),
+      BlError,
+      /rent period "semester" is not valid on branch/,
+    );
   });
 
-  test("should reject if not all amounts is equal to 0 on orderItem", async () => {
+  test("should reject if not all amounts is equal to 0 on orderItem", async ({ assert }) => {
     const orderItem = {
       type: "rent",
       amount: 100,
       unitPrice: 80,
     } as OrderItem;
 
-    return expect(
-      orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo as BranchPaymentInfo, 100),
-    ).to.be.rejectedWith(BlError, /amounts where set on orderItem when branch is responsible/);
+    return assert.rejects(
+      () =>
+        orderItemRentPeriodValidator.validate(
+          orderItem,
+          branchPaymentInfo as BranchPaymentInfo,
+          100,
+        ),
+      BlError,
+      /amounts where set on orderItem when branch is responsible/,
+    );
   });
 
-  test("should resolve with true if all amounts is 0", async () => {
+  test("should resolve with true if all amounts is 0", async ({ assert }) => {
     const orderItem = {
       type: "rent",
       amount: 0,
       unitPrice: 0,
     } as OrderItem;
 
-    return expect(
+    return assert.doesNotReject(() =>
       orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo as BranchPaymentInfo, 100),
-    ).to.be.fulfilled;
+    );
   });
 
-  branchPaymentInfo = {
+  // The movedFromOrder path: the customer changes an already-placed rent order, so the new
+  // orderItem must be priced against what was payed on the original order. The branch charges
+  // itemPrice * percentage (0.5 here) for a rent period.
+  const movedPaymentInfo = {
     responsible: false,
     rentPeriods: [
       {
         type: "semester",
+        date: new Date(),
+        maxNumberOfPeriods: 1,
+        percentage: 0.5,
       },
     ],
   } as any;
 
-  const orderItem = {
-    type: "rent",
-    item: "itemA",
-    amount: 0,
-    unitPrice: 0,
-    info: {
-      to: new Date(),
-      from: new Date(),
-      numberOfPeriods: 1,
-      periodType: "semester",
-    },
-    movedFromOrder: "orderB",
-  } as any;
+  function movedOrderItem(amount: number, periodType: string) {
+    return {
+      type: "rent",
+      item: "itemA",
+      amount,
+      unitPrice: 100,
+      info: {
+        to: new Date(),
+        from: new Date(),
+        numberOfPeriods: 1,
+        periodType,
+      },
+      movedFromOrder: "orderB",
+    } as any;
+  }
 
-  test("should reject if orderItem.amount is 0 but the movedFromOrder has not been payed for", async () => {
-    orderB.payments = []; // this means no payment is provided, aka customer has not payed
-    orderStorageGetStub.withArgs("orderB").resolves(orderB);
-
-    await orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, 100);
-  });
-
-  test("should reject if period is the same but orderItem.amount is not 0", async ({ assert }) => {
-    orderB.payments = ["payment1"]; // this means that the order is payed for
-    orderStorageGetStub.withArgs("orderB").resolves(orderB);
-
-    orderB.orderItems[0].type = "rent";
-    orderB.orderItems[0].info.periodType = "semester";
-
-    orderItem.amount = 100;
-    orderItem.type = "rent";
-    orderItem.info.periodType = "semester";
-
-    await assert.rejects(() =>
-      orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, 100),
-    );
-  });
-
-  test("should reject if orderItem.amount is not equal to rentPrice - oldOrderItem.amount ", async ({
-    assert,
-  }) => {
-    branchPaymentInfo = {
-      responsible: false,
-      rentPeriods: [
+  // payments non-empty together with placed true means the original order is payed for
+  function originalOrder(payments: string[], payedAmount: number, periodType: string) {
+    return {
+      id: "orderB",
+      amount: payedAmount,
+      orderItems: [
         {
-          type: "semester",
+          type: "rent",
+          item: "itemA",
+          amount: payedAmount,
+          unitPrice: 100,
+          info: {
+            to: new Date(),
+            from: new Date(),
+            numberOfPeriods: 1,
+            periodType,
+          },
         },
       ],
+      payments,
+      placed: true,
     } as any;
-    branchPaymentInfo.rentPeriods.push({
-      type: "year",
-      date: new Date(),
-      maxNumberOfPeriods: 1,
-      percentage: 0.5,
-    });
-    orderB.payments = ["payment1"]; // this means that the order is payed for
-    orderStorageGetStub.withArgs("orderB").resolves(orderB);
+  }
 
-    orderB.orderItems[0].type = "rent";
-    orderB.orderItems[0].amount = 200;
-    orderB.orderItems[0].info.periodType = "semester";
-
-    const itemPrice = 500;
-
-    orderItem.amount = 100; // this should actually be (itemPrice 500 * percentage 0.5)- oldOrderItem 200 = 50
-    orderItem.type = "rent";
-    orderItem.info.periodType = "year";
-
-    await assert.rejects(() =>
-      orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, itemPrice),
-    );
-  });
-
-  test("should reject if orderItem.amount is not equal to rentPrice 500 - oldOrderItem.amount 750 = -250", async ({
+  test("should reject if the original order is not payed and orderItem.amount is 0", async ({
     assert,
   }) => {
-    branchPaymentInfo.rentPeriods = [
-      {
-        type: "semester",
-        date: new Date(),
-        maxNumberOfPeriods: 1,
-        percentage: 0.5,
-      },
-    ];
-    orderB.payments = ["payment1"]; // this means that the order is payed for
-    orderStorageGetStub.withArgs("orderB").resolves(orderB);
+    orderStorageGetStub.withArgs("orderB").resolves(originalOrder([], 100, "semester"));
 
-    orderB.orderItems[0].type = "rent";
-    orderB.orderItems[0].amount = 750;
-    orderB.orderItems[0].info.periodType = "year";
-
-    const itemPrice = 1000;
-
-    orderItem.amount = 0; // this should actually be (itemPrice 1000 * percentage 0.5)- oldOrderItem 750 = -250
-    orderItem.type = "rent";
-    orderItem.info.periodType = "semester";
-
-    // fixme, test is wrong
-    await assert.doesNotReject(() =>
-      orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, itemPrice),
+    return assert.rejects(
+      () =>
+        orderItemRentPeriodValidator.validate(movedOrderItem(0, "semester"), movedPaymentInfo, 100),
+      BlError,
+      /the original order has not been payed, but current orderItem.amount is "0"/,
     );
   });
 
-  test("should resolve if orderItem.amount is equal to rentPrice 500 - oldOrderItem.amount 750 = -250", async () => {
-    branchPaymentInfo.rentPeriods = [
-      {
-        type: "semester",
-        date: new Date(),
-        maxNumberOfPeriods: 1,
-        percentage: 0.5,
-      },
-    ];
-    orderB.payments = ["payment1"]; // this means that the order is payed for
-    orderStorageGetStub.withArgs("orderB").resolves(orderB);
+  test("should reject if the period is the same but orderItem.amount is not 0", async ({
+    assert,
+  }) => {
+    orderStorageGetStub.withArgs("orderB").resolves(originalOrder(["payment1"], 100, "semester"));
 
-    orderB.orderItems[0].type = "rent";
-    orderB.orderItems[0].amount = 750;
-    orderB.orderItems[0].info.periodType = "year";
-
-    const itemPrice = 1000;
-
-    orderItem.amount = -250; // this should be (itemPrice 1000 * percentage 0.5)- oldOrderItem 750 = -250
-    orderItem.type = "rent";
-    orderItem.info.periodType = "semester";
-
-    return expect(orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, itemPrice)).to
-      .be.rejected;
+    return assert.rejects(
+      () =>
+        orderItemRentPeriodValidator.validate(
+          movedOrderItem(100, "semester"),
+          movedPaymentInfo,
+          100,
+        ),
+      BlError,
+      /the original order has been payed, but current orderItem.amount is "100"/,
+    );
   });
 
-  test("should reject if orderItem.amount is not equalt to branchPayment percentage * itemPrice", async () => {
+  test(
+    "should reject if the period changed and orderItem.amount {amount} is not the new price minus the payed amount ({expected})",
+  )
+    .with([
+      { amount: 100, payedAmount: 200, itemPrice: 500, expected: 50 },
+      { amount: 0, payedAmount: 750, itemPrice: 1000, expected: -250 },
+    ])
+    .run(({ assert }, { amount, payedAmount, itemPrice, expected }) => {
+      orderStorageGetStub
+        .withArgs("orderB")
+        .resolves(originalOrder(["payment1"], payedAmount, "year"));
+
+      return assert.rejects(
+        () =>
+          orderItemRentPeriodValidator.validate(
+            movedOrderItem(amount, "semester"),
+            movedPaymentInfo,
+            itemPrice,
+          ),
+        BlError,
+        new RegExp(
+          `orderItem amount is "${amount}" but should be "${expected}" since the old orderItem.amount was "${payedAmount}"`,
+        ),
+      );
+    });
+
+  test("should resolve if the period changed and orderItem.amount is the new price minus the payed amount", async ({
+    assert,
+  }) => {
+    // new price is itemPrice 1000 * percentage 0.5 = 500, minus the 750 already payed = -250
+    orderStorageGetStub.withArgs("orderB").resolves(originalOrder(["payment1"], 750, "year"));
+
+    return assert.doesNotReject(() =>
+      orderItemRentPeriodValidator.validate(
+        movedOrderItem(-250, "semester"),
+        movedPaymentInfo,
+        1000,
+      ),
+    );
+  });
+
+  test("should reject if orderItem.amount is not equalt to branchPayment percentage * itemPrice", async ({
+    assert,
+  }) => {
     const branchPaymentInfo: any = {
       responsible: false,
       rentPeriods: [
@@ -255,15 +230,14 @@ test.group("OrderItemRentPeriodValidator", (group) => {
       amount: 0,
     };
 
-    return expect(
-      orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, itemPrice),
-    ).to.be.rejectedWith(
+    return assert.rejects(
+      () => orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, itemPrice),
       BlError,
       /orderItem.amount "0" is not equal to itemPrice "100" \* percentage "0.5" "50"/,
     );
   });
 
-  test("should resolve if given valid orderItem", async () => {
+  test("should resolve if given valid orderItem", async ({ assert }) => {
     const branchPaymentInfo: any = {
       responsible: false,
       rentPeriods: [
@@ -286,7 +260,8 @@ test.group("OrderItemRentPeriodValidator", (group) => {
       amount: 50,
     };
 
-    return expect(orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, itemPrice)).to
-      .be.fulfilled;
+    return assert.doesNotReject(() =>
+      orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, itemPrice),
+    );
   });
 });

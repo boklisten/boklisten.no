@@ -1,5 +1,4 @@
 import { test } from "@japa/runner";
-import { expect } from "chai";
 import sinon, { createSandbox } from "sinon";
 
 import { findItemByIsbn, findUniqueItemByBlid } from "#services/item_lookup";
@@ -22,55 +21,57 @@ test.group("item_lookup", (group) => {
     sandbox.restore();
   });
 
-  test("findItemByIsbn returns the item carrying the isbn", async () => {
+  test("findItemByIsbn returns the item carrying the isbn", async ({ assert }) => {
     const item = { id: "item1", title: "Matematikk 1T" };
     itemsStub.getByQueryOrNull.resolves([item]);
 
-    expect(await findItemByIsbn("9788203208119")).to.equal(item);
+    assert.equal(await findItemByIsbn("9788203208119"), item);
   });
 
-  test("findItemByIsbn filters on the nested isbn field", async () => {
+  test("findItemByIsbn filters on the nested isbn field", async ({ assert }) => {
     itemsStub.getByQueryOrNull.resolves([{ id: "item1", title: "Matematikk 1T" }]);
 
     await findItemByIsbn("9788203208119");
 
     const [query] = itemsStub.getByQueryOrNull.firstCall.args;
-    expect(query.stringFilters).to.deep.equal([{ fieldName: "info.isbn", value: "9788203208119" }]);
+    assert.deepEqual(query.stringFilters, [{ fieldName: "info.isbn", value: "9788203208119" }]);
   });
 
   // A book we do not stock is an ordinary outcome, not a server error: getByQuery would throw
   // BlError("not found") here, which is why the lookup uses getByQueryOrNull.
-  test("findItemByIsbn returns null when nothing matches", async () => {
+  test("findItemByIsbn returns null when nothing matches", async ({ assert }) => {
     itemsStub.getByQueryOrNull.resolves(null);
 
-    expect(await findItemByIsbn("9788203208119")).to.equal(null);
+    assert.equal(await findItemByIsbn("9788203208119"), null);
   });
 
-  test("findItemByIsbn returns null for an empty result", async () => {
+  test("findItemByIsbn returns null for an empty result", async ({ assert }) => {
     itemsStub.getByQueryOrNull.resolves([]);
 
-    expect(await findItemByIsbn("9788203208119")).to.equal(null);
+    assert.equal(await findItemByIsbn("9788203208119"), null);
   });
 
-  test("findUniqueItemByBlid returns the unique item a blid is connected to", async () => {
+  test("findUniqueItemByBlid returns the unique item a blid is connected to", async ({
+    assert,
+  }) => {
     const uniqueItem = { id: "unique1", blid: "12345678", item: "item1", title: "Matematikk 1T" };
     uniqueItemsStub.getByQueryOrNull.resolves([uniqueItem]);
 
-    expect(await findUniqueItemByBlid("12345678")).to.equal(uniqueItem);
+    assert.equal(await findUniqueItemByBlid("12345678"), uniqueItem);
   });
 
-  test("findUniqueItemByBlid filters on blid", async () => {
+  test("findUniqueItemByBlid filters on blid", async ({ assert }) => {
     uniqueItemsStub.getByQueryOrNull.resolves([{ id: "unique1" }]);
 
     await findUniqueItemByBlid("12345678");
 
     const [query] = uniqueItemsStub.getByQueryOrNull.firstCall.args;
-    expect(query.stringFilters).to.deep.equal([{ fieldName: "blid", value: "12345678" }]);
+    assert.deepEqual(query.stringFilters, [{ fieldName: "blid", value: "12345678" }]);
   });
 
-  test("findUniqueItemByBlid returns null for an unconnected blid", async () => {
+  test("findUniqueItemByBlid returns null for an unconnected blid", async ({ assert }) => {
     uniqueItemsStub.getByQueryOrNull.resolves(null);
 
-    expect(await findUniqueItemByBlid("12345678")).to.equal(null);
+    assert.equal(await findUniqueItemByBlid("12345678"), null);
   });
 });

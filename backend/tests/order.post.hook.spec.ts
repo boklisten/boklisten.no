@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
@@ -11,9 +9,6 @@ import { StorageService } from "#services/storage_service";
 import { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderPostHook", (group) => {
   const orderValidator: OrderValidator = new OrderValidator();
@@ -104,47 +99,52 @@ test.group("OrderPostHook", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if requestBody is not valid", async () => {
-    return expect(
-      orderPostHook.before({ valid: false }, testAccessToken),
-    ).to.eventually.be.rejectedWith(BlError, /not a valid order/);
-  });
-
-  test("should resolve if requestBody is valid", async () => {
-    return expect(orderHookBefore.validate({ valid: true })).to.eventually.be.fulfilled;
-  });
-  test("should reject if accessToken is empty or undefined", async () => {
-    orderPostHook.after([testOrder]).catch((blError: BlError) => {
-      return expect(blError.getMsg()).to.contain(
-        "accessToken was not specified when trying to process order",
-      );
-    });
-  });
-
-  test("should reject if orderValidator.validate rejected with error", async () => {
-    orderValidated = false;
-
-    testOrder.id = "order1";
-    return expect(orderPostHook.after([testOrder], testAccessToken)).to.eventually.be.rejectedWith(
+  test("should reject if requestBody is not valid", async ({ assert }) => {
+    return assert.rejects(
+      () => orderPostHook.before({ valid: false }, testAccessToken),
       BlError,
       /not a valid order/,
     );
   });
 
-  test("should resolve with testOrder when orderValidator.validate is resolved", async () => {
+  test("should resolve if requestBody is valid", async ({ assert }) => {
+    return assert.doesNotReject(() => orderHookBefore.validate({ valid: true }));
+  });
+  test("should reject if accessToken is empty or undefined", async ({ assert }) => {
+    return assert.rejects(
+      () => orderPostHook.after([testOrder]),
+      BlError,
+      /accessToken was not specified when trying to process order/,
+    );
+  });
+
+  test("should reject if orderValidator.validate rejected with error", async ({ assert }) => {
+    orderValidated = false;
+
+    testOrder.id = "order1";
+    return assert.rejects(
+      () => orderPostHook.after([testOrder], testAccessToken),
+      BlError,
+      /not a valid order/,
+    );
+  });
+
+  test("should resolve with testOrder when orderValidator.validate is resolved", async ({
+    assert,
+  }) => {
     orderValidated = true;
     testOrder.id = "order1";
 
-    void orderPostHook.after([testOrder], testAccessToken).then((orders: Order[]) => {
-      expect(orders.length).to.be.eql(1);
-      return expect(orders[0]).to.eql(testOrder);
-    });
+    const orders: Order[] = await orderPostHook.after([testOrder], testAccessToken);
+    assert.equal(orders.length, 1);
+    assert.deepEqual(orders[0], testOrder);
   });
 
-  test("should reject if order.placed is set to true", async () => {
+  test("should reject if order.placed is set to true", async ({ assert }) => {
     testOrder.placed = true;
 
-    return expect(orderPostHook.after([testOrder], testAccessToken)).to.be.rejectedWith(
+    return assert.rejects(
+      () => orderPostHook.after([testOrder], testAccessToken),
       BlError,
       /order.placed is set to true on post of order/,
     );

@@ -1,13 +1,8 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 
 import { DeliveryBranchHandler } from "#services/legacy/collections/delivery/helpers/deliveryBranch/delivery-branch-handler";
 import { BlError } from "#shared/bl-error";
 import { Delivery } from "#shared/delivery/delivery";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("DeliveryBringHandler", (group) => {
   const deliveryBranchHandler = new DeliveryBranchHandler();
@@ -25,10 +20,11 @@ test.group("DeliveryBringHandler", (group) => {
     };
   });
 
-  test("should reject if delivery.amount is not equal to 0", async () => {
+  test("should reject if delivery.amount is not equal to 0", async ({ assert }) => {
     testDelivery.amount = 133;
 
-    return expect(deliveryBranchHandler.validate(testDelivery)).to.be.rejectedWith(
+    return assert.rejects(
+      () => deliveryBranchHandler.validate(testDelivery),
       BlError,
       /delivery.amount is "133" but should be "0"/,
     );

@@ -1,13 +1,8 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { StorageService } from "#services/storage_service";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("CustomerItemActiveBlid", (group) => {
   let sandbox: sinon.SinonSandbox;
@@ -26,7 +21,7 @@ test.group("CustomerItemActiveBlid", (group) => {
     sandbox.restore();
   });
 
-  test("should resolve true if one customerItem is active", async () => {
+  test("should resolve true if one customerItem is active", async ({ assert }) => {
     const customerItem1 = {
       id: "customerItem1",
       item: "item1",
@@ -52,10 +47,10 @@ test.group("CustomerItemActiveBlid", (group) => {
     getByQueryStub.resolves([customerItem1, customerItem2]);
 
     const result = await customerItemActiveBlid.getActiveCustomerItemIds("blid1");
-    expect(result).to.eql(["customerItem1"]);
+    assert.deepEqual(result, ["customerItem1"]);
   });
 
-  test("should resolve false if no customerItem is active", async () => {
+  test("should resolve false if no customerItem is active", async ({ assert }) => {
     const customerItem = {
       id: "customerItem1",
       item: "item1",
@@ -71,6 +66,6 @@ test.group("CustomerItemActiveBlid", (group) => {
     getByQueryStub.resolves([customerItem]);
 
     const result = await customerItemActiveBlid.getActiveCustomerItemIds("blid1");
-    expect(result).to.eql([]);
+    assert.deepEqual(result, []);
   });
 });

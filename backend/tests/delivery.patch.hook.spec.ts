@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { DeliveryValidator } from "#services/legacy/collections/delivery/helpers/deliveryValidator/delivery-validator";
@@ -10,9 +8,6 @@ import { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
 import { Delivery } from "#shared/delivery/delivery";
 import { Order } from "#shared/order/order";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("DeliveryPatchHook", (group) => {
   const deliveryValidator = new DeliveryValidator();
@@ -95,42 +90,51 @@ test.group("DeliveryPatchHook", (group) => {
     sandbox.restore();
   });
 
-  test("should resolve if all parameters are valid", async () => {
-    return expect(deliveryPatchHook.before(testRequest, testAccessToken, "delivery1")).to.be
-      .fulfilled;
+  test("should resolve if all parameters are valid", async ({ assert }) => {
+    return assert.doesNotReject(() =>
+      deliveryPatchHook.before(testRequest, testAccessToken, "delivery1"),
+    );
   });
 
-  test("should reject if id is undefined", async () => {
-    return expect(
-      deliveryPatchHook.before(testRequest, testAccessToken, undefined),
-    ).to.be.rejectedWith(BlError, /id is undefined/);
+  test("should reject if id is undefined", async ({ assert }) => {
+    return assert.rejects(
+      () => deliveryPatchHook.before(testRequest, testAccessToken, undefined),
+      BlError,
+      /id is undefined/,
+    );
   });
 
-  test("should reject if body is empty or undefined", async () => {
-    return expect(deliveryPatchHook.before(null, testAccessToken, "delivery1")).to.be.rejectedWith(
+  test("should reject if body is empty or undefined", async ({ assert }) => {
+    return assert.rejects(
+      () => deliveryPatchHook.before(null, testAccessToken, "delivery1"),
       BlError,
       /body is undefined/,
     );
   });
 
-  test("should reject if accessToken is empty or undefined", async () => {
-    return expect(deliveryPatchHook.before(testRequest, undefined, "delivery1")).to.be.rejectedWith(
+  test("should reject if accessToken is empty or undefined", async ({ assert }) => {
+    return assert.rejects(
+      () => deliveryPatchHook.before(testRequest, undefined, "delivery1"),
       BlError,
       /accessToken is undefined/,
     );
   });
 
-  test("should reject if delivery is not found", async () => {
-    return expect(
-      deliveryPatchHook.before(testRequest, testAccessToken, "deliveryNotFound"),
-    ).to.be.rejectedWith(BlError, /delivery "deliveryNotFound" not found/);
+  test("should reject if delivery is not found", async ({ assert }) => {
+    return assert.rejects(
+      () => deliveryPatchHook.before(testRequest, testAccessToken, "deliveryNotFound"),
+      BlError,
+      /delivery "deliveryNotFound" not found/,
+    );
   });
 
-  test("should reject if deliveryValidator fails", async () => {
+  test("should reject if deliveryValidator fails", async ({ assert }) => {
     deliveryValidated = false;
 
-    return expect(
-      deliveryPatchHook.before(testRequest, testAccessToken, "delivery1"),
-    ).to.be.rejectedWith(BlError, /patched delivery could not be validated/);
+    return assert.rejects(
+      () => deliveryPatchHook.before(testRequest, testAccessToken, "delivery1"),
+      BlError,
+      /patched delivery could not be validated/,
+    );
   });
 });

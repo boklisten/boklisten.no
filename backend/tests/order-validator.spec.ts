@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderFieldValidator } from "#services/legacy/collections/order/helpers/order-validator/order-field-validator/order-field-validator";
@@ -12,9 +10,6 @@ import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Branch } from "#shared/branch";
 import { Order } from "#shared/order/order";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderValidator", (group) => {
   let testOrder: Order;
@@ -141,54 +136,56 @@ test.group("OrderValidator", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if amount is null or undefined", async () => {
+  test("should reject if amount is null or undefined", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.amount = undefined;
-    return expect(orderValidator.validate(testOrder, false)).to.eventually.be.rejectedWith(
+    return assert.rejects(
+      () => orderValidator.validate(testOrder, false),
       BlError,
       /order.amount is undefined/,
     );
   });
 
-  test("should reject if branch is not found", async () => {
+  test("should reject if branch is not found", async ({ assert }) => {
     testOrder.branch = "notFoundBranch";
 
-    return expect(orderValidator.validate(testOrder, false)).to.be.rejectedWith(
-      BlError,
-      "not found",
-    );
+    return assert.rejects(() => orderValidator.validate(testOrder, false), BlError, "not found");
   });
 
-  test("should reject if orderItems is empty or undefined", async () => {
+  test("should reject if orderItems is empty or undefined", async ({ assert }) => {
     testOrder.orderItems = [];
-    return expect(orderValidator.validate(testOrder, false)).to.eventually.be.rejectedWith(
+    return assert.rejects(
+      () => orderValidator.validate(testOrder, false),
       BlError,
       /order.orderItems is empty or undefined/,
     );
   });
 
-  test("should reject with error", async () => {
+  test("should reject if orderItemValidator rejects", async ({ assert }) => {
     orderItemShouldResolve = false;
 
-    return expect(orderValidator.validate(testOrder, false)).to.eventually.be.rejectedWith(
+    return assert.rejects(
+      () => orderValidator.validate(testOrder, false),
       BlError,
       /orderItems not valid/,
     );
   });
 
-  test("should reject with error", async () => {
+  test("should reject if orderPlacedValidator rejects", async ({ assert }) => {
     orderPlacedShouldResolve = false;
 
-    return expect(orderValidator.validate(testOrder, false)).to.eventually.be.rejectedWith(
+    return assert.rejects(
+      () => orderValidator.validate(testOrder, false),
       BlError,
       /validation of order.placed failed/,
     );
   });
 
-  test("should reject with error", async () => {
+  test("should reject if orderUserDetailValidator rejects", async ({ assert }) => {
     orderUserDetailValidatorShouldResolve = false;
 
-    return expect(orderValidator.validate(testOrder, false)).to.be.rejectedWith(
+    return assert.rejects(
+      () => orderValidator.validate(testOrder, false),
       BlError,
       /validation of UserDetail failed/,
     );

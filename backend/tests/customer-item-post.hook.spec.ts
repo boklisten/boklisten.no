@@ -1,8 +1,5 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
-import sinonChai from "sinon-chai";
 
 import { CustomerItemPostHook } from "#services/legacy/collections/customer-item/hooks/customer-item-post.hook";
 import { CustomerItemValidator } from "#services/legacy/collections/customer-item/validators/customer-item-validator";
@@ -12,10 +9,6 @@ import { BlError } from "#shared/bl-error";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { Order } from "#shared/order/order";
 import { UserDetail } from "#shared/user-detail";
-
-chaiUse(chaiAsPromised);
-should();
-chaiUse(sinonChai);
 
 test.group("CustomerItemPostHook", (group) => {
   let sandbox: sinon.SinonSandbox;
@@ -138,84 +131,95 @@ test.group("CustomerItemPostHook", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if customerItem parameter is undefined", async () => {
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      customerItemPostHook.before(undefined, testAccessToken),
-    ).to.be.rejectedWith(BlError, /customerItem is undefined/);
+  test("should reject if customerItem parameter is undefined", async ({ assert }) => {
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        customerItemPostHook.before(undefined, testAccessToken),
+      BlError,
+      /customerItem is undefined/,
+    );
   });
 
-  test("should reject if customerItemValidator.validate rejects", async () => {
+  test("should reject if customerItemValidator.validate rejects", async ({ assert }) => {
     validateCustomerItem = false;
 
-    return expect(customerItemPostHook.before(testCustomerItem)).to.be.rejectedWith(
+    return assert.rejects(
+      () => customerItemPostHook.before(testCustomerItem),
       BlError,
       "could not validate customerItem",
     );
   });
 
-  test("should resolve with true if customerItemValidator.validate resolves", async () => {
-    return expect(customerItemPostHook.before(testCustomerItem)).to.be.fulfilled;
+  test("should resolve with true if customerItemValidator.validate resolves", async ({
+    assert,
+  }) => {
+    return assert.doesNotReject(() => customerItemPostHook.before(testCustomerItem));
   });
 
-  test("should reject if userDetail is not valid", async () => {
+  test("should reject if userDetail is not valid", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testUserDetail.name = null;
 
     // @ts-expect-error fixme: auto ignored
     testUserDetail.dob = null;
 
-    return expect(customerItemPostHook.before(testCustomerItem)).to.be.rejectedWith(
+    return assert.rejects(
+      () => customerItemPostHook.before(testCustomerItem),
       BlError,
       /userDetail "userDetail1" not valid/,
     );
   });
 
-  test("should reject if customerItems are empty", async () => {
-    return expect(customerItemPostHook.after([], testAccessToken)).to.be.rejectedWith(
+  test("should reject if customerItems are empty", async ({ assert }) => {
+    return assert.rejects(
+      () => customerItemPostHook.after([], testAccessToken),
       BlError,
       /customerItems is empty or undefined/,
     );
   });
 
-  test("should reject if customerItem.customer is not defined", async () => {
+  test("should reject if customerItem.customer is not defined", async ({ assert }) => {
     testCustomerItem.customer = "notFoundCustomer";
 
-    return expect(
-      customerItemPostHook.after([testCustomerItem], testAccessToken),
-    ).to.be.rejectedWith(BlError, /userDetail not found/);
+    return assert.rejects(
+      () => customerItemPostHook.after([testCustomerItem], testAccessToken),
+      BlError,
+      /userDetail not found/,
+    );
   });
 
-  test("should update userDetail with the ids array if it was empty", async () => {
+  test("should update userDetail with the ids array if it was empty", async ({ assert }) => {
     testUserDetail.customerItems = [];
-    void customerItemPostHook.after([testCustomerItem], testAccessToken).then(() => {
-      return expect(
-        userDetailStub.calledWithMatch("userDetail1", {
-          customerItems: ["customerItem1"],
-        }),
-      ).to.be.true;
-    });
+    await customerItemPostHook.after([testCustomerItem], testAccessToken);
+    assert.isTrue(
+      userDetailStub.calledWithMatch("userDetail1", {
+        customerItems: ["customerItem1"],
+      }),
+    );
   });
 
-  test("should add the new id to the old userDetail.customerItem array", async () => {
+  test("should add the new id to the old userDetail.customerItem array", async ({ assert }) => {
     testUserDetail.customerItems = ["customerItem2"];
-    void customerItemPostHook.after([testCustomerItem], testAccessToken).then(() => {
-      // @ts-expect-error fixme: auto ignored bad test enums
-      userDetailStub.should.have.been.calledWith("userDetail1", {
+    await customerItemPostHook.after([testCustomerItem], testAccessToken);
+    assert.isTrue(
+      userDetailStub.calledWith("userDetail1", {
         customerItems: ["customerItem2", "customerItem1"],
-      });
-    });
+      }),
+    );
   });
 
-  test("should reject with error if customerItems.orders.length is over 1", async () => {
+  test("should reject with error if customerItems.orders.length is over 1", async ({ assert }) => {
     testCustomerItem.orders = ["order1", "order2"];
 
-    return expect(
-      customerItemPostHook.after([testCustomerItem], testAccessToken),
-    ).to.be.rejectedWith(BlError, /customerItem.orders.length is "2" but should be "1"/);
+    return assert.rejects(
+      () => customerItemPostHook.after([testCustomerItem], testAccessToken),
+      BlError,
+      /customerItem.orders.length is "2" but should be "1"/,
+    );
   });
 
-  test("should update order.orderItems with the customerItem", async () => {
+  test("should update order.orderItems with the customerItem", async ({ assert }) => {
     testOrder.orderItems = [
       {
         type: "rent",
@@ -249,11 +253,11 @@ test.group("CustomerItemPostHook", (group) => {
       },
     ];
 
-    void customerItemPostHook.after([testCustomerItem], testAccessToken).then(() => {
-      // @ts-expect-error fixme: auto ignored bad test enums
-      orderUpdateStub.should.have.been.calledWith("order1", {
+    await customerItemPostHook.after([testCustomerItem], testAccessToken);
+    assert.isTrue(
+      orderUpdateStub.calledWith("order1", {
         orderItems: expectedOrderUpdateParameter,
-      });
-    });
+      }),
+    );
   });
 });

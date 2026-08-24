@@ -19,18 +19,6 @@ import { recordTransfer } from "#services/matches/record_transfer";
 import { StorageService } from "#services/storage_service";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 
-/** chai-as-promised is not registered in this suite, so assert rejections explicitly. */
-async function expectRejection(promise: Promise<unknown>, pattern: RegExp) {
-  const error = await promise.then(
-    () => null,
-    (caught: Error) => caught,
-  );
-  if (error === null) throw new Error(`expected a rejection matching ${pattern}`);
-  if (!pattern.test(error.message)) {
-    throw new Error(`expected "${error.message}" to match ${pattern}`);
-  }
-}
-
 /** The receiver doing the scanning. */
 const A = "5d765db5fc8c47001c408d81";
 /** The peer A was matched with. */
@@ -263,12 +251,12 @@ test.group("recordTransfer", (group) => {
     assert.lengthOf(await BookHandover.all(), 1);
   });
 
-  test("refuses to record a handover for a copy with no BL-ID", async () => {
+  test("refuses to record a handover for a copy with no BL-ID", async ({ assert }) => {
     await seedObligation(B, A);
     stubMongo(activeCopy({ customer: B, blid: undefined }));
 
-    await expectRejection(
-      recordTransfer(A, { blid: BLID }),
+    await assert.rejects(
+      () => recordTransfer(A, { blid: BLID }),
       /Kan ikke registrere overlevering uten BL-ID/,
     );
   });
@@ -312,7 +300,7 @@ test.group("recordTransfer", (group) => {
     (StorageService.CustomerItems.update as sinon.SinonStub).restore();
     sandbox.stub(StorageService.CustomerItems, "update").rejects(new Error("mongo down"));
 
-    await expectRejection(recordTransfer(A, { blid: BLID }), /mongo down/);
+    await assert.rejects(() => recordTransfer(A, { blid: BLID }), /mongo down/);
 
     assert.isEmpty(
       await BookHandover.all(),

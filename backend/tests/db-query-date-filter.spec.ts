@@ -1,69 +1,66 @@
 import { test } from "@japa/runner";
-import { expect, should, use as chaiUse } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import moment from "moment";
 
 import { DbQueryDateFilter } from "#services/legacy/query/db-query-date-filter";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("DbQueryDateFilter", async () => {
   const dbQueryDateFilter: DbQueryDateFilter = new DbQueryDateFilter();
   const validDateFormat = "DDMMYYYYHHmm";
 
-  test("should throw TypeError if parameters are empty", async () => {
-    expect(() => {
+  test("should throw TypeError if parameters are empty", async ({ assert }) => {
+    assert.throws(() => {
       dbQueryDateFilter.getDateFilters({}, []);
-    }).to.throw(TypeError);
+    }, TypeError);
   });
 
-  test("should return empty array if valid params is empty", async () => {
-    expect(dbQueryDateFilter.getDateFilters({ something: "aas" }, [])).to.eql([]);
+  test("should return empty array if valid params is empty", async ({ assert }) => {
+    assert.deepEqual(dbQueryDateFilter.getDateFilters({ something: "aas" }, []), []);
   });
 
-  test("should return empty array if query does not include any of the valid params", async () => {
-    expect(dbQueryDateFilter.getDateFilters({ something: "" }, ["creationTime"])).to.eql([]);
+  test("should return empty array if query does not include any of the valid params", async ({
+    assert,
+  }) => {
+    assert.deepEqual(dbQueryDateFilter.getDateFilters({ something: "" }, ["creationTime"]), []);
   });
 
-  test("should return filter with correct filedName", async () => {
+  test("should return filter with correct filedName", async ({ assert }) => {
     const fieldName = "creationDate";
     const query = { creationDate: "010120010000" };
     const momentDate = moment(query.creationDate, validDateFormat, true).toDate();
 
-    expect(dbQueryDateFilter.getDateFilters(query, [fieldName])).to.eql([
+    assert.deepEqual(dbQueryDateFilter.getDateFilters(query, [fieldName]), [
       { fieldName: fieldName, op: { $eq: momentDate } },
     ]);
   });
 
-  test(`should throw SyntaxError when date is ..."`)
+  test("should throw SyntaxError when date is {$self}")
     .with(["212121", "10notvalid", "kkk", "albert", "330120010000", "2101200300001"])
-    .run((ctx, date) => {
+    .run(({ assert }, date) => {
       const query = { creationTime: "" };
       query.creationTime = date;
 
-      expect(() => {
+      assert.throws(() => {
         dbQueryDateFilter.getDateFilters(query, ["creationTime"]);
-      }).to.throw(SyntaxError);
+      }, SyntaxError);
     });
 
-  test("should resolve with correct date filter")
+  test("should resolve with correct $eq date filter for {creationTime}")
     .with([{ creationTime: "201220180000" }, { creationTime: "010720180000" }])
-    .run((ctx, validQuery) => {
+    .run(({ assert }, validQuery) => {
       const dateString = validQuery.creationTime;
       const isoDate = moment(dateString, validDateFormat, true).toDate();
 
-      expect(dbQueryDateFilter.getDateFilters(validQuery, ["creationTime"])).to.eql([
+      assert.deepEqual(dbQueryDateFilter.getDateFilters(validQuery, ["creationTime"]), [
         { fieldName: "creationTime", op: { $eq: isoDate } },
       ]);
     });
 
-  test("should resolve with correct date filter")
+  test("should resolve with correct {op} date filter")
     .with([
       { creationTime: "<201220180000", op: "$lt" },
       { creationTime: ">010720180000", op: "$gt" },
     ])
-    .run((ctx, validQuery) => {
+    .run(({ assert }, validQuery) => {
       const dateString = validQuery.creationTime.slice(1, validQuery.creationTime.length);
       const isoDate = moment(dateString, validDateFormat, true).toDate();
 
@@ -72,18 +69,18 @@ test.group("DbQueryDateFilter", async () => {
       // @ts-expect-error fixme: auto ignored
       expectedOp[validQuery.op] = isoDate;
 
-      expect(dbQueryDateFilter.getDateFilters(validQuery, ["creationTime"])).to.eql([
+      assert.deepEqual(dbQueryDateFilter.getDateFilters(validQuery, ["creationTime"]), [
         { fieldName: "creationTime", op: expectedOp },
       ]);
     });
 
-  test("should resolve with correct date filter")
+  test("should resolve with correct date range filter for {creationTime}")
     .with([
       { creationTime: [">101020100000", "<171020100000"] },
       { creationTime: [">111220120000", "<121220130000"] },
       { creationTime: [">111220120000", "<101220150000"] },
     ])
-    .run((ctx, validQuery) => {
+    .run(({ assert }, validQuery) => {
       // @ts-expect-error fixme: auto ignored
       const gtDateString = validQuery.creationTime[0].slice(1);
 
@@ -93,7 +90,7 @@ test.group("DbQueryDateFilter", async () => {
       const gtIsoDate = moment(gtDateString, validDateFormat, true).toDate();
       const ltIsoDate = moment(ltDateString, validDateFormat, true).toDate();
 
-      expect(dbQueryDateFilter.getDateFilters(validQuery, ["creationTime"])).to.eql([
+      assert.deepEqual(dbQueryDateFilter.getDateFilters(validQuery, ["creationTime"]), [
         {
           fieldName: "creationTime",
           op: { $gt: gtIsoDate, $lt: ltIsoDate },

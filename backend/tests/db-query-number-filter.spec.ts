@@ -1,84 +1,81 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 
 import { DbQueryNumberFilter } from "#services/legacy/query/db-query-number-filter";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("DbQueryNumberFilter", async () => {
   const dbQueryNumberFilter: DbQueryNumberFilter = new DbQueryNumberFilter();
 
-  test("should throw error when no input is given", async () => {
-    expect(() => {
-      dbQueryNumberFilter.getNumberFilters({}, []);
-    }).to.throw(TypeError);
-  });
-
-  test("should return empty array when the ValidParams are empty", async () => {
-    expect(dbQueryNumberFilter.getNumberFilters({ title: "test title", name: "hello" }, [])).to.eql(
+  test("should return empty array when the ValidParams are empty", async ({ assert }) => {
+    assert.deepEqual(
+      dbQueryNumberFilter.getNumberFilters({ title: "test title", name: "hello" }, []),
       [],
     );
   });
 
-  test("should throw error when query is null", async () => {
-    expect(() => {
-      dbQueryNumberFilter.getNumberFilters(null, ["age"]);
-    }).to.throw(TypeError);
-  });
-
-  test("should throw error when query is empty", async () => {
-    expect(() => {
-      dbQueryNumberFilter.getNumberFilters({}, ["age"]);
-    }).to.throw(TypeError);
-  });
-
-  test('should return array containing "{fieldName: "age", op: {$lt: 60}}"', async () => {
-    const result = [{ fieldName: "age", op: { $lt: 60 } }];
-
-    expect(dbQueryNumberFilter.getNumberFilters({ age: "<60" }, ["age"])).to.eql(result);
-  });
-
-  test('should return array equal to [{filedName: "age", op: {$lt: 86, $gt: 12}}]', async () => {
-    const result = [{ fieldName: "age", op: { $lt: 86, $gt: 12 } }];
-
-    expect(dbQueryNumberFilter.getNumberFilters({ age: ["<86", ">12"] }, ["age"])).to.eql(result);
-  });
-
-  test('should return array with {fieldName: "age", op: {$eq: 10}}', async () => {
-    const result = [{ fieldName: "age", op: { $eq: 10 } }];
-
-    expect(dbQueryNumberFilter.getNumberFilters({ age: "10" }, ["age"])).to.eql(result);
-  });
-
-  test("should throw error when number is not valid", async () => {
-    expect(() => {
-      dbQueryNumberFilter.getNumberFilters({ age: ">10>1" }, ["age"]);
-    }).to.throw(TypeError);
-  });
-
-  test("should throw error when wrong input is given", async () => {
-    expect(() => {
-      dbQueryNumberFilter.getNumberFilters({ price: "*10" }, ["price"]);
-    }).to.throw(TypeError);
-  });
-
-  test("should throw error when combinding eq operator with lessThan operator", async () => {
-    expect(() => {
-      dbQueryNumberFilter.getNumberFilters({ age: ["<40", "30"] }, ["age"]);
-    }).to.throw(SyntaxError);
-  });
-
-  test("should throw error when combinding eq operator with greaterThan operator", async () => {
-    expect(() => {
-      dbQueryNumberFilter.getNumberFilters({ age: [">40", "30"] }, ["age"]);
-    }).to.throw(SyntaxError);
-  });
-
-  test("should return an empty array if none of the validNumberNumberParams are included in the query", async () => {
-    expect(
+  test("should return an empty array if none of the validNumberParams are included in the query", async ({
+    assert,
+  }) => {
+    assert.deepEqual(
       dbQueryNumberFilter.getNumberFilters({ title: "test", name: "bill" }, ["age", "price"]),
-    ).to.eql([]);
+      [],
+    );
   });
+
+  test("should throw {error} when {reason}")
+    .with([
+      { reason: "no input is given", query: {}, validParams: [], error: TypeError },
+      { reason: "query is null", query: null, validParams: ["age"], error: TypeError },
+      { reason: "query is empty", query: {}, validParams: ["age"], error: TypeError },
+      {
+        reason: "number is not valid",
+        query: { age: ">10>1" },
+        validParams: ["age"],
+        error: TypeError,
+      },
+      {
+        reason: "wrong input is given",
+        query: { price: "*10" },
+        validParams: ["price"],
+        error: TypeError,
+      },
+      {
+        reason: "combining eq operator with lessThan operator",
+        query: { age: ["<40", "30"] },
+        validParams: ["age"],
+        error: SyntaxError,
+      },
+      {
+        reason: "combining eq operator with greaterThan operator",
+        query: { age: [">40", "30"] },
+        validParams: ["age"],
+        error: SyntaxError,
+      },
+    ])
+    .run(({ assert }, { query, validParams, error }) => {
+      assert.throws(() => {
+        dbQueryNumberFilter.getNumberFilters(query, validParams);
+      }, error);
+    });
+
+  test("should parse {reason}")
+    .with([
+      {
+        reason: "a lessThan operator",
+        query: { age: "<60" },
+        expected: [{ fieldName: "age", op: { $lt: 60 } }],
+      },
+      {
+        reason: "combined lessThan and greaterThan operators",
+        query: { age: ["<86", ">12"] },
+        expected: [{ fieldName: "age", op: { $lt: 86, $gt: 12 } }],
+      },
+      {
+        reason: "a plain number as an eq operator",
+        query: { age: "10" },
+        expected: [{ fieldName: "age", op: { $eq: 10 } }],
+      },
+    ])
+    .run(({ assert }, { query, expected }) => {
+      assert.deepEqual(dbQueryNumberFilter.getNumberFilters(query, ["age"]), expected);
+    });
 });

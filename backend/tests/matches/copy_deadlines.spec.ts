@@ -1,5 +1,4 @@
 import { test } from "@japa/runner";
-import { expect } from "chai";
 import sinon, { createSandbox } from "sinon";
 
 import { extendRemainingCopyDeadlines } from "#services/matches/copy_deadlines";
@@ -25,35 +24,35 @@ test.group("extendRemainingCopyDeadlines", (group) => {
     return sandbox.stub(StorageService.CustomerItems, "update").resolves({} as never);
   }
 
-  test("the kept copy inherits the later deadline of the pair", async () => {
+  test("the kept copy inherits the later deadline of the pair", async ({ assert }) => {
     // The VG1 student: their own Gymnos is due in June, the one they were given in June runs to
     // August. They hand over the August copy, so the copy they keep must run to August too.
     const update = stubRemaining([{ id: "ci-june", deadline: JUNE }]);
 
     await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST);
 
-    expect(update.calledOnce).to.equal(true);
-    expect(update.firstCall.args[0]).to.equal("ci-june");
-    expect(update.firstCall.args[1]).to.deep.equal({ deadline: AUGUST });
+    assert.equal(update.calledOnce, true);
+    assert.equal(update.firstCall.args[0], "ci-june");
+    assert.deepEqual(update.firstCall.args[1], { deadline: AUGUST });
   });
 
-  test("a copy already running longer is left alone", async () => {
+  test("a copy already running longer is left alone", async ({ assert }) => {
     const update = stubRemaining([{ id: "ci-august", deadline: AUGUST }]);
 
     await extendRemainingCopyDeadlines(A, GYMNOS_2009, JUNE);
 
-    expect(update.called).to.equal(false);
+    assert.equal(update.called, false);
   });
 
-  test("does nothing when no copies remain", async () => {
+  test("does nothing when no copies remain", async ({ assert }) => {
     const update = stubRemaining([]);
 
     await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST);
 
-    expect(update.called).to.equal(false);
+    assert.equal(update.called, false);
   });
 
-  test("extends every remaining copy that is running short", async () => {
+  test("extends every remaining copy that is running short", async ({ assert }) => {
     const update = stubRemaining([
       { id: "ci-1", deadline: JUNE },
       { id: "ci-2", deadline: JUNE },
@@ -62,7 +61,7 @@ test.group("extendRemainingCopyDeadlines", (group) => {
 
     await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST);
 
-    expect(update.callCount).to.equal(2);
+    assert.equal(update.callCount, 2);
   });
 
   test("looks across equivalent editions", async ({ assert }) => {

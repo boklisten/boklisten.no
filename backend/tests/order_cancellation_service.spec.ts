@@ -1,5 +1,4 @@
 import { test } from "@japa/runner";
-import { expect } from "chai";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderEmailHandler } from "#services/legacy/order_email_handler";
@@ -44,24 +43,24 @@ test.group("OrderCancellationService", (group) => {
     sandbox.restore();
   });
 
-  test("creates a customer cancellation order and sends the order email", async () => {
+  test("creates a customer cancellation order and sends the order email", async ({ assert }) => {
     const cancelOrder = await OrderCancellationService.cancelOrderItems({
       originalOrder,
       orderItems,
       notifyCustomer: true,
     });
 
-    expect(cancelOrder.id).to.equal("cancelOrder1");
-    expect(addOrderStub.callCount).to.equal(1);
+    assert.equal(cancelOrder.id, "cancelOrder1");
+    assert.equal(addOrderStub.callCount, 1);
     const added = addOrderStub.firstCall.args[0];
-    expect(added.byCustomer).to.equal(true);
-    expect(added.employee).to.equal(undefined);
-    expect(added.amount).to.equal(0);
-    expect(added.placed).to.equal(true);
-    expect(added.branch).to.equal("branch1");
-    expect(added.customer).to.equal("customer1");
-    expect(added.notification).to.deep.equal({ email: true });
-    expect(added.orderItems).to.deep.equal([
+    assert.equal(added.byCustomer, true);
+    assert.equal(added.employee, undefined);
+    assert.equal(added.amount, 0);
+    assert.equal(added.placed, true);
+    assert.equal(added.branch, "branch1");
+    assert.equal(added.customer, "customer1");
+    assert.deepEqual(added.notification, { email: true });
+    assert.deepEqual(added.orderItems, [
       {
         movedFromOrder: "order1",
         delivered: true,
@@ -72,34 +71,36 @@ test.group("OrderCancellationService", (group) => {
         unitPrice: 0,
       },
     ]);
-    expect(sendOrderReceiptStub.callCount).to.equal(1);
+    assert.equal(sendOrderReceiptStub.callCount, 1);
   });
 
-  test("stamps movedToOrder on the original order items", async () => {
+  test("stamps movedToOrder on the original order items", async ({ assert }) => {
     await OrderCancellationService.cancelOrderItems({
       originalOrder,
       orderItems,
       notifyCustomer: true,
     });
 
-    expect(updateOrderStub.args).to.deep.equal([
+    assert.deepEqual(updateOrderStub.args, [
       ["order1", { orderItems: [{ item: "item1", title: "Bok 1", movedToOrder: "cancelOrder1" }] }],
     ]);
   });
 
-  test("appends the cancellation order to the customer's userdetail", async () => {
+  test("appends the cancellation order to the customer's userdetail", async ({ assert }) => {
     await OrderCancellationService.cancelOrderItems({
       originalOrder,
       orderItems,
       notifyCustomer: true,
     });
 
-    expect(updateUserDetailStub.args).to.deep.equal([
+    assert.deepEqual(updateUserDetailStub.args, [
       ["customer1", { orders: ["order1", "cancelOrder1"] }],
     ]);
   });
 
-  test("marks admin cancellations with the employee and honours notifyCustomer off", async () => {
+  test("marks admin cancellations with the employee and honours notifyCustomer off", async ({
+    assert,
+  }) => {
     await OrderCancellationService.cancelOrderItems({
       originalOrder,
       orderItems,
@@ -108,14 +109,14 @@ test.group("OrderCancellationService", (group) => {
     });
 
     const added = addOrderStub.firstCall.args[0];
-    expect(added.byCustomer).to.equal(false);
-    expect(added.employee).to.equal("employee1");
-    expect(added.notification).to.deep.equal({ email: false });
-    expect(sendOrderReceiptStub.callCount).to.equal(0);
-    expect(updateUserDetailStub.callCount).to.equal(1);
+    assert.equal(added.byCustomer, false);
+    assert.equal(added.employee, "employee1");
+    assert.deepEqual(added.notification, { email: false });
+    assert.equal(sendOrderReceiptStub.callCount, 0);
+    assert.equal(updateUserDetailStub.callCount, 1);
   });
 
-  test("still cancels when the customer no longer exists", async () => {
+  test("still cancels when the customer no longer exists", async ({ assert }) => {
     getUserDetailStub.withArgs("customer1").rejects(new Error("not found"));
 
     const cancelOrder = await OrderCancellationService.cancelOrderItems({
@@ -124,9 +125,9 @@ test.group("OrderCancellationService", (group) => {
       notifyCustomer: true,
     });
 
-    expect(cancelOrder.id).to.equal("cancelOrder1");
-    expect(updateOrderStub.callCount).to.equal(1);
-    expect(sendOrderReceiptStub.callCount).to.equal(0);
-    expect(updateUserDetailStub.callCount).to.equal(0);
+    assert.equal(cancelOrder.id, "cancelOrder1");
+    assert.equal(updateOrderStub.callCount, 1);
+    assert.equal(sendOrderReceiptStub.callCount, 0);
+    assert.equal(updateUserDetailStub.callCount, 0);
   });
 });

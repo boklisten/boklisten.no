@@ -1,5 +1,4 @@
 import { test } from "@japa/runner";
-import { expect } from "chai";
 
 import { InvoiceActive } from "#services/legacy/collections/invoice/helpers/invoice-active";
 import { Invoice } from "#shared/invoice";
@@ -7,7 +6,7 @@ import { Invoice } from "#shared/invoice";
 test.group("InvoiceActive", async () => {
   const invoiceActive = new InvoiceActive();
 
-  test("should return false if invoice is not active", async () => {
+  test("should return false if invoice is not active", async ({ assert }) => {
     const nonActiveInvoices: Invoice[] = [
       {
         id: "invoice1",
@@ -41,11 +40,11 @@ test.group("InvoiceActive", async () => {
 
     for (const invoice of nonActiveInvoices) {
       // oxlint-disable-next-line no-unused-expressions
-      expect(invoiceActive.isActive(invoice)).to.be.false;
+      assert.isFalse(invoiceActive.isActive(invoice));
     }
   });
 
-  test("should return true if invoice is active", async () => {
+  test("should return true if invoice is active", async ({ assert }) => {
     const activeInvoices: Invoice[] = [
       {
         id: "invoice1",
@@ -79,7 +78,7 @@ test.group("InvoiceActive", async () => {
 
     for (const invoice of activeInvoices) {
       // oxlint-disable-next-line no-unused-expressions
-      expect(invoiceActive.isActive(invoice)).to.be.true;
+      assert.isTrue(invoiceActive.isActive(invoice));
     }
   });
 });

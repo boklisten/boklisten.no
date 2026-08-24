@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
@@ -11,9 +9,6 @@ import { Order } from "#shared/order/order";
 import { Payment } from "#shared/payment/payment";
 import { UserDetail } from "#shared/user-detail";
 import { VippsCheckoutSession } from "#validators/checkout_validators";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("VippsCheckoutService.update", (group) => {
   let testOrder: Order;
@@ -61,13 +56,13 @@ test.group("VippsCheckoutService.update", (group) => {
     sandbox.restore();
   });
 
-  test("should capture the order amount when the payment succeeds", async () => {
+  test("should capture the order amount when the payment succeeds", async ({ assert }) => {
     await VippsCheckoutService.update(successfulSession);
 
-    expect(captureStub.args).to.deep.equal([["order1", 40_000]]);
+    assert.deepEqual(captureStub.args, [["order1", 40_000]]);
   });
 
-  test("should include the delivery price in the captured amount", async () => {
+  test("should include the delivery price in the captured amount", async ({ assert }) => {
     await VippsCheckoutService.update({
       ...successfulSession,
       shippingDetails: {
@@ -76,31 +71,31 @@ test.group("VippsCheckoutService.update", (group) => {
       },
     });
 
-    expect(captureStub.args).to.deep.equal([["order1", 47_500]]);
+    assert.deepEqual(captureStub.args, [["order1", 47_500]]);
   });
 
-  test("should place the order and resolve even if the capture fails", async () => {
+  test("should place the order and resolve even if the capture fails", async ({ assert }) => {
     captureStub.rejects(new Error("Vipps is down"));
 
     await VippsCheckoutService.update(successfulSession);
 
-    expect(placeOrderStub.callCount).to.equal(1);
+    assert.equal(placeOrderStub.callCount, 1);
   });
 
-  test("should not capture when the payment has not succeeded", async () => {
+  test("should not capture when the payment has not succeeded", async ({ assert }) => {
     await VippsCheckoutService.update({
       ...successfulSession,
       sessionState: "PaymentInitiated",
     });
 
-    expect(captureStub.callCount).to.equal(0);
+    assert.equal(captureStub.callCount, 0);
   });
 
-  test("should not capture when the order is already paid for", async () => {
+  test("should not capture when the order is already paid for", async ({ assert }) => {
     testOrder.checkoutState = "PaymentSuccessful";
 
     await VippsCheckoutService.update(successfulSession);
 
-    expect(captureStub.callCount).to.equal(0);
+    assert.equal(captureStub.callCount, 0);
   });
 });

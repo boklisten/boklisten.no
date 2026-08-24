@@ -1,15 +1,10 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderActive", (group) => {
   const orderActive = new OrderActive();
@@ -25,13 +20,13 @@ test.group("OrderActive", (group) => {
     sandbox.restore();
   });
 
-  test("should resolve with false if no orders was found", async () => {
+  test("should resolve with false if no orders was found", async ({ assert }) => {
     getOrderByQueryStub.rejects(new BlError("not found").code(702));
 
-    return expect(orderActive.haveActiveOrders(testUserId)).to.eventually.be.false;
+    assert.isFalse(await orderActive.haveActiveOrders(testUserId));
   });
 
-  test("should resolve with false if orders was found but none was active", async () => {
+  test("should resolve with false if orders was found but none was active", async ({ assert }) => {
     const nonActiveOrder: Order = {
       id: "order1",
       amount: 100,
@@ -44,10 +39,12 @@ test.group("OrderActive", (group) => {
 
     getOrderByQueryStub.resolves([nonActiveOrder]);
 
-    return expect(orderActive.haveActiveOrders(testUserId)).to.eventually.be.false;
+    assert.isFalse(await orderActive.haveActiveOrders(testUserId));
   });
 
-  test("should resolve with true if orders was found and at least one was active", async () => {
+  test("should resolve with true if orders was found and at least one was active", async ({
+    assert,
+  }) => {
     const nonActiveOrder: Order = {
       id: "order1",
       amount: 100,
@@ -80,10 +77,12 @@ test.group("OrderActive", (group) => {
 
     getOrderByQueryStub.resolves([nonActiveOrder, activeOrder]);
 
-    return expect(orderActive.haveActiveOrders(testUserId)).to.eventually.be.true;
+    assert.isTrue(await orderActive.haveActiveOrders(testUserId));
   });
 
-  test("should resolve with false if orders was found and all order-items was handed out", async () => {
+  test("should resolve with false if orders was found and all order-items was handed out", async ({
+    assert,
+  }) => {
     const nonActiveOrder: Order = {
       id: "order1",
       amount: 100,
@@ -126,6 +125,6 @@ test.group("OrderActive", (group) => {
 
     getOrderByQueryStub.resolves([nonActiveOrder, nonActiveOrder2]);
 
-    return expect(orderActive.haveActiveOrders(testUserId)).to.eventually.be.false;
+    assert.isFalse(await orderActive.haveActiveOrders(testUserId));
   });
 });

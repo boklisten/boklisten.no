@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { CustomerItemHandler } from "#services/legacy/collections/customer-item/helpers/customer-item-handler";
@@ -14,9 +12,6 @@ import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
 import { Payment } from "#shared/payment/payment";
 import { UserDetail } from "#shared/user-detail";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderPlacedHandler", (group) => {
   let testOrder: Order;
@@ -173,58 +168,53 @@ test.group("OrderPlacedHandler", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if order could not be updated with confirm true", async () => {
+  test("should reject if order could not be updated with confirm true", async ({ assert }) => {
     orderUpdate = false;
 
-    orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).catch((err: BlError) => {
-      // @ts-expect-error fixme: auto ignored
-      return expect(err.errorStack[0].getMsg()).to.be.eq("could not update order");
-    });
+    const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
+      () => null,
+      (caught: BlError) => caught,
+    );
+    assert.instanceOf(err, BlError);
+    assert.equal(err?.errorStack[0]?.getMsg(), "could not update order");
   });
 
-  test("should reject if paymentHandler.confirmPayments rejects", async () => {
+  test("should reject if paymentHandler.confirmPayments rejects", async ({ assert }) => {
     paymentsConfirmed = false;
 
-    orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).catch((err: BlError) => {
-      // @ts-expect-error fixme: auto ignored
-      return expect(err.errorStack[0].getMsg()).to.be.eq("could not confirm payments");
-    });
+    const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
+      () => null,
+      (caught: BlError) => caught,
+    );
+    assert.instanceOf(err, BlError);
+    assert.equal(err?.errorStack[0]?.getMsg(), "could not confirm payments");
   });
 
-  test("should reject if order.customer is not found", async () => {
+  test("should reject if order.customer is not found", async ({ assert }) => {
     testOrder.customer = "notFoundUserDetails";
 
-    try {
-      await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details);
-    } catch (e) {
-      // @ts-expect-error fixme: auto ignored
-      expect(e.errorStack[0].getMsg()).to.eq('customer "notFoundUserDetails" not found');
-    }
+    const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
+      () => null,
+      (caught: BlError) => caught,
+    );
+    assert.instanceOf(err, BlError);
+    assert.equal(err?.errorStack[0]?.getMsg(), 'customer "notFoundUserDetails" not found');
   });
 
-  test("should reject if userDetailStorage.updates rejects", async () => {
+  test("should reject if userDetailStorage.updates rejects", async ({ assert }) => {
     userDeatilUpdate = false;
 
-    orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).catch((err: BlError) => {
-      // @ts-expect-error fixme: auto ignored
-      return expect(err.errorStack[0].getMsg()).to.be.eq(
-        "could not update userDetail with placed order",
-      );
-    });
+    const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
+      () => null,
+      (caught: BlError) => caught,
+    );
+    assert.instanceOf(err, BlError);
+    assert.equal(err?.errorStack[0]?.getMsg(), "could not update userDetail with placed order");
   });
 
-  //test('should reject if userDetail.emailConfirmed is false', async () => {
-  //testUserDetail.emailConfirmed = false;
-
-  //orderPlacedHandler.placeOrder(testOrder, testAccessToken).catch((err: BlError) => {
-  //return expect( err.errorStack[0].getMsg())
-  //.to.be.eq('userDetail.emailConfirmed is not true');
-  //
-  //})
-  /*});*/
-
-  test("should resolve when order was placed", async () => {
-    return expect(orderPlacedHandler.placeOrder(testOrder, testAccessToken.details)).to.be
-      .fulfilled;
+  test("should resolve when order was placed", async ({ assert }) => {
+    return assert.doesNotReject(() =>
+      orderPlacedHandler.placeOrder(testOrder, testAccessToken.details),
+    );
   });
 });

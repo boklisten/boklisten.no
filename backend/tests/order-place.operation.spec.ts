@@ -1,7 +1,5 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import moment from "moment-timezone";
 import sinon, { createSandbox } from "sinon";
 
@@ -22,9 +20,6 @@ import { Order } from "#shared/order/order";
 import { OrderItem } from "#shared/order/order-item/order-item";
 import { SIGNATURE_NUM_MONTHS_VALID } from "#shared/serialized-signature";
 import { UserDetail } from "#shared/user-detail";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderPlaceOperation", (group) => {
   const orderToCustomerItemGenerator = new OrderToCustomerItemGenerator();
@@ -114,12 +109,13 @@ test.group("OrderPlaceOperation", (group) => {
       .toDate(),
   };
 
-  test("should reject if order is not found", async () => {
+  test("should reject if order is not found", async ({ assert }) => {
     getOrderStub.rejects(new BlError('order "randomOrder" not found'));
 
-    return expect(
-      orderPlaceOperation.run({ documentId: "randomOrder" }),
-    ).to.eventually.be.rejectedWith(/order "randomOrder" not found/);
+    return assert.rejects(
+      () => orderPlaceOperation.run({ documentId: "randomOrder" }),
+      /order "randomOrder" not found/,
+    );
   });
 
   test("should reject if orderPlacedHandler.placeOrder rejects", async ({ assert }) => {
@@ -138,7 +134,7 @@ test.group("OrderPlaceOperation", (group) => {
     );
   });
 
-  test("should reject if orderValidator.validate rejects", async () => {
+  test("should reject if orderValidator.validate rejects", async ({ assert }) => {
     getOrderStub.resolves(validOrder);
     placeOrderStub.resolves({} as Order);
     validateOrderStub.rejects(new BlError("order not valid!"));
@@ -147,12 +143,12 @@ test.group("OrderPlaceOperation", (group) => {
     getSignatureStub.resolves(validSignature);
     getUserDetailStub.resolves(userDetailWithSignatures);
 
-    return expect(
+    return assert.rejects(() =>
       orderPlaceOperation.run({
         documentId: validOrder.id,
         user: { id: "user1", permission: "admin", details: "" },
       }),
-    ).to.eventually.be.rejected;
+    );
   });
 
   test("should resolve if order is valid", async ({ assert }) => {

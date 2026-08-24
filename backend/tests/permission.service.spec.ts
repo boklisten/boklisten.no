@@ -1,15 +1,12 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 
 import { PermissionService } from "#services/permission_service";
 import { BlDocument } from "#shared/bl-document";
 
-chaiUse(chaiAsPromised);
-should();
-
 test.group("PermissionSerivice", async () => {
-  test("should return true if document.user.id is the same as userId even if UserPermission is not correct", async () => {
+  test("should return true if document.user.id is the same as userId even if UserPermission is not correct", async ({
+    assert,
+  }) => {
     const userId = "aabc";
     const doc: BlDocument = {
       id: "doc1",
@@ -17,10 +14,12 @@ test.group("PermissionSerivice", async () => {
     };
 
     // oxlint-disable-next-line no-unused-expressions
-    expect(PermissionService.haveRestrictedDocumentPermission(userId, "customer", doc)).to.be.true;
+    assert.isTrue(PermissionService.haveRestrictedDocumentPermission(userId, "customer", doc));
   });
 
-  test("should return false if userId is not equal to document.user.id and UserPermission is not valid", async () => {
+  test("should return false if userId is not equal to document.user.id and UserPermission is not valid", async ({
+    assert,
+  }) => {
     const userId = "abc";
     const doc: BlDocument = {
       id: "doc1",
@@ -28,20 +27,24 @@ test.group("PermissionSerivice", async () => {
     };
 
     // oxlint-disable-next-line no-unused-expressions
-    expect(PermissionService.haveRestrictedDocumentPermission(userId, "employee", doc)).to.be.false;
+    assert.isFalse(PermissionService.haveRestrictedDocumentPermission(userId, "employee", doc));
   });
 
-  test("should return false if userId is not equal to document.user.id and user.permission is customer", async () => {
+  test("should return false if userId is not equal to document.user.id and user.permission is customer", async ({
+    assert,
+  }) => {
     const userId = "abc";
     const doc: BlDocument = {
       id: "doc1",
       user: { id: "123", permission: "admin" },
     };
     // oxlint-disable-next-line no-unused-expressions
-    expect(PermissionService.haveRestrictedDocumentPermission(userId, "employee", doc)).to.be.false;
+    assert.isFalse(PermissionService.haveRestrictedDocumentPermission(userId, "employee", doc));
   });
 
-  test("should return true if userId is not equal to document.user.id but UserPermission is over the document.user.permission", async () => {
+  test("should return true if userId is not equal to document.user.id but UserPermission is over the document.user.permission", async ({
+    assert,
+  }) => {
     const userId = "abc";
     const doc: BlDocument = {
       id: "123",
@@ -49,6 +52,6 @@ test.group("PermissionSerivice", async () => {
     };
 
     // oxlint-disable-next-line no-unused-expressions
-    expect(PermissionService.haveRestrictedDocumentPermission(userId, "admin", doc)).to.be.true;
+    assert.isTrue(PermissionService.haveRestrictedDocumentPermission(userId, "admin", doc));
   });
 });

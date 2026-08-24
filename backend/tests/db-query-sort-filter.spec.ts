@@ -1,38 +1,36 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 
 import { DbQuerySortFilter } from "#services/legacy/query/db-query-sort-filter";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("DbQuerySortFilter", async () => {
   const dbQuerySortFilter: DbQuerySortFilter = new DbQuerySortFilter();
 
-  test("should throw TypeError when query is null or empty", async () => {
-    expect(() => {
+  test("should throw TypeError when query is null or empty", async ({ assert }) => {
+    assert.throws(() => {
       dbQuerySortFilter.getSortFilters({}, ["hello"]);
-    }).to.throw(TypeError);
+    }, TypeError);
   });
 
-  test("should return empty array if query does not have the sort object", async () => {
-    expect(dbQuerySortFilter.getSortFilters({ name: "hello" }, ["age"])).to.eql([]);
+  test("should return empty array if query does not have the sort object", async ({ assert }) => {
+    assert.deepEqual(dbQuerySortFilter.getSortFilters({ name: "hello" }, ["age"]), []);
   });
 
-  test("should throw ReferenceError if none of the sort params are in the ValidSortParams", async () => {
-    expect(() => {
+  test("should throw ReferenceError if none of the sort params are in the ValidSortParams", async ({
+    assert,
+  }) => {
+    assert.throws(() => {
       dbQuerySortFilter.getSortFilters({ sort: ["-age", "name"] }, ["desc"]);
-    }).to.throw(ReferenceError);
+    }, ReferenceError);
   });
 
-  test("should return correct array with the given input", async () => {
+  test("should return correct array with the given input", async ({ assert }) => {
     const result = [
       { fieldName: "name", direction: 1 },
       { fieldName: "age", direction: -1 },
     ];
 
-    expect(dbQuerySortFilter.getSortFilters({ sort: ["name", "-age"] }, ["name", "age"])).to.eql(
+    assert.deepEqual(
+      dbQuerySortFilter.getSortFilters({ sort: ["name", "-age"] }, ["name", "age"]),
       result,
     );
   });

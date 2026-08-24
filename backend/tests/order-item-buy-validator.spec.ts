@@ -1,15 +1,10 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 
 import { OrderItemBuyValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-buy-validator/order-item-buy-validator";
 import { PriceService } from "#services/legacy/price.service";
 import { BlError } from "#shared/bl-error";
 import { Item } from "#shared/item";
 import { Order } from "#shared/order/order";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderItemBuyValidator", (group) => {
   const priceService = new PriceService();
@@ -68,51 +63,51 @@ test.group("OrderItemBuyValidator", (group) => {
     testOrder.orderItems[0].type = "buy";
   });
 
-  test("should resolve when a valid order is passed", async () => {
-    return expect(
+  test("should resolve when a valid order is passed", async ({ assert }) => {
+    return assert.doesNotReject(() =>
       orderItemPriceValidator.validate(
         // @ts-expect-error fixme: auto ignored
         testOrder.orderItems[0],
         testItem,
       ),
-    ).to.eventually.be.fulfilled;
+    );
   });
 
-  test("should reject when item.price is 200 and orderItem.amount is 100", async () => {
+  test("should reject when item.price is 200 and orderItem.amount is 100", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].amount = 100;
     testItem.price = 200;
 
-    return expect(
-      orderItemPriceValidator.validate(
-        // @ts-expect-error fixme: auto ignored
-        testOrder.orderItems[0],
-        testItem,
-      ),
-    ).to.be.rejectedWith(
+    return assert.rejects(
+      () =>
+        orderItemPriceValidator.validate(
+          // @ts-expect-error fixme: auto ignored
+          testOrder.orderItems[0],
+          testItem,
+        ),
       BlError,
       /orderItem.amount "100" is not equal to item.price "200" = "200"/,
     );
   });
 
-  test("should reject if item.price is 134 and orderItem.amount is 400", async () => {
+  test("should reject if item.price is 134 and orderItem.amount is 400", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].amount = 400;
     testItem.price = 134;
 
-    return expect(
-      orderItemPriceValidator.validate(
-        // @ts-expect-error fixme: auto ignored
-        testOrder.orderItems[0],
-        testItem,
-      ),
-    ).to.be.rejectedWith(
+    return assert.rejects(
+      () =>
+        orderItemPriceValidator.validate(
+          // @ts-expect-error fixme: auto ignored
+          testOrder.orderItems[0],
+          testItem,
+        ),
       BlError,
       /orderItem.amount "400" is not equal to item.price "134" = "134"/,
     );
   });
 
-  test("should resolve if a valid order is sent", async () => {
+  test("should resolve if a valid order is sent", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].type = "buy";
 
@@ -125,16 +120,16 @@ test.group("OrderItemBuyValidator", (group) => {
     testItem.price = 400;
     testItem.id = "theItem";
 
-    return expect(
+    return assert.doesNotReject(() =>
       orderItemPriceValidator.validate(
         // @ts-expect-error fixme: auto ignored
         testOrder.orderItems[0],
         testItem,
       ),
-    ).to.be.fulfilled;
+    );
   });
 
-  test("should resolve if a valid order is placed", async () => {
+  test("should resolve if a valid order is placed", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].amount = 600;
 
@@ -145,12 +140,12 @@ test.group("OrderItemBuyValidator", (group) => {
     testItem.id = "theItem1";
     testItem.price = 600;
 
-    return expect(
+    return assert.doesNotReject(() =>
       orderItemPriceValidator.validate(
         // @ts-expect-error fixme: auto ignored
         testOrder.orderItems[0],
         testItem,
       ),
-    ).to.be.fulfilled;
+    );
   });
 });

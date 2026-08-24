@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { DeliveryHandler } from "#services/legacy/collections/delivery/helpers/deliveryHandler/delivery-handler";
@@ -8,9 +6,6 @@ import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Delivery } from "#shared/delivery/delivery";
 import { Order } from "#shared/order/order";
-
-chaiUse(chaiAsPromised);
-should();
 
 let testOrder: Order;
 let testDelivery: Delivery;
@@ -55,12 +50,14 @@ test.group("DeliveryHandler", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if OrderStorage.update rejects", async () => {
+  test("should reject if OrderStorage.update rejects", async ({ assert }) => {
     testDelivery.method = "branch";
     canUpdateOrder = false;
 
-    return expect(
-      deliveryHandler.updateOrderBasedOnMethod(testDelivery, testOrder),
-    ).to.be.rejectedWith(BlError, /could not update/);
+    return assert.rejects(
+      () => deliveryHandler.updateOrderBasedOnMethod(testDelivery, testOrder),
+      BlError,
+      /could not update/,
+    );
   });
 });

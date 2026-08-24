@@ -1,38 +1,42 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 
 import { OrderHookBefore } from "#services/legacy/collections/order/hooks/order-hook-before";
 import { BlError } from "#shared/bl-error";
 
-chaiUse(chaiAsPromised);
-should();
-
 test.group("OrderHookBefore", async () => {
   const orderHookBefore: OrderHookBefore = new OrderHookBefore();
 
-  test("should reject if body is an array", async () => {
+  test("should reject if body is an array", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     const testRequest = [];
 
-    // @ts-expect-error fixme: auto ignored
-    orderHookBefore.validate(testRequest).catch((blError: BlError) => {
-      return expect(blError.getMsg()).to.contain("request is an array but should be a object");
-    });
+    return assert.rejects(
+      // @ts-expect-error fixme: auto ignored
+      () => orderHookBefore.validate(testRequest),
+      BlError,
+      /request is an array but should be a object/,
+    );
   });
 
-  test("should reject if body does not include the minimum required fields of order like amount and orderItems", async () => {
+  test("should reject if body does not include the minimum required fields of order like amount and orderItems", async ({
+    assert,
+  }) => {
     const testRequest = {
       somethingRandom: ["hi", "hello there"],
     };
 
-    orderHookBefore.validate(testRequest).catch((blError: BlError) => {
-      expect(blError.getMsg()).to.contain("the request body is not valid");
-      return expect(blError.getCode()).to.be.eql(701);
-    });
+    const blError = await orderHookBefore.validate(testRequest).then(
+      () => null,
+      (caught: BlError) => caught,
+    );
+    assert.instanceOf(blError, BlError);
+    assert.include(blError?.getMsg() ?? "", "the request body is not valid");
+    assert.equal(blError?.getCode(), 701);
   });
 
-  test("should resolve if the request have the minimum required fields of Order", async () => {
+  test("should resolve if the request have the minimum required fields of Order", async ({
+    assert,
+  }) => {
     const testRequest = {
       id: "order1",
       amount: 450,
@@ -71,8 +75,6 @@ test.group("OrderHookBefore", async () => {
       creationTime: new Date(),
     };
 
-    void orderHookBefore.validate(testRequest).then((valid) => {
-      return expect(valid).to.be.true;
-    });
+    assert.isTrue(await orderHookBefore.validate(testRequest));
   });
 });

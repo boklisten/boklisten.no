@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { PaymentValidator } from "#services/legacy/collections/payment/helpers/payment.validator";
@@ -9,9 +7,6 @@ import { BlError } from "#shared/bl-error";
 import { Delivery } from "#shared/delivery/delivery";
 import { Order } from "#shared/order/order";
 import { Payment } from "#shared/payment/payment";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("PaymentValidator", (group) => {
   const paymentValidator = new PaymentValidator();
@@ -72,50 +67,55 @@ test.group("PaymentValidator", (group) => {
     sandbox.restore();
   });
 
-  test("validate() - should reject if payment is undefined", async () => {
-    return expect(paymentValidator.validate(undefined)).to.eventually.be.rejectedWith(
+  test("validate() - should reject if payment is undefined", async ({ assert }) => {
+    return assert.rejects(
+      () => paymentValidator.validate(undefined),
       BlError,
       /payment is not defined/,
     );
   });
 
-  test("validate() - should reject if paymentMethod is not valid", async () => {
-    return expect(
-      paymentValidator.validate(
-        JSON.parse(JSON.stringify({ method: "something", order: testOrder.id })),
-      ),
-    ).to.eventually.be.rejectedWith(BlError, 'payment.method "something" not supported');
-  });
-
-  test("validate() - should resolve when payment is valid", async () => {
-    return expect(paymentValidator.validate(testPayment)).to.eventually.be.fulfilled;
-  });
-
-  test("validate() - should reject if order is not found", async () => {
-    testPayment.order = "orderNotFound";
-
-    return expect(paymentValidator.validate(testPayment)).to.be.rejectedWith(
+  test("validate() - should reject if paymentMethod is not valid", async ({ assert }) => {
+    return assert.rejects(
+      () =>
+        paymentValidator.validate(
+          JSON.parse(JSON.stringify({ method: "something", order: testOrder.id })),
+        ),
       BlError,
-      /order not found/,
+      'payment.method "something" not supported',
     );
   });
 
-  test("validate() - should reject if order.delivery is not found", async () => {
+  test("validate() - should resolve when payment is valid", async ({ assert }) => {
+    return assert.doesNotReject(() => paymentValidator.validate(testPayment));
+  });
+
+  test("validate() - should reject if order is not found", async ({ assert }) => {
+    testPayment.order = "orderNotFound";
+
+    return assert.rejects(() => paymentValidator.validate(testPayment), BlError, /order not found/);
+  });
+
+  test("validate() - should reject if order.delivery is not found", async ({ assert }) => {
     testOrder.delivery = "notFoundDelivery";
 
-    return expect(paymentValidator.validate(testPayment)).to.be.rejectedWith(
+    return assert.rejects(
+      () => paymentValidator.validate(testPayment),
       BlError,
       /delivery not found/,
     );
   });
 
-  test("validate() - should reject if payment.amount is not equal to order.amount + delivery.amount", async () => {
+  test("validate() - should reject if payment.amount is not equal to order.amount + delivery.amount", async ({
+    assert,
+  }) => {
     testOrder.amount = 200;
     testPayment.amount = 200;
     testDelivery.amount = 100;
     testOrder.delivery = testDelivery.id;
 
-    return expect(paymentValidator.validate(testPayment)).to.be.rejectedWith(
+    return assert.rejects(
+      () => paymentValidator.validate(testPayment),
       BlError,
       /payment.amount "200" is not equal to \(order.amount \+ delivery.amount\) "300"/,
     );

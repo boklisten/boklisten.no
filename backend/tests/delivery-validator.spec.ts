@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { DeliveryBranchHandler } from "#services/legacy/collections/delivery/helpers/deliveryBranch/delivery-branch-handler";
@@ -10,9 +8,6 @@ import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Delivery } from "#shared/delivery/delivery";
 import { Order } from "#shared/order/order";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("DeliveryValidator", (group) => {
   let testDelivery: Delivery;
@@ -68,31 +63,38 @@ test.group("DeliveryValidator", (group) => {
     sandbox.restore();
   });
 
-  test("should reject with error when method is not defined", async () => {
+  test("should reject with error when method is not defined", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testDelivery.method = null;
 
-    return expect(deliveryValidator.validate(testDelivery)).to.be.rejectedWith(
+    return assert.rejects(
+      () => deliveryValidator.validate(testDelivery),
       BlError,
       /delivery.method not defined/,
     );
   });
 
-  test("should reject if delivery.method is branch and DeliveryBranchHandler.validate rejects", async () => {
+  test("should reject if delivery.method is branch and DeliveryBranchHandler.validate rejects", async ({
+    assert,
+  }) => {
     deliveryBranchValidation = false;
     testDelivery.method = "branch";
 
-    return expect(deliveryValidator.validate(testDelivery)).to.be.rejectedWith(
+    return assert.rejects(
+      () => deliveryValidator.validate(testDelivery),
       BlError,
       /validation of delivery.method "branch" failed/,
     );
   });
 
-  test("should reject if delivery.method is bring and DeliveryBringHandler.validate rejects", async () => {
+  test("should reject if delivery.method is bring and DeliveryBringHandler.validate rejects", async ({
+    assert,
+  }) => {
     deliveryBringValidation = false;
     testDelivery.method = "bring";
 
-    return expect(deliveryValidator.validate(testDelivery)).to.be.rejectedWith(
+    return assert.rejects(
+      () => deliveryValidator.validate(testDelivery),
       BlError,
       /validation of delivery.method "bring" failed/,
     );

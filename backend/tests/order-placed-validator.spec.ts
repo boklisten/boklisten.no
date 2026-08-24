@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderPlacedValidator } from "#services/legacy/collections/order/helpers/order-validator/order-placed-validator/order-placed-validator";
@@ -9,9 +7,6 @@ import { BlError } from "#shared/bl-error";
 import { Delivery } from "#shared/delivery/delivery";
 import { Order } from "#shared/order/order";
 import { Payment } from "#shared/payment/payment";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderPlacedValidator", (group) => {
   let testOrder: Order;
@@ -95,78 +90,76 @@ test.group("OrderPlacedValidator", (group) => {
     sandbox.restore();
   });
 
-  test("should resolve with true", async () => {
+  test("should resolve with true", async ({ assert }) => {
     testOrder.placed = false;
 
-    return expect(orderPlacedValidator.validate(testOrder)).to.eventually.be.true;
+    assert.isTrue(await orderPlacedValidator.validate(testOrder));
   });
 
-  test("should resolve with true if there are no payments attached", async () => {
+  test("should resolve with true if there are no payments attached", async ({ assert }) => {
     testOrder.payments = [];
 
-    return expect(orderPlacedValidator.validate(testOrder)).to.be.fulfilled;
+    return assert.doesNotReject(() => orderPlacedValidator.validate(testOrder));
   });
 
-  test("should reject with error if delivery is not found", async () => {
+  test("should reject with error if delivery is not found", async ({ assert }) => {
     testOrder.delivery = "notFoundDelivery";
-
-    orderPlacedValidator
-      .validate(testOrder)
-      // @ts-expect-error fixme: auto ignored bad test enums
-      .should.be.rejectedWith(BlError, /delivery "notFoundDelivery" not found/);
+    await assert.rejects(
+      () => orderPlacedValidator.validate(testOrder),
+      BlError,
+      /delivery "notFoundDelivery" not found/,
+    );
   });
 
-  test("should reject with error if payments is not found", async () => {
+  test("should reject with error if payments is not found", async ({ assert }) => {
     testOrder.payments = ["notFound"];
-
-    orderPlacedValidator
-      .validate(testOrder)
-      // @ts-expect-error fixme: auto ignored bad test enums
-      .should.be.rejectedWith(BlError, /order.payments is not found/);
+    await assert.rejects(
+      () => orderPlacedValidator.validate(testOrder),
+      BlError,
+      /order.payments is not found/,
+    );
   });
 
-  test("should reject with error if payment.confirmed is false", async () => {
+  test("should reject with error if payment.confirmed is false", async ({ assert }) => {
     testPayment.confirmed = false;
-
-    orderPlacedValidator
-      .validate(testOrder)
-      // @ts-expect-error fixme: auto ignored bad test enums
-      .should.be.rejectedWith(BlError, /payment is not confirmed/);
+    await assert.rejects(
+      () => orderPlacedValidator.validate(testOrder),
+      BlError,
+      /payment is not confirmed/,
+    );
   });
 
-  test("should reject with error if total amount in payments is not equal to order.amount + delivery.amount", async () => {
+  test("should reject with error if total amount in payments is not equal to order.amount + delivery.amount", async ({
+    assert,
+  }) => {
     testOrder.amount = 450;
     testDelivery.amount = 40;
     testPayment.amount = 100;
-
-    orderPlacedValidator
-      .validate(testOrder)
-      // @ts-expect-error fixme: auto ignored bad test enums
-      .should.be.rejectedWith(
-        BlError,
-        /total amount of payments is not equal to total of order.amount \+ delivery.amount/,
-      );
+    await assert.rejects(
+      () => orderPlacedValidator.validate(testOrder),
+      BlError,
+      /total amount of payments is not equal to total of order.amount \+ delivery.amount/,
+    );
   });
 
-  test("should reject with error if total amount in order.orderItems is not equal to order.amount", async () => {
+  test("should reject with error if total amount in order.orderItems is not equal to order.amount", async ({
+    assert,
+  }) => {
     testOrder.payments = [];
 
     // @ts-expect-error fixme: auto ignored
     testOrder.delivery = null;
     testOrder.amount = 999;
-
-    orderPlacedValidator
-      .validate(testOrder)
-      // @ts-expect-error fixme: auto ignored bad test enums
-      .should.be.rejectedWith(
-        BlError,
-        /total of order.orderItems amount is not equal to order.amount/,
-      );
+    await assert.rejects(
+      () => orderPlacedValidator.validate(testOrder),
+      BlError,
+      /total of order.orderItems amount is not equal to order.amount/,
+    );
   });
 
-  test("should resolve if delivery and payments are valid according to order information", async () => {
-    void orderPlacedValidator.validate(testOrder).then((resolved) => {
-      return expect(resolved).to.be.true;
-    });
+  test("should resolve if delivery and payments are valid according to order information", async ({
+    assert,
+  }) => {
+    assert.isTrue(await orderPlacedValidator.validate(testOrder));
   });
 });

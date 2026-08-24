@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
@@ -11,9 +9,6 @@ import { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
 import { UserDetail } from "#shared/user-detail";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderPatchHook", (group) => {
   const orderValidator = new OrderValidator();
@@ -130,32 +125,42 @@ test.group("OrderPatchHook", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if body is empty or undefined", async () => {
-    return expect(orderPatchHook.before(undefined, testAccessToken, "order1")).to.be.rejectedWith(
+  test("should reject if body is empty or undefined", async ({ assert }) => {
+    return assert.rejects(
+      () => orderPatchHook.before(undefined, testAccessToken, "order1"),
       BlError,
       /body not defined/,
     );
   });
 
-  test("should reject if accessToken is empty or undefined", async () => {
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      orderPatchHook.before({ placed: true }, undefined, "order1"),
-    ).to.be.rejectedWith(BlError, /accessToken not defined/);
+  test("should reject if accessToken is empty or undefined", async ({ assert }) => {
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        orderPatchHook.before({ placed: true }, undefined, "order1"),
+      BlError,
+      /accessToken not defined/,
+    );
   });
 
-  test("should reject if id is not defined", async () => {
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      orderPatchHook.before(testRequestBody, testAccessToken, null),
-    ).to.be.rejectedWith(BlError, /id not defined/);
+  test("should reject if id is not defined", async ({ assert }) => {
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        orderPatchHook.before(testRequestBody, testAccessToken, null),
+      BlError,
+      /id not defined/,
+    );
   });
 
-  test("should reject if accessToken is not defined", async () => {
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      orderPatchHook.after([testOrder], undefined),
-    ).to.be.rejectedWith(BlError, /accessToken not defined/);
+  test("should reject if accessToken is not defined", async ({ assert }) => {
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        orderPatchHook.after([testOrder], undefined),
+      BlError,
+      /accessToken not defined/,
+    );
   });
 
   test("should reject if OrderPlaced.placeOrder rejects", async ({ assert }) => {

@@ -81,13 +81,15 @@ test.group("BranchSubjectsService", (group) => {
     );
   });
 
-  test("allows the same names on different branches", async () => {
+  test("allows the same names on different branches", async ({ assert }) => {
     await BranchSubjectsService.create(BRANCH, { name: "Kjemi 2", externalName: "K2", books: [] });
-    await BranchSubjectsService.create(OTHER_BRANCH, {
-      name: "Kjemi 2",
-      externalName: "K2",
-      books: [],
-    });
+    await assert.doesNotReject(() =>
+      BranchSubjectsService.create(OTHER_BRANCH, {
+        name: "Kjemi 2",
+        externalName: "K2",
+        books: [],
+      }),
+    );
   });
 
   test("rejects the same book twice in one subject", async ({ assert }) => {

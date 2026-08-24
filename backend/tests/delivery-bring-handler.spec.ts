@@ -1,13 +1,8 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 
 import { DeliveryBringHandler } from "#services/legacy/collections/delivery/helpers/deliveryBring/delivery-bring-handler";
 import { BlError } from "#shared/bl-error";
 import { Delivery } from "#shared/delivery/delivery";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("DeliveryBringHandler", (group) => {
   let testDelivery: Delivery;
@@ -29,17 +24,18 @@ test.group("DeliveryBringHandler", (group) => {
     };
   });
 
-  test("should reject with error if delivery.info is not defined", async () => {
+  test("should reject with error if delivery.info is not defined", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testDelivery.info = undefined;
 
-    return expect(deliveryBringHandler.validate(testDelivery)).to.be.rejectedWith(
+    return assert.rejects(
+      () => deliveryBringHandler.validate(testDelivery),
       BlError,
       /delivery.info not defined/,
     );
   });
 
-  test("should reject if delivery.info.from is empty or undefined", async () => {
+  test("should reject if delivery.info.from is empty or undefined", async ({ assert }) => {
     testDelivery.info = {
       amount: 100,
       estimatedDelivery: new Date(),
@@ -48,13 +44,14 @@ test.group("DeliveryBringHandler", (group) => {
       to: "0560",
     };
 
-    return expect(deliveryBringHandler.validate(testDelivery)).to.be.rejectedWith(
+    return assert.rejects(
+      () => deliveryBringHandler.validate(testDelivery),
       BlError,
       /delivery.info.from not defined/,
     );
   });
 
-  test("should reject if delivery.info.from is empty or undefined", async () => {
+  test("should reject if delivery.info.to is empty or undefined", async ({ assert }) => {
     testDelivery.info = {
       amount: 100,
       estimatedDelivery: new Date(),
@@ -63,7 +60,8 @@ test.group("DeliveryBringHandler", (group) => {
       to: undefined,
     };
 
-    return expect(deliveryBringHandler.validate(testDelivery)).to.be.rejectedWith(
+    return assert.rejects(
+      () => deliveryBringHandler.validate(testDelivery),
       BlError,
       /delivery.info.to not defined/,
     );

@@ -1,6 +1,5 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import { test } from "@japa/runner";
-import { expect } from "chai";
 import sinon, { createSandbox } from "sinon";
 
 import CustomerItemsController from "#controllers/customer_items_controller";
@@ -17,8 +16,8 @@ function contextFor(detailsId: string) {
 function matchStage(aggregateStub: sinon.SinonStub): Record<string, unknown> {
   const pipeline = aggregateStub.firstCall.args[0] as { $match?: Record<string, unknown> }[];
   const stage = pipeline.find((entry) => entry.$match !== undefined)?.$match;
-  expect(stage, "aggregate had no $match stage").to.not.equal(undefined);
-  return stage as Record<string, unknown>;
+  if (stage === undefined) throw new Error("aggregate had no $match stage");
+  return stage;
 }
 
 test.group("CustomerItemsController.getActiveCustomerItemsForCustomer", (group) => {
@@ -41,38 +40,42 @@ test.group("CustomerItemsController.getActiveCustomerItemsForCustomer", (group) 
     sandbox.restore();
   });
 
-  test("requires employee permission", async () => {
+  test("requires employee permission", async ({ assert }) => {
     await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
-    expect(employeeStub.calledOnce).to.equal(true);
+    assert.equal(employeeStub.calledOnce, true);
   });
 
-  test("returns nothing for an id that is not an object id, without querying", async () => {
+  test("returns nothing for an id that is not an object id, without querying", async ({
+    assert,
+  }) => {
     const result = await controller.getActiveCustomerItemsForCustomer(contextFor("not-an-id"));
-    expect(result).to.deep.equal([]);
-    expect(aggregateStub.called).to.equal(false);
+    assert.deepEqual(result, []);
+    assert.equal(aggregateStub.called, false);
   });
 
-  test("scopes the query to the requested customer", async () => {
+  test("scopes the query to the requested customer", async ({ assert }) => {
     await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
-    expect(String(matchStage(aggregateStub)["customer"])).to.equal(DETAILS_ID);
+    assert.equal(String(matchStage(aggregateStub)["customer"]), DETAILS_ID);
   });
 
-  test("treats a missing flag as not-set, so books written before the flag existed still count", async () => {
+  test("treats a missing flag as not-set, so books written before the flag existed still count", async ({
+    assert,
+  }) => {
     // Regression guard: { cancel: false } does not match documents where the field is absent, and
     // hundreds of older customer items omit it. isCustomerItemActive reads absent as falsy.
     await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
     const match = matchStage(aggregateStub);
     for (const flag of ["returned", "buyout", "cancel", "buyback"]) {
-      expect(match[flag], `${flag} must use $ne: true, not false`).to.deep.equal({ $ne: true });
+      assert.deepEqual(match[flag], { $ne: true }, `${flag} must use $ne: true, not false`);
     }
   });
 
-  test("only counts books actually handed out", async () => {
+  test("only counts books actually handed out", async ({ assert }) => {
     await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
-    expect(matchStage(aggregateStub)["handout"]).to.equal(true);
+    assert.equal(matchStage(aggregateStub)["handout"], true);
   });
 
-  test("passes the aggregated books through", async () => {
+  test("passes the aggregated books through", async ({ assert }) => {
     const book = {
       id: "ci1",
       title: "Mønster 1T",
@@ -82,6 +85,6 @@ test.group("CustomerItemsController.getActiveCustomerItemsForCustomer", (group) 
     };
     aggregateStub.resolves([book]);
     const result = await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
-    expect(result).to.deep.equal([book]);
+    assert.deepEqual(result, [book]);
   });
 });

@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { PaymentValidator } from "#services/legacy/collections/payment/helpers/payment.validator";
@@ -9,9 +7,6 @@ import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
 import { Payment } from "#shared/payment/payment";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("PaymentPostHook", (group) => {
   const paymentValidator = new PaymentValidator();
@@ -88,41 +83,50 @@ test.group("PaymentPostHook", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if ids is empty or undefined", async () => {
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      paymentPostHook.after([], testAccessToken),
-    ).to.eventually.be.rejectedWith(BlError, /payments is empty or undefined/);
+  test("should reject if ids is empty or undefined", async ({ assert }) => {
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        paymentPostHook.after([], testAccessToken),
+      BlError,
+      /payments is empty or undefined/,
+    );
   });
 
-  test("should reject if paymentValidator.validate rejects", async () => {
+  test("should reject if paymentValidator.validate rejects", async ({ assert }) => {
     paymentValidated = false;
 
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      paymentPostHook.after([testPayment], testAccessToken),
-    ).to.be.rejectedWith(BlError, /payment could not be validated/);
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        paymentPostHook.after([testPayment], testAccessToken),
+      BlError,
+      /payment could not be validated/,
+    );
   });
 
-  test("should add payment id to order.payments", async () => {
+  test("should add payment id to order.payments", async ({ assert }) => {
     const orderUpdateStub = StorageService.Orders.update as sinon.SinonStub;
 
     // @ts-expect-error fixme: auto ignored
     await paymentPostHook.after([testPayment], testAccessToken);
 
-    expect(orderUpdateStub.callCount).to.equal(1);
-    expect(orderUpdateStub.firstCall.args[0]).to.equal(testOrder.id);
-    expect(orderUpdateStub.firstCall.args[1]).to.deep.equal({
+    assert.equal(orderUpdateStub.callCount, 1);
+    assert.equal(orderUpdateStub.firstCall.args[0], testOrder.id);
+    assert.deepEqual(orderUpdateStub.firstCall.args[1], {
       payments: [testPayment.id],
     });
   });
 
-  test("should reject if order.payments already includes the payment id", async () => {
+  test("should reject if order.payments already includes the payment id", async ({ assert }) => {
     testOrder.payments = [testPayment.id];
 
-    return expect(
-      // @ts-expect-error fixme: auto ignored
-      paymentPostHook.after([testPayment], testAccessToken),
-    ).to.be.rejectedWith(BlError, /order.payments already includes payment/);
+    return assert.rejects(
+      () =>
+        // @ts-expect-error fixme: auto ignored
+        paymentPostHook.after([testPayment], testAccessToken),
+      BlError,
+      /order.payments already includes payment/,
+    );
   });
 });

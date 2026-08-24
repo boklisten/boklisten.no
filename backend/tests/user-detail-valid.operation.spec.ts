@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { UserDetailValidOperation } from "#services/legacy/collections/user-detail/operations/user-detail-valid.operation";
@@ -9,9 +7,6 @@ import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
 import { UserDetail } from "#shared/user-detail";
 import { BlApiRequest } from "#types/bl-api-request";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("UserDetailValidOperation", (group) => {
   const userDetailValidOperation = new UserDetailValidOperation();

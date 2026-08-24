@@ -1,5 +1,4 @@
 import { test } from "@japa/runner";
-import { expect } from "chai";
 
 import {
   deriveObligationProgress,
@@ -23,120 +22,119 @@ const obligation = { senderCustomerId: S, receiverCustomerId: R, itemId: ITEM_X 
 const standObligation = { senderCustomerId: null, receiverCustomerId: R, itemId: ITEM_X };
 
 test.group("dischargesSenderHalf", () => {
-  test("a book belonging to the sender discharges their obligation", () => {
-    expect(dischargesSenderHalf(obligation, S, ITEM_X)).to.equal(true);
+  test("a book belonging to the sender discharges their obligation", ({ assert }) => {
+    // Covers the Gymnos case too: a student who received next year's copy before parting with
+    // their own holds two, and handing over either must credit them — the check only looks at
+    // owner and title, so which copy it is never matters.
+    assert.equal(dischargesSenderHalf(obligation, S, ITEM_X), true);
   });
 
-  test("either of the sender's two copies discharges it", () => {
-    // The Gymnos case: a student who received next year's copy before parting with their own
-    // holds two, and handing over either must credit them. Nothing here depends on which.
-    expect(dischargesSenderHalf(obligation, S, ITEM_X)).to.equal(true);
+  test("a book belonging to someone else does not", ({ assert }) => {
+    assert.equal(dischargesSenderHalf(obligation, C, ITEM_X), false);
   });
 
-  test("a book belonging to someone else does not", () => {
-    expect(dischargesSenderHalf(obligation, C, ITEM_X)).to.equal(false);
+  test("a different title does not", ({ assert }) => {
+    assert.equal(dischargesSenderHalf(obligation, S, OTHER_ITEM), false);
   });
 
-  test("a different title does not", () => {
-    expect(dischargesSenderHalf(obligation, S, OTHER_ITEM)).to.equal(false);
-  });
-
-  test("an equivalent edition counts as the same title", () => {
+  test("an equivalent edition counts as the same title", ({ assert }) => {
     const gymnos = { senderCustomerId: S, receiverCustomerId: R, itemId: GYMNOS_2009 };
-    expect(dischargesSenderHalf(gymnos, S, GYMNOS_2012)).to.equal(true);
+    assert.equal(dischargesSenderHalf(gymnos, S, GYMNOS_2012), true);
   });
 
-  test("a stand-sourced obligation has no sender to credit", () => {
-    expect(dischargesSenderHalf(standObligation, null, ITEM_X)).to.equal(false);
+  test("a stand-sourced obligation has no sender to credit", ({ assert }) => {
+    assert.equal(dischargesSenderHalf(standObligation, null, ITEM_X), false);
   });
 });
 
 test.group("satisfiesReceiverHalf", () => {
-  test("any copy of the title from anyone satisfies the receiver", () => {
-    expect(satisfiesReceiverHalf(obligation, R, ITEM_X)).to.equal(true);
+  test("any copy of the title from anyone satisfies the receiver", ({ assert }) => {
+    assert.equal(satisfiesReceiverHalf(obligation, R, ITEM_X), true);
   });
 
-  test("a different title does not", () => {
-    expect(satisfiesReceiverHalf(obligation, R, OTHER_ITEM)).to.equal(false);
+  test("a different title does not", ({ assert }) => {
+    assert.equal(satisfiesReceiverHalf(obligation, R, OTHER_ITEM), false);
   });
 
-  test("an equivalent edition does", () => {
+  test("an equivalent edition does", ({ assert }) => {
     const gymnos = { senderCustomerId: S, receiverCustomerId: R, itemId: GYMNOS_2009 };
-    expect(satisfiesReceiverHalf(gymnos, R, GYMNOS_2012)).to.equal(true);
+    assert.equal(satisfiesReceiverHalf(gymnos, R, GYMNOS_2012), true);
   });
 });
 
 test.group("deriveObligationProgress", () => {
-  test("case 1: pending when nothing has happened", () => {
+  test("case 1: pending when nothing has happened", ({ assert }) => {
     const progress = deriveObligationProgress(obligation, null, null);
-    expect(progress.senderDischarged).to.equal(false);
-    expect(progress.receiverSatisfied).to.equal(false);
-    expect(progress.wentAsPlanned).to.equal(false);
-    expect(progress.receivedFrom).to.equal(null);
-    expect(progress.deliveredTo).to.equal(null);
+    assert.equal(progress.senderDischarged, false);
+    assert.equal(progress.receiverSatisfied, false);
+    assert.equal(progress.wentAsPlanned, false);
+    assert.equal(progress.receivedFrom, null);
+    assert.equal(progress.deliveredTo, null);
   });
 
-  test("case 2: as planned when one handover discharges both halves", () => {
+  test("case 2: as planned when one handover discharges both halves", ({ assert }) => {
     const handover = { id: 1, fromCustomerId: S, toCustomerId: R };
     const progress = deriveObligationProgress(obligation, handover, handover);
-    expect(progress.wentAsPlanned).to.equal(true);
-    expect(progress.receivedFrom).to.equal(null);
-    expect(progress.deliveredTo).to.equal(null);
+    assert.equal(progress.wentAsPlanned, true);
+    assert.equal(progress.receivedFrom, null);
+    assert.equal(progress.deliveredTo, null);
   });
 
-  test("case 3: a second copy the sender owns is as good as their first", () => {
+  test("case 3: a second copy the sender owns is as good as their first", ({ assert }) => {
     // Receiving next year's copy and passing it on still credits the sender: it was theirs.
     const handover = { id: 2, fromCustomerId: S, toCustomerId: R };
     const progress = deriveObligationProgress(obligation, handover, handover);
-    expect(progress.wentAsPlanned).to.equal(true);
-    expect(progress.senderDischarged).to.equal(true);
-    expect(progress.receivedFrom).to.equal(null);
+    assert.equal(progress.wentAsPlanned, true);
+    assert.equal(progress.senderDischarged, true);
+    assert.equal(progress.receivedFrom, null);
   });
 
-  test("case 4: names the actual sender when the book came from someone else", () => {
+  test("case 4: names the actual sender when the book came from someone else", ({ assert }) => {
     const fromC = { id: 3, fromCustomerId: C, toCustomerId: R };
     const progress = deriveObligationProgress(obligation, null, fromC);
-    expect(progress.receiverSatisfied).to.equal(true);
-    expect(progress.senderDischarged).to.equal(false);
-    expect(progress.wentAsPlanned).to.equal(false);
-    expect(progress.receivedFrom).to.deep.equal({ kind: "customer", customerId: C });
+    assert.equal(progress.receiverSatisfied, true);
+    assert.equal(progress.senderDischarged, false);
+    assert.equal(progress.wentAsPlanned, false);
+    assert.deepEqual(progress.receivedFrom, { kind: "customer", customerId: C });
   });
 
-  test("case 6: the sender's copy went elsewhere and the receiver is still waiting", () => {
+  test("case 6: the sender's copy went elsewhere and the receiver is still waiting", ({
+    assert,
+  }) => {
     // We report only what was recorded. Whether R will still get a book is unknowable: S may be
     // holding somebody else's copy that no scan ever captured, so nothing here guesses at it.
     const toC = { id: 5, fromCustomerId: S, toCustomerId: C };
     const progress = deriveObligationProgress(obligation, toC, null);
-    expect(progress.senderDischarged).to.equal(true);
-    expect(progress.deliveredTo).to.deep.equal({ kind: "customer", customerId: C });
-    expect(progress.receiverSatisfied).to.equal(false);
+    assert.equal(progress.senderDischarged, true);
+    assert.deepEqual(progress.deliveredTo, { kind: "customer", customerId: C });
+    assert.equal(progress.receiverSatisfied, false);
   });
 
-  test("case 8: reports the stand as the origin of a pickup", () => {
+  test("case 8: reports the stand as the origin of a pickup", ({ assert }) => {
     const fromStand = { id: 7, fromCustomerId: null, toCustomerId: R };
     const progress = deriveObligationProgress(obligation, null, fromStand);
-    expect(progress.receivedFrom).to.deep.equal({ kind: "stand" });
-    expect(progress.receiverSatisfied).to.equal(true);
+    assert.deepEqual(progress.receivedFrom, { kind: "stand" });
+    assert.equal(progress.receiverSatisfied, true);
   });
 
-  test("case 9: reports the stand as the destination of a return", () => {
+  test("case 9: reports the stand as the destination of a return", ({ assert }) => {
     const toStand = { id: 8, fromCustomerId: S, toCustomerId: null };
     const progress = deriveObligationProgress(obligation, toStand, null);
-    expect(progress.deliveredTo).to.deep.equal({ kind: "stand" });
-    expect(progress.senderDischarged).to.equal(true);
+    assert.deepEqual(progress.deliveredTo, { kind: "stand" });
+    assert.equal(progress.senderDischarged, true);
   });
 
-  test("case 10: both halves discharged by two different handovers", () => {
+  test("case 10: both halves discharged by two different handovers", ({ assert }) => {
     const senderGaveToC = { id: 9, fromCustomerId: S, toCustomerId: C };
     const receiverGotFromC = { id: 10, fromCustomerId: C, toCustomerId: R };
     const progress = deriveObligationProgress(obligation, senderGaveToC, receiverGotFromC);
-    expect(progress.wentAsPlanned).to.equal(false);
-    expect(progress.deliveredTo).to.deep.equal({ kind: "customer", customerId: C });
-    expect(progress.receivedFrom).to.deep.equal({ kind: "customer", customerId: C });
+    assert.equal(progress.wentAsPlanned, false);
+    assert.deepEqual(progress.deliveredTo, { kind: "customer", customerId: C });
+    assert.deepEqual(progress.receivedFrom, { kind: "customer", customerId: C });
   });
 
-  test("nothing is inferred about a pending obligation beyond it being pending", () => {
+  test("nothing is inferred about a pending obligation beyond it being pending", ({ assert }) => {
     const progress = deriveObligationProgress(obligation, null, null);
-    expect(Object.values(progress)).to.deep.equal([false, false, false, null, null]);
+    assert.deepEqual(Object.values(progress), [false, false, false, null, null]);
   });
 });

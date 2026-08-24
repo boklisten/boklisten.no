@@ -1,14 +1,9 @@
 import { test } from "@japa/runner";
-import { assert, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import { createSandbox } from "sinon";
 
 import { UserDetailUpdateHook } from "#services/legacy/collections/user-detail/hooks/user-detail-update.hook";
 import { StorageService } from "#services/storage_service";
 import { AccessToken } from "#shared/access-token";
-
-chaiUse(chaiAsPromised);
-should();
 
 const customerAccessToken = { permission: "customer" } as AccessToken;
 const adminAccessToken = { permission: "admin" } as AccessToken;
@@ -27,7 +22,7 @@ test.group("UserDetailUpdateHook", async (group) => {
     sandbox.restore();
   });
 
-  test("should do proper capitalization with latin letters", async () => {
+  test("should do proper capitalization with latin letters", async ({ assert }) => {
     const body = {
       name: "siri matheus berge",
       address: "portalgata 15c",
@@ -42,7 +37,7 @@ test.group("UserDetailUpdateHook", async (group) => {
     assert.deepEqual(result, expected);
   });
 
-  test("should do proper capitalization and spacing with Norwegian letters", async () => {
+  test("should do proper capitalization and spacing with Norwegian letters", async ({ assert }) => {
     const body = {
       name: "        TOR åGE       bRingsVær       ",
       address: "øygatÆn     ",
@@ -57,7 +52,7 @@ test.group("UserDetailUpdateHook", async (group) => {
     assert.deepEqual(result, expected);
   });
 
-  test("should do proper capitalization on exotic characters", async () => {
+  test("should do proper capitalization on exotic characters", async ({ assert }) => {
     const body = {
       name: "İgiorİ ßißßa",
       address: "łFEłŁlo 12ł",
@@ -72,7 +67,7 @@ test.group("UserDetailUpdateHook", async (group) => {
     assert.deepEqual(result, expected);
   });
 
-  test("should capitalize each part of hyphenated names", async () => {
+  test("should capitalize each part of hyphenated names", async ({ assert }) => {
     const body = {
       name: "john maYor-taylor",
       address: "johnson st  2",
@@ -87,14 +82,14 @@ test.group("UserDetailUpdateHook", async (group) => {
     assert.deepEqual(result, expected);
   });
 
-  test("should disallow email-confirmed status change by customer", async () => {
+  test("should disallow email-confirmed status change by customer", async ({ assert }) => {
     const body = {
       emailConfirmed: true,
     };
-    await assert.isRejected(userDetailUpdateHook.before(body, customerAccessToken));
+    await assert.rejects(() => userDetailUpdateHook.before(body, customerAccessToken));
   });
 
-  test("should allow email-confirmed status change by admin", async () => {
+  test("should allow email-confirmed status change by admin", async ({ assert }) => {
     const body = {
       emailConfirmed: true,
     };
@@ -105,7 +100,7 @@ test.group("UserDetailUpdateHook", async (group) => {
     assert.deepEqual(result, expected);
   });
 
-  test("should allow patch by customer", async () => {
+  test("should allow patch by customer", async ({ assert }) => {
     const body = {
       name: "1",
       postCode: "3",
@@ -119,31 +114,9 @@ test.group("UserDetailUpdateHook", async (group) => {
     assert.deepEqual(result, expected);
   });
 
-  test("should error on wrongly-typed field", async () => {
-    const properties = [
-      "name",
-      "address",
-      "phone",
-      "postCity",
-      "postCode",
-      "dob",
-      "emailConfirmed",
-    ];
-    const invalidBodies = properties.map((property) => ({ [property]: 2 }));
-    // Assert that validation fails for all wrong bodies
-    await Promise.all(
-      invalidBodies.map(
-        (body) =>
-          // Flip promise result, resolved => rejected and vice versa
-          new Promise<void>((resolve, reject) => {
-            userDetailUpdateHook
-              .before(body, adminAccessToken)
-              .then(() =>
-                reject(new Error(`Validator accepted wrongly typed ${JSON.stringify(body)}`)),
-              )
-              .catch(() => resolve());
-          }),
-      ),
+  test("should error on wrongly-typed {$self}")
+    .with(["name", "address", "phone", "postCity", "postCode", "dob", "emailConfirmed"])
+    .run(({ assert }, property) =>
+      assert.rejects(() => userDetailUpdateHook.before({ [property]: 2 }, adminAccessToken)),
     );
-  });
 });

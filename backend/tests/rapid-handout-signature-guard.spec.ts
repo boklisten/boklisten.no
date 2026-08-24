@@ -1,5 +1,4 @@
 import { test } from "@japa/runner";
-import { expect } from "chai";
 import sinon, { createSandbox } from "sinon";
 
 import { verifyCustomerSignature } from "#services/legacy/signature.helper";
@@ -54,41 +53,50 @@ test.group("verifyCustomerSignature", (group) => {
     sandbox.restore();
   });
 
-  test("should return feedback when the customer does not exist", async () => {
+  test("should return feedback when the customer does not exist", async ({ assert }) => {
     userDetailStub.resolves(null);
 
     const feedback = await verifyCustomerSignature("missing-customer");
 
-    expect(feedback).to.be.a("string").and.to.contain("signatur");
+    assert.typeOf(feedback, "string");
+    assert.include(feedback, "signatur");
   });
 
-  test("should return feedback when an unsigned customer has an open rent order", async () => {
+  test("should return feedback when an unsigned customer has an open rent order", async ({
+    assert,
+  }) => {
     orders = [openOrderWith("rent")];
     userDetailStub.resolves(userDetailWith({ signatures: [] }));
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
-    expect(feedback).to.be.a("string").and.to.contain("signatur");
+    assert.typeOf(feedback, "string");
+    assert.include(feedback, "signatur");
   });
 
-  test("should return feedback when the signature task is requested", async () => {
+  test("should return feedback when the signature task is requested", async ({ assert }) => {
     userDetailStub.resolves(userDetailWith({ signatures: [], tasks: { signAgreement: true } }));
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
-    expect(feedback).to.be.a("string").and.to.contain("signatur");
+    assert.typeOf(feedback, "string");
+    assert.include(feedback, "signatur");
   });
 
-  test("should return null for an unsigned customer with only a partly-payment order", async () => {
+  test("should return null for an unsigned customer with only a partly-payment order", async ({
+    assert,
+  }) => {
     orders = [openOrderWith("partly-payment")];
     userDetailStub.resolves(userDetailWith({ signatures: [] }));
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
-    expect(feedback).to.equal(null);
+    assert.equal(feedback, null);
   });
 
-  test("should return feedback when the newest signature is expired and a rent order is open", async () => {
+  test("should return feedback when the newest signature is expired and a rent order is open", async ({
+    assert,
+  }) => {
     orders = [openOrderWith("rent")];
     userDetailStub.resolves(userDetailWith({ signatures: ["signature1"] }));
     signatureStub.resolves({
@@ -98,10 +106,13 @@ test.group("verifyCustomerSignature", (group) => {
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
-    expect(feedback).to.be.a("string").and.to.contain("signatur");
+    assert.typeOf(feedback, "string");
+    assert.include(feedback, "signatur");
   });
 
-  test("should return feedback when an underage customer signed without a guardian", async () => {
+  test("should return feedback when an underage customer signed without a guardian", async ({
+    assert,
+  }) => {
     orders = [openOrderWith("rent")];
     userDetailStub.resolves(userDetailWith({ dob: childDob, signatures: ["signature1"] }));
     signatureStub.resolves({
@@ -111,10 +122,11 @@ test.group("verifyCustomerSignature", (group) => {
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
-    expect(feedback).to.be.a("string").and.to.contain("signatur");
+    assert.typeOf(feedback, "string");
+    assert.include(feedback, "signatur");
   });
 
-  test("should return null when the customer has a valid signature", async () => {
+  test("should return null when the customer has a valid signature", async ({ assert }) => {
     orders = [openOrderWith("rent")];
     userDetailStub.resolves(userDetailWith({ signatures: ["signature1"] }));
     signatureStub.resolves({
@@ -124,6 +136,6 @@ test.group("verifyCustomerSignature", (group) => {
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
-    expect(feedback).to.equal(null);
+    assert.equal(feedback, null);
   });
 });

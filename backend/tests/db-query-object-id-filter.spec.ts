@@ -1,41 +1,41 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import mongoose from "mongoose";
 
 import { DbQueryObjectIdFilter } from "#services/legacy/query/db-query-object-id-filter";
 
-chaiUse(chaiAsPromised);
-should();
-
 test.group("DbQueryObjectIdFilter", async () => {
   const dbQueryObjectIdFilter: DbQueryObjectIdFilter = new DbQueryObjectIdFilter();
 
-  test("should return empty array if query is valid and validObjectIdParams is empty", async () => {
-    expect(
+  test("should return empty array if query is valid and validObjectIdParams is empty", async ({
+    assert,
+  }) => {
+    assert.deepEqual(
       dbQueryObjectIdFilter.getObjectIdFilters({ name: "5c2e0e5bb311ba0701f15967" }, []),
-    ).to.eql([]);
+      [],
+    );
   });
 
-  test("should throw TypeError if query is empty", async () => {
-    expect(() => {
+  test("should throw TypeError if query is empty", async ({ assert }) => {
+    assert.throws(() => {
       dbQueryObjectIdFilter.getObjectIdFilters({}, ["id"]);
-    }).to.throw(TypeError);
+    }, TypeError);
   });
 
-  test("should throw error when both query and validParams are empty ", async () => {
-    expect(() => {
+  test("should throw error when both query and validParams are empty ", async ({ assert }) => {
+    assert.throws(() => {
       dbQueryObjectIdFilter.getObjectIdFilters({}, []);
-    }).to.throw(TypeError);
+    }, TypeError);
   });
 
-  test("should throw Error if parameter is not a valid object-id", async () => {
-    expect(() => {
+  test("should throw Error if parameter is not a valid object-id", async ({ assert }) => {
+    assert.throws(() => {
       dbQueryObjectIdFilter.getObjectIdFilters({ id: { test: {} } }, ["id"]);
-    }).to.throw(Error);
+    }, Error);
   });
 
-  test("should not change values in query that are not in ValidObjectIdParams", async () => {
+  test("should not change values in query that are not in ValidObjectIdParams", async ({
+    assert,
+  }) => {
     const result = [
       {
         fieldName: "id",
@@ -45,12 +45,13 @@ test.group("DbQueryObjectIdFilter", async () => {
         ],
       },
     ];
-    expect(
+    assert.deepEqual(
       dbQueryObjectIdFilter.getObjectIdFilters({ id: "5c2e0e5bb311ba0701f15967" }, ["id"]),
-    ).to.eql(result);
+      result,
+    );
   });
 
-  test("should return correct array given valid input", async () => {
+  test("should return correct array given valid input", async ({ assert }) => {
     const query = {
       id: "5c2e0e5bb311ba0701f15967",
       customer: "5c2e0e5bb311ba0701f15967",
@@ -82,7 +83,8 @@ test.group("DbQueryObjectIdFilter", async () => {
       },
     ];
 
-    expect(dbQueryObjectIdFilter.getObjectIdFilters(query, ["id", "customer", "branch"])).to.eql(
+    assert.deepEqual(
+      dbQueryObjectIdFilter.getObjectIdFilters(query, ["id", "customer", "branch"]),
       result,
     );
   });

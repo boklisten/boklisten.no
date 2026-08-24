@@ -1,6 +1,4 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
@@ -9,9 +7,6 @@ import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
 import { OrderItem } from "#shared/order/order-item/order-item";
 import { UserDetail } from "#shared/user-detail";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("OrderToCustomerItemGenerator", (group) => {
   const userDetail = {
@@ -47,7 +42,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
   });
   const generator = new OrderToCustomerItemGenerator();
 
-  test('should return customer-item type "partly-payment', async () => {
+  test('should return customer-item type "partly-payment', async ({ assert }) => {
     const deadline = new Date(2100, 1, 1);
     const today = new Date();
 
@@ -117,10 +112,12 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     ];
 
     const result = generator.generate(order);
-    return expect(result).to.eventually.be.eql(expectedResult);
+    assert.deepEqual(await result, expectedResult);
   });
 
-  test('should return multiple customer-items when more than one order-item has type "partly-payment', async () => {
+  test('should return multiple customer-items when more than one order-item has type "partly-payment', async ({
+    assert,
+  }) => {
     const deadline = new Date(2100, 1, 1);
     const today = new Date();
 
@@ -239,10 +236,12 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     ];
 
     const result = generator.generate(order);
-    return expect(result).to.eventually.be.eql(expectedResult);
+    assert.deepEqual(await result, expectedResult);
   });
 
-  test("should return empty array if no order-item shall be converted to customer-items when more than one order-item", async () => {
+  test("should return empty array if no order-item shall be converted to customer-items when more than one order-item", async ({
+    assert,
+  }) => {
     const deadline = new Date(2100, 1, 1);
     const today = new Date();
 
@@ -292,10 +291,10 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const result = generator.generate(order);
-    return expect(result).to.eventually.be.eql([]);
+    assert.deepEqual(await result, []);
   });
 
-  test('should return customer-item type "rent"', async () => {
+  test('should return customer-item type "rent"', async ({ assert }) => {
     const deadline = new Date(2100, 1, 1);
     const today = new Date();
 
@@ -361,10 +360,10 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     ];
 
     const result = generator.generate(order);
-    return expect(result).to.eventually.be.eql(expectedResult);
+    assert.deepEqual(await result, expectedResult);
   });
 
-  test('should return multiple customer-items with type "rent"', async () => {
+  test('should return multiple customer-items with type "rent"', async ({ assert }) => {
     const deadline = new Date(2100, 1, 1);
     const today = new Date();
 
@@ -475,10 +474,10 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     ];
 
     const result = generator.generate(order);
-    return expect(result).to.eventually.be.eql(expectedResult);
+    assert.deepEqual(await result, expectedResult);
   });
 
-  test('should return multiple customer-items with type "loan"', async () => {
+  test('should return multiple customer-items with type "loan"', async ({ assert }) => {
     const deadline = new Date(2100, 1, 1);
     const today = new Date();
 
@@ -589,10 +588,12 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     ];
 
     const result = generator.generate(order);
-    return expect(result).to.eventually.be.eql(expectedResult);
+    assert.deepEqual(await result, expectedResult);
   });
 
-  test('should return multiple customer-items with enums "loan", "rent" and "partly-payment"', async () => {
+  test('should return multiple customer-items with enums "loan", "rent" and "partly-payment"', async ({
+    assert,
+  }) => {
     const deadline = new Date(2100, 1, 1);
     const today = new Date();
 
@@ -765,6 +766,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     ];
 
     const result = generator.generate(order);
-    return expect(result).to.eventually.be.eql(expectedResult);
+    assert.deepEqual(await result, expectedResult);
   });
 });

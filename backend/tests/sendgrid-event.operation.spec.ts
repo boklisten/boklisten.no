@@ -1,14 +1,9 @@
 import { test } from "@japa/runner";
-import { expect, use as chaiUse, should } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import sinon, { createSandbox } from "sinon";
 
 import { SendgridEventOperation } from "#services/legacy/collections/message/operations/sendgrid-event.operation";
 import { StorageService } from "#services/storage_service";
 import { Message } from "#shared/message/message";
-
-chaiUse(chaiAsPromised);
-should();
 
 test.group("SendgridEventOperation", (group) => {
   const sendgridEventOperation = new SendgridEventOperation();
@@ -32,23 +27,23 @@ test.group("SendgridEventOperation", (group) => {
     sandbox.restore();
   });
 
-  test("should be rejected if blApiRequest.data is empty or undefined", async () => {
+  test("should be rejected if blApiRequest.data is empty or undefined", async ({ assert }) => {
     const blApiRequest = {
       data: null,
     };
 
-    return expect(sendgridEventOperation.run(blApiRequest)).to.be.rejected;
+    return assert.rejects(() => sendgridEventOperation.run(blApiRequest));
   });
 
-  test("should be rejected if blApiRequest.data is not an array", async () => {
+  test("should be rejected if blApiRequest.data is not an array", async ({ assert }) => {
     const blApiRequest = {
       data: { something: "else" },
     };
 
-    return expect(sendgridEventOperation.run(blApiRequest)).to.be.rejected;
+    return assert.rejects(() => sendgridEventOperation.run(blApiRequest));
   });
 
-  test('should return true if sendgridEvent email type is not "reminder"', async () => {
+  test('should return true if sendgridEvent email type is not "reminder"', async ({ assert }) => {
     const blApiRequest = {
       data: [
         {
@@ -59,10 +54,10 @@ test.group("SendgridEventOperation", (group) => {
       ],
     };
 
-    return expect(sendgridEventOperation.run(blApiRequest)).to.eventually.be.fulfilled;
+    return assert.doesNotReject(() => sendgridEventOperation.run(blApiRequest));
   });
 
-  test("should get correct message based on info in sendgrid event", async () => {
+  test("should get correct message based on info in sendgrid event", async ({ assert }) => {
     const sendgridEvent = {
       email: "some@email.com",
       timestamp: 1234,
@@ -81,14 +76,11 @@ test.group("SendgridEventOperation", (group) => {
 
     messageStorageGetIdStub.withArgs("blMessage1").resolves({ id: "blMessage1" } as Message);
 
-    void sendgridEventOperation.run(blApiRequest).then(() => {
-      const arg = messageStorageGetIdStub.lastCall.args[0];
-
-      return expect(arg).to.eq("blMessage1");
-    });
+    await sendgridEventOperation.run(blApiRequest);
+    assert.equal(messageStorageGetIdStub.lastCall.args[0], "blMessage1");
   });
 
-  test("should update correct message with sendgrid event", async () => {
+  test("should update correct message with sendgrid event", async ({ assert }) => {
     const sendgridEvent = {
       email: "some@email.com",
       timestamp: 1234,
@@ -107,10 +99,9 @@ test.group("SendgridEventOperation", (group) => {
 
     messageStorageUpdateStub.resolves({} as Message);
 
-    void sendgridEventOperation.run(blApiRequest).then(() => {
-      const args = messageStorageUpdateStub.lastCall.args;
-      expect(args[0]).to.eq("blMessage1");
-      return expect(args[1]).to.eql({ events: [sendgridEvent] });
-    });
+    await sendgridEventOperation.run(blApiRequest);
+    const args = messageStorageUpdateStub.lastCall.args;
+    assert.equal(args[0], "blMessage1");
+    assert.deepEqual(args[1], { events: [sendgridEvent] });
   });
 });
