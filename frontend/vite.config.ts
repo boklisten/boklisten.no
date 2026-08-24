@@ -1,6 +1,5 @@
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
-import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import babel from "@rolldown/plugin-babel";
+import react from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
@@ -23,8 +22,7 @@ export default defineConfig({
         },
       },
     }),
-    react(),
-    babel({ presets: [reactCompilerPreset()] }),
+    react({ compiler: true }),
     sentryTanstackStart({
       org: "boklisten",
       project: "frontend",

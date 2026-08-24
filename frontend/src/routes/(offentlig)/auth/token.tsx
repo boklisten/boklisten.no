@@ -53,6 +53,7 @@ function TokenPage() {
   });
   useEffect(() => {
     if (accessToken && refreshToken) {
+      // oxlint-disable-next-line react/set-state-in-effect -- setHasFailed only runs after an awaited network call, never synchronously during the effect
       void onLogin({ accessToken, refreshToken });
     }
   }, [accessToken, refreshToken, attempt]);

@@ -16,6 +16,10 @@ export default defineConfig({
     "jsx-a11y",
     "promise",
   ],
+  // TODO: enable more categories for better linting
+  categories: {
+    correctness: "error",
+  },
   rules: {
     // fixme: remove these to improve linting
     "@typescript-eslint/unbound-method": "off",

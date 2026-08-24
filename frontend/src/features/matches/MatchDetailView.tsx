@@ -59,14 +59,17 @@ export default function MatchDetailView({
   const finished = isFullyFulfilled(viewerMatch);
 
   // Completion is observed on the refetched match rather than in the scan callback, which only
-  // sees the match as it was when the scanner opened. Gating on the scanner being open keeps a
-  // student who merely revisits a finished match from being redirected away.
-  useEffect(() => {
+  // sees the match as it was when the scanner opened. Reacting to the transition while the
+  // scanner is open keeps a student who merely revisits a finished match from being redirected
+  // away — a match that is already finished on first render never trips the countdown.
+  const [wasFinished, setWasFinished] = useState(finished);
+  if (finished !== wasFinished) {
+    setWasFinished(finished);
     if (finished && opened) {
       close();
       setRedirectCountdownStarted(true);
     }
-  }, [finished, opened, close]);
+  }
 
   const canScan = !isStandMatch && toReceive.length > 0;
 

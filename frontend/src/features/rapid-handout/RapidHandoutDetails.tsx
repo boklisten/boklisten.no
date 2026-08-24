@@ -4,7 +4,7 @@ import { Box, Button, Modal, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconObjectScan } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import CancelOrderItemButton from "@/features/rapid-handout/CancelOrderItemButton";
 import {
@@ -62,10 +62,11 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
     resolve: (choice: NoOrderChoice | null) => void;
   } | null>(null);
 
-  useEffect(() => {
-    if (!orders) {
-      return;
-    }
+  // Local scan state is reconciled against every fresh poll of the orders during render; starting
+  // from undefined means a cache-warm first render still populates the list.
+  const [syncedOrders, setSyncedOrders] = useState<typeof orders>(undefined);
+  if (orders !== undefined && orders !== syncedOrders) {
+    setSyncedOrders(orders);
     const unfulfilledOrderItems = calculateUnfulfilledOrderItems(orders);
     setItemStatuses((previousState) => {
       const refreshed = previousState.map((itemStatus) => ({
@@ -87,7 +88,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
       }
       return [...refreshed, ...added];
     });
-  }, [orders]);
+  }
 
   const { receiveBooks, giveBooks } = buildPeerBooks(matchData ?? [], customer.id);
   // One list for everything the customer is due to get: unmarked rows are ordinary stand

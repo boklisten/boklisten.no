@@ -42,7 +42,7 @@
   "dependencies": {
     "@adonisjs/ally": "^6.3.0",
     "@adonisjs/auth": "^10.1.0",
-    "@adonisjs/core": "^7.4.0",
+    "@adonisjs/core": "^7.5.0",
     "@adonisjs/cors": "^3.0.0",
     "@adonisjs/limiter": "^3.0.1",
     "@adonisjs/lucid": "^22.4.2",
@@ -65,7 +65,7 @@
     "moment": "^2.30.1",
     "moment-timezone": "^0.6.3",
     "mongodb": "^7.5.0",
-    "mongoose": "^9.9.1",
+    "mongoose": "^9.9.3",
     "openapi-fetch": "^0.17.0",
     "pdfkit": "^0.19.1",
     "pg": "^8.23.0",
@@ -76,7 +76,7 @@
     "validator": "^13.15.35"
   },
   "devDependencies": {
-    "@adonisjs/assembler": "^8.4.0",
+    "@adonisjs/assembler": "^8.5.0",
     "@adonisjs/tsconfig": "^2.0.0",
     "@japa/api-client": "^3.2.1",
     "@japa/assert": "^4.2.0",

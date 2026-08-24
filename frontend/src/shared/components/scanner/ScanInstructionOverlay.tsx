@@ -32,14 +32,15 @@ function BarcodeIllustration({ type }: { type: ScanCodeType }) {
   const scale = (LABEL_WIDTH - QUIET_ZONE * 2) / totalModules;
 
   let cursor = QUIET_ZONE;
-  const bars = BAR_RUNS.map((run, index) => {
+  const bars = [];
+  for (const [index, run] of BAR_RUNS.entries()) {
     const x = cursor;
     cursor += run * scale;
     if (index % 2 !== 0) {
-      return null;
+      continue;
     }
     const isGuard = GUARD_RUNS.has(index);
-    return (
+    bars.push(
       <rect
         key={index}
         x={x}
@@ -47,9 +48,9 @@ function BarcodeIllustration({ type }: { type: ScanCodeType }) {
         width={run * scale}
         height={(isGuard ? GUARD_BOTTOM : BARS_BOTTOM) - BARS_TOP}
         fill={"#111318"}
-      />
+      />,
     );
-  });
+  }
 
   return (
     <svg

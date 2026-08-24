@@ -1,5 +1,5 @@
 import { type IDetectedBarcode, type IScannerError, Scanner } from "@yudiel/react-qr-scanner";
-import { type ReactNode, useCallback, useRef } from "react";
+import { type ReactNode, useCallback, useEffect, useRef } from "react";
 
 import { determineScanCodeType, type ScanCodeType } from "@/shared/utils/scanCodes";
 
@@ -35,11 +35,13 @@ export default function CameraScanner({
   // The handler closes over caller state that changes between steps of a multi-step scan flow, so
   // read it through a ref instead of whatever the scanner captured on an earlier render.
   const onCodeRef = useRef(onCode);
-  onCodeRef.current = onCode;
   const acceptsRef = useRef(accepts);
-  acceptsRef.current = accepts;
   const activeRef = useRef(active);
-  activeRef.current = active;
+  useEffect(() => {
+    onCodeRef.current = onCode;
+    acceptsRef.current = accepts;
+    activeRef.current = active;
+  });
   // Two detections can overlap, and handing out the same book twice is unrecoverable. Only ever
   // let one code be processed at a time.
   const busyRef = useRef(false);
