@@ -73,10 +73,9 @@ export default class UserDetailsController {
   }
 
   async updateAsEmployee(ctx: HttpContext) {
-    const { permission: employeePermission } = PermissionService.employeeOrFail(ctx);
+    PermissionService.employeeOrFail(ctx);
     const targetUserDetailsId = ctx.request.param("detailsId");
     const {
-      permission,
       emailVerified,
       email,
       phoneNumber,
@@ -105,9 +104,5 @@ export default class UserDetailsController {
       guardian,
       "tasks.confirmDetails": false,
     });
-    if (PermissionService.isAdmin(employeePermission)) {
-      const user = await UserService.getByUserDetailsId(targetUserDetailsId);
-      if (user) await StorageService.Users.update(user.id, { permission });
-    }
   }
 }

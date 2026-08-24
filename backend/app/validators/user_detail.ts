@@ -1,6 +1,5 @@
 import vine from "@vinejs/vine";
 
-import { USER_PERMISSION } from "#shared/user-permission";
 import { emailField, phoneField, postalCodeField } from "#validators/common/fields";
 import { uniqueEmail, uniquePhoneNumber } from "#validators/common/rules";
 import { cleanUserInput } from "#validators/common/transformers";
@@ -56,16 +55,15 @@ export const userDetailSearchValidator = vine.create({
 
 export const customerUpdateUserDetailsValidator = vine
   .withMetaData<{ detailsId: string }>()
-  .compile(customerUpdateUserDetailsSchema);
+  .create(customerUpdateUserDetailsSchema);
 
 // Fields that employees are allowed to adjust
 const employeeUpdateUserDetailsSchema = vine.object({
   ...customerUpdateUserDetailsSchema.getProperties(),
   email: emailField.clone().use(uniqueEmail()),
   emailVerified: vine.boolean(),
-  permission: vine.enum(USER_PERMISSION),
 });
 
 export const employeeUpdateUserDetailsValidator = vine
   .withMetaData<{ detailsId: string }>()
-  .compile(employeeUpdateUserDetailsSchema);
+  .create(employeeUpdateUserDetailsSchema);

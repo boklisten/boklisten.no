@@ -943,6 +943,78 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_detail_controller').default['confirmEmail']>>>
     }
   }
+  'user_management.metrics': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/users/metrics'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['metrics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['metrics']>>>
+    }
+  }
+  'user_management.duplicates': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/users/duplicates'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['duplicates']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['duplicates']>>>
+    }
+  }
+  'user_management.merge': {
+    methods: ["POST"]
+    pattern: '/v2/admin/users/merge'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/user_management').mergeUsersValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/user_management').mergeUsersValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['merge']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['merge']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'user_management.employees': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/users/employees'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['employees']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['employees']>>>
+    }
+  }
+  'user_management.set_permission': {
+    methods: ["POST"]
+    pattern: '/v2/admin/users/permission'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/user_management').setPermissionValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/user_management').setPermissionValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['setPermission']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['setPermission']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'user_management.destroy': {
+    methods: ["DELETE"]
+    pattern: '/v2/admin/users/:detailsId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { detailsId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['destroy']>>>
+    }
+  }
   'customer_items.get_customer_items': {
     methods: ["GET","HEAD"]
     pattern: '/v2/customer_items'
@@ -1917,18 +1989,6 @@ export interface Registry {
   }
   'collection.userdetails.patch': {
     methods: ["PATCH"]
-    pattern: '/userdetails/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.userdetails.delete': {
-    methods: ["DELETE"]
     pattern: '/userdetails/:id'
     types: {
       body: {}

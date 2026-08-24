@@ -11,9 +11,9 @@ import {
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
-import ChartCard from "@/features/matches/insights/ChartCard";
+import ChartCard from "@/shared/components/charts/ChartCard";
 import DataFreshness from "@/features/matches/insights/DataFreshness";
-import DonutWithLegend from "@/features/matches/insights/DonutWithLegend";
+import DonutWithLegend from "@/shared/components/charts/DonutWithLegend";
 import StatTile from "@/shared/components/StatTile";
 import SunburstChart from "@/features/matches/insights/SunburstChart";
 import useReportDownload from "@/features/reports/useReportDownload";

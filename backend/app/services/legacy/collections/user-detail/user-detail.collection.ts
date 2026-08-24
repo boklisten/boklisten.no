@@ -1,4 +1,3 @@
-import { UserDetailDeleteHook } from "#services/legacy/collections/user-detail/hooks/user-detail-delete.hook";
 import { UserDetailUpdateHook } from "#services/legacy/collections/user-detail/hooks/user-detail-update.hook";
 import { UserDetailReadPermissionOperation } from "#services/legacy/collections/user-detail/operations/read-permission/user-detail-read-permission.operation";
 import { UserDetailValidOperation } from "#services/legacy/collections/user-detail/operations/user-detail-valid.operation";
@@ -42,13 +41,6 @@ export const UserDetailCollection: BlCollection = {
         permission: "customer",
         restricted: true,
       },
-    },
-    {
-      method: "delete",
-      restriction: {
-        permission: "admin",
-      },
-      hook: new UserDetailDeleteHook(),
     },
     {
       method: "getAll",

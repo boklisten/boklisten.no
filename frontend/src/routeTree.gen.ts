@@ -64,6 +64,7 @@ import { Route as offentligOverleveringerIndexRouteImport } from './routes/(offe
 import { Route as offentligOverleveringerMatchIdRouteImport } from './routes/(offentlig)/overleveringer/$matchId'
 import { Route as offentligSigneringUserDetailIdRouteImport } from './routes/(offentlig)/signering.$userDetailId'
 import { Route as administrasjonAdminDatabaseBokerRouteImport } from './routes/(administrasjon)/admin/database/boker'
+import { Route as administrasjonAdminDatabaseBrukereRouteImport } from './routes/(administrasjon)/admin/database/brukere'
 import { Route as administrasjonAdminDatabaseDynamisk_innholdRouteImport } from './routes/(administrasjon)/admin/database/dynamisk_innhold'
 import { Route as administrasjonAdminDatabaseFilialerRouteImport } from './routes/(administrasjon)/admin/database/filialer'
 import { Route as administrasjonAdminDatabaseRapporterRouteImport } from './routes/(administrasjon)/admin/database/rapporter'
@@ -382,6 +383,12 @@ const administrasjonAdminDatabaseBokerRoute =
     path: '/database/boker',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
+const administrasjonAdminDatabaseBrukereRoute =
+  administrasjonAdminDatabaseBrukereRouteImport.update({
+    id: '/database/brukere',
+    path: '/database/brukere',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
 const administrasjonAdminDatabaseDynamisk_innholdRoute =
   administrasjonAdminDatabaseDynamisk_innholdRouteImport.update({
     id: '/database/dynamisk_innhold',
@@ -573,6 +580,7 @@ export interface FileRoutesByFullPath {
   '/kasse/': typeof offentligKasseIndexRoute
   '/overleveringer/': typeof offentligOverleveringerIndexRoute
   '/admin/database/boker': typeof administrasjonAdminDatabaseBokerRoute
+  '/admin/database/brukere': typeof administrasjonAdminDatabaseBrukereRoute
   '/admin/database/dynamisk_innhold': typeof administrasjonAdminDatabaseDynamisk_innholdRoute
   '/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
   '/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
@@ -649,6 +657,7 @@ export interface FileRoutesByTo {
   '/kasse': typeof offentligKasseIndexRoute
   '/overleveringer': typeof offentligOverleveringerIndexRoute
   '/admin/database/boker': typeof administrasjonAdminDatabaseBokerRoute
+  '/admin/database/brukere': typeof administrasjonAdminDatabaseBrukereRoute
   '/admin/database/dynamisk_innhold': typeof administrasjonAdminDatabaseDynamisk_innholdRoute
   '/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
   '/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
@@ -730,6 +739,7 @@ export interface FileRoutesById {
   '/(offentlig)/kasse/': typeof offentligKasseIndexRoute
   '/(offentlig)/overleveringer/': typeof offentligOverleveringerIndexRoute
   '/(administrasjon)/admin/database/boker': typeof administrasjonAdminDatabaseBokerRoute
+  '/(administrasjon)/admin/database/brukere': typeof administrasjonAdminDatabaseBrukereRoute
   '/(administrasjon)/admin/database/dynamisk_innhold': typeof administrasjonAdminDatabaseDynamisk_innholdRoute
   '/(administrasjon)/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
   '/(administrasjon)/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
@@ -811,6 +821,7 @@ export interface FileRouteTypes {
     | '/kasse/'
     | '/overleveringer/'
     | '/admin/database/boker'
+    | '/admin/database/brukere'
     | '/admin/database/dynamisk_innhold'
     | '/admin/database/filialer'
     | '/admin/database/rapporter'
@@ -887,6 +898,7 @@ export interface FileRouteTypes {
     | '/kasse'
     | '/overleveringer'
     | '/admin/database/boker'
+    | '/admin/database/brukere'
     | '/admin/database/dynamisk_innhold'
     | '/admin/database/filialer'
     | '/admin/database/rapporter'
@@ -967,6 +979,7 @@ export interface FileRouteTypes {
     | '/(offentlig)/kasse/'
     | '/(offentlig)/overleveringer/'
     | '/(administrasjon)/admin/database/boker'
+    | '/(administrasjon)/admin/database/brukere'
     | '/(administrasjon)/admin/database/dynamisk_innhold'
     | '/(administrasjon)/admin/database/filialer'
     | '/(administrasjon)/admin/database/rapporter'
@@ -1398,6 +1411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminDatabaseBokerRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
+    '/(administrasjon)/admin/database/brukere': {
+      id: '/(administrasjon)/admin/database/brukere'
+      path: '/database/brukere'
+      fullPath: '/admin/database/brukere'
+      preLoaderRoute: typeof administrasjonAdminDatabaseBrukereRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
     '/(administrasjon)/admin/database/dynamisk_innhold': {
       id: '/(administrasjon)/admin/database/dynamisk_innhold'
       path: '/database/dynamisk_innhold'
@@ -1732,6 +1752,7 @@ interface administrasjonAdminRouteRouteChildren {
   administrasjonAdminVentelisteRoute: typeof administrasjonAdminVentelisteRoute
   administrasjonAdminIndexRoute: typeof administrasjonAdminIndexRoute
   administrasjonAdminDatabaseBokerRoute: typeof administrasjonAdminDatabaseBokerRoute
+  administrasjonAdminDatabaseBrukereRoute: typeof administrasjonAdminDatabaseBrukereRoute
   administrasjonAdminDatabaseDynamisk_innholdRoute: typeof administrasjonAdminDatabaseDynamisk_innholdRoute
   administrasjonAdminDatabaseFilialerRoute: typeof administrasjonAdminDatabaseFilialerRoute
   administrasjonAdminDatabaseRapporterRoute: typeof administrasjonAdminDatabaseRapporterRoute
@@ -1760,6 +1781,8 @@ const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildr
     administrasjonAdminIndexRoute: administrasjonAdminIndexRoute,
     administrasjonAdminDatabaseBokerRoute:
       administrasjonAdminDatabaseBokerRoute,
+    administrasjonAdminDatabaseBrukereRoute:
+      administrasjonAdminDatabaseBrukereRoute,
     administrasjonAdminDatabaseDynamisk_innholdRoute:
       administrasjonAdminDatabaseDynamisk_innholdRoute,
     administrasjonAdminDatabaseFilialerRoute:

@@ -72,6 +72,10 @@ export default function SelectedCustomerCard({
                       <AdministrateUserForm
                         userDetail={customer}
                         onSaved={() => modals.close(ADMINISTRATE_USER_MODAL_ID)}
+                        onDeleted={() => {
+                          modals.close(ADMINISTRATE_USER_MODAL_ID);
+                          onDeselect();
+                        }}
                       />
                     ),
                   })

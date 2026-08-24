@@ -253,6 +253,16 @@ router.post("/v2/employee/user_details/:detailsId/confirm_email", [
 ]);
 
 /**
+ * user management
+ */
+router.get("/v2/admin/users/metrics", [controllers.UserManagement, "metrics"]);
+router.get("/v2/admin/users/duplicates", [controllers.UserManagement, "duplicates"]);
+router.post("/v2/admin/users/merge", [controllers.UserManagement, "merge"]);
+router.get("/v2/admin/users/employees", [controllers.UserManagement, "employees"]);
+router.post("/v2/admin/users/permission", [controllers.UserManagement, "setPermission"]);
+router.delete("/v2/admin/users/:detailsId", [controllers.UserManagement, "destroy"]);
+
+/**
  * customer items
  */
 router.get("/v2/customer_items", [controllers.CustomerItems, "getCustomerItems"]);

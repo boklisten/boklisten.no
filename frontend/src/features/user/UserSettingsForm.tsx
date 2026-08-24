@@ -1,12 +1,13 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
-import { Button, Space, Stack, TextInput, Tooltip } from "@mantine/core";
+import { Button, Group, Space, Stack, Text, TextInput, Tooltip } from "@mantine/core";
 import { IconCheck, IconInfoCircleFilled, IconMailFast } from "@tabler/icons-react";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Activity, useState } from "react";
 
+import PermissionBadge from "@/features/rapid-handout/PermissionBadge";
 import UserInfoFields, { UserInfoFieldValues } from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
@@ -27,7 +28,6 @@ export default function UserSettingsForm({
   const queryClient = useQueryClient();
   const { api, client } = useApiClient();
   const defaultValues: UserInfoFieldValues = {
-    permission: userDetail.permission,
     name: userDetail.name,
     phoneNumber: userDetail.phone,
     address: userDetail.address,
@@ -141,16 +141,14 @@ export default function UserSettingsForm({
           </Activity>
         </Stack>
       </Activity>
-      <Activity mode={form.state.values.permission !== "customer" ? "visible" : "hidden"}>
-        <form.AppField name={"permission"}>
-          {(field) => (
-            <field.SelectPermissionField
-              description={"Ditt tilgangsnivå bestemmer hva du har tilgang til å gjøre i bl-admin"}
-              readOnly
-            />
-          )}
-        </form.AppField>
-      </Activity>
+      {userDetail.permission !== "customer" && (
+        <Group gap={"xs"}>
+          <Text size={"sm"} c={"dimmed"}>
+            Tilgangsnivå:
+          </Text>
+          <PermissionBadge permission={userDetail.permission} />
+        </Group>
+      )}
       <Space />
       <UserInfoFields perspective={"personal"} fields={createFieldMap(defaultValues)} form={form} />
       <form.AppForm>

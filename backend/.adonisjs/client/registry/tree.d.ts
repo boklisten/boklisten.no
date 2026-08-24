@@ -124,6 +124,14 @@ export interface ApiDefinition {
     updateAsEmployee: typeof routes['user_detail.update_as_employee']
     confirmEmail: typeof routes['user_detail.confirm_email']
   }
+  userManagement: {
+    metrics: typeof routes['user_management.metrics']
+    duplicates: typeof routes['user_management.duplicates']
+    merge: typeof routes['user_management.merge']
+    employees: typeof routes['user_management.employees']
+    setPermission: typeof routes['user_management.set_permission']
+    destroy: typeof routes['user_management.destroy']
+  }
   customerItems: {
     getCustomerItems: typeof routes['customer_items.get_customer_items']
     getActiveCustomerItemsForCustomer: typeof routes['customer_items.get_active_customer_items_for_customer']
@@ -276,7 +284,6 @@ export interface ApiDefinition {
         }
       }
       patch: typeof routes['collection.userdetails.patch']
-      delete: typeof routes['collection.userdetails.delete']
       getAll: typeof routes['collection.userdetails.getAll']
     }
     messages: {

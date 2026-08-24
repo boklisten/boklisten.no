@@ -30,7 +30,6 @@ import SelectBranchField from "@/shared/components/form/fields/complex/SelectBra
 import SelectBranchesField from "@/shared/components/form/fields/complex/SelectBranchesField";
 import SelectEmailTemplateField from "@/shared/components/form/fields/complex/SelectEmailTemplateField";
 import SelectItemsField from "@/shared/components/form/fields/complex/SelectItemsField";
-import SelectPermissionField from "@/shared/components/form/fields/complex/SelectPermissionField";
 import SignatureCanvasField from "@/shared/components/form/fields/complex/SignatureCanvasField";
 import ImageField from "@/shared/components/form/fields/complex/ImageField";
 
@@ -63,7 +62,6 @@ const { useAppForm, withFieldGroup } = createFormHook({
     NewPasswordField,
     SelectBranchField,
     SelectBranchesField,
-    SelectPermissionField,
     SegmentedControlField,
     DeadlinePickerField,
     RichTextEditorField,

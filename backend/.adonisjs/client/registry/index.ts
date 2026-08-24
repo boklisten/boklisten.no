@@ -474,6 +474,42 @@ const routes = {
     tokens: [{"old":"/v2/employee/user_details/:detailsId/confirm_email","type":0,"val":"v2","end":""},{"old":"/v2/employee/user_details/:detailsId/confirm_email","type":0,"val":"employee","end":""},{"old":"/v2/employee/user_details/:detailsId/confirm_email","type":0,"val":"user_details","end":""},{"old":"/v2/employee/user_details/:detailsId/confirm_email","type":1,"val":"detailsId","end":""},{"old":"/v2/employee/user_details/:detailsId/confirm_email","type":0,"val":"confirm_email","end":""}],
     types: placeholder as Registry['user_detail.confirm_email']['types'],
   },
+  'user_management.metrics': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/admin/users/metrics',
+    tokens: [{"old":"/v2/admin/users/metrics","type":0,"val":"v2","end":""},{"old":"/v2/admin/users/metrics","type":0,"val":"admin","end":""},{"old":"/v2/admin/users/metrics","type":0,"val":"users","end":""},{"old":"/v2/admin/users/metrics","type":0,"val":"metrics","end":""}],
+    types: placeholder as Registry['user_management.metrics']['types'],
+  },
+  'user_management.duplicates': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/admin/users/duplicates',
+    tokens: [{"old":"/v2/admin/users/duplicates","type":0,"val":"v2","end":""},{"old":"/v2/admin/users/duplicates","type":0,"val":"admin","end":""},{"old":"/v2/admin/users/duplicates","type":0,"val":"users","end":""},{"old":"/v2/admin/users/duplicates","type":0,"val":"duplicates","end":""}],
+    types: placeholder as Registry['user_management.duplicates']['types'],
+  },
+  'user_management.merge': {
+    methods: ["POST"],
+    pattern: '/v2/admin/users/merge',
+    tokens: [{"old":"/v2/admin/users/merge","type":0,"val":"v2","end":""},{"old":"/v2/admin/users/merge","type":0,"val":"admin","end":""},{"old":"/v2/admin/users/merge","type":0,"val":"users","end":""},{"old":"/v2/admin/users/merge","type":0,"val":"merge","end":""}],
+    types: placeholder as Registry['user_management.merge']['types'],
+  },
+  'user_management.employees': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/admin/users/employees',
+    tokens: [{"old":"/v2/admin/users/employees","type":0,"val":"v2","end":""},{"old":"/v2/admin/users/employees","type":0,"val":"admin","end":""},{"old":"/v2/admin/users/employees","type":0,"val":"users","end":""},{"old":"/v2/admin/users/employees","type":0,"val":"employees","end":""}],
+    types: placeholder as Registry['user_management.employees']['types'],
+  },
+  'user_management.set_permission': {
+    methods: ["POST"],
+    pattern: '/v2/admin/users/permission',
+    tokens: [{"old":"/v2/admin/users/permission","type":0,"val":"v2","end":""},{"old":"/v2/admin/users/permission","type":0,"val":"admin","end":""},{"old":"/v2/admin/users/permission","type":0,"val":"users","end":""},{"old":"/v2/admin/users/permission","type":0,"val":"permission","end":""}],
+    types: placeholder as Registry['user_management.set_permission']['types'],
+  },
+  'user_management.destroy': {
+    methods: ["DELETE"],
+    pattern: '/v2/admin/users/:detailsId',
+    tokens: [{"old":"/v2/admin/users/:detailsId","type":0,"val":"v2","end":""},{"old":"/v2/admin/users/:detailsId","type":0,"val":"admin","end":""},{"old":"/v2/admin/users/:detailsId","type":0,"val":"users","end":""},{"old":"/v2/admin/users/:detailsId","type":1,"val":"detailsId","end":""}],
+    types: placeholder as Registry['user_management.destroy']['types'],
+  },
   'customer_items.get_customer_items': {
     methods: ["GET","HEAD"],
     pattern: '/v2/customer_items',
@@ -965,12 +1001,6 @@ const routes = {
     pattern: '/userdetails/:id',
     tokens: [{"old":"/userdetails/:id","type":0,"val":"userdetails","end":""},{"old":"/userdetails/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['collection.userdetails.patch']['types'],
-  },
-  'collection.userdetails.delete': {
-    methods: ["DELETE"],
-    pattern: '/userdetails/:id',
-    tokens: [{"old":"/userdetails/:id","type":0,"val":"userdetails","end":""},{"old":"/userdetails/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.userdetails.delete']['types'],
   },
   'collection.userdetails.getAll': {
     methods: ["GET","HEAD"],

@@ -5,8 +5,9 @@ import { IconCheck, IconInfoCircleFilled } from "@tabler/icons-react";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { Activity, useState } from "react";
+import { useState } from "react";
 
+import UserDangerZone from "@/features/user/UserDangerZone";
 import UserInfoFields, { UserInfoFieldValues } from "@/features/user/UserInfoFields";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
@@ -25,15 +26,16 @@ type AdministrateUserFormValues = {
 export default function AdministrateUserForm({
   userDetail,
   onSaved,
+  onDeleted,
 }: {
   userDetail: UserDetail & { permission: UserPermission };
   onSaved?: (() => void) | undefined;
+  onDeleted?: (() => void) | undefined;
 }) {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const { api, client } = useApiClient();
   const defaultValues: AdministrateUserFormValues = {
-    permission: userDetail.permission,
     email: userDetail.email,
     emailVerified: userDetail.emailConfirmed ?? false,
     name: userDetail.name,
@@ -80,7 +82,6 @@ export default function AdministrateUserForm({
         .updateAsEmployee({
           params: { detailsId: userDetail.id },
           body: {
-            permission: formValues.permission,
             email: formValues.email,
             emailVerified: formValues.emailVerified,
             name: formValues.name,
@@ -146,11 +147,6 @@ export default function AdministrateUserForm({
       <form.AppField name={"emailVerified"}>
         {(field) => <field.SwitchField label={"E-post bekreftet"} />}
       </form.AppField>
-      <Activity mode={isAdmin ? "visible" : "hidden"}>
-        <form.AppField name={"permission"}>
-          {(field) => <field.SelectPermissionField />}
-        </form.AppField>
-      </Activity>
       <Space />
       <UserInfoFields
         perspective={"administrate"}
@@ -167,6 +163,12 @@ export default function AdministrateUserForm({
       >
         Lagre
       </Button>
+      {isAdmin && (
+        <>
+          <Space />
+          <UserDangerZone userDetail={userDetail} onDeleted={onDeleted} />
+        </>
+      )}
     </Stack>
   );
 }

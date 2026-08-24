@@ -1,4 +1,3 @@
-import type { UserPermission } from "@boklisten/backend/shared/user-permission";
 import { Divider, Fieldset, Stack, Title } from "@mantine/core";
 import dayjs from "dayjs";
 import { Activity } from "react";
@@ -11,7 +10,6 @@ import { withFieldGroup } from "@/shared/hooks/form";
 import { isUnder18 } from "@/shared/utils/dates";
 
 export interface UserInfoFieldValues {
-  permission: UserPermission;
   name: string;
   phoneNumber: string;
   address: string;
@@ -27,7 +25,6 @@ export interface UserInfoFieldValues {
 }
 
 export const userInfoFieldDefaultValues: UserInfoFieldValues = {
-  permission: "customer",
   name: "",
   phoneNumber: "",
   address: "",

@@ -18,6 +18,7 @@ import {
   IconSearch,
   IconSend,
   IconShoppingCart,
+  IconUsers,
 } from "@tabler/icons-react";
 import type { LinkProps } from "@tanstack/react-router";
 
@@ -144,6 +145,12 @@ export const ADMIN_NAV_SECTIONS = [
             description: "Rediger filialer og åpningstider",
             to: "/admin/database/filialer",
             icon: IconBuildingStore,
+          },
+          {
+            label: "Brukere",
+            description: "Se kundestatistikk, rydd i duplikater og administrer ansatte",
+            to: "/admin/database/brukere",
+            icon: IconUsers,
           },
           {
             label: "Selskap",
