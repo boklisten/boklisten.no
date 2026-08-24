@@ -88,7 +88,7 @@
     "@types/chai-as-promised": "^8.0.2",
     "@types/cors": "^2.8.19",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/luxon": "^3.7.4",
+    "@types/luxon": "^3.7.5",
     "@types/node": "^26.2.0",
     "@types/pdfkit": "^0.17.6",
     "@types/qrcode": "^1.5.6",
