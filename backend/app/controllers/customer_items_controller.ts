@@ -213,6 +213,8 @@ export default class CustomerItemsController {
           customer: new ObjectId(detailsId),
         },
       },
+      // The $lookup below overwrites "item" with the joined document, so the id is kept aside
+      { $addFields: { itemId: "$item" } },
       {
         $lookup: {
           from: BlSchemaName.Items,
@@ -226,6 +228,7 @@ export default class CustomerItemsController {
         $project: {
           _id: 0,
           id: { $toString: "$_id" },
+          item: { $toString: "$itemId" },
           title: { $ifNull: ["$item.title", "Ukjent bok"] },
           blid: { $ifNull: ["$blid", null] },
           type: { $ifNull: ["$type", null] },

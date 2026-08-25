@@ -1,12 +1,12 @@
-import { Badge, Stack, Table, Text, Tooltip } from "@mantine/core";
-import { IconAlertSquareFilled, IconSquareCheckFilled, IconUsers } from "@tabler/icons-react";
+import { Stack, Table, Text, Tooltip } from "@mantine/core";
+import { IconAlertSquareFilled, IconSquareCheckFilled } from "@tabler/icons-react";
 
 import {
   describeObligation,
   isObligationSettled,
   type ViewerObligation,
 } from "@/features/matches/forViewer";
-import type { ItemStatus } from "@/shared/components/matches/matches-helper";
+import { type ItemStatus, PeerBadge } from "@/shared/components/matches/matches-helper";
 
 function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: string }) {
   return (
@@ -120,19 +120,7 @@ export function ItemStatusTable({
               ) : (
                 <Stack gap={2} align={"flex-start"}>
                   <Text size={"sm"}>{item.title}</Text>
-                  <Badge
-                    variant={"light"}
-                    color={"blue"}
-                    tt={"none"}
-                    leftSection={<IconUsers size={12} />}
-                    // Student names must survive 375px, so the label wraps instead of truncating
-                    styles={{
-                      root: { height: "auto" },
-                      label: { whiteSpace: "normal", lineHeight: 1.3 },
-                    }}
-                  >
-                    Mottas fra {item.receiveFromName}
-                  </Badge>
+                  <PeerBadge>Mottas fra {item.receiveFromName}</PeerBadge>
                 </Stack>
               )}
             </Table.Td>

@@ -15,7 +15,6 @@ import {
 import NoOrderHandoutModal, {
   type NoOrderChoice,
 } from "@/features/rapid-handout/NoOrderHandoutModal";
-import PeerTransferList from "@/features/rapid-handout/PeerTransferList";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { ItemStatus } from "@/shared/components/matches/matches-helper";
 import { ItemStatusTable } from "@/shared/components/matches/MatchItemTable";
@@ -90,7 +89,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
     });
   }
 
-  const { receiveBooks, giveBooks } = buildPeerBooks(matchData ?? [], customer.id);
+  const { receiveBooks } = buildPeerBooks(matchData ?? [], customer.id);
   // One list for everything the customer is due to get: unmarked rows are ordinary stand
   // handouts, rows due from another student carry that student's name (edition-tolerant match).
   // Peer books nobody ordered still belong in the list, ticked once the transfer has happened.
@@ -114,7 +113,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
   ].sort(
     (a, b) => Number(a.receiveFromName !== undefined) - Number(b.receiveFromName !== undefined),
   );
-  const nothingToShow = orders !== undefined && bookRows.length === 0 && giveBooks.length === 0;
+  const nothingToShow = orders !== undefined && bookRows.length === 0;
 
   const invalidate = () => {
     void queryClient.invalidateQueries({
@@ -321,10 +320,6 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
           Scan bøker
         </Button>
       </Box>
-
-      {giveBooks.length > 0 && (
-        <PeerTransferList title={"Leveres til andre elever"} books={giveBooks} />
-      )}
 
       <Modal
         opened={opened}
