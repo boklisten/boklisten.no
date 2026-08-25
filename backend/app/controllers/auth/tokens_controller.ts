@@ -3,10 +3,17 @@ import jwt from "jsonwebtoken";
 
 import BlResponseHandler from "#services/legacy/bl-response.handler";
 import TokenService from "#services/token_service";
+import { UserDetailService } from "#services/user_detail_service";
+import { UserService } from "#services/user_service";
 import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
 import env from "#start/env";
 import { tokenValidator } from "#validators/auth_validators";
+
+async function getUserFromVerifiedRefreshToken(verifiedRefreshToken: jwt.JwtPayload) {
+  const userDetail = await UserDetailService.getByEmail(verifiedRefreshToken["username"]);
+  return await UserService.getByUserDetailsId(userDetail?.id);
+}
 
 export default class TokensController {
   // @deprecated Only used for bl-admin, use token for new adoptions
@@ -20,7 +27,11 @@ export default class TokensController {
       }
 
       try {
-        const tokens = await TokenService.createTokens(verifiedRefreshToken["username"]);
+        const user = await getUserFromVerifiedRefreshToken(verifiedRefreshToken);
+        if (!user) {
+          throw new Error("Could not find user");
+        }
+        const tokens = await TokenService.createTokens(user);
 
         if (!tokens) {
           throw new Error("Could not create tokens");
@@ -57,7 +68,12 @@ export default class TokensController {
         return;
       }
 
-      const tokens = await TokenService.createTokens(verifiedRefreshToken["username"]);
+      const user = await getUserFromVerifiedRefreshToken(verifiedRefreshToken);
+      if (!user) {
+        ctx.response.unauthorized();
+        return;
+      }
+      const tokens = await TokenService.createTokens(user);
 
       if (!tokens) {
         ctx.response.unauthorized();
