@@ -10,7 +10,7 @@ import { createFileRoute } from "@tanstack/react-router";
  *
  * Keep this in sync when what Boklisten offers changes.
  */
-const llmsTxt = `# Boklisten.no
+const llmsTxt = () => `# Boklisten.no
 
 > Boklisten.no formidler pensumbøker til elever i videregående skole og til privatister. Elever låner bøker gjennom skolens utlånsordning, privatister kjøper bøkene og kan få dem kjøpt tilbake når de er ferdige, og skoler får administrert hele utlånsordningen sin.
 
@@ -74,7 +74,7 @@ export const Route = createFileRoute("/llms.txt")({
   server: {
     handlers: {
       GET: async () => {
-        return new Response(llmsTxt, {
+        return new Response(llmsTxt(), {
           headers: {
             "Content-Type": "text/plain; charset=utf-8",
             "Cache-Control": "public, max-age=3600",
