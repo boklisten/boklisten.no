@@ -8,6 +8,6 @@ export const reminderValidator = vine.create(
     customerItemType: vine.enum(["partly-payment", "rent", "loan"]),
     branchIDs: vine.array(vine.string()),
     emailTemplateId: vine.string().use(existingEmailTemplateId()).nullable(),
-    smsText: vine.string().minLength(3).maxLength(320).nullable(),
+    smsText: vine.string().minLength(3).maxLength(1600).nullable(),
   }),
 );

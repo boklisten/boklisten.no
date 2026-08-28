@@ -20,7 +20,7 @@ export const createDispatchValidator = vine.create(
       vine.object({
         email: emailField.clone().optional().requiredIfExists("emailTemplateId"),
         phone: phoneField.clone().optional().requiredIfExists("smsText"),
-        smsText: vine.string().minLength(3).maxLength(320).optional(),
+        smsText: vine.string().minLength(3).maxLength(1600).optional(),
         emailTemplateId: vine.string().optional().use(existingEmailTemplateId()),
       }),
     ),
