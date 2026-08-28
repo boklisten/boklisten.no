@@ -17,14 +17,17 @@ export const UserDetailService = {
   async search(searchStr: string): Promise<(UserDetail & { permission: UserPermission })[]> {
     // blid is a random identifier, so matching against it only produces confusing results.
     const userDetails = await StorageService.UserDetails.search(searchStr, ["blid"]);
-    const users = (await StorageService.Users.aggregate([
+    const users = await StorageService.Users.aggregate<{
+      userDetail: ObjectId;
+      permission: UserPermission;
+    }>([
       {
         $match: {
           userDetail: { $in: userDetails.map((userDetail) => new ObjectId(userDetail.id)) },
         },
       },
       { $project: { userDetail: 1, permission: 1 } },
-    ])) as { userDetail: ObjectId; permission: UserPermission }[];
+    ]);
     const permissions = new Map(users.map((user) => [String(user.userDetail), user.permission]));
 
     const escaped = searchStr.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -48,7 +51,7 @@ export const UserDetailService = {
             : new ObjectId(userDetail.id).getTimestamp().getTime(),
         }))
         // Own-info matches first, then newest customers first within each group.
-        .sort((a, b) =>
+        .toSorted((a, b) =>
           a.matchesOwnInfo === b.matchesOwnInfo
             ? b.createdAt - a.createdAt
             : Number(b.matchesOwnInfo) - Number(a.matchesOwnInfo),
@@ -73,6 +76,7 @@ export const UserDetailService = {
   async createVippsUserDetail(vippsUser: VippsUser) {
     const blid = BlidService.createUserBlid("vipps", vippsUser.id);
     return await StorageService.UserDetails.add(
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixme: it is janky to just add this without all the details
       {
         email: vippsUser.email,
         blid,
@@ -140,6 +144,7 @@ export const UserDetailService = {
   ) {
     const blid = BlidService.createUserBlid("local", CryptoService.random());
     return await StorageService.UserDetails.add(
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixme: it is janky to just add this without all the details
       {
         blid,
         name,

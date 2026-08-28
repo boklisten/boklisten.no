@@ -14,8 +14,8 @@ function toEndOfDay(date: Date | string, location: string): Date {
   return moment.tz(date, location).endOf("day").toDate();
 }
 
-function format(date: Date | string, location: string, format: string): string {
-  return moment.tz(date, location).format(format);
+function format(date: Date | string, location: string, formatString: string): string {
+  return moment.tz(date, location).format(formatString);
 }
 
 function between(date: Date, from: Date, to: Date, location: string): boolean {
@@ -34,8 +34,8 @@ function isOver18(birthday: Date | string): boolean {
   return moment(birthday).isSameOrBefore(eightTeenYearsAgo, "day");
 }
 
-function toDate(dateString: string, format: string, location: string) {
-  return moment.tz(dateString, format, location).toDate();
+function toDate(dateString: string, formatString: string, location: string) {
+  return moment.tz(dateString, formatString, location).toDate();
 }
 
 /*

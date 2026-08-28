@@ -59,9 +59,7 @@ function DayTimeline({ round }: { round: Round }) {
       withCurrentTimeIndicator={false}
       // Hours shrink on a narrow screen so the whole round stays on screen. At a fixed slot width a
       // phone shows the first hour or two and the student row reads as empty until you scroll it.
-      style={
-        { "--resources-day-view-slot-width": "clamp(42px, 11vw, 80px)" } as React.CSSProperties
-      }
+      style={{ "--resources-day-view-slot-width": "clamp(42px, 11vw, 80px)" }}
       resources={[
         { id: "elever", label: "Elever", color: "blue" },
         { id: "stand", label: "Stand", color: "teal" },

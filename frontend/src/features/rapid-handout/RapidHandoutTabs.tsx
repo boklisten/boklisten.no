@@ -86,11 +86,7 @@ export default function RapidHandoutTabs({
       value={currentTab}
       keepMounted={false}
       onChange={(value) =>
-        onTabChange(
-          RAPID_HANDOUT_TABS.includes(value as RapidHandoutTab)
-            ? (value as RapidHandoutTab)
-            : "bestillinger",
-        )
+        onTabChange(RAPID_HANDOUT_TABS.find((tab) => tab === value) ?? "bestillinger")
       }
     >
       <Tabs.List mb={"md"}>

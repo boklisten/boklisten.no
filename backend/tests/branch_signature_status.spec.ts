@@ -7,6 +7,7 @@ import {
   MemberSignatureRow,
 } from "#services/branch_signature_status_service";
 import { StorageService } from "#services/storage_service";
+import { unchecked } from "#tests/test-doubles";
 
 const NOW = new Date(2026, 7, 18);
 
@@ -150,9 +151,9 @@ test.group("BranchSignatureStatusService.getStatus", (group) => {
     assert.equal(result.totalMembers, 2);
     assert.equal(result.needsSignature, 1);
     assert.equal(result.noSignatureNeeded, 1);
-    const pipeline = aggregateStub.firstCall.args[0] as {
+    const pipeline: {
       $match?: { branchMembership?: { $in?: { toString(): string }[] } };
-    }[];
+    }[] = unchecked(aggregateStub.firstCall.args[0]);
     const matchedIds = pipeline[0]?.$match?.branchMembership?.$in?.map((id) => id.toString());
     assert.deepEqual(matchedIds, [branchId, childId]);
   });

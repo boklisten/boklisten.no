@@ -3,7 +3,6 @@ import sinon, { createSandbox } from "sinon";
 
 import { SendgridEventOperation } from "#services/legacy/collections/message/operations/sendgrid-event.operation";
 import { StorageService } from "#services/storage_service";
-import { Message } from "#shared/message/message";
 
 test.group("SendgridEventOperation", (group) => {
   const sendgridEventOperation = new SendgridEventOperation();
@@ -21,7 +20,7 @@ test.group("SendgridEventOperation", (group) => {
 
     messageStorageGetIdStub = messagesStub.get;
     messageStorageUpdateStub = messagesStub.update;
-    messageStorageUpdateStub.resolves({} as Message);
+    messageStorageUpdateStub.resolves({});
   });
   group.each.teardown(() => {
     sandbox.restore();
@@ -72,9 +71,9 @@ test.group("SendgridEventOperation", (group) => {
 
     const blApiRequest = { data: [sendgridEvent] };
 
-    messageStorageUpdateStub.resolves({} as Message);
+    messageStorageUpdateStub.resolves({});
 
-    messageStorageGetIdStub.withArgs("blMessage1").resolves({ id: "blMessage1" } as Message);
+    messageStorageGetIdStub.withArgs("blMessage1").resolves({ id: "blMessage1" });
 
     await sendgridEventOperation.run(blApiRequest);
     assert.equal(messageStorageGetIdStub.lastCall.args[0], "blMessage1");
@@ -95,9 +94,9 @@ test.group("SendgridEventOperation", (group) => {
 
     const blApiRequest = { data: [sendgridEvent] };
 
-    messageStorageGetIdStub.withArgs("blMessage1").resolves({ id: "blMessage1" } as Message);
+    messageStorageGetIdStub.withArgs("blMessage1").resolves({ id: "blMessage1" });
 
-    messageStorageUpdateStub.resolves({} as Message);
+    messageStorageUpdateStub.resolves({});
 
     await sendgridEventOperation.run(blApiRequest);
     const args = messageStorageUpdateStub.lastCall.args;

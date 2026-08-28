@@ -46,7 +46,7 @@ export default function CustomerItemsReport() {
         ...(includeBuyout && { includeBuyout }),
       };
       const rows = await client.api.reports.getCustomerItemsReport({ query });
-      return (rows ?? []) as Record<string, unknown>[];
+      return rows ?? [];
     },
     filename: `customer_items-${dayjs().format("YYYY-MM-DD")}.csv`,
   });

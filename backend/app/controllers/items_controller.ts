@@ -17,7 +17,7 @@ export default class ItemsController {
   }
   async get(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
-    return (await StorageService.Items.getAll()).sort((a, b) => a.title.localeCompare(b.title));
+    return (await StorageService.Items.getAll()).toSorted((a, b) => a.title.localeCompare(b.title));
   }
 
   async getByIsbn(ctx: HttpContext) {

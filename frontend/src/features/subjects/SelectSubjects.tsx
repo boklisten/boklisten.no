@@ -52,7 +52,7 @@ export default function SelectSubjects({ branchId }: { branchId: string }) {
         </Button>
       </Activity>
       {Object.entries(subjects)
-        .sort((a, b) => a[0].localeCompare(b[0]))
+        .toSorted((a, b) => a[0].localeCompare(b[0]))
         .map(([name]) => (
           <Button
             leftSection={selectedSubjects.has(name) ? <IconBasketCheck /> : undefined}

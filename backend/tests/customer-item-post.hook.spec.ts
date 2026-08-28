@@ -9,6 +9,7 @@ import { BlError } from "#shared/bl-error";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { Order } from "#shared/order/order";
 import { UserDetail } from "#shared/user-detail";
+import { mock } from "#tests/test-doubles";
 
 test.group("CustomerItemPostHook", (group) => {
   let sandbox: sinon.SinonSandbox;
@@ -24,14 +25,13 @@ test.group("CustomerItemPostHook", (group) => {
 
   group.each.setup(() => {
     sandbox = createSandbox();
-    testAccessToken = {
+    testAccessToken = mock<AccessToken>({
       sub: "user1",
       permission: "customer",
       details: "userDetail1",
-    } as AccessToken;
+    });
 
-    // @ts-expect-error fixme: auto ignored
-    testUserDetail = {
+    testUserDetail = mock<UserDetail>({
       id: "userDetail1",
       name: "Alexander Hamilton",
       address: "Boston road 1c",
@@ -43,7 +43,7 @@ test.group("CustomerItemPostHook", (group) => {
       active: true,
       customerItems: [],
       branchMembership: "branch1",
-    } as UserDetail;
+    });
 
     testCustomerItem = {
       id: "customerItem1",

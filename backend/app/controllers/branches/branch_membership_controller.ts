@@ -29,7 +29,7 @@ export default class BranchMembershipController {
           name: member.name,
           yearOfBirth: moment(member.dob).format("YYYY"),
         }))
-        .sort((a, b) => a.name.localeCompare(b.name)),
+        .toSorted((a, b) => a.name.localeCompare(b.name)),
       indirectMembers: {
         count: indirectMembers.length,
       },

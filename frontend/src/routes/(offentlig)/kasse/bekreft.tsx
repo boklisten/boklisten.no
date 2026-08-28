@@ -3,6 +3,7 @@ import { Container, Stack, Title } from "@mantine/core";
 import ConfirmOrder from "@/features/checkout/ConfirmOrder";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
+import { stringParam } from "@/shared/utils/searchParams";
 
 export const Route = createFileRoute("/(offentlig)/kasse/bekreft")({
   head: () =>
@@ -11,7 +12,7 @@ export const Route = createFileRoute("/(offentlig)/kasse/bekreft")({
     }),
   component: CheckoutConfirmPage,
   validateSearch: (search) => ({
-    orderId: (search["orderId"] as string) || "",
+    orderId: stringParam(search["orderId"]),
   }),
 });
 

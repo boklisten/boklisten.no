@@ -9,7 +9,7 @@ import { isBoolean, isNotNullish } from "#services/legacy/typescript-helpers";
 import { BlStorageData, BlStorageHandler } from "#services/storage_service";
 import { BlDocument } from "#shared/bl-document";
 import { BlError } from "#shared/bl-error";
-import { UserPermission } from "#shared/user-permission";
+import { parsePermission } from "#shared/user-permission";
 import { BlApiRequest } from "#types/bl-api-request";
 import { BlCollection, BlEndpoint } from "#types/bl-collection";
 
@@ -80,7 +80,9 @@ function onPost(collection: BlCollection) {
         await collection.storage.add(blApiRequest.data, blApiRequest.user),
       ];
     } catch (blError) {
-      throw new BlError("could not add document").add(blError as BlError);
+      throw new BlError("could not add document").add(
+        blError instanceof BlError ? blError : new BlError(String(blError)),
+      );
     }
   };
 }
@@ -164,9 +166,9 @@ async function handleEndpointRequest({
     data: isNotNullish(beforeData) && !isBoolean(beforeData) ? beforeData : requestData,
     user: accessToken
       ? {
-          id: accessToken.sub as string,
-          details: accessToken["details"] as string,
-          permission: accessToken["permission"] as UserPermission,
+          id: accessToken.sub ?? "",
+          details: String(accessToken["details"] ?? ""),
+          permission: parsePermission(accessToken["permission"]),
         }
       : undefined,
   };

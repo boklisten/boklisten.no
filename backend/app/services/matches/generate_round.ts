@@ -21,9 +21,9 @@ import type { UserDetail } from "#shared/user-detail";
 
 async function getGroupMemberships(customerIds: string[]): Promise<Map<string, string>> {
   if (customerIds.length === 0) return new Map();
-  const userDetails = (await StorageService.UserDetails.aggregate([
+  const userDetails = await StorageService.UserDetails.aggregate<UserDetail>([
     { $match: { _id: { $in: customerIds.map((id) => new ObjectId(id)) } } },
-  ])) as UserDetail[];
+  ]);
   return new Map(
     userDetails.flatMap((detail) =>
       detail.branchMembership ? [[detail.id, detail.branchMembership] as const] : [],

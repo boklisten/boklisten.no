@@ -64,6 +64,7 @@ export default function AuthGuard({
   useEffect(() => {
     if (isLoading) return;
     onAuthChange();
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies -- the extra deps deliberately re-run the auth check whenever the auth state changes
   }, [isLoading, isLoggedIn, requiredPermission, hasPendingTasks, isOnAllowedPath]);
 
   if (errorUpdateCount > 0 && userDetail === undefined) {

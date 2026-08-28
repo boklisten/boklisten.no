@@ -9,6 +9,7 @@ import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { hasPendingTasks } from "@/shared/utils/tasks";
 import { useEffect, useEffectEvent, useState } from "react";
 import { login } from "@/shared/hooks/useAuth";
+import { stringParam } from "@/shared/utils/searchParams";
 
 export const Route = createFileRoute("/(offentlig)/auth/token")({
   head: () =>
@@ -17,8 +18,8 @@ export const Route = createFileRoute("/(offentlig)/auth/token")({
       description: "Du blir nå logget inn. Vennligst vent.",
     }),
   validateSearch: (search) => ({
-    refreshToken: (search["refresh_token"] as string) || "",
-    accessToken: (search["access_token"] as string) || "",
+    refreshToken: stringParam(search["refresh_token"]),
+    accessToken: stringParam(search["access_token"]),
   }),
   component: TokenPage,
 });
@@ -56,6 +57,7 @@ function TokenPage() {
       // oxlint-disable-next-line react/set-state-in-effect -- setHasFailed only runs after an awaited network call, never synchronously during the effect
       void onLogin({ accessToken, refreshToken });
     }
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies -- `attempt` deliberately re-runs the login when the user retries
   }, [accessToken, refreshToken, attempt]);
 
   if (hasFailed) {

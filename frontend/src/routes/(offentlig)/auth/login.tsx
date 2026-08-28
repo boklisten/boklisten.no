@@ -4,6 +4,7 @@ import LocalSignIn from "@/features/auth/LocalSignIn";
 import VippsButton from "@/features/auth/VippsButton";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
+import { stringParam } from "@/shared/utils/searchParams";
 
 export const Route = createFileRoute("/(offentlig)/auth/login")({
   head: () =>
@@ -13,8 +14,8 @@ export const Route = createFileRoute("/(offentlig)/auth/login")({
         "Logg inn på Boklisten for å bestille pensumbøker, se status på bøkene du har, og finne ordrehistorikken din.",
     }),
   validateSearch: (search): { redirect?: string; caller?: string } => ({
-    redirect: (search["redirect"] as string) || "",
-    caller: (search["caller"] as string) || "",
+    redirect: stringParam(search["redirect"]),
+    caller: stringParam(search["caller"]),
   }),
   component: LoginPage,
 });

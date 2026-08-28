@@ -46,9 +46,7 @@ export const BRANCH_MANAGER_TABS = [
 export type BranchManagerTab = (typeof BRANCH_MANAGER_TABS)[number];
 
 export function parseBranchManagerTab(value: unknown): BranchManagerTab | undefined {
-  return BRANCH_MANAGER_TABS.includes(value as BranchManagerTab)
-    ? (value as BranchManagerTab)
-    : undefined;
+  return BRANCH_MANAGER_TABS.find((tab) => tab === value);
 }
 
 const route = getRouteApi("/(administrasjon)/admin/database/filialer");

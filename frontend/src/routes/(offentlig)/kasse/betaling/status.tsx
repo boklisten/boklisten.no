@@ -3,6 +3,7 @@ import { Container, Stack, Title } from "@mantine/core";
 import VippsCheckoutStatus from "@/features/payment/VippsCheckoutStatus";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
+import { stringParam } from "@/shared/utils/searchParams";
 
 export const Route = createFileRoute("/(offentlig)/kasse/betaling/status")({
   head: () =>
@@ -11,7 +12,7 @@ export const Route = createFileRoute("/(offentlig)/kasse/betaling/status")({
     }),
   component: CheckoutStatusPage,
   validateSearch: (search) => ({
-    orderId: (search["orderId"] as string) || "",
+    orderId: stringParam(search["orderId"]),
   }),
 });
 

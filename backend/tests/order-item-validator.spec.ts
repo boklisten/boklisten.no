@@ -11,6 +11,7 @@ import { BlError } from "#shared/bl-error";
 import { Branch } from "#shared/branch";
 import { Item } from "#shared/item";
 import { Order } from "#shared/order/order";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderItemValidator", (group) => {
   const orderItemFieldValidator = new OrderFieldValidator();
@@ -111,7 +112,7 @@ test.group("OrderItemValidator", (group) => {
     });
 
     sandbox.stub(StorageService.Items, "get").callsFake(() => {
-      return Promise.resolve({} as Item);
+      return Promise.resolve(mock<Item>({}));
     });
   });
   group.each.teardown(() => {

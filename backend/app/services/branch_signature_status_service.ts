@@ -41,7 +41,7 @@ export const BranchSignatureStatusService = {
   async getStatus(branchId: string): Promise<BranchSignatureStatus> {
     const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
     const scopeIds = [branchId, ...descendantIds];
-    const rows = (await StorageService.UserDetails.aggregate([
+    const rows = await StorageService.UserDetails.aggregate<MemberSignatureRow>([
       { $match: { branchMembership: { $in: scopeIds.map((id) => new ObjectId(id)) } } },
       {
         $project: {
@@ -61,7 +61,7 @@ export const BranchSignatureStatusService = {
         },
       },
       { $project: { dob: 1, signAgreement: 1, signature: { $first: "$signature" } } },
-    ])) as MemberSignatureRow[];
+    ]);
     return BranchSignatureStatusService.summarize(rows, new Date());
   },
 };

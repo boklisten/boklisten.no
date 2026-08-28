@@ -156,11 +156,11 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
 
   const booksOutData = [...data.standBookExpectations]
     .filter((book) => book.expectedOut > 0 || book.actualOut > 0)
-    .sort((a, b) => b.expectedOut - a.expectedOut)
+    .toSorted((a, b) => b.expectedOut - a.expectedOut)
     .map((book) => ({ title: book.title, Forventet: book.expectedOut, Hentet: book.actualOut }));
   const booksInData = [...data.standBookExpectations]
     .filter((book) => book.expectedIn > 0 || book.actualIn > 0)
-    .sort((a, b) => b.expectedIn - a.expectedIn)
+    .toSorted((a, b) => b.expectedIn - a.expectedIn)
     .map((book) => ({ title: book.title, Forventet: book.expectedIn, Levert: book.actualIn }));
 
   const standAttendanceData = data.standAttendance.map((slot) => ({
@@ -168,10 +168,10 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
     Elever: slot.people,
   }));
 
-  const attendanceLocations = [...new Set(data.userAttendance.map((slot) => slot.location))].sort(
-    (a, b) => a.localeCompare(b),
-  );
-  const attendanceDates = [...new Set(data.userAttendance.map((slot) => slot.date))].sort(
+  const attendanceLocations = [
+    ...new Set(data.userAttendance.map((slot) => slot.location)),
+  ].toSorted((a, b) => a.localeCompare(b));
+  const attendanceDates = [...new Set(data.userAttendance.map((slot) => slot.date))].toSorted(
     compareSlots,
   );
   // Pivot the flat (location, date, people) list into one row per time slot,

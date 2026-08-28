@@ -1,4 +1,4 @@
-import { Button, type ComboboxItem, Group, MultiSelect, Paper, Stack, Text } from "@mantine/core";
+import { Button, Group, MultiSelect, Paper, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -110,7 +110,8 @@ export function BranchSubjectModal({
             description={"Søk etter tittel eller ISBN. Et fag kan også være uten bøker."}
             data={items?.map((item) => ({ label: item.title, value: item.id })) ?? []}
             filter={({ options, search }) =>
-              (options as ComboboxItem[]).filter((option) => {
+              options.filter((option) => {
+                if (!("value" in option)) return false;
                 if (option.label.toLowerCase().trim().includes(search.toLowerCase().trim()))
                   return true;
                 const isbn = items?.find((item) => item.id === option.value)?.info.isbn.toString();

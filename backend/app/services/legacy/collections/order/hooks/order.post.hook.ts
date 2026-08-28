@@ -77,7 +77,7 @@ export class OrderPostHook extends Hook {
             return reject(new BlError("order.placed is set to true on post of order"));
           }
 
-          resolve(order);
+          return resolve(order);
         })
         .catch((blError: BlError) => {
           return reject(blError);

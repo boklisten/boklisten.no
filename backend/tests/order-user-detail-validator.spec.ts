@@ -6,6 +6,7 @@ import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
 import { UserDetail } from "#shared/user-detail";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderUserDetailValidator", (group) => {
   const orderUserDetailValidator = new OrderUserDetailValidator();
@@ -14,15 +15,15 @@ test.group("OrderUserDetailValidator", (group) => {
 
   let sandbox: sinon.SinonSandbox;
   group.each.setup(() => {
-    testOrder = {
+    testOrder = mock<Order>({
       id: "order1",
       customer: "userDetail1",
-    } as Order;
+    });
 
-    testUserDetail = {
+    testUserDetail = mock<UserDetail>({
       id: "userDetail1",
       emailConfirmed: true,
-    } as UserDetail;
+    });
     sandbox = createSandbox();
     sandbox.stub(StorageService.UserDetails, "get").callsFake((id) => {
       if (id !== testUserDetail.id) {

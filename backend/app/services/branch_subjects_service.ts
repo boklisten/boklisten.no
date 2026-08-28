@@ -31,10 +31,10 @@ export function normalizeSubjectName(value: string) {
 
 async function fetchItemTitles(itemIds: string[]): Promise<Map<string, string>> {
   if (itemIds.length === 0) return new Map();
-  const items = (await StorageService.Items.aggregate([
+  const items = await StorageService.Items.aggregate<{ id: string; title: string }>([
     { $match: { _id: { $in: itemIds.map((id) => new ObjectId(id)) } } },
     { $project: { title: 1 } },
-  ])) as { id: string; title: string }[];
+  ]);
   return new Map(items.map((item) => [item.id, item.title]));
 }
 
@@ -88,9 +88,9 @@ async function toResponse(subjects: BranchSubject[]) {
           partlyPaymentAtBranch: book.partlyPaymentAtBranch,
           buyAtBranch: book.buyAtBranch,
         }))
-        .sort((a, b) => a.item.title.localeCompare(b.item.title)),
+        .toSorted((a, b) => a.item.title.localeCompare(b.item.title)),
     }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .toSorted((a, b) => a.name.localeCompare(b.name));
 }
 
 function assertValidInput(input: BranchSubjectInput, existingSubjects: BranchSubject[]) {
@@ -192,7 +192,12 @@ export const BranchSubjectsService = {
    * overwrites manual edits.
    */
   async importFromBranchItems(branchId: string) {
-    const branchItems = (await StorageService.BranchItems.aggregate([
+    const branchItems = await StorageService.BranchItems.aggregate<
+      { itemId: string; categories: string[] } & Record<
+        "rent" | "partlyPayment" | "buy" | "rentAtBranch" | "partlyPaymentAtBranch" | "buyAtBranch",
+        boolean
+      >
+    >([
       { $match: { branch: new ObjectId(branchId) } },
       {
         $project: {
@@ -206,10 +211,7 @@ export const BranchSubjectsService = {
           buyAtBranch: { $ifNull: ["$buyAtBranch", false] },
         },
       },
-    ])) as ({ itemId: string; categories: string[] } & Record<
-      "rent" | "partlyPayment" | "buy" | "rentAtBranch" | "partlyPaymentAtBranch" | "buyAtBranch",
-      boolean
-    >)[];
+    ]);
 
     const booksByCategory = new Map<string, { name: string; books: BranchSubjectBookInput[] }>();
     for (const branchItem of branchItems) {

@@ -6,6 +6,47 @@ import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { BranchPaymentInfo } from "#shared/branch-payment-info";
 import { OrderItem } from "#shared/order/order-item/order-item";
+import { mock } from "#tests/test-doubles";
+
+function movedOrderItem(amount: number, periodType: string) {
+  return mock<any>({
+    type: "rent",
+    item: "itemA",
+    amount,
+    unitPrice: 100,
+    info: {
+      to: new Date(),
+      from: new Date(),
+      numberOfPeriods: 1,
+      periodType,
+    },
+    movedFromOrder: "orderB",
+  });
+}
+
+// payments non-empty together with placed true means the original order is payed for
+function originalOrder(payments: string[], payedAmount: number, periodType: string) {
+  return mock<any>({
+    id: "orderB",
+    amount: payedAmount,
+    orderItems: [
+      {
+        type: "rent",
+        item: "itemA",
+        amount: payedAmount,
+        unitPrice: 100,
+        info: {
+          to: new Date(),
+          from: new Date(),
+          numberOfPeriods: 1,
+          periodType,
+        },
+      },
+    ],
+    payments,
+    placed: true,
+  });
+}
 
 test.group("OrderItemRentPeriodValidator", (group) => {
   const orderItemRentPeriodValidator = new OrderItemRentPeriodValidator();
@@ -25,41 +66,36 @@ test.group("OrderItemRentPeriodValidator", (group) => {
   });
 
   test("should reject if period is not found in branchPaymentInfo", async ({ assert }) => {
-    const branchPaymentInfo = {
+    const paymentInfo = mock<BranchPaymentInfo>({
       rentPeriods: [{ type: "year" }],
-    };
+    });
 
-    const orderItem = {
+    const orderItem = mock<OrderItem>({
       type: "rent",
       info: {
         periodType: "semester",
       },
-    };
+    });
 
     return assert.rejects(
-      () =>
-        orderItemRentPeriodValidator.validate(
-          orderItem as OrderItem,
-          branchPaymentInfo as BranchPaymentInfo,
-          100,
-        ),
+      () => orderItemRentPeriodValidator.validate(orderItem, paymentInfo, 100),
       BlError,
       /rent period "semester" is not valid on branch/,
     );
   });
 
   test("should reject if not all amounts is equal to 0 on orderItem", async ({ assert }) => {
-    const orderItem = {
+    const orderItem = mock<OrderItem>({
       type: "rent",
       amount: 100,
       unitPrice: 80,
-    } as OrderItem;
+    });
 
     return assert.rejects(
       () =>
         orderItemRentPeriodValidator.validate(
           orderItem,
-          branchPaymentInfo as BranchPaymentInfo,
+          mock<BranchPaymentInfo>(branchPaymentInfo),
           100,
         ),
       BlError,
@@ -68,21 +104,25 @@ test.group("OrderItemRentPeriodValidator", (group) => {
   });
 
   test("should resolve with true if all amounts is 0", async ({ assert }) => {
-    const orderItem = {
+    const orderItem = mock<OrderItem>({
       type: "rent",
       amount: 0,
       unitPrice: 0,
-    } as OrderItem;
+    });
 
     return assert.doesNotReject(() =>
-      orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo as BranchPaymentInfo, 100),
+      orderItemRentPeriodValidator.validate(
+        orderItem,
+        mock<BranchPaymentInfo>(branchPaymentInfo),
+        100,
+      ),
     );
   });
 
   // The movedFromOrder path: the customer changes an already-placed rent order, so the new
   // orderItem must be priced against what was payed on the original order. The branch charges
   // itemPrice * percentage (0.5 here) for a rent period.
-  const movedPaymentInfo = {
+  const movedPaymentInfo = mock<any>({
     responsible: false,
     rentPeriods: [
       {
@@ -92,47 +132,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
         percentage: 0.5,
       },
     ],
-  } as any;
-
-  function movedOrderItem(amount: number, periodType: string) {
-    return {
-      type: "rent",
-      item: "itemA",
-      amount,
-      unitPrice: 100,
-      info: {
-        to: new Date(),
-        from: new Date(),
-        numberOfPeriods: 1,
-        periodType,
-      },
-      movedFromOrder: "orderB",
-    } as any;
-  }
-
-  // payments non-empty together with placed true means the original order is payed for
-  function originalOrder(payments: string[], payedAmount: number, periodType: string) {
-    return {
-      id: "orderB",
-      amount: payedAmount,
-      orderItems: [
-        {
-          type: "rent",
-          item: "itemA",
-          amount: payedAmount,
-          unitPrice: 100,
-          info: {
-            to: new Date(),
-            from: new Date(),
-            numberOfPeriods: 1,
-            periodType,
-          },
-        },
-      ],
-      payments,
-      placed: true,
-    } as any;
-  }
+  });
 
   test("should reject if the original order is not payed and orderItem.amount is 0", async ({
     assert,
@@ -208,7 +208,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
   test("should reject if orderItem.amount is not equalt to branchPayment percentage * itemPrice", async ({
     assert,
   }) => {
-    const branchPaymentInfo: any = {
+    const paymentInfo: any = {
       responsible: false,
       rentPeriods: [
         {
@@ -231,14 +231,14 @@ test.group("OrderItemRentPeriodValidator", (group) => {
     };
 
     return assert.rejects(
-      () => orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, itemPrice),
+      () => orderItemRentPeriodValidator.validate(orderItem, paymentInfo, itemPrice),
       BlError,
       /orderItem.amount "0" is not equal to itemPrice "100" \* percentage "0.5" "50"/,
     );
   });
 
   test("should resolve if given valid orderItem", async ({ assert }) => {
-    const branchPaymentInfo: any = {
+    const paymentInfo: any = {
       responsible: false,
       rentPeriods: [
         {
@@ -261,7 +261,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
     };
 
     return assert.doesNotReject(() =>
-      orderItemRentPeriodValidator.validate(orderItem, branchPaymentInfo, itemPrice),
+      orderItemRentPeriodValidator.validate(orderItem, paymentInfo, itemPrice),
     );
   });
 });

@@ -50,7 +50,7 @@ export class OrderPatchHook extends Hook {
         this.orderPlacedHandler
           .placeOrder(order, accessToken.details)
           .then((placedOrder) => {
-            resolve([placedOrder]);
+            return resolve([placedOrder]);
           })
           .catch((orderPlacedError: BlError) => {
             reject(new BlError("order could not be placed").add(orderPlacedError));
@@ -62,7 +62,7 @@ export class OrderPatchHook extends Hook {
           .validate(order, isAdmin)
           .then(() => {
             // @ts-expect-error fixme: auto ignored
-            resolve([order]);
+            return resolve([order]);
           })
           .catch((validationError: BlError) => {
             if (order?.placed) {

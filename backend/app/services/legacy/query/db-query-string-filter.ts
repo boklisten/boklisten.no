@@ -29,13 +29,16 @@ export class DbQueryStringFilter {
       return stringFilters;
     } catch (error) {
       if (error instanceof TypeError) {
-        throw new TypeError("query includes bad string parameter data, reason: " + error.message);
+        throw new TypeError("query includes bad string parameter data, reason: " + error.message, {
+          cause: error,
+        });
       }
 
       throw new Error(
         "could not parse the string parameters in query, reason: " +
           // @ts-expect-error fixme: auto ignored
           error.message,
+        { cause: error },
       );
     }
   }

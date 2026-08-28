@@ -27,7 +27,7 @@ export default function useCart() {
   });
   function add(cartItem: CartItem) {
     remove(cartItem.id);
-    setCart((prev) => [...prev, cartItem].sort((a, b) => a.title.localeCompare(b.title)));
+    setCart((prev) => [...prev, cartItem].toSorted((a, b) => a.title.localeCompare(b.title)));
   }
   function remove(itemId: string) {
     setCart((prev) => prev.filter((cartItem) => cartItem.id !== itemId));

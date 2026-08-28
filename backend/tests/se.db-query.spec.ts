@@ -34,9 +34,9 @@ test.group("SEDbQuery", async () => {
   });
 
   test("should return correct ogFilterObj based on ogFilter array", async ({ assert }) => {
-    const dbQuery: SEDbQuery = new SEDbQuery();
+    const query: SEDbQuery = new SEDbQuery();
 
-    dbQuery.onlyGetFilters = [
+    query.onlyGetFilters = [
       { fieldName: "name", value: 1 },
       { fieldName: "age", value: 1 },
     ];
@@ -46,19 +46,19 @@ test.group("SEDbQuery", async () => {
       age: 1,
     };
 
-    assert.deepEqual(dbQuery.getOgFilter(), result);
+    assert.deepEqual(query.getOgFilter(), result);
   });
 
   test("should return correct sortFilter object based on sortFilter array", async ({ assert }) => {
-    const dbQuery: SEDbQuery = new SEDbQuery();
+    const query: SEDbQuery = new SEDbQuery();
 
-    dbQuery.sortFilters = [
+    query.sortFilters = [
       { fieldName: "age", direction: 1 },
       { fieldName: "name", direction: -1 },
     ];
 
     const result = { age: 1, name: -1 };
 
-    assert.deepEqual(dbQuery.getSortFilter(), result);
+    assert.deepEqual(query.getSortFilter(), result);
   });
 });

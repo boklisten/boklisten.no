@@ -3,7 +3,7 @@ import { Badge, Tooltip } from "@mantine/core";
 import { getEnv, isProduction } from "@/shared/utils/env";
 
 export default function TestVersionChip() {
-  if (isProduction()) return;
+  if (isProduction()) return null;
   const env = getEnv();
 
   return (

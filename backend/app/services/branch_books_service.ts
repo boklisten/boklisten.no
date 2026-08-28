@@ -89,7 +89,7 @@ export function clusterDeadlines(
     const time = deadline.getTime();
     countByTime.set(time, (countByTime.get(time) ?? 0) + count);
   }
-  const sorted = [...countByTime.entries()].sort(
+  const sorted = [...countByTime.entries()].toSorted(
     ([timeA, countA], [timeB, countB]) => countB - countA || timeA - timeB,
   );
   const claimed = new Set<number>();
@@ -102,10 +102,10 @@ export function clusterDeadlines(
     for (const memberTime of members) claimed.add(memberTime);
     clusters.push({
       anchor: new Date(anchorTime),
-      members: members.sort((a, b) => a - b).map((time) => new Date(time)),
+      members: members.toSorted((a, b) => a - b).map((time) => new Date(time)),
     });
   }
-  return clusters.sort((a, b) => a.anchor.getTime() - b.anchor.getTime());
+  return clusters.toSorted((a, b) => a.anchor.getTime() - b.anchor.getTime());
 }
 
 export function buildSummary(rows: SummaryRow[]): BranchBooksSummary {
@@ -129,7 +129,7 @@ export function buildSummary(rows: SummaryRow[]): BranchBooksSummary {
       entry.total += row.total;
       titleById.set(row.itemId, entry);
     }
-    const titles = [...titleById.values()].sort((a, b) => a.title.localeCompare(b.title));
+    const titles = [...titleById.values()].toSorted((a, b) => a.title.localeCompare(b.title));
     return {
       deadline: anchor.toISOString(),
       deadlines: members.map((member) => member.toISOString()),
@@ -236,7 +236,7 @@ export const BranchBooksService = {
 
   async getActiveBooksSummary(branchId: string): Promise<BranchBooksSummary> {
     const { branchObjectId, scopeObjectIds } = await resolveScope(branchId);
-    const rows = (await StorageService.CustomerItems.aggregate([
+    const rows = await StorageService.CustomerItems.aggregate<SummaryRow>([
       {
         $match: {
           ...ACTIVE_CUSTOMER_ITEM_MATCH,
@@ -254,7 +254,7 @@ export const BranchBooksService = {
         },
       },
       ...ITEM_TITLE_STAGES,
-    ])) as SummaryRow[];
+    ]);
     return buildSummary(rows);
   },
 
@@ -267,7 +267,14 @@ export const BranchBooksService = {
     deadlines: string[];
     itemId: string;
   }) {
-    const rows = (await StorageService.CustomerItems.aggregate([
+    const rows = await StorageService.CustomerItems.aggregate<{
+      customerItemId: string;
+      customerName: string | null;
+      dob: Date | null;
+      membershipBranchName: string | null;
+      blid: string | null;
+      handoutTime: Date | null;
+    }>([
       {
         $match: {
           ...ACTIVE_CUSTOMER_ITEM_MATCH,
@@ -289,14 +296,7 @@ export const BranchBooksService = {
           handoutTime: { $ifNull: ["$handoutInfo.time", null] },
         },
       },
-    ])) as {
-      customerItemId: string;
-      customerName: string | null;
-      dob: Date | null;
-      membershipBranchName: string | null;
-      blid: string | null;
-      handoutTime: Date | null;
-    }[];
+    ]);
     return rows.map(({ dob, ...row }) => ({
       ...row,
       birthYear: toBirthYear(dob),
@@ -336,7 +336,7 @@ export const BranchBooksService = {
 
   async getOrderedBooksSummary(branchId: string): Promise<BranchBooksSummary> {
     const { branchObjectId, scopeObjectIds } = await resolveScope(branchId);
-    const rows = (await StorageService.Orders.aggregate([
+    const rows = await StorageService.Orders.aggregate<SummaryRow>([
       { $match: { placed: true, branch: { $in: scopeObjectIds } } },
       { $unwind: "$orderItems" },
       { $match: OPEN_ORDER_ITEM_MATCH },
@@ -356,7 +356,7 @@ export const BranchBooksService = {
         },
       },
       ...ITEM_TITLE_STAGES,
-    ])) as SummaryRow[];
+    ]);
     return buildSummary(rows);
   },
 
@@ -369,7 +369,14 @@ export const BranchBooksService = {
     deadlines: string[];
     itemId: string;
   }) {
-    const rows = (await StorageService.Orders.aggregate([
+    const rows = await StorageService.Orders.aggregate<{
+      orderId: string;
+      orderItemId: string;
+      customerName: string | null;
+      dob: Date | null;
+      membershipBranchName: string | null;
+      orderTime: Date | null;
+    }>([
       { $match: { placed: true, branch: new ObjectId(branchId) } },
       { $unwind: "$orderItems" },
       { $match: { ...OPEN_ORDER_ITEM_MATCH, "orderItems.item": new ObjectId(itemId) } },
@@ -394,14 +401,7 @@ export const BranchBooksService = {
           orderTime: { $ifNull: ["$creationTime", null] },
         },
       },
-    ])) as {
-      orderId: string;
-      orderItemId: string;
-      customerName: string | null;
-      dob: Date | null;
-      membershipBranchName: string | null;
-      orderTime: Date | null;
-    }[];
+    ]);
     return rows.map(({ dob, ...row }) => ({
       ...row,
       birthYear: toBirthYear(dob),
@@ -496,7 +496,13 @@ export const BranchBooksService = {
       itemObjectId: filter.itemId ? new ObjectId(filter.itemId) : undefined,
       orderItemObjectIds: filter.orderItemIds?.map((id) => new ObjectId(id)),
     });
-    const candidates = (await StorageService.Orders.aggregate([
+    const candidates = await StorageService.Orders.aggregate<{
+      orderId: string;
+      branch: string;
+      customer: string;
+      amount: number;
+      cancelItems: { item: string; title: string }[];
+    }>([
       {
         $match: {
           placed: true,
@@ -525,13 +531,7 @@ export const BranchBooksService = {
           },
         },
       },
-    ])) as {
-      orderId: string;
-      branch: string;
-      customer: string;
-      amount: number;
-      cancelItems: { item: string; title: string }[];
-    }[];
+    ]);
 
     // Orders with money on them are skipped: cancelling those means refunds, which are handled manually
     const cancellable = candidates.filter((order) => order.amount === 0);

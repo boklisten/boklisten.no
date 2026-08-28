@@ -38,13 +38,13 @@ export function buildBranchMappings(
   branches: BranchSummary[],
 ): BranchMapping[] {
   return [...new Set(localNames.filter((localName): localName is string => !!localName))]
-    .sort((a, b) => a.localeCompare(b))
+    .toSorted((a, b) => a.localeCompare(b))
     .map((localName) => {
       const candidates = branches
         .filter((branch) =>
           normalizeBranchName(branch.name).includes(normalizeBranchName(localName)),
         )
-        .sort(
+        .toSorted(
           (a, b) =>
             normalizeBranchName(a.name).length - normalizeBranchName(b.name).length ||
             a.name.localeCompare(b.name),
@@ -104,9 +104,9 @@ export function computeTasks(userDetail: UserDetail, hasValidSignature: boolean)
 async function findExistingUsers(userCandidates: UserCandidate[]): Promise<(UserDetail | null)[]> {
   const phones = userCandidates.map((candidate) => normalizePhone(candidate.phone));
   const emails = userCandidates.map((candidate) => candidate.email);
-  const matches = (await StorageService.UserDetails.aggregate([
+  const matches = await StorageService.UserDetails.aggregate<UserDetail>([
     { $match: { $or: [{ phone: { $in: phones } }, { email: { $in: emails } }] } },
-  ])) as UserDetail[];
+  ]);
   const usersByPhone = new Map(
     matches.filter((user) => user.phone).map((user) => [user.phone, user]),
   );
@@ -129,7 +129,7 @@ async function updateExistingUser(
     ...existingUser,
     ...update,
     signatures: existingUser.signatures ?? [],
-  } as UserDetail;
+  };
   const tasks = computeTasks(mergedUser, await userHasValidSignature(mergedUser));
   await StorageService.UserDetails.update(existingUser.id, { ...update, tasks });
 }

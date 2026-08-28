@@ -36,7 +36,7 @@ export default function BranchItemSettings({ branchId }: { branchId: string }) {
     .values()
     .toArray()
     .filter((v) => v !== undefined)
-    .sort((a, b) => a.localeCompare(b));
+    .toSorted((a, b) => a.localeCompare(b));
 
   const form = useAppForm({
     defaultValues: {
@@ -64,9 +64,9 @@ export default function BranchItemSettings({ branchId }: { branchId: string }) {
               children: (
                 <BranchItemCreationModal
                   modalId={modalId}
-                  onConfirm={(branchItems) => {
+                  onConfirm={(selectedBranchItems) => {
                     modals.close(modalId);
-                    const newBranchItems = branchItems;
+                    const newBranchItems = selectedBranchItems;
                     for (const branchItem of form.state.values.branchItems) {
                       if (newBranchItems.some((nbi) => nbi.item.id === branchItem.item.id))
                         continue;

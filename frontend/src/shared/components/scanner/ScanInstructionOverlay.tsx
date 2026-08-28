@@ -86,7 +86,7 @@ function locateHint(type: ScanCodeType): string | null {
     case "blid": {
       return "Klistremerket med bokas unike ID";
     }
-    case "unknown": {
+    default: {
       return null;
     }
   }

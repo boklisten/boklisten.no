@@ -10,7 +10,7 @@ export default class PublicBlidLookupController {
 
     const blid = ctx.request.param("blid");
 
-    return (await StorageService.CustomerItems.aggregate([
+    return await StorageService.CustomerItems.aggregate<PublicBlidLookupResult>([
       {
         $match: {
           returned: false,
@@ -56,6 +56,6 @@ export default class PublicBlidLookupController {
           phone: { $first: "$customerInfo.phone" },
         },
       },
-    ])) as PublicBlidLookupResult[];
+    ]);
   }
 }

@@ -73,6 +73,15 @@ function OrderedBookDetails({
   );
 }
 
+function bulkFilter(target: BranchBooksEditTarget, includeDescendants: boolean) {
+  return {
+    ...(target.filter.deadlines && { deadlines: target.filter.deadlines }),
+    ...(target.filter.itemId && { itemId: target.filter.itemId }),
+    ...(target.filter.ids && { orderItemIds: target.filter.ids }),
+    includeDescendants,
+  };
+}
+
 export default function OrderedBooksTab({ branchId }: { branchId: string }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
@@ -115,15 +124,6 @@ export default function OrderedBooksTab({ branchId }: { branchId: string }) {
         ]),
     }),
   );
-
-  function bulkFilter(target: BranchBooksEditTarget, includeDescendants: boolean) {
-    return {
-      ...(target.filter.deadlines && { deadlines: target.filter.deadlines }),
-      ...(target.filter.itemId && { itemId: target.filter.itemId }),
-      ...(target.filter.ids && { orderItemIds: target.filter.ids }),
-      includeDescendants,
-    };
-  }
 
   function openEdit(kind: BranchBooksEditKind, target: BranchBooksEditTarget) {
     if (kind === "cancel") {

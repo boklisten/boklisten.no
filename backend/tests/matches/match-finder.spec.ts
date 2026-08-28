@@ -396,17 +396,16 @@ test.group("Faulty data checks", async () => {
   }) => {
     const userDuplicateA = createFakeMatchableUser("userDup", ["A"], ["B"]);
     const userDuplicateB = { ...userDuplicateA };
-    assert.throws(() => {
-      new MatchFinder([userDuplicateA, userDuplicateB]);
-    }, "Found duplicates in this.users");
+    assert.throws(
+      () => new MatchFinder([userDuplicateA, userDuplicateB]),
+      "Found duplicates in this.users",
+    );
   });
 
   test("accepts a user who wants an item they already have", async ({ assert }) => {
     // A student can legitimately hold one copy of a title and be owed another — two subjects
     // sharing a book, or a retake year. MatchFinder used to reject this outright.
     const userX = createFakeMatchableUser("userX", ["book1", "book2"], ["book2"]);
-    assert.doesNotThrow(() => {
-      new MatchFinder([userX]);
-    });
+    assert.doesNotThrow(() => new MatchFinder([userX]));
   });
 });

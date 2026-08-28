@@ -3,17 +3,17 @@ import { useState } from "react";
 import { jsonToCsv } from "@/features/reports/jsonToCsv";
 import { showErrorNotification } from "@/shared/utils/notifications";
 
-interface UseReportDownloadOptions<T extends Record<string, unknown>> {
-  fetchRows: () => Promise<T[]>;
+interface UseReportDownloadOptions {
+  fetchRows: () => Promise<unknown[]>;
   filename: string;
   errorMessage?: string;
 }
 
-export default function useReportDownload<T extends Record<string, unknown>>({
+export default function useReportDownload({
   fetchRows,
   filename,
   errorMessage = "Klarte ikke laste ned rapport",
-}: UseReportDownloadOptions<T>) {
+}: UseReportDownloadOptions) {
   const [isLoading, setIsLoading] = useState(false);
 
   async function download() {

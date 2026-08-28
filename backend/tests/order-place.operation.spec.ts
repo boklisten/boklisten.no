@@ -20,6 +20,7 @@ import { Order } from "#shared/order/order";
 import { OrderItem } from "#shared/order/order-item/order-item";
 import { SIGNATURE_NUM_MONTHS_VALID } from "#shared/serialized-signature";
 import { UserDetail } from "#shared/user-detail";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderPlaceOperation", (group) => {
   const orderToCustomerItemGenerator = new OrderToCustomerItemGenerator();
@@ -136,7 +137,7 @@ test.group("OrderPlaceOperation", (group) => {
 
   test("should reject if orderValidator.validate rejects", async ({ assert }) => {
     getOrderStub.resolves(validOrder);
-    placeOrderStub.resolves({} as Order);
+    placeOrderStub.resolves({});
     validateOrderStub.rejects(new BlError("order not valid!"));
     getManyCustomerItemsStub.resolves([]);
     aggregateCustomerItemsStub.resolves([]);
@@ -153,7 +154,7 @@ test.group("OrderPlaceOperation", (group) => {
 
   test("should resolve if order is valid", async ({ assert }) => {
     getManyCustomerItemsStub.resolves([]);
-    const order = {
+    const order = mock<Order>({
       id: "validOrder1",
       customer: "customer1",
       amount: 100,
@@ -163,7 +164,7 @@ test.group("OrderPlaceOperation", (group) => {
           amount: 100,
         },
       ],
-    } as Order;
+    });
 
     getOrderStub.resolves(order);
     generateCustomerItemStub.resolves([]);
@@ -211,17 +212,17 @@ test.group("OrderPlaceOperation", (group) => {
   }
 
   function stubStandOrder(orderItem: Partial<OrderItem>, customerItem: Record<string, unknown>) {
-    const order = {
+    const order = mock<Order>({
       id: "standOrder1",
       customer: CUSTOMER,
       byCustomer: false,
       amount: 0,
       orderItems: [{ item: ITEM, amount: 0, unitPrice: 0, ...orderItem }],
-    } as Order;
+    });
 
     getOrderStub.resolves(order);
     getManyCustomerItemsStub.callsFake(async (ids: string[]) =>
-      [customerItem].filter((candidate) => ids.includes(candidate["id"] as string)),
+      [customerItem].filter((candidate) => ids.includes(String(candidate["id"]))),
     );
     aggregateCustomerItemsStub.resolves([]);
     generateCustomerItemStub.resolves([]);

@@ -3,6 +3,7 @@ import sinon, { createSandbox } from "sinon";
 
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { StorageService } from "#services/storage_service";
+import { asStub } from "#tests/test-doubles";
 
 test.group("CustomerItemActiveBlid", (group) => {
   let sandbox: sinon.SinonSandbox;
@@ -43,7 +44,7 @@ test.group("CustomerItemActiveBlid", (group) => {
     };
 
     // Grab our stub and define the return value for THIS test
-    const getByQueryStub = StorageService.CustomerItems.getByQuery as sinon.SinonStub;
+    const getByQueryStub = asStub(StorageService.CustomerItems.getByQuery);
     getByQueryStub.resolves([customerItem1, customerItem2]);
 
     const result = await customerItemActiveBlid.getActiveCustomerItemIds("blid1");
@@ -62,7 +63,7 @@ test.group("CustomerItemActiveBlid", (group) => {
     };
 
     // For this test, the same stub returns a different result
-    const getByQueryStub = StorageService.CustomerItems.getByQuery as sinon.SinonStub;
+    const getByQueryStub = asStub(StorageService.CustomerItems.getByQuery);
     getByQueryStub.resolves([customerItem]);
 
     const result = await customerItemActiveBlid.getActiveCustomerItemIds("blid1");

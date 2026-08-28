@@ -13,7 +13,7 @@ export async function roundPlanMetrics(round: MatchRound): Promise<MatchRoundPla
   const { branches, deadline, includeCustomerItemsFromOtherBranches } = round;
 
   const [members, heldBooks, orderedBooks] = await Promise.all([
-    StorageService.UserDetails.aggregate([
+    StorageService.UserDetails.aggregate<{ students: number }>([
       { $match: membersOfBranches(branches) },
       { $count: "students" },
     ]),
@@ -22,7 +22,7 @@ export async function roundPlanMetrics(round: MatchRound): Promise<MatchRoundPla
   ]);
 
   return {
-    branchMembers: (members[0] as { students: number } | undefined)?.students ?? 0,
+    branchMembers: members[0]?.students ?? 0,
     activeBooks: tally(heldBooks),
     orderedBooks: tally(orderedBooks),
   };

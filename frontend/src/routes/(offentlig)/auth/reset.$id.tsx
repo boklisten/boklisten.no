@@ -3,6 +3,7 @@ import { Container, Stack, Title } from "@mantine/core";
 import PasswordReset from "@/features/auth/PasswordReset";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
+import { stringParam } from "@/shared/utils/searchParams";
 
 export const Route = createFileRoute("/(offentlig)/auth/reset/$id")({
   head: () =>
@@ -11,7 +12,7 @@ export const Route = createFileRoute("/(offentlig)/auth/reset/$id")({
       description: "Lag et nytt passord, slik at du får tilgang på kontoen din.",
     }),
   validateSearch: (search) => ({
-    resetToken: (search["token"] as string) || "",
+    resetToken: stringParam(search["token"]),
   }),
   component: PasswordResetPage,
 });

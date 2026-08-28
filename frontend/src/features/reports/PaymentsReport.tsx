@@ -32,7 +32,7 @@ export default function PaymentsReport() {
         ...(created.to && { createdBefore: created.to.toISOString() }),
       };
       const rows = await client.api.reports.getPaymentsReport({ query });
-      return (rows ?? []) as Record<string, unknown>[];
+      return rows ?? [];
     },
     filename: `payments-${dayjs().format("YYYY-MM-DD")}.csv`,
   });

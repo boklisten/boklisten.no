@@ -116,7 +116,7 @@ const UniqueIdGeneratorService = {
     const buffers: Buffer[] = [];
 
     for await (const chunk of doc) {
-      buffers.push(chunk as Buffer);
+      buffers.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     }
 
     return Buffer.concat(buffers);

@@ -6,7 +6,7 @@ const OPTIONS = [
   { value: "light", label: "Lys", icon: IconSun },
   { value: "dark", label: "Mørk", icon: IconMoon },
   { value: "auto", label: "System", icon: IconDeviceLaptop },
-];
+] as const satisfies readonly { value: MantineColorScheme; label: string; icon: unknown }[];
 
 export default function ColorSchemeSelector() {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
@@ -19,7 +19,10 @@ export default function ColorSchemeSelector() {
       <SegmentedControl
         radius={"xl"}
         value={colorScheme}
-        onChange={(value) => setColorScheme(value as MantineColorScheme)}
+        onChange={(value) => {
+          const scheme = OPTIONS.find((option) => option.value === value)?.value;
+          if (scheme) setColorScheme(scheme);
+        }}
         data={OPTIONS.map(({ value, label, icon: Icon }) => ({
           value,
           label: (

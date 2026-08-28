@@ -25,7 +25,7 @@ function calculateDeadlineOptions() {
       ),
     )
     .filter((date) => !date.isBefore(earliest) && !date.isAfter(latest))
-    .sort((a, b) => a.valueOf() - b.valueOf())
+    .toSorted((a, b) => a.valueOf() - b.valueOf())
     .map((date) => ({
       value: date.format("YYYY-MM-DD"),
       label: date.format("DD/MM/YYYY"),

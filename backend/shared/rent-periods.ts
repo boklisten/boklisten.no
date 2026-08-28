@@ -11,7 +11,7 @@ export type RentPeriod = BranchPaymentInfo["rentPeriods"][number];
 export function futureRentPeriods(branch: Branch, now: Date): RentPeriod[] {
   return (branch.paymentInfo?.rentPeriods ?? [])
     .filter((period) => new Date(period.date).getTime() > now.getTime())
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .toSorted((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 /** The branch's future rent period matching the picked deadline, if the pick is valid. */

@@ -20,7 +20,7 @@ const realCalendarDate = vine.createRule((value, _, field) => {
  * partial patch can arrange — the plan form always sends both ends of a window.
  */
 const laterThan = vine.createRule((value, startField: string, field) => {
-  const start = (field.parent as Record<string, unknown>)[startField];
+  const start: unknown = Reflect.get(Object(field.parent), startField);
   if (typeof value !== "string" || typeof start !== "string") return;
   if (value <= start) {
     field.report("Sluttiden må være etter starttiden", "later_than", field);
@@ -60,12 +60,14 @@ const planFields = {
 type PlanFields = typeof planFields;
 
 const buildPlanFields = () =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries erases the key/value pairing TS can see in planFields; the assertion restores it
   Object.fromEntries(Object.entries(planFields).map(([key, field]) => [key, field()])) as {
     [K in keyof PlanFields]: ReturnType<PlanFields[K]>;
   };
 
 /** The same fields, each made optional — VineJS has no `.partial()` on an assembled object. */
 const buildOptionalPlanFields = () =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries erases the key/value pairing TS can see in planFields; the assertion restores it
   Object.fromEntries(
     Object.entries(planFields).map(([key, field]) => [key, field().optional()]),
   ) as { [K in keyof PlanFields]: ReturnType<ReturnType<PlanFields[K]>["optional"]> };
@@ -106,4 +108,5 @@ export const matchRoundPatchValidator = vine.create(matchRoundPatchSchema);
  * Read off the plan itself, so a field added to the plan freezes with it rather than staying
  * silently editable until someone remembers to list it here too.
  */
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.keys widens to string[]; planFields is a closed local object so its keys are exactly keyof PlanFields
 export const PLAN_PATCH_KEYS = Object.keys(planFields) as (keyof PlanFields)[];

@@ -36,12 +36,15 @@ export class DbQueryNumberFilter {
       return numberFilters;
     } catch (error) {
       if (error instanceof TypeError)
-        throw new TypeError("query includes bad number data, reason: " + error.message);
+        throw new TypeError("query includes bad number data, reason: " + error.message, {
+          cause: error,
+        });
       if (error instanceof SyntaxError)
         throw new SyntaxError("query includes syntax errors, reason: " + error.message);
       throw new Error(
         // @ts-expect-error fixme: auto ignored
         "failure when parsing query for number operations" + error.message,
+        { cause: error },
       );
     }
   }

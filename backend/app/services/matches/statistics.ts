@@ -116,6 +116,9 @@ function emptyStatistics(): MatchStatistics {
  * worked by accident. Completion is now the share of obligation halves that a recorded handover
  * actually discharged.
  */
+const increment = (map: Map<string, number>, item: string) =>
+  map.set(item, (map.get(item) ?? 0) + 1);
+
 export async function computeMatchStatistics(roundId?: number): Promise<MatchStatistics> {
   const round =
     roundId === undefined
@@ -159,9 +162,6 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
   const actualInByItem = new Map<string, number>();
   const expectedOutByItem = new Map<string, number>();
   const actualOutByItem = new Map<string, number>();
-  const increment = (map: Map<string, number>, item: string) =>
-    map.set(item, (map.get(item) ?? 0) + 1);
-
   const bump = (customer: string, kind: "userMatches" | "standMatches") => {
     const existing = matchesPerCustomer.get(customer) ?? { userMatches: 0, standMatches: 0 };
     existing[kind]++;
@@ -317,7 +317,7 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
       onlyUserHandovers,
       mustVisitStand,
     },
-    distribution: [...distributionCounts.values()].sort((a, b) => b.students - a.students),
+    distribution: [...distributionCounts.values()].toSorted((a, b) => b.students - a.students),
     userMatchCompletion,
     standMatchCompletion,
     userBookTransfer,
@@ -327,10 +327,10 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
     standBranchHierarchy,
     standAttendance: [...standAttendanceCounts.entries()]
       .map(([date, people]) => ({ date, people }))
-      .sort((a, b) => compareSlots(a.date, b.date)) satisfies StandAttendanceSlot[],
+      .toSorted((a, b) => compareSlots(a.date, b.date)) satisfies StandAttendanceSlot[],
     userAttendance: [...userAttendanceStudents.values()]
       .map(({ location, date, students }) => ({ location, date, people: students.size }))
-      .sort(
+      .toSorted(
         (a, b) => a.location.localeCompare(b.location) || compareSlots(a.date, b.date),
       ) satisfies UserAttendanceSlot[],
     handoverVerdicts: verdicts,
@@ -382,7 +382,7 @@ async function computeStandBookExpectations(counts: {
       expectedOut: counts.expectedOutByItem.get(itemId) ?? 0,
       actualOut: counts.actualOutByItem.get(itemId) ?? 0,
     }))
-    .sort((a, b) => b.expectedIn + b.expectedOut - (a.expectedIn + a.expectedOut));
+    .toSorted((a, b) => b.expectedIn + b.expectedOut - (a.expectedIn + a.expectedOut));
 }
 
 const UNKNOWN_BRANCH = "Ukjent filial";
@@ -451,7 +451,7 @@ function ancestorChain(
     chain.push({ id: currentId, name: branch.localName || branch.name });
     currentId = branch.parentBranch;
   }
-  return chain.reverse();
+  return chain.toReversed();
 }
 
 function toBranchNodes(level: Map<string, MutableBranchNode>): BranchHierarchyNode[] {
@@ -461,5 +461,5 @@ function toBranchNodes(level: Map<string, MutableBranchNode>): BranchHierarchyNo
       students: node.students,
       children: toBranchNodes(node.children),
     }))
-    .sort((a, b) => b.students - a.students);
+    .toSorted((a, b) => b.students - a.students);
 }

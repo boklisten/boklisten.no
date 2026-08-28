@@ -45,8 +45,9 @@ export default function NotifyRoundButton({
     onError: (error: Error) => setApiError(error.message),
   });
 
+  const defaultValues: NotifyFields = { target: "all", message: "" };
   const form = useAppForm({
-    defaultValues: { target: "all", message: "" } as NotifyFields,
+    defaultValues,
     onSubmit: ({ value }) => notifyMutation.mutate(value),
   });
 

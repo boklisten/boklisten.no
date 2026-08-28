@@ -21,7 +21,7 @@ export function nameScanCodeType(type: ScanCodeType): string {
     case "isbn": {
       return "bokas ISBN";
     }
-    case "unknown": {
+    default: {
       return "en ukjent kode";
     }
   }
@@ -35,7 +35,7 @@ export function describeScanCodeFormat(type: ScanCodeType): string {
     case "isbn": {
       return "13 siffer";
     }
-    case "unknown": {
+    default: {
       return "kode";
     }
   }

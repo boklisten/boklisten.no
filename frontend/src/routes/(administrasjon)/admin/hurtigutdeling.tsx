@@ -23,9 +23,7 @@ type RapidHandoutSearch = {
 };
 
 function parseTab(value: unknown): RapidHandoutTab | undefined {
-  return RAPID_HANDOUT_TABS.includes(value as RapidHandoutTab)
-    ? (value as RapidHandoutTab)
-    : undefined;
+  return RAPID_HANDOUT_TABS.find((tab) => tab === value);
 }
 
 export const Route = createFileRoute("/(administrasjon)/admin/hurtigutdeling")({

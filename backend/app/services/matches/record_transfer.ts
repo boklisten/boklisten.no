@@ -66,18 +66,16 @@ async function findReceiverRentOrder(
 ): Promise<OriginalOrderInfo | undefined> {
   const orderActive = new OrderActive();
   return (await orderActive.getActiveOrders(receiverUserDetailId))
-    .map((order) => ({
-      order,
-      relevantOrderItem: order.orderItems.find(
+    .flatMap((order) => {
+      const relevantOrderItem = order.orderItems.find(
         (orderItem) =>
           orderActive.isOrderItemActive(orderItem) &&
           itemsAreEquivalent(orderItem.item, itemId) &&
           orderItem.type === "rent",
-      ),
-    }))
-    .find(({ relevantOrderItem }) => relevantOrderItem !== undefined) as
-    | OriginalOrderInfo
-    | undefined;
+      );
+      return relevantOrderItem ? [{ order, relevantOrderItem }] : [];
+    })
+    .at(0);
 }
 
 async function createMatchReceiveOrder(

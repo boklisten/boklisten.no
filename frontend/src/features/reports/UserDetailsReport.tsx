@@ -20,7 +20,7 @@ export default function UserDetailsReport() {
         ...(branchFilter.length > 0 && { branchFilter }),
       };
       const rows = await client.api.reports.getUserDetailsReport({ query });
-      return (rows ?? []) as Record<string, unknown>[];
+      return rows ?? [];
     },
     filename: `user_details-${dayjs().format("YYYY-MM-DD")}.csv`,
   });

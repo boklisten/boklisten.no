@@ -74,7 +74,7 @@ export default function MatchItemTable({
     <TableFrame>
       {[...obligations]
         .map((obligation) => ({ obligation, ...rowStatus(obligation, adminView) }))
-        .sort((a, b) => Number(a.fulfilled) - Number(b.fulfilled))
+        .toSorted((a, b) => Number(a.fulfilled) - Number(b.fulfilled))
         .map(({ obligation, fulfilled, label }) => {
           const note = describeObligation(obligation, adminView);
           return (
@@ -111,7 +111,7 @@ export function ItemStatusTable({
   return (
     <TableFrame hasActions={renderAction !== undefined}>
       {[...itemStatuses]
-        .sort((a, b) => Number(a.fulfilled) - Number(b.fulfilled))
+        .toSorted((a, b) => Number(a.fulfilled) - Number(b.fulfilled))
         .map((item) => (
           <Table.Tr key={item.id}>
             <Table.Td>

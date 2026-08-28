@@ -79,6 +79,7 @@ export class OrderConfirmOperation implements Operation {
   }
 
   public async run(blApiRequest: BlApiRequest) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- legacy request context carries only these fields; downstream only reads them
     const accessToken = {
       // @ts-expect-error fixme: auto ignored
       details: blApiRequest.user.id,

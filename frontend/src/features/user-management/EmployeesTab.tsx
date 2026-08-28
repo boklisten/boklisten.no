@@ -161,7 +161,7 @@ export default function EmployeesTab() {
                     w={160}
                     onChange={(value) => {
                       if (value && value !== employee.permission) {
-                        confirmPermissionChange(employee, value as UserPermission);
+                        confirmPermissionChange(employee, value);
                       }
                     }}
                   />

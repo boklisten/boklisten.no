@@ -163,14 +163,14 @@ export function scheduleUserMeetings(input: ScheduleInput): UserMatchAssignment[
       matchCounts.set(person, (matchCounts.get(person) ?? 0) + 1);
     }
   }
-  const people = [...matchCounts.keys()].sort((a, b) => {
+  const people = [...matchCounts.keys()].toSorted((a, b) => {
     const byCount = matchCounts.get(b)! - matchCounts.get(a)!;
     return byCount !== 0 ? byCount : a.localeCompare(b);
   });
 
   const cohortKey = (match: CandidateUserMatch) =>
     [memberships.get(match.customerA) ?? "unknown", memberships.get(match.customerB) ?? "unknown"]
-      .sort((a, b) => a.localeCompare(b))
+      .toSorted((a, b) => a.localeCompare(b))
       .join("|");
 
   const assignments: (UserMatchAssignment | null)[] = Array.from(
@@ -184,7 +184,7 @@ export function scheduleUserMeetings(input: ScheduleInput): UserMatchAssignment[
         ({ match, index }) =>
           assignments[index] === null && (match.customerA === person || match.customerB === person),
       )
-      .sort((a, b) => {
+      .toSorted((a, b) => {
         const counterpartyOf = (entry: { match: CandidateUserMatch }) =>
           entry.match.customerA === person ? entry.match.customerB : entry.match.customerA;
         const byCounterparty = counterpartyOf(a).localeCompare(counterpartyOf(b));
@@ -207,7 +207,10 @@ export function scheduleUserMeetings(input: ScheduleInput): UserMatchAssignment[
       };
     }
   }
-  return assignments as UserMatchAssignment[];
+  return assignments.map((assignment) => {
+    if (assignment === null) throw new BlError("Ikke alle møter fikk tildelt et tidspunkt");
+    return assignment;
+  });
 }
 
 /**
@@ -247,10 +250,10 @@ export function scheduleStandVisits(
     .map((standMatch, index) => ({
       index,
       signature: [...standMatch.expectedHandoffItems, ...standMatch.expectedPickupItems]
-        .sort((a, b) => a.localeCompare(b))
+        .toSorted((a, b) => a.localeCompare(b))
         .join(","),
     }))
-    .sort(
+    .toSorted(
       (a, b) =>
         a.signature.localeCompare(b.signature) ||
         standMatches[a.index]!.customer.localeCompare(standMatches[b.index]!.customer),

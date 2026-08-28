@@ -19,6 +19,7 @@ export class SendgridEventOperation implements Operation {
     }
 
     for (const sendgridEvent of blApiRequest.data) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- webhook payload from SendGrid; trusted as-is like the rest of this legacy operation
       await this.parseSendgridEvent(sendgridEvent as SendgridEvent);
     }
 
@@ -33,14 +34,15 @@ export class SendgridEventOperation implements Operation {
     const messageType = sendgridEvent["bl_message_type"];
 
     if (!blMessageId) {
+      // default is that the message dont have a blMessageId
       logger.debug(`sendgrid event did not have a bl_message_id`);
-      return true; // default is that the message dont have a blMessageId
+      return;
     }
 
     if (messageType !== "reminder") {
-      logger.debug(`sendgrid event did not have supported bl_message_type`);
       // as of now, we only whant to collect the reminder emails
-      return true;
+      logger.debug(`sendgrid event did not have supported bl_message_type`);
+      return;
     }
 
     try {
@@ -50,9 +52,7 @@ export class SendgridEventOperation implements Operation {
       logger.warn(`could not update sendgrid event ${error}`);
       // if we dont find the message, there is no worries in not handling it
       // this is just for logging anyway, and we can handle some losses
-      return true;
     }
-    return;
   }
 
   private async updateMessageWithSendgridEvent(

@@ -16,6 +16,14 @@ const ITEM_X = "5d765db5fc8c47001c408e01";
 const ITEM_Y = "5d765db5fc8c47001c408e02";
 const BLID = "BL0001234567";
 
+function standParticipant(match: Match): MatchParticipant {
+  return match.participants.find((participant) => participant.userDetailId === null)!;
+}
+
+function customerParticipant(match: Match): MatchParticipant {
+  return match.participants.find((participant) => participant.userDetailId !== null)!;
+}
+
 test.group("sendMatchToStand", (group) => {
   let round: MatchRound;
 
@@ -73,14 +81,6 @@ test.group("sendMatchToStand", (group) => {
       .preload("participants")
       .preload("obligations")
       .first();
-  }
-
-  function standParticipant(match: Match): MatchParticipant {
-    return match.participants.find((participant) => participant.userDetailId === null)!;
-  }
-
-  function customerParticipant(match: Match): MatchParticipant {
-    return match.participants.find((participant) => participant.userDetailId !== null)!;
   }
 
   test("appends both halves of a pending obligation to existing stand matches", async ({

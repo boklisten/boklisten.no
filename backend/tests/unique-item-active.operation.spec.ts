@@ -1,10 +1,9 @@
 import { test } from "@japa/runner";
-import sinon from "sinon";
+import sinon, { createSandbox } from "sinon";
 
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { UniqueItemActiveOperation } from "#services/legacy/collections/unique-item/operations/unique-item-active.operation";
 import { StorageService } from "#services/storage_service";
-import { UniqueItem } from "#shared/unique-item";
 
 test.group("UniqueItemActiveOperation", (group) => {
   const customerItemActiveBlid = new CustomerItemActiveBlid();
@@ -16,7 +15,7 @@ test.group("UniqueItemActiveOperation", (group) => {
   let getActiveCustomerItemsStub: sinon.SinonStub;
 
   group.each.setup(() => {
-    sandbox = sinon.createSandbox();
+    sandbox = createSandbox();
     getActiveCustomerItemsStub = sandbox.stub(customerItemActiveBlid, "getActiveCustomerItems");
 
     getUniqueItemStub = sandbox.stub(StorageService.UniqueItems, "get");
@@ -26,7 +25,7 @@ test.group("UniqueItemActiveOperation", (group) => {
   });
 
   test("should not reject", async ({ assert }) => {
-    getUniqueItemStub.resolves({ blid: "blid1" } as UniqueItem);
+    getUniqueItemStub.resolves({ blid: "blid1" });
 
     getActiveCustomerItemsStub.resolves([]);
 

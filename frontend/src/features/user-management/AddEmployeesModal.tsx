@@ -155,7 +155,9 @@ export default function AddEmployeesModal({
           data={GRANTABLE_PERMISSIONS}
           value={permission}
           allowDeselect={false}
-          onChange={(value) => setPermission((value as UserPermission) ?? "employee")}
+          onChange={(value) =>
+            setPermission(GRANTABLE_PERMISSIONS.find((p) => p.value === value)?.value ?? "employee")
+          }
         />
         <Button
           disabled={selectedUsers.length === 0}

@@ -27,7 +27,7 @@ async function aggregateCustomersToRemind(
   deadlineISO: string,
 ) {
   const { after, before } = deadlineWindow(new Date(deadlineISO));
-  return (await StorageService.CustomerItems.aggregate([
+  return await StorageService.CustomerItems.aggregate<ReminderCustomer>([
     {
       $match: {
         returned: false,
@@ -91,7 +91,7 @@ async function aggregateCustomersToRemind(
         customerItems: 1,
       },
     },
-  ])) as ReminderCustomer[];
+  ]);
 }
 
 /**

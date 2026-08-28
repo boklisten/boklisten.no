@@ -150,14 +150,14 @@ export function findInvalidDeadlines(rows: Pick<SubjectChoiceRow, "deadline">[])
     ...new Set(
       rows.map((row) => row.deadline).filter((deadline) => !DateTime.fromISO(deadline).isValid),
     ),
-  ].sort();
+  ].toSorted();
 }
 
 export function findPastDeadlines(rows: Pick<SubjectChoiceRow, "deadline">[], now: Date): string[] {
   const today = DateTime.fromJSDate(now).toISODate() ?? "";
   return [
     ...new Set(rows.map((row) => row.deadline).filter((deadline) => deadline <= today)),
-  ].sort();
+  ].toSorted();
 }
 
 export function resolvePeriodType(deadline: Date, now: Date): "year" | "semester" {
@@ -316,7 +316,7 @@ export function planSubjectChoices({
 
   plan.unknownSubjects = [...unknownSubjectStudents.values()]
     .map(({ subject, students }) => ({ subject, studentCount: students.size }))
-    .sort((a, b) => a.subject.localeCompare(b.subject));
+    .toSorted((a, b) => a.subject.localeCompare(b.subject));
   plan.unknownUsers.sort((a, b) => a.name.localeCompare(b.name));
   plan.ambiguousUsers.sort((a, b) => a.name.localeCompare(b.name));
   return plan;
@@ -325,18 +325,27 @@ export function planSubjectChoices({
 async function fetchScopeBranches(branchId: string) {
   const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
   const scopeIds = [branchId, ...descendantIds];
-  const branches = (await StorageService.Branches.aggregate([
+  const branches = await StorageService.Branches.aggregate<{
+    id: string;
+    name: string;
+    parentBranch?: string;
+    childBranches?: string[];
+  }>([
     { $match: { _id: { $in: scopeIds.map((id) => new ObjectId(id)) } } },
     { $project: { name: 1, parentBranch: 1, childBranches: 1 } },
-  ])) as { id: string; name: string; parentBranch?: string; childBranches?: string[] }[];
+  ]);
   return { scopeIds, branches };
 }
 
 async function fetchMembers(scopeIds: string[]): Promise<MemberSummary[]> {
-  const members = (await StorageService.UserDetails.aggregate([
+  const members = await StorageService.UserDetails.aggregate<{
+    id: string;
+    name?: string;
+    branchMembership?: string;
+  }>([
     { $match: { branchMembership: { $in: scopeIds.map((id) => new ObjectId(id)) } } },
     { $project: { name: 1, branchMembership: 1 } },
-  ])) as { id: string; name?: string; branchMembership?: string }[];
+  ]);
   return members.map((member) => ({
     id: member.id,
     name: member.name ?? "",
@@ -348,11 +357,11 @@ async function fetchOwnedItemKeys(customerIds: string[]): Promise<Set<string>> {
   if (customerIds.length === 0) return new Set();
   const customerObjectIds = customerIds.map((id) => new ObjectId(id));
   const [activeCustomerItems, openOrderItems] = await Promise.all([
-    StorageService.CustomerItems.aggregate([
+    StorageService.CustomerItems.aggregate<{ customer: string; item: string }>([
       { $match: { ...ACTIVE_CUSTOMER_ITEM_MATCH, customer: { $in: customerObjectIds } } },
       { $project: { customer: { $toString: "$customer" }, item: { $toString: "$item" } } },
-    ]) as Promise<{ customer: string; item: string }[]>,
-    StorageService.Orders.aggregate([
+    ]),
+    StorageService.Orders.aggregate<{ customer: string; item: string }>([
       { $match: { placed: true, customer: { $in: customerObjectIds } } },
       { $unwind: "$orderItems" },
       { $match: OPEN_ORDER_ITEM_MATCH },
@@ -362,7 +371,7 @@ async function fetchOwnedItemKeys(customerIds: string[]): Promise<Set<string>> {
           item: { $toString: "$orderItems.item" },
         },
       },
-    ]) as Promise<{ customer: string; item: string }[]>,
+    ]),
   ]);
   return new Set(
     [...activeCustomerItems, ...openOrderItems].map(({ customer, item }) => `${customer}:${item}`),

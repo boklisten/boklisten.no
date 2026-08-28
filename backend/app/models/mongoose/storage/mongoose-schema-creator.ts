@@ -9,6 +9,7 @@ export class MongooseModelCreator<T> {
   ) {}
 
   create(): Model<T> {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the mongoose/typed-model boundary: the schema was built from T, but mongoose cannot carry that through model()
     return mongoose.model(
       this.schemaName,
       this.standardizeSchema(this.schema),
@@ -61,16 +62,18 @@ export class MongooseModelCreator<T> {
     if (!returnValue) return;
     // Arrays are also "object" and can be handled the same way
     if (typeof returnValue === "object") {
-      const document = returnValue as Record<string, unknown>;
+      const document = returnValue;
       // Translate _id to id only if id does not already exist
       // (embedded documents such as BlDocument.user may have an id field which is different from the _id field)
-      if ("_id" in document && !("id" in document)) document["id"] = document["_id"];
-      delete document["_id"];
-      delete document["__v"];
+      if ("_id" in document && !("id" in document)) {
+        Reflect.set(document, "id", Reflect.get(document, "_id"));
+      }
+      Reflect.deleteProperty(document, "_id");
+      Reflect.deleteProperty(document, "__v");
       for (const key of Object.keys(document)) {
-        const value = document[key];
+        const value: unknown = Reflect.get(document, key);
         if (value instanceof mongoose.Types.ObjectId) {
-          document[key] = String(value);
+          Reflect.set(document, key, String(value));
         } else if (typeof value === "object") {
           MongooseModelCreator.transformObject(value);
         }

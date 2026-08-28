@@ -33,24 +33,28 @@ export class DeliveryPostHook extends Hook {
         // @ts-expect-error fixme: auto ignored
         .get(delivery.order)
         .then((order: Order) => {
-          this.deliveryValidator
-            // @ts-expect-error fixme: auto ignored
-            .validate(delivery)
-            .then(() => {
-              this.deliveryHandler
+          return (
+            this.deliveryValidator
+              // @ts-expect-error fixme: auto ignored
+              .validate(delivery)
+              .then(() => {
+                return (
+                  this.deliveryHandler
 
-                // @ts-expect-error fixme: auto ignored
-                .updateOrderBasedOnMethod(delivery, order, accessToken)
-                .then((updatedDelivery: Delivery) => {
-                  return resolve([updatedDelivery]);
-                })
-                .catch((blError: BlError) => {
-                  return reject(blError);
-                });
-            })
-            .catch((blError: BlError) => {
-              return reject(blError);
-            });
+                    // @ts-expect-error fixme: auto ignored
+                    .updateOrderBasedOnMethod(delivery, order, accessToken)
+                    .then((updatedDelivery: Delivery) => {
+                      return resolve([updatedDelivery]);
+                    })
+                    .catch((blError: BlError) => {
+                      return reject(blError);
+                    })
+                );
+              })
+              .catch((blError: BlError) => {
+                return reject(blError);
+              })
+          );
         })
         .catch((blError: BlError) => {
           return reject(blError);

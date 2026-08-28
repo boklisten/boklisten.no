@@ -4,7 +4,6 @@ import { DatePickerInput } from "@mantine/dates";
 import {
   DATE_RANGE_PRESETS,
   DATE_RANGE_PRESET_LABELS,
-  type DateRangePreset,
   type DateRangeValue,
 } from "@/features/reports/dateRangePresets";
 
@@ -24,7 +23,12 @@ export default function DateRangePresetField({
       <Stack gap={"xs"}>
         <SegmentedControl
           value={value.preset}
-          onChange={(next) => onChange({ ...value, preset: next as DateRangePreset })}
+          onChange={(next) => {
+            const preset = DATE_RANGE_PRESETS.find((option) => option === next);
+            if (preset) {
+              onChange({ ...value, preset });
+            }
+          }}
           data={DATE_RANGE_PRESETS.map((preset) => ({
             value: preset,
             label: DATE_RANGE_PRESET_LABELS[preset],

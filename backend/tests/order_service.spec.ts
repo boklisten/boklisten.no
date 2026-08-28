@@ -5,16 +5,15 @@ import { CustomerItemService } from "#services/customer_item_service";
 import { OrderItemService } from "#services/order_item_service";
 import { OrderService } from "#services/order_service";
 import { StorageService } from "#services/storage_service";
-import { CustomerItem } from "#shared/customer-item/customer-item";
 import { Item } from "#shared/item";
-import { Order } from "#shared/order/order";
+import { asStub, mock } from "#tests/test-doubles";
 
 const CUSTOMER_ID = "5d765db5fc8c47001c408d91";
 const BRANCH_ID = "5d765db5fc8c47001c408d81";
 const ITEM_ID = "6100000000000000000000a1";
 const DEADLINE = new Date("2027-07-01");
 
-const ITEM = { id: ITEM_ID, title: "Kjemien stemmer", price: 500 } as Item;
+const ITEM = mock<Item>({ id: ITEM_ID, title: "Kjemien stemmer", price: 500 });
 
 test.group("OrderService.createFromCart", (group) => {
   let sandbox: sinon.SinonSandbox;
@@ -45,7 +44,7 @@ test.group("OrderService.createFromCart", (group) => {
     });
     ordersAdd = sandbox
       .stub(StorageService.Orders, "add")
-      .callsFake((order) => Promise.resolve({ ...order, id: "order1" } as Order));
+      .callsFake((order) => Promise.resolve({ ...order, id: "order1" }));
   });
   group.each.teardown(() => sandbox.restore());
 
@@ -68,9 +67,9 @@ test.group("OrderService.createFromCart", (group) => {
   });
 
   test("rejects rent when the customer already has the book", async ({ assert }) => {
-    (CustomerItemService.getCustomerItemByItemIdOrNull as sinon.SinonStub).resolves({
+    asStub(CustomerItemService.getCustomerItemByItemIdOrNull).resolves({
       id: "ci1",
-    } as CustomerItem);
+    });
     await assert.rejects(
       () => OrderService.createFromCart(CUSTOMER_ID, [rentCartItem()]),
       /Du har allerede «Kjemien stemmer»/,
@@ -81,7 +80,7 @@ test.group("OrderService.createFromCart", (group) => {
   test("rejects rent when the customer already has an open order for the book", async ({
     assert,
   }) => {
-    (StorageService.Orders.aggregate as sinon.SinonStub).resolves([
+    asStub(StorageService.Orders.aggregate).resolves([
       { orderId: "order0", itemId: ITEM_ID, title: ITEM.title, deadline: DEADLINE },
     ]);
     await assert.rejects(
@@ -94,7 +93,7 @@ test.group("OrderService.createFromCart", (group) => {
   test("rejects buy when the customer already has an open buy order for the book", async ({
     assert,
   }) => {
-    const aggregate = StorageService.Orders.aggregate as sinon.SinonStub;
+    const aggregate = asStub(StorageService.Orders.aggregate);
     aggregate.resolves([{ orderId: "order0", itemId: ITEM_ID, title: ITEM.title, deadline: null }]);
     await assert.rejects(
       () =>
@@ -112,9 +111,9 @@ test.group("OrderService.createFromCart", (group) => {
   });
 
   test("allows buyout even though the customer has the book", async ({ assert }) => {
-    (CustomerItemService.getCustomerItemByItemIdOrNull as sinon.SinonStub).resolves({
+    asStub(CustomerItemService.getCustomerItemByItemIdOrNull).resolves({
       id: "ci1",
-    } as CustomerItem);
+    });
     const order = await OrderService.createFromCart(CUSTOMER_ID, [
       { id: ITEM_ID, branchId: BRANCH_ID, type: "buyout" },
     ]);

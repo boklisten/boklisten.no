@@ -50,6 +50,7 @@ export class DbQueryObjectIdFilter {
       if (error instanceof TypeError) {
         throw new TypeError(
           "query includes bad object-id parameter data, reason: " + error.message,
+          { cause: error },
         );
       }
 
@@ -57,6 +58,7 @@ export class DbQueryObjectIdFilter {
         "could not parse the object-id parameters in query, reason: " +
           // @ts-expect-error fixme: auto ignored
           error.message,
+        { cause: error },
       );
     }
   }

@@ -54,9 +54,7 @@ function AdminMatchesPage() {
 
   const fallbackRoundId =
     (rounds.find((round) => round.status === "active") ?? rounds[0])?.id ?? null;
-  const selectedRoundId = rounds.some((round) => round.id === runde)
-    ? (runde as string)
-    : fallbackRoundId;
+  const selectedRoundId = rounds.find((round) => round.id === runde)?.id ?? fallbackRoundId;
   const activeTab = fane ?? "innsikt";
   const selectedRound = rounds.find((round) => round.id === selectedRoundId);
 

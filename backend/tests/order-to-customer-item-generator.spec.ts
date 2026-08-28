@@ -7,9 +7,10 @@ import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
 import { OrderItem } from "#shared/order/order-item/order-item";
 import { UserDetail } from "#shared/user-detail";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderToCustomerItemGenerator", (group) => {
-  const userDetail = {
+  const userDetail = mock<UserDetail>({
     id: "customer1",
     name: "Hans Hansen",
     email: "hanshansen@hansen.com",
@@ -24,7 +25,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
       email: "lathanshansen@hansen.com",
       phone: "123456789",
     },
-  } as UserDetail;
+  });
   let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {

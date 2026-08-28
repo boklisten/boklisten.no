@@ -43,7 +43,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
   );
 
   useEffect(() => {
-    if (data !== "PaymentInitiated" || attempt > MAX_ATTEMPTS) return;
+    if (data !== "PaymentInitiated" || attempt > MAX_ATTEMPTS) return undefined;
     function startExponentialWait() {
       const waitInSeconds = attempt ** 2;
       setSecondsBeforeNextAttempt(waitInSeconds);

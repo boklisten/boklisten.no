@@ -6,6 +6,7 @@ import BranchSubject from "#models/branch_subject";
 import BranchSubjectBook from "#models/branch_subject_book";
 import { BranchSubjectsService, fetchSubjectsForUpload } from "#services/branch_subjects_service";
 import { StorageService } from "#services/storage_service";
+import { unchecked } from "#tests/test-doubles";
 
 const BRANCH = "5d765db5fc8c47001c408d81";
 const OTHER_BRANCH = "5d765db5fc8c47001c408d82";
@@ -33,7 +34,7 @@ test.group("BranchSubjectsService", (group) => {
   function stubItemTitles(titles: Record<string, string>) {
     sandbox
       .stub(StorageService.Items, "aggregate")
-      .resolves(Object.entries(titles).map(([id, title]) => ({ id, title })) as never);
+      .resolves(Object.entries(titles).map(([id, title]) => ({ id, title })));
   }
 
   test("creates a subject with books and lists it with item titles", async ({ assert }) => {
@@ -162,15 +163,17 @@ test.group("BranchSubjectsService", (group) => {
   test("import creates one subject per category with the books' options copied", async ({
     assert,
   }) => {
-    sandbox.stub(StorageService.BranchItems, "aggregate").resolves([
-      {
-        itemId: ITEM_KJEMI,
-        categories: ["Kjemi 2", "Realfag"],
-        ...ALL_OFF,
-        rent: true,
-      },
-      { itemId: ITEM_FYSIKK, categories: ["Realfag"], ...ALL_OFF, buy: true },
-    ] as never);
+    sandbox.stub(StorageService.BranchItems, "aggregate").resolves(
+      unchecked([
+        {
+          itemId: ITEM_KJEMI,
+          categories: ["Kjemi 2", "Realfag"],
+          ...ALL_OFF,
+          rent: true,
+        },
+        { itemId: ITEM_FYSIKK, categories: ["Realfag"], ...ALL_OFF, buy: true },
+      ]),
+    );
     stubItemTitles({ [ITEM_KJEMI]: "Kjemien stemmer", [ITEM_FYSIKK]: "Fysikkboka" });
 
     const result = await BranchSubjectsService.importFromBranchItems(BRANCH);
@@ -192,7 +195,7 @@ test.group("BranchSubjectsService", (group) => {
   }) => {
     sandbox
       .stub(StorageService.BranchItems, "aggregate")
-      .resolves([{ itemId: ITEM_KJEMI, categories: ["Kjemi 2"], ...ALL_OFF }] as never);
+      .resolves(unchecked([{ itemId: ITEM_KJEMI, categories: ["Kjemi 2"], ...ALL_OFF }]));
     await BranchSubjectsService.create(BRANCH, {
       name: "kjemi2",
       externalName: "noe annet",
@@ -222,7 +225,7 @@ test.group("BranchSubjectsService", (group) => {
       subjectsByBranchId
         .get(BRANCH)
         ?.map((subject) => subject.externalName)
-        .sort(),
+        .toSorted(),
       ["Gym", "Kjemi 2 programfag"],
     );
     assert.deepEqual(

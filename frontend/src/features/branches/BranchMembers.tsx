@@ -16,10 +16,20 @@ export default function BranchMembers({ branchId }: { branchId: string }) {
   );
 
   const removeMembersMutation = useMutation({
-    mutationFn: async ({ branchId, scope }: { branchId: string; scope: "direct" | "indirect" }) =>
+    mutationFn: async ({
+      branchId: targetBranchId,
+      scope,
+    }: {
+      branchId: string;
+      scope: "direct" | "indirect";
+    }) =>
       scope === "direct"
-        ? client.api.branchMembership.removeDirectMembers({ params: { branchId } })
-        : client.api.branchMembership.removeIndirectMembers({ params: { branchId } }),
+        ? client.api.branchMembership.removeDirectMembers({
+            params: { branchId: targetBranchId },
+          })
+        : client.api.branchMembership.removeIndirectMembers({
+            params: { branchId: targetBranchId },
+          }),
     onSuccess: () => showSuccessNotification("Medlemsliste ble oppdatert"),
     onError: () => showErrorNotification("Klarte ikke oppdatere medlemsliste"),
     onSettled: () =>

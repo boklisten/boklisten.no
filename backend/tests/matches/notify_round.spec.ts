@@ -8,11 +8,21 @@ import { createTestRound } from "#tests/matches/match-testing-utils";
 import DispatchService from "#services/dispatch_service";
 import { notify } from "#services/matches/notify_round";
 import { StorageService } from "#services/storage_service";
+import { mock, unchecked } from "#tests/test-doubles";
 
 const A = "5d765db5fc8c47001c408d81";
 const B = "5d765db5fc8c47001c408d82";
 const C = "5d765db5fc8c47001c408d83";
 const D = "5d765db5fc8c47001c408d84";
+
+async function seedRoundWithUserMatch(customerIds: string[], status = "active") {
+  const round = await createTestRound({ name: "Round", standLocation: "Kantina", status });
+  const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
+  await MatchParticipant.createMany(
+    customerIds.map((userDetailId) => ({ matchId: match.id, userDetailId })),
+  );
+  return round;
+}
 
 test.group("notify", (group) => {
   let sandbox: sinon.SinonSandbox;
@@ -24,21 +34,12 @@ test.group("notify", (group) => {
     sandbox.stub(DispatchService, "sendMatchInformation").resolves({
       mailStatus: { success: true },
       smsStatus: { successCount: 0, failed: [] },
-    } as never);
+    });
     getManyStub = sandbox
       .stub(StorageService.UserDetails, "getMany")
-      .callsFake(async (ids) => ids.map((id) => ({ id })) as never);
+      .callsFake(async (ids) => unchecked(ids.map((id) => ({ id }))));
   });
   group.each.teardown(() => sandbox.restore());
-
-  async function seedRoundWithUserMatch(customerIds: string[], status = "active") {
-    const round = await createTestRound({ name: "Round", standLocation: "Kantina", status });
-    const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
-    await MatchParticipant.createMany(
-      customerIds.map((userDetailId) => ({ matchId: match.id, userDetailId })),
-    );
-    return round;
-  }
 
   test("messages the named round rather than the default one", async ({ assert }) => {
     const oldRound = await seedRoundWithUserMatch([A, B]);
@@ -46,7 +47,7 @@ test.group("notify", (group) => {
 
     await notify({ target: "all", message: "Husk overleveringen!", roundId: oldRound.id });
 
-    assert.sameMembers(getManyStub.firstCall.args[0] as string[], [A, B]);
+    assert.sameMembers(mock<string[]>(getManyStub.firstCall.args[0]), [A, B]);
   });
 
   test("defaults to the newest active round", async ({ assert }) => {
@@ -55,7 +56,7 @@ test.group("notify", (group) => {
 
     await notify({ target: "all", message: "Husk overleveringen!" });
 
-    assert.sameMembers(getManyStub.firstCall.args[0] as string[], [A, B]);
+    assert.sameMembers(mock<string[]>(getManyStub.firstCall.args[0]), [A, B]);
   });
 
   test("refuses to message a draft round", async ({ assert }) => {

@@ -93,7 +93,7 @@ function findPastDeadlines(rows: SubjectChoiceRow[]): string[] {
   const today = localTodayISO();
   return [
     ...new Set(rows.map((row) => row.deadline).filter((deadline) => deadline <= today)),
-  ].sort();
+  ].toSorted();
 }
 
 function isRealDate(deadline: string): boolean {
@@ -105,14 +105,15 @@ function isRealDate(deadline: string): boolean {
 function findInvalidDeadlines(rows: SubjectChoiceRow[]): string[] {
   return [
     ...new Set(rows.map((row) => row.deadline).filter((deadline) => !isRealDate(deadline))),
-  ].sort();
+  ].toSorted();
+}
+
+function cell(row: Record<string, unknown>, key: string): string {
+  const value = row[key];
+  return value == null ? "" : String(value).trim();
 }
 
 function toSubjectChoiceRows(result: ImportResult): SubjectChoiceRow[] {
-  function cell(row: Record<string, unknown>, key: string): string {
-    const value = row[key];
-    return value == null ? "" : String(value).trim();
-  }
   return result.rows
     .map((row) => ({
       name: cell(row, "name"),

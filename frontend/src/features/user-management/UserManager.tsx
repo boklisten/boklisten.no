@@ -9,9 +9,7 @@ export const USER_MANAGER_TABS = ["kunder", "ansatte"] as const;
 export type UserManagerTab = (typeof USER_MANAGER_TABS)[number];
 
 export function parseUserManagerTab(value: unknown): UserManagerTab | undefined {
-  return USER_MANAGER_TABS.includes(value as UserManagerTab)
-    ? (value as UserManagerTab)
-    : undefined;
+  return USER_MANAGER_TABS.find((tab) => tab === value);
 }
 
 const route = getRouteApi("/(administrasjon)/admin/database/brukere");

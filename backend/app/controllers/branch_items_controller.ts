@@ -55,6 +55,6 @@ export default class BranchItemsController {
           };
         }),
       )
-    ).sort((a, b) => a.item.title.localeCompare(b.item.title));
+    ).toSorted((a, b) => a.item.title.localeCompare(b.item.title));
   }
 }

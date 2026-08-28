@@ -47,13 +47,15 @@ export default class TokensController {
           new BlError("could not create tokens")
             .store("oldRefreshToken", refreshToken)
             .code(906)
-            .add(error as BlError),
+            .add(error instanceof BlError ? error : new BlError(String(error))),
         );
       }
     } catch (error) {
       return BlResponseHandler.createErrorResponse(
         ctx,
-        new BlError("refreshToken not valid").code(909).add(error as BlError),
+        new BlError("refreshToken not valid")
+          .code(909)
+          .add(error instanceof BlError ? error : new BlError(String(error))),
       );
     }
   }
@@ -64,26 +66,22 @@ export default class TokensController {
       const verifiedRefreshToken = jwt.verify(refreshToken, env.get("REFRESH_TOKEN_SECRET"));
 
       if (typeof verifiedRefreshToken === "string") {
-        ctx.response.unauthorized();
-        return;
+        return ctx.response.unauthorized();
       }
 
       const user = await getUserFromVerifiedRefreshToken(verifiedRefreshToken);
       if (!user) {
-        ctx.response.unauthorized();
-        return;
+        return ctx.response.unauthorized();
       }
       const tokens = await TokenService.createTokens(user);
 
       if (!tokens) {
-        ctx.response.unauthorized();
-        return;
+        return ctx.response.unauthorized();
       }
 
       return tokens;
     } catch {
-      ctx.response.unauthorized();
-      return;
+      return ctx.response.unauthorized();
     }
   }
 }

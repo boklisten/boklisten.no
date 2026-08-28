@@ -11,6 +11,7 @@ import { createTestRound } from "#tests/matches/match-testing-utils";
 import { MatchRepository } from "#services/matches/match_repository";
 import { computeMatchStatistics } from "#services/matches/statistics";
 import { StorageService } from "#services/storage_service";
+import { unchecked } from "#tests/test-doubles";
 
 /** The matched pair. */
 const A = "5d765db5fc8c47001c408d81";
@@ -30,9 +31,9 @@ test.group("computeMatchStatistics", (group) => {
 
   group.each.setup(() => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService.Items, "getMany").resolves([] as never);
-    sandbox.stub(StorageService.UserDetails, "getMany").resolves([] as never);
-    sandbox.stub(StorageService.Branches, "getAll").resolves([] as never);
+    sandbox.stub(StorageService.Items, "getMany").resolves(unchecked([]));
+    sandbox.stub(StorageService.UserDetails, "getMany").resolves(unchecked([]));
+    sandbox.stub(StorageService.Branches, "getAll").resolves(unchecked([]));
   });
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());

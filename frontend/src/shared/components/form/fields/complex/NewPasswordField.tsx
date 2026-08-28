@@ -3,8 +3,8 @@ import PasswordStrengthBarImport from "react-password-strength-bar";
 
 import { useFieldContext } from "@/shared/hooks/form";
 
-// fixme: bad types
-const PasswordStrengthBar = (PasswordStrengthBarImport as any).default;
+// fixme: bad types — the package ships its component on `.default` of the ESM default export
+const PasswordStrengthBar = Reflect.get(PasswordStrengthBarImport, "default");
 
 export function newPasswordFieldValidator(value: string) {
   if (!value) return "Du må fylle inn et passord";

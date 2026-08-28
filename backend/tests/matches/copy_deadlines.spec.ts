@@ -3,6 +3,7 @@ import sinon, { createSandbox } from "sinon";
 
 import { extendRemainingCopyDeadlines } from "#services/matches/copy_deadlines";
 import { StorageService } from "#services/storage_service";
+import { unchecked } from "#tests/test-doubles";
 
 const A = "5d765db5fc8c47001c408d81";
 const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
@@ -20,8 +21,8 @@ test.group("extendRemainingCopyDeadlines", (group) => {
   group.each.teardown(() => sandbox.restore());
 
   function stubRemaining(remaining: { id: string; deadline: Date }[]) {
-    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves(remaining as never);
-    return sandbox.stub(StorageService.CustomerItems, "update").resolves({} as never);
+    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves(remaining);
+    return sandbox.stub(StorageService.CustomerItems, "update").resolves(unchecked({}));
   }
 
   test("the kept copy inherits the later deadline of the pair", async ({ assert }) => {
@@ -67,12 +68,16 @@ test.group("extendRemainingCopyDeadlines", (group) => {
   test("looks across equivalent editions", async ({ assert }) => {
     // A student can hold GYMNOS 2009 and GYMNOS 2012 interchangeably, so both count as the
     // same title when deciding which deadline the kept copy carries.
-    const aggregate = sandbox.stub(StorageService.CustomerItems, "aggregate").resolves([] as never);
-    sandbox.stub(StorageService.CustomerItems, "update").resolves({} as never);
+    const aggregate = sandbox
+      .stub(StorageService.CustomerItems, "aggregate")
+      .resolves(unchecked([]));
+    sandbox.stub(StorageService.CustomerItems, "update").resolves(unchecked({}));
 
     await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST);
 
-    const pipeline = aggregate.firstCall.args[0] as { $match: { item: { $in: unknown[] } } }[];
+    const pipeline: { $match: { item: { $in: unknown[] } } }[] = unchecked(
+      aggregate.firstCall.args[0],
+    );
     assert.lengthOf(pipeline[0]!.$match.item.$in, 2);
     assert.include(
       pipeline[0]!.$match.item.$in.map(String),

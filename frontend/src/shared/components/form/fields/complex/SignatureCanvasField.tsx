@@ -1,7 +1,7 @@
 import { ActionIcon, Box, Stack, Text, Tooltip } from "@mantine/core";
 import { IconEraser } from "@tabler/icons-react";
 import { Activity, useEffect, useEffectEvent, useRef } from "react";
-import SignatureCanvas from "react-signature-canvas";
+import { SignatureCanvas } from "react-signature-canvas";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { useFieldContext } from "@/shared/hooks/form";

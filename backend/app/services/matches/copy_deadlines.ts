@@ -22,7 +22,7 @@ export async function extendRemainingCopyDeadlines(
 ) {
   const equivalentItemIds = getEquivalentItemIds(itemId);
 
-  const remaining = (await StorageService.CustomerItems.aggregate([
+  const remaining = await StorageService.CustomerItems.aggregate<CustomerItem>([
     {
       $match: {
         customer: new ObjectId(customerId),
@@ -33,7 +33,7 @@ export async function extendRemainingCopyDeadlines(
         buyback: false,
       },
     },
-  ])) as CustomerItem[];
+  ]);
 
   await Promise.all(
     remaining

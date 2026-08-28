@@ -105,11 +105,12 @@ const IMPORT_COLUMNS: Column[] = [
   },
 ];
 
+function cell(row: Record<string, unknown>, key: string): string {
+  const value = row[key];
+  return value == null ? "" : String(value).trim();
+}
+
 function toUserCandidates(result: ImportResult): UserCandidate[] {
-  function cell(row: Record<string, unknown>, key: string): string {
-    const value = row[key];
-    return value == null ? "" : String(value).trim();
-  }
   return result.rows.map((row) => ({
     name: cell(row, "name"),
     phone: cell(row, "phone"),
@@ -215,8 +216,10 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
     provisionMutation.mutate({
       userCandidates,
       branchResolutions: ambiguousMappings.flatMap((mapping) => {
-        const branchId = selectedBranchId(mapping);
-        return branchId ? [{ localName: mapping.localName, branchId }] : [];
+        const resolvedBranchId = selectedBranchId(mapping);
+        return resolvedBranchId
+          ? [{ localName: mapping.localName, branchId: resolvedBranchId }]
+          : [];
       }),
     });
   }
@@ -300,11 +303,11 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
                                   label: candidate.name,
                                 }))}
                                 value={selectedBranchId(mapping)}
-                                onChange={(branchId) =>
-                                  branchId &&
+                                onChange={(nextBranchId) =>
+                                  nextBranchId &&
                                   setBranchSelections((selections) => ({
                                     ...selections,
-                                    [mapping.localName]: branchId,
+                                    [mapping.localName]: nextBranchId,
                                   }))
                                 }
                                 allowDeselect={false}

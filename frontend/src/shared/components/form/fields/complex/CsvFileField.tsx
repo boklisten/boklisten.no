@@ -116,8 +116,8 @@ export default function CsvFileField(
           }
 
           const reader = new FileReader();
-          reader.onload = () => {
-            const csvText = reader.result as string;
+          reader.addEventListener("load", () => {
+            const csvText = typeof reader.result === "string" ? reader.result : "";
 
             Papa.parse<string[]>(csvText, {
               header: false,
@@ -145,15 +145,15 @@ export default function CsvFileField(
                 field.handleChange(null);
               },
             });
-          };
-          reader.onerror = (err) => {
+          });
+          reader.addEventListener("error", (err) => {
             showErrorNotification({
               title: "Klarte ikke lese CSV",
               message: "" + err,
             });
             setValue(null);
             field.handleChange(null);
-          };
+          });
           reader.readAsText(file);
         }}
         onBlur={field.handleBlur}

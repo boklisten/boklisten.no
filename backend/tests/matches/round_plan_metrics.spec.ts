@@ -1,11 +1,11 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type { PipelineStage } from "mongoose";
 import sinon, { createSandbox } from "sinon";
 
 import { roundPlanMetrics } from "#services/matches/round_plan_metrics";
 import { StorageService } from "#services/storage_service";
 import { TEST_DEADLINE, createTestRound } from "#tests/matches/match-testing-utils";
+import { unchecked } from "#tests/test-doubles";
 
 const BRANCH = "5d765db5fc8c47001c408b01";
 const SENDER = "5d765db5fc8c47001c408b02";
@@ -32,13 +32,11 @@ test.group("roundPlanMetrics", (group) => {
     return {
       userDetails: sandbox
         .stub(StorageService.UserDetails, "aggregate")
-        .resolves((members ? [members] : []) as never),
+        .resolves(members ? [members] : []),
       customerItems: sandbox
         .stub(StorageService.CustomerItems, "aggregate")
-        .resolves((activeBooks ?? []) as never),
-      orders: sandbox
-        .stub(StorageService.Orders, "aggregate")
-        .resolves((orderedBooks ?? []) as never),
+        .resolves(activeBooks ?? []),
+      orders: sandbox.stub(StorageService.Orders, "aggregate").resolves(orderedBooks ?? []),
     };
   }
 
@@ -80,7 +78,7 @@ test.group("roundPlanMetrics", (group) => {
 
     await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
-    const [match] = stubs.customerItems.firstCall.args[0] as [
+    const [match]: [
       {
         $match: {
           returned: boolean;
@@ -88,7 +86,7 @@ test.group("roundPlanMetrics", (group) => {
           "handoutInfo.handoutById": { $in: { toString(): string }[] };
         };
       },
-    ];
+    ] = unchecked(stubs.customerItems.firstCall.args[0]);
     assert.isFalse(match.$match.returned, "a returned book is nobody's to hand over");
     assert.equal(
       match.$match.deadline.$gt.toISOString(),
@@ -114,10 +112,10 @@ test.group("roundPlanMetrics", (group) => {
     assert,
   }) => {
     const stubs = stubMongo({});
-    stubs.customerItems.onFirstCall().resolves([{ id: SENDER, items: ["item-1"] }] as never);
+    stubs.customerItems.onFirstCall().resolves(unchecked([{ id: SENDER, items: ["item-1"] }]));
     stubs.customerItems
       .onSecondCall()
-      .resolves([{ id: SENDER, items: ["item-1", "item-2"] }] as never);
+      .resolves(unchecked([{ id: SENDER, items: ["item-1", "item-2"] }]));
 
     const metrics = await roundPlanMetrics(
       await createTestRound({
@@ -126,9 +124,9 @@ test.group("roundPlanMetrics", (group) => {
       }),
     );
 
-    const [match] = stubs.customerItems.secondCall.args[0] as [
+    const [match]: [
       { $match: { customer: { $in: { toString(): string }[] }; "handoutInfo.handoutBy"?: string } },
-    ];
+    ] = unchecked(stubs.customerItems.secondCall.args[0]);
     assert.deepEqual(
       match.$match.customer.$in.map(String),
       [SENDER],
@@ -146,9 +144,8 @@ test.group("roundPlanMetrics", (group) => {
 
     await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
-    const [match] = stubs.userDetails.firstCall.args[0] as [
-      { $match: { branchMembership: { $in: { toString(): string }[] } } },
-    ];
+    const [match]: [{ $match: { branchMembership: { $in: { toString(): string }[] } } }] =
+      unchecked(stubs.userDetails.firstCall.args[0]);
     assert.deepEqual(match.$match.branchMembership.$in.map(String), [BRANCH]);
   });
 
@@ -157,7 +154,7 @@ test.group("roundPlanMetrics", (group) => {
 
     await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
-    const pipeline = stubs.orders.firstCall.args[0] as PipelineStage[];
+    const pipeline = stubs.orders.firstCall.args[0];
     const unwindIndex = pipeline.findIndex((stage) => "$unwind" in stage);
     const groupIndex = pipeline.findIndex((stage) => "$group" in stage);
     assert.isAbove(unwindIndex, -1, "the order items have to be split apart to be counted");

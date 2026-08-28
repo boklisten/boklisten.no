@@ -21,7 +21,9 @@ export interface EmployeeRow {
 }
 
 async function getEmployees(): Promise<EmployeeRow[]> {
-  const rows = (await StorageService.Users.aggregate([
+  const rows = await StorageService.Users.aggregate<
+    Omit<EmployeeRow, "lastActive"> & { lastActive?: Date }
+  >([
     { $match: { permission: { $ne: USER_PERMISSION.CUSTOMER } } },
     {
       $lookup: {
@@ -43,7 +45,7 @@ async function getEmployees(): Promise<EmployeeRow[]> {
       },
     },
     { $sort: { name: 1 } },
-  ])) as (Omit<EmployeeRow, "lastActive"> & { lastActive?: Date })[];
+  ]);
 
   return rows.map((row) => ({
     detailsId: String(row.detailsId),
@@ -112,6 +114,10 @@ async function removeAuthArtifacts(detailsId: string) {
   ]);
 }
 
+const union = (first: string[] | undefined, second: string[] | undefined) => [
+  ...new Set([...(first ?? []), ...(second ?? [])]),
+];
+
 /**
  * Moves every reference from the source user onto the target user, then
  * deletes the source login and user detail. References are re-pointed before
@@ -131,9 +137,6 @@ async function mergeUsers(fromDetailsId: string, toDetailsId: string) {
   const fromUser = await assertIsCustomer(fromDetailsId, "slås sammen");
   await assertIsCustomer(toDetailsId, "slås sammen");
 
-  const union = (first: string[] | undefined, second: string[] | undefined) => [
-    ...new Set([...(first ?? []), ...(second ?? [])]),
-  ];
   await StorageService.UserDetails.update(toDetailsId, {
     orders: union(toDetails.orders, fromDetails.orders),
     customerItems: union(toDetails.customerItems, fromDetails.customerItems),

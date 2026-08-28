@@ -1,3 +1,4 @@
+import { BlError } from "#shared/bl-error";
 import { StorageService } from "#services/storage_service";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -50,7 +51,7 @@ interface RegistrationFacets {
 async function aggregateActivity(): Promise<ActivityRow[]> {
   const now = Date.now();
   // oxlint-disable no-thenable -- MongoDB $switch branches require `then` keys
-  return (await StorageService.Users.aggregate([
+  return await StorageService.Users.aggregate<ActivityRow>([
     {
       $project: {
         hasVipps: { $gt: ["$login.vipps.userId", null] },
@@ -85,13 +86,13 @@ async function aggregateActivity(): Promise<ActivityRow[]> {
       },
     },
     { $group: { _id: { method: "$method", bucket: "$bucket" }, count: { $sum: 1 } } },
-  ])) as ActivityRow[];
+  ]);
   // oxlint-enable no-thenable
 }
 
 async function aggregateRegistrations(): Promise<RegistrationFacets> {
   const now = Date.now();
-  const [facets] = (await StorageService.UserDetails.aggregate([
+  const [facets] = await StorageService.UserDetails.aggregate<RegistrationFacets>([
     {
       $facet: {
         total: [{ $count: "count" }],
@@ -116,7 +117,8 @@ async function aggregateRegistrations(): Promise<RegistrationFacets> {
         ],
       },
     },
-  ])) as [RegistrationFacets];
+  ]);
+  if (!facets) throw new BlError("registration aggregation returned nothing");
   return facets;
 }
 

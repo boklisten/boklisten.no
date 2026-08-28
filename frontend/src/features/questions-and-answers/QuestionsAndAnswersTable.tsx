@@ -113,9 +113,9 @@ export default function QuestionsAndAnswersTable() {
           localeText={AG_GRID_LOCALE_NO}
           loading={isLoading || isDestroying || isReordering}
           rowDragManaged
-          onRowDragEnd={({ api }) => {
+          onRowDragEnd={({ api: gridApi }) => {
             const ids: number[] = [];
-            api.forEachNodeAfterFilterAndSort(({ data }) => {
+            gridApi.forEachNodeAfterFilterAndSort(({ data }) => {
               if (data) ids.push(Number(data.id));
             });
             updateOrder({ body: { ids } });

@@ -2,6 +2,7 @@ import { test } from "@japa/runner";
 
 import { findFutureRentPeriod, futureRentPeriods } from "#shared/rent-periods";
 import type { Branch } from "#shared/branch";
+import { unchecked } from "#tests/test-doubles";
 
 const NOW = new Date("2026-08-20T12:00:00Z");
 const PAST = new Date("2026-06-01T00:00:00Z");
@@ -44,7 +45,7 @@ test.group("futureRentPeriods()", () => {
 
   test("handles dates stored as strings", ({ assert }) => {
     // Mongo does not guarantee Date instances, so the shared type lies about this at runtime
-    const branch = branchWithRentPeriods([SOON.toISOString() as unknown as Date]);
+    const branch = branchWithRentPeriods([unchecked(SOON.toISOString())]);
     assert.lengthOf(futureRentPeriods(branch, NOW), 1);
   });
 });

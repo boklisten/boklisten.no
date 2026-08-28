@@ -58,7 +58,7 @@ export default function CustomerItemCard({
   actionableCustomerItem: Route.Response<"customer_items.get_customer_items">[number];
 }) {
   const cart = useCart();
-  const cartItem = cart.get().find((cartItem) => cartItem.id === actionableCustomerItem.item.id);
+  const cartItem = cart.get().find((entry) => entry.id === actionableCustomerItem.item.id);
 
   return (
     <Card shadow={"md"} withBorder>
@@ -107,11 +107,11 @@ export default function CustomerItemCard({
               const actionCartItem = cart
                 .get()
                 .find(
-                  (cartItem) =>
-                    cartItem.id === actionableCustomerItem.item.id &&
-                    cart.getSelectedOption(cartItem).type === action.type &&
+                  (entry) =>
+                    entry.id === actionableCustomerItem.item.id &&
+                    cart.getSelectedOption(entry).type === action.type &&
                     ("to" in action
-                      ? dayjs(cart.getSelectedOption(cartItem).to).isSame(action.to)
+                      ? dayjs(cart.getSelectedOption(entry).to).isSame(action.to)
                       : true),
                 );
               return (
@@ -134,7 +134,7 @@ export default function CustomerItemCard({
                         return;
                       }
                       const availableActions = actionableCustomerItem.actions.filter(
-                        (action) => action.available,
+                        (candidate) => candidate.available,
                       );
                       cart.add({
                         id: actionableCustomerItem.item.id,

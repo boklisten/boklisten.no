@@ -42,7 +42,6 @@ export class OrderItemExtendValidator {
   }
 
   private validateCustomerItem(branch: Branch, orderItem: OrderItem): Promise<boolean> {
-    // @ts-expect-error fixme: auto ignored
     return (
       StorageService.CustomerItems
         // @ts-expect-error fixme: auto ignored
@@ -69,7 +68,7 @@ export class OrderItemExtendValidator {
 
             return true;
           }
-          return;
+          return true;
         })
         .catch((blError: BlError) => {
           throw blError;

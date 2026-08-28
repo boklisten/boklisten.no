@@ -27,9 +27,9 @@ export class OrderPlacedValidator {
         // when delivery is attached
         StorageService.Deliveries.get(order.delivery)
           .then((delivery: Delivery) => {
-            this.validatePayments(order, delivery)
+            return this.validatePayments(order, delivery)
               .then(() => {
-                resolve(true);
+                return resolve(true);
               })
               .catch((paymentValidationError: BlError) => {
                 reject(paymentValidationError);
@@ -56,7 +56,7 @@ export class OrderPlacedValidator {
     return new Promise((resolve, reject) => {
       const totalOrderAmount = order.amount + (delivery ? delivery.amount : 0);
 
-      StorageService.Payments.getMany(order.payments as string[])
+      StorageService.Payments.getMany(order.payments ?? [])
         .then((payments: Payment[]) => {
           let paymentTotal = 0;
 
@@ -75,7 +75,7 @@ export class OrderPlacedValidator {
             );
           }
 
-          resolve(true);
+          return resolve(true);
         })
         .catch((blError: BlError) => {
           reject(new BlError("order.payments is not found").code(702).add(blError));

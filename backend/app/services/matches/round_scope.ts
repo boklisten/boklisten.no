@@ -77,13 +77,13 @@ export async function getHeldItems(
   deadline: DateTime,
   includeItemsFromOtherBranches: boolean,
 ): Promise<Map<string, Set<string>>> {
-  let aggregated = (await StorageService.CustomerItems.aggregate([
+  let aggregated = await StorageService.CustomerItems.aggregate<{ id: string; items: string[] }>([
     { $match: activeBooksHandedOutAt(branchIds, deadline) },
     groupByCustomer,
-  ])) as { id: string; items: string[] }[];
+  ]);
 
   if (includeItemsFromOtherBranches) {
-    aggregated = (await StorageService.CustomerItems.aggregate([
+    aggregated = await StorageService.CustomerItems.aggregate<{ id: string; items: string[] }>([
       {
         $match: {
           ...activeBooksAtDeadline(deadline),
@@ -91,7 +91,7 @@ export async function getHeldItems(
         },
       },
       groupByCustomer,
-    ])) as { id: string; items: string[] }[];
+    ]);
   }
 
   return new Map(
@@ -100,7 +100,7 @@ export async function getHeldItems(
 }
 
 export async function getWantedItems(branchIds: string[]): Promise<Map<string, Set<string>>> {
-  const aggregated = (await StorageService.Orders.aggregate([
+  const aggregated = await StorageService.Orders.aggregate<{ id: string; wantedItems: string[] }>([
     ...orderedBooksAt(branchIds),
     {
       $group: {
@@ -109,7 +109,7 @@ export async function getWantedItems(branchIds: string[]): Promise<Map<string, S
         wantedItems: { $addToSet: "$orderItems.item" },
       },
     },
-  ])) as { id: string; wantedItems: string[] }[];
+  ]);
 
   return new Map(
     aggregated.map((receiver) => [String(receiver.id), new Set(receiver.wantedItems.map(String))]),

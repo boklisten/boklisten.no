@@ -6,9 +6,9 @@ import { StorageService } from "#services/storage_service";
 import { VippsCheckoutService } from "#services/vipps/vipps_checkout_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import { Order } from "#shared/order/order";
-import { Payment } from "#shared/payment/payment";
 import { UserDetail } from "#shared/user-detail";
 import { VippsCheckoutSession } from "#validators/checkout_validators";
+import { mock } from "#tests/test-doubles";
 
 test.group("VippsCheckoutService.update", (group) => {
   let testOrder: Order;
@@ -29,20 +29,22 @@ test.group("VippsCheckoutService.update", (group) => {
       branch: "branch1",
       customer: "customer1",
       byCustomer: true,
-    } as unknown as Order;
+    };
 
     sandbox = createSandbox();
     sandbox.stub(StorageService.Orders, "get").callsFake(() => Promise.resolve(testOrder));
     sandbox
       .stub(StorageService.Orders, "update")
       .callsFake((_id, data) => Promise.resolve({ ...testOrder, ...data }));
-    sandbox.stub(StorageService.UserDetails, "get").resolves({
-      id: "customer1",
-      name: "Ola Nordmann",
-    } as UserDetail);
+    sandbox.stub(StorageService.UserDetails, "get").resolves(
+      mock<UserDetail>({
+        id: "customer1",
+        name: "Ola Nordmann",
+      }),
+    );
     sandbox
       .stub(StorageService.Payments, "add")
-      .callsFake((payment) => Promise.resolve({ ...payment, id: "payment1" } as Payment));
+      .callsFake((payment) => Promise.resolve({ ...payment, id: "payment1" }));
     sandbox
       .stub(StorageService.Deliveries, "add")
       .callsFake((delivery) => Promise.resolve({ ...delivery, id: "delivery1" }));

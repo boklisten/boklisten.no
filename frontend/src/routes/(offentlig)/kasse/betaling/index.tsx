@@ -7,6 +7,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import loadScriptOnce from "@/shared/utils/loadScriptOnce";
 import { seo } from "@/shared/utils/seo";
 import { useEffect } from "react";
+import { stringParam } from "@/shared/utils/searchParams";
 
 export const Route = createFileRoute("/(offentlig)/kasse/betaling/")({
   head: () =>
@@ -14,8 +15,8 @@ export const Route = createFileRoute("/(offentlig)/kasse/betaling/")({
       title: "Betaling | Boklisten.no",
     }),
   validateSearch: (search) => ({
-    checkoutFrontendUrl: (search["checkoutFrontendUrl"] as string) || "",
-    token: (search["token"] as string) || "",
+    checkoutFrontendUrl: stringParam(search["checkoutFrontendUrl"]),
+    token: stringParam(search["token"]),
   }),
   component: PaymentPage,
 });
@@ -25,13 +26,13 @@ function PaymentPage() {
   const { checkoutFrontendUrl, token } = Route.useSearch();
 
   useEffect(() => {
-    if (!checkoutFrontendUrl || !token) return;
+    if (!checkoutFrontendUrl || !token) return undefined;
     let cancelled = false;
     loadScriptOnce("https://checkout.vipps.no/vippsCheckoutSDK.js")
       .then(() => {
-        if (cancelled) return;
+        if (cancelled) return undefined;
         /* @ts-expect-error official Vipps Checkout */
-        VippsCheckout({
+        return VippsCheckout({
           iFrameContainerId,
           checkoutFrontendUrl,
           token,

@@ -15,7 +15,7 @@ export default class DispatchController {
             (transactionalTemplate) => transactionalTemplate.templateId === emailTemplate.id,
           ),
       )
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .toSorted((a, b) => a.name.localeCompare(b.name));
   }
   async createDispatch(ctx: HttpContext) {
     PermissionService.adminOrFail(ctx);

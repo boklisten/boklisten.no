@@ -138,13 +138,13 @@ export class OrderPlacedHandler {
           const orders = userDetail.orders ?? [];
 
           if (orders.includes(order.id)) {
-            resolve(true);
+            return resolve(true);
           } else {
             orders.push(order.id);
 
-            StorageService.UserDetails.update(order.customer, { orders })
+            return StorageService.UserDetails.update(order.customer, { orders })
               .then(() => {
-                resolve(true);
+                return resolve(true);
               })
               .catch(() => {
                 reject(new BlError("could not update userDetail with placed order"));

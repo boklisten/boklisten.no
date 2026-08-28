@@ -9,6 +9,7 @@ import { BlError } from "#shared/bl-error";
 import { Branch } from "#shared/branch";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { OrderItem } from "#shared/order/order-item/order-item";
+import { mock } from "#tests/test-doubles";
 
 test.group("CustomerItemHandler", (group) => {
   const customerItemHandler = new CustomerItemHandler();
@@ -40,15 +41,15 @@ test.group("CustomerItemHandler", (group) => {
   });
 
   test("should reject if returned is true", async ({ assert }) => {
-    const customerItem = {
+    const customerItem = mock<CustomerItem>({
       deadline: new Date(),
       handout: true,
       returned: true,
-    } as CustomerItem;
+    });
 
     getCustomerItemStub.withArgs("customerItem1").resolves(customerItem);
 
-    const orderItem = {} as OrderItem;
+    const orderItem = mock<OrderItem>({});
 
     return assert.rejects(
       () => customerItemHandler.extend("customerItem1", orderItem, "branch1", "order1"),
@@ -58,17 +59,17 @@ test.group("CustomerItemHandler", (group) => {
   });
 
   test("should reject if orderItem.type is not extend", async ({ assert }) => {
-    const customerItem = {
+    const customerItem = mock<CustomerItem>({
       deadline: new Date(),
       handout: true,
       returned: false,
-    } as CustomerItem;
+    });
 
     getCustomerItemStub.withArgs("customerItem1").resolves(customerItem);
 
-    const orderItem = {
+    const orderItem = mock<OrderItem>({
       type: "rent",
-    } as OrderItem;
+    });
 
     return assert.rejects(
       () => customerItemHandler.extend("customerItem1", orderItem, "branch1", "order1"),
@@ -78,15 +79,15 @@ test.group("CustomerItemHandler", (group) => {
   });
 
   test("should reject if branch does not have the extend period", async ({ assert }) => {
-    const customerItem = {
+    const customerItem = mock<CustomerItem>({
       deadline: new Date(),
       handout: true,
       returned: false,
-    } as CustomerItem;
+    });
 
     getCustomerItemStub.withArgs("customerItem1").resolves(customerItem);
 
-    const orderItem = {
+    const orderItem = mock<OrderItem>({
       type: "extend",
       info: {
         from: new Date(),
@@ -95,9 +96,9 @@ test.group("CustomerItemHandler", (group) => {
         periodType: "year",
         customerItem: "customerItem1",
       },
-    } as OrderItem;
+    });
 
-    const branch = {
+    const branch = mock<Branch>({
       paymentInfo: {
         extendPeriods: [
           {
@@ -108,7 +109,7 @@ test.group("CustomerItemHandler", (group) => {
           },
         ],
       },
-    } as Branch;
+    });
 
     getBranchStub.withArgs("branch1").resolves(branch);
 
@@ -122,9 +123,9 @@ test.group("CustomerItemHandler", (group) => {
   // These three paths throw a plain string, which assert.rejects cannot match on, so compare the
   // rejection reason directly.
   test('should reject if orderItem.type is not "buyout"', async ({ assert }) => {
-    const orderItem = {
+    const orderItem = mock<OrderItem>({
       type: "rent",
-    } as OrderItem;
+    });
     const reason = await customerItemHandler.buyout("customerItem1", "order1", orderItem).then(
       () => null,
       (caught: unknown) => caught,
@@ -133,9 +134,9 @@ test.group("CustomerItemHandler", (group) => {
   });
 
   test('should reject if orderItem.type is not "return"', async ({ assert }) => {
-    const orderItem = {
+    const orderItem = mock<OrderItem>({
       type: "rent",
-    } as OrderItem;
+    });
     const reason = await customerItemHandler
       .return("customerItem1", "order1", orderItem, "branch1", "employee1")
       .then(
@@ -146,9 +147,9 @@ test.group("CustomerItemHandler", (group) => {
   });
 
   test('should reject if orderItem.type is not "buyback"', async ({ assert }) => {
-    const orderItem = {
+    const orderItem = mock<OrderItem>({
       type: "rent",
-    } as OrderItem;
+    });
     const reason = await customerItemHandler.buyback("customerItem1", "order1", orderItem).then(
       () => null,
       (caught: unknown) => caught,
@@ -211,7 +212,7 @@ test.group("CustomerItemHandler", (group) => {
   test("should return customerItems not returned with the specified deadline", async ({
     assert,
   }) => {
-    const customerItems = [
+    const customerItems = mock<CustomerItem[]>([
       {
         id: "1",
         item: "item1",
@@ -224,7 +225,7 @@ test.group("CustomerItemHandler", (group) => {
         deadline: new Date(2018, 11, 20),
         returned: false,
       },
-    ] as CustomerItem[];
+    ]);
 
     getByQueryCustomerItemStub.resolves(customerItems);
 

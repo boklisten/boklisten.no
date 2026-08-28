@@ -8,6 +8,7 @@ import {
   normalizePhone,
 } from "#services/user_provisioning_service";
 import { UserDetail } from "#shared/user-detail";
+import { mock } from "#tests/test-doubles";
 
 const BRANCHES = [
   { id: "sta", name: "Ullern Oslo VG1 STA" },
@@ -125,7 +126,7 @@ test.group("UserProvisioningService.normalizePhone()", () => {
 const today = new Date();
 const UNDERAGE_DOB = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate());
 
-const EXISTING_USER = {
+const EXISTING_USER = mock<UserDetail>({
   id: "existing-id",
   name: "Ola Nordmann",
   email: "ola@example.com",
@@ -139,7 +140,7 @@ const EXISTING_USER = {
     email: "kari@example.com",
     phone: "87654321",
   },
-} as UserDetail;
+});
 
 test.group("UserProvisioningService.mergeCandidateIntoUserDetail()", () => {
   test("overwrites fields present in the candidate", ({ assert }) => {
@@ -201,7 +202,7 @@ test.group("UserProvisioningService.computeTasks()", () => {
   });
 
   test("requires confirmDetails when a required field is missing", ({ assert }) => {
-    const incomplete = { ...EXISTING_USER, dob: undefined } as unknown as UserDetail;
+    const incomplete = mock<UserDetail>({ ...EXISTING_USER, dob: undefined });
     assert.deepEqual(computeTasks(incomplete, true), {
       confirmDetails: true,
       signAgreement: false,

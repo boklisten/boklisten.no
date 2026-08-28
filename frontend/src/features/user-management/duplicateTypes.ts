@@ -22,6 +22,6 @@ export interface DuplicatePair {
 export function duplicatePairKey(pair: DuplicatePair) {
   return pair.users
     .map((user) => user.detailsId)
-    .sort()
+    .toSorted()
     .join("|");
 }

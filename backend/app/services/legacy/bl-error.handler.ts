@@ -170,7 +170,7 @@ function requestErrorResponse(code: number): BlapiErrorResponse {
     }
     case 812: {
       blapiErrorResponse.msg =
-        "Forsørger prøvde å signere for myndig, eller mindreårig prøve å signere for seg" + " selv";
+        "Forsørger prøvde å signere for myndig, eller mindreårig prøve å signere for seg selv";
       blapiErrorResponse.httpStatus = 409;
       break;
     }

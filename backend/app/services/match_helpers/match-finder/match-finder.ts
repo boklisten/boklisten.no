@@ -34,6 +34,16 @@ import type {
  *
  */
 
+function fingerprint(users: MatchableUser[]) {
+  let items = 0;
+  let wantedItems = 0;
+  for (const user of users) {
+    items += user.items.size;
+    wantedItems += user.wantedItems.size;
+  }
+  return `${users.length}:${items}:${wantedItems}`;
+}
+
 export class MatchFinder {
   public users: MatchableUser[];
   private userGroups = new Map<string, MatchableUser[]>();
@@ -81,20 +91,11 @@ export class MatchFinder {
     for (const [groupId, users] of this.userGroups
       .entries()
       .toArray()
-      .sort((a, b) => a[0].localeCompare(b[0]))) {
+      .toSorted((a, b) => a[0].localeCompare(b[0]))) {
       this.createMatches(tryFindTwoWayMatch, users);
       this.logMatchingStatus(`Created TwoWayMatches for ${groupId}`);
     }
     const ratioCache = new Map<string, { successRate: number; numberOfMatches: number }>();
-    const fingerprint = (users: MatchableUser[]) => {
-      let items = 0;
-      let wantedItems = 0;
-      for (const user of users) {
-        items += user.items.size;
-        wantedItems += user.wantedItems.size;
-      }
-      return `${users.length}:${items}:${wantedItems}`;
-    };
     while (this.userGroups.size > 1) {
       const iterableUserGroups = this.userGroups.entries().toArray();
       let bestGrouping: {
@@ -134,7 +135,7 @@ export class MatchFinder {
       if (!bestGrouping) throw new BlError("Failed to find a compatible userGroup pair");
 
       const joinedGroupId = [bestGrouping.groupA, bestGrouping.groupB]
-        .sort((a, b) => a.localeCompare(b))
+        .toSorted((a, b) => a.localeCompare(b))
         .join("+");
       for (const user of this.users) {
         if (
@@ -539,14 +540,14 @@ export class MatchFinder {
       ` ${message} Groups (${this.userGroups.size}): ${this.userGroups
         .entries()
         .toArray()
-        .sort((a, b) => a[0].localeCompare(b[0]))
+        .toSorted((a, b) => a[0].localeCompare(b[0]))
         .map(([key, value]) => `${key}: ${value.length} users`)
         .join(", ")}\n`,
     );
   }
 
   private logItemDemand(users: MatchableUser[]): void {
-    const sortedItems = Object.entries(this.calculateItemDemand(users)).sort((a, b) => {
+    const sortedItems = Object.entries(this.calculateItemDemand(users)).toSorted((a, b) => {
       const totalDiff = b[1].total - a[1].total;
       if (totalDiff !== 0) return totalDiff;
       return b[1].wanted - a[1].wanted;
@@ -565,7 +566,7 @@ export class MatchFinder {
     for (const [key, value] of this.userGroups
       .entries()
       .toArray()
-      .sort((a, b) => a[0].localeCompare(b[0]))) {
+      .toSorted((a, b) => a[0].localeCompare(b[0]))) {
       logger.debug("---\nDemand for " + key);
       this.logItemDemand(value);
     }
@@ -655,7 +656,7 @@ export class MatchFinder {
     for (const [setup, numberOfUsers] of matchConfigSetups
       .entries()
       .toArray()
-      .sort((a, b) => {
+      .toSorted((a, b) => {
         const byNumberOfCustomers = b[1] - a[1];
         if (byNumberOfCustomers !== 0) return byNumberOfCustomers;
         return b[0].localeCompare(a[0]);
@@ -669,7 +670,7 @@ export class MatchFinder {
     for (const [item, count] of handoffCounts
       .entries()
       .toArray()
-      .sort((a, b) => b[1] - a[1])) {
+      .toSorted((a, b) => b[1] - a[1])) {
       logger.debug(`${item}: ${count}`);
     }
     logger.debug(
@@ -678,7 +679,7 @@ export class MatchFinder {
     for (const [item, count] of pickupCounts
       .entries()
       .toArray()
-      .sort((a, b) => b[1] - a[1])) {
+      .toSorted((a, b) => b[1] - a[1])) {
       logger.debug(`${item}: ${count}`);
     }
     const standInAndOuts = new Set<string>();

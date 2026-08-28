@@ -9,6 +9,7 @@ import { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
 import { UserDetail } from "#shared/user-detail";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderPatchHook", (group) => {
   const orderValidator = new OrderValidator();
@@ -82,7 +83,7 @@ test.group("OrderPatchHook", (group) => {
       if (!orderPlacedConfirmed) {
         return Promise.reject(new BlError("could not place order"));
       }
-      return Promise.resolve({} as Order);
+      return Promise.resolve(mock<Order>({}));
     });
 
     sandbox.stub(StorageService.UserDetails, "update").callsFake((id, data) => {
@@ -94,7 +95,7 @@ test.group("OrderPatchHook", (group) => {
         testUserDetail.orders = data["orders"];
       }
 
-      return Promise.resolve({} as UserDetail);
+      return Promise.resolve(mock<UserDetail>({}));
     });
 
     sandbox.stub(StorageService.UserDetails, "get").callsFake((id) => {

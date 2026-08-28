@@ -5,6 +5,7 @@ import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
+import { stringParam } from "@/shared/utils/searchParams";
 
 export const Route = createFileRoute("/(offentlig)/auth/failure")({
   head: () =>
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/(offentlig)/auth/failure")({
       description: `Vi klarte ikke å logge deg inn. ${PLEASE_TRY_AGAIN_TEXT}`,
     }),
   validateSearch: (search): { reason?: string } => ({
-    reason: (search["reason"] as string) || "",
+    reason: stringParam(search["reason"]),
   }),
   component: AuthFailurePage,
 });

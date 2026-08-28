@@ -18,6 +18,7 @@ import { MatchRepository } from "#services/matches/match_repository";
 import { recordTransfer } from "#services/matches/record_transfer";
 import { StorageService } from "#services/storage_service";
 import { CustomerItem } from "#shared/customer-item/customer-item";
+import { asStub, mock, unchecked } from "#tests/test-doubles";
 
 /** The receiver doing the scanning. */
 const A = "5d765db5fc8c47001c408d81";
@@ -39,7 +40,7 @@ function inOneMonth(): Date {
 
 /** The minimum of an active `CustomerItem` that the transfer path actually reads. */
 function activeCopy(overrides: Partial<CustomerItem> & { customer: string }): CustomerItem {
-  return {
+  return mock<CustomerItem>({
     id: "customer-item-1",
     blid: BLID,
     item: ITEM_X,
@@ -52,7 +53,7 @@ function activeCopy(overrides: Partial<CustomerItem> & { customer: string }): Cu
     },
     returned: false,
     ...overrides,
-  } as unknown as CustomerItem;
+  });
 }
 
 test.group("recordTransfer", (group) => {
@@ -97,57 +98,60 @@ test.group("recordTransfer", (group) => {
       .stub(CustomerItemActiveBlid.prototype, "getActiveCustomerItems")
       .resolves(customerItem ? [customerItem] : []);
 
-    sandbox.stub(OrderActive.prototype, "getActiveOrders").resolves([
-      {
-        id: "receiver-rent-order",
-        branch: BRANCH,
-        customer: A,
-        placed: true,
-        orderItems: [
-          {
-            type: "rent",
-            item: options.orderedItem ?? customerItem?.item ?? ITEM_X,
-            title: "Matematikk R1",
-            amount: 0,
-            unitPrice: 0,
-            info: { to: inOneMonth() },
-          },
-        ],
-      },
-    ] as never);
+    sandbox.stub(OrderActive.prototype, "getActiveOrders").resolves(
+      unchecked([
+        {
+          id: "receiver-rent-order",
+          branch: BRANCH,
+          customer: A,
+          placed: true,
+          orderItems: [
+            {
+              type: "rent",
+              item: options.orderedItem ?? customerItem?.item ?? ITEM_X,
+              title: "Matematikk R1",
+              amount: 0,
+              unitPrice: 0,
+              info: { to: inOneMonth() },
+            },
+          ],
+        },
+      ]),
+    );
 
     sandbox
       .stub(StorageService.Items, "get")
-      .callsFake(async (id) => ({ id, title: "Matematikk R1" }) as never);
+      .callsFake(async (id) => unchecked({ id, title: "Matematikk R1" }));
     // Names for the unexpected-sender feedback. Without this stub the lookup hangs on a Mongo
     // connection that does not exist in this suite.
     sandbox
       .stub(StorageService.UserDetails, "getMany")
-      .callsFake(
-        async (ids) =>
-          ids.map((id) => ({ id, name: id === B ? "Bendik Buer" : "Cecilie Carlsen" })) as never,
+      .callsFake(async (ids) =>
+        unchecked(ids.map((id) => ({ id, name: id === B ? "Bendik Buer" : "Cecilie Carlsen" }))),
       );
-    sandbox.stub(StorageService.Branches, "get").resolves({
-      id: BRANCH,
-      paymentInfo: { rentPeriods: [{ date: inOneMonth() }] },
-    } as never);
+    sandbox.stub(StorageService.Branches, "get").resolves(
+      unchecked({
+        id: BRANCH,
+        paymentInfo: { rentPeriods: [{ date: inOneMonth() }] },
+      }),
+    );
 
     let placedOrders = 0;
     sandbox
       .stub(StorageService.Orders, "add")
-      .callsFake(async (order) => ({ ...order, id: `placed-order-${++placedOrders}` }) as never);
+      .callsFake(async (order) => ({ ...order, id: `placed-order-${++placedOrders}` }));
     sandbox.stub(StorageService.Orders, "update").resolvesArg(0);
 
     sandbox.stub(StorageService.CustomerItems, "update").resolvesArg(0);
     // No other copies of the title, so no deadline is extended.
-    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves([] as never);
+    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves(unchecked([]));
     sandbox
       .stub(StorageService.CustomerItems, "add")
-      .resolves({ id: "new-customer-item" } as never);
+      .resolves(unchecked({ id: "new-customer-item" }));
 
     sandbox
       .stub(OrderToCustomerItemGenerator.prototype, "generate")
-      .resolves([{ id: "generated-customer-item" }] as never);
+      .resolves(unchecked([{ id: "generated-customer-item" }]));
     sandbox.stub(OrderValidator.prototype, "validate").resolves();
     return {
       movedHandlerStub: sandbox
@@ -297,7 +301,7 @@ test.group("recordTransfer", (group) => {
   test("takes the discharge back when the Mongo side of the transfer fails", async ({ assert }) => {
     await seedObligation(B, A);
     stubMongo(activeCopy({ customer: B }));
-    (StorageService.CustomerItems.update as sinon.SinonStub).restore();
+    asStub(StorageService.CustomerItems.update).restore();
     sandbox.stub(StorageService.CustomerItems, "update").rejects(new Error("mongo down"));
 
     await assert.rejects(() => recordTransfer(A, { blid: BLID }), /mongo down/);

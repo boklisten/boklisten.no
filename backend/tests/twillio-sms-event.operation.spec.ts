@@ -3,7 +3,6 @@ import sinon, { createSandbox } from "sinon";
 
 import { TwilioSmsEventOperation } from "#services/legacy/collections/message/operations/twillio-sms-event.operation";
 import { StorageService } from "#services/storage_service";
-import { Message } from "#shared/message/message";
 
 test.group("TwilioSmsEventOperation", (group) => {
   const twilioSmsEventOperation = new TwilioSmsEventOperation();
@@ -20,7 +19,7 @@ test.group("TwilioSmsEventOperation", (group) => {
     sandbox.stub(StorageService, "Messages").value(messagesStub);
     messageStorageGetIdStub = messagesStub.get;
     messageStorageUpdateStub = messagesStub.update;
-    messageStorageUpdateStub.resolves({} as Message);
+    messageStorageUpdateStub.resolves({});
   });
   group.each.teardown(() => {
     sandbox.restore();
@@ -60,9 +59,9 @@ test.group("TwilioSmsEventOperation", (group) => {
       query: { bl_message_id: "blMessage1" },
     };
 
-    messageStorageUpdateStub.resolves({} as Message);
+    messageStorageUpdateStub.resolves({});
 
-    messageStorageGetIdStub.withArgs("blMessage1").resolves({ id: "blMessage1" } as Message);
+    messageStorageGetIdStub.withArgs("blMessage1").resolves({ id: "blMessage1" });
 
     await twilioSmsEventOperation.run(blApiRequest);
     assert.equal(messageStorageGetIdStub.lastCall.args[0], "blMessage1");
@@ -81,9 +80,9 @@ test.group("TwilioSmsEventOperation", (group) => {
       query: { bl_message_id: "blMessage1" },
     };
 
-    messageStorageGetIdStub.withArgs("blMessage1").resolves({ id: "blMessage1" } as Message);
+    messageStorageGetIdStub.withArgs("blMessage1").resolves({ id: "blMessage1" });
 
-    messageStorageUpdateStub.resolves({} as Message);
+    messageStorageUpdateStub.resolves({});
 
     await twilioSmsEventOperation.run(blApiRequest);
     const args = messageStorageUpdateStub.lastCall.args;

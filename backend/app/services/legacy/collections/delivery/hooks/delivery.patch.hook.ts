@@ -49,23 +49,27 @@ export class DeliveryPatchHook extends Hook {
         // @ts-expect-error fixme: auto ignored
         .get(delivery.order)
         .then((order: Order) => {
-          this.deliveryValidator
-            // @ts-expect-error fixme: auto ignored
-            .validate(delivery)
-            .then(() => {
-              this.deliveryHandler
-                // @ts-expect-error fixme: auto ignored
-                .updateOrderBasedOnMethod(delivery, order)
-                .then((updatedDelivery: Delivery) => {
-                  return resolve([updatedDelivery]);
-                })
-                .catch((blError: BlError) => {
-                  return reject(blError);
-                });
-            })
-            .catch((blError: BlError) => {
-              return reject(blError);
-            });
+          return (
+            this.deliveryValidator
+              // @ts-expect-error fixme: auto ignored
+              .validate(delivery)
+              .then(() => {
+                return (
+                  this.deliveryHandler
+                    // @ts-expect-error fixme: auto ignored
+                    .updateOrderBasedOnMethod(delivery, order)
+                    .then((updatedDelivery: Delivery) => {
+                      return resolve([updatedDelivery]);
+                    })
+                    .catch((blError: BlError) => {
+                      return reject(blError);
+                    })
+                );
+              })
+              .catch((blError: BlError) => {
+                return reject(blError);
+              })
+          );
         })
         .catch((blError: BlError) => {
           return reject(blError);
@@ -91,7 +95,7 @@ export class DeliveryPatchHook extends Hook {
           if (body["method"]) {
             delivery.method = body["method"];
           }
-          this.deliveryValidator
+          return this.deliveryValidator
             .validate(delivery)
             .then(() => {
               return resolve(true);

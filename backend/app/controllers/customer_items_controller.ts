@@ -199,10 +199,10 @@ export default class CustomerItemsController {
    */
   async getActiveCustomerItemsForCustomer(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
-    const detailsId = ctx.request.param("detailsId") as string;
+    const detailsId = String(ctx.request.param("detailsId"));
     if (!ObjectId.isValid(detailsId)) return [];
 
-    return (await StorageService.CustomerItems.aggregate([
+    return await StorageService.CustomerItems.aggregate<ActiveCustomerItem>([
       {
         $match: {
           returned: { $ne: true },
@@ -236,6 +236,6 @@ export default class CustomerItemsController {
         },
       },
       { $sort: { deadline: 1, title: 1 } },
-    ])) as ActiveCustomerItem[];
+    ]);
   }
 }

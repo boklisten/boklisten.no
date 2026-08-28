@@ -3,7 +3,7 @@ import router from "@adonisjs/core/services/router";
 
 import BlResponseHandler from "#services/legacy/bl-response.handler";
 import CollectionEndpointAuth from "#services/legacy/collection-endpoint/collection-endpoint-auth";
-import { UserPermission } from "#shared/user-permission";
+import { parsePermission } from "#shared/user-permission";
 import { BlEndpointMethod, BlEndpointOperation } from "#types/bl-collection";
 
 function createUri(
@@ -34,9 +34,9 @@ function createRequestHandler(operation: BlEndpointOperation) {
         data: ctx.request.body(),
         user: accessToken
           ? {
-              id: accessToken.sub as string,
-              details: accessToken["details"] as string,
-              permission: accessToken["permission"] as UserPermission,
+              id: accessToken.sub ?? "",
+              details: String(accessToken["details"] ?? ""),
+              permission: parsePermission(accessToken["permission"]),
             }
           : undefined,
       };

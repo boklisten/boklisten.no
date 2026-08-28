@@ -47,12 +47,12 @@ test.group("match rounds", (group) => {
   });
 });
 
+async function createRound() {
+  return createTestRound({ name: "Round", standLocation: "Kantina" });
+}
+
 test.group("match participants", (group) => {
   group.each.setup(() => testUtils.db().truncate());
-
-  async function createRound() {
-    return createTestRound({ name: "Round", standLocation: "Kantina" });
-  }
 
   test("a user match has two customer participants", async ({ assert }) => {
     const round = await createRound();

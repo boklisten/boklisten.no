@@ -22,13 +22,13 @@ export function toBranchTreeNodeData(branches: Branch[]) {
       .map((childBranchId) => branchById.get(childBranchId))
       .filter((childBranch) => childBranch !== undefined)
       .map(toNode)
-      .sort(byShortLabel);
+      .toSorted(byShortLabel);
   }
 
   return branches
     .filter((branch) => !claimed.has(branch.id))
     .map(toNode)
-    .sort(byShortLabel);
+    .toSorted(byShortLabel);
 }
 
 function byShortLabel(a: TreeNodeData, b: TreeNodeData) {

@@ -45,8 +45,8 @@ export default function SelectOrderBranch() {
   return (
     <>
       {Array.from(groupedBranches.entries())
-        .sort((a, b) => a[0].localeCompare(b[0], "no"))
-        .map(([region, branches]) => (
+        .toSorted((a, b) => a[0].localeCompare(b[0], "no"))
+        .map(([region, regionBranches]) => (
           <NavLink
             key={region}
             label={region}
@@ -55,7 +55,7 @@ export default function SelectOrderBranch() {
             c={"#fff"}
             style={{ borderRadius: 5 }}
           >
-            {branches.map((branch) => (
+            {regionBranches.map((branch) => (
               <NavLink
                 component={TanStackAnchor}
                 key={branch.id}

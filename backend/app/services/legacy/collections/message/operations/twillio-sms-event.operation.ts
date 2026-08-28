@@ -36,8 +36,9 @@ export class TwilioSmsEventOperation implements Operation {
 
   private async parseAndAddTwilioEvent(twilioEvent: unknown, blMessageId: string) {
     if (!blMessageId) {
+      // default is that the message dont have a blMessageId
       logger.debug(`sendgrid event did not have a bl_message_id`);
-      return true; // default is that the message dont have a blMessageId
+      return;
     }
 
     try {
@@ -47,9 +48,7 @@ export class TwilioSmsEventOperation implements Operation {
       logger.warn(`could not update sendgrid event ${error}`);
       // if we dont find the message, there is no worries in not handling it
       // this is just for logging anyway, and we can handle some losses
-      return true;
     }
-    return;
   }
 
   private async updateMessageWithTwilioSmsEvent(

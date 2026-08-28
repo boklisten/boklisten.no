@@ -66,8 +66,8 @@ export const AuthVippsService = {
           "CLIENT_URI",
         )}/auth/token?access_token=${tokens.accessToken}&refresh_token=${tokens.refreshToken}`,
       );
-    } catch (error) {
-      logger.error(error);
+    } catch (creationError) {
+      logger.error(creationError);
       redirectToAuthFailedPage(ctx, ERROR);
     }
   },

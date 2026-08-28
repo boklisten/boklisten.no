@@ -10,7 +10,13 @@ import { OrderItem } from "#shared/order/order-item/order-item";
 
 export const OrderService = {
   async getOpenOrderItems(customerId: string, types: CartItemType[] = ["rent", "partly-payment"]) {
-    const openOrderItems = (await StorageService.Orders.aggregate([
+    const openOrderItems = await StorageService.Orders.aggregate<{
+      orderId: string;
+      itemId: string;
+      title: string;
+      deadline: string;
+      cancelable: boolean;
+    }>([
       {
         $match: {
           customer: new ObjectId(customerId),
@@ -52,13 +58,7 @@ export const OrderService = {
           cancelable: { $eq: ["$amount", 0] },
         },
       },
-    ])) as {
-      orderId: string;
-      itemId: string;
-      title: string;
-      deadline: string;
-      cancelable: boolean;
-    }[];
+    ]);
 
     // An item a user match depends on is never cancelable, regardless of match lock
     const blockedItemIds = await itemIdsInActiveUserMatches(customerId);

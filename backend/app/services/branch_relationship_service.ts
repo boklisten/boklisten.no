@@ -5,7 +5,7 @@ import { StorageService } from "#services/storage_service";
 
 export const BranchRelationshipService = {
   async getLeafDescendants(branchId: string): Promise<{ id: string; name: string }[]> {
-    return (await StorageService.Branches.aggregate([
+    return await StorageService.Branches.aggregate<{ id: string; name: string }>([
       {
         $match: {
           _id: new ObjectId(branchId),
@@ -32,7 +32,7 @@ export const BranchRelationshipService = {
           name: "$childBranches.name",
         },
       },
-    ])) as { id: string; name: string }[];
+    ]);
   },
   async getNestedChildBranchIds(parentId: string) {
     const result: string[] = [];

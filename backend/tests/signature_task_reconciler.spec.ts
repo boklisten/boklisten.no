@@ -24,7 +24,7 @@ function makeUserDetail(overrides: Partial<UserDetail> = {}): UserDetail {
     signatures: [],
     blid: "u#test",
     ...overrides,
-  } as UserDetail;
+  };
 }
 
 function makeRentOrder(overrides: Partial<Order> = {}): Order {
@@ -61,7 +61,7 @@ function makeCustomerItem(overrides: Partial<CustomerItem> = {}): CustomerItem {
     handout: true,
     returned: false,
     ...overrides,
-  } as CustomerItem;
+  };
 }
 
 test.group("reconcileSignatureTask", (group) => {

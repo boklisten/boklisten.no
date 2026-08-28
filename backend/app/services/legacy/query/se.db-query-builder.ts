@@ -88,14 +88,16 @@ export class SEDbQueryBuilder {
       databaseQuery.expandFilters = this.dbQueryExpandFilter.getExpandFilters(query);
     } catch (error) {
       if (error instanceof TypeError)
-        throw new TypeError("TypeError when building query, reason: " + error.message);
+        throw new TypeError("TypeError when building query, reason: " + error.message, {
+          cause: error,
+        });
       if (error instanceof ReferenceError)
         throw new ReferenceError("ReferenceError when building query, reason: " + error.message);
       if (error instanceof RangeError)
         throw new RangeError("RangeError when building query, reason: " + error.message);
 
       // @ts-expect-error fixme: auto ignored
-      throw new Error("Error when building query, reason: " + error.message);
+      throw new Error("Error when building query, reason: " + error.message, { cause: error });
     }
 
     return databaseQuery;

@@ -1,4 +1,4 @@
-import { type ComboboxItem, MultiSelect, type MultiSelectProps } from "@mantine/core";
+import { MultiSelect, type MultiSelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import { useFieldContext } from "@/shared/hooks/form";
@@ -18,7 +18,8 @@ export default function SelectItemsField(props: MultiSelectProps) {
       description={"Søk etter tittel eller ISBN"}
       data={items?.map((item) => ({ label: item.title, value: item.id })) ?? []}
       filter={({ options, search }) => {
-        return (options as ComboboxItem[]).filter((option) => {
+        return options.filter((option) => {
+          if (!("value" in option)) return false;
           if (option.label.toLowerCase().trim().includes(search.toLowerCase().trim())) return true;
           const isbn = items?.find((item) => item.id === option.value)?.info.isbn.toString();
           return isbn?.includes(search.trim()) ?? false;

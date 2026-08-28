@@ -56,6 +56,7 @@ export class BringDeliveryService {
       const response = await fetch(postalInfoUrl, {
         headers: bringAuthHeaders,
       });
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- external Bring API response
       const postalInfo = (await response.json()) as {
         postalCode: { city: string };
       };
@@ -110,7 +111,7 @@ export class BringDeliveryService {
             );
           }
 
-          resolve(deliveryInfoBring);
+          return resolve(deliveryInfoBring);
         })
         .catch((blError: BlError) => {
           return reject(blError);

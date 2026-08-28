@@ -38,8 +38,8 @@ export const OrderItemService = {
 
   async createExtendOrderItem(customerItem: CustomerItem, item: Item, to: Date) {
     const branch = await StorageService.Branches.get(customerItem.handoutInfo?.handoutById);
-    const extendPeriod = branch.paymentInfo?.extendPeriods.find((extendPeriod) =>
-      isSameDeadlineDay(extendPeriod.date, to),
+    const extendPeriod = branch.paymentInfo?.extendPeriods.find((period) =>
+      isSameDeadlineDay(period.date, to),
     );
     if (!extendPeriod)
       throw new Error(
@@ -80,8 +80,8 @@ export const OrderItemService = {
   },
   async createRentOrderItem(item: Item, branchId: string, to: Date) {
     const branch = await StorageService.Branches.get(branchId);
-    const rentPeriod = branch.paymentInfo?.rentPeriods.find((rentPeriod) =>
-      isSameDeadlineDay(rentPeriod.date, to),
+    const rentPeriod = branch.paymentInfo?.rentPeriods.find((period) =>
+      isSameDeadlineDay(period.date, to),
     );
     if (!rentPeriod)
       throw new Error(
@@ -106,8 +106,8 @@ export const OrderItemService = {
 
   async createPartlyPaymentOrderItem(item: Item, branchId: string, to: Date) {
     const branch = await StorageService.Branches.get(branchId);
-    const partlyPaymentPeriod = branch.paymentInfo?.partlyPaymentPeriods?.find(
-      (partlyPaymentPeriod) => isSameDeadlineDay(partlyPaymentPeriod.date, to),
+    const partlyPaymentPeriod = branch.paymentInfo?.partlyPaymentPeriods?.find((period) =>
+      isSameDeadlineDay(period.date, to),
     );
     if (!partlyPaymentPeriod)
       throw new Error(

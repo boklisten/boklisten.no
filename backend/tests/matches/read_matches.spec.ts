@@ -11,6 +11,7 @@ import { MatchRepository } from "#services/matches/match_repository";
 import { getMatchesForCustomer, getMatchesForRound } from "#services/matches/read_matches";
 import { StorageService } from "#services/storage_service";
 import { USER_PERMISSION } from "#shared/user-permission";
+import { asStub, unchecked } from "#tests/test-doubles";
 
 const A = "5d765db5fc8c47001c408d81";
 const B = "5d765db5fc8c47001c408d82";
@@ -29,15 +30,17 @@ test.group("read matches", (group) => {
 
   function stubMongo() {
     sandbox.stub(StorageService.UserDetails, "getMany").callsFake(async (ids) => {
-      return [
-        { id: A, name: "Kari Hansen", phone: "1", email: "kari@x.no" },
-        { id: B, name: "Ola Nordmann", phone: "2", email: "ola@x.no" },
-        { id: OUTSIDER, name: "Per Berg", phone: "3", email: "per@x.no" },
-      ].filter((person) => ids.includes(person.id)) as never;
+      return unchecked(
+        [
+          { id: A, name: "Kari Hansen", phone: "1", email: "kari@x.no" },
+          { id: B, name: "Ola Nordmann", phone: "2", email: "ola@x.no" },
+          { id: OUTSIDER, name: "Per Berg", phone: "3", email: "per@x.no" },
+        ].filter((person) => ids.includes(person.id)),
+      );
     });
     sandbox
       .stub(StorageService.Items, "getMany")
-      .resolves([{ id: ITEM_X, title: "Matematikk R1" }] as never);
+      .resolves(unchecked([{ id: ITEM_X, title: "Matematikk R1" }]));
   }
 
   async function seed() {
@@ -161,13 +164,10 @@ test.group("read matches", (group) => {
     await getMatchesForCustomer(A);
 
     assert.equal(
-      (StorageService.UserDetails.getMany as sinon.SinonStub).firstCall.args[1],
+      asStub(StorageService.UserDetails.getMany).firstCall.args[1],
       USER_PERMISSION.ADMIN,
     );
-    assert.equal(
-      (StorageService.Items.getMany as sinon.SinonStub).firstCall.args[1],
-      USER_PERMISSION.ADMIN,
-    );
+    assert.equal(asStub(StorageService.Items.getMany).firstCall.args[1], USER_PERMISSION.ADMIN);
   });
 
   test("reads Mongo once per collection however many matches there are", async ({ assert }) => {
@@ -187,7 +187,7 @@ test.group("read matches", (group) => {
 
     await getMatchesForRound(round.id);
 
-    assert.equal((StorageService.UserDetails.getMany as sinon.SinonStub).callCount, 1);
-    assert.equal((StorageService.Items.getMany as sinon.SinonStub).callCount, 1);
+    assert.equal(asStub(StorageService.UserDetails.getMany).callCount, 1);
+    assert.equal(asStub(StorageService.Items.getMany).callCount, 1);
   });
 });

@@ -7,6 +7,7 @@ import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
 import { Payment } from "#shared/payment/payment";
+import { asStub } from "#tests/test-doubles";
 
 test.group("PaymentPostHook", (group) => {
   const paymentValidator = new PaymentValidator();
@@ -106,7 +107,7 @@ test.group("PaymentPostHook", (group) => {
   });
 
   test("should add payment id to order.payments", async ({ assert }) => {
-    const orderUpdateStub = StorageService.Orders.update as sinon.SinonStub;
+    const orderUpdateStub = asStub(StorageService.Orders.update);
 
     // @ts-expect-error fixme: auto ignored
     await paymentPostHook.after([testPayment], testAccessToken);

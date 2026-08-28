@@ -13,8 +13,8 @@ export default function RichTextEditorField(props: { label: string }) {
     immediatelyRender: false,
     extensions: [StarterKit.configure({ link: false }), Link],
     content: field.state.value,
-    onUpdate: ({ editor }) => {
-      field.handleChange(editor.getHTML());
+    onUpdate: ({ editor: updatedEditor }) => {
+      field.handleChange(updatedEditor.getHTML());
     },
     onBlur: field.handleBlur,
   });

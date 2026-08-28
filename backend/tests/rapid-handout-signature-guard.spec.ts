@@ -5,28 +5,30 @@ import { verifyCustomerSignature } from "#services/legacy/signature.helper";
 import { StorageService } from "#services/storage_service";
 import { Order } from "#shared/order/order";
 import type { UserDetail } from "#shared/user-detail";
+import { OrderItemType } from "#shared/order/order-item/order-item-type";
+import { mock } from "#tests/test-doubles";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 const adultDob = new Date(new Date().getFullYear() - 30, 0, 1);
 const childDob = new Date(new Date().getFullYear() - 10, 0, 1);
 
 function userDetailWith(overrides: Partial<UserDetail>): UserDetail {
-  return {
+  return mock<UserDetail>({
     id: CUSTOMER_ID,
     name: "Test Kunde",
     dob: adultDob,
     signatures: [],
     ...overrides,
-  } as UserDetail;
+  });
 }
 
-function openOrderWith(type: string): Order {
-  return {
+function openOrderWith(type: OrderItemType): Order {
+  return mock<Order>({
     id: "order1",
     placed: true,
     customer: CUSTOMER_ID,
     orderItems: [{ type, item: "item1", title: "Bok", amount: 100, unitPrice: 100 }],
-  } as Order;
+  });
 }
 
 test.group("verifyCustomerSignature", (group) => {
@@ -39,10 +41,14 @@ test.group("verifyCustomerSignature", (group) => {
     sandbox = createSandbox();
     userDetailStub = sandbox.stub(StorageService.UserDetails, "getOrNull");
     sandbox.stub(StorageService.UserDetails, "update").callsFake((id, data) =>
-      Promise.resolve({
-        ...userDetailWith({}),
-        tasks: { signAgreement: (data as Record<string, unknown>)["tasks.signAgreement"] },
-      } as UserDetail),
+      Promise.resolve(
+        mock<UserDetail>({
+          ...userDetailWith({}),
+          tasks: {
+            signAgreement: (data as Record<string, unknown>)["tasks.signAgreement"] === true,
+          },
+        }),
+      ),
     );
     signatureStub = sandbox.stub(StorageService.Signatures, "get");
     orders = [];

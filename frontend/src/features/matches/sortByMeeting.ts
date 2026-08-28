@@ -15,5 +15,5 @@ export function compareByMeeting(a: MeetingOrdered, b: MeetingOrdered): number {
 }
 
 export function sortByMeeting<T extends MeetingOrdered>(matches: readonly T[]): T[] {
-  return [...matches].sort(compareByMeeting);
+  return [...matches].toSorted(compareByMeeting);
 }

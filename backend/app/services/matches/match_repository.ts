@@ -154,7 +154,7 @@ async function attachMatches(roundId: number, matches: MatchDraft[]): Promise<Ma
     // The models would fill these via their autoCreate hooks; raw inserts must say so themselves.
     const now = DateTime.now().toJSDate();
 
-    const matchRows = (await trx
+    const matchRows: { id: number }[] = await trx
       .table("matches")
       .insert(
         matches.map((draft) => ({
@@ -165,7 +165,7 @@ async function attachMatches(roundId: number, matches: MatchDraft[]): Promise<Ma
           updated_at: now,
         })),
       )
-      .returning("id")) as { id: number }[];
+      .returning("id");
 
     const participantRows = matches.flatMap((draft, index) => {
       const matchId = matchRows[index]?.id;
@@ -179,14 +179,14 @@ async function attachMatches(roundId: number, matches: MatchDraft[]): Promise<Ma
         updated_at: now,
       }));
     });
-    const createdParticipants = (await trx
-      .table("match_participants")
-      .insert(participantRows)
-      .returning(["id", "match_id", "user_detail_id"])) as {
+    const createdParticipants: {
       id: number;
       match_id: number;
       user_detail_id: string | null;
-    }[];
+    }[] = await trx
+      .table("match_participants")
+      .insert(participantRows)
+      .returning(["id", "match_id", "user_detail_id"]);
     const participantIds = new Map(
       createdParticipants.map((participant) => [
         `${participant.match_id}:${participant.user_detail_id}`,
@@ -262,7 +262,7 @@ interface CountRow {
 }
 
 const toCountMap = (rows: CountRow[]) =>
-  new Map(rows.map((row) => [Number(row.round_id), Number(row.total)]));
+  new Map(rows.map((row) => [row.round_id, Number(row.total)]));
 
 /**
  * How many matches each round has, and how many of their obligations have already been settled by
@@ -297,10 +297,10 @@ async function roundCounts(roundId?: number): Promise<Map<number, RoundCounts>> 
     void handoverQuery.where("matches.round_id", roundId);
   }
 
-  const [matchRows, handoverRows] = (await Promise.all([matchQuery, handoverQuery])) as [
-    CountRow[],
-    CountRow[],
-  ];
+  const [matchRows, handoverRows]: [CountRow[], CountRow[]] = await Promise.all([
+    matchQuery,
+    handoverQuery,
+  ]);
   const matches = toCountMap(matchRows);
   const handovers = toCountMap(handoverRows);
 

@@ -29,7 +29,9 @@ export class PaymentPostHook extends Hook {
     try {
       await this.paymentValidator.validate(payment);
     } catch (error) {
-      throw new BlError("payment could not be validated").add(error as BlError);
+      throw new BlError("payment could not be validated").add(
+        error instanceof BlError ? error : new BlError(String(error)),
+      );
     }
 
     await this.updateOrderWithPayment(payment);
@@ -54,7 +56,9 @@ export class PaymentPostHook extends Hook {
         payments: [...paymentIds, payment.id],
       });
     } catch (error) {
-      throw new BlError("order could not be updated with paymentId").add(error as BlError);
+      throw new BlError("order could not be updated with paymentId").add(
+        error instanceof BlError ? error : new BlError(String(error)),
+      );
     }
   }
 }

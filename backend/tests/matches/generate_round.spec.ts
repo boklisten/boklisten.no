@@ -13,6 +13,7 @@ import {
   TEST_MEETING_DATE,
   createTestRound,
 } from "#tests/matches/match-testing-utils";
+import { unchecked } from "#tests/test-doubles";
 
 const A = "5d765db5fc8c47001c408d81";
 const B = "5d765db5fc8c47001c408d82";
@@ -47,9 +48,9 @@ test.group("generateRound", (group) => {
     wanted: { id: string; wantedItems: string[] }[],
     userDetails: { id: string; branchMembership?: string }[] = [],
   ) {
-    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves(held as never);
-    sandbox.stub(StorageService.Orders, "aggregate").resolves(wanted as never);
-    sandbox.stub(StorageService.UserDetails, "aggregate").resolves(userDetails as never);
+    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves(held);
+    sandbox.stub(StorageService.Orders, "aggregate").resolves(wanted);
+    sandbox.stub(StorageService.UserDetails, "aggregate").resolves(userDetails);
   }
 
   test("creates an obligation per matched title, with both parties named", async ({ assert }) => {
@@ -251,15 +252,15 @@ test.group("generateRound", (group) => {
   test("looks for books due on the deadline, give or take two days", async ({ assert }) => {
     const aggregateStub = sandbox
       .stub(StorageService.CustomerItems, "aggregate")
-      .resolves([heldBy(A, [ITEM_X])] as never);
-    sandbox.stub(StorageService.Orders, "aggregate").resolves([] as never);
-    sandbox.stub(StorageService.UserDetails, "aggregate").resolves([] as never);
+      .resolves(unchecked([heldBy(A, [ITEM_X])]));
+    sandbox.stub(StorageService.Orders, "aggregate").resolves(unchecked([]));
+    sandbox.stub(StorageService.UserDetails, "aggregate").resolves(unchecked([]));
 
     await generateRound(await plannedRound());
 
-    const pipeline = aggregateStub.firstCall.args[0] as [
-      { $match: { deadline: { $gt: Date; $lt: Date } } },
-    ];
+    const pipeline: [{ $match: { deadline: { $gt: Date; $lt: Date } } }] = unchecked(
+      aggregateStub.firstCall.args[0],
+    );
     const { $gt, $lt } = pipeline[0].$match.deadline;
     assert.equal(
       $gt.toISOString(),

@@ -6,6 +6,7 @@ import { BlError } from "#shared/bl-error";
 import { Branch } from "#shared/branch";
 import { BlApiRequest } from "#types/bl-api-request";
 import { BlDocumentPermission, BlEndpointRestriction } from "#types/bl-collection";
+import { mock } from "#tests/test-doubles";
 
 test.group("CollectionEndpointDocumentAuth", (group) => {
   let testBlApiRequest: BlApiRequest;
@@ -13,9 +14,9 @@ test.group("CollectionEndpointDocumentAuth", (group) => {
   let testRestriction: BlEndpointRestriction;
 
   group.each.setup(() => {
-    testRestriction = {
+    testRestriction = mock<BlEndpointRestriction>({
       restricted: true,
-    } as BlEndpointRestriction;
+    });
 
     testBlApiRequest = {
       user: {
@@ -25,13 +26,13 @@ test.group("CollectionEndpointDocumentAuth", (group) => {
       },
     };
     testDocs = [
-      {
+      mock<Branch>({
         id: "doc1",
         user: {
           id: "user1",
           permission: "customer",
         },
-      } as Branch,
+      }),
     ];
   });
 

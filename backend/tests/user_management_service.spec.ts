@@ -16,6 +16,7 @@ import { StorageService } from "#services/storage_service";
 import { UserManagementService } from "#services/user_management_service";
 import { createTestRound } from "#tests/matches/match-testing-utils";
 import { User } from "#types/user";
+import { asStub, mock, unchecked } from "#tests/test-doubles";
 
 const FROM = "5d765db5fc8c47001c408d81";
 const TO = "5d765db5fc8c47001c408d82";
@@ -23,6 +24,15 @@ const OTHER = "5d765db5fc8c47001c408d83";
 const ITEM_X = "5d765db5fc8c47001c408e01";
 const FROM_USER_ID = "5d765db5fc8c47001c408f01";
 const TO_USER_ID = "5d765db5fc8c47001c408f02";
+
+async function seedMatch(customerIds: string[]) {
+  const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
+  const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
+  const participants = await MatchParticipant.createMany(
+    customerIds.map((userDetailId) => ({ matchId: match.id, userDetailId })),
+  );
+  return { match, participants };
+}
 
 test.group("UserManagementService.mergeUsers", (group) => {
   let sandbox: sinon.SinonSandbox;
@@ -37,23 +47,22 @@ test.group("UserManagementService.mergeUsers", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService.UserDetails, "getOrNull").callsFake(
-      async (id) =>
-        ({
-          id,
-          orders: id === FROM ? ["order-from"] : ["order-to"],
-          customerItems: id === FROM ? ["ci-from", "ci-shared"] : ["ci-to", "ci-shared"],
-          signatures: [],
-        }) as never,
+    sandbox.stub(StorageService.UserDetails, "getOrNull").callsFake(async (id) =>
+      unchecked({
+        id,
+        orders: id === FROM ? ["order-from"] : ["order-to"],
+        customerItems: id === FROM ? ["ci-from", "ci-shared"] : ["ci-to", "ci-shared"],
+        signatures: [],
+      }),
     );
     sandbox.stub(StorageService.Users, "getByQuery").callsFake(async (query) => {
       const detailsId = query.stringFilters?.[0]?.value;
       return [
-        {
+        mock<User>({
           id: detailsId === FROM ? FROM_USER_ID : TO_USER_ID,
           userDetail: detailsId,
           permission: "customer",
-        } as User,
+        }),
       ];
     });
     detailsUpdateStub = sandbox.stub(StorageService.UserDetails, "update").resolves();
@@ -68,15 +77,6 @@ test.group("UserManagementService.mergeUsers", (group) => {
     sandbox.stub(StorageService.Payments, "updateMany").resolves();
   });
   group.each.teardown(() => sandbox.restore());
-
-  async function seedMatch(customerIds: string[]) {
-    const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
-    const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
-    const participants = await MatchParticipant.createMany(
-      customerIds.map((userDetailId) => ({ matchId: match.id, userDetailId })),
-    );
-    return { match, participants };
-  }
 
   test("repoints participants and handovers at the surviving user", async ({ assert }) => {
     const { match } = await seedMatch([FROM, OTHER]);
@@ -185,8 +185,8 @@ test.group("UserManagementService.mergeUsers", (group) => {
   });
 
   test("refuses to merge employees or admins", async ({ assert }) => {
-    (StorageService.Users.getByQuery as sinon.SinonStub).callsFake(async () => [
-      { id: FROM_USER_ID, userDetail: FROM, permission: "admin" } as User,
+    asStub(StorageService.Users.getByQuery).callsFake(async () => [
+      mock<User>({ id: FROM_USER_ID, userDetail: FROM, permission: "admin" }),
     ]);
     await assert.rejects(() => UserManagementService.mergeUsers(FROM, TO));
   });
@@ -203,10 +203,10 @@ test.group("UserManagementService.deleteUser", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService.UserDetails, "getOrNull").resolves({ id: FROM } as never);
+    sandbox.stub(StorageService.UserDetails, "getOrNull").resolves(unchecked({ id: FROM }));
     sandbox
       .stub(StorageService.Users, "getByQuery")
-      .resolves([{ id: FROM_USER_ID, userDetail: FROM, permission: "customer" } as User]);
+      .resolves([mock<User>({ id: FROM_USER_ID, userDetail: FROM, permission: "customer" })]);
     detailsRemoveStub = sandbox.stub(StorageService.UserDetails, "remove").resolves();
     usersRemoveStub = sandbox.stub(StorageService.Users, "remove").resolves();
     activeOrdersStub = sandbox.stub(OrderActive.prototype, "haveActiveOrders").resolves(false);
@@ -250,8 +250,8 @@ test.group("UserManagementService.deleteUser", (group) => {
   });
 
   test("refuses to delete employees or admins", async ({ assert }) => {
-    (StorageService.Users.getByQuery as sinon.SinonStub).resolves([
-      { id: FROM_USER_ID, userDetail: FROM, permission: "employee" } as User,
+    asStub(StorageService.Users.getByQuery).resolves([
+      mock<User>({ id: FROM_USER_ID, userDetail: FROM, permission: "employee" }),
     ]);
     await assert.rejects(() => UserManagementService.deleteUser(FROM));
     assert.isFalse(detailsRemoveStub.called);

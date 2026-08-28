@@ -3,7 +3,7 @@ import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
 import type { Order } from "@boklisten/backend/shared/order/order";
 import type { OrderItem } from "@boklisten/backend/shared/order/order-item/order-item";
 
-import { forViewer, partyName } from "@/features/matches/forViewer";
+import { forViewer, partyName, type ViewerObligation } from "@/features/matches/forViewer";
 
 /** A book the customer exchanges with another student (received from / delivered to a peer). */
 export interface PeerBook {
@@ -47,19 +47,20 @@ export function buildOpenOrderInfo(
   return openOrderInfo;
 }
 
+const toPeerBooks = (obligations: ViewerObligation[]): PeerBook[] =>
+  obligations.map((obligation) => ({
+    id: obligation.itemId,
+    title: obligation.title,
+    fulfilled: obligation.fulfilled,
+    personName: partyName(obligation.expected),
+  }));
+
 export function buildPeerBooks(matches: MatchDto[], customerId: string) {
   const receiveBooks: PeerBook[] = [];
   const giveBooks: PeerBook[] = [];
   for (const match of matches) {
     if (match.isStandMatch) continue;
     const { toDeliver, toReceive } = forViewer(match, customerId);
-    const toPeerBooks = (obligations: typeof toDeliver): PeerBook[] =>
-      obligations.map((obligation) => ({
-        id: obligation.itemId,
-        title: obligation.title,
-        fulfilled: obligation.fulfilled,
-        personName: partyName(obligation.expected),
-      }));
     receiveBooks.push(...toPeerBooks(toReceive));
     giveBooks.push(...toPeerBooks(toDeliver));
   }

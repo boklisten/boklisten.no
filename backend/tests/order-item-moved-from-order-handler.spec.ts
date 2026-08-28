@@ -5,6 +5,7 @@ import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/ord
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Order } from "#shared/order/order";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderItemMovedFromOrderHandler", (group) => {
   const oiMovedFromOrderHandler = new OrderItemMovedFromOrderHandler();
@@ -30,7 +31,7 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
 
   const testMovedFromOrderId = "testMovedFromOrderId";
 
-  const testMovedFromOrder = {
+  const testMovedFromOrder = mock<Order>({
     amount: 100,
     orderItems: [
       {
@@ -47,7 +48,7 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
         },
       },
     ],
-  } as Order;
+  });
 
   const order = {
     id: "testOrder1",
@@ -101,12 +102,12 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
 
   /** An original order for one item and a new order that moves `movedItemId` out of it. */
   function ordersWithItems(originalItemId: string, movedItemId: string) {
-    const originalOrder = {
+    const originalOrder = mock<Order>({
       id: "originalOrder1",
       amount: 0,
       orderItems: [{ type: "rent", item: originalItemId, amount: 0, unitPrice: 0 }],
-    } as Order;
-    const newOrder = {
+    });
+    const newOrder = mock<Order>({
       id: "newOrder1",
       amount: 0,
       orderItems: [
@@ -118,7 +119,7 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
           movedFromOrder: originalOrder.id,
         },
       ],
-    } as Order;
+    });
     getOrderStub.withArgs(originalOrder.id).resolves(originalOrder);
     updateOrderStub.resolves(originalOrder);
     return { originalOrder, newOrder };
@@ -145,15 +146,15 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
   });
 
   test("prefers the exact item over an equivalent edition", async ({ assert }) => {
-    const originalOrder = {
+    const originalOrder = mock<Order>({
       id: "originalOrder1",
       amount: 0,
       orderItems: [
         { type: "rent", item: GYMNOS_2009, amount: 0, unitPrice: 0 },
         { type: "rent", item: GYMNOS_2012, amount: 0, unitPrice: 0 },
       ],
-    } as Order;
-    const newOrder = {
+    });
+    const newOrder = mock<Order>({
       id: "newOrder1",
       amount: 0,
       orderItems: [
@@ -165,7 +166,7 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
           movedFromOrder: originalOrder.id,
         },
       ],
-    } as Order;
+    });
     getOrderStub.withArgs(originalOrder.id).resolves(originalOrder);
     updateOrderStub.resolves(originalOrder);
 

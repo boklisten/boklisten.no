@@ -4,9 +4,10 @@ import { createSandbox } from "sinon";
 import { UserDetailUpdateHook } from "#services/legacy/collections/user-detail/hooks/user-detail-update.hook";
 import { StorageService } from "#services/storage_service";
 import { AccessToken } from "#shared/access-token";
+import { mock } from "#tests/test-doubles";
 
-const customerAccessToken = { permission: "customer" } as AccessToken;
-const adminAccessToken = { permission: "admin" } as AccessToken;
+const customerAccessToken = mock<AccessToken>({ permission: "customer" });
+const adminAccessToken = mock<AccessToken>({ permission: "admin" });
 
 test.group("UserDetailUpdateHook", async (group) => {
   const userDetailUpdateHook = new UserDetailUpdateHook();

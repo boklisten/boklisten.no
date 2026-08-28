@@ -44,7 +44,7 @@ export function resolveDateRange({ preset, customRange }: DateRangeValue): Resol
       return { from: dayjs().startOf("year").toDate(), to: dayjs().endOf("year").toDate() };
     case "all-time":
       return {};
-    case "custom": {
+    default: {
       const [from, to] = customRange;
       return {
         ...(from && { from: dayjs(from).startOf("day").toDate() }),

@@ -5,16 +5,17 @@ import sinon, { createSandbox } from "sinon";
 import CustomerItemsController from "#controllers/customer_items_controller";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
+import { mock } from "#tests/test-doubles";
 
 const DETAILS_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 
 function contextFor(detailsId: string) {
-  return { request: { param: () => detailsId } } as unknown as HttpContext;
+  return mock<HttpContext>({ request: { param: () => detailsId } });
 }
 
 /** The $match stage of the aggregate the controller ran. */
 function matchStage(aggregateStub: sinon.SinonStub): Record<string, unknown> {
-  const pipeline = aggregateStub.firstCall.args[0] as { $match?: Record<string, unknown> }[];
+  const pipeline = mock<{ $match?: Record<string, unknown> }[]>(aggregateStub.firstCall.args[0]);
   const stage = pipeline.find((entry) => entry.$match !== undefined)?.$match;
   if (stage === undefined) throw new Error("aggregate had no $match stage");
   return stage;

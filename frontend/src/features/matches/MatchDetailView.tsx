@@ -31,7 +31,7 @@ function useIsTooEarly(meetingTime: string | null) {
   const [isTooEarly, setIsTooEarly] = useState(dayjs().isBefore(dayjs(meetingTime)));
 
   useEffect(() => {
-    if (!meetingTime) return;
+    if (!meetingTime) return undefined;
     const interval = setInterval(() => {
       setIsTooEarly(dayjs().isBefore(dayjs(meetingTime)));
     }, 10_000);

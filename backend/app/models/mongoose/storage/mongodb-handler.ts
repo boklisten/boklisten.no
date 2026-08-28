@@ -32,6 +32,7 @@ export class MongodbHandler<T extends BlDocument> {
 
   // fixme: disallow undefined here, and handle missing values higher up
   public async get(id: string | undefined): Promise<T> {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the mongo/typed boundary: lean() documents have the shape the schema for T defines
     const document_ = (await this.mongooseModel
       .findById<T>(id)
       .lean({ transform: MongooseModelCreator.transformObject })
@@ -72,6 +73,7 @@ export class MongodbHandler<T extends BlDocument> {
       .find(databaseQuery.getFilter(), databaseQuery.getOgFilter())
       .limit(databaseQuery.getLimitFilter())
       .skip(databaseQuery.getSkipFilter())
+      // oxlint-disable-next-line unicorn/no-array-sort -- Mongoose Query#sort, not Array#sort
       .sort(databaseQuery.getSortFilter())
       .lean({ transform: MongooseModelCreator.transformObject })
       .exec()
@@ -118,9 +120,13 @@ export class MongodbHandler<T extends BlDocument> {
     }
   }
 
-  public async aggregate(aggregation: PipelineStage[]): Promise<unknown[]> {
+  /**
+   * The row shape is whatever the pipeline produces, which Mongoose cannot know —
+   * the caller declares the type it built the pipeline for.
+   */
+  public async aggregate<Row = unknown>(aggregation: PipelineStage[]): Promise<Row[]> {
     const docs = await this.mongooseModel
-      .aggregate(aggregation)
+      .aggregate<Row>(aggregation)
       .exec()
       .catch((error) => {
         throw this.handleError(new BlError("failed to aggregate documents"), error);
@@ -180,6 +186,7 @@ export class MongodbHandler<T extends BlDocument> {
     // Don't update the user of a document after creation
     delete newData["user"];
 
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the mongo/typed boundary: lean() documents have the shape the schema for T defines
     const document_ = (await this.mongooseModel
       .findOneAndUpdate({ _id: id }, newData, { new: true })
       .lean({ transform: MongooseModelCreator.transformObject })
@@ -224,6 +231,7 @@ export class MongodbHandler<T extends BlDocument> {
   }
 
   public async remove(id: string) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the mongo/typed boundary: lean() documents have the shape the schema for T defines
     const document_ = (await this.mongooseModel
       .findByIdAndDelete<T>(id)
       .lean({ transform: MongooseModelCreator.transformObject })
@@ -269,12 +277,12 @@ export class MongodbHandler<T extends BlDocument> {
     const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(escaped, "i");
 
-    return (await this.mongooseModel
+    return await this.mongooseModel
       .find({
         $or: searchPaths.map((path) => ({ [path]: regex })),
       })
       .lean({ transform: MongooseModelCreator.transformObject })
-      .exec()) as T[];
+      .exec();
   }
   /**
    * Tries to fetch all nested values on the specified documents.

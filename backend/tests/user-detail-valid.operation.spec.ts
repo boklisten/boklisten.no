@@ -7,6 +7,7 @@ import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
 import { UserDetail } from "#shared/user-detail";
 import { BlApiRequest } from "#types/bl-api-request";
+import { mock } from "#tests/test-doubles";
 
 test.group("UserDetailValidOperation", (group) => {
   const userDetailValidOperation = new UserDetailValidOperation();
@@ -44,9 +45,9 @@ test.group("UserDetailValidOperation", (group) => {
   });
 
   test("should reject if userDetail is not found", async ({ assert }) => {
-    testUserDetail = {
+    testUserDetail = mock<UserDetail>({
       id: "userDetail1",
-    } as UserDetail;
+    });
 
     const blApiRequest = {
       documentId: "notFoundUserDetail",

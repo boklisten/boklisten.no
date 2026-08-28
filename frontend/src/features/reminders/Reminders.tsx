@@ -78,7 +78,8 @@ export default function Reminders() {
         children: (
           <Text size="sm">
             Du er nå i ferd med å sende en påminnelse på{" "}
-            {value.messageMethod === "sms" ? "sms" : "e-post"} til {recipientCount} kunder.
+            {value.messageMethod === MessageMethod.SMS ? "sms" : "e-post"} til {recipientCount}{" "}
+            kunder.
           </Text>
         ),
         labels: { confirm: "Send", cancel: "Avbryt" },
@@ -149,7 +150,8 @@ export default function Reminders() {
                 validators={{
                   onChangeListenTo: ["messageMethod"],
                   onChange: ({ value }) =>
-                    form.state.values.messageMethod === "sms" && (!value || value.length === 0)
+                    form.state.values.messageMethod === MessageMethod.SMS &&
+                    (!value || value.length === 0)
                       ? "Du må fylle inn melding"
                       : null,
                 }}
@@ -173,7 +175,7 @@ export default function Reminders() {
                 validators={{
                   onChangeListenTo: ["messageMethod"],
                   onChange: ({ value }) => {
-                    if (form.state.values.messageMethod === "email" && !value)
+                    if (form.state.values.messageMethod === MessageMethod.EMAIL && !value)
                       return "Du må velge e-postmal";
 
                     return null;

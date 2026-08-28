@@ -137,7 +137,7 @@ export function findDuplicateCandidatePairs(sources: DuplicateCandidateSource[])
     const keys = [
       candidate.name && `name:${candidate.name}`,
       candidate.dob && `dob:${candidate.dob}`,
-    ].filter(Boolean) as string[];
+    ].filter(Boolean);
     for (const key of keys) {
       const block = blocks.get(key) ?? [];
       block.push(candidate);
@@ -158,7 +158,7 @@ export function findDuplicateCandidatePairs(sources: DuplicateCandidateSource[])
       for (let j = i + 1; j < block.length; j++) {
         const a = block[i]!;
         const b = block[j]!;
-        const pairKey = [a.source.id, b.source.id].sort().join("|");
+        const pairKey = [a.source.id, b.source.id].toSorted().join("|");
         if (seenPairs.has(pairKey)) continue;
         const { isCandidate, score, reasons } = scorePair(a, b);
         if (!isCandidate) continue;
@@ -167,11 +167,15 @@ export function findDuplicateCandidatePairs(sources: DuplicateCandidateSource[])
       }
     }
   }
-  return pairs.sort((first, second) => second.score - first.score);
+  return pairs.toSorted((first, second) => second.score - first.score);
 }
 
 async function findUserAccounts(detailsIds: string[]) {
-  const rows = (await StorageService.Users.aggregate([
+  const rows = await StorageService.Users.aggregate<{
+    userDetail: string;
+    permission: UserPermission;
+    lastActive?: Date;
+  }>([
     { $match: { userDetail: { $in: detailsIds.map((id) => new ObjectId(id)) } } },
     {
       $project: {
@@ -180,12 +184,12 @@ async function findUserAccounts(detailsIds: string[]) {
         lastActive: "$login.lastTokenIssuedAt",
       },
     },
-  ])) as { userDetail: string; permission: UserPermission; lastActive?: Date }[];
+  ]);
   return new Map(rows.map((row) => [String(row.userDetail), row]));
 }
 
 async function countActiveBooks(detailsIds: string[]) {
-  const rows = (await StorageService.CustomerItems.aggregate([
+  const rows = await StorageService.CustomerItems.aggregate<{ id: string; count: number }>([
     {
       $match: {
         ...ACTIVE_CUSTOMER_ITEM_MATCH,
@@ -193,17 +197,17 @@ async function countActiveBooks(detailsIds: string[]) {
       },
     },
     { $group: { _id: "$customer", count: { $sum: 1 } } },
-  ])) as { id: string; count: number }[];
+  ]);
   return new Map(rows.map((row) => [String(row.id), row.count]));
 }
 
 async function countOrderedItems(detailsIds: string[]) {
-  const rows = (await StorageService.Orders.aggregate([
+  const rows = await StorageService.Orders.aggregate<{ id: string; count: number }>([
     { $match: { placed: true, customer: { $in: detailsIds.map((id) => new ObjectId(id)) } } },
     { $unwind: "$orderItems" },
     { $match: OPEN_ORDER_ITEM_MATCH },
     { $group: { _id: "$customer", count: { $sum: 1 } } },
-  ])) as { id: string; count: number }[];
+  ]);
   return new Map(rows.map((row) => [String(row.id), row.count]));
 }
 
@@ -259,7 +263,7 @@ async function countActiveMatches(detailsIds: string[]) {
 }
 
 async function findDuplicateCustomers(): Promise<DuplicateCustomersResult> {
-  const sources = (await StorageService.UserDetails.aggregate([
+  const sources = await StorageService.UserDetails.aggregate<DuplicateCandidateSource>([
     {
       $project: {
         name: 1,
@@ -273,7 +277,7 @@ async function findDuplicateCustomers(): Promise<DuplicateCustomersResult> {
         guardianPhone: { $ifNull: ["$guardian.phone", ""] },
       },
     },
-  ])) as DuplicateCandidateSource[];
+  ]);
 
   const allPairs = findDuplicateCandidatePairs(sources);
   const pairs = allPairs.slice(0, MAX_PAIRS);

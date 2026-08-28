@@ -110,7 +110,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
         fulfilled: book.fulfilled,
         receiveFromName: book.personName,
       })),
-  ].sort(
+  ].toSorted(
     (a, b) => Number(a.receiveFromName !== undefined) - Number(b.receiveFromName !== undefined),
   );
   const nothingToShow = orders !== undefined && bookRows.length === 0;
