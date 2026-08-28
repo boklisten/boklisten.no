@@ -73,9 +73,8 @@ export default function BranchBooksEditModal({
       onClose();
     } catch {
       // The mutation's onError notification covers this; keep the modal open for a retry
-    } finally {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   }
 
   return (

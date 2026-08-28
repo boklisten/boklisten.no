@@ -32,9 +32,8 @@ export default function useReportDownload({
       URL.revokeObjectURL(url);
     } catch {
       showErrorNotification(errorMessage);
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   }
 
   return { download, isLoading };

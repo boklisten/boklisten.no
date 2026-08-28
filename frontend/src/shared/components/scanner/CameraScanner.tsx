@@ -55,21 +55,18 @@ export default function CameraScanner({
       return;
     }
     busyRef.current = true;
-    try {
-      for (const code of codes) {
-        if (!activeRef.current) {
-          break;
-        }
-        try {
-          await onCodeRef.current(code);
-        } catch (error) {
-          // onCode owns its own error reporting; this only stops an unhandled rejection.
-          console.error("Failed to handle scanned code", error);
-        }
+    for (const code of codes) {
+      if (!activeRef.current) {
+        break;
       }
-    } finally {
-      busyRef.current = false;
+      try {
+        await onCodeRef.current(code);
+      } catch (error) {
+        // onCode owns its own error reporting; this only stops an unhandled rejection.
+        console.error("Failed to handle scanned code", error);
+      }
     }
+    busyRef.current = false;
   }, []);
 
   return (

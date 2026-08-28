@@ -71,7 +71,15 @@ export default function SunburstChart({ data }: { data: BranchHierarchyNode[] })
   const depth = Math.max(1, maxDepthOf(data));
   const ringWidth = (OUTER_RADIUS - HOLE_RADIUS) / depth;
   const arcs: Arc[] = [];
-  let nextHue = 0;
+
+  // Level-1 segments each get their own hue, assigned in render order across all roots;
+  // deeper levels inherit their ancestor's hue.
+  const levelOneHues = new Map<BranchHierarchyNode, string>();
+  for (const root of data) {
+    for (const child of root.children) {
+      levelOneHues.set(child, HUES[levelOneHues.size % HUES.length]!);
+    }
+  }
 
   const walk = (
     node: BranchHierarchyNode,
@@ -81,7 +89,7 @@ export default function SunburstChart({ data }: { data: BranchHierarchyNode[] })
     inheritedHue: string,
     pathLabel: string,
   ) => {
-    const hue = level === 0 ? "gray" : level === 1 ? HUES[nextHue++ % HUES.length]! : inheritedHue;
+    const hue = level === 0 ? "gray" : (levelOneHues.get(node) ?? inheritedHue);
     const shade = level === 0 ? 5 : Math.max(3, 7 - (level - 1));
     const innerR = HOLE_RADIUS + level * ringWidth;
     const outerR = innerR + ringWidth;

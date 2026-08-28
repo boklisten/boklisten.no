@@ -25,12 +25,20 @@ export default function useCart() {
     key: "cart",
     defaultValue: [],
   });
+  function remove(itemId: string) {
+    setCart((prev) => prev.filter((cartItem) => cartItem.id !== itemId));
+  }
   function add(cartItem: CartItem) {
     remove(cartItem.id);
     setCart((prev) => [...prev, cartItem].toSorted((a, b) => a.title.localeCompare(b.title)));
   }
-  function remove(itemId: string) {
-    setCart((prev) => prev.filter((cartItem) => cartItem.id !== itemId));
+  function getSelectedOption(cartItem: CartItem) {
+    const selectedOption = cartItem.options[cartItem.selectedOptionIndex];
+    if (!selectedOption) {
+      clear();
+      throw new Error("Invalid selected option in cart!");
+    }
+    return selectedOption;
   }
   function calculateTotal() {
     return Math.ceil(
@@ -41,14 +49,6 @@ export default function useCart() {
     return Math.ceil(
       cart.reduce((total, cartItem) => total + (getSelectedOption(cartItem).payLater ?? 0), 0),
     );
-  }
-  function getSelectedOption(cartItem: CartItem) {
-    const selectedOption = cartItem.options[cartItem.selectedOptionIndex];
-    if (!selectedOption) {
-      clear();
-      throw new Error("Invalid selected option in cart!");
-    }
-    return selectedOption;
   }
 
   function getOptionLabel(option?: CartItemOption) {

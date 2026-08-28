@@ -35,13 +35,11 @@ function AdminNavItem({
   );
 }
 
-export default function AdminPageNavigation({
-  onNavigate = () => {
-    return;
-  },
-}: {
-  onNavigate?: () => void;
-}) {
+function noop() {
+  return;
+}
+
+export default function AdminPageNavigation({ onNavigate = noop }: { onNavigate?: () => void }) {
   const pathname = useLocation({ select: (location) => location.pathname });
   const { isAdmin } = useAuth();
   return (
