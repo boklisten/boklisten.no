@@ -46,7 +46,6 @@ test.group("OrderPatchHook", (group) => {
       postCity: "oslo",
       dob: new Date(),
       orders: [],
-      signatures: [],
       blid: "",
     };
 

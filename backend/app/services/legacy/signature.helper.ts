@@ -1,29 +1,16 @@
-import { Signature } from "#models/mongoose/signature.schema";
+import Signature from "#models/signature";
 import { CustomerItemActive } from "#services/legacy/collections/customer-item/helpers/customer-item-active";
 import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { CustomerItem } from "#shared/customer-item/customer-item";
-import { SIGNATURE_NUM_MONTHS_VALID } from "#shared/serialized-signature";
 import { UserDetail } from "#shared/user-detail";
 
 const signatureRequiringItemTypes = new Set(["rent", "loan"]);
 
-export async function getValidUserSignature(userDetail: UserDetail): Promise<Signature | null> {
-  const newestSignatureId = userDetail.signatures.at(-1);
-  if (newestSignatureId == undefined) return null;
-
-  const signature = await StorageService.Signatures.get(newestSignatureId);
-  if (!signatureIsValidForUser(userDetail, signature)) {
-    return null;
-  }
-
-  return signature;
-}
-
 export async function userHasValidSignature(userDetail: UserDetail): Promise<boolean> {
-  return (await getValidUserSignature(userDetail)) != null;
+  return (await Signature.validForCustomer(userDetail)) != null;
 }
 
 /**
@@ -101,33 +88,4 @@ export async function verifyCustomerSignature(customerId: string): Promise<strin
     return "Kunden mangler gyldig signatur, og kan derfor ikke få utdelt bøker. Be kunden signere først.";
   }
   return null;
-}
-
-export function signatureIsValidForUser(
-  userDetail: { dob?: Date | null },
-  signature: { creationTime?: Date; signedByGuardian?: boolean },
-  now: Date = new Date(),
-): boolean {
-  if (isSignatureExpired(signature, now)) {
-    return false;
-  }
-
-  return isUnderage(userDetail, now) === (signature.signedByGuardian ?? false);
-}
-
-export function isUnderage(userDetail: { dob?: Date | null }, now: Date = new Date()): boolean {
-  if (!userDetail.dob) return false;
-  const latestAdultBirthDate = new Date(now.getFullYear() - 18, now.getMonth(), now.getDate());
-  return userDetail.dob > latestAdultBirthDate;
-}
-
-function isSignatureExpired(signature: { creationTime?: Date }, now: Date = new Date()): boolean {
-  if (!signature.creationTime) return false;
-  const oldestAllowedSignatureTime = new Date(
-    now.getFullYear(),
-    now.getMonth() - SIGNATURE_NUM_MONTHS_VALID,
-    now.getDate(),
-  );
-
-  return signature.creationTime < oldestAllowedSignatureTime;
 }

@@ -11,7 +11,6 @@ import { ItemSchema } from "#models/mongoose/item.schema";
 import { MessageSchema } from "#models/mongoose/message.schema";
 import { OrderSchema } from "#models/mongoose/order.schema";
 import { PaymentSchema } from "#models/mongoose/payment.schema";
-import { SignatureSchema } from "#models/mongoose/signature.schema";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { MongodbHandler } from "#models/mongoose/storage/mongodb-handler";
 import { UniqueItemSchema } from "#models/mongoose/unique-item.schema";
@@ -31,7 +30,6 @@ export const StorageService = {
   Messages: new MongodbHandler(MessageSchema, BlSchemaName.Messages),
   Orders: new MongodbHandler(OrderSchema, BlSchemaName.Orders),
   Payments: new MongodbHandler(PaymentSchema, BlSchemaName.Payments),
-  Signatures: new MongodbHandler(SignatureSchema, BlSchemaName.Signatures),
   UniqueItems: new MongodbHandler(UniqueItemSchema, BlSchemaName.UniqueItems),
   Users: new MongodbHandler(UserSchema, BlSchemaName.Users),
   UserDetails: new MongodbHandler(UserDetailSchema, BlSchemaName.UserDetails),

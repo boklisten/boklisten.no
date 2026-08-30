@@ -4,6 +4,7 @@ import EmailVerification from "#models/email_verification";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import PasswordReset from "#models/password_reset";
+import Signature from "#models/signature";
 import { CustomerHaveActiveCustomerItems } from "#services/legacy/collections/customer-item/helpers/customer-have-active-customer-items";
 import { CustomerInvoiceActive } from "#services/legacy/collections/invoice/helpers/customer-invoice-active";
 import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
@@ -140,10 +141,10 @@ async function mergeUsers(fromDetailsId: string, toDetailsId: string) {
   await StorageService.UserDetails.update(toDetailsId, {
     orders: union(toDetails.orders, fromDetails.orders),
     customerItems: union(toDetails.customerItems, fromDetails.customerItems),
-    signatures: union(toDetails.signatures, fromDetails.signatures),
   });
 
   await Promise.all([
+    Signature.reassignCustomer(fromDetailsId, toDetailsId),
     StorageService.CustomerItems.updateMany({ customer: fromDetailsId }, { customer: toDetailsId }),
     StorageService.Orders.updateMany({ customer: fromDetailsId }, { customer: toDetailsId }),
     StorageService.Payments.updateMany({ customer: fromDetailsId }, { customer: toDetailsId }),

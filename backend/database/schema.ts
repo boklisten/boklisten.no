@@ -254,6 +254,25 @@ export class RateLimitSchema extends BaseModel {
   declare points: number
 }
 
+export class SignatureSchema extends BaseModel {
+  static $columns = ['createdAt', 'customerDetailsId', 'id', 'image', 'signedByGuardian', 'signingName', 'updatedAt'] as const
+  $columns = SignatureSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare customerDetailsId: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare image: Buffer
+  @column()
+  declare signedByGuardian: boolean
+  @column()
+  declare signingName: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class WaitingListCustomerSchema extends BaseModel {
   static $columns = ['branchId', 'createdAt', 'id', 'itemId', 'name', 'phoneNumber', 'updatedAt'] as const
   $columns = WaitingListCustomerSchema.$columns

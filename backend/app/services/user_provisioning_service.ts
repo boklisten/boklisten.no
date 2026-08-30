@@ -128,7 +128,6 @@ async function updateExistingUser(
   const mergedUser = {
     ...existingUser,
     ...update,
-    signatures: existingUser.signatures ?? [],
   };
   const tasks = computeTasks(mergedUser, await userHasValidSignature(mergedUser));
   await StorageService.UserDetails.update(existingUser.id, { ...update, tasks });

@@ -35,7 +35,6 @@ test.group("UserDetailValidOperation", (group) => {
       postCity: "LONDON",
       dob: new Date(1946, 9, 5),
       emailConfirmed: true,
-      signatures: [],
       blid: "",
       branchMembership: "branch1",
     };

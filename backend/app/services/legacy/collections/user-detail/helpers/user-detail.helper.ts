@@ -1,4 +1,4 @@
-import { isUnderage } from "#services/legacy/signature.helper";
+import { isUnderage } from "#models/signature";
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { UserDetail } from "#shared/user-detail";
 

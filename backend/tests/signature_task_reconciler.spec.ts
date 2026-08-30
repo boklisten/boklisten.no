@@ -1,6 +1,9 @@
+import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 import sinon, { createSandbox } from "sinon";
 
+import Signature from "#models/signature";
 import { reconcileSignatureTask } from "#services/legacy/signature.helper";
 import { StorageService } from "#services/storage_service";
 import { CustomerItem } from "#shared/customer-item/customer-item";
@@ -8,7 +11,6 @@ import { Order } from "#shared/order/order";
 import { UserDetail } from "#shared/user-detail";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
-const SIGNATURE_ID = "signature1";
 
 function makeUserDetail(overrides: Partial<UserDetail> = {}): UserDetail {
   return {
@@ -21,10 +23,18 @@ function makeUserDetail(overrides: Partial<UserDetail> = {}): UserDetail {
     postCity: "OSLO",
     // An adult, so a non-guardian signature is the valid kind.
     dob: new Date(1990, 0, 1),
-    signatures: [],
     blid: "u#test",
     ...overrides,
   };
+}
+
+function createValidSignature() {
+  return Signature.create({
+    customerDetailsId: CUSTOMER_ID,
+    signingName: "Test Testersen",
+    signedByGuardian: false,
+    image: Buffer.from("webp"),
+  });
 }
 
 function makeRentOrder(overrides: Partial<Order> = {}): Order {
@@ -70,6 +80,8 @@ test.group("reconcileSignatureTask", (group) => {
   let customerItems: CustomerItem[];
   let updateStub: sinon.SinonStub;
 
+  group.each.setup(() => testUtils.db().truncate());
+
   group.each.setup(() => {
     sandbox = createSandbox();
     orders = [];
@@ -80,17 +92,6 @@ test.group("reconcileSignatureTask", (group) => {
     });
     sandbox.stub(StorageService, "CustomerItems").value({
       getByQuery: sandbox.stub().callsFake(() => Promise.resolve(customerItems)),
-    });
-    sandbox.stub(StorageService, "Signatures").value({
-      get: sandbox.stub().callsFake((id: string) => {
-        if (id !== SIGNATURE_ID) return Promise.reject(new Error("not found"));
-        return Promise.resolve({
-          id: SIGNATURE_ID,
-          signingName: "Test Testersen",
-          signedByGuardian: false,
-          creationTime: new Date(),
-        });
-      }),
     });
     updateStub = sandbox.stub().callsFake((id: string, data: Record<string, unknown>) =>
       Promise.resolve({
@@ -106,10 +107,8 @@ test.group("reconcileSignatureTask", (group) => {
   });
 
   test("clears the task when the user has a valid signature", async ({ assert }) => {
-    const userDetail = makeUserDetail({
-      signatures: [SIGNATURE_ID],
-      tasks: { signAgreement: true },
-    });
+    await createValidSignature();
+    const userDetail = makeUserDetail({ tasks: { signAgreement: true } });
 
     const result = await reconcileSignatureTask(userDetail);
 
@@ -118,12 +117,32 @@ test.group("reconcileSignatureTask", (group) => {
   });
 
   test("does not write when the user has a valid signature and no task set", async ({ assert }) => {
-    const userDetail = makeUserDetail({ signatures: [SIGNATURE_ID] });
+    await createValidSignature();
+    const userDetail = makeUserDetail();
 
     const result = await reconcileSignatureTask(userDetail);
 
     assert.equal(updateStub.called, false);
     assert.equal(result.tasks?.signAgreement ?? false, false);
+  });
+
+  test("judges only the newest signature, even when an older one is valid", async ({ assert }) => {
+    await createValidSignature();
+    // A newer guardian-signed signature is invalid for an adult.
+    await Signature.create({
+      customerDetailsId: CUSTOMER_ID,
+      signingName: "Guardian Guardiansen",
+      signedByGuardian: true,
+      image: Buffer.from("webp"),
+      createdAt: DateTime.now().plus({ hours: 1 }),
+    });
+    orders = [makeRentOrder()];
+    const userDetail = makeUserDetail();
+
+    const result = await reconcileSignatureTask(userDetail);
+
+    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
+    assert.equal(result.tasks?.signAgreement, true);
   });
 
   test("sets the task when an open rent order exists and no valid signature", async ({

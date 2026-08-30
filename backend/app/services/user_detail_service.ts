@@ -119,7 +119,6 @@ export const UserDetailService = {
           phone: guardian?.phone ?? "",
         },
         blid,
-        signatures: [],
       },
       { id: blid, permission: "customer" },
     );

@@ -1,19 +1,19 @@
 import { HttpContext } from "@adonisjs/core/http";
 import { Transformer } from "@napi-rs/image";
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 
+import Signature, { isUnderage } from "#models/signature";
 import DispatchService from "#services/dispatch_service";
 import { DateService } from "#services/legacy/date.service";
-import {
-  getValidUserSignature,
-  isUnderage,
-  reconcileSignatureTask,
-  userHasValidSignature,
-} from "#services/legacy/signature.helper";
+import { reconcileSignatureTask, userHasValidSignature } from "#services/legacy/signature.helper";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
-import { SIGNATURE_NUM_MONTHS_VALID } from "#shared/serialized-signature";
 import { signValidator } from "#validators/signature";
+
+function formatSignedDate(dateTime: DateTime | null): string | undefined {
+  if (!dateTime) return undefined;
+  return DateService.format(dateTime.toJSDate(), "Europe/Oslo", "DD/MM/YYYY");
+}
 
 export default class SignaturesController {
   async getSignature(ctx: HttpContext) {
@@ -24,22 +24,16 @@ export default class SignaturesController {
     if (!userDetail) return null;
 
     userDetail = await reconcileSignatureTask(userDetail);
-    const validSignature = await getValidUserSignature(userDetail);
+    const validSignature = await Signature.validForCustomer(userDetail);
     if (validSignature) {
       return {
-        image: validSignature.image,
+        image: validSignature.image.toString("base64"),
         isSignatureValid: true,
         signatureRequired: false,
         signedByGuardian: validSignature.signedByGuardian,
         signingName: validSignature.signingName,
-        signedAtText:
-          validSignature.creationTime &&
-          DateService.format(validSignature.creationTime, "Europe/Oslo", "DD/MM/YYYY"),
-        expiresAtText: DateService.format(
-          moment(validSignature.creationTime).add(SIGNATURE_NUM_MONTHS_VALID, "months").toDate(),
-          "Europe/Oslo",
-          "DD/MM/YYYY",
-        ),
+        signedAtText: formatSignedDate(validSignature.createdAt),
+        expiresAtText: formatSignedDate(validSignature.expiresAt),
       };
     }
 
@@ -77,21 +71,15 @@ export default class SignaturesController {
           "Lenken er ugyldig. Vennligst prøv igjen, eller ta kontakt hvis problemet vedvarer.",
       };
     }
-    const validSignature = await getValidUserSignature(userDetail);
+    const validSignature = await Signature.validForCustomer(userDetail);
     if (validSignature) {
       return {
         isSignatureValid: true,
         name: userDetail.name,
         signedByGuardian: validSignature.signedByGuardian,
         signingName: validSignature.signingName,
-        signedAtText:
-          validSignature.creationTime &&
-          DateService.format(validSignature.creationTime, "Europe/Oslo", "DD/MM/YYYY"),
-        expiresAtText: DateService.format(
-          moment(validSignature.creationTime).add(SIGNATURE_NUM_MONTHS_VALID, "months").toDate(),
-          "Europe/Oslo",
-          "DD/MM/YYYY",
-        ),
+        signedAtText: formatSignedDate(validSignature.createdAt),
+        expiresAtText: formatSignedDate(validSignature.expiresAt),
       };
     }
 
@@ -114,13 +102,13 @@ export default class SignaturesController {
       return;
     }
     const image = await new Transformer(Buffer.from(base64EncodedImage, "base64")).webp(10);
-    const writtenSignature = await StorageService.Signatures.add({
-      image,
+    await Signature.create({
+      customerDetailsId: userDetail.id,
       signingName: isUnderage(userDetail) ? signingName : userDetail.name,
       signedByGuardian: isUnderage(userDetail),
+      image,
     });
     await StorageService.UserDetails.update(userDetail.id, {
-      signatures: [...userDetail.signatures, writtenSignature.id],
       "tasks.signAgreement": false,
     });
   }

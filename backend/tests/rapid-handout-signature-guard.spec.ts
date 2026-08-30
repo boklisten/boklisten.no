@@ -1,6 +1,9 @@
+import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 import sinon, { createSandbox } from "sinon";
 
+import Signature from "#models/signature";
 import { verifyCustomerSignature } from "#services/legacy/signature.helper";
 import { StorageService } from "#services/storage_service";
 import { Order } from "#shared/order/order";
@@ -17,7 +20,16 @@ function userDetailWith(overrides: Partial<UserDetail>): UserDetail {
     id: CUSTOMER_ID,
     name: "Test Kunde",
     dob: adultDob,
-    signatures: [],
+    ...overrides,
+  });
+}
+
+function createSignature(overrides: Partial<Parameters<typeof Signature.create>[0]> = {}) {
+  return Signature.create({
+    customerDetailsId: CUSTOMER_ID,
+    signingName: "Test Kunde",
+    signedByGuardian: false,
+    image: Buffer.from("webp"),
     ...overrides,
   });
 }
@@ -34,8 +46,9 @@ function openOrderWith(type: OrderItemType): Order {
 test.group("verifyCustomerSignature", (group) => {
   let sandbox: sinon.SinonSandbox;
   let userDetailStub: sinon.SinonStub;
-  let signatureStub: sinon.SinonStub;
   let orders: Order[];
+
+  group.each.setup(() => testUtils.db().truncate());
 
   group.each.setup(() => {
     sandbox = createSandbox();
@@ -50,7 +63,6 @@ test.group("verifyCustomerSignature", (group) => {
         }),
       ),
     );
-    signatureStub = sandbox.stub(StorageService.Signatures, "get");
     orders = [];
     sandbox.stub(StorageService.Orders, "getByQuery").callsFake(() => Promise.resolve(orders));
     sandbox.stub(StorageService.CustomerItems, "getByQuery").callsFake(() => Promise.resolve([]));
@@ -72,7 +84,7 @@ test.group("verifyCustomerSignature", (group) => {
     assert,
   }) => {
     orders = [openOrderWith("rent")];
-    userDetailStub.resolves(userDetailWith({ signatures: [] }));
+    userDetailStub.resolves(userDetailWith({}));
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
@@ -81,7 +93,7 @@ test.group("verifyCustomerSignature", (group) => {
   });
 
   test("should return feedback when the signature task is requested", async ({ assert }) => {
-    userDetailStub.resolves(userDetailWith({ signatures: [], tasks: { signAgreement: true } }));
+    userDetailStub.resolves(userDetailWith({ tasks: { signAgreement: true } }));
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
@@ -93,7 +105,7 @@ test.group("verifyCustomerSignature", (group) => {
     assert,
   }) => {
     orders = [openOrderWith("partly-payment")];
-    userDetailStub.resolves(userDetailWith({ signatures: [] }));
+    userDetailStub.resolves(userDetailWith({}));
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
@@ -104,11 +116,8 @@ test.group("verifyCustomerSignature", (group) => {
     assert,
   }) => {
     orders = [openOrderWith("rent")];
-    userDetailStub.resolves(userDetailWith({ signatures: ["signature1"] }));
-    signatureStub.resolves({
-      signedByGuardian: false,
-      creationTime: new Date(2000, 0, 1),
-    });
+    userDetailStub.resolves(userDetailWith({}));
+    await createSignature({ createdAt: DateTime.local(2000, 1, 1) });
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
@@ -120,11 +129,8 @@ test.group("verifyCustomerSignature", (group) => {
     assert,
   }) => {
     orders = [openOrderWith("rent")];
-    userDetailStub.resolves(userDetailWith({ dob: childDob, signatures: ["signature1"] }));
-    signatureStub.resolves({
-      signedByGuardian: false,
-      creationTime: new Date(),
-    });
+    userDetailStub.resolves(userDetailWith({ dob: childDob }));
+    await createSignature();
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 
@@ -134,11 +140,8 @@ test.group("verifyCustomerSignature", (group) => {
 
   test("should return null when the customer has a valid signature", async ({ assert }) => {
     orders = [openOrderWith("rent")];
-    userDetailStub.resolves(userDetailWith({ signatures: ["signature1"] }));
-    signatureStub.resolves({
-      signedByGuardian: false,
-      creationTime: new Date(),
-    });
+    userDetailStub.resolves(userDetailWith({}));
+    await createSignature();
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);
 

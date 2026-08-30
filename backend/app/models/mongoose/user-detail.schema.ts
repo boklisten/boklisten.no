@@ -70,7 +70,6 @@ export const UserDetailSchema: BlSchema<UserDetail> = new Schema({
   },
   customerItems: [{ type: Schema.Types.ObjectId, ref: BlSchemaName.CustomerItems }],
   orders: [{ type: Schema.Types.ObjectId, ref: BlSchemaName.Orders }],
-  signatures: [{ type: Schema.Types.ObjectId, ref: BlSchemaName.Signatures }],
   blid: {
     type: String,
     required: true,

@@ -9,6 +9,7 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import PasswordReset from "#models/password_reset";
+import Signature from "#models/signature";
 import { CustomerHaveActiveCustomerItems } from "#services/legacy/collections/customer-item/helpers/customer-have-active-customer-items";
 import { CustomerInvoiceActive } from "#services/legacy/collections/invoice/helpers/customer-invoice-active";
 import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
@@ -52,7 +53,6 @@ test.group("UserManagementService.mergeUsers", (group) => {
         id,
         orders: id === FROM ? ["order-from"] : ["order-to"],
         customerItems: id === FROM ? ["ci-from", "ci-shared"] : ["ci-to", "ci-shared"],
-        signatures: [],
       }),
     );
     sandbox.stub(StorageService.Users, "getByQuery").callsFake(async (query) => {
@@ -96,6 +96,19 @@ test.group("UserManagementService.mergeUsers", (group) => {
       [TO, OTHER],
     );
     assert.equal((await BookHandover.firstOrFail()).fromUserDetailId, TO);
+  });
+
+  test("moves signatures onto the surviving user", async ({ assert }) => {
+    await Signature.create({
+      customerDetailsId: FROM,
+      signingName: "Test Testersen",
+      signedByGuardian: false,
+      image: Buffer.from("webp"),
+    });
+
+    await UserManagementService.mergeUsers(FROM, TO);
+
+    assert.equal((await Signature.firstOrFail()).customerDetailsId, TO);
   });
 
   test("when both users are in the same match, obligations move to the surviving participant", async ({

@@ -1,14 +1,19 @@
 import { ObjectId } from "mongodb";
 
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
+import Signature from "#models/signature";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
-import { signatureIsValidForUser } from "#services/legacy/signature.helper";
 import { StorageService } from "#services/storage_service";
 
 export interface MemberSignatureRow {
   dob?: Date | null;
   signAgreement?: boolean | null;
-  signature?: { creationTime?: Date; signedByGuardian?: boolean } | null;
+  signature?: Signature | null;
+}
+
+interface MemberRow {
+  id: { toString(): string };
+  dob?: Date | null;
+  signAgreement?: boolean | null;
 }
 
 export interface BranchSignatureStatus {
@@ -19,7 +24,7 @@ export interface BranchSignatureStatus {
 }
 
 export const BranchSignatureStatusService = {
-  summarize(rows: MemberSignatureRow[], now: Date): BranchSignatureStatus {
+  summarize(rows: MemberSignatureRow[]): BranchSignatureStatus {
     const status: BranchSignatureStatus = {
       totalMembers: rows.length,
       validSignature: 0,
@@ -27,7 +32,7 @@ export const BranchSignatureStatusService = {
       noSignatureNeeded: 0,
     };
     for (const row of rows) {
-      if (row.signature && signatureIsValidForUser(row, row.signature, now)) {
+      if (row.signature?.isValidFor(row)) {
         status.validSignature++;
       } else if (row.signAgreement === true) {
         status.needsSignature++;
@@ -41,27 +46,21 @@ export const BranchSignatureStatusService = {
   async getStatus(branchId: string): Promise<BranchSignatureStatus> {
     const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
     const scopeIds = [branchId, ...descendantIds];
-    const rows = await StorageService.UserDetails.aggregate<MemberSignatureRow>([
+    const members = await StorageService.UserDetails.aggregate<MemberRow>([
       { $match: { branchMembership: { $in: scopeIds.map((id) => new ObjectId(id)) } } },
-      {
-        $project: {
-          dob: 1,
-          signAgreement: "$tasks.signAgreement",
-          lastSignatureId: { $last: "$signatures" },
-        },
-      },
-      {
-        $lookup: {
-          from: BlSchemaName.Signatures,
-          localField: "lastSignatureId",
-          foreignField: "_id",
-          as: "signature",
-          // Signature documents hold the drawn image; never pull it into the pipeline.
-          pipeline: [{ $project: { creationTime: 1, signedByGuardian: 1 } }],
-        },
-      },
-      { $project: { dob: 1, signAgreement: 1, signature: { $first: "$signature" } } },
+      { $project: { dob: 1, signAgreement: "$tasks.signAgreement" } },
     ]);
-    return BranchSignatureStatusService.summarize(rows, new Date());
+    const newestSignatures = await Signature.newestPerCustomer(
+      members.map((member) => member.id.toString()),
+    );
+    const signatureByCustomer = new Map(
+      newestSignatures.map((signature) => [signature.customerDetailsId, signature]),
+    );
+    const rows = members.map((member) => ({
+      dob: member.dob,
+      signAgreement: member.signAgreement,
+      signature: signatureByCustomer.get(member.id.toString()),
+    }));
+    return BranchSignatureStatusService.summarize(rows);
   },
 };

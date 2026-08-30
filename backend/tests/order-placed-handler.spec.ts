@@ -160,7 +160,6 @@ test.group("OrderPlacedHandler", (group) => {
       postCity: "",
       dob: new Date(),
       emailConfirmed: true,
-      signatures: [],
       blid: "",
     };
   });

@@ -1,6 +1,9 @@
+import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 import { createSandbox } from "sinon";
 
+import Signature from "#models/signature";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import {
   BranchSignatureStatusService,
@@ -9,20 +12,36 @@ import {
 import { StorageService } from "#services/storage_service";
 import { unchecked } from "#tests/test-doubles";
 
-const NOW = new Date(2026, 7, 18);
+function makeSignature(createdAt: DateTime, signedByGuardian: boolean): Signature {
+  const signature = new Signature();
+  signature.createdAt = createdAt;
+  signature.signedByGuardian = signedByGuardian;
+  return signature;
+}
+
+// Mirrors the calendar arithmetic in Signature.isExpired, so boundary tests are exact.
+function monthsAgo(months: number): DateTime {
+  const now = new Date();
+  return DateTime.fromJSDate(new Date(now.getFullYear(), now.getMonth() - months, now.getDate()));
+}
+
+function yearsAgo(years: number): Date {
+  const now = new Date();
+  return new Date(now.getFullYear() - years, now.getMonth(), now.getDate());
+}
 
 function adultWithSignature(overrides: Partial<MemberSignatureRow> = {}): MemberSignatureRow {
   return {
-    dob: new Date(1990, 0, 1),
+    dob: yearsAgo(30),
     signAgreement: false,
-    signature: { creationTime: new Date(2026, 5, 1), signedByGuardian: false },
+    signature: makeSignature(monthsAgo(1), false),
     ...overrides,
   };
 }
 
 test.group("BranchSignatureStatusService.summarize", () => {
   test("counts an adult with a fresh non-guardian signature as valid", ({ assert }) => {
-    const result = BranchSignatureStatusService.summarize([adultWithSignature()], NOW);
+    const result = BranchSignatureStatusService.summarize([adultWithSignature()]);
     assert.deepEqual(result, {
       totalMembers: 1,
       validSignature: 1,
@@ -33,19 +52,19 @@ test.group("BranchSignatureStatusService.summarize", () => {
 
   test("counts an underage member with a guardian signature as valid", ({ assert }) => {
     const row: MemberSignatureRow = {
-      dob: new Date(2010, 0, 1),
+      dob: yearsAgo(10),
       signAgreement: false,
-      signature: { creationTime: new Date(2026, 5, 1), signedByGuardian: true },
+      signature: makeSignature(monthsAgo(1), true),
     };
-    const result = BranchSignatureStatusService.summarize([row], NOW);
+    const result = BranchSignatureStatusService.summarize([row]);
     assert.equal(result.validSignature, 1);
   });
 
   test("counts a member with the signAgreement task and no signature as needing to sign", ({
     assert,
   }) => {
-    const row: MemberSignatureRow = { dob: new Date(1990, 0, 1), signAgreement: true };
-    const result = BranchSignatureStatusService.summarize([row], NOW);
+    const row: MemberSignatureRow = { dob: yearsAgo(30), signAgreement: true };
+    const result = BranchSignatureStatusService.summarize([row]);
     assert.deepEqual(result, {
       totalMembers: 1,
       validSignature: 0,
@@ -57,28 +76,28 @@ test.group("BranchSignatureStatusService.summarize", () => {
   test("treats an expired signature as no signature", ({ assert }) => {
     const row = adultWithSignature({
       signAgreement: true,
-      // 49 months before NOW — past the 48 month validity window
-      signature: { creationTime: new Date(2022, 6, 18), signedByGuardian: false },
+      // Past the 48 month validity window
+      signature: makeSignature(monthsAgo(49), false),
     });
-    const result = BranchSignatureStatusService.summarize([row], NOW);
+    const result = BranchSignatureStatusService.summarize([row]);
     assert.equal(result.needsSignature, 1);
     assert.equal(result.validSignature, 0);
   });
 
   test("keeps a signature signed exactly 48 months ago valid", ({ assert }) => {
     const row = adultWithSignature({
-      signature: { creationTime: new Date(2022, 7, 18), signedByGuardian: false },
+      signature: makeSignature(monthsAgo(48), false),
     });
-    const result = BranchSignatureStatusService.summarize([row], NOW);
+    const result = BranchSignatureStatusService.summarize([row]);
     assert.equal(result.validSignature, 1);
   });
 
   test("treats an adult's guardian-signed signature as invalid", ({ assert }) => {
     const row = adultWithSignature({
       signAgreement: true,
-      signature: { creationTime: new Date(2026, 5, 1), signedByGuardian: true },
+      signature: makeSignature(monthsAgo(1), true),
     });
-    const result = BranchSignatureStatusService.summarize([row], NOW);
+    const result = BranchSignatureStatusService.summarize([row]);
     assert.equal(result.needsSignature, 1);
     assert.equal(result.validSignature, 0);
   });
@@ -86,8 +105,8 @@ test.group("BranchSignatureStatusService.summarize", () => {
   test("counts a member without the task and without a signature as not needing to sign", ({
     assert,
   }) => {
-    const row: MemberSignatureRow = { dob: new Date(1990, 0, 1) };
-    const result = BranchSignatureStatusService.summarize([row], NOW);
+    const row: MemberSignatureRow = { dob: yearsAgo(30) };
+    const result = BranchSignatureStatusService.summarize([row]);
     assert.deepEqual(result, {
       totalMembers: 1,
       validSignature: 0,
@@ -98,27 +117,27 @@ test.group("BranchSignatureStatusService.summarize", () => {
 
   test("counts a valid signature even when the task flag is stale", ({ assert }) => {
     const row = adultWithSignature({ signAgreement: true });
-    const result = BranchSignatureStatusService.summarize([row], NOW);
+    const result = BranchSignatureStatusService.summarize([row]);
     assert.equal(result.validSignature, 1);
     assert.equal(result.needsSignature, 0);
   });
 
   test("treats a member without dob as an adult", ({ assert }) => {
     const row: MemberSignatureRow = {
-      signature: { creationTime: new Date(2026, 5, 1), signedByGuardian: false },
+      signature: makeSignature(monthsAgo(1), false),
     };
-    const result = BranchSignatureStatusService.summarize([row], NOW);
+    const result = BranchSignatureStatusService.summarize([row]);
     assert.equal(result.validSignature, 1);
   });
 
   test("sums members across all buckets", ({ assert }) => {
     const rows: MemberSignatureRow[] = [
       adultWithSignature(),
-      { dob: new Date(2010, 0, 1), signAgreement: true },
-      { dob: new Date(1990, 0, 1) },
-      { dob: new Date(1990, 0, 1) },
+      { dob: yearsAgo(10), signAgreement: true },
+      { dob: yearsAgo(30) },
+      { dob: yearsAgo(30) },
     ];
-    const result = BranchSignatureStatusService.summarize(rows, NOW);
+    const result = BranchSignatureStatusService.summarize(rows);
     assert.deepEqual(result, {
       totalMembers: 4,
       validSignature: 1,
@@ -130,27 +149,47 @@ test.group("BranchSignatureStatusService.summarize", () => {
 
 test.group("BranchSignatureStatusService.getStatus", (group) => {
   const sandbox = createSandbox();
+  group.each.setup(() => testUtils.db().truncate());
   group.each.teardown(() => sandbox.restore());
 
-  test("aggregates members of the branch and its descendants", async ({ assert }) => {
+  test("joins members of the branch and its descendants with their newest signature", async ({
+    assert,
+  }) => {
     const branchId = "5f7f7f7f7f7f7f7f7f7f7f7f";
     const childId = "6a7f7f7f7f7f7f7f7f7f7f7f";
+    const signedMemberId = "aaaaaaaaaaaaaaaaaaaaaaaa";
+    const unsignedMemberId = "bbbbbbbbbbbbbbbbbbbbbbbb";
     sandbox
       .stub(BranchRelationshipService, "getNestedChildBranchIds")
       .withArgs(branchId)
       .resolves([childId]);
-    const aggregateStub = sandbox
-      .stub(StorageService.UserDetails, "aggregate")
-      .resolves([
-        { dob: new Date(1990, 0, 1), signAgreement: true },
-        { dob: new Date(1990, 0, 1) },
-      ]);
+    const aggregateStub = sandbox.stub(StorageService.UserDetails, "aggregate").resolves([
+      { id: signedMemberId, dob: yearsAgo(30) },
+      { id: unsignedMemberId, dob: yearsAgo(30), signAgreement: true },
+    ]);
+    // An old guardian-signed signature that the newer valid one must shadow.
+    await Signature.create({
+      customerDetailsId: signedMemberId,
+      signingName: "Guardian Guardiansen",
+      signedByGuardian: true,
+      image: Buffer.from("webp"),
+      createdAt: DateTime.now().minus({ years: 1 }),
+    });
+    await Signature.create({
+      customerDetailsId: signedMemberId,
+      signingName: "Medlem Medlemsen",
+      signedByGuardian: false,
+      image: Buffer.from("webp"),
+    });
 
     const result = await BranchSignatureStatusService.getStatus(branchId);
 
-    assert.equal(result.totalMembers, 2);
-    assert.equal(result.needsSignature, 1);
-    assert.equal(result.noSignatureNeeded, 1);
+    assert.deepEqual(result, {
+      totalMembers: 2,
+      validSignature: 1,
+      needsSignature: 1,
+      noSignatureNeeded: 0,
+    });
     const pipeline: {
       $match?: { branchMembership?: { $in?: { toString(): string }[] } };
     }[] = unchecked(aggregateStub.firstCall.args[0]);

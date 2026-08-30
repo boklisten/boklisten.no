@@ -1,14 +1,14 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 import sinon, { createSandbox } from "sinon";
 
 import BookHandover from "#models/book_handover";
+import Signature, { SIGNATURE_NUM_MONTHS_VALID } from "#models/signature";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import { createTestRound } from "#tests/matches/match-testing-utils";
-import { Signature } from "#models/mongoose/signature.schema";
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
 import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
 import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
@@ -18,9 +18,18 @@ import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
 import { Order } from "#shared/order/order";
 import { OrderItem } from "#shared/order/order-item/order-item";
-import { SIGNATURE_NUM_MONTHS_VALID } from "#shared/serialized-signature";
 import { UserDetail } from "#shared/user-detail";
 import { mock } from "#tests/test-doubles";
+
+function createValidSignature() {
+  return Signature.create({
+    customerDetailsId: "customer1",
+    signingName: "",
+    signedByGuardian: true,
+    image: Buffer.from("test"),
+    createdAt: DateTime.now().minus({ months: SIGNATURE_NUM_MONTHS_VALID / 2 }),
+  });
+}
 
 test.group("OrderPlaceOperation", (group) => {
   const orderToCustomerItemGenerator = new OrderToCustomerItemGenerator();
@@ -40,7 +49,6 @@ test.group("OrderPlaceOperation", (group) => {
   let generateCustomerItemStub: sinon.SinonStub;
   let validateOrderStub: sinon.SinonStub;
   let getUserDetailStub: sinon.SinonStub;
-  let getSignatureStub: sinon.SinonStub;
   let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {
@@ -53,12 +61,15 @@ test.group("OrderPlaceOperation", (group) => {
     generateCustomerItemStub = sandbox.stub(orderToCustomerItemGenerator, "generate");
     validateOrderStub = sandbox.stub(orderValidator, "validate");
     getUserDetailStub = sandbox.stub(StorageService.UserDetails, "get");
-    getSignatureStub = sandbox.stub(StorageService.Signatures, "get");
   });
   group.each.teardown(() => {
     sandbox.restore();
   });
   group.each.setup(() => testUtils.db().truncate());
+  // An underage customer with a valid guardian signature in Postgres.
+  group.each.setup(async () => {
+    await createValidSignature();
+  });
 
   const validOrder: Order = {
     id: "validOrder1",
@@ -95,19 +106,8 @@ test.group("OrderPlaceOperation", (group) => {
     postCode: "",
     postCity: "",
     dob: new Date(),
-    signatures: ["validSignature"],
     id: "customer1",
     blid: "",
-  };
-
-  const validSignature: Signature = {
-    image: Buffer.from("test"),
-    signingName: "",
-    signedByGuardian: true,
-    id: "validSignature",
-    creationTime: moment()
-      .subtract(SIGNATURE_NUM_MONTHS_VALID / 2, "months")
-      .toDate(),
   };
 
   test("should reject if order is not found", async ({ assert }) => {
@@ -125,7 +125,6 @@ test.group("OrderPlaceOperation", (group) => {
     getManyCustomerItemsStub.resolves([]);
     aggregateCustomerItemsStub.resolves([]);
     getUserDetailStub.resolves(userDetailWithSignatures);
-    getSignatureStub.resolves(validSignature);
 
     await assert.rejects(() =>
       orderPlaceOperation.run({
@@ -141,7 +140,6 @@ test.group("OrderPlaceOperation", (group) => {
     validateOrderStub.rejects(new BlError("order not valid!"));
     getManyCustomerItemsStub.resolves([]);
     aggregateCustomerItemsStub.resolves([]);
-    getSignatureStub.resolves(validSignature);
     getUserDetailStub.resolves(userDetailWithSignatures);
 
     return assert.rejects(() =>
@@ -170,7 +168,6 @@ test.group("OrderPlaceOperation", (group) => {
     generateCustomerItemStub.resolves([]);
     placeOrderStub.resolves(order);
     validateOrderStub.resolves(true);
-    getSignatureStub.resolves(validSignature);
     getUserDetailStub.resolves(userDetailWithSignatures);
 
     const result = await orderPlaceOperation.run({
@@ -228,7 +225,6 @@ test.group("OrderPlaceOperation", (group) => {
     generateCustomerItemStub.resolves([]);
     placeOrderStub.resolves(order);
     validateOrderStub.resolves(true);
-    getSignatureStub.resolves(validSignature);
     getUserDetailStub.resolves(userDetailWithSignatures);
     return order;
   }
