@@ -275,6 +275,8 @@ router.get("/v2/employee/user_details/:detailsId/customer_items", [
 /**
  * signatures
  */
+router.get("/signatures/gallery", [controllers.Signatures, "gallery"]);
+
 router.post("/signatures/send/:detailsId", [controllers.Signatures, "sendSignatureLink"]);
 
 router.post("/signatures/me/send", [controllers.Signatures, "sendSignatureLinkAsCustomer"]);

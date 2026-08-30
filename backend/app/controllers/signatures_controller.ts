@@ -7,6 +7,7 @@ import DispatchService from "#services/dispatch_service";
 import { DateService } from "#services/legacy/date.service";
 import { reconcileSignatureTask, userHasValidSignature } from "#services/legacy/signature.helper";
 import { PermissionService } from "#services/permission_service";
+import { SignatureGalleryService } from "#services/signature_gallery_service";
 import { StorageService } from "#services/storage_service";
 import { signValidator } from "#validators/signature";
 
@@ -40,6 +41,11 @@ async function getSignatureStatus(detailsId: string) {
 }
 
 export default class SignaturesController {
+  async gallery(ctx: HttpContext) {
+    PermissionService.adminOrFail(ctx);
+    const cursor = SignatureGalleryService.decodeCursor(ctx.request.input("cursor"));
+    return await SignatureGalleryService.getPage(cursor);
+  }
   async getSignature(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
     return getSignatureStatus(ctx.request.param("detailsId"));

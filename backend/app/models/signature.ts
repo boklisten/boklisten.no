@@ -38,6 +38,31 @@ export default class Signature extends SignatureSchema {
       .withScopes((scopes) => scopes.newestFirst());
   }
 
+  /**
+   * A keyset page of the newest signature per customer, ordered newest first. The cursor points at
+   * the last row of the previous page; rows at or before it are excluded.
+   */
+  static async newestPerCustomerPage(
+    cursor: { createdAt: Date; id: number } | null,
+    limit: number,
+  ): Promise<Signature[]> {
+    const query = this.query()
+      .whereNotExists((newer) => {
+        void newer
+          .from("signatures as newer")
+          .whereColumn("newer.customer_details_id", "signatures.customer_details_id")
+          .whereRaw(
+            '("newer"."created_at", "newer"."id") > ("signatures"."created_at", "signatures"."id")',
+          );
+      })
+      .withScopes((scopes) => scopes.newestFirst())
+      .limit(limit);
+    if (cursor) {
+      void query.whereRaw('("created_at", "id") < (?, ?)', [cursor.createdAt, cursor.id]);
+    }
+    return await query;
+  }
+
   static async reassignCustomer(fromDetailsId: string, toDetailsId: string): Promise<void> {
     await this.query()
       .where("customerDetailsId", fromDetailsId)

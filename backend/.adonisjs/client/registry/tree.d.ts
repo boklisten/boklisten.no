@@ -137,6 +137,7 @@ export interface ApiDefinition {
     getActiveCustomerItemsForCustomer: typeof routes['customer_items.get_active_customer_items_for_customer']
   }
   signatures: {
+    gallery: typeof routes['signatures.gallery']
     sendSignatureLink: typeof routes['signatures.send_signature_link']
     sendSignatureLinkAsCustomer: typeof routes['signatures.send_signature_link_as_customer']
     getMySignature: typeof routes['signatures.get_my_signature']

@@ -17,6 +17,7 @@ import {
   IconReceipt,
   IconSearch,
   IconSend,
+  IconSignature,
   IconShoppingCart,
   IconUsers,
 } from "@tabler/icons-react";
@@ -151,6 +152,12 @@ export const ADMIN_NAV_SECTIONS = [
             description: "Se kundestatistikk, rydd i duplikater og administrer ansatte",
             to: "/admin/database/brukere",
             icon: IconUsers,
+          },
+          {
+            label: "Signaturer",
+            description: "Se de nyeste gyldige signaturene",
+            to: "/admin/database/signaturer",
+            icon: IconSignature,
           },
           {
             label: "Selskap",

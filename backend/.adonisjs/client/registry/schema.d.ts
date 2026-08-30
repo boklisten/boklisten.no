@@ -1039,6 +1039,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['getActiveCustomerItemsForCustomer']>>>
     }
   }
+  'signatures.gallery': {
+    methods: ["GET","HEAD"]
+    pattern: '/signatures/gallery'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['gallery']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['gallery']>>>
+    }
+  }
   'signatures.send_signature_link': {
     methods: ["POST"]
     pattern: '/signatures/send/:detailsId'
