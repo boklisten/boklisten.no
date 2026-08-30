@@ -279,6 +279,8 @@ router.post("/signatures/send/:detailsId", [controllers.Signatures, "sendSignatu
 
 router.post("/signatures/me/send", [controllers.Signatures, "sendSignatureLinkAsCustomer"]);
 
+router.get("/signatures/me", [controllers.Signatures, "getMySignature"]);
+
 router.get("/signatures/valid/:detailsId", [controllers.Signatures, "hasValidSignature"]);
 
 router.get("/signatures/get/:detailsId", [controllers.Signatures, "getSignature"]);

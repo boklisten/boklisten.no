@@ -25,6 +25,9 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
           }),
         });
         void queryClient.invalidateQueries({
+          queryKey: publicApi.signatures.getMySignature.pathKey(),
+        });
+        void queryClient.invalidateQueries({
           queryKey: publicApi.userDetail.getMyDetails.pathKey(),
         });
       },

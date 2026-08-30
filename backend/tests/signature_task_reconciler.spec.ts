@@ -157,13 +157,26 @@ test.group("reconcileSignatureTask", (group) => {
     assert.equal(result.tasks?.signAgreement, true);
   });
 
-  test("does not set the task for orders with only partly-payment or buy items", async ({
-    assert,
-  }) => {
+  test("sets the task when an open partly-payment order exists", async ({ assert }) => {
     orders = [
       makeRentOrder({
         orderItems: [
           { type: "partly-payment", item: "item1", title: "A", amount: 100, unitPrice: 100 },
+        ] as Order["orderItems"],
+      }),
+    ];
+    const userDetail = makeUserDetail();
+
+    const result = await reconcileSignatureTask(userDetail);
+
+    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
+    assert.equal(result.tasks?.signAgreement, true);
+  });
+
+  test("does not set the task for orders with only buy items", async ({ assert }) => {
+    orders = [
+      makeRentOrder({
+        orderItems: [
           { type: "buy", item: "item2", title: "B", amount: 100, unitPrice: 100 },
         ] as Order["orderItems"],
       }),
@@ -200,7 +213,16 @@ test.group("reconcileSignatureTask", (group) => {
     assert.equal(result.tasks?.signAgreement, true);
   });
 
-  test("treats customer items without a type as rent", async ({ assert }) => {
+  test("sets the task for active customer items regardless of type", async ({ assert }) => {
+    customerItems = [makeCustomerItem({ type: "partly-payment" })];
+    const userDetail = makeUserDetail();
+
+    await reconcileSignatureTask(userDetail);
+
+    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
+  });
+
+  test("sets the task for customer items without a type", async ({ assert }) => {
     customerItems = [makeCustomerItem({ type: undefined })];
     const userDetail = makeUserDetail();
 
@@ -214,7 +236,6 @@ test.group("reconcileSignatureTask", (group) => {
       makeCustomerItem({ returned: true }),
       makeCustomerItem({ id: "customerItem2", buyout: true }),
       makeCustomerItem({ id: "customerItem3", handout: false }),
-      makeCustomerItem({ id: "customerItem4", type: "partly-payment" }),
     ];
     const userDetail = makeUserDetail();
 

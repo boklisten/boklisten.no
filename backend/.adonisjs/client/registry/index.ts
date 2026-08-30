@@ -534,6 +534,12 @@ const routes = {
     tokens: [{"old":"/signatures/me/send","type":0,"val":"signatures","end":""},{"old":"/signatures/me/send","type":0,"val":"me","end":""},{"old":"/signatures/me/send","type":0,"val":"send","end":""}],
     types: placeholder as Registry['signatures.send_signature_link_as_customer']['types'],
   },
+  'signatures.get_my_signature': {
+    methods: ["GET","HEAD"],
+    pattern: '/signatures/me',
+    tokens: [{"old":"/signatures/me","type":0,"val":"signatures","end":""},{"old":"/signatures/me","type":0,"val":"me","end":""}],
+    types: placeholder as Registry['signatures.get_my_signature']['types'],
+  },
   'signatures.has_valid_signature': {
     methods: ["GET","HEAD"],
     pattern: '/signatures/valid/:detailsId',

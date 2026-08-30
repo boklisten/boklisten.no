@@ -15,32 +15,38 @@ function formatSignedDate(dateTime: DateTime | null): string | undefined {
   return DateService.format(dateTime.toJSDate(), "Europe/Oslo", "DD/MM/YYYY");
 }
 
+async function getSignatureStatus(detailsId: string) {
+  let userDetail = await StorageService.UserDetails.getOrNull(detailsId);
+  if (!userDetail) return null;
+
+  userDetail = await reconcileSignatureTask(userDetail);
+  const validSignature = await Signature.validForCustomer(userDetail);
+  if (validSignature) {
+    return {
+      image: validSignature.image.toString("base64"),
+      isSignatureValid: true,
+      signatureRequired: false,
+      signedByGuardian: validSignature.signedByGuardian,
+      signingName: validSignature.signingName,
+      signedAtText: formatSignedDate(validSignature.createdAt),
+      expiresAtText: formatSignedDate(validSignature.expiresAtFor(userDetail)),
+    };
+  }
+
+  return {
+    isSignatureValid: false,
+    signatureRequired: userDetail.tasks?.signAgreement === true,
+  };
+}
+
 export default class SignaturesController {
   async getSignature(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
-
-    const detailsId = ctx.request.param("detailsId");
-    let userDetail = await StorageService.UserDetails.getOrNull(detailsId);
-    if (!userDetail) return null;
-
-    userDetail = await reconcileSignatureTask(userDetail);
-    const validSignature = await Signature.validForCustomer(userDetail);
-    if (validSignature) {
-      return {
-        image: validSignature.image.toString("base64"),
-        isSignatureValid: true,
-        signatureRequired: false,
-        signedByGuardian: validSignature.signedByGuardian,
-        signingName: validSignature.signingName,
-        signedAtText: formatSignedDate(validSignature.createdAt),
-        expiresAtText: formatSignedDate(validSignature.expiresAt),
-      };
-    }
-
-    return {
-      isSignatureValid: false,
-      signatureRequired: userDetail.tasks?.signAgreement === true,
-    };
+    return getSignatureStatus(ctx.request.param("detailsId"));
+  }
+  async getMySignature(ctx: HttpContext) {
+    const { detailsId } = PermissionService.authenticate(ctx);
+    return getSignatureStatus(detailsId);
   }
   async sendSignatureLink(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
@@ -79,7 +85,7 @@ export default class SignaturesController {
         signedByGuardian: validSignature.signedByGuardian,
         signingName: validSignature.signingName,
         signedAtText: formatSignedDate(validSignature.createdAt),
-        expiresAtText: formatSignedDate(validSignature.expiresAt),
+        expiresAtText: formatSignedDate(validSignature.expiresAtFor(userDetail)),
       };
     }
 

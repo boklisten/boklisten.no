@@ -67,6 +67,19 @@ export default class Signature extends SignatureSchema {
   get expiresAt(): DateTime | null {
     return this.createdAt?.plus({ months: SIGNATURE_NUM_MONTHS_VALID }) ?? null;
   }
+
+  /**
+   * When the signature actually stops being valid for this customer: a guardian signature dies on
+   * the customer's 18th birthday (isValidFor starts rejecting it), if that comes before the
+   * ordinary validity window runs out.
+   */
+  expiresAtFor(userDetail: { dob?: Date | null }): DateTime | null {
+    const expiresAt = this.expiresAt;
+    if (!this.signedByGuardian || !userDetail.dob) return expiresAt;
+    const eighteenthBirthday = DateTime.fromJSDate(userDetail.dob).plus({ years: 18 });
+    if (!expiresAt) return eighteenthBirthday;
+    return expiresAt < eighteenthBirthday ? expiresAt : eighteenthBirthday;
+  }
 }
 
 export function isUnderage(userDetail: { dob?: Date | null }): boolean {

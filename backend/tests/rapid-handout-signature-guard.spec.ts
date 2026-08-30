@@ -101,10 +101,20 @@ test.group("verifyCustomerSignature", (group) => {
     assert.include(feedback, "signatur");
   });
 
-  test("should return null for an unsigned customer with only a partly-payment order", async ({
+  test("should return feedback when an unsigned customer has an open partly-payment order", async ({
     assert,
   }) => {
     orders = [openOrderWith("partly-payment")];
+    userDetailStub.resolves(userDetailWith({}));
+
+    const feedback = await verifyCustomerSignature(CUSTOMER_ID);
+
+    assert.typeOf(feedback, "string");
+    assert.include(feedback, "signatur");
+  });
+
+  test("should return null for an unsigned customer with only a buy order", async ({ assert }) => {
+    orders = [openOrderWith("buy")];
     userDetailStub.resolves(userDetailWith({}));
 
     const feedback = await verifyCustomerSignature(CUSTOMER_ID);

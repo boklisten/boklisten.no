@@ -31,6 +31,11 @@ export default function SignedContractDetails({
           <Text>Gyldig til:</Text>
           <Text fw={"bold"}>{expiresAtText}</Text>
         </Group>
+        {signedByGuardian && (
+          <Text fs={"italic"} size={"sm"}>
+            Merk: Når {name} fyller 18 år, må avtalen signeres på nytt av eleven selv.
+          </Text>
+        )}
       </Stack>
     </SuccessAlert>
   );

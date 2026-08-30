@@ -33,7 +33,6 @@ function yearsAgo(years: number): Date {
 function adultWithSignature(overrides: Partial<MemberSignatureRow> = {}): MemberSignatureRow {
   return {
     dob: yearsAgo(30),
-    signAgreement: false,
     signature: makeSignature(monthsAgo(1), false),
     ...overrides,
   };
@@ -46,36 +45,30 @@ test.group("BranchSignatureStatusService.summarize", () => {
       totalMembers: 1,
       validSignature: 1,
       needsSignature: 0,
-      noSignatureNeeded: 0,
     });
   });
 
   test("counts an underage member with a guardian signature as valid", ({ assert }) => {
     const row: MemberSignatureRow = {
       dob: yearsAgo(10),
-      signAgreement: false,
       signature: makeSignature(monthsAgo(1), true),
     };
     const result = BranchSignatureStatusService.summarize([row]);
     assert.equal(result.validSignature, 1);
   });
 
-  test("counts a member with the signAgreement task and no signature as needing to sign", ({
-    assert,
-  }) => {
-    const row: MemberSignatureRow = { dob: yearsAgo(30), signAgreement: true };
+  test("counts a member without a signature as needing to sign", ({ assert }) => {
+    const row: MemberSignatureRow = { dob: yearsAgo(30) };
     const result = BranchSignatureStatusService.summarize([row]);
     assert.deepEqual(result, {
       totalMembers: 1,
       validSignature: 0,
       needsSignature: 1,
-      noSignatureNeeded: 0,
     });
   });
 
   test("treats an expired signature as no signature", ({ assert }) => {
     const row = adultWithSignature({
-      signAgreement: true,
       // Past the 48 month validity window
       signature: makeSignature(monthsAgo(49), false),
     });
@@ -94,32 +87,11 @@ test.group("BranchSignatureStatusService.summarize", () => {
 
   test("treats an adult's guardian-signed signature as invalid", ({ assert }) => {
     const row = adultWithSignature({
-      signAgreement: true,
       signature: makeSignature(monthsAgo(1), true),
     });
     const result = BranchSignatureStatusService.summarize([row]);
     assert.equal(result.needsSignature, 1);
     assert.equal(result.validSignature, 0);
-  });
-
-  test("counts a member without the task and without a signature as not needing to sign", ({
-    assert,
-  }) => {
-    const row: MemberSignatureRow = { dob: yearsAgo(30) };
-    const result = BranchSignatureStatusService.summarize([row]);
-    assert.deepEqual(result, {
-      totalMembers: 1,
-      validSignature: 0,
-      needsSignature: 0,
-      noSignatureNeeded: 1,
-    });
-  });
-
-  test("counts a valid signature even when the task flag is stale", ({ assert }) => {
-    const row = adultWithSignature({ signAgreement: true });
-    const result = BranchSignatureStatusService.summarize([row]);
-    assert.equal(result.validSignature, 1);
-    assert.equal(result.needsSignature, 0);
   });
 
   test("treats a member without dob as an adult", ({ assert }) => {
@@ -130,10 +102,10 @@ test.group("BranchSignatureStatusService.summarize", () => {
     assert.equal(result.validSignature, 1);
   });
 
-  test("sums members across all buckets", ({ assert }) => {
+  test("sums members across both buckets", ({ assert }) => {
     const rows: MemberSignatureRow[] = [
       adultWithSignature(),
-      { dob: yearsAgo(10), signAgreement: true },
+      { dob: yearsAgo(10) },
       { dob: yearsAgo(30) },
       { dob: yearsAgo(30) },
     ];
@@ -141,8 +113,7 @@ test.group("BranchSignatureStatusService.summarize", () => {
     assert.deepEqual(result, {
       totalMembers: 4,
       validSignature: 1,
-      needsSignature: 1,
-      noSignatureNeeded: 2,
+      needsSignature: 3,
     });
   });
 });
@@ -165,7 +136,7 @@ test.group("BranchSignatureStatusService.getStatus", (group) => {
       .resolves([childId]);
     const aggregateStub = sandbox.stub(StorageService.UserDetails, "aggregate").resolves([
       { id: signedMemberId, dob: yearsAgo(30) },
-      { id: unsignedMemberId, dob: yearsAgo(30), signAgreement: true },
+      { id: unsignedMemberId, dob: yearsAgo(30) },
     ]);
     // An old guardian-signed signature that the newer valid one must shadow.
     await Signature.create({
@@ -188,7 +159,6 @@ test.group("BranchSignatureStatusService.getStatus", (group) => {
       totalMembers: 2,
       validSignature: 1,
       needsSignature: 1,
-      noSignatureNeeded: 0,
     });
     const pipeline: {
       $match?: { branchMembership?: { $in?: { toString(): string }[] } };

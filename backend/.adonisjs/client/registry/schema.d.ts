@@ -1063,6 +1063,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['sendSignatureLinkAsCustomer']>>>
     }
   }
+  'signatures.get_my_signature': {
+    methods: ["GET","HEAD"]
+    pattern: '/signatures/me'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['getMySignature']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['getMySignature']>>>
+    }
+  }
   'signatures.has_valid_signature': {
     methods: ["GET","HEAD"]
     pattern: '/signatures/valid/:detailsId'

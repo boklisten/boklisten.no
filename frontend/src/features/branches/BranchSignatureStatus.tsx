@@ -10,7 +10,7 @@ import {
   ThemeIcon,
   Tooltip,
 } from "@mantine/core";
-import { IconCircleCheck, IconCircleMinus, IconPencilExclamation } from "@tabler/icons-react";
+import { IconCircleCheck, IconPencilExclamation } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -26,16 +26,9 @@ const STATUS_SEGMENTS = [
   {
     key: "needsSignature",
     label: "Må signere",
-    description: "Har bøker eller bestillinger som krever signatur, men mangler gyldig signatur.",
+    description: "Mangler gyldig signatur, og kan derfor ikke få utdelt bøker.",
     color: "orange",
     icon: <IconPencilExclamation size={22} />,
-  },
-  {
-    key: "noSignatureNeeded",
-    label: "Trenger ikke signere",
-    description: "Har ingen bøker eller bestillinger som krever signatur.",
-    color: "gray",
-    icon: <IconCircleMinus size={22} />,
   },
 ] as const;
 
@@ -63,8 +56,7 @@ export default function BranchSignatureStatus({ branchId }: { branchId: string }
       <Stack>
         <Skeleton h={25} w={"60%"} />
         <Skeleton h={16} />
-        <SimpleGrid cols={{ base: 1, sm: 3 }}>
-          <Skeleton h={110} />
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Skeleton h={110} />
           <Skeleton h={110} />
         </SimpleGrid>
@@ -102,7 +94,7 @@ export default function BranchSignatureStatus({ branchId }: { branchId: string }
           );
         })}
       </Progress.Root>
-      <SimpleGrid cols={{ base: 1, sm: 3 }}>
+      <SimpleGrid cols={{ base: 1, sm: 2 }}>
         {STATUS_SEGMENTS.map((segment) => {
           const count = data[segment.key];
           return (

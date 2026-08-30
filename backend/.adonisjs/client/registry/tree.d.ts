@@ -139,6 +139,7 @@ export interface ApiDefinition {
   signatures: {
     sendSignatureLink: typeof routes['signatures.send_signature_link']
     sendSignatureLinkAsCustomer: typeof routes['signatures.send_signature_link_as_customer']
+    getMySignature: typeof routes['signatures.get_my_signature']
     hasValidSignature: typeof routes['signatures.has_valid_signature']
     getSignature: typeof routes['signatures.get_signature']
     sign: typeof routes['signatures.sign']

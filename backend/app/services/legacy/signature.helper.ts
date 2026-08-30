@@ -7,7 +7,7 @@ import { BlError } from "#shared/bl-error";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { UserDetail } from "#shared/user-detail";
 
-const signatureRequiringItemTypes = new Set(["rent", "loan"]);
+const signatureRequiringOrderItemTypes = new Set(["rent", "loan", "partly-payment"]);
 
 export async function userHasValidSignature(userDetail: UserDetail): Promise<boolean> {
   return (await Signature.validForCustomer(userDetail)) != null;
@@ -16,8 +16,9 @@ export async function userHasValidSignature(userDetail: UserDetail): Promise<boo
 /**
  * The single maintainer of the `tasks.signAgreement` flag, which is the one variable every
  * signature-requirement consumer reads. A valid signature clears the task; lacking one, the task is
- * set when the customer has an open rent/loan order or holds an active rent/loan item. A task that
- * was requested elsewhere (provisioning, signature link) is a demand that stays until signed.
+ * set when the customer has an open order for books (anything but a purchase) or holds any
+ * active book. A task that was requested elsewhere (provisioning, signature link) is a demand that
+ * stays until signed.
  */
 export async function reconcileSignatureTask(userDetail: UserDetail): Promise<UserDetail> {
   const taskIsSet = userDetail.tasks?.signAgreement === true;
@@ -49,7 +50,8 @@ async function hasOpenSignatureRequiringOrder(customerId: string): Promise<boole
   return activeOrders.some((order) =>
     order.orderItems.some(
       (orderItem) =>
-        signatureRequiringItemTypes.has(orderItem.type) && orderActive.isOrderItemActive(orderItem),
+        signatureRequiringOrderItemTypes.has(orderItem.type) &&
+        orderActive.isOrderItemActive(orderItem),
     ),
   );
 }
@@ -71,10 +73,7 @@ async function possessesSignatureRequiringItem(customerId: string): Promise<bool
 
   const customerItemActive = new CustomerItemActive();
   return customerItems.some(
-    (customerItem) =>
-      customerItem.handout &&
-      customerItemActive.isActive(customerItem) &&
-      signatureRequiringItemTypes.has(customerItem.type ?? "rent"),
+    (customerItem) => customerItem.handout && customerItemActive.isActive(customerItem),
   );
 }
 
