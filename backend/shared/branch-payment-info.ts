@@ -3,7 +3,6 @@ import { Period } from "#shared/period";
 export interface BranchPaymentInfo {
   responsible: boolean; // if set the branch is responsible for payment, not the customer
   responsibleForDelivery?: boolean; // if set the customer does not need to pay for the delivery
-  payLater?: boolean; // if set the customer can pay the order later at branch
   partlyPaymentPeriods?: {
     type: Period;
     date: Date;
@@ -11,13 +10,6 @@ export interface BranchPaymentInfo {
     percentageBuyoutUsed: number; // same as percentageBuyout but for when the item is used
     percentageUpFront: number; // item.price * this desides what the customer needs to pay upfront
     percentageUpFrontUsed: number; // same as percentageUpFront but for when teh item is used
-  }[];
-  loanPeriods?: {
-    type: Period;
-    periodStart: Date;
-    periodEnd: Date;
-    percentage: number;
-    buyout: { percentage: number };
   }[];
   rentPeriods: {
     type: Period; // the allowed period

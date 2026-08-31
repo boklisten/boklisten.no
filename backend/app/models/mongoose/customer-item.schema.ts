@@ -67,7 +67,10 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     required: true,
   },
   returnInfo: {
-    returnedTo: String,
+    returnedTo: {
+      type: String,
+      enum: ["branch"],
+    },
     returnedToId: {
       type: Schema.Types.ObjectId,
       ref: BlSchemaName.Branches,

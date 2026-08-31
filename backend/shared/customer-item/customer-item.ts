@@ -16,17 +16,17 @@ export interface CustomerItem extends BlDocument {
   deadline: Date; //the deadline to return (or buyout if type is "partly-payment") this item
   handout: boolean; // if this customerItem is handed out to customer or not
   handoutInfo?: {
-    handoutBy: "branch" | "customer"; // if this was handed out by another customer or a branch
-    handoutById: string; // the id of the branch or customer that handed out the item
-    handoutEmployee?: string; // if at branch, this is the id of the employee that handed out the item
+    handoutBy: "branch";
+    handoutById: string; // the id of the branch that handed out the item
+    handoutEmployee?: string; // the id of the employee that handed out the item
     time: Date; // the time this item was handed out
   };
 
   returned: boolean; // if this item is returned or not
   returnInfo?: {
-    returnedTo: "branch" | "customer"; //if the item was returned to a branch or a customer
-    returnedToId: string; // if returnedTo a branch, this is the id of a branch, otherwise a customer
-    returnEmployee?: string; // if it was returned to a branch, this is the id of the employee
+    returnedTo: "branch";
+    returnedToId: string; // the id of the branch the item was returned to
+    returnEmployee?: string; // the id of the employee that received the item
     time: Date; //the time of return
   };
 

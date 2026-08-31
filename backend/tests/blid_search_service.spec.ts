@@ -874,16 +874,10 @@ test.group("BlidSearchService.assembleBlidSearch() – active item", () => {
     });
   });
 
-  test("has a null handout branch when a legacy item was handed out by a customer", ({
-    assert,
-  }) => {
+  test("has a null handout branch when a legacy item lacks handoutInfo", ({ assert }) => {
     const result = assembleBlidSearch(
       baseSources({
-        customerItems: [
-          makeCustomerItem({
-            handoutInfo: { handoutBy: "customer", handoutById: PETRA, time: T1 },
-          }),
-        ],
+        customerItems: [makeCustomerItem({ handoutInfo: undefined })],
       }),
     );
     assert.equal(result.activeItem?.handoutBranchId, null);

@@ -63,15 +63,11 @@ export function collectReferencedIds(
     userDetailIds.add(customerItem.customer);
     const { handoutInfo, returnInfo } = customerItem;
     if (handoutInfo) {
-      (handoutInfo.handoutBy === "customer" ? userDetailIds : branchIds).add(
-        handoutInfo.handoutById,
-      );
+      branchIds.add(handoutInfo.handoutById);
       if (handoutInfo.handoutEmployee) userDetailIds.add(handoutInfo.handoutEmployee);
     }
     if (returnInfo) {
-      (returnInfo.returnedTo === "customer" ? userDetailIds : branchIds).add(
-        returnInfo.returnedToId,
-      );
+      branchIds.add(returnInfo.returnedToId);
       if (returnInfo.returnEmployee) userDetailIds.add(returnInfo.returnEmployee);
     }
   }
@@ -347,15 +343,11 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       events.push({
         time: new Date(handoutInfo.time).toISOString(),
         action: "handout",
-        from:
-          handoutInfo.handoutBy === "customer"
-            ? customerParty(handoutInfo.handoutById)
-            : { type: "stand" },
+        from: { type: "stand" },
         to: customerParty(customerItem.customer),
         employee: employeeOf(handoutInfo.handoutEmployee),
         byCustomer: false,
-        branchName:
-          handoutInfo.handoutBy === "branch" ? branchName(handoutInfo.handoutById) : undefined,
+        branchName: branchName(handoutInfo.handoutById),
         deadline: new Date(deadlineAtHandout).toISOString(),
         handoutType: customerItem.type,
       });
@@ -365,14 +357,10 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
         time: new Date(returnInfo.time).toISOString(),
         action: "return",
         from: customerParty(customerItem.customer),
-        to:
-          returnInfo.returnedTo === "customer"
-            ? customerParty(returnInfo.returnedToId)
-            : { type: "stand" },
+        to: { type: "stand" },
         employee: employeeOf(returnInfo.returnEmployee),
         byCustomer: false,
-        branchName:
-          returnInfo.returnedTo === "branch" ? branchName(returnInfo.returnedToId) : undefined,
+        branchName: branchName(returnInfo.returnedToId),
       });
     }
     for (const periodExtend of customerItem.periodExtends ?? []) {
@@ -437,13 +425,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
     const { handoutInfo, returnInfo } = customerItem;
     for (const event of attributed) {
       const branchId =
-        event.action === "return"
-          ? returnInfo?.returnedTo === "branch"
-            ? returnInfo.returnedToId
-            : undefined
-          : handoutInfo?.handoutBy === "branch"
-            ? handoutInfo.handoutById
-            : undefined;
+        event.action === "return" ? returnInfo?.returnedToId : handoutInfo?.handoutById;
       if (branchId !== undefined) event.branchName = branchName(branchId);
     }
     const newestWithDeadline = attributed
@@ -490,8 +472,7 @@ function deriveActiveItem(customerItems: CustomerItem[]): BlidActiveItem | undef
   return {
     customerItemId: active.id,
     deadline: new Date(active.deadline).toISOString(),
-    handoutBranchId:
-      active.handoutInfo?.handoutBy === "branch" ? active.handoutInfo.handoutById : null,
+    handoutBranchId: active.handoutInfo?.handoutById ?? null,
   };
 }
 
@@ -560,8 +541,8 @@ export const BlidSearchService = {
     const set: Record<string, unknown> = { lastUpdated: new Date() };
     if (deadline) set["deadline"] = new Date(deadline);
     if (branchId) {
-      // Legacy transfer-received items may say handoutBy "customer"; picking a branch makes
-      // the pair coherent again.
+      // handoutInfo may be missing entirely on legacy items; set both keys so the pair
+      // stays coherent.
       set["handoutInfo.handoutBy"] = "branch";
       set["handoutInfo.handoutById"] = new ObjectId(branchId);
     }
