@@ -3,7 +3,6 @@ import {
   Badge,
   CloseButton,
   Group,
-  Indicator,
   Loader,
   SegmentedControl,
   Stack,

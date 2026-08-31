@@ -1,5 +1,5 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import { Loader, Stack, Text } from "@mantine/core";
+import { Loader, Stack } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import MessageEntryList from "@/features/message-log/MessageEntryList";

@@ -1,5 +1,5 @@
 import type { SendoutStatsDto } from "@boklisten/backend/shared/message-log";
-import { Container, Stack, Tabs, Text, Title } from "@mantine/core";
+import { Container, Stack, Tabs, Title } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
