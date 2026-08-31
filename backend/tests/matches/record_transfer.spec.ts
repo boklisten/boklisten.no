@@ -319,6 +319,38 @@ test.group("recordTransfer", (group) => {
     assert.isEmpty(await BookHandover.all());
   });
 
+  test("blocks a copy whose deadline has expired", async ({ assert }) => {
+    await seedObligation(B, A);
+    // A copy the sender kept past its deadline — overdue books must go to the stand, not transfer.
+    stubMongo(
+      activeCopy({
+        customer: B,
+        deadline: DateTime.now().minus({ years: 1 }).toJSDate(),
+      }),
+    );
+
+    const { feedback } = await recordTransfer(A, { blid: BLID });
+
+    assert.match(feedback ?? "", /utgått frist/);
+    assert.match(feedback ?? "", /Bendik Buer må beholde boka/);
+    assert.isEmpty(await BookHandover.all());
+  });
+
+  test("blocks an expired copy even when its deadline matches the round's", async ({ assert }) => {
+    // Expiry is absolute: a copy past its deadline must never transfer, even in a round whose own
+    // deadline has passed.
+    const yesterday = DateTime.now().minus({ days: 1 }).startOf("day");
+    round.deadline = yesterday;
+    await round.save();
+    await seedObligation(B, A);
+    stubMongo(activeCopy({ customer: B, deadline: yesterday.toJSDate() }));
+
+    const { feedback } = await recordTransfer(A, { blid: BLID });
+
+    assert.match(feedback ?? "", /utgått frist/);
+    assert.isEmpty(await BookHandover.all());
+  });
+
   test("rejects a blid with no active copy behind it", async ({ assert }) => {
     await seedObligation(B, A);
     stubMongo(null);

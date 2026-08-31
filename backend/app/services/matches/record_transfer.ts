@@ -26,6 +26,21 @@ import { matchTransferSchema } from "#validators/matches";
 
 const invalidBlidFeedback = "Feil strekkode. Bruk bokas unike ID. Se instruksjoner for hjelp";
 const inactiveBlidFeedback = "Boka du har skannet er ikke aktiv. Vennligst lever den på stand";
+const genericExpiredDeadlineFeedback =
+  "Boka du har skannet har en utgått frist og kan ikke overleveres. Eieren må beholde boka og vil få faktura. Kom på stand for å få boka du skal ha.";
+
+async function expiredDeadlineFeedback(ownerDetailsId: string): Promise<string> {
+  const ownerName = await StorageService.UserDetails.getMany(
+    [ownerDetailsId],
+    USER_PERMISSION.ADMIN,
+  )
+    .then(([detail]) => detail?.name)
+    .catch(() => undefined);
+  if (!ownerName) {
+    return genericExpiredDeadlineFeedback;
+  }
+  return `Boka du har skannet har en utgått frist og kan ikke overleveres. ${ownerName} må beholde boka og vil få faktura. Kom på stand for å få boka du skal ha.`;
+}
 const alreadyYoursFeedback = "Denne boka er allerede registrert på deg.";
 const alreadyReceivedFeedback = "Du har allerede skannet denne boka.";
 const notOrderedFeedback =
@@ -255,6 +270,10 @@ export async function recordTransfer(
 
   if (customerItem.customer === detailsId) {
     return { feedback: alreadyYoursFeedback };
+  }
+
+  if (new Date(customerItem.deadline) < new Date()) {
+    return { feedback: await expiredDeadlineFeedback(customerItem.customer) };
   }
 
   const receiverObligation = await MatchRepository.findReceiverObligation(
