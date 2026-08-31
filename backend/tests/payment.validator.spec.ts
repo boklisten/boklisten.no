@@ -45,6 +45,12 @@ test.group("PaymentValidator", (group) => {
       info: {
         amount: 100,
         estimatedDelivery: new Date(),
+        facilityAddress: {
+          address: "Martin Lingesvei 25",
+          postalCode: "1364",
+          postalCity: "FORNEBU",
+        },
+        from: "1364",
       },
       order: "order1",
       amount: 100,

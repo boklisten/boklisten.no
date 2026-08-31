@@ -144,8 +144,7 @@ export class BringDeliveryService {
     facilityAddress: FacilityAddress,
     shipmentAddress: ShipmentAddress,
     items: Item[],
-    // @ts-expect-error fixme: auto ignored
-    product,
+    product: NonNullable<DeliveryInfoBring["product"]>,
   ): BringDelivery {
     const totalWeightInGrams = this.calculateTotalWeight(items);
 
@@ -164,7 +163,7 @@ export class BringDeliveryService {
     facilityAddress: FacilityAddress,
     shipmentAddress: ShipmentAddress,
     responseData: any,
-    product: string,
+    product: NonNullable<DeliveryInfoBring["product"]>,
   ): DeliveryInfoBring {
     let deliveryInfoBring: DeliveryInfoBring = {
       amount: -1,

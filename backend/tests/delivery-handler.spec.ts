@@ -35,6 +35,11 @@ test.group("DeliveryHandler", (group) => {
         amount: 100,
         estimatedDelivery: new Date(),
         taxAmount: 0,
+        facilityAddress: {
+          address: "Martin Lingesvei 25",
+          postalCode: "1364",
+          postalCity: "FORNEBU",
+        },
         from: "0450",
         to: "0560",
       },

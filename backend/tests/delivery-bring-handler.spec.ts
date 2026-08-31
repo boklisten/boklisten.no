@@ -7,6 +7,11 @@ import { Delivery } from "#shared/delivery/delivery";
 test.group("DeliveryBringHandler", (group) => {
   let testDelivery: Delivery;
   const deliveryBringHandler = new DeliveryBringHandler();
+  const facilityAddress = {
+    address: "Martin Lingesvei 25",
+    postalCode: "1364",
+    postalCity: "FORNEBU",
+  };
 
   group.each.setup(() => {
     testDelivery = {
@@ -16,6 +21,7 @@ test.group("DeliveryBringHandler", (group) => {
         amount: 100,
         estimatedDelivery: new Date(),
         taxAmount: 0,
+        facilityAddress,
         from: "7070",
         to: "0560",
       },
@@ -40,6 +46,8 @@ test.group("DeliveryBringHandler", (group) => {
       amount: 100,
       estimatedDelivery: new Date(),
       taxAmount: 0,
+      facilityAddress,
+      // @ts-expect-error testing invalid input
       from: undefined,
       to: "0560",
     };
@@ -56,6 +64,7 @@ test.group("DeliveryBringHandler", (group) => {
       amount: 100,
       estimatedDelivery: new Date(),
       taxAmount: 0,
+      facilityAddress,
       from: "7070",
       to: undefined,
     };
