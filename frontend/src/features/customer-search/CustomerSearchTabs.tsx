@@ -4,26 +4,39 @@ import { Badge, Group, Indicator, Tabs, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import CustomerMessagesView from "@/features/message-log/CustomerMessagesView";
-import ActiveBooksView, { isOverdue } from "@/features/rapid-handout/ActiveBooksView";
-import CustomerMatchesView, { peerMatches } from "@/features/rapid-handout/CustomerMatchesView";
-import { countStandBooksToHandOut } from "@/features/rapid-handout/handoutBooks";
-import RapidHandoutDetails from "@/features/rapid-handout/RapidHandoutDetails";
+import ActiveBooksView, { isOverdue } from "@/features/customer-search/ActiveBooksView";
+import CustomerMatchesView, { peerMatches } from "@/features/customer-search/CustomerMatchesView";
+import { countStandBooksToHandOut } from "@/features/customer-search/handoutBooks";
+import HandoutView from "@/features/customer-search/HandoutView";
 import useApiClient from "@/shared/hooks/useApiClient";
 
-export const RAPID_HANDOUT_TABS = ["bestillinger", "boker", "overleveringer", "meldinger"] as const;
-export type RapidHandoutTab = (typeof RAPID_HANDOUT_TABS)[number];
+export const CUSTOMER_SEARCH_TABS = [
+  "bestillinger",
+  "boker",
+  "overleveringer",
+  "meldinger",
+] as const;
+export type CustomerSearchTab = (typeof CUSTOMER_SEARCH_TABS)[number];
 
 const POLL_INTERVAL_MS = 5000;
 
 /** Full labels are too wide for a phone tab row, so each tab also carries a short one. */
-const TAB_LABELS: Record<RapidHandoutTab, { short: string; full: string }> = {
+const TAB_LABELS: Record<CustomerSearchTab, { short: string; full: string }> = {
   bestillinger: { short: "Bestillinger", full: "Bestillinger" },
   boker: { short: "Bøker", full: "Kundens bøker" },
   overleveringer: { short: "Overleveringer", full: "Overleveringer" },
   meldinger: { short: "Meldinger", full: "Meldinger" },
 };
 
-function TabLabel({ tab, count, alert }: { tab: RapidHandoutTab; count: number; alert?: boolean }) {
+function TabLabel({
+  tab,
+  count,
+  alert,
+}: {
+  tab: CustomerSearchTab;
+  count: number;
+  alert?: boolean;
+}) {
   return (
     <Group gap={6} wrap={"nowrap"} component={"span"} display={"inline-flex"}>
       <Text span hiddenFrom={"sm"} fz={"inherit"}>
@@ -44,14 +57,14 @@ function TabLabel({ tab, count, alert }: { tab: RapidHandoutTab; count: number; 
   );
 }
 
-export default function RapidHandoutTabs({
+export default function CustomerSearchTabs({
   customer,
   activeTab,
   onTabChange,
 }: {
   customer: UserDetail;
-  activeTab: RapidHandoutTab;
-  onTabChange: (tab: RapidHandoutTab) => void;
+  activeTab: CustomerSearchTab;
+  onTabChange: (tab: CustomerSearchTab) => void;
 }) {
   const { api } = useApiClient();
   // The panels below fetch these same queries, so reading them here shares the React Query cache.
@@ -99,7 +112,7 @@ export default function RapidHandoutTabs({
       value={currentTab}
       keepMounted={false}
       onChange={(value) =>
-        onTabChange(RAPID_HANDOUT_TABS.find((tab) => tab === value) ?? "bestillinger")
+        onTabChange(CUSTOMER_SEARCH_TABS.find((tab) => tab === value) ?? "bestillinger")
       }
     >
       <Tabs.List mb={"md"}>
@@ -121,7 +134,7 @@ export default function RapidHandoutTabs({
 
       {/* Kept mounted so the scan-progress ticks survive a visit to another tab. */}
       <Tabs.Panel value={"bestillinger"} keepMounted>
-        <RapidHandoutDetails customer={customer} />
+        <HandoutView customer={customer} />
       </Tabs.Panel>
       <Tabs.Panel value={"boker"}>
         <ActiveBooksView customerId={customer.id} />

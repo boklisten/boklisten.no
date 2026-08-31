@@ -15,8 +15,8 @@ import { modals } from "@mantine/modals";
 import { IconMail, IconPencil, IconPhone, IconX } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
-import initials from "@/features/rapid-handout/initials";
-import PermissionBadge from "@/features/rapid-handout/PermissionBadge";
+import initials from "@/features/customer-search/initials";
+import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import AdministrateUserForm from "@/features/user/AdministrateUserForm";
 import useApiClient from "@/shared/hooks/useApiClient";
 

@@ -386,9 +386,9 @@ router.post("/webhooks/sendgrid", [controllers.Webhooks, "sendgridEvents"]);
 router.post("/webhooks/twilio/:messageId", [controllers.Webhooks, "twilioSmsEvent"]);
 
 /**
- * Rapid handout
+ * Handout
  */
-router.post("/rapid-handout", [controllers.RapidHandout, "handout"]);
+router.post("/handout", [controllers.Handout, "handout"]);
 
 /**
  * Bulk collection (Hurtiginnsamling)

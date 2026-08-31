@@ -1531,16 +1531,16 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['twilioSmsEvent']>>>
     }
   }
-  'rapid_handout.handout': {
+  'handout.handout': {
     methods: ["POST"]
-    pattern: '/rapid-handout'
+    pattern: '/handout'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/rapid_handout_validator').rapidHandoutValidator)>>
+      body: ExtractBody<InferInput<(typeof import('#validators/handout_validator').handoutValidator)>>
       paramsTuple: []
       params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/rapid_handout_validator').rapidHandoutValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/rapid_handout_controller').default['handout']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/rapid_handout_controller').default['handout']>>> | { status: 422; response: { errors: SimpleError[] } }
+      query: ExtractQuery<InferInput<(typeof import('#validators/handout_validator').handoutValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/handout_controller').default['handout']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/handout_controller').default['handout']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'bulk_collection.lookup': {

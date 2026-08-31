@@ -145,10 +145,10 @@ function MessageEntry({
           {withCustomerLink && entry.regardingCustomerDetailsId && (
             <TanStackAnchor
               size={"sm"}
-              to={"/admin/hurtigutdeling"}
+              to={"/admin/kundesok"}
               search={{ kunde: entry.regardingCustomerDetailsId, visning: "meldinger" }}
             >
-              Åpne kunden i hurtigutdeling
+              Åpne kunden i kundesøk
             </TanStackAnchor>
           )}
         </Stack>

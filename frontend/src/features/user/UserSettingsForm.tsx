@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Activity, useState } from "react";
 
-import PermissionBadge from "@/features/rapid-handout/PermissionBadge";
+import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import UserInfoFields, { UserInfoFieldValues } from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";

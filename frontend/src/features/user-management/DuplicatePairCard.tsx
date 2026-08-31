@@ -17,7 +17,7 @@ import type {
   DuplicateUserSummary,
 } from "@/features/user-management/duplicateTypes";
 import MergeCustomersModal from "@/features/user-management/MergeCustomersModal";
-import PermissionBadge from "@/features/rapid-handout/PermissionBadge";
+import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import TanStackButton from "@/shared/components/TanStackButton";
 import useBranchNames from "@/features/user-management/useBranchNames";
 import { norwegianTime } from "@/shared/utils/dayjs";
@@ -64,7 +64,7 @@ function UserSummary({ user, branchName }: { user: DuplicateUserSummary; branchN
       </Tooltip>
       <CountsLine user={user} />
       <TanStackButton
-        to={"/admin/hurtigutdeling"}
+        to={"/admin/kundesok"}
         search={{ kunde: user.detailsId }}
         variant={"subtle"}
         size={"compact-sm"}
@@ -72,7 +72,7 @@ function UserSummary({ user, branchName }: { user: DuplicateUserSummary; branchN
         w={"fit-content"}
         px={0}
       >
-        Åpne i hurtigutdeling
+        Åpne i kundesøk
       </TanStackButton>
     </Stack>
   );

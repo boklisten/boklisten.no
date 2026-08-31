@@ -3,43 +3,43 @@ import { Container, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import CustomerActionBar from "@/features/rapid-handout/CustomerActionBar";
-import CustomerPicker from "@/features/rapid-handout/CustomerPicker";
-import CustomerSearchSpotlight from "@/features/rapid-handout/CustomerSearchSpotlight";
-import EmailConfirmationWarning from "@/features/rapid-handout/EmailConfirmationWarning";
-import RapidHandoutTabs, {
-  RAPID_HANDOUT_TABS,
-  type RapidHandoutTab,
-} from "@/features/rapid-handout/RapidHandoutTabs";
-import SelectedCustomerCard from "@/features/rapid-handout/SelectedCustomerCard";
+import CustomerActionBar from "@/features/customer-search/CustomerActionBar";
+import CustomerPicker from "@/features/customer-search/CustomerPicker";
+import CustomerSearchSpotlight from "@/features/customer-search/CustomerSearchSpotlight";
+import EmailConfirmationWarning from "@/features/customer-search/EmailConfirmationWarning";
+import CustomerSearchTabs, {
+  CUSTOMER_SEARCH_TABS,
+  type CustomerSearchTab,
+} from "@/features/customer-search/CustomerSearchTabs";
+import SelectedCustomerCard from "@/features/customer-search/SelectedCustomerCard";
 import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { seo } from "@/shared/utils/seo";
 
-type RapidHandoutSearch = {
+type CustomerSearchParams = {
   kunde?: string;
-  visning?: RapidHandoutTab;
+  visning?: CustomerSearchTab;
 };
 
-function parseTab(value: unknown): RapidHandoutTab | undefined {
-  return RAPID_HANDOUT_TABS.find((tab) => tab === value);
+function parseTab(value: unknown): CustomerSearchTab | undefined {
+  return CUSTOMER_SEARCH_TABS.find((tab) => tab === value);
 }
 
-export const Route = createFileRoute("/(administrasjon)/admin/hurtigutdeling")({
-  validateSearch: (search: Record<string, unknown>): RapidHandoutSearch => ({
+export const Route = createFileRoute("/(administrasjon)/admin/kundesok")({
+  validateSearch: (search: Record<string, unknown>): CustomerSearchParams => ({
     kunde:
       typeof search["kunde"] === "string" && search["kunde"] !== "" ? search["kunde"] : undefined,
     visning: parseTab(search["visning"]),
   }),
   head: () =>
     seo({
-      title: "Hurtigutdeling | bl-admin",
+      title: "Kundesøk | bl-admin",
     }),
-  component: RapidHandoutPage,
+  component: CustomerSearchPage,
 });
 
-function RapidHandoutPage() {
+function CustomerSearchPage() {
   const { kunde, visning } = Route.useSearch();
   const navigate = Route.useNavigate();
 
@@ -58,7 +58,7 @@ function RapidHandoutPage() {
   const deselect = () => void navigate({ search: {} });
   const selectCustomer = (userDetail: UserDetail) =>
     void navigate({ search: { kunde: userDetail.id } });
-  const selectTab = (tab: RapidHandoutTab) =>
+  const selectTab = (tab: CustomerSearchTab) =>
     void navigate({
       search: (previous) => ({ ...previous, visning: tab === "bestillinger" ? undefined : tab }),
       replace: true,
@@ -70,7 +70,7 @@ function RapidHandoutPage() {
   return (
     <Container>
       <Stack>
-        <Title>Hurtigutdeling</Title>
+        <Title>Kundesøk</Title>
         <CustomerSearchSpotlight onSelect={selectCustomer} />
         {kunde === undefined && <CustomerPicker onSelect={selectCustomer} />}
         {loading && (
@@ -96,7 +96,7 @@ function RapidHandoutPage() {
             </Stack>
             <EmailConfirmationWarning customer={customer} />
             <SignatureStatusBanner userDetail={customer} />
-            <RapidHandoutTabs
+            <CustomerSearchTabs
               key={customer.id}
               customer={customer}
               activeTab={visning ?? "bestillinger"}

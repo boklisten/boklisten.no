@@ -6,7 +6,7 @@ import { IconMail, IconPhone, IconSearch } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import PermissionBadge from "@/features/rapid-handout/PermissionBadge";
+import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import useApiClient from "@/shared/hooks/useApiClient";
 
 const MIN_SEARCH_LENGTH = 3;

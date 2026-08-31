@@ -28,7 +28,7 @@ import { norwegianTime } from "@/shared/utils/dayjs";
 function PersonLink({ detailsId, name }: { detailsId: string; name: string }) {
   return (
     <TanStackAnchor
-      to={"/admin/hurtigutdeling"}
+      to={"/admin/kundesok"}
       search={{ kunde: detailsId }}
       c={"inherit"}
       fw={700}

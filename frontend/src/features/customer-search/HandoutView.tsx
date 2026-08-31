@@ -6,15 +6,15 @@ import { IconObjectScan } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import CancelOrderItemButton from "@/features/rapid-handout/CancelOrderItemButton";
+import CancelOrderItemButton from "@/features/customer-search/CancelOrderItemButton";
 import {
   buildOpenOrderInfo,
   buildPeerBooks,
   calculateUnfulfilledOrderItems,
-} from "@/features/rapid-handout/handoutBooks";
+} from "@/features/customer-search/handoutBooks";
 import NoOrderHandoutModal, {
   type NoOrderChoice,
-} from "@/features/rapid-handout/NoOrderHandoutModal";
+} from "@/features/customer-search/NoOrderHandoutModal";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { ItemStatus } from "@/shared/components/matches/matches-helper";
 import { ItemStatusTable } from "@/shared/components/matches/MatchItemTable";
@@ -29,7 +29,7 @@ const CONFIRM_Z_INDEX = 350;
 
 const POLL_INTERVAL_MS = 5000;
 
-export default function RapidHandoutDetails({ customer }: { customer: UserDetail }) {
+export default function HandoutView({ customer }: { customer: UserDetail }) {
   const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const { data: orders } = useQuery(
@@ -203,7 +203,7 @@ export default function RapidHandoutDetails({ customer }: { customer: UserDetail
     const confirmedReasons = new Set<string>();
 
     for (;;) {
-      const response = await client.api.rapidHandout.handout({ body });
+      const response = await client.api.handout.handout({ body });
 
       if ("connectBlid" in response && response.connectBlid) {
         setPendingBlid(blid);

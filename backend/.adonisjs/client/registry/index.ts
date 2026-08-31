@@ -768,11 +768,11 @@ const routes = {
     tokens: [{"old":"/webhooks/twilio/:messageId","type":0,"val":"webhooks","end":""},{"old":"/webhooks/twilio/:messageId","type":0,"val":"twilio","end":""},{"old":"/webhooks/twilio/:messageId","type":1,"val":"messageId","end":""}],
     types: placeholder as Registry['webhooks.twilio_sms_event']['types'],
   },
-  'rapid_handout.handout': {
+  'handout.handout': {
     methods: ["POST"],
-    pattern: '/rapid-handout',
-    tokens: [{"old":"/rapid-handout","type":0,"val":"rapid-handout","end":""}],
-    types: placeholder as Registry['rapid_handout.handout']['types'],
+    pattern: '/handout',
+    tokens: [{"old":"/handout","type":0,"val":"handout","end":""}],
+    types: placeholder as Registry['handout.handout']['types'],
   },
   'bulk_collection.lookup': {
     methods: ["GET","HEAD"],

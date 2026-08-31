@@ -3,8 +3,8 @@ import { Button, Group, Kbd, Stack, Text } from "@mantine/core";
 import { useOs } from "@mantine/hooks";
 import { IconObjectScan, IconSearch } from "@tabler/icons-react";
 
-import { openCustomerSearch } from "@/features/rapid-handout/CustomerSearchSpotlight";
-import useCustomerScanner from "@/features/rapid-handout/useCustomerScanner";
+import { openCustomerSearch } from "@/features/customer-search/CustomerSearchSpotlight";
+import useCustomerScanner from "@/features/customer-search/useCustomerScanner";
 
 export default function CustomerPicker({
   onSelect,

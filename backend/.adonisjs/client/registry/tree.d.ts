@@ -209,8 +209,8 @@ export interface ApiDefinition {
     sendgridEvents: typeof routes['webhooks.sendgrid_events']
     twilioSmsEvent: typeof routes['webhooks.twilio_sms_event']
   }
-  rapidHandout: {
-    handout: typeof routes['rapid_handout.handout']
+  handout: {
+    handout: typeof routes['handout.handout']
   }
   bulkCollection: {
     lookup: typeof routes['bulk_collection.lookup']

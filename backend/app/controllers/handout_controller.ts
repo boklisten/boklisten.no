@@ -15,7 +15,7 @@ import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/ord
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { findUniqueItemByBlid } from "#services/item_lookup";
 import { verifyCustomerSignature } from "#services/legacy/signature.helper";
-import { rapidHandoutValidator } from "#validators/rapid_handout_validator";
+import { handoutValidator } from "#validators/handout_validator";
 import { PermissionService } from "#services/permission_service";
 import BlidService from "#services/blid_service";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
@@ -23,11 +23,11 @@ import { findFutureRentPeriod } from "#shared/rent-periods";
 
 const blidNotActiveFeedback = "Denne unike IDen er ikke koblet til noen bok.";
 
-export default class RapidHandoutController {
+export default class HandoutController {
   async handout(ctx: HttpContext) {
     const { detailsId: employeeId } = PermissionService.employeeOrFail(ctx);
     const { blid, customerId, force, branchId, deadline } =
-      await ctx.request.validateUsing(rapidHandoutValidator);
+      await ctx.request.validateUsing(handoutValidator);
 
     if (!BlidService.isValidBlid(blid)) {
       return { feedback: "Denne bliden er ikke gyldig." };

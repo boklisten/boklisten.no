@@ -5,7 +5,7 @@ import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
 import { Badge, Box, Card, Code, Group, Skeleton, Stack, Table, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
-import { buildPeerBooks } from "@/features/rapid-handout/handoutBooks";
+import { buildPeerBooks } from "@/features/customer-search/handoutBooks";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";

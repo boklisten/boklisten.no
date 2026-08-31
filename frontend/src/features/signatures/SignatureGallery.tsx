@@ -27,7 +27,7 @@ import { forwardRef, useEffect } from "react";
 
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
 
-import PermissionBadge from "@/features/rapid-handout/PermissionBadge";
+import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
@@ -62,9 +62,9 @@ function SignatureCard({ signature }: { signature: GallerySignature }) {
   return (
     <CardLink
       ref={ref}
-      to={"/admin/hurtigutdeling"}
+      to={"/admin/kundesok"}
       search={{ kunde: signature.customerDetailsId }}
-      aria-label={`Åpne ${signature.customerName} i hurtigutdeling`}
+      aria-label={`Åpne ${signature.customerName} i kundesøk`}
       withBorder
       radius={"md"}
       padding={"sm"}
@@ -171,7 +171,7 @@ export default function SignatureGallery() {
         <Title>Signaturer</Title>
         <Text c={"dimmed"}>
           De nyeste gyldige signaturene, nyest først. Trykk på en signatur for å åpne kunden i
-          hurtigutdeling.
+          kundesøk.
         </Text>
       </Stack>
       {isLoading && <GallerySkeleton />}

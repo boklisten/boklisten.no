@@ -7,7 +7,6 @@ import {
   IconBuildings,
   IconBuildingStore,
   IconChartBar,
-  IconChecklist,
   IconDatabase,
   IconEdit,
   IconFileDollar,
@@ -19,8 +18,8 @@ import {
   IconSend,
   IconSignature,
   IconTimeline,
-  IconShoppingCart,
   IconUsers,
+  IconUserSearch,
 } from "@tabler/icons-react";
 import type { LinkProps } from "@tanstack/react-router";
 
@@ -53,22 +52,16 @@ export const ADMIN_NAV_SECTIONS = [
         icon: IconSearch,
       },
       {
-        label: "Handlekurv",
-        description: "Opprett en ordre på vegne av en kunde",
-        to: "/admin/handlekurv",
-        icon: IconShoppingCart,
+        label: "Kundesøk",
+        description: "Finn en elev og håndter bøkene deres",
+        to: "/admin/kundesok",
+        icon: IconUserSearch,
       },
       {
         label: "Hurtiginnsamling",
         description: "Samle inn mange bøker på rad",
         to: "/admin/hurtiginnsamling",
         icon: IconQrcode,
-      },
-      {
-        label: "Hurtigutdeling",
-        description: "Finn en elev og del ut bøkene deres",
-        to: "/admin/hurtigutdeling",
-        icon: IconChecklist,
       },
       {
         label: "Ordreoversikt",

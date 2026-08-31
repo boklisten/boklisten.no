@@ -9,7 +9,7 @@ import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 /**
- * Per-row "Avbestill" in the rapid handout book table. When `disabledReason` is set, the button
+ * Per-row "Avbestill" in the customer search book table. When `disabledReason` is set, the button
  * looks disabled but keeps hover events (data-disabled, not disabled) so the tooltip can explain
  * why cancellation is blocked.
  */

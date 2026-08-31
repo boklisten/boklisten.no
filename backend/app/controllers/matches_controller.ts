@@ -25,7 +25,7 @@ export default class MatchesController {
     return ctx.serialize(await readMatchesForCustomer(detailsId));
   }
 
-  /** Employee-facing: the matches of a given customer, used by the rapid handout stand view. */
+  /** Employee-facing: the matches of a given customer, used by the customer search stand view. */
   async getMatchesForCustomer(ctx: HttpContext) {
     PermissionService.authenticate(ctx, USER_PERMISSION.EMPLOYEE);
     return ctx.serialize(await readMatchesForCustomer(ctx.request.param("customerId")));

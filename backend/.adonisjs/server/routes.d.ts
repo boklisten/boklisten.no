@@ -131,7 +131,7 @@ export type ScannedRoutes = {
     'message_logs.sendouts': { paramsTuple?: []; params?: {} }
     'webhooks.sendgrid_events': { paramsTuple?: []; params?: {} }
     'webhooks.twilio_sms_event': { paramsTuple: [ParamValue]; params: {'messageId': ParamValue} }
-    'rapid_handout.handout': { paramsTuple?: []; params?: {} }
+    'handout.handout': { paramsTuple?: []; params?: {} }
     'bulk_collection.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'bulk_collection.collect': { paramsTuple?: []; params?: {} }
     'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }
@@ -424,7 +424,7 @@ export type ScannedRoutes = {
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'webhooks.sendgrid_events': { paramsTuple?: []; params?: {} }
     'webhooks.twilio_sms_event': { paramsTuple: [ParamValue]; params: {'messageId': ParamValue} }
-    'rapid_handout.handout': { paramsTuple?: []; params?: {} }
+    'handout.handout': { paramsTuple?: []; params?: {} }
     'bulk_collection.collect': { paramsTuple?: []; params?: {} }
     'collection.branches.post': { paramsTuple?: []; params?: {} }
     'collection.branchitems.post': { paramsTuple?: []; params?: {} }

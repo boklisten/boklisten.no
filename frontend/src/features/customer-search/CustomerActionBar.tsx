@@ -2,8 +2,8 @@ import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import { Box, Button, Flex } from "@mantine/core";
 import { IconObjectScan, IconSearch } from "@tabler/icons-react";
 
-import { openCustomerSearch } from "@/features/rapid-handout/CustomerSearchSpotlight";
-import useCustomerScanner from "@/features/rapid-handout/useCustomerScanner";
+import { openCustomerSearch } from "@/features/customer-search/CustomerSearchSpotlight";
+import useCustomerScanner from "@/features/customer-search/useCustomerScanner";
 
 export default function CustomerActionBar({
   onSelect,
