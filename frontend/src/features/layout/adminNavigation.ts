@@ -46,9 +46,9 @@ export const ADMIN_NAV_SECTIONS = [
     label: "Verktøy",
     links: [
       {
-        label: "BL-ID-søk",
-        description: "Søk opp en bok og se hvem som har den",
-        to: "/admin/blid",
+        label: "Boksøk",
+        description: "Skann og se historikken til bøker",
+        to: "/admin/boksok",
         icon: IconSearch,
       },
       {

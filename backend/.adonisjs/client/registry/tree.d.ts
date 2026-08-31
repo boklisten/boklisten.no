@@ -93,6 +93,10 @@ export interface ApiDefinition {
   publicBlidLookup: {
     lookup: typeof routes['public_blid_lookup.lookup']
   }
+  blidSearch: {
+    lookup: typeof routes['blid_search.lookup']
+    updateActiveItem: typeof routes['blid_search.update_active_item']
+  }
   matches: {
     notify: typeof routes['matches.notify']
     getMyMatches: typeof routes['matches.get_my_matches']

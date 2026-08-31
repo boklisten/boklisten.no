@@ -59,6 +59,8 @@ export type ScannedRoutes = {
     'email_verification.send': { paramsTuple?: []; params?: {} }
     'email_verification.verify': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'public_blid_lookup.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'blid_search.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'blid_search.update_active_item': { paramsTuple?: []; params?: {} }
     'matches.notify': { paramsTuple?: []; params?: {} }
     'matches.get_my_matches': { paramsTuple?: []; params?: {} }
     'matches.get_matches_for_customer': { paramsTuple: [ParamValue]; params: {'customerId': ParamValue} }
@@ -212,6 +214,7 @@ export type ScannedRoutes = {
     'questions_and_answers.get_all': { paramsTuple?: []; params?: {} }
     'email_verification.verify': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'public_blid_lookup.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'blid_search.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'matches.get_my_matches': { paramsTuple?: []; params?: {} }
     'matches.get_matches_for_customer': { paramsTuple: [ParamValue]; params: {'customerId': ParamValue} }
     'matches.get_all_matches': { paramsTuple?: []; params?: {} }
@@ -302,6 +305,7 @@ export type ScannedRoutes = {
     'questions_and_answers.get_all': { paramsTuple?: []; params?: {} }
     'email_verification.verify': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'public_blid_lookup.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'blid_search.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'matches.get_my_matches': { paramsTuple?: []; params?: {} }
     'matches.get_matches_for_customer': { paramsTuple: [ParamValue]; params: {'customerId': ParamValue} }
     'matches.get_all_matches': { paramsTuple?: []; params?: {} }
@@ -458,6 +462,7 @@ export type ScannedRoutes = {
     'branch_books.bulk_update_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'questions_and_answers.update_order': { paramsTuple?: []; params?: {} }
     'questions_and_answers.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'blid_search.update_active_item': { paramsTuple?: []; params?: {} }
     'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branches.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branchitems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

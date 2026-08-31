@@ -10,6 +10,7 @@ export const controllers = {
     Tokens: () => import('#controllers/auth/tokens_controller'),
     Vipps: () => import('#controllers/auth/vipps_controller'),
   },
+  BlidSearch: () => import('#controllers/blid_search_controller'),
   BranchItems: () => import('#controllers/branch_items_controller'),
   branches: {
     BranchBooks: () => import('#controllers/branches/branch_books_controller'),

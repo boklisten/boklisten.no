@@ -49,7 +49,18 @@ export const OrderSchema: BlSchema<Order> = new Schema({
           required: false,
         },
         info: {
-          type: Schema.Types.Mixed,
+          type: new Schema(
+            {
+              from: Date,
+              to: Date,
+              numberOfPeriods: Number,
+              periodType: String,
+              customerItem: String,
+              amountLeftToPay: Number,
+              buybackAmount: Number,
+            },
+            { _id: false, strict: false },
+          ),
           required: false,
         },
         handout: {

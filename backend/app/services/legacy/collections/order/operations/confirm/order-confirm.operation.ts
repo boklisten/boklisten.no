@@ -62,10 +62,13 @@ export class OrderConfirmOperation implements Operation {
 
       for (const orderItem of order.orderItems) {
         for (const alreadyOrderedItem of alreadyOrderedItems) {
+          const deadline = orderItem.info?.to;
+          const alreadyOrderedDeadline = alreadyOrderedItem.info?.to;
           if (
             orderItem.item === alreadyOrderedItem.item &&
-            // @ts-expect-error fixme: auto ignored
-            orderItem.info.to === alreadyOrderedItem.info.to
+            deadline != null &&
+            alreadyOrderedDeadline != null &&
+            new Date(deadline).getTime() === new Date(alreadyOrderedDeadline).getTime()
           ) {
             return true;
           }

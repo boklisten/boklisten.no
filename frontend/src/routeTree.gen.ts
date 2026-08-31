@@ -26,7 +26,7 @@ import { Route as offentligOverleveringerRouteRouteImport } from './routes/(offe
 import { Route as offentligSjekkRouteImport } from './routes/(offentlig)/sjekk'
 import { Route as offentligUserSettingsRouteImport } from './routes/(offentlig)/user-settings'
 import { Route as administrasjonAdminIndexRouteImport } from './routes/(administrasjon)/admin/index'
-import { Route as administrasjonAdminBlidRouteImport } from './routes/(administrasjon)/admin/blid'
+import { Route as administrasjonAdminBoksokRouteImport } from './routes/(administrasjon)/admin/boksok'
 import { Route as administrasjonAdminFakturaRouteImport } from './routes/(administrasjon)/admin/faktura'
 import { Route as administrasjonAdminHandlekurvRouteImport } from './routes/(administrasjon)/admin/handlekurv'
 import { Route as administrasjonAdminHurtiginnsamlingRouteImport } from './routes/(administrasjon)/admin/hurtiginnsamling'
@@ -175,11 +175,12 @@ const administrasjonAdminIndexRoute =
     path: '/',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminBlidRoute = administrasjonAdminBlidRouteImport.update({
-  id: '/blid',
-  path: '/blid',
-  getParentRoute: () => administrasjonAdminRouteRoute,
-} as any)
+const administrasjonAdminBoksokRoute =
+  administrasjonAdminBoksokRouteImport.update({
+    id: '/boksok',
+    path: '/boksok',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
 const administrasjonAdminFakturaRoute =
   administrasjonAdminFakturaRouteImport.update({
     id: '/faktura',
@@ -538,7 +539,7 @@ export interface FileRoutesByFullPath {
   '/admin/overleveringer': typeof administrasjonAdminOverleveringerRouteRouteWithChildren
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
-  '/admin/blid': typeof administrasjonAdminBlidRoute
+  '/admin/boksok': typeof administrasjonAdminBoksokRoute
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
   '/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/admin/hurtiginnsamling': typeof administrasjonAdminHurtiginnsamlingRoute
@@ -614,7 +615,7 @@ export interface FileRoutesByTo {
   '/user-settings': typeof offentligUserSettingsRoute
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
-  '/admin/blid': typeof administrasjonAdminBlidRoute
+  '/admin/boksok': typeof administrasjonAdminBoksokRoute
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
   '/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/admin/hurtiginnsamling': typeof administrasjonAdminHurtiginnsamlingRoute
@@ -695,7 +696,7 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/overleveringer': typeof administrasjonAdminOverleveringerRouteRouteWithChildren
   '/(offentlig)/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/(offentlig)/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
-  '/(administrasjon)/admin/blid': typeof administrasjonAdminBlidRoute
+  '/(administrasjon)/admin/boksok': typeof administrasjonAdminBoksokRoute
   '/(administrasjon)/admin/faktura': typeof administrasjonAdminFakturaRoute
   '/(administrasjon)/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/(administrasjon)/admin/hurtiginnsamling': typeof administrasjonAdminHurtiginnsamlingRoute
@@ -776,7 +777,7 @@ export interface FileRouteTypes {
     | '/admin/overleveringer'
     | '/info/branch'
     | '/info/policies'
-    | '/admin/blid'
+    | '/admin/boksok'
     | '/admin/faktura'
     | '/admin/handlekurv'
     | '/admin/hurtiginnsamling'
@@ -852,7 +853,7 @@ export interface FileRouteTypes {
     | '/user-settings'
     | '/info/branch'
     | '/info/policies'
-    | '/admin/blid'
+    | '/admin/boksok'
     | '/admin/faktura'
     | '/admin/handlekurv'
     | '/admin/hurtiginnsamling'
@@ -932,7 +933,7 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/overleveringer'
     | '/(offentlig)/info/branch'
     | '/(offentlig)/info/policies'
-    | '/(administrasjon)/admin/blid'
+    | '/(administrasjon)/admin/boksok'
     | '/(administrasjon)/admin/faktura'
     | '/(administrasjon)/admin/handlekurv'
     | '/(administrasjon)/admin/hurtiginnsamling'
@@ -1133,11 +1134,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminIndexRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(administrasjon)/admin/blid': {
-      id: '/(administrasjon)/admin/blid'
-      path: '/blid'
-      fullPath: '/admin/blid'
-      preLoaderRoute: typeof administrasjonAdminBlidRouteImport
+    '/(administrasjon)/admin/boksok': {
+      id: '/(administrasjon)/admin/boksok'
+      path: '/boksok'
+      fullPath: '/admin/boksok'
+      preLoaderRoute: typeof administrasjonAdminBoksokRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
     '/(administrasjon)/admin/faktura': {
@@ -1718,7 +1719,7 @@ const administrasjonAdminOverleveringerRouteRouteWithChildren =
 
 interface administrasjonAdminRouteRouteChildren {
   administrasjonAdminOverleveringerRouteRoute: typeof administrasjonAdminOverleveringerRouteRouteWithChildren
-  administrasjonAdminBlidRoute: typeof administrasjonAdminBlidRoute
+  administrasjonAdminBoksokRoute: typeof administrasjonAdminBoksokRoute
   administrasjonAdminFakturaRoute: typeof administrasjonAdminFakturaRoute
   administrasjonAdminHandlekurvRoute: typeof administrasjonAdminHandlekurvRoute
   administrasjonAdminHurtiginnsamlingRoute: typeof administrasjonAdminHurtiginnsamlingRoute
@@ -1744,7 +1745,7 @@ const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildr
   {
     administrasjonAdminOverleveringerRouteRoute:
       administrasjonAdminOverleveringerRouteRouteWithChildren,
-    administrasjonAdminBlidRoute: administrasjonAdminBlidRoute,
+    administrasjonAdminBoksokRoute: administrasjonAdminBoksokRoute,
     administrasjonAdminFakturaRoute: administrasjonAdminFakturaRoute,
     administrasjonAdminHandlekurvRoute: administrasjonAdminHandlekurvRoute,
     administrasjonAdminHurtiginnsamlingRoute:

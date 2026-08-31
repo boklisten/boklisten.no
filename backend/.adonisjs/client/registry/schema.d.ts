@@ -667,6 +667,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/public_blid_lookup_controller').default['lookup']>>>
     }
   }
+  'blid_search.lookup': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/blid_search/:blid'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { blid: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['lookup']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['lookup']>>>
+    }
+  }
+  'blid_search.update_active_item': {
+    methods: ["PATCH"]
+    pattern: '/v2/admin/blid_search/active_item'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/blid_search').blidActiveItemUpdateValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/blid_search').blidActiveItemUpdateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['updateActiveItem']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['updateActiveItem']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'matches.notify': {
     methods: ["POST"]
     pattern: '/matches/notify'

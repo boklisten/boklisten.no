@@ -336,6 +336,18 @@ const routes = {
     tokens: [{"old":"/public_blid_lookup/:blid","type":0,"val":"public_blid_lookup","end":""},{"old":"/public_blid_lookup/:blid","type":1,"val":"blid","end":""}],
     types: placeholder as Registry['public_blid_lookup.lookup']['types'],
   },
+  'blid_search.lookup': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/admin/blid_search/:blid',
+    tokens: [{"old":"/v2/admin/blid_search/:blid","type":0,"val":"v2","end":""},{"old":"/v2/admin/blid_search/:blid","type":0,"val":"admin","end":""},{"old":"/v2/admin/blid_search/:blid","type":0,"val":"blid_search","end":""},{"old":"/v2/admin/blid_search/:blid","type":1,"val":"blid","end":""}],
+    types: placeholder as Registry['blid_search.lookup']['types'],
+  },
+  'blid_search.update_active_item': {
+    methods: ["PATCH"],
+    pattern: '/v2/admin/blid_search/active_item',
+    tokens: [{"old":"/v2/admin/blid_search/active_item","type":0,"val":"v2","end":""},{"old":"/v2/admin/blid_search/active_item","type":0,"val":"admin","end":""},{"old":"/v2/admin/blid_search/active_item","type":0,"val":"blid_search","end":""},{"old":"/v2/admin/blid_search/active_item","type":0,"val":"active_item","end":""}],
+    types: placeholder as Registry['blid_search.update_active_item']['types'],
+  },
   'matches.notify': {
     methods: ["POST"],
     pattern: '/matches/notify',
