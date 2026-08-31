@@ -7,7 +7,7 @@ import { BlError } from "#shared/bl-error";
 import { CustomerItem } from "#shared/customer-item/customer-item";
 import { UserDetail } from "#shared/user-detail";
 
-const signatureRequiringOrderItemTypes = new Set(["rent", "loan", "partly-payment"]);
+const signatureRequiringOrderItemTypes = new Set(["rent", "partly-payment"]);
 
 export async function userHasValidSignature(userDetail: UserDetail): Promise<boolean> {
   return (await Signature.validForCustomer(userDetail)) != null;

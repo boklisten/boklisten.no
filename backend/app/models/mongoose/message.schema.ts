@@ -12,6 +12,7 @@ export const MessageSchema: BlSchema<Message> = new Schema({
   messageSubtype: {
     type: String,
     required: true,
+    // "loan" is no longer written (loans were retired), but exists on reminders from 2019-2023
     enum: ["partly-payment", "rent", "loan", "none", "confirmed", "canceled", "all"],
   },
   messageMethod: {

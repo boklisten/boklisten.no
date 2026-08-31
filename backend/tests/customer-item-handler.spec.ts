@@ -1,9 +1,7 @@
 import { test } from "@japa/runner";
-import mongoose from "mongoose";
 import sinon, { createSandbox } from "sinon";
 
 import { CustomerItemHandler } from "#services/legacy/collections/customer-item/helpers/customer-item-handler";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Branch } from "#shared/branch";
@@ -16,7 +14,6 @@ test.group("CustomerItemHandler", (group) => {
 
   let sandbox: sinon.SinonSandbox;
   let getCustomerItemStub: sinon.SinonStub;
-  let getByQueryCustomerItemStub: sinon.SinonStub;
   let getBranchStub: sinon.SinonStub;
 
   group.each.setup(() => {
@@ -33,7 +30,6 @@ test.group("CustomerItemHandler", (group) => {
     sandbox.stub(StorageService, "Branches").value(branchesStub);
 
     getCustomerItemStub = customerItemsStub.get;
-    getByQueryCustomerItemStub = customerItemsStub.getByQuery;
     getBranchStub = branchesStub.get;
   });
   group.each.teardown(() => {
@@ -155,93 +151,5 @@ test.group("CustomerItemHandler", (group) => {
       (caught: unknown) => caught,
     );
     assert.equal(reason, 'orderItem.type is not "buyback"');
-  });
-
-  test("should return emtpy array if there are no customerItems", async ({ assert }) => {
-    getByQueryCustomerItemStub.onFirstCall().resolves([]);
-
-    const notReturnedCustomerItems = await customerItemHandler.getNotReturned(
-      "5c33b6137eab87644f7e75e2",
-      new Date(2012, 1, 1),
-    );
-    assert.deepEqual(notReturnedCustomerItems, []);
-  });
-
-  test("should ask db with correct query", async ({ assert }) => {
-    const expectedQuery = new SEDbQuery();
-
-    const before = new Date(2018, 11, 18);
-    const deadline = new Date(2018, 11, 20);
-    const after = new Date(2018, 11, 22);
-
-    expectedQuery.dateFilters = [
-      {
-        fieldName: "deadline",
-        op: {
-          $gt: before,
-          $lt: after,
-        },
-      },
-    ];
-
-    expectedQuery.objectIdFilters = [
-      {
-        fieldName: "customer",
-        value: [
-          "5c33b6137eab87644f7e75e2",
-          new mongoose.Types.ObjectId("5c33b6137eab87644f7e75e2"),
-        ],
-      },
-    ];
-
-    expectedQuery.booleanFilters = [
-      { fieldName: "returned", value: false },
-      { fieldName: "buyout", value: false },
-    ];
-
-    getByQueryCustomerItemStub.withArgs(expectedQuery).resolves([]);
-
-    await customerItemHandler.getNotReturned("5c33b6137eab87644f7e75e2", deadline);
-    const queryArg = getByQueryCustomerItemStub.getCall(0).args[0];
-
-    assert.deepEqual(queryArg.booleanFilters, expectedQuery.booleanFilters);
-
-    assert.deepEqual(queryArg.objectIdFilters, expectedQuery.objectIdFilters);
-  });
-
-  test("should return customerItems not returned with the specified deadline", async ({
-    assert,
-  }) => {
-    const customerItems = mock<CustomerItem[]>([
-      {
-        id: "1",
-        item: "item1",
-        deadline: new Date(2018, 11, 20),
-        returned: false,
-      },
-      {
-        id: "2",
-        item: "item2",
-        deadline: new Date(2018, 11, 20),
-        returned: false,
-      },
-    ]);
-
-    getByQueryCustomerItemStub.resolves(customerItems);
-
-    const result = await customerItemHandler.getNotReturned(
-      "5c33b6137eab87644f7e75e2",
-      new Date(2018, 11, 20),
-    );
-    assert.deepEqual(result, customerItems);
-  });
-
-  test("should reject if BlStorage.CustomerItems rejects", async ({ assert }) => {
-    getByQueryCustomerItemStub.rejects(new BlError("someting wrong"));
-
-    return assert.rejects(
-      () => customerItemHandler.getNotReturned("5c33b6137eab87644f7e75e2", new Date()),
-      BlError,
-    );
   });
 });

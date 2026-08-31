@@ -15,7 +15,6 @@ import { norwegianTime } from "@/shared/utils/dayjs";
 const TYPE_LABELS: Record<CustomerItemType, string> = {
   rent: "Lån",
   "partly-payment": "Delbetaling",
-  loan: "Lån",
 };
 
 export function isOverdue(deadline: string | Date): boolean {
@@ -24,7 +23,7 @@ export function isOverdue(deadline: string | Date): boolean {
 
 function deadlineLabel(book: ActiveCustomerItem): string {
   const date = norwegianTime(book.deadline).format("DD.MM.YYYY");
-  return book.type ? `${TYPE_LABELS[book.type]} til ${date}` : `Frist ${date}`;
+  return `${TYPE_LABELS[book.type]} til ${date}`;
 }
 
 function DeadlineText({ book }: { book: ActiveCustomerItem }) {

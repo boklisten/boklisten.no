@@ -61,6 +61,7 @@ function makeCustomerItem(overrides: Partial<CustomerItem> = {}): CustomerItem {
   return {
     id: "customer-item-1",
     item: "item-1",
+    type: "rent",
     blid: BLID,
     customer: IDA,
     deadline: DEADLINE_1,

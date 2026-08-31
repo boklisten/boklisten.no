@@ -14,7 +14,6 @@ const translations = {
   buyback: "tilbakekjøp",
   buyout: "kjøp ut",
   sell: "selg",
-  loan: "lån til",
   "invoice-paid": "betale faktura",
   "match-receive": "motta fra elev",
   "match-deliver": "overlevere til elev",

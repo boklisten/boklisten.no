@@ -111,7 +111,7 @@ export default function OrderCard({
                       <OrderItemTypeIcon type={orderItem.type} />
                       <Text size="sm" c="dimmed">
                         {orderItem.typeLabel}
-                        {["rent", "partly-payment", "loan", "extend"].includes(orderItem.type) &&
+                        {["rent", "partly-payment", "extend"].includes(orderItem.type) &&
                           orderItem.info?.to &&
                           ` til ${norwegianTime(orderItem.info.to).format("D. MMM YYYY")}`}
                       </Text>

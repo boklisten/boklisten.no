@@ -29,7 +29,6 @@ export class OrderToCustomerItemGenerator {
     return (
       orderItem.type === "partly-payment" ||
       orderItem.type === "rent" ||
-      orderItem.type === "loan" ||
       orderItem.type === "match-receive"
     );
   }
@@ -46,9 +45,6 @@ export class OrderToCustomerItemGenerator {
       case "rent":
       case "match-receive": {
         return this.createRentCustomerItem(customerDetail, order, orderItem);
-      }
-      case "loan": {
-        return this.createLoanCustomerItem(customerDetail, order, orderItem);
       }
       // No default
     }
@@ -92,31 +88,6 @@ export class OrderToCustomerItemGenerator {
       // @ts-expect-error fixme: auto ignored
       id: null,
       type: "rent",
-      item: orderItem.item,
-      blid: orderItem.blid,
-      customer: order.customer,
-      // @ts-expect-error fixme: auto ignored
-      deadline: orderItem.info.to,
-      handout: true,
-
-      // @ts-expect-error fixme: auto ignored
-      handoutInfo: this.createHandoutInfo(order),
-      returned: false,
-      totalAmount: orderItem.amount,
-      orders: [order.id],
-      customerInfo: this.createCustomerInfo(customerDetail),
-    };
-  }
-
-  private createLoanCustomerItem(
-    customerDetail: UserDetail,
-    order: Order,
-    orderItem: OrderItem,
-  ): CustomerItem {
-    return {
-      // @ts-expect-error fixme: auto ignored
-      id: null,
-      type: "loan",
       item: orderItem.item,
       blid: orderItem.blid,
       customer: order.customer,

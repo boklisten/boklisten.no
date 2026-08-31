@@ -29,6 +29,7 @@ test.group("OrderItemExtendValidator", (group) => {
     testCustomerItem = {
       id: "customerItem1",
       item: "item1",
+      type: "rent",
       deadline: new Date(),
       handout: true,
       customer: "customer1",

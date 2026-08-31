@@ -46,9 +46,7 @@ function isoOrUndefined(date: Date | undefined): string | undefined {
 }
 
 function handoutTypeOf(orderItem: OrderItem | undefined): CustomerItemType | undefined {
-  return orderItem?.type === "rent" ||
-    orderItem?.type === "partly-payment" ||
-    orderItem?.type === "loan"
+  return orderItem?.type === "rent" || orderItem?.type === "partly-payment"
     ? orderItem.type
     : undefined;
 }
@@ -236,8 +234,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       >;
       switch (orderItem.type) {
         case "rent":
-        case "partly-payment":
-        case "loan": {
+        case "partly-payment": {
           if (!orderItem.handout) continue;
           event = {
             action: "handout",

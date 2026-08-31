@@ -11,7 +11,6 @@ import {
 
 export default function OrderItemTypeIcon({ type }: { type: OrderItemType }) {
   switch (type) {
-    case "loan":
     case "rent":
     case "partly-payment":
       return <IconCalendar size={18} />;

@@ -22,7 +22,7 @@ interface ReminderCustomer {
 }
 
 async function aggregateCustomersToRemind(
-  customerItemType: "rent" | "partly-payment" | "loan",
+  customerItemType: "rent" | "partly-payment",
   branchIDs: string[],
   deadlineISO: string,
 ) {

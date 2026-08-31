@@ -14,7 +14,8 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     type: String,
     trim: true,
     lowercase: true,
-    enum: ["rent", "partly-payment", null],
+    enum: ["rent", "partly-payment"],
+    required: true,
   },
   blid: {
     type: String,

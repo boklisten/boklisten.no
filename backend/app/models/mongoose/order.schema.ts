@@ -25,7 +25,6 @@ export const OrderSchema: BlSchema<Order> = new Schema({
             "return",
             "cancel",
             "partly-payment",
-            "loan",
             "buyback",
             "invoice-paid",
             "match-receive",

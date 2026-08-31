@@ -1,6 +1,3 @@
-import moment from "moment-timezone";
-
-import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { Branch } from "#shared/branch";
@@ -173,73 +170,6 @@ export class CustomerItemHandler {
         order: orderId,
       },
     });
-  }
-
-  /**
-   * Fetches a customers customerItems not returned for the specified deadline
-   * @param customerId the customer to look for
-   * @param deadline the deadline of the customerItem
-   */
-  public async getNotReturned(
-    customerId: string,
-    deadline: Date,
-    type?: "partly-payment" | "rent" | "loan" | "all",
-  ): Promise<CustomerItem[]> {
-    if (customerId == null || customerId.length <= 0) {
-      throw new BlError("customerId is null or undefined");
-    }
-
-    if (deadline == null) {
-      throw new BlError("deadline is null or undefined");
-    }
-
-    const before = moment.tz(deadline, "Europe/London").subtract(2, "day").format("DDMMYYYYHHmm");
-
-    const after = moment.tz(deadline, "Europe/London").add(2, "day").format("DDMMYYYYHHmm");
-
-    let query;
-
-    const databaseQueryBuilder = new SEDbQueryBuilder();
-    let databaseQuery;
-
-    if (type) {
-      if (type === "loan") {
-        type = "rent";
-      }
-      query = {
-        customer: customerId.toString(),
-        deadline: [">" + before, "<" + after],
-        returned: "false",
-        buyout: "false",
-        type: type,
-      };
-
-      databaseQuery = databaseQueryBuilder.getDbQuery(query, [
-        { fieldName: "customer", type: "object-id" },
-        { fieldName: "deadline", type: "date" },
-        { fieldName: "returned", type: "boolean" },
-        { fieldName: "match", type: "boolean" },
-        { fieldName: "buyout", type: "boolean" },
-        { fieldName: "type", type: "string" },
-      ]);
-    } else {
-      query = {
-        customer: customerId.toString(),
-        deadline: [">" + before, "<" + after],
-        returned: "false",
-        buyout: "false",
-      };
-
-      databaseQuery = databaseQueryBuilder.getDbQuery(query, [
-        { fieldName: "customer", type: "object-id" },
-        { fieldName: "deadline", type: "date" },
-        { fieldName: "returned", type: "boolean" },
-        { fieldName: "match", type: "boolean" },
-        { fieldName: "buyout", type: "boolean" },
-      ]);
-    }
-
-    return await StorageService.CustomerItems.getByQuery(databaseQuery);
   }
 
   private getExtendPeriod(

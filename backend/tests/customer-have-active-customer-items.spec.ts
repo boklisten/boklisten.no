@@ -31,6 +31,7 @@ test.group("CustomerHaveActiveCustomerItems", (group) => {
     const nonActiveCustomerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
+      type: "rent",
       deadline: new Date(),
       customer: testUserId,
       handout: true,
@@ -46,6 +47,7 @@ test.group("CustomerHaveActiveCustomerItems", (group) => {
     const nonActiveCustomerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
+      type: "rent",
       deadline: new Date(),
       customer: testUserId,
       handout: true,
@@ -55,6 +57,7 @@ test.group("CustomerHaveActiveCustomerItems", (group) => {
     const activeCustomerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
+      type: "rent",
       deadline: new Date(),
       customer: testUserId,
       handout: true,

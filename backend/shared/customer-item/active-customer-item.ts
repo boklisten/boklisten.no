@@ -7,6 +7,6 @@ export interface ActiveCustomerItem {
   item: string;
   title: string;
   blid: string | null;
-  type: CustomerItemType | null;
+  type: CustomerItemType;
   deadline: Date;
 }

@@ -49,6 +49,7 @@ test.group("CustomerItemPostHook", (group) => {
       id: "customerItem1",
       customer: "userDetail1",
       item: "item1",
+      type: "rent",
       deadline: new Date(),
       handout: true,
       handoutInfo: {

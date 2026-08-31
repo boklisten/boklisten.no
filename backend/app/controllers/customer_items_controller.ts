@@ -231,7 +231,7 @@ export default class CustomerItemsController {
           item: { $toString: "$itemId" },
           title: { $ifNull: ["$item.title", "Ukjent bok"] },
           blid: { $ifNull: ["$blid", null] },
-          type: { $ifNull: ["$type", null] },
+          type: "$type",
           deadline: "$deadline",
         },
       },

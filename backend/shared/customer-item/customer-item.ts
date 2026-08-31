@@ -11,7 +11,7 @@ import { Period } from "#shared/period";
 export interface CustomerItem extends BlDocument {
   item: string; // what item is this customerItem for
   blid?: string; // the unique id for this customer item
-  type?: CustomerItemType; // type is used to determine how to handle the customerItem
+  type: CustomerItemType; // type is used to determine how to handle the customerItem
   customer: string; // the id/or the customer
   deadline: Date; //the deadline to return (or buyout if type is "partly-payment") this item
   handout: boolean; // if this customerItem is handed out to customer or not

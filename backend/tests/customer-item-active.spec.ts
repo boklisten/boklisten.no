@@ -10,6 +10,7 @@ test.group("CustomerItemActive", async () => {
     const customerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
+      type: "rent",
       blid: "blid1",
       customer: "customer1",
       deadline: new Date(),
@@ -26,6 +27,7 @@ test.group("CustomerItemActive", async () => {
     const customerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
+      type: "rent",
       blid: "blid1",
       customer: "customer1",
       deadline: new Date(),
@@ -42,6 +44,7 @@ test.group("CustomerItemActive", async () => {
     const customerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
+      type: "rent",
       blid: "blid1",
       customer: "customer1",
       deadline: new Date(),
@@ -59,6 +62,7 @@ test.group("CustomerItemActive", async () => {
     const customerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
+      type: "rent",
       blid: "blid1",
       customer: "customer1",
       deadline: new Date(),
@@ -77,6 +81,7 @@ test.group("CustomerItemActive", async () => {
     const customerItem: CustomerItem = {
       id: "customerItem1",
       item: "item1",
+      type: "rent",
       blid: "blid1",
       customer: "customer1",
       deadline: new Date(),

@@ -1,1 +1,1 @@
-export type CustomerItemType = "rent" | "partly-payment" | "loan";
+export type CustomerItemType = "rent" | "partly-payment";
