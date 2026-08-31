@@ -41,6 +41,7 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
   handout: {
     type: Boolean,
     default: false,
+    required: true,
   },
   handoutInfo: {
     handoutBy: {

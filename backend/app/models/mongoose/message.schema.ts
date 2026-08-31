@@ -7,14 +7,18 @@ export const MessageSchema: BlSchema<Message> = new Schema({
   messageType: {
     type: String,
     required: true,
+    enum: ["reminder", "custom-reminder", "generic", "receipt", "match", "booking"],
   },
   messageSubtype: {
     type: String,
     required: true,
+    enum: ["partly-payment", "rent", "loan", "none", "confirmed", "canceled", "all"],
   },
   messageMethod: {
     type: String,
     required: true,
+    // "all" is no longer written, but exists on historic documents
+    enum: ["sms", "email", "all"],
   },
   sequenceNumber: {
     type: Number,

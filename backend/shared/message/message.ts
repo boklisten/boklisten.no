@@ -18,7 +18,8 @@ export interface Message extends BlDocument {
   // what type of subtype, ex: 'partly-payment', 'rent'
   messageSubtype: MessageSubtype;
   // what type of method should be used to send message ex: 'email', 'sms'
-  messageMethod: MessageMethod;
+  // ("all" is no longer written, but exists on historic documents)
+  messageMethod: MessageMethod | "all";
   // the id of the customer
   customerId: string;
   // if there are more than one message of this type and subtype

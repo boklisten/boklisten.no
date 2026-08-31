@@ -70,6 +70,7 @@ test.group("DeliveryPostHook", (group) => {
       customer: "customer1",
       amount: 100,
       byCustomer: true,
+      placed: false,
       branch: "branch1",
       orderItems: [
         {

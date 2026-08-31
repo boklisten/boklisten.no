@@ -23,6 +23,7 @@ function makeUserDetail(overrides: Partial<UserDetail> = {}): UserDetail {
     postCity: "OSLO",
     // An adult, so a non-guardian signature is the valid kind.
     dob: new Date(1990, 0, 1),
+    emailConfirmed: false,
     blid: "u#test",
     ...overrides,
   };

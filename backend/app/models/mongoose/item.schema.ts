@@ -58,5 +58,6 @@ export const ItemSchema: BlSchema<Item> = new Schema({
   buyback: {
     type: Boolean,
     default: false,
+    required: true,
   },
 });

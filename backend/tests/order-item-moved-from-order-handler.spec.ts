@@ -50,7 +50,7 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
     ],
   });
 
-  const order = {
+  const order: Order = {
     id: "testOrder1",
     amount: 0,
     orderItems: [
@@ -72,7 +72,8 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
     branch: "branch1",
     customer: "customer1",
     byCustomer: false,
-  } as Order;
+    placed: false,
+  };
 
   test('should update the last orderItem with "movedToOrder"', async ({ assert }) => {
     getOrderStub.withArgs(testMovedFromOrderId).resolves(testMovedFromOrder);

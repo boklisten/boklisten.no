@@ -40,6 +40,7 @@ test.group("OrderPlacedValidator", (group) => {
       delivery: "delivery1",
       branch: "b1",
       byCustomer: true,
+      placed: false,
       payments: ["payment1"],
     };
 

@@ -29,12 +29,14 @@ test.group("PaymentPostHook", (group) => {
       branch: "branch1",
       customer: "customer1",
       byCustomer: true,
+      placed: false,
       payments: [],
     };
 
     testPayment = {
       id: "payment1",
-      method: "later",
+      method: "card",
+      confirmed: false,
       order: "order1",
       amount: 0,
       customer: "customer1",

@@ -62,6 +62,7 @@ test.group("OrderPostHook", (group) => {
       ],
       branch: "b1",
       byCustomer: true,
+      placed: false,
       payments: [],
       delivery: "",
       active: false,

@@ -18,7 +18,7 @@ async function toPresent(order: Order) {
       id: payment.id,
       methodLabel: TranslationService.translatePaymentMethod(payment.method),
       amount: payment.amount,
-      confirmed: payment.confirmed ?? false,
+      confirmed: payment.confirmed,
     }));
 
   return {

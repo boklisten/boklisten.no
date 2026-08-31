@@ -134,6 +134,7 @@ test.group("OrderPlacedHandler", (group) => {
       amount: 200,
       customer: "customer1",
       branch: "branch1",
+      confirmed: false,
       info: {
         paymentId: "vipps-checkout1",
       },

@@ -29,6 +29,7 @@ test.group("VippsCheckoutService.update", (group) => {
       branch: "branch1",
       customer: "customer1",
       byCustomer: true,
+      placed: false,
     };
 
     sandbox = createSandbox();

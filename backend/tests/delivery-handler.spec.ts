@@ -23,6 +23,7 @@ test.group("DeliveryHandler", (group) => {
       branch: "branch1",
       customer: "customer1",
       byCustomer: true,
+      placed: false,
     };
 
     testDelivery = {

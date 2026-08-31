@@ -8,6 +8,6 @@ export interface Payment extends BlDocument {
   amount: number; //the total amount for this payment
   customer: string; //the id of the customer this payment is intended for
   branch: string; //the id of the branch this payment was placed on
-  info?: PaymentInfo | PaymentInfo[]; //method specific info, can also be array containing card, cash and cashout
-  confirmed?: boolean; //a boolean to check if the payment is confirmed or not
+  info?: PaymentInfo; //method specific info; only present on historic gateway payments
+  confirmed: boolean; //a boolean to check if the payment is confirmed or not
 }

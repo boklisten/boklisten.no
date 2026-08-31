@@ -45,6 +45,7 @@ test.group("OrderPatchHook", (group) => {
       postCode: "123",
       postCity: "oslo",
       dob: new Date(),
+      emailConfirmed: false,
       orders: [],
       blid: "",
     };

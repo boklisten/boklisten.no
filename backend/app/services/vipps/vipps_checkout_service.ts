@@ -203,6 +203,7 @@ export const VippsCheckoutService = {
       amount: order.amount + deliveryPrice,
       customer: order.customer,
       branch: order.branch,
+      confirmed: false,
     });
 
     order = await StorageService.Orders.update(order.id, {

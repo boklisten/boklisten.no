@@ -32,10 +32,7 @@ export class OrderActive {
   }
 
   private isOrderActive(order: Order): boolean {
-    return (
-      order.placed === true &&
-      order.orderItems.some((orderItem) => this.isOrderItemActive(orderItem))
-    );
+    return order.placed && order.orderItems.some((orderItem) => this.isOrderItemActive(orderItem));
   }
 
   public isOrderItemActive(orderItem: OrderItem): boolean {

@@ -28,6 +28,7 @@ test.group("DeliveryPatchHook", (group) => {
       branch: "branch1",
       customer: "customer1",
       byCustomer: true,
+      placed: false,
       delivery: "delivery1",
     };
 

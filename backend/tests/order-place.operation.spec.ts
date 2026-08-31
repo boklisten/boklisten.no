@@ -106,6 +106,7 @@ test.group("OrderPlaceOperation", (group) => {
     postCode: "",
     postCity: "",
     dob: new Date(),
+    emailConfirmed: false,
     id: "customer1",
     blid: "",
   };

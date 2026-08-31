@@ -43,6 +43,7 @@ export const UserDetailSchema: BlSchema<UserDetail> = new Schema({
   emailConfirmed: {
     type: Boolean,
     default: false,
+    required: true,
   },
   dob: {
     type: Date,

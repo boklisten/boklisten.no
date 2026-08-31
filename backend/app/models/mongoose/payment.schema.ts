@@ -8,6 +8,8 @@ export const PaymentSchema: BlSchema<Payment> = new Schema({
   method: {
     type: String,
     required: true,
+    // "dibs" is a retired payment gateway; kept for pre-2020 documents
+    enum: ["card", "cash", "vipps", "vipps-checkout", "dibs"],
   },
   order: {
     type: Schema.Types.ObjectId,
@@ -29,5 +31,8 @@ export const PaymentSchema: BlSchema<Payment> = new Schema({
     required: true,
   },
   info: Schema.Types.Mixed,
-  confirmed: Boolean,
+  confirmed: {
+    type: Boolean,
+    default: false,
+  },
 });

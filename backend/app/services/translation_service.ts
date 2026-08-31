@@ -42,9 +42,7 @@ export const TranslationService = {
       card: "kort",
       vipps: "Vipps",
       "vipps-checkout": "Vipps Checkout",
-      branch: "på filial",
-      later: "betales senere",
-      cashout: "betalt til kunde",
+      dibs: "kort (nettbetaling)",
     }[paymentMethod];
   },
 };

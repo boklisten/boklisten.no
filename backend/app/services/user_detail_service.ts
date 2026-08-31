@@ -112,6 +112,7 @@ export const UserDetailService = {
         postCode: postalCode,
         postCity: postalCity,
         dob,
+        emailConfirmed: false,
         branchMembership,
         guardian: {
           name: guardian?.name ?? "",

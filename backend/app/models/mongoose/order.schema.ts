@@ -16,6 +16,21 @@ export const OrderSchema: BlSchema<Order> = new Schema({
           // Important: keep this nesting ("type" is reserved by mongoose)
           type: String,
           required: true,
+          enum: [
+            "rent",
+            "buy",
+            "extend",
+            "sell",
+            "buyout",
+            "return",
+            "cancel",
+            "partly-payment",
+            "loan",
+            "buyback",
+            "invoice-paid",
+            "match-receive",
+            "match-deliver",
+          ],
         },
         item: {
           type: Schema.Types.ObjectId,
@@ -103,6 +118,7 @@ export const OrderSchema: BlSchema<Order> = new Schema({
   placed: {
     type: Boolean,
     default: false,
+    required: true,
   },
   payments: {
     type: [String],

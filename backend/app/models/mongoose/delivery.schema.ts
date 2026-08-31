@@ -8,6 +8,7 @@ export const DeliverySchema: BlSchema<Delivery> = new Schema({
   method: {
     type: String,
     required: true,
+    enum: ["branch", "bring"],
   },
   info: {
     type: Schema.Types.Mixed,

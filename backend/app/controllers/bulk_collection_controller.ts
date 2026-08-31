@@ -111,6 +111,7 @@ export default class BulkCollectionController {
         branch: handoutInfo!.handoutById,
         customer,
         byCustomer: false,
+        placed: false,
         payments: [],
       });
 

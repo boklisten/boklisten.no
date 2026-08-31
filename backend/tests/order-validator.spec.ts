@@ -97,6 +97,7 @@ test.group("OrderValidator", (group) => {
       delivery: "delivery1",
       branch: "branch1",
       byCustomer: true,
+      placed: false,
       payments: ["payment1"],
     };
 
