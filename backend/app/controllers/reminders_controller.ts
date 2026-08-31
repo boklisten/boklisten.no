@@ -4,11 +4,13 @@ import { ObjectId } from "mongodb";
 
 import { deadlineWindow } from "#services/deadline_window";
 import DispatchService from "#services/dispatch_service";
+import { MessageLogContext, MessageLogService } from "#services/message_log_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { reminderValidator } from "#validators/reminder";
 
 interface ReminderCustomer {
+  customerDetailsId: string;
   name: string;
   dob: Date;
   customerItems: {
@@ -80,6 +82,7 @@ async function aggregateCustomersToRemind(
     },
     {
       $project: {
+        customerDetailsId: { $toString: "$_id" },
         name: "$customer.name",
         phone: "$customer.phone",
         dob: "$customer.dob",
@@ -110,6 +113,7 @@ async function sendReminderEmail(
   emailTemplateId: string,
   customers: ReminderCustomer[],
   target: "primary" | "guardian",
+  context: MessageLogContext,
 ) {
   const filteredCustomers =
     target === "primary"
@@ -121,8 +125,10 @@ async function sendReminderEmail(
   }
   return await DispatchService.sendUserProvidedEmailTemplate({
     templateId: emailTemplateId,
+    context,
     recipients: filteredCustomers.map((customer) => ({
       to: target === "primary" ? customer.email : (customer.guardian.email ?? ""),
+      regardingCustomerDetailsId: customer.customerDetailsId,
       dynamicTemplateData: {
         name: customer.name?.split(" ")?.[0] ?? "",
         items: customer.customerItems.map((customerItem) => ({
@@ -145,18 +151,26 @@ export default class RemindersController {
   }
 
   async remind(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+    const { detailsId } = PermissionService.adminOrFail(ctx);
 
     const { deadlineISO, customerItemType, branchIDs, emailTemplateId, smsText } =
       await ctx.request.validateUsing(reminderValidator);
 
     const customers = await aggregateCustomersToRemind(customerItemType, branchIDs, deadlineISO);
 
+    const sendout = await MessageLogService.createSendout({
+      kind: "reminder",
+      name: `Påminnelse ${customerItemType === "rent" ? "lån" : "avbetaling"}, frist ${formatDeadline(deadlineISO)}`,
+      initiatedByDetailsId: detailsId,
+    });
+    const context: MessageLogContext = { messageType: "reminder", sendoutId: sendout?.id };
+
     if (emailTemplateId) {
       const { success: successPrimaryEmail } = await sendReminderEmail(
         emailTemplateId,
         customers,
         "primary",
+        context,
       );
       if (!successPrimaryEmail) {
         return ctx.response.internalServerError();
@@ -167,6 +181,7 @@ export default class RemindersController {
           emailTemplateId,
           customers,
           "guardian",
+          context,
         );
         if (!successGuardianEmail) {
           return ctx.response.internalServerError();
@@ -176,15 +191,23 @@ export default class RemindersController {
 
     if (smsText) {
       await DispatchService.sendReminderSms(
-        customers.map((customer) => customer.phone),
+        customers.map((customer) => ({
+          to: customer.phone,
+          regardingCustomerDetailsId: customer.customerDetailsId,
+        })),
         smsText,
+        context,
       );
       if (customerItemType === "rent") {
         await DispatchService.sendReminderSms(
           customers
             .filter((customer) => (customer.guardian.phone?.length ?? 0) > 0)
-            .map((customer) => customer.guardian.phone ?? ""),
+            .map((customer) => ({
+              to: customer.guardian.phone ?? "",
+              regardingCustomerDetailsId: customer.customerDetailsId,
+            })),
           smsText,
+          context,
         );
       }
     }

@@ -51,5 +51,5 @@ export default defineConfig({
       },
     ],
   },
-  ignorePatterns: [".adonisjs", "database/schema.ts", "openapi"],
+  ignorePatterns: [".adonisjs", "**/database/schema.ts", "openapi"],
 });

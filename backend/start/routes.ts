@@ -372,6 +372,20 @@ router.get("/dispatch/email_templates", [controllers.Dispatch, "getEmailTemplate
 router.post("/dispatch", [controllers.Dispatch, "createDispatch"]);
 
 /**
+ * Message logs
+ */
+router.get("/v2/message_logs/customer/:detailsId", [controllers.MessageLogs, "customerLog"]);
+router.get("/v2/message_logs/feed", [controllers.MessageLogs, "feed"]);
+router.get("/v2/message_logs/metrics", [controllers.MessageLogs, "metrics"]);
+router.get("/v2/message_logs/sendouts", [controllers.MessageLogs, "sendouts"]);
+
+/**
+ * Provider webhooks (unauthenticated; verified with provider signatures instead)
+ */
+router.post("/webhooks/sendgrid", [controllers.Webhooks, "sendgridEvents"]);
+router.post("/webhooks/twilio/:messageId", [controllers.Webhooks, "twilioSmsEvent"]);
+
+/**
  * Rapid handout
  */
 router.post("/rapid-handout", [controllers.RapidHandout, "handout"]);

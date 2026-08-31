@@ -2,12 +2,16 @@ import { Infer } from "@vinejs/vine/types";
 
 import MatchRound from "#models/match_round";
 import DispatchService from "#services/dispatch_service";
+import { MessageLogService } from "#services/message_log_service";
 import { MatchRepository } from "#services/matches/match_repository";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { matchNotifySchema } from "#validators/matches";
 
-export async function notify({ target, message, roundId }: Infer<typeof matchNotifySchema>) {
+export async function notify(
+  { target, message, roundId }: Infer<typeof matchNotifySchema>,
+  initiatedByDetailsId?: string,
+) {
   const round =
     roundId === undefined
       ? await MatchRepository.findDefaultRound()
@@ -52,9 +56,15 @@ export async function notify({ target, message, roundId }: Infer<typeof matchNot
   }
 
   const targetCustomers = await StorageService.UserDetails.getMany([...targetCustomerIds]);
+  const sendout = await MessageLogService.createSendout({
+    kind: "match-notify",
+    name: round.name,
+    initiatedByDetailsId,
+  });
   const { mailStatus, smsStatus } = await DispatchService.sendMatchInformation({
     customers: targetCustomers,
     smsBody: message,
+    sendoutId: sendout?.id,
   });
 
   return `Emails sent successfully? ${mailStatus.success} | SMS: ${smsStatus.successCount} successful, failed to send to ${smsStatus.failed.join(", ")}`;

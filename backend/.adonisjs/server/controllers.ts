@@ -32,6 +32,7 @@ export const controllers = {
   MatchRounds: () => import('#controllers/match_rounds_controller'),
   MatchStatistics: () => import('#controllers/match_statistics_controller'),
   Matches: () => import('#controllers/matches_controller'),
+  MessageLogs: () => import('#controllers/message_logs_controller'),
   OpeningHours: () => import('#controllers/opening_hours_controller'),
   OrderHistory: () => import('#controllers/order_history_controller'),
   Orders: () => import('#controllers/orders_controller'),
@@ -49,4 +50,5 @@ export const controllers = {
   UserManagement: () => import('#controllers/user_management_controller'),
   UserProvisioning: () => import('#controllers/user_provisioning_controller'),
   WaitingListCustomer: () => import('#controllers/waiting_list_customer_controller'),
+  Webhooks: () => import('#controllers/webhooks_controller'),
 }

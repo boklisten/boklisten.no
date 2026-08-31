@@ -15,9 +15,9 @@ import { matchNotifyValidator, matchTransferValidator } from "#validators/matche
 
 export default class MatchesController {
   async notify(ctx: HttpContext) {
-    PermissionService.authenticate(ctx, USER_PERMISSION.ADMIN);
+    const { detailsId } = PermissionService.authenticate(ctx, USER_PERMISSION.ADMIN);
     const matchNotifyConfiguration = await ctx.request.validateUsing(matchNotifyValidator);
-    return await notify(matchNotifyConfiguration);
+    return await notify(matchNotifyConfiguration, detailsId);
   }
 
   async getMyMatches(ctx: HttpContext) {

@@ -7,6 +7,7 @@ import twilio from "twilio";
 import { OrderEmailHandler } from "#services/legacy/order_email_handler";
 import { isUnderage } from "#models/signature";
 import { userHasValidSignature } from "#services/legacy/signature.helper";
+import { MessageLogContext, MessageLogService } from "#services/message_log_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { UserDetailService } from "#services/user_detail_service";
@@ -32,37 +33,72 @@ const twilioClient = twilio(env.get("TWILIO_SMS_SID"), env.get("TWILIO_SMS_AUTH_
 interface SmsMessage {
   to: string;
   body: string;
+  regardingCustomerDetailsId?: string | null;
+}
+
+/**
+ * Twilio can only report delivery to a reachable URL, so status callbacks are attached outside
+ * local development. The message log row id rides in the path; Twilio echoes it back on every
+ * status change.
+ */
+function twilioStatusCallback(messageId: string | undefined): string | undefined {
+  if (!messageId) return undefined;
+  if (env.get("API_ENV") !== "production" && env.get("API_ENV") !== "staging") return undefined;
+  return `${env.get("BL_API_URI")}/webhooks/twilio/${messageId}`;
 }
 
 const SmsService = {
-  async sendOne(message: SmsMessage) {
+  async sendOne(message: SmsMessage, context: MessageLogContext) {
+    const logEntry = await MessageLogService.logOutgoingMessage({
+      channel: "sms",
+      recipient: message.to,
+      context: {
+        ...context,
+        regardingCustomerDetailsId:
+          message.regardingCustomerDetailsId ?? context.regardingCustomerDetailsId,
+      },
+      smsBody: message.body,
+    });
+
     if (env.get("API_ENV") !== "production") {
       logger.info(
         "Since API_ENV !== production, SMS will only be sent to users with permission 'employee' or above",
       );
       const userDetail = await UserDetailService.getByPhoneNumber(message.to);
-      if (!userDetail) return { successCount: 1, failed: [] };
-      const user = await UserService.getByUserDetailsId(userDetail.id);
-
-      if (!user || !PermissionService.isPermissionEqualOrOver(user.permission, "employee"))
+      const user = userDetail ? await UserService.getByUserDetailsId(userDetail.id) : null;
+      if (!user || !PermissionService.isPermissionEqualOrOver(user.permission, "employee")) {
+        await MessageLogService.recordSendResult(logEntry, {
+          status: "skipped",
+          reason: "Utenfor produksjon sendes SMS bare til ansatte",
+        });
         return { successCount: 1, failed: [] };
+      }
     }
 
     try {
-      await twilioClient.messages.create({
+      const twilioMessage = await twilioClient.messages.create({
         body: message.body,
         to: `+47${message.to}`,
         from: "Boklisten",
+        statusCallback: twilioStatusCallback(logEntry?.id),
       });
+      if (logEntry) {
+        logEntry.providerMessageId = twilioMessage.sid;
+      }
+      await MessageLogService.recordSendResult(logEntry, { status: "sent" });
       logger.info(`successfully sent SMS to "${message.to}"`);
       return { successCount: 1, failed: [] };
     } catch (error) {
+      await MessageLogService.recordSendResult(logEntry, {
+        status: "send-failed",
+        reason: String(error),
+      });
       logger.error(`failed to send SMS to "${message.to}", reason: ${error}`);
       return { successCount: 0, failed: [message.to] };
     }
   },
-  async sendMany(messages: SmsMessage[]) {
-    return (await Promise.all(messages.map((message) => this.sendOne(message)))).reduce(
+  async sendMany(messages: SmsMessage[], context: MessageLogContext) {
+    return (await Promise.all(messages.map((message) => this.sendOne(message, context)))).reduce(
       (acc, next) => ({
         successCount: acc.successCount + next.successCount,
         failed: [...acc.failed, ...next.failed],
@@ -90,9 +126,11 @@ const EmailService = {
   async sendEmail({
     template,
     recipients,
+    context,
   }: {
     template: EmailTemplate;
     recipients: EmailRecipient | EmailRecipient[];
+    context: MessageLogContext;
   }) {
     const _personalizations = Array.isArray(recipients) ? recipients : [recipients];
 
@@ -102,13 +140,22 @@ const EmailService = {
         "Since API_ENV !== production, emails will only be sent to users with permission 'employee' or above",
       );
       personalizations = [];
+      const skipped: EmailRecipient[] = [];
       for (const personalization of _personalizations) {
         const userDetail = await UserDetailService.getByEmail(personalization.to);
-        if (!userDetail) continue;
-        const user = await UserService.getByUserDetailsId(userDetail.id);
-        if (!user || !PermissionService.isPermissionEqualOrOver(user.permission, "employee"))
+        const user = userDetail ? await UserService.getByUserDetailsId(userDetail.id) : null;
+        if (!user || !PermissionService.isPermissionEqualOrOver(user.permission, "employee")) {
+          skipped.push(personalization);
           continue;
+        }
         personalizations.push(personalization);
+      }
+      for (const personalization of skipped) {
+        const logEntry = await this.logEmail(template, personalization, context);
+        await MessageLogService.recordSendResult(logEntry, {
+          status: "skipped",
+          reason: "Utenfor produksjon sendes e-post bare til ansatte",
+        });
       }
     }
 
@@ -117,38 +164,86 @@ const EmailService = {
       batches.push(personalizations.slice(i, i + SENDGRID_BATCH_SIZE));
     }
 
+    let success = true;
     for (const batch of batches) {
+      const logEntries: Awaited<ReturnType<typeof EmailService.logEmail>>[] = [];
+      for (const personalization of batch) {
+        logEntries.push(await this.logEmail(template, personalization, context));
+      }
       try {
         const [sendGridResponse] = await sgMail.send({
           from: template.sender,
           templateId: template.templateId,
-          personalizations: batch,
+          personalizations: batch.map((personalization, index) => ({
+            to: personalization.to,
+            dynamicTemplateData: personalization.dynamicTemplateData,
+            customArgs: {
+              bl_message_id: logEntries[index]?.id ?? "",
+              bl_api_env: env.get("API_ENV"),
+            },
+          })),
         });
 
-        if (sendGridResponse.statusCode !== 202) {
+        const batchOk = sendGridResponse.statusCode === 202;
+        if (!batchOk) {
           logger.error(`SendGrid batch failed with status ${sendGridResponse.statusCode}`);
-          return { success: false };
+          success = false;
+        }
+        for (const logEntry of logEntries) {
+          await MessageLogService.recordSendResult(logEntry, {
+            status: batchOk ? "sent" : "send-failed",
+            reason: batchOk ? undefined : `SendGrid svarte ${sendGridResponse.statusCode}`,
+          });
         }
       } catch (error) {
         logger.error(`SendGrid send error: ${String(error)}`);
-        return { success: false };
+        for (const logEntry of logEntries) {
+          await MessageLogService.recordSendResult(logEntry, {
+            status: "send-failed",
+            reason: String(error),
+          });
+        }
+        success = false;
       }
     }
 
-    return { success: true };
+    return { success };
+  },
+  async logEmail(template: EmailTemplate, recipient: EmailRecipient, context: MessageLogContext) {
+    const subject = recipient.dynamicTemplateData?.["subject"];
+    return await MessageLogService.logOutgoingMessage({
+      channel: "email",
+      recipient: recipient.to,
+      context: {
+        ...context,
+        regardingCustomerDetailsId:
+          recipient.regardingCustomerDetailsId ?? context.regardingCustomerDetailsId,
+      },
+      subject: typeof subject === "string" ? subject : null,
+      templateId: template.templateId,
+      templateData: recipient.dynamicTemplateData,
+    });
   },
 };
 
 const DispatchService = {
-  async sendReminderSms(phoneNumbers: string[], body: string) {
-    return await SmsService.sendMany(phoneNumbers.map((to) => ({ to, body })));
+  async sendReminderSms(
+    recipients: { to: string; regardingCustomerDetailsId?: string | null }[],
+    body: string,
+    context: MessageLogContext,
+  ) {
+    return await SmsService.sendMany(
+      recipients.map((recipient) => ({ ...recipient, body })),
+      context,
+    );
   },
-  async sendUserProvidedSms(phoneNumber: string, body: string) {
-    return await SmsService.sendOne({ to: phoneNumber, body });
+  async sendUserProvidedSms(phoneNumber: string, body: string, context: MessageLogContext) {
+    return await SmsService.sendOne({ to: phoneNumber, body }, context);
   },
   async sendOrderReceipt(emailUser: EmailUser, emailOrder: EmailOrder, paymentNeeded: boolean) {
     await EmailService.sendEmail({
       template: EMAIL_TEMPLATES.receipt,
+      context: { messageType: "receipt", regardingCustomerDetailsId: emailUser.id },
       recipients: [
         {
           to: emailUser.email,
@@ -174,9 +269,15 @@ const DispatchService = {
       "tasks.signAgreement": true,
     });
 
+    const context: MessageLogContext = {
+      messageType: "signature",
+      regardingCustomerDetailsId: customerDetail.id,
+    };
+
     if (isUnderage(customerDetail) && customerDetail.guardian) {
       await EmailService.sendEmail({
         template: EMAIL_TEMPLATES.guardianSignature,
+        context,
         recipients: {
           to: customerDetail.guardian.email,
           dynamicTemplateData: {
@@ -188,13 +289,17 @@ const DispatchService = {
         },
       });
 
-      await SmsService.sendOne({
-        to: customerDetail.guardian.phone,
-        body: `Hei. ${customerDetail.name} skal snart motta bøker fra ${branchName} via Boklisten.no. Siden ${customerDetail.name} er under 18 år, krever vi at du som foresatt signerer låneavtalen. Vi har derfor sendt en e-post til ${customerDetail.guardian.email} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
-      });
+      await SmsService.sendOne(
+        {
+          to: customerDetail.guardian.phone,
+          body: `Hei. ${customerDetail.name} skal snart motta bøker fra ${branchName} via Boklisten.no. Siden ${customerDetail.name} er under 18 år, krever vi at du som foresatt signerer låneavtalen. Vi har derfor sendt en e-post til ${customerDetail.guardian.email} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
+        },
+        context,
+      );
     } else {
       await EmailService.sendEmail({
         template: EMAIL_TEMPLATES.signature,
+        context,
         recipients: {
           to: customerDetail.email,
           dynamicTemplateData: {
@@ -205,10 +310,13 @@ const DispatchService = {
         },
       });
 
-      await SmsService.sendOne({
-        to: customerDetail.phone,
-        body: `Hei. Du skal snart motta bøker fra ${branchName} via Boklisten.no. Før du kan motta bøkene må du signere vår låneavtale. Vi har derfor sendt en e-post til ${customerDetail.email} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
-      });
+      await SmsService.sendOne(
+        {
+          to: customerDetail.phone,
+          body: `Hei. Du skal snart motta bøker fra ${branchName} via Boklisten.no. Før du kan motta bøkene må du signere vår låneavtale. Vi har derfor sendt en e-post til ${customerDetail.email} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
+        },
+        context,
+      );
     }
   },
 
@@ -219,6 +327,7 @@ const DispatchService = {
   ) {
     await EmailService.sendEmail({
       template: EMAIL_TEMPLATES.deliveryInformation,
+      context: { messageType: "delivery-info", regardingCustomerDetailsId: customerDetail.id },
       recipients: [
         {
           to: customerDetail.email,
@@ -247,6 +356,7 @@ const DispatchService = {
   async sendPasswordReset({ id, email, token }: { id: number; email: string; token: string }) {
     return await EmailService.sendEmail({
       template: EMAIL_TEMPLATES.passwordReset,
+      context: { messageType: "password-reset" },
       recipients: [
         {
           to: email,
@@ -261,6 +371,7 @@ const DispatchService = {
   async sendEmailVerification(email: string, verificationId: string) {
     await EmailService.sendEmail({
       template: EMAIL_TEMPLATES.emailVerification,
+      context: { messageType: "email-verification" },
       recipients: [
         {
           to: email,
@@ -271,12 +382,23 @@ const DispatchService = {
       ],
     });
   },
-  async sendMatchInformation({ customers, smsBody }: { customers: UserDetail[]; smsBody: string }) {
+  async sendMatchInformation({
+    customers,
+    smsBody,
+    sendoutId,
+  }: {
+    customers: UserDetail[];
+    smsBody: string;
+    sendoutId?: number | null;
+  }) {
+    const context: MessageLogContext = { messageType: "match-notify", sendoutId };
     const [mailStatus, smsStatus] = await Promise.all([
       EmailService.sendEmail({
         template: EMAIL_TEMPLATES.matchNotify,
+        context,
         recipients: customers.map((customer) => ({
           to: customer.email,
+          regardingCustomerDetailsId: customer.id,
           dynamicTemplateData: {
             name: customer.name.split(" ")[0] ?? customer.name,
             username: customer.email,
@@ -286,8 +408,10 @@ const DispatchService = {
       SmsService.sendMany(
         customers.map((customer) => ({
           to: customer.phone,
+          regardingCustomerDetailsId: customer.id,
           body: `Hei, ${customer.name.split(" ")[0]}. ${smsBody} Mvh Boklisten`,
         })),
+        context,
       ),
     ]);
     return { mailStatus, smsStatus };
@@ -295,9 +419,11 @@ const DispatchService = {
   async sendUserProvidedEmailTemplate({
     templateId,
     recipients,
+    context,
   }: {
     templateId: string;
     recipients: EmailRecipient[];
+    context: MessageLogContext;
   }) {
     return await EmailService.sendEmail({
       template: {
@@ -305,6 +431,7 @@ const DispatchService = {
         templateId,
       },
       recipients,
+      context,
     });
   },
   async sendOnboardingMessage({
@@ -314,9 +441,14 @@ const DispatchService = {
     userDetail: UserDetail;
     branchName: string;
   }) {
+    const context: MessageLogContext = {
+      messageType: "onboarding",
+      regardingCustomerDetailsId: userDetail.id,
+    };
     const firstName = userDetail.name.split(" ")[0];
     const emailStatus = await EmailService.sendEmail({
       template: EMAIL_TEMPLATES.onboarding,
+      context,
       recipients: {
         to: userDetail.email,
         dynamicTemplateData: {
@@ -326,10 +458,13 @@ const DispatchService = {
         },
       },
     });
-    const smsStatus = await SmsService.sendOne({
-      to: userDetail.phone,
-      body: `Hei ${firstName}, velkommen til ${branchName}! Vi i Boklisten administrerer utlån av bøkene du skal bruke, og før du kan få dem trenger vi at du bekrefter informasjonen din og signerer vår låneavtale på Boklisten.no. Er du under 18 år, må en foresatt signere. Vi har opprettet en konto til deg, og du kan logge inn med Vipps eller opprette et passord for å komme i gang. Mvh. Boklisten.no`,
-    });
+    const smsStatus = await SmsService.sendOne(
+      {
+        to: userDetail.phone,
+        body: `Hei ${firstName}, velkommen til ${branchName}! Vi i Boklisten administrerer utlån av bøkene du skal bruke, og før du kan få dem trenger vi at du bekrefter informasjonen din og signerer vår låneavtale på Boklisten.no. Er du under 18 år, må en foresatt signere. Vi har opprettet en konto til deg, og du kan logge inn med Vipps eller opprette et passord for å komme i gang. Mvh. Boklisten.no`,
+      },
+      context,
+    );
     return { emailStatus, smsStatus };
   },
   async getEmailTemplates() {

@@ -194,6 +194,68 @@ export class MatchSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class MessageEventSchema extends BaseModel {
+  static $columns = ['createdAt', 'errorCode', 'event', 'id', 'messageId', 'occurredAt', 'payload', 'providerEventId', 'reason', 'source', 'updatedAt'] as const
+  $columns = MessageEventSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare errorCode: string | null
+  @column()
+  declare event: string
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare messageId: string
+  @column.dateTime()
+  declare occurredAt: DateTime
+  @column()
+  declare payload: any | null
+  @column()
+  declare providerEventId: string | null
+  @column()
+  declare reason: string | null
+  @column()
+  declare source: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class MessageSchema extends BaseModel {
+  static $columns = ['channel', 'createdAt', 'id', 'messageType', 'providerMessageId', 'recipient', 'regardingCustomerDetailsId', 'sendoutId', 'smsBody', 'status', 'statusDetail', 'subject', 'templateData', 'templateId', 'updatedAt'] as const
+  $columns = MessageSchema.$columns
+  @column()
+  declare channel: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare messageType: string
+  @column()
+  declare providerMessageId: string | null
+  @column()
+  declare recipient: string
+  @column()
+  declare regardingCustomerDetailsId: string | null
+  @column()
+  declare sendoutId: number | null
+  @column()
+  declare smsBody: string | null
+  @column()
+  declare status: string
+  @column()
+  declare statusDetail: string | null
+  @column()
+  declare subject: string | null
+  @column()
+  declare templateData: any | null
+  @column()
+  declare templateId: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class OpeningHourSchema extends BaseModel {
   static $columns = ['branchId', 'createdAt', 'from', 'id', 'to', 'updatedAt'] as const
   $columns = OpeningHourSchema.$columns
@@ -252,6 +314,23 @@ export class RateLimitSchema extends BaseModel {
   declare key: string
   @column()
   declare points: number
+}
+
+export class SendoutSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'initiatedByDetailsId', 'kind', 'name', 'updatedAt'] as const
+  $columns = SendoutSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare initiatedByDetailsId: string | null
+  @column()
+  declare kind: string
+  @column()
+  declare name: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
 }
 
 export class SignatureSchema extends BaseModel {

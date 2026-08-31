@@ -48,4 +48,6 @@ export const EMAIL_TEMPLATES = {
 export interface EmailRecipient {
   to: string;
   dynamicTemplateData?: Record<string, unknown>;
+  /** Message-log context only — stripped before the personalization is sent to SendGrid. */
+  regardingCustomerDetailsId?: string | null;
 }

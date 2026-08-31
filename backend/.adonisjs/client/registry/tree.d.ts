@@ -199,6 +199,16 @@ export interface ApiDefinition {
     getEmailTemplates: typeof routes['dispatch.get_email_templates']
     createDispatch: typeof routes['dispatch.create_dispatch']
   }
+  messageLogs: {
+    customerLog: typeof routes['message_logs.customer_log']
+    feed: typeof routes['message_logs.feed']
+    metrics: typeof routes['message_logs.metrics']
+    sendouts: typeof routes['message_logs.sendouts']
+  }
+  webhooks: {
+    sendgridEvents: typeof routes['webhooks.sendgrid_events']
+    twilioSmsEvent: typeof routes['webhooks.twilio_sms_event']
+  }
   rapidHandout: {
     handout: typeof routes['rapid_handout.handout']
   }
@@ -286,20 +296,6 @@ export interface ApiDefinition {
       }
       patch: typeof routes['collection.userdetails.patch']
       getAll: typeof routes['collection.userdetails.getAll']
-    }
-    messages: {
-      post: typeof routes['collection.messages.post']
-      operation: {
-        sendgridEvents: {
-          post: typeof routes['collection.messages.operation.sendgrid-events.post']
-        }
-        twilioSmsEvents: {
-          post: typeof routes['collection.messages.operation.twilio-sms-events.post']
-        }
-      }
-      getAll: typeof routes['collection.messages.getAll']
-      getId: typeof routes['collection.messages.getId']
-      delete: typeof routes['collection.messages.delete']
     }
     invoices: {
       getId: typeof routes['collection.invoices.getId']

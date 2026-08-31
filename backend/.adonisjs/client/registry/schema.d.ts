@@ -1459,6 +1459,78 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/dispatch_controller').default['createDispatch']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'message_logs.customer_log': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/message_logs/customer/:detailsId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { detailsId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['customerLog']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['customerLog']>>>
+    }
+  }
+  'message_logs.feed': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/message_logs/feed'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/message_log').messageLogFeedValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['feed']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['feed']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'message_logs.metrics': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/message_logs/metrics'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/message_log').messageLogMetricsValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['metrics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['metrics']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'message_logs.sendouts': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/message_logs/sendouts'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['sendouts']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['sendouts']>>>
+    }
+  }
+  'webhooks.sendgrid_events': {
+    methods: ["POST"]
+    pattern: '/webhooks/sendgrid'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['sendgridEvents']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['sendgridEvents']>>>
+    }
+  }
+  'webhooks.twilio_sms_event': {
+    methods: ["POST"]
+    pattern: '/webhooks/twilio/:messageId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { messageId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['twilioSmsEvent']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['twilioSmsEvent']>>>
+    }
+  }
   'rapid_handout.handout': {
     methods: ["POST"]
     pattern: '/rapid-handout'
@@ -2018,78 +2090,6 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.messages.post': {
-    methods: ["POST"]
-    pattern: '/messages'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.messages.operation.sendgrid-events.post': {
-    methods: ["POST"]
-    pattern: '/messages/sendgrid-events'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.messages.operation.twilio-sms-events.post': {
-    methods: ["POST"]
-    pattern: '/messages/twilio-sms-events'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.messages.getAll': {
-    methods: ["GET","HEAD"]
-    pattern: '/messages'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.messages.getId': {
-    methods: ["GET","HEAD"]
-    pattern: '/messages/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.messages.delete': {
-    methods: ["DELETE"]
-    pattern: '/messages/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
       query: {}
       response: unknown
       errorResponse: unknown

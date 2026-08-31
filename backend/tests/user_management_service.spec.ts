@@ -42,7 +42,6 @@ test.group("UserManagementService.mergeUsers", (group) => {
   let usersRemoveStub: sinon.SinonStub;
   let customerItemsUpdateManyStub: sinon.SinonStub;
   let ordersUpdateManyStub: sinon.SinonStub;
-  let messagesUpdateManyStub: sinon.SinonStub;
   let invoicesUpdateManyStub: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
@@ -72,7 +71,6 @@ test.group("UserManagementService.mergeUsers", (group) => {
       .stub(StorageService.CustomerItems, "updateMany")
       .resolves();
     ordersUpdateManyStub = sandbox.stub(StorageService.Orders, "updateMany").resolves();
-    messagesUpdateManyStub = sandbox.stub(StorageService.Messages, "updateMany").resolves();
     invoicesUpdateManyStub = sandbox.stub(StorageService.Invoices, "updateMany").resolves();
     sandbox.stub(StorageService.Payments, "updateMany").resolves();
   });
@@ -170,7 +168,6 @@ test.group("UserManagementService.mergeUsers", (group) => {
       customerItemsUpdateManyStub.calledWithMatch({ customer: FROM }, { customer: TO }),
     );
     assert.isTrue(ordersUpdateManyStub.calledWithMatch({ customer: FROM }, { customer: TO }));
-    assert.isTrue(messagesUpdateManyStub.calledWithMatch({ customerId: FROM }, { customerId: TO }));
     assert.isTrue(
       invoicesUpdateManyStub.calledWithMatch(
         { "customerInfo.userDetail": FROM },

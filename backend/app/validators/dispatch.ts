@@ -16,6 +16,8 @@ export const sendgridEmailTemplatesResponseValidator = vine.create(
 
 export const createDispatchValidator = vine.create(
   vine.object({
+    /** Human-readable label for the sendout in the message log, e.g. the email template name. */
+    name: vine.string().maxLength(255).optional(),
     recipients: vine.array(
       vine.object({
         email: emailField.clone().optional().requiredIfExists("emailTemplateId"),

@@ -18,6 +18,7 @@ import {
   IconSearch,
   IconSend,
   IconSignature,
+  IconTimeline,
   IconShoppingCart,
   IconUsers,
 } from "@tabler/icons-react";
@@ -122,6 +123,12 @@ export const ADMIN_NAV_SECTIONS = [
             description: "Send SMS eller e-post til en liste med mottakere",
             to: "/admin/kommunikasjon/utsendelser",
             icon: IconSend,
+          },
+          {
+            label: "Meldingslogg",
+            description: "Se alle sendte meldinger og leveringsstatus i sanntid",
+            to: "/admin/kommunikasjon/logg",
+            icon: IconTimeline,
           },
         ],
       },

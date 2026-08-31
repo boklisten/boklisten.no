@@ -152,7 +152,6 @@ async function mergeUsers(fromDetailsId: string, toDetailsId: string) {
       { "customerInfo.userDetail": fromDetailsId },
       { "customerInfo.userDetail": toDetailsId },
     ),
-    StorageService.Messages.updateMany({ customerId: fromDetailsId }, { customerId: toDetailsId }),
     BookHandover.query()
       .where("fromUserDetailId", fromDetailsId)
       .update({ fromUserDetailId: toDetailsId }),

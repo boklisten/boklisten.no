@@ -11,6 +11,7 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 import { Route } from "@tuyau/core/types";
 
 const defaultValues: {
+  name: string;
   recipients: {
     email?: string;
     phone?: string;
@@ -18,6 +19,7 @@ const defaultValues: {
     email_template_id?: string;
   }[];
 } = {
+  name: "",
   recipients: [],
 };
 
@@ -42,7 +44,7 @@ export default function DispatchManager() {
       showSuccessNotification({
         icon: <IconMailFast />,
         title: "Utsendelsen var vellykket!",
-        message: `Husk å sjekke status hos Twilio / SendGrid for å bekrefte at den har kommet frem`,
+        message: `Følg med på leveringsstatus i meldingsloggen under Kommunikasjon`,
       });
     },
   });
@@ -52,6 +54,7 @@ export default function DispatchManager() {
     onSubmit: ({ value }) =>
       sendMutation.mutate({
         body: {
+          name: value.name.trim() || undefined,
           recipients: value.recipients.map((recipient) => ({
             phone: recipient.phone,
             email: recipient.email,
@@ -64,6 +67,16 @@ export default function DispatchManager() {
   return (
     <>
       <EmailTemplateDropdown />
+      <form.AppField name={"name"}>
+        {(field) => (
+          <field.TextField
+            label={"Navn på utsendelsen"}
+            description={"Valgfritt. Vises i meldingsloggen under Kommunikasjon."}
+            placeholder={"F.eks. Informasjon om høstens utdeling"}
+            maxLength={255}
+          />
+        )}
+      </form.AppField>
       <form.AppField name={"recipients"}>
         {(field) => (
           <field.CsvFileField

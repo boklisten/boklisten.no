@@ -5,7 +5,6 @@ import { CustomerItemCollection } from "#services/legacy/collections/customer-it
 import { DeliveryCollection } from "#services/legacy/collections/delivery/delivery.collection";
 import { InvoiceCollection } from "#services/legacy/collections/invoice/invoice.collection";
 import { ItemCollection } from "#services/legacy/collections/item/item.collection";
-import { MessageCollection } from "#services/legacy/collections/message/message.collection";
 import { OrderCollection } from "#services/legacy/collections/order/order.collection";
 import { PaymentCollection } from "#services/legacy/collections/payment/payment.collection";
 import { UniqueItemCollection } from "#services/legacy/collections/unique-item/unique-item.collection";
@@ -20,7 +19,6 @@ const BlCollections = [
   OrderCollection,
   PaymentCollection,
   UserDetailCollection,
-  MessageCollection,
   InvoiceCollection,
   CompanyCollection,
   UniqueItemCollection,

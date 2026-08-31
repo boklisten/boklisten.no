@@ -1,14 +1,16 @@
+import { isFailureStatus } from "@boklisten/backend/shared/message-log";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import { Badge, Group, Indicator, Tabs, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
+import CustomerMessagesView from "@/features/message-log/CustomerMessagesView";
 import ActiveBooksView, { isOverdue } from "@/features/rapid-handout/ActiveBooksView";
 import CustomerMatchesView, { peerMatches } from "@/features/rapid-handout/CustomerMatchesView";
 import { countStandBooksToHandOut } from "@/features/rapid-handout/handoutBooks";
 import RapidHandoutDetails from "@/features/rapid-handout/RapidHandoutDetails";
 import useApiClient from "@/shared/hooks/useApiClient";
 
-export const RAPID_HANDOUT_TABS = ["bestillinger", "boker", "overleveringer"] as const;
+export const RAPID_HANDOUT_TABS = ["bestillinger", "boker", "overleveringer", "meldinger"] as const;
 export type RapidHandoutTab = (typeof RAPID_HANDOUT_TABS)[number];
 
 const POLL_INTERVAL_MS = 5000;
@@ -18,6 +20,7 @@ const TAB_LABELS: Record<RapidHandoutTab, { short: string; full: string }> = {
   bestillinger: { short: "Bestillinger", full: "Bestillinger" },
   boker: { short: "Bøker", full: "Kundens bøker" },
   overleveringer: { short: "Overleveringer", full: "Overleveringer" },
+  meldinger: { short: "Meldinger", full: "Meldinger" },
 };
 
 function TabLabel({ tab, count, alert }: { tab: RapidHandoutTab; count: number; alert?: boolean }) {
@@ -71,11 +74,21 @@ export default function RapidHandoutTabs({
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
+  const { data: messageLog } = useQuery(
+    api.messageLogs.customerLog.queryOptions(
+      { params: { detailsId: customer.id } },
+      { refetchInterval: POLL_INTERVAL_MS },
+    ),
+  );
 
   const toHandOut = countStandBooksToHandOut(orders, matches, customer.id);
   const matchCount = peerMatches(matches).length;
   const bookCount = activeBooks?.length ?? 0;
   const hasOverdue = (activeBooks ?? []).some((book) => isOverdue(book.deadline));
+  // The badge counts problems, not traffic: a full message count would always be noise here.
+  const failedMessages = (messageLog?.entries ?? []).filter((entry) =>
+    isFailureStatus(entry.status),
+  ).length;
 
   // Most customers have no peer exchanges at all; an empty tab is just noise for them.
   const showMatches = matchCount > 0;
@@ -101,6 +114,9 @@ export default function RapidHandoutTabs({
             <TabLabel tab={"overleveringer"} count={matchCount} />
           </Tabs.Tab>
         )}
+        <Tabs.Tab value={"meldinger"} px={{ base: 8, sm: "md" }}>
+          <TabLabel tab={"meldinger"} count={failedMessages} alert={failedMessages > 0} />
+        </Tabs.Tab>
       </Tabs.List>
 
       {/* Kept mounted so the scan-progress ticks survive a visit to another tab. */}
@@ -112,6 +128,9 @@ export default function RapidHandoutTabs({
       </Tabs.Panel>
       <Tabs.Panel value={"overleveringer"}>
         <CustomerMatchesView customerId={customer.id} />
+      </Tabs.Panel>
+      <Tabs.Panel value={"meldinger"}>
+        <CustomerMessagesView customer={customer} />
       </Tabs.Panel>
     </Tabs>
   );

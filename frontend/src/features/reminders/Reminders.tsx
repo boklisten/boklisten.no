@@ -1,5 +1,4 @@
 import type { CustomerItemType } from "@boklisten/backend/shared/customer-item/customer-item-type";
-import { MessageMethod } from "@boklisten/backend/shared/message/message-method/message-method";
 import { Button, Grid, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconMailFast, IconSend } from "@tabler/icons-react";
@@ -15,6 +14,12 @@ import {
   showInfoNotification,
   showSuccessNotification,
 } from "@/shared/utils/notifications";
+
+const MessageMethod = {
+  SMS: "sms",
+  EMAIL: "email",
+} as const;
+type MessageMethod = (typeof MessageMethod)[keyof typeof MessageMethod];
 
 interface RemindersFormData {
   branchIds: string[];
