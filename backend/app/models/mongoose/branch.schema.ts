@@ -44,6 +44,7 @@ export const BranchSchema: BlSchema<Branch> = new Schema({
           type: {
             // Important: keep this nesting ("type" is reserved by mongoose)
             type: String,
+            enum: ["semester", "year"],
           },
           date: Date,
           percentageBuyout: Number,
@@ -60,6 +61,7 @@ export const BranchSchema: BlSchema<Branch> = new Schema({
           type: {
             // Important: keep this nesting ("type" is reserved by mongoose)
             type: String,
+            enum: ["semester", "year"],
           },
           maxNumberOfPeriods: Number,
           date: Date,
@@ -74,6 +76,7 @@ export const BranchSchema: BlSchema<Branch> = new Schema({
           type: {
             // Important: keep this nesting ("type" is reserved by mongoose)
             type: String,
+            enum: ["semester", "year"],
           },
           maxNumberOfPeriods: Number,
           date: Date,

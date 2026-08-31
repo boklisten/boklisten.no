@@ -1,1 +1,1 @@
-export type Period = "semester" | "year" | "day" | "month" | "hour";
+export type Period = "semester" | "year";

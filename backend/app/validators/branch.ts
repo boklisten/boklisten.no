@@ -47,7 +47,7 @@ export const branchValidator = vine.create(
         partlyPaymentPeriods: vine
           .array(
             vine.object({
-              type: vine.enum(["semester", "year", "day", "month", "hour"]),
+              type: vine.enum(["semester", "year"]),
               date: vine.date(),
               percentageBuyout: percentageField,
               percentageBuyoutUsed: percentageField,
@@ -59,7 +59,7 @@ export const branchValidator = vine.create(
         rentPeriods: vine
           .array(
             vine.object({
-              type: vine.enum(["semester", "year", "day", "month", "hour"]),
+              type: vine.enum(["semester", "year"]),
               date: vine.date(),
               maxNumberOfPeriods: vine.number().positive(),
               percentage: percentageField,
@@ -70,7 +70,7 @@ export const branchValidator = vine.create(
           .array(
             vine
               .object({
-                type: vine.enum(["semester", "year", "day", "month", "hour"]),
+                type: vine.enum(["semester", "year"]),
                 date: vine.date(),
                 maxNumberOfPeriods: vine.number().positive(),
                 price: vine.number().positive(),

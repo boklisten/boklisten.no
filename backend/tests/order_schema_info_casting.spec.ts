@@ -72,6 +72,11 @@ test.group("OrderSchema orderItems.info casting", () => {
     assert.equal(fieldOf(info, "buybackAmount"), 50);
   });
 
+  test("rejects a periodType outside the semester/year enum", async ({ assert }) => {
+    const { order } = buildOrder({ periodType: "day" });
+    await assert.rejects(() => order.validate(), /periodType/);
+  });
+
   test("preserves keys the schema does not declare", ({ assert }) => {
     const { info } = buildOrder({ to: "2027-07-01", someLegacyKey: "kept" });
     assert.equal(fieldOf(info, "someLegacyKey"), "kept");

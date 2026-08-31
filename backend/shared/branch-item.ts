@@ -18,5 +18,4 @@ export interface BranchItem extends BlDocument {
 
   active?: boolean;
   categories?: string[];
-  required?: boolean; // whether a customer affiliated with this branch (and branch item) is required to have this item (fellesfag)
 }

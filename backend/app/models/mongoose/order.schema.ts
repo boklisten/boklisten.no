@@ -68,7 +68,7 @@ export const OrderSchema: BlSchema<Order> = new Schema({
               from: Date,
               to: Date,
               numberOfPeriods: Number,
-              periodType: String,
+              periodType: { type: String, enum: ["semester", "year"] },
               customerItem: String,
               amountLeftToPay: Number,
               buybackAmount: Number,

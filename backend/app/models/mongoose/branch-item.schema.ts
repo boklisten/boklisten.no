@@ -64,5 +64,4 @@ export const BranchItemSchema: BlSchema<BranchItem> = new Schema({
     type: [String],
     default: [],
   },
-  required: Boolean, // fixme: currently not in use, consider removing
 });

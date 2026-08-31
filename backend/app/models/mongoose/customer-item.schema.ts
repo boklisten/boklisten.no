@@ -116,6 +116,7 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
         },
         periodType: {
           type: String,
+          enum: ["semester", "year"],
           required: true,
         },
         time: {
