@@ -45,9 +45,9 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
   if (isLoading) {
     return (
       <Stack>
-        <Skeleton height={40} width={"100%"} />
-        <Skeleton height={200} width={"100%"} />
-        <Skeleton height={50} width={"100%"} />
+        <Skeleton height={40} width="100%" />
+        <Skeleton height={200} width="100%" />
+        <Skeleton height={50} width="100%" />
         <Skeleton height={50} width={100} />
       </Stack>
     );
@@ -55,7 +55,7 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
 
   if (isError || !data) {
     return (
-      <ErrorAlert title={"Noe gikk galt under lasting av signaturstatus"}>
+      <ErrorAlert title="Noe gikk galt under lasting av signaturstatus">
         {PLEASE_TRY_AGAIN_TEXT}
       </ErrorAlert>
     );
@@ -64,8 +64,8 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
   if (data.isSignatureValid) {
     return (
       <Stack>
-        <Spoiler maxHeight={165} showLabel={"Vis mer"} hideLabel={"Vis mindre"}>
-          <EditableTextReadOnly dataKey={"betingelser"} />
+        <Spoiler maxHeight={165} showLabel="Vis mer" hideLabel="Vis mindre">
+          <EditableTextReadOnly dataKey="betingelser" />
         </Spoiler>
         <SignedContractDetails
           signedByGuardian={data.signedByGuardian ?? false}
@@ -80,12 +80,12 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
 
   return (
     <Stack>
-      <Spoiler maxHeight={165} showLabel={"Vis mer"} hideLabel={"Vis mindre"}>
-        <EditableTextReadOnly dataKey={"betingelser"} />
+      <Spoiler maxHeight={165} showLabel="Vis mer" hideLabel="Vis mindre">
+        <EditableTextReadOnly dataKey="betingelser" />
       </Spoiler>
-      <Stack gap={"xs"}>
+      <Stack gap="xs">
         <form.AppField
-          name={"base64EncodedImage"}
+          name="base64EncodedImage"
           validators={{
             onSubmit: ({ value }) =>
               value.length === 0
@@ -100,12 +100,15 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
           )}
         </form.AppField>
         <form.AppField
-          name={"signingName"}
+          name="signingName"
           validators={{
             onChange: ({ value }) => {
-              if (value?.length === 0) return "Du må fylle inn foresatt sitt fulle navn";
-              if (data.isUnderage && data.name === value)
+              if (value?.length === 0) {
+                return "Du må fylle inn foresatt sitt fulle navn";
+              }
+              if (data.isUnderage && data.name === value) {
                 return "Foresattes navn må være forskjellig fra elevens navn";
+              }
               return null;
             },
           }}
@@ -123,7 +126,7 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
           onClick={form.handleSubmit}
           loading={signMutation.isPending}
           leftSection={<IconChecks />}
-          color={"green"}
+          color="green"
         >
           Signer
         </Button>

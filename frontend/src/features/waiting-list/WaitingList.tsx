@@ -28,7 +28,7 @@ export default function WaitingList() {
 
   if (itemsError || branchesError || waitingListError) {
     return (
-      <ErrorAlert title={"Klarte ikke laste inn venteliste"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
+      <ErrorAlert title="Klarte ikke laste inn venteliste">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
     );
   }
 

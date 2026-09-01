@@ -6,7 +6,9 @@ const loadedScripts = new Map<string, Promise<void>>();
  */
 export default function loadScriptOnce(src: string): Promise<void> {
   const existing = loadedScripts.get(src);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
   const promise = new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
     script.src = src;

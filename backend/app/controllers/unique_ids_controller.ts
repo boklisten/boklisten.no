@@ -1,5 +1,5 @@
 import string from "@adonisjs/core/helpers/string";
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 import encryption from "@adonisjs/core/services/encryption";
 
 import UnauthorizedException from "#exceptions/unauthorized_exception";
@@ -14,8 +14,9 @@ export default class UniqueIdsController {
   }
 
   async downloadUniqueIdPdf(ctx: HttpContext) {
-    if (!encryption.decrypt(ctx.request.param("token"), tokenPurpose))
+    if (!encryption.decrypt(ctx.request.param("token"), tokenPurpose)) {
       throw new UnauthorizedException("Invalid token");
+    }
 
     const pdf = await UniqueIdGeneratorService.generateUniqueIdPdf();
     ctx.response

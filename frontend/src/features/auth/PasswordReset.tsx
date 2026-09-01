@@ -61,7 +61,7 @@ export default function PasswordReset({ id }: { id: string }) {
           {message ??
             "Lenken har utløpt. Du kan be om å få tilsendt en ny lenke på 'glemt passord'-siden"}
         </ErrorAlert>
-        <TanStackAnchor to={"/auth/forgot"}>Gå til glemt passord</TanStackAnchor>
+        <TanStackAnchor to="/auth/forgot">Gå til glemt passord</TanStackAnchor>
       </Activity>
 
       <Activity
@@ -71,22 +71,22 @@ export default function PasswordReset({ id }: { id: string }) {
           <ErrorAlert title={GENERIC_ERROR_TEXT}>{apiError}</ErrorAlert>
         </Activity>
         <form.AppField
-          name={"newPassword"}
+          name="newPassword"
           validators={{
             onBlur: ({ value }) => newPasswordFieldValidator(value),
           }}
         >
-          {(field) => <field.NewPasswordField label={"Nytt passord"} />}
+          {(field) => <field.NewPasswordField label="Nytt passord" />}
         </form.AppField>
         <Button onClick={form.handleSubmit}>Lag nytt passord</Button>
-        <TanStackAnchor to={"/auth/login"}>Tilbake til innloggingssiden</TanStackAnchor>
+        <TanStackAnchor to="/auth/login">Tilbake til innloggingssiden</TanStackAnchor>
       </Activity>
 
       <Activity
         mode={!isExpired && resetPasswordMutation.isSuccess && !apiError ? "visible" : "hidden"}
       >
         <SuccessAlert>Passordet ble oppdatert! Du kan nå logge inn.</SuccessAlert>
-        <TanStackAnchor to={"/auth/login"}>
+        <TanStackAnchor to="/auth/login">
           <Button>Logg inn</Button>
         </TanStackAnchor>
       </Activity>

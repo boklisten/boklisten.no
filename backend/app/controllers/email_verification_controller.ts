@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import DispatchService from "#services/dispatch_service";
 import { PermissionService } from "#services/permission_service";

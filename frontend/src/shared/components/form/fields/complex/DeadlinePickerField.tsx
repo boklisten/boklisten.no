@@ -1,4 +1,5 @@
-import { DatePickerInput, type DatePickerInputProps } from "@mantine/dates";
+import { DatePickerInput } from "@mantine/dates";
+import type { DatePickerInputProps } from "@mantine/dates";
 import dayjs from "dayjs";
 
 import { useFieldContext } from "@/shared/hooks/form";
@@ -38,9 +39,9 @@ export default function DeadlinePickerField(props: DatePickerInputProps) {
     <DatePickerInput
       clearable
       presets={calculateDeadlineOptions()}
-      label={"Velg frist"}
-      valueFormat={"DD/MM/YYYY"}
-      placeholder={"DD/MM/YYYY"}
+      label="Velg frist"
+      valueFormat="DD/MM/YYYY"
+      placeholder="DD/MM/YYYY"
       minDate={dayjs().subtract(1, "month").toDate()}
       maxDate={dayjs().add(5, "years").toDate()}
       {...props}

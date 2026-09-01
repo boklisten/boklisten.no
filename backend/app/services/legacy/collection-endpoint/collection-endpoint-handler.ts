@@ -1,17 +1,17 @@
-import { JwtPayload } from "jsonwebtoken";
-import { ParsedQs } from "qs";
+import type { JwtPayload } from "jsonwebtoken";
+import type { ParsedQs } from "qs";
 
 import CollectionEndpointDocumentAuth from "#services/legacy/collection-endpoint/collection-endpoint-document-auth";
 import { Hook } from "#services/legacy/hook";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import type { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { isBoolean, isNotNullish } from "#services/legacy/typescript-helpers";
-import { BlStorageData, BlStorageHandler } from "#services/storage_service";
-import { BlDocument } from "#shared/bl-document";
+import type { BlStorageData, BlStorageHandler } from "#services/storage_service";
+import type { BlDocument } from "#shared/bl-document";
 import { BlError } from "#shared/bl-error";
 import { parsePermission } from "#shared/user-permission";
-import { BlApiRequest } from "#types/bl-api-request";
-import { BlCollection, BlEndpoint } from "#types/bl-collection";
+import type { BlApiRequest } from "#types/bl-api-request";
+import type { BlCollection, BlEndpoint } from "#types/bl-collection";
 
 function onGetAll(collection: BlCollection, endpoint: BlEndpoint) {
   return async function onRequest(blApiRequest: BlApiRequest) {
@@ -51,9 +51,7 @@ function onGetAll(collection: BlCollection, endpoint: BlEndpoint) {
 
       return collection.storage
         .getAll(permission)
-        .then((docs) => {
-          return docs;
-        })
+        .then((docs) => docs)
         .catch((blError: BlError) => {
           throw blError;
         });
@@ -162,7 +160,7 @@ async function handleEndpointRequest({
 
   const blApiRequest = {
     documentId,
-    query: query,
+    query,
     data: isNotNullish(beforeData) && !isBoolean(beforeData) ? beforeData : requestData,
     user: accessToken
       ? {

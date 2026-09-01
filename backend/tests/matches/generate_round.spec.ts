@@ -1,7 +1,8 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";

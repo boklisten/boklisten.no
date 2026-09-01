@@ -18,5 +18,5 @@ export const Route = createFileRoute("/(offentlig)/info/pupils")({
 });
 
 function PupilsPage() {
-  return <EditableTextReadOnly dataKey={"vgs_elever"} />;
+  return <EditableTextReadOnly dataKey="vgs_elever" />;
 }

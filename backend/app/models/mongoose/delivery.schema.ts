@@ -1,8 +1,8 @@
 import { Schema } from "mongoose";
 
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
-import { BlSchema } from "#services/storage_service";
-import { Delivery } from "#shared/delivery/delivery";
+import type { BlSchema } from "#services/storage_service";
+import type { Delivery } from "#shared/delivery/delivery";
 
 // Shared shape for both methods: "branch" uses only { branch }, "bring" uses the rest.
 // bl-admin's tracking-number flow also writes { branch, estimatedDelivery: null } on bring

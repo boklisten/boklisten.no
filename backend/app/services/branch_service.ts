@@ -1,6 +1,6 @@
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { StorageService } from "#services/storage_service";
-import { Branch } from "#shared/branch";
+import type { Branch } from "#shared/branch";
 
 export const BranchService = {
   async getByName(branchName: string | undefined): Promise<Branch | null> {

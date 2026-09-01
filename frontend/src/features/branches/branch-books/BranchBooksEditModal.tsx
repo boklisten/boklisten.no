@@ -4,7 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { bookCountLabel } from "@/features/branches/branch-books/bookCountLabel";
-import { BranchBooksEditKind, BranchBooksEditTarget } from "@/features/branches/branch-books/types";
+import type {
+  BranchBooksEditKind,
+  BranchBooksEditTarget,
+} from "@/features/branches/branch-books/types";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -49,8 +52,10 @@ export default function BranchBooksEditModal({
   const targetBranch = branches?.find((branch) => branch.id === selectedBranchId);
 
   async function submit() {
-    if (isSubmitting) return;
-    const deadline = form.state.values.deadline;
+    if (isSubmitting) {
+      return;
+    }
+    const { deadline } = form.state.values;
     const sentence =
       kind === "deadline"
         ? `Setter ny frist ${norwegianTime(deadline).format("D. MMMM YYYY")} for ${target.description}.`
@@ -61,7 +66,9 @@ export default function BranchBooksEditModal({
       confirmLabel: "Bekreft",
       zIndex: 1000,
     });
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
     setIsSubmitting(true);
     try {
       await onSubmit(
@@ -88,28 +95,28 @@ export default function BranchBooksEditModal({
         />
       )}
       {kind === "deadline" ? (
-        <form.AppField name={"deadline"}>
-          {(field) => <field.DeadlinePickerField label={"Velg ny frist"} />}
+        <form.AppField name="deadline">
+          {(field) => <field.DeadlinePickerField label="Velg ny frist" />}
         </form.AppField>
       ) : (
         <SelectBranchTreeView
-          label={"Velg ny filial"}
+          label="Velg ny filial"
           branches={branches ?? []}
           onSelect={setSelectedBranchId}
         />
       )}
       {kind === "branch" && selectedBranchId === branchId && (
-        <Alert icon={<IconInfoCircle />} color={"gray"}>
+        <Alert icon={<IconInfoCircle />} color="gray">
           Bøkene er allerede på denne filialen. Velg en annen filial.
         </Alert>
       )}
       {kind === "branch" && branchMoveNote && (
-        <Alert icon={<IconInfoCircle />} color={"yellow"}>
+        <Alert icon={<IconInfoCircle />} color="yellow">
           {branchMoveNote}
         </Alert>
       )}
-      <Group justify={"flex-end"}>
-        <Button variant={"default"} onClick={onClose}>
+      <Group justify="flex-end">
+        <Button variant="default" onClick={onClose}>
           Avbryt
         </Button>
         <form.Subscribe selector={(state) => state.values.deadline}>

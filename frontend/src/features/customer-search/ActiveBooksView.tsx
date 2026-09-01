@@ -29,7 +29,7 @@ function deadlineLabel(book: ActiveCustomerItem): string {
 function DeadlineText({ book }: { book: ActiveCustomerItem }) {
   const overdue = isOverdue(book.deadline);
   return (
-    <Text size={"sm"} c={overdue ? "red" : "dimmed"} fw={overdue ? 600 : undefined}>
+    <Text size="sm" c={overdue ? "red" : "dimmed"} fw={overdue ? 600 : undefined}>
       {deadlineLabel(book)}
     </Text>
   );
@@ -37,7 +37,7 @@ function DeadlineText({ book }: { book: ActiveCustomerItem }) {
 
 function OverdueBadge() {
   return (
-    <Badge color={"red"} variant={"filled"} size={"sm"} style={{ flexShrink: 0 }}>
+    <Badge color="red" variant="filled" size="sm" style={{ flexShrink: 0 }}>
       Over frist
     </Badge>
   );
@@ -57,9 +57,13 @@ function buildDeliverToNames(
   const names = new Map<string, string>();
   for (const book of books) {
     const index = pending.findIndex((peerBook) => itemsAreEquivalent(peerBook.id, book.item));
-    if (index === -1) continue;
+    if (index === -1) {
+      continue;
+    }
     const [peerBook] = pending.splice(index, 1);
-    if (peerBook) names.set(book.id, peerBook.personName);
+    if (peerBook) {
+      names.set(book.id, peerBook.personName);
+    }
   }
   return names;
 }
@@ -72,11 +76,11 @@ function BookCards({
   deliverToNames: Map<string, string>;
 }) {
   return (
-    <Stack gap={"xs"} hiddenFrom={"sm"}>
+    <Stack gap="xs" hiddenFrom="sm">
       {books.map((book) => {
         const deliverToName = deliverToNames.get(book.id);
         return (
-          <Card key={book.id} withBorder radius={"md"} padding={"sm"}>
+          <Card key={book.id} withBorder radius="md" padding="sm">
             <Text fw={600} lh={1.3}>
               {book.title}
             </Text>
@@ -85,13 +89,13 @@ function BookCards({
                 <PeerBadge>Leveres til {deliverToName}</PeerBadge>
               </Group>
             )}
-            <Group justify={"space-between"} gap={6} mt={4}>
+            <Group justify="space-between" gap={6} mt={4}>
               <Group gap={6}>
                 <DeadlineText book={book} />
                 {isOverdue(book.deadline) && <OverdueBadge />}
               </Group>
               {book.blid && (
-                <Text size={"sm"} c={"dimmed"} ff={"monospace"}>
+                <Text size="sm" c="dimmed" ff="monospace">
                   {book.blid}
                 </Text>
               )}
@@ -111,7 +115,7 @@ function BookTable({
   deliverToNames: Map<string, string>;
 }) {
   return (
-    <Box visibleFrom={"sm"}>
+    <Box visibleFrom="sm">
       <Table striped>
         <Table.Thead>
           <Table.Tr>
@@ -126,14 +130,14 @@ function BookTable({
             return (
               <Table.Tr key={book.id}>
                 <Table.Td>
-                  <Stack gap={2} align={"flex-start"}>
+                  <Stack gap={2} align="flex-start">
                     <Text fw={500}>{book.title}</Text>
                     {deliverToName && <PeerBadge>Leveres til {deliverToName}</PeerBadge>}
                   </Stack>
                 </Table.Td>
                 <Table.Td>{book.blid ? <Code>{book.blid}</Code> : "–"}</Table.Td>
                 <Table.Td>
-                  <Group gap={6} wrap={"nowrap"}>
+                  <Group gap={6} wrap="nowrap">
                     <DeadlineText book={book} />
                     {isOverdue(book.deadline) && <OverdueBadge />}
                   </Group>
@@ -164,10 +168,10 @@ export default function ActiveBooksView({ customerId }: { customerId: string }) 
 
   if (isPending) {
     return (
-      <Stack gap={"xs"}>
-        <Skeleton height={20} width={"40%"} radius={"sm"} />
-        <Skeleton height={44} radius={"sm"} />
-        <Skeleton height={44} radius={"sm"} />
+      <Stack gap="xs">
+        <Skeleton height={20} width="40%" radius="sm" />
+        <Skeleton height={44} radius="sm" />
+        <Skeleton height={44} radius="sm" />
       </Stack>
     );
   }
@@ -184,13 +188,13 @@ export default function ActiveBooksView({ customerId }: { customerId: string }) 
   const deliverToNames = buildDeliverToNames(books, matches ?? [], customerId);
 
   return (
-    <Stack gap={"xs"}>
-      <Group gap={"xs"}>
-        <Text size={"sm"} c={"dimmed"}>
+    <Stack gap="xs">
+      <Group gap="xs">
+        <Text size="sm" c="dimmed">
           {books.length} {books.length === 1 ? "aktiv bok" : "aktive bøker"}
         </Text>
         {overdueCount > 0 && (
-          <Badge color={"red"} variant={"light"}>
+          <Badge color="red" variant="light">
             {overdueCount} over frist
           </Badge>
         )}

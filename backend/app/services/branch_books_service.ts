@@ -95,11 +95,15 @@ export function clusterDeadlines(
   const claimed = new Set<number>();
   const clusters: { anchor: Date; members: Date[] }[] = [];
   for (const [anchorTime] of sorted) {
-    if (claimed.has(anchorTime)) continue;
+    if (claimed.has(anchorTime)) {
+      continue;
+    }
     const members = sorted
       .map(([time]) => time)
       .filter((time) => !claimed.has(time) && Math.abs(time - anchorTime) < DEADLINE_PADDING_MS);
-    for (const memberTime of members) claimed.add(memberTime);
+    for (const memberTime of members) {
+      claimed.add(memberTime);
+    }
     clusters.push({
       anchor: new Date(anchorTime),
       members: members.toSorted((a, b) => a - b).map((time) => new Date(time)),
@@ -116,7 +120,9 @@ export function buildSummary(rows: SummaryRow[]): BranchBooksSummary {
     const memberTimes = new Set(members.map((member) => member.getTime()));
     const titleById = new Map<string, BranchBooksTitle>();
     for (const row of rows) {
-      if (!memberTimes.has(row.deadline.getTime())) continue;
+      if (!memberTimes.has(row.deadline.getTime())) {
+        continue;
+      }
       const entry = titleById.get(row.itemId) ?? {
         itemId: row.itemId,
         title: row.title,
@@ -328,8 +334,12 @@ export const BranchBooksService = {
       }),
     };
     const set: Record<string, unknown> = { lastUpdated: new Date() };
-    if (update.deadline) set["deadline"] = new Date(update.deadline);
-    if (update.branchId) set["handoutInfo.handoutById"] = new ObjectId(update.branchId);
+    if (update.deadline) {
+      set["deadline"] = new Date(update.deadline);
+    }
+    if (update.branchId) {
+      set["handoutInfo.handoutById"] = new ObjectId(update.branchId);
+    }
     const result = await StorageService.CustomerItems.updateMany(mongoFilter, { $set: set });
     return { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount };
   },

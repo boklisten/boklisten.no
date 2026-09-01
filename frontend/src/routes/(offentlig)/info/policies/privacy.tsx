@@ -18,5 +18,5 @@ export const Route = createFileRoute("/(offentlig)/info/policies/privacy")({
 });
 
 function PrivacyPage() {
-  return <EditableTextReadOnly dataKey={"personvernavtale"} />;
+  return <EditableTextReadOnly dataKey="personvernavtale" />;
 }

@@ -1,4 +1,4 @@
-import { ParsedQs } from "qs";
+import type { ParsedQs } from "qs";
 
 import { DbQueryBooleanFilter } from "#services/legacy/query/db-query-boolean-filter";
 import { DbQueryDateFilter } from "#services/legacy/query/db-query-date-filter";
@@ -11,21 +11,22 @@ import { DbQueryRegexFilter } from "#services/legacy/query/db-query-regex-filter
 import { DbQuerySkipFilter } from "#services/legacy/query/db-query-skip-filter";
 import { DbQuerySortFilter } from "#services/legacy/query/db-query-sort-filter";
 import { DbQueryStringFilter } from "#services/legacy/query/db-query-string-filter";
-import { DbQueryValidParams, ValidParameter } from "#services/legacy/query/db-query-valid-params";
+import type { ValidParameter } from "#services/legacy/query/db-query-valid-params";
+import { DbQueryValidParams } from "#services/legacy/query/db-query-valid-params";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 
 export class SEDbQueryBuilder {
-  private dbQueryBooleanFilter: DbQueryBooleanFilter;
-  private dbQueryDateFilter: DbQueryDateFilter;
-  private dbQueryLimitFilter: DbQueryLimitFilter;
-  private dbQueryNumberFilter: DbQueryNumberFilter;
-  private dbQueryOnlyGetFilter: DbQueryOnlyGetFilter;
-  private dbQueryRegexFilter: DbQueryRegexFilter;
-  private dbQuerySkipFilter: DbQuerySkipFilter;
-  private dbQuerySortFilter: DbQuerySortFilter;
-  private dbQueryStringFilter: DbQueryStringFilter;
-  private dbQueryObjectIdFilter: DbQueryObjectIdFilter;
-  private dbQueryExpandFilter: DbQueryExpandFilter;
+  private readonly dbQueryBooleanFilter: DbQueryBooleanFilter;
+  private readonly dbQueryDateFilter: DbQueryDateFilter;
+  private readonly dbQueryLimitFilter: DbQueryLimitFilter;
+  private readonly dbQueryNumberFilter: DbQueryNumberFilter;
+  private readonly dbQueryOnlyGetFilter: DbQueryOnlyGetFilter;
+  private readonly dbQueryRegexFilter: DbQueryRegexFilter;
+  private readonly dbQuerySkipFilter: DbQuerySkipFilter;
+  private readonly dbQuerySortFilter: DbQuerySortFilter;
+  private readonly dbQueryStringFilter: DbQueryStringFilter;
+  private readonly dbQueryObjectIdFilter: DbQueryObjectIdFilter;
+  private readonly dbQueryExpandFilter: DbQueryExpandFilter;
 
   constructor() {
     this.dbQueryBooleanFilter = new DbQueryBooleanFilter();
@@ -87,17 +88,20 @@ export class SEDbQueryBuilder {
       );
       databaseQuery.expandFilters = this.dbQueryExpandFilter.getExpandFilters(query);
     } catch (error) {
-      if (error instanceof TypeError)
-        throw new TypeError("TypeError when building query, reason: " + error.message, {
+      if (error instanceof TypeError) {
+        throw new TypeError(`TypeError when building query, reason: ${error.message}`, {
           cause: error,
         });
-      if (error instanceof ReferenceError)
-        throw new ReferenceError("ReferenceError when building query, reason: " + error.message);
-      if (error instanceof RangeError)
-        throw new RangeError("RangeError when building query, reason: " + error.message);
+      }
+      if (error instanceof ReferenceError) {
+        throw new ReferenceError(`ReferenceError when building query, reason: ${error.message}`);
+      }
+      if (error instanceof RangeError) {
+        throw new RangeError(`RangeError when building query, reason: ${error.message}`);
+      }
 
       // @ts-expect-error fixme: auto ignored
-      throw new Error("Error when building query, reason: " + error.message, { cause: error });
+      throw new Error(`Error when building query, reason: ${error.message}`, { cause: error });
     }
 
     return databaseQuery;

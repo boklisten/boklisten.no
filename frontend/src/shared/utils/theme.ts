@@ -1,4 +1,5 @@
-import { type CSSVariablesResolver, createTheme } from "@mantine/core";
+import { createTheme } from "@mantine/core";
+import type { CSSVariablesResolver } from "@mantine/core";
 
 const theme = createTheme({
   colors: {

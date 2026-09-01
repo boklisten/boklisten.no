@@ -1,4 +1,5 @@
-import { Switch, type SwitchProps } from "@mantine/core";
+import { Switch } from "@mantine/core";
+import type { SwitchProps } from "@mantine/core";
 
 import { useFieldContext } from "@/shared/hooks/form";
 

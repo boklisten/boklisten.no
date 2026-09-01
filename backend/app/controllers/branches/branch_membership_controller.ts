@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 import moment from "moment";
 
 import { BranchRelationshipService } from "#services/branch_relationship_service";

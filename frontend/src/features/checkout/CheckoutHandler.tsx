@@ -40,14 +40,16 @@ export default function CheckoutHandler() {
           void navigate({ to: "/kasse/bekreft", search: { orderId } });
           break;
         }
-        case "payment":
+        case "payment": {
           void navigate({
             to: "/kasse/betaling",
             search: { token, checkoutFrontendUrl },
           });
           break;
-        default:
+        }
+        default: {
           throw new Error("Unknown checkout step");
+        }
       }
     },
     onError: (error) => {
@@ -57,7 +59,9 @@ export default function CheckoutHandler() {
   });
 
   function initializeCheckout() {
-    if (hasStarted) return;
+    if (hasStarted) {
+      return;
+    }
     setHasStarted(true);
     initializeCheckoutMutation.mutate(cart.get());
   }

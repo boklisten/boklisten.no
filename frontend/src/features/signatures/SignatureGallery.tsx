@@ -2,7 +2,6 @@ import {
   Badge,
   Box,
   Card,
-  type CardProps,
   Center,
   Group,
   Image,
@@ -13,6 +12,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import type { CardProps } from "@mantine/core";
 import {
   useFocusWithin,
   useHover,
@@ -35,7 +35,7 @@ import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 const GRID_COLS = { base: 1, xs: 2, md: 3, lg: 4, xl: 5 };
 
 const CardAnchor = forwardRef<HTMLAnchorElement, Omit<CardProps, "component">>((props, ref) => (
-  <Card ref={ref} component={"a"} {...props} />
+  <Card ref={ref} component="a" {...props} />
 ));
 const CardLink = createLink(CardAnchor);
 
@@ -62,13 +62,13 @@ function SignatureCard({ signature }: { signature: GallerySignature }) {
   return (
     <CardLink
       ref={ref}
-      to={"/admin/kundesok"}
+      to="/admin/kundesok"
       search={{ kunde: signature.customerDetailsId }}
       aria-label={`Åpne ${signature.customerName} i kundesøk`}
       withBorder
-      radius={"md"}
-      padding={"sm"}
-      c={"var(--mantine-color-text)"}
+      radius="md"
+      padding="sm"
+      c="var(--mantine-color-text)"
       style={{
         borderColor: `var(--mantine-color-${active ? "brand-text" : "default-border"})`,
         boxShadow: active ? "var(--mantine-shadow-xs)" : "none",
@@ -76,17 +76,17 @@ function SignatureCard({ signature }: { signature: GallerySignature }) {
         textDecoration: "none",
       }}
     >
-      <Card.Section withBorder bg={"white"} p={"xs"} pos={"relative"}>
+      <Card.Section withBorder bg="white" p="xs" pos="relative">
         <Image
           src={`data:image/webp;base64,${signature.image}`}
           alt={`Signatur fra ${signature.signingName}`}
-          fit={"contain"}
+          fit="contain"
           style={{ aspectRatio: "3 / 1" }}
         />
         <Text
-          size={"xs"}
-          c={"dimmed"}
-          pos={"absolute"}
+          size="xs"
+          c="dimmed"
+          pos="absolute"
           right={6}
           bottom={4}
           px={4}
@@ -95,9 +95,9 @@ function SignatureCard({ signature }: { signature: GallerySignature }) {
           {signature.signedAtText}
         </Text>
       </Card.Section>
-      <Stack gap={4} pt={"sm"}>
-        <Group justify={"space-between"} gap={"xs"} wrap={"nowrap"}>
-          <Text size={"sm"} fw={600} truncate>
+      <Stack gap={4} pt="sm">
+        <Group justify="space-between" gap="xs" wrap="nowrap">
+          <Text size="sm" fw={600} truncate>
             {signature.customerName}
           </Text>
           <IconArrowRight
@@ -112,18 +112,18 @@ function SignatureCard({ signature }: { signature: GallerySignature }) {
           />
         </Group>
         {signature.signedByGuardian && (
-          <Text size={"xs"} truncate>
+          <Text size="xs" truncate>
             Signert av {signature.signingName}
           </Text>
         )}
         {(signature.branchName || signature.permission !== "customer") && (
           <Group gap={4}>
             {signature.branchName && (
-              <Badge size={"sm"} variant={"light"}>
+              <Badge size="sm" variant="light">
                 {signature.branchName}
               </Badge>
             )}
-            <PermissionBadge permission={signature.permission} size={"sm"} />
+            <PermissionBadge permission={signature.permission} size="sm" />
           </Group>
         )}
       </Stack>
@@ -133,9 +133,9 @@ function SignatureCard({ signature }: { signature: GallerySignature }) {
 
 function GallerySkeleton() {
   return (
-    <SimpleGrid cols={GRID_COLS} spacing={"md"}>
+    <SimpleGrid cols={GRID_COLS} spacing="md">
       {Array.from({ length: 10 }, (_, index) => (
-        <Skeleton key={index} height={160} radius={"md"} />
+        <Skeleton key={index} height={160} radius="md" />
       ))}
     </SimpleGrid>
   );
@@ -160,7 +160,9 @@ export default function SignatureGallery() {
   const nearingBottom = entry?.isIntersecting ?? false;
 
   useEffect(() => {
-    if (nearingBottom && hasNextPage && !isFetching) void fetchNextPage();
+    if (nearingBottom && hasNextPage && !isFetching) {
+      void fetchNextPage();
+    }
   }, [nearingBottom, hasNextPage, isFetching, fetchNextPage]);
 
   const signatures = data?.pages.flatMap((page) => page.signatures) ?? [];
@@ -169,20 +171,20 @@ export default function SignatureGallery() {
     <Stack>
       <Stack gap={4}>
         <Title>Signaturer</Title>
-        <Text c={"dimmed"}>
+        <Text c="dimmed">
           De nyeste gyldige signaturene, nyest først. Trykk på en signatur for å åpne kunden i
           kundesøk.
         </Text>
       </Stack>
       {isLoading && <GallerySkeleton />}
       {isError && (
-        <ErrorAlert title={"Klarte ikke laste signaturer"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
+        <ErrorAlert title="Klarte ikke laste signaturer">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
       )}
       {!isLoading && !isError && signatures.length === 0 && (
-        <Text c={"dimmed"}>Ingen gyldige signaturer å vise.</Text>
+        <Text c="dimmed">Ingen gyldige signaturer å vise.</Text>
       )}
       {signatures.length > 0 && (
-        <SimpleGrid cols={GRID_COLS} spacing={"md"}>
+        <SimpleGrid cols={GRID_COLS} spacing="md">
           {signatures.map((signature) => (
             <SignatureCard key={signature.id} signature={signature} />
           ))}
@@ -190,12 +192,12 @@ export default function SignatureGallery() {
       )}
       <Box ref={sentinelRef} />
       {isFetchingNextPage && (
-        <Center py={"md"}>
-          <Loader size={"sm"} />
+        <Center py="md">
+          <Loader size="sm" />
         </Center>
       )}
       {!isLoading && !isError && !hasNextPage && signatures.length > 0 && (
-        <Text ta={"center"} c={"dimmed"} size={"sm"} py={"md"}>
+        <Text ta="center" c="dimmed" size="sm" py="md">
           Ingen flere signaturer
         </Text>
       )}

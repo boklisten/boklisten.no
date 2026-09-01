@@ -20,7 +20,7 @@ export const Route = createFileRoute("/(offentlig)/auth/reset/$id")({
 function PasswordResetPage() {
   const { id } = Route.useParams();
   return (
-    <Container size={"xs"}>
+    <Container size="xs">
       <Stack>
         <Title>Lag nytt passord</Title>
         <PasswordReset id={id} />

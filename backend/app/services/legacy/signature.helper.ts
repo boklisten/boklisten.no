@@ -4,8 +4,8 @@ import { OrderActive } from "#services/legacy/collections/order/helpers/order-ac
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { UserDetail } from "#shared/user-detail";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { UserDetail } from "#shared/user-detail";
 
 const signatureRequiringOrderItemTypes = new Set(["rent", "partly-payment"]);
 
@@ -24,13 +24,17 @@ export async function reconcileSignatureTask(userDetail: UserDetail): Promise<Us
   const taskIsSet = userDetail.tasks?.signAgreement === true;
 
   if (await userHasValidSignature(userDetail)) {
-    if (!taskIsSet) return userDetail;
+    if (!taskIsSet) {
+      return userDetail;
+    }
     return await StorageService.UserDetails.update(userDetail.id, {
       "tasks.signAgreement": false,
     });
   }
 
-  if (taskIsSet) return userDetail;
+  if (taskIsSet) {
+    return userDetail;
+  }
 
   if (
     (await hasOpenSignatureRequiringOrder(userDetail.id)) ||

@@ -1,12 +1,13 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { UserDetailValidOperation } from "#services/legacy/collections/user-detail/operations/user-detail-valid.operation";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
-import { UserDetail } from "#shared/user-detail";
-import { BlApiRequest } from "#types/bl-api-request";
+import type { UserDetail } from "#shared/user-detail";
+import type { BlApiRequest } from "#types/bl-api-request";
 import { mock } from "#tests/test-doubles";
 
 test.group("UserDetailValidOperation", (group) => {

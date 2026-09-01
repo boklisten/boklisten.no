@@ -22,9 +22,9 @@ function AdminPageLayout() {
     <AppShell
       header={{ height: 65 }}
       navbar={{ breakpoint: "xs", width: 200, collapsed: { mobile: true } }}
-      padding={"md"}
+      padding="md"
     >
-      <AppShellHeader bg={"brand"}>
+      <AppShellHeader bg="brand">
         <AdminPageHeader />
       </AppShellHeader>
       <AppShellNavbar>

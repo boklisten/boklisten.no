@@ -2,7 +2,8 @@ import { Alert, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { IconAlertTriangle, IconTrash } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 
-import { useRefreshRounds, type Round } from "@/features/matches/rounds/useRounds";
+import { useRefreshRounds } from "@/features/matches/rounds/useRounds";
+import type { Round } from "@/features/matches/rounds/useRounds";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -30,7 +31,7 @@ export default function DeleteMatchesModal({
   );
 
   return (
-    <Modal opened={opened} onClose={onClose} title={"Slett overleveringene"}>
+    <Modal opened={opened} onClose={onClose} title="Slett overleveringene">
       <Stack>
         <Text>
           Dette sletter {round.matchCount}{" "}
@@ -41,8 +42,8 @@ export default function DeleteMatchesModal({
 
         {round.handoverCount > 0 && (
           <Alert
-            color={"orange"}
-            variant={"light"}
+            color="orange"
+            variant="light"
             icon={<IconAlertTriangle size={18} />}
             title={`${round.handoverCount} ${
               round.handoverCount === 1 ? "bok er" : "bøker er"
@@ -52,17 +53,17 @@ export default function DeleteMatchesModal({
           </Alert>
         )}
 
-        <Text size={"sm"} c={"dimmed"}>
+        <Text size="sm" c="dimmed">
           Elevene mister overleveringene sine, og runden blir skjult for dem til den er generert på
           nytt.
         </Text>
 
-        <Group justify={"flex-end"}>
-          <Button variant={"default"} onClick={onClose}>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose}>
             Avbryt
           </Button>
           <Button
-            color={"red"}
+            color="red"
             leftSection={<IconTrash size={16} />}
             loading={deleteMutation.isPending}
             onClick={() => deleteMutation.mutate({ params: { id: round.id } })}

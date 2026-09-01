@@ -16,7 +16,7 @@ export default function MatchListItemCard({
 }) {
   return (
     <TanStackAnchor
-      underline={"never"}
+      underline="never"
       to={admin ? "/admin/overleveringer/$matchId" : "/overleveringer/$matchId"}
       params={{ matchId }}
       search={admin ? (previous) => previous : undefined}
@@ -26,9 +26,9 @@ export default function MatchListItemCard({
         withBorder
         bg={finished ? "rgba(134, 200, 134, 0.2)" : ""}
       >
-        <Stack gap={"xs"}>
+        <Stack gap="xs">
           {children}
-          <Button mt={"md"} variant={finished ? "transparent" : "filled"} color={"green"}>
+          <Button mt="md" variant={finished ? "transparent" : "filled"} color="green">
             Åpne
           </Button>
         </Stack>

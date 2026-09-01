@@ -16,8 +16,8 @@ export const Route = createFileRoute("/(offentlig)/kasse/")({
 function CheckoutPage() {
   return (
     <AuthGuard>
-      <Container size={"md"}>
-        <Stack align={"center"} gap={"xs"}>
+      <Container size="md">
+        <Stack align="center" gap="xs">
           <CheckoutHandler />
         </Stack>
       </Container>

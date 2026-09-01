@@ -18,5 +18,5 @@ export const Route = createFileRoute("/(offentlig)/info/policies/terms")({
 });
 
 function TermsPage() {
-  return <EditableTextReadOnly dataKey={"vilkaar"} />;
+  return <EditableTextReadOnly dataKey="vilkaar" />;
 }

@@ -1,14 +1,12 @@
-import BranchManager, {
-  type BranchManagerTab,
-  parseBranchManagerTab,
-} from "@/features/branches/BranchManager";
+import BranchManager, { parseBranchManagerTab } from "@/features/branches/BranchManager";
+import type { BranchManagerTab } from "@/features/branches/BranchManager";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 
-type BranchManagerSearch = {
+interface BranchManagerSearch {
   filial?: string;
   filialFane?: BranchManagerTab;
-};
+}
 
 export const Route = createFileRoute("/(administrasjon)/admin/database/filialer")({
   validateSearch: (search: Record<string, unknown>): BranchManagerSearch => ({

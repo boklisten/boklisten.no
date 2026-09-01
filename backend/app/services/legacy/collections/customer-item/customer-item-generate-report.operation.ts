@@ -3,8 +3,8 @@ import { ObjectId } from "mongodb";
 
 import { StorageService } from "#services/storage_service";
 import { BlapiResponse } from "#shared/blapi-response";
-import { BlApiRequest } from "#types/bl-api-request";
-import { Operation } from "#types/operation";
+import type { BlApiRequest } from "#types/bl-api-request";
+import type { Operation } from "#types/operation";
 
 const customerItemGenerateReportValidator = vine.object({
   branchFilter: vine.array(vine.string()).optional(),
@@ -42,8 +42,8 @@ export class CustomerItemGenerateReportOperation implements Operation {
     const reportData = await StorageService.CustomerItems.aggregate([
       {
         $match: {
-          returned: returned,
-          buyout: buyout,
+          returned,
+          buyout,
           ...filterByHandoutBranchIfPresent,
           ...creationTimeFilter,
         },

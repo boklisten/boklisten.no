@@ -11,7 +11,9 @@ import env from "#start/env";
 export default class extends BaseSchema {
   override async up() {
     this.defer(async () => {
-      if (env.get("API_ENV") === "test") return;
+      if (env.get("API_ENV") === "test") {
+        return;
+      }
 
       const connection = await mongoose
         .createConnection(env.get("MONGODB_URI"), {
@@ -20,7 +22,9 @@ export default class extends BaseSchema {
         .asPromise();
       try {
         const mongo = connection.db;
-        if (!mongo) throw new Error("mongoose connection has no db handle");
+        if (!mongo) {
+          throw new Error("mongoose connection has no db handle");
+        }
 
         const result = await mongo
           .collection("branchitems")

@@ -1,7 +1,8 @@
 import { Group, Text } from "@mantine/core";
 import { IconChevronsRight, IconSwitchHorizontal } from "@tabler/icons-react";
 
-import { partyName, type ViewerMatch } from "@/features/matches/forViewer";
+import { partyName } from "@/features/matches/forViewer";
+import type { ViewerMatch } from "@/features/matches/forViewer";
 
 export function formatActionsString(handoffItems: number, pickupItems: number) {
   const hasHandoffItems = handoffItems > 0;
@@ -49,7 +50,7 @@ export const FormattedDatetime = ({ date }: { date: Date }) => {
   return (
     <Group gap={0}>
       <Text>{timeString}</Text>
-      <Text c={"dimmed"}>, {dateString}</Text>
+      <Text c="dimmed">, {dateString}</Text>
     </Group>
   );
 };
@@ -61,12 +62,12 @@ export const MatchTitle = ({ viewerMatch }: { viewerMatch: ViewerMatch }) => {
   const receives = viewerMatch.toReceive.length > 0;
 
   const me = (
-    <Text c={"dimmed"} fz={"inherit"}>
+    <Text c="dimmed" fz="inherit">
       Meg
     </Text>
   );
   const them = (
-    <Text fw={"bold"} fz={"inherit"}>
+    <Text fw="bold" fz="inherit">
       {otherLabel}
     </Text>
   );

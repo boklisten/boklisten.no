@@ -3,7 +3,7 @@ import { IconPhone, IconUser } from "@tabler/icons-react";
 
 export default function AdminMatchContact({ name, phone }: { name: string; phone: string }) {
   return (
-    <Group gap={"lg"}>
+    <Group gap="lg">
       <Group gap={5}>
         <IconUser />
         <Text>{name}</Text>

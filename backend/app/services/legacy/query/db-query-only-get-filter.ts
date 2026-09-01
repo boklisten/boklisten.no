@@ -1,4 +1,4 @@
-import { ParsedQs } from "qs";
+import type { ParsedQs } from "qs";
 
 export interface OnlyGetFilter {
   fieldName: string;
@@ -11,7 +11,9 @@ export class DbQueryOnlyGetFilter {
       throw new TypeError("query can not be undefined or empty");
     }
 
-    if (!query["og"] || validOnlyGetParams.length <= 0) return [];
+    if (!query["og"] || validOnlyGetParams.length <= 0) {
+      return [];
+    }
 
     return this.generateOnlyGetFilters(query["og"], validOnlyGetParams);
   }
@@ -20,10 +22,11 @@ export class DbQueryOnlyGetFilter {
     const onlyGetParameterArray = Array.isArray(og) ? og : [og];
 
     return onlyGetParameterArray.map((onlyGetParameter) => {
-      if (!validOnlyGetParams.includes(onlyGetParameter))
+      if (!validOnlyGetParams.includes(onlyGetParameter)) {
         throw new ReferenceError(
-          'the parameter "' + onlyGetParameter + '" is not in validOnlyGetParams',
+          `the parameter "${onlyGetParameter}" is not in validOnlyGetParams`,
         );
+      }
       return { fieldName: onlyGetParameter, value: 1 };
     });
   }

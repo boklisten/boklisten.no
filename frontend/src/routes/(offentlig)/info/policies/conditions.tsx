@@ -18,5 +18,5 @@ export const Route = createFileRoute("/(offentlig)/info/policies/conditions")({
 });
 
 function ConditionsPage() {
-  return <EditableTextReadOnly dataKey={"betingelser"} />;
+  return <EditableTextReadOnly dataKey="betingelser" />;
 }

@@ -1,4 +1,5 @@
-import { MultiSelect, type MultiSelectProps } from "@mantine/core";
+import { MultiSelect } from "@mantine/core";
+import type { MultiSelectProps } from "@mantine/core";
 
 import { useFieldContext } from "@/shared/hooks/form";
 

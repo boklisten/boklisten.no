@@ -1,11 +1,11 @@
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderActive {
-  private queryBuilder = new SEDbQueryBuilder();
+  private readonly queryBuilder = new SEDbQueryBuilder();
 
   public async getActiveOrders(userId: string): Promise<Order[]> {
     const databaseQuery = this.queryBuilder.getDbQuery({ customer: userId }, [

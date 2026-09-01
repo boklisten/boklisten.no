@@ -8,7 +8,9 @@ import validator from "validator";
 
 export async function postalCodeFieldValidator(value: string) {
   const illegalPostalCodeMessage = "Du må oppgi et gyldig norsk postnummer";
-  if (!value || !validator.isPostalCode(value, "NO")) return illegalPostalCodeMessage;
+  if (!value || !validator.isPostalCode(value, "NO")) {
+    return illegalPostalCodeMessage;
+  }
 
   const postalCity = await publicApiClient.api.postal.lookupPostalCode({
     params: {
@@ -25,7 +27,9 @@ export default function PostalCodeField() {
 
   const lookupPostalCodeMutation = useMutation({
     mutationFn: async () => {
-      if (!validator.isPostalCode(code, "NO")) return null;
+      if (!validator.isPostalCode(code, "NO")) {
+        return null;
+      }
       return publicApiClient.api.postal.lookupPostalCode({
         params: {
           postalCode: code,
@@ -38,18 +42,18 @@ export default function PostalCodeField() {
 
   let postalCityHint = <></>;
   if (city) {
-    postalCityHint = <Text size={"sm"}>{city}</Text>;
+    postalCityHint = <Text size="sm">{city}</Text>;
   } else if (lookupPostalCodeMutation.isPending) {
-    postalCityHint = <Loader size={"xs"} />;
+    postalCityHint = <Loader size="xs" />;
   }
 
   return (
     <TextInput
       required
-      label={"Postnummer"}
-      placeholder={"2560"}
-      autoComplete={"postal-code"}
-      inputMode={"numeric"}
+      label="Postnummer"
+      placeholder="2560"
+      autoComplete="postal-code"
+      inputMode="numeric"
       rightSectionWidth={city ? city.length * 10 : 30}
       rightSection={postalCityHint}
       value={code}

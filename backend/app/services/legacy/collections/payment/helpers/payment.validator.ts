@@ -1,8 +1,8 @@
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
-import { Order } from "#shared/order/order";
-import { Payment } from "#shared/payment/payment";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { Order } from "#shared/order/order";
+import type { Payment } from "#shared/payment/payment";
 
 export class PaymentValidator {
   public validate(payment?: Payment): Promise<boolean> {
@@ -17,9 +17,7 @@ export class PaymentValidator {
         order = orderInStorage;
         return this.validateIfOrderHasDelivery(payment, order);
       })
-      .then(() => {
-        return this.validatePaymentBasedOnMethod(payment);
-      })
+      .then(() => this.validatePaymentBasedOnMethod(payment))
       .catch((validatePaymentError: unknown) => {
         if (validatePaymentError instanceof BlError) {
           throw validatePaymentError;
@@ -49,7 +47,9 @@ export class PaymentValidator {
   }
 
   private validatePaymentBasedOnMethod(payment: Payment): boolean {
-    if (["card", "cash", "vipps"].includes(payment.method)) return true;
+    if (["card", "cash", "vipps"].includes(payment.method)) {
+      return true;
+    }
     throw new BlError(`payment.method "${payment.method}" not supported`);
   }
 }

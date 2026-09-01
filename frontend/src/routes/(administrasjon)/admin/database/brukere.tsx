@@ -1,15 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import AuthGuard from "@/features/auth/AuthGuard";
-import UserManager, {
-  type UserManagerTab,
-  parseUserManagerTab,
-} from "@/features/user-management/UserManager";
+import UserManager, { parseUserManagerTab } from "@/features/user-management/UserManager";
+import type { UserManagerTab } from "@/features/user-management/UserManager";
 import { seo } from "@/shared/utils/seo";
 
-type UserManagerSearch = {
+interface UserManagerSearch {
   brukerFane?: UserManagerTab;
-};
+}
 
 export const Route = createFileRoute("/(administrasjon)/admin/database/brukere")({
   validateSearch: (search: Record<string, unknown>): UserManagerSearch => ({
@@ -24,7 +22,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/database/brukere")
 
 function DatabaseUsersPage() {
   return (
-    <AuthGuard requiredPermission={"admin"}>
+    <AuthGuard requiredPermission="admin">
       <UserManager />
     </AuthGuard>
   );

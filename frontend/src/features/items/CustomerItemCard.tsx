@@ -11,11 +11,12 @@ import {
   IconShoppingCart,
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
-import { Activity, type ReactNode } from "react";
+import { Activity } from "react";
+import type { ReactNode } from "react";
 
 import useCart from "@/shared/hooks/useCart";
 import { norwegianTime } from "@/shared/utils/dayjs";
-import { Route } from "@tuyau/core/types";
+import type { Route } from "@tuyau/core/types";
 
 function InfoEntry({
   startIcon,
@@ -27,7 +28,7 @@ function InfoEntry({
   text: string;
 }) {
   return (
-    <Group gap={"xs"}>
+    <Group gap="xs">
       {startIcon}
       <Tooltip label={label}>
         <Text>{text}</Text>
@@ -61,29 +62,25 @@ export default function CustomerItemCard({
   const cartItem = cart.get().find((entry) => entry.id === actionableCustomerItem.item.id);
 
   return (
-    <Card shadow={"md"} withBorder>
-      <Group gap={"xs"} mb={"md"}>
+    <Card shadow="md" withBorder>
+      <Group gap="xs" mb="md">
         <Title order={3}>{actionableCustomerItem.item.title}</Title>
         <StatusChip status={actionableCustomerItem.status} />
       </Group>
       <Stack>
         <InfoEntry
           startIcon={<IconQrcode />}
-          label={"Unik ID"}
+          label="Unik ID"
           text={actionableCustomerItem.blid ?? ""}
         />
+        <InfoEntry label="ISBN" startIcon={<IconBook2 />} text={actionableCustomerItem.item.isbn} />
         <InfoEntry
-          label={"ISBN"}
-          startIcon={<IconBook2 />}
-          text={actionableCustomerItem.item.isbn}
-        />
-        <InfoEntry
-          label={"Ansvarlig filial"}
+          label="Ansvarlig filial"
           startIcon={<IconSchool />}
           text={actionableCustomerItem.branch.name}
         />
         <InfoEntry
-          label={"Utdelingstidspunkt"}
+          label="Utdelingstidspunkt"
           startIcon={<IconHourglassHigh />}
           text={norwegianTime(actionableCustomerItem.handoutAt).format("DD/MM/YYYY")}
         />
@@ -91,7 +88,7 @@ export default function CustomerItemCard({
         <Group>
           <IconCalendarEvent />
           <Text>Frist: </Text>
-          <Text fw={"bold"}>
+          <Text fw="bold">
             {norwegianTime(actionableCustomerItem.deadline).format("DD/MM/YYYY")}
           </Text>
         </Group>
@@ -159,7 +156,7 @@ export default function CustomerItemCard({
         {cartItem && (
           <Group gap={5}>
             <Text>Pris:</Text>
-            <Text fw={"bold"}>{cart.getSelectedOption(cartItem).price} kr</Text>
+            <Text fw="bold">{cart.getSelectedOption(cartItem).price} kr</Text>
           </Group>
         )}
       </Stack>

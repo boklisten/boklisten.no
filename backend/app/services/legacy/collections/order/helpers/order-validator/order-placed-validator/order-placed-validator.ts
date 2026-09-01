@@ -1,9 +1,9 @@
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
-import { Order } from "#shared/order/order";
-import { Payment } from "#shared/payment/payment";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { Order } from "#shared/order/order";
+import type { Payment } from "#shared/payment/payment";
 
 export class OrderPlacedValidator {
   public validate(order: Order): Promise<boolean> {
@@ -26,15 +26,13 @@ export class OrderPlacedValidator {
       } else {
         // when delivery is attached
         StorageService.Deliveries.get(order.delivery)
-          .then((delivery: Delivery) => {
-            return this.validatePayments(order, delivery)
-              .then(() => {
-                return resolve(true);
-              })
+          .then((delivery: Delivery) =>
+            this.validatePayments(order, delivery)
+              .then(() => resolve(true))
               .catch((paymentValidationError: BlError) => {
                 reject(paymentValidationError);
-              });
-          })
+              }),
+          )
           .catch((blError: BlError) => {
             reject(new BlError(`delivery "${order.delivery}" not found`).add(blError));
           });

@@ -1,7 +1,7 @@
-import { JwtPayload } from "jsonwebtoken";
-import { ParsedQs } from "qs";
+import type { JwtPayload } from "jsonwebtoken";
+import type { ParsedQs } from "qs";
 
-import { BlDocument } from "#shared/bl-document";
+import type { BlDocument } from "#shared/bl-document";
 
 export class Hook {
   public before(

@@ -1,4 +1,4 @@
-import { UserPermission } from "#shared/user-permission";
+import type { UserPermission } from "#shared/user-permission";
 
 export interface BlDocument {
   id: string;

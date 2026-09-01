@@ -68,7 +68,9 @@ export function eventLabel(event: string): string {
 
 /** Mirrors the backend's recipient normalization so contact info can be matched to log entries. */
 export function normalizeRecipient(channel: MessageChannel, recipient: string): string {
-  if (channel === "email") return recipient.trim().toLowerCase();
+  if (channel === "email") {
+    return recipient.trim().toLowerCase();
+  }
   const digits = recipient.replaceAll(/\D/g, "");
   return digits.length === 10 && digits.startsWith("47") ? digits.slice(2) : digits;
 }

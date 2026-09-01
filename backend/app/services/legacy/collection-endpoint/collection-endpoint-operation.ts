@@ -1,10 +1,10 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 import router from "@adonisjs/core/services/router";
 
 import BlResponseHandler from "#services/legacy/bl-response.handler";
 import CollectionEndpointAuth from "#services/legacy/collection-endpoint/collection-endpoint-auth";
 import { parsePermission } from "#shared/user-permission";
-import { BlEndpointMethod, BlEndpointOperation } from "#types/bl-collection";
+import type { BlEndpointMethod, BlEndpointOperation } from "#types/bl-collection";
 
 function createUri(
   collectionUri: string,
@@ -20,7 +20,7 @@ function createUri(
   ) {
     uri += "/:id";
   }
-  uri += "/" + operationName;
+  uri += `/${operationName}`;
   return uri;
 }
 

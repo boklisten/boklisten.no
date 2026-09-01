@@ -14,12 +14,12 @@ export const Route = createFileRoute("/(offentlig)/auth/forgot")({
 
 function ForgotPage() {
   return (
-    <Container size={"xs"}>
+    <Container size="xs">
       <Stack>
-        <Title ta={"center"} variant="h1">
+        <Title ta="center" variant="h1">
           Glemt passord
         </Title>
-        <Text ta={"center"}>
+        <Text ta="center">
           Skriv inn din e-postadresse, så sender vi deg en lenke slik at du kan nullstille passordet
           ditt.
         </Text>

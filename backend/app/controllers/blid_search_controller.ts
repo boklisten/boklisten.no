@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import { BlidSearchService } from "#services/blid_search_service";
 import { PermissionService } from "#services/permission_service";

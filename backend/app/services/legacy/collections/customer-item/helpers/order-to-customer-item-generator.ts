@@ -1,8 +1,8 @@
 import { StorageService } from "#services/storage_service";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
-import { UserDetail } from "#shared/user-detail";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { UserDetail } from "#shared/user-detail";
 
 export class OrderToCustomerItemGenerator {
   public async generate(order: Order): Promise<CustomerItem[]> {
@@ -72,7 +72,7 @@ export class OrderToCustomerItemGenerator {
       handoutInfo: this.createHandoutInfo(order),
       returned: false,
       // @ts-expect-error fixme: auto ignored
-      amountLeftToPay: orderItem["info"]["amountLeftToPay"],
+      amountLeftToPay: orderItem.info.amountLeftToPay,
       totalAmount: orderItem.amount,
       orders: [order.id],
       customerInfo: this.createCustomerInfo(customerDetail),

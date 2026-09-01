@@ -7,18 +7,18 @@ import { PriceService } from "#services/legacy/price.service";
 import { isNotNullish } from "#services/legacy/typescript-helpers";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Branch } from "#shared/branch";
-import { Item } from "#shared/item";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Branch } from "#shared/branch";
+import type { Item } from "#shared/item";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderItemValidator {
-  private orderItemFieldValidator: OrderFieldValidator;
-  private orderItemExtendValidator: OrderItemExtendValidator;
-  private orderItemBuyValidator: OrderItemBuyValidator;
-  private orderItemRentValidator: OrderItemRentValidator;
-  private orderItemPartlyPaymentValidator: OrderItemPartlyPaymentValidator;
-  private priceService: PriceService;
+  private readonly orderItemFieldValidator: OrderFieldValidator;
+  private readonly orderItemExtendValidator: OrderItemExtendValidator;
+  private readonly orderItemBuyValidator: OrderItemBuyValidator;
+  private readonly orderItemRentValidator: OrderItemRentValidator;
+  private readonly orderItemPartlyPaymentValidator: OrderItemPartlyPaymentValidator;
+  private readonly priceService: PriceService;
 
   constructor(
     orderItemFieldValidator?: OrderFieldValidator,
@@ -70,8 +70,9 @@ export class OrderItemValidator {
           isNotNullish(orderItem.blid) && ["partly-payment", "rent"].includes(orderItem.type),
       )
       .map((orderItem) => orderItem.blid);
-    if (blids.length > 0 && blids.length !== new Set(blids).size)
+    if (blids.length > 0 && blids.length !== new Set(blids).size) {
       throw new BlError("order contains multiple of the same blid").code(814);
+    }
   }
 
   private async validateOrderItemBasedOnType(

@@ -1,7 +1,8 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
@@ -29,15 +30,15 @@ test.group("read matches", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
   function stubMongo() {
-    sandbox.stub(StorageService.UserDetails, "getMany").callsFake(async (ids) => {
-      return unchecked(
+    sandbox.stub(StorageService.UserDetails, "getMany").callsFake(async (ids) =>
+      unchecked(
         [
           { id: A, name: "Kari Hansen", phone: "1", email: "kari@x.no" },
           { id: B, name: "Ola Nordmann", phone: "2", email: "ola@x.no" },
           { id: OUTSIDER, name: "Per Berg", phone: "3", email: "per@x.no" },
         ].filter((person) => ids.includes(person.id)),
-      );
-    });
+      ),
+    );
     sandbox
       .stub(StorageService.Items, "getMany")
       .resolves(unchecked([{ id: ITEM_X, title: "Matematikk R1" }]));

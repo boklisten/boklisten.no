@@ -29,7 +29,7 @@ function CountsLine({ user }: { user: DuplicateUserSummary }) {
     `${user.activeMatches} aktive overleveringer`,
   ];
   return (
-    <Text size={"sm"} c={"dimmed"}>
+    <Text size="sm" c="dimmed">
       {counts.join(" · ")}
     </Text>
   );
@@ -38,19 +38,19 @@ function CountsLine({ user }: { user: DuplicateUserSummary }) {
 function UserSummary({ user, branchName }: { user: DuplicateUserSummary; branchName?: string }) {
   return (
     <Stack gap={4} miw={0}>
-      <Group gap={"xs"}>
+      <Group gap="xs">
         <Text fw={600}>{user.name || "Uten navn"}</Text>
-        <PermissionBadge permission={user.permission} size={"sm"} />
+        <PermissionBadge permission={user.permission} size="sm" />
         {branchName && (
-          <Badge variant={"light"} size={"sm"}>
+          <Badge variant="light" size="sm">
             {branchName}
           </Badge>
         )}
       </Group>
-      <Text size={"sm"} style={{ overflowWrap: "anywhere" }}>
+      <Text size="sm" style={{ overflowWrap: "anywhere" }}>
         {user.email}
       </Text>
-      {user.phone && <Text size={"sm"}>{user.phone}</Text>}
+      {user.phone && <Text size="sm">{user.phone}</Text>}
       <Tooltip
         label={
           user.lastActive
@@ -58,18 +58,18 @@ function UserSummary({ user, branchName }: { user: DuplicateUserSummary; branchN
             : "Har aldri logget inn"
         }
       >
-        <Text size={"sm"} c={"dimmed"} w={"fit-content"}>
+        <Text size="sm" c="dimmed" w="fit-content">
           Sist aktiv: {user.lastActive ? norwegianTime(user.lastActive).fromNow() : "aldri"}
         </Text>
       </Tooltip>
       <CountsLine user={user} />
       <TanStackButton
-        to={"/admin/kundesok"}
+        to="/admin/kundesok"
         search={{ kunde: user.detailsId }}
-        variant={"subtle"}
-        size={"compact-sm"}
+        variant="subtle"
+        size="compact-sm"
         leftSection={<IconExternalLink size={16} />}
-        w={"fit-content"}
+        w="fit-content"
         px={0}
       >
         Åpne i kundesøk
@@ -92,30 +92,32 @@ export default function DuplicatePairCard({
   const [mergeModalOpen, setMergeModalOpen] = useState(false);
   const branchNames = useBranchNames();
   const [first, second] = pair.users;
-  if (!first || !second) return null;
+  if (!first || !second) {
+    return null;
+  }
 
   return (
-    <Paper withBorder radius={"md"} p={"md"}>
-      <Stack gap={"sm"}>
+    <Paper withBorder radius="md" p="md">
+      <Stack gap="sm">
         <Group gap={6}>
           {pair.reasons.map((reason) => (
-            <Badge key={reason} variant={"light"} color={"orange"}>
+            <Badge key={reason} variant="light" color="orange">
               {reason}
             </Badge>
           ))}
         </Group>
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing={"md"}>
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <UserSummary user={first} branchName={branchNames.get(first.branchMembership ?? "")} />
           <UserSummary user={second} branchName={branchNames.get(second.branchMembership ?? "")} />
         </SimpleGrid>
         <Divider />
-        <Group justify={"flex-end"} gap={"xs"}>
+        <Group justify="flex-end" gap="xs">
           {ignored ? (
-            <Button variant={"default"} leftSection={<IconEyeOff size={16} />} onClick={onUnignore}>
+            <Button variant="default" leftSection={<IconEyeOff size={16} />} onClick={onUnignore}>
               Fjern fra ignorerte
             </Button>
           ) : (
-            <Button variant={"default"} leftSection={<IconEyeOff size={16} />} onClick={onIgnore}>
+            <Button variant="default" leftSection={<IconEyeOff size={16} />} onClick={onIgnore}>
               Ignorer
             </Button>
           )}

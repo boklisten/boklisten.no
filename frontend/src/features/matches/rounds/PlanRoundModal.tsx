@@ -7,7 +7,8 @@ import { Activity, useState } from "react";
 import { SLOT_TIME_PATTERN } from "@boklisten/backend/shared/match/match-round-dto";
 
 import ExcludedCustomersField from "@/features/matches/rounds/ExcludedCustomersField";
-import { useRefreshRounds, type Round } from "@/features/matches/rounds/useRounds";
+import { useRefreshRounds } from "@/features/matches/rounds/useRounds";
+import type { Round } from "@/features/matches/rounds/useRounds";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -16,8 +17,12 @@ import { showSuccessNotification } from "@/shared/utils/notifications";
 const asDate = (value: string) => dayjs(value).format("YYYY-MM-DD");
 
 const requireSlotTime = (value: string) => {
-  if (!value) return "Du må velge et klokkeslett";
-  if (!SLOT_TIME_PATTERN.test(value)) return "Klokkeslettet må være på et timinuttersintervall";
+  if (!value) {
+    return "Du må velge et klokkeslett";
+  }
+  if (!SLOT_TIME_PATTERN.test(value)) {
+    return "Klokkeslettet må være på et timinuttersintervall";
+  }
   return null;
 };
 
@@ -101,12 +106,18 @@ export default function PlanRoundModal({
   const saveMutation = useMutation({
     mutationFn: async (values: PlanFields) => {
       setApiError(null);
-      if (!values.deadline) throw new Error("Du må velge en frist");
-      if (!values.meetingDate) throw new Error("Du må velge en dato for overleveringene");
+      if (!values.deadline) {
+        throw new Error("Du må velge en frist");
+      }
+      if (!values.meetingDate) {
+        throw new Error("Du må velge en dato for overleveringene");
+      }
       const locations = values.userMatchLocations
         .map((location) => location.name.trim())
         .filter((name) => name.length > 0);
-      if (locations.length === 0) throw new Error("Du må legge til minst ett møtested");
+      if (locations.length === 0) {
+        throw new Error("Du må legge til minst ett møtested");
+      }
 
       const body = {
         name: values.name.trim(),
@@ -150,7 +161,7 @@ export default function PlanRoundModal({
       opened
       onClose={onClose}
       title={editing ? "Rediger planen" : "Planlegg ny runde"}
-      size={"lg"}
+      size="lg"
     >
       <Stack>
         <Activity mode={apiError ? "visible" : "hidden"}>
@@ -160,7 +171,7 @@ export default function PlanRoundModal({
         </Activity>
 
         <form.AppField
-          name={"name"}
+          name="name"
           validators={{
             onBlur: ({ value }) => (value.trim().length === 0 ? "Runden må ha et navn" : null),
           }}
@@ -168,15 +179,15 @@ export default function PlanRoundModal({
           {(field) => (
             <field.TextField
               required
-              label={"Navn på runden"}
-              placeholder={"Ullern Vår 2026"}
-              description={"Vises i nedtrekkslisten over runder"}
+              label="Navn på runden"
+              placeholder="Ullern Vår 2026"
+              description="Vises i nedtrekkslisten over runder"
             />
           )}
         </form.AppField>
 
         <form.AppField
-          name={"branches"}
+          name="branches"
           validators={{
             onBlur: ({ value }) => (value.length === 0 ? "Velg minst én filial" : null),
           }}
@@ -184,26 +195,26 @@ export default function PlanRoundModal({
           {(field) => <field.SelectBranchesField required />}
         </form.AppField>
 
-        <form.AppField name={"deadline"}>
+        <form.AppField name="deadline">
           {(field) => (
             <field.DeadlinePickerField
               required
-              label={"Frist på bøkene"}
-              description={"Runden tar med bøker som har frist på denne datoen"}
+              label="Frist på bøkene"
+              description="Runden tar med bøker som har frist på denne datoen"
             />
           )}
         </form.AppField>
 
-        <form.AppField name={"includeCustomerItemsFromOtherBranches"}>
-          {(field) => <field.CheckboxField label={"Ta med bøker delt ut ved andre filialer"} />}
+        <form.AppField name="includeCustomerItemsFromOtherBranches">
+          {(field) => <field.CheckboxField label="Ta med bøker delt ut ved andre filialer" />}
         </form.AppField>
 
-        <Fieldset legend={"Ekskluderte elever"}>
+        <Fieldset legend="Ekskluderte elever">
           <Stack>
-            <Text size={"sm"} c={"dimmed"}>
+            <Text size="sm" c="dimmed">
               Disse elevene holdes helt utenfor runden og får ingen overleveringer.
             </Text>
-            <form.AppField name={"excludedCustomerIds"}>
+            <form.AppField name="excludedCustomerIds">
               {(field) => (
                 <ExcludedCustomersField value={field.state.value} onChange={field.setValue} />
               )}
@@ -212,7 +223,7 @@ export default function PlanRoundModal({
         </Fieldset>
 
         <form.AppField
-          name={"meetingDate"}
+          name="meetingDate"
           validators={{
             onBlur: ({ value }) => (!value ? "Du må velge en dato" : null),
           }}
@@ -220,47 +231,47 @@ export default function PlanRoundModal({
           {(field) => (
             <field.DateField
               required
-              label={"Dato for overleveringer"}
-              description={"Alle overleveringer og stand-besøk skjer denne dagen"}
+              label="Dato for overleveringer"
+              description="Alle overleveringer og stand-besøk skjer denne dagen"
             />
           )}
         </form.AppField>
 
-        <Fieldset legend={"Elevoverleveringer"}>
+        <Fieldset legend="Elevoverleveringer">
           <Stack>
             <Group grow>
               <form.AppField
-                name={"userMeetingFrom"}
+                name="userMeetingFrom"
                 validators={{ onBlur: ({ value }) => requireSlotTime(value) }}
               >
-                {(field) => <field.TimePickerField required label={"Fra"} />}
+                {(field) => <field.TimePickerField required label="Fra" />}
               </form.AppField>
               <form.AppField
-                name={"userMeetingTo"}
+                name="userMeetingTo"
                 validators={{
                   onBlur: ({ value, fieldApi }) =>
                     requireEndAfter(value, fieldApi.form.getFieldValue("userMeetingFrom")),
                 }}
               >
-                {(field) => <field.TimePickerField required label={"Til"} />}
+                {(field) => <field.TimePickerField required label="Til" />}
               </form.AppField>
             </Group>
 
-            <form.AppField name={"userMatchLocations"} mode={"array"}>
+            <form.AppField name="userMatchLocations" mode="array">
               {(field) => (
                 <Stack>
-                  <Text size={"sm"} fw={500}>
+                  <Text size="sm" fw={500}>
                     Møtesteder for elever
                   </Text>
                   {field.state.value.map((_, index) => (
                     <Card key={`location-${index}`} withBorder>
-                      <Group align={"flex-end"}>
+                      <Group align="flex-end">
                         <form.AppField name={`userMatchLocations[${index}].name`}>
-                          {(subField) => <subField.TextField label={"Sted"} />}
+                          {(subField) => <subField.TextField label="Sted" />}
                         </form.AppField>
                         <Button
-                          variant={"subtle"}
-                          color={"red"}
+                          variant="subtle"
+                          color="red"
                           leftSection={<IconTrash size={16} />}
                           disabled={field.state.value.length === 1}
                           onClick={() => field.setValue(field.state.value.toSpliced(index, 1))}
@@ -272,7 +283,7 @@ export default function PlanRoundModal({
                   ))}
                   <Group>
                     <Button
-                      variant={"default"}
+                      variant="default"
                       leftSection={<IconPlus size={16} />}
                       onClick={() => field.setValue(field.state.value.concat([{ name: "" }]))}
                     >
@@ -285,41 +296,39 @@ export default function PlanRoundModal({
           </Stack>
         </Fieldset>
 
-        <Fieldset legend={"Stand"}>
+        <Fieldset legend="Stand">
           <Stack>
             <form.AppField
-              name={"standLocation"}
+              name="standLocation"
               validators={{
                 onBlur: ({ value }) => (value.trim().length === 0 ? "Standen må ha et sted" : null),
               }}
             >
-              {(field) => (
-                <field.TextField required label={"Sted for stand"} placeholder={"Kantina"} />
-              )}
+              {(field) => <field.TextField required label="Sted for stand" placeholder="Kantina" />}
             </form.AppField>
 
             <Group grow>
               <form.AppField
-                name={"standFrom"}
+                name="standFrom"
                 validators={{ onBlur: ({ value }) => requireSlotTime(value) }}
               >
-                {(field) => <field.TimePickerField required label={"Standen åpner"} />}
+                {(field) => <field.TimePickerField required label="Standen åpner" />}
               </form.AppField>
               <form.AppField
-                name={"standTo"}
+                name="standTo"
                 validators={{
                   onBlur: ({ value, fieldApi }) =>
                     requireEndAfter(value, fieldApi.form.getFieldValue("standFrom")),
                 }}
               >
-                {(field) => <field.TimePickerField required label={"Standen stenger"} />}
+                {(field) => <field.TimePickerField required label="Standen stenger" />}
               </form.AppField>
             </Group>
           </Stack>
         </Fieldset>
 
-        <Group justify={"flex-end"}>
-          <Button variant={"default"} onClick={onClose}>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose}>
             Avbryt
           </Button>
           <Button loading={saveMutation.isPending} onClick={form.handleSubmit}>

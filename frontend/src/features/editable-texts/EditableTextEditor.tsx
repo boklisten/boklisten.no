@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import { Route } from "@tuyau/core/types";
+import type { Route } from "@tuyau/core/types";
 
 export default function EditableTextEditor({
   editableText,
@@ -53,25 +53,25 @@ export default function EditableTextEditor({
   return (
     <Stack>
       <form.AppField
-        name={"id"}
+        name="id"
         validators={{
           onChange: ({ value }) => (value.length === 0 ? "Du fylle inn unik nøkkel" : null),
         }}
       >
         {(field) => (
           <field.TextField
-            label={"Unik nøkkel"}
-            description={"Unik nøkkel kan ikke endres etter opprettelse"}
-            placeholder={"min_nye_nokkel"}
+            label="Unik nøkkel"
+            description="Unik nøkkel kan ikke endres etter opprettelse"
+            placeholder="min_nye_nokkel"
             disabled={editableText !== undefined}
           />
         )}
       </form.AppField>
-      <form.AppField name={"text"}>
-        {(field) => <field.RichTextEditorField label={"Tekst"} />}
+      <form.AppField name="text">
+        {(field) => <field.RichTextEditorField label="Tekst" />}
       </form.AppField>
       <Group>
-        <Button variant={"subtle"} onClick={() => onClose()}>
+        <Button variant="subtle" onClick={() => onClose()}>
           Avbryt
         </Button>
         <Button loading={upsertEditableTextMutation.isPending} onClick={form.handleSubmit}>

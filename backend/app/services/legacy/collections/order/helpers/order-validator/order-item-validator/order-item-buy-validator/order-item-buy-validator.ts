@@ -1,12 +1,12 @@
 import { PriceService } from "#services/legacy/price.service";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Item } from "#shared/item";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Item } from "#shared/item";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderItemBuyValidator {
-  private priceService: PriceService;
+  private readonly priceService: PriceService;
 
   constructor(priceService?: PriceService) {
     this.priceService = priceService ?? new PriceService({ roundDown: true });
@@ -21,9 +21,10 @@ export class OrderItemBuyValidator {
       }
       return Promise.reject(
         new BlError(
-          "unknown error, could not validate price of orderItems, error: " +
+          `unknown error, could not validate price of orderItems, error: ${
             // @ts-expect-error fixme: auto ignored
-            error.message,
+            error.message
+          }`,
         ).store("error", error),
       );
     }
@@ -59,9 +60,7 @@ export class OrderItemBuyValidator {
 
         return true;
       })
-      .catch(() => {
-        return false;
-      });
+      .catch(() => false);
 
     // @ts-expect-error fixme: auto ignored
     return undefined;

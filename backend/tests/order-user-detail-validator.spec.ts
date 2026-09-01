@@ -1,11 +1,12 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderUserDetailValidator } from "#services/legacy/collections/order/helpers/order-validator/order-user-detail-validator/order-user-detail-validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
-import { UserDetail } from "#shared/user-detail";
+import type { Order } from "#shared/order/order";
+import type { UserDetail } from "#shared/user-detail";
 import { mock } from "#tests/test-doubles";
 
 test.group("OrderUserDetailValidator", (group) => {
@@ -42,13 +43,12 @@ test.group("OrderUserDetailValidator", (group) => {
 
     const err = await orderUserDetailValidator.validate(testOrder).then(
       () => null,
-      (caught: BlError) => caught,
+      (error: BlError) => error,
     );
     assert.instanceOf(err, BlError);
     assert.equal(err?.errorStack[0]?.getMsg(), "could not get userDetail");
   });
 
-  test("should resolve if userDetail is valid", async ({ assert }) => {
-    return assert.doesNotReject(() => orderUserDetailValidator.validate(testOrder));
-  });
+  test("should resolve if userDetail is valid", async ({ assert }) =>
+    assert.doesNotReject(() => orderUserDetailValidator.validate(testOrder)));
 });

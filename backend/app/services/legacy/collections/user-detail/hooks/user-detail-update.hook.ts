@@ -1,7 +1,7 @@
 import { Hook } from "#services/legacy/hook";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
 import { userDetailPatchValidator } from "#validators/user_detail";
 

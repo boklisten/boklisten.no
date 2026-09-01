@@ -23,17 +23,17 @@ export default function MatchList() {
   }
 
   if (error || !data || !detailsId) {
-    return <ErrorAlert title={"Klarte ikke laste inn dine overleveringer"}></ErrorAlert>;
+    return <ErrorAlert title="Klarte ikke laste inn dine overleveringer" />;
   }
 
   if (data.length === 0) {
     return (
-      <InfoAlert title={"Du har ingen overleveringer :)"}>
-        <Stack gap={"xs"}>
-          <Text size={"sm"}>
+      <InfoAlert title="Du har ingen overleveringer :)">
+        <Stack gap="xs">
+          <Text size="sm">
             Har du fått melding om overleveringer? Sjekk om du er logget inn med riktig konto.
           </Text>
-          <Text size={"sm"}>Ta kontakt med info@boklisten.no om du har spørsmål.</Text>
+          <Text size="sm">Ta kontakt med info@boklisten.no om du har spørsmål.</Text>
         </Stack>
       </InfoAlert>
     );
@@ -45,7 +45,7 @@ export default function MatchList() {
   const finished = viewerMatches.filter(isFullyFulfilled);
 
   return (
-    <Stack gap={"xl"}>
+    <Stack gap="xl">
       <ProgressBar
         percentComplete={(100 * finished.length) / viewerMatches.length}
         subtitle={

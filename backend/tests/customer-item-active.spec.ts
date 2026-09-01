@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 
 import { CustomerItemActive } from "#services/legacy/collections/customer-item/helpers/customer-item-active";
-import { CustomerItem } from "#shared/customer-item/customer-item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
 
 test.group("CustomerItemActive", async () => {
   const customerItemActive = new CustomerItemActive();

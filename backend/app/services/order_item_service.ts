@@ -1,9 +1,9 @@
 import { DateTime } from "luxon";
 
 import { StorageService } from "#services/storage_service";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { Item } from "#shared/item";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { Item } from "#shared/item";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 function isSameDeadlineDay(a: Date, b: Date): boolean {
   return DateTime.fromJSDate(a)
@@ -21,7 +21,9 @@ export const OrderItemService = {
         (period) => period.type === orderItem?.info?.periodType,
       )?.percentageBuyout ?? branch?.paymentInfo?.buyout?.percentage;
 
-    if (!buyoutPercentage) throw new Error("Could not find buyout percentage in checkout!");
+    if (!buyoutPercentage) {
+      throw new Error("Could not find buyout percentage in checkout!");
+    }
 
     const price =
       customerItem.amountLeftToPay || Math.floor((item.price * buyoutPercentage) / 10) * 10;
@@ -41,15 +43,17 @@ export const OrderItemService = {
     const extendPeriod = branch.paymentInfo?.extendPeriods.find((period) =>
       isSameDeadlineDay(period.date, to),
     );
-    if (!extendPeriod)
+    if (!extendPeriod) {
       throw new Error(
         `Extend period not found in checkout customer: ${customerItem.customer}, branch: ${branch.id}, customer item: ${customerItem.id}`,
       );
+    }
 
-    if ((customerItem.periodExtends?.length ?? 0) >= extendPeriod.maxNumberOfPeriods)
+    if ((customerItem.periodExtends?.length ?? 0) >= extendPeriod.maxNumberOfPeriods) {
       throw new Error(
         `Customer item does not qualify for extension: ${customerItem.customer}, branch: ${branch.id}, customer item: ${customerItem.id}`,
       );
+    }
 
     return {
       type: "extend",
@@ -83,10 +87,11 @@ export const OrderItemService = {
     const rentPeriod = branch.paymentInfo?.rentPeriods.find((period) =>
       isSameDeadlineDay(period.date, to),
     );
-    if (!rentPeriod)
+    if (!rentPeriod) {
       throw new Error(
         `Rent period not found in checkout branch: ${branchId} to: ${to.toISOString()} item: ${item.id}`,
       );
+    }
 
     return {
       type: "rent",
@@ -109,10 +114,11 @@ export const OrderItemService = {
     const partlyPaymentPeriod = branch.paymentInfo?.partlyPaymentPeriods?.find((period) =>
       isSameDeadlineDay(period.date, to),
     );
-    if (!partlyPaymentPeriod)
+    if (!partlyPaymentPeriod) {
       throw new Error(
         `Rent period not found in checkout branch: ${branchId} to: ${to.toISOString()} item: ${item.id}`,
       );
+    }
 
     const priceUpFront = Math.floor((item.price * partlyPaymentPeriod.percentageUpFront) / 10) * 10;
 

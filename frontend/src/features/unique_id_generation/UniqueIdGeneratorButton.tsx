@@ -15,7 +15,7 @@ export default function UniqueIdGeneratorButton() {
   return (
     <Button
       loading={isPending}
-      component={"a"}
+      component="a"
       href={
         import.meta.env["VITE_API_URL"] +
         publicApiClient.urlFor("unique_ids.download_unique_id_pdf", {

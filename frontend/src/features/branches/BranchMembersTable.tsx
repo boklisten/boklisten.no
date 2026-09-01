@@ -3,7 +3,7 @@ import { modals } from "@mantine/modals";
 import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
 import type { ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import { Route } from "@tuyau/core/types";
+import type { Route } from "@tuyau/core/types";
 
 import MoveBranchMemberModal from "@/features/branches/MoveBranchMemberModal";
 
@@ -35,7 +35,7 @@ export default function BranchMembersTable({
             cellRenderer: ({ data }: ICellRendererParams<BranchMember>) =>
               data && (
                 <Button
-                  variant={"subtle"}
+                  variant="subtle"
                   onClick={() => {
                     const modalId = modals.open({
                       title: `Flytt ${data.name}`,

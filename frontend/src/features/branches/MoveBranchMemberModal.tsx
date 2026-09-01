@@ -46,11 +46,11 @@ export default function MoveBranchMemberModal({
 
   return (
     <Stack>
-      <form.AppField name={"branchMembership"}>
-        {(field) => <field.SelectBranchField perspective={"administrate"} />}
+      <form.AppField name="branchMembership">
+        {(field) => <field.SelectBranchField perspective="administrate" />}
       </form.AppField>
       <Group>
-        <Button variant={"subtle"} onClick={() => onClose()}>
+        <Button variant="subtle" onClick={() => onClose()}>
           Avbryt
         </Button>
         <Button loading={updateBranchMembershipMutation.isPending} onClick={form.handleSubmit}>

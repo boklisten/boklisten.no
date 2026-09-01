@@ -1,4 +1,5 @@
-import { MultiSelect, type MultiSelectProps } from "@mantine/core";
+import { MultiSelect } from "@mantine/core";
+import type { MultiSelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import { useFieldContext } from "@/shared/hooks/form";
@@ -11,20 +12,24 @@ export default function SelectItemsField(props: MultiSelectProps) {
 
   return (
     <MultiSelect
-      label={"Bøker"}
-      placeholder={"Velg bøker"}
+      label="Bøker"
+      placeholder="Velg bøker"
       searchable
       clearable
-      description={"Søk etter tittel eller ISBN"}
+      description="Søk etter tittel eller ISBN"
       data={items?.map((item) => ({ label: item.title, value: item.id })) ?? []}
-      filter={({ options, search }) => {
-        return options.filter((option) => {
-          if (!("value" in option)) return false;
-          if (option.label.toLowerCase().trim().includes(search.toLowerCase().trim())) return true;
+      filter={({ options, search }) =>
+        options.filter((option) => {
+          if (!("value" in option)) {
+            return false;
+          }
+          if (option.label.toLowerCase().trim().includes(search.toLowerCase().trim())) {
+            return true;
+          }
           const isbn = items?.find((item) => item.id === option.value)?.info.isbn.toString();
           return isbn?.includes(search.trim()) ?? false;
-        });
-      }}
+        })
+      }
       {...props}
       value={field.state.value.map((v) => v.id)}
       onChange={(values) =>

@@ -41,8 +41,8 @@ export default function BranchMembers({ branchId }: { branchId: string }) {
   function removeMembersButton(scope: "direct" | "indirect", subject: string) {
     return (
       <Button
-        variant={"subtle"}
-        c={"red"}
+        variant="subtle"
+        c="red"
         loading={removeMembersMutation.isPending}
         onClick={() =>
           modals.openConfirmModal({

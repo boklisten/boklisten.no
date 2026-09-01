@@ -38,32 +38,32 @@ export default function SelectedCustomerCard({
   );
 
   return (
-    <Paper withBorder radius={"md"} p={"md"}>
-      <Stack gap={"sm"}>
-        <Group justify={"space-between"} align={"flex-start"} wrap={"nowrap"} gap={"xs"}>
-          <Group gap={"sm"} align={"center"} wrap={"nowrap"} miw={0}>
-            <Avatar color={"brand"} radius={"xl"}>
+    <Paper withBorder radius="md" p="md">
+      <Stack gap="sm">
+        <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
+          <Group gap="sm" align="center" wrap="nowrap" miw={0}>
+            <Avatar color="brand" radius="xl">
               {initials(customer.name)}
             </Avatar>
             <Stack gap={4} miw={0}>
-              <Title order={2} size={"h4"} lh={1.2}>
+              <Title order={2} size="h4" lh={1.2}>
                 {customer.name}
               </Title>
               {(branch || customer.permission !== "customer") && (
                 <Group gap={6}>
                   <PermissionBadge permission={customer.permission} />
-                  {branch && <Badge variant={"light"}>{branch.name}</Badge>}
+                  {branch && <Badge variant="light">{branch.name}</Badge>}
                 </Group>
               )}
             </Stack>
           </Group>
-          <Group gap={4} wrap={"nowrap"}>
-            <Tooltip label={"Rediger brukerdetaljer"}>
+          <Group gap={4} wrap="nowrap">
+            <Tooltip label="Rediger brukerdetaljer">
               <ActionIcon
-                variant={"subtle"}
-                color={"gray"}
-                size={"lg"}
-                aria-label={"Rediger brukerdetaljer"}
+                variant="subtle"
+                color="gray"
+                size="lg"
+                aria-label="Rediger brukerdetaljer"
                 onClick={() =>
                   modals.open({
                     modalId: ADMINISTRATE_USER_MODAL_ID,
@@ -84,12 +84,12 @@ export default function SelectedCustomerCard({
                 <IconPencil size={20} aria-hidden />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label={"Fjern valgt kunde"}>
+            <Tooltip label="Fjern valgt kunde">
               <ActionIcon
-                variant={"subtle"}
-                color={"gray"}
-                size={"lg"}
-                aria-label={"Fjern valgt kunde"}
+                variant="subtle"
+                color="gray"
+                size="lg"
+                aria-label="Fjern valgt kunde"
                 onClick={onDeselect}
               >
                 <IconX size={20} aria-hidden />
@@ -97,17 +97,17 @@ export default function SelectedCustomerCard({
             </Tooltip>
           </Group>
         </Group>
-        <Group gap={"md"} c={"dimmed"} style={{ rowGap: 4 }}>
+        <Group gap="md" c="dimmed" style={{ rowGap: 4 }}>
           {customer.phone && (
-            <Group gap={6} wrap={"nowrap"}>
+            <Group gap={6} wrap="nowrap">
               <IconPhone size={16} aria-hidden />
-              <Text size={"sm"}>{customer.phone}</Text>
+              <Text size="sm">{customer.phone}</Text>
             </Group>
           )}
           {customer.email && (
-            <Group gap={6} wrap={"nowrap"}>
+            <Group gap={6} wrap="nowrap">
               <IconMail size={16} aria-hidden />
-              <Text size={"sm"} style={{ overflowWrap: "anywhere" }}>
+              <Text size="sm" style={{ overflowWrap: "anywhere" }}>
                 {customer.email}
               </Text>
             </Group>

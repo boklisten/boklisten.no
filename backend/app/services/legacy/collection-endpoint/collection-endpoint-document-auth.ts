@@ -1,9 +1,9 @@
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { PermissionService } from "#services/permission_service";
-import { BlStorageData } from "#services/storage_service";
+import type { BlStorageData } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { BlApiRequest } from "#types/bl-api-request";
-import { BlDocumentPermission, BlEndpointRestriction } from "#types/bl-collection";
+import type { BlApiRequest } from "#types/bl-api-request";
+import type { BlDocumentPermission, BlEndpointRestriction } from "#types/bl-collection";
 
 function validate(
   restriction: BlEndpointRestriction | undefined,

@@ -1,17 +1,20 @@
 import { Exception } from "@adonisjs/core/exceptions";
-import { Infer } from "@vinejs/vine/types";
+import type { Infer } from "@vinejs/vine/types";
 
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import DispatchService from "#services/dispatch_service";
 import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpers/user-detail.helper";
 import { userHasValidSignature } from "#services/legacy/signature.helper";
 import { StorageService } from "#services/storage_service";
-import { UserDetail } from "#shared/user-detail";
+import type { UserDetail } from "#shared/user-detail";
 import { UserDetailService } from "#services/user_detail_service";
-import { userProvisioningValidator } from "#validators/user_provisioning";
+import type { userProvisioningValidator } from "#validators/user_provisioning";
 
 type UserCandidate = Infer<typeof userProvisioningValidator>["userCandidates"][number];
-type BranchSummary = { id: string; name: string };
+interface BranchSummary {
+  id: string;
+  name: string;
+}
 
 export interface BranchMapping {
   localName: string;
@@ -37,7 +40,7 @@ export function buildBranchMappings(
   localNames: (string | undefined)[],
   branches: BranchSummary[],
 ): BranchMapping[] {
-  return [...new Set(localNames.filter((localName): localName is string => !!localName))]
+  return [...new Set(localNames.filter((localName): localName is string => Boolean(localName)))]
     .toSorted((a, b) => a.localeCompare(b))
     .map((localName) => {
       const candidates = branches
@@ -69,7 +72,9 @@ export function applyBranchResolutions(
     resolutions.map((resolution) => [resolution.localName, resolution.branchId]),
   );
   return mappings.map((mapping) => {
-    if (mapping.status !== "ambiguous") return mapping;
+    if (mapping.status !== "ambiguous") {
+      return mapping;
+    }
     const branch = mapping.candidates.find(
       (candidate) => candidate.id === resolvedBranchIds.get(mapping.localName),
     );
@@ -205,7 +210,9 @@ export const UserProvisioningService = {
     };
     async function processCandidate(candidate: UserCandidate, index: number) {
       const branch = candidate.localName ? branchByLocalName.get(candidate.localName) : null;
-      if (candidate.localName && !branch) return;
+      if (candidate.localName && !branch) {
+        return;
+      }
       try {
         const existingUser = existingUsers[index];
         if (existingUser) {

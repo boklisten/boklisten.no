@@ -1,14 +1,15 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { CustomerItemPostHook } from "#services/legacy/collections/customer-item/hooks/customer-item-post.hook";
 import { CustomerItemValidator } from "#services/legacy/collections/customer-item/validators/customer-item-validator";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { Order } from "#shared/order/order";
-import { UserDetail } from "#shared/user-detail";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { Order } from "#shared/order/order";
+import type { UserDetail } from "#shared/user-detail";
 import { mock } from "#tests/test-doubles";
 
 test.group("CustomerItemPostHook", (group) => {
@@ -97,9 +98,9 @@ test.group("CustomerItemPostHook", (group) => {
       return Promise.resolve(testOrder);
     });
 
-    orderUpdateStub = sandbox.stub(StorageService.Orders, "update").callsFake(() => {
-      return Promise.resolve(testOrder);
-    });
+    orderUpdateStub = sandbox
+      .stub(StorageService.Orders, "update")
+      .callsFake(() => Promise.resolve(testOrder));
 
     sandbox.stub(customerItemValidator, "validate").callsFake(() => {
       if (!validateCustomerItem) {
@@ -123,24 +124,23 @@ test.group("CustomerItemPostHook", (group) => {
       return Promise.resolve(testUserDetail);
     });
 
-    userDetailStub = sandbox.stub(StorageService.UserDetails, "update").callsFake(() => {
-      return Promise.resolve(testUserDetail);
-    });
+    userDetailStub = sandbox
+      .stub(StorageService.UserDetails, "update")
+      .callsFake(() => Promise.resolve(testUserDetail));
   });
 
   group.each.teardown(() => {
     sandbox.restore();
   });
 
-  test("should reject if customerItem parameter is undefined", async ({ assert }) => {
-    return assert.rejects(
+  test("should reject if customerItem parameter is undefined", async ({ assert }) =>
+    assert.rejects(
       () =>
         // @ts-expect-error fixme: auto ignored
         customerItemPostHook.before(undefined, testAccessToken),
       BlError,
       /customerItem is undefined/,
-    );
-  });
+    ));
 
   test("should reject if customerItemValidator.validate rejects", async ({ assert }) => {
     validateCustomerItem = false;
@@ -152,11 +152,8 @@ test.group("CustomerItemPostHook", (group) => {
     );
   });
 
-  test("should resolve with true if customerItemValidator.validate resolves", async ({
-    assert,
-  }) => {
-    return assert.doesNotReject(() => customerItemPostHook.before(testCustomerItem));
-  });
+  test("should resolve with true if customerItemValidator.validate resolves", async ({ assert }) =>
+    assert.doesNotReject(() => customerItemPostHook.before(testCustomerItem)));
 
   test("should reject if userDetail is not valid", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
@@ -172,13 +169,12 @@ test.group("CustomerItemPostHook", (group) => {
     );
   });
 
-  test("should reject if customerItems are empty", async ({ assert }) => {
-    return assert.rejects(
+  test("should reject if customerItems are empty", async ({ assert }) =>
+    assert.rejects(
       () => customerItemPostHook.after([], testAccessToken),
       BlError,
       /customerItems is empty or undefined/,
-    );
-  });
+    ));
 
   test("should reject if customerItem.customer is not defined", async ({ assert }) => {
     testCustomerItem.customer = "notFoundCustomer";

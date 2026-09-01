@@ -1,6 +1,7 @@
 import { test } from "@japa/runner";
 
-import { buildSummary, clusterDeadlines, SummaryRow } from "#services/branch_books_service";
+import type { SummaryRow } from "#services/branch_books_service";
+import { buildSummary, clusterDeadlines } from "#services/branch_books_service";
 
 const JULY_1 = new Date("2026-07-01T00:00:00.000Z");
 const JUNE_30 = new Date("2026-06-30T22:00:00.000Z");

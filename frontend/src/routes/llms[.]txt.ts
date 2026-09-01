@@ -73,14 +73,13 @@ Frister, priser, avdragsordninger og gebyrer står i betingelsene og i spørsmå
 export const Route = createFileRoute("/llms.txt")({
   server: {
     handlers: {
-      GET: async () => {
-        return new Response(llmsTxt(), {
+      GET: async () =>
+        new Response(llmsTxt(), {
           headers: {
             "Content-Type": "text/plain; charset=utf-8",
             "Cache-Control": "public, max-age=3600",
           },
-        });
-      },
+        }),
     },
   },
 });

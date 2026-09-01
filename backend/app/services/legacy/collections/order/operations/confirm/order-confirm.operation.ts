@@ -1,16 +1,16 @@
 import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
-import { Order } from "#shared/order/order";
-import { BlApiRequest } from "#types/bl-api-request";
-import { Operation } from "#types/operation";
+import type { Order } from "#shared/order/order";
+import type { BlApiRequest } from "#types/bl-api-request";
+import type { Operation } from "#types/operation";
 
 export class OrderConfirmOperation implements Operation {
-  private queryBuilder = new SEDbQueryBuilder();
-  private orderPlacedHandler: OrderPlacedHandler;
+  private readonly queryBuilder = new SEDbQueryBuilder();
+  private readonly orderPlacedHandler: OrderPlacedHandler;
 
   constructor(orderPlacedHandler?: OrderPlacedHandler) {
     this.orderPlacedHandler = orderPlacedHandler ?? new OrderPlacedHandler();
@@ -109,7 +109,7 @@ export class OrderConfirmOperation implements Operation {
     try {
       placedOrder = await this.orderPlacedHandler.placeOrder(order, accessToken.details);
     } catch (error) {
-      throw new BlError("order could not be placed:" + error);
+      throw new BlError(`order could not be placed:${error}`);
     }
     return new BlapiResponse([placedOrder]);
   }

@@ -8,7 +8,8 @@ import dayjs from "dayjs";
 import { Activity, useState } from "react";
 
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
-import UserInfoFields, { UserInfoFieldValues } from "@/features/user/UserInfoFields";
+import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
+import UserInfoFields from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
@@ -18,7 +19,7 @@ import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import { Route } from "@tuyau/core/types";
+import type { Route } from "@tuyau/core/types";
 
 export default function UserSettingsForm({
   userDetail,
@@ -106,18 +107,18 @@ export default function UserSettingsForm({
   );
 
   return (
-    <Stack gap={"xs"}>
+    <Stack gap="xs">
       <TextInput
         disabled
-        label={"E-post"}
-        description={"Ta kontakt dersom du ønsker å endre e-postadresse"}
+        label="E-post"
+        description="Ta kontakt dersom du ønsker å endre e-postadresse"
         value={userDetail.email}
         rightSection={
           <Tooltip label={userDetail.emailConfirmed ? "Bekreftet" : "Ikke bekreftet"}>
             {userDetail.emailConfirmed ? (
-              <IconCheck color={"green"} />
+              <IconCheck color="green" />
             ) : (
-              <IconInfoCircleFilled color={"orange"} />
+              <IconInfoCircleFilled color="orange" />
             )}
           </Tooltip>
         }
@@ -131,7 +132,7 @@ export default function UserSettingsForm({
             </InfoAlert>
           </Activity>
           <Activity mode={!sendEmailVerification.isSuccess ? "visible" : "hidden"}>
-            <WarningAlert title={"E-postadressen er ikke bekreftet"}>
+            <WarningAlert title="E-postadressen er ikke bekreftet">
               En bekreftelseslenke har blitt sendt til {userDetail.email}. Trykk på knappen nedenfor
               for å sende en ny lenke.
             </WarningAlert>
@@ -142,15 +143,15 @@ export default function UserSettingsForm({
         </Stack>
       </Activity>
       {userDetail.permission !== "customer" && (
-        <Group gap={"xs"}>
-          <Text size={"sm"} c={"dimmed"}>
+        <Group gap="xs">
+          <Text size="sm" c="dimmed">
             Tilgangsnivå:
           </Text>
           <PermissionBadge permission={userDetail.permission} />
         </Group>
       )}
       <Space />
-      <UserInfoFields perspective={"personal"} fields={createFieldMap(defaultValues)} form={form} />
+      <UserInfoFields perspective="personal" fields={createFieldMap(defaultValues)} form={form} />
       <form.AppForm>
         <form.ErrorSummary serverErrors={serverErrors} />
       </form.AppForm>

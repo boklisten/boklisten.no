@@ -1,11 +1,11 @@
 import { test } from "@japa/runner";
 
 import CollectionEndpointDocumentAuth from "#services/legacy/collection-endpoint/collection-endpoint-document-auth";
-import { BlStorageData } from "#services/storage_service";
+import type { BlStorageData } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Branch } from "#shared/branch";
-import { BlApiRequest } from "#types/bl-api-request";
-import { BlDocumentPermission, BlEndpointRestriction } from "#types/bl-collection";
+import type { Branch } from "#shared/branch";
+import type { BlApiRequest } from "#types/bl-api-request";
+import type { BlDocumentPermission, BlEndpointRestriction } from "#types/bl-collection";
 import { mock } from "#tests/test-doubles";
 
 test.group("CollectionEndpointDocumentAuth", (group) => {
@@ -36,15 +36,14 @@ test.group("CollectionEndpointDocumentAuth", (group) => {
     ];
   });
 
-  test("should reject if blApiRequest is null or undefined", async ({ assert }) => {
-    return assert.rejects(
+  test("should reject if blApiRequest is null or undefined", async ({ assert }) =>
+    assert.rejects(
       () =>
         // @ts-expect-error fixme: auto ignored
         CollectionEndpointDocumentAuth.validate(testRestriction, testDocs, null),
       BlError,
       /blApiRequest is null or undefined/,
-    );
-  });
+    ));
 
   test("should resolve if blApiRequest.user.id is equal to document.user.id", async ({
     assert,

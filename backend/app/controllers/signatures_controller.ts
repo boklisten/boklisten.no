@@ -1,6 +1,6 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 import { Transformer } from "@napi-rs/image";
-import { DateTime } from "luxon";
+import type { DateTime } from "luxon";
 
 import Signature, { isUnderage } from "#models/signature";
 import DispatchService from "#services/dispatch_service";
@@ -12,13 +12,17 @@ import { StorageService } from "#services/storage_service";
 import { signValidator } from "#validators/signature";
 
 function formatSignedDate(dateTime: DateTime | null): string | undefined {
-  if (!dateTime) return undefined;
+  if (!dateTime) {
+    return undefined;
+  }
   return DateService.format(dateTime.toJSDate(), "Europe/Oslo", "DD/MM/YYYY");
 }
 
 async function getSignatureStatus(detailsId: string) {
   let userDetail = await StorageService.UserDetails.getOrNull(detailsId);
-  if (!userDetail) return null;
+  if (!userDetail) {
+    return null;
+  }
 
   userDetail = await reconcileSignatureTask(userDetail);
   const validSignature = await Signature.validForCustomer(userDetail);

@@ -1,12 +1,13 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
-import { UserDetail } from "#shared/user-detail";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { UserDetail } from "#shared/user-detail";
 import { mock } from "#tests/test-doubles";
 
 test.group("OrderToCustomerItemGenerator", (group) => {
@@ -96,7 +97,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         },
         returned: false,
         // @ts-expect-error fixme: auto ignored
-        amountLeftToPay: orderItem["info"]["amountLeftToPay"],
+        amountLeftToPay: orderItem.info.amountLeftToPay,
         totalAmount: orderItem.amount,
         blid: orderItem.blid,
         viewableFor: [userDetail.blid],
@@ -190,7 +191,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         returned: false,
         blid: orderItem.blid,
         // @ts-expect-error fixme: auto ignored
-        amountLeftToPay: orderItem["info"]["amountLeftToPay"],
+        amountLeftToPay: orderItem.info.amountLeftToPay,
         totalAmount: orderItem.amount,
         viewableFor: [userDetail.blid],
         orders: [order.id],
@@ -223,7 +224,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         },
         returned: false,
         // @ts-expect-error fixme: auto ignored
-        amountLeftToPay: orderItem2["info"]["amountLeftToPay"],
+        amountLeftToPay: orderItem2.info.amountLeftToPay,
         totalAmount: orderItem2.amount,
         orders: [order.id],
         customerInfo: {
@@ -598,7 +599,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         },
         returned: false,
         // @ts-expect-error fixme: auto ignored
-        amountLeftToPay: orderItem3["info"]["amountLeftToPay"],
+        amountLeftToPay: orderItem3.info.amountLeftToPay,
         totalAmount: orderItem3.amount,
         orders: [order.id],
         customerInfo: {

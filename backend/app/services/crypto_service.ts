@@ -7,7 +7,7 @@ const CryptoService = {
       Buffer.from(crypto.randomBytes(32)),
       crypto.randomBytes(16),
     );
-    return cipher.update(message, "utf-8", "hex") + cipher.final("hex");
+    return cipher.update(message, "utf8", "hex") + cipher.final("hex");
   },
   random() {
     return crypto.randomBytes(20).toString("hex");

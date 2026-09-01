@@ -1,6 +1,6 @@
 import { test } from "@japa/runner";
 
-import { ValidParameter } from "#services/legacy/query/db-query-valid-params";
+import type { ValidParameter } from "#services/legacy/query/db-query-valid-params";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 

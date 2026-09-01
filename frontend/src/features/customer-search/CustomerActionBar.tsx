@@ -14,25 +14,25 @@ export default function CustomerActionBar({
 
   return (
     <Box
-      pos={"sticky"}
-      py={"xs"}
+      pos="sticky"
+      py="xs"
       style={{
         top: "var(--app-shell-header-offset, 0px)",
         zIndex: 10,
         backgroundColor: "var(--mantine-color-body)",
       }}
     >
-      <Flex gap={"xs"} wrap={"wrap"} justify={{ base: "center", sm: "flex-start" }}>
+      <Flex gap="xs" wrap="wrap" justify={{ base: "center", sm: "flex-start" }}>
         <Button
-          px={"sm"}
+          px="sm"
           leftSection={<IconObjectScan size={18} aria-hidden />}
           onClick={openCustomerScanner}
         >
           Skann kundeID
         </Button>
         <Button
-          px={"sm"}
-          variant={"default"}
+          px="sm"
+          variant="default"
           leftSection={<IconSearch size={18} aria-hidden />}
           onClick={openCustomerSearch}
         >

@@ -1,5 +1,6 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderFieldValidator } from "#services/legacy/collections/order/helpers/order-validator/order-field-validator/order-field-validator";
 import { OrderItemValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-validator";
@@ -8,8 +9,8 @@ import { OrderUserDetailValidator } from "#services/legacy/collections/order/hel
 import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Branch } from "#shared/branch";
-import { Order } from "#shared/order/order";
+import type { Branch } from "#shared/branch";
+import type { Order } from "#shared/order/order";
 
 test.group("OrderValidator", (group) => {
   let testOrder: Order;

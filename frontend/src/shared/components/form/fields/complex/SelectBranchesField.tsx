@@ -1,4 +1,5 @@
-import { TreeSelect, type TreeSelectProps } from "@mantine/core";
+import { TreeSelect } from "@mantine/core";
+import type { TreeSelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import { useFieldContext } from "@/shared/hooks/form";
@@ -14,11 +15,11 @@ export default function SelectBranchesField(
 
   return (
     <TreeSelect
-      mode={"checkbox"}
-      checkedStrategy={"all"}
-      label={"Filialer"}
-      placeholder={"Velg filialer"}
-      nothingFoundMessage={"Fant ingen filialer"}
+      mode="checkbox"
+      checkedStrategy="all"
+      label="Filialer"
+      placeholder="Velg filialer"
+      nothingFoundMessage="Fant ingen filialer"
       maxDisplayedValues={6}
       maxDisplayedValuesContent={(overflow) => `+${overflow} til`}
       searchable

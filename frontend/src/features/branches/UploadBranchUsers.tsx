@@ -1,4 +1,5 @@
-import { CSVImporter, type Column, type ImportResult } from "@importcsv/react";
+import { CSVImporter } from "@importcsv/react";
+import type { Column, ImportResult } from "@importcsv/react";
 import {
   Alert,
   Badge,
@@ -225,9 +226,9 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
   }
 
   return (
-    <Stack gap={"xs"}>
+    <Stack gap="xs">
       <Title order={4}>Last opp elever</Title>
-      <Text size={"sm"} c={"dimmed"}>
+      <Text size="sm" c="dimmed">
         Last opp en elevliste (CSV eller Excel). Nye elever får konto og velkomstmelding,
         eksisterende elever får kun oppdatert informasjonen sin.
       </Text>
@@ -245,7 +246,7 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
         isModal
         modalIsOpen={importerOpen}
         modalOnCloseTriggered={() => setImporterOpen(false)}
-        primaryColor={"#26768f"}
+        primaryColor="#26768f"
         onComplete={(result) => {
           setImporterOpen(false);
           const userCandidates = toUserCandidates(result);
@@ -261,8 +262,8 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
       <Modal
         opened={evaluation !== undefined && candidates !== null}
         onClose={closeEvaluation}
-        title={"Bekreft opplasting av elever"}
-        size={"lg"}
+        title="Bekreft opplasting av elever"
+        size="lg"
       >
         {evaluation && candidates && (
           <Stack>
@@ -270,7 +271,7 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
               {`${evaluation.createCount} ${evaluation.createCount === 1 ? "ny elev" : "nye elever"} opprettes og ${evaluation.updateCount} ${evaluation.updateCount === 1 ? "eksisterende elev" : "eksisterende elever"} oppdateres.`}
             </Text>
             {candidatesWithoutClass > 0 && (
-              <Text size={"sm"} c={"dimmed"}>
+              <Text size="sm" c="dimmed">
                 {`${candidatesWithoutClass} ${candidatesWithoutClass === 1 ? "elev" : "elever"} mangler klasse i filen og lastes opp uten klasse. Eksisterende elever beholder klassen sin.`}
               </Text>
             )}
@@ -314,7 +315,7 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
                               />
                             )}
                             {mapping.status === "unmatched" && (
-                              <Badge color={"red"} variant={"light"}>
+                              <Badge color="red" variant="light">
                                 Ikke funnet
                               </Badge>
                             )}
@@ -328,26 +329,22 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
             )}
             {ambiguousMappings.length > 0 && (
               <Alert
-                color={"blue"}
+                color="blue"
                 icon={<IconInfoCircle />}
-                title={"Noen klasser passer med flere filialer"}
+                title="Noen klasser passer med flere filialer"
               >
                 Vi har foreslått den filialen som ligner mest. Kontroller at valgene i tabellen
                 stemmer før du bekrefter.
               </Alert>
             )}
             {confirmBlocked && (
-              <Alert
-                color={"red"}
-                icon={<IconAlertTriangle />}
-                title={"Noen klasser mangler filial"}
-              >
+              <Alert color="red" icon={<IconAlertTriangle />} title="Noen klasser mangler filial">
                 Noen av klassene i filen passer ikke med noen filial under denne filialen. Rett opp
                 klassenavnene i filen eller filialstrukturen, og last opp listen på nytt.
               </Alert>
             )}
-            <Group justify={"flex-end"}>
-              <Button variant={"default"} onClick={closeEvaluation}>
+            <Group justify="flex-end">
+              <Button variant="default" onClick={closeEvaluation}>
                 Avbryt
               </Button>
               <Button

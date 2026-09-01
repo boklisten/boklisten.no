@@ -3,11 +3,8 @@ import { IconExternalLink, IconLogout, IconUserEdit } from "@tabler/icons-react"
 import { useLocation } from "@tanstack/react-router";
 import { Fragment } from "react";
 
-import {
-  type AdminNavLink,
-  isAdminNavLinkActive,
-  visibleAdminNavSections,
-} from "@/features/layout/adminNavigation";
+import { isAdminNavLinkActive, visibleAdminNavSections } from "@/features/layout/adminNavigation";
+import type { AdminNavLink } from "@/features/layout/adminNavigation";
 import useAuth from "@/shared/hooks/useAuth";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 
@@ -27,8 +24,8 @@ function AdminNavItem({
       to={link.to}
       active={isAdminNavLinkActive(link, pathname)}
       leftSection={<LinkIcon />}
-      underline={"never"}
-      c={"var(--mantine-color-text)"}
+      underline="never"
+      c="var(--mantine-color-text)"
       component={TanStackAnchor}
       onClick={onNavigate}
     />
@@ -43,7 +40,7 @@ export default function AdminPageNavigation({ onNavigate = noop }: { onNavigate?
   const pathname = useLocation({ select: (location) => location.pathname });
   const { isAdmin } = useAuth();
   return (
-    <Stack justify={"space-between"} h={"100%"}>
+    <Stack justify="space-between" h="100%">
       <ScrollArea>
         <Stack gap={5}>
           {visibleAdminNavSections(isAdmin).map((section) => (
@@ -65,8 +62,8 @@ export default function AdminPageNavigation({ onNavigate = noop }: { onNavigate?
                     label={group.label}
                     leftSection={<GroupIcon />}
                     active={group.links.some((link) => isAdminNavLinkActive(link, pathname))}
-                    c={"var(--mantine-color-text)"}
-                    component={"button"}
+                    c="var(--mantine-color-text)"
+                    component="button"
                   >
                     {group.links.map((link) => (
                       <AdminNavItem
@@ -84,38 +81,38 @@ export default function AdminPageNavigation({ onNavigate = noop }: { onNavigate?
         </Stack>
       </ScrollArea>
 
-      <Stack gap={5} mb={"md"}>
-        <Divider label={"Bruker"} />
+      <Stack gap={5} mb="md">
+        <Divider label="Bruker" />
         <NavLink
-          label={"Brukerinnstillinger"}
-          to={"/admin/user-settings"}
+          label="Brukerinnstillinger"
+          to="/admin/user-settings"
           active={pathname.includes("/user-settings")}
           leftSection={<IconUserEdit />}
-          variant={"subtle"}
-          underline={"never"}
-          c={"var(--mantine-color-text)"}
+          variant="subtle"
+          underline="never"
+          c="var(--mantine-color-text)"
           component={TanStackAnchor}
           onClick={onNavigate}
         />
         <NavLink
-          label={"Gå til kundeside"}
-          description={"Se offentlig informasjon og egne bøker"}
-          to={"/"}
+          label="Gå til kundeside"
+          description="Se offentlig informasjon og egne bøker"
+          to="/"
           leftSection={<IconExternalLink />}
           component={TanStackAnchor}
           active
-          underline={"never"}
+          underline="never"
           onClick={onNavigate}
         />
         <NavLink
-          label={"Logg ut"}
-          to={"/auth/logout"}
+          label="Logg ut"
+          to="/auth/logout"
           leftSection={<IconLogout />}
-          variant={"subtle"}
+          variant="subtle"
           component={TanStackAnchor}
           active
-          underline={"never"}
-          color={"red"}
+          underline="never"
+          color="red"
           onClick={onNavigate}
         />
       </Stack>

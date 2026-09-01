@@ -65,7 +65,9 @@ async function custodyChain(blid: string): Promise<BookHandover[]> {
  * `MatchObligation` and `BookHandover` import each other.
  */
 async function handoversForObligations(obligationIds: number[]): Promise<BookHandover[]> {
-  if (obligationIds.length === 0) return [];
+  if (obligationIds.length === 0) {
+    return [];
+  }
   return BookHandover.query()
     .whereIn("dischargesSenderObligationId", obligationIds)
     .orWhereIn("dischargesReceiverObligationId", obligationIds);
@@ -103,7 +105,9 @@ async function unattachedHandoverCount(
         .whereIn("fromUserDetailId", roundParticipantCustomerIds(roundId))
         .orWhereIn("toUserDetailId", roundParticipantCustomerIds(roundId));
     });
-  if (until) void query.where("occurredAt", "<", until.toISO()!);
+  if (until) {
+    void query.where("occurredAt", "<", until.toISO()!);
+  }
 
   const [row] = await query.count("* as total");
   return Number(row?.$extras["total"] ?? 0);
@@ -351,7 +355,9 @@ async function recordHandover(input: RecordHandoverInput): Promise<BookHandover>
 
 /** True when `error` is Postgres rejecting a second discharge of the given obligation half. */
 export function isDischargeConflict(error: unknown, half: "sender" | "receiver"): boolean {
-  if (typeof error !== "object" || error === null) return false;
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
   const { code, constraint } = error as { code?: unknown; constraint?: unknown };
   return code === "23505" && constraint === `book_handovers_${half}_obligation_unique`;
 }

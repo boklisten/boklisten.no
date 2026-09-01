@@ -1,10 +1,10 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
-import { Order } from "#shared/order/order";
+import type { Order } from "#shared/order/order";
 
 async function toPresent(order: Order) {
   const branch = await StorageService.Branches.getOrNull(order.branch);
@@ -13,7 +13,7 @@ async function toPresent(order: Order) {
       (order.payments ?? []).map((payment) => StorageService.Payments.getOrNull(payment)),
     )
   )
-    .filter((payment) => !!payment)
+    .filter((payment) => payment !== null)
     .map((payment) => ({
       id: payment.id,
       methodLabel: TranslationService.translatePaymentMethod(payment.method),
@@ -37,7 +37,9 @@ export default class OrderHistoryController {
     const { detailsId } = PermissionService.authenticate(ctx);
     const orderId = ctx.request.param("orderId");
     const order = await StorageService.Orders.getOrNull(orderId);
-    if (!order || detailsId !== order.customer) return null;
+    if (!order || detailsId !== order.customer) {
+      return null;
+    }
 
     return toPresent(order);
   }

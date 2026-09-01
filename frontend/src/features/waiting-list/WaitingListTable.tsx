@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
 import type { ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import { Route } from "@tuyau/core/types";
+import type { Route } from "@tuyau/core/types";
 
 import CreateWaitingListEntry from "@/features/waiting-list/CreateWaitingListEntry";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -83,12 +83,12 @@ export default function WaitingListTable({
               flex: 0,
               cellRenderer: ({ data }: ICellRendererParams<WaitingListEntry>) =>
                 data && (
-                  <Group gap={"xs"} h={"100%"} align={"center"} wrap={"nowrap"}>
-                    <Tooltip label={"Slett"}>
+                  <Group gap="xs" h="100%" align="center" wrap="nowrap">
+                    <Tooltip label="Slett">
                       <ActionIcon
-                        aria-label={"Slett"}
-                        variant={"subtle"}
-                        color={"red"}
+                        aria-label="Slett"
+                        variant="subtle"
+                        color="red"
                         onClick={() => destroyWaitingListEntry({ params: { id: data.id } })}
                       >
                         <IconTrash />

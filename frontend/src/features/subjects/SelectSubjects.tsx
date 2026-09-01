@@ -24,18 +24,18 @@ export default function SelectSubjects({ branchId }: { branchId: string }) {
   if (!subjects) {
     return (
       <Stack>
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
       </Stack>
     );
   }
@@ -43,11 +43,11 @@ export default function SelectSubjects({ branchId }: { branchId: string }) {
   return (
     <>
       <Activity mode={Object.entries(subjects).length === 0 ? "visible" : "hidden"}>
-        <InfoAlert title={"Ingen fag tilgjengelig"}>
+        <InfoAlert title="Ingen fag tilgjengelig">
           Denne skolen har ikke satt opp noen fag enda. Ta kontakt på info@boklisten.no om du har
           spørsmål.
         </InfoAlert>
-        <Button component={TanStackAnchor} to={"/bestilling"} leftSection={<IconArrowBack />}>
+        <Button component={TanStackAnchor} to="/bestilling" leftSection={<IconArrowBack />}>
           Velg en annen skole
         </Button>
       </Activity>
@@ -70,10 +70,10 @@ export default function SelectSubjects({ branchId }: { branchId: string }) {
           </Button>
         ))}
       <Activity mode={selectedSubjects.size > 0 ? "visible" : "hidden"}>
-        <Affix w={"100%"}>
-          <Card withBorder shadow={"md"}>
-            <Stack align={"center"} gap={"xs"}>
-              <Text fs={"italic"}>{selectedSubjects.size} fag</Text>
+        <Affix w="100%">
+          <Card withBorder shadow="md">
+            <Stack align="center" gap="xs">
+              <Text fs="italic">{selectedSubjects.size} fag</Text>
               <Box>
                 <Button
                   onClick={() => {
@@ -88,9 +88,9 @@ export default function SelectSubjects({ branchId }: { branchId: string }) {
                     void navigate({ to: "/handlekurv" });
                   }}
                   leftSection={<IconBasket />}
-                  bg={"green"}
-                  c={"white"}
-                  fw={"bolder"}
+                  bg="green"
+                  c="white"
+                  fw="bolder"
                 >
                   Generer boklisten din
                 </Button>

@@ -18,5 +18,5 @@ export const Route = createFileRoute("/(offentlig)/info/general")({
 });
 
 function GeneralInformationPage() {
-  return <EditableTextReadOnly dataKey={"generell_informasjon"} />;
+  return <EditableTextReadOnly dataKey="generell_informasjon" />;
 }

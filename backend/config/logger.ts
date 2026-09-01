@@ -2,7 +2,7 @@ import { defineConfig, targets } from "@adonisjs/core/logger";
 import app from "@adonisjs/core/services/app";
 
 import env from "#start/env";
-import { InferLoggers } from "@adonisjs/core/types";
+import type { InferLoggers } from "@adonisjs/core/types";
 
 const loggerConfig = defineConfig({
   default: "app",

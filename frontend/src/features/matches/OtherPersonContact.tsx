@@ -23,18 +23,10 @@ const OtherPersonContact = ({ party }: { party: HandoverParty }) => {
 
 function formatPhoneNumber(number: string): string {
   if (/\d{8}/.exec(number) !== null) {
-    return number.slice(0, 3) + " " + number.slice(3, 5) + " " + number.slice(5, 8);
+    return `${number.slice(0, 3)} ${number.slice(3, 5)} ${number.slice(5, 8)}`;
   }
   if (/\d{10}/.exec(number) !== null) {
-    return (
-      number.slice(2) +
-      " " +
-      number.slice(2, 5) +
-      " " +
-      number.slice(5, 7) +
-      " " +
-      number.slice(7, 10)
-    );
+    return `${number.slice(2)} ${number.slice(2, 5)} ${number.slice(5, 7)} ${number.slice(7, 10)}`;
   }
   return number;
 }

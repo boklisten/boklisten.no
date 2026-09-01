@@ -534,14 +534,16 @@ test.group("MatchRepository", (group) => {
       });
 
     await discharge("BL0001234567");
-    const error = await discharge("BL0007654321").then(
-      () => null,
-      (caught: unknown) => caught,
-    );
+    let dischargeError: unknown = null;
+    try {
+      await discharge("BL0007654321");
+    } catch (error) {
+      dischargeError = error;
+    }
 
-    assert.isNotNull(error);
-    assert.isTrue(isDischargeConflict(error, "sender"));
-    assert.isFalse(isDischargeConflict(error, "receiver"));
+    assert.isNotNull(dischargeError);
+    assert.isTrue(isDischargeConflict(dischargeError, "sender"));
+    assert.isFalse(isDischargeConflict(dischargeError, "receiver"));
   });
 
   test("rolls back and writes nothing when the obligation half is already discharged", async ({

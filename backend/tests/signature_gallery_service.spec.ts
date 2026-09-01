@@ -1,14 +1,12 @@
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import Signature from "#models/signature";
-import {
-  GalleryContext,
-  GalleryCustomer,
-  SignatureGalleryService,
-} from "#services/signature_gallery_service";
+import type { GalleryContext, GalleryCustomer } from "#services/signature_gallery_service";
+import { SignatureGalleryService } from "#services/signature_gallery_service";
 import { StorageService } from "#services/storage_service";
 import { unchecked } from "#tests/test-doubles";
 

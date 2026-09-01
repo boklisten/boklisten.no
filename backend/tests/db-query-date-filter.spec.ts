@@ -29,7 +29,7 @@ test.group("DbQueryDateFilter", async () => {
     const momentDate = moment(query.creationDate, validDateFormat, true).toDate();
 
     assert.deepEqual(dbQueryDateFilter.getDateFilters(query, [fieldName]), [
-      { fieldName: fieldName, op: { $eq: momentDate } },
+      { fieldName, op: { $eq: momentDate } },
     ]);
   });
 

@@ -69,6 +69,6 @@ export const VippsPaymentService = {
   },
   token: {
     issue: () => encryption.encrypt(string.random(32), "1 day", callbackTokenPurpose),
-    verify: (token: string) => !!encryption.decrypt(token, callbackTokenPurpose),
+    verify: (token: string) => Boolean(encryption.decrypt(token, callbackTokenPurpose)),
   },
 };

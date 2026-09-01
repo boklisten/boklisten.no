@@ -1,4 +1,4 @@
-import { Infer } from "@vinejs/vine/types";
+import type { Infer } from "@vinejs/vine/types";
 import { ObjectId } from "mongodb";
 
 import BlidService from "#services/blid_service";
@@ -6,11 +6,11 @@ import CryptoService from "#services/crypto_service";
 import DispatchService from "#services/dispatch_service";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { StorageService } from "#services/storage_service";
-import { UserDetail } from "#shared/user-detail";
-import { UserPermission } from "#shared/user-permission";
-import { VippsUser } from "#types/user";
-import { registerSchema } from "#validators/auth_validators";
-import { userProvisioningValidator } from "#validators/user_provisioning";
+import type { UserDetail } from "#shared/user-detail";
+import type { UserPermission } from "#shared/user-permission";
+import type { VippsUser } from "#types/user";
+import type { registerSchema } from "#validators/auth_validators";
+import type { userProvisioningValidator } from "#validators/user_provisioning";
 import EmailVerification from "#models/email_verification";
 
 export const UserDetailService = {
@@ -30,7 +30,7 @@ export const UserDetailService = {
     ]);
     const permissions = new Map(users.map((user) => [String(user.userDetail), user.permission]));
 
-    const escaped = searchStr.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escaped = searchStr.trim().replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
     const matcher = new RegExp(escaped, "i");
     return (
       userDetails

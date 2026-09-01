@@ -1,4 +1,5 @@
-import { PasswordInput, type PasswordInputProps, Stack } from "@mantine/core";
+import { PasswordInput, Stack } from "@mantine/core";
+import type { PasswordInputProps } from "@mantine/core";
 import PasswordStrengthBarImport from "react-password-strength-bar";
 
 import { useFieldContext } from "@/shared/hooks/form";
@@ -7,8 +8,12 @@ import { useFieldContext } from "@/shared/hooks/form";
 const PasswordStrengthBar = Reflect.get(PasswordStrengthBarImport, "default");
 
 export function newPasswordFieldValidator(value: string) {
-  if (!value) return "Du må fylle inn et passord";
-  if (value.length < 10) return "Passordet må ha minst 10 tegn";
+  if (!value) {
+    return "Du må fylle inn et passord";
+  }
+  if (value.length < 10) {
+    return "Passordet må ha minst 10 tegn";
+  }
 
   return null;
 }
@@ -19,10 +24,10 @@ export default function NewPasswordField(props: PasswordInputProps) {
     <Stack gap={2}>
       <PasswordInput
         required
-        label={"Passord"}
-        type={"password"}
-        autoComplete={"new-password"}
-        placeholder={"correct horse battery staple"}
+        label="Passord"
+        type="password"
+        autoComplete="new-password"
+        placeholder="correct horse battery staple"
         {...props}
         value={field.state.value}
         onChange={(event) => field.handleChange(event.target.value)}
@@ -32,7 +37,7 @@ export default function NewPasswordField(props: PasswordInputProps) {
       <PasswordStrengthBar
         password={field.state.value}
         minLength={10}
-        shortScoreWord={"for kort"}
+        shortScoreWord="for kort"
         scoreWords={["svakt", "svakt", "ok", "stekt", "veldig sterkt"]}
       />
     </Stack>

@@ -20,9 +20,9 @@ function CheckoutStatusPage() {
   const { orderId } = Route.useSearch();
 
   return (
-    <Container size={"md"}>
+    <Container size="md">
       <Stack>
-        <Title ta={"center"}>Betaling</Title>
+        <Title ta="center">Betaling</Title>
         <VippsCheckoutStatus orderId={orderId} />
       </Stack>
     </Container>

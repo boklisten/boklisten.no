@@ -1,4 +1,5 @@
-import { type CalendarLevel, DateInput, type DateInputProps } from "@mantine/dates";
+import { DateInput } from "@mantine/dates";
+import type { CalendarLevel, DateInputProps } from "@mantine/dates";
 import { useState } from "react";
 
 import { useFieldContext } from "@/shared/hooks/form";
@@ -13,13 +14,15 @@ export default function DateField(props: DateInputProps) {
   return (
     <DateInput
       {...props}
-      valueFormat={"DD/MM/YYYY"}
-      placeholder={"DD/MM/YYYY"}
+      valueFormat="DD/MM/YYYY"
+      placeholder="DD/MM/YYYY"
       level={level}
       onLevelChange={setLevel}
       date={date}
       onDateChange={(value) => {
-        if (value) setDate(new Date(value));
+        if (value) {
+          setDate(new Date(value));
+        }
       }}
       value={field.state.value}
       onChange={(value) => {

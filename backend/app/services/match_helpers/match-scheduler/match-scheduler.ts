@@ -39,7 +39,9 @@ type Score = readonly [
 
 function beats(candidate: Score, incumbent: Score): boolean {
   for (let index = 0; index < candidate.length; index++) {
-    if (candidate[index] !== incumbent[index]) return candidate[index]! > incumbent[index]!;
+    if (candidate[index] !== incumbent[index]) {
+      return candidate[index]! > incumbent[index]!;
+    }
   }
   return false;
 }
@@ -67,7 +69,9 @@ function scoreCell(
   let stickiness = 0;
   let compactness = 0;
   for (const person of participants) {
-    if (state.usedLocations.get(person)?.has(location)) stickiness++;
+    if (state.usedLocations.get(person)?.has(location)) {
+      stickiness++;
+    }
     const occupied = state.occupancy.get(person);
     if (occupied !== undefined && occupied.size > 0) {
       if (occupied.has(slot)) {
@@ -102,7 +106,9 @@ function findBestCell(
         const at = state.occupancy.get(person)?.get(slot);
         return at !== undefined && at !== location;
       });
-      if (blocked) continue;
+      if (blocked) {
+        continue;
+      }
       const score = scoreCell(participants, slot, location, cohortKey, state);
       if (best === null || beats(score, best.score)) {
         best = { slot, location, score };
@@ -147,7 +153,9 @@ function commit(
  */
 export function scheduleUserMeetings(input: ScheduleInput): UserMatchAssignment[] {
   const { userMatches, userSlots, locations, memberships } = input;
-  if (userMatches.length === 0) return [];
+  if (userMatches.length === 0) {
+    return [];
+  }
 
   const state: SchedulerState = {
     occupancy: new Map(),
@@ -208,7 +216,9 @@ export function scheduleUserMeetings(input: ScheduleInput): UserMatchAssignment[
     }
   }
   return assignments.map((assignment) => {
-    if (assignment === null) throw new BlError("Ikke alle møter fikk tildelt et tidspunkt");
+    if (assignment === null) {
+      throw new BlError("Ikke alle møter fikk tildelt et tidspunkt");
+    }
     return assignment;
   });
 }
@@ -225,23 +235,29 @@ export function scheduleStandVisits(
   userAssignments: UserMatchAssignment[],
 ): DateTime[] {
   const { standMatches, standSlots, userMatches } = input;
-  if (standMatches.length === 0) return [];
+  if (standMatches.length === 0) {
+    return [];
+  }
   if (standSlots.length === 0) {
     throw new BlError("Standens åpningstid må vare i minst ti minutter").code(200);
   }
 
   const lastMeeting = new Map<string, DateTime>();
   userMatches.forEach((match, index) => {
-    const time = userAssignments[index]!.time;
+    const { time } = userAssignments[index]!;
     for (const person of [match.customerA, match.customerB]) {
       const previous = lastMeeting.get(person);
-      if (previous === undefined || time > previous) lastMeeting.set(person, time);
+      if (previous === undefined || time > previous) {
+        lastMeeting.set(person, time);
+      }
     }
   });
 
   const eligibleFrom = standMatches.map((standMatch) => {
     const last = lastMeeting.get(standMatch.customer);
-    if (last === undefined) return 0;
+    if (last === undefined) {
+      return 0;
+    }
     const index = standSlots.findIndex((slot) => slot > last);
     return index === -1 ? standSlots.length - 1 : index;
   });

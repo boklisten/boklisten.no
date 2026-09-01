@@ -1,11 +1,12 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 import logger from "@adonisjs/core/services/logger";
 
 import { StorageService } from "#services/storage_service";
 import TokenService from "#services/token_service";
 import { UserDetailService } from "#services/user_detail_service";
 import { UserService } from "#services/user_service";
-import { AUTH_VIPPS_ERROR, AuthVippsError } from "#shared/auth_vipps_error";
+import type { AuthVippsError } from "#shared/auth_vipps_error";
+import { AUTH_VIPPS_ERROR } from "#shared/auth_vipps_error";
 import env from "#start/env";
 
 function redirectToAuthFailedPage(ctx: HttpContext, reason: string) {

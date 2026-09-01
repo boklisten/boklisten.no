@@ -2,11 +2,11 @@ import moment from "moment";
 import { stringify } from "qs";
 
 import { APP_CONFIG } from "#services/legacy/application-config";
-import { BringDelivery } from "#services/legacy/collections/delivery/helpers/deliveryBring/bringDelivery";
+import type { BringDelivery } from "#services/legacy/collections/delivery/helpers/deliveryBring/bringDelivery";
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { BlError } from "#shared/bl-error";
-import { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
-import { Item } from "#shared/item";
+import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
+import type { Item } from "#shared/item";
 import env from "#start/env";
 
 interface ShipmentAddress {
@@ -23,7 +23,7 @@ interface FacilityAddress {
 }
 
 export class BringDeliveryService {
-  private bringShipmentUrl = APP_CONFIG.url.bring.shipmentInfo;
+  private readonly bringShipmentUrl = APP_CONFIG.url.bring.shipmentInfo;
 
   public async getDeliveryInfoBring(
     facilityAddress: FacilityAddress,
@@ -61,7 +61,7 @@ export class BringDeliveryService {
         postalCode: { city: string };
       };
 
-      shipmentAddress.postalCity = postalInfo["postalCode"]["city"];
+      shipmentAddress.postalCity = postalInfo.postalCode.city;
     } catch {
       return Promise.reject(new BlError("fromPostalCode is not valid"));
     }
@@ -113,9 +113,7 @@ export class BringDeliveryService {
 
           return resolve(deliveryInfoBring);
         })
-        .catch((blError: BlError) => {
-          return reject(blError);
-        });
+        .catch((blError: BlError) => reject(blError));
     });
   }
 
@@ -149,7 +147,7 @@ export class BringDeliveryService {
     const totalWeightInGrams = this.calculateTotalWeight(items);
 
     return {
-      clientUrl: env.get("CLIENT_URI") + "/",
+      clientUrl: `${env.get("CLIENT_URI")}/`,
       weight: totalWeightInGrams,
       frompostalcode: facilityAddress.postalCode,
       topostalcode: shipmentAddress.postalCode,
@@ -169,8 +167,8 @@ export class BringDeliveryService {
       amount: -1,
       estimatedDelivery: new Date(),
       taxAmount: 0,
-      facilityAddress: facilityAddress,
-      shipmentAddress: shipmentAddress,
+      facilityAddress,
+      shipmentAddress,
       from: facilityAddress.postalCode,
       to: shipmentAddress.postalCode,
       product,
@@ -221,9 +219,9 @@ export class BringDeliveryService {
       deliveryInfoBring.taxAmount = Number.parseInt(priceWithoutAdditionalService["vat"]);
     }
 
-    const expectedDelivery = product["expectedDelivery"];
+    const { expectedDelivery } = product;
     if (expectedDelivery) {
-      const workingDays = expectedDelivery["workingDays"];
+      const { workingDays } = expectedDelivery;
       if (workingDays) {
         deliveryInfoBring.estimatedDelivery = moment()
           .add(Number.parseInt(workingDays) + APP_CONFIG.delivery.deliveryDays, "days")

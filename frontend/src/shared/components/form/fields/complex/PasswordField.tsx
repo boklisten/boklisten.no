@@ -1,9 +1,12 @@
-import { PasswordInput, type PasswordInputProps } from "@mantine/core";
+import { PasswordInput } from "@mantine/core";
+import type { PasswordInputProps } from "@mantine/core";
 
 import { useFieldContext } from "@/shared/hooks/form";
 
 export function passwordFieldValidator(value: string) {
-  if (!value) return "Du må fylle inn passord";
+  if (!value) {
+    return "Du må fylle inn passord";
+  }
   return null;
 }
 
@@ -12,10 +15,10 @@ export default function PasswordField(props: PasswordInputProps) {
   return (
     <PasswordInput
       required
-      label={"Ditt passord"}
-      type={"password"}
-      autoComplete={"current-password"}
-      placeholder={"correct horse battery staple"}
+      label="Ditt passord"
+      type="password"
+      autoComplete="current-password"
+      placeholder="correct horse battery staple"
       {...props}
       value={field.state.value}
       onChange={(event) => field.handleChange(event.target.value)}

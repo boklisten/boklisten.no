@@ -9,7 +9,8 @@ import DeleteMatchesModal from "@/features/matches/rounds/DeleteMatchesModal";
 import DeleteRoundModal from "@/features/matches/rounds/DeleteRoundModal";
 import NotifyRoundButton from "@/features/matches/rounds/NotifyRoundButton";
 import RoundSelector from "@/features/matches/rounds/RoundSelector";
-import { isPlanned, useRefreshRounds, type Round } from "@/features/matches/rounds/useRounds";
+import { isPlanned, useRefreshRounds } from "@/features/matches/rounds/useRounds";
+import type { Round } from "@/features/matches/rounds/useRounds";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -17,10 +18,10 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 function RenameForm({ round, onRename }: { round: Round; onRename: (name: string) => void }) {
   const [name, setName] = useState(round.name);
   return (
-    <Group align={"flex-end"}>
+    <Group align="flex-end">
       <TextInput
         style={{ flex: 1 }}
-        label={"Navn på runden"}
+        label="Navn på runden"
         value={name}
         onChange={(event) => setName(event.currentTarget.value)}
       />
@@ -77,9 +78,9 @@ export default function RoundToolbar({
   });
 
   return (
-    <Card withBorder radius={"md"} padding={"sm"}>
-      <Group justify={"space-between"} gap={"sm"} wrap={"wrap"}>
-        <Group gap={"md"} wrap={"wrap"}>
+    <Card withBorder radius="md" padding="sm">
+      <Group justify="space-between" gap="sm" wrap="wrap">
+        <Group gap="md" wrap="wrap">
           <RoundSelector rounds={rounds} selectedRoundId={selectedRoundId} onSelect={onSelect} />
           {isAdmin && selected && (
             <Tooltip
@@ -90,10 +91,10 @@ export default function RoundToolbar({
                     ? "Elevene ser runden og overleveringene sine"
                     : "Utkast – skjult for elevene"
               }
-              refProp={"rootRef"}
+              refProp="rootRef"
             >
               <Switch
-                label={"Synlig for elever"}
+                label="Synlig for elever"
                 checked={active}
                 disabled={patchMutation.isPending || planned}
                 onChange={(event) =>
@@ -107,16 +108,16 @@ export default function RoundToolbar({
           )}
         </Group>
         {isAdmin && (
-          <Group gap={"xs"} wrap={"wrap"}>
+          <Group gap="xs" wrap="wrap">
             <NotifyRoundButton roundId={selectedRoundId} disabled={!active} />
-            <Button variant={"default"} leftSection={<IconPlus size={16} />} onClick={onNewRound}>
+            <Button variant="default" leftSection={<IconPlus size={16} />} onClick={onNewRound}>
               Ny runde
             </Button>
             {selected && (
               <>
-                <Menu position={"bottom-end"} withArrow>
+                <Menu position="bottom-end" withArrow>
                   <Menu.Target>
-                    <ActionIcon variant={"default"} size={36} aria-label={"Flere valg for runden"}>
+                    <ActionIcon variant="default" size={36} aria-label="Flere valg for runden">
                       <IconDotsVertical size={18} />
                     </ActionIcon>
                   </Menu.Target>
@@ -145,7 +146,7 @@ export default function RoundToolbar({
                     <Menu.Divider />
                     {!planned && (
                       <Menu.Item
-                        color={"red"}
+                        color="red"
                         leftSection={<IconTrash size={16} />}
                         onClick={deleteMatchesModal.open}
                       >
@@ -153,7 +154,7 @@ export default function RoundToolbar({
                       </Menu.Item>
                     )}
                     <Menu.Item
-                      color={"red"}
+                      color="red"
                       leftSection={<IconTrash size={16} />}
                       onClick={deleteModal.open}
                     >

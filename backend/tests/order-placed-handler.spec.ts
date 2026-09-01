@@ -1,5 +1,6 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { CustomerItemHandler } from "#services/legacy/collections/customer-item/helpers/customer-item-handler";
 import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
@@ -7,11 +8,11 @@ import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/o
 import { PaymentHandler } from "#services/legacy/collections/payment/helpers/payment-handler";
 import { OrderEmailHandler } from "#services/legacy/order_email_handler";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
-import { Payment } from "#shared/payment/payment";
-import { UserDetail } from "#shared/user-detail";
+import type { Order } from "#shared/order/order";
+import type { Payment } from "#shared/payment/payment";
+import type { UserDetail } from "#shared/user-detail";
 
 test.group("OrderPlacedHandler", (group) => {
   let testOrder: Order;
@@ -87,10 +88,11 @@ test.group("OrderPlacedHandler", (group) => {
         }
         return Promise.resolve(testOrder);
       }),
-      get: sandbox.stub().callsFake(() => {
-        // If you need custom logic, do it here. Otherwise:
-        return Promise.resolve(testOrder); // or whatever you need
-      }),
+      get: sandbox.stub().callsFake(
+        () =>
+          // If you need custom logic, do it here. Otherwise:
+          Promise.resolve(testOrder), // or whatever you need
+      ),
     };
     sandbox.stub(StorageService, "Orders").value(ordersStub);
 
@@ -173,7 +175,7 @@ test.group("OrderPlacedHandler", (group) => {
 
     const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
       () => null,
-      (caught: BlError) => caught,
+      (error: BlError) => error,
     );
     assert.instanceOf(err, BlError);
     assert.equal(err?.errorStack[0]?.getMsg(), "could not update order");
@@ -184,7 +186,7 @@ test.group("OrderPlacedHandler", (group) => {
 
     const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
       () => null,
-      (caught: BlError) => caught,
+      (error: BlError) => error,
     );
     assert.instanceOf(err, BlError);
     assert.equal(err?.errorStack[0]?.getMsg(), "could not confirm payments");
@@ -195,7 +197,7 @@ test.group("OrderPlacedHandler", (group) => {
 
     const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
       () => null,
-      (caught: BlError) => caught,
+      (error: BlError) => error,
     );
     assert.instanceOf(err, BlError);
     assert.equal(err?.errorStack[0]?.getMsg(), 'customer "notFoundUserDetails" not found');
@@ -206,15 +208,12 @@ test.group("OrderPlacedHandler", (group) => {
 
     const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
       () => null,
-      (caught: BlError) => caught,
+      (error: BlError) => error,
     );
     assert.instanceOf(err, BlError);
     assert.equal(err?.errorStack[0]?.getMsg(), "could not update userDetail with placed order");
   });
 
-  test("should resolve when order was placed", async ({ assert }) => {
-    return assert.doesNotReject(() =>
-      orderPlacedHandler.placeOrder(testOrder, testAccessToken.details),
-    );
-  });
+  test("should resolve when order was placed", async ({ assert }) =>
+    assert.doesNotReject(() => orderPlacedHandler.placeOrder(testOrder, testAccessToken.details)));
 });

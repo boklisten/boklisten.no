@@ -20,7 +20,7 @@ export default function AdminBlidSearchResult({
   );
 
   if (isPending) {
-    return <Skeleton height={280} radius={"md"} />;
+    return <Skeleton height={280} radius="md" />;
   }
   if (isError) {
     return <ErrorAlert>Kunne ikke søke opp boka. Prøv igjen.</ErrorAlert>;
@@ -30,9 +30,9 @@ export default function AdminBlidSearchResult({
   if (unknown) {
     return (
       <WarningAlert>
-        <Group justify={"space-between"}>
+        <Group justify="space-between">
           <Text>Fant ingen bok med unik ID {blid}.</Text>
-          <Button variant={"subtle"} size={"compact-sm"} onClick={onClear}>
+          <Button variant="subtle" size="compact-sm" onClick={onClear}>
             Tøm søket
           </Button>
         </Group>
@@ -41,8 +41,8 @@ export default function AdminBlidSearchResult({
   }
 
   return (
-    <Paper withBorder radius={"md"} p={"md"}>
-      <Stack gap={"md"}>
+    <Paper withBorder radius="md" p="md">
+      <Stack gap="md">
         <BlidBookHeader result={data} onClear={onClear} />
         <Divider />
         <BlidHistoryTimeline history={data.history} activeItem={data.activeItem} />

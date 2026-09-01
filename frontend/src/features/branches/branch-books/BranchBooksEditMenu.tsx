@@ -6,7 +6,7 @@ import {
   IconDotsVertical,
 } from "@tabler/icons-react";
 
-import { BranchBooksEditKind } from "@/features/branches/branch-books/types";
+import type { BranchBooksEditKind } from "@/features/branches/branch-books/types";
 
 export default function BranchBooksEditMenu({
   label,
@@ -19,9 +19,9 @@ export default function BranchBooksEditMenu({
   onEdit: (kind: BranchBooksEditKind) => void;
 }) {
   return (
-    <Menu position={"bottom-end"} withinPortal>
+    <Menu position="bottom-end" withinPortal>
       <Menu.Target>
-        <ActionIcon variant={"subtle"} color={"gray"} aria-label={label}>
+        <ActionIcon variant="subtle" color="gray" aria-label={label}>
           <IconDotsVertical size={18} />
         </ActionIcon>
       </Menu.Target>
@@ -36,7 +36,7 @@ export default function BranchBooksEditMenu({
           <>
             <Menu.Divider />
             <Menu.Item
-              color={"red"}
+              color="red"
               leftSection={<IconCircleX size={16} />}
               onClick={() => onEdit("cancel")}
             >

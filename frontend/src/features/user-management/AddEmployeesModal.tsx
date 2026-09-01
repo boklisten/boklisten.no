@@ -92,24 +92,24 @@ export default function AddEmployeesModal({
     selectedUsers.some((selected) => selected.detailsId === detailsId);
 
   return (
-    <Modal opened={opened} onClose={closeAndReset} title={"Legg til ansatte"} size={"lg"}>
-      <Stack gap={"sm"}>
+    <Modal opened={opened} onClose={closeAndReset} title="Legg til ansatte" size="lg">
+      <Stack gap="sm">
         <TextInput
-          label={"Søk etter kunder"}
-          placeholder={"Navn, e-post eller telefon"}
+          label="Søk etter kunder"
+          placeholder="Navn, e-post eller telefon"
           leftSection={<IconSearch size={16} />}
-          rightSection={isFetching ? <Loader size={"xs"} /> : undefined}
+          rightSection={isFetching ? <Loader size="xs" /> : undefined}
           value={searchValue}
           onChange={(event) => setSearchValue(event.currentTarget.value)}
           data-autofocus
         />
         {searchActive && searchResults && searchResults.length === 0 && (
-          <Text size={"sm"} c={"dimmed"} fs={"italic"}>
+          <Text size="sm" c="dimmed" fs="italic">
             Ingen kunder matcher søket.
           </Text>
         )}
         {searchResults && searchResults.length > 0 && (
-          <Stack gap={"xs"}>
+          <Stack gap="xs">
             {searchResults.slice(0, MAX_RESULTS).map((result) => (
               <Checkbox
                 key={result.id}
@@ -122,16 +122,16 @@ export default function AddEmployeesModal({
                 }
                 label={
                   <>
-                    <Text span size={"sm"} fw={600}>
+                    <Text span size="sm" fw={600}>
                       {result.name || result.email}
                     </Text>
                     {result.permission !== "customer" && (
-                      <Text span size={"sm"} c={"dimmed"}>
+                      <Text span size="sm" c="dimmed">
                         {" "}
                         · er allerede {PERMISSION_LABELS[result.permission]}
                       </Text>
                     )}
-                    <Text size={"xs"} c={"dimmed"} style={{ overflowWrap: "anywhere" }}>
+                    <Text size="xs" c="dimmed" style={{ overflowWrap: "anywhere" }}>
                       {result.email}
                     </Text>
                   </>
@@ -150,8 +150,8 @@ export default function AddEmployeesModal({
           </Pill.Group>
         )}
         <Select
-          label={"Tilgangsnivå"}
-          description={"Alle valgte brukere får samme tilgangsnivå"}
+          label="Tilgangsnivå"
+          description="Alle valgte brukere får samme tilgangsnivå"
           data={GRANTABLE_PERMISSIONS}
           value={permission}
           allowDeselect={false}

@@ -5,12 +5,8 @@ import dayjs from "dayjs";
 import { Activity, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import {
-  isFullyFulfilled,
-  partyName,
-  type ViewerMatch,
-  viewerProgress,
-} from "@/features/matches/forViewer";
+import { isFullyFulfilled, partyName, viewerProgress } from "@/features/matches/forViewer";
+import type { ViewerMatch } from "@/features/matches/forViewer";
 import { MatchTitle } from "@/features/matches/matchesList/helper";
 import MeetingInfo from "@/features/matches/MeetingInfo";
 import OtherPersonContact from "@/features/matches/OtherPersonContact";
@@ -31,7 +27,9 @@ function useIsTooEarly(meetingTime: string | null) {
   const [isTooEarly, setIsTooEarly] = useState(dayjs().isBefore(dayjs(meetingTime)));
 
   useEffect(() => {
-    if (!meetingTime) return undefined;
+    if (!meetingTime) {
+      return undefined;
+    }
     const interval = setInterval(() => {
       setIsTooEarly(dayjs().isBefore(dayjs(meetingTime)));
     }, 10_000);
@@ -74,8 +72,8 @@ export default function MatchDetailView({
   const canScan = !isStandMatch && toReceive.length > 0;
 
   return (
-    <Stack gap={"xl"}>
-      <Stack gap={"xs"}>
+    <Stack gap="xl">
+      <Stack gap="xs">
         <Title>
           <MatchTitle viewerMatch={viewerMatch} />
         </Title>
@@ -83,7 +81,7 @@ export default function MatchDetailView({
         <Activity mode={finished ? "visible" : "hidden"}>
           <SuccessAlert>Du er ferdig med denne overleveringen.</SuccessAlert>
           <Activity mode={redirectCountdownStarted ? "visible" : "hidden"}>
-            <CountdownToRedirect path={"/overleveringer"} seconds={5} />
+            <CountdownToRedirect path="/overleveringer" seconds={5} />
           </Activity>
         </Activity>
 
@@ -92,7 +90,7 @@ export default function MatchDetailView({
 
       <Activity mode={finished ? "hidden" : "visible"}>
         <Activity mode={isStandMatch ? "hidden" : "visible"}>
-          <Stack gap={"xs"}>
+          <Stack gap="xs">
             <Title order={2}>Hvordan fungerer det?</Title>
             <Text>
               Du skal møte en annen elev og utveksle bøker. Det er viktig at den som mottar bøker
@@ -102,7 +100,7 @@ export default function MatchDetailView({
           </Stack>
         </Activity>
 
-        <Stack gap={"xs"}>
+        <Stack gap="xs">
           <MatchHeader>{isStandMatch ? "Du skal på stand" : "Du skal møte"}</MatchHeader>
           {counterparty && !isStandMatch && <OtherPersonContact party={counterparty} />}
           <MeetingInfo
@@ -113,7 +111,7 @@ export default function MatchDetailView({
       </Activity>
 
       <Activity mode={isStandMatch ? "visible" : "hidden"}>
-        <Stack align={"center"} w={"100%"}>
+        <Stack align="center" w="100%">
           <ShowCustomerIdButton
             customerId={viewerCustomerId}
             extraContent={
@@ -122,7 +120,7 @@ export default function MatchDetailView({
                   <Title>Oppmøte {norwegianTime(viewerMatch.meetingTime).format("HH:mm")}</Title>
                 </Activity>
                 <Activity mode={tooEarly ? "visible" : "hidden"}>
-                  <InfoAlert title={"For tidlig ute"}>
+                  <InfoAlert title="For tidlig ute">
                     Din oppmøtetid har ikke kommet enda. Vent med å stille deg i kø til tidspunktet
                     du har fått tildelt.
                   </InfoAlert>
@@ -134,18 +132,18 @@ export default function MatchDetailView({
       </Activity>
 
       <Activity mode={canScan && !finished ? "visible" : "hidden"}>
-        <Stack gap={"xs"}>
+        <Stack gap="xs">
           <MatchHeader>Når du skal motta bøker</MatchHeader>
           <Text>For å motta bøker må du skanne dem</Text>
           <ScannerTutorial />
-          <Button color={"green"} leftSection={<IconObjectScan />} onClick={open}>
+          <Button color="green" leftSection={<IconObjectScan />} onClick={open}>
             Skann bøker
           </Button>
-          <Modal opened={opened} onClose={close} title={"Skann bøker"}>
+          <Modal opened={opened} onClose={close} title="Skann bøker">
             <ScannerPanel
               allowManualEntry
               accepts={["blid"]}
-              successMessage={"Boken har blitt registrert!"}
+              successMessage="Boken har blitt registrert!"
               onScan={async (blid) => {
                 const response = await client.api.matches.transferItem({ body: { blid } });
                 await queryClient.invalidateQueries({

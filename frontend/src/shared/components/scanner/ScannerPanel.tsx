@@ -3,30 +3,30 @@ import { Button, Modal, Stack } from "@mantine/core";
 import type { NotificationData } from "@mantine/notifications";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { IconForms } from "@tabler/icons-react";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
+import type { ReactNode } from "react";
 
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import CameraErrorAlert from "@/shared/components/scanner/CameraErrorAlert";
 import CameraScanner from "@/shared/components/scanner/CameraScanner";
 import ManualCodeEntry from "@/shared/components/scanner/ManualCodeEntry";
-import ScanInstructionOverlay, {
-  type ScanInstruction,
-} from "@/shared/components/scanner/ScanInstructionOverlay";
+import ScanInstructionOverlay from "@/shared/components/scanner/ScanInstructionOverlay";
+import type { ScanInstruction } from "@/shared/components/scanner/ScanInstructionOverlay";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 import {
   determineScanCodeType,
   listScanCodeTypes,
   nameScanCodeType,
-  type ScanCodeType,
 } from "@/shared/utils/scanCodes";
+import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
-export type ScanNotice = {
+export interface ScanNotice {
   message: string;
   title?: string | undefined;
-};
+}
 
-export type ScannerPanelProps = {
+export interface ScannerPanelProps {
   onScan: (code: string) => Promise<ScanNotice | void> | ScanNotice | void;
   accepts?: ScanCodeType[] | undefined;
   instruction?: ScanInstruction | null | undefined;
@@ -34,7 +34,7 @@ export type ScannerPanelProps = {
   onSuccess?: (() => void) | undefined;
   allowManualEntry?: boolean | undefined;
   children?: ReactNode;
-};
+}
 
 // Mantine modals default to z-index 200. The panel usually renders inside one, so its own modals
 // have to outrank the host rather than rely on portal ordering.
@@ -155,7 +155,7 @@ export default function ScannerPanel({
 
       {manualEntryAvailable && (
         <Button
-          variant={"outline"}
+          variant="outline"
           leftSection={<IconForms />}
           onClick={() => setManualEntryOpen(true)}
         >
@@ -166,7 +166,7 @@ export default function ScannerPanel({
       <Modal
         opened={manualEntryOpen}
         onClose={() => setManualEntryOpen(false)}
-        title={"Manuell registrering"}
+        title="Manuell registrering"
         zIndex={MANUAL_ENTRY_Z_INDEX}
       >
         <ManualCodeEntry accepts={accepts} onSubmit={handleCode} />

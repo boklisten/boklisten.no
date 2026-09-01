@@ -6,7 +6,7 @@ import type { BelongsTo, HasMany } from "@adonisjs/lucid/types/relations";
 import MessageEvent from "#models/message_event";
 import Sendout from "#models/sendout";
 import { MessageSchema } from "#database/schema";
-import { MessageChannel, MessageStatus, MessageType } from "#shared/message-log";
+import type { MessageChannel, MessageStatus, MessageType } from "#shared/message-log";
 
 export default class Message extends MessageSchema {
   static override selfAssignPrimaryKey = true;

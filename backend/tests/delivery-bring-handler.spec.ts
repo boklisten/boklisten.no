@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 
 import { DeliveryBringHandler } from "#services/legacy/collections/delivery/helpers/deliveryBring/delivery-bring-handler";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
+import type { Delivery } from "#shared/delivery/delivery";
 
 test.group("DeliveryBringHandler", (group) => {
   let testDelivery: Delivery;

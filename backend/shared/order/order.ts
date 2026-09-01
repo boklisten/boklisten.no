@@ -1,5 +1,5 @@
-import { BlDocument } from "#shared/bl-document";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { BlDocument } from "#shared/bl-document";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export interface Order extends BlDocument {
   amount: number; // the total amount of this order

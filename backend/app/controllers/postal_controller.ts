@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import { BringService } from "#services/bring/bring_service";
 

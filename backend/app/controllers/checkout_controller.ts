@@ -33,15 +33,17 @@ export default class CheckoutController {
     const { detailsId } = PermissionService.authenticate(ctx);
     const orderId = ctx.request.param("orderId");
     const order = await StorageService.Orders.get(orderId);
-    if (detailsId !== order.customer || order.checkoutState || order.amount > 0)
+    if (detailsId !== order.customer || order.checkoutState || order.amount > 0) {
       throw new Error("You do not have permission to confirm this order");
+    }
 
     await new OrderPlacedHandler().placeOrder(order, order.customer);
   }
 
   async handleVippsCallback(ctx: HttpContext) {
-    if (!VippsPaymentService.token.verify(ctx.request.header("Authorization") ?? ""))
+    if (!VippsPaymentService.token.verify(ctx.request.header("Authorization") ?? "")) {
       throw new UnauthorizedException("Authorization header missing or invalid");
+    }
     const session = await ctx.request.validateUsing(vippsCheckoutSessionValidator);
     await VippsCheckoutService.update(session);
   }
@@ -50,8 +52,9 @@ export default class CheckoutController {
     const { detailsId } = PermissionService.authenticate(ctx);
     const orderId = ctx.request.param("orderId");
     const order = await StorageService.Orders.get(orderId);
-    if (detailsId !== order.customer)
+    if (detailsId !== order.customer) {
       throw new Error("You do not have permission to access this payment information");
+    }
 
     if (order.checkoutState === "SessionCreated" || order.checkoutState === "PaymentInitiated") {
       const session = await VippsPaymentService.checkout.info(order.id);

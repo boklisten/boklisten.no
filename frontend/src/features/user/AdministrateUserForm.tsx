@@ -8,7 +8,8 @@ import dayjs from "dayjs";
 import { useState } from "react";
 
 import UserDangerZone from "@/features/user/UserDangerZone";
-import UserInfoFields, { UserInfoFieldValues } from "@/features/user/UserInfoFields";
+import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
+import UserInfoFields from "@/features/user/UserInfoFields";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
@@ -119,11 +120,11 @@ export default function AdministrateUserForm({
   });
 
   return (
-    <Stack gap={"xs"}>
+    <Stack gap="xs">
       <form.Subscribe selector={(state) => state.values.emailVerified}>
         {(emailVerified) => (
           <form.AppField
-            name={"email"}
+            name="email"
             validators={{
               onBlur: ({ value }) => emailFieldValidator(value, "personal"),
             }}
@@ -133,9 +134,9 @@ export default function AdministrateUserForm({
                 rightSection={
                   <Tooltip label={emailVerified ? "Bekreftet" : "Ikke bekreftet"}>
                     {emailVerified ? (
-                      <IconCheck color={"green"} />
+                      <IconCheck color="green" />
                     ) : (
-                      <IconInfoCircleFilled color={"orange"} />
+                      <IconInfoCircleFilled color="orange" />
                     )}
                   </Tooltip>
                 }
@@ -144,12 +145,12 @@ export default function AdministrateUserForm({
           </form.AppField>
         )}
       </form.Subscribe>
-      <form.AppField name={"emailVerified"}>
-        {(field) => <field.SwitchField label={"E-post bekreftet"} />}
+      <form.AppField name="emailVerified">
+        {(field) => <field.SwitchField label="E-post bekreftet" />}
       </form.AppField>
       <Space />
       <UserInfoFields
-        perspective={"administrate"}
+        perspective="administrate"
         fields={createFieldMap(defaultValues)}
         form={form}
       />

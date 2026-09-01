@@ -1,11 +1,13 @@
 import { Hook } from "#services/legacy/hook";
 import { PermissionService } from "#services/permission_service";
-import { AccessToken } from "#shared/access-token";
-import { Branch } from "#shared/branch";
+import type { AccessToken } from "#shared/access-token";
+import type { Branch } from "#shared/branch";
 
 export class BranchGetHook extends Hook {
   public override after(branches: Branch[], accessToken: AccessToken): Promise<Branch[]> {
-    for (const branch of branches) this.resolveBranchItems(branch, accessToken);
+    for (const branch of branches) {
+      this.resolveBranchItems(branch, accessToken);
+    }
 
     return Promise.resolve(branches);
   }

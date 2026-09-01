@@ -1,15 +1,15 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 import router from "@adonisjs/core/services/router";
 
 import BlResponseHandler from "#services/legacy/bl-response.handler";
 import CollectionEndpointAuth from "#services/legacy/collection-endpoint/collection-endpoint-auth";
 import CollectionEndpointHandler from "#services/legacy/collection-endpoint/collection-endpoint-handler";
 import CollectionEndpointOperation from "#services/legacy/collection-endpoint/collection-endpoint-operation";
-import { BlStorageData } from "#services/storage_service";
+import type { BlStorageData } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
-import { BlApiRequest } from "#types/bl-api-request";
-import { BlCollection, BlEndpoint } from "#types/bl-collection";
+import type { BlApiRequest } from "#types/bl-api-request";
+import type { BlCollection, BlEndpoint } from "#types/bl-collection";
 
 function createRequestHandler(
   endpoint: BlEndpoint,

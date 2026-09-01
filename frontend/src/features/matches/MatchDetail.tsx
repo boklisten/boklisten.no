@@ -34,8 +34,8 @@ const MatchDetail = ({ matchId }: { matchId: string }) => {
   return (
     <>
       <Box>
-        <TanStackAnchor to={"/overleveringer"}>
-          <Button variant={"subtle"} leftSection={<IconArrowLeft />}>
+        <TanStackAnchor to="/overleveringer">
+          <Button variant="subtle" leftSection={<IconArrowLeft />}>
             Alle overleveringer
           </Button>
         </TanStackAnchor>

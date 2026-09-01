@@ -11,19 +11,19 @@ import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
-import { OrderItemType } from "#shared/order/order-item/order-item-type";
-import { UserPermission } from "#shared/user-permission";
-import { BlApiRequest } from "#types/bl-api-request";
-import { Operation } from "#types/operation";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { OrderItemType } from "#shared/order/order-item/order-item-type";
+import type { UserPermission } from "#shared/user-permission";
+import type { BlApiRequest } from "#types/bl-api-request";
+import type { Operation } from "#types/operation";
 
 export class OrderPlaceOperation implements Operation {
-  private queryBuilder = new SEDbQueryBuilder();
-  private orderToCustomerItemGenerator: OrderToCustomerItemGenerator;
-  private orderPlacedHandler: OrderPlacedHandler;
-  private orderValidator: OrderValidator;
+  private readonly queryBuilder = new SEDbQueryBuilder();
+  private readonly orderToCustomerItemGenerator: OrderToCustomerItemGenerator;
+  private readonly orderPlacedHandler: OrderPlacedHandler;
+  private readonly orderValidator: OrderValidator;
 
   constructor(
     orderToCustomerItemGenerator?: OrderToCustomerItemGenerator,
@@ -315,9 +315,7 @@ export class OrderPlaceOperation implements Operation {
     customerItems: CustomerItem[],
     customerId: string,
   ): Promise<boolean> {
-    const customerItemIds: string[] = customerItems.map((ci) => {
-      return ci.id.toString();
-    });
+    const customerItemIds: string[] = customerItems.map((ci) => ci.id.toString());
 
     const userDetail = await StorageService.UserDetails.get(customerId);
 

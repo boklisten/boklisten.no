@@ -1,12 +1,13 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderPlacedValidator } from "#services/legacy/collections/order/helpers/order-validator/order-placed-validator/order-placed-validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
-import { Order } from "#shared/order/order";
-import { Payment } from "#shared/payment/payment";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { Order } from "#shared/order/order";
+import type { Payment } from "#shared/payment/payment";
 
 test.group("OrderPlacedValidator", (group) => {
   let testOrder: Order;
@@ -68,24 +69,26 @@ test.group("OrderPlacedValidator", (group) => {
     };
 
     sandbox = createSandbox();
-    sandbox.stub(StorageService.Payments, "getMany").callsFake((ids: string[]) => {
-      return new Promise((resolve, reject) => {
-        if (ids[0] !== "payment1") {
-          return reject(new BlError("not found").code(702));
-        }
-        resolve([testPayment]);
-      });
-    });
+    sandbox.stub(StorageService.Payments, "getMany").callsFake(
+      (ids: string[]) =>
+        new Promise((resolve, reject) => {
+          if (ids[0] !== "payment1") {
+            return reject(new BlError("not found").code(702));
+          }
+          resolve([testPayment]);
+        }),
+    );
 
-    sandbox.stub(StorageService.Deliveries, "get").callsFake((id) => {
-      return new Promise((resolve, reject) => {
-        if (id !== "delivery1") {
-          return reject(new BlError("not found").code(702));
-        }
+    sandbox.stub(StorageService.Deliveries, "get").callsFake(
+      (id) =>
+        new Promise((resolve, reject) => {
+          if (id !== "delivery1") {
+            return reject(new BlError("not found").code(702));
+          }
 
-        resolve(testDelivery);
-      });
-    });
+          resolve(testDelivery);
+        }),
+    );
   });
   group.each.teardown(() => {
     sandbox.restore();

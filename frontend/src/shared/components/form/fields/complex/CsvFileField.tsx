@@ -1,4 +1,5 @@
-import { FileInput, type FileInputProps, Stack, Text } from "@mantine/core";
+import { FileInput, Stack, Text } from "@mantine/core";
+import type { FileInputProps } from "@mantine/core";
 import { IconFileTypeCsv } from "@tabler/icons-react";
 import Papa from "papaparse";
 import { Activity, useState } from "react";
@@ -75,20 +76,28 @@ export default function CsvFileField(
           return null;
         }
         const firstValue = values[0];
-        if (values.length === 1 && firstValue) parsedRow[header] = firstValue;
-        else parsedRow[header] = values;
+        if (values.length === 1 && firstValue) {
+          parsedRow[header] = firstValue;
+        } else {
+          parsedRow[header] = values;
+        }
       }
 
       for (const header of optionalHeaders ?? []) {
         const indices = headerIndexMap[header] ?? [];
-        if (indices.length === 0) continue;
+        if (indices.length === 0) {
+          continue;
+        }
 
         const values = indices.map((i) => (row[i] ?? "").trim()).filter((v) => v !== "");
 
         const firstValue = values[0];
         if (firstValue) {
-          if (values.length === 1) parsedRow[header] = firstValue;
-          else parsedRow[header] = values;
+          if (values.length === 1) {
+            parsedRow[header] = firstValue;
+          } else {
+            parsedRow[header] = values;
+          }
         }
       }
       parsedRows.push(parsedRow);
@@ -102,7 +111,7 @@ export default function CsvFileField(
     <Stack gap={5}>
       <FileInput
         clearable
-        placeholder={"Velg fil (csv)"}
+        placeholder="Velg fil (csv)"
         accept="csv,text/csv"
         leftSection={<IconFileTypeCsv />}
         description={`Format: ${props.headers.map((header) => header.label).join(", ")}`}
@@ -139,7 +148,7 @@ export default function CsvFileField(
               error: (error: unknown) => {
                 showErrorNotification({
                   title: "Klarte ikke lese CSV",
-                  message: "" + error,
+                  message: String(error),
                 });
                 setValue(null);
                 field.handleChange(null);
@@ -149,7 +158,7 @@ export default function CsvFileField(
           reader.addEventListener("error", (err) => {
             showErrorNotification({
               title: "Klarte ikke lese CSV",
-              message: "" + err,
+              message: String(err),
             });
             setValue(null);
             field.handleChange(null);
@@ -160,7 +169,7 @@ export default function CsvFileField(
         error={field.state.meta.errors.join(", ")}
       />
       <Activity mode={numberOfRowsParsed > 0 ? "visible" : "hidden"}>
-        <Text size={"sm"} fs={"italic"}>
+        <Text size="sm" fs="italic">
           Antall {typeof props.label === "string" ? props.label.toLowerCase() : "rader med data"}:{" "}
           {numberOfRowsParsed}
         </Text>

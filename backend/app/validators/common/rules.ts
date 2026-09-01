@@ -19,7 +19,9 @@ export const uniqueEmail = vine.createRule(async (value, options, field) => {
   }
   const foundUserDetail = await UserDetailService.getByEmail(value);
   const detailsId: string | null = field.meta["detailsId"] ?? null;
-  if (foundUserDetail?.id === detailsId) return;
+  if (foundUserDetail?.id === detailsId) {
+    return;
+  }
 
   if (foundUserDetail) {
     field.report(
@@ -36,7 +38,9 @@ export const uniquePhoneNumber = vine.createRule(async (value, options, field) =
   }
   const foundUserDetail = await UserDetailService.getByPhoneNumber(value);
   const detailsId: string | null = field.meta["detailsId"] ?? null;
-  if (foundUserDetail?.id === detailsId) return;
+  if (foundUserDetail?.id === detailsId) {
+    return;
+  }
 
   if (foundUserDetail) {
     field.report(

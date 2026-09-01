@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import BranchBooksDetailsTable from "@/features/branches/branch-books/BranchBooksDetailsTable";
 import BranchBooksEditModal from "@/features/branches/branch-books/BranchBooksEditModal";
 import BranchBooksTree from "@/features/branches/branch-books/BranchBooksTree";
-import {
+import type {
   ActiveBookDetail,
   BranchBooksDetailColumn,
   BranchBooksEditKind,
@@ -56,8 +56,8 @@ function ActiveBookDetails({
       isLoading={detailsQuery.isLoading}
       isError={detailsQuery.isError}
       columns={COLUMNS}
-      leafLabel={"Utdelt på denne filialen"}
-      emptyLabel={"Ingen av disse bøkene er delt ut direkte på denne filialen."}
+      leafLabel="Utdelt på denne filialen"
+      emptyLabel="Ingen av disse bøkene er delt ut direkte på denne filialen."
       rowKey={(row) => row.customerItemId}
       onEditRow={onEditRow}
     />
@@ -85,7 +85,9 @@ export default function ActiveBooksTab({ branchId }: { branchId: string }) {
   );
 
   function openEdit(kind: BranchBooksEditKind, target: BranchBooksEditTarget) {
-    if (kind === "cancel") return; // Active books cannot be cancelled
+    if (kind === "cancel") {
+      return;
+    } // Active books cannot be cancelled
     const modalId = modals.open({
       title: kind === "deadline" ? "Endre frist" : "Flytt til annen filial",
       children: (
@@ -121,15 +123,15 @@ export default function ActiveBooksTab({ branchId }: { branchId: string }) {
         direct={summaryQuery.data?.direct}
         indirect={summaryQuery.data?.indirect}
         totalIcon={<IconSum size={18} />}
-        directLabel={"Utdelt på denne filialen"}
-        indirectLabel={"Utdelt på underliggende filialer"}
+        directLabel="Utdelt på denne filialen"
+        indirectLabel="Utdelt på underliggende filialer"
       />
       <BranchBooksTree
         summary={summaryQuery.data}
         isLoading={summaryQuery.isLoading}
         isError={summaryQuery.isError}
-        treeLabel={"Aktive bøker etter frist"}
-        emptyLabel={"Ingen aktive bøker på denne filialen."}
+        treeLabel="Aktive bøker etter frist"
+        emptyLabel="Ingen aktive bøker på denne filialen."
         onEdit={openEdit}
         renderDetails={(deadlines, itemId, enabled) => (
           <ActiveBookDetails

@@ -6,5 +6,5 @@ export const Route = createFileRoute("/(administrasjon)/admin/scanner")({
 });
 
 function ScannerPage() {
-  return <RedirectToBlAdmin path={"scanner"} />;
+  return <RedirectToBlAdmin path="scanner" />;
 }

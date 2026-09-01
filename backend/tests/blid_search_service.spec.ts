@@ -1,13 +1,10 @@
 import { test } from "@japa/runner";
 
-import {
-  assembleBlidSearch,
-  BlidSearchSources,
-  collectReferencedIds,
-} from "#services/blid_search_service";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { BlidSearchSources } from "#services/blid_search_service";
+import { assembleBlidSearch, collectReferencedIds } from "#services/blid_search_service";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 const BLID = "12345678";
 const IDA = "ida-id";

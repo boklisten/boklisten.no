@@ -74,7 +74,7 @@ export function websiteSchema() {
 }
 
 export function faqPageSchema(
-  questionsAndAnswers: ReadonlyArray<{ id: string; question: string; answer: string }>,
+  questionsAndAnswers: readonly { id: string; question: string; answer: string }[],
 ) {
   return {
     "@context": "https://schema.org",
@@ -101,11 +101,11 @@ export function branchSchema({
   branchName: string;
   address: string | undefined;
   pathname: string;
-  openingHours: ReadonlyArray<{
+  openingHours: readonly {
     id: string | number;
     from: Date | string | null;
     to: Date | string | null;
-  }>;
+  }[];
 }) {
   const url = absoluteUrl(pathname);
   const datedOpeningHours = openingHours.filter(

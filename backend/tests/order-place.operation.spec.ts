@@ -1,7 +1,8 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import BookHandover from "#models/book_handover";
 import Signature, { SIGNATURE_NUM_MONTHS_VALID } from "#models/signature";
@@ -16,9 +17,9 @@ import { OrderPlaceOperation } from "#services/legacy/collections/order/operatio
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
-import { UserDetail } from "#shared/user-detail";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { UserDetail } from "#shared/user-detail";
 import { mock } from "#tests/test-doubles";
 
 function createValidSignature() {

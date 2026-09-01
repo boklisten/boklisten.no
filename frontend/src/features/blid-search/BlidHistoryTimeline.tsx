@@ -28,11 +28,11 @@ import { norwegianTime } from "@/shared/utils/dayjs";
 function PersonLink({ detailsId, name }: { detailsId: string; name: string }) {
   return (
     <TanStackAnchor
-      to={"/admin/kundesok"}
+      to="/admin/kundesok"
       search={{ kunde: detailsId }}
-      c={"inherit"}
+      c="inherit"
       fw={700}
-      underline={"hover"}
+      underline="hover"
     >
       {name}
     </TanStackAnchor>
@@ -59,7 +59,9 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
   );
   switch (action) {
     case "handout": {
-      if (to?.type !== "customer") return "Boka ble delt ut";
+      if (to?.type !== "customer") {
+        return "Boka ble delt ut";
+      }
       if (from?.type === "customer") {
         // The previous holder is not repeated here — their own entry sits just below.
         return (
@@ -127,7 +129,9 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
       return "Fristen ble utsatt";
     }
     case "buyout": {
-      if (to?.type !== "customer") return "Boka ble kjøpt ut";
+      if (to?.type !== "customer") {
+        return "Boka ble kjøpt ut";
+      }
       return (
         <>
           <Party party={to} /> kjøpte ut boka{employee && <> hos {employee}</>}
@@ -135,7 +139,9 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
       );
     }
     case "invoice-paid": {
-      if (to?.type !== "customer") return "Fakturaen for boka ble betalt";
+      if (to?.type !== "customer") {
+        return "Fakturaen for boka ble betalt";
+      }
       return (
         <>
           <Party party={to} /> betalte faktura for boka
@@ -143,7 +149,9 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
       );
     }
     case "buyback": {
-      if (from?.type !== "customer") return "Boka ble solgt tilbake til Boklisten";
+      if (from?.type !== "customer") {
+        return "Boka ble solgt tilbake til Boklisten";
+      }
       if (employee) {
         return <>{employee} kjøpte tilbake boka</>;
       }
@@ -160,7 +168,9 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
       return "Utdelingen ble kansellert";
     }
     case "deadline-expired": {
-      if (to?.type !== "customer") return "Boka ble ikke levert innen fristen";
+      if (to?.type !== "customer") {
+        return "Boka ble ikke levert innen fristen";
+      }
       return (
         <>
           <Party party={to} /> leverte ikke boka innen fristen
@@ -191,7 +201,9 @@ function formatDate(iso: string): string {
 
 function metaLine(event: BlidHistoryEvent): string {
   // The expiry is a state of affairs, not a recorded moment — a clock time would be noise.
-  if (event.action === "deadline-expired") return formatDate(event.time);
+  if (event.action === "deadline-expired") {
+    return formatDate(event.time);
+  }
   return norwegianTime(event.time).format("DD.MM.YYYY [kl.] HH:mm:ss");
 }
 
@@ -220,9 +232,9 @@ function EventChip({
 }) {
   return (
     <Badge
-      variant={"light"}
+      variant="light"
       color={color}
-      tt={"none"}
+      tt="none"
       fw={500}
       leftSection={<Icon size={12} aria-hidden />}
     >
@@ -233,7 +245,9 @@ function EventChip({
 
 function EventChips({ event, live }: { event: BlidHistoryEvent; live?: LiveChipsState }) {
   // The sentence and date already say everything the expiry knows.
-  if (event.action === "deadline-expired") return null;
+  if (event.action === "deadline-expired") {
+    return null;
+  }
   if (live?.editable) {
     return (
       <ActiveItemChips
@@ -245,11 +259,13 @@ function EventChips({ event, live }: { event: BlidHistoryEvent; live?: LiveChips
     );
   }
   const frist = fristLabel(event) ?? (live ? formatDate(live.item.deadline) : null);
-  if (!event.branchName && frist === null) return null;
+  if (!event.branchName && frist === null) {
+    return null;
+  }
   return (
     <Group gap={6} mt={6}>
       {event.branchName && (
-        <EventChip icon={IconBuildingStore} color={"gray"} label={event.branchName} />
+        <EventChip icon={IconBuildingStore} color="gray" label={event.branchName} />
       )}
       {frist !== null && (
         <EventChip
@@ -272,7 +288,7 @@ export default function BlidHistoryTimeline({
 }) {
   const { isAdmin } = useAuth();
   if (history.length === 0) {
-    return <Text c={"dimmed"}>Ingen hendelser er registrert på denne boka.</Text>;
+    return <Text c="dimmed">Ingen hendelser er registrert på denne boka.</Text>;
   }
   // The newest entry that is not the synthetic expiry carries the book's current branch and
   // deadline; for admins those chips open the corrections to the active loan.
@@ -292,13 +308,13 @@ export default function BlidHistoryTimeline({
             key={index}
             bullet={
               // variant="light" matches the status badge's rendering of the same color.
-              <ThemeIcon variant={"light"} color={color} size={28} radius={"xl"}>
+              <ThemeIcon variant="light" color={color} size={28} radius="xl">
                 <Icon size={16} aria-hidden />
               </ThemeIcon>
             }
           >
             <Text>{describeEvent(event)}</Text>
-            <Text size={"xs"} c={"dimmed"}>
+            <Text size="xs" c="dimmed">
               {metaLine(event)}
             </Text>
             <EventChips

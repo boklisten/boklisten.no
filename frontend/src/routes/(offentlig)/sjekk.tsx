@@ -15,10 +15,10 @@ export const Route = createFileRoute("/(offentlig)/sjekk")({
 
 function PublicBlidSearchPage() {
   return (
-    <Container size={"xs"}>
+    <Container size="xs">
       <Stack>
-        <Title ta={"center"}>Boksøk</Title>
-        <Text ta={"center"}>
+        <Title ta="center">Boksøk</Title>
+        <Text ta="center">
           Skann bokas unike ID, eller skriv den inn (8 eller 12 tegn), for å se hvem boka tilhører.
         </Text>
         <AuthGuard>

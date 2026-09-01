@@ -7,7 +7,7 @@ export const Route = createFileRoute("/(offentlig)")({
 
 function PublicPageLayout() {
   return (
-    <PublicLayout padding={"md"} withBorder>
+    <PublicLayout padding="md" withBorder>
       <Outlet />
     </PublicLayout>
   );

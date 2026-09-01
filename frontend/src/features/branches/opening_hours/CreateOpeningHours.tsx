@@ -45,9 +45,9 @@ export default function CreateOpeningHours({ branchId }: { branchId: string }) {
 
   return (
     <Stack>
-      <Group align={"start"}>
+      <Group align="start">
         <form.AppField
-          name={"date"}
+          name="date"
           validators={{
             onBlur: ({ value }) => (!value ? "Du må fylle inn dato" : null),
           }}
@@ -57,33 +57,33 @@ export default function CreateOpeningHours({ branchId }: { branchId: string }) {
               required
               minDate={new Date()}
               maxDate={dayjs().add(1, "year").toDate()}
-              label={"Dato"}
-              placeholder={"Velg dato"}
+              label="Dato"
+              placeholder="Velg dato"
             />
           )}
         </form.AppField>
         <form.AppField
-          name={"start"}
+          name="start"
           validators={{
             onBlur: ({ value }) => (!value ? "Du må fylle inn starttidspunkt" : null),
           }}
         >
-          {(field) => <field.TimePickerField required label={"Fra"} />}
+          {(field) => <field.TimePickerField required label="Fra" />}
         </form.AppField>
         <form.AppField
-          name={"end"}
+          name="end"
           validators={{
             onBlur: ({ value }) => (!value ? "Du må fylle inn slutttidspunkt" : null),
           }}
         >
-          {(field) => <field.TimePickerField required label={"Til"} />}
+          {(field) => <field.TimePickerField required label="Til" />}
         </form.AppField>
       </Group>
       <form.AppForm>
         <form.ErrorSummary />
       </form.AppForm>
       <Group>
-        <Button onClick={form.handleSubmit} bg={"green"}>
+        <Button onClick={form.handleSubmit} bg="green">
           Legg til
         </Button>
       </Group>

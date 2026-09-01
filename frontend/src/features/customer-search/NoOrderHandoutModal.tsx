@@ -29,14 +29,18 @@ function defaultBranchId(
   let current = startBranchId === undefined ? undefined : byId.get(startBranchId);
   while (current && !visited.has(current.id)) {
     visited.add(current.id);
-    if (futureRentPeriods(current, now).length > 0) return current.id;
+    if (futureRentPeriods(current, now).length > 0) {
+      return current.id;
+    }
     current = current.parentBranch === undefined ? undefined : byId.get(current.parentBranch);
   }
   return null;
 }
 
 function deadlineOptions(branch: Branch | undefined, now: Date) {
-  if (!branch) return [];
+  if (!branch) {
+    return [];
+  }
   return futureRentPeriods(branch, now).map((period) => ({
     value: new Date(period.date).toISOString(),
     label: `Lån til ${norwegianTime(period.date).format("DD.MM.YYYY")}`,
@@ -90,8 +94,8 @@ function HandoutForm({
         likevel.
       </Text>
       <Select
-        label={"Filial"}
-        placeholder={"Velg filial"}
+        label="Filial"
+        placeholder="Velg filial"
         searchable
         allowDeselect={false}
         comboboxProps={comboboxProps}
@@ -103,8 +107,8 @@ function HandoutForm({
         }}
       />
       <Select
-        label={"Frist"}
-        placeholder={"Velg frist"}
+        label="Frist"
+        placeholder="Velg frist"
         allowDeselect={false}
         comboboxProps={comboboxProps}
         disabled={periods.length === 0}
@@ -112,12 +116,12 @@ function HandoutForm({
         value={selectedDeadline}
         onChange={setDeadline}
       />
-      <Group justify={"flex-end"}>
-        <Button variant={"default"} onClick={() => onClose(null)}>
+      <Group justify="flex-end">
+        <Button variant="default" onClick={() => onClose(null)}>
           Avbryt
         </Button>
         <Button
-          color={"green"}
+          color="green"
           disabled={initialBranchId === null || selectedDeadline === null}
           onClick={() =>
             initialBranchId !== null &&
@@ -147,7 +151,7 @@ export default function NoOrderHandoutModal({
     <Modal
       opened={request !== null}
       onClose={() => onClose(null)}
-      title={"Del ut uten bestilling"}
+      title="Del ut uten bestilling"
       zIndex={zIndex}
     >
       {request && (

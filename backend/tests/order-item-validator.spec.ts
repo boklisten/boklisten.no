@@ -1,5 +1,6 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderFieldValidator } from "#services/legacy/collections/order/helpers/order-validator/order-field-validator/order-field-validator";
 import { OrderItemBuyValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-buy-validator/order-item-buy-validator";
@@ -8,9 +9,9 @@ import { OrderItemRentValidator } from "#services/legacy/collections/order/helpe
 import { OrderItemValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Branch } from "#shared/branch";
-import { Item } from "#shared/item";
-import { Order } from "#shared/order/order";
+import type { Branch } from "#shared/branch";
+import type { Item } from "#shared/item";
+import type { Order } from "#shared/order/order";
 import { mock } from "#tests/test-doubles";
 
 test.group("OrderItemValidator", (group) => {
@@ -93,17 +94,11 @@ test.group("OrderItemValidator", (group) => {
     };
 
     sandbox = createSandbox();
-    sandbox.stub(orderItemRentValidator, "validate").callsFake(() => {
-      return Promise.resolve(true);
-    });
+    sandbox.stub(orderItemRentValidator, "validate").callsFake(() => Promise.resolve(true));
 
-    sandbox.stub(orderItemBuyValidator, "validate").callsFake(() => {
-      return Promise.resolve(true);
-    });
+    sandbox.stub(orderItemBuyValidator, "validate").callsFake(() => Promise.resolve(true));
 
-    sandbox.stub(orderItemExtendValidator, "validate").callsFake(() => {
-      return Promise.resolve(true);
-    });
+    sandbox.stub(orderItemExtendValidator, "validate").callsFake(() => Promise.resolve(true));
 
     sandbox.stub(StorageService.Branches, "get").callsFake((id) => {
       if (id !== "branch1") {
@@ -112,9 +107,7 @@ test.group("OrderItemValidator", (group) => {
       return Promise.resolve(testBranch);
     });
 
-    sandbox.stub(StorageService.Items, "get").callsFake(() => {
-      return Promise.resolve(mock<Item>({}));
-    });
+    sandbox.stub(StorageService.Items, "get").callsFake(() => Promise.resolve(mock<Item>({})));
   });
   group.each.teardown(() => {
     sandbox.restore();
@@ -178,7 +171,7 @@ test.group("OrderItemValidator", (group) => {
         amount: 100,
         unitPrice: 100,
         info: {
-          to: new Date(1234567891011), // Friday, February 13th 2009
+          to: new Date(1_234_567_891_011), // Friday, February 13th 2009
         },
       },
     ];
@@ -225,7 +218,7 @@ test.group("OrderItemValidator", (group) => {
         amount: 100,
         unitPrice: 100,
         info: {
-          to: new Date(1234567891011), // Friday, February 13th 2009
+          to: new Date(1_234_567_891_011), // Friday, February 13th 2009
         },
       },
     ];

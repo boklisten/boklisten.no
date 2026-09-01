@@ -1,4 +1,5 @@
-import { NumberInput, type NumberInputProps } from "@mantine/core";
+import { NumberInput } from "@mantine/core";
+import type { NumberInputProps } from "@mantine/core";
 
 import { useFieldContext } from "@/shared/hooks/form";
 
@@ -8,7 +9,7 @@ export default function NumberField(props: NumberInputProps) {
   return (
     <NumberInput
       allowedDecimalSeparators={[",", "."]}
-      decimalSeparator={","}
+      decimalSeparator=","
       {...props}
       value={field.state.value}
       onChange={(value) => field.handleChange(Number(value))}

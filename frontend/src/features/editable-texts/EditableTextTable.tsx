@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
 import type { ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import { Route } from "@tuyau/core/types";
+import type { Route } from "@tuyau/core/types";
 
 import EditableTextEditor from "@/features/editable-texts/EditableTextEditor";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
@@ -48,7 +48,7 @@ export default function EditableTextTable() {
 
   if (error) {
     return (
-      <ErrorAlert title={"Klarte ikke laste inn dynamisk innhold"}>
+      <ErrorAlert title="Klarte ikke laste inn dynamisk innhold">
         {PLEASE_TRY_AGAIN_TEXT}
       </ErrorAlert>
     );
@@ -74,21 +74,21 @@ export default function EditableTextTable() {
               flex: 0,
               cellRenderer: ({ data }: ICellRendererParams<EditableText>) =>
                 data && (
-                  <Group gap={"xs"} h={"100%"} align={"center"} wrap={"nowrap"}>
-                    <Tooltip label={"Endre"}>
+                  <Group gap="xs" h="100%" align="center" wrap="nowrap">
+                    <Tooltip label="Endre">
                       <ActionIcon
-                        aria-label={"Endre"}
-                        variant={"subtle"}
+                        aria-label="Endre"
+                        variant="subtle"
                         onClick={() => openEditorModal(data)}
                       >
                         <IconEdit />
                       </ActionIcon>
                     </Tooltip>
-                    <Tooltip label={"Slett"}>
+                    <Tooltip label="Slett">
                       <ActionIcon
-                        aria-label={"Slett"}
-                        variant={"subtle"}
-                        color={"red"}
+                        aria-label="Slett"
+                        variant="subtle"
+                        color="red"
                         onClick={() =>
                           modals.openConfirmModal({
                             title: "Bekreft sletting av dynamisk innhold",

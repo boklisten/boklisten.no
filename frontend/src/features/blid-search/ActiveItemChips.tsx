@@ -2,7 +2,8 @@ import type { BlidActiveItem } from "@boklisten/backend/shared/blid_search";
 import { Button, Group, Modal, Stack, TreeSelect } from "@mantine/core";
 import { IconBuildingStore, IconCalendarDue, IconPencil } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
+import type { ReactNode } from "react";
 
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -44,31 +45,33 @@ function ChangeBranchModal({
   const [branchId, setBranchId] = useState(activeItem.handoutBranchId);
   const updateMutation = useActiveItemUpdate("Filialen ble endret", onClose);
   return (
-    <Modal opened onClose={onClose} title={"Endre filial"}>
+    <Modal opened onClose={onClose} title="Endre filial">
       <Stack>
         <TreeSelect
-          label={"Filial"}
-          description={"Boka regnes som utdelt fra denne filialen"}
-          placeholder={"Velg filial"}
+          label="Filial"
+          description="Boka regnes som utdelt fra denne filialen"
+          placeholder="Velg filial"
           data={toBranchTreeNodeData(branches ?? [])}
           // Unlike the signup picker: no expandOnClick, because a loan can sit on any branch
           // in the tree, so parents must be selectable too — the chevron alone expands. And no
           // renderNode, since it replaces the whole option content, chevron included.
           searchable
-          nothingFoundMessage={"Fant ingen filialer"}
+          nothingFoundMessage="Fant ingen filialer"
           // Wait for the branch data to be present so we can render its name
           value={branches ? branchId : null}
           onChange={setBranchId}
         />
-        <Group justify={"flex-end"}>
-          <Button variant={"default"} onClick={onClose}>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose}>
             Avbryt
           </Button>
           <Button
             loading={updateMutation.isPending}
             disabled={branchId === null || branchId === activeItem.handoutBranchId}
             onClick={() => {
-              if (branchId === null) return;
+              if (branchId === null) {
+                return;
+              }
               updateMutation.mutate({
                 body: { customerItemId: activeItem.customerItemId, branchId },
               });
@@ -94,7 +97,9 @@ function ChangeDeadlineModal({
   const form = useAppForm({
     defaultValues: { deadline: currentDeadline },
     onSubmit: ({ value }) => {
-      if (value.deadline === null) return;
+      if (value.deadline === null) {
+        return;
+      }
       updateMutation.mutate({
         body: {
           customerItemId: activeItem.customerItemId,
@@ -104,18 +109,18 @@ function ChangeDeadlineModal({
     },
   });
   return (
-    <Modal opened onClose={onClose} title={"Endre frist"}>
+    <Modal opened onClose={onClose} title="Endre frist">
       <Stack>
-        <form.AppField name={"deadline"}>
+        <form.AppField name="deadline">
           {(field) => (
             <field.DeadlinePickerField
               clearable={false}
-              description={"Datoen boka skal leveres tilbake innen"}
+              description="Datoen boka skal leveres tilbake innen"
             />
           )}
         </form.AppField>
-        <Group justify={"flex-end"}>
-          <Button variant={"default"} onClick={onClose}>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose}>
             Avbryt
           </Button>
           <form.Subscribe selector={(state) => state.values.deadline}>
@@ -151,10 +156,10 @@ function ChipButton({
 }) {
   return (
     <Button
-      variant={"light"}
+      variant="light"
       color={color}
-      size={"compact-xs"}
-      radius={"xl"}
+      size="compact-xs"
+      radius="xl"
       fw={500}
       title={title}
       leftSection={<Icon size={12} aria-hidden />}
@@ -189,8 +194,8 @@ export default function ActiveItemChips({
     <Group gap={6} mt={6}>
       <ChipButton
         icon={IconBuildingStore}
-        color={"gray"}
-        title={"Endre filial"}
+        color="gray"
+        title="Endre filial"
         onClick={() => setEditing("branch")}
       >
         {branchLabel ?? "Velg filial"}
@@ -198,7 +203,7 @@ export default function ActiveItemChips({
       <ChipButton
         icon={IconCalendarDue}
         color={expired ? "red" : "gray"}
-        title={"Endre frist"}
+        title="Endre frist"
         onClick={() => setEditing("deadline")}
       >
         Frist: {fristLabel}

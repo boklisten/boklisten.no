@@ -1,5 +1,6 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderEmailHandler } from "#services/legacy/order_email_handler";
 import { OrderCancellationService } from "#services/order_cancellation_service";

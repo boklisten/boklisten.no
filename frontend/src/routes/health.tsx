@@ -3,9 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/health")({
   server: {
     handlers: {
-      GET: async () => {
-        return new Response(JSON.stringify({ status: "ok" }));
-      },
+      GET: async () => Response.json({ status: "ok" }),
     },
   },
 });

@@ -1,10 +1,10 @@
-import { DateTime } from "luxon";
+import type { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
 import Signature from "#models/signature";
 import { DateService } from "#services/legacy/date.service";
 import { StorageService } from "#services/storage_service";
-import { UserPermission } from "#shared/user-permission";
+import type { UserPermission } from "#shared/user-permission";
 
 const PAGE_SIZE = 30;
 const BATCH_SIZE = 50;
@@ -51,7 +51,9 @@ export const SignatureGalleryService = {
   },
 
   decodeCursor(cursor: unknown): GalleryCursor | null {
-    if (typeof cursor !== "string" || !/^\d{1,15}_\d{1,15}$/.test(cursor)) return null;
+    if (typeof cursor !== "string" || !/^\d{1,15}_\d{1,15}$/.test(cursor)) {
+      return null;
+    }
     const [createdAtMillis, id] = cursor.split("_").map(Number);
     return { createdAt: new Date(createdAtMillis ?? 0), id: id ?? 0 };
   },
@@ -65,7 +67,9 @@ export const SignatureGalleryService = {
     customer: GalleryCustomer | undefined,
     context: GalleryContext,
   ): GallerySignature | null {
-    if (!customer || !signature.isValidFor(customer)) return null;
+    if (!customer || !signature.isValidFor(customer)) {
+      return null;
+    }
     return {
       id: signature.id,
       customerDetailsId: signature.customerDetailsId,
@@ -91,7 +95,9 @@ export const SignatureGalleryService = {
     let currentCursor = cursor;
     for (let batch = 0; batch < MAX_BATCHES; batch++) {
       const rows = await Signature.newestPerCustomerPage(currentCursor, BATCH_SIZE);
-      if (rows.length === 0) return { signatures, nextCursor: null };
+      if (rows.length === 0) {
+        return { signatures, nextCursor: null };
+      }
       const customers = await StorageService.UserDetails.getMany(
         rows.map((row) => row.customerDetailsId),
       );
@@ -104,13 +110,17 @@ export const SignatureGalleryService = {
           customersById.get(row.customerDetailsId),
           { branchNames, permissions },
         );
-        if (item) signatures.push(item);
+        if (item) {
+          signatures.push(item);
+        }
         currentCursor = { createdAt: row.createdAt?.toJSDate() ?? new Date(0), id: row.id };
         if (signatures.length >= PAGE_SIZE) {
           return { signatures, nextCursor: SignatureGalleryService.encodeCursor(currentCursor) };
         }
       }
-      if (rows.length < BATCH_SIZE) return { signatures, nextCursor: null };
+      if (rows.length < BATCH_SIZE) {
+        return { signatures, nextCursor: null };
+      }
     }
     return {
       signatures,
@@ -120,7 +130,9 @@ export const SignatureGalleryService = {
 };
 
 function formatSignedDate(dateTime: DateTime | null): string {
-  if (!dateTime) return "";
+  if (!dateTime) {
+    return "";
+  }
   return DateService.format(dateTime.toJSDate(), "Europe/Oslo", "DD/MM/YYYY");
 }
 
@@ -131,7 +143,9 @@ function formatSignedDate(dateTime: DateTime | null): string {
 async function fetchPermissions(
   customerDetailsIds: string[],
 ): Promise<Map<string, UserPermission>> {
-  if (customerDetailsIds.length === 0) return new Map();
+  if (customerDetailsIds.length === 0) {
+    return new Map();
+  }
   const users = await StorageService.Users.aggregate<{
     userDetail: ObjectId;
     permission: UserPermission;
@@ -162,7 +176,9 @@ async function addMissingBranchNames(
         .filter((id): id is string => typeof id === "string" && !branchNames.has(id)),
     ),
   ];
-  if (missing.length === 0) return;
+  if (missing.length === 0) {
+    return;
+  }
   // The handler's transform renames _id to id and stringifies ObjectIds in the result rows.
   const branches = await StorageService.Branches.aggregate<{ id: string; name: string }>([
     { $match: { _id: { $in: missing.map((id) => new ObjectId(id)) } } },

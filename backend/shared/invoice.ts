@@ -1,6 +1,6 @@
-import { BlDocument } from "#shared/bl-document";
-import { Comment } from "#shared/comment";
-import { CustomerItemType } from "#shared/customer-item/customer-item-type";
+import type { BlDocument } from "#shared/bl-document";
+import type { Comment } from "#shared/comment";
+import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
 
 export interface Invoice extends BlDocument {
   duedate: Date;

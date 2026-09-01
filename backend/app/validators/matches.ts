@@ -8,7 +8,9 @@ import { SLOT_TIME_PATTERN } from "#shared/match/match-round-dto";
  * into March. Luxon is the one that actually refuses a day that does not exist.
  */
 const realCalendarDate = vine.createRule((value, _, field) => {
-  if (typeof value !== "string") return;
+  if (typeof value !== "string") {
+    return;
+  }
   if (!DateTime.fromISO(value).isValid) {
     field.report(`${value} er ikke en gyldig dato`, "real_calendar_date", field);
   }
@@ -21,7 +23,9 @@ const realCalendarDate = vine.createRule((value, _, field) => {
  */
 const laterThan = vine.createRule((value, startField: string, field) => {
   const start: unknown = Reflect.get(Object(field.parent), startField);
-  if (typeof value !== "string" || typeof start !== "string") return;
+  if (typeof value !== "string" || typeof start !== "string") {
+    return;
+  }
   if (value <= start) {
     field.report("Sluttiden må være etter starttiden", "later_than", field);
   }

@@ -8,19 +8,22 @@ export interface NumberFilter {
 }
 
 export class DbQueryNumberFilter {
-  private operationIdentifiers = [
+  private readonly operationIdentifiers = [
     { op: "$gt", opIdentifier: ">", atIndex: 0 },
     { op: "$lt", opIdentifier: "<", atIndex: 0 },
   ];
 
-  private equalOperation = "$eq";
+  private readonly equalOperation = "$eq";
 
   public getNumberFilters(query: any, validNumberParams: string[]): NumberFilter[] {
     const numberFilters: NumberFilter[] = [];
 
-    if (!query || (Object.keys(query).length === 0 && query.constructor === Object))
+    if (!query || (Object.keys(query).length === 0 && query.constructor === Object)) {
       throw new TypeError("the given query can not be null or undefined");
-    if (validNumberParams.length <= 0) return [];
+    }
+    if (validNumberParams.length <= 0) {
+      return [];
+    }
 
     try {
       for (const parameter in query) {
@@ -35,15 +38,17 @@ export class DbQueryNumberFilter {
 
       return numberFilters;
     } catch (error) {
-      if (error instanceof TypeError)
-        throw new TypeError("query includes bad number data, reason: " + error.message, {
+      if (error instanceof TypeError) {
+        throw new TypeError(`query includes bad number data, reason: ${error.message}`, {
           cause: error,
         });
-      if (error instanceof SyntaxError)
-        throw new SyntaxError("query includes syntax errors, reason: " + error.message);
+      }
+      if (error instanceof SyntaxError) {
+        throw new SyntaxError(`query includes syntax errors, reason: ${error.message}`);
+      }
       throw new Error(
         // @ts-expect-error fixme: auto ignored
-        "failure when parsing query for number operations" + error.message,
+        `failure when parsing query for number operations${error.message}`,
         { cause: error },
       );
     }
@@ -53,8 +58,9 @@ export class DbQueryNumberFilter {
     fieldName: string,
     value: string,
   ): NumberFilter {
-    if (!value)
+    if (!value) {
       throw new Error("QueryBuilderNumberFilter.generateNumberFilter(): value is not defined");
+    }
 
     if (this.valueHasOperationIdentifier(value)) {
       const opWithValue = this.getOperationWithValue(value);
@@ -62,11 +68,11 @@ export class DbQueryNumberFilter {
 
       op[opWithValue.operation] = opWithValue.value;
 
-      return { fieldName: fieldName, op };
+      return { fieldName, op };
     }
 
     return this.validateNumberFilter({
-      fieldName: fieldName,
+      fieldName,
       op: { $eq: this.extractNumberFromQueryString(value) },
     });
   }
@@ -75,7 +81,9 @@ export class DbQueryNumberFilter {
     fieldName: string,
     values: string[],
   ): NumberFilter {
-    if (values.length <= 0) throw new RangeError("the supplied array is empty");
+    if (values.length <= 0) {
+      throw new RangeError("the supplied array is empty");
+    }
 
     const op: any = {};
 
@@ -84,12 +92,13 @@ export class DbQueryNumberFilter {
       op[opWithValue.operation] = opWithValue.value;
     }
 
-    return this.validateNumberFilter({ fieldName: fieldName, op: op });
+    return this.validateNumberFilter({ fieldName, op });
   }
 
   private validateNumberFilter(numberFilter: NumberFilter) {
-    if (numberFilter.op.$eq && (numberFilter.op.$gt || numberFilter.op.$lt))
+    if (numberFilter.op.$eq && (numberFilter.op.$gt || numberFilter.op.$lt)) {
       throw new SyntaxError("numberFilter cannot combine eq operation with other operations");
+    }
 
     return numberFilter;
   }
@@ -112,7 +121,7 @@ export class DbQueryNumberFilter {
     );
 
     return {
-      operation: operation,
+      operation,
       value: number,
     };
   }
@@ -129,7 +138,7 @@ export class DbQueryNumberFilter {
 
   private extractNumberFromQueryString(number_: string): number {
     if (number_.split("").some((n) => isNaN(Number.parseInt(n, 10)))) {
-      throw new TypeError('value "' + number_ + '" is not a valid number');
+      throw new TypeError(`value "${number_}" is not a valid number`);
     }
     return Number.parseInt(number_, 10);
   }

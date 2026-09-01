@@ -12,7 +12,9 @@ export default function useAuthLinker() {
   const { client } = useApiClient();
 
   async function redirectToBlAdmin(path: string, retainHistory?: boolean) {
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
 
     const url = new URL(`${import.meta.env["VITE_BL_ADMIN_URL"]}/${path}${searchStr}`);
 
@@ -27,7 +29,9 @@ export default function useAuthLinker() {
           const freshTokens = await publicApiClient.api.tokens.token({
             body: { refreshToken: storedRefreshToken },
           });
-          if (freshTokens) login(freshTokens);
+          if (freshTokens) {
+            login(freshTokens);
+          }
         } catch {
           // Fall back to the stored tokens
         }
@@ -74,8 +78,12 @@ export default function useAuthLinker() {
     if (hasPendingTasks(userDetail)) {
       // Persist caller/redirect so the handoff survives the detour to /oppgaver
       const { localStorageKeys } = BL_CONFIG.login;
-      if (search.caller) localStorage.setItem(localStorageKeys.caller, search.caller);
-      if (search.redirect) localStorage.setItem(localStorageKeys.redirect, search.redirect);
+      if (search.caller) {
+        localStorage.setItem(localStorageKeys.caller, search.caller);
+      }
+      if (search.redirect) {
+        localStorage.setItem(localStorageKeys.redirect, search.redirect);
+      }
       void navigate({ to: "/oppgaver" });
     } else {
       redirectToCaller();

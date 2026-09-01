@@ -2,10 +2,10 @@ import type { CSSProperties } from "react";
 
 import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
-export type ScanInstruction = {
+export interface ScanInstruction {
   text: string;
   illustrate?: ScanCodeType | undefined;
-};
+}
 
 /**
  * Alternating bar/space run widths, in abstract modules.
@@ -47,30 +47,30 @@ function BarcodeIllustration({ type }: { type: ScanCodeType }) {
         y={BARS_TOP}
         width={run * scale}
         height={(isGuard ? GUARD_BOTTOM : BARS_BOTTOM) - BARS_TOP}
-        fill={"#111318"}
+        fill="#111318"
       />,
     );
   }
 
   return (
     <svg
-      aria-hidden={"true"}
-      focusable={"false"}
+      aria-hidden="true"
+      focusable="false"
       viewBox={`0 0 ${LABEL_WIDTH} 60`}
       width={64}
       height={34}
       style={{ flexShrink: 0, display: "block" }}
     >
-      <rect x={0} y={0} width={LABEL_WIDTH} height={60} rx={4} fill={"#F7F7F4"} />
+      <rect x={0} y={0} width={LABEL_WIDTH} height={60} rx={4} fill="#F7F7F4" />
       {bars}
       <text
         x={LABEL_WIDTH / 2}
         y={57}
-        textAnchor={"middle"}
+        textAnchor="middle"
         fontSize={7}
-        fontFamily={"ui-monospace, SFMono-Regular, Menlo, monospace"}
+        fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
         letterSpacing={0.4}
-        fill={"#111318"}
+        fill="#111318"
       >
         {type === "isbn" ? "9 788203 208119" : "12345678"}
       </text>
@@ -120,7 +120,7 @@ export default function ScanInstructionOverlay({ instruction }: { instruction: S
   const hint = instruction.illustrate === undefined ? null : locateHint(instruction.illustrate);
 
   return (
-    <div style={scrimStyle} role={"status"}>
+    <div style={scrimStyle} role="status">
       {instruction.illustrate !== undefined && instruction.illustrate !== "unknown" && (
         <BarcodeIllustration type={instruction.illustrate} />
       )}

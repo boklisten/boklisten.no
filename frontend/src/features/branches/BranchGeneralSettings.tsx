@@ -60,55 +60,51 @@ export default function BranchGeneralSettings({
 
   return (
     <Stack>
-      <form.AppField name={"name"}>
+      <form.AppField name="name">
         {(field) => (
-          <field.TextField required label={"Navn"} placeholder={"Flåklypa videregående skole"} />
+          <field.TextField required label="Navn" placeholder="Flåklypa videregående skole" />
         )}
       </form.AppField>
       <form.AppField
-        name={"logo"}
+        name="logo"
         validators={{
           onChange: ({ value }) => imageFieldValidator(value),
         }}
       >
-        {(field) => <field.ImageField label={"Logo"} />}
+        {(field) => <field.ImageField label="Logo" />}
       </form.AppField>
-      <form.AppField name={"location.region"}>
-        {(field) => (
-          <field.TextField required label={"Region"} placeholder={"Oslo, Trondheim, Ski"} />
-        )}
+      <form.AppField name="location.region">
+        {(field) => <field.TextField required label="Region" placeholder="Oslo, Trondheim, Ski" />}
       </form.AppField>
-      <form.AppField name={"location.address"}>
-        {(field) => (
-          <field.TextField label={"Adresse"} placeholder={"Postboks 8, 1316 Eiksmarka"} />
-        )}
+      <form.AppField name="location.address">
+        {(field) => <field.TextField label="Adresse" placeholder="Postboks 8, 1316 Eiksmarka" />}
       </form.AppField>
-      <form.AppField name={"type"}>
+      <form.AppField name="type">
         {(field) => (
           <field.SelectField
             data={["privatist", "VGS"]}
-            label={"Type"}
-            placeholder={"privatist eller VGS"}
+            label="Type"
+            placeholder="privatist eller VGS"
             clearable
           />
         )}
       </form.AppField>
       <Activity mode={existingBranch ? "visible" : "hidden"}>
-        <form.AppField name={"active"}>
-          {(field) => <field.SwitchField label={"Aktiv"} />}
+        <form.AppField name="active">
+          {(field) => <field.SwitchField label="Aktiv" />}
         </form.AppField>
-        <form.AppField name={"isBranchItemsLive.online"}>
-          {(field) => <field.SwitchField label={"Synlig for kunder"} />}
+        <form.AppField name="isBranchItemsLive.online">
+          {(field) => <field.SwitchField label="Synlig for kunder" />}
         </form.AppField>
-        <form.AppField name={"isBranchItemsLive.atBranch"}>
-          {(field) => <field.SwitchField label={"Synlig for ansatte"} />}
+        <form.AppField name="isBranchItemsLive.atBranch">
+          {(field) => <field.SwitchField label="Synlig for ansatte" />}
         </form.AppField>
       </Activity>
       <form.AppForm>
         <form.ErrorSummary />
       </form.AppForm>
       <Button
-        color={"green"}
+        color="green"
         onClick={form.handleSubmit}
         loading={addBranchMutation.isPending || updateBranchMutation.isPending}
       >

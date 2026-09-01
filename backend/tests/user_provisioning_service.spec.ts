@@ -7,7 +7,7 @@ import {
   mergeCandidateIntoUserDetail,
   normalizePhone,
 } from "#services/user_provisioning_service";
-import { UserDetail } from "#shared/user-detail";
+import type { UserDetail } from "#shared/user-detail";
 import { mock } from "#tests/test-doubles";
 
 const BRANCHES = [

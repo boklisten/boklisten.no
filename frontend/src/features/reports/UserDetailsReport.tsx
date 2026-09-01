@@ -27,13 +27,13 @@ export default function UserDetailsReport() {
 
   return (
     <ReportCard
-      title={"Kunder"}
-      description={"Eksporter en CSV med alle kunder, filtrert på filialtilhørighet."}
+      title="Kunder"
+      description="Eksporter en CSV med alle kunder, filtrert på filialtilhørighet."
       isLoading={isLoading}
       onDownload={download}
     >
       <BranchMultiSelect
-        label={"Filialtilhørighet"}
+        label="Filialtilhørighet"
         value={branchFilter}
         onChange={setBranchFilter}
       />

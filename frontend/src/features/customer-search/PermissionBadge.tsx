@@ -1,5 +1,6 @@
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
-import { Badge, type BadgeProps } from "@mantine/core";
+import { Badge } from "@mantine/core";
+import type { BadgeProps } from "@mantine/core";
 
 const PERMISSION_BADGES: Record<
   Exclude<UserPermission, "customer">,
@@ -22,7 +23,7 @@ export default function PermissionBadge({
   }
   const { label, color } = PERMISSION_BADGES[permission];
   return (
-    <Badge variant={"filled"} color={color} size={size}>
+    <Badge variant="filled" color={color} size={size}>
       {label}
     </Badge>
   );

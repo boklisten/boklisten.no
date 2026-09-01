@@ -17,11 +17,11 @@ export const Route = createFileRoute("/(offentlig)/items")({
 
 function YourItemsPage() {
   return (
-    <Container size={"md"}>
+    <Container size="md">
       <Title>Dine bøker</Title>
       <AuthGuard>
         <MySignatureStatus />
-        <Stack gap={"xl"}>
+        <Stack gap="xl">
           <CustomerItemsOverview />
           <AffixCartIndicator />
         </Stack>

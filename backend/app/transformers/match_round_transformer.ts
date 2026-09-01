@@ -1,13 +1,13 @@
 import { BaseTransformer } from "@adonisjs/core/transformers";
 
-import MatchRound from "#models/match_round";
+import type MatchRound from "#models/match_round";
 import type { RoundCounts } from "#services/matches/match_repository";
 import type { MatchRoundDto } from "#shared/match/match-round-dto";
 
 const NOTHING_GENERATED: RoundCounts = { matches: 0, handovers: 0 };
 
 export default class MatchRoundTransformer extends BaseTransformer<MatchRound> {
-  private counts: Map<number, RoundCounts>;
+  private readonly counts: Map<number, RoundCounts>;
 
   constructor(resource: MatchRound, counts: Map<number, RoundCounts>) {
     super(resource);

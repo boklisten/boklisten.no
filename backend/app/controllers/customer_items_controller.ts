@@ -7,10 +7,10 @@ import { DateService } from "#services/legacy/date.service";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
-import { Branch } from "#shared/branch";
-import { ActiveCustomerItem } from "#shared/customer-item/active-customer-item";
-import { CustomerItemStatus } from "#shared/customer-item/actionable_customer_item";
-import { CustomerItem } from "#shared/customer-item/customer-item";
+import type { Branch } from "#shared/branch";
+import type { ActiveCustomerItem } from "#shared/customer-item/active-customer-item";
+import type { CustomerItemStatus } from "#shared/customer-item/actionable_customer_item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
 
 function isHandedOutWithinTheLastTwoWeeks(customerItem: CustomerItem) {
   const handedOutAt = customerItem.creationTime
@@ -47,29 +47,33 @@ function hasBeenExtendedBefore(customerItem: CustomerItem) {
 }
 
 function calculateExtensionStatus(customerItem: CustomerItem, branch: Branch | null) {
-  if (!branch)
+  if (!branch) {
     return {
       canExtend: false,
       feedback: "Fant ikke filialen som denne boka er utdelt på. Vennligst ta kontakt for hjelp",
     } as const;
+  }
 
-  if (isDeadlineWithGracePeriodExpired(customerItem))
+  if (isDeadlineWithGracePeriodExpired(customerItem)) {
     return {
       canExtend: false,
       feedback: "Fristen for å forlenge har utløpt",
     } as const;
+  }
 
-  if (!branchHasExtensionsInTheFuture(customerItem.deadline, branch))
+  if (!branchHasExtensionsInTheFuture(customerItem.deadline, branch)) {
     return {
       canExtend: false,
       feedback: "Denne filialen tilbyr for øyeblikket ikke forlenging",
     } as const;
+  }
 
-  if (hasBeenExtendedBefore(customerItem))
+  if (hasBeenExtendedBefore(customerItem)) {
     return {
       canExtend: false,
       feedback: "Denne bøken har allerede blitt forlenget",
     } as const;
+  }
 
   return {
     canExtend: true,
@@ -82,17 +86,19 @@ function calculateExtensionStatus(customerItem: CustomerItem, branch: Branch | n
 }
 
 async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch | null) {
-  if (isDeadlineWithGracePeriodExpired(customerItem))
+  if (isDeadlineWithGracePeriodExpired(customerItem)) {
     return {
       canBuyout: false,
       feedback: "Fristen for å kjøpe ut har utløpt",
     } as const;
+  }
 
-  if (isHandedOutWithinTheLastTwoWeeks(customerItem))
+  if (isHandedOutWithinTheLastTwoWeeks(customerItem)) {
     return {
       canBuyout: false,
       feedback: "Du må ha ha boken i minst 2 uker før du kan kjøpe den ut",
     } as const;
+  }
 
   const item = await StorageService.Items.getOrNull(customerItem.item);
   const order = await StorageService.Orders.getOrNull(customerItem.orders?.at(-1));
@@ -102,11 +108,12 @@ async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch 
       (period) => period.type === orderItem?.info?.periodType,
     )?.percentageBuyout ?? branch?.paymentInfo?.buyout?.percentage;
 
-  if (!item || !buyoutPercentage)
+  if (!item || !buyoutPercentage) {
     return {
       canBuyout: false,
       feedback: "Klarte ikke beregne utkjøpspris. Vennligst ta kontakt hvis du vil kjøpe ut boka.",
     } as const;
+  }
 
   return {
     canBuyout: true,
@@ -116,11 +123,16 @@ async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch 
 }
 
 function calculateStatus(customerItem: CustomerItem): CustomerItemStatus {
-  if (customerItem.buyout) return { type: "buyout", text: "Kjøpt ut" };
-  if (customerItem.returned) return { type: "returned", text: "Returnert" };
+  if (customerItem.buyout) {
+    return { type: "buyout", text: "Kjøpt ut" };
+  }
+  if (customerItem.returned) {
+    return { type: "returned", text: "Returnert" };
+  }
 
-  if (customerItem.deadline.getTime() < new Date().getTime())
+  if (customerItem.deadline.getTime() < new Date().getTime()) {
     return { type: "overdue", text: "Fristen har utløpt" };
+  }
 
   return { type: "active", text: "Aktiv" };
 }
@@ -132,7 +144,9 @@ export default class CustomerItemsController {
     databaseQuery.stringFilters = [{ fieldName: "customer", value: detailsId }];
     databaseQuery.sortFilters = [{ fieldName: "lastUpdated", direction: -1 }];
     const customerItems = await StorageService.CustomerItems.getByQueryOrNull(databaseQuery);
-    if (!customerItems) return [];
+    if (!customerItems) {
+      return [];
+    }
 
     return await Promise.all(
       customerItems.map(async (customerItem) => {
@@ -200,7 +214,9 @@ export default class CustomerItemsController {
   async getActiveCustomerItemsForCustomer(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
     const detailsId = String(ctx.request.param("detailsId"));
-    if (!ObjectId.isValid(detailsId)) return [];
+    if (!ObjectId.isValid(detailsId)) {
+      return [];
+    }
 
     return await StorageService.CustomerItems.aggregate<ActiveCustomerItem>([
       {

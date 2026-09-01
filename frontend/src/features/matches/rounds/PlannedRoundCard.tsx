@@ -48,7 +48,7 @@ function DayTimeline({ round }: { round: Round }) {
 
   return (
     <ResourcesDayView
-      mode={"static"}
+      mode="static"
       date={day}
       // The card already states the date above, and there is nothing to navigate to from a plan.
       withHeader={false}
@@ -89,7 +89,7 @@ function DayTimeline({ round }: { round: Round }) {
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <Stack gap={4} style={{ minWidth: 0 }}>
-      <Text size={"xs"} c={"dimmed"} tt={"uppercase"} fw={600} lh={1.4}>
+      <Text size="xs" c="dimmed" tt="uppercase" fw={600} lh={1.4}>
         {label}
       </Text>
       {children}
@@ -121,14 +121,14 @@ export default function PlannedRoundCard({
   const meetingDay = dayjs(round.meetingDate);
 
   return (
-    <Card withBorder radius={"md"} padding={"lg"}>
-      <Stack gap={"lg"}>
+    <Card withBorder radius="md" padding="lg">
+      <Stack gap="lg">
         <Stack gap={4}>
-          <Badge variant={"light"} color={"gray"} leftSection={<IconCalendarEvent size={12} />}>
+          <Badge variant="light" color="gray" leftSection={<IconCalendarEvent size={12} />}>
             Planlagt
           </Badge>
           <Title order={2}>{round.name}</Title>
-          <Text c={"dimmed"} size={"sm"}>
+          <Text c="dimmed" size="sm">
             Ingen overleveringer er laget ennå. Se over planen, og generer når den stemmer.
           </Text>
         </Stack>
@@ -139,18 +139,18 @@ export default function PlannedRoundCard({
             leave the schedule stranded against its left edge on a wide screen. */}
         <Card
           withBorder
-          radius={"sm"}
-          padding={"md"}
-          bg={"var(--mantine-color-body)"}
-          w={"fit-content"}
-          maw={"100%"}
+          radius="sm"
+          padding="md"
+          bg="var(--mantine-color-body)"
+          w="fit-content"
+          maw="100%"
         >
-          <Stack gap={"md"}>
-            <Group gap={"xs"} align={"baseline"}>
-              <Text fw={700} size={"lg"}>
+          <Stack gap="md">
+            <Group gap="xs" align="baseline">
+              <Text fw={700} size="lg">
                 {meetingDay.format("D. MMMM YYYY")}
               </Text>
-              <Text c={"dimmed"} size={"sm"}>
+              <Text c="dimmed" size="sm">
                 {meetingDay.format("dddd")}
               </Text>
             </Group>
@@ -158,35 +158,35 @@ export default function PlannedRoundCard({
           </Stack>
         </Card>
 
-        <Group gap={"xl"} align={"flex-start"} wrap={"wrap"}>
-          <Detail label={"Frist på bøkene"}>
+        <Group gap="xl" align="flex-start" wrap="wrap">
+          <Detail label="Frist på bøkene">
             <Text fw={500}>{dayjs(round.deadline).format("D. MMMM YYYY")}</Text>
           </Detail>
 
-          <Detail label={"Stand"}>
+          <Detail label="Stand">
             <Text fw={500}>{round.standLocation}</Text>
           </Detail>
 
-          <Detail label={"Møtesteder for elever"}>
+          <Detail label="Møtesteder for elever">
             <Group gap={6}>
               {round.userMatchLocations.map((location) => (
-                <Badge key={location} variant={"default"} radius={"sm"}>
+                <Badge key={location} variant="default" radius="sm">
                   {location}
                 </Badge>
               ))}
             </Group>
           </Detail>
 
-          <Detail label={"Filialer"}>
+          <Detail label="Filialer">
             <Group gap={6}>
               {round.branches.map((id) => (
-                <Badge key={id} variant={"default"} radius={"sm"}>
+                <Badge key={id} variant="default" radius="sm">
                   {branches?.find((branch) => branch.id === id)?.name ?? "Ukjent filial"}
                 </Badge>
               ))}
             </Group>
             {round.includeCustomerItemsFromOtherBranches && (
-              <Text size={"xs"} c={"dimmed"}>
+              <Text size="xs" c="dimmed">
                 Tar også med bøker delt ut ved andre filialer
               </Text>
             )}
@@ -194,9 +194,9 @@ export default function PlannedRoundCard({
         </Group>
 
         {isAdmin && (
-          <Group justify={"flex-end"} gap={"sm"}>
+          <Group justify="flex-end" gap="sm">
             <Button
-              variant={"default"}
+              variant="default"
               leftSection={<IconEdit size={16} />}
               onClick={onEdit}
               disabled={generating}

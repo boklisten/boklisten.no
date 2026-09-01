@@ -26,11 +26,15 @@ function PaymentPage() {
   const { checkoutFrontendUrl, token } = Route.useSearch();
 
   useEffect(() => {
-    if (!checkoutFrontendUrl || !token) return undefined;
+    if (!checkoutFrontendUrl || !token) {
+      return undefined;
+    }
     let cancelled = false;
     loadScriptOnce("https://checkout.vipps.no/vippsCheckoutSDK.js")
       .then(() => {
-        if (cancelled) return undefined;
+        if (cancelled) {
+          return undefined;
+        }
         /* @ts-expect-error official Vipps Checkout */
         return VippsCheckout({
           iFrameContainerId,
@@ -48,14 +52,13 @@ function PaymentPage() {
     };
   }, [checkoutFrontendUrl, token]);
 
-  if (!checkoutFrontendUrl || !token)
-    return (
-      <ErrorAlert title={"Klarte ikke vise betalingsside"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
-    );
+  if (!checkoutFrontendUrl || !token) {
+    return <ErrorAlert title="Klarte ikke vise betalingsside">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>;
+  }
   return (
     <Container>
-      <Title ta={"center"}>Betaling</Title>
-      <section id={iFrameContainerId}></section>
+      <Title ta="center">Betaling</Title>
+      <section id={iFrameContainerId} />
     </Container>
   );
 }

@@ -1,8 +1,8 @@
 import { Schema } from "mongoose";
 
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
-import { BlSchema } from "#services/storage_service";
-import { Payment } from "#shared/payment/payment";
+import type { BlSchema } from "#services/storage_service";
+import type { Payment } from "#shared/payment/payment";
 
 export const PaymentSchema: BlSchema<Payment> = new Schema({
   method: {

@@ -94,7 +94,7 @@ export default function BranchManager() {
       <Grid>
         <Grid.Col span={{ base: 12, md: 3 }}>
           <SelectBranchTreeView
-            label={"Velg filial"}
+            label="Velg filial"
             branches={branches ?? []}
             onSelect={(branchId) => {
               setSelectedBranchId(branchId);
@@ -118,69 +118,69 @@ export default function BranchManager() {
                 }
                 keepMounted={false}
               >
-                <Tabs.List mb={"md"}>
-                  <Tabs.Tab value={"general"} leftSection={<IconBuildingStore />}>
+                <Tabs.List mb="md">
+                  <Tabs.Tab value="general" leftSection={<IconBuildingStore />}>
                     Generelt
                   </Tabs.Tab>
-                  <Tabs.Tab value={"relationships"} leftSection={<IconHierarchy3 />}>
+                  <Tabs.Tab value="relationships" leftSection={<IconHierarchy3 />}>
                     Relasjoner
                   </Tabs.Tab>
-                  <Tabs.Tab value={"payment"} leftSection={<IconCashRegister />}>
+                  <Tabs.Tab value="payment" leftSection={<IconCashRegister />}>
                     Betaling
                   </Tabs.Tab>
-                  <Tabs.Tab value={"books"} leftSection={<IconBooks />}>
+                  <Tabs.Tab value="books" leftSection={<IconBooks />}>
                     Bøker
                   </Tabs.Tab>
-                  <Tabs.Tab value={"subjects"} leftSection={<IconSchool />}>
+                  <Tabs.Tab value="subjects" leftSection={<IconSchool />}>
                     Fag
                   </Tabs.Tab>
-                  <Tabs.Tab value={"hours"} leftSection={<IconClock />}>
+                  <Tabs.Tab value="hours" leftSection={<IconClock />}>
                     Åpningstider
                   </Tabs.Tab>
-                  <Tabs.Tab value={"members"} leftSection={<IconUsers />}>
+                  <Tabs.Tab value="members" leftSection={<IconUsers />}>
                     Elever
                   </Tabs.Tab>
-                  <Tabs.Tab value={"signatures"} leftSection={<IconSignature />}>
+                  <Tabs.Tab value="signatures" leftSection={<IconSignature />}>
                     Signering
                   </Tabs.Tab>
-                  <Tabs.Tab value={"active-books"} leftSection={<IconBook2 />}>
+                  <Tabs.Tab value="active-books" leftSection={<IconBook2 />}>
                     Aktive bøker
                   </Tabs.Tab>
-                  <Tabs.Tab value={"ordered-books"} leftSection={<IconShoppingCart />}>
+                  <Tabs.Tab value="ordered-books" leftSection={<IconShoppingCart />}>
                     Bestilte bøker
                   </Tabs.Tab>
                 </Tabs.List>
-                <Tabs.Panel value={"general"}>
+                <Tabs.Panel value="general">
                   <BranchGeneralSettings key={selectedBranchId} existingBranch={selectedBranch} />
                 </Tabs.Panel>
-                <Tabs.Panel value={"relationships"}>
+                <Tabs.Panel value="relationships">
                   <BranchRelationshipSettings key={selectedBranchId} branch={selectedBranch} />
                 </Tabs.Panel>
-                <Tabs.Panel value={"payment"}>
+                <Tabs.Panel value="payment">
                   <BranchPaymentSettings key={selectedBranchId} existingBranch={selectedBranch} />
                 </Tabs.Panel>
-                <Tabs.Panel value={"books"}>
+                <Tabs.Panel value="books">
                   <BranchItemSettings key={selectedBranchId} branchId={selectedBranch.id} />
                 </Tabs.Panel>
-                <Tabs.Panel value={"subjects"}>
+                <Tabs.Panel value="subjects">
                   <BranchSubjectSettings key={selectedBranchId} branchId={selectedBranch.id} />
                 </Tabs.Panel>
-                <Tabs.Panel value={"hours"}>
+                <Tabs.Panel value="hours">
                   <OpeningHoursSettings key={selectedBranchId} branchId={selectedBranch.id} />
                 </Tabs.Panel>
-                <Tabs.Panel value={"members"}>
+                <Tabs.Panel value="members">
                   <Stack>
                     <BranchMembers key={selectedBranch.id} branchId={selectedBranch.id} />
                     <UploadBranchUsers branchId={selectedBranch.id} />
                   </Stack>
                 </Tabs.Panel>
-                <Tabs.Panel value={"signatures"}>
+                <Tabs.Panel value="signatures">
                   <BranchSignatureStatus key={selectedBranch.id} branchId={selectedBranch.id} />
                 </Tabs.Panel>
-                <Tabs.Panel value={"active-books"}>
+                <Tabs.Panel value="active-books">
                   <ActiveBooksTab key={selectedBranch.id} branchId={selectedBranch.id} />
                 </Tabs.Panel>
-                <Tabs.Panel value={"ordered-books"}>
+                <Tabs.Panel value="ordered-books">
                   <Stack key={selectedBranch.id}>
                     <OrderedBooksTab branchId={selectedBranch.id} />
                     <UploadSubjectChoices

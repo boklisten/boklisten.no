@@ -17,9 +17,11 @@ export default function TasksIndicator({ children }: { children: ReactNode }) {
       ? 0
       : (userDetail.tasks.confirmDetails ? 1 : 0) + (userDetail.tasks.signAgreement ? 1 : 0);
 
-  if (taskCount === 0) return <>{children}</>;
+  if (taskCount === 0) {
+    return <>{children}</>;
+  }
   return (
-    <Indicator color={"red"} disabled={taskCount === 0}>
+    <Indicator color="red" disabled={taskCount === 0}>
       {children}
     </Indicator>
   );

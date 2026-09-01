@@ -64,26 +64,26 @@ export default function CreateWaitingListEntry({
   return (
     <Stack>
       <Title order={2}>Legg til i venteliste</Title>
-      <Stack gap={"xl"}>
-        <Stack gap={"xs"}>
+      <Stack gap="xl">
+        <Stack gap="xs">
           <form.AppField
-            name={"name"}
+            name="name"
             validators={{
               onSubmit: ({ value }) => nameFieldValidator(value, "administrate"),
             }}
           >
-            {(field) => <field.NameField autoComplete={"off"} />}
+            {(field) => <field.NameField autoComplete="off" />}
           </form.AppField>
           <form.AppField
-            name={"phoneNumber"}
+            name="phoneNumber"
             validators={{
               onSubmit: ({ value }) => phoneNumberFieldValidator(value, "administrate"),
             }}
           >
-            {(field) => <field.PhoneNumberField autoComplete={"off"} />}
+            {(field) => <field.PhoneNumberField autoComplete="off" />}
           </form.AppField>
           <form.AppField
-            name={"itemIds"}
+            name="itemIds"
             validators={{
               onSubmit: ({ value }) => (value.length === 0 ? "Du må velge minst en bok" : null),
             }}
@@ -91,8 +91,8 @@ export default function CreateWaitingListEntry({
             {(field) => (
               <field.MultiSelectField
                 required
-                label={"Bøker"}
-                placeholder={"Velg bøker"}
+                label="Bøker"
+                placeholder="Velg bøker"
                 data={items.map((item) => ({
                   value: item.id,
                   label: item.title,
@@ -103,7 +103,7 @@ export default function CreateWaitingListEntry({
             )}
           </form.AppField>
           <form.AppField
-            name={"branchId"}
+            name="branchId"
             validators={{
               onSubmit: ({ value }) => (value.length === 0 ? "Du må velge en filial" : null),
             }}
@@ -111,8 +111,8 @@ export default function CreateWaitingListEntry({
             {(field) => (
               <field.SelectField
                 required
-                label={"Filial"}
-                placeholder={"Velg filial"}
+                label="Filial"
+                placeholder="Velg filial"
                 data={
                   branches?.map((branch) => ({
                     value: branch.id,
@@ -129,7 +129,7 @@ export default function CreateWaitingListEntry({
           </form.AppForm>
         </Stack>
         <Group>
-          <Button variant={"subtle"} onClick={() => onClose()}>
+          <Button variant="subtle" onClick={() => onClose()}>
             Avbryt
           </Button>
           <Button loading={addWaitingListCustomer.isPending} onClick={form.handleSubmit}>

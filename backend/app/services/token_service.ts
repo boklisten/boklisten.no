@@ -1,9 +1,10 @@
-import jwt, { JwtPayload } from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 import { APP_CONFIG } from "#services/legacy/application-config";
 import { StorageService } from "#services/storage_service";
 import env from "#start/env";
-import { User } from "#types/user";
+import type { User } from "#types/user";
 
 const TokenService = {
   async createTokens(user: User) {

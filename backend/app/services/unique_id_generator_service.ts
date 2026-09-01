@@ -48,7 +48,7 @@ function createBarcodeCanvas(id: string) {
     height: PRINTER_DIMENSIONS.barcode.barcodeHeight,
     margin: PRINTER_DIMENSIONS.barcode.margin,
     marginBottom: PRINTER_DIMENSIONS.barcode.marginBottom,
-    text: "BL-" + id,
+    text: `BL-${id}`,
   });
   return canvas;
 }

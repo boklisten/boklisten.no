@@ -5,10 +5,8 @@ import { createSandbox } from "sinon";
 
 import Signature from "#models/signature";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
-import {
-  BranchSignatureStatusService,
-  MemberSignatureRow,
-} from "#services/branch_signature_status_service";
+import type { MemberSignatureRow } from "#services/branch_signature_status_service";
+import { BranchSignatureStatusService } from "#services/branch_signature_status_service";
 import { StorageService } from "#services/storage_service";
 import { unchecked } from "#tests/test-doubles";
 

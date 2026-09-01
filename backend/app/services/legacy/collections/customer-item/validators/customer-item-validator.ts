@@ -1,6 +1,6 @@
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { BlError } from "#shared/bl-error";
-import { CustomerItem } from "#shared/customer-item/customer-item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
 
 export class CustomerItemValidator {
   public validate(customerItem: CustomerItem): Promise<boolean> {

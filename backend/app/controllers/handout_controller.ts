@@ -33,14 +33,19 @@ export default class HandoutController {
       return { feedback: "Denne bliden er ikke gyldig." };
     }
     const signatureFeedback = await verifyCustomerSignature(customerId);
-    if (signatureFeedback) return { feedback: signatureFeedback };
+    if (signatureFeedback) {
+      return { feedback: signatureFeedback };
+    }
 
     const userFeedback = await this.verifyBlidNotActive(blid, customerId);
-    if (userFeedback) return { feedback: userFeedback };
+    if (userFeedback) {
+      return { feedback: userFeedback };
+    }
 
     const uniqueItemOrFeedback = await this.verifyUniqueItemPresent(blid);
-    if (typeof uniqueItemOrFeedback === "string")
+    if (typeof uniqueItemOrFeedback === "string") {
       return { feedback: uniqueItemOrFeedback, connectBlid: true };
+    }
 
     // A book the customer is supposed to receive from another student should not normally be
     // handed out at the stand, so the employee must confirm (force) before we hand it out. The
@@ -107,7 +112,9 @@ export default class HandoutController {
     customerId: string,
   ): Promise<{ deliverFromName: string } | null> {
     const senderCustomerId = await PeerObligations.findPeerSender(customerId, itemId);
-    if (!senderCustomerId) return null;
+    if (!senderCustomerId) {
+      return null;
+    }
 
     const sender = await StorageService.UserDetails.getOrNull(senderCustomerId);
     return { deliverFromName: sender?.name ?? "en annen elev" };
@@ -321,8 +328,9 @@ export default class HandoutController {
       const activeCustomerItems = await new CustomerItemActiveBlid().getActiveCustomerItems(blid);
       if (activeCustomerItems.length > 0) {
         const lastCustomerItem = activeCustomerItems[0];
-        if (lastCustomerItem?.customer === customerId)
+        if (lastCustomerItem?.customer === customerId) {
           return "Denne boken er allerede delt ut til denne kunden.";
+        }
         return "Denne boken er allerede delt ut til en annen kunde. Sjekk bl-admin for mer informasjon.";
       }
     } catch {

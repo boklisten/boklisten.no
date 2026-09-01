@@ -1,18 +1,15 @@
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
-import MatchRound from "#models/match_round";
+import type MatchRound from "#models/match_round";
 import { MatchFinder } from "#services/match_helpers/match-finder/match-finder";
-import { MatchableUser } from "#services/match_helpers/match-finder/match-types";
+import type { MatchableUser } from "#services/match_helpers/match-finder/match-types";
 import {
   buildSlots,
   scheduleMatches,
 } from "#services/match_helpers/match-scheduler/match-scheduler";
-import {
-  MatchRepository,
-  type MatchDraft,
-  type ObligationDraft,
-} from "#services/matches/match_repository";
+import { MatchRepository } from "#services/matches/match_repository";
+import type { MatchDraft, ObligationDraft } from "#services/matches/match_repository";
 import { getHeldItems, getWantedItems } from "#services/matches/round_scope";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
@@ -20,7 +17,9 @@ import { canonicalItemId } from "#shared/item-equivalence";
 import type { UserDetail } from "#shared/user-detail";
 
 async function getGroupMemberships(customerIds: string[]): Promise<Map<string, string>> {
-  if (customerIds.length === 0) return new Map();
+  if (customerIds.length === 0) {
+    return new Map();
+  }
   const userDetails = await StorageService.UserDetails.aggregate<UserDetail>([
     { $match: { _id: { $in: customerIds.map((id) => new ObjectId(id)) } } },
   ]);

@@ -7,8 +7,8 @@ import {
   determineScanCodeType,
   listScanCodeTypes,
   nameScanCodeType,
-  type ScanCodeType,
 } from "@/shared/utils/scanCodes";
+import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
 function soleAcceptedType(accepts: ScanCodeType[] | undefined): ScanCodeType | null {
   return accepts?.length === 1 ? (accepts[0] ?? null) : null;
@@ -50,7 +50,7 @@ export default function ManualCodeEntry({
       <Stack>
         <InfoAlert>Skal kun brukes dersom koden ikke lar seg skanne</InfoAlert>
         <form.AppField
-          name={"code"}
+          name="code"
           validators={{ onSubmit: ({ value }) => validateCode(value, accepts) }}
         >
           {(field) => (
@@ -65,7 +65,7 @@ export default function ManualCodeEntry({
         </form.AppField>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type={"submit"} loading={isSubmitting}>
+            <Button type="submit" loading={isSubmitting}>
               Bekreft
             </Button>
           )}

@@ -18,5 +18,5 @@ export const Route = createFileRoute("/(offentlig)/info/companies")({
 });
 
 function CompaniesPage() {
-  return <EditableTextReadOnly dataKey={"for_skolekunder"} />;
+  return <EditableTextReadOnly dataKey="for_skolekunder" />;
 }

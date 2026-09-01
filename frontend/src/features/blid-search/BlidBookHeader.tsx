@@ -20,25 +20,25 @@ export default function BlidBookHeader({
 }) {
   const { label, color } = STATUS_BADGE[result.status];
   return (
-    <Group justify={"space-between"} align={"flex-start"} wrap={"nowrap"} gap={"xs"}>
-      <Group gap={"sm"} align={"center"} wrap={"nowrap"} miw={0}>
-        <ThemeIcon variant={"light"} size={"xl"} radius={"xl"}>
+    <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
+      <Group gap="sm" align="center" wrap="nowrap" miw={0}>
+        <ThemeIcon variant="light" size="xl" radius="xl">
           <IconBook2 aria-hidden />
         </ThemeIcon>
         <Stack gap={4} miw={0}>
-          <Title order={2} size={"h4"} lh={1.2}>
+          <Title order={2} size="h4" lh={1.2}>
             {result.book?.title ?? "Ukjent tittel"}
           </Title>
-          <Text size={"sm"} c={"dimmed"}>
+          <Text size="sm" c="dimmed">
             {result.book?.isbn ? `ISBN ${result.book.isbn} · ` : ""}Unik ID {result.blid}
           </Text>
         </Stack>
       </Group>
-      <Group gap={4} wrap={"nowrap"} style={{ flexShrink: 0 }}>
-        <Badge variant={"light"} color={color}>
+      <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
+        <Badge variant="light" color={color}>
           {label}
         </Badge>
-        <CloseButton aria-label={"Lukk boksøket"} onClick={onClear} />
+        <CloseButton aria-label="Lukk boksøket" onClick={onClear} />
       </Group>
     </Group>
   );

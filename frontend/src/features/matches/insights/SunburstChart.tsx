@@ -66,7 +66,9 @@ function cssColor(hue: string, shade: number) {
 
 export default function SunburstChart({ data }: { data: BranchHierarchyNode[] }) {
   const total = data.reduce((sum, node) => sum + node.students, 0);
-  if (total === 0) return null;
+  if (total === 0) {
+    return null;
+  }
 
   const depth = Math.max(1, maxDepthOf(data));
   const ringWidth = (OUTER_RADIUS - HOLE_RADIUS) / depth;
@@ -136,14 +138,14 @@ export default function SunburstChart({ data }: { data: BranchHierarchyNode[] })
 
   return (
     <Center>
-      <Box pos={"relative"} w={"100%"} maw={SIZE}>
-        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} width={"100%"} role={"img"}>
+      <Box pos="relative" w="100%" maw={SIZE}>
+        <svg viewBox={`0 0 ${SIZE} ${SIZE}`} width="100%" role="img">
           {arcs.map((arc, index) => (
             <g key={index}>
               <path
                 d={arc.path}
                 fill={arc.color}
-                stroke={"var(--mantine-color-body)"}
+                stroke="var(--mantine-color-body)"
                 strokeWidth={1}
               >
                 <title>{arc.tooltip}</title>
@@ -153,8 +155,8 @@ export default function SunburstChart({ data }: { data: BranchHierarchyNode[] })
                   transform={arc.labelTransform}
                   fill={arc.textColor}
                   fontSize={11}
-                  textAnchor={"middle"}
-                  dominantBaseline={"central"}
+                  textAnchor="middle"
+                  dominantBaseline="central"
                   style={{ pointerEvents: "none" }}
                 >
                   {arc.label}
@@ -165,24 +167,24 @@ export default function SunburstChart({ data }: { data: BranchHierarchyNode[] })
           <text
             x={CENTER}
             y={CENTER - 6}
-            textAnchor={"middle"}
+            textAnchor="middle"
             fontSize={26}
             fontWeight={700}
-            fill={"var(--mantine-color-text)"}
+            fill="var(--mantine-color-text)"
           >
             {total.toLocaleString("nb-NO")}
           </text>
           <text
             x={CENTER}
             y={CENTER + 16}
-            textAnchor={"middle"}
+            textAnchor="middle"
             fontSize={12}
-            fill={"var(--mantine-color-dimmed)"}
+            fill="var(--mantine-color-dimmed)"
           >
             elever
           </text>
         </svg>
-        <Text size={"xs"} c={"dimmed"} ta={"center"} mt={"xs"}>
+        <Text size="xs" c="dimmed" ta="center" mt="xs">
           Midten viser øverste filialnivå, ytterringene nivåene under. Hold musepekeren over for
           detaljer.
         </Text>

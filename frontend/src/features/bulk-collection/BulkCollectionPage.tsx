@@ -50,7 +50,7 @@ export default function BulkCollectionPage() {
     modals.openConfirmModal({
       title: "Skal overleveres til en annen elev",
       children: (
-        <Text size={"sm"}>
+        <Text size="sm">
           Denne boka skal {book.customerName} egentlig overlevere til{" "}
           <Text span fw={600}>
             {book.deliverToName}
@@ -160,9 +160,9 @@ export default function BulkCollectionPage() {
       <Stack>
         <Title>Hurtiginnsamling</Title>
 
-        <Switch checked={showCamera} onChange={toggleCamera} label={"Vis kamera"} />
+        <Switch checked={showCamera} onChange={toggleCamera} label="Vis kamera" />
         {showCamera && (
-          <Box maw={420} w={"100%"} mx={"auto"}>
+          <Box maw={420} w="100%" mx="auto">
             {cameraError === null ? (
               <CameraScanner
                 key={cameraAttempt}
@@ -182,7 +182,7 @@ export default function BulkCollectionPage() {
           </Box>
         )}
 
-        <Button variant={"outline"} leftSection={<IconForms />} onClick={openManualEntry}>
+        <Button variant="outline" leftSection={<IconForms />} onClick={openManualEntry}>
           Skriv inn BL-ID manuelt
         </Button>
 
@@ -196,13 +196,13 @@ export default function BulkCollectionPage() {
         )}
 
         {overdueBooks.length > 0 && (
-          <WarningAlert title={"Sjekk bøkene før levering"}>
+          <WarningAlert title="Sjekk bøkene før levering">
             <Text>{bookCountLabel(overdueBooks.length)} har utløpt frist.</Text>
           </WarningAlert>
         )}
 
         <Button
-          color={"green"}
+          color="green"
           leftSection={<IconPackageImport />}
           disabled={scannedBooks.length === 0}
           loading={collectMutation.isPending}

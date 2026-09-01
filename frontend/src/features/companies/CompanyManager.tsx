@@ -28,11 +28,11 @@ function CompanyCard({ company }: { company: Company }) {
   );
   return (
     <Card withBorder>
-      <Group justify={"space-between"}>
+      <Group justify="space-between">
         <Title order={3}>{company.name}</Title>
         <Button
           loading={deleteCompanyMutation.isPending}
-          bg={"red"}
+          bg="red"
           onClick={() =>
             modals.openConfirmModal({
               title: `Bekreft sletting av ${company.name}`,
@@ -100,35 +100,33 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
     <Stack>
       <Title order={3}>Opprett selskap</Title>
       <form.AppField
-        name={"name"}
+        name="name"
         validators={{
           onBlur: ({ value }) => (!value ? "Du må fylle inn navn på selskap" : null),
         }}
       >
-        {(field) => (
-          <field.TextField label={"Navn på selskap"} required placeholder={"Lom kommune"} />
-        )}
+        {(field) => <field.TextField label="Navn på selskap" required placeholder="Lom kommune" />}
       </form.AppField>
       <form.AppField
-        name={"organizationNumber"}
+        name="organizationNumber"
         validators={{
           onBlur: ({ value }) => (!value ? "Du må fylle inn organisasjonsnummer" : null),
         }}
       >
         {(field) => (
-          <field.TextField label={"Organisasjonsnummer"} required placeholder={"912047385"} />
+          <field.TextField label="Organisasjonsnummer" required placeholder="912047385" />
         )}
       </form.AppField>
       <form.AppField
-        name={"customerNumber"}
+        name="customerNumber"
         validators={{
           onBlur: ({ value }) => (!value ? "Du må fylle inn kundenummer" : null),
         }}
       >
-        {(field) => <field.TextField label={"Kundenummer"} required placeholder={"123"} />}
+        {(field) => <field.TextField label="Kundenummer" required placeholder="123" />}
       </form.AppField>
       <form.AppField
-        name={"contactInfo.phone"}
+        name="contactInfo.phone"
         validators={{
           onBlur: ({ value }) => phoneNumberFieldValidator(value, "administrate"),
         }}
@@ -136,7 +134,7 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
         {(field) => <field.PhoneNumberField />}
       </form.AppField>
       <form.AppField
-        name={"contactInfo.email"}
+        name="contactInfo.email"
         validators={{
           onBlur: ({ value }) => emailFieldValidator(value, "administrate"),
         }}
@@ -144,7 +142,7 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
         {(field) => <field.EmailField />}
       </form.AppField>
       <form.AppField
-        name={"contactInfo.address"}
+        name="contactInfo.address"
         validators={{
           onBlur: ({ value }) => addressFieldValidator(value),
         }}
@@ -152,7 +150,7 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
         {(field) => <field.AddressField />}
       </form.AppField>
       <form.AppField
-        name={"contactInfo.postal"}
+        name="contactInfo.postal"
         validators={{
           onBlurAsync: ({ value }) => postalCodeFieldValidator(value.code),
         }}
@@ -196,7 +194,7 @@ export default function CompanyManager() {
         ))}
       </Activity>
       <Activity mode={isError ? "visible" : "hidden"}>
-        <ErrorAlert title={"Klarte ikke laste inn selskap"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
+        <ErrorAlert title="Klarte ikke laste inn selskap">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
       </Activity>
       <Activity mode={data ? "visible" : "hidden"}>
         {data?.map((company) => (

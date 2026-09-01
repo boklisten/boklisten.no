@@ -15,10 +15,10 @@ export const Route = createFileRoute("/(offentlig)/auth/logout")({
 
 function LogoutPage() {
   return (
-    <Container size={"md"}>
+    <Container size="md">
       <Stack>
-        <Title ta={"center"}>Du er nå logget ut</Title>
-        <CountdownToRedirect seconds={5} path={"/"} shouldReplaceInHistory />
+        <Title ta="center">Du er nå logget ut</Title>
+        <CountdownToRedirect seconds={5} path="/" shouldReplaceInHistory />
         <AuthLogoutComponent />
       </Stack>
     </Container>

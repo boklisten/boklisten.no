@@ -1,10 +1,11 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { CartService } from "#services/cart_service";
 import { StorageService } from "#services/storage_service";
-import { BranchItem } from "#shared/branch-item";
-import { Item } from "#shared/item";
+import type { BranchItem } from "#shared/branch-item";
+import type { Item } from "#shared/item";
 import { mock } from "#tests/test-doubles";
 
 const BRANCH_ID = "5d765db5fc8c47001c408d81";

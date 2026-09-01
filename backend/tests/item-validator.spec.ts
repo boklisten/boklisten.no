@@ -2,8 +2,8 @@ import { test } from "@japa/runner";
 
 import { ItemValidator } from "#services/legacy/collections/order/helpers/order-validator/item-validator/item-validator";
 import { BlError } from "#shared/bl-error";
-import { Item } from "#shared/item";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Item } from "#shared/item";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 test.group("ItemValidator", (group) => {
   let testItem: Item;

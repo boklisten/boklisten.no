@@ -43,21 +43,25 @@ const CountdownToRedirect = ({
   }, []);
 
   const onIntervalEnd = useEffectEvent(() => {
-    if (shouldRedirectToCaller) return redirectToCaller();
+    if (shouldRedirectToCaller) {
+      return redirectToCaller();
+    }
     if (path) {
       void navigate({ to: path, replace: shouldReplaceInHistory });
     }
   });
   useEffect(() => {
-    if (progress <= 0) onIntervalEnd();
+    if (progress <= 0) {
+      onIntervalEnd();
+    }
   }, [progress]);
 
   return (
     <Stack>
-      <Title order={6} ta={"center"}>
+      <Title order={6} ta="center">
         Du blir videresendt om {Math.ceil((progress / 100) * seconds)} sekunder...
       </Title>
-      <Progress value={progress} color={"green"} />
+      <Progress value={progress} color="green" />
     </Stack>
   );
 };

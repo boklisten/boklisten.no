@@ -1,4 +1,5 @@
-import { Text, TextInput, type TextInputProps } from "@mantine/core";
+import { Text, TextInput } from "@mantine/core";
+import type { TextInputProps } from "@mantine/core";
 
 import { useFieldContext } from "@/shared/hooks/form";
 import validator from "validator";
@@ -9,20 +10,26 @@ export function phoneNumberFieldValidator(
   primaryPhoneNumber?: string,
 ) {
   if (!value) {
-    if (context === "personal" || context === "administrate")
+    if (context === "personal" || context === "administrate") {
       return "Du må fylle inn telefonnummer";
-    if (context === "guardian") return "Du må fylle inn foresatt sitt telefonnummer";
+    }
+    if (context === "guardian") {
+      return "Du må fylle inn foresatt sitt telefonnummer";
+    }
   }
 
   if (!validator.isMobilePhone(value, "nb-NO") || value.length !== 8 || value.includes("+47")) {
-    if (context === "personal" || context === "administrate")
+    if (context === "personal" || context === "administrate") {
       return "Du må fylle inn et gyldig norsk telefonnummer (8 tall uten mellomrom og +47)";
-    if (context === "guardian")
+    }
+    if (context === "guardian") {
       return "Du må fylle inn et gyldig norsk telefonnummer for foresatt (8 tall uten mellomrom og +47)";
+    }
   }
 
-  if (context === "guardian" && value === primaryPhoneNumber)
+  if (context === "guardian" && value === primaryPhoneNumber) {
     return `Foresatt sitt telefonnummer må være forskjellig fra kontoens telefonnummer (${primaryPhoneNumber})`;
+  }
 
   return null;
 }
@@ -33,12 +40,12 @@ export default function PhoneNumberField(props: TextInputProps) {
   return (
     <TextInput
       required
-      label={"Telefonnummer"}
-      placeholder={"98765432"}
-      autoComplete={"tel-national"}
-      inputMode={"numeric"}
+      label="Telefonnummer"
+      placeholder="98765432"
+      autoComplete="tel-national"
+      inputMode="numeric"
       leftSection={
-        <Text size={"sm"} c={"dimmed"}>
+        <Text size="sm" c="dimmed">
           +47
         </Text>
       }

@@ -10,7 +10,8 @@ import { CustomerInvoiceActive } from "#services/legacy/collections/invoice/help
 import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
 import { StorageService } from "#services/storage_service";
 import { UserService } from "#services/user_service";
-import { USER_PERMISSION, UserPermission } from "#shared/user-permission";
+import type { UserPermission } from "#shared/user-permission";
+import { USER_PERMISSION } from "#shared/user-permission";
 
 export interface EmployeeRow {
   detailsId: string;
@@ -104,7 +105,9 @@ async function deleteUser(detailsId: string) {
   }
 
   await removeAuthArtifacts(detailsId);
-  if (user) await StorageService.Users.remove(user.id);
+  if (user) {
+    await StorageService.Users.remove(user.id);
+  }
   await StorageService.UserDetails.remove(detailsId);
 }
 
@@ -163,7 +166,9 @@ async function mergeUsers(fromDetailsId: string, toDetailsId: string) {
   await mergeMatchParticipants(fromDetailsId, toDetailsId);
   await removeAuthArtifacts(fromDetailsId);
 
-  if (fromUser) await StorageService.Users.remove(fromUser.id);
+  if (fromUser) {
+    await StorageService.Users.remove(fromUser.id);
+  }
   await StorageService.UserDetails.remove(fromDetailsId);
 }
 

@@ -38,17 +38,17 @@ function TabLabel({
   alert?: boolean;
 }) {
   return (
-    <Group gap={6} wrap={"nowrap"} component={"span"} display={"inline-flex"}>
-      <Text span hiddenFrom={"sm"} fz={"inherit"}>
+    <Group gap={6} wrap="nowrap" component="span" display="inline-flex">
+      <Text span hiddenFrom="sm" fz="inherit">
         {TAB_LABELS[tab].short}
       </Text>
-      <Text span visibleFrom={"sm"} fz={"inherit"}>
+      <Text span visibleFrom="sm" fz="inherit">
         {TAB_LABELS[tab].full}
       </Text>
       {count > 0 && (
         // The count stays gray — it is a total, not a problem count. Overdue books get a red dot.
-        <Indicator color={"red"} size={7} offset={1} disabled={!alert}>
-          <Badge size={"sm"} variant={"light"} color={"gray"} circle={count < 10}>
+        <Indicator color="red" size={7} offset={1} disabled={!alert}>
+          <Badge size="sm" variant="light" color="gray" circle={count < 10}>
             {count}
           </Badge>
         </Indicator>
@@ -115,34 +115,34 @@ export default function CustomerSearchTabs({
         onTabChange(CUSTOMER_SEARCH_TABS.find((tab) => tab === value) ?? "bestillinger")
       }
     >
-      <Tabs.List mb={"md"}>
-        <Tabs.Tab value={"bestillinger"} px={{ base: 8, sm: "md" }}>
-          <TabLabel tab={"bestillinger"} count={toHandOut} />
+      <Tabs.List mb="md">
+        <Tabs.Tab value="bestillinger" px={{ base: 8, sm: "md" }}>
+          <TabLabel tab="bestillinger" count={toHandOut} />
         </Tabs.Tab>
-        <Tabs.Tab value={"boker"} px={{ base: 8, sm: "md" }}>
-          <TabLabel tab={"boker"} count={bookCount} alert={hasOverdue} />
+        <Tabs.Tab value="boker" px={{ base: 8, sm: "md" }}>
+          <TabLabel tab="boker" count={bookCount} alert={hasOverdue} />
         </Tabs.Tab>
         {showMatches && (
-          <Tabs.Tab value={"overleveringer"} px={{ base: 8, sm: "md" }}>
-            <TabLabel tab={"overleveringer"} count={matchCount} />
+          <Tabs.Tab value="overleveringer" px={{ base: 8, sm: "md" }}>
+            <TabLabel tab="overleveringer" count={matchCount} />
           </Tabs.Tab>
         )}
-        <Tabs.Tab value={"meldinger"} px={{ base: 8, sm: "md" }}>
-          <TabLabel tab={"meldinger"} count={failedMessages} alert={failedMessages > 0} />
+        <Tabs.Tab value="meldinger" px={{ base: 8, sm: "md" }}>
+          <TabLabel tab="meldinger" count={failedMessages} alert={failedMessages > 0} />
         </Tabs.Tab>
       </Tabs.List>
 
       {/* Kept mounted so the scan-progress ticks survive a visit to another tab. */}
-      <Tabs.Panel value={"bestillinger"} keepMounted>
+      <Tabs.Panel value="bestillinger" keepMounted>
         <HandoutView customer={customer} />
       </Tabs.Panel>
-      <Tabs.Panel value={"boker"}>
+      <Tabs.Panel value="boker">
         <ActiveBooksView customerId={customer.id} />
       </Tabs.Panel>
-      <Tabs.Panel value={"overleveringer"}>
+      <Tabs.Panel value="overleveringer">
         <CustomerMatchesView customerId={customer.id} />
       </Tabs.Panel>
-      <Tabs.Panel value={"meldinger"}>
+      <Tabs.Panel value="meldinger">
         <CustomerMessagesView customer={customer} />
       </Tabs.Panel>
     </Tabs>

@@ -15,7 +15,9 @@ export default function SignatureCanvasField(props: { label: string }) {
 
   useEffect(() => {
     const resize = () => {
-      if (!sigCanvas.current) return;
+      if (!sigCanvas.current) {
+        return;
+      }
       const canvas = sigCanvas.current.getCanvas();
       const box = containerRef.current;
       if (canvas && box) {
@@ -47,7 +49,9 @@ export default function SignatureCanvasField(props: { label: string }) {
       >
         <SignatureCanvas
           onEnd={() => {
-            if (!sigCanvas.current) return;
+            if (!sigCanvas.current) {
+              return;
+            }
             const header = "data:image/png;base64,";
             const dataUrl = sigCanvas.current.toDataURL("image/png");
             field.setValue(dataUrl.slice(header.length));
@@ -57,12 +61,12 @@ export default function SignatureCanvasField(props: { label: string }) {
           }}
           ref={sigCanvas}
         />
-        <Tooltip label={"Tøm"}>
+        <Tooltip label="Tøm">
           <ActionIcon
-            aria-label={"Tøm"}
-            color={"dark"}
-            variant={"subtle"}
-            pos={"absolute"}
+            aria-label="Tøm"
+            color="dark"
+            variant="subtle"
+            pos="absolute"
             right={0}
             bottom={0}
             onClick={() => {

@@ -1,15 +1,16 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { DeliveryHandler } from "#services/legacy/collections/delivery/helpers/deliveryHandler/delivery-handler";
 import { DeliveryValidator } from "#services/legacy/collections/delivery/helpers/deliveryValidator/delivery-validator";
 import { DeliveryPostHook } from "#services/legacy/collections/delivery/hooks/delivery.post.hook";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
-import { Item } from "#shared/item";
-import { Order } from "#shared/order/order";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { Item } from "#shared/item";
+import type { Order } from "#shared/order/order";
 
 test.group("DeliveryPostHook", (group) => {
   const deliveryValidator = new DeliveryValidator();
@@ -93,55 +94,53 @@ test.group("DeliveryPostHook", (group) => {
       return Promise.resolve(true);
     });
 
-    sandbox.stub(deliveryHandler, "updateOrderBasedOnMethod").callsFake(() => {
-      return Promise.reject(new BlError("order could not be updated"));
-    });
+    sandbox
+      .stub(deliveryHandler, "updateOrderBasedOnMethod")
+      .callsFake(() => Promise.reject(new BlError("order could not be updated")));
 
-    sandbox.stub(StorageService.Deliveries, "get").callsFake((id) => {
-      return new Promise((resolve, reject) => {
-        if (id === "delivery1") {
-          return resolve(testDelivery);
-        }
-        return reject(new BlError("not found").code(702));
-      });
-    });
+    sandbox.stub(StorageService.Deliveries, "get").callsFake(
+      (id) =>
+        new Promise((resolve, reject) => {
+          if (id === "delivery1") {
+            return resolve(testDelivery);
+          }
+          return reject(new BlError("not found").code(702));
+        }),
+    );
 
-    sandbox.stub(StorageService.Orders, "get").callsFake((id) => {
-      return new Promise((resolve, reject) => {
-        if (id === "order1") {
-          return resolve(testOrder);
-        }
-        return reject(new BlError("not found").code(702));
-      });
-    });
+    sandbox.stub(StorageService.Orders, "get").callsFake(
+      (id) =>
+        new Promise((resolve, reject) => {
+          if (id === "order1") {
+            return resolve(testOrder);
+          }
+          return reject(new BlError("not found").code(702));
+        }),
+    );
 
-    sandbox.stub(StorageService.Items, "getMany").callsFake((ids: string[]) => {
-      return new Promise((resolve, reject) => {
-        if (ids[0] === "item1") {
-          return resolve([testItem]);
-        }
-        return reject(new BlError("not found").code(702));
-      });
-    });
+    sandbox.stub(StorageService.Items, "getMany").callsFake(
+      (ids: string[]) =>
+        new Promise((resolve, reject) => {
+          if (ids[0] === "item1") {
+            return resolve([testItem]);
+          }
+          return reject(new BlError("not found").code(702));
+        }),
+    );
   });
   group.each.teardown(() => {
     sandbox.restore();
   });
 
-  test("should reject if deliveryIds is empty or undefined", async ({ assert }) => {
-    return assert.rejects(
-      () => deliveryPostHook.after([]),
-      BlError,
-      /deliveries is empty or undefined/,
-    );
-  });
+  test("should reject if deliveryIds is empty or undefined", async ({ assert }) =>
+    assert.rejects(() => deliveryPostHook.after([]), BlError, /deliveries is empty or undefined/));
 
   test("should reject if delivery.order is not found", async ({ assert }) => {
     testDelivery.order = "notFoundOrder";
 
     const blError = await deliveryPostHook.after([testDelivery], testAccessToken).then(
       () => null,
-      (caught: BlError) => caught,
+      (error: BlError) => error,
     );
     assert.instanceOf(blError, BlError);
     assert.equal(blError?.getCode(), 702);
@@ -157,11 +156,10 @@ test.group("DeliveryPostHook", (group) => {
     );
   });
 
-  test("should reject if DeliveryHandler.updateOrderBasedOnMethod rejects", async ({ assert }) => {
-    return assert.rejects(
+  test("should reject if DeliveryHandler.updateOrderBasedOnMethod rejects", async ({ assert }) =>
+    assert.rejects(
       () => deliveryPostHook.after([testDelivery], testAccessToken),
       BlError,
       /order could not be updated/,
-    );
-  });
+    ));
 });

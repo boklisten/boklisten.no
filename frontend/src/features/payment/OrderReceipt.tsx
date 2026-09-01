@@ -18,9 +18,7 @@ export default function OrderReceipt({ orderId }: { orderId: string }) {
 
   if (isError || !data) {
     return (
-      <ErrorAlert title={"Klarte ikke laste inn ordrekvittering"}>
-        {PLEASE_TRY_AGAIN_TEXT}
-      </ErrorAlert>
+      <ErrorAlert title="Klarte ikke laste inn ordrekvittering">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
     );
   }
   return (

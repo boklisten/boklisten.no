@@ -1,4 +1,4 @@
-import { Invoice } from "#shared/invoice";
+import type { Invoice } from "#shared/invoice";
 
 export class InvoiceActive {
   public isActive(invoice: Invoice): boolean {

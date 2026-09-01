@@ -9,18 +9,18 @@ import CustomerSearchSpotlight from "@/features/customer-search/CustomerSearchSp
 import EmailConfirmationWarning from "@/features/customer-search/EmailConfirmationWarning";
 import CustomerSearchTabs, {
   CUSTOMER_SEARCH_TABS,
-  type CustomerSearchTab,
 } from "@/features/customer-search/CustomerSearchTabs";
+import type { CustomerSearchTab } from "@/features/customer-search/CustomerSearchTabs";
 import SelectedCustomerCard from "@/features/customer-search/SelectedCustomerCard";
 import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { seo } from "@/shared/utils/seo";
 
-type CustomerSearchParams = {
+interface CustomerSearchParams {
   kunde?: string;
   visning?: CustomerSearchTab;
-};
+}
 
 function parseTab(value: unknown): CustomerSearchTab | undefined {
   return CUSTOMER_SEARCH_TABS.find((tab) => tab === value);
@@ -75,8 +75,8 @@ function CustomerSearchPage() {
         {kunde === undefined && <CustomerPicker onSelect={selectCustomer} />}
         {loading && (
           <Stack>
-            <Skeleton height={110} radius={"md"} />
-            <Skeleton height={200} radius={"md"} />
+            <Skeleton height={110} radius="md" />
+            <Skeleton height={200} radius="md" />
           </Stack>
         )}
         {notFound && (
@@ -89,7 +89,7 @@ function CustomerSearchPage() {
           <Stack>
             <CustomerActionBar onSelect={selectCustomer} />
             <Stack gap={6}>
-              <Text fz={"sm"} fw={500} c={"dimmed"}>
+              <Text fz="sm" fw={500} c="dimmed">
                 Valgt kunde
               </Text>
               <SelectedCustomerCard customer={customer} onDeselect={deselect} />

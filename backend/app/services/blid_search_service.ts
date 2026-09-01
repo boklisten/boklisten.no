@@ -6,17 +6,17 @@ import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { StorageService } from "#services/storage_service";
-import {
+import type {
   BlidActiveItem,
   BlidHistoryEvent,
   BlidParty,
   BlidSearchResult,
   BlidStatus,
 } from "#shared/blid_search";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { CustomerItemType } from "#shared/customer-item/customer-item-type";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 import { USER_PERMISSION } from "#shared/user-permission";
 
 export interface HandoverRow {
@@ -64,21 +64,31 @@ export function collectReferencedIds(
     const { handoutInfo, returnInfo } = customerItem;
     if (handoutInfo) {
       branchIds.add(handoutInfo.handoutById);
-      if (handoutInfo.handoutEmployee) userDetailIds.add(handoutInfo.handoutEmployee);
+      if (handoutInfo.handoutEmployee) {
+        userDetailIds.add(handoutInfo.handoutEmployee);
+      }
     }
     if (returnInfo) {
       branchIds.add(returnInfo.returnedToId);
-      if (returnInfo.returnEmployee) userDetailIds.add(returnInfo.returnEmployee);
+      if (returnInfo.returnEmployee) {
+        userDetailIds.add(returnInfo.returnEmployee);
+      }
     }
   }
   for (const order of orders) {
     userDetailIds.add(order.customer);
-    if (order.employee) userDetailIds.add(order.employee);
+    if (order.employee) {
+      userDetailIds.add(order.employee);
+    }
     branchIds.add(order.branch);
   }
   for (const handover of handovers) {
-    if (handover.fromUserDetailId) userDetailIds.add(handover.fromUserDetailId);
-    if (handover.toUserDetailId) userDetailIds.add(handover.toUserDetailId);
+    if (handover.fromUserDetailId) {
+      userDetailIds.add(handover.fromUserDetailId);
+    }
+    if (handover.toUserDetailId) {
+      userDetailIds.add(handover.toUserDetailId);
+    }
   }
 
   return { userDetailIds: [...userDetailIds], branchIds: [...branchIds] };
@@ -123,7 +133,9 @@ function reconcileOneSidedMatches(
   const pairedDelivers = new Set<BlidHistoryEvent>();
 
   for (const receive of receives) {
-    if (duplicatesTransfer(receive)) continue;
+    if (duplicatesTransfer(receive)) {
+      continue;
+    }
     const deliver = delivers.find(
       (candidate) =>
         !pairedDelivers.has(candidate) &&
@@ -141,7 +153,9 @@ function reconcileOneSidedMatches(
     }
   }
   for (const deliver of delivers) {
-    if (pairedDelivers.has(deliver) || duplicatesTransfer(deliver)) continue;
+    if (pairedDelivers.has(deliver) || duplicatesTransfer(deliver)) {
+      continue;
+    }
     events.push(deliver);
     transfers.push(deliver);
   }
@@ -166,7 +180,9 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   // item instead, which pins them to this copy just as well.
   const customerItemIds = new Set(sources.customerItems.map((customerItem) => customerItem.id));
   const belongsToBlid = (orderItem: OrderItem) => {
-    if (orderItem.blid === sources.blid) return true;
+    if (orderItem.blid === sources.blid) {
+      return true;
+    }
     const linkedCustomerItem = orderItem.info?.customerItem ?? orderItem.customerItem;
     return (
       orderItem.blid == null &&
@@ -183,8 +199,12 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   // Handover rows are the authoritative movement record: they know both parties.
   const orderIdsCoveredByHandover = new Set<string>();
   for (const handover of sources.handovers) {
-    if (handover.fromUserDetailId === null && handover.toUserDetailId === null) continue;
-    if (handover.orderId !== null) orderIdsCoveredByHandover.add(handover.orderId);
+    if (handover.fromUserDetailId === null && handover.toUserDetailId === null) {
+      continue;
+    }
+    if (handover.orderId !== null) {
+      orderIdsCoveredByHandover.add(handover.orderId);
+    }
 
     const order = handover.orderId === null ? undefined : ordersById.get(handover.orderId);
     const relevantOrderItem = order?.orderItems.find(belongsToBlid);
@@ -213,16 +233,22 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       orderId: handover.orderId ?? undefined,
     };
     events.push(event);
-    if (action === "match-transfer") transfers.push(event);
+    if (action === "match-transfer") {
+      transfers.push(event);
+    }
   }
 
   // Legacy match orders record only their own side; they are paired up after the loop.
   const oneSidedMatches: BlidHistoryEvent[] = [];
   for (const order of sources.orders) {
     // An unplaced order is an abandoned cart; nothing in it actually happened to the book.
-    if (!order.placed) continue;
+    if (!order.placed) {
+      continue;
+    }
     for (const orderItem of order.orderItems) {
-      if (!belongsToBlid(orderItem)) continue;
+      if (!belongsToBlid(orderItem)) {
+        continue;
+      }
 
       let event: Pick<
         BlidHistoryEvent,
@@ -231,7 +257,9 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       switch (orderItem.type) {
         case "rent":
         case "partly-payment": {
-          if (!orderItem.handout) continue;
+          if (!orderItem.handout) {
+            continue;
+          }
           event = {
             action: "handout",
             from: { type: "stand" },
@@ -291,7 +319,9 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
         event.action === "handout" ||
         event.action === "return" ||
         event.action === "match-transfer";
-      if (isMovement && orderIdsCoveredByHandover.has(order.id)) continue;
+      if (isMovement && orderIdsCoveredByHandover.has(order.id)) {
+        continue;
+      }
 
       const fullEvent: BlidHistoryEvent = {
         ...event,
@@ -365,7 +395,9 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
     }
     for (const periodExtend of customerItem.periodExtends ?? []) {
       const deadline = new Date(periodExtend.to).toISOString();
-      if (extendDeadlines.has(deadline)) continue;
+      if (extendDeadlines.has(deadline)) {
+        continue;
+      }
       events.push({
         time: new Date(periodExtend.time).toISOString(),
         action: "extend",
@@ -418,7 +450,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   // customer item is authoritative for display: its events show its branch (the return its
   // return branch), and its newest deadline-carrying event shows its current deadline.
   for (const customerItem of sources.customerItems) {
-    const orderIds = new Set(customerItem.orders ?? []);
+    const orderIds = new Set(customerItem.orders);
     const attributed = events.filter(
       (event) => event.orderId !== undefined && orderIds.has(event.orderId),
     );
@@ -426,7 +458,9 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
     for (const event of attributed) {
       const branchId =
         event.action === "return" ? returnInfo?.returnedToId : handoutInfo?.handoutById;
-      if (branchId !== undefined) event.branchName = branchName(branchId);
+      if (branchId !== undefined) {
+        event.branchName = branchName(branchId);
+      }
     }
     const newestWithDeadline = attributed
       .filter((event) => event.deadline !== undefined)
@@ -440,8 +474,12 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   // admin backdates the deadline to before the newest recorded event.
   events.sort((a, b) => {
     if (a.action !== b.action) {
-      if (a.action === "deadline-expired") return -1;
-      if (b.action === "deadline-expired") return 1;
+      if (a.action === "deadline-expired") {
+        return -1;
+      }
+      if (b.action === "deadline-expired") {
+        return 1;
+      }
     }
     return b.time.localeCompare(a.time);
   });
@@ -454,7 +492,9 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
     if (event.action === "extend") {
       event.previousDeadline = deadlineInEffect ?? event.previousDeadline;
     }
-    if (event.deadline !== undefined) deadlineInEffect = event.deadline;
+    if (event.deadline !== undefined) {
+      deadlineInEffect = event.deadline;
+    }
   }
 
   return {
@@ -468,7 +508,9 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
 
 function deriveActiveItem(customerItems: CustomerItem[]): BlidActiveItem | undefined {
   const active = customerItems.find(isActivelyHeld);
-  if (!active) return undefined;
+  if (!active) {
+    return undefined;
+  }
   return {
     customerItemId: active.id,
     deadline: new Date(active.deadline).toISOString(),
@@ -491,7 +533,9 @@ function isActivelyHeld(customerItem: CustomerItem): boolean {
  * bought and keeps the book, while returns, buybacks and cancels all leave it back at the stand.
  */
 function deriveStatus(customerItems: CustomerItem[]): BlidStatus {
-  if (customerItems.some(isActivelyHeld)) return "handed-out";
+  if (customerItems.some(isActivelyHeld)) {
+    return "handed-out";
+  }
   const newest = customerItems.toSorted((a, b) => customerItemTime(b) - customerItemTime(a))[0];
   return newest?.buyout && !newest.returned ? "bought-out" : "not-handed-out";
 }
@@ -539,7 +583,9 @@ export const BlidSearchService = {
     branchId?: string;
   }): Promise<void> {
     const set: Record<string, unknown> = { lastUpdated: new Date() };
-    if (deadline) set["deadline"] = new Date(deadline);
+    if (deadline) {
+      set["deadline"] = new Date(deadline);
+    }
     if (branchId) {
       // handoutInfo may be missing entirely on legacy items; set both keys so the pair
       // stays coherent.

@@ -92,9 +92,9 @@ Referrer: ${typeof document !== "undefined" ? document.referrer || "none" : "n/a
   }, [error]);
 
   return (
-    <Stack align={"center"}>
-      {withLogo && <Logo variant={"blue"} />}
-      <ErrorAlert title={"Oisann! Her gikk noe veldig galt!"}>
+    <Stack align="center">
+      {withLogo && <Logo variant="blue" />}
+      <ErrorAlert title="Oisann! Her gikk noe veldig galt!">
         Du kan prøve å laste inn siden på nytt, eller gå tilbake til forsiden. Ta kontakt på
         teknisk@boklisten.no dersom problemet vedvarer! Kopier feilmeldingen under inn i e-posten,
         slik at vi enklere kan hjelpe deg.

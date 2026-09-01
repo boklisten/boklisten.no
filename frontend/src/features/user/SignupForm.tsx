@@ -3,10 +3,8 @@ import { createFieldMap } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { Activity, useState } from "react";
 
-import UserInfoFields, {
-  userInfoFieldDefaultValues,
-  UserInfoFieldValues,
-} from "@/features/user/UserInfoFields";
+import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
+import UserInfoFields, { userInfoFieldDefaultValues } from "@/features/user/UserInfoFields";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
@@ -112,9 +110,9 @@ export default function SignupForm() {
   });
 
   return (
-    <Stack gap={"xs"}>
+    <Stack gap="xs">
       <form.AppField
-        name={"email"}
+        name="email"
         validators={{
           onBlur: ({ value }) => emailFieldValidator(value, "personal"),
         }}
@@ -133,17 +131,17 @@ export default function SignupForm() {
         )}
       </form.Subscribe>
       <form.AppField
-        name={"password"}
+        name="password"
         validators={{
           onBlur: ({ value }) => newPasswordFieldValidator(value),
         }}
       >
         {(field) => <field.NewPasswordField />}
       </form.AppField>
-      <UserInfoFields perspective={"personal"} fields={createFieldMap(defaultValues)} form={form} />
+      <UserInfoFields perspective="personal" fields={createFieldMap(defaultValues)} form={form} />
       <Space />
       <form.AppField
-        name={"agreeToTermsAndConditions"}
+        name="agreeToTermsAndConditions"
         validators={{
           onChange: ({ value }) => (!value ? "Du må godta våre betingelser og vilkår" : ""),
         }}
@@ -153,17 +151,17 @@ export default function SignupForm() {
             required
             label={
               <Group gap={3}>
-                <Text size={"sm"}>
+                <Text size="sm">
                   {"Jeg godtar Boklistens "}
-                  <TanStackAnchor to={"/info/policies/conditions"} target={"_blank"}>
+                  <TanStackAnchor to="/info/policies/conditions" target="_blank">
                     betingelser
                   </TanStackAnchor>
                   {" og "}
-                  <TanStackAnchor to={"/info/policies/terms"} target={"_blank"}>
+                  <TanStackAnchor to="/info/policies/terms" target="_blank">
                     vilkår
                   </TanStackAnchor>
                 </Text>
-                <Text size={"sm"} c={"var(--mantine-color-error)"}>
+                <Text size="sm" c="var(--mantine-color-error)">
                   *
                 </Text>
               </Group>

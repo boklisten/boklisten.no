@@ -4,15 +4,15 @@ import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpe
 import { Hook } from "#services/legacy/hook";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
+import type { Order } from "#shared/order/order";
 
 export class OrderPostHook extends Hook {
-  private orderValidator: OrderValidator;
-  private orderHookBefore: OrderHookBefore;
+  private readonly orderValidator: OrderValidator;
+  private readonly orderHookBefore: OrderHookBefore;
 
-  private userDetailHelper: UserDetailHelper;
+  private readonly userDetailHelper: UserDetailHelper;
 
   constructor(
     orderValidator?: OrderValidator,
@@ -35,7 +35,7 @@ export class OrderPostHook extends Hook {
       this.orderHookBefore.validate(requestBody),
     ]);
     if (!validUserDetails) {
-      throw new BlError("UserDetail not set for user: " + accessToken.username).code(902);
+      throw new BlError(`UserDetail not set for user: ${accessToken.username}`).code(902);
     }
     if (!validRequestBody) {
       throw new BlError("Invalid order").code(701);
@@ -63,9 +63,7 @@ export class OrderPostHook extends Hook {
     const isAdmin = PermissionService.isPermissionEqualOrOver(accessToken.permission, "admin");
 
     // @ts-expect-error fixme: auto ignored
-    return this.validateOrder(order, isAdmin).then(() => {
-      return [order];
-    });
+    return this.validateOrder(order, isAdmin).then(() => [order]);
   }
 
   private validateOrder(order: Order, isAdmin: boolean): Promise<Order> {
@@ -79,9 +77,7 @@ export class OrderPostHook extends Hook {
 
           return resolve(order);
         })
-        .catch((blError: BlError) => {
-          return reject(blError);
-        });
+        .catch((blError: BlError) => reject(blError));
     });
   }
 }

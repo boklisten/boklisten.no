@@ -26,7 +26,7 @@ export default function AdministrateUserSignatures({ userDetail }: { userDetail:
     return <Skeleton />;
   }
   if (!data || isError) {
-    return <ErrorAlert title={"Klarte ikke laste signatur"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>;
+    return <ErrorAlert title="Klarte ikke laste signatur">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>;
   }
 
   if (data.isSignatureValid) {
@@ -53,7 +53,7 @@ export default function AdministrateUserSignatures({ userDetail }: { userDetail:
 
   return (
     <Stack align="center">
-      <WarningAlert title={"Denne kunden har ikke gyldig signatur"}>
+      <WarningAlert title="Denne kunden har ikke gyldig signatur">
         <Group>
           <CopyButton value={`${window.location.origin}/signering/${userDetail.id}`}>
             {({ copy }) => (

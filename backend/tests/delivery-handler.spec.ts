@@ -1,11 +1,12 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { DeliveryHandler } from "#services/legacy/collections/delivery/helpers/deliveryHandler/delivery-handler";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
-import { Order } from "#shared/order/order";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { Order } from "#shared/order/order";
 
 let testOrder: Order;
 let testDelivery: Delivery;

@@ -36,7 +36,9 @@ export interface MatchLookups {
 const UNKNOWN_PERSON: MatchPerson = { name: "", phone: "", email: "" };
 
 function toParty(customerId: string | null, lookups: MatchLookups): HandoverParty {
-  if (customerId === null) return { kind: "stand" };
+  if (customerId === null) {
+    return { kind: "stand" };
+  }
   const person = lookups.people.get(customerId) ?? UNKNOWN_PERSON;
   return { kind: "customer", customerId, ...person };
 }

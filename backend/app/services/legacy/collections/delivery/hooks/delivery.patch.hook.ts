@@ -2,15 +2,15 @@ import { DeliveryHandler } from "#services/legacy/collections/delivery/helpers/d
 import { DeliveryValidator } from "#services/legacy/collections/delivery/helpers/deliveryValidator/delivery-validator";
 import { Hook } from "#services/legacy/hook";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
-import { Order } from "#shared/order/order";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { Order } from "#shared/order/order";
 
 export class DeliveryPatchHook extends Hook {
-  private deliveryValidator: DeliveryValidator;
+  private readonly deliveryValidator: DeliveryValidator;
 
-  private deliveryHandler: DeliveryHandler;
+  private readonly deliveryHandler: DeliveryHandler;
 
   constructor(deliveryValidator?: DeliveryValidator, deliveryHandler?: DeliveryHandler) {
     super();
@@ -33,9 +33,7 @@ export class DeliveryPatchHook extends Hook {
     }
 
     return this.tryToValidatePatch(body, id)
-      .then(() => {
-        return true;
-      })
+      .then(() => true)
       .catch((blError: BlError) => {
         throw blError;
       });
@@ -48,32 +46,20 @@ export class DeliveryPatchHook extends Hook {
       StorageService.Orders
         // @ts-expect-error fixme: auto ignored
         .get(delivery.order)
-        .then((order: Order) => {
-          return (
-            this.deliveryValidator
-              // @ts-expect-error fixme: auto ignored
-              .validate(delivery)
-              .then(() => {
-                return (
-                  this.deliveryHandler
-                    // @ts-expect-error fixme: auto ignored
-                    .updateOrderBasedOnMethod(delivery, order)
-                    .then((updatedDelivery: Delivery) => {
-                      return resolve([updatedDelivery]);
-                    })
-                    .catch((blError: BlError) => {
-                      return reject(blError);
-                    })
-                );
-              })
-              .catch((blError: BlError) => {
-                return reject(blError);
-              })
-          );
-        })
-        .catch((blError: BlError) => {
-          return reject(blError);
-        });
+        .then((order: Order) =>
+          this.deliveryValidator
+            // @ts-expect-error fixme: auto ignored
+            .validate(delivery)
+            .then(() =>
+              this.deliveryHandler
+                // @ts-expect-error fixme: auto ignored
+                .updateOrderBasedOnMethod(delivery, order)
+                .then((updatedDelivery: Delivery) => resolve([updatedDelivery]))
+                .catch((blError: BlError) => reject(blError)),
+            )
+            .catch((blError: BlError) => reject(blError)),
+        )
+        .catch((blError: BlError) => reject(blError));
     });
   }
 
@@ -97,20 +83,18 @@ export class DeliveryPatchHook extends Hook {
           }
           return this.deliveryValidator
             .validate(delivery)
-            .then(() => {
-              return resolve(true);
-            })
-            .catch((blError: BlError) => {
-              return reject(
+            .then(() => resolve(true))
+            .catch((blError: BlError) =>
+              reject(
                 new BlError("patched delivery could not be validated")
                   .add(blError)
                   .store("delivery", delivery),
-              );
-            });
+              ),
+            );
         })
-        .catch((blError: BlError) => {
-          return reject(new BlError(`delivery "${id}" not found`).add(blError));
-        });
+        .catch((blError: BlError) =>
+          reject(new BlError(`delivery "${id}" not found`).add(blError)),
+        );
     });
   }
 }

@@ -18,7 +18,7 @@ export default function MySignatureStatus() {
 
   if (data.isSignatureValid) {
     return (
-      <Box mt={"md"}>
+      <Box mt="md">
         <SignedContractDetails
           signedByGuardian={data.signedByGuardian ?? false}
           signingName={data.signingName ?? ""}
@@ -35,10 +35,10 @@ export default function MySignatureStatus() {
   }
 
   return (
-    <WarningAlert title={"Du mangler gyldig signatur"} mt={"md"}>
-      <Stack align={"flex-start"} gap={"xs"}>
+    <WarningAlert title="Du mangler gyldig signatur" mt="md">
+      <Stack align="flex-start" gap="xs">
         <Text>Bøker kan ikke deles ut før låneavtalen er signert.</Text>
-        <TanStackButton to={"/oppgaver"} leftSection={<IconSignature />}>
+        <TanStackButton to="/oppgaver" leftSection={<IconSignature />}>
           Signer låneavtale
         </TanStackButton>
       </Stack>

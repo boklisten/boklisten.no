@@ -20,18 +20,18 @@ export default function ReportCard({
   downloadLabel = "Last ned rapport",
 }: ReportCardProps) {
   return (
-    <Card withBorder padding={"lg"} radius={"md"}>
-      <Stack gap={"md"}>
-        <Stack gap={"xs"}>
+    <Card withBorder padding="lg" radius="md">
+      <Stack gap="md">
+        <Stack gap="xs">
           <Title order={2}>{title}</Title>
           {description && (
-            <Text size={"sm"} c={"dimmed"}>
+            <Text size="sm" c="dimmed">
               {description}
             </Text>
           )}
         </Stack>
-        <Stack gap={"md"}>{children}</Stack>
-        <Group justify={"flex-end"}>
+        <Stack gap="md">{children}</Stack>
+        <Group justify="flex-end">
           <Button
             leftSection={<IconFileDownload size={18} />}
             loading={isLoading}

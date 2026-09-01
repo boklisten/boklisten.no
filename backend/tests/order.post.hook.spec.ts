@@ -1,14 +1,15 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
 import { OrderHookBefore } from "#services/legacy/collections/order/hooks/order-hook-before";
 import { OrderPostHook } from "#services/legacy/collections/order/hooks/order.post.hook";
 import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpers/user-detail.helper";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
+import type { Order } from "#shared/order/order";
 
 test.group("OrderPostHook", (group) => {
   const orderValidator: OrderValidator = new OrderValidator();
@@ -87,37 +88,35 @@ test.group("OrderPostHook", (group) => {
       }
       return Promise.resolve(testOrder);
     });
-    sandbox.stub(orderHookBefore, "validate").callsFake((requestBody) => {
-      return new Promise((resolve, reject) => {
-        if (!requestBody["valid"]) {
-          return reject(new BlError("not a valid order").code(701));
-        }
-        resolve(true);
-      });
-    });
+    sandbox.stub(orderHookBefore, "validate").callsFake(
+      (requestBody) =>
+        new Promise((resolve, reject) => {
+          if (!requestBody["valid"]) {
+            return reject(new BlError("not a valid order").code(701));
+          }
+          resolve(true);
+        }),
+    );
   });
   group.each.teardown(() => {
     sandbox.restore();
   });
 
-  test("should reject if requestBody is not valid", async ({ assert }) => {
-    return assert.rejects(
+  test("should reject if requestBody is not valid", async ({ assert }) =>
+    assert.rejects(
       () => orderPostHook.before({ valid: false }, testAccessToken),
       BlError,
       /not a valid order/,
-    );
-  });
+    ));
 
-  test("should resolve if requestBody is valid", async ({ assert }) => {
-    return assert.doesNotReject(() => orderHookBefore.validate({ valid: true }));
-  });
-  test("should reject if accessToken is empty or undefined", async ({ assert }) => {
-    return assert.rejects(
+  test("should resolve if requestBody is valid", async ({ assert }) =>
+    assert.doesNotReject(() => orderHookBefore.validate({ valid: true })));
+  test("should reject if accessToken is empty or undefined", async ({ assert }) =>
+    assert.rejects(
       () => orderPostHook.after([testOrder]),
       BlError,
       /accessToken was not specified when trying to process order/,
-    );
-  });
+    ));
 
   test("should reject if orderValidator.validate rejected with error", async ({ assert }) => {
     orderValidated = false;

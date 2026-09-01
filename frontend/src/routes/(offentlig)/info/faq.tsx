@@ -23,7 +23,7 @@ export const Route = createFileRoute("/(offentlig)/info/faq")({
 function FaqPage() {
   return (
     <Stack>
-      <Title ta={"center"}>Spørsmål og svar</Title>
+      <Title ta="center">Spørsmål og svar</Title>
       <QuestionsAndAnswersReadOnly />
     </Stack>
   );

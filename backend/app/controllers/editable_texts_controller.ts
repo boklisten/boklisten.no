@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import { PermissionService } from "#services/permission_service";
 import { editableTextsValidator } from "#validators/editable_texts_validator";

@@ -52,25 +52,20 @@ export default function ForgotPasswordForm() {
         </Activity>
       </Stack>
       <form.AppField
-        name={"email"}
+        name="email"
         validators={{
           onBlur: ({ value }) =>
             !validator.isEmail(value) ? "Du må fylle inn en gyldig e-post" : null,
         }}
       >
         {(field) => (
-          <field.TextField
-            required
-            label={"E-post"}
-            placeholder={"Din e-post"}
-            autoComplete={"email"}
-          />
+          <field.TextField required label="E-post" placeholder="Din e-post" autoComplete="email" />
         )}
       </form.AppField>
       <Button loading={requestPasswordResetMutation.isPending} onClick={form.handleSubmit}>
         Reset passord
       </Button>
-      <TanStackAnchor size={"sm"} to={"/auth/login"}>
+      <TanStackAnchor size="sm" to="/auth/login">
         Tilbake til innloggingssiden
       </TanStackAnchor>
     </>

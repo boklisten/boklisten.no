@@ -2,7 +2,7 @@ import CryptoService from "#services/crypto_service";
 
 const BlidService = {
   createUserBlid(provider: string, providerId: string) {
-    return "u#" + CryptoService.cipher(provider + providerId);
+    return `u#${CryptoService.cipher(provider + providerId)}`;
   },
 
   /** A BL-ID is either a 12-character alphanumeric id or an 8-digit numeric id. */

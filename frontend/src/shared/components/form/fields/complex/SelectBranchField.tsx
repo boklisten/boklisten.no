@@ -1,4 +1,5 @@
-import { Anchor, Button, Group, Stack, TreeSelect, type TreeSelectProps } from "@mantine/core";
+import { Anchor, Button, Group, Stack, TreeSelect } from "@mantine/core";
+import type { TreeSelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import { useFieldContext } from "@/shared/hooks/form";
@@ -15,14 +16,14 @@ export default function SelectBranchField({
   const subject = perspective === "personal" ? "din" : "kundens";
 
   return (
-    <Stack gap={"xs"}>
+    <Stack gap="xs">
       <TreeSelect
-        label={"Skole"}
+        label="Skole"
         placeholder={`Velg ${subject} skole`}
         description={
           <>
             Finner du ikke {subject} skole eller klasse? Ta kontakt på{" "}
-            <Anchor underline={"never"} size={"xs"} href={"mailto:info@boklisten.no"}>
+            <Anchor underline="never" size="xs" href="mailto:info@boklisten.no">
               info@boklisten.no
             </Anchor>
             , så hjelper vi deg!
@@ -32,7 +33,7 @@ export default function SelectBranchField({
         renderNode={({ node, hasChildren }) => (hasChildren ? null : getBranchNodeShortLabel(node))}
         expandOnClick
         searchable
-        nothingFoundMessage={"Fant ingen skoler"}
+        nothingFoundMessage="Fant ingen skoler"
         clearable
         {...props}
         // Wait for the branch data to be present so we can render its name
@@ -42,7 +43,7 @@ export default function SelectBranchField({
         error={field.state.meta.errors.join(", ")}
       />
       <Group>
-        <Button variant={"subtle"} size={"compact-sm"} onClick={() => field.handleChange(null)}>
+        <Button variant="subtle" size="compact-sm" onClick={() => field.handleChange(null)}>
           {perspective === "personal" ? "Jeg skal ikke ha bøker" : "Kunden skal ikke ha bøker"}
         </Button>
       </Group>

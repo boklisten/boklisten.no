@@ -60,27 +60,26 @@ export default function LocalSignIn() {
         <ErrorAlert title={GENERIC_ERROR_TEXT}>{apiError}</ErrorAlert>
       </Activity>
       <form.AppField
-        name={"username"}
+        name="username"
         validators={{
-          onBlur: ({ value }) => {
-            return (!validator.isEmail(value) && !validator.isMobilePhone(value, "nb-NO")) ||
-              value.includes("+47")
+          onBlur: ({ value }) =>
+            (!validator.isEmail(value) && !validator.isMobilePhone(value, "nb-NO")) ||
+            value.includes("+47")
               ? "Du må fylle inn gyldig e-post eller telefonnummer (uten +47)"
-              : null;
-          },
+              : null,
         }}
       >
         {(field) => (
           <field.TextField
             required
-            label={"Brukernavn"}
-            placeholder={"E-post eller telefonnummer"}
-            autoComplete={"username"}
+            label="Brukernavn"
+            placeholder="E-post eller telefonnummer"
+            autoComplete="username"
           />
         )}
       </form.AppField>
       <form.AppField
-        name={"password"}
+        name="password"
         validators={{
           onBlur: ({ value }) => passwordFieldValidator(value),
         }}
@@ -90,11 +89,11 @@ export default function LocalSignIn() {
       <Button onClick={form.handleSubmit} loading={signInMutation.isPending}>
         Logg inn
       </Button>
-      <Group justify={"space-between"}>
-        <TanStackAnchor size={"sm"} to={"/auth/forgot"}>
+      <Group justify="space-between">
+        <TanStackAnchor size="sm" to="/auth/forgot">
           Glemt passord?
         </TanStackAnchor>
-        <TanStackAnchor size={"sm"} to={"/auth/register"}>
+        <TanStackAnchor size="sm" to="/auth/register">
           Har du ikke konto? Registrer deg
         </TanStackAnchor>
       </Group>

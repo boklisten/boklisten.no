@@ -4,7 +4,8 @@ import { ObjectId } from "mongodb";
 
 import { deadlineWindow } from "#services/deadline_window";
 import DispatchService from "#services/dispatch_service";
-import { MessageLogContext, MessageLogService } from "#services/message_log_service";
+import type { MessageLogContext } from "#services/message_log_service";
+import { MessageLogService } from "#services/message_log_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { reminderValidator } from "#validators/reminder";

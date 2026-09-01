@@ -1,5 +1,5 @@
 import { BaseTransformer } from "@adonisjs/core/transformers";
-import WaitingListCustomer from "#models/waiting_list_customer";
+import type WaitingListCustomer from "#models/waiting_list_customer";
 
 export default class WaitingListCustomerTransformer extends BaseTransformer<WaitingListCustomer> {
   toObject() {

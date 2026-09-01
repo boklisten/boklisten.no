@@ -3,7 +3,7 @@ import { createSandbox } from "sinon";
 
 import { UserDetailUpdateHook } from "#services/legacy/collections/user-detail/hooks/user-detail-update.hook";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { mock } from "#tests/test-doubles";
 
 const customerAccessToken = mock<AccessToken>({ permission: "customer" });
@@ -15,9 +15,7 @@ test.group("UserDetailUpdateHook", async (group) => {
   let sandbox: sinon.SinonSandbox;
   group.each.setup(() => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService.UserDetails, "getByQuery").callsFake(() => {
-      return Promise.resolve([]);
-    });
+    sandbox.stub(StorageService.UserDetails, "getByQuery").callsFake(() => Promise.resolve([]));
   });
   group.each.teardown(() => {
     sandbox.restore();

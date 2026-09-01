@@ -118,7 +118,9 @@ async function aggregateRegistrations(): Promise<RegistrationFacets> {
       },
     },
   ]);
-  if (!facets) throw new BlError("registration aggregation returned nothing");
+  if (!facets) {
+    throw new BlError("registration aggregation returned nothing");
+  }
   return facets;
 }
 

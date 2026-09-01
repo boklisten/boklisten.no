@@ -18,21 +18,23 @@ export default function TasksLink() {
       ? 0
       : (userDetail.tasks.confirmDetails ? 1 : 0) + (userDetail.tasks.signAgreement ? 1 : 0);
 
-  if (taskCount === 0) return null;
+  if (taskCount === 0) {
+    return null;
+  }
   return (
     <NavLink
-      label={"Oppgaver"}
+      label="Oppgaver"
       description={`Du har ${taskCount} ${taskCount === 1 ? "oppgave" : "oppgaver"} som må fullføres.`}
-      to={"/oppgaver"}
+      to="/oppgaver"
       leftSection={
-        <Badge color={"red"} circle>
+        <Badge color="red" circle>
           {taskCount}
         </Badge>
       }
       component={TanStackAnchor}
-      color={"red"}
+      color="red"
       active
-      variant={"subtle"}
+      variant="subtle"
       onClick={close}
     />
   );

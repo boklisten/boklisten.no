@@ -1,18 +1,18 @@
 import { Badge, Title } from "@mantine/core";
 import { IconUsers } from "@tabler/icons-react";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
-export const MatchHeader = ({ children }: { children: ReactNode }) => {
-  return <Title order={2}>{children}</Title>;
-};
+export const MatchHeader = ({ children }: { children: ReactNode }) => (
+  <Title order={2}>{children}</Title>
+);
 
 /** Marks a book that moves between two students rather than over the counter. */
 export function PeerBadge({ children }: { children: ReactNode }) {
   return (
     <Badge
-      variant={"light"}
-      color={"blue"}
-      tt={"none"}
+      variant="light"
+      color="blue"
+      tt="none"
       leftSection={<IconUsers size={12} />}
       // Student names must survive 375px, so the label wraps instead of truncating
       styles={{

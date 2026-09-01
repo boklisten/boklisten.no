@@ -1,4 +1,5 @@
-import { Slider, type SliderProps, Stack, Text } from "@mantine/core";
+import { Slider, Stack, Text } from "@mantine/core";
+import type { SliderProps } from "@mantine/core";
 
 import { useFieldContext } from "@/shared/hooks/form";
 
@@ -6,8 +7,8 @@ export default function PercentageField(props: { slider?: SliderProps; label: st
   const field = useFieldContext<number>();
 
   return (
-    <Stack gap={5} mb={"md"}>
-      <Text size={"sm"}>{props.label}</Text>
+    <Stack gap={5} mb="md">
+      <Text size="sm">{props.label}</Text>
       <Slider
         miw={200}
         label={`${Math.round(field.state.value * 100)}%`}

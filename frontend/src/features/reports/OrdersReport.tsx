@@ -5,11 +5,8 @@ import BranchMultiSelect from "@/features/reports/BranchMultiSelect";
 import DateRangePresetField from "@/features/reports/DateRangePresetField";
 import ReportCard from "@/features/reports/ReportCard";
 import useReportDownload from "@/features/reports/useReportDownload";
-import {
-  DEFAULT_DATE_RANGE,
-  resolveDateRange,
-  type DateRangeValue,
-} from "@/features/reports/dateRangePresets";
+import { DEFAULT_DATE_RANGE, resolveDateRange } from "@/features/reports/dateRangePresets";
+import type { DateRangeValue } from "@/features/reports/dateRangePresets";
 import useApiClient from "@/shared/hooks/useApiClient";
 
 interface OrdersReportQuery {
@@ -39,13 +36,13 @@ export default function OrdersReport() {
 
   return (
     <ReportCard
-      title={"Ordrer"}
-      description={"Eksporter en CSV med alle plasserte ordrer, filtrert på filial og tid."}
+      title="Ordrer"
+      description="Eksporter en CSV med alle plasserte ordrer, filtrert på filial og tid."
       isLoading={isLoading}
       onDownload={download}
     >
       <BranchMultiSelect value={branchFilter} onChange={setBranchFilter} />
-      <DateRangePresetField label={"Opprettet"} value={creationRange} onChange={setCreationRange} />
+      <DateRangePresetField label="Opprettet" value={creationRange} onChange={setCreationRange} />
     </ReportCard>
   );
 }

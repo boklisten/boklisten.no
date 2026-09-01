@@ -26,23 +26,23 @@ export default function CustomerReceiptItem({ receipt }: { receipt: CustomerColl
               <Stack
                 key={`${book.orderId}-${index}`}
                 gap={2}
-                py={"xs"}
+                py="xs"
                 style={{
                   borderTop:
                     index === 0 ? undefined : "1px solid var(--mantine-color-default-border)",
                 }}
               >
-                <Text fw={500} size={"sm"}>
+                <Text fw={500} size="sm">
                   {book.title}
                 </Text>
-                <Group gap={"md"}>
-                  <Text size={"xs"} c={"dimmed"}>
+                <Group gap="md">
+                  <Text size="xs" c="dimmed">
                     Kl. {book.time}
                   </Text>
-                  <Text size={"xs"} c={"dimmed"}>
+                  <Text size="xs" c="dimmed">
                     Ordre {book.orderId}
                   </Text>
-                  <Text size={"xs"} c={"dimmed"}>
+                  <Text size="xs" c="dimmed">
                     Frist {formatDeadline(book.deadline)}
                   </Text>
                 </Group>

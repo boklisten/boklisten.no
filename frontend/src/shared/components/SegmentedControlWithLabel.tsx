@@ -1,4 +1,5 @@
-import { SegmentedControl, type SegmentedControlProps, Stack, Text } from "@mantine/core";
+import { SegmentedControl, Stack, Text } from "@mantine/core";
+import type { SegmentedControlProps } from "@mantine/core";
 
 export default function SegmentedControlWithLabel(
   props: SegmentedControlProps & { label: string },

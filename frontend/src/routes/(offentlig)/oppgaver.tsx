@@ -15,7 +15,7 @@ export const Route = createFileRoute("/(offentlig)/oppgaver")({
 
 function TasksPage() {
   return (
-    <Container size={"sm"}>
+    <Container size="sm">
       <Stack>
         <Title>Dine oppgaver</Title>
         <AuthGuard>

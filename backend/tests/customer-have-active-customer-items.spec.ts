@@ -1,10 +1,11 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { CustomerHaveActiveCustomerItems } from "#services/legacy/collections/customer-item/helpers/customer-have-active-customer-items";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { CustomerItem } from "#shared/customer-item/customer-item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
 
 test.group("CustomerHaveActiveCustomerItems", (group) => {
   const customerHaveActiveCustomerItems = new CustomerHaveActiveCustomerItems();

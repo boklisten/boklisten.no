@@ -1,8 +1,8 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 import * as Sentry from "@sentry/node";
 
 import BlErrorHandler from "#services/legacy/bl-error.handler";
-import { BlapiErrorResponse } from "#shared/blapi-error-response";
+import type { BlapiErrorResponse } from "#shared/blapi-error-response";
 import { BlapiResponse } from "#shared/blapi-response";
 
 function createErrorResponse({ response }: HttpContext, blError: unknown) {

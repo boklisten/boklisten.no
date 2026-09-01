@@ -41,17 +41,19 @@ function BranchInfoPageLayout() {
     <>
       <Stack gap={5}>
         <Title>Åpningstider</Title>
-        <Text size={"sm"} fs={"italic"}>
+        <Text size="sm" fs="italic">
           Her vises åpningstider for privatist-filialer. VGS-elever får beskjed fra skolen om
           åpningstider.
         </Text>
       </Stack>
       <Select
-        label={"Valgt skole"}
-        placeholder={"Din skole"}
+        label="Valgt skole"
+        placeholder="Din skole"
         value={branchId ?? selectedBranchId ?? ""}
         onChange={(value) => {
-          if (!value) return;
+          if (!value) {
+            return;
+          }
           setSelectedBranchId(value);
           void navigate({ to: "/info/branch/$branchId", params: { branchId: value } });
         }}

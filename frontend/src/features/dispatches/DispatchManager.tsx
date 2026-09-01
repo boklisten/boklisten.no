@@ -8,7 +8,7 @@ import EmailTemplateDropdown from "@/features/dispatches/EmailTemplateDropdown";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import { Route } from "@tuyau/core/types";
+import type { Route } from "@tuyau/core/types";
 
 const defaultValues: {
   name: string;
@@ -67,20 +67,20 @@ export default function DispatchManager() {
   return (
     <>
       <EmailTemplateDropdown />
-      <form.AppField name={"name"}>
+      <form.AppField name="name">
         {(field) => (
           <field.TextField
-            label={"Navn på utsendelsen"}
-            description={"Valgfritt. Vises i meldingsloggen under Kommunikasjon."}
-            placeholder={"F.eks. Informasjon om høstens utdeling"}
+            label="Navn på utsendelsen"
+            description="Valgfritt. Vises i meldingsloggen under Kommunikasjon."
+            placeholder="F.eks. Informasjon om høstens utdeling"
             maxLength={255}
           />
         )}
       </form.AppField>
-      <form.AppField name={"recipients"}>
+      <form.AppField name="recipients">
         {(field) => (
           <field.CsvFileField
-            label={"Mottakere"}
+            label="Mottakere"
             headers={[
               { label: "phone" },
               { label: "email" },

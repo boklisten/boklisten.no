@@ -2,16 +2,16 @@ import { CustomerItemValidator } from "#services/legacy/collections/customer-ite
 import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpers/user-detail.helper";
 import { Hook } from "#services/legacy/hook";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { Order } from "#shared/order/order";
-import { UserDetail } from "#shared/user-detail";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { Order } from "#shared/order/order";
+import type { UserDetail } from "#shared/user-detail";
 
 export class CustomerItemPostHook extends Hook {
-  private customerItemValidator: CustomerItemValidator;
+  private readonly customerItemValidator: CustomerItemValidator;
 
-  private userDetailHelper: UserDetailHelper;
+  private readonly userDetailHelper: UserDetailHelper;
 
   constructor(customerItemValidator?: CustomerItemValidator, userDetailHelper?: UserDetailHelper) {
     super();
@@ -33,9 +33,7 @@ export class CustomerItemPostHook extends Hook {
 
         return this.customerItemValidator
           .validate(customerItem)
-          .then(() => {
-            return true;
-          })
+          .then(() => true)
           .catch((customerItemValidationError: BlError) => {
             throw new BlError("could not validate customerItem").add(customerItemValidationError);
           });
@@ -79,7 +77,7 @@ export class CustomerItemPostHook extends Hook {
         //update the corresponding orderItem with customerItem
         for (const orderItem of order.orderItems) {
           if (orderItem.item.toString() === customerItem.item.toString()) {
-            orderItem.info = Object.assign({ customerItem: customerItem.id }, orderItem.info);
+            orderItem.info = { customerItem: customerItem.id, ...orderItem.info };
             break;
           }
         }
@@ -87,9 +85,7 @@ export class CustomerItemPostHook extends Hook {
           orderItems: order.orderItems,
         });
       })
-      .then(() => {
-        return StorageService.UserDetails.get(customerItem.customer);
-      })
+      .then(() => StorageService.UserDetails.get(customerItem.customer))
       .then((userDetail: UserDetail) => {
         // @ts-expect-error fixme: auto ignored
         let newCustomerItems = [];
@@ -110,9 +106,7 @@ export class CustomerItemPostHook extends Hook {
           { customerItems: newCustomerItems },
         );
       })
-      .then(() => {
-        return [customerItem];
-      })
+      .then(() => [customerItem])
       .catch((blError: BlError) => {
         throw blError.store("userDetail", accessToken.sub).store("customerItemId", customerItem.id);
       });

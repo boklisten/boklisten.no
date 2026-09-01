@@ -57,7 +57,9 @@ const isRelatedSearch = (a: string, b: string) => a.startsWith(b) || b.startsWit
 function selectFirstResult() {
   const { listId } = searchStore.getState();
   const list = listId ? document.getElementById(listId) : null;
-  if (!list) return;
+  if (!list) {
+    return;
+  }
   list.querySelector("[data-selected]")?.removeAttribute("data-selected");
   const first = list.querySelector("[data-action]");
   first?.setAttribute("data-selected", "true");
@@ -109,16 +111,16 @@ export default function CustomerSearchSpotlight({
       onQueryChange={setSearchValue}
       shortcut={["mod + K"]}
       scrollable
-      maxHeight={"60vh"}
+      maxHeight="60vh"
     >
       <Spotlight.Search
-        placeholder={"Telefonnummer, e-post, navn eller adresse"}
+        placeholder="Telefonnummer, e-post, navn eller adresse"
         leftSection={<IconSearch size={20} aria-hidden />}
-        rightSection={isFetching ? <Loader size={"xs"} /> : undefined}
+        rightSection={isFetching ? <Loader size="xs" /> : undefined}
         spellCheck={false}
-        autoCorrect={"off"}
-        autoCapitalize={"off"}
-        autoComplete={"off"}
+        autoCorrect="off"
+        autoCapitalize="off"
+        autoComplete="off"
       />
       <Spotlight.ActionsList>
         {trimmedSearch.length < MIN_SEARCH_LENGTH && (
@@ -138,30 +140,30 @@ export default function CustomerSearchSpotlight({
                 onSelect(userDetail);
               }}
             >
-              <Stack gap={4} w={"100%"}>
-                <Group gap={"xs"} justify={"space-between"}>
+              <Stack gap={4} w="100%">
+                <Group gap="xs" justify="space-between">
                   <Text fw={600}>{userDetail.name}</Text>
                   <Group gap={6}>
-                    <PermissionBadge permission={userDetail.permission} size={"sm"} />
+                    <PermissionBadge permission={userDetail.permission} size="sm" />
                     {userDetail.branchMembership &&
                       branchNames.has(userDetail.branchMembership) && (
-                        <Badge variant={"light"} size={"sm"}>
+                        <Badge variant="light" size="sm">
                           {branchNames.get(userDetail.branchMembership)}
                         </Badge>
                       )}
                   </Group>
                 </Group>
-                <Group gap={"md"} fz={"sm"} opacity={0.7}>
+                <Group gap="md" fz="sm" opacity={0.7}>
                   {userDetail.phone && (
                     <Group gap={4}>
                       <IconPhone size={16} aria-hidden />
-                      <Text size={"sm"}>{userDetail.phone}</Text>
+                      <Text size="sm">{userDetail.phone}</Text>
                     </Group>
                   )}
                   {userDetail.email && (
                     <Group gap={4}>
                       <IconMail size={16} aria-hidden />
-                      <Text size={"sm"}>{userDetail.email}</Text>
+                      <Text size="sm">{userDetail.email}</Text>
                     </Group>
                   )}
                 </Group>

@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import { PermissionService } from "#services/permission_service";

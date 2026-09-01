@@ -1,5 +1,5 @@
 import { BaseTransformer } from "@adonisjs/core/transformers";
-import OpeningHour from "#models/opening_hour";
+import type OpeningHour from "#models/opening_hour";
 
 export default class OpeningHourTransformer extends BaseTransformer<OpeningHour> {
   toObject() {

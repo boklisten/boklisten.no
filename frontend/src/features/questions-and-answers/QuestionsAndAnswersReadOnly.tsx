@@ -31,7 +31,7 @@ export default function QuestionsAndAnswersReadOnly() {
   }
   if (data === undefined) {
     return (
-      <ErrorAlert title={"Klarte ikke laste inn spørsmål og svar"}>
+      <ErrorAlert title="Klarte ikke laste inn spørsmål og svar">
         {PLEASE_TRY_AGAIN_TEXT}
       </ErrorAlert>
     );
@@ -42,7 +42,7 @@ export default function QuestionsAndAnswersReadOnly() {
       <Activity mode={data.length === 0 ? "visible" : "hidden"}>
         <InfoAlert>Ingen spørsmål og svar er publisert enda</InfoAlert>
       </Activity>
-      <Accordion keepMounted keepMountedMode={"display-none"}>
+      <Accordion keepMounted keepMountedMode="display-none">
         {data.map((questionAndAnswer) => (
           <AccordionItem key={questionAndAnswer.id} value={questionAndAnswer.id}>
             <AccordionControl>

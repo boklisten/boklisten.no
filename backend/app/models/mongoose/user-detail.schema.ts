@@ -1,8 +1,8 @@
 import { Schema } from "mongoose";
 
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
-import { BlSchema } from "#services/storage_service";
-import { UserDetail } from "#shared/user-detail";
+import type { BlSchema } from "#services/storage_service";
+import type { UserDetail } from "#shared/user-detail";
 
 export const UserDetailSchema: BlSchema<UserDetail> = new Schema({
   name: {

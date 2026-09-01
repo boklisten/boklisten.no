@@ -2,7 +2,7 @@ import { UserDetailUpdateHook } from "#services/legacy/collections/user-detail/h
 import { UserDetailReadPermissionOperation } from "#services/legacy/collections/user-detail/operations/read-permission/user-detail-read-permission.operation";
 import { UserDetailValidOperation } from "#services/legacy/collections/user-detail/operations/user-detail-valid.operation";
 import { StorageService } from "#services/storage_service";
-import { BlCollection } from "#types/bl-collection";
+import type { BlCollection } from "#types/bl-collection";
 
 export const UserDetailCollection: BlCollection = {
   storage: StorageService.UserDetails,

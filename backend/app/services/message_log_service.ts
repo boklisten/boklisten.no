@@ -6,10 +6,7 @@ import Message from "#models/message";
 import MessageEvent from "#models/message_event";
 import Sendout from "#models/sendout";
 import { StorageService } from "#services/storage_service";
-import {
-  FAILURE_MESSAGE_STATUSES,
-  MESSAGE_CHANNELS,
-  MESSAGE_STATUSES,
+import type {
   MessageChannel,
   MessageEventDto,
   MessageLogEntryDto,
@@ -19,6 +16,7 @@ import {
   SendoutKind,
   SendoutStatsDto,
 } from "#shared/message-log";
+import { FAILURE_MESSAGE_STATUSES, MESSAGE_CHANNELS, MESSAGE_STATUSES } from "#shared/message-log";
 
 /**
  * Higher rank wins; a status only ever advances. Failures outrank everything so a late engagement
@@ -82,7 +80,9 @@ function normalizeRecipient(channel: MessageChannel, recipient: string): string 
 function redactTemplateData(
   templateData: Record<string, unknown> | undefined,
 ): Record<string, unknown> | null {
-  if (!templateData) return null;
+  if (!templateData) {
+    return null;
+  }
   return Object.fromEntries(
     Object.entries(templateData).map(([key, value]) => [
       key,
@@ -151,7 +151,9 @@ async function recordSendResult(
   message: Message | null,
   result: { status: "sent" | "send-failed" | "skipped"; reason?: string },
 ): Promise<void> {
-  if (!message) return;
+  if (!message) {
+    return;
+  }
   try {
     await MessageEvent.create({
       messageId: message.id,
@@ -185,7 +187,9 @@ async function recordProviderEvent(input: {
   providerMessageId?: string | null;
 }): Promise<boolean> {
   const message = await Message.find(input.messageId);
-  if (!message) return false;
+  if (!message) {
+    return false;
+  }
 
   const inserted = await db
     .table("message_events")
@@ -204,7 +208,9 @@ async function recordProviderEvent(input: {
     .onConflict("provider_event_id")
     .ignore()
     .returning("id");
-  if (inserted.length === 0) return true; // duplicate webhook delivery
+  if (inserted.length === 0) {
+    return true;
+  } // duplicate webhook delivery
 
   const statusMap = input.source === "twilio" ? TWILIO_STATUS_MAP : SENDGRID_EVENT_MAP;
   const newStatus = statusMap[input.event];
@@ -267,7 +273,9 @@ async function customerLog(detailsId: string): Promise<{
     .filter((phone): phone is string => (phone?.length ?? 0) > 0)
     .map((phone) => normalizeRecipient("sms", phone));
   const recipients = [...new Set([...emails, ...phones])];
-  if (recipients.length === 0) return { entries: [], recipients: { email: [], phone: [] } };
+  if (recipients.length === 0) {
+    return { entries: [], recipients: { email: [], phone: [] } };
+  }
 
   const messages = await Message.query()
     .whereIn("recipient", recipients)
@@ -294,9 +302,15 @@ async function feed(input: {
     .preload("sendout")
     .orderBy("createdAt", "desc")
     .limit(input.limit);
-  if (input.channel) void query.where("channel", input.channel);
-  if (input.sendoutId) void query.where("sendoutId", input.sendoutId);
-  if (input.onlyFailures) void query.whereIn("status", [...FAILURE_MESSAGE_STATUSES]);
+  if (input.channel) {
+    void query.where("channel", input.channel);
+  }
+  if (input.sendoutId) {
+    void query.where("sendoutId", input.sendoutId);
+  }
+  if (input.onlyFailures) {
+    void query.whereIn("status", [...FAILURE_MESSAGE_STATUSES]);
+  }
   if (input.search) {
     // Escape LIKE wildcards so searching for e.g. "%" cannot match everything.
     const escaped = input.search.replaceAll(/[\\%_]/g, String.raw`\$&`);
@@ -350,8 +364,12 @@ async function metrics(days: number): Promise<MessageLogMetricsDto> {
   for (const row of perDayRows) {
     const date = String(row.day);
     const entry = perDayByDate.get(date) ?? { sms: 0, email: 0, failures: 0 };
-    if (row.channel === "sms") entry.sms += Number(row.total);
-    if (row.channel === "email") entry.email += Number(row.total);
+    if (row.channel === "sms") {
+      entry.sms += Number(row.total);
+    }
+    if (row.channel === "email") {
+      entry.email += Number(row.total);
+    }
     entry.failures += Number(row.failures);
     perDayByDate.set(date, entry);
   }
@@ -365,7 +383,9 @@ async function metrics(days: number): Promise<MessageLogMetricsDto> {
   for (const row of funnelRows) {
     const channel = MESSAGE_CHANNELS.find((candidate) => candidate === row.channel);
     const status = MESSAGE_STATUSES.find((candidate) => candidate === row.status);
-    if (!channel || !status) continue;
+    if (!channel || !status) {
+      continue;
+    }
     funnel[channel][status] = Number(row.total);
   }
 
@@ -380,7 +400,9 @@ async function metrics(days: number): Promise<MessageLogMetricsDto> {
 /** Recent sendouts, newest first, each with message counts grouped by status. */
 async function sendoutStats(limit: number): Promise<SendoutStatsDto[]> {
   const sendouts = await Sendout.query().orderBy("createdAt", "desc").limit(limit);
-  if (sendouts.length === 0) return [];
+  if (sendouts.length === 0) {
+    return [];
+  }
   const countRows = await db
     .from("messages")
     .whereIn(
@@ -393,7 +415,9 @@ async function sendoutStats(limit: number): Promise<SendoutStatsDto[]> {
   const countsBySendout = new Map<number, Partial<Record<MessageStatus, number>>>();
   for (const row of countRows) {
     const status = MESSAGE_STATUSES.find((candidate) => candidate === row.status);
-    if (!status) continue;
+    if (!status) {
+      continue;
+    }
     const counts = countsBySendout.get(Number(row.sendout_id)) ?? {};
     counts[status] = Number(row.total);
     countsBySendout.set(Number(row.sendout_id), counts);

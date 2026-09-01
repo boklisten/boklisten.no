@@ -1,4 +1,5 @@
-import { ACQUISITION_CART_ITEM_TYPES, type CartItem } from "@boklisten/backend/shared/cart_item";
+import { ACQUISITION_CART_ITEM_TYPES } from "@boklisten/backend/shared/cart_item";
+import type { CartItem } from "@boklisten/backend/shared/cart_item";
 import {
   ActionIcon,
   Box,
@@ -26,7 +27,7 @@ import SegmentedControlWithLabel from "@/shared/components/SegmentedControlWithL
 function CheckoutButton({ to, label, blocked }: { to: string; label: string; blocked: boolean }) {
   if (blocked) {
     return (
-      <Button leftSection={<IconCashRegister />} size={"md"} disabled>
+      <Button leftSection={<IconCashRegister />} size="md" disabled>
         {label}
       </Button>
     );
@@ -36,9 +37,9 @@ function CheckoutButton({ to, label, blocked }: { to: string; label: string; blo
       component={TanStackAnchor}
       to={to}
       leftSection={<IconCashRegister />}
-      size={"md"}
-      bg={"green"}
-      underline={"never"}
+      size="md"
+      bg="green"
+      underline="never"
     >
       {label}
     </Button>
@@ -69,24 +70,30 @@ export default function CartContent() {
   const orderedItemIds = new Set(openOrderItems?.map((orderItem) => orderItem.itemId));
 
   function getConflict(cartItem: CartItem): "owned" | "ordered" | null {
-    if (!ACQUISITION_CART_ITEM_TYPES.includes(cart.getSelectedOption(cartItem).type)) return null;
-    if (ownedItemIds.has(cartItem.id)) return "owned";
-    if (orderedItemIds.has(cartItem.id)) return "ordered";
+    if (!ACQUISITION_CART_ITEM_TYPES.includes(cart.getSelectedOption(cartItem).type)) {
+      return null;
+    }
+    if (ownedItemIds.has(cartItem.id)) {
+      return "owned";
+    }
+    if (orderedItemIds.has(cartItem.id)) {
+      return "ordered";
+    }
     return null;
   }
   const hasConflicts = cart.get().some((cartItem) => getConflict(cartItem) !== null);
   if (cart.isEmpty()) {
     return (
       <>
-        <InfoAlert title={"Handlekurven er tom"}>
-          Du kan finne nye bøker ved å trykke på {"'bestill bøker'"} eller administrere dine
-          nåværende bøker på {"'dine bøker'"}.
+        <InfoAlert title="Handlekurven er tom">
+          Du kan finne nye bøker ved å trykke på 'bestill bøker' eller administrere dine nåværende
+          bøker på 'dine bøker'.
         </InfoAlert>
         <Group>
-          <Button component={TanStackAnchor} to={"/bestilling"} leftSection={<IconShoppingCart />}>
+          <Button component={TanStackAnchor} to="/bestilling" leftSection={<IconShoppingCart />}>
             Bestill bøker
           </Button>
-          <Button component={TanStackAnchor} to={"/items"} leftSection={<IconBook />}>
+          <Button component={TanStackAnchor} to="/items" leftSection={<IconBook />}>
             Dine bøker
           </Button>
         </Group>
@@ -94,26 +101,26 @@ export default function CartContent() {
     );
   }
   return (
-    <Stack gap={"xl"}>
+    <Stack gap="xl">
       <Stack>
         {cart.get().map((cartItem) => {
           const selectedOption = cart.getSelectedOption(cartItem);
           const conflict = getConflict(cartItem);
           return (
-            <Card withBorder shadow={"md"} key={cartItem.id}>
+            <Card withBorder shadow="md" key={cartItem.id}>
               <Stack>
-                <Card.Section bg={"brand"} p={"xs"}>
+                <Card.Section bg="brand" p="xs">
                   <Grid>
                     <Grid.Col span={10}>
-                      <Text fw={"bolder"} c={"white"}>
+                      <Text fw="bolder" c="white">
                         {cartItem.title}
                       </Text>
                     </Grid.Col>
                     <Grid.Col span={2}>
-                      <Stack align={"end"}>
+                      <Stack align="end">
                         <ActionIcon
-                          aria-label={"Fjern fra handlekurv"}
-                          color={"red"}
+                          aria-label="Fjern fra handlekurv"
+                          color="red"
                           onClick={() => cart.remove(cartItem.id)}
                         >
                           <IconX />
@@ -122,12 +129,12 @@ export default function CartContent() {
                     </Grid.Col>
                   </Grid>
                 </Card.Section>
-                <Group justify={"space-between"}>
+                <Group justify="space-between">
                   <Group gap={5}>
                     <Activity mode={cartItem.options.length > 1 ? "visible" : "hidden"}>
                       <SegmentedControlWithLabel
-                        label={"Handling"}
-                        visibleFrom={"sm"}
+                        label="Handling"
+                        visibleFrom="sm"
                         value={cartItem.selectedOptionIndex.toString()}
                         data={cartItem.options.map((option, index) => ({
                           label: cart.getOptionLabel(option),
@@ -141,7 +148,7 @@ export default function CartContent() {
                         }}
                       />
                       <Select
-                        hiddenFrom={"sm"}
+                        hiddenFrom="sm"
                         value={cartItem.selectedOptionIndex.toString()}
                         data={cartItem.options.map((option, index) => ({
                           label: cart.getOptionLabel(option),
@@ -160,9 +167,9 @@ export default function CartContent() {
                     </Activity>
                   </Group>
                   <Group>
-                    <Text fw={"bold"}>{selectedOption.price} kr</Text>
+                    <Text fw="bold">{selectedOption.price} kr</Text>
                     <Activity mode={selectedOption.payLater ? "visible" : "hidden"}>
-                      <Text fs={"italic"} c={"dimmed"} size={"sm"}>
+                      <Text fs="italic" c="dimmed" size="sm">
                         betal senere: {selectedOption.payLater} kr
                       </Text>
                     </Activity>
@@ -176,7 +183,7 @@ export default function CartContent() {
                         : "Du har allerede bestilt denne boken"
                     }
                   >
-                    <Text size={"sm"}>
+                    <Text size="sm">
                       {conflict === "owned"
                         ? "Boken er registrert på deg og ligger under «Dine bøker»."
                         : "Bestillingen din ligger under «Dine bøker»."}{" "}
@@ -189,28 +196,28 @@ export default function CartContent() {
           );
         })}
       </Stack>
-      <Stack align={"center"}>
+      <Stack align="center">
         <Stack gap={5}>
           <Group gap={5}>
             <Text>Betal nå</Text>
-            <Text fw={"bold"}>{cart.calculateTotal()}</Text>
+            <Text fw="bold">{cart.calculateTotal()}</Text>
             <Text>kr</Text>
           </Group>
           <Activity mode={cart.calculatePayLater() > 0 ? "visible" : "hidden"}>
-            <Text fs={"italic"} c={"dimmed"} size={"sm"}>
+            <Text fs="italic" c="dimmed" size="sm">
               betal senere: {cart.calculatePayLater()} kr
             </Text>
           </Activity>
         </Stack>
         <Activity mode={hasConflicts ? "visible" : "hidden"}>
           <Box maw={400}>
-            <Text size={"sm"} c={"dimmed"} ta={"center"}>
+            <Text size="sm" c="dimmed" ta="center">
               Du kan ikke bestille flere av samme bok. Fjern bøkene du allerede har for å gå til
               kassen.
             </Text>
           </Box>
         </Activity>
-        <CheckoutButton to={"/kasse"} label={"Gå til kassen"} blocked={hasConflicts} />
+        <CheckoutButton to="/kasse" label="Gå til kassen" blocked={hasConflicts} />
       </Stack>
       <Activity
         mode={

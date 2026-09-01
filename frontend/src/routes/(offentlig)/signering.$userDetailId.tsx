@@ -15,7 +15,7 @@ export const Route = createFileRoute("/(offentlig)/signering/$userDetailId")({
 function SignaturePage() {
   const { userDetailId } = Route.useParams();
   return (
-    <Container size={"sm"}>
+    <Container size="sm">
       <Stack>
         <Title>Signering</Title>
         <SignAgreement userDetailId={userDetailId} />

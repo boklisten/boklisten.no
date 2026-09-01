@@ -1,5 +1,5 @@
-import { Branch } from "#shared/branch";
-import { BranchPaymentInfo } from "#shared/branch-payment-info";
+import type { Branch } from "#shared/branch";
+import type { BranchPaymentInfo } from "#shared/branch-payment-info";
 
 export type RentPeriod = BranchPaymentInfo["rentPeriods"][number];
 

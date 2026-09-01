@@ -10,24 +10,22 @@ const MeetingInfo = ({
 }: {
   meetingTime: string | null;
   meetingLocation: string;
-}) => {
-  return (
-    <Stack gap={"xs"}>
-      <Group gap={5}>
-        <IconClock />
-        {(meetingTime && <FormattedDatetime date={new Date(meetingTime)} />) || (
-          <Text>
-            Du kan møte opp når standen vår er åpen.{" "}
-            <TanStackAnchor to="/info/branch">Se åpningstider her</TanStackAnchor>
-          </Text>
-        )}
-      </Group>
-      <Group gap={5}>
-        <IconMapPin />
-        <Text>{meetingLocation}</Text>
-      </Group>
-    </Stack>
-  );
-};
+}) => (
+  <Stack gap="xs">
+    <Group gap={5}>
+      <IconClock />
+      {(meetingTime && <FormattedDatetime date={new Date(meetingTime)} />) || (
+        <Text>
+          Du kan møte opp når standen vår er åpen.{" "}
+          <TanStackAnchor to="/info/branch">Se åpningstider her</TanStackAnchor>
+        </Text>
+      )}
+    </Group>
+    <Group gap={5}>
+      <IconMapPin />
+      <Text>{meetingLocation}</Text>
+    </Group>
+  </Stack>
+);
 
 export default MeetingInfo;

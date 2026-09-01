@@ -7,5 +7,5 @@ export const Route = createFileRoute("/(administrasjon)/admin/faktura")({
 
 function InvoicesPage() {
   // apply auth guard once implemented       <AuthGuard requiredPermission={USER_PERMISSION.ADMIN} />
-  return <RedirectToBlAdmin path={"invoices"} />;
+  return <RedirectToBlAdmin path="invoices" />;
 }

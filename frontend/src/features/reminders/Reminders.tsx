@@ -100,7 +100,7 @@ export default function Reminders() {
   return (
     <>
       <form.AppField
-        name={"branchIds"}
+        name="branchIds"
         validators={{
           onChange: ({ value }) => (value.length === 0 ? "Du må velge minst en filial" : null),
         }}
@@ -108,10 +108,12 @@ export default function Reminders() {
         {(field) => <field.SelectBranchesField />}
       </form.AppField>
       <form.AppField
-        name={"deadline"}
+        name="deadline"
         validators={{
           onSubmit: ({ value }) => {
-            if (!value) return "Du må velge en frist";
+            if (!value) {
+              return "Du må velge en frist";
+            }
             return null;
           },
         }}
@@ -120,10 +122,10 @@ export default function Reminders() {
       </form.AppField>
       <Grid>
         <Grid.Col span={{ base: 12, xs: 6 }}>
-          <form.AppField name={"customerItemType"}>
+          <form.AppField name="customerItemType">
             {(field) => (
               <field.SegmentedControlField
-                label={"Kundetype"}
+                label="Kundetype"
                 data={[
                   { value: "rent", label: "VGS" },
                   { value: "partly-payment", label: "Privatist" },
@@ -133,10 +135,10 @@ export default function Reminders() {
           </form.AppField>
         </Grid.Col>
         <Grid.Col span={{ base: 12, xs: 6 }}>
-          <form.AppField name={"messageMethod"}>
+          <form.AppField name="messageMethod">
             {(field) => (
               <field.SegmentedControlField
-                label={"Meldingstype"}
+                label="Meldingstype"
                 data={[
                   { value: MessageMethod.SMS, label: "SMS" },
                   { value: MessageMethod.EMAIL, label: "E-post" },
@@ -151,7 +153,7 @@ export default function Reminders() {
           <>
             <Activity mode={messageMethod === MessageMethod.SMS ? "visible" : "hidden"}>
               <form.AppField
-                name={"smsText"}
+                name="smsText"
                 validators={{
                   onChangeListenTo: ["messageMethod"],
                   onChange: ({ value }) =>
@@ -163,9 +165,9 @@ export default function Reminders() {
               >
                 {(field) => (
                   <field.TextAreaField
-                    label={"Melding"}
+                    label="Melding"
                     description={calculateSmsSegmentFeedback(field.state.value ?? "")}
-                    placeholder={"Hei! [...] Mvh, Boklisten.no"}
+                    placeholder="Hei! [...] Mvh, Boklisten.no"
                     autosize
                     minRows={2}
                     maxRows={10}
@@ -176,12 +178,13 @@ export default function Reminders() {
 
             <Activity mode={messageMethod === MessageMethod.EMAIL ? "visible" : "hidden"}>
               <form.AppField
-                name={"emailTemplateId"}
+                name="emailTemplateId"
                 validators={{
                   onChangeListenTo: ["messageMethod"],
                   onChange: ({ value }) => {
-                    if (form.state.values.messageMethod === MessageMethod.EMAIL && !value)
+                    if (form.state.values.messageMethod === MessageMethod.EMAIL && !value) {
                       return "Du må velge e-postmal";
+                    }
 
                     return null;
                   },

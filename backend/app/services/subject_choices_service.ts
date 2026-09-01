@@ -3,15 +3,12 @@ import { ObjectId } from "mongodb";
 
 import { ACTIVE_CUSTOMER_ITEM_MATCH, OPEN_ORDER_ITEM_MATCH } from "#services/branch_books_service";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
-import {
-  fetchSubjectsForUpload,
-  normalizeSubjectName,
-  SubjectForUpload,
-} from "#services/branch_subjects_service";
+import type { SubjectForUpload } from "#services/branch_subjects_service";
+import { fetchSubjectsForUpload, normalizeSubjectName } from "#services/branch_subjects_service";
 import { StorageService } from "#services/storage_service";
 import { buildBranchMappings } from "#services/user_provisioning_service";
 import { canonicalItemId, getEquivalentItemIds } from "#shared/item-equivalence";
-import { Period } from "#shared/period";
+import type { Period } from "#shared/period";
 
 export interface SubjectChoiceRow {
   name: string;
@@ -139,7 +136,9 @@ export function resolveSubjectItems({
     if (match) {
       return { branchId, items: match.books };
     }
-    if (branchId === uploadBranchId) return null;
+    if (branchId === uploadBranchId) {
+      return null;
+    }
     branchId = parentByBranchId.get(branchId);
   }
   return null;
@@ -228,7 +227,9 @@ export function planSubjectChoices({
     };
     for (const choice of group.choices) {
       const choiceKey = `${normalizeCompact(choice.subject)}|${choice.deadline}`;
-      if (entry.seenChoices.has(choiceKey)) continue;
+      if (entry.seenChoices.has(choiceKey)) {
+        continue;
+      }
       entry.seenChoices.add(choiceKey);
       entry.choices.push(choice);
     }
@@ -354,7 +355,9 @@ async function fetchMembers(scopeIds: string[]): Promise<MemberSummary[]> {
 }
 
 async function fetchOwnedItemKeys(customerIds: string[]): Promise<Set<string>> {
-  if (customerIds.length === 0) return new Set();
+  if (customerIds.length === 0) {
+    return new Set();
+  }
   const customerObjectIds = customerIds.map((id) => new ObjectId(id));
   const [activeCustomerItems, openOrderItems] = await Promise.all([
     StorageService.CustomerItems.aggregate<{ customer: string; item: string }>([
@@ -387,7 +390,9 @@ async function buildPlan(branchId: string, rows: SubjectChoiceRow[]): Promise<Su
 
   const parentByBranchId = new Map<string, string>();
   for (const branch of branches) {
-    if (branch.parentBranch) parentByBranchId.set(branch.id, String(branch.parentBranch));
+    if (branch.parentBranch) {
+      parentByBranchId.set(branch.id, String(branch.parentBranch));
+    }
   }
   const leafBranches = branches.filter((branch) => (branch.childBranches ?? []).length === 0);
   const groups = groupSubjectChoiceRows(rows);

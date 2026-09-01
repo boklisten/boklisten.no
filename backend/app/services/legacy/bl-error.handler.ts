@@ -39,7 +39,7 @@ function printError(error: unknown) {
     }
 
     logger.info(
-      `! (${error.getCode()}): ${error.getMsg()}` + (error.stack ? `, stack:\n${error.stack}` : ""),
+      `! (${error.getCode()}): ${error.getMsg()}${error.stack ? `, stack:\n${error.stack}` : ""}`,
     );
 
     if (error.getStore() && error.getStore().length > 0) {
@@ -62,24 +62,27 @@ function getErrorResponse(blError: BlError): BlapiErrorResponse {
     data: null,
   };
 
-  if (!blError.getCode() || blError.getCode() === 0) return blapiErrorResponse;
-  else if (blError.getCode() >= 200 && blError.getCode() <= 299)
+  if (!blError.getCode() || blError.getCode() === 0) {
+    return blapiErrorResponse;
+  } else if (blError.getCode() >= 200 && blError.getCode() <= 299) {
     return serverErrorResponse(blError.getCode());
-  else if (blError.getCode() >= 700 && blError.getCode() <= 799)
+  } else if (blError.getCode() >= 700 && blError.getCode() <= 799) {
     return documentErrorResponse(blError.getCode());
-  else if (blError.getCode() >= 800 && blError.getCode() <= 899)
+  } else if (blError.getCode() >= 800 && blError.getCode() <= 899) {
     return requestErrorResponse(blError.getCode());
-  else if (blError.getCode() >= 900 && blError.getCode() <= 999)
+  } else if (blError.getCode() >= 900 && blError.getCode() <= 999) {
     return authErrorResponse(blError.getCode());
-  else if (blError.getCode() >= 10_000 && blError.getCode() <= 11_000) {
+  } else if (blError.getCode() >= 10_000 && blError.getCode() <= 11_000) {
     return fakeSuccessResponse(blError);
-  } else return blapiErrorResponse;
+  } else {
+    return blapiErrorResponse;
+  }
 }
 
 function serverErrorResponse(code: number): BlapiErrorResponse {
   const blapiErrorResponse: BlapiErrorResponse = {
     httpStatus: 500,
-    code: code,
+    code,
     msg: "server error",
     data: null,
   };
@@ -97,7 +100,7 @@ function serverErrorResponse(code: number): BlapiErrorResponse {
 function requestErrorResponse(code: number): BlapiErrorResponse {
   const blapiErrorResponse: BlapiErrorResponse = {
     httpStatus: 500,
-    code: code,
+    code,
     msg: "server error",
     data: null,
   };
@@ -193,7 +196,7 @@ function requestErrorResponse(code: number): BlapiErrorResponse {
 function documentErrorResponse(code: number): BlapiErrorResponse {
   const blapiErrorResponse: BlapiErrorResponse = {
     httpStatus: 400,
-    code: code,
+    code,
     msg: "bad format",
     data: null,
   };
@@ -216,7 +219,7 @@ function documentErrorResponse(code: number): BlapiErrorResponse {
 function authErrorResponse(code: number): BlapiErrorResponse {
   const blapiErrorResponse: BlapiErrorResponse = {
     httpStatus: 401,
-    code: code,
+    code,
     msg: "authentication failure",
     data: null,
   };
@@ -282,8 +285,7 @@ function fakeSuccessResponse(underlyingError: BlError): BlapiErrorResponse {
   return {
     httpStatus: 200,
     code: underlyingError.getCode(),
-    msg:
-      "returning fake success for security reasons, underlying error: " + underlyingError.getMsg(),
+    msg: `returning fake success for security reasons, underlying error: ${underlyingError.getMsg()}`,
     data: [],
   };
 }

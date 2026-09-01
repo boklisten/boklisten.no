@@ -11,10 +11,10 @@ export default function EmailTemplateDropdown() {
 
   return (
     <Accordion>
-      <Accordion.Item value={"templates"}>
+      <Accordion.Item value="templates">
         <Accordion.Control>Tilgjengelige e-postmaler</Accordion.Control>
         <Accordion.Panel>
-          <Stack align={"center"}>
+          <Stack align="center">
             <Table
               data={{
                 head: ["Navn", "ID"],
@@ -25,8 +25,8 @@ export default function EmailTemplateDropdown() {
             />
             <Button
               component={TanStackAnchor}
-              href={"https://mc.sendgrid.com/dynamic-templates"}
-              target={"_blank"}
+              href="https://mc.sendgrid.com/dynamic-templates"
+              target="_blank"
               leftSection={<IconExternalLink />}
             >
               Administrer maler

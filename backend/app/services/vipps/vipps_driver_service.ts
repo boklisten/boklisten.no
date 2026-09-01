@@ -7,7 +7,7 @@ import type {
 } from "@adonisjs/ally/types";
 import type { HttpContext } from "@adonisjs/core/http";
 
-import { VippsUser } from "#types/user";
+import type { VippsUser } from "#types/user";
 
 interface VippsDriverAccessToken {
   token: string;
@@ -73,7 +73,7 @@ class VippsDriver extends Oauth2Driver<VippsDriverAccessToken, VippsDriverScopes
   protected override configureAccessTokenRequest(request: ApiRequestContract) {
     const credentials = Buffer.from(
       `${this.config.clientId}:${this.config.clientSecret}`,
-      "utf-8",
+      "utf8",
     ).toString("base64");
     request.header("Authorization", `Basic ${credentials}`);
 
@@ -127,7 +127,7 @@ class VippsDriver extends Oauth2Driver<VippsDriverAccessToken, VippsDriverScopes
 
     return {
       ...user,
-      token: token,
+      token,
     } as const;
   }
 

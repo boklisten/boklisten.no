@@ -1,13 +1,14 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
 import { StorageService } from "#services/storage_service";
 import { VippsCheckoutService } from "#services/vipps/vipps_checkout_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
-import { Order } from "#shared/order/order";
-import { UserDetail } from "#shared/user-detail";
-import { VippsCheckoutSession } from "#validators/checkout_validators";
+import type { Order } from "#shared/order/order";
+import type { UserDetail } from "#shared/user-detail";
+import type { VippsCheckoutSession } from "#validators/checkout_validators";
 import { mock } from "#tests/test-doubles";
 
 test.group("VippsCheckoutService.update", (group) => {

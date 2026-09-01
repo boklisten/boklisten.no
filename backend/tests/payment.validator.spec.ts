@@ -1,12 +1,14 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { PaymentValidator } from "#services/legacy/collections/payment/helpers/payment.validator";
 import { StorageService } from "#services/storage_service";
+import { unchecked } from "#tests/test-doubles";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
-import { Order } from "#shared/order/order";
-import { Payment } from "#shared/payment/payment";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { Order } from "#shared/order/order";
+import type { Payment } from "#shared/payment/payment";
 
 test.group("PaymentValidator", (group) => {
   const paymentValidator = new PaymentValidator();
@@ -64,38 +66,30 @@ test.group("PaymentValidator", (group) => {
       return Promise.resolve(testOrder);
     });
 
-    sandbox.stub(StorageService.Deliveries, "get").callsFake((id) => {
-      return id === testDelivery.id
-        ? Promise.resolve(testDelivery)
-        : Promise.reject(new BlError("delivery not found"));
-    });
+    sandbox
+      .stub(StorageService.Deliveries, "get")
+      .callsFake((id) =>
+        id === testDelivery.id
+          ? Promise.resolve(testDelivery)
+          : Promise.reject(new BlError("delivery not found")),
+      );
   });
   group.each.teardown(() => {
     sandbox.restore();
   });
 
-  test("validate() - should reject if payment is undefined", async ({ assert }) => {
-    return assert.rejects(
-      () => paymentValidator.validate(undefined),
-      BlError,
-      /payment is not defined/,
-    );
-  });
+  test("validate() - should reject if payment is undefined", async ({ assert }) =>
+    assert.rejects(() => paymentValidator.validate(undefined), BlError, /payment is not defined/));
 
-  test("validate() - should reject if paymentMethod is not valid", async ({ assert }) => {
-    return assert.rejects(
-      () =>
-        paymentValidator.validate(
-          JSON.parse(JSON.stringify({ method: "something", order: testOrder.id })),
-        ),
+  test("validate() - should reject if paymentMethod is not valid", async ({ assert }) =>
+    assert.rejects(
+      () => paymentValidator.validate(unchecked({ method: "something", order: testOrder.id })),
       BlError,
       'payment.method "something" not supported',
-    );
-  });
+    ));
 
-  test("validate() - should resolve when payment is valid", async ({ assert }) => {
-    return assert.doesNotReject(() => paymentValidator.validate(testPayment));
-  });
+  test("validate() - should resolve when payment is valid", async ({ assert }) =>
+    assert.doesNotReject(() => paymentValidator.validate(testPayment)));
 
   test("validate() - should reject if order is not found", async ({ assert }) => {
     testPayment.order = "orderNotFound";

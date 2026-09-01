@@ -1,9 +1,9 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import { CartService } from "#services/cart_service";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { StorageService } from "#services/storage_service";
-import { CartItem } from "#shared/cart_item";
+import type { CartItem } from "#shared/cart_item";
 
 export default class SubjectsController {
   async getBranchSubjects(ctx: HttpContext) {
@@ -20,7 +20,9 @@ export default class SubjectsController {
         CartService.getOptions(branchItem),
       ]);
       const selectedOption = options[0];
-      if (!selectedOption) continue;
+      if (!selectedOption) {
+        continue;
+      }
       for (const category of branchItem.categories ?? []) {
         const cartItems = subjectsMap.get(category) ?? [];
         subjectsMap.set(category, [

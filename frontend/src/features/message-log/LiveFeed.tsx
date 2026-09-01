@@ -51,10 +51,10 @@ export default function LiveFeed({
   );
 
   return (
-    <Stack gap={"sm"}>
-      <Group gap={"sm"}>
+    <Stack gap="sm">
+      <Group gap="sm">
         <SegmentedControl
-          size={"xs"}
+          size="xs"
           value={channel}
           onChange={(value) => setChannel(value === "sms" || value === "email" ? value : "alle")}
           data={[
@@ -64,17 +64,17 @@ export default function LiveFeed({
           ]}
         />
         <Switch
-          size={"sm"}
-          label={"Bare feil"}
+          size="sm"
+          label="Bare feil"
           checked={onlyFailures}
           onChange={(event) => setOnlyFailures(event.currentTarget.checked)}
         />
         <TextInput
-          size={"xs"}
+          size="xs"
           flex={1}
           miw={160}
           leftSection={<IconSearch size={14} />}
-          placeholder={"Søk på telefonnummer eller e-post"}
+          placeholder="Søk på telefonnummer eller e-post"
           value={search}
           onChange={(event) => setSearch(event.currentTarget.value)}
         />
@@ -82,11 +82,11 @@ export default function LiveFeed({
       {sendoutFilter && (
         <Group gap={4}>
           <Badge
-            variant={"light"}
+            variant="light"
             rightSection={
               <CloseButton
-                size={"xs"}
-                aria-label={"Fjern utsendelsesfilter"}
+                size="xs"
+                aria-label="Fjern utsendelsesfilter"
                 onClick={onClearSendoutFilter}
               />
             }
@@ -98,7 +98,7 @@ export default function LiveFeed({
       {error && errorUpdateCount > 0 ? (
         <ErrorAlert>Kunne ikke hente meldingsloggen. Prøv igjen senere.</ErrorAlert>
       ) : isPending || !data ? (
-        <Loader mx={"auto"} display={"block"} my={"lg"} />
+        <Loader mx="auto" display="block" my="lg" />
       ) : (
         <>
           <MessageEntryList
@@ -109,7 +109,7 @@ export default function LiveFeed({
             }
           />
           {data.length === FEED_LIMIT && (
-            <Text size={"xs"} c={"dimmed"} ta={"center"}>
+            <Text size="xs" c="dimmed" ta="center">
               Viser de {FEED_LIMIT} nyeste meldingene. Bruk filtrene for å finne eldre.
             </Text>
           )}

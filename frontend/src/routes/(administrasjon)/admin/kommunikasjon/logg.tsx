@@ -26,7 +26,7 @@ function MessageLogPage() {
   }
 
   return (
-    <Container size={"md"}>
+    <Container size="md">
       <Stack>
         <Title>Meldingslogg</Title>
         <Tabs
@@ -34,17 +34,17 @@ function MessageLogPage() {
           onChange={(value) => setActiveTab(value === "statistikk" ? "statistikk" : "logg")}
           keepMounted={false}
         >
-          <Tabs.List mb={"md"}>
-            <Tabs.Tab value={"logg"}>Sanntidslogg</Tabs.Tab>
-            <Tabs.Tab value={"statistikk"}>Statistikk</Tabs.Tab>
+          <Tabs.List mb="md">
+            <Tabs.Tab value="logg">Sanntidslogg</Tabs.Tab>
+            <Tabs.Tab value="statistikk">Statistikk</Tabs.Tab>
           </Tabs.List>
-          <Tabs.Panel value={"logg"}>
+          <Tabs.Panel value="logg">
             <LiveFeed
               sendoutFilter={sendoutFilter}
               onClearSendoutFilter={() => setSendoutFilter(null)}
             />
           </Tabs.Panel>
-          <Tabs.Panel value={"statistikk"}>
+          <Tabs.Panel value="statistikk">
             <MessageLogStatistics onShowSendoutInLog={showSendoutInLog} />
           </Tabs.Panel>
         </Tabs>

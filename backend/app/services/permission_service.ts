@@ -1,13 +1,14 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 import jwt from "jsonwebtoken";
 
 import NotAllowedException from "#exceptions/not_allowed_exception";
 import UnauthorizedException from "#exceptions/unauthorized_exception";
 import { APP_CONFIG } from "#services/legacy/application-config";
-import { BlDocument } from "#shared/bl-document";
-import { USER_PERMISSION, UserPermission } from "#shared/user-permission";
+import type { BlDocument } from "#shared/bl-document";
+import type { UserPermission } from "#shared/user-permission";
+import { USER_PERMISSION } from "#shared/user-permission";
 import env from "#start/env";
-import { BlDocumentPermission } from "#types/bl-collection";
+import type { BlDocumentPermission } from "#types/bl-collection";
 
 function isAdmin(userPermission: UserPermission | null) {
   return userPermission === USER_PERMISSION.ADMIN;
@@ -43,7 +44,9 @@ function isPermissionOver(
   permission?: UserPermission,
   restrictedPermission?: UserPermission,
 ): boolean {
-  if (!restrictedPermission || !permission) return false;
+  if (!restrictedPermission || !permission) {
+    return false;
+  }
   const { CUSTOMER, EMPLOYEE, MANAGER, ADMIN } = USER_PERMISSION;
 
   if (permission === EMPLOYEE && restrictedPermission === CUSTOMER) {
@@ -66,9 +69,13 @@ function isPermissionOver(
 }
 
 function extractBearerToken(authHeader?: string) {
-  if (!authHeader) return "";
+  if (!authHeader) {
+    return "";
+  }
   const [scheme, token] = authHeader.split(" ");
-  if (scheme !== "Bearer" || !token) return "";
+  if (scheme !== "Bearer" || !token) {
+    return "";
+  }
   return token;
 }
 
@@ -77,7 +84,9 @@ function verifyAccessToken(token: string) {
     issuer: APP_CONFIG.token.access.iss,
     audience: APP_CONFIG.token.access.aud,
   });
-  if (typeof decoded === "string") throw new Error("token is not a valid jwt");
+  if (typeof decoded === "string") {
+    throw new Error("token is not a valid jwt");
+  }
   return decoded;
 }
 

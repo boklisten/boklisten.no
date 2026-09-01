@@ -4,10 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   bookToFormValue,
-  type BranchSubject,
   formValueToBook,
   PAYMENT_OPTIONS,
-  type SubjectBookFormValue,
+} from "@/features/branches/subjects/subjectOptions";
+import type {
+  BranchSubject,
+  SubjectBookFormValue,
 } from "@/features/branches/subjects/subjectOptions";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -72,21 +74,21 @@ export function BranchSubjectModal({
   return (
     <Stack>
       <form.AppField
-        name={"name"}
+        name="name"
         validators={{
           onChange: ({ value }) => (value.trim().length === 0 ? "Fyll inn et navn" : undefined),
         }}
       >
         {(field) => (
           <field.TextField
-            label={"Navn"}
-            description={"Det kundene ser når de bestiller bøker"}
+            label="Navn"
+            description="Det kundene ser når de bestiller bøker"
             required
           />
         )}
       </form.AppField>
       <form.AppField
-        name={"externalName"}
+        name="externalName"
         validators={{
           onChange: ({ value }) =>
             value.trim().length === 0 ? "Fyll inn et eksternt navn" : undefined,
@@ -94,26 +96,29 @@ export function BranchSubjectModal({
       >
         {(field) => (
           <field.TextField
-            label={"Eksternt navn"}
-            description={"Fagnavnet slik det står i skolens fagvalg-fil"}
+            label="Eksternt navn"
+            description="Fagnavnet slik det står i skolens fagvalg-fil"
             required
           />
         )}
       </form.AppField>
-      <form.AppField name={"books"}>
+      <form.AppField name="books">
         {(field) => (
           <MultiSelect
-            label={"Bøker"}
-            placeholder={"Velg bøker"}
+            label="Bøker"
+            placeholder="Velg bøker"
             searchable
             clearable
-            description={"Søk etter tittel eller ISBN. Et fag kan også være uten bøker."}
+            description="Søk etter tittel eller ISBN. Et fag kan også være uten bøker."
             data={items?.map((item) => ({ label: item.title, value: item.id })) ?? []}
             filter={({ options, search }) =>
               options.filter((option) => {
-                if (!("value" in option)) return false;
-                if (option.label.toLowerCase().trim().includes(search.toLowerCase().trim()))
+                if (!("value" in option)) {
+                  return false;
+                }
+                if (option.label.toLowerCase().trim().includes(search.toLowerCase().trim())) {
                   return true;
+                }
                 const isbn = items?.find((item) => item.id === option.value)?.info.isbn.toString();
                 return isbn?.includes(search.trim()) ?? false;
               })
@@ -137,22 +142,22 @@ export function BranchSubjectModal({
           />
         )}
       </form.AppField>
-      <form.AppField name={"books"} mode={"array"}>
+      <form.AppField name="books" mode="array">
         {(field) =>
           field.state.value.map((book, i) => (
-            <Paper key={book.item.id} withBorder p={"sm"}>
-              <Stack gap={"xs"}>
-                <Text fw={500} size={"sm"}>
+            <Paper key={book.item.id} withBorder p="sm">
+              <Stack gap="xs">
+                <Text fw={500} size="sm">
                   {book.item.title}
                 </Text>
                 <form.AppField name={`books[${i}].ordering`}>
                   {(subField) => (
-                    <subField.ChipsField label={"Bestilling"} data={[...PAYMENT_OPTIONS]} />
+                    <subField.ChipsField label="Bestilling" data={[...PAYMENT_OPTIONS]} />
                   )}
                 </form.AppField>
                 <form.AppField name={`books[${i}].atBranch`}>
                   {(subField) => (
-                    <subField.ChipsField label={"På filial"} data={[...PAYMENT_OPTIONS]} />
+                    <subField.ChipsField label="På filial" data={[...PAYMENT_OPTIONS]} />
                   )}
                 </form.AppField>
               </Stack>
@@ -160,12 +165,12 @@ export function BranchSubjectModal({
           ))
         }
       </form.AppField>
-      <Group justify={"right"} mt={"md"}>
-        <Button variant={"outline"} onClick={() => modals.close(modalId)}>
+      <Group justify="right" mt="md">
+        <Button variant="outline" onClick={() => modals.close(modalId)}>
           Avbryt
         </Button>
         <Button
-          bg={"green"}
+          bg="green"
           onClick={form.handleSubmit}
           loading={createMutation.isPending || updateMutation.isPending}
         >

@@ -51,7 +51,9 @@ export default function useCart() {
   }
 
   function getOptionLabel(option?: CartItemOption) {
-    if (!option) throw new Error("Invalid cart item option!");
+    if (!option) {
+      throw new Error("Invalid cart item option!");
+    }
     return `${translations[option.type]} ${option.to ? norwegianTime(option.to).format("DD/MM/YYYY") : ""}`;
   }
   return {

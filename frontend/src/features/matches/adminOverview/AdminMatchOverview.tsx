@@ -27,8 +27,8 @@ function rowMatchesSearch(match: MatchDto, needle: string): boolean {
 
 function OverviewSkeleton() {
   return (
-    <Stack gap={"lg"}>
-      <Group align={"center"} gap={"md"} wrap={"wrap"}>
+    <Stack gap="lg">
+      <Group align="center" gap="md" wrap="wrap">
         <Skeleton height={36} style={{ flex: 1, minWidth: 220 }} />
         <Skeleton height={36} width={232} />
       </Group>
@@ -42,7 +42,9 @@ function OverviewSkeleton() {
 }
 
 function MatchGroup({ heading, matches }: { heading: string; matches: MatchDto[] }) {
-  if (matches.length === 0) return null;
+  if (matches.length === 0) {
+    return null;
+  }
   return (
     <Stack>
       <Title order={2}>{heading}</Title>
@@ -78,8 +80,12 @@ export default function AdminMatchOverview({ roundId }: { roundId: string }) {
     [data, needle, typeFilter],
   );
 
-  if (isLoading) return <OverviewSkeleton />;
-  if (error || !data) return <ErrorAlert title={"Klarte ikke laste inn overleveringer"} />;
+  if (isLoading) {
+    return <OverviewSkeleton />;
+  }
+  if (error || !data) {
+    return <ErrorAlert title="Klarte ikke laste inn overleveringer" />;
+  }
 
   const unfinished = rows.filter((match) => !isMatchFinished(match));
   const begun = unfinished.filter(isMatchBegun);
@@ -95,15 +101,15 @@ export default function AdminMatchOverview({ roundId }: { roundId: string }) {
   const shownCount = shownBegun.length + shownNotBegun.length + shownFinished.length;
 
   return (
-    <Stack gap={"lg"}>
-      <Group align={"center"} gap={"md"} wrap={"wrap"}>
+    <Stack gap="lg">
+      <Group align="center" gap="md" wrap="wrap">
         <TextInput
           style={{ flex: 1, minWidth: 220 }}
           leftSection={<IconSearch size={18} />}
-          placeholder={"Søk etter navn, telefon eller e-post"}
+          placeholder="Søk etter navn, telefon eller e-post"
           value={search}
           onChange={(event) => {
-            const value = event.currentTarget.value;
+            const { value } = event.currentTarget;
             void navigate({
               search: (previous) => ({ ...previous, sok: value || undefined }),
               replace: true,
@@ -111,7 +117,7 @@ export default function AdminMatchOverview({ roundId }: { roundId: string }) {
           }}
         />
         <SegmentedControl
-          aria-label={"Type overlevering"}
+          aria-label="Type overlevering"
           value={typeFilter}
           onChange={(value) =>
             void navigate({
@@ -131,7 +137,7 @@ export default function AdminMatchOverview({ roundId }: { roundId: string }) {
       </Group>
 
       {shownCount < rows.length && (
-        <Text c={"dimmed"} size={"sm"}>
+        <Text c="dimmed" size="sm">
           Viser {shownCount} av {rows.length}. Søk for å avgrense listen.
         </Text>
       )}
@@ -140,9 +146,9 @@ export default function AdminMatchOverview({ roundId }: { roundId: string }) {
         <OverviewEmptyState filtered={data.length > 0} />
       ) : (
         <>
-          <MatchGroup heading={"Påbegynte overleveringer"} matches={shownBegun} />
-          <MatchGroup heading={"Ikke påbegynte overleveringer"} matches={shownNotBegun} />
-          <MatchGroup heading={"Fullførte overleveringer"} matches={shownFinished} />
+          <MatchGroup heading="Påbegynte overleveringer" matches={shownBegun} />
+          <MatchGroup heading="Ikke påbegynte overleveringer" matches={shownNotBegun} />
+          <MatchGroup heading="Fullførte overleveringer" matches={shownFinished} />
         </>
       )}
     </Stack>

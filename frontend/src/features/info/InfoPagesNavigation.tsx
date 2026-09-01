@@ -29,13 +29,13 @@ const InfoPagesNavigation = () => {
 
   return (
     <Center>
-      <Box visibleFrom={"sm"}>
+      <Box visibleFrom="sm">
         <Tabs value={tabs.find((tab) => pathname.includes(tab.value))?.value ?? pathname}>
-          <TabsList justify={"center"}>
+          <TabsList justify="center">
             {tabs.map((tab) => (
               <TanStackAnchor
-                underline={"never"}
-                c={"var(--mantine-color-text)"}
+                underline="never"
+                c="var(--mantine-color-text)"
                 key={tab.value}
                 to={tab.value}
               >
@@ -45,13 +45,15 @@ const InfoPagesNavigation = () => {
           </TabsList>
         </Tabs>
       </Box>
-      <Box hiddenFrom={"sm"}>
+      <Box hiddenFrom="sm">
         <Select
           data={tabs}
-          label={"Velg side"}
+          label="Velg side"
           value={pathname}
           onChange={(value) => {
-            if (!value) return;
+            if (!value) {
+              return;
+            }
             void navigate({ to: value });
           }}
         />

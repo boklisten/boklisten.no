@@ -14,7 +14,7 @@ export default function BranchLocationInfo({ branchId }: { branchId: string }) {
     return <Skeleton width={250} height={25} />;
   }
   if (isError) {
-    return <ErrorAlert title={"Klarte ikke laste inn addresse"} />;
+    return <ErrorAlert title="Klarte ikke laste inn addresse" />;
   }
 
   return (

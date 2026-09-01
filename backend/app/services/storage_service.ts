@@ -1,5 +1,5 @@
-import { ObjectId } from "mongodb";
-import { Schema } from "mongoose";
+import type { ObjectId } from "mongodb";
+import type { Schema } from "mongoose";
 
 import { BranchItemSchema } from "#models/mongoose/branch-item.schema";
 import { BranchSchema } from "#models/mongoose/branch.schema";

@@ -23,16 +23,14 @@ export default function OrderHistory() {
 
   if (isError || data === undefined) {
     return (
-      <ErrorAlert title={"Klarte ikke laste inn ordrehistorikk"}>
-        {PLEASE_TRY_AGAIN_TEXT}
-      </ErrorAlert>
+      <ErrorAlert title="Klarte ikke laste inn ordrehistorikk">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
     );
   }
 
   if (data.length === 0) {
     return (
-      <InfoAlert title={"Du har for øyeblikket ingen ordre"}>
-        Trykk på {"'bestill bøker'"} dersom du ønsker å bestille bøker
+      <InfoAlert title="Du har for øyeblikket ingen ordre">
+        Trykk på 'bestill bøker' dersom du ønsker å bestille bøker
       </InfoAlert>
     );
   }

@@ -42,7 +42,7 @@ export default function Tasks() {
   }
   if (!data || isError) {
     return (
-      <ErrorAlert title={"Noe gikk galt under lasting av dine oppgaver"}>
+      <ErrorAlert title="Noe gikk galt under lasting av dine oppgaver">
         {PLEASE_TRY_AGAIN_TEXT}
       </ErrorAlert>
     );
@@ -53,7 +53,7 @@ export default function Tasks() {
     return (
       <Stack>
         <SuccessAlert>Du har fullført alle utestående oppgaver</SuccessAlert>
-        <CountdownToRedirect shouldRedirectToCaller={true} seconds={5} />
+        <CountdownToRedirect shouldRedirectToCaller seconds={5} />
       </Stack>
     );
   }
@@ -61,40 +61,40 @@ export default function Tasks() {
   const signAgreementTask = data?.tasks?.signAgreement;
   return (
     <>
-      <Text fs={"italic"}>
+      <Text fs="italic">
         Vi mangler noen opplysninger fra deg – fullfør oppgavene nedenfor for å fortsette.
       </Text>
       <Stepper active={0}>
         {confirmDetailsTask && (
-          <Stepper.Step label={"Bekreft din informasjon"}>
+          <Stepper.Step label="Bekreft din informasjon">
             <UserSettingsForm userDetail={data} />
           </Stepper.Step>
         )}
         {signAgreementTask && (
-          <Stepper.Step label={"Signer låneavtale"}>
+          <Stepper.Step label="Signer låneavtale">
             <Activity mode={isUnder18(data.dob) ? "visible" : "hidden"}>
               <Stack>
-                <InfoAlert title={"Send signaturforespørsel til foresatt"}>
+                <InfoAlert title="Send signaturforespørsel til foresatt">
                   <Stack gap={5}>
                     <Text>
                       Siden du er under 18 år krever vi signatur fra en av dine foresatte.
                     </Text>
-                    <Title mt={"xs"} order={4}>
+                    <Title mt="xs" order={4}>
                       Oppgitt foresatt
                     </Title>
                     <Group gap={5}>
                       <Text>Navn</Text>
-                      <Text fw={"bold"}>{data.guardian?.name}</Text>
+                      <Text fw="bold">{data.guardian?.name}</Text>
                     </Group>
                     <Group gap={5}>
                       <Text>Telefonnummer:</Text>
-                      <Text fw={"bold"}>{data.guardian?.phone}</Text>
+                      <Text fw="bold">{data.guardian?.phone}</Text>
                     </Group>
                     <Group gap={5}>
                       <Text>E-post:</Text>
-                      <Text fw={"bold"}>{data.guardian?.email}</Text>
+                      <Text fw="bold">{data.guardian?.email}</Text>
                     </Group>
-                    <Text fs={"italic"} size={"sm"} mt={"xs"}>
+                    <Text fs="italic" size="sm" mt="xs">
                       Du kan endre foresatt-opplysninger i brukerinnstillinger
                     </Text>
                   </Stack>

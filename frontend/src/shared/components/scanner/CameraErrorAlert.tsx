@@ -66,10 +66,10 @@ export default function CameraErrorAlert({
 
   return (
     <WarningAlert title={copy.title}>
-      <Stack gap={"xs"} align={"flex-start"}>
+      <Stack gap="xs" align="flex-start">
         {copy.message}
         {RETRY_WORTH_IT.has(error.kind) && (
-          <Button size={"xs"} variant={"outline"} onClick={onRetry}>
+          <Button size="xs" variant="outline" onClick={onRetry}>
             Prøv igjen
           </Button>
         )}

@@ -1,9 +1,9 @@
-import { Hook } from "#services/legacy/hook";
-import { ValidParameter } from "#services/legacy/query/db-query-valid-params";
-import { BlStorageHandler } from "#services/storage_service";
-import { UserPermission } from "#shared/user-permission";
-import { NestedDocument } from "#types/nested-document";
-import { Operation } from "#types/operation";
+import type { Hook } from "#services/legacy/hook";
+import type { ValidParameter } from "#services/legacy/query/db-query-valid-params";
+import type { BlStorageHandler } from "#services/storage_service";
+import type { UserPermission } from "#shared/user-permission";
+import type { NestedDocument } from "#types/nested-document";
+import type { Operation } from "#types/operation";
 
 export interface BlCollection {
   storage: BlStorageHandler;

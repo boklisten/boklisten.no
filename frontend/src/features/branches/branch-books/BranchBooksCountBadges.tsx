@@ -18,25 +18,25 @@ export default function BranchBooksCountBadges({
 }) {
   if (!showScopeSplit) {
     return (
-      <Badge variant={"light"} color={"gray"} leftSection={<IconSum size={12} />}>
+      <Badge variant="light" color="gray" leftSection={<IconSum size={12} />}>
         {total}
       </Badge>
     );
   }
   return (
-    <Group gap={4} wrap={"nowrap"}>
-      <Tooltip label={"Denne filialen"}>
-        <Badge variant={"light"} color={"blue"} leftSection={<IconBuildingStore size={12} />}>
+    <Group gap={4} wrap="nowrap">
+      <Tooltip label="Denne filialen">
+        <Badge variant="light" color="blue" leftSection={<IconBuildingStore size={12} />}>
           {direct}
         </Badge>
       </Tooltip>
-      <Tooltip label={"Underliggende filialer"}>
-        <Badge variant={"light"} color={"grape"} leftSection={<IconHierarchy3 size={12} />}>
+      <Tooltip label="Underliggende filialer">
+        <Badge variant="light" color="grape" leftSection={<IconHierarchy3 size={12} />}>
           {indirect}
         </Badge>
       </Tooltip>
-      <Tooltip label={"Totalt"}>
-        <Badge variant={"light"} color={"gray"} leftSection={<IconSum size={12} />}>
+      <Tooltip label="Totalt">
+        <Badge variant="light" color="gray" leftSection={<IconSum size={12} />}>
           {total}
         </Badge>
       </Tooltip>

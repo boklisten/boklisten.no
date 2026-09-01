@@ -3,13 +3,13 @@ import { OrderValidator } from "#services/legacy/collections/order/helpers/order
 import { Hook } from "#services/legacy/hook";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
+import type { Order } from "#shared/order/order";
 
 export class OrderPatchHook extends Hook {
-  private orderValidator: OrderValidator;
-  private orderPlacedHandler: OrderPlacedHandler;
+  private readonly orderValidator: OrderValidator;
+  private readonly orderPlacedHandler: OrderPlacedHandler;
 
   constructor(orderValidator?: OrderValidator, orderPlacedHandler?: OrderPlacedHandler) {
     super();
@@ -49,9 +49,7 @@ export class OrderPatchHook extends Hook {
       if (order?.placed) {
         this.orderPlacedHandler
           .placeOrder(order, accessToken.details)
-          .then((placedOrder) => {
-            return resolve([placedOrder]);
-          })
+          .then((placedOrder) => resolve([placedOrder]))
           .catch((orderPlacedError: BlError) => {
             reject(new BlError("order could not be placed").add(orderPlacedError));
           });
@@ -60,27 +58,27 @@ export class OrderPatchHook extends Hook {
 
           // @ts-expect-error fixme: auto ignored
           .validate(order, isAdmin)
-          .then(() => {
+          .then(() =>
             // @ts-expect-error fixme: auto ignored
-            return resolve([order]);
-          })
+            resolve([order]),
+          )
           .catch((validationError: BlError) => {
             if (order?.placed) {
               StorageService.Orders.update(order.id, { placed: false })
-                .then(() => {
-                  return reject(
+                .then(() =>
+                  reject(
                     new BlError(
                       "validation of patch of order failed, order.placed is set to false",
                     ).add(validationError),
-                  );
-                })
-                .catch((updateError: BlError) => {
-                  return reject(
+                  ),
+                )
+                .catch((updateError: BlError) =>
+                  reject(
                     new BlError("could not set order.placed to false when order validation failed")
                       .add(updateError)
                       .add(validationError),
-                  );
-                });
+                  ),
+                );
             } else {
               return reject(
                 new BlError("patch of order could not be validated").add(validationError),

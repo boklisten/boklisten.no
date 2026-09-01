@@ -4,14 +4,14 @@ import { OrderPlacedValidator } from "#services/legacy/collections/order/helpers
 import { OrderUserDetailValidator } from "#services/legacy/collections/order/helpers/order-validator/order-user-detail-validator/order-user-detail-validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
+import type { Order } from "#shared/order/order";
 
 export class OrderValidator {
-  private orderPlacedValidator: OrderPlacedValidator;
-  private orderItemValidator: OrderItemValidator;
+  private readonly orderPlacedValidator: OrderPlacedValidator;
+  private readonly orderItemValidator: OrderItemValidator;
 
-  private orderFieldValidator: OrderFieldValidator;
-  private orderUserDetailValidator: OrderUserDetailValidator;
+  private readonly orderFieldValidator: OrderFieldValidator;
+  private readonly orderUserDetailValidator: OrderUserDetailValidator;
 
   constructor(
     orderItemValidator?: OrderItemValidator,

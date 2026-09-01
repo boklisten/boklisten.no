@@ -1,9 +1,9 @@
-export type AdminMatchListSearch = {
+export interface AdminMatchListSearch {
   runde?: string;
   fane?: "liste";
   sok?: string;
   type?: "user" | "stand";
-};
+}
 
 export function validateAdminMatchListSearch(
   search: Record<string, unknown>,

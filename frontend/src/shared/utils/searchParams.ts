@@ -3,7 +3,11 @@
  * value arrives as a number — everything else non-string (missing, arrays, objects) reads as "".
  */
 export function stringParam(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (typeof value === "number") return String(value);
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "number") {
+    return String(value);
+  }
   return "";
 }

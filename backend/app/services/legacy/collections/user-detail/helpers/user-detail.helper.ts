@@ -1,6 +1,6 @@
 import { isUnderage } from "#models/signature";
 import { isNullish } from "#services/legacy/typescript-helpers";
-import { UserDetail } from "#shared/user-detail";
+import type { UserDetail } from "#shared/user-detail";
 
 export class UserDetailHelper {
   public isValid(userDetail: UserDetail): boolean {

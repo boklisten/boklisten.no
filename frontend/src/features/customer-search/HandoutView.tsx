@@ -12,14 +12,14 @@ import {
   buildPeerBooks,
   calculateUnfulfilledOrderItems,
 } from "@/features/customer-search/handoutBooks";
-import NoOrderHandoutModal, {
-  type NoOrderChoice,
-} from "@/features/customer-search/NoOrderHandoutModal";
+import NoOrderHandoutModal from "@/features/customer-search/NoOrderHandoutModal";
+import type { NoOrderChoice } from "@/features/customer-search/NoOrderHandoutModal";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import { ItemStatus } from "@/shared/components/matches/matches-helper";
+import type { ItemStatus } from "@/shared/components/matches/matches-helper";
 import { ItemStatusTable } from "@/shared/components/matches/MatchItemTable";
 import { StandScannerProgress } from "@/shared/components/matches/MatchScannerContent";
-import ScannerPanel, { type ScanNotice } from "@/shared/components/scanner/ScannerPanel";
+import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
+import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import useApiClient from "@/shared/hooks/useApiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 
@@ -141,9 +141,13 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
     userMatchItemIds.some((matchItemId) => itemsAreEquivalent(matchItemId, itemId));
 
   function renderCancelAction(itemStatus: ItemStatus) {
-    if (itemStatus.fulfilled) return null;
+    if (itemStatus.fulfilled) {
+      return null;
+    }
     const orderInfo = openOrderInfo.get(itemStatus.id);
-    if (!orderInfo) return null;
+    if (!orderInfo) {
+      return null;
+    }
     const disabledReason = isInUserMatch(itemStatus.id)
       ? "Boka er en del av en overlevering med en annen elev og kan ikke avbestilles"
       : orderInfo.paid
@@ -221,13 +225,17 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
 
         if (response.reason === "peer-match") {
           const confirmed = await confirmPeerMatch(response.deliverFromName);
-          if (!confirmed) return { message: "Boka ble ikke delt ut." };
+          if (!confirmed) {
+            return { message: "Boka ble ikke delt ut." };
+          }
           body = { ...body, force: true };
           continue;
         }
 
         const choice = await askNoOrderChoice(blid, response.title);
-        if (!choice) return { message: "Boka ble ikke delt ut." };
+        if (!choice) {
+          return { message: "Boka ble ikke delt ut." };
+        }
         noOrderTitle = response.title;
         body = { ...body, branchId: choice.branchId, deadline: choice.deadline };
         continue;
@@ -242,7 +250,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
         // recorded directly. A second no-order copy of the same title gets a blid-suffixed id so
         // the rows do not collide.
         const title = noOrderTitle ?? "";
-        const itemId = response.itemId;
+        const { itemId } = response;
         setItemStatuses((previousState) => [
           ...previousState,
           {
@@ -299,20 +307,16 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
   }
 
   return (
-    <Stack gap={"lg"}>
+    <Stack gap="lg">
       {nothingToShow && <InfoAlert>Denne kunden har for øyeblikket ingen bestilte bøker</InfoAlert>}
 
       {bookRows.length > 0 && (
-        <ItemStatusTable
-          itemStatuses={bookRows}
-          isSender={true}
-          renderAction={renderCancelAction}
-        />
+        <ItemStatusTable itemStatuses={bookRows} isSender renderAction={renderCancelAction} />
       )}
 
       <Box>
         <Button
-          color={"green"}
+          color="green"
           leftSection={<IconObjectScan />}
           onClick={open}
           disabled={signatureStatus?.signatureRequired}
@@ -327,7 +331,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
           close();
           setPendingBlid(null);
         }}
-        title={"Skann bøker"}
+        title="Skann bøker"
       >
         <ScannerPanel
           allowManualEntry
@@ -346,7 +350,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
           onSuccess={invalidate}
         >
           {bookRows.length === 0 ? (
-            <InfoAlert mt={"xs"}>
+            <InfoAlert mt="xs">
               Denne kunden har ingen bestilte bøker. Bøker du skanner blir delt ut uten bestilling.
             </InfoAlert>
           ) : (

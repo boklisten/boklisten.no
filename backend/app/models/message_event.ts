@@ -1,5 +1,5 @@
 import { MessageEventSchema } from "#database/schema";
-import { MessageEventSource } from "#shared/message-log";
+import type { MessageEventSource } from "#shared/message-log";
 
 export default class MessageEvent extends MessageEventSchema {
   declare source: MessageEventSource;

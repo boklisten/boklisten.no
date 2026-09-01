@@ -36,36 +36,36 @@ export default function UserDangerZone({
   });
 
   return (
-    <Paper withBorder radius={"md"} p={"md"} style={{ borderColor: "var(--mantine-color-red-6)" }}>
-      <Stack gap={"xs"}>
-        <Text fw={700} c={"red"}>
+    <Paper withBorder radius="md" p="md" style={{ borderColor: "var(--mantine-color-red-6)" }}>
+      <Stack gap="xs">
+        <Text fw={700} c="red">
           Faresone
         </Text>
-        <Text size={"sm"}>
+        <Text size="sm">
           Sletter kunden permanent. Kunder med aktive bøker, bestillinger eller fakturaer kan ikke
           slettes.
         </Text>
         {!confirming && (
           <Button
-            color={"red"}
-            variant={"outline"}
+            color="red"
+            variant="outline"
             leftSection={<IconTrash size={16} />}
-            w={"fit-content"}
+            w="fit-content"
             onClick={() => setConfirming(true)}
           >
             Slett kunde
           </Button>
         )}
         <Collapse expanded={confirming}>
-          <Stack gap={"xs"}>
+          <Stack gap="xs">
             <TextInput
               label={`Skriv «${confirmPhrase}» for å bekrefte slettingen`}
               value={confirmText}
               onChange={(event) => setConfirmText(event.currentTarget.value)}
             />
-            <Group gap={"xs"}>
+            <Group gap="xs">
               <Button
-                variant={"default"}
+                variant="default"
                 onClick={() => {
                   setConfirming(false);
                   setConfirmText("");
@@ -74,7 +74,7 @@ export default function UserDangerZone({
                 Avbryt
               </Button>
               <Button
-                color={"red"}
+                color="red"
                 leftSection={<IconTrash size={16} />}
                 disabled={confirmText.trim() !== confirmPhrase}
                 loading={deleteMutation.isPending}

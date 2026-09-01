@@ -16,8 +16,8 @@ export default function SignedContractDetails({
   expiresAtText: string;
 }) {
   return (
-    <SuccessAlert title={"Kontrakten er signert"}>
-      <Stack gap={"xs"}>
+    <SuccessAlert title="Kontrakten er signert">
+      <Stack gap="xs">
         <Text>
           {signedByGuardian
             ? `${signingName} (foresatt) har signert kontrakten på vegne av ${name} (elev).`
@@ -25,14 +25,14 @@ export default function SignedContractDetails({
         </Text>
         <Group gap={5}>
           <Text>Signert:</Text>
-          <Text fw={"bold"}>{signedAtText}</Text>
+          <Text fw="bold">{signedAtText}</Text>
         </Group>
         <Group gap={5}>
           <Text>Gyldig til:</Text>
-          <Text fw={"bold"}>{expiresAtText}</Text>
+          <Text fw="bold">{expiresAtText}</Text>
         </Group>
         {signedByGuardian && (
-          <Text fs={"italic"} size={"sm"}>
+          <Text fs="italic" size="sm">
             Merk: Når {name} fyller 18 år, må avtalen signeres på nytt av eleven selv.
           </Text>
         )}

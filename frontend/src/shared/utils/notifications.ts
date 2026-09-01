@@ -1,5 +1,6 @@
 import type { MantineColor } from "@mantine/core";
-import { type NotificationData, notifications } from "@mantine/notifications";
+import { notifications } from "@mantine/notifications";
+import type { NotificationData } from "@mantine/notifications";
 
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 

@@ -1,6 +1,7 @@
 import { modals } from "@mantine/modals";
 
-import ScannerPanel, { type ScannerPanelProps } from "@/shared/components/scanner/ScannerPanel";
+import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
+import type { ScannerPanelProps } from "@/shared/components/scanner/ScannerPanel";
 
 const SCANNER_MODAL_ID = "scanner";
 

@@ -22,13 +22,13 @@ export const Route = createFileRoute("/(offentlig)/auth/login")({
 
 function LoginPage() {
   return (
-    <Container size={"xs"}>
+    <Container size="xs">
       <Stack>
-        <Title ta={"center"}>Logg inn</Title>
+        <Title ta="center">Logg inn</Title>
         <Center>
-          <VippsButton verb={"login"} />
+          <VippsButton verb="login" />
         </Center>
-        <Divider w={"100%"} label={"eller"}></Divider>
+        <Divider w="100%" label="eller" />
         <LocalSignIn />
       </Stack>
     </Container>

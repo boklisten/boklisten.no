@@ -59,7 +59,7 @@ export default function QuestionsAndAnswersTable() {
 
   if (error) {
     return (
-      <ErrorAlert title={"Klarte ikke laste inn spørsmål og svar"}>
+      <ErrorAlert title="Klarte ikke laste inn spørsmål og svar">
         {PLEASE_TRY_AGAIN_TEXT}
       </ErrorAlert>
     );
@@ -84,21 +84,21 @@ export default function QuestionsAndAnswersTable() {
               flex: 0,
               cellRenderer: ({ data }: ICellRendererParams<QuestionAndAnswer>) =>
                 data && (
-                  <Group gap={"xs"} h={"100%"} align={"center"} wrap={"nowrap"}>
-                    <Tooltip label={"Endre"}>
+                  <Group gap="xs" h="100%" align="center" wrap="nowrap">
+                    <Tooltip label="Endre">
                       <ActionIcon
-                        aria-label={"Endre"}
-                        variant={"subtle"}
+                        aria-label="Endre"
+                        variant="subtle"
                         onClick={() => openEditorModal(data)}
                       >
                         <IconEdit />
                       </ActionIcon>
                     </Tooltip>
-                    <Tooltip label={"Slett"}>
+                    <Tooltip label="Slett">
                       <ActionIcon
-                        aria-label={"Slett"}
-                        variant={"subtle"}
-                        color={"red"}
+                        aria-label="Slett"
+                        variant="subtle"
+                        color="red"
                         onClick={() => destroyQuestionAndAnswer({ params: { id: data.id } })}
                       >
                         <IconTrash />
@@ -116,7 +116,9 @@ export default function QuestionsAndAnswersTable() {
           onRowDragEnd={({ api: gridApi }) => {
             const ids: number[] = [];
             gridApi.forEachNodeAfterFilterAndSort(({ data }) => {
-              if (data) ids.push(Number(data.id));
+              if (data) {
+                ids.push(Number(data.id));
+              }
             });
             updateOrder({ body: { ids } });
           }}

@@ -1,8 +1,8 @@
 import { Schema } from "mongoose";
 
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
-import { BlSchema } from "#services/storage_service";
-import { Branch } from "#shared/branch";
+import type { BlSchema } from "#services/storage_service";
+import type { Branch } from "#shared/branch";
 
 export const BranchSchema: BlSchema<Branch> = new Schema({
   name: {

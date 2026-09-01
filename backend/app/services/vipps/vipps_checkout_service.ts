@@ -9,9 +9,9 @@ import { DateService } from "#services/legacy/date.service";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
-import { Order } from "#shared/order/order";
+import type { Order } from "#shared/order/order";
 import env from "#start/env";
-import { VippsCheckoutSession } from "#validators/checkout_validators";
+import type { VippsCheckoutSession } from "#validators/checkout_validators";
 
 async function updateUserDetailWithBillingDetails(
   session: VippsCheckoutSession,
@@ -40,7 +40,9 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
     (orderItem) =>
       orderItem.type === "rent" || orderItem.type === "partly-payment" || orderItem.type === "buy",
   );
-  if (!needLogistics) return null;
+  if (!needLogistics) {
+    return null;
+  }
 
   const totalWeightInGrams = await DeliveryService.calculateOrderWeightInGrams(order);
 
@@ -145,14 +147,20 @@ export const VippsCheckoutService = {
   },
   async update(session: VippsCheckoutSession) {
     let order = await StorageService.Orders.get(session.reference);
-    if (order.checkoutState === session.sessionState || order.checkoutState === "PaymentSuccessful")
+    if (
+      order.checkoutState === session.sessionState ||
+      order.checkoutState === "PaymentSuccessful"
+    ) {
       return;
+    }
 
     await StorageService.Orders.update(order.id, {
       checkoutState: session.sessionState,
     });
 
-    if (session.sessionState !== "PaymentSuccessful") return;
+    if (session.sessionState !== "PaymentSuccessful") {
+      return;
+    }
 
     const userDetail = await updateUserDetailWithBillingDetails(session, order.customer);
 

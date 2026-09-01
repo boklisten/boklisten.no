@@ -30,7 +30,9 @@ export function normalizeSubjectName(value: string) {
 }
 
 async function fetchItemTitles(itemIds: string[]): Promise<Map<string, string>> {
-  if (itemIds.length === 0) return new Map();
+  if (itemIds.length === 0) {
+    return new Map();
+  }
   const items = await StorageService.Items.aggregate<{ id: string; title: string }>([
     { $match: { _id: { $in: itemIds.map((id) => new ObjectId(id)) } } },
     { $project: { title: 1 } },
@@ -51,7 +53,9 @@ export interface SubjectForUpload {
 export async function fetchSubjectsForUpload(
   branchIds: string[],
 ): Promise<Map<string, SubjectForUpload[]>> {
-  if (branchIds.length === 0) return new Map();
+  if (branchIds.length === 0) {
+    return new Map();
+  }
   const subjects = await BranchSubject.query().whereIn("branchId", branchIds).preload("books");
   const itemIds = [...new Set(subjects.flatMap((subject) => subject.books.map((b) => b.itemId)))];
   const titleByItemId = await fetchItemTitles(itemIds);
@@ -217,7 +221,9 @@ export const BranchSubjectsService = {
     for (const branchItem of branchItems) {
       for (const category of branchItem.categories) {
         const name = category.trim();
-        if (name.length === 0) continue;
+        if (name.length === 0) {
+          continue;
+        }
         const key = normalizeSubjectName(name);
         const entry = booksByCategory.get(key) ?? { name, books: [] };
         if (!entry.books.some((book) => book.itemId === branchItem.itemId)) {

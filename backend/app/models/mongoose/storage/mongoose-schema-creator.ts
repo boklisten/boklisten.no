@@ -1,11 +1,12 @@
-import mongoose, { Model, Schema } from "mongoose";
+import type { Model, Schema } from "mongoose";
+import mongoose from "mongoose";
 
-import { BlSchema } from "#services/storage_service";
+import type { BlSchema } from "#services/storage_service";
 
 export class MongooseModelCreator<T> {
   constructor(
-    private schema: BlSchema<T>,
-    private schemaName: string,
+    private readonly schema: BlSchema<T>,
+    private readonly schemaName: string,
   ) {}
 
   create(): Model<T> {
@@ -58,8 +59,12 @@ export class MongooseModelCreator<T> {
 
   public static transformObject(document_: unknown, returnValue?: unknown): void {
     // Mongoose isn't sure which parameter to use, so try both :/
-    if (!returnValue && document_) returnValue = document_;
-    if (!returnValue) return;
+    if (!returnValue && document_) {
+      returnValue = document_;
+    }
+    if (!returnValue) {
+      return;
+    }
     // Arrays are also "object" and can be handled the same way
     if (typeof returnValue === "object") {
       const document = returnValue;

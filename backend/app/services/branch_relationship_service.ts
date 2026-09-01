@@ -45,7 +45,9 @@ export const BranchRelationshipService = {
       const children = branch.childBranches ?? [];
 
       for (const childId of children) {
-        if (visited.includes(childId)) continue;
+        if (visited.includes(childId)) {
+          continue;
+        }
         visited.push(childId);
         result.push(childId);
         stack.push(childId);

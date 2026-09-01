@@ -24,22 +24,22 @@ export default function DataFreshness({
   const secondsUntilNext = Math.max(0, Math.ceil((dataUpdatedAt + refreshIntervalMs - now) / 1000));
 
   return (
-    <Group justify={"space-between"} wrap={"nowrap"}>
-      <Group gap={"md"} wrap={"nowrap"}>
-        <Text size={"sm"} c={"dimmed"}>
+    <Group justify="space-between" wrap="nowrap">
+      <Group gap="md" wrap="nowrap">
+        <Text size="sm" c="dimmed">
           Oppdatert kl. {dayjs(dataUpdatedAt).format("HH:mm:ss")}
         </Text>
-        <Text size={"sm"} c={"dimmed"}>
+        <Text size="sm" c="dimmed">
           {isFetching ? "Oppdaterer …" : `Neste oppdatering om ${secondsUntilNext} sek`}
         </Text>
       </Group>
-      <Tooltip label={"Oppdater nå"}>
+      <Tooltip label="Oppdater nå">
         <ActionIcon
-          variant={"light"}
-          size={"lg"}
+          variant="light"
+          size="lg"
           loading={isFetching}
           onClick={onRefresh}
-          aria-label={"Oppdater statistikk"}
+          aria-label="Oppdater statistikk"
         >
           <IconRefresh size={18} />
         </ActionIcon>

@@ -7,7 +7,8 @@ import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import { createTestRound } from "#tests/matches/match-testing-utils";
 import { MatchRepository } from "#services/matches/match_repository";
-import { toMatchDtos, type MatchLookups } from "#transformers/match_transformer";
+import { toMatchDtos } from "#transformers/match_transformer";
+import type { MatchLookups } from "#transformers/match_transformer";
 
 const A = "5d765db5fc8c47001c408d81";
 const B = "5d765db5fc8c47001c408d82";

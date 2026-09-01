@@ -43,7 +43,7 @@ function matchSummary(match: MatchDto, customerId: string) {
 function PanelSection({ label, children }: { label: string; children: ReactNode }) {
   return (
     <Stack gap={6}>
-      <Text size={"xs"} fw={700} c={"dimmed"} tt={"uppercase"}>
+      <Text size="xs" fw={700} c="dimmed" tt="uppercase">
         {label}
       </Text>
       {children}
@@ -56,16 +56,16 @@ function MatchPanel({ match, customerId }: { match: MatchDto; customerId: string
   const peer = counterparty ? partyName(counterparty) : "den andre eleven";
 
   return (
-    <Stack gap={"lg"}>
+    <Stack gap="lg">
       <SendMatchToStandButton match={match} />
 
-      <PanelSection label={"Møtested"}>
+      <PanelSection label="Møtested">
         <MeetingInfo meetingLocation={match.meetingLocation} meetingTime={match.meetingTime} />
       </PanelSection>
 
       {counterparty?.kind === "customer" && (
         // Only the other student — the selected customer's own number is already on the card above.
-        <PanelSection label={"Kontakt"}>
+        <PanelSection label="Kontakt">
           <AdminMatchContact name={counterparty.name} phone={counterparty.phone} />
         </PanelSection>
       )}
@@ -100,9 +100,9 @@ export default function CustomerMatchesView({ customerId }: { customerId: string
 
   if (isPending) {
     return (
-      <Stack gap={"xs"}>
-        <Skeleton height={72} radius={"sm"} />
-        <Skeleton height={72} radius={"sm"} />
+      <Stack gap="xs">
+        <Skeleton height={72} radius="sm" />
+        <Skeleton height={72} radius="sm" />
       </Stack>
     );
   }
@@ -114,8 +114,8 @@ export default function CustomerMatchesView({ customerId }: { customerId: string
   const visibleMatches = peerMatches(matches);
 
   return (
-    <Stack gap={"sm"}>
-      <Text size={"sm"} c={"dimmed"}>
+    <Stack gap="sm">
+      <Text size="sm" c="dimmed">
         {visibleMatches.length === 1
           ? "1 overlevering med andre elever"
           : `${visibleMatches.length} overleveringer med andre elever`}
@@ -124,7 +124,7 @@ export default function CustomerMatchesView({ customerId }: { customerId: string
       {visibleMatches.length === 0 ? (
         <InfoAlert>Kunden har ingen overleveringer med andre elever.</InfoAlert>
       ) : (
-        <Accordion variant={"separated"} radius={"md"} chevronPosition={"right"}>
+        <Accordion variant="separated" radius="md" chevronPosition="right">
           {visibleMatches.map((match) => {
             const progress = matchProgress(match);
             const finished = isMatchFinished(match);
@@ -132,14 +132,14 @@ export default function CustomerMatchesView({ customerId }: { customerId: string
             return (
               <Accordion.Item key={match.id} value={match.id}>
                 <Accordion.Control>
-                  <Stack gap={6} pr={"xs"}>
-                    <Group gap={6} wrap={"wrap"} align={"baseline"}>
-                      <Text size={"sm"} c={"dimmed"}>
+                  <Stack gap={6} pr="xs">
+                    <Group gap={6} wrap="wrap" align="baseline">
+                      <Text size="sm" c="dimmed">
                         {summary.direction}
                       </Text>
                       <Text fw={600}>{summary.peer}</Text>
                       {finished && (
-                        <Badge color={"green"} variant={"light"}>
+                        <Badge color="green" variant="light">
                           Fullført
                         </Badge>
                       )}
@@ -147,7 +147,7 @@ export default function CustomerMatchesView({ customerId }: { customerId: string
                     <ProgressBar
                       percentComplete={progress.percent}
                       subtitle={
-                        <Text size={"sm"} c={"dimmed"}>
+                        <Text size="sm" c="dimmed">
                           {progress.label}
                         </Text>
                       }

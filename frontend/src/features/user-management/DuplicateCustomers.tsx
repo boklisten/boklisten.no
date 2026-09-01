@@ -23,30 +23,30 @@ export default function DuplicateCustomers() {
   const ignoredPairs = pairs?.filter((pair) => ignoredKeys.includes(duplicatePairKey(pair))) ?? [];
 
   return (
-    <Stack gap={"sm"}>
+    <Stack gap="sm">
       <Stack gap={2}>
-        <Group gap={"xs"}>
-          <Title order={2} size={"h3"}>
+        <Group gap="xs">
+          <Title order={2} size="h3">
             Mulige duplikater
           </Title>
           {data && visiblePairs.length > 0 && (
-            <Badge variant={"light"} color={"orange"}>
+            <Badge variant="light" color="orange">
               {visiblePairs.length}
               {data.totalPairCount > data.pairs.length ? "+" : ""}
             </Badge>
           )}
         </Group>
-        <Text size={"sm"} c={"dimmed"}>
+        <Text size="sm" c="dimmed">
           Kunder som ligner på hverandre i navn, fødselsdato, foresatt eller adresse. Ignorerte par
           lagres kun i denne nettleseren.
         </Text>
       </Stack>
       {isError && (
-        <ErrorAlert title={"Kunne ikke lete etter duplikater"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
+        <ErrorAlert title="Kunne ikke lete etter duplikater">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
       )}
-      {isPending && <Skeleton height={160} radius={"md"} />}
+      {isPending && <Skeleton height={160} radius="md" />}
       {pairs && visiblePairs.length === 0 && (
-        <Text c={"dimmed"} fs={"italic"}>
+        <Text c="dimmed" fs="italic">
           Ingen mulige duplikater å vise.
         </Text>
       )}
@@ -58,11 +58,11 @@ export default function DuplicateCustomers() {
         />
       ))}
       {ignoredPairs.length > 0 && (
-        <Accordion variant={"contained"}>
-          <Accordion.Item value={"ignored"}>
+        <Accordion variant="contained">
+          <Accordion.Item value="ignored">
             <Accordion.Control>Ignorerte par ({ignoredPairs.length})</Accordion.Control>
             <Accordion.Panel>
-              <Stack gap={"sm"}>
+              <Stack gap="sm">
                 {ignoredPairs.map((pair) => (
                   <DuplicatePairCard
                     key={duplicatePairKey(pair)}

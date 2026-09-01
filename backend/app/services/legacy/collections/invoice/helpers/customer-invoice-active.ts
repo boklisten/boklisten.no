@@ -2,11 +2,11 @@ import { InvoiceActive } from "#services/legacy/collections/invoice/helpers/invo
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Invoice } from "#shared/invoice";
+import type { Invoice } from "#shared/invoice";
 
 export class CustomerInvoiceActive {
-  private queryBuilder = new SEDbQueryBuilder();
-  private invoiceActive = new InvoiceActive();
+  private readonly queryBuilder = new SEDbQueryBuilder();
+  private readonly invoiceActive = new InvoiceActive();
 
   public async haveActiveInvoices(userId: string): Promise<boolean> {
     const databaseQuery = this.queryBuilder.getDbQuery({ "customerInfo.userDetail": userId }, [

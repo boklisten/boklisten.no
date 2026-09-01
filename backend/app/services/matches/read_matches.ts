@@ -5,14 +5,17 @@ import { MatchRepository } from "#services/matches/match_repository";
 import { StorageService } from "#services/storage_service";
 import type { MatchDto } from "#shared/match/match-dto";
 import { USER_PERMISSION } from "#shared/user-permission";
-import { toMatchDtos, type MatchLookups, type MatchPerson } from "#transformers/match_transformer";
+import { toMatchDtos } from "#transformers/match_transformer";
+import type { MatchLookups, MatchPerson } from "#transformers/match_transformer";
 
 /**
  * Fetched with admin permission, which skips the active-only filter. A student who has been
  * deactivated mid-round is still a party to their matches, and the admin overview must show them.
  */
 async function getPeople(customerIds: string[]): Promise<Map<string, MatchPerson>> {
-  if (customerIds.length === 0) return new Map();
+  if (customerIds.length === 0) {
+    return new Map();
+  }
   const userDetails = await StorageService.UserDetails.getMany(customerIds, USER_PERMISSION.ADMIN);
   return new Map(
     userDetails.map((detail) => [
@@ -24,7 +27,9 @@ async function getPeople(customerIds: string[]): Promise<Map<string, MatchPerson
 
 /** Admin permission for the same reason: an item deactivated mid-round must keep its title. */
 async function getTitles(itemIds: string[]): Promise<Map<string, string>> {
-  if (itemIds.length === 0) return new Map();
+  if (itemIds.length === 0) {
+    return new Map();
+  }
   const items = await StorageService.Items.getMany(itemIds, USER_PERMISSION.ADMIN);
   return new Map(items.map((item) => [item.id, item.title]));
 }
@@ -40,12 +45,18 @@ async function buildLookups(matches: Match[], handovers: BookHandover[]): Promis
   const customerIds = new Set<string>();
   for (const match of matches) {
     for (const participant of match.participants) {
-      if (participant.userDetailId !== null) customerIds.add(participant.userDetailId);
+      if (participant.userDetailId !== null) {
+        customerIds.add(participant.userDetailId);
+      }
     }
   }
   for (const handover of handovers) {
-    if (handover.fromUserDetailId !== null) customerIds.add(handover.fromUserDetailId);
-    if (handover.toUserDetailId !== null) customerIds.add(handover.toUserDetailId);
+    if (handover.fromUserDetailId !== null) {
+      customerIds.add(handover.fromUserDetailId);
+    }
+    if (handover.toUserDetailId !== null) {
+      customerIds.add(handover.toUserDetailId);
+    }
   }
 
   const itemIds = new Set(matches.flatMap((match) => match.obligations.map((o) => o.itemId)));
@@ -71,7 +82,9 @@ export async function getMatchesForCustomer(customerId: string): Promise<MatchDt
 /** One match by id, or null. Lets a detail page load without pulling its whole round. */
 export async function getMatchById(matchId: number): Promise<MatchDto | null> {
   const match = await MatchRepository.findById(matchId);
-  if (!match) return null;
+  if (!match) {
+    return null;
+  }
   return (await render([match]))[0] ?? null;
 }
 
@@ -84,6 +97,8 @@ export async function getMatchesForRound(roundId?: number): Promise<MatchDto[]> 
     roundId === undefined
       ? await MatchRepository.findDefaultRound()
       : await MatchRound.find(roundId);
-  if (!round) return [];
+  if (!round) {
+    return [];
+  }
   return render(await MatchRepository.findForRound(round.id));
 }

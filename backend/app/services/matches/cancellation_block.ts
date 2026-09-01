@@ -12,7 +12,9 @@ export async function itemIdsInActiveUserMatches(customerId: string): Promise<Se
   const matches = await MatchRepository.findForCustomer(customerId);
   const blocked = new Set<string>();
   for (const match of matches) {
-    if (match.participants.some((participant) => participant.isStand)) continue;
+    if (match.participants.some((participant) => participant.isStand)) {
+      continue;
+    }
     for (const obligation of match.obligations) {
       for (const itemId of getEquivalentItemIds(obligation.itemId)) {
         blocked.add(itemId);

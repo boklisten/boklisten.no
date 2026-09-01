@@ -1,6 +1,6 @@
-import { ParsedQs } from "qs";
+import type { ParsedQs } from "qs";
 
-import { UserPermission } from "#shared/user-permission";
+import type { UserPermission } from "#shared/user-permission";
 
 export interface BlApiRequest {
   documentId?: string | undefined;

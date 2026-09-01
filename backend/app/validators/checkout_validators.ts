@@ -1,5 +1,5 @@
 import vine from "@vinejs/vine";
-import { Infer } from "@vinejs/vine/types";
+import type { Infer } from "@vinejs/vine/types";
 
 export const initializeCheckoutValidator = vine.create(
   vine.object({

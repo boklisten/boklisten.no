@@ -18,14 +18,13 @@ Disallow: /
 export const Route = createFileRoute("/robots.txt")({
   server: {
     handlers: {
-      GET: async () => {
-        return new Response(isProduction() ? productionRobots : stagingRobots, {
+      GET: async () =>
+        new Response(isProduction() ? productionRobots : stagingRobots, {
           headers: {
             "Content-Type": "text/plain; charset=utf-8",
             "Cache-Control": "public, max-age=3600",
           },
-        });
-      },
+        }),
     },
   },
 });

@@ -1,6 +1,7 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
-import { BranchBooksService, BranchBooksUpdate } from "#services/branch_books_service";
+import type { BranchBooksUpdate } from "#services/branch_books_service";
+import { BranchBooksService } from "#services/branch_books_service";
 import { PermissionService } from "#services/permission_service";
 import {
   activeBooksBulkUpdateValidator,

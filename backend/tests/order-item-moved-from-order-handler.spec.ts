@@ -1,10 +1,11 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
+import type { Order } from "#shared/order/order";
 import { mock } from "#tests/test-doubles";
 
 test.group("OrderItemMovedFromOrderHandler", (group) => {
@@ -86,7 +87,7 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
 
   test('should reject if original order item already have "movedToOrder"', async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
-    testMovedFromOrder.orderItems[0]["movedToOrder"] = "anotherOrder";
+    testMovedFromOrder.orderItems[0].movedToOrder = "anotherOrder";
     getOrderStub.withArgs(testMovedFromOrderId).resolves(testMovedFromOrder);
     updateOrderStub.resolves(testMovedFromOrder);
 

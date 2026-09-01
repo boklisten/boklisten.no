@@ -1,5 +1,5 @@
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
+import type { Delivery } from "#shared/delivery/delivery";
 
 export class DeliveryBranchHandler {
   validate(delivery: Delivery): Promise<boolean> {

@@ -16,14 +16,14 @@ import type {
   CustomerCollectionReceipt,
   ScannedBook,
 } from "#shared/bulk-collection/bulk-collection-dtos";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { Item } from "#shared/item";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { Item } from "#shared/item";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 import { bulkCollectionCollectValidator } from "#validators/bulk_collection_validator";
 
 export default class BulkCollectionController {
-  private queryBuilder = new SEDbQueryBuilder();
-  private customerItemActive = new CustomerItemActive();
+  private readonly queryBuilder = new SEDbQueryBuilder();
+  private readonly customerItemActive = new CustomerItemActive();
 
   /**
    * Resolve a scanned BL-ID into a row for the to-deliver list, verifying the book is currently

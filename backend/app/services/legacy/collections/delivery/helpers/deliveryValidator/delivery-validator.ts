@@ -2,11 +2,11 @@ import { DeliveryBranchHandler } from "#services/legacy/collections/delivery/hel
 import { DeliveryBringHandler } from "#services/legacy/collections/delivery/helpers/deliveryBring/delivery-bring-handler";
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
+import type { Delivery } from "#shared/delivery/delivery";
 
 export class DeliveryValidator {
-  private deliveryBranchHandler: DeliveryBranchHandler;
-  private deliveryBringHandler: DeliveryBringHandler;
+  private readonly deliveryBranchHandler: DeliveryBranchHandler;
+  private readonly deliveryBringHandler: DeliveryBringHandler;
 
   constructor(
     deliveryBranchHandler?: DeliveryBranchHandler,

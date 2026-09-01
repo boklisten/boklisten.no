@@ -13,11 +13,11 @@ export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/pami
 
 function RemindersPage() {
   return (
-    <Container size={"xs"}>
+    <Container size="xs">
       <Stack>
         <Stack gap={2}>
           <Title>Påminnelser</Title>
-          <Text size={"sm"} c={"dimmed"}>
+          <Text size="sm" c="dimmed">
             Send SMS eller e-post til elever med aktive bøker på valgte filialer
           </Text>
         </Stack>

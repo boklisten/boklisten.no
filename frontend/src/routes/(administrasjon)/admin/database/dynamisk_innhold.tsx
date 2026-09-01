@@ -14,13 +14,13 @@ export const Route = createFileRoute("/(administrasjon)/admin/database/dynamisk_
 
 function EditableTextPage() {
   return (
-    <Stack gap={"xl"}>
+    <Stack gap="xl">
       <Title>Dynamisk innhold</Title>
-      <Stack gap={"xs"}>
+      <Stack gap="xs">
         <Title order={2}>Tekst</Title>
         <EditableTextTable />
       </Stack>
-      <Stack gap={"xs"}>
+      <Stack gap="xs">
         <Title order={2}>Spørsmål og svar</Title>
         <QuestionsAndAnswersTable />
       </Stack>

@@ -10,7 +10,7 @@ import {
   seededRandom,
   shuffler,
 } from "#tests/matches/match-testing-utils";
-import { MatchableUser } from "#services/match_helpers/match-finder/match-types";
+import type { MatchableUser } from "#services/match_helpers/match-finder/match-types";
 import otto_treider_test_users_year_0 from "#tests/matches/test-data/test_users_year_0";
 import otto_treider_test_users_year_1 from "#tests/matches/test-data/test_users_year_1";
 import otto_treider_test_users_year_2 from "#tests/matches/test-data/test_users_year_2";
@@ -129,7 +129,7 @@ test.group("Partly User Match", async () => {
   test("should be able to fully match and partly match a set of shuffled users", async ({
     assert,
   }) => {
-    const shuffle = shuffler(seededRandom(12345));
+    const shuffle = shuffler(seededRandom(12_345));
     const senderGroupA = createUserGroup("sender-A", 10, ["A", "B", "C"], []);
     const senderGroupB = createUserGroup("sender-B", 5, ["A"], []);
     const senderGroupC = createUserGroup("sender-C", 5, ["B", "C"], []);
@@ -184,7 +184,7 @@ test.group("Partly User Match", async () => {
   test("should be able to fully and partly match some shuffled users, leaving some receivers to match with stand", async ({
     assert,
   }) => {
-    const shuffle = shuffler(seededRandom(12345));
+    const shuffle = shuffler(seededRandom(12_345));
     const senderGroupA = createUserGroup("sender-A", 3, ["A"], []);
     const senderGroupB = createUserGroup("sender-B", 4, ["B"], []);
     const senderGroupC = createUserGroup("sender-C", 5, ["A", "B"], []);
@@ -207,7 +207,7 @@ test.group("Partly User Match", async () => {
 
 test.group("Large User Groups", async () => {
   test("can sufficiently match created user groups", async ({ assert }) => {
-    const shuffle = shuffler(seededRandom(324892));
+    const shuffle = shuffler(seededRandom(324_892));
     const users = [
       createUserGroup("sender-A", 210, ["A", "C", "D"], []),
       createUserGroup("sender-B", 242, ["C", "D", "E"], []),
@@ -226,14 +226,12 @@ test.group("Large User Groups", async () => {
   });
 
   test("can perfectly match realistic user data with itself", async ({ assert }) => {
-    const shuffle = shuffler(seededRandom(12345));
+    const shuffle = shuffler(seededRandom(12_345));
     const rawData = ullern_test_users;
     const test_senders = createMatchableUsersWithIdSuffix(rawData, true);
     const test_receivers = createMatchableUsersWithIdSuffix(rawData, false);
 
-    const matchFinder = new MatchFinder(
-      shuffle([test_senders.slice(), test_receivers.slice()].flat()),
-    );
+    const matchFinder = new MatchFinder(shuffle([[...test_senders], [...test_receivers]].flat()));
 
     const [userMatches, standMatches] = matchFinder.generateMatches();
 
@@ -244,7 +242,7 @@ test.group("Large User Groups", async () => {
   test("can sufficiently match realistic user data with a modified version of itself", async ({
     assert,
   }) => {
-    const shuffle = shuffler(seededRandom(123454332));
+    const shuffle = shuffler(seededRandom(123_454_332));
     const rawData = ullern_test_users;
     const test_senders = createMatchableUsersWithIdSuffix(rawData, true);
     const test_receivers = createMatchableUsersWithIdSuffix(rawData, false);
@@ -262,18 +260,18 @@ test.group("Large User Groups", async () => {
   test("should have a lot of pickup and deliveries when many new books are introduced", async ({
     assert,
   }) => {
-    const shuffle = shuffler(seededRandom(128738745));
+    const shuffle = shuffler(seededRandom(128_738_745));
     const testUsersYear1: MatchableUser[] = otto_treider_test_users_year_1.map(({ items, id }) => ({
       wantedItems: new Set(items),
       items: new Set(),
       groupMembership: "unknown",
-      id: id + "_year1",
+      id: `${id}_year1`,
     }));
     const testUsersYear2: MatchableUser[] = otto_treider_test_users_year_2.map(({ items, id }) => ({
       items: new Set(items),
       wantedItems: new Set(),
       groupMembership: "unknown",
-      id: id + "_year2",
+      id: `${id}_year2`,
     }));
 
     const matchFinder = new MatchFinder(shuffle([testUsersYear1, testUsersYear2].flat()));
@@ -287,30 +285,30 @@ test.group("Large User Groups", async () => {
   test("should be able to sufficiently match two different year classes with similar books", async ({
     assert,
   }) => {
-    const shuffle = shuffler(seededRandom(123982));
+    const shuffle = shuffler(seededRandom(123_982));
     const testUsersYear0: MatchableUser[] = otto_treider_test_users_year_0.map(({ items, id }) => ({
       wantedItems: new Set(items),
       items: new Set(),
       groupMembership: "unknown",
-      id: id + "_year0",
+      id: `${id}_year0`,
     }));
     const testUsersYear1: MatchableUser[] = otto_treider_test_users_year_1.map(({ items, id }) => ({
       items: new Set(items),
       wantedItems: new Set(),
       groupMembership: "unknown",
-      id: id + "_year1",
+      id: `${id}_year1`,
     }));
 
     const [userMatches, standMatches] = new MatchFinder(
       shuffle([testUsersYear0, testUsersYear1].flat()),
     ).generateMatches();
 
-    const standDeliveryItems = standMatches.flatMap((standMatch) =>
-      Array.from(standMatch.expectedHandoffItems),
-    );
-    const standPickupItems = standMatches.flatMap((standMatch) =>
-      Array.from(standMatch.expectedPickupItems),
-    );
+    const standDeliveryItems = standMatches.flatMap((standMatch) => [
+      ...standMatch.expectedHandoffItems,
+    ]);
+    const standPickupItems = standMatches.flatMap((standMatch) => [
+      ...standMatch.expectedPickupItems,
+    ]);
 
     assert.isTrue(
       standDeliveryItems.every((deliveryItem) => !standPickupItems.includes(deliveryItem)),
@@ -350,8 +348,8 @@ test.group("Users with both wantedItems and items", async () => {
     assert.lengthOf(standMatches, 0);
 
     const match = userMatches[0];
-    assert.includeMembers(Array.from(match?.expectedAToBItems ?? []), ["book1", "book2"]);
-    assert.includeMembers(Array.from(match?.expectedBToAItems ?? []), ["book3", "book4"]);
+    assert.includeMembers([...(match?.expectedAToBItems ?? [])], ["book1", "book2"]);
+    assert.includeMembers([...(match?.expectedBToAItems ?? [])], ["book3", "book4"]);
   });
 
   test("should be able to solve complex scenario without stand matches", async ({ assert }) => {
@@ -370,7 +368,7 @@ test.group("Users with both wantedItems and items", async () => {
 
 test.group("Group matching logic", async () => {
   test("should prioritize matching similar groups first", async ({ assert }) => {
-    const shuffle = shuffler(seededRandom(12345));
+    const shuffle = shuffler(seededRandom(12_345));
     const group1Users = createUserGroup("group1", 2, ["A"], ["B"], "STA");
     const group2Users = createUserGroup("group2", 2, ["B"], ["A"], "STB");
     const group3Users = createUserGroup("group3", 15, ["B"], ["A"], "STC");

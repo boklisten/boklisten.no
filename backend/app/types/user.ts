@@ -1,5 +1,5 @@
-import { BlDocument } from "#shared/bl-document";
-import { UserPermission } from "#shared/user-permission";
+import type { BlDocument } from "#shared/bl-document";
+import type { UserPermission } from "#shared/user-permission";
 
 interface VippsLogin {
   userId: string;

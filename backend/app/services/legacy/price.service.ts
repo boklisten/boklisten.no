@@ -1,6 +1,6 @@
 export class PriceService {
-  private up: boolean;
-  private down: boolean;
+  private readonly up: boolean;
+  private readonly down: boolean;
 
   constructor(config?: { roundUp?: boolean; roundDown?: boolean }) {
     this.up = config?.roundUp ?? false;
@@ -8,7 +8,7 @@ export class PriceService {
   }
 
   public sanitize(price: number): number {
-    return +price.toFixed(2); // the plus changes the output to a number
+    return Number(price.toFixed(2)); // the plus changes the output to a number
   }
 
   public round(number_: number): number {

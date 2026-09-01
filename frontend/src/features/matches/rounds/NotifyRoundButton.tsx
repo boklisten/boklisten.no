@@ -54,23 +54,23 @@ export default function NotifyRoundButton({
   return (
     <>
       <Button
-        variant={"default"}
+        variant="default"
         disabled={disabled}
         leftSection={<IconSpeakerphone size={16} />}
         onClick={open}
       >
         Send melding
       </Button>
-      <Modal opened={opened} onClose={close} title={"Send melding til elevene i runden"}>
+      <Modal opened={opened} onClose={close} title="Send melding til elevene i runden">
         <Stack>
           <Activity mode={apiError ? "visible" : "hidden"}>
-            <ErrorAlert title={"Klarte ikke sende meldingen"}>{apiError}</ErrorAlert>
+            <ErrorAlert title="Klarte ikke sende meldingen">{apiError}</ErrorAlert>
           </Activity>
 
-          <form.AppField name={"target"}>
+          <form.AppField name="target">
             {(field) => (
               <field.SegmentedControlField
-                label={"Mottakere"}
+                label="Mottakere"
                 data={[
                   { label: "Alle", value: "all" },
                   { label: "Elevoverleveringer", value: "user-matches" },
@@ -81,7 +81,7 @@ export default function NotifyRoundButton({
           </form.AppField>
 
           <form.AppField
-            name={"message"}
+            name="message"
             validators={{
               onBlur: ({ value }) =>
                 value.trim().length < 10 ? "Meldingen må være på minst 10 tegn" : null,
@@ -92,14 +92,14 @@ export default function NotifyRoundButton({
                 required
                 autosize
                 minRows={4}
-                label={"Melding"}
-                description={"Sendes som SMS og e-post"}
+                label="Melding"
+                description="Sendes som SMS og e-post"
               />
             )}
           </form.AppField>
 
-          <Group justify={"flex-end"}>
-            <Button variant={"default"} onClick={close}>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={close}>
               Avbryt
             </Button>
             <Button loading={notifyMutation.isPending} onClick={form.handleSubmit}>

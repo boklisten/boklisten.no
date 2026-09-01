@@ -22,7 +22,7 @@ export default function CollectionReceipt({
         Skann flere
       </Button>
 
-      <Accordion variant={"separated"}>
+      <Accordion variant="separated">
         {receipt.map((entry) => (
           <CustomerReceiptItem key={entry.customerId} receipt={entry} />
         ))}

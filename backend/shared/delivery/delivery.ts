@@ -1,7 +1,7 @@
-import { BlDocument } from "#shared/bl-document";
-import { DeliveryInfoBranch } from "#shared/delivery/delivery-info/delivery-info-branch";
-import { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
-import { DeliveryMethod } from "#shared/delivery/delivery-method/delivery-method";
+import type { BlDocument } from "#shared/bl-document";
+import type { DeliveryInfoBranch } from "#shared/delivery/delivery-info/delivery-info-branch";
+import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
+import type { DeliveryMethod } from "#shared/delivery/delivery-method/delivery-method";
 
 export interface Delivery extends BlDocument {
   method: DeliveryMethod; //method used for delivery

@@ -13,7 +13,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/database/selskap")
 
 function DatabaseCompaniesPage() {
   return (
-    <AuthGuard requiredPermission={"admin"}>
+    <AuthGuard requiredPermission="admin">
       <CompanyManager />
     </AuthGuard>
   );

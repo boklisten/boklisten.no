@@ -3,7 +3,8 @@ import { IconTrash } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { useRefreshRounds, type Round } from "@/features/matches/rounds/useRounds";
+import { useRefreshRounds } from "@/features/matches/rounds/useRounds";
+import type { Round } from "@/features/matches/rounds/useRounds";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -40,14 +41,14 @@ export default function DeleteRoundModal({
   );
 
   return (
-    <Modal opened={opened} onClose={close} title={"Slett runden"}>
+    <Modal opened={opened} onClose={close} title="Slett runden">
       <Stack>
         <Text>
           Dette sletter runden <Text span fw={600}>{`«${round.name}»`}</Text> for godt, med alle
           overleveringene i den. Elevene mister overleveringene sine i denne runden, og bøkene låses
           opp igjen.
         </Text>
-        <Text size={"sm"} c={"dimmed"}>
+        <Text size="sm" c="dimmed">
           Overleveringer som allerede er fullført beholdes i historikken til bøkene.
         </Text>
         <TextInput
@@ -57,12 +58,12 @@ export default function DeleteRoundModal({
           value={confirmation}
           onChange={(event) => setConfirmation(event.currentTarget.value)}
         />
-        <Group justify={"flex-end"}>
-          <Button variant={"default"} onClick={close}>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={close}>
             Avbryt
           </Button>
           <Button
-            color={"red"}
+            color="red"
             leftSection={<IconTrash size={16} />}
             disabled={confirmation.trim() !== round.name}
             loading={deleteMutation.isPending}

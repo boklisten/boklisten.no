@@ -1,6 +1,7 @@
 import { Group, Skeleton, Text, ThemeIcon } from "@mantine/core";
 import { IconBuildingStore, IconHierarchy3, IconUsers } from "@tabler/icons-react";
-import { Activity, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { Activity } from "react";
 
 function MetricRow({
   icon,
@@ -19,12 +20,12 @@ function MetricRow({
 }) {
   return (
     <Group gap={5}>
-      <ThemeIcon variant={"transparent"} color={color} size={"md"}>
+      <ThemeIcon variant="transparent" color={color} size="md">
         {icon}
       </ThemeIcon>
-      <Text fw={"bold"}>{label}:</Text>
+      <Text fw="bold">{label}:</Text>
       <Activity mode={isLoading ? "visible" : "hidden"}>
-        <Skeleton w={"xl"} h={"md"} />
+        <Skeleton w="xl" h="md" />
       </Activity>
       <Activity mode={value === undefined || isLoading ? "hidden" : "visible"}>
         <Text>{value}</Text>
@@ -67,14 +68,14 @@ export default function BranchScopeMetrics({
     <>
       <MetricRow
         icon={totalIcon ?? <IconUsers size={18} />}
-        color={"gray"}
+        color="gray"
         label={totalLabel}
         value={total}
         isLoading={isLoading}
       />
       <MetricRow
         icon={<IconBuildingStore size={18} />}
-        color={"blue"}
+        color="blue"
         label={directLabel}
         value={direct}
         isLoading={isLoading}
@@ -82,7 +83,7 @@ export default function BranchScopeMetrics({
       />
       <MetricRow
         icon={<IconHierarchy3 size={18} />}
-        color={"grape"}
+        color="grape"
         label={indirectLabel}
         value={indirect}
         isLoading={isLoading}

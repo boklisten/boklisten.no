@@ -56,16 +56,18 @@ export default function CancelOrderItemButton({
       confirmLabel: "Avbestill",
       confirmColor: "red",
     });
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
     cancelMutation.mutate({ body: { orderId, itemId: itemStatus.id } });
   }
 
   return (
     <Tooltip label={disabledReason} disabled={disabledReason === null} multiline maw={280}>
       <Button
-        variant={"subtle"}
-        color={"red"}
-        size={"compact-sm"}
+        variant="subtle"
+        color="red"
+        size="compact-sm"
         data-disabled={disabledReason !== null || undefined}
         loading={cancelMutation.isPending}
         onClick={(event) => {

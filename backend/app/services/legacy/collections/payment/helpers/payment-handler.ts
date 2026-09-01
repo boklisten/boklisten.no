@@ -1,7 +1,7 @@
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
-import { Payment } from "#shared/payment/payment";
+import type { Order } from "#shared/order/order";
+import type { Payment } from "#shared/payment/payment";
 
 export class PaymentHandler {
   public async confirmPayments(order: Order): Promise<Payment[]> {
@@ -42,7 +42,9 @@ export class PaymentHandler {
       return Promise.resolve(true);
     }
 
-    if (payment.method === "vipps-checkout") return Promise.resolve(true);
+    if (payment.method === "vipps-checkout") {
+      return Promise.resolve(true);
+    }
 
     return Promise.reject(new BlError(`payment method "${payment.method}" not supported`));
   }

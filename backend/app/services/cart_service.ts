@@ -1,6 +1,6 @@
 import { StorageService } from "#services/storage_service";
-import { BranchItem } from "#shared/branch-item";
-import { CartItemOption } from "#shared/cart_item";
+import type { BranchItem } from "#shared/branch-item";
+import type { CartItemOption } from "#shared/cart_item";
 
 export const CartService = {
   async getOptions(branchItem: BranchItem) {

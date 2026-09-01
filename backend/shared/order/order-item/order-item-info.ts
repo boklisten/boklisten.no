@@ -1,4 +1,4 @@
-import { Period } from "#shared/period";
+import type { Period } from "#shared/period";
 
 export interface OrderItemInfo {
   from?: Date;

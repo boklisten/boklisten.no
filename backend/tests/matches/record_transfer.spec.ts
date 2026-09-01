@@ -1,13 +1,14 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import BookHandover from "#models/book_handover";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import MatchRound from "#models/match_round";
+import type MatchRound from "#models/match_round";
 import { createTestRound } from "#tests/matches/match-testing-utils";
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
@@ -17,7 +18,7 @@ import { OrderValidator } from "#services/legacy/collections/order/helpers/order
 import { MatchRepository } from "#services/matches/match_repository";
 import { recordTransfer } from "#services/matches/record_transfer";
 import { StorageService } from "#services/storage_service";
-import { CustomerItem } from "#shared/customer-item/customer-item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
 
 /** The receiver doing the scanning. */

@@ -22,8 +22,8 @@ export const Route = createFileRoute("/(offentlig)/bestilling/")({
 
 function OrderPage() {
   return (
-    <Container size={"md"}>
-      <Stack gap={"xs"}>
+    <Container size="md">
+      <Stack gap="xs">
         <Title>Hvor går du på skole?</Title>
         <SelectOrderBranch />
       </Stack>

@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 
 import { DeliveryBranchHandler } from "#services/legacy/collections/delivery/helpers/deliveryBranch/delivery-branch-handler";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
+import type { Delivery } from "#shared/delivery/delivery";
 
 test.group("DeliveryBringHandler", (group) => {
   const deliveryBranchHandler = new DeliveryBranchHandler();

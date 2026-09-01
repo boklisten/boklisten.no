@@ -1,7 +1,7 @@
 import { DeliveryPatchHook } from "#services/legacy/collections/delivery/hooks/delivery.patch.hook";
 import { DeliveryPostHook } from "#services/legacy/collections/delivery/hooks/delivery.post.hook";
 import { StorageService } from "#services/storage_service";
-import { BlCollection } from "#types/bl-collection";
+import type { BlCollection } from "#types/bl-collection";
 
 export const DeliveryCollection: BlCollection = {
   storage: StorageService.Deliveries,

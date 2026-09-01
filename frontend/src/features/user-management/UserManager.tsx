@@ -31,18 +31,18 @@ export default function UserManager() {
         }
         keepMounted={false}
       >
-        <Tabs.List mb={"md"}>
-          <Tabs.Tab value={"kunder"} leftSection={<IconUsers />}>
+        <Tabs.List mb="md">
+          <Tabs.Tab value="kunder" leftSection={<IconUsers />}>
             Kunder
           </Tabs.Tab>
-          <Tabs.Tab value={"ansatte"} leftSection={<IconUserCog />}>
+          <Tabs.Tab value="ansatte" leftSection={<IconUserCog />}>
             Ansatte
           </Tabs.Tab>
         </Tabs.List>
-        <Tabs.Panel value={"kunder"}>
+        <Tabs.Panel value="kunder">
           <CustomersTab />
         </Tabs.Panel>
-        <Tabs.Panel value={"ansatte"}>
+        <Tabs.Panel value="ansatte">
           <EmployeesTab />
         </Tabs.Panel>
       </Tabs>

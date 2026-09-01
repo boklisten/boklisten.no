@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 import vine from "@vinejs/vine";
 
 import { StorageService } from "#services/storage_service";
@@ -44,11 +44,12 @@ export default class LocalController {
       },
     });
     const tokens = await TokenService.createTokens(user);
-    if (!tokens)
+    if (!tokens) {
       return {
         message:
           "Klarte ikke logge deg inn. Vennligst prøv igjen eller ta kontakt dersom problemet vedvarer",
       };
+    }
 
     return {
       tokens,

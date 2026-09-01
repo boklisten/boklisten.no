@@ -16,7 +16,7 @@ export const Route = createFileRoute("/(offentlig)/info/contact")({
 function ContactPage() {
   return (
     <>
-      <Title ta={"center"} order={2}>
+      <Title ta="center" order={2}>
         Kontakt oss
       </Title>
       <ContactInfo />

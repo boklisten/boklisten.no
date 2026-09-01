@@ -8,7 +8,7 @@ import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { formatOpeningHour } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 import { publicApi } from "@/shared/utils/publicApiClient";
-import { Route } from "@tuyau/core/types";
+import type { Route } from "@tuyau/core/types";
 
 const OpeningHourRow = ({
   openingHour,
@@ -39,7 +39,7 @@ const OpeningHourRow = ({
       <Table.Td>{toTime}</Table.Td>
       <Table.Td>
         <Button
-          bg={"red"}
+          bg="red"
           onClick={() =>
             deleteOpeningHourMutation.mutate({
               params: {
@@ -64,7 +64,7 @@ export default function OpeningHoursList({ branchId }: { branchId: string }) {
 
   if (isLoadingOpeningHours) {
     return (
-      <Stack w={"100%"} mt={"md"}>
+      <Stack w="100%" mt="md">
         <Skeleton height={25} />
         <Skeleton height={25} />
         <Skeleton height={25} />
@@ -76,14 +76,14 @@ export default function OpeningHoursList({ branchId }: { branchId: string }) {
 
   if (isErrorOpeningHours || openingHours == undefined) {
     return (
-      <ErrorAlert title={"Klarte ikke laste inn åpningstider"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
+      <ErrorAlert title="Klarte ikke laste inn åpningstider">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
     );
   }
 
   if (openingHours.length === 0) {
     return (
       <>
-        <InfoAlert title={"Ingen fremtidige åpningstider"}>
+        <InfoAlert title="Ingen fremtidige åpningstider">
           Denne filialen har ingen fremtidige åpningstider.
         </InfoAlert>
       </>

@@ -3,7 +3,7 @@ import { IconInfoCircle } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { bookCountLabel } from "@/features/branches/branch-books/bookCountLabel";
-import { BranchBooksEditTarget } from "@/features/branches/branch-books/types";
+import type { BranchBooksEditTarget } from "@/features/branches/branch-books/types";
 
 export default function BranchBooksCancelModal({
   target,
@@ -25,7 +25,9 @@ export default function BranchBooksCancelModal({
   const affectedCount = includeDescendants ? target.total : target.direct;
 
   async function submit() {
-    if (isSubmitting) return;
+    if (isSubmitting) {
+      return;
+    }
     setIsSubmitting(true);
     try {
       await onSubmit({ notifyCustomers, includeDescendants });
@@ -47,24 +49,19 @@ export default function BranchBooksCancelModal({
         />
       )}
       <Switch
-        label={"Send kvittering på e-post til kundene"}
+        label="Send kvittering på e-post til kundene"
         checked={notifyCustomers}
         onChange={(event) => setNotifyCustomers(event.currentTarget.checked)}
       />
-      <Alert icon={<IconInfoCircle />} color={"yellow"}>
+      <Alert icon={<IconInfoCircle />} color="yellow">
         Avbestillingen kan ikke angres. Betalte bestillinger blir ikke avbestilt og må håndteres
         manuelt.
       </Alert>
-      <Group justify={"flex-end"}>
-        <Button variant={"default"} onClick={onClose}>
+      <Group justify="flex-end">
+        <Button variant="default" onClick={onClose}>
           Avbryt
         </Button>
-        <Button
-          color={"red"}
-          disabled={affectedCount === 0}
-          loading={isSubmitting}
-          onClick={submit}
-        >
+        <Button color="red" disabled={affectedCount === 0} loading={isSubmitting} onClick={submit}>
           Avbestill ({bookCountLabel(affectedCount)})
         </Button>
       </Group>

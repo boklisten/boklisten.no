@@ -1,21 +1,19 @@
 import { Stack, Table, Text, Tooltip } from "@mantine/core";
 import { IconAlertSquareFilled, IconSquareCheckFilled } from "@tabler/icons-react";
 
-import {
-  describeObligation,
-  isObligationSettled,
-  type ViewerObligation,
-} from "@/features/matches/forViewer";
-import { type ItemStatus, PeerBadge } from "@/shared/components/matches/matches-helper";
+import { describeObligation, isObligationSettled } from "@/features/matches/forViewer";
+import type { ViewerObligation } from "@/features/matches/forViewer";
+import { PeerBadge } from "@/shared/components/matches/matches-helper";
+import type { ItemStatus } from "@/shared/components/matches/matches-helper";
 
 function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: string }) {
   return (
     <Tooltip label={label}>
       <Table.Td>
         {fulfilled ? (
-          <IconSquareCheckFilled color={"green"} />
+          <IconSquareCheckFilled color="green" />
         ) : (
-          <IconAlertSquareFilled color={"orange"} />
+          <IconAlertSquareFilled color="orange" />
         )}
       </Table.Td>
     </Tooltip>
@@ -83,7 +81,7 @@ export default function MatchItemTable({
                 <Stack gap={2}>
                   <Text>{obligation.title}</Text>
                   {note && (
-                    <Text size={"xs"} c={"dimmed"}>
+                    <Text size="xs" c="dimmed">
                       {note}
                     </Text>
                   )}
@@ -118,8 +116,8 @@ export function ItemStatusTable({
               {item.receiveFromName === undefined ? (
                 item.title
               ) : (
-                <Stack gap={2} align={"flex-start"}>
-                  <Text size={"sm"}>{item.title}</Text>
+                <Stack gap={2} align="flex-start">
+                  <Text size="sm">{item.title}</Text>
                   <PeerBadge>Mottas fra {item.receiveFromName}</PeerBadge>
                 </Stack>
               )}

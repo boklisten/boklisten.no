@@ -1,6 +1,7 @@
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
 import { Button, Stack } from "@mantine/core";
-import { Activity, type ReactNode, useEffect, useEffectEvent } from "react";
+import { Activity, useEffect, useEffectEvent } from "react";
+import type { ReactNode } from "react";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -62,17 +63,17 @@ export default function AuthGuard({
   });
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading) {
+      return;
+    }
     onAuthChange();
     // oxlint-disable-next-line react/exhaustive-effect-dependencies -- the extra deps deliberately re-run the auth check whenever the auth state changes
   }, [isLoading, isLoggedIn, requiredPermission, hasPendingTasks, isOnAllowedPath]);
 
   if (errorUpdateCount > 0 && userDetail === undefined) {
     return (
-      <Stack align={"center"}>
-        <ErrorAlert title={"Klarte ikke laste inn brukeren din"}>
-          {PLEASE_TRY_AGAIN_TEXT}
-        </ErrorAlert>
+      <Stack align="center">
+        <ErrorAlert title="Klarte ikke laste inn brukeren din">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
         <Button loading={isFetching} onClick={() => void refetch()}>
           Prøv igjen
         </Button>

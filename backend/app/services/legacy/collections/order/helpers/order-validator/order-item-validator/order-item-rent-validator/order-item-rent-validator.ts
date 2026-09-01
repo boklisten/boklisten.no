@@ -1,12 +1,12 @@
 import { OrderItemRentPeriodValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-rent-validator/order-item-rent-period-validator/order-item-rent-period-validator";
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { BlError } from "#shared/bl-error";
-import { Branch } from "#shared/branch";
-import { Item } from "#shared/item";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Branch } from "#shared/branch";
+import type { Item } from "#shared/item";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderItemRentValidator {
-  private orderItemRentPeriodValidator = new OrderItemRentPeriodValidator();
+  private readonly orderItemRentPeriodValidator = new OrderItemRentPeriodValidator();
 
   public async validate(branch: Branch, orderItem: OrderItem, item: Item): Promise<boolean> {
     try {

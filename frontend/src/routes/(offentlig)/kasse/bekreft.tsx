@@ -19,7 +19,7 @@ export const Route = createFileRoute("/(offentlig)/kasse/bekreft")({
 function CheckoutConfirmPage() {
   const { orderId } = Route.useSearch();
   return (
-    <Container size={"md"}>
+    <Container size="md">
       <Stack>
         <Title>Bekreft bestilling</Title>
         <ConfirmOrder orderId={orderId} />

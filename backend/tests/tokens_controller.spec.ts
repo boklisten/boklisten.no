@@ -1,16 +1,17 @@
 import { HttpContextFactory } from "@adonisjs/core/factories/http";
 import { test } from "@japa/runner";
 import jwt from "jsonwebtoken";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import TokensController from "#controllers/auth/tokens_controller";
 import { StorageService } from "#services/storage_service";
 import { UserDetailService } from "#services/user_detail_service";
 import { UserService } from "#services/user_service";
-import { UserDetail } from "#shared/user-detail";
+import type { UserDetail } from "#shared/user-detail";
 import env from "#start/env";
 import { mock } from "#tests/test-doubles";
-import { User } from "#types/user";
+import type { User } from "#types/user";
 
 function createRefreshToken() {
   return jwt.sign(

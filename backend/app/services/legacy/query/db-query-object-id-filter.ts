@@ -11,7 +11,9 @@ export class DbQueryObjectIdFilter {
     if (!query || (Object.keys(query).length === 0 && query.constructor === Object)) {
       throw new TypeError("query can not be undefined or empty");
     }
-    if (validStringParams.length <= 0) return [];
+    if (validStringParams.length <= 0) {
+      return [];
+    }
 
     const objectIdFilters: ObjectIdFilter[] = [];
 
@@ -49,15 +51,16 @@ export class DbQueryObjectIdFilter {
     } catch (error) {
       if (error instanceof TypeError) {
         throw new TypeError(
-          "query includes bad object-id parameter data, reason: " + error.message,
+          `query includes bad object-id parameter data, reason: ${error.message}`,
           { cause: error },
         );
       }
 
       throw new Error(
-        "could not parse the object-id parameters in query, reason: " +
+        `could not parse the object-id parameters in query, reason: ${
           // @ts-expect-error fixme: auto ignored
-          error.message,
+          error.message
+        }`,
         { cause: error },
       );
     }
@@ -67,14 +70,14 @@ export class DbQueryObjectIdFilter {
     if (this.validateStringParam(parameter)) {
       return new Types.ObjectId(parameter);
     }
-    throw new TypeError('the paramterer of value "' + parameter + '" is not a valid string');
+    throw new TypeError(`the paramterer of value "${parameter}" is not a valid string`);
   }
 
   private getStringParamValue(parameter: string): string {
     if (this.validateStringParam(parameter)) {
       return parameter;
     }
-    throw new TypeError('the paramterer of value "' + parameter + '" is not a valid string');
+    throw new TypeError(`the paramterer of value "${parameter}" is not a valid string`);
   }
 
   private validateStringParam(parameter?: string): boolean {

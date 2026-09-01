@@ -14,12 +14,15 @@ export class DbQueryRegexFilter {
 
     let searchString = query.s;
 
-    if (!searchString) return [];
+    if (!searchString) {
+      return [];
+    }
 
     searchString = this.sanitizeSearchString(searchString);
 
-    if (searchString.length < 3)
-      throw new TypeError('search string "' + searchString + '" is under 3 chars long');
+    if (searchString.length < 3) {
+      throw new TypeError(`search string "${searchString}" is under 3 chars long`);
+    }
 
     return this.generateRegexFilters(searchString, validRegexParams);
   }

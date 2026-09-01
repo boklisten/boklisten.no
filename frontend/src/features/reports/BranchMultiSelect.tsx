@@ -20,7 +20,7 @@ export default function BranchMultiSelect({
   return (
     <MultiSelect
       label={label}
-      placeholder={"Alle filialer"}
+      placeholder="Alle filialer"
       searchable
       clearable
       disabled={isPending}

@@ -37,15 +37,15 @@ export default function CustomerMessagesView({ customer }: { customer: UserDetai
     return <ErrorAlert>Kunne ikke hente meldingene. Prøv igjen senere.</ErrorAlert>;
   }
   if (isPending || !data) {
-    return <Loader mx={"auto"} display={"block"} my={"lg"} />;
+    return <Loader mx="auto" display="block" my="lg" />;
   }
 
   return (
-    <Stack gap={"xs"}>
+    <Stack gap="xs">
       <MessageEntryList
         entries={data.entries}
         guardianRecipients={guardianRecipientsOf(customer)}
-        emptyText={"Ingen meldinger er sendt til denne kunden ennå."}
+        emptyText="Ingen meldinger er sendt til denne kunden ennå."
       />
     </Stack>
   );

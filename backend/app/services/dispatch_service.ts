@@ -7,22 +7,19 @@ import twilio from "twilio";
 import { OrderEmailHandler } from "#services/legacy/order_email_handler";
 import { isUnderage } from "#models/signature";
 import { userHasValidSignature } from "#services/legacy/signature.helper";
-import { MessageLogContext, MessageLogService } from "#services/message_log_service";
+import type { MessageLogContext } from "#services/message_log_service";
+import { MessageLogService } from "#services/message_log_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { UserDetailService } from "#services/user_detail_service";
 import { UserService } from "#services/user_service";
-import { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
-import { Order } from "#shared/order/order";
-import { UserDetail } from "#shared/user-detail";
+import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
+import type { Order } from "#shared/order/order";
+import type { UserDetail } from "#shared/user-detail";
 import env from "#start/env";
-import { EmailOrder, EmailUser } from "#types/email";
-import {
-  EMAIL_SENDER,
-  EMAIL_TEMPLATES,
-  EmailRecipient,
-  EmailTemplate,
-} from "#types/email_templates";
+import type { EmailOrder, EmailUser } from "#types/email";
+import type { EmailRecipient, EmailTemplate } from "#types/email_templates";
+import { EMAIL_SENDER, EMAIL_TEMPLATES } from "#types/email_templates";
 import { sendgridEmailTemplatesResponseValidator } from "#validators/dispatch";
 
 const twilioClient = twilio(env.get("TWILIO_SMS_SID"), env.get("TWILIO_SMS_AUTH_TOKEN"), {
@@ -42,8 +39,12 @@ interface SmsMessage {
  * status change.
  */
 function twilioStatusCallback(messageId: string | undefined): string | undefined {
-  if (!messageId) return undefined;
-  if (env.get("API_ENV") !== "production" && env.get("API_ENV") !== "staging") return undefined;
+  if (!messageId) {
+    return undefined;
+  }
+  if (env.get("API_ENV") !== "production" && env.get("API_ENV") !== "staging") {
+    return undefined;
+  }
   return `${env.get("BL_API_URI")}/webhooks/twilio/${messageId}`;
 }
 
@@ -248,7 +249,7 @@ const DispatchService = {
         {
           to: emailUser.email,
           dynamicTemplateData: {
-            subject: "Din kvittering fra Boklisten.no #" + emailOrder.id,
+            subject: `Din kvittering fra Boklisten.no #${emailOrder.id}`,
             emailTemplateInput: {
               user: emailUser,
               order: emailOrder,
@@ -264,7 +265,9 @@ const DispatchService = {
     });
   },
   async sendSignatureLink(customerDetail: UserDetail, branchName: string) {
-    if (await userHasValidSignature(customerDetail)) return;
+    if (await userHasValidSignature(customerDetail)) {
+      return;
+    }
     await StorageService.UserDetails.update(customerDetail.id, {
       "tasks.signAgreement": true,
     });
@@ -284,7 +287,7 @@ const DispatchService = {
             guardianSignatureUri: `${env.get("CLIENT_URI")}/signering/${customerDetail.id}`,
             customerName: customerDetail.name,
             guardianName: customerDetail.guardian.name,
-            branchName: branchName,
+            branchName,
           },
         },
       });
@@ -305,7 +308,7 @@ const DispatchService = {
           dynamicTemplateData: {
             signatureUri: `${env.get("CLIENT_URI")}/signering/${customerDetail.id}`,
             name: customerDetail.name,
-            branchName: branchName,
+            branchName,
           },
         },
       });

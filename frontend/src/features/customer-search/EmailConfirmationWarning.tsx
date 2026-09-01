@@ -29,9 +29,9 @@ export default function EmailConfirmationWarning({ customer }: { customer: UserD
   }
 
   return (
-    <WarningAlert title={"E-postadressen er ikke bekreftet"}>
-      <Stack gap={"xs"} align={"flex-start"}>
-        <Text size={"sm"}>
+    <WarningAlert title="E-postadressen er ikke bekreftet">
+      <Stack gap="xs" align="flex-start">
+        <Text size="sm">
           Spør kunden om{" "}
           <Text span fw={700} style={{ overflowWrap: "anywhere" }}>
             {customer.email}
@@ -39,13 +39,13 @@ export default function EmailConfirmationWarning({ customer }: { customer: UserD
           er riktig e-post. Er den feil, kan du endre den med{" "}
           <IconPencil
             size={16}
-            aria-label={"Rediger brukerdetaljer"}
+            aria-label="Rediger brukerdetaljer"
             style={{ verticalAlign: "text-bottom" }}
           />
         </Text>
         <Button
-          color={"yellow"}
-          variant={"filled"}
+          color="yellow"
+          variant="filled"
           loading={confirmEmailMutation.isPending}
           onClick={() => confirmEmailMutation.mutate({ params: { detailsId: customer.id } })}
         >

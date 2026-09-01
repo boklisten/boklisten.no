@@ -1,6 +1,6 @@
 import { HttpContext } from "@adonisjs/core/http";
 import { BaseSerializer } from "@adonisjs/core/transformers";
-import { type SimplePaginatorMetaKeys } from "@adonisjs/lucid/types/querybuilder";
+import type { SimplePaginatorMetaKeys } from "@adonisjs/lucid/types/querybuilder";
 
 class ApiSerializer extends BaseSerializer<{
   Wrap: "data";

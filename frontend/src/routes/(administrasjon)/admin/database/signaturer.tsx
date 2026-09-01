@@ -14,7 +14,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/database/signature
 
 function DatabaseSignaturesPage() {
   return (
-    <AuthGuard requiredPermission={"admin"}>
+    <AuthGuard requiredPermission="admin">
       <SignatureGallery />
     </AuthGuard>
   );

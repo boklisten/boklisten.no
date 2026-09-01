@@ -84,7 +84,9 @@ export default class extends BaseSchema {
     });
 
     this.defer(async () => {
-      if (env.get("API_ENV") === "test") return;
+      if (env.get("API_ENV") === "test") {
+        return;
+      }
 
       const connection = await mongoose
         .createConnection(env.get("MONGODB_URI"), {
@@ -93,7 +95,9 @@ export default class extends BaseSchema {
         .asPromise();
       try {
         const mongo = connection.db;
-        if (!mongo) throw new Error("mongoose connection has no db handle");
+        if (!mongo) {
+          throw new Error("mongoose connection has no db handle");
+        }
         await mongo.dropCollection("messages").catch((error: unknown) => {
           // NamespaceNotFound: already gone, nothing to drop.
           const alreadyGone =
@@ -101,7 +105,9 @@ export default class extends BaseSchema {
             error !== null &&
             "codeName" in error &&
             error.codeName === "NamespaceNotFound";
-          if (!alreadyGone) throw error;
+          if (!alreadyGone) {
+            throw error;
+          }
         });
       } finally {
         await connection.close();

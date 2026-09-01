@@ -6,8 +6,8 @@ import TanStackAnchor from "@/shared/components/TanStackAnchor";
 
 export default function Logo({ variant, admin }: { variant: "white" | "blue"; admin?: boolean }) {
   return (
-    <TanStackAnchor to={admin ? "/admin" : "/"} underline={"never"}>
-      <Group gap={"xs"} wrap={"nowrap"}>
+    <TanStackAnchor to={admin ? "/admin" : "/"} underline="never">
+      <Group gap="xs" wrap="nowrap">
         <Image
           src={`/images/boklisten_logo_${variant}.png`}
           width={40}
@@ -18,7 +18,7 @@ export default function Logo({ variant, admin }: { variant: "white" | "blue"; ad
           style={{ fontFamily: "serif" }}
           order={2}
           c={variant === "white" ? "#fff" : "#26768f"}
-          textWrap={"nowrap"}
+          textWrap="nowrap"
         >
           {admin ? "bl-admin" : "Boklisten.no"}
         </Title>

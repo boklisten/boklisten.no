@@ -17,8 +17,8 @@ function SelectSubjectsPage() {
   const { branchId } = Route.useParams();
 
   return (
-    <Container size={"md"}>
-      <Stack gap={"xs"}>
+    <Container size="md">
+      <Stack gap="xs">
         <Title>Hvilke fag tar du?</Title>
         <SelectSubjects branchId={branchId} />
       </Stack>

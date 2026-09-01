@@ -1,12 +1,13 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { PaymentValidator } from "#services/legacy/collections/payment/helpers/payment.validator";
 import { PaymentPostHook } from "#services/legacy/collections/payment/hooks/payment.post.hook";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
-import { Payment } from "#shared/payment/payment";
+import type { Order } from "#shared/order/order";
+import type { Payment } from "#shared/payment/payment";
 import { asStub } from "#tests/test-doubles";
 
 test.group("PaymentPostHook", (group) => {
@@ -58,9 +59,7 @@ test.group("PaymentPostHook", (group) => {
 
       return Promise.resolve(testPayment);
     });
-    sandbox.stub(StorageService.Payments, "update").callsFake(() => {
-      return Promise.resolve(testPayment);
-    });
+    sandbox.stub(StorageService.Payments, "update").callsFake(() => Promise.resolve(testPayment));
 
     sandbox.stub(StorageService.Orders, "get").callsFake((id) => {
       if (id !== testOrder.id) {
@@ -70,9 +69,7 @@ test.group("PaymentPostHook", (group) => {
       return Promise.resolve(testOrder);
     });
 
-    sandbox.stub(StorageService.Orders, "update").callsFake(() => {
-      return Promise.resolve(testOrder);
-    });
+    sandbox.stub(StorageService.Orders, "update").callsFake(() => Promise.resolve(testOrder));
 
     sandbox.stub(paymentValidator, "validate").callsFake(() => {
       if (!paymentValidated) {
@@ -86,15 +83,14 @@ test.group("PaymentPostHook", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if ids is empty or undefined", async ({ assert }) => {
-    return assert.rejects(
+  test("should reject if ids is empty or undefined", async ({ assert }) =>
+    assert.rejects(
       () =>
         // @ts-expect-error fixme: auto ignored
         paymentPostHook.after([], testAccessToken),
       BlError,
       /payments is empty or undefined/,
-    );
-  });
+    ));
 
   test("should reject if paymentValidator.validate rejects", async ({ assert }) => {
     paymentValidated = false;

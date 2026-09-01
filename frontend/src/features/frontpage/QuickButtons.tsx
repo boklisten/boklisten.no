@@ -9,25 +9,25 @@ import useAuth from "@/shared/hooks/useAuth";
 export default function QuickButtons() {
   const { isLoggedIn, detailsId } = useAuth();
   return (
-    <Group justify={"center"}>
+    <Group justify="center">
       <Activity mode={isLoggedIn ? "visible" : "hidden"}>
-        <Button component={TanStackAnchor} to={"/items"} leftSection={<IconBook />}>
+        <Button component={TanStackAnchor} to="/items" leftSection={<IconBook />}>
           Dine bøker
         </Button>
         {detailsId && <ShowCustomerIdButton customerId={detailsId} />}
       </Activity>
       <Activity mode={!isLoggedIn ? "visible" : "hidden"}>
-        <Button component={TanStackAnchor} to={"/auth/login"} bg={"green"}>
+        <Button component={TanStackAnchor} to="/auth/login" bg="green">
           Logg inn
         </Button>
-        <Button component={TanStackAnchor} to={"/auth/register"}>
+        <Button component={TanStackAnchor} to="/auth/register">
           Registrer deg
         </Button>
       </Activity>
-      <Button component={TanStackAnchor} to={"/info/branch"} variant={"outline"}>
+      <Button component={TanStackAnchor} to="/info/branch" variant="outline">
         Våre åpningstider
       </Button>
-      <Button component={TanStackAnchor} to={"/info/faq"} variant={"outline"}>
+      <Button component={TanStackAnchor} to="/info/faq" variant="outline">
         Ofte stilte spørsmål
       </Button>
     </Group>

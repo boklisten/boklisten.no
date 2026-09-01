@@ -1,7 +1,10 @@
-import { type IDetectedBarcode, type IScannerError, Scanner } from "@yudiel/react-qr-scanner";
-import { type ReactNode, useCallback, useEffect, useRef } from "react";
+import { Scanner } from "@yudiel/react-qr-scanner";
+import type { IDetectedBarcode, IScannerError } from "@yudiel/react-qr-scanner";
+import { useCallback, useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 
-import { determineScanCodeType, type ScanCodeType } from "@/shared/utils/scanCodes";
+import { determineScanCodeType } from "@/shared/utils/scanCodes";
+import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
 const DECODED_FORMATS = ["qr_code", "code_128", "ean_8", "ean_13"] as const;
 

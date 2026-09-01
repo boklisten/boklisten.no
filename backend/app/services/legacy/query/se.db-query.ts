@@ -1,16 +1,16 @@
 import { ObjectId } from "mongodb";
 
-import { BooleanFilter } from "#services/legacy/query/db-query-boolean-filter";
-import { DateFilter } from "#services/legacy/query/db-query-date-filter";
-import { ExpandFilter } from "#services/legacy/query/db-query-expand-filter";
-import { LimitFilter } from "#services/legacy/query/db-query-limit-filter";
-import { NumberFilter } from "#services/legacy/query/db-query-number-filter";
-import { ObjectIdFilter } from "#services/legacy/query/db-query-object-id-filter";
-import { OnlyGetFilter } from "#services/legacy/query/db-query-only-get-filter";
-import { RegexFilter } from "#services/legacy/query/db-query-regex-filter";
-import { SkipFilter } from "#services/legacy/query/db-query-skip-filter";
-import { SortFilter } from "#services/legacy/query/db-query-sort-filter";
-import { StringFilter } from "#services/legacy/query/db-query-string-filter";
+import type { BooleanFilter } from "#services/legacy/query/db-query-boolean-filter";
+import type { DateFilter } from "#services/legacy/query/db-query-date-filter";
+import type { ExpandFilter } from "#services/legacy/query/db-query-expand-filter";
+import type { LimitFilter } from "#services/legacy/query/db-query-limit-filter";
+import type { NumberFilter } from "#services/legacy/query/db-query-number-filter";
+import type { ObjectIdFilter } from "#services/legacy/query/db-query-object-id-filter";
+import type { OnlyGetFilter } from "#services/legacy/query/db-query-only-get-filter";
+import type { RegexFilter } from "#services/legacy/query/db-query-regex-filter";
+import type { SkipFilter } from "#services/legacy/query/db-query-skip-filter";
+import type { SortFilter } from "#services/legacy/query/db-query-sort-filter";
+import type { StringFilter } from "#services/legacy/query/db-query-string-filter";
 import { BlError } from "#shared/bl-error";
 
 export class SEDbQuery {
@@ -79,8 +79,9 @@ export class SEDbQuery {
       if (Array.isArray(objectIdFilter.value)) {
         const array = objectIdFilter.value;
         for (const stringValue of array) {
-          if (!ObjectId.isValid(stringValue))
+          if (!ObjectId.isValid(stringValue)) {
             throw new BlError(`Invalid ObjectID: ${stringValue}`).code(701);
+          }
           const multipleValuesFilterObject = {};
 
           // @ts-expect-error fixme: auto ignored
@@ -88,8 +89,9 @@ export class SEDbQuery {
           orArray.push(multipleValuesFilterObject);
         }
       } else {
-        if (!ObjectId.isValid(objectIdFilter.value))
+        if (!ObjectId.isValid(objectIdFilter.value)) {
           throw new BlError(`Invalid ObjectID: ${objectIdFilter.value}`).code(701);
+        }
 
         // @ts-expect-error fixme: auto ignored
         filterObject[objectIdFilter.fieldName] = objectIdFilter.value;

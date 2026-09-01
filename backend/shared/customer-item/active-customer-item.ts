@@ -1,4 +1,4 @@
-import { CustomerItemType } from "#shared/customer-item/customer-item-type";
+import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
 
 /** A book a customer is currently holding, as shown to employees at the stand. */
 export interface ActiveCustomerItem {

@@ -25,21 +25,21 @@ function ExcludedCustomerRow({ id, onRemove }: { id: string; onRemove: () => voi
   );
 
   return (
-    <Card withBorder padding={"xs"}>
-      <Group justify={"space-between"} wrap={"nowrap"}>
+    <Card withBorder padding="xs">
+      <Group justify="space-between" wrap="nowrap">
         <Stack gap={0} style={{ minWidth: 0 }}>
           <Text fw={500} truncate>
             {isPending ? "Laster…" : (detail?.name ?? "Fant ikke eleven")}
           </Text>
           {detail?.email && (
-            <Text size={"sm"} c={"dimmed"} truncate>
+            <Text size="sm" c="dimmed" truncate>
               {detail.email}
             </Text>
           )}
         </Stack>
         <Button
-          variant={"subtle"}
-          color={"red"}
+          variant="subtle"
+          color="red"
           leftSection={<IconTrash size={16} />}
           style={{ flexShrink: 0 }}
           onClick={onRemove}
@@ -107,16 +107,16 @@ export default function ExcludedCustomersField({
       ))}
 
       <TextInput
-        label={"Legg til elev"}
-        placeholder={"Telefonnummer, e-post, navn eller adresse"}
+        label="Legg til elev"
+        placeholder="Telefonnummer, e-post, navn eller adresse"
         value={searchValue}
         onChange={(event) => setSearchValue(event.currentTarget.value)}
         leftSection={<IconSearch size={16} aria-hidden />}
-        rightSection={isFetching ? <Loader size={"xs"} /> : undefined}
+        rightSection={isFetching ? <Loader size="xs" /> : undefined}
         spellCheck={false}
-        autoCorrect={"off"}
-        autoCapitalize={"off"}
-        autoComplete={"off"}
+        autoCorrect="off"
+        autoCapitalize="off"
+        autoComplete="off"
       />
 
       {searchActive && (
@@ -125,24 +125,24 @@ export default function ExcludedCustomersField({
             {candidates.map((result) => (
               <Button
                 key={result.id}
-                variant={"subtle"}
-                color={"gray"}
+                variant="subtle"
+                color="gray"
                 fullWidth
-                justify={"flex-start"}
-                h={"auto"}
-                py={"xs"}
+                justify="flex-start"
+                h="auto"
+                py="xs"
                 onClick={() => add(result)}
               >
-                <Stack gap={0} align={"flex-start"}>
+                <Stack gap={0} align="flex-start">
                   <Text fw={500}>{result.name}</Text>
-                  <Text size={"sm"} c={"dimmed"}>
+                  <Text size="sm" c="dimmed">
                     {[result.phone, result.email].filter(Boolean).join(" · ")}
                   </Text>
                 </Stack>
               </Button>
             ))}
             {candidates.length === 0 && !isFetching && (
-              <Text size={"sm"} c={"dimmed"} p={"sm"}>
+              <Text size="sm" c="dimmed" p="sm">
                 Fant ingen elever for «{debouncedSearch}».
               </Text>
             )}

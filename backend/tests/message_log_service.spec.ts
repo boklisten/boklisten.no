@@ -3,7 +3,8 @@ import { generateKeyPairSync, randomUUID, sign as signCrypto } from "node:crypto
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import Message from "#models/message";
 import MessageEvent from "#models/message_event";
@@ -225,7 +226,7 @@ test.group("verifySendgridSignature", () => {
 
     assert.isTrue(verifySendgridSignature({ publicKeyBase64, rawBody, signature, timestamp }));
     assert.isFalse(
-      verifySendgridSignature({ publicKeyBase64, rawBody: rawBody + " ", signature, timestamp }),
+      verifySendgridSignature({ publicKeyBase64, rawBody: `${rawBody} `, signature, timestamp }),
     );
     assert.isFalse(
       verifySendgridSignature({ publicKeyBase64: "not-a-key", rawBody, signature, timestamp }),

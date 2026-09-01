@@ -16,7 +16,7 @@ export const Route = createFileRoute("/(offentlig)/order-history")({
 function OrdersPage() {
   return (
     <AuthGuard>
-      <Container size={"md"}>
+      <Container size="md">
         <Stack>
           <Title>Ordrehistorikk</Title>
           <OrderHistory />

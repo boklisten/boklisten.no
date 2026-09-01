@@ -5,8 +5,9 @@ import { CustomerItemService } from "#services/customer_item_service";
 import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
 import { OrderItemService } from "#services/order_item_service";
 import { StorageService } from "#services/storage_service";
-import { ACQUISITION_CART_ITEM_TYPES, CartItemType, CheckoutCartItem } from "#shared/cart_item";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { CartItemType, CheckoutCartItem } from "#shared/cart_item";
+import { ACQUISITION_CART_ITEM_TYPES } from "#shared/cart_item";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export const OrderService = {
   async getOpenOrderItems(customerId: string, types: CartItemType[] = ["rent", "partly-payment"]) {
@@ -70,8 +71,9 @@ export const OrderService = {
   },
 
   async createFromCart(customerId: string, cartItems: CheckoutCartItem[]) {
-    if (new Set(cartItems.map((cartItem) => cartItem.id)).size !== cartItems.length)
+    if (new Set(cartItems.map((cartItem) => cartItem.id)).size !== cartItems.length) {
       throw new BadRequestException("Du kan ikke bestille flere av samme bok");
+    }
 
     const openOrderItemIds = cartItems.some((cartItem) =>
       ACQUISITION_CART_ITEM_TYPES.includes(cartItem.type),
@@ -95,20 +97,29 @@ export const OrderService = {
         }),
       ]);
       if (ACQUISITION_CART_ITEM_TYPES.includes(cartItem.type)) {
-        if (customerItem) throw new BadRequestException(`Du har allerede «${item.title}»`);
-        if (openOrderItemIds.has(cartItem.id))
+        if (customerItem) {
+          throw new BadRequestException(`Du har allerede «${item.title}»`);
+        }
+        if (openOrderItemIds.has(cartItem.id)) {
           throw new BadRequestException(`Du har allerede bestilt «${item.title}»`);
+        }
       }
       let orderItem: OrderItem;
       switch (cartItem.type) {
         case "buyout": {
-          if (!customerItem) throw new Error("No customer item found for buyout");
+          if (!customerItem) {
+            throw new Error("No customer item found for buyout");
+          }
           orderItem = await OrderItemService.createBuyoutOrderItem(customerItem, item);
           break;
         }
         case "extend": {
-          if (!customerItem) throw new Error("customerItem is required for extensions");
-          if (!cartItem.to) throw new Error("to is required for extensions");
+          if (!customerItem) {
+            throw new Error("customerItem is required for extensions");
+          }
+          if (!cartItem.to) {
+            throw new Error("to is required for extensions");
+          }
           orderItem = await OrderItemService.createExtendOrderItem(customerItem, item, cartItem.to);
           break;
         }
@@ -117,7 +128,9 @@ export const OrderService = {
           break;
         }
         case "partly-payment": {
-          if (!cartItem.to) throw new Error("to is required for extensions");
+          if (!cartItem.to) {
+            throw new Error("to is required for extensions");
+          }
           orderItem = await OrderItemService.createPartlyPaymentOrderItem(
             item,
             cartItem.branchId,
@@ -126,7 +139,9 @@ export const OrderService = {
           break;
         }
         case "rent": {
-          if (!cartItem.to) throw new Error("to is required for extensions");
+          if (!cartItem.to) {
+            throw new Error("to is required for extensions");
+          }
           orderItem = await OrderItemService.createRentOrderItem(
             item,
             cartItem.branchId,
@@ -134,14 +149,17 @@ export const OrderService = {
           );
           break;
         }
-        default:
+        default: {
           throw new Error("Order item type not supported");
+        }
       }
       total += orderItem.amount;
       orderItems.push(orderItem);
     }
     const branchId = cartItems[0]?.branchId;
-    if (!branchId) throw new Error("No branchId for checkout order");
+    if (!branchId) {
+      throw new Error("No branchId for checkout order");
+    }
 
     return await StorageService.Orders.add({
       amount: total,

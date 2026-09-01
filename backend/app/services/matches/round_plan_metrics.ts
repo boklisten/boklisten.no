@@ -5,7 +5,9 @@ import type { BookTally, MatchRoundPlanMetrics } from "#shared/match/match-round
 
 function tally(booksByStudent: Map<string, Set<string>>): BookTally {
   let books = 0;
-  for (const items of booksByStudent.values()) books += items.size;
+  for (const items of booksByStudent.values()) {
+    books += items.size;
+  }
   return { books, students: booksByStudent.size };
 }
 

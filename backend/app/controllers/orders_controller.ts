@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import { assertNotBlockedByUserMatch } from "#services/matches/cancellation_block";
@@ -6,8 +6,8 @@ import { OrderCancellationService } from "#services/order_cancellation_service";
 import { OrderService } from "#services/order_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 import { USER_PERMISSION } from "#shared/user-permission";
 import { cancelOrderItemValidator } from "#validators/cancel_order_item_validator";
 import { SEDbQuery } from "#services/legacy/query/se.db-query";

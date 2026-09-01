@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 import hash from "@adonisjs/core/services/hash";
 
 import CryptoService from "#services/crypto_service";
@@ -16,10 +16,11 @@ async function getPasswordReset({ id, token }: { id: string; token: string }) {
     .where("createdAt", ">", DateTime.now().minus({ minutes: 30 }).toSQL())
     .first();
 
-  if (!passwordReset)
+  if (!passwordReset) {
     return {
       message: `Lenken har utløpt. Du kan be om å få tilsendt en ny lenke på 'glemt passord'-siden`,
     };
+  }
 
   try {
     await hash.assertEquals(passwordReset.tokenHash, token);

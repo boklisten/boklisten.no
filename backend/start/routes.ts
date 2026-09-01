@@ -9,13 +9,9 @@ import { throttle } from "#start/limiter";
  * static
  */
 
-router.get("/", () => {
-  return {};
-});
+router.get("/", () => ({}));
 
-router.get("/health", () => {
-  return { status: "ok" };
-});
+router.get("/health", () => ({ status: "ok" }));
 
 /**
  * auth token

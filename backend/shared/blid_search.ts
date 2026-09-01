@@ -1,4 +1,4 @@
-import { CustomerItemType } from "#shared/customer-item/customer-item-type";
+import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
 
 /** A party that can hold or hand over a book: a customer, or the stand itself. */
 export type BlidParty = { type: "customer"; detailsId: string; name: string } | { type: "stand" };

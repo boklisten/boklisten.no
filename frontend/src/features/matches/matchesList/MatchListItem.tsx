@@ -1,12 +1,8 @@
 import { Text, Title } from "@mantine/core";
 import { Activity } from "react";
 
-import {
-  isBegun,
-  isFullyFulfilled,
-  type ViewerMatch,
-  viewerProgress,
-} from "@/features/matches/forViewer";
+import { isBegun, isFullyFulfilled, viewerProgress } from "@/features/matches/forViewer";
+import type { ViewerMatch } from "@/features/matches/forViewer";
 import { formatActionsString, MatchTitle } from "@/features/matches/matchesList/helper";
 import MatchListItemCard from "@/features/matches/matchesList/MatchListItemCard";
 import MeetingInfo from "@/features/matches/MeetingInfo";
@@ -26,7 +22,7 @@ export default function MatchListItem({ viewerMatch }: { viewerMatch: ViewerMatc
       <Activity mode={started ? "visible" : "hidden"}>
         <ProgressBar
           percentComplete={progress.percent}
-          subtitle={<Text size={"sm"}>{progress.label}</Text>}
+          subtitle={<Text size="sm">{progress.label}</Text>}
         />
       </Activity>
       <Activity mode={!started && !finished ? "visible" : "hidden"}>

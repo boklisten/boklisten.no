@@ -25,7 +25,9 @@ async function standMatchFor(
     .whereHas("participants", (participants) => participants.where("userDetailId", customerId))
     .preload("participants")
     .first();
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
 
   const created = await Match.create(
     { roundId, meetingLocation: standLocation, meetingTime: null },

@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 
 import { BranchGetHook } from "#services/legacy/collections/branch/hook/branch-get.hook";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { mock } from "#tests/test-doubles";
 
 const branchGetHook = new BranchGetHook();

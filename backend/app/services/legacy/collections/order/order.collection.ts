@@ -4,7 +4,7 @@ import { OrderConfirmOperation } from "#services/legacy/collections/order/operat
 import { GetCustomerOrdersOperation } from "#services/legacy/collections/order/operations/get-customer-orders.operation";
 import { OrderPlaceOperation } from "#services/legacy/collections/order/operations/place/order-place.operation";
 import { StorageService } from "#services/storage_service";
-import { BlCollection } from "#types/bl-collection";
+import type { BlCollection } from "#types/bl-collection";
 
 export const OrderCollection: BlCollection = {
   storage: StorageService.Orders,

@@ -27,7 +27,9 @@ export function isMatchBegun(match: MatchDto): boolean {
 
 export function orderedParties(match: MatchDto): HandoverParty[] {
   const [first, second] = match.participants;
-  if (!first || !second) return match.participants;
+  if (!first || !second) {
+    return match.participants;
+  }
   const firstDelivers = match.obligations.some((obligation) =>
     isSameParty(obligation.sender, first),
   );
@@ -41,11 +43,11 @@ export const AdminMatchTitle = ({ match }: { match: MatchDto }) => {
 
   return (
     <Group gap={2}>
-      <Text fw={"bold"} fz={"inherit"}>
+      <Text fw="bold" fz="inherit">
         {left ? displayName(left) : "?"}
       </Text>
       {isExchange ? <IconSwitchHorizontal size={20} /> : <IconChevronsRight />}
-      <Text fw={"bold"} fz={"inherit"}>
+      <Text fw="bold" fz="inherit">
         {right ? displayName(right) : "?"}
       </Text>
     </Group>

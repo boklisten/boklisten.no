@@ -1,6 +1,6 @@
 import { Hook } from "#services/legacy/hook";
 import { PermissionService } from "#services/permission_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
 
 export class PaymentGetAllHook extends Hook {

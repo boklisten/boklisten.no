@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node";
-import { Infer } from "@vinejs/vine/types";
+import type { Infer } from "@vinejs/vine/types";
 import { DateTime } from "luxon";
 
 import BlidService from "#services/blid_service";
@@ -17,12 +17,12 @@ import {
 } from "#services/matches/match_repository";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { CustomerItem } from "#shared/customer-item/customer-item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 import { USER_PERMISSION } from "#shared/user-permission";
-import { matchTransferSchema } from "#validators/matches";
+import type { matchTransferSchema } from "#validators/matches";
 
 const invalidBlidFeedback = "Feil strekkode. Bruk bokas unike ID. Se instruksjoner for hjelp";
 const inactiveBlidFeedback = "Boka du har skannet er ikke aktiv. Vennligst lever den på stand";

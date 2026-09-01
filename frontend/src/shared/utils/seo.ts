@@ -17,7 +17,9 @@ export function normalizePathname(pathname: string): string {
 
 export function isIndexable(pathname: string): boolean {
   const path = normalizePathname(pathname);
-  if (LAYOUT_ONLY_PATHS.has(path)) return false;
+  if (LAYOUT_ONLY_PATHS.has(path)) {
+    return false;
+  }
   return (
     INDEXABLE_PATHS.has(path) ||
     INDEXABLE_PATH_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
@@ -45,7 +47,7 @@ export function jsonLdScript(schema: Record<string, unknown>) {
  * context: reading `ctx` inside `head` makes TypeScript give up on inferring
  * that route's `validateSearch`, and silently widens its search params to `{}`.
  */
-export function urlDependentHead(ctx: { matches: ReadonlyArray<{ pathname: string }> }) {
+export function urlDependentHead(ctx: { matches: readonly { pathname: string }[] }) {
   const pathname = ctx.matches.at(-1)?.pathname ?? "/";
   const canonical = absoluteUrl(pathname);
   const indexable = isProduction() && isIndexable(pathname);

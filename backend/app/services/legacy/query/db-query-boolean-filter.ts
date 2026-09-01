@@ -1,4 +1,4 @@
-import { ParsedQs } from "qs";
+import type { ParsedQs } from "qs";
 
 export interface BooleanFilter {
   fieldName: string;
@@ -7,8 +7,9 @@ export interface BooleanFilter {
 
 export class DbQueryBooleanFilter {
   public getBooleanFilters(query: ParsedQs, validBooleanParams: string[]): BooleanFilter[] {
-    if (!query || (Object.keys(query).length === 0 && query.constructor === Object))
+    if (!query || (Object.keys(query).length === 0 && query.constructor === Object)) {
       throw new TypeError("the given query can not be null or undefined");
+    }
 
     return this.generateBooleanFilters(query, validBooleanParams);
   }
@@ -24,10 +25,10 @@ export class DbQueryBooleanFilter {
         } else if (query[parameter] === "false") {
           value = false;
         } else {
-          throw new TypeError('value "' + query[parameter] + '" could not be parsed to boolean');
+          throw new TypeError(`value "${query[parameter]}" could not be parsed to boolean`);
         }
 
-        booleanFilters.push({ fieldName: parameter, value: value });
+        booleanFilters.push({ fieldName: parameter, value });
       }
     }
 

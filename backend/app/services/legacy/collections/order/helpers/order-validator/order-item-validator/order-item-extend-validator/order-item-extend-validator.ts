@@ -1,8 +1,8 @@
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Branch } from "#shared/branch";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Branch } from "#shared/branch";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderItemExtendValidator {
   public async validate(branch: Branch, orderItem: OrderItem): Promise<boolean> {

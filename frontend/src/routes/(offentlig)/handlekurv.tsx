@@ -14,7 +14,7 @@ export const Route = createFileRoute("/(offentlig)/handlekurv")({
 
 function CartPage() {
   return (
-    <Container size={"md"}>
+    <Container size="md">
       <Stack>
         <Title>Handlekurv</Title>
         <CartContent />

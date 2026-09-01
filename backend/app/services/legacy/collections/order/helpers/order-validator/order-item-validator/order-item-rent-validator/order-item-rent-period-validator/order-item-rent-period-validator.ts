@@ -3,11 +3,11 @@ import { PriceService } from "#services/legacy/price.service";
 import { isNotNullish } from "#services/legacy/typescript-helpers";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { BranchPaymentInfo } from "#shared/branch-payment-info";
+import type { BranchPaymentInfo } from "#shared/branch-payment-info";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
-import { Period } from "#shared/period";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { Period } from "#shared/period";
 
 interface BranchPaymentPeriod {
   type: Period;
@@ -17,7 +17,7 @@ interface BranchPaymentPeriod {
 }
 
 export class OrderItemRentPeriodValidator {
-  private priceService = new PriceService(APP_CONFIG.payment.paymentServiceConfig);
+  private readonly priceService = new PriceService(APP_CONFIG.payment.paymentServiceConfig);
 
   public async validate(
     orderItem: OrderItem,

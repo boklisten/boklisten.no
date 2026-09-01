@@ -1,4 +1,4 @@
-import { BlDocument } from "#shared/bl-document";
+import type { BlDocument } from "#shared/bl-document";
 
 export interface BranchItem extends BlDocument {
   branch: string;

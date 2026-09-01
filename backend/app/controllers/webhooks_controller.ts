@@ -39,7 +39,9 @@ export default class WebhooksController {
     for (const event of events) {
       try {
         const [, data] = await sendgridEventValidator.tryValidate(event);
-        if (!data || data.bl_api_env !== env.get("API_ENV")) continue;
+        if (!data || data.bl_api_env !== env.get("API_ENV")) {
+          continue;
+        }
 
         await MessageLogService.recordProviderEvent({
           messageId: data.bl_message_id,

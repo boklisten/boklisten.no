@@ -2,12 +2,12 @@ import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-it
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
-import { UniqueItem } from "#shared/unique-item";
-import { BlApiRequest } from "#types/bl-api-request";
-import { Operation } from "#types/operation";
+import type { UniqueItem } from "#shared/unique-item";
+import type { BlApiRequest } from "#types/bl-api-request";
+import type { Operation } from "#types/operation";
 
 export class UniqueItemActiveOperation implements Operation {
-  private customerItemActiveBlid: CustomerItemActiveBlid;
+  private readonly customerItemActiveBlid: CustomerItemActiveBlid;
 
   constructor(customerItemActiveBlid?: CustomerItemActiveBlid) {
     this.customerItemActiveBlid = customerItemActiveBlid ?? new CustomerItemActiveBlid();

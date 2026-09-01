@@ -1,4 +1,4 @@
-import { Infer } from "@vinejs/vine/types";
+import type { Infer } from "@vinejs/vine/types";
 
 import MatchRound from "#models/match_round";
 import DispatchService from "#services/dispatch_service";
@@ -6,7 +6,7 @@ import { MessageLogService } from "#services/message_log_service";
 import { MatchRepository } from "#services/matches/match_repository";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { matchNotifySchema } from "#validators/matches";
+import type { matchNotifySchema } from "#validators/matches";
 
 export async function notify(
   { target, message, roundId }: Infer<typeof matchNotifySchema>,
@@ -16,7 +16,9 @@ export async function notify(
     roundId === undefined
       ? await MatchRepository.findDefaultRound()
       : await MatchRound.find(roundId);
-  if (!round) return "Could not find any matches!";
+  if (!round) {
+    return "Could not find any matches!";
+  }
 
   // Students cannot see a draft round, so a message about it would point them at nothing.
   if (round.status !== "active") {
@@ -24,7 +26,9 @@ export async function notify(
   }
 
   const matches = await MatchRepository.findForRound(round.id);
-  if (matches.length === 0) return "Could not find any matches!";
+  if (matches.length === 0) {
+    return "Could not find any matches!";
+  }
 
   const userMatchCustomers = new Set<string>();
   const standMatchCustomers = new Set<string>();
@@ -33,7 +37,9 @@ export async function notify(
       (participant) => participant.userDetailId === null,
     );
     for (const participant of match.participants) {
-      if (participant.userDetailId === null) continue;
+      if (participant.userDetailId === null) {
+        continue;
+      }
       (isStandMatch ? standMatchCustomers : userMatchCustomers).add(participant.userDetailId);
     }
   }

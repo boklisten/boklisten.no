@@ -1,12 +1,13 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderItemExtendValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-extend-validator/order-item-extend-validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Branch } from "#shared/branch";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { Order } from "#shared/order/order";
+import type { Branch } from "#shared/branch";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { Order } from "#shared/order/order";
 
 test.group("OrderItemExtendValidator", (group) => {
   const orderItemExtendValidator = new OrderItemExtendValidator();
@@ -128,7 +129,7 @@ test.group("OrderItemExtendValidator", (group) => {
     assert,
   }) => {
     // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].info["periodType"] = "year";
+    testOrder.orderItems[0].info.periodType = "year";
 
     // @ts-expect-error fixme: auto ignored
     testBranch.paymentInfo.extendPeriods = [
@@ -151,7 +152,7 @@ test.group("OrderItemExtendValidator", (group) => {
 
   test("should reject if orderItem.info.numberOfPeriods is greater than the maxNumberOfPeriods on branch", async () => {
     // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].info["numberOfPeriods"] = 3;
+    testOrder.orderItems[0].info.numberOfPeriods = 3;
 
     // @ts-expect-error fixme: auto ignored
     testBranch.paymentInfo.extendPeriods = [

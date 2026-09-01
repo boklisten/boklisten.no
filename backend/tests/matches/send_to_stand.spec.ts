@@ -6,7 +6,7 @@ import BookHandover from "#models/book_handover";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import MatchRound from "#models/match_round";
+import type MatchRound from "#models/match_round";
 import { createTestRound } from "#tests/matches/match-testing-utils";
 import { sendMatchToStand } from "#services/matches/send_to_stand";
 

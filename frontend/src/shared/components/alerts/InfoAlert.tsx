@@ -1,4 +1,5 @@
-import { Alert, type AlertProps } from "@mantine/core";
+import { Alert } from "@mantine/core";
+import type { AlertProps } from "@mantine/core";
 import { IconInfoCircle } from "@tabler/icons-react";
 
 export default function InfoAlert(props: AlertProps) {

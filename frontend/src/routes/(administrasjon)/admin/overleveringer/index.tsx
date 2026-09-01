@@ -12,12 +12,8 @@ import MatchStatistics from "@/features/matches/insights/MatchStatistics";
 import PlanRoundModal from "@/features/matches/rounds/PlanRoundModal";
 import PlannedRoundCard from "@/features/matches/rounds/PlannedRoundCard";
 import RoundToolbar from "@/features/matches/rounds/RoundToolbar";
-import {
-  isPlanned,
-  useRefreshRounds,
-  useRounds,
-  type Round,
-} from "@/features/matches/rounds/useRounds";
+import { isPlanned, useRefreshRounds, useRounds } from "@/features/matches/rounds/useRounds";
+import type { Round } from "@/features/matches/rounds/useRounds";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
@@ -34,10 +30,10 @@ export const Route = createFileRoute("/(administrasjon)/admin/overleveringer/")(
 
 function PageSkeleton() {
   return (
-    <Stack gap={"lg"}>
-      <Skeleton height={64} radius={"md"} />
+    <Stack gap="lg">
+      <Skeleton height={64} radius="md" />
       <Skeleton height={36} width={280} />
-      <Skeleton height={300} radius={"md"} />
+      <Skeleton height={300} radius="md" />
     </Stack>
   );
 }
@@ -79,15 +75,15 @@ function AdminMatchesPage() {
   }
 
   return (
-    <Container size={"lg"} py={"lg"}>
-      <Stack gap={"lg"}>
+    <Container size="lg" py="lg">
+      <Stack gap="lg">
         <Title order={1}>Overleveringer</Title>
         {isLoading ? (
           <PageSkeleton />
         ) : error ? (
-          <ErrorAlert title={"Klarte ikke laste inn runder"} />
+          <ErrorAlert title="Klarte ikke laste inn runder" />
         ) : rounds.length === 0 ? (
-          <Stack gap={"lg"}>
+          <Stack gap="lg">
             {isAdmin && (
               <Group>
                 <Button leftSection={<IconPlus size={16} />} onClick={() => setPlanning({})}>
@@ -98,7 +94,7 @@ function AdminMatchesPage() {
             <OverviewEmptyState filtered={false} />
           </Stack>
         ) : (
-          <Stack gap={"lg"}>
+          <Stack gap="lg">
             <RoundToolbar
               rounds={rounds}
               selectedRoundId={selectedRoundId}
@@ -127,18 +123,18 @@ function AdminMatchesPage() {
                   })
                 }
               >
-                <Tabs.List mb={"md"}>
-                  <Tabs.Tab value={"innsikt"} leftSection={<IconChartHistogram size={16} />}>
+                <Tabs.List mb="md">
+                  <Tabs.Tab value="innsikt" leftSection={<IconChartHistogram size={16} />}>
                     Innsikt
                   </Tabs.Tab>
-                  <Tabs.Tab value={"liste"} leftSection={<IconListSearch size={16} />}>
+                  <Tabs.Tab value="liste" leftSection={<IconListSearch size={16} />}>
                     Alle overleveringer
                   </Tabs.Tab>
                 </Tabs.List>
-                <Tabs.Panel value={"innsikt"}>
+                <Tabs.Panel value="innsikt">
                   {selectedRoundId !== null && <MatchStatistics roundId={selectedRoundId} />}
                 </Tabs.Panel>
-                <Tabs.Panel value={"liste"}>
+                <Tabs.Panel value="liste">
                   {selectedRoundId !== null && <AdminMatchOverview roundId={selectedRoundId} />}
                 </Tabs.Panel>
               </Tabs>

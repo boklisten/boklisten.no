@@ -1,5 +1,5 @@
-import { OrderItemType } from "#shared/order/order-item/order-item-type";
-import { PaymentMethod } from "#shared/payment/payment-method/payment-method";
+import type { OrderItemType } from "#shared/order/order-item/order-item-type";
+import type { PaymentMethod } from "#shared/payment/payment-method/payment-method";
 
 export const TranslationService = {
   translateOrderItemTypePastTense(orderItemType: OrderItemType) {

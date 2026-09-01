@@ -49,30 +49,28 @@ export default function BranchRelationshipSettings({ branch }: { branch: Branch 
 
   return (
     <Stack>
-      <form.AppField name={"localName"}>
-        {(field) => <field.TextField label={"Lokalt navn"} placeholder={"Flåklypa"} />}
+      <form.AppField name="localName">
+        {(field) => <field.TextField label="Lokalt navn" placeholder="Flåklypa" />}
       </form.AppField>
-      <form.AppField name={"parentBranch"}>
+      <form.AppField name="parentBranch">
         {(field) => (
           <field.SelectField
-            label={"Tilhører"}
-            placeholder={"Velg filial"}
+            label="Tilhører"
+            placeholder="Velg filial"
             data={branchOptions}
             searchable
             clearable
           />
         )}
       </form.AppField>
-      <form.AppField name={"childLabel"}>
-        {(field) => (
-          <field.TextField label={"Delt inn i"} placeholder={"årskull, klasse, parallell"} />
-        )}
+      <form.AppField name="childLabel">
+        {(field) => <field.TextField label="Delt inn i" placeholder="årskull, klasse, parallell" />}
       </form.AppField>
-      <form.AppField name={"childBranches"}>
+      <form.AppField name="childBranches">
         {(field) => (
           <field.MultiSelectField
-            label={"Består av"}
-            placeholder={"Velg filialer"}
+            label="Består av"
+            placeholder="Velg filialer"
             data={branchOptions}
             searchable
             clearable
@@ -83,7 +81,7 @@ export default function BranchRelationshipSettings({ branch }: { branch: Branch 
         <form.ErrorSummary />
       </form.AppForm>
       <Button
-        color={"green"}
+        color="green"
         onClick={form.handleSubmit}
         loading={updateRelationshipsMutation.isPending}
       >

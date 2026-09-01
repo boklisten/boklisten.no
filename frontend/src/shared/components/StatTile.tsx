@@ -15,18 +15,18 @@ export default function StatTile({
   color: string;
 }) {
   return (
-    <Card withBorder padding={"lg"} radius={"md"} h={"100%"}>
-      <Group wrap={"nowrap"}>
-        <ThemeIcon size={"xl"} radius={"md"} variant={"light"} color={color}>
+    <Card withBorder padding="lg" radius="md" h="100%">
+      <Group wrap="nowrap">
+        <ThemeIcon size="xl" radius="md" variant="light" color={color}>
           {icon}
         </ThemeIcon>
         <div>
-          <Text size={"sm"} c={"dimmed"}>
+          <Text size="sm" c="dimmed">
             {label}
           </Text>
           <Title order={2}>{value.toLocaleString("nb-NO")}</Title>
           {caption && (
-            <Text size={"xs"} c={"dimmed"}>
+            <Text size="xs" c="dimmed">
               {caption}
             </Text>
           )}

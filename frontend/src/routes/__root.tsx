@@ -24,7 +24,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     const { meta, links } = urlDependentHead(ctx);
     return {
       meta: [
-        { charSet: "utf-8" },
+        { charSet: "utf8" },
         {
           name: "viewport",
           content: "width=device-width, initial-scale=1",

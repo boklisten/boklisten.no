@@ -1,11 +1,12 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { CustomerItemService } from "#services/customer_item_service";
 import { OrderItemService } from "#services/order_item_service";
 import { OrderService } from "#services/order_service";
 import { StorageService } from "#services/storage_service";
-import { Item } from "#shared/item";
+import type { Item } from "#shared/item";
 import { asStub, mock } from "#tests/test-doubles";
 
 const CUSTOMER_ID = "5d765db5fc8c47001c408d91";

@@ -55,8 +55,12 @@ function slotLabel(date: string | null) {
 }
 
 function compareSlots(a: string | null, b: string | null) {
-  if (a === null) return 1;
-  if (b === null) return -1;
+  if (a === null) {
+    return 1;
+  }
+  if (b === null) {
+    return -1;
+  }
   return a.localeCompare(b);
 }
 
@@ -101,7 +105,7 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
   }
 
   if (isError || !data) {
-    return <ErrorAlert title={"Kunne ikke laste statistikken"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>;
+    return <ErrorAlert title="Kunne ikke laste statistikken">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>;
   }
 
   const { studentReach } = data;
@@ -192,7 +196,7 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
   }));
 
   return (
-    <Stack gap={"lg"}>
+    <Stack gap="lg">
       <DataFreshness
         dataUpdatedAt={dataUpdatedAt}
         refreshIntervalMs={REFRESH_INTERVAL_MS}
@@ -202,26 +206,26 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
 
       <SimpleGrid cols={{ base: 1, sm: 3 }}>
         <StatTile
-          label={"Antall elever"}
+          label="Antall elever"
           value={studentReach.totalStudents}
           icon={<IconUsers />}
-          color={"blue"}
+          color="blue"
         />
         <StatTile
-          label={"Elevoverleveringer"}
+          label="Elevoverleveringer"
           value={data.userMatchCount}
           icon={<IconArrowsExchange />}
-          color={"teal"}
+          color="teal"
         />
         <StatTile
-          label={"Standoverleveringer"}
+          label="Standoverleveringer"
           value={data.standMatchCount}
           icon={<IconBuildingStore />}
-          color={"grape"}
+          color="grape"
         />
       </SimpleGrid>
 
-      <ChartCard title={"Hvor mange må innom stand?"}>
+      <ChartCard title="Hvor mange må innom stand?">
         <DonutWithLegend
           centerLabel={studentReach.totalStudents.toLocaleString("nb-NO")}
           data={[
@@ -236,18 +240,16 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
       </ChartCard>
 
       <ChartCard
-        title={"Fordeling av overleveringer per elev"}
-        description={
-          "Antall elever per kombinasjon av overleveringer, fargelagt etter hvor gunstig løsningen er"
-        }
+        title="Fordeling av overleveringer per elev"
+        description="Antall elever per kombinasjon av overleveringer, fargelagt etter hvor gunstig løsningen er"
         isEmpty={distributionData.length === 0}
       >
         <BarChart
           h={Math.max(300, distributionData.length * 32)}
           data={distributionData}
-          dataKey={"config"}
-          type={"stacked"}
-          orientation={"vertical"}
+          dataKey="config"
+          type="stacked"
+          orientation="vertical"
           yAxisProps={{ width: 210 }}
           series={distributionSeries}
           withLegend
@@ -255,17 +257,15 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
       </ChartCard>
 
       <ChartCard
-        title={"Fullføringsgrad"}
-        description={
-          "Hvor stor andel av overleveringene som er fullført, påbegynt eller ikke startet"
-        }
+        title="Fullføringsgrad"
+        description="Hvor stor andel av overleveringene som er fullført, påbegynt eller ikke startet"
       >
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          <Stack gap={"xs"}>
+          <Stack gap="xs">
             <Text fw={600}>Elevoverleveringer</Text>
             <DonutWithLegend centerLabel={`${userCompletedPercent} %`} data={userCompletionDonut} />
           </Stack>
-          <Stack gap={"xs"}>
+          <Stack gap="xs">
             <Text fw={600}>Standoverleveringer</Text>
             <DonutWithLegend
               centerLabel={`${standCompletedPercent} %`}
@@ -276,7 +276,7 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
       </ChartCard>
 
       <ChartCard
-        title={"Hvordan overleveringene faktisk gikk"}
+        title="Hvordan overleveringene faktisk gikk"
         description={
           "Hver bok har to halvdeler — avsender som gir fra seg sitt eksemplar, og mottaker som blir " +
           "betjent. De blir rutinemessig oppfylt av hver sin hendelse, så de telles hver for seg."
@@ -287,31 +287,31 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
 
       <SimpleGrid cols={{ base: 1, sm: 3 }}>
         <StatTile
-          label={"Elever med uleverte bøker"}
+          label="Elever med uleverte bøker"
           value={data.senderLiability.studentsStillResponsible}
           icon={<IconAlertTriangle />}
-          color={"orange"}
+          color="orange"
         />
         <StatTile
-          label={"Uleverte eksemplarer"}
+          label="Uleverte eksemplarer"
           value={data.senderLiability.copiesOutstanding}
           icon={<IconBook />}
-          color={"orange"}
+          color="orange"
         />
         <StatTile
-          label={"Bøker flyttet utenom runden"}
+          label="Bøker flyttet utenom runden"
           value={data.handoverVerdicts.outsideAnyMatch}
           icon={<IconArrowsShuffle />}
-          color={"gray"}
+          color="gray"
         />
       </SimpleGrid>
 
-      <ChartCard title={"Bokoverføringer"} description={"Forventet mot faktisk overførte bøker"}>
+      <ChartCard title="Bokoverføringer" description="Forventet mot faktisk overførte bøker">
         <Stack>
           <BarChart
             h={300}
             data={bookTransferData}
-            dataKey={"type"}
+            dataKey="type"
             series={[
               { name: "Forventet", color: "blue.3" },
               { name: "Overført", color: "teal.6" },
@@ -321,13 +321,13 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
           <Stack gap={4}>
             {bookTransfer.map(({ label, expected, transferred }) => (
               <div key={label}>
-                <Group justify={"space-between"}>
-                  <Text size={"sm"}>{label}</Text>
-                  <Text size={"sm"} c={"dimmed"}>
+                <Group justify="space-between">
+                  <Text size="sm">{label}</Text>
+                  <Text size="sm" c="dimmed">
                     {transferred} / {expected} ({percent(transferred, expected)} %)
                   </Text>
                 </Group>
-                <Progress value={percent(transferred, expected)} color={"teal"} />
+                <Progress value={percent(transferred, expected)} color="teal" />
               </div>
             ))}
           </Stack>
@@ -335,14 +335,14 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
       </ChartCard>
 
       <ChartCard
-        title={"Bøker ut fra standen"}
-        description={"Forventet mot faktisk uthentede eksemplarer per tittel"}
+        title="Bøker ut fra standen"
+        description="Forventet mot faktisk uthentede eksemplarer per tittel"
         isEmpty={booksOutData.length === 0}
       >
         <Stack>
-          <Group justify={"flex-end"}>
+          <Group justify="flex-end">
             <Button
-              variant={"light"}
+              variant="light"
               leftSection={<IconDownload size={16} />}
               loading={pickupListDownload.isLoading}
               onClick={pickupListDownload.download}
@@ -353,8 +353,8 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
           <BarChart
             h={Math.max(300, booksOutData.length * 30)}
             data={booksOutData}
-            dataKey={"title"}
-            orientation={"vertical"}
+            dataKey="title"
+            orientation="vertical"
             yAxisProps={{ width: 240 }}
             series={[
               { name: "Forventet", color: "blue.3" },
@@ -366,15 +366,15 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
       </ChartCard>
 
       <ChartCard
-        title={"Bøker inn til standen"}
-        description={"Forventet mot faktisk innleverte eksemplarer per tittel"}
+        title="Bøker inn til standen"
+        description="Forventet mot faktisk innleverte eksemplarer per tittel"
         isEmpty={booksInData.length === 0}
       >
         <BarChart
           h={Math.max(300, booksInData.length * 30)}
           data={booksInData}
-          dataKey={"title"}
-          orientation={"vertical"}
+          dataKey="title"
+          orientation="vertical"
           yAxisProps={{ width: 240 }}
           series={[
             { name: "Forventet", color: "orange.3" },
@@ -385,38 +385,36 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
       </ChartCard>
 
       <ChartCard
-        title={"Oppmøte per lokasjon og tidspunkt"}
-        description={
-          "Antall elever som forventes til elevoverlevering, fordelt på sted og tidspunkt"
-        }
+        title="Oppmøte per lokasjon og tidspunkt"
+        description="Antall elever som forventes til elevoverlevering, fordelt på sted og tidspunkt"
         isEmpty={userAttendanceData.length === 0}
       >
         <BarChart
           h={350}
           data={userAttendanceData}
-          dataKey={"slot"}
-          type={"stacked"}
+          dataKey="slot"
+          type="stacked"
           series={attendanceSeries}
           withLegend
         />
       </ChartCard>
 
       <ChartCard
-        title={"Oppmøte på stand per tidspunkt"}
-        description={"Antall elever som forventes på standen per møtetidspunkt"}
+        title="Oppmøte på stand per tidspunkt"
+        description="Antall elever som forventes på standen per møtetidspunkt"
         isEmpty={standAttendanceData.length === 0}
       >
         <BarChart
           h={300}
           data={standAttendanceData}
-          dataKey={"slot"}
+          dataKey="slot"
           series={[{ name: "Elever", color: "grape.6" }]}
         />
       </ChartCard>
 
       <ChartCard
-        title={"Filialtilknytning for elever på stand"}
-        description={"Hvilke filialer elevene som må møte på standen hører til"}
+        title="Filialtilknytning for elever på stand"
+        description="Hvilke filialer elevene som må møte på standen hører til"
         isEmpty={data.standBranchHierarchy.length === 0}
       >
         <SunburstChart data={data.standBranchHierarchy} />

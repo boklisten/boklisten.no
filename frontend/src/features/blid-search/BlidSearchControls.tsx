@@ -1,7 +1,8 @@
 import { Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconBarcode, IconKeyboard, IconObjectScan } from "@tabler/icons-react";
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 
 import { isValidBlid } from "@/features/blid-search/validateBlid";
 import useWedgeScanner from "@/features/blid-search/useWedgeScanner";
@@ -28,7 +29,7 @@ export default function BlidSearchControls({
   const scanButton = (
     <Button
       size={compact ? "sm" : "lg"}
-      radius={"md"}
+      radius="md"
       leftSection={<IconObjectScan size={compact ? 20 : 24} aria-hidden />}
       onClick={() =>
         openScannerModal({
@@ -46,8 +47,8 @@ export default function BlidSearchControls({
   const manualButton = (
     <Button
       size={compact ? "sm" : "md"}
-      variant={"subtle"}
-      color={"gray"}
+      variant="subtle"
+      color="gray"
       leftSection={<IconKeyboard size={compact ? 18 : 20} aria-hidden />}
       onClick={openManual}
     >
@@ -58,22 +59,22 @@ export default function BlidSearchControls({
   return (
     <>
       {compact ? (
-        <Group gap={"xs"}>
+        <Group gap="xs">
           {scanButton}
           {manualButton}
         </Group>
       ) : (
-        <Stack align={"center"} gap={"md"} py={"xl"}>
+        <Stack align="center" gap="md" py="xl">
           {instruction !== undefined && (
-            <Text c={"dimmed"} ta={"center"}>
+            <Text c="dimmed" ta="center">
               {instruction}
             </Text>
           )}
           {scanButton}
           {manualButton}
-          <Group gap={6} c={"dimmed"} fz={"xs"}>
+          <Group gap={6} c="dimmed" fz="xs">
             <IconBarcode size={16} aria-hidden />
-            <Text size={"xs"}>En fysisk strekkodeskanner kan brukes når som helst</Text>
+            <Text size="xs">En fysisk strekkodeskanner kan brukes når som helst</Text>
           </Group>
         </Stack>
       )}
@@ -120,16 +121,16 @@ function ManualBlidModal({
         setShowError(false);
         onClose();
       }}
-      title={"Skriv inn unik ID"}
+      title="Skriv inn unik ID"
     >
       <form onSubmit={handleSubmit}>
         <Stack>
           <TextInput
             // Mantine's modal focus trap moves focus on open; data-autofocus points it here.
             data-autofocus
-            label={"Unik ID"}
-            description={"8 eller 12 tegn"}
-            placeholder={"12345678"}
+            label="Unik ID"
+            description="8 eller 12 tegn"
+            placeholder="12345678"
             value={value}
             error={showError ? "Unik ID må være 8 siffer eller 12 tegn" : undefined}
             onChange={(event) => {
@@ -137,7 +138,7 @@ function ManualBlidModal({
               setShowError(false);
             }}
           />
-          <Button type={"submit"}>Søk opp bok</Button>
+          <Button type="submit">Søk opp bok</Button>
         </Stack>
       </form>
     </Modal>

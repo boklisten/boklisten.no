@@ -4,7 +4,7 @@ export interface ValidParameter {
 }
 
 export class DbQueryValidParams {
-  private validParams: ValidParameter[];
+  private readonly validParams: ValidParameter[];
 
   constructor(validParams: ValidParameter[]) {
     this.validParams = validParams;

@@ -1,11 +1,12 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderItemRentPeriodValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-rent-validator/order-item-rent-period-validator/order-item-rent-period-validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { BranchPaymentInfo } from "#shared/branch-payment-info";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { BranchPaymentInfo } from "#shared/branch-payment-info";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 import { mock } from "#tests/test-doubles";
 
 function movedOrderItem(amount: number, periodType: string) {

@@ -33,7 +33,9 @@ const STATUS_SEGMENTS = [
 ] as const;
 
 function formatPercent(count: number, total: number): string {
-  if (total === 0) return "0 %";
+  if (total === 0) {
+    return "0 %";
+  }
   return `${Math.round((count / total) * 100)} %`;
 }
 
@@ -45,7 +47,7 @@ export default function BranchSignatureStatus({ branchId }: { branchId: string }
 
   if (isError) {
     return (
-      <Alert color={"red"} title={"Klarte ikke hente signaturstatus"}>
+      <Alert color="red" title="Klarte ikke hente signaturstatus">
         Prøv å laste siden på nytt.
       </Alert>
     );
@@ -54,7 +56,7 @@ export default function BranchSignatureStatus({ branchId }: { branchId: string }
   if (isLoading || !data) {
     return (
       <Stack>
-        <Skeleton h={25} w={"60%"} />
+        <Skeleton h={25} w="60%" />
         <Skeleton h={16} />
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Skeleton h={110} />
@@ -66,7 +68,7 @@ export default function BranchSignatureStatus({ branchId }: { branchId: string }
 
   if (data.totalMembers === 0) {
     return (
-      <Text c={"dimmed"}>
+      <Text c="dimmed">
         Ingen elever har medlemskap i denne filialen eller underliggende filialer.
       </Text>
     );
@@ -76,12 +78,12 @@ export default function BranchSignatureStatus({ branchId }: { branchId: string }
     <Stack>
       <Text>
         Signaturstatus for{" "}
-        <Text span fw={"bold"}>
+        <Text span fw="bold">
           {data.totalMembers}
         </Text>{" "}
         {data.totalMembers === 1 ? "elev" : "elever"} i denne filialen og underliggende filialer
       </Text>
-      <Progress.Root size={"xl"}>
+      <Progress.Root size="xl">
         {STATUS_SEGMENTS.filter((segment) => data[segment.key] > 0).map((segment) => {
           const count = data[segment.key];
           return (
@@ -99,21 +101,21 @@ export default function BranchSignatureStatus({ branchId }: { branchId: string }
           const count = data[segment.key];
           return (
             <Card key={segment.key} withBorder>
-              <Group gap={"xs"} wrap={"nowrap"} align={"flex-start"}>
-                <ThemeIcon variant={"transparent"} color={segment.color}>
+              <Group gap="xs" wrap="nowrap" align="flex-start">
+                <ThemeIcon variant="transparent" color={segment.color}>
                   {segment.icon}
                 </ThemeIcon>
                 <Stack gap={0}>
-                  <Group gap={"xs"} align={"baseline"}>
-                    <Text size={"xl"} fw={"bold"}>
+                  <Group gap="xs" align="baseline">
+                    <Text size="xl" fw="bold">
                       {count}
                     </Text>
-                    <Text size={"sm"} c={"dimmed"}>
+                    <Text size="sm" c="dimmed">
                       {formatPercent(count, data.totalMembers)}
                     </Text>
                   </Group>
-                  <Text fw={"bold"}>{segment.label}</Text>
-                  <Text size={"sm"} c={"dimmed"}>
+                  <Text fw="bold">{segment.label}</Text>
+                  <Text size="sm" c="dimmed">
                     {segment.description}
                   </Text>
                 </Stack>

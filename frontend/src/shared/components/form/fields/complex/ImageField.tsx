@@ -1,4 +1,5 @@
-import { Stack, TextInput, type TextInputProps } from "@mantine/core";
+import { Stack, TextInput } from "@mantine/core";
+import type { TextInputProps } from "@mantine/core";
 
 import { useFieldContext } from "@/shared/hooks/form";
 import { Activity } from "react";
@@ -11,8 +12,9 @@ export function imageFieldValidator(value: string) {
       require_tld: import.meta.env["VITE_APP_ENV"] !== "dev",
       require_protocol: true,
     })
-  )
+  ) {
     return "Du må fylle inn en gyldig lenke";
+  }
   return null;
 }
 
@@ -20,7 +22,7 @@ export default function ImageField(props: TextInputProps) {
   const field = useFieldContext<string>();
 
   return (
-    <Stack gap={"sm"}>
+    <Stack gap="sm">
       <Activity
         mode={field.state.value && field.state.meta.errors.length === 0 ? "visible" : "hidden"}
       >
@@ -34,9 +36,9 @@ export default function ImageField(props: TextInputProps) {
         />
       </Activity>
       <TextInput
-        label={"Bildelenke"}
+        label="Bildelenke"
         placeholder={`${import.meta.env["VITE_API_URL"]}/mitt_bilde.png`}
-        autoComplete={"photo"}
+        autoComplete="photo"
         {...props}
         value={field.state.value}
         onChange={(event) => field.handleChange(event.target.value)}

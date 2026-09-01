@@ -8,7 +8,7 @@ import BranchBooksCancelModal from "@/features/branches/branch-books/BranchBooks
 import BranchBooksDetailsTable from "@/features/branches/branch-books/BranchBooksDetailsTable";
 import BranchBooksEditModal from "@/features/branches/branch-books/BranchBooksEditModal";
 import BranchBooksTree from "@/features/branches/branch-books/BranchBooksTree";
-import {
+import type {
   BranchBooksDetailColumn,
   BranchBooksEditKind,
   BranchBooksEditTarget,
@@ -64,8 +64,8 @@ function OrderedBookDetails({
       isLoading={detailsQuery.isLoading}
       isError={detailsQuery.isError}
       columns={COLUMNS}
-      leafLabel={"Bestilt på denne filialen"}
-      emptyLabel={"Ingen av disse bøkene er bestilt direkte fra denne filialen."}
+      leafLabel="Bestilt på denne filialen"
+      emptyLabel="Ingen av disse bøkene er bestilt direkte fra denne filialen."
       allowCancel
       rowKey={(row) => row.orderItemId}
       onEditRow={onEditRow}
@@ -104,7 +104,9 @@ export default function OrderedBooksTab({ branchId }: { branchId: string }) {
   const cancelMutation = useMutation(
     api.branchBooks.cancelOrderedBooks.mutationOptions({
       onSuccess: (result) => {
-        if (!result) return;
+        if (!result) {
+          return;
+        }
         if (result.cancelledBooks > 0) {
           showSuccessNotification(`Avbestilte ${bookCountLabel(result.cancelledBooks)}`);
         }
@@ -172,15 +174,15 @@ export default function OrderedBooksTab({ branchId }: { branchId: string }) {
         direct={summaryQuery.data?.direct}
         indirect={summaryQuery.data?.indirect}
         totalIcon={<IconSum size={18} />}
-        directLabel={"Bestilt på denne filialen"}
-        indirectLabel={"Bestilt på underliggende filialer"}
+        directLabel="Bestilt på denne filialen"
+        indirectLabel="Bestilt på underliggende filialer"
       />
       <BranchBooksTree
         summary={summaryQuery.data}
         isLoading={summaryQuery.isLoading}
         isError={summaryQuery.isError}
-        treeLabel={"Bestilte bøker etter frist"}
-        emptyLabel={"Ingen bestilte bøker på denne filialen."}
+        treeLabel="Bestilte bøker etter frist"
+        emptyLabel="Ingen bestilte bøker på denne filialen."
         allowCancel
         onEdit={openEdit}
         renderDetails={(deadlines, itemId, enabled) => (

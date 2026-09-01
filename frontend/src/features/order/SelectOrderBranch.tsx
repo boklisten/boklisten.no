@@ -14,18 +14,18 @@ export default function SelectOrderBranch() {
   if (!branches) {
     return (
       <Stack>
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
-        <Skeleton h={35} w={"100%"} />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
+        <Skeleton h={35} w="100%" />
       </Stack>
     );
   }
@@ -44,15 +44,15 @@ export default function SelectOrderBranch() {
 
   return (
     <>
-      {Array.from(groupedBranches.entries())
+      {[...groupedBranches.entries()]
         .toSorted((a, b) => a[0].localeCompare(b[0], "no"))
         .map(([region, regionBranches]) => (
           <NavLink
             key={region}
             label={region}
-            fw={"bold"}
-            bg={"brand"}
-            c={"#fff"}
+            fw="bold"
+            bg="brand"
+            c="#fff"
             style={{ borderRadius: 5 }}
           >
             {regionBranches.map((branch) => (
@@ -60,25 +60,25 @@ export default function SelectOrderBranch() {
                 component={TanStackAnchor}
                 key={branch.id}
                 leftSection={<IconSchool />}
-                active={true}
-                variant={"subtle"}
+                active
+                variant="subtle"
                 to={`/bestilling/${branch.id}`}
                 label={branch.name}
               />
             ))}
           </NavLink>
         ))}
-      <Divider label={"eller"} my={"xs"} />
+      <Divider label="eller" my="xs" />
       <Text>Jeg går ikke går på noen skole (bøker til overs)</Text>
       <NavLink
         component={TanStackAnchor}
         leftSection={<IconSchool />}
-        fw={"bold"}
-        bg={"brand"}
-        c={"#fff"}
+        fw="bold"
+        bg="brand"
+        c="#fff"
         style={{ borderRadius: 5 }}
-        to={"/bestilling/63c5715d38bbec00484aa540"}
-        label={"Fri privatist"}
+        to="/bestilling/63c5715d38bbec00484aa540"
+        label="Fri privatist"
       />
     </>
   );

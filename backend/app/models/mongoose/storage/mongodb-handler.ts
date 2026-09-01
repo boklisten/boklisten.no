@@ -1,25 +1,25 @@
 import logger from "@adonisjs/core/services/logger";
-import {
+import type {
   SchemaType,
   QueryFilter,
   Model,
   MongooseUpdateQueryOptions,
   PipelineStage,
-  Types,
   UpdateQuery,
   UpdateWithAggregationPipeline,
   UpdateWriteOpResult,
 } from "mongoose";
+import { Types } from "mongoose";
 
 import { MongooseModelCreator } from "#models/mongoose/storage/mongoose-schema-creator";
-import { ExpandFilter } from "#services/legacy/query/db-query-expand-filter";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import type { ExpandFilter } from "#services/legacy/query/db-query-expand-filter";
+import type { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { PermissionService } from "#services/permission_service";
-import { BlSchema } from "#services/storage_service";
-import { BlDocument } from "#shared/bl-document";
+import type { BlSchema } from "#services/storage_service";
+import type { BlDocument } from "#shared/bl-document";
 import { BlError } from "#shared/bl-error";
-import { UserPermission } from "#shared/user-permission";
-import { NestedDocument } from "#types/nested-document";
+import type { UserPermission } from "#shared/user-permission";
+import type { NestedDocument } from "#types/nested-document";
 
 export class MongodbHandler<T extends BlDocument> {
   private readonly mongooseModel: Model<T>;
@@ -184,7 +184,7 @@ export class MongodbHandler<T extends BlDocument> {
   public async update(id: string, data: UpdateQuery<T>) {
     const newData = { ...data, lastUpdated: new Date() };
     // Don't update the user of a document after creation
-    delete newData["user"];
+    delete newData.user;
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the mongo/typed boundary: lean() documents have the shape the schema for T defines
     const document_ = (await this.mongooseModel
@@ -274,7 +274,7 @@ export class MongodbHandler<T extends BlDocument> {
       throw new BlError("no searchable fields found").code(701);
     }
 
-    const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
     const regex = new RegExp(escaped, "i");
 
     return await this.mongooseModel

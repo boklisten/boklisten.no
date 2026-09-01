@@ -1,7 +1,7 @@
 import { isNullish } from "#services/legacy/typescript-helpers";
 import { BlError } from "#shared/bl-error";
-import { Branch } from "#shared/branch";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Branch } from "#shared/branch";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderItemPartlyPaymentValidator {
   public validate(

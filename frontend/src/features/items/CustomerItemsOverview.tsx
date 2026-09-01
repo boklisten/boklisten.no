@@ -1,6 +1,7 @@
 import { Accordion, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, type ReactNode } from "react";
+import { Activity } from "react";
+import type { ReactNode } from "react";
 
 import CustomerItemCard from "@/features/items/CustomerItemCard";
 import OpenOrdersList from "@/features/items/OpenOrdersList";
@@ -20,16 +21,16 @@ function CustomerItemsOverviewWrapper({
 }) {
   return (
     <>
-      <Stack gap={"xs"}>
-        <Title order={2} mt={"md"}>
+      <Stack gap="xs">
+        <Title order={2} mt="md">
           Bestilte bøker
         </Title>
         {orderedItemsSlot}
       </Stack>
 
-      <Stack gap={"xs"}>
+      <Stack gap="xs">
         <Title order={2}>Aktive bøker</Title>
-        <Text fw={"light"} fs={"italic"}>
+        <Text fw="light" fs="italic">
           Dette er bøkene du for øyeblikket er ansvarlig for. Du får beskjed om hvordan de skal
           leveres når fristen nærmer seg.
         </Text>
@@ -37,7 +38,7 @@ function CustomerItemsOverviewWrapper({
       </Stack>
 
       <Accordion>
-        <Accordion.Item value={"prev-items"}>
+        <Accordion.Item value="prev-items">
           <Accordion.Control>
             <Title order={2}>Tidligere bøker</Title>
           </Accordion.Control>
@@ -90,7 +91,7 @@ export default function CustomerItemsOverview() {
 
   if (!data || isError || !openOrderItems || isErrorOpenOrderItems) {
     return (
-      <ErrorAlert title={"Dette skjedde noe galt under innlastingen av dine bøker"}>
+      <ErrorAlert title="Dette skjedde noe galt under innlastingen av dine bøker">
         {PLEASE_TRY_AGAIN_TEXT}
       </ErrorAlert>
     );
@@ -113,7 +114,7 @@ export default function CustomerItemsOverview() {
             ))}
           </Activity>
           <Activity mode={activeItems.length === 0 ? "visible" : "hidden"}>
-            <InfoAlert title={"Du har for øyeblikket ingen aktive bøker."} />
+            <InfoAlert title="Du har for øyeblikket ingen aktive bøker." />
           </Activity>
         </>
       }
@@ -128,7 +129,7 @@ export default function CustomerItemsOverview() {
             ))}
           </Activity>
           <Activity mode={inactiveItems.length === 0 ? "visible" : "hidden"}>
-            <InfoAlert title={"Du har ikke levert inn eller kjøpt ut noen bøker enda."} />
+            <InfoAlert title="Du har ikke levert inn eller kjøpt ut noen bøker enda." />
           </Activity>
         </>
       }

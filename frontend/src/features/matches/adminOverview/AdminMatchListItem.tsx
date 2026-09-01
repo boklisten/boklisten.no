@@ -25,7 +25,7 @@ export default function AdminMatchListItem({ match }: { match: MatchDto }) {
       <Activity mode={started && !finished ? "visible" : "hidden"}>
         <ProgressBar
           percentComplete={progress.percent}
-          subtitle={<Text size={"sm"}>{progress.label}</Text>}
+          subtitle={<Text size="sm">{progress.label}</Text>}
         />
       </Activity>
       <Activity mode={!finished ? "visible" : "hidden"}>

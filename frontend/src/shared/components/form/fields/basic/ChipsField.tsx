@@ -1,4 +1,5 @@
-import { Chip, Group, Input, type MantineSize } from "@mantine/core";
+import { Chip, Group, Input } from "@mantine/core";
+import type { MantineSize } from "@mantine/core";
 
 import { useFieldContext } from "@/shared/hooks/form";
 
@@ -14,12 +15,12 @@ export default function ChipsField({
   const field = useFieldContext<string[]>();
 
   return (
-    <Group gap={"xs"} wrap={"nowrap"}>
-      <Input.Label w={70} mb={0} fw={"normal"} c={"dimmed"} fz={"sm"}>
+    <Group gap="xs" wrap="nowrap">
+      <Input.Label w={70} mb={0} fw="normal" c="dimmed" fz="sm">
         {label}
       </Input.Label>
       <Chip.Group multiple value={field.state.value} onChange={field.handleChange}>
-        <Group gap={"xs"}>
+        <Group gap="xs">
           {data.map((option) => (
             <Chip key={option.value} value={option.value} size={size}>
               {option.label}

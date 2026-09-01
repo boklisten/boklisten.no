@@ -1,6 +1,6 @@
 import { Group, Progress, Stack } from "@mantine/core";
 import { IconCircleCheckFilled } from "@tabler/icons-react";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export default function ProgressBar({
   percentComplete,
@@ -22,7 +22,7 @@ export default function ProgressBar({
 
   return (
     <Stack gap={5}>
-      <Progress value={percentComplete} color={"green"} />
+      <Progress value={percentComplete} color="green" />
       {subtitle}
     </Stack>
   );

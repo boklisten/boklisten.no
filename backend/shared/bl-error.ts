@@ -1,10 +1,11 @@
 export class BlError extends Error {
+  public override name = "BlError";
   private _code: number;
   private _className: string | undefined;
   private _methodName: string | undefined;
-  private _errorStack: BlError[];
-  private _data: unknown;
-  private _store: { key: string; value: unknown }[];
+  private readonly _errorStack: BlError[];
+  private readonly _data: unknown;
+  private readonly _store: { key: string; value: unknown }[];
 
   constructor(message: string) {
     super(message);
@@ -13,13 +14,13 @@ export class BlError extends Error {
     this._code = 0;
   }
 
-  add(blError: BlError): BlError {
+  add(blError: BlError): this {
     this._errorStack.push(blError);
     return this;
   }
 
   store(key: string, value: unknown) {
-    this._store.push({ key: key, value: value });
+    this._store.push({ key, value });
     return this;
   }
 
@@ -27,7 +28,7 @@ export class BlError extends Error {
     return this._store;
   }
 
-  data(data: unknown): BlError {
+  data(data: unknown): this {
     // @ts-expect-error fixme: auto ignored  bad typing
     this.data = data;
     return this;
@@ -41,7 +42,7 @@ export class BlError extends Error {
     return this._errorStack;
   }
 
-  className(className: string): BlError {
+  className(className: string): this {
     this._className = className;
     return this;
   }
@@ -50,7 +51,7 @@ export class BlError extends Error {
     return this._className;
   }
 
-  methodName(methodName: string): BlError {
+  methodName(methodName: string): this {
     this._methodName = methodName;
     return this;
   }
@@ -59,7 +60,7 @@ export class BlError extends Error {
     return this._methodName;
   }
 
-  msg(message: string): BlError {
+  msg(message: string): this {
     this.message = message;
     return this;
   }
@@ -74,7 +75,9 @@ export class BlError extends Error {
   }
 
   getCode(): number {
-    if (!this._code) return 0;
+    if (!this._code) {
+      return 0;
+    }
     return this._code;
   }
 }

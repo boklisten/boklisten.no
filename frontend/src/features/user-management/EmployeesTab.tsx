@@ -66,14 +66,14 @@ export default function EmployeesTab() {
     modals.openConfirmModal({
       title: "Endre tilgangsnivå",
       children: (
-        <Stack gap={"xs"}>
-          <Text size={"sm"}>
+        <Stack gap="xs">
+          <Text size="sm">
             {permission === "customer"
               ? `${employee.name} mister ansatt-tilgangen og blir vanlig kunde.`
               : `${employee.name} får tilgangsnivået ${PERMISSION_LABELS[permission]}.`}
           </Text>
           {isSelf && (
-            <Text size={"sm"} c={"red"} fw={600}>
+            <Text size="sm" c="red" fw={600}>
               Dette er din egen konto. Senker du ditt eget tilgangsnivå, mister du tilgangen til
               denne siden og kan ikke angre selv.
             </Text>
@@ -87,17 +87,17 @@ export default function EmployeesTab() {
   }
 
   if (isError) {
-    return <ErrorAlert title={"Kunne ikke laste ansatte"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>;
+    return <ErrorAlert title="Kunne ikke laste ansatte">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>;
   }
   if (isPending) {
     return (
       <Stack>
         <SimpleGrid cols={{ base: 1, sm: 3 }}>
           {Array.from({ length: 3 }, (_, index) => (
-            <Skeleton key={index} height={100} radius={"md"} />
+            <Skeleton key={index} height={100} radius="md" />
           ))}
         </SimpleGrid>
-        <Skeleton height={300} radius={"md"} />
+        <Skeleton height={300} radius="md" />
       </Stack>
     );
   }
@@ -106,25 +106,25 @@ export default function EmployeesTab() {
     employees.filter((employee) => employee.permission === permission).length;
 
   return (
-    <Stack gap={"lg"}>
+    <Stack gap="lg">
       <SimpleGrid cols={{ base: 1, sm: 3 }}>
         <StatTile
-          label={"Ansatte"}
+          label="Ansatte"
           value={countByPermission("employee")}
           icon={<IconUserCog />}
-          color={"blue"}
+          color="blue"
         />
         <StatTile
-          label={"Managere"}
+          label="Managere"
           value={countByPermission("manager")}
           icon={<IconUserShield />}
-          color={"grape"}
+          color="grape"
         />
         <StatTile
-          label={"Administratorer"}
+          label="Administratorer"
           value={countByPermission("admin")}
           icon={<IconShieldStar />}
-          color={"red"}
+          color="red"
         />
       </SimpleGrid>
       <Box>
@@ -133,7 +133,7 @@ export default function EmployeesTab() {
         </Button>
       </Box>
       <Table.ScrollContainer minWidth={560}>
-        <Table verticalSpacing={"sm"} highlightOnHover>
+        <Table verticalSpacing="sm" highlightOnHover>
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Navn</Table.Th>
@@ -145,10 +145,10 @@ export default function EmployeesTab() {
             {employees.map((employee) => (
               <Table.Tr key={employee.detailsId}>
                 <Table.Td>
-                  <Text size={"sm"} fw={600}>
+                  <Text size="sm" fw={600}>
                     {employee.name || "Uten navn"}
                   </Text>
-                  <Text size={"xs"} c={"dimmed"} style={{ overflowWrap: "anywhere" }}>
+                  <Text size="xs" c="dimmed" style={{ overflowWrap: "anywhere" }}>
                     {employee.email}
                   </Text>
                 </Table.Td>
@@ -174,7 +174,7 @@ export default function EmployeesTab() {
                         : "Har aldri logget inn"
                     }
                   >
-                    <Text size={"sm"}>{lastActiveLabel(employee.lastActive)}</Text>
+                    <Text size="sm">{lastActiveLabel(employee.lastActive)}</Text>
                   </Tooltip>
                 </Table.Td>
               </Table.Tr>

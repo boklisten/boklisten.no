@@ -2,11 +2,11 @@ import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpe
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { BlapiResponse } from "#shared/blapi-response";
-import { BlApiRequest } from "#types/bl-api-request";
-import { Operation } from "#types/operation";
+import type { BlApiRequest } from "#types/bl-api-request";
+import type { Operation } from "#types/operation";
 
 export class UserDetailValidOperation implements Operation {
-  private userDetailHelper = new UserDetailHelper();
+  private readonly userDetailHelper = new UserDetailHelper();
 
   async run(blApiRequest: BlApiRequest) {
     try {

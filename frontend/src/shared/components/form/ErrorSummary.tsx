@@ -19,8 +19,8 @@ export default function ErrorSummary({ serverErrors = [] }: { serverErrors?: str
 
         return (
           <Activity mode={errors.length > 0 ? "visible" : "hidden"}>
-            <ErrorAlert title={"Du må rette opp følgende før du kan gå videre"}>
-              <List size={"sm"}>
+            <ErrorAlert title="Du må rette opp følgende før du kan gå videre">
+              <List size="sm">
                 {errors.map((error, i) => (
                   <List.Item key={`err-${i}`}>{error}</List.Item>
                 ))}

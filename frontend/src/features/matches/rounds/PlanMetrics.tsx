@@ -15,7 +15,7 @@ export default function PlanMetrics({ roundId }: { roundId: string }) {
 
   if (isError) {
     return (
-      <Text size={"sm"} c={"dimmed"}>
+      <Text size="sm" c="dimmed">
         Fikk ikke hentet tallene for planen. Dette påvirker ikke runden.
       </Text>
     );
@@ -25,7 +25,7 @@ export default function PlanMetrics({ roundId }: { roundId: string }) {
     return (
       <SimpleGrid cols={TILE_COLUMNS}>
         {["elever", "leveres", "hentes"].map((tile) => (
-          <Skeleton key={tile} height={104} radius={"md"} />
+          <Skeleton key={tile} height={104} radius="md" />
         ))}
       </SimpleGrid>
     );
@@ -34,25 +34,25 @@ export default function PlanMetrics({ roundId }: { roundId: string }) {
   return (
     <SimpleGrid cols={TILE_COLUMNS}>
       <StatTile
-        label={"Elever i filialene"}
+        label="Elever i filialene"
         value={data.branchMembers}
-        caption={"antall registrerte elever på valgte filialer"}
+        caption="antall registrerte elever på valgte filialer"
         icon={<IconUsers />}
-        color={"blue"}
+        color="blue"
       />
       <StatTile
-        label={"Bøker som skal leveres"}
+        label="Bøker som skal leveres"
         value={data.activeBooks.books}
         caption={spreadOver(data.activeBooks.students)}
         icon={<IconBookDownload />}
-        color={"orange"}
+        color="orange"
       />
       <StatTile
-        label={"Bøker som er bestilt"}
+        label="Bøker som er bestilt"
         value={data.orderedBooks.books}
         caption={spreadOver(data.orderedBooks.students)}
         icon={<IconBookUpload />}
-        color={"teal"}
+        color="teal"
       />
     </SimpleGrid>
   );

@@ -11,7 +11,9 @@ import { determineScanCodeType } from "@/shared/utils/scanCodes";
 const MAX_KEYSTROKE_GAP_MS = 250;
 
 function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
   return (
     target instanceof HTMLInputElement ||
     target instanceof HTMLTextAreaElement ||

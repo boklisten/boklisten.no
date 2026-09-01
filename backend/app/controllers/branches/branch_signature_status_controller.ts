@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import { BranchSignatureStatusService } from "#services/branch_signature_status_service";
 import { PermissionService } from "#services/permission_service";

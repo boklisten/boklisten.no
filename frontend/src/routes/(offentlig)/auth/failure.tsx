@@ -23,10 +23,10 @@ function AuthFailurePage() {
   const { reason } = Route.useSearch();
   return (
     <Container>
-      <Stack align={"center"}>
+      <Stack align="center">
         <Title>Vi klarte ikke logge deg inn</Title>
         <AuthFailureReasonAlert reason={reason ?? ""} />
-        <TanStackAnchor to={"/auth/login"}>Tilbake til innloggingssiden</TanStackAnchor>
+        <TanStackAnchor to="/auth/login">Tilbake til innloggingssiden</TanStackAnchor>
       </Stack>
     </Container>
   );

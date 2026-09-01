@@ -13,11 +13,11 @@ export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/utse
 
 function DispatchPage() {
   return (
-    <Container size={"sm"}>
+    <Container size="sm">
       <Stack>
         <Stack gap={2}>
           <Title>Utsendelser</Title>
-          <Text size={"sm"} c={"dimmed"}>
+          <Text size="sm" c="dimmed">
             Send SMS og/eller e-post til en liste med mottakere
           </Text>
         </Stack>

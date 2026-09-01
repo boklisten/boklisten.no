@@ -3,13 +3,13 @@ import { DateService } from "#services/legacy/date.service";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
-import { OrderItemType } from "#shared/order/order-item/order-item-type";
-import { Payment } from "#shared/payment/payment";
-import { UserDetail } from "#shared/user-detail";
-import { EmailOrder, EmailUser } from "#types/email";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { OrderItemType } from "#shared/order/order-item/order-item-type";
+import type { Payment } from "#shared/payment/payment";
+import type { UserDetail } from "#shared/user-detail";
+import type { EmailOrder, EmailUser } from "#types/email";
 
 export const OrderEmailHandler = {
   async sendOrderReceipt(customerDetail: UserDetail, order: Order) {
@@ -63,7 +63,7 @@ export const OrderEmailHandler = {
       emailOrderDelivery = await this.extractEmailOrderDeliveryFromOrder(order);
       emailOrderPayment = await this.extractEmailOrderPaymentFromOrder(order);
     } catch (error) {
-      throw new BlError("could not create email based on order" + error);
+      throw new BlError(`could not create email based on order${error}`);
     }
 
     emailOrder.showDelivery = emailOrderDelivery.showDelivery;

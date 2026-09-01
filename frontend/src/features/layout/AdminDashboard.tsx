@@ -14,7 +14,8 @@ import { IconArrowRight } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
 
-import { type AdminNavLink, visibleAdminNavSections } from "@/features/layout/adminNavigation";
+import { visibleAdminNavSections } from "@/features/layout/adminNavigation";
+import type { AdminNavLink } from "@/features/layout/adminNavigation";
 import ColorSchemeSelector from "@/features/user/ColorSchemeSelector";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
@@ -39,7 +40,7 @@ function AdminNavCard({ link }: { link: AdminNavLink }) {
       label={link.label}
       description={link.description}
       leftSection={
-        <ThemeIcon variant={"light"} size={38} radius={"md"}>
+        <ThemeIcon variant="light" size={38} radius="md">
           <LinkIcon size={20} aria-hidden />
         </ThemeIcon>
       }
@@ -54,8 +55,8 @@ function AdminNavCard({ link }: { link: AdminNavLink }) {
         />
       }
       component={TanStackAnchor}
-      underline={"never"}
-      c={"var(--mantine-color-text)"}
+      underline="never"
+      c="var(--mantine-color-text)"
       styles={{
         root: {
           border: `1px solid var(--mantine-color-${active ? "brand-text" : "default-border"})`,
@@ -73,7 +74,7 @@ function AdminNavCard({ link }: { link: AdminNavLink }) {
 
 function AdminNavGrid({ links }: { links: AdminNavLink[] }) {
   return (
-    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing={"md"}>
+    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
       {links.map((link) => (
         <AdminNavCard key={link.label} link={link} />
       ))}
@@ -88,48 +89,43 @@ export default function AdminDashboard() {
   const firstName = userDetail?.name.trim().split(" ")[0];
 
   return (
-    <Container size={"lg"} py={"xl"}>
+    <Container size="lg" py="xl">
       <Stack gap={50}>
-        <Stack align={"center"} gap={0}>
-          <Image
-            src={"/images/boklisten_logo_blue.png"}
-            width={64}
-            height={64}
-            alt={"Boklisten.no"}
-          />
+        <Stack align="center" gap={0}>
+          <Image src="/images/boklisten_logo_blue.png" width={64} height={64} alt="Boklisten.no" />
           <Title
             order={1}
-            mt={"xs"}
-            ta={"center"}
+            mt="xs"
+            ta="center"
             style={{ fontFamily: BOOK_SERIF }}
-            c={"var(--mantine-color-brand-text)"}
+            c="var(--mantine-color-brand-text)"
           >
             Velkommen{firstName ? `, ${firstName}` : ""}
           </Title>
-          <Text mt={"sm"} c={"dimmed"} ta={"center"} maw={"46ch"}>
+          <Text mt="sm" c="dimmed" ta="center" maw="46ch">
             Her er verktøyene du trenger for å dele ut, samle inn og holde orden på bøkene.
           </Text>
           <ColorSchemeSelector />
         </Stack>
 
         {visibleAdminNavSections(isAdmin).map((section) => (
-          <Stack key={section.label} gap={"lg"}>
+          <Stack key={section.label} gap="lg">
             <Divider
               label={
-                <Title order={2} size={"xs"} tt={"uppercase"} lts={"0.08em"} c={"dimmed"}>
+                <Title order={2} size="xs" tt="uppercase" lts="0.08em" c="dimmed">
                   {section.label}
                 </Title>
               }
-              labelPosition={"left"}
+              labelPosition="left"
             />
             <AdminNavGrid links={section.links} />
             {section.groups?.map((group) => {
               const GroupIcon = group.icon;
               return (
-                <Stack key={group.label} gap={"sm"}>
-                  <Group gap={6} c={"var(--mantine-color-brand-text)"}>
+                <Stack key={group.label} gap="sm">
+                  <Group gap={6} c="var(--mantine-color-brand-text)">
                     <GroupIcon size={18} aria-hidden />
-                    <Title order={3} size={"sm"}>
+                    <Title order={3} size="sm">
                       {group.label}
                     </Title>
                   </Group>

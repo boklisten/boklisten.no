@@ -18,5 +18,5 @@ export const Route = createFileRoute("/(offentlig)/info/about")({
 });
 
 function AboutPage() {
-  return <EditableTextReadOnly dataKey={"om_oss"} />;
+  return <EditableTextReadOnly dataKey="om_oss" />;
 }

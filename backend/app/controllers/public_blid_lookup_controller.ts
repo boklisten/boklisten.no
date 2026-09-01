@@ -1,8 +1,8 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
-import { PublicBlidLookupResult } from "#shared/public_blid_lookup";
+import type { PublicBlidLookupResult } from "#shared/public_blid_lookup";
 
 export default class PublicBlidLookupController {
   async lookup(ctx: HttpContext) {
@@ -17,7 +17,7 @@ export default class PublicBlidLookupController {
           buyout: false,
           cancel: false,
           buyback: false,
-          blid: blid,
+          blid,
         },
       },
       {

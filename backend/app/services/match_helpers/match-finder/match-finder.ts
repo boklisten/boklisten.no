@@ -51,8 +51,8 @@ export class MatchFinder {
   // items that either no one has or no one wants
   public unmatchableItems = new Set<string>();
 
-  private userMatches: CandidateUserMatch[] = [];
-  private standMatches: CandidateStandMatch[] = [];
+  private readonly userMatches: CandidateUserMatch[] = [];
+  private readonly standMatches: CandidateStandMatch[] = [];
   private readonly MAX_USER_MATCH_COUNT = 4;
 
   constructor(private readonly _users: MatchableUser[]) {
@@ -132,7 +132,9 @@ export class MatchFinder {
           }
         }
       }
-      if (!bestGrouping) throw new BlError("Failed to find a compatible userGroup pair");
+      if (!bestGrouping) {
+        throw new BlError("Failed to find a compatible userGroup pair");
+      }
 
       const joinedGroupId = [bestGrouping.groupA, bestGrouping.groupB]
         .toSorted((a, b) => a.localeCompare(b))
@@ -283,14 +285,14 @@ export class MatchFinder {
 
     if (uncheckedUnmatchableItems.size > 0) {
       this.logItemDemand(this.users);
-      logger.debug(
-        `🕵️‍♀️ Detected unmatchable items: ${Array.from(uncheckedUnmatchableItems).join(", ")}`,
-      );
+      logger.debug(`🕵️‍♀️ Detected unmatchable items: ${[...uncheckedUnmatchableItems].join(", ")}`);
       this.unmatchableItems = this.unmatchableItems.union(newUnmatchableItems);
       let count = 0;
       for (const user of this.users) {
         const created = this.createStandMatch(user, this.unmatchableItems);
-        if (created) count++;
+        if (created) {
+          count++;
+        }
       }
       if (count > 0) {
         logger.debug(`🧹 Created ${count} StandMatches for unmatchable items`);
@@ -306,9 +308,9 @@ export class MatchFinder {
    * @private
    */
   private createFullStandMatches() {
-    const itemCounts = countItemOccurrences(this.users.flatMap((user) => Array.from(user.items)));
+    const itemCounts = countItemOccurrences(this.users.flatMap((user) => [...user.items]));
     const wantedItemCounts = countItemOccurrences(
-      this.users.flatMap((user) => Array.from(user.wantedItems)),
+      this.users.flatMap((user) => [...user.wantedItems]),
     );
     const itemImbalances = calculateItemImbalances(itemCounts, wantedItemCounts);
 
@@ -535,7 +537,9 @@ export class MatchFinder {
     );
   }
   private logGroupStatus(message?: string) {
-    if (this.userGroups.size === 0) return;
+    if (this.userGroups.size === 0) {
+      return;
+    }
     logger.debug(
       ` ${message} Groups (${this.userGroups.size}): ${this.userGroups
         .entries()
@@ -549,10 +553,14 @@ export class MatchFinder {
   private logItemDemand(users: MatchableUser[]): void {
     const sortedItems = Object.entries(this.calculateItemDemand(users)).toSorted((a, b) => {
       const totalDiff = b[1].total - a[1].total;
-      if (totalDiff !== 0) return totalDiff;
+      if (totalDiff !== 0) {
+        return totalDiff;
+      }
       return b[1].wanted - a[1].wanted;
     });
-    if (sortedItems.keys().toArray().length === 0) return;
+    if (sortedItems.keys().toArray().length === 0) {
+      return;
+    }
 
     logger.debug(
       `Remaining Items:\n${sortedItems
@@ -567,7 +575,7 @@ export class MatchFinder {
       .entries()
       .toArray()
       .toSorted((a, b) => a[0].localeCompare(b[0]))) {
-      logger.debug("---\nDemand for " + key);
+      logger.debug(`---\nDemand for ${key}`);
       this.logItemDemand(value);
     }
     logger.debug("---\n");
@@ -658,7 +666,9 @@ export class MatchFinder {
       .toArray()
       .toSorted((a, b) => {
         const byNumberOfCustomers = b[1] - a[1];
-        if (byNumberOfCustomers !== 0) return byNumberOfCustomers;
+        if (byNumberOfCustomers !== 0) {
+          return byNumberOfCustomers;
+        }
         return b[0].localeCompare(a[0]);
       })) {
       logger.debug(`${setup}: ${numberOfUsers} users`);

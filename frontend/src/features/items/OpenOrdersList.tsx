@@ -55,14 +55,12 @@ export default function OpenOrdersList({
                 <Table.Td>
                   <Tooltip
                     disabled={orderItem.cancelable}
-                    label={
-                      "Ikke tilgjenglig for øyeblikket. Ta kontakt dersom du ønsker å avbestille"
-                    }
+                    label="Ikke tilgjenglig for øyeblikket. Ta kontakt dersom du ønsker å avbestille"
                   >
                     <Button
-                      variant={"subtle"}
+                      variant="subtle"
                       disabled={!orderItem.cancelable}
-                      color={"red"}
+                      color="red"
                       loading={cancelOrderItemMutation.isPending}
                       onClick={async () => {
                         modals.openConfirmModal({
@@ -91,8 +89,8 @@ export default function OpenOrdersList({
       </Activity>
 
       <Activity mode={!openOrderItems || openOrderItems.length === 0 ? "visible" : "hidden"}>
-        <InfoAlert title={"Du har ingen aktive bestillinger"}>
-          Trykk på {"'bestill bøker'"} for å bestille noen.
+        <InfoAlert title="Du har ingen aktive bestillinger">
+          Trykk på 'bestill bøker' for å bestille noen.
         </InfoAlert>
       </Activity>
       <Box>

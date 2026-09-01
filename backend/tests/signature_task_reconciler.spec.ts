@@ -1,14 +1,15 @@
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import Signature from "#models/signature";
 import { reconcileSignatureTask } from "#services/legacy/signature.helper";
 import { StorageService } from "#services/storage_service";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { Order } from "#shared/order/order";
-import { UserDetail } from "#shared/user-detail";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { Order } from "#shared/order/order";
+import type { UserDetail } from "#shared/user-detail";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 

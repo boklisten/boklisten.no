@@ -30,20 +30,24 @@ export interface ResolvedRange {
 
 export function resolveDateRange({ preset, customRange }: DateRangeValue): ResolvedRange {
   switch (preset) {
-    case "dag":
+    case "dag": {
       return { from: dayjs().startOf("day").toDate(), to: dayjs().endOf("day").toDate() };
-    case "uke":
+    }
+    case "uke": {
       return { from: dayjs().startOf("week").toDate(), to: dayjs().endOf("week").toDate() };
+    }
     case "semester": {
       const isSpring = dayjs().month() < 7;
       const from = isSpring ? dayjs().month(0).date(1) : dayjs().month(7).date(1);
       const to = isSpring ? dayjs().month(6).date(31) : dayjs().month(11).date(31);
       return { from: from.startOf("day").toDate(), to: to.endOf("day").toDate() };
     }
-    case "ar":
+    case "ar": {
       return { from: dayjs().startOf("year").toDate(), to: dayjs().endOf("year").toDate() };
-    case "all-time":
+    }
+    case "all-time": {
       return {};
+    }
     default: {
       const [from, to] = customRange;
       return {

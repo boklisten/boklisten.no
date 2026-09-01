@@ -15,14 +15,14 @@ function BackToCartButton() {
   return (
     <NavLink
       component={TanStackAnchor}
-      to={"/handlekurv"}
+      to="/handlekurv"
       leftSection={<IconBasket />}
       active
       bdrs={5}
-      bg={"green"}
-      c={"white"}
-      fw={"bolder"}
-      label={"Gå til handlekurv"}
+      bg="green"
+      c="white"
+      fw="bolder"
+      label="Gå til handlekurv"
     />
   );
 }
@@ -43,13 +43,15 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
   );
 
   useEffect(() => {
-    if (data !== "PaymentInitiated" || attempt > MAX_ATTEMPTS) return undefined;
+    if (data !== "PaymentInitiated" || attempt > MAX_ATTEMPTS) {
+      return undefined;
+    }
     function startExponentialWait() {
       const waitInSeconds = attempt ** 2;
       setSecondsBeforeNextAttempt(waitInSeconds);
 
       const interval = setInterval(() => {
-        setSecondsBeforeNextAttempt((t) => +(t - 0.1).toFixed(1));
+        setSecondsBeforeNextAttempt((t) => Number((t - 0.1).toFixed(1)));
       }, 100);
 
       const timeout = setTimeout(async () => {
@@ -97,7 +99,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
 
   if (isError) {
     return (
-      <ErrorAlert title={"Klarte ikke hente betalingsstatus"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
+      <ErrorAlert title="Klarte ikke hente betalingsstatus">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
     );
   }
 
@@ -105,21 +107,21 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
     return (
       <>
         <Activity mode={attempt <= MAX_ATTEMPTS ? "visible" : "hidden"}>
-          <Card withBorder shadow={"md"}>
+          <Card withBorder shadow="md">
             <Stack>
               <Stack gap={5}>
                 <Title order={3}>Prosesserer betaling...</Title>
-                <Text fs={"italic"}>
+                <Text fs="italic">
                   Venter på betalingsstatus fra Vipps. Vennligst ikke lukk fanen.
                 </Text>
               </Stack>
               <Activity mode={secondsBeforeNextAttempt < 1 ? "visible" : "hidden"}>
-                <Loader type={"dots"} />
+                <Loader type="dots" />
               </Activity>
               <Activity mode={secondsBeforeNextAttempt >= 1 ? "visible" : "hidden"}>
                 <Text>Prøver igjen om {secondsBeforeNextAttempt.toFixed(0)} sekunder</Text>
               </Activity>
-              <Text size={"sm"} fs={"italic"}>
+              <Text size="sm" fs="italic">
                 Forsøk {attempt} av {MAX_ATTEMPTS}
               </Text>
             </Stack>
@@ -127,7 +129,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
         </Activity>
 
         <Activity mode={attempt > MAX_ATTEMPTS ? "visible" : "hidden"}>
-          <ErrorAlert title={"Vipps bruke for lang tid på å svare"}>
+          <ErrorAlert title="Vipps bruke for lang tid på å svare">
             Vi mottok ikke oppdatert betalingsinformasjon etter å ha ventet i{" "}
             {calculateTotalWait(attempt)} sekunder. Du kan prøve igjen eller ta kontakt hvis
             problemet vedvarer.
@@ -149,19 +151,19 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
     return (
       <>
         <Title order={2}>Kvittering</Title>
-        <SuccessAlert title={"Din ordre er bekreftet!"}>
-          Kvittering har blitt sendt på e-post. Du kan se dine nåværende bøker ved å trykke på{" "}
-          {'"Dine bøker"'}
+        <SuccessAlert title="Din ordre er bekreftet!">
+          Kvittering har blitt sendt på e-post. Du kan se dine nåværende bøker ved å trykke på "Dine
+          bøker"
         </SuccessAlert>
         <OrderReceipt orderId={orderId} />
         <NavLink
           component={TanStackAnchor}
-          to={"/items"}
+          to="/items"
           leftSection={<IconBook />}
           active
-          variant={"filled"}
-          fw={"bolder"}
-          label={"Dine bøker"}
+          variant="filled"
+          fw="bolder"
+          label="Dine bøker"
         />
       </>
     );
@@ -170,8 +172,8 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
   if (data === "SessionExpired") {
     return (
       <>
-        <ErrorAlert title={"Betalingsforespørselen har utløpt"}>
-          Du kan starte på nytt ved å trykke på {'"Gå til handlekurv"'}
+        <ErrorAlert title="Betalingsforespørselen har utløpt">
+          Du kan starte på nytt ved å trykke på "Gå til handlekurv"
         </ErrorAlert>
         <BackToCartButton />
       </>
@@ -181,8 +183,8 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
   if (data === "PaymentTerminated") {
     return (
       <>
-        <ErrorAlert title={"Du har avbrutt betalingen"}>
-          Du kan starte på nytt ved å trykke på {'"Gå til handlekurv"'}
+        <ErrorAlert title="Du har avbrutt betalingen">
+          Du kan starte på nytt ved å trykke på "Gå til handlekurv"
         </ErrorAlert>
         <BackToCartButton />
       </>
@@ -191,7 +193,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
 
   return (
     <>
-      <ErrorAlert title={"Noe gikk galt under betalingen"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
+      <ErrorAlert title="Noe gikk galt under betalingen">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
       <BackToCartButton />
     </>
   );

@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 
 import { PermissionService } from "#services/permission_service";
-import { BlDocument } from "#shared/bl-document";
+import type { BlDocument } from "#shared/bl-document";
 
 test.group("PermissionSerivice", async () => {
   test("should return true if document.user.id is the same as userId even if UserPermission is not correct", async ({

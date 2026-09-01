@@ -7,15 +7,15 @@ export default function AdminPageNavigationDrawer() {
   const [opened, { toggle, close }] = useDisclosure();
 
   return (
-    <Box hiddenFrom={"xs"}>
+    <Box hiddenFrom="xs">
       <Burger
-        color={"white"}
+        color="white"
         opened={opened}
         onClick={toggle}
         aria-label={opened ? "Lukk meny" : "Åpne meny"}
       />
 
-      <Drawer opened={opened} onClose={close} position={"right"} title={"Velg side"}>
+      <Drawer opened={opened} onClose={close} position="right" title="Velg side">
         <AdminPageNavigation onNavigate={close} />
       </Drawer>
     </Box>

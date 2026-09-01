@@ -32,19 +32,19 @@ function AdminMatchDetailPage() {
   );
 
   return (
-    <Container size={"lg"} py={"lg"}>
-      <Stack gap={"lg"}>
-        <TanStackAnchor to={"/admin/overleveringer"} search={(previous) => previous}>
+    <Container size="lg" py="lg">
+      <Stack gap="lg">
+        <TanStackAnchor to="/admin/overleveringer" search={(previous) => previous}>
           ← Alle overleveringer
         </TanStackAnchor>
         {isLoading ? (
           <Skeleton height={200} />
         ) : error ? (
-          <ErrorAlert title={"Klarte ikke laste inn overleveringen"} />
+          <ErrorAlert title="Klarte ikke laste inn overleveringen" />
         ) : match ? (
           <AdminMatchDetail match={match} />
         ) : (
-          <InfoAlert title={"Fant ikke overleveringen"} />
+          <InfoAlert title="Fant ikke overleveringen" />
         )}
       </Stack>
     </Container>

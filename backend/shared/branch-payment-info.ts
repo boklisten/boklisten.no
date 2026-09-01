@@ -1,4 +1,4 @@
-import { Period } from "#shared/period";
+import type { Period } from "#shared/period";
 
 export interface BranchPaymentInfo {
   responsible: boolean; // if set the branch is responsible for payment, not the customer

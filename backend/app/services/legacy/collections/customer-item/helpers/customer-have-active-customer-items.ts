@@ -2,11 +2,11 @@ import { CustomerItemActive } from "#services/legacy/collections/customer-item/h
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { CustomerItem } from "#shared/customer-item/customer-item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
 
 export class CustomerHaveActiveCustomerItems {
-  private queryBuilder = new SEDbQueryBuilder();
-  private customerItemActive = new CustomerItemActive();
+  private readonly queryBuilder = new SEDbQueryBuilder();
+  private readonly customerItemActive = new CustomerItemActive();
 
   public async haveActiveCustomerItems(userId: string): Promise<boolean> {
     const databaseQuery = this.queryBuilder.getDbQuery({ customer: userId }, [

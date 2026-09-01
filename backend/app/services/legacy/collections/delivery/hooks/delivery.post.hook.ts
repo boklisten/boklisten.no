@@ -2,14 +2,14 @@ import { DeliveryHandler } from "#services/legacy/collections/delivery/helpers/d
 import { DeliveryValidator } from "#services/legacy/collections/delivery/helpers/deliveryValidator/delivery-validator";
 import { Hook } from "#services/legacy/hook";
 import { StorageService } from "#services/storage_service";
-import { AccessToken } from "#shared/access-token";
+import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
-import { Delivery } from "#shared/delivery/delivery";
-import { Order } from "#shared/order/order";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { Order } from "#shared/order/order";
 
 export class DeliveryPostHook extends Hook {
-  private deliveryValidator: DeliveryValidator;
-  private deliveryHandler: DeliveryHandler;
+  private readonly deliveryValidator: DeliveryValidator;
+  private readonly deliveryHandler: DeliveryHandler;
 
   constructor(deliveryValidator?: DeliveryValidator, deliveryHandler?: DeliveryHandler) {
     super();
@@ -32,33 +32,21 @@ export class DeliveryPostHook extends Hook {
 
         // @ts-expect-error fixme: auto ignored
         .get(delivery.order)
-        .then((order: Order) => {
-          return (
-            this.deliveryValidator
-              // @ts-expect-error fixme: auto ignored
-              .validate(delivery)
-              .then(() => {
-                return (
-                  this.deliveryHandler
+        .then((order: Order) =>
+          this.deliveryValidator
+            // @ts-expect-error fixme: auto ignored
+            .validate(delivery)
+            .then(() =>
+              this.deliveryHandler
 
-                    // @ts-expect-error fixme: auto ignored
-                    .updateOrderBasedOnMethod(delivery, order, accessToken)
-                    .then((updatedDelivery: Delivery) => {
-                      return resolve([updatedDelivery]);
-                    })
-                    .catch((blError: BlError) => {
-                      return reject(blError);
-                    })
-                );
-              })
-              .catch((blError: BlError) => {
-                return reject(blError);
-              })
-          );
-        })
-        .catch((blError: BlError) => {
-          return reject(blError);
-        });
+                // @ts-expect-error fixme: auto ignored
+                .updateOrderBasedOnMethod(delivery, order, accessToken)
+                .then((updatedDelivery: Delivery) => resolve([updatedDelivery]))
+                .catch((blError: BlError) => reject(blError)),
+            )
+            .catch((blError: BlError) => reject(blError)),
+        )
+        .catch((blError: BlError) => reject(blError));
     });
   }
 }

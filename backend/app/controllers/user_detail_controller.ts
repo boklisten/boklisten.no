@@ -1,4 +1,4 @@
-import { HttpContext } from "@adonisjs/core/http";
+import type { HttpContext } from "@adonisjs/core/http";
 
 import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpers/user-detail.helper";
 import { reconcileSignatureTask } from "#services/legacy/signature.helper";
@@ -14,7 +14,9 @@ import {
 
 async function getUserDetail(detailsId: string) {
   let userDetail = await StorageService.UserDetails.getOrNull(detailsId);
-  if (!userDetail) return null;
+  if (!userDetail) {
+    return null;
+  }
 
   if (!new UserDetailHelper().isValid(userDetail)) {
     userDetail = await StorageService.UserDetails.update(detailsId, {

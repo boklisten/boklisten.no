@@ -2,7 +2,7 @@ import { defineConfig } from "@adonisjs/ally";
 
 import { VippsDriverService } from "#services/vipps/vipps_driver_service";
 import env from "#start/env";
-import { InferSocialProviders } from "@adonisjs/ally/types";
+import type { InferSocialProviders } from "@adonisjs/ally/types";
 
 const allyConfig = defineConfig({
   vipps: VippsDriverService({

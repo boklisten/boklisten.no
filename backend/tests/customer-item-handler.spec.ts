@@ -1,12 +1,13 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { CustomerItemHandler } from "#services/legacy/collections/customer-item/helpers/customer-item-handler";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Branch } from "#shared/branch";
-import { CustomerItem } from "#shared/customer-item/customer-item";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Branch } from "#shared/branch";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 import { mock } from "#tests/test-doubles";
 
 test.group("CustomerItemHandler", (group) => {
@@ -124,7 +125,7 @@ test.group("CustomerItemHandler", (group) => {
     });
     const reason = await customerItemHandler.buyout("customerItem1", "order1", orderItem).then(
       () => null,
-      (caught: unknown) => caught,
+      (error: unknown) => error,
     );
     assert.equal(reason, 'orderItem.type is not "buyout"');
   });
@@ -137,7 +138,7 @@ test.group("CustomerItemHandler", (group) => {
       .return("customerItem1", "order1", orderItem, "branch1", "employee1")
       .then(
         () => null,
-        (caught: unknown) => caught,
+        (error: unknown) => error,
       );
     assert.equal(reason, 'orderItem.type is not "return"');
   });
@@ -148,7 +149,7 @@ test.group("CustomerItemHandler", (group) => {
     });
     const reason = await customerItemHandler.buyback("customerItem1", "order1", orderItem).then(
       () => null,
-      (caught: unknown) => caught,
+      (error: unknown) => error,
     );
     assert.equal(reason, 'orderItem.type is not "buyback"');
   });

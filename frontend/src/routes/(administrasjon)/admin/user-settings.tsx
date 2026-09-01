@@ -13,9 +13,9 @@ export const Route = createFileRoute("/(administrasjon)/admin/user-settings")({
 
 function SettingsPage() {
   return (
-    <Container size={"xs"}>
+    <Container size="xs">
       <Stack>
-        <Title ta={"center"}>Brukerinnstillinger</Title>
+        <Title ta="center">Brukerinnstillinger</Title>
         <UserSettings />
       </Stack>
     </Container>

@@ -1,5 +1,5 @@
-import { OrderItemInfo } from "#shared/order/order-item/order-item-info";
-import { OrderItemType } from "#shared/order/order-item/order-item-type";
+import type { OrderItemInfo } from "#shared/order/order-item/order-item-info";
+import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 
 export interface OrderItem {
   type: OrderItemType; //the operation on this OrderItem

@@ -1,10 +1,11 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { CustomerInvoiceActive } from "#services/legacy/collections/invoice/helpers/customer-invoice-active";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Invoice } from "#shared/invoice";
+import type { Invoice } from "#shared/invoice";
 
 test.group("CustomerInvoiceActive", (group) => {
   const customerInvoiceActive = new CustomerInvoiceActive();

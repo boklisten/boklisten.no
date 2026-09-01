@@ -19,48 +19,48 @@ function totalActivity(user: DuplicateUserSummary) {
 
 function MergeRoleCard({
   user,
-  role,
+  mergeRole,
   branchName,
 }: {
   user: DuplicateUserSummary;
-  role: "delete" | "keep";
+  mergeRole: "delete" | "keep";
   branchName?: string;
 }) {
-  const isKeep = role === "keep";
+  const isKeep = mergeRole === "keep";
   return (
     <Paper
       withBorder
-      radius={"md"}
-      p={"sm"}
+      radius="md"
+      p="sm"
       style={{
         borderColor: `var(--mantine-color-${isKeep ? "green" : "red"}-6)`,
       }}
     >
-      <Group wrap={"nowrap"} align={"flex-start"}>
-        <ThemeIcon variant={"light"} color={isKeep ? "green" : "red"} radius={"md"}>
+      <Group wrap="nowrap" align="flex-start">
+        <ThemeIcon variant="light" color={isKeep ? "green" : "red"} radius="md">
           {isKeep ? <IconUserCheck size={18} /> : <IconTrash size={18} />}
         </ThemeIcon>
         <Stack gap={2} miw={0}>
-          <Text size={"xs"} fw={700} c={isKeep ? "green" : "red"} tt={"uppercase"}>
+          <Text size="xs" fw={700} c={isKeep ? "green" : "red"} tt="uppercase">
             {isKeep ? "Beholdes" : "Slettes"}
           </Text>
-          <Group gap={"xs"}>
+          <Group gap="xs">
             <Text fw={600}>{user.name || "Uten navn"}</Text>
             {branchName && (
-              <Badge variant={"light"} size={"sm"}>
+              <Badge variant="light" size="sm">
                 {branchName}
               </Badge>
             )}
           </Group>
-          <Text size={"sm"} c={"dimmed"} style={{ overflowWrap: "anywhere" }}>
+          <Text size="sm" c="dimmed" style={{ overflowWrap: "anywhere" }}>
             {user.email}
             {user.phone ? ` · ${user.phone}` : ""}
           </Text>
-          <Text size={"sm"} c={"dimmed"}>
+          <Text size="sm" c="dimmed">
             {user.activeBooks} aktive bøker · {user.orderedItems} bestilte bøker ·{" "}
             {user.activeMatches} aktive overleveringer
           </Text>
-          <Text size={"sm"} c={"dimmed"}>
+          <Text size="sm" c="dimmed">
             Sist aktiv: {user.lastActive ? norwegianTime(user.lastActive).fromNow() : "aldri"}
           </Text>
         </Stack>
@@ -106,26 +106,28 @@ export default function MergeCustomersModal({
       showErrorNotification(errorMessage(error, "Klarte ikke å slå sammen kundene")),
   });
 
-  if (!first || !second) return null;
+  if (!first || !second) {
+    return null;
+  }
   const keptUser = first.detailsId === keepId ? first : second;
   const deletedUser = first.detailsId === keepId ? second : first;
 
   return (
-    <Modal opened={opened} onClose={onClose} title={"Slå sammen kunder"} size={"lg"}>
-      <Stack gap={"sm"}>
+    <Modal opened={opened} onClose={onClose} title="Slå sammen kunder" size="lg">
+      <Stack gap="sm">
         <MergeRoleCard
           user={deletedUser}
-          role={"delete"}
+          mergeRole="delete"
           branchName={branchNames.get(deletedUser.branchMembership ?? "")}
         />
-        <Group justify={"space-between"}>
-          <Group gap={6} c={"dimmed"}>
+        <Group justify="space-between">
+          <Group gap={6} c="dimmed">
             <IconArrowDown size={18} />
-            <Text size={"sm"}>Alt innhold flyttes til</Text>
+            <Text size="sm">Alt innhold flyttes til</Text>
           </Group>
           <Button
-            variant={"default"}
-            size={"compact-sm"}
+            variant="default"
+            size="compact-sm"
             leftSection={<IconArrowsExchange size={16} />}
             onClick={() => setKeepId(deletedUser.detailsId)}
           >
@@ -134,20 +136,20 @@ export default function MergeCustomersModal({
         </Group>
         <MergeRoleCard
           user={keptUser}
-          role={"keep"}
+          mergeRole="keep"
           branchName={branchNames.get(keptUser.branchMembership ?? "")}
         />
-        <Alert color={"red"}>
+        <Alert color="red">
           Kontoen til «{deletedUser.name || deletedUser.email}» slettes permanent. Bøker,
           bestillinger, betalinger og overleveringer flyttes til «{keptUser.name || keptUser.email}
           ». Dette kan ikke angres.
         </Alert>
-        <Group justify={"flex-end"} gap={"xs"}>
-          <Button variant={"default"} onClick={onClose}>
+        <Group justify="flex-end" gap="xs">
+          <Button variant="default" onClick={onClose}>
             Avbryt
           </Button>
           <Button
-            color={"red"}
+            color="red"
             loading={mergeMutation.isPending}
             onClick={() =>
               mergeMutation.mutate({

@@ -1,7 +1,8 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import BookHandover from "#models/book_handover";
 import EmailVerification from "#models/email_verification";
@@ -16,7 +17,7 @@ import { OrderActive } from "#services/legacy/collections/order/helpers/order-ac
 import { StorageService } from "#services/storage_service";
 import { UserManagementService } from "#services/user_management_service";
 import { createTestRound } from "#tests/matches/match-testing-utils";
-import { User } from "#types/user";
+import type { User } from "#types/user";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
 
 const FROM = "5d765db5fc8c47001c408d81";

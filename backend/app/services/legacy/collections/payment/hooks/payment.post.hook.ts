@@ -2,10 +2,10 @@ import { PaymentValidator } from "#services/legacy/collections/payment/helpers/p
 import { Hook } from "#services/legacy/hook";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Payment } from "#shared/payment/payment";
+import type { Payment } from "#shared/payment/payment";
 
 export class PaymentPostHook extends Hook {
-  private paymentValidator: PaymentValidator;
+  private readonly paymentValidator: PaymentValidator;
 
   constructor(paymentValidator?: PaymentValidator) {
     super();
@@ -24,7 +24,9 @@ export class PaymentPostHook extends Hook {
     }
 
     const payment = payments[0];
-    if (!payment) return [];
+    if (!payment) {
+      return [];
+    }
 
     try {
       await this.paymentValidator.validate(payment);

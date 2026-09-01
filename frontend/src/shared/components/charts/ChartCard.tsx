@@ -13,18 +13,18 @@ export default function ChartCard({
   children: ReactNode;
 }) {
   return (
-    <Card withBorder padding={"lg"} radius={"md"} h={"100%"}>
-      <Stack gap={"xs"} h={"100%"}>
+    <Card withBorder padding="lg" radius="md" h="100%">
+      <Stack gap="xs" h="100%">
         <Stack gap={2}>
           <Title order={3}>{title}</Title>
           {description && (
-            <Text size={"sm"} c={"dimmed"}>
+            <Text size="sm" c="dimmed">
               {description}
             </Text>
           )}
         </Stack>
         {isEmpty ? (
-          <Text c={"dimmed"} fs={"italic"} py={"xl"} ta={"center"}>
+          <Text c="dimmed" fs="italic" py="xl" ta="center">
             Ingen data å vise
           </Text>
         ) : (

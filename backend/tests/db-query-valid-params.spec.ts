@@ -1,6 +1,7 @@
 import { test } from "@japa/runner";
 
-import { DbQueryValidParams, ValidParameter } from "#services/legacy/query/db-query-valid-params";
+import type { ValidParameter } from "#services/legacy/query/db-query-valid-params";
+import { DbQueryValidParams } from "#services/legacy/query/db-query-valid-params";
 
 test.group("DbQueryValidParams", async () => {
   test("should return empty array if no valid NumberParams is set", async ({ assert }) => {

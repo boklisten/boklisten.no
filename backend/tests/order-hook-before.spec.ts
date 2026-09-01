@@ -27,7 +27,7 @@ test.group("OrderHookBefore", async () => {
 
     const blError = await orderHookBefore.validate(testRequest).then(
       () => null,
-      (caught: BlError) => caught,
+      (error: BlError) => error,
     );
     assert.instanceOf(blError, BlError);
     assert.include(blError?.getMsg() ?? "", "the request body is not valid");

@@ -6,5 +6,5 @@ export const Route = createFileRoute("/(administrasjon)/admin/database/boker")({
 });
 
 function DatabaseBooksPage() {
-  return <RedirectToBlAdmin path={"database/books"} />;
+  return <RedirectToBlAdmin path="database/books" />;
 }

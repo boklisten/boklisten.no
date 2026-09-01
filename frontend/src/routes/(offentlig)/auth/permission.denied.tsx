@@ -17,15 +17,15 @@ export const Route = createFileRoute("/(offentlig)/auth/permission/denied")({
 
 function PermissionDeniedPage() {
   return (
-    <Container size={"xs"}>
+    <Container size="xs">
       <Stack>
         <Title>Tilgang avslått</Title>
-        <ErrorAlert title={"Du har ikke tilgang til å se dette innholdet"}>
+        <ErrorAlert title="Du har ikke tilgang til å se dette innholdet">
           Du forsøke å logge inn med en annen bruker eller ta kontakt med administrator for
           spørsmål.
         </ErrorAlert>
         <AuthLogoutComponent />
-        <TanStackAnchor to={"/auth/login"}>Tilbake til innloggingssiden</TanStackAnchor>
+        <TanStackAnchor to="/auth/login">Tilbake til innloggingssiden</TanStackAnchor>
       </Stack>
     </Container>
   );

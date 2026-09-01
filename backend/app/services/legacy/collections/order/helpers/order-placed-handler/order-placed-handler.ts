@@ -8,14 +8,14 @@ import { OrderEmailHandler } from "#services/legacy/order_email_handler";
 import { reconcileSignatureTask } from "#services/legacy/signature.helper";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
-import { UserDetail } from "#shared/user-detail";
+import type { Order } from "#shared/order/order";
+import type { UserDetail } from "#shared/user-detail";
 
 export class OrderPlacedHandler {
-  private paymentHandler: PaymentHandler;
+  private readonly paymentHandler: PaymentHandler;
 
-  private customerItemHandler: CustomerItemHandler;
-  private orderItemMovedFromOrderHandler: OrderItemMovedFromOrderHandler;
+  private readonly customerItemHandler: CustomerItemHandler;
+  private readonly orderItemMovedFromOrderHandler: OrderItemMovedFromOrderHandler;
 
   constructor(
     paymentHandler?: PaymentHandler,
@@ -49,15 +49,19 @@ export class OrderPlacedHandler {
       return placedOrder;
     } catch (error) {
       // @ts-expect-error fixme: auto ignored
-      throw new BlError("could not update order: " + error).add(error);
+      throw new BlError(`could not update order: ${error}`).add(error);
     }
   }
 
   private async updateSignatureTask(order: Order): Promise<void> {
     try {
-      if (!order?.customer) return;
+      if (!order?.customer) {
+        return;
+      }
       const userDetail = await StorageService.UserDetails.getOrNull(order.customer);
-      if (!userDetail) return;
+      if (!userDetail) {
+        return;
+      }
       await reconcileSignatureTask(userDetail);
     } catch (error) {
       logger.error(`could not update signature task for order ${order.id}: ${error}`);
@@ -143,9 +147,7 @@ export class OrderPlacedHandler {
             orders.push(order.id);
 
             return StorageService.UserDetails.update(order.customer, { orders })
-              .then(() => {
-                return resolve(true);
-              })
+              .then(() => resolve(true))
               .catch(() => {
                 reject(new BlError("could not update userDetail with placed order"));
               });

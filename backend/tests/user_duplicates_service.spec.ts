@@ -1,9 +1,7 @@
 import { test } from "@japa/runner";
 
-import {
-  DuplicateCandidateSource,
-  findDuplicateCandidatePairs,
-} from "#services/user_duplicates_service";
+import type { DuplicateCandidateSource } from "#services/user_duplicates_service";
+import { findDuplicateCandidatePairs } from "#services/user_duplicates_service";
 
 function user(overrides: Partial<DuplicateCandidateSource> & { id: string }) {
   return {

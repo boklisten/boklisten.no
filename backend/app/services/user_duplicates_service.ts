@@ -5,7 +5,7 @@ import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import { ACTIVE_CUSTOMER_ITEM_MATCH, OPEN_ORDER_ITEM_MATCH } from "#services/branch_books_service";
 import { StorageService } from "#services/storage_service";
-import { UserPermission } from "#shared/user-permission";
+import type { UserPermission } from "#shared/user-permission";
 
 // Caps enrichment and rendering cost; truncation is reported via totalPairCount
 const MAX_PAIRS = 100;
@@ -67,7 +67,9 @@ function normalizePhone(value: string | undefined) {
 }
 
 function normalizeDob(value: Date | string | undefined) {
-  if (!value) return "";
+  if (!value) {
+    return "";
+  }
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
 }
@@ -153,15 +155,21 @@ export function findDuplicateCandidatePairs(sources: DuplicateCandidateSource[])
     reasons: string[];
   }[] = [];
   for (const block of blocks.values()) {
-    if (block.length < 2 || block.length > MAX_BLOCK_SIZE) continue;
+    if (block.length < 2 || block.length > MAX_BLOCK_SIZE) {
+      continue;
+    }
     for (let i = 0; i < block.length; i++) {
       for (let j = i + 1; j < block.length; j++) {
         const a = block[i]!;
         const b = block[j]!;
         const pairKey = [a.source.id, b.source.id].toSorted().join("|");
-        if (seenPairs.has(pairKey)) continue;
+        if (seenPairs.has(pairKey)) {
+          continue;
+        }
         const { isCandidate, score, reasons } = scorePair(a, b);
-        if (!isCandidate) continue;
+        if (!isCandidate) {
+          continue;
+        }
         seenPairs.add(pairKey);
         pairs.push({ a: a.source, b: b.source, score, reasons });
       }
@@ -214,14 +222,20 @@ async function countOrderedItems(detailsIds: string[]) {
 /** Matches where the user still has an obligation no book handover has discharged. */
 async function countActiveMatches(detailsIds: string[]) {
   const counts = new Map<string, number>();
-  if (detailsIds.length === 0) return counts;
+  if (detailsIds.length === 0) {
+    return counts;
+  }
   const participants = await MatchParticipant.query().whereIn("userDetailId", detailsIds);
-  if (participants.length === 0) return counts;
+  if (participants.length === 0) {
+    return counts;
+  }
   const participantIds = participants.map((participant) => participant.id);
   const obligations = await MatchObligation.query()
     .whereIn("senderParticipantId", participantIds)
     .orWhereIn("receiverParticipantId", participantIds);
-  if (obligations.length === 0) return counts;
+  if (obligations.length === 0) {
+    return counts;
+  }
   const handovers = await BookHandover.query()
     .whereIn(
       "dischargesSenderObligationId",
@@ -250,7 +264,9 @@ async function countActiveMatches(detailsIds: string[]) {
         : undefined,
     ];
     for (const participant of openSides) {
-      if (!participant?.userDetailId) continue;
+      if (!participant?.userDetailId) {
+        continue;
+      }
       const matches = activeMatchesByUser.get(participant.userDetailId) ?? new Set();
       matches.add(obligation.matchId);
       activeMatchesByUser.set(participant.userDetailId, matches);

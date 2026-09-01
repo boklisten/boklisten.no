@@ -37,7 +37,7 @@ function PublicBlidResult({ blid, onClear }: { blid: string; onClear: () => void
   );
 
   if (isPending) {
-    return <Skeleton height={220} radius={"md"} />;
+    return <Skeleton height={220} radius="md" />;
   }
   if (isError) {
     return <ErrorAlert>Kunne ikke søke opp boka. Prøv igjen.</ErrorAlert>;
@@ -48,41 +48,41 @@ function PublicBlidResult({ blid, onClear }: { blid: string; onClear: () => void
   }
 
   return (
-    <Paper withBorder radius={"md"} p={"md"}>
-      <Stack gap={"sm"}>
-        <Group justify={"space-between"} align={"flex-start"} wrap={"nowrap"} gap={"xs"}>
-          <Group gap={"sm"} align={"center"} wrap={"nowrap"} miw={0}>
-            <ThemeIcon variant={"light"} size={"xl"} radius={"xl"}>
+    <Paper withBorder radius="md" p="md">
+      <Stack gap="sm">
+        <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
+          <Group gap="sm" align="center" wrap="nowrap" miw={0}>
+            <ThemeIcon variant="light" size="xl" radius="xl">
               <IconBook2 aria-hidden />
             </ThemeIcon>
             <Stack gap={4} miw={0}>
-              <Title order={2} size={"h4"} lh={1.2}>
+              <Title order={2} size="h4" lh={1.2}>
                 {result.title}
               </Title>
-              <Text size={"sm"} c={"dimmed"}>
+              <Text size="sm" c="dimmed">
                 ISBN {result.isbn} · Unik ID {blid}
               </Text>
             </Stack>
           </Group>
-          <CloseButton aria-label={"Lukk boksøket"} onClick={onClear} />
+          <CloseButton aria-label="Lukk boksøket" onClick={onClear} />
         </Group>
         <Stack gap={6}>
-          <Text fz={"sm"} fw={500} c={"dimmed"}>
+          <Text fz="sm" fw={500} c="dimmed">
             Tilhører
           </Text>
           <Text fw={700}>{result.name}</Text>
-          <Group gap={"md"}>
+          <Group gap="md">
             <Group gap={5}>
               <IconPhone size={16} aria-hidden />
-              <Text size={"sm"}>{result.phone}</Text>
+              <Text size="sm">{result.phone}</Text>
             </Group>
             <Group gap={5}>
               <IconMail size={16} aria-hidden />
-              <Text size={"sm"}>{result.email}</Text>
+              <Text size="sm">{result.email}</Text>
             </Group>
           </Group>
         </Stack>
-        <Table verticalSpacing={"xs"} layout={"fixed"}>
+        <Table verticalSpacing="xs" layout="fixed">
           <Table.Tbody>
             <Table.Tr>
               <Table.Th>Utdelt hos</Table.Th>

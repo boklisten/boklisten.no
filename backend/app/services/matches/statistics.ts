@@ -5,8 +5,8 @@ import { MatchRepository } from "#services/matches/match_repository";
 import {
   deriveObligationProgress,
   indexHandoversByHalf,
-  type HandoverFacts,
 } from "#services/matches/obligation_status";
+import type { HandoverFacts } from "#services/matches/obligation_status";
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
 import type {
@@ -30,8 +30,12 @@ function countLabel(count: number, noun: string): string {
 
 /** Sort meeting slots chronologically, keeping the "no time" bucket (null) last. */
 function compareSlots(a: string | null, b: string | null): number {
-  if (a === null) return 1;
-  if (b === null) return -1;
+  if (a === null) {
+    return 1;
+  }
+  if (b === null) {
+    return -1;
+  }
   return a.localeCompare(b);
 }
 
@@ -61,7 +65,9 @@ function countableHalves(obligation: MatchObligation): number {
 }
 
 function toHandoverFacts(handover: BookHandover | null): HandoverFacts | null {
-  if (handover === null) return null;
+  if (handover === null) {
+    return null;
+  }
   return {
     id: handover.id,
     fromCustomerId: handover.fromUserDetailId,
@@ -124,7 +130,9 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
     roundId === undefined
       ? await MatchRepository.findDefaultRound()
       : await MatchRound.find(roundId);
-  if (!round) return emptyStatistics();
+  if (!round) {
+    return emptyStatistics();
+  }
 
   const matches = await MatchRepository.findForRound(round.id);
   const obligationIds = matches.flatMap((match) => match.obligations.map((o) => o.id));
@@ -189,12 +197,16 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
       standAttendanceCounts.set(date, (standAttendanceCounts.get(date) ?? 0) + 1);
     } else {
       userMatchCount++;
-      for (const customer of customers) bump(customer, "userMatches");
+      for (const customer of customers) {
+        bump(customer, "userMatches");
+      }
 
       const key = `${match.meetingLocation} ${date ?? ""}`;
       const slot = userAttendanceStudents.get(key);
       if (slot) {
-        for (const customer of customers) slot.students.add(customer);
+        for (const customer of customers) {
+          slot.students.add(customer);
+        }
       } else {
         userAttendanceStudents.set(key, {
           location: match.meetingLocation,
@@ -231,7 +243,9 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
         }
       } else {
         userBookTransfer.expected++;
-        if (state.senderHandover) userBookTransfer.transferred++;
+        if (state.senderHandover) {
+          userBookTransfer.transferred++;
+        }
       }
 
       // A student's own copy that has not been handed over anywhere keeps them liable.
@@ -256,15 +270,25 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
       const standHalfAsPlanned =
         (senderIsStand && progress.receiverSatisfied && progress.receivedFrom === null) ||
         (receiverIsStand && progress.senderDischarged && progress.deliveredTo === null);
-      if (progress.wentAsPlanned || standHalfAsPlanned) verdicts.asPlanned++;
-      if (progress.receivedFrom !== null) verdicts.fromUnexpectedSender++;
-      if (progress.deliveredTo !== null) verdicts.toUnexpectedRecipient++;
+      if (progress.wentAsPlanned || standHalfAsPlanned) {
+        verdicts.asPlanned++;
+      }
+      if (progress.receivedFrom !== null) {
+        verdicts.fromUnexpectedSender++;
+      }
+      if (progress.deliveredTo !== null) {
+        verdicts.toUnexpectedRecipient++;
+      }
     }
 
     const breakdown = isStandMatch ? standMatchCompletion : userMatchCompletion;
-    if (countable > 0 && settled >= countable) breakdown.completed++;
-    else if (settled > 0) breakdown.started++;
-    else breakdown.notStarted++;
+    if (countable > 0 && settled >= countable) {
+      breakdown.completed++;
+    } else if (settled > 0) {
+      breakdown.started++;
+    } else {
+      breakdown.notStarted++;
+    }
   }
 
   verdicts.outsideAnyMatch = await countUnattachedHandovers(round);
@@ -273,8 +297,11 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
   let mustVisitStand = 0;
   const distributionCounts = new Map<string, MatchConfigDistributionEntry>();
   for (const { userMatches: u, standMatches: s } of matchesPerCustomer.values()) {
-    if (s > 0) mustVisitStand++;
-    else onlyUserHandovers++;
+    if (s > 0) {
+      mustVisitStand++;
+    } else {
+      onlyUserHandovers++;
+    }
 
     const key = `${u}-${s}`;
     const existing = distributionCounts.get(key);
@@ -344,7 +371,9 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
  */
 async function countUnattachedHandovers(round: MatchRound): Promise<number> {
   const from = round.generatedAt ?? round.createdAt;
-  if (!from) return 0;
+  if (!from) {
+    return 0;
+  }
   const nextRound = await MatchRound.query()
     .where("id", ">", round.id)
     .orderBy("id", "asc")
@@ -368,7 +397,9 @@ async function computeStandBookExpectations(counts: {
       ...counts.actualOutByItem.keys(),
     ]),
   ];
-  if (itemIds.length === 0) return [];
+  if (itemIds.length === 0) {
+    return [];
+  }
 
   const items = await StorageService.Items.getMany(itemIds, USER_PERMISSION.ADMIN);
   const titleById = new Map(items.map((item) => [item.id, item.title]));
@@ -402,7 +433,9 @@ interface MutableBranchNode {
 async function computeStandBranchHierarchy(
   standCustomers: string[],
 ): Promise<BranchHierarchyNode[]> {
-  if (standCustomers.length === 0) return [];
+  if (standCustomers.length === 0) {
+    return [];
+  }
 
   const [userDetails, branches] = await Promise.all([
     StorageService.UserDetails.getMany(standCustomers, USER_PERMISSION.ADMIN),
@@ -446,7 +479,9 @@ function ancestorChain(
   while (currentId && !visited.has(currentId)) {
     visited.add(currentId);
     const branch = branchById.get(currentId);
-    if (!branch) break;
+    if (!branch) {
+      break;
+    }
     // Use localName at deeper levels; the root usually only has a full name.
     chain.push({ id: currentId, name: branch.localName || branch.name });
     currentId = branch.parentBranch;

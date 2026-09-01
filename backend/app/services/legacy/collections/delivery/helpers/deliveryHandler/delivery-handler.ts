@@ -1,14 +1,14 @@
 import { BringDeliveryService } from "#services/legacy/collections/delivery/helpers/deliveryBring/bringDelivery.service";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Branch } from "#shared/branch";
-import { Delivery } from "#shared/delivery/delivery";
-import { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
-import { Item } from "#shared/item";
-import { Order } from "#shared/order/order";
+import type { Branch } from "#shared/branch";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
+import type { Item } from "#shared/item";
+import type { Order } from "#shared/order/order";
 
 export class DeliveryHandler {
-  private bringDeliveryService: BringDeliveryService;
+  private readonly bringDeliveryService: BringDeliveryService;
 
   constructor(bringDeliveryService?: BringDeliveryService) {
     this.bringDeliveryService = bringDeliveryService ?? new BringDeliveryService();
@@ -30,9 +30,7 @@ export class DeliveryHandler {
 
   private updateOrderWithDeliveryMethodBranch(delivery: Delivery, order: Order): Promise<Delivery> {
     return this.updateOrder(order, delivery)
-      .then(() => {
-        return delivery;
-      })
+      .then(() => delivery)
       .catch((blError: BlError) => {
         throw blError;
       });
@@ -40,21 +38,17 @@ export class DeliveryHandler {
 
   private updateOrderWithDeliveryMethodBring(delivery: Delivery, order: Order): Promise<Delivery> {
     return new Promise((resolve, reject) => {
-      void this.fetchItems(order).then((items: Item[]) => {
-        return this.getBringDeliveryInfoAndUpdateDelivery(order, delivery, items)
-          .then((updatedDelivery: Delivery) => {
-            return this.updateOrder(order, updatedDelivery)
-              .then(() => {
-                return resolve(updatedDelivery);
-              })
-              .catch((blError: BlError) => {
-                return reject(blError);
-              });
-          })
+      void this.fetchItems(order).then((items: Item[]) =>
+        this.getBringDeliveryInfoAndUpdateDelivery(order, delivery, items)
+          .then((updatedDelivery: Delivery) =>
+            this.updateOrder(order, updatedDelivery)
+              .then(() => resolve(updatedDelivery))
+              .catch((blError: BlError) => reject(blError)),
+          )
           .catch((bringDeliveryInfoError) => {
             reject(new BlError("failed to get bring delivery info").add(bringDeliveryInfoError));
-          });
-      });
+          }),
+      );
     });
   }
 
@@ -62,9 +56,7 @@ export class DeliveryHandler {
     const orderUpdateData = { delivery: delivery.id };
 
     return StorageService.Orders.update(order.id, orderUpdateData)
-      .then(() => {
-        return true;
-      })
+      .then(() => true)
       .catch((blError: BlError) => {
         throw new BlError("could not update order").add(blError);
       });
@@ -75,9 +67,7 @@ export class DeliveryHandler {
       const itemIds: string[] = order.orderItems.map((orderItem) => orderItem.item);
 
       StorageService.Items.getMany(itemIds)
-        .then((items: Item[]) => {
-          return resolve(items);
-        })
+        .then((items: Item[]) => resolve(items))
         .catch((blError: BlError) => {
           reject(blError);
         });
@@ -111,7 +101,7 @@ export class DeliveryHandler {
             .then((deliveryInfoBring: DeliveryInfoBring) => {
               // @ts-expect-error fixme: auto ignored
               if (delivery.info["trackingNumber"]) {
-                deliveryInfoBring["trackingNumber"] =
+                deliveryInfoBring.trackingNumber =
                   // @ts-expect-error fixme: auto ignored
                   delivery.info["trackingNumber"];
               }
@@ -120,9 +110,7 @@ export class DeliveryHandler {
                 amount: deliveryInfoBring.amount,
                 info: deliveryInfoBring,
               })
-                .then((updatedDelivery: Delivery) => {
-                  return resolve(updatedDelivery);
-                })
+                .then((updatedDelivery: Delivery) => resolve(updatedDelivery))
                 .catch((updateDeliveryError: BlError) => {
                   reject(updateDeliveryError);
                 });

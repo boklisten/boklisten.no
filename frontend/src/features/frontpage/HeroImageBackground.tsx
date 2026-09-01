@@ -15,13 +15,13 @@ export function HeroImageBackground() {
         backgroundSize: "110px, 90px, 70px, 43px",
       }}
     >
-      <Stack align={"center"}>
-        <Title c={"white"} fw={800} style={{ fontSize: "40px" }}>
+      <Stack align="center">
+        <Title c="white" fw={800} style={{ fontSize: "40px" }}>
           Alltid riktig bok!{" "}
         </Title>
 
         <Container size={640}>
-          <Text size="lg" c={"white"} ta={"center"}>
+          <Text size="lg" c="white" ta="center">
             Vi i Boklisten.no er veldig opptatt av lærebøker, derfor vil vi gjøre det så enkelt som
             mulig for deg å få tak i dem.
           </Text>

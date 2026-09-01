@@ -1,10 +1,11 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
+import type { Order } from "#shared/order/order";
 
 test.group("OrderActive", (group) => {
   const orderActive = new OrderActive();

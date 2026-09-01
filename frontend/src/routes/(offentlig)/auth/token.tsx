@@ -62,11 +62,9 @@ function TokenPage() {
 
   if (hasFailed) {
     return (
-      <Container size={"xs"}>
-        <Stack align={"center"}>
-          <ErrorAlert title={"Klarte ikke fullføre innloggingen"}>
-            {PLEASE_TRY_AGAIN_TEXT}
-          </ErrorAlert>
+      <Container size="xs">
+        <Stack align="center">
+          <ErrorAlert title="Klarte ikke fullføre innloggingen">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
           <Button
             onClick={() => {
               setHasFailed(false);
@@ -81,8 +79,8 @@ function TokenPage() {
   }
 
   return (
-    <Container size={"xs"}>
-      <Stack align={"center"}>
+    <Container size="xs">
+      <Stack align="center">
         <Title>Du blir nå logget inn...</Title>
         <Loader />
       </Stack>

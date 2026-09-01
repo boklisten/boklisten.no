@@ -1,5 +1,6 @@
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import { extendRemainingCopyDeadlines } from "#services/matches/copy_deadlines";
 import { StorageService } from "#services/storage_service";

@@ -2,7 +2,7 @@ import { isNullish } from "#services/legacy/typescript-helpers";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
-import { Order } from "#shared/order/order";
+import type { Order } from "#shared/order/order";
 
 interface OrderItemToUpdate {
   itemId: string;

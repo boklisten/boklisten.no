@@ -25,8 +25,8 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
   const navigate = useNavigate();
 
   return (
-    <Stack gap={"xl"}>
-      <Stack gap={"xs"}>
+    <Stack gap="xl">
+      <Stack gap="xs">
         <Title>
           <AdminMatchTitle match={match} />
         </Title>
@@ -41,10 +41,10 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
         }
       />
 
-      <Stack gap={"xs"}>
+      <Stack gap="xs">
         <MatchHeader>Møtested</MatchHeader>
         <MeetingInfo meetingLocation={match.meetingLocation} meetingTime={match.meetingTime} />
-        <Text fw={"bold"}>{match.isStandMatch ? "Elev" : "Elever"}</Text>
+        <Text fw="bold">{match.isStandMatch ? "Elev" : "Elever"}</Text>
         {parties
           .filter((party) => party.kind === "customer")
           .map((party) => (
@@ -58,7 +58,9 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
 
       {parties.map((party) => {
         const { toDeliver } = forParty(match, partyKey(party));
-        if (toDeliver.length === 0) return null;
+        if (toDeliver.length === 0) {
+          return null;
+        }
         const other = parties.find((candidate) => partyKey(candidate) !== partyKey(party));
         return (
           <Stack gap={0} key={partyKey(party)}>

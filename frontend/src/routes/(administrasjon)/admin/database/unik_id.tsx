@@ -14,7 +14,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/database/unik_id")
 
 function DatabaseUniqueIdPage() {
   return (
-    <AuthGuard requiredPermission={"admin"}>
+    <AuthGuard requiredPermission="admin">
       <Stack>
         <Title>Lag utskriftsklar PDF med unike IDer</Title>
         <Box>

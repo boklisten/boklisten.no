@@ -1,7 +1,7 @@
 // mulberry32 PRNG: https://stackoverflow.com/a/47593316
 import { DateTime } from "luxon";
 
-import {
+import type {
   CandidateStandMatch,
   CandidateUserMatch,
   MatchableUser,
@@ -44,7 +44,8 @@ export function createTestRound(overrides: Partial<MatchRound> = {}) {
 
 export function seededRandom(seed: number) {
   return function () {
-    let t = (seed += 0x6d_2b_79_f5);
+    seed += 0x6d_2b_79_f5;
+    let t = seed;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296;
@@ -86,7 +87,7 @@ export function createFakeMatchableUser(
   return {
     id,
     items: new Set(items),
-    wantedItems: new Set(wantedItems ?? []),
+    wantedItems: new Set(wantedItems),
     groupMembership: groupMembership ?? "unknown",
   };
 }
@@ -121,7 +122,7 @@ export function createMatchableUsersWithIdSuffix(
   isSender: boolean,
 ): MatchableUser[] {
   return rawData.map(({ id, items }) => {
-    const processedItems = new Set(items.map((item) => item["$numberLong"]));
+    const processedItems = new Set(items.map((item) => item.$numberLong));
     return {
       id: id + (isSender ? "_sender" : "_receiver"),
       items: isSender ? processedItems : new Set(),

@@ -1,11 +1,11 @@
 import { CustomerItemActive } from "#services/legacy/collections/customer-item/helpers/customer-item-active";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { StorageService } from "#services/storage_service";
-import { CustomerItem } from "#shared/customer-item/customer-item";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
 
 export class CustomerItemActiveBlid {
-  private customerItemActive = new CustomerItemActive();
-  private dbQueryBuilder = new SEDbQueryBuilder();
+  private readonly customerItemActive = new CustomerItemActive();
+  private readonly dbQueryBuilder = new SEDbQueryBuilder();
 
   /**
    * Checks if a blid is used by an active customerItem
@@ -16,7 +16,7 @@ export class CustomerItemActiveBlid {
   }
 
   async getActiveCustomerItems(blid: string): Promise<CustomerItem[]> {
-    const databaseQuery = this.dbQueryBuilder.getDbQuery({ blid: blid }, [
+    const databaseQuery = this.dbQueryBuilder.getDbQuery({ blid }, [
       { fieldName: "blid", type: "string" },
     ]);
 

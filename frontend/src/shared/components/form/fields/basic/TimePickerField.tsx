@@ -1,4 +1,5 @@
-import { TimePicker, type TimePickerProps } from "@mantine/dates";
+import { TimePicker } from "@mantine/dates";
+import type { TimePickerProps } from "@mantine/dates";
 
 import { useFieldContext } from "@/shared/hooks/form";
 

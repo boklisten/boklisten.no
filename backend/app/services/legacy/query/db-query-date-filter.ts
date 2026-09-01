@@ -10,16 +10,15 @@ export interface DateFilter {
 }
 
 export class DbQueryDateFilter {
-  private operationIdentifiers: {
+  private readonly operationIdentifiers: {
     op: string;
     opIdentifier: string;
     atIndex: number;
   }[];
 
-  private dateFormat: string;
+  private readonly dateFormat: string = "DDMMYYYYHHmm";
 
   public constructor() {
-    this.dateFormat = "DDMMYYYYHHmm";
     this.operationIdentifiers = [
       { op: "$gt", opIdentifier: ">", atIndex: 0 },
       { op: "$lt", opIdentifier: "<", atIndex: 0 },
@@ -27,15 +26,13 @@ export class DbQueryDateFilter {
   }
 
   public getDateFilters(query: any, validDateParams: string[]): DateFilter[] {
-    if (!query || (Object.keys(query).length === 0 && query.constructor === Object))
+    if (!query || (Object.keys(query).length === 0 && query.constructor === Object)) {
       throw new TypeError("the given query can not be null or undefined");
+    }
 
     try {
       for (const parameter in query) {
-        if (
-          Object.prototype.hasOwnProperty.call(query, parameter) &&
-          validDateParams.includes(parameter)
-        ) {
+        if (Object.hasOwn(query, parameter) && validDateParams.includes(parameter)) {
           return Array.isArray(query[parameter])
             ? this.generateMultipleDateFilter(parameter, query[parameter])
             : [this.generateSingleDayFilter(parameter, query[parameter])];
@@ -45,7 +42,7 @@ export class DbQueryDateFilter {
       return [];
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new SyntaxError();
+        throw new SyntaxError("could not parse date filter");
       }
     }
 
@@ -54,8 +51,9 @@ export class DbQueryDateFilter {
   }
 
   private generateSingleDayFilter(fieldName: string, value: string): DateFilter {
-    if (!value)
+    if (!value) {
       throw new Error("QueryBuilderDateFilter.generateDateFilter(): value is not defined");
+    }
 
     const operation = this.getOperation(value);
 
@@ -85,12 +83,12 @@ export class DbQueryDateFilter {
       op[operation] = isoDate;
 
       return {
-        fieldName: fieldName,
-        op: op,
+        fieldName,
+        op,
       };
     }
 
-    return { fieldName: fieldName, op: { $eq: isoDate } };
+    return { fieldName, op: { $eq: isoDate } };
   }
 
   private generateMultipleDateFilter(fieldName: string, values: string[]): DateFilter[] {
@@ -104,7 +102,7 @@ export class DbQueryDateFilter {
       operations[op] = moment(theDateString, this.dateFormat, true).toDate();
     }
 
-    return [{ fieldName: fieldName, op: operations }];
+    return [{ fieldName, op: operations }];
   }
 
   private getOperation(value: string): string {

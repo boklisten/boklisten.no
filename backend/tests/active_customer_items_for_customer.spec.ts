@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import { test } from "@japa/runner";
-import sinon, { createSandbox } from "sinon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import CustomerItemsController from "#controllers/customer_items_controller";
 import { PermissionService } from "#services/permission_service";
@@ -17,7 +18,9 @@ function contextFor(detailsId: string) {
 function matchStage(aggregateStub: sinon.SinonStub): Record<string, unknown> {
   const pipeline = mock<{ $match?: Record<string, unknown> }[]>(aggregateStub.firstCall.args[0]);
   const stage = pipeline.find((entry) => entry.$match !== undefined)?.$match;
-  if (stage === undefined) throw new Error("aggregate had no $match stage");
+  if (stage === undefined) {
+    throw new Error("aggregate had no $match stage");
+  }
   return stage;
 }
 

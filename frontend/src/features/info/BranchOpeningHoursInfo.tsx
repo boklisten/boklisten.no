@@ -7,7 +7,7 @@ import ContactInfo from "@/shared/components/ContactInfo";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { formatOpeningHour } from "@/shared/utils/dates";
 import { publicApi } from "@/shared/utils/publicApiClient";
-import { Route } from "@tuyau/core/types";
+import type { Route } from "@tuyau/core/types";
 
 const OpeningHourRow = ({
   openingHour,
@@ -38,7 +38,7 @@ export default function BranchOpeningHours({ branchId }: { branchId: string }) {
 
   if (isLoadingOpeningHours) {
     return (
-      <Stack w={"100%"} mt={"md"}>
+      <Stack w="100%" mt="md">
         <Skeleton height={25} />
         <Skeleton height={25} />
         <Skeleton height={25} />
@@ -50,14 +50,14 @@ export default function BranchOpeningHours({ branchId }: { branchId: string }) {
 
   if (isErrorOpeningHours || openingHours == undefined) {
     return (
-      <ErrorAlert title={"Klarte ikke laste inn åpningstider"}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
+      <ErrorAlert title="Klarte ikke laste inn åpningstider">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
     );
   }
 
   if (openingHours.length === 0) {
     return (
       <>
-        <InfoAlert title={"Sesongen er over – eller åpningstidene er ikke klare enda"}>
+        <InfoAlert title="Sesongen er over – eller åpningstidene er ikke klare enda">
           Du kan bestille bøker i Posten, eller kontakte oss for spørsmål.
         </InfoAlert>
         <ContactInfo />

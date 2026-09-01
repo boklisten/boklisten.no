@@ -1,4 +1,4 @@
-import {
+import type {
   CandidateStandMatch,
   CandidateUserMatch,
   MatchableUser,
@@ -35,10 +35,16 @@ export function sortUsers(
     const aHasStandMatch = customersWithStandMatch.has(a.id);
     const bHasStandMatch = customersWithStandMatch.has(b.id);
 
-    if (aHasStandMatch && !bHasStandMatch) return 1;
-    if (!aHasStandMatch && bHasStandMatch) return -1;
+    if (aHasStandMatch && !bHasStandMatch) {
+      return 1;
+    }
+    if (!aHasStandMatch && bHasStandMatch) {
+      return -1;
+    }
 
-    if (b.items.size !== a.items.size) return b.items.size - a.items.size;
+    if (b.items.size !== a.items.size) {
+      return b.items.size - a.items.size;
+    }
 
     return b.wantedItems.size - a.wantedItems.size;
   });
@@ -163,8 +169,8 @@ export function canMatchPerfectlyWithStand(
   user: MatchableUser,
   itemImbalances: Record<string, number>,
 ): boolean {
-  const canDeliverItems = Array.from(user.items).every((item) => (itemImbalances[item] ?? 0) > 0);
-  const canReceiveWantedItems = Array.from(user.wantedItems).every(
+  const canDeliverItems = [...user.items].every((item) => (itemImbalances[item] ?? 0) > 0);
+  const canReceiveWantedItems = [...user.wantedItems].every(
     (item) => (itemImbalances[item] ?? 0) < 0,
   );
   return canDeliverItems && canReceiveWantedItems;
@@ -195,8 +201,8 @@ export function updateItemImbalances(
  * Aka. either no one wants the items, or no one has the items
  */
 export function calculateUnmatchableItems(users: MatchableUser[]): Set<string> {
-  const items = new Set(users.flatMap((user) => Array.from(user.items)));
-  const wantedItems = new Set(users.flatMap((user) => Array.from(user.wantedItems)));
+  const items = new Set(users.flatMap((user) => [...user.items]));
+  const wantedItems = new Set(users.flatMap((user) => [...user.wantedItems]));
   return items.symmetricDifference(wantedItems);
 }
 

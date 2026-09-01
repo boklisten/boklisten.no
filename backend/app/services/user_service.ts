@@ -1,7 +1,7 @@
 import { SEDbQuery } from "#services/legacy/query/se.db-query";
 import { PasswordService } from "#services/password_service";
 import { StorageService } from "#services/storage_service";
-import { User } from "#types/user";
+import type { User } from "#types/user";
 
 export const UserService = {
   async getByUserDetailsId(detailsId: string | undefined): Promise<User | null> {

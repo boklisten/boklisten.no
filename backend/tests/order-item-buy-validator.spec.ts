@@ -3,8 +3,8 @@ import { test } from "@japa/runner";
 import { OrderItemBuyValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-buy-validator/order-item-buy-validator";
 import { PriceService } from "#services/legacy/price.service";
 import { BlError } from "#shared/bl-error";
-import { Item } from "#shared/item";
-import { Order } from "#shared/order/order";
+import type { Item } from "#shared/item";
+import type { Order } from "#shared/order/order";
 
 test.group("OrderItemBuyValidator", (group) => {
   const priceService = new PriceService();
@@ -64,15 +64,14 @@ test.group("OrderItemBuyValidator", (group) => {
     testOrder.orderItems[0].type = "buy";
   });
 
-  test("should resolve when a valid order is passed", async ({ assert }) => {
-    return assert.doesNotReject(() =>
+  test("should resolve when a valid order is passed", async ({ assert }) =>
+    assert.doesNotReject(() =>
       orderItemPriceValidator.validate(
         // @ts-expect-error fixme: auto ignored
         testOrder.orderItems[0],
         testItem,
       ),
-    );
-  });
+    ));
 
   test("should reject when item.price is 200 and orderItem.amount is 100", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored

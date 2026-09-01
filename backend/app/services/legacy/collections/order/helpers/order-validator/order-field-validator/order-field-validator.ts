@@ -1,7 +1,7 @@
 import { isNullish, isNumber } from "#services/legacy/typescript-helpers";
 import { BlError } from "#shared/bl-error";
-import { Order } from "#shared/order/order";
-import { OrderItem } from "#shared/order/order-item/order-item";
+import type { Order } from "#shared/order/order";
+import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderFieldValidator {
   validate(order: Order): Promise<boolean> {

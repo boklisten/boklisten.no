@@ -20,7 +20,7 @@ export function getRouter() {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    defaultErrorComponent: ({ error }) => <ErrorBoundary error={error} withLogo href={"/"} />,
+    defaultErrorComponent: ({ error }) => <ErrorBoundary error={error} withLogo href="/" />,
     defaultNotFoundComponent: NotFoundPage,
   });
 
@@ -40,7 +40,7 @@ export function getRouter() {
       enableLogs: true,
       tracesSampleRate: 0.1,
       replaysSessionSampleRate: 0.1,
-      replaysOnErrorSampleRate: 1.0,
+      replaysOnErrorSampleRate: 1,
     });
   }
   return router;

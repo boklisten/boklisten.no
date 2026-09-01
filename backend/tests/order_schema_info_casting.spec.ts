@@ -30,7 +30,9 @@ function buildOrder(info: Record<string, unknown>) {
   });
   // toObject exposes the subdocument as stored, including keys the schema does not declare.
   const stored: unknown = order.toObject().orderItems[0]?.info;
-  if (stored == null) throw new Error("orderItem lost its info");
+  if (stored == null) {
+    throw new Error("orderItem lost its info");
+  }
   return { order, info: stored };
 }
 

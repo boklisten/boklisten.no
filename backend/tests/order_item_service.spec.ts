@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 
 import { OrderItemService } from "#services/order_item_service";
-import { Item } from "#shared/item";
+import type { Item } from "#shared/item";
 import { mock } from "#tests/test-doubles";
 
 const ITEM_ID = "6100000000000000000000a1";
