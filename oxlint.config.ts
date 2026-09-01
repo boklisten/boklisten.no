@@ -16,13 +16,86 @@ export default defineConfig({
     "jsx-a11y",
     "promise",
   ],
-  // TODO: enable more categories for better linting
   categories: {
     correctness: "error",
     suspicious: "error",
+    pedantic: "error",
+    perf: "error",
     style: "error",
   },
   rules: {
+    // Deep-readonly parameters everywhere is not a convention this codebase uses
+    "typescript/prefer-readonly-parameter-types": "off",
+    // Truthiness checks on strings/numbers/nullables are used deliberately throughout
+    "typescript/strict-boolean-expressions": "off",
+    // Adding/removing async changes API shape (Promise identity); manual work — revisit
+    "require-await": "off",
+    "typescript/require-await": "off",
+    // Void arrow shorthands (`onClick={() => setX(1)}`) are idiomatic; fix is churny
+    "typescript/no-confusing-void-expression": "off",
+    "typescript/strict-void-return": "off",
+    // Size caps require refactoring, not lint fixes (same call as the style category)
+    "max-lines-per-function": "off",
+    "max-lines": "off",
+    "max-depth": "off",
+    "import/max-dependencies": "off",
+    // Inline and TODO comments are used deliberately
+    "no-inline-comments": "off",
+    "no-warning-comments": "off",
+    // Adding the /u flag can change matching semantics; not a safe bulk fix
+    "require-unicode-regexp": "off",
+    // The legacy Mongo/any-typed surface makes the no-unsafe-* family unavoidable
+    // during the Mongoose→Lucid migration — revisit once the legacy layer shrinks
+    "typescript/no-unsafe-member-access": "off",
+    "typescript/no-unsafe-assignment": "off",
+    "typescript/no-unsafe-argument": "off",
+    "typescript/no-unsafe-return": "off",
+    "typescript/no-unsafe-call": "off",
+    // ~98 manual fixes (mostly async handlers in void positions) — revisit
+    "typescript/no-misused-promises": "off",
+    // Swapping if/else branches at 33 sites is manual and stylistic
+    "no-negated-condition": "off",
+    "unicorn/no-negated-condition": "off",
+    // `.map(callbackReference)` is used deliberately; wrapping in arrows is churn
+    "unicorn/no-array-callback-reference": "off",
+    // Norwegian copy is full of quotes/apostrophes; HTML entities hurt readability
+    "react/no-unescaped-entities": "off",
+    // Genuinely conflicts with typescript/consistent-return (kept enabled): the explicit
+    // `return undefined` it wants removed is exactly what consistent-return demands when
+    // other branches return values (useEffect early exits), and the remaining hits are
+    // explicit-undefined arguments that the signatures require — not a revisit candidate
+    "unicorn/no-useless-undefined": "off",
+    // `== null` / `!= null` nullish checks are idiomatic and kept
+    eqeqeq: ["error", "always", { null: "ignore" }],
+    // Inside `Boolean(a || b)` the `||` is truthiness logic, not defaulting — converting
+    // it to `??` would change behavior. Note: `!(a || b)` is NOT covered by this option;
+    // make optional members explicit there (`x ?? false` / `Boolean(x)`)
+    "typescript/prefer-nullish-coalescing": ["error", { ignoreBooleanCoercion: true }],
+    // TanStack Router's `throw redirect()` is idiomatic in loaders/guards — allow the
+    // Redirect type it returns; everything else thrown must be an Error
+    "typescript/only-throw-error": [
+      "error",
+      { allow: [{ from: "package", name: "Redirect", package: "@tanstack/router-core" }] },
+    ],
+    // A default clause counts as handling the remaining union members
+    "typescript/switch-exhaustiveness-check": [
+      "error",
+      { considerDefaultExhaustiveForUnions: true },
+    ],
+    // --- Perf category ---
+    // These only matter for components wrapped in React.memo, which this codebase
+    // doesn't use; JSX/objects/functions as props is the core Mantine idiom
+    "react-perf/jsx-no-new-function-as-prop": "off",
+    "react-perf/jsx-no-new-object-as-prop": "off",
+    "react-perf/jsx-no-new-array-as-prop": "off",
+    "react-perf/jsx-no-jsx-as-prop": "off",
+    // Sequential awaits are deliberate (ordered side-effects, DB writes, rate-limited
+    // external APIs); blanket Promise.all parallelization is a behavior change
+    "no-await-in-loop": "off",
+    // Index keys are the idiomatic choice for the dominant hits: TanStack Form array
+    // fields (subfields are addressed by index anyway), static skeleton loaders, and
+    // read-only lists whose rows have no unique field
+    "react/no-array-index-key": "off",
     // --- Style category: only auto-fixable rules are kept enabled. ---
     // consistent-type-imports puts type imports on their own line; don't flag that as a dupe
     "no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
@@ -70,21 +143,12 @@ export default defineConfig({
     "typescript/parameter-properties": "off",
     // No auto-fix, manual rewrites only
     "unicorn/no-await-expression-member": "off",
+    // All hits are third-party factory idioms (VippsCheckout, JsBarcode, Client) and
+    // `new this.mongooseModel()`; the options needed to allow them gut the rule
     "new-cap": "off",
-    "func-names": "off",
-    "func-name-matching": "off",
-    "prefer-named-capture-group": "off",
     "prefer-destructuring": "off",
-    "react/function-component-definition": "off",
-    "typescript/method-signature-style": "off",
-    "unicorn/prefer-ternary": "off",
-    "unicorn/prefer-logical-operator-over-ternary": "off",
-    // Fix can't tell whether concat() args are arrays or scalars, so it leaves most sites
-    "unicorn/prefer-spread": "off",
     // `typeof window === "undefined"` SSR guards are deliberate
     "unicorn/prefer-global-this": "off",
-    // Its Boolean() fix defeats TypeScript's inferred type predicates in .filter() narrowing
-    "no-implicit-coercion": "off",
     // pdfkit's default export genuinely is PDFDocument
     "import/no-named-as-default": "off",
     // False-positives on MongoDB collection.find(filter, options) as Array#find thisArg
@@ -95,10 +159,9 @@ export default defineConfig({
     "typescript/no-empty-interface": ["error", { allowSingleExtends: true }],
     // oxfmt lowercases hex digits, this rule wants them uppercase — the formatter owns casing
     "unicorn/number-literal-case": "off",
-    // fixme: remove these to improve linting
+    // Most hits are benign form/library method references that would need `this: void`
+    // annotations or arrow wrappers for no runtime gain
     "@typescript-eslint/unbound-method": "off",
-    "@typescript-eslint/no-base-to-string": "off",
-    "@typescript-eslint/restrict-template-expressions": "off",
     // Obsolete with the automatic JSX transform (React 17+)
     "react/react-in-jsx-scope": "off",
     // Type-aware analysis trusts the Mongoose schema types, but legacy Mongo documents hold

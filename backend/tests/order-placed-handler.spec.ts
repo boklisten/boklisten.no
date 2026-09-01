@@ -46,9 +46,8 @@ test.group("OrderPlacedHandler", (group) => {
         } else if (customerItem.item === "item2") {
           customerItem.id = "customerItem2";
           return Promise.resolve(customerItem);
-        } else {
-          return Promise.reject("could not add doc");
         }
+        return Promise.reject(new BlError("could not add doc"));
       }),
     };
     sandbox.stub(StorageService, "CustomerItems").value(customerItemsStub);
@@ -61,11 +60,9 @@ test.group("OrderPlacedHandler", (group) => {
         return Promise.resolve(testUserDetail);
       }),
       update: sandbox.stub().callsFake((id, data) => {
-        if (userDeatilUpdate) {
-          if (data["orders"]) {
-            testUserDetail.orders = data["orders"];
-            return Promise.resolve(testUserDetail);
-          }
+        if (userDeatilUpdate && data["orders"]) {
+          testUserDetail.orders = data["orders"];
+          return Promise.resolve(testUserDetail);
         }
         return Promise.reject(new BlError("could not update user detail"));
       }),

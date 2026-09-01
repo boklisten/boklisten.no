@@ -95,7 +95,7 @@ export default class MatchRoundsController {
   async generate(ctx: HttpContext) {
     PermissionService.adminOrFail(ctx);
     const round = await MatchRound.findOrFail(roundIdParameter(ctx));
-    return await generateRound(round);
+    return generateRound(round);
   }
 
   async destroyMatches(ctx: HttpContext) {

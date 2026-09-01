@@ -94,7 +94,7 @@ const SmsService = {
         status: "send-failed",
         reason: String(error),
       });
-      logger.error(`failed to send SMS to "${message.to}", reason: ${error}`);
+      logger.error(`failed to send SMS to "${message.to}", reason: ${String(error)}`);
       return { successCount: 0, failed: [message.to] };
     }
   },
@@ -212,7 +212,7 @@ const EmailService = {
   },
   async logEmail(template: EmailTemplate, recipient: EmailRecipient, context: MessageLogContext) {
     const subject = recipient.dynamicTemplateData?.["subject"];
-    return await MessageLogService.logOutgoingMessage({
+    return MessageLogService.logOutgoingMessage({
       channel: "email",
       recipient: recipient.to,
       context: {
@@ -233,13 +233,13 @@ const DispatchService = {
     body: string,
     context: MessageLogContext,
   ) {
-    return await SmsService.sendMany(
+    return SmsService.sendMany(
       recipients.map((recipient) => ({ ...recipient, body })),
       context,
     );
   },
   async sendUserProvidedSms(phoneNumber: string, body: string, context: MessageLogContext) {
-    return await SmsService.sendOne({ to: phoneNumber, body }, context);
+    return SmsService.sendOne({ to: phoneNumber, body }, context);
   },
   async sendOrderReceipt(emailUser: EmailUser, emailOrder: EmailOrder, paymentNeeded: boolean) {
     await EmailService.sendEmail({
@@ -357,7 +357,7 @@ const DispatchService = {
   },
 
   async sendPasswordReset({ id, email, token }: { id: number; email: string; token: string }) {
-    return await EmailService.sendEmail({
+    return EmailService.sendEmail({
       template: EMAIL_TEMPLATES.passwordReset,
       context: { messageType: "password-reset" },
       recipients: [
@@ -428,7 +428,7 @@ const DispatchService = {
     recipients: EmailRecipient[];
     context: MessageLogContext;
   }) {
-    return await EmailService.sendEmail({
+    return EmailService.sendEmail({
       template: {
         sender: EMAIL_SENDER.INFO,
         templateId,
@@ -471,7 +471,7 @@ const DispatchService = {
     return { emailStatus, smsStatus };
   },
   async getEmailTemplates() {
-    return await EmailService.getEmailTemplates();
+    return EmailService.getEmailTemplates();
   },
 };
 

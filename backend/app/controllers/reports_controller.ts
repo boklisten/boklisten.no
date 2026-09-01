@@ -44,7 +44,7 @@ export default class ReportsController {
       includeBuyout,
     } = await ctx.request.validateUsing(customerItemsReportValidator);
 
-    return await StorageService.CustomerItems.aggregate([
+    return StorageService.CustomerItems.aggregate([
       {
         $match: {
           ...branchFieldFilter("handoutInfo.handoutById", branchFilter),
@@ -125,7 +125,7 @@ export default class ReportsController {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(ordersReportValidator);
 
-    return await StorageService.Orders.aggregate([
+    return StorageService.Orders.aggregate([
       {
         $match: {
           placed: true,
@@ -233,7 +233,7 @@ export default class ReportsController {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(paymentsReportValidator);
 
-    return await StorageService.Payments.aggregate([
+    return StorageService.Payments.aggregate([
       {
         $match: {
           ...branchFieldFilter("branch", branchFilter),
@@ -281,7 +281,7 @@ export default class ReportsController {
     PermissionService.adminOrFail(ctx);
     const { branchFilter } = await ctx.request.validateUsing(userDetailsReportValidator);
 
-    return await StorageService.UserDetails.aggregate([
+    return StorageService.UserDetails.aggregate([
       {
         $match: {
           ...branchFieldFilter("branchMembership", branchFilter),

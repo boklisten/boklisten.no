@@ -22,21 +22,20 @@ function validate(
 
     for (const document_ of docs) {
       if (isNullish(document_.viewableFor) || document_.viewableFor.length <= 0) {
-        if (restriction.restricted) {
-          if (
-            !PermissionService.haveRestrictedDocumentPermission(
-              // @ts-expect-error fixme: auto ignored
-              blApiRequest.user.id,
-              // @ts-expect-error fixme: auto ignored
-              blApiRequest.user.permission,
-              document_,
-              documentPermission,
-            )
-          ) {
-            return Promise.reject(
-              new BlError("lacking restricted permission to view or edit the document").code(904),
-            );
-          }
+        if (
+          restriction.restricted &&
+          !PermissionService.haveRestrictedDocumentPermission(
+            // @ts-expect-error fixme: auto ignored
+            blApiRequest.user.id,
+            // @ts-expect-error fixme: auto ignored
+            blApiRequest.user.permission,
+            document_,
+            documentPermission,
+          )
+        ) {
+          return Promise.reject(
+            new BlError("lacking restricted permission to view or edit the document").code(904),
+          );
         }
       } else {
         let permissionValid = false;

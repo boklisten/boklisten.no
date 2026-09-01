@@ -108,7 +108,7 @@ test.group("OrderPatchHook", (group) => {
 
     sandbox.stub(StorageService.Orders, "update").callsFake(() => {
       if (!orderUpdated) {
-        return Promise.reject("could not update");
+        return Promise.reject(new BlError("could not update"));
       }
       return Promise.resolve(testOrder);
     });
@@ -156,7 +156,7 @@ test.group("OrderPatchHook", (group) => {
     assert.rejects(
       () =>
         // @ts-expect-error fixme: auto ignored
-        orderPatchHook.after([testOrder], undefined),
+        orderPatchHook.after([testOrder]),
       BlError,
       /accessToken not defined/,
     ));

@@ -23,18 +23,16 @@ export const Route = createFileRoute("/(offentlig)/auth/register")({
 
 function RegisterPage() {
   return (
-    <>
-      <Container size="xs">
-        <Stack>
-          <Title ta="center">Registrer deg</Title>
-          <VippsButton verb="register" />
-          <Divider label="Eller, registrer deg med e-post" />
-          <SignupForm />
-          <TanStackAnchor size="sm" to="/auth/login">
-            Har du allerede en konto? Logg inn
-          </TanStackAnchor>
-        </Stack>
-      </Container>
-    </>
+    <Container size="xs">
+      <Stack>
+        <Title ta="center">Registrer deg</Title>
+        <VippsButton verb="register" />
+        <Divider label="Eller, registrer deg med e-post" />
+        <SignupForm />
+        <TanStackAnchor size="sm" to="/auth/login">
+          Har du allerede en konto? Logg inn
+        </TanStackAnchor>
+      </Stack>
+    </Container>
   );
 }

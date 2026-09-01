@@ -9,17 +9,18 @@ const IMPORTER = (filePath: string) => {
   return import(filePath);
 };
 
-new Ignitor(APP_ROOT, { importer: IMPORTER })
-  .tap((app) => {
-    app.booting(async () => {
-      await import("#start/env");
-    });
-    app.listen("SIGTERM", () => app.terminate());
-    app.listenIf(app.managedByPm2, "SIGINT", () => app.terminate());
-  })
-  .httpServer()
-  .start()
-  .catch((error) => {
-    process.exitCode = 1;
-    void prettyPrintError(error);
-  });
+try {
+  await new Ignitor(APP_ROOT, { importer: IMPORTER })
+    .tap((app) => {
+      app.booting(async () => {
+        await import("#start/env");
+      });
+      app.listen("SIGTERM", () => app.terminate());
+      app.listenIf(app.managedByPm2, "SIGINT", () => app.terminate());
+    })
+    .httpServer()
+    .start();
+} catch (error) {
+  process.exitCode = 1;
+  void prettyPrintError(error);
+}

@@ -4,6 +4,11 @@ import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { branchRelationshipValidator } from "#validators/branch";
 
+// The client and legacy data may hold "" where an ObjectID or null belongs
+function branchIdOrNull(id: string | null | undefined): string | null {
+  return id == null || id === "" ? null : id;
+}
+
 // Updates the relationship references in other branch entities
 async function updateBranchRelationships({
   branchId,
@@ -108,15 +113,15 @@ export default class BranchRelationshipController {
     const updatedBranch = await StorageService.Branches.update(relationshipData.id, {
       ...relationshipData,
       // since parentBranch might be "" from the client, we need to convert it to null so that the database accepts the value (ObjectID or nullish)
-      parentBranch: relationshipData.parentBranch || null,
+      parentBranch: branchIdOrNull(relationshipData.parentBranch),
     });
 
     await updateBranchRelationships({
       branchId: updatedBranch.id,
-      oldParentId: storedBranch.parentBranch || null,
-      oldChildrenIds: storedBranch.childBranches || null,
-      newParentId: updatedBranch.parentBranch || null,
-      newChildrenIds: updatedBranch.childBranches || null,
+      oldParentId: branchIdOrNull(storedBranch.parentBranch),
+      oldChildrenIds: storedBranch.childBranches ?? null,
+      newParentId: branchIdOrNull(updatedBranch.parentBranch),
+      newChildrenIds: updatedBranch.childBranches ?? null,
     });
 
     return updatedBranch;

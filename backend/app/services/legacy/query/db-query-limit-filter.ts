@@ -16,7 +16,7 @@ export class DbQueryLimitFilter {
       );
     }
 
-    const limitNumber = Number.parseInt(query.limit);
+    const limitNumber = Math.trunc(Number(query.limit));
 
     return { limit: limitNumber };
   }
@@ -25,7 +25,7 @@ export class DbQueryLimitFilter {
     const limitString = limit.toString();
 
     for (const n of limitString) {
-      if (!Number.parseInt(n) && n !== "0") {
+      if (!Math.trunc(Number(n)) && n !== "0") {
         return false;
       }
     }

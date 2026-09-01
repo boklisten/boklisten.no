@@ -32,7 +32,7 @@ async function updateUserDetailWithBillingDetails(
   } catch (error) {
     logger.error(error);
   }
-  return await StorageService.UserDetails.get(customerId);
+  return StorageService.UserDetails.get(customerId);
 }
 
 async function createLogistics(order: Order, isDeliveryFree: boolean) {

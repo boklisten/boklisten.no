@@ -10,7 +10,7 @@ export interface MemberSignatureRow {
 }
 
 interface MemberRow {
-  id: { toString(): string };
+  id: { toString: () => string };
   dob?: Date | null;
 }
 

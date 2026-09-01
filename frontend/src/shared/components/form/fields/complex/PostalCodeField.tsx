@@ -1,5 +1,6 @@
 import { Loader, Text, TextInput } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 import { useFieldContext } from "@/shared/hooks/form";
 import { showErrorNotification } from "@/shared/utils/notifications";
@@ -40,7 +41,7 @@ export default function PostalCodeField() {
     onError: () => showErrorNotification("Klarte ikke laste inn poststed"),
   });
 
-  let postalCityHint = <></>;
+  let postalCityHint: ReactNode = null;
   if (city) {
     postalCityHint = <Text size="sm">{city}</Text>;
   } else if (lookupPostalCodeMutation.isPending) {

@@ -31,9 +31,7 @@ async function getPasswordReset({ id, token }: { id: string; token: string }) {
   }
 
   let user = await UserService.getByUserDetailsId(passwordReset.userDetailId);
-  if (!user) {
-    user = await UserService.createLocalUser(passwordReset.userDetailId, CryptoService.random());
-  }
+  user ??= await UserService.createLocalUser(passwordReset.userDetailId, CryptoService.random());
 
   return { user, passwordReset };
 }

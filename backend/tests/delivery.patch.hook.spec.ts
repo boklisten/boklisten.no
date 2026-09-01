@@ -99,7 +99,7 @@ test.group("DeliveryPatchHook", (group) => {
 
   test("should reject if id is undefined", async ({ assert }) =>
     assert.rejects(
-      () => deliveryPatchHook.before(testRequest, testAccessToken, undefined),
+      () => deliveryPatchHook.before(testRequest, testAccessToken),
       BlError,
       /id is undefined/,
     ));

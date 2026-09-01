@@ -64,9 +64,7 @@ export class DbQueryNumberFilter {
 
     if (this.valueHasOperationIdentifier(value)) {
       const opWithValue = this.getOperationWithValue(value);
-      const op: any = {};
-
-      op[opWithValue.operation] = opWithValue.value;
+      const op: any = { [opWithValue.operation]: opWithValue.value };
 
       return { fieldName, op };
     }
@@ -137,9 +135,11 @@ export class DbQueryNumberFilter {
   }
 
   private extractNumberFromQueryString(number_: string): number {
-    if (number_.split("").some((n) => isNaN(Number.parseInt(n, 10)))) {
-      throw new TypeError(`value "${number_}" is not a valid number`);
+    for (const character of number_) {
+      if (isNaN(Number(character))) {
+        throw new TypeError(`value "${number_}" is not a valid number`);
+      }
     }
-    return Number.parseInt(number_, 10);
+    return Math.trunc(Number(number_));
   }
 }

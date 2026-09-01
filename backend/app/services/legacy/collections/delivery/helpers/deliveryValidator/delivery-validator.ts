@@ -12,12 +12,8 @@ export class DeliveryValidator {
     deliveryBranchHandler?: DeliveryBranchHandler,
     deliveryBringHandler?: DeliveryBringHandler,
   ) {
-    this.deliveryBranchHandler = deliveryBranchHandler
-      ? deliveryBranchHandler
-      : new DeliveryBranchHandler();
-    this.deliveryBringHandler = deliveryBringHandler
-      ? deliveryBringHandler
-      : new DeliveryBringHandler();
+    this.deliveryBranchHandler = deliveryBranchHandler ?? new DeliveryBranchHandler();
+    this.deliveryBringHandler = deliveryBringHandler ?? new DeliveryBringHandler();
   }
 
   public validate(delivery: Delivery): Promise<boolean> {
@@ -38,7 +34,7 @@ export class DeliveryValidator {
       }
       default: {
         return Promise.reject(
-          new BlError(`delivery.method "${delivery.method}" is not supported`).store(
+          new BlError(`delivery.method "${String(delivery.method)}" is not supported`).store(
             "delivery",
             delivery,
           ),

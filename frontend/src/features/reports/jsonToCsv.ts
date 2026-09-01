@@ -2,7 +2,19 @@ function escapeCell(value: unknown): string {
   if (value === null || value === undefined) {
     return "";
   }
-  const raw = value instanceof Date ? value.toISOString() : String(value);
+  let raw: string;
+  if (value instanceof Date) {
+    raw = value.toISOString();
+  } else if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
+    raw = String(value);
+  } else {
+    raw = JSON.stringify(value) ?? "";
+  }
   return /[",\n\r]/.test(raw) ? `"${raw.replaceAll('"', '""')}"` : raw;
 }
 

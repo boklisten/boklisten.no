@@ -2,7 +2,7 @@ import { Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconBarcode, IconKeyboard, IconObjectScan } from "@tabler/icons-react";
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 
 import { isValidBlid } from "@/features/blid-search/validateBlid";
 import useWedgeScanner from "@/features/blid-search/useWedgeScanner";
@@ -102,7 +102,7 @@ function ManualBlidModal({
   const [value, setValue] = useState("");
   const [showError, setShowError] = useState(false);
 
-  function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     const blid = value.trim();
     if (!isValidBlid(blid)) {

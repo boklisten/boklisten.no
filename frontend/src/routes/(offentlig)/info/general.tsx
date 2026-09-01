@@ -6,7 +6,10 @@ import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/info/general")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(editableTextQueryOptions("generell_informasjon"));
+    await context.queryClient.query({
+      ...editableTextQueryOptions("generell_informasjon"),
+      staleTime: "static",
+    });
   },
   head: () =>
     seo({

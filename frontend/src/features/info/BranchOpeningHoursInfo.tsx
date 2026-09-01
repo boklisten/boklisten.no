@@ -9,11 +9,11 @@ import { formatOpeningHour } from "@/shared/utils/dates";
 import { publicApi } from "@/shared/utils/publicApiClient";
 import type { Route } from "@tuyau/core/types";
 
-const OpeningHourRow = ({
+function OpeningHourRow({
   openingHour,
 }: {
   openingHour: Route.Response<"opening_hours.get">[number];
-}) => {
+}) {
   const { weekday, date, fromTime, toTime } = formatOpeningHour(openingHour);
   return (
     <Table.Tr key={openingHour.id}>
@@ -24,7 +24,7 @@ const OpeningHourRow = ({
       <Table.Td>{toTime}</Table.Td>
     </Table.Tr>
   );
-};
+}
 
 export const branchOpeningHoursQueryOptions = (branchId: string) =>
   publicApi.openingHours.get.queryOptions({ params: { branchId } });
@@ -48,7 +48,7 @@ export default function BranchOpeningHours({ branchId }: { branchId: string }) {
     );
   }
 
-  if (isErrorOpeningHours || openingHours == undefined) {
+  if (isErrorOpeningHours || openingHours === undefined) {
     return (
       <ErrorAlert title="Klarte ikke laste inn åpningstider">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
     );

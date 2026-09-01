@@ -36,8 +36,7 @@ test.group("DbQueryDateFilter", async () => {
   test("should throw SyntaxError when date is {$self}")
     .with(["212121", "10notvalid", "kkk", "albert", "330120010000", "2101200300001"])
     .run(({ assert }, date) => {
-      const query = { creationTime: "" };
-      query.creationTime = date;
+      const query = { creationTime: date };
 
       assert.throws(() => {
         dbQueryDateFilter.getDateFilters(query, ["creationTime"]);
@@ -61,13 +60,10 @@ test.group("DbQueryDateFilter", async () => {
       { creationTime: ">010720180000", op: "$gt" },
     ])
     .run(({ assert }, validQuery) => {
-      const dateString = validQuery.creationTime.slice(1, validQuery.creationTime.length);
+      const dateString = validQuery.creationTime.slice(1);
       const isoDate = moment(dateString, validDateFormat, true).toDate();
 
-      const expectedOp = {};
-
-      // @ts-expect-error fixme: auto ignored
-      expectedOp[validQuery.op] = isoDate;
+      const expectedOp = { [validQuery.op]: isoDate };
 
       assert.deepEqual(dbQueryDateFilter.getDateFilters(validQuery, ["creationTime"]), [
         { fieldName: "creationTime", op: expectedOp },

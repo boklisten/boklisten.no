@@ -24,7 +24,7 @@ export class OrderItemRentPeriodValidator {
     branchPaymentInfo: BranchPaymentInfo,
     itemPrice: number,
   ): Promise<boolean> {
-    if (orderItem.type != "rent") {
+    if (orderItem.type !== "rent") {
       throw new BlError('orderItem.type is not "rent" when validating rent period');
     }
 

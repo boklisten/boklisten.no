@@ -54,7 +54,6 @@ export async function notify(
       targetCustomerIds = standMatchCustomers.difference(userMatchCustomers);
       break;
     }
-    case "all":
     default: {
       targetCustomerIds = userMatchCustomers.union(standMatchCustomers);
       break;

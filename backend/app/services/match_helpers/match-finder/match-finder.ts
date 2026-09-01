@@ -515,16 +515,12 @@ export class MatchFinder {
 
     for (const user of users) {
       for (const item of user.items) {
-        if (!itemMap[item]) {
-          itemMap[item] = { total: 0, wanted: 0 };
-        }
+        itemMap[item] ??= { total: 0, wanted: 0 };
         itemMap[item].total++;
       }
 
       for (const item of user.wantedItems) {
-        if (!itemMap[item]) {
-          itemMap[item] = { total: 0, wanted: 0 };
-        }
+        itemMap[item] ??= { total: 0, wanted: 0 };
         itemMap[item].wanted++;
       }
     }

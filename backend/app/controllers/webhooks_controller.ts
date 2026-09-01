@@ -56,7 +56,7 @@ export default class WebhooksController {
         });
       } catch (error) {
         // One broken event must not block the rest of the batch; SendGrid re-posts on non-2xx.
-        logger.error(`failed to record SendGrid event: ${error}`);
+        logger.error(`failed to record SendGrid event: ${String(error)}`);
       }
     }
 
@@ -93,7 +93,7 @@ export default class WebhooksController {
       messageId,
       source: "twilio",
       event: data.MessageStatus,
-      errorCode: data.ErrorCode || null,
+      errorCode: data.ErrorCode ?? null,
       payload: data,
       occurredAt: DateTime.now(),
       // Twilio sends no event id; one status per message is enough to drop re-posts.

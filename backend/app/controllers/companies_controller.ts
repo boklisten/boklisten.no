@@ -9,7 +9,7 @@ export default class CompaniesController {
     PermissionService.adminOrFail(ctx);
     const { name, organizationNumber, customerNumber, contactInfo } =
       await ctx.request.validateUsing(companyValidator);
-    return await StorageService.Companies.add({
+    return StorageService.Companies.add({
       name,
       organizationNumber,
       customerNumber,
@@ -30,6 +30,6 @@ export default class CompaniesController {
   }
   async deleteCompany(ctx: HttpContext) {
     PermissionService.adminOrFail(ctx);
-    return await StorageService.Companies.remove(ctx.request.param("companyId"));
+    return StorageService.Companies.remove(ctx.request.param("companyId"));
   }
 }

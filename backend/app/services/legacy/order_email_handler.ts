@@ -63,7 +63,7 @@ export const OrderEmailHandler = {
       emailOrderDelivery = await this.extractEmailOrderDeliveryFromOrder(order);
       emailOrderPayment = await this.extractEmailOrderPaymentFromOrder(order);
     } catch (error) {
-      throw new BlError(`could not create email based on order${error}`);
+      throw new BlError(`could not create email based on order${String(error)}`);
     }
 
     emailOrder.showDelivery = emailOrderDelivery.showDelivery;
@@ -126,7 +126,7 @@ export const OrderEmailHandler = {
   async extractEmailOrderDeliveryFromOrder(order: Order) {
     const deliveryId = order.delivery;
     if (!deliveryId?.length) {
-      return Promise.resolve({ delivery: null, showDelivery: false });
+      return { delivery: null, showDelivery: false };
     }
     const delivery = await StorageService.Deliveries.get(deliveryId);
     return delivery.method === "bring"

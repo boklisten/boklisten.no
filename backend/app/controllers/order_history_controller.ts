@@ -50,6 +50,6 @@ export default class OrderHistoryController {
     databaseQuery.booleanFilters = [{ fieldName: "placed", value: true }];
     databaseQuery.sortFilters = [{ fieldName: "creationTime", direction: -1 }];
     const orders = (await StorageService.Orders.getByQueryOrNull(databaseQuery)) ?? [];
-    return await Promise.all(orders.map(async (order) => toPresent(order)));
+    return Promise.all(orders.map(async (order) => toPresent(order)));
   }
 }

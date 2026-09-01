@@ -36,6 +36,10 @@ export class OrderActive {
   }
 
   public isOrderItemActive(orderItem: OrderItem): boolean {
-    return !(orderItem.handout || orderItem.delivered || orderItem.movedToOrder);
+    return !(
+      (orderItem.handout ?? false) ||
+      (orderItem.delivered ?? false) ||
+      Boolean(orderItem.movedToOrder)
+    );
   }
 }

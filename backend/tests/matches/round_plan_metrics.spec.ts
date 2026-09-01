@@ -84,7 +84,7 @@ test.group("roundPlanMetrics", (group) => {
         $match: {
           returned: boolean;
           deadline: { $gt: Date; $lt: Date };
-          "handoutInfo.handoutById": { $in: { toString(): string }[] };
+          "handoutInfo.handoutById": { $in: { toString: () => string }[] };
         };
       },
     ] = unchecked(stubs.customerItems.firstCall.args[0]);
@@ -126,7 +126,12 @@ test.group("roundPlanMetrics", (group) => {
     );
 
     const [match]: [
-      { $match: { customer: { $in: { toString(): string }[] }; "handoutInfo.handoutBy"?: string } },
+      {
+        $match: {
+          customer: { $in: { toString: () => string }[] };
+          "handoutInfo.handoutBy"?: string;
+        };
+      },
     ] = unchecked(stubs.customerItems.secondCall.args[0]);
     assert.deepEqual(
       match.$match.customer.$in.map(String),
@@ -145,7 +150,7 @@ test.group("roundPlanMetrics", (group) => {
 
     await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
-    const [match]: [{ $match: { branchMembership: { $in: { toString(): string }[] } } }] =
+    const [match]: [{ $match: { branchMembership: { $in: { toString: () => string }[] } } }] =
       unchecked(stubs.userDetails.firstCall.args[0]);
     assert.deepEqual(match.$match.branchMembership.$in.map(String), [BRANCH]);
   });

@@ -6,7 +6,10 @@ import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/info/companies")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(editableTextQueryOptions("for_skolekunder"));
+    await context.queryClient.query({
+      ...editableTextQueryOptions("for_skolekunder"),
+      staleTime: "static",
+    });
   },
   head: () =>
     seo({

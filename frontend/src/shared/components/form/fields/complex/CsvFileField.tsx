@@ -26,7 +26,7 @@ export default function CsvFileField(
   const optionalHeaders = props.headers
     .filter((header) => !header.required)
     .map((header) => header.label);
-  const allHeaders = [...requiredHeaders, ...optionalHeaders];
+  const allHeaders = new Set([...requiredHeaders, ...optionalHeaders]);
 
   function parseRows(rows: string[][]): Record<string, string | string[]>[] | null {
     if (rows.length < 2) {
@@ -40,10 +40,8 @@ export default function CsvFileField(
     const headerRow = rows[0]?.map((h) => h.trim()) ?? [];
     const headerIndexMap: Record<string, number[]> = {};
     headerRow.forEach((headerName, i) => {
-      if (allHeaders.includes(headerName)) {
-        if (!headerIndexMap[headerName]) {
-          headerIndexMap[headerName] = [];
-        }
+      if (allHeaders.has(headerName)) {
+        headerIndexMap[headerName] ??= [];
         headerIndexMap[headerName].push(i);
       }
     });
@@ -76,11 +74,7 @@ export default function CsvFileField(
           return null;
         }
         const firstValue = values[0];
-        if (values.length === 1 && firstValue) {
-          parsedRow[header] = firstValue;
-        } else {
-          parsedRow[header] = values;
-        }
+        parsedRow[header] = values.length === 1 && firstValue ? firstValue : values;
       }
 
       for (const header of optionalHeaders ?? []) {
@@ -93,11 +87,7 @@ export default function CsvFileField(
 
         const firstValue = values[0];
         if (firstValue) {
-          if (values.length === 1) {
-            parsedRow[header] = firstValue;
-          } else {
-            parsedRow[header] = values;
-          }
+          parsedRow[header] = values.length === 1 ? firstValue : values;
         }
       }
       parsedRows.push(parsedRow);
@@ -124,18 +114,15 @@ export default function CsvFileField(
             return;
           }
 
-          const reader = new FileReader();
-          reader.addEventListener("load", () => {
-            const csvText = typeof reader.result === "string" ? reader.result : "";
-
+          const parseCsvText = (csvText: string) => {
             Papa.parse<string[]>(csvText, {
               header: false,
               skipEmptyLines: true,
               complete: ({ data, errors }) => {
-                if (errors.length) {
+                if (errors.length > 0) {
                   showErrorNotification({
                     title: "Klarte ikke lese CSV",
-                    message: errors.join(", "),
+                    message: errors.map((error) => error.message).join(", "),
                   });
                   setValue(null);
                   field.handleChange(null);
@@ -154,16 +141,18 @@ export default function CsvFileField(
                 field.handleChange(null);
               },
             });
-          });
-          reader.addEventListener("error", (err) => {
-            showErrorNotification({
-              title: "Klarte ikke lese CSV",
-              message: String(err),
+          };
+          file
+            .text()
+            .then(parseCsvText)
+            .catch((error: unknown) => {
+              showErrorNotification({
+                title: "Klarte ikke lese CSV",
+                message: error instanceof Error ? error.message : "Ukjent feil",
+              });
+              setValue(null);
+              field.handleChange(null);
             });
-            setValue(null);
-            field.handleChange(null);
-          });
-          reader.readAsText(file);
         }}
         onBlur={field.handleBlur}
         error={field.state.meta.errors.join(", ")}

@@ -319,12 +319,8 @@ export class OrderPlaceOperation implements Operation {
 
     const userDetail = await StorageService.UserDetails.get(customerId);
 
-    let userDetailCustomerItemsIds = userDetail.customerItems ?? [];
-
-    userDetailCustomerItemsIds = userDetailCustomerItemsIds.concat(customerItemIds);
-
     await StorageService.UserDetails.update(customerId, {
-      customerItems: userDetailCustomerItemsIds,
+      customerItems: [...(userDetail.customerItems ?? []), ...customerItemIds],
     });
 
     return true;

@@ -20,7 +20,7 @@ class ApiSerializer extends BaseSerializer<{
 
 const serializer = new ApiSerializer();
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- framework macro glue: Object.assign cannot express the merged callable-with-method type
-const serialize = Object.assign(function (
+const serialize = Object.assign(function serialize(
   this: HttpContext,
   ...[data, resolver]: Parameters<ApiSerializer["serializeWithoutWrapping"]>
 ) {

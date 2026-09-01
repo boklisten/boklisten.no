@@ -29,7 +29,6 @@ export function getRouter() {
   if (!router.isServer && !import.meta.env.DEV) {
     Sentry.init({
       dsn: "https://6ffc45d40e73d726fff078a70929a634@o569888.ingest.us.sentry.io/4508654849294336",
-      sendDefaultPii: true,
       integrations: [
         Sentry.tanstackRouterBrowserTracingIntegration(router),
         Sentry.replayIntegration(),
@@ -37,7 +36,6 @@ export function getRouter() {
           colorScheme: "system",
         }),
       ],
-      enableLogs: true,
       tracesSampleRate: 0.1,
       replaysSessionSampleRate: 0.1,
       replaysOnErrorSampleRate: 1,

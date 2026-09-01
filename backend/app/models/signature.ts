@@ -30,7 +30,7 @@ export default class Signature extends SignatureSchema {
    * The newest signature for each of the given customers, without the image payload.
    */
   static async newestPerCustomer(customerDetailsIds: string[]): Promise<Signature[]> {
-    return await this.query()
+    return this.query()
       .select("id", "customerDetailsId", "signedByGuardian", "createdAt")
       .whereIn("customerDetailsId", customerDetailsIds)
       .distinctOn("customerDetailsId")
@@ -60,7 +60,7 @@ export default class Signature extends SignatureSchema {
     if (cursor) {
       void query.whereRaw('("created_at", "id") < (?, ?)', [cursor.createdAt, cursor.id]);
     }
-    return await query;
+    return query;
   }
 
   static async reassignCustomer(fromDetailsId: string, toDetailsId: string): Promise<void> {

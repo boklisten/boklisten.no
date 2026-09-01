@@ -10,9 +10,10 @@ test.group("DbQueryValidParams", async () => {
   });
 
   test('should return array like ["name", "desc"] ', async ({ assert }) => {
-    const validParams: ValidParameter[] = [];
-    validParams.push({ fieldName: "age", type: "number" });
-    validParams.push({ fieldName: "price", type: "number" });
+    const validParams: ValidParameter[] = [
+      { fieldName: "age", type: "number" },
+      { fieldName: "price", type: "number" },
+    ];
     const dbQueryValidParams: DbQueryValidParams = new DbQueryValidParams(validParams);
     const result = ["age", "price"];
 

@@ -10,7 +10,7 @@ import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
-const MatchDetail = ({ matchId }: { matchId: string }) => {
+function MatchDetail({ matchId }: { matchId: string }) {
   const { api } = useApiClient();
   const { detailsId } = useAuth();
 
@@ -44,6 +44,6 @@ const MatchDetail = ({ matchId }: { matchId: string }) => {
       <MatchDetailView viewerMatch={forViewer(match, detailsId)} viewerCustomerId={detailsId} />
     </>
   );
-};
+}
 
 export default MatchDetail;

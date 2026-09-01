@@ -94,7 +94,7 @@ test.group("match round management", (group) => {
         () => {
           throw new Error(`expected the validator to reject the status '${status}'`);
         },
-        () => undefined,
+        () => {},
       );
     }
 

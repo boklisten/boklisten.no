@@ -13,30 +13,32 @@ export class OrderPlacedValidator {
       }
 
       if (!this.validateOrderItems(order)) {
-        return reject(new BlError("total of order.orderItems amount is not equal to order.amount"));
+        reject(new BlError("total of order.orderItems amount is not equal to order.amount"));
+        return;
       }
 
       if (isNullish(order.payments) || order.payments.length <= 0) {
-        return resolve(true); // if there are no payments, there is no need do do more validation
+        resolve(true); // if there are no payments, there is no need do do more validation
+        return;
       }
 
       if (isNullish(order.delivery)) {
         // if there are payments but no delivery
-        return this.validatePayments(order);
-      } else {
-        // when delivery is attached
-        StorageService.Deliveries.get(order.delivery)
-          .then((delivery: Delivery) =>
-            this.validatePayments(order, delivery)
-              .then(() => resolve(true))
-              .catch((paymentValidationError: BlError) => {
-                reject(paymentValidationError);
-              }),
-          )
-          .catch((blError: BlError) => {
-            reject(new BlError(`delivery "${order.delivery}" not found`).add(blError));
-          });
+        void this.validatePayments(order);
+        return;
       }
+      // when delivery is attached
+      StorageService.Deliveries.get(order.delivery)
+        .then((delivery: Delivery) =>
+          this.validatePayments(order, delivery)
+            .then(() => resolve(true))
+            .catch((paymentValidationError: BlError) => {
+              reject(paymentValidationError);
+            }),
+        )
+        .catch((blError: BlError) => {
+          reject(new BlError(`delivery "${order.delivery}" not found`).add(blError));
+        });
     });
   }
 
@@ -65,7 +67,7 @@ export class OrderPlacedValidator {
             paymentTotal += payment.amount;
           }
 
-          if (paymentTotal != totalOrderAmount) {
+          if (paymentTotal !== totalOrderAmount) {
             return reject(
               new BlError(
                 "total amount of payments is not equal to total of order.amount + delivery.amount",

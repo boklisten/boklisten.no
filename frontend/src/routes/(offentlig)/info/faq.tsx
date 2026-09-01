@@ -8,7 +8,7 @@ import { faqPageSchema } from "@/shared/utils/structuredData";
 
 export const Route = createFileRoute("/(offentlig)/info/faq")({
   loader: async ({ context }) =>
-    await context.queryClient.ensureQueryData(questionsAndAnswersQueryOptions()),
+    context.queryClient.query({ ...questionsAndAnswersQueryOptions(), staleTime: "static" }),
   head: (ctx) => ({
     ...seo({
       title: "Spørsmål og svar om kjøp og lån av pensumbøker | Boklisten.no",

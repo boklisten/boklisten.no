@@ -16,7 +16,7 @@ function createUri(
     operationMethod === "getId" ||
     operationMethod === "patch" ||
     operationMethod === "put" ||
-    operationMethod == "delete"
+    operationMethod === "delete"
   ) {
     uri += "/:id";
   }

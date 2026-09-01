@@ -285,7 +285,7 @@ export default function PlanRoundModal({
                     <Button
                       variant="default"
                       leftSection={<IconPlus size={16} />}
-                      onClick={() => field.setValue(field.state.value.concat([{ name: "" }]))}
+                      onClick={() => field.setValue([...field.state.value, { name: "" }])}
                     >
                       Legg til møtested
                     </Button>

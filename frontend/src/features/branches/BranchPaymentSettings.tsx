@@ -132,16 +132,15 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                   ))}
                   <Button
                     onClick={() =>
-                      field.setValue(
-                        field.state.value.concat([
-                          {
-                            type: "semester",
-                            maxNumberOfPeriods: 1,
-                            percentage: 1,
-                            date: dayjs().format("YYYY-MM-DD"),
-                          },
-                        ]),
-                      )
+                      field.setValue([
+                        ...field.state.value,
+                        {
+                          type: "semester",
+                          maxNumberOfPeriods: 1,
+                          percentage: 1,
+                          date: dayjs().format("YYYY-MM-DD"),
+                        },
+                      ])
                     }
                   >
                     Legg til
@@ -223,18 +222,17 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                   ))}
                   <Button
                     onClick={() =>
-                      field.setValue(
-                        field.state.value.concat([
-                          {
-                            type: "semester",
-                            percentageBuyout: 1,
-                            percentageBuyoutUsed: 1,
-                            percentageUpFront: 1,
-                            percentageUpFrontUsed: 1,
-                            date: dayjs().format("YYYY-MM-DD"),
-                          },
-                        ]),
-                      )
+                      field.setValue([
+                        ...field.state.value,
+                        {
+                          type: "semester",
+                          percentageBuyout: 1,
+                          percentageBuyoutUsed: 1,
+                          percentageUpFront: 1,
+                          percentageUpFrontUsed: 1,
+                          date: dayjs().format("YYYY-MM-DD"),
+                        },
+                      ])
                     }
                   >
                     Legg til
@@ -294,16 +292,15 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                 ))}
                 <Button
                   onClick={() =>
-                    field.setValue(
-                      field.state.value.concat([
-                        {
-                          type: "semester",
-                          maxNumberOfPeriods: 1,
-                          price: 0,
-                          date: dayjs().format("YYYY-MM-DD"),
-                        },
-                      ]),
-                    )
+                    field.setValue([
+                      ...field.state.value,
+                      {
+                        type: "semester",
+                        maxNumberOfPeriods: 1,
+                        price: 0,
+                        date: dayjs().format("YYYY-MM-DD"),
+                      },
+                    ])
                   }
                 >
                   Legg til

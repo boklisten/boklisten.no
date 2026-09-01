@@ -102,7 +102,7 @@ export default function BulkCollectionPage() {
       return;
     }
     // Errors are surfaced via the mutation's onError handler.
-    await lookupMutation.mutateAsync(blid).catch(() => undefined);
+    await lookupMutation.mutateAsync(blid).catch(() => {});
   };
 
   const openManualEntry = () => {

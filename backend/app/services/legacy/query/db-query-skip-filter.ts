@@ -21,11 +21,11 @@ export class DbQuerySkipFilter {
     const skipstr = skip.toString();
 
     for (const s of skipstr) {
-      if (s !== "0" && !Number.parseInt(s)) {
+      if (s !== "0" && !Math.trunc(Number(s))) {
         throw new TypeError(`skip parameter "${skip}" is not a valid number`);
       }
     }
 
-    return Number.parseInt(skipstr);
+    return Math.trunc(Number(skipstr));
   }
 }

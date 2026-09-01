@@ -23,7 +23,7 @@ test.group("OrderService.createFromCart", (group) => {
   group.each.setup(() => {
     sandbox = createSandbox();
     sandbox.stub(StorageService.Items, "get").resolves(ITEM);
-    sandbox.stub(CustomerItemService, "getCustomerItemByItemIdOrNull").resolves(undefined);
+    sandbox.stub(CustomerItemService, "getCustomerItemByItemIdOrNull").resolves();
     sandbox.stub(StorageService.Orders, "aggregate").resolves([]);
     sandbox.stub(OrderItemService, "createRentOrderItem").resolves({
       type: "rent",

@@ -35,7 +35,7 @@ async function expiredDeadlineFeedback(ownerDetailsId: string): Promise<string> 
     USER_PERMISSION.ADMIN,
   )
     .then(([detail]) => detail?.name)
-    .catch(() => undefined);
+    .catch(() => {});
   if (!ownerName) {
     return genericExpiredDeadlineFeedback;
   }

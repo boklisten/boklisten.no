@@ -4,7 +4,7 @@ import { StorageService } from "#services/storage_service";
 
 export const PasswordService = {
   async hash(text: string) {
-    return await hash.make(text);
+    return hash.make(text);
   },
   async setPassword(userId: string, password: string) {
     await StorageService.Users.update(userId, {

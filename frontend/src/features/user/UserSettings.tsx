@@ -5,7 +5,7 @@ import UserSettingsForm from "@/features/user/UserSettingsForm";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { useNavigate } from "@tanstack/react-router";
 
-const UserSettings = () => {
+function UserSettings() {
   const { api } = useApiClient();
   const navigate = useNavigate();
 
@@ -28,6 +28,6 @@ const UserSettings = () => {
   }
 
   return <UserSettingsForm userDetail={data} />;
-};
+}
 
 export default UserSettings;

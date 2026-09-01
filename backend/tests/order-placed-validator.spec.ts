@@ -41,11 +41,9 @@ test.group("OrderPlacedValidator", (group) => {
       delivery: "delivery1",
       branch: "b1",
       byCustomer: true,
-      placed: false,
+      placed: true,
       payments: ["payment1"],
     };
-
-    testOrder.placed = true;
 
     testPayment = {
       id: "payment1",
@@ -73,7 +71,8 @@ test.group("OrderPlacedValidator", (group) => {
       (ids: string[]) =>
         new Promise((resolve, reject) => {
           if (ids[0] !== "payment1") {
-            return reject(new BlError("not found").code(702));
+            reject(new BlError("not found").code(702));
+            return;
           }
           resolve([testPayment]);
         }),
@@ -83,7 +82,8 @@ test.group("OrderPlacedValidator", (group) => {
       (id) =>
         new Promise((resolve, reject) => {
           if (id !== "delivery1") {
-            return reject(new BlError("not found").code(702));
+            reject(new BlError("not found").code(702));
+            return;
           }
 
           resolve(testDelivery);

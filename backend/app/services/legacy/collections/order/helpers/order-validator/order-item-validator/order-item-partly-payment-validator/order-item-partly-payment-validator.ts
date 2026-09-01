@@ -4,7 +4,7 @@ import type { Branch } from "#shared/branch";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderItemPartlyPaymentValidator {
-  public validate(
+  public async validate(
     orderItem: OrderItem,
 
     // @ts-expect-error fixme: auto ignored
@@ -12,28 +12,20 @@ export class OrderItemPartlyPaymentValidator {
     branch: Branch,
   ): Promise<boolean> {
     if (orderItem.type !== "partly-payment") {
-      return Promise.reject(new BlError("orderItem not of type 'partly-payment'"));
+      throw new BlError("orderItem not of type 'partly-payment'");
     }
 
-    try {
-      this.validateFields(orderItem);
-    } catch (error) {
-      return Promise.reject(error);
-    }
+    this.validateFields(orderItem);
 
     // @ts-expect-error fixme: auto ignored
     if (!this.isPeriodSupported(orderItem.info.periodType, branch)) {
-      return Promise.reject(
-        new BlError(
-          // @ts-expect-error fixme: auto ignored
-          `partly-payment period "${orderItem.info.periodType}" not supported on branch`,
-        ),
+      throw new BlError(
+        // @ts-expect-error fixme: auto ignored
+        `partly-payment period "${orderItem.info.periodType}" not supported on branch`,
       );
     }
 
-    return new Promise((resolve) => {
-      resolve(true);
-    });
+    return true;
   }
 
   private isPeriodSupported(period: any, branch: Branch) {

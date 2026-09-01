@@ -42,7 +42,7 @@ test.group("match rounds", (group) => {
       () => {
         throw new Error("expected the status check constraint to reject 'sometime'");
       },
-      () => undefined,
+      () => {},
     );
   });
 });
@@ -109,7 +109,7 @@ test.group("match participants", (group) => {
       () => {
         throw new Error("expected the (match_id, user_detail_id) unique constraint to reject this");
       },
-      () => undefined,
+      () => {},
     );
   });
 
@@ -122,7 +122,7 @@ test.group("match participants", (group) => {
       () => {
         throw new Error("expected the single-stand partial unique index to reject this");
       },
-      () => undefined,
+      () => {},
     );
   });
 
@@ -191,7 +191,7 @@ test.group("match obligations", (group) => {
       () => {
         throw new Error("expected the composite foreign key to reject a foreign participant");
       },
-      () => undefined,
+      () => {},
     );
   });
 
@@ -207,7 +207,7 @@ test.group("match obligations", (group) => {
       () => {
         throw new Error("expected the distinct-parties check constraint to reject this");
       },
-      () => undefined,
+      () => {},
     );
   });
 });
@@ -312,7 +312,7 @@ test.group("book handovers", (group) => {
       () => {
         throw new Error("expected the partial unique index to reject a second discharge");
       },
-      () => undefined,
+      () => {},
     );
 
     assert.lengthOf(await BookHandover.all(), 1);
@@ -574,7 +574,7 @@ test.group("MatchRepository", (group) => {
       () => {
         throw new Error("expected the duplicate discharge to be rejected");
       },
-      () => undefined,
+      () => {},
     );
 
     assert.lengthOf(await BookHandover.all(), 1);

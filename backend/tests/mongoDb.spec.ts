@@ -15,14 +15,14 @@ test.group("MongooseModelCreator", async () => {
       user: input.user.toString(),
       items: input.items.map((item) => item.toString()),
     };
-    MongooseModelCreator.transformObject(input, undefined);
+    MongooseModelCreator.transformObject(input);
     assert.deepEqual(input, expectedOutput);
   });
 
   test("should convert objectIDs in an array to strings", async ({ assert }) => {
     const input = [new ObjectId(), new ObjectId()];
     const expectedOutput = input.map((item) => item.toString());
-    MongooseModelCreator.transformObject(input, undefined);
+    MongooseModelCreator.transformObject(input);
     assert.deepEqual(input, expectedOutput);
   });
 
@@ -33,21 +33,21 @@ test.group("MongooseModelCreator", async () => {
     const expectedOutput = {
       orderItems: [{ item: input.orderItems[0]?.item.toString() }],
     };
-    MongooseModelCreator.transformObject(input, undefined);
+    MongooseModelCreator.transformObject(input);
     assert.deepEqual(input, expectedOutput);
   });
 
   test("should rename '_id'-keys to 'id'", async ({ assert }) => {
     const input = { orderItems: [{ _id: "hello" }] };
     const expectedOutput = { orderItems: [{ id: "hello" }] };
-    MongooseModelCreator.transformObject(input, undefined);
+    MongooseModelCreator.transformObject(input);
     assert.deepEqual(input, expectedOutput);
   });
 
   test("should not replace existing 'id'-values with '_id'-values", async ({ assert }) => {
     const input = { orderItems: [{ _id: "hello", id: "you" }] };
     const expectedOutput = { orderItems: [{ id: "you" }] };
-    MongooseModelCreator.transformObject(input, undefined);
+    MongooseModelCreator.transformObject(input);
     assert.deepEqual(input, expectedOutput);
   });
 });

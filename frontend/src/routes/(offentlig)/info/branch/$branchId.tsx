@@ -9,8 +9,11 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/(offentlig)/info/branch/$branchId")({
   loader: async ({ context, params }) => {
     const [branch, openingHours] = await Promise.all([
-      context.queryClient.ensureQueryData(branchQueryOptions(params.branchId)),
-      context.queryClient.ensureQueryData(branchOpeningHoursQueryOptions(params.branchId)),
+      context.queryClient.query({ ...branchQueryOptions(params.branchId), staleTime: "static" }),
+      context.queryClient.query({
+        ...branchOpeningHoursQueryOptions(params.branchId),
+        staleTime: "static",
+      }),
     ]);
     return { branch, openingHours };
   },
@@ -24,9 +27,10 @@ export const Route = createFileRoute("/(offentlig)/info/branch/$branchId")({
     return {
       ...seo({
         title: `${branchName} – åpningstider | Boklisten.no`,
-        description: openingHours.length
-          ? `Se når Boklisten står på stand ved ${branchName}, og når du kan hente og levere pensumbøker.`
-          : `Åpningstider for henting og levering av pensumbøker ved ${branchName}.`,
+        description:
+          openingHours.length > 0
+            ? `Se når Boklisten står på stand ved ${branchName}, og når du kan hente og levere pensumbøker.`
+            : `Åpningstider for henting og levering av pensumbøker ved ${branchName}.`,
       }),
       scripts: [
         jsonLdScript(

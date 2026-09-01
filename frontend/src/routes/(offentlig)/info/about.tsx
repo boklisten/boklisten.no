@@ -6,7 +6,7 @@ import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/info/about")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(editableTextQueryOptions("om_oss"));
+    await context.queryClient.query({ ...editableTextQueryOptions("om_oss"), staleTime: "static" });
   },
   head: () =>
     seo({

@@ -23,7 +23,9 @@ export class DeliveryHandler {
         return this.updateOrderWithDeliveryMethodBring(delivery, order);
       }
       default: {
-        return Promise.reject(new BlError(`delivery.method "${delivery.method}" is not supported`));
+        return Promise.reject(
+          new BlError(`delivery.method "${String(delivery.method)}" is not supported`),
+        );
       }
     }
   }
@@ -83,8 +85,7 @@ export class DeliveryHandler {
       StorageService.Branches.get(order.branch)
         .then((branch: Branch) => {
           const freeDelivery =
-            (branch.paymentInfo && branch.paymentInfo.responsibleForDelivery) ||
-            order.handoutByDelivery;
+            (branch.paymentInfo?.responsibleForDelivery ?? false) || order.handoutByDelivery;
 
           return this.bringDeliveryService
             .getDeliveryInfoBring(
@@ -115,7 +116,7 @@ export class DeliveryHandler {
                   reject(updateDeliveryError);
                 });
             })
-            .catch((blError) => {
+            .catch((blError: BlError) => {
               reject(blError);
             });
         })

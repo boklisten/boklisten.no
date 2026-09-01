@@ -109,7 +109,7 @@ async function createSendout(input: {
       initiatedByDetailsId: input.initiatedByDetailsId ?? null,
     });
   } catch (error) {
-    logger.error(`failed to create sendout: ${error}`);
+    logger.error(`failed to create sendout: ${String(error)}`);
     return null;
   }
 }
@@ -141,7 +141,7 @@ async function logOutgoingMessage(input: {
       status: "created",
     });
   } catch (error) {
-    logger.error(`failed to log outgoing message to "${input.recipient}": ${error}`);
+    logger.error(`failed to log outgoing message to "${input.recipient}": ${String(error)}`);
     return null;
   }
 }
@@ -166,7 +166,7 @@ async function recordSendResult(
     message.statusDetail = result.reason ?? null;
     await message.save();
   } catch (error) {
-    logger.error(`failed to record send result for message "${message.id}": ${error}`);
+    logger.error(`failed to record send result for message "${message.id}": ${String(error)}`);
   }
 }
 

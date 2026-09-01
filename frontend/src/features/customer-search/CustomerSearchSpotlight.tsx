@@ -56,13 +56,19 @@ const isRelatedSearch = (a: string, b: string) => a.startsWith(b) || b.startsWit
 // (data-action/data-selected) through the public store once the fresh list is in the DOM.
 function selectFirstResult() {
   const { listId } = searchStore.getState();
+  // oxlint-disable-next-line unicorn/prefer-query-selector -- Mantine useId() ids contain colons, which are invalid in querySelector syntax
   const list = listId ? document.getElementById(listId) : null;
   if (!list) {
     return;
   }
-  list.querySelector("[data-selected]")?.removeAttribute("data-selected");
-  const first = list.querySelector("[data-action]");
-  first?.setAttribute("data-selected", "true");
+  const selected = list.querySelector<HTMLElement>("[data-selected]");
+  if (selected) {
+    delete selected.dataset["selected"];
+  }
+  const first = list.querySelector<HTMLElement>("[data-action]");
+  if (first) {
+    first.dataset["selected"] = "true";
+  }
   searchStore.updateState((state) => ({ ...state, selected: first ? 0 : -1 }));
 }
 

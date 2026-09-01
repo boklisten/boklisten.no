@@ -43,7 +43,7 @@ export function createTestRound(overrides: Partial<MatchRound> = {}) {
 }
 
 export function seededRandom(seed: number) {
-  return function () {
+  return () => {
     seed += 0x6d_2b_79_f5;
     let t = seed;
     t = Math.imul(t ^ (t >>> 15), t | 1);

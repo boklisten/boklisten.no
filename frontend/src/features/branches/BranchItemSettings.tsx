@@ -95,7 +95,7 @@ export default function BranchItemSettings({ branchId }: { branchId: string }) {
         <Skeleton height={280} />
         <Skeleton height={280} />
       </Activity>
-      <Activity mode={!isLoading && (isError || branchItems == undefined) ? "visible" : "hidden"}>
+      <Activity mode={!isLoading && (isError || branchItems === undefined) ? "visible" : "hidden"}>
         <ErrorAlert title="Klarte ikke laste inn åpningstider">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
       </Activity>
       <form.Subscribe selector={(state) => state.values.branchItems}>

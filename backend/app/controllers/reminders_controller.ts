@@ -30,7 +30,7 @@ async function aggregateCustomersToRemind(
   deadlineISO: string,
 ) {
   const { after, before } = deadlineWindow(new Date(deadlineISO));
-  return await StorageService.CustomerItems.aggregate<ReminderCustomer>([
+  return StorageService.CustomerItems.aggregate<ReminderCustomer>([
     {
       $match: {
         returned: false,
@@ -124,7 +124,7 @@ async function sendReminderEmail(
   if (filteredCustomers.length === 0) {
     return { success: true };
   }
-  return await DispatchService.sendUserProvidedEmailTemplate({
+  return DispatchService.sendUserProvidedEmailTemplate({
     templateId: emailTemplateId,
     context,
     recipients: filteredCustomers.map((customer) => ({

@@ -17,7 +17,7 @@ export default class MatchesController {
   async notify(ctx: HttpContext) {
     const { detailsId } = PermissionService.authenticate(ctx, USER_PERMISSION.ADMIN);
     const matchNotifyConfiguration = await ctx.request.validateUsing(matchNotifyValidator);
-    return await notify(matchNotifyConfiguration, detailsId);
+    return notify(matchNotifyConfiguration, detailsId);
   }
 
   async getMyMatches(ctx: HttpContext) {
@@ -68,6 +68,6 @@ export default class MatchesController {
   async transferItem(ctx: HttpContext) {
     const { detailsId } = PermissionService.authenticate(ctx);
     const transferData = await ctx.request.validateUsing(matchTransferValidator);
-    return await recordTransfer(detailsId, transferData);
+    return recordTransfer(detailsId, transferData);
   }
 }

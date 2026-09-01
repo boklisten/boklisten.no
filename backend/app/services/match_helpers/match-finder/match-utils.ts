@@ -75,8 +75,8 @@ export function tryFindTwoWayMatch(
     userGroup.find(
       (candidate) =>
         user.id !== candidate.id &&
-        !(user.wantedItems.symmetricDifference(candidate.items).size > 0) &&
-        !(candidate.wantedItems.symmetricDifference(user.items).size > 0),
+        user.wantedItems.symmetricDifference(candidate.items).size === 0 &&
+        candidate.wantedItems.symmetricDifference(user.items).size === 0,
     ) ?? null
   );
 }
@@ -123,13 +123,10 @@ export function tryFindPartialMatch(
  * @param items
  */
 export function countItemOccurrences(items: string[]): Record<string, number> {
-  return items.reduce(
-    (accumulator: Record<string, number>, next) => ({
-      ...accumulator,
-      [next]: (accumulator[next] ?? 0) + 1,
-    }),
-    {},
-  );
+  return items.reduce((accumulator: Record<string, number>, next) => {
+    accumulator[next] = (accumulator[next] ?? 0) + 1;
+    return accumulator;
+  }, {});
 }
 
 /**
@@ -145,15 +142,16 @@ export function calculateItemImbalances(
   itemsCounts: Record<string, number>,
   wantedItemsCounts: Record<string, number>,
 ): Record<string, number> {
-  return Object.keys({ ...wantedItemsCounts, ...itemsCounts }).reduce((diffs, item) => {
-    const itemCount = itemsCounts[item] ?? 0;
-    const wantedItemCount = wantedItemsCounts[item] ?? 0;
+  return Object.keys({ ...wantedItemsCounts, ...itemsCounts }).reduce(
+    (diffs: Record<string, number>, item) => {
+      const itemCount = itemsCounts[item] ?? 0;
+      const wantedItemCount = wantedItemsCounts[item] ?? 0;
 
-    return {
-      ...diffs,
-      [item]: itemCount - wantedItemCount,
-    };
-  }, {});
+      diffs[item] = itemCount - wantedItemCount;
+      return diffs;
+    },
+    {},
+  );
 }
 
 /**

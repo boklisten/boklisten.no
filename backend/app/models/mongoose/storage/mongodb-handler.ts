@@ -87,7 +87,7 @@ export class MongodbHandler<T extends BlDocument> {
 
     const expandFilters = databaseQuery.getExpandFilter();
     return allowedNestedDocuments && allowedNestedDocuments.length > 0
-      ? await this.retrieveNestedDocuments(docs, allowedNestedDocuments, expandFilters)
+      ? this.retrieveNestedDocuments(docs, allowedNestedDocuments, expandFilters)
       : docs;
   }
 
@@ -175,12 +175,6 @@ export class MongodbHandler<T extends BlDocument> {
       );
     }
   }
-
-  public async addMany(docs: T[]) {
-    const insertedDocs = await this.mongooseModel.insertMany(docs);
-    return insertedDocs.map((document_) => document_.toObject());
-  }
-
   public async update(id: string, data: UpdateQuery<T>) {
     const newData = { ...data, lastUpdated: new Date() };
     // Don't update the user of a document after creation
@@ -188,7 +182,7 @@ export class MongodbHandler<T extends BlDocument> {
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the mongo/typed boundary: lean() documents have the shape the schema for T defines
     const document_ = (await this.mongooseModel
-      .findOneAndUpdate({ _id: id }, newData, { new: true })
+      .findOneAndUpdate({ _id: id }, newData, { returnDocument: "after" })
       .lean({ transform: MongooseModelCreator.transformObject })
       .exec()
       .catch((error) => {
@@ -274,10 +268,10 @@ export class MongodbHandler<T extends BlDocument> {
       throw new BlError("no searchable fields found").code(701);
     }
 
-    const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+    const escaped = normalized.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
     const regex = new RegExp(escaped, "i");
 
-    return await this.mongooseModel
+    return this.mongooseModel
       .find({
         $or: searchPaths.map((path) => ({ [path]: regex })),
       })
@@ -356,11 +350,9 @@ export class MongodbHandler<T extends BlDocument> {
         return blError.code(702).store("castError", error);
       } else if (error.name === "ValidationError") {
         return blError.code(701).store("validationError", error);
-      } else {
-        return blError.code(200);
       }
-    } else {
-      return new BlError("EndpointMongoDb: unknown error").add(blError).code(200);
+      return blError.code(200);
     }
+    return new BlError("EndpointMongoDb: unknown error").add(blError).code(200);
   }
 }

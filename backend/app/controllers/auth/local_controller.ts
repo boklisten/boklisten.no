@@ -60,6 +60,6 @@ export default class LocalController {
     const registerData = await request.validateUsing(registerValidator);
     const userDetail = await UserDetailService.createLocalUserDetail(registerData);
     const user = await UserService.createLocalUser(userDetail.id, registerData.password);
-    return await TokenService.createTokens(user);
+    return TokenService.createTokens(user);
   }
 }

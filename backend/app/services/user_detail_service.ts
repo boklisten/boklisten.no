@@ -30,7 +30,7 @@ export const UserDetailService = {
     ]);
     const permissions = new Map(users.map((user) => [String(user.userDetail), user.permission]));
 
-    const escaped = searchStr.trim().replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+    const escaped = searchStr.trim().replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
     const matcher = new RegExp(escaped, "i");
     return (
       userDetails
@@ -75,7 +75,7 @@ export const UserDetailService = {
   },
   async createVippsUserDetail(vippsUser: VippsUser) {
     const blid = BlidService.createUserBlid("vipps", vippsUser.id);
-    return await StorageService.UserDetails.add(
+    return StorageService.UserDetails.add(
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixme: it is janky to just add this without all the details
       {
         email: vippsUser.email,
@@ -143,7 +143,7 @@ export const UserDetailService = {
     branchMembership: string | undefined,
   ) {
     const blid = BlidService.createUserBlid("local", CryptoService.random());
-    return await StorageService.UserDetails.add(
+    return StorageService.UserDetails.add(
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixme: it is janky to just add this without all the details
       {
         blid,

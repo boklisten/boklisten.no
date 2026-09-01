@@ -29,7 +29,7 @@ export function verifySendgridSignature({
       Buffer.from(signature, "base64"),
     );
   } catch (error) {
-    logger.error(`failed to verify SendGrid webhook signature: ${error}`);
+    logger.error(`failed to verify SendGrid webhook signature: ${String(error)}`);
     return false;
   }
 }

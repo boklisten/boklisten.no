@@ -26,6 +26,7 @@ export const OrderItemService = {
     }
 
     const price =
+      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- amountLeftToPay can be 0, which deliberately falls through to the computed buyout price
       customerItem.amountLeftToPay || Math.floor((item.price * buyoutPercentage) / 10) * 10;
     return {
       type: "buyout",

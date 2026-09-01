@@ -16,7 +16,7 @@ export class CustomerInvoiceActive {
     try {
       invoices = await StorageService.Invoices.getByQuery(databaseQuery);
     } catch (error) {
-      if (error instanceof BlError && error.getCode() == 702) {
+      if (error instanceof BlError && error.getCode() === 702) {
         return false;
       }
     }

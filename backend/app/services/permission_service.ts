@@ -85,7 +85,7 @@ function verifyAccessToken(token: string) {
     audience: APP_CONFIG.token.access.aud,
   });
   if (typeof decoded === "string") {
-    throw new Error("token is not a valid jwt");
+    throw new TypeError("token is not a valid jwt");
   }
   return decoded;
 }
@@ -157,6 +157,9 @@ export const PermissionService = {
   haveRestrictedDocumentPermission,
   isPermissionEqualOrOver,
   isPermissionOver,
+  // Deliberately still exported for the legacy collection endpoints; the deprecation
+  // marker is there to stop new usages
+  // oxlint-disable-next-line typescript/no-deprecated
   authenticateLegacy,
   authenticate,
   adminOrFail,

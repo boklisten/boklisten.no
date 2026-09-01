@@ -1,5 +1,15 @@
+export function cellToString(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "number" || typeof value === "bigint" || typeof value === "boolean") {
+    return String(value);
+  }
+  return "";
+}
+
 export function normalizeNorwegianPhone(value: unknown): string {
-  const digits = String(value ?? "").replaceAll(/\D/g, "");
+  const digits = cellToString(value).replaceAll(/\D/g, "");
   if (digits.length === 10 && digits.startsWith("47")) {
     return digits.slice(2);
   }
@@ -10,10 +20,11 @@ export function normalizeNorwegianPhone(value: unknown): string {
 }
 
 export function normalizeNorwegianDate(value: unknown): string {
-  const text = String(value ?? "").trim();
-  const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(text);
-  if (!match) {
+  const text = cellToString(value).trim();
+  const match = /^(?<day>\d{1,2})\.(?<month>\d{1,2})\.(?<year>\d{4})$/.exec(text);
+  if (!match?.groups) {
     return text;
   }
-  return `${match[3]}-${match[2]?.padStart(2, "0")}-${match[1]?.padStart(2, "0")}`;
+  const { day, month, year } = match.groups;
+  return `${year}-${month?.padStart(2, "0")}-${day?.padStart(2, "0")}`;
 }

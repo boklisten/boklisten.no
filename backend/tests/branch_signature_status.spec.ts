@@ -159,7 +159,7 @@ test.group("BranchSignatureStatusService.getStatus", (group) => {
       needsSignature: 1,
     });
     const pipeline: {
-      $match?: { branchMembership?: { $in?: { toString(): string }[] } };
+      $match?: { branchMembership?: { $in?: { toString: () => string }[] } };
     }[] = unchecked(aggregateStub.firstCall.args[0]);
     const matchedIds = pipeline[0]?.$match?.branchMembership?.$in?.map((id) => id.toString());
     assert.deepEqual(matchedIds, [branchId, childId]);

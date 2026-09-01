@@ -13,9 +13,10 @@ export const Route = createFileRoute("/(offentlig)/bestilling/")({
         "Velg hvilken skole og hvilke fag du tar, så finner vi bøkene du trenger for deg!",
     }),
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(
-      queryOptions(publicApi.branches.getPublic.queryOptions()),
-    );
+    await context.queryClient.query({
+      ...queryOptions(publicApi.branches.getPublic.queryOptions()),
+      staleTime: "static",
+    });
   },
   component: OrderPage,
 });

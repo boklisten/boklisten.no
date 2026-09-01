@@ -6,7 +6,10 @@ import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/info/pupils")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(editableTextQueryOptions("vgs_elever"));
+    await context.queryClient.query({
+      ...editableTextQueryOptions("vgs_elever"),
+      staleTime: "static",
+    });
   },
   head: () =>
     seo({

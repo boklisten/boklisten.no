@@ -63,7 +63,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
 
   // Local scan state is reconciled against every fresh poll of the orders during render; starting
   // from undefined means a cache-warm first render still populates the list.
-  const [syncedOrders, setSyncedOrders] = useState<typeof orders>(undefined);
+  const [syncedOrders, setSyncedOrders] = useState<typeof orders>();
   if (orders !== undefined && orders !== syncedOrders) {
     setSyncedOrders(orders);
     const unfulfilledOrderItems = calculateUnfulfilledOrderItems(orders);
@@ -172,11 +172,13 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
   }
 
   function askNoOrderChoice(blid: string, title: string): Promise<NoOrderChoice | null> {
-    return new Promise((resolve) => setNoOrderRequest({ blid, title, resolve }));
+    return new Promise((resolve) => {
+      setNoOrderRequest({ blid, title, resolve });
+    });
   }
 
   async function confirmPeerMatch(deliverFromName: string): Promise<boolean> {
-    return await asyncConfirmModal({
+    return asyncConfirmModal({
       title: "Skal mottas fra en annen elev",
       children: (
         <Text>
@@ -194,7 +196,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
   }
 
   async function handOutBlid(blid: string): Promise<ScanNotice | void> {
-    let body: {
+    const body: {
       blid: string;
       customerId: string;
       force?: boolean;
@@ -228,7 +230,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
           if (!confirmed) {
             return { message: "Boka ble ikke delt ut." };
           }
-          body = { ...body, force: true };
+          body.force = true;
           continue;
         }
 
@@ -237,7 +239,8 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
           return { message: "Boka ble ikke delt ut." };
         }
         noOrderTitle = response.title;
-        body = { ...body, branchId: choice.branchId, deadline: choice.deadline };
+        body.branchId = choice.branchId;
+        body.deadline = choice.deadline;
         continue;
       }
 

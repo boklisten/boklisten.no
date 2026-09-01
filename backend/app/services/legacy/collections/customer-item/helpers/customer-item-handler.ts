@@ -50,7 +50,7 @@ export class CustomerItemHandler {
     });
 
     customerItemOrders.push(orderId);
-    return await StorageService.CustomerItems.update(customerItemId, {
+    return StorageService.CustomerItems.update(customerItemId, {
       deadline: orderItem.info.to,
       periodExtends,
       orders: customerItemOrders,
@@ -65,7 +65,7 @@ export class CustomerItemHandler {
    */
   public async buyout(customerItemId: string, orderId: string, orderItem: OrderItem) {
     if (orderItem.type !== "buyout") {
-      throw `orderItem.type is not "buyout"`;
+      throw new BlError(`orderItem.type is not "buyout"`);
     }
 
     const customerItem = await StorageService.CustomerItems.get(customerItemId);
@@ -73,7 +73,7 @@ export class CustomerItemHandler {
 
     customerItemOrders.push(orderId);
 
-    return await StorageService.CustomerItems.update(customerItemId, {
+    return StorageService.CustomerItems.update(customerItemId, {
       buyout: true,
       orders: customerItemOrders,
       buyoutInfo: {
@@ -97,7 +97,7 @@ export class CustomerItemHandler {
     employeeId: string,
   ) {
     if (orderItem.type !== "return") {
-      throw `orderItem.type is not "return"`;
+      throw new BlError(`orderItem.type is not "return"`);
     }
 
     const customerItem = await StorageService.CustomerItems.get(customerItemId);
@@ -106,7 +106,7 @@ export class CustomerItemHandler {
 
     customerItemOrders.push(orderId);
 
-    return await StorageService.CustomerItems.update(customerItemId, {
+    return StorageService.CustomerItems.update(customerItemId, {
       returned: true,
       orders: customerItemOrders,
       returnInfo: {
@@ -126,7 +126,7 @@ export class CustomerItemHandler {
    */
   public async cancel(customerItemId: string, orderId: string, orderItem: OrderItem) {
     if (orderItem.type !== "cancel") {
-      throw `orderItem.type is not "cancel"`;
+      throw new BlError(`orderItem.type is not "cancel"`);
     }
 
     const customerItem = await StorageService.CustomerItems.get(customerItemId);
@@ -135,7 +135,7 @@ export class CustomerItemHandler {
 
     customerItemOrders.push(orderId);
 
-    return await StorageService.CustomerItems.update(customerItemId, {
+    return StorageService.CustomerItems.update(customerItemId, {
       returned: true,
       orders: customerItemOrders,
       cancel: true,
@@ -154,7 +154,7 @@ export class CustomerItemHandler {
    */
   public async buyback(customerItemId: string, orderId: string, orderItem: OrderItem) {
     if (orderItem.type !== "buyback") {
-      throw `orderItem.type is not "buyback"`;
+      throw new BlError(`orderItem.type is not "buyback"`);
     }
 
     const customerItem = await StorageService.CustomerItems.get(customerItemId);
@@ -162,7 +162,7 @@ export class CustomerItemHandler {
 
     customerItemOrders.push(orderId);
 
-    return await StorageService.CustomerItems.update(customerItemId, {
+    return StorageService.CustomerItems.update(customerItemId, {
       returned: true,
       orders: customerItemOrders,
       buyback: true,

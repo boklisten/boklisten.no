@@ -63,10 +63,7 @@ export class SEDbQuery {
       if (Array.isArray(stringFilter.value)) {
         const array = stringFilter.value;
         for (const stringValue of array) {
-          const multipleValuesFilterObject = {};
-
-          // @ts-expect-error fixme: auto ignored
-          multipleValuesFilterObject[stringFilter.fieldName] = stringValue;
+          const multipleValuesFilterObject = { [stringFilter.fieldName]: stringValue };
           orArray.push(multipleValuesFilterObject);
         }
       } else {
@@ -80,17 +77,14 @@ export class SEDbQuery {
         const array = objectIdFilter.value;
         for (const stringValue of array) {
           if (!ObjectId.isValid(stringValue)) {
-            throw new BlError(`Invalid ObjectID: ${stringValue}`).code(701);
+            throw new BlError(`Invalid ObjectID: ${String(stringValue)}`).code(701);
           }
-          const multipleValuesFilterObject = {};
-
-          // @ts-expect-error fixme: auto ignored
-          multipleValuesFilterObject[objectIdFilter.fieldName] = stringValue;
+          const multipleValuesFilterObject = { [objectIdFilter.fieldName]: stringValue };
           orArray.push(multipleValuesFilterObject);
         }
       } else {
         if (!ObjectId.isValid(objectIdFilter.value)) {
-          throw new BlError(`Invalid ObjectID: ${objectIdFilter.value}`).code(701);
+          throw new BlError(`Invalid ObjectID: ${String(objectIdFilter.value)}`).code(701);
         }
 
         // @ts-expect-error fixme: auto ignored
@@ -99,10 +93,7 @@ export class SEDbQuery {
     }
 
     for (const regexFilter of this.regexFilters) {
-      const regexFilterObject = {};
-
-      // @ts-expect-error fixme: auto ignored
-      regexFilterObject[regexFilter.fieldName] = regexFilter.op;
+      const regexFilterObject = { [regexFilter.fieldName]: regexFilter.op };
       orArray.push(regexFilterObject);
     }
 

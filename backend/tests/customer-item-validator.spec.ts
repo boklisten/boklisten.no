@@ -8,7 +8,7 @@ test.group("CustomerItemValidator", async () => {
   test("should reject if sent customerItem is undefined", async ({ assert }) =>
     assert.rejects(
       // @ts-expect-error fixme: auto ignored
-      () => customerItemValidator.validate(undefined),
+      () => customerItemValidator.validate(),
       BlError,
       /customerItem is undefined/,
     ));

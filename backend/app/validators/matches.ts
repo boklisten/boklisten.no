@@ -22,7 +22,7 @@ const realCalendarDate = vine.createRule((value, _, field) => {
  * partial patch can arrange — the plan form always sends both ends of a window.
  */
 const laterThan = vine.createRule((value, startField: string, field) => {
-  const start: unknown = Reflect.get(Object(field.parent), startField);
+  const start: unknown = Reflect.get(new Object(field.parent), startField);
   if (typeof value !== "string" || typeof start !== "string") {
     return;
   }

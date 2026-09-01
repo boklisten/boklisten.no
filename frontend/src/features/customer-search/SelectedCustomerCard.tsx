@@ -49,7 +49,7 @@ export default function SelectedCustomerCard({
               <Title order={2} size="h4" lh={1.2}>
                 {customer.name}
               </Title>
-              {(branch || customer.permission !== "customer") && (
+              {(Boolean(branch) || customer.permission !== "customer") && (
                 <Group gap={6}>
                   <PermissionBadge permission={customer.permission} />
                   {branch && <Badge variant="light">{branch.name}</Badge>}

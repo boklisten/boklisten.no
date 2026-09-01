@@ -51,6 +51,7 @@ export default function useApiClient() {
             return redirectToLogin();
           }
 
+          let retryRequest: Request;
           try {
             const newTokens = await publicApiClient.api.tokens.token({
               body: {
@@ -62,12 +63,12 @@ export default function useApiClient() {
             }
             login(newTokens);
 
-            const retryRequest = new Request(request);
+            retryRequest = new Request(request);
             retryRequest.headers.set("Authorization", `Bearer ${newTokens.accessToken}`);
-            return fetch(retryRequest);
           } catch {
             return redirectToLogin();
           }
+          return fetch(retryRequest);
         },
       ],
     },

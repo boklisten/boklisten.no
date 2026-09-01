@@ -20,10 +20,11 @@ export class OrderItemRentValidator {
       return true;
     } catch (error) {
       if (error instanceof BlError) {
-        return Promise.reject(error);
+        throw error;
       }
-      return Promise.reject(
-        new BlError("unknown error, could not validate orderItem type rent").store("error", error),
+      throw new BlError("unknown error, could not validate orderItem type rent").store(
+        "error",
+        error,
       );
     }
   }

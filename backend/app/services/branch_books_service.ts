@@ -303,11 +303,12 @@ export const BranchBooksService = {
         },
       },
     ]);
-    return rows.map(({ dob, ...row }) => ({
-      ...row,
-      birthYear: toBirthYear(dob),
-      handoutTime: row.handoutTime ? row.handoutTime.toISOString() : null,
-    }));
+    return rows.map(({ dob, ...row }) =>
+      Object.assign(row, {
+        birthYear: toBirthYear(dob),
+        handoutTime: row.handoutTime ? row.handoutTime.toISOString() : null,
+      }),
+    );
   },
 
   async bulkUpdateActiveBooks({
@@ -412,11 +413,12 @@ export const BranchBooksService = {
         },
       },
     ]);
-    return rows.map(({ dob, ...row }) => ({
-      ...row,
-      birthYear: toBirthYear(dob),
-      orderTime: row.orderTime ? row.orderTime.toISOString() : null,
-    }));
+    return rows.map(({ dob, ...row }) =>
+      Object.assign(row, {
+        birthYear: toBirthYear(dob),
+        orderTime: row.orderTime ? row.orderTime.toISOString() : null,
+      }),
+    );
   },
 
   async bulkUpdateOrderedBooks({

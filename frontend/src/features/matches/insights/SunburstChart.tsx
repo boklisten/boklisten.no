@@ -140,8 +140,8 @@ export default function SunburstChart({ data }: { data: BranchHierarchyNode[] })
     <Center>
       <Box pos="relative" w="100%" maw={SIZE}>
         <svg viewBox={`0 0 ${SIZE} ${SIZE}`} width="100%" role="img">
-          {arcs.map((arc, index) => (
-            <g key={index}>
+          {arcs.map((arc) => (
+            <g key={arc.path}>
               <path
                 d={arc.path}
                 fill={arc.color}

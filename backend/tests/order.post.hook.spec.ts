@@ -92,7 +92,8 @@ test.group("OrderPostHook", (group) => {
       (requestBody) =>
         new Promise((resolve, reject) => {
           if (!requestBody["valid"]) {
-            return reject(new BlError("not a valid order").code(701));
+            reject(new BlError("not a valid order").code(701));
+            return;
           }
           resolve(true);
         }),

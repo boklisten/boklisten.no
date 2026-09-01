@@ -41,12 +41,8 @@ export const AuthVippsService = {
     let user = await UserService.getByUserDetailsId(userDetail?.id);
 
     try {
-      if (!userDetail) {
-        userDetail = await UserDetailService.createVippsUserDetail(vippsUser);
-      }
-      if (!user) {
-        user = await UserService.createVippsUser(userDetail.id, vippsUser.id);
-      }
+      userDetail ??= await UserDetailService.createVippsUserDetail(vippsUser);
+      user ??= await UserService.createVippsUser(userDetail.id, vippsUser.id);
 
       await StorageService.Users.update(user.id, {
         $set: {

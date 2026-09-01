@@ -15,7 +15,7 @@ export const UserService = {
     }
   },
   async createLocalUser(detailsId: string, password: string) {
-    return await StorageService.Users.add({
+    return StorageService.Users.add({
       userDetail: detailsId,
       permission: "customer",
       login: {
@@ -26,7 +26,7 @@ export const UserService = {
     });
   },
   async createVippsUser(detailsId: string, vippsUserId: string) {
-    return await StorageService.Users.add({
+    return StorageService.Users.add({
       userDetail: detailsId,
       permission: "customer",
       login: { vipps: { userId: vippsUserId, lastLogin: new Date() } },

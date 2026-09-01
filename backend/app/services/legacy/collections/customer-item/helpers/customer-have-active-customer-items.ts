@@ -17,7 +17,7 @@ export class CustomerHaveActiveCustomerItems {
     try {
       customerItems = await StorageService.CustomerItems.getByQuery(databaseQuery);
     } catch (error) {
-      if (error instanceof BlError && error.getCode() == 702) {
+      if (error instanceof BlError && error.getCode() === 702) {
         return false;
       }
       throw error;

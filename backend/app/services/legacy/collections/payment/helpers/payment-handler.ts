@@ -17,7 +17,7 @@ export class PaymentHandler {
       throw new BlError("one or more payments was not found");
     }
 
-    return await this.confirmAllPayments(order, payments);
+    return this.confirmAllPayments(order, payments);
   }
 
   private async confirmAllPayments(order: Order, payments: Payment[]): Promise<Payment[]> {

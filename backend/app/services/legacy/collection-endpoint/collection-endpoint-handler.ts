@@ -41,21 +41,20 @@ function onGetAll(collection: BlCollection, endpoint: BlEndpoint) {
         );
       }
 
-      return await collection.storage.getByQuery(databaseQuery, endpoint.nestedDocuments);
-    } else {
-      // if no query, give back all objects in collection
-      let permission = undefined;
-      if (blApiRequest.user) {
-        permission = blApiRequest.user.permission;
-      }
-
-      return collection.storage
-        .getAll(permission)
-        .then((docs) => docs)
-        .catch((blError: BlError) => {
-          throw blError;
-        });
+      return collection.storage.getByQuery(databaseQuery, endpoint.nestedDocuments);
     }
+    // if no query, give back all objects in collection
+    let permission = undefined;
+    if (blApiRequest.user) {
+      permission = blApiRequest.user.permission;
+    }
+
+    return collection.storage
+      .getAll(permission)
+      .then((docs) => docs)
+      .catch((blError: BlError) => {
+        throw blError;
+      });
   };
 }
 
@@ -184,7 +183,7 @@ async function handleEndpointRequest({
     collection.documentPermission,
   );
 
-  return await hook.after(responseData, accessToken);
+  return hook.after(responseData, accessToken);
 }
 
 const CollectionEndpointHandler = {

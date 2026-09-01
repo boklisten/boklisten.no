@@ -40,9 +40,9 @@ export class OrderValidator {
       await this.orderPlacedValidator.validate(order);
     } catch (error) {
       if (error instanceof BlError) {
-        return Promise.reject(error);
+        throw error;
       }
-      return Promise.reject(new BlError("order could not be validated").store("error", error));
+      throw new BlError("order could not be validated").store("error", error);
     }
     return true;
   }

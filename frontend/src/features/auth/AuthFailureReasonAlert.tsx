@@ -20,7 +20,6 @@ export default function AuthFailureReasonAlert({ reason }: { reason: string }) {
       text = "Forespørselen din har utløpt";
       break;
     }
-    case AUTH_VIPPS_ERROR.ERROR:
     default: {
       text = "Det skjedde en ukjent feil";
       break;

@@ -77,10 +77,7 @@ export class DbQueryDateFilter {
     //let lessThanIsoDate = momentDate.add(1, 'day').toISOString();
 
     if (operation) {
-      const op = {};
-
-      // @ts-expect-error fixme: auto ignored
-      op[operation] = isoDate;
+      const op = { [operation]: isoDate };
 
       return {
         fieldName,

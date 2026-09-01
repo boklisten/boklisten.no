@@ -79,7 +79,7 @@ test.group("PaymentValidator", (group) => {
   });
 
   test("validate() - should reject if payment is undefined", async ({ assert }) =>
-    assert.rejects(() => paymentValidator.validate(undefined), BlError, /payment is not defined/));
+    assert.rejects(() => paymentValidator.validate(), BlError, /payment is not defined/));
 
   test("validate() - should reject if paymentMethod is not valid", async ({ assert }) =>
     assert.rejects(

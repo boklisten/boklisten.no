@@ -12,7 +12,7 @@ function createBlapiErrorResponse(error: unknown): BlapiErrorResponse {
             "error",
             error,
           )
-        : new BlError(`unknown error: ${error}`).store("error", error);
+        : new BlError(`unknown error: ${String(error)}`).store("error", error);
 
   printErrorStack(blError);
 
@@ -50,7 +50,7 @@ function printError(error: unknown) {
   } else if (error instanceof Error) {
     logger.info(`! (err) ${error.message}\n${error.stack}`);
   } else {
-    logger.info(`! (???) ${error}`);
+    logger.info(`! (???) ${String(error)}`);
   }
 }
 
@@ -74,9 +74,8 @@ function getErrorResponse(blError: BlError): BlapiErrorResponse {
     return authErrorResponse(blError.getCode());
   } else if (blError.getCode() >= 10_000 && blError.getCode() <= 11_000) {
     return fakeSuccessResponse(blError);
-  } else {
-    return blapiErrorResponse;
   }
+  return blapiErrorResponse;
 }
 
 function serverErrorResponse(code: number): BlapiErrorResponse {

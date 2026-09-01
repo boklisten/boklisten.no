@@ -51,7 +51,7 @@ interface RegistrationFacets {
 async function aggregateActivity(): Promise<ActivityRow[]> {
   const now = Date.now();
   // oxlint-disable no-thenable -- MongoDB $switch branches require `then` keys
-  return await StorageService.Users.aggregate<ActivityRow>([
+  return StorageService.Users.aggregate<ActivityRow>([
     {
       $project: {
         hasVipps: { $gt: ["$login.vipps.userId", null] },

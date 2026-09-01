@@ -106,7 +106,7 @@ export default function BranchSubjectSettings({ branchId }: { branchId: string }
         <Skeleton height={60} />
         <Skeleton height={60} />
       </Activity>
-      <Activity mode={!isLoading && (isError || subjects == undefined) ? "visible" : "hidden"}>
+      <Activity mode={!isLoading && (isError || subjects === undefined) ? "visible" : "hidden"}>
         <ErrorAlert title="Klarte ikke laste inn fagene">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
       </Activity>
       {subjects?.length === 0 && (

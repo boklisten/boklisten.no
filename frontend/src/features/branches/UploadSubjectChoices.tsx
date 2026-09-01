@@ -24,7 +24,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
-import { normalizeNorwegianDate } from "@/features/branches/csvNormalizers";
+import { cellToString, normalizeNorwegianDate } from "@/features/branches/csvNormalizers";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification } from "@/shared/utils/notifications";
 
@@ -111,8 +111,7 @@ function findInvalidDeadlines(rows: SubjectChoiceRow[]): string[] {
 }
 
 function cell(row: Record<string, unknown>, key: string): string {
-  const value = row[key];
-  return value == null ? "" : String(value).trim();
+  return cellToString(row[key]).trim();
 }
 
 function toSubjectChoiceRows(result: ImportResult): SubjectChoiceRow[] {

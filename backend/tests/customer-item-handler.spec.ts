@@ -117,40 +117,37 @@ test.group("CustomerItemHandler", (group) => {
     );
   });
 
-  // These three paths throw a plain string, which assert.rejects cannot match on, so compare the
-  // rejection reason directly.
   test('should reject if orderItem.type is not "buyout"', async ({ assert }) => {
     const orderItem = mock<OrderItem>({
       type: "rent",
     });
-    const reason = await customerItemHandler.buyout("customerItem1", "order1", orderItem).then(
-      () => null,
-      (error: unknown) => error,
+    await assert.rejects(
+      () => customerItemHandler.buyout("customerItem1", "order1", orderItem),
+      BlError,
+      /orderItem.type is not "buyout"/,
     );
-    assert.equal(reason, 'orderItem.type is not "buyout"');
   });
 
   test('should reject if orderItem.type is not "return"', async ({ assert }) => {
     const orderItem = mock<OrderItem>({
       type: "rent",
     });
-    const reason = await customerItemHandler
-      .return("customerItem1", "order1", orderItem, "branch1", "employee1")
-      .then(
-        () => null,
-        (error: unknown) => error,
-      );
-    assert.equal(reason, 'orderItem.type is not "return"');
+    await assert.rejects(
+      () =>
+        customerItemHandler.return("customerItem1", "order1", orderItem, "branch1", "employee1"),
+      BlError,
+      /orderItem.type is not "return"/,
+    );
   });
 
   test('should reject if orderItem.type is not "buyback"', async ({ assert }) => {
     const orderItem = mock<OrderItem>({
       type: "rent",
     });
-    const reason = await customerItemHandler.buyback("customerItem1", "order1", orderItem).then(
-      () => null,
-      (error: unknown) => error,
+    await assert.rejects(
+      () => customerItemHandler.buyback("customerItem1", "order1", orderItem),
+      BlError,
+      /orderItem.type is not "buyback"/,
     );
-    assert.equal(reason, 'orderItem.type is not "buyback"');
   });
 });

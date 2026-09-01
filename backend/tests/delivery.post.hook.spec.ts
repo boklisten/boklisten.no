@@ -102,9 +102,10 @@ test.group("DeliveryPostHook", (group) => {
       (id) =>
         new Promise((resolve, reject) => {
           if (id === "delivery1") {
-            return resolve(testDelivery);
+            resolve(testDelivery);
+            return;
           }
-          return reject(new BlError("not found").code(702));
+          reject(new BlError("not found").code(702));
         }),
     );
 
@@ -112,9 +113,10 @@ test.group("DeliveryPostHook", (group) => {
       (id) =>
         new Promise((resolve, reject) => {
           if (id === "order1") {
-            return resolve(testOrder);
+            resolve(testOrder);
+            return;
           }
-          return reject(new BlError("not found").code(702));
+          reject(new BlError("not found").code(702));
         }),
     );
 
@@ -122,9 +124,10 @@ test.group("DeliveryPostHook", (group) => {
       (ids: string[]) =>
         new Promise((resolve, reject) => {
           if (ids[0] === "item1") {
-            return resolve([testItem]);
+            resolve([testItem]);
+            return;
           }
-          return reject(new BlError("not found").code(702));
+          reject(new BlError("not found").code(702));
         }),
     );
   });

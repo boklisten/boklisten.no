@@ -25,7 +25,9 @@ export class DbQueryBooleanFilter {
         } else if (query[parameter] === "false") {
           value = false;
         } else {
-          throw new TypeError(`value "${query[parameter]}" could not be parsed to boolean`);
+          throw new TypeError(
+            `value "${JSON.stringify(query[parameter])}" could not be parsed to boolean`,
+          );
         }
 
         booleanFilters.push({ fieldName: parameter, value });

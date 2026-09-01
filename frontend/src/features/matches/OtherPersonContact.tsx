@@ -2,7 +2,7 @@ import type { HandoverParty } from "@boklisten/backend/shared/match/match-dto";
 import { Anchor, Group, Text } from "@mantine/core";
 import { IconPhone } from "@tabler/icons-react";
 
-const OtherPersonContact = ({ party }: { party: HandoverParty }) => {
+function OtherPersonContact({ party }: { party: HandoverParty }) {
   if (party.kind === "stand") {
     return (
       <Group gap={5}>
@@ -19,7 +19,7 @@ const OtherPersonContact = ({ party }: { party: HandoverParty }) => {
       </Text>
     </Group>
   );
-};
+}
 
 function formatPhoneNumber(number: string): string {
   if (/\d{8}/.exec(number) !== null) {

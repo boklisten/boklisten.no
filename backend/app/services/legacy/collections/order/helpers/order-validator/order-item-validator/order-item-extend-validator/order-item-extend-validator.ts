@@ -12,13 +12,11 @@ export class OrderItemExtendValidator {
       await this.validateCustomerItem(branch, orderItem);
     } catch (error) {
       if (error instanceof BlError) {
-        return Promise.reject(error);
+        throw error;
       }
-      return Promise.reject(
-        new BlError('unknown error, could not validate orderItem.type "extend"').store(
-          "error",
-          error,
-        ),
+      throw new BlError('unknown error, could not validate orderItem.type "extend"').store(
+        "error",
+        error,
       );
     }
 

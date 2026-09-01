@@ -47,7 +47,7 @@ export default function Tasks() {
       </ErrorAlert>
     );
   }
-  const hasTasks = (data.tasks?.confirmDetails || data.tasks?.signAgreement) ?? false;
+  const hasTasks = (data.tasks?.confirmDetails ?? false) || (data.tasks?.signAgreement ?? false);
 
   if (!hasTasks) {
     return (

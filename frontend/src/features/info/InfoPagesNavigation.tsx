@@ -21,7 +21,7 @@ const tabs = [
   value: `/info/${string}`;
 }[];
 
-const InfoPagesNavigation = () => {
+function InfoPagesNavigation() {
   const navigate = useNavigate();
   const pathname = useLocation({
     select: (location) => location.pathname,
@@ -60,6 +60,6 @@ const InfoPagesNavigation = () => {
       </Box>
     </Center>
   );
-};
+}
 
 export default InfoPagesNavigation;

@@ -15,6 +15,7 @@ import {
   showSuccessNotification,
 } from "@/shared/utils/notifications";
 
+// oxlint-disable-next-line no-redeclare -- deliberate const + type pairing
 const MessageMethod = {
   SMS: "sms",
   EMAIL: "email",

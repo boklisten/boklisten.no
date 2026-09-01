@@ -52,11 +52,9 @@ export class OrderItemValidator {
       }
     } catch (error) {
       if (error instanceof BlError) {
-        return Promise.reject(error);
+        throw error;
       }
-      return Promise.reject(
-        new BlError("unknown error, orderItem could not be validated").store("error", error),
-      );
+      throw new BlError("unknown error, orderItem could not be validated").store("error", error);
     }
 
     // @ts-expect-error fixme: auto ignored
@@ -82,21 +80,22 @@ export class OrderItemValidator {
   ): Promise<boolean> {
     switch (orderItem.type) {
       case "rent": {
-        return await this.orderItemRentValidator.validate(branch, orderItem, item);
+        return this.orderItemRentValidator.validate(branch, orderItem, item);
       }
       case "partly-payment": {
-        return await this.orderItemPartlyPaymentValidator.validate(orderItem, item, branch);
+        return this.orderItemPartlyPaymentValidator.validate(orderItem, item, branch);
       }
       case "buy": {
-        return await this.orderItemBuyValidator.validate(orderItem, item);
+        return this.orderItemBuyValidator.validate(orderItem, item);
       }
       case "extend": {
-        return await this.orderItemExtendValidator.validate(branch, orderItem);
+        return this.orderItemExtendValidator.validate(branch, orderItem);
+      }
+      default: {
+        // Other order item types have no type-specific validation
+        return true;
       }
     }
-
-    // @ts-expect-error fixme: auto ignored
-    return undefined;
   }
 
   private validateOrderItemAmounts(orderItem: OrderItem) {

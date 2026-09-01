@@ -9,9 +9,8 @@ export function calculateSmsSegmentFeedback(smsText: string) {
         ? SMS_MAX_SINGLE_SEGMENT_LENGTH
         : length % SMS_MAX_SINGLE_SEGMENT_LENGTH;
     return `1 segment, ${extraChars}/${SMS_MAX_SINGLE_SEGMENT_LENGTH} til neste`;
-  } else {
-    const segments = Math.ceil(length / SMS_MAX_MULTIPLE_SEGMENT_LENGTH);
-    const extraChars = length % SMS_MAX_MULTIPLE_SEGMENT_LENGTH;
-    return `${segments} segmenter, ${extraChars}/${SMS_MAX_MULTIPLE_SEGMENT_LENGTH} til neste`;
   }
+  const segments = Math.ceil(length / SMS_MAX_MULTIPLE_SEGMENT_LENGTH);
+  const extraChars = length % SMS_MAX_MULTIPLE_SEGMENT_LENGTH;
+  return `${segments} segmenter, ${extraChars}/${SMS_MAX_MULTIPLE_SEGMENT_LENGTH} til neste`;
 }

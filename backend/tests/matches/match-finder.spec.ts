@@ -306,13 +306,11 @@ test.group("Large User Groups", async () => {
     const standDeliveryItems = standMatches.flatMap((standMatch) => [
       ...standMatch.expectedHandoffItems,
     ]);
-    const standPickupItems = standMatches.flatMap((standMatch) => [
-      ...standMatch.expectedPickupItems,
-    ]);
-
-    assert.isTrue(
-      standDeliveryItems.every((deliveryItem) => !standPickupItems.includes(deliveryItem)),
+    const standPickupItems = new Set(
+      standMatches.flatMap((standMatch) => [...standMatch.expectedPickupItems]),
     );
+
+    assert.isTrue(standDeliveryItems.every((deliveryItem) => !standPickupItems.has(deliveryItem)));
 
     assert.assert(userMatches.length <= 86);
     assert.assert(standMatches.length <= 51);

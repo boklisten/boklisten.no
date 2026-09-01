@@ -63,11 +63,12 @@ export const OrderService = {
 
     // An item a user match depends on is never cancelable, regardless of match lock
     const blockedItemIds = await itemIdsInActiveUserMatches(customerId);
-    return openOrderItems.map((openOrderItem) =>
-      blockedItemIds.has(String(openOrderItem.itemId))
-        ? { ...openOrderItem, cancelable: false }
-        : openOrderItem,
-    );
+    return openOrderItems.map((openOrderItem) => {
+      if (blockedItemIds.has(String(openOrderItem.itemId))) {
+        openOrderItem.cancelable = false;
+      }
+      return openOrderItem;
+    });
   },
 
   async createFromCart(customerId: string, cartItems: CheckoutCartItem[]) {
@@ -161,7 +162,7 @@ export const OrderService = {
       throw new Error("No branchId for checkout order");
     }
 
-    return await StorageService.Orders.add({
+    return StorageService.Orders.add({
       amount: total,
       orderItems,
       branch: branchId,

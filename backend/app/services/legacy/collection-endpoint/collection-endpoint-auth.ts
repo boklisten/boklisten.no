@@ -25,6 +25,9 @@ function authenticate(
   return new Promise((resolve, reject) => {
     if (restriction) {
       try {
+        // The legacy collection endpoints consume the JwtPayload shape; migrating them
+        // to authenticate() is its own task
+        // oxlint-disable-next-line typescript/no-deprecated
         const accessToken = PermissionService.authenticateLegacy(ctx);
         validateAuth(restriction, accessToken);
         resolve(accessToken);
@@ -33,7 +36,7 @@ function authenticate(
       }
     } else {
       // no authentication needed
-      return resolve(undefined);
+      resolve(undefined);
     }
   });
 }

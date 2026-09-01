@@ -58,7 +58,7 @@ export const OrderCancellationService = {
       }
     } catch (error) {
       logger.error(
-        `failed to update or notify customer "${originalOrder.customer}" after cancelling order "${originalOrder.id}": ${error}`,
+        `failed to update or notify customer "${originalOrder.customer}" after cancelling order "${originalOrder.id}": ${String(error)}`,
       );
     }
 

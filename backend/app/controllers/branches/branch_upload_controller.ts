@@ -26,7 +26,7 @@ export default class BranchUploadController {
     const branchId = ctx.request.param("branchId");
     const { rows } = await ctx.request.validateUsing(subjectChoicesValidator);
     assertValidDeadlines(rows);
-    return await SubjectChoicesService.evaluate(branchId, rows);
+    return SubjectChoicesService.evaluate(branchId, rows);
   }
 
   async uploadSubjectChoices(ctx: HttpContext) {
@@ -34,6 +34,6 @@ export default class BranchUploadController {
     const branchId = ctx.request.param("branchId");
     const { rows } = await ctx.request.validateUsing(subjectChoicesValidator);
     assertValidDeadlines(rows);
-    return await SubjectChoicesService.upload(branchId, rows);
+    return SubjectChoicesService.upload(branchId, rows);
   }
 }

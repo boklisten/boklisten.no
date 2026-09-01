@@ -52,7 +52,7 @@ export default function PasswordReset({ id }: { id: string }) {
   });
 
   const message = data?.message;
-  const isExpired = message || isError;
+  const isExpired = Boolean(message) || isError;
 
   return (
     <>

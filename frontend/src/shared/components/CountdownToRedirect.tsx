@@ -5,7 +5,7 @@ import { useEffect, useEffectEvent, useState } from "react";
 import useAuthLinker from "@/shared/hooks/useAuthLinker";
 import { useNavigate } from "@tanstack/react-router";
 
-const CountdownToRedirect = ({
+function CountdownToRedirect({
   seconds,
   path,
   shouldReplaceInHistory,
@@ -15,7 +15,7 @@ const CountdownToRedirect = ({
   path?: string;
   shouldReplaceInHistory?: boolean;
   shouldRedirectToCaller?: boolean;
-}) => {
+}) {
   const { redirectToCaller } = useAuthLinker();
   const [progress, setProgress] = useState(100);
   const navigate = useNavigate();
@@ -64,6 +64,6 @@ const CountdownToRedirect = ({
       <Progress value={progress} color="green" />
     </Stack>
   );
-};
+}
 
 export default CountdownToRedirect;

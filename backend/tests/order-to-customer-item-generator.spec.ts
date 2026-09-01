@@ -33,10 +33,9 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     sandbox = createSandbox();
     sandbox.stub(StorageService.UserDetails, "get").callsFake((id) => {
       if (id === userDetail.id) {
-        return new Promise((resolve) => resolve(userDetail));
-      } else {
-        throw new BlError("not found").code(702);
+        return Promise.resolve(userDetail);
       }
+      throw new BlError("not found").code(702);
     });
   });
   group.each.teardown(() => {

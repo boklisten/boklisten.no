@@ -63,7 +63,7 @@ export class BringDeliveryService {
 
       shipmentAddress.postalCity = postalInfo.postalCode.city;
     } catch {
-      return Promise.reject(new BlError("fromPostalCode is not valid"));
+      throw new BlError("fromPostalCode is not valid");
     }
     const product = this.decideProduct(items);
     if (freeDelivery) {
@@ -174,19 +174,13 @@ export class BringDeliveryService {
       product,
     };
 
-    if (
-      !responseData["consignments"] ||
-      !Array.isArray(responseData["consignments"] || responseData["consignments"].length === 0)
-    ) {
+    if (!Array.isArray(responseData["consignments"]) || responseData["consignments"].length === 0) {
       throw new BlError("no consignments provided in response from bringApi");
     }
 
     if (
-      !responseData["consignments"][0]["products"] ||
-      !Array.isArray(
-        responseData["consignments"][0]["products"] ||
-          responseData["consignments"][0]["products"].length === 0,
-      )
+      !Array.isArray(responseData["consignments"][0]["products"]) ||
+      responseData["consignments"][0]["products"].length === 0
     ) {
       throw new BlError("no products provided in response from bringApi");
     }
@@ -215,8 +209,8 @@ export class BringDeliveryService {
     const priceInfo = product["price"]["listPrice"];
     const priceWithoutAdditionalService = priceInfo["priceWithoutAdditionalServices"];
     if (priceWithoutAdditionalService) {
-      deliveryInfoBring.amount = Number.parseInt(priceWithoutAdditionalService["amountWithVAT"]);
-      deliveryInfoBring.taxAmount = Number.parseInt(priceWithoutAdditionalService["vat"]);
+      deliveryInfoBring.amount = Math.trunc(Number(priceWithoutAdditionalService["amountWithVAT"]));
+      deliveryInfoBring.taxAmount = Math.trunc(Number(priceWithoutAdditionalService["vat"]));
     }
 
     const { expectedDelivery } = product;
@@ -224,7 +218,7 @@ export class BringDeliveryService {
       const { workingDays } = expectedDelivery;
       if (workingDays) {
         deliveryInfoBring.estimatedDelivery = moment()
-          .add(Number.parseInt(workingDays) + APP_CONFIG.delivery.deliveryDays, "days")
+          .add(Math.trunc(Number(workingDays)) + APP_CONFIG.delivery.deliveryDays, "days")
           .toDate();
       }
     }

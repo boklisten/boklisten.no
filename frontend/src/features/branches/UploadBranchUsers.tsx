@@ -19,6 +19,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import {
+  cellToString,
   normalizeNorwegianDate,
   normalizeNorwegianPhone,
 } from "@/features/branches/csvNormalizers";
@@ -107,8 +108,7 @@ const IMPORT_COLUMNS: Column[] = [
 ];
 
 function cell(row: Record<string, unknown>, key: string): string {
-  const value = row[key];
-  return value == null ? "" : String(value).trim();
+  return cellToString(row[key]).trim();
 }
 
 function toUserCandidates(result: ImportResult): UserCandidate[] {

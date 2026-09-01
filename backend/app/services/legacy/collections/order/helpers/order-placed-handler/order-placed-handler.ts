@@ -49,7 +49,7 @@ export class OrderPlacedHandler {
       return placedOrder;
     } catch (error) {
       // @ts-expect-error fixme: auto ignored
-      throw new BlError(`could not update order: ${error}`).add(error);
+      throw new BlError(`could not update order: ${String(error)}`).add(error);
     }
   }
 
@@ -64,7 +64,7 @@ export class OrderPlacedHandler {
       }
       await reconcileSignatureTask(userDetail);
     } catch (error) {
-      logger.error(`could not update signature task for order ${order.id}: ${error}`);
+      logger.error(`could not update signature task for order ${order.id}: ${String(error)}`);
     }
   }
 
@@ -143,15 +143,14 @@ export class OrderPlacedHandler {
 
           if (orders.includes(order.id)) {
             return resolve(true);
-          } else {
-            orders.push(order.id);
-
-            return StorageService.UserDetails.update(order.customer, { orders })
-              .then(() => resolve(true))
-              .catch(() => {
-                reject(new BlError("could not update userDetail with placed order"));
-              });
           }
+          orders.push(order.id);
+
+          return StorageService.UserDetails.update(order.customer, { orders })
+            .then(() => resolve(true))
+            .catch(() => {
+              reject(new BlError("could not update userDetail with placed order"));
+            });
         })
         .catch((getUserDetailError: BlError) => {
           reject(new BlError(`customer "${order.customer}" not found`).add(getUserDetailError));
@@ -169,10 +168,8 @@ export class OrderPlacedHandler {
       typeof order.delivery === "string"
         ? await StorageService.Deliveries.get(order.delivery)
         : null;
-    if (delivery?.info && "trackingNumber" in delivery.info) {
-      await DispatchService.sendDeliveryInformation(customerDetail, order, delivery.info);
-    } else {
-      await OrderEmailHandler.sendOrderReceipt(customerDetail, order);
-    }
+    await (delivery?.info && "trackingNumber" in delivery.info
+      ? DispatchService.sendDeliveryInformation(customerDetail, order, delivery.info)
+      : OrderEmailHandler.sendOrderReceipt(customerDetail, order));
   }
 }

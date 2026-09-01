@@ -24,19 +24,13 @@ export class BranchGetHook extends Hook {
           if (!branch.isBranchItemsLive.atBranch) {
             branch.branchItems = [];
           }
-        } else {
-          // user is customer
-          if (!branch.isBranchItemsLive.online) {
-            // user must be "online" (bl-web)
-            branch.branchItems = [];
-          }
-        }
-      } else {
-        // no user found must be "online" (bl-web)
-        if (!branch.isBranchItemsLive.online) {
-          // should not show branchItems
+        } else if (!branch.isBranchItemsLive.online) {
+          // user is customer and must be "online" (bl-web)
           branch.branchItems = [];
         }
+      } else if (!branch.isBranchItemsLive.online) {
+        // no user found, must be "online" (bl-web); should not show branchItems
+        branch.branchItems = [];
       }
     }
   }

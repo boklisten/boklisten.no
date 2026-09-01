@@ -20,10 +20,8 @@ export default class CheckoutController {
     const branch = await StorageService.Branches.get(order.branch);
     const isDeliveryFree = branch.paymentInfo?.responsibleForDelivery ?? false;
 
-    if (order.amount === 0) {
-      if (!branch.deliveryMethods?.byMail || isDeliveryFree) {
-        return { nextStep: "confirm", orderId: order.id } as const;
-      }
+    if (order.amount === 0 && (!branch.deliveryMethods?.byMail || isDeliveryFree)) {
+      return { nextStep: "confirm", orderId: order.id } as const;
     }
 
     const { token, checkoutFrontendUrl } = await VippsCheckoutService.create(order, isDeliveryFree);

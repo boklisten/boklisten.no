@@ -71,7 +71,7 @@ export default function MatchItemTable({
   return (
     <TableFrame>
       {[...obligations]
-        .map((obligation) => ({ obligation, ...rowStatus(obligation, adminView) }))
+        .map((obligation) => Object.assign(rowStatus(obligation, adminView), { obligation }))
         .toSorted((a, b) => Number(a.fulfilled) - Number(b.fulfilled))
         .map(({ obligation, fulfilled, label }) => {
           const note = describeObligation(obligation, adminView);

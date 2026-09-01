@@ -7,7 +7,7 @@ import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { publicApi } from "@/shared/utils/publicApiClient";
 
-const BuybackList = () => {
+function BuybackList() {
   const { data: items, error } = useQuery(publicApi.items.getBuybackItems.queryOptions());
 
   return (
@@ -43,6 +43,6 @@ const BuybackList = () => {
       </Activity>
     </>
   );
-};
+}
 
 export default BuybackList;

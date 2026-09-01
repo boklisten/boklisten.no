@@ -48,7 +48,7 @@ export default class SignaturesController {
   async gallery(ctx: HttpContext) {
     PermissionService.adminOrFail(ctx);
     const cursor = SignatureGalleryService.decodeCursor(ctx.request.input("cursor"));
-    return await SignatureGalleryService.getPage(cursor);
+    return SignatureGalleryService.getPage(cursor);
   }
   async getSignature(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);

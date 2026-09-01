@@ -16,7 +16,7 @@ import { unchecked } from "#tests/test-doubles";
 const CUSTOMER = "5d765db5fc8c47001c408d91";
 
 async function logSms(recipient: string, overrides: { sendoutId?: number | null } = {}) {
-  return await MessageLogService.logOutgoingMessage({
+  return MessageLogService.logOutgoingMessage({
     channel: "sms",
     recipient,
     context: { messageType: "reminder", ...overrides },

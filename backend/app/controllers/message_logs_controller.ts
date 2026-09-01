@@ -8,7 +8,7 @@ export default class MessageLogsController {
   /** All messages sent to the customer's current contact info, guardians included. */
   async customerLog(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
-    return await MessageLogService.customerLog(ctx.request.param("detailsId"));
+    return MessageLogService.customerLog(ctx.request.param("detailsId"));
   }
 
   /** Newest slice of the global message log, polled by the live feed. */
@@ -16,7 +16,7 @@ export default class MessageLogsController {
     PermissionService.employeeOrFail(ctx);
     const { limit, channel, sendoutId, onlyFailures, search } =
       await ctx.request.validateUsing(messageLogFeedValidator);
-    return await MessageLogService.feed({
+    return MessageLogService.feed({
       limit: limit ?? 50,
       channel,
       sendoutId,
@@ -28,11 +28,11 @@ export default class MessageLogsController {
   async metrics(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
     const { days } = await ctx.request.validateUsing(messageLogMetricsValidator);
-    return await MessageLogService.metrics(days ?? 30);
+    return MessageLogService.metrics(days ?? 30);
   }
 
   async sendouts(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
-    return await MessageLogService.sendoutStats(20);
+    return MessageLogService.sendoutStats(20);
   }
 }

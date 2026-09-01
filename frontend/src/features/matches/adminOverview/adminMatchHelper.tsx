@@ -36,7 +36,7 @@ export function orderedParties(match: MatchDto): HandoverParty[] {
   return firstDelivers ? [first, second] : [second, first];
 }
 
-export const AdminMatchTitle = ({ match }: { match: MatchDto }) => {
+export function AdminMatchTitle({ match }: { match: MatchDto }) {
   const [left, right] = orderedParties(match);
   const isExchange =
     new Set(match.obligations.map((obligation) => partyName(obligation.sender))).size > 1;
@@ -52,7 +52,7 @@ export const AdminMatchTitle = ({ match }: { match: MatchDto }) => {
       </Text>
     </Group>
   );
-};
+}
 
 export function displayName(party: HandoverParty): string {
   return party.kind === "stand" ? "Stand" : party.name;

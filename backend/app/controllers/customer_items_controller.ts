@@ -118,6 +118,7 @@ async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch 
   return {
     canBuyout: true,
     feedback: "",
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- amountLeftToPay can be 0, which deliberately falls through to the computed buyout price
     price: customerItem.amountLeftToPay || Math.floor((item.price * buyoutPercentage) / 10) * 10,
   } as const;
 }
@@ -130,7 +131,7 @@ function calculateStatus(customerItem: CustomerItem): CustomerItemStatus {
     return { type: "returned", text: "Returnert" };
   }
 
-  if (customerItem.deadline.getTime() < new Date().getTime()) {
+  if (customerItem.deadline.getTime() < Date.now()) {
     return { type: "overdue", text: "Fristen har utløpt" };
   }
 
@@ -148,7 +149,7 @@ export default class CustomerItemsController {
       return [];
     }
 
-    return await Promise.all(
+    return Promise.all(
       customerItems.map(async (customerItem) => {
         const item = await StorageService.Items.get(customerItem.item);
         const branch = await StorageService.Branches.get(customerItem.handoutInfo?.handoutById);
@@ -218,7 +219,7 @@ export default class CustomerItemsController {
       return [];
     }
 
-    return await StorageService.CustomerItems.aggregate<ActiveCustomerItem>([
+    return StorageService.CustomerItems.aggregate<ActiveCustomerItem>([
       {
         $match: {
           returned: { $ne: true },

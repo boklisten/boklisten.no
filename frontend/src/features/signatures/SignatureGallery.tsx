@@ -34,9 +34,11 @@ import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 const GRID_COLS = { base: 1, xs: 2, md: 3, lg: 4, xl: 5 };
 
+// oxlint-disable-next-line react/function-component-definition
 const CardAnchor = forwardRef<HTMLAnchorElement, Omit<CardProps, "component">>((props, ref) => (
   <Card ref={ref} component="a" {...props} />
 ));
+CardAnchor.displayName = "CardAnchor";
 const CardLink = createLink(CardAnchor);
 
 interface GallerySignature {
@@ -116,7 +118,7 @@ function SignatureCard({ signature }: { signature: GallerySignature }) {
             Signert av {signature.signingName}
           </Text>
         )}
-        {(signature.branchName || signature.permission !== "customer") && (
+        {(Boolean(signature.branchName) || signature.permission !== "customer") && (
           <Group gap={4}>
             {signature.branchName && (
               <Badge size="sm" variant="light">

@@ -27,7 +27,7 @@ export async function reconcileSignatureTask(userDetail: UserDetail): Promise<Us
     if (!taskIsSet) {
       return userDetail;
     }
-    return await StorageService.UserDetails.update(userDetail.id, {
+    return StorageService.UserDetails.update(userDetail.id, {
       "tasks.signAgreement": false,
     });
   }
@@ -40,7 +40,7 @@ export async function reconcileSignatureTask(userDetail: UserDetail): Promise<Us
     (await hasOpenSignatureRequiringOrder(userDetail.id)) ||
     (await possessesSignatureRequiringItem(userDetail.id))
   ) {
-    return await StorageService.UserDetails.update(userDetail.id, {
+    return StorageService.UserDetails.update(userDetail.id, {
       "tasks.signAgreement": true,
     });
   }

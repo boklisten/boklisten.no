@@ -41,7 +41,7 @@ export default function AuthGuard({
   });
 
   const hasPendingTasks =
-    (userDetail?.tasks?.confirmDetails || userDetail?.tasks?.signAgreement) ?? false;
+    (userDetail?.tasks?.confirmDetails ?? false) || (userDetail?.tasks?.signAgreement ?? false);
   const isOnAllowedPath = PATHS_ALLOWED_WITH_PENDING_TASKS.some((allowed) =>
     pathname.includes(allowed),
   );

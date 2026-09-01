@@ -33,7 +33,7 @@ function AdminNavItem({
 }
 
 function noop() {
-  return;
+  // intentionally empty
 }
 
 export default function AdminPageNavigation({ onNavigate = noop }: { onNavigate?: () => void }) {

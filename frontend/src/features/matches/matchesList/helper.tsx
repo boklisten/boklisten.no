@@ -7,8 +7,7 @@ import type { ViewerMatch } from "@/features/matches/forViewer";
 export function formatActionsString(handoffItems: number, pickupItems: number) {
   const hasHandoffItems = handoffItems > 0;
   const hasPickupItems = pickupItems > 0;
-  const stringBuilder: string[] = [];
-  stringBuilder.push("Du skal ");
+  const stringBuilder: string[] = ["Du skal "];
 
   if (hasHandoffItems) {
     stringBuilder.push("levere ");
@@ -38,7 +37,7 @@ export function formatActionsString(handoffItems: number, pickupItems: number) {
   return stringBuilder.join("");
 }
 
-export const FormattedDatetime = ({ date }: { date: Date }) => {
+export function FormattedDatetime({ date }: { date: Date }) {
   const dateString = date.toLocaleDateString("no", {
     timeZone: "Europe/Oslo",
     dateStyle: "long",
@@ -53,9 +52,9 @@ export const FormattedDatetime = ({ date }: { date: Date }) => {
       <Text c="dimmed">, {dateString}</Text>
     </Group>
   );
-};
+}
 
-export const MatchTitle = ({ viewerMatch }: { viewerMatch: ViewerMatch }) => {
+export function MatchTitle({ viewerMatch }: { viewerMatch: ViewerMatch }) {
   const other = viewerMatch.counterparty ? partyName(viewerMatch.counterparty) : "stand";
   const otherLabel = other === "stand" ? "Stand" : other;
   const delivers = viewerMatch.toDeliver.length > 0;
@@ -97,4 +96,4 @@ export const MatchTitle = ({ viewerMatch }: { viewerMatch: ViewerMatch }) => {
       {them}
     </Group>
   );
-};
+}

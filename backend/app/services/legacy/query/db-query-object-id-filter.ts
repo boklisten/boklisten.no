@@ -24,26 +24,24 @@ export class DbQueryObjectIdFilter {
     try {
       for (const parameter in query) {
         if (validStringParams.includes(parameter)) {
+          const valueArray: (string | Types.ObjectId)[] = [];
           if (Array.isArray(query[parameter])) {
-            const valueArray: (string | Types.ObjectId)[] = [];
             query[parameter].forEach((parameterValue: string) => {
-              valueArray.push(this.getStringParamValue(parameterValue));
-              valueArray.push(this.getObjectIdParamValue(parameterValue));
-            });
-            objectIdFilters.push({
-              fieldName: parameter,
-              value: valueArray,
+              valueArray.push(
+                this.getStringParamValue(parameterValue),
+                this.getObjectIdParamValue(parameterValue),
+              );
             });
           } else {
-            const valueArray = [
+            valueArray.push(
               this.getStringParamValue(query[parameter]),
               this.getObjectIdParamValue(query[parameter]),
-            ];
-            objectIdFilters.push({
-              fieldName: parameter,
-              value: valueArray,
-            });
+            );
           }
+          objectIdFilters.push({
+            fieldName: parameter,
+            value: valueArray,
+          });
         }
       }
 

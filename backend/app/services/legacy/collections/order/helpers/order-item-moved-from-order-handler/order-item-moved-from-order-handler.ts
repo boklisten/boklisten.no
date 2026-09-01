@@ -25,7 +25,7 @@ export class OrderItemMovedFromOrderHandler {
         };
       });
 
-    return await this.addMovedToOrderOnOrderItems(orderItemsToUpdate);
+    return this.addMovedToOrderOnOrderItems(orderItemsToUpdate);
   }
 
   private async addMovedToOrderOnOrderItems(

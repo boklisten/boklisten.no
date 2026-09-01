@@ -14,6 +14,6 @@ export class Hook {
   }
 
   after(docs: BlDocument[], _accessToken?: JwtPayload): Promise<BlDocument[]> {
-    return Promise.resolve(docs ? docs : []);
+    return Promise.resolve(docs || []);
   }
 }

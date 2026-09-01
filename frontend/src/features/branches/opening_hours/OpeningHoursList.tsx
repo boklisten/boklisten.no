@@ -10,11 +10,11 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 import { publicApi } from "@/shared/utils/publicApiClient";
 import type { Route } from "@tuyau/core/types";
 
-const OpeningHourRow = ({
+function OpeningHourRow({
   openingHour,
 }: {
   openingHour: Route.Response<"opening_hours.get">[number];
-}) => {
+}) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   const deleteOpeningHourMutation = useMutation(
@@ -53,7 +53,7 @@ const OpeningHourRow = ({
       </Table.Td>
     </Table.Tr>
   );
-};
+}
 
 export default function OpeningHoursList({ branchId }: { branchId: string }) {
   const {
@@ -74,7 +74,7 @@ export default function OpeningHoursList({ branchId }: { branchId: string }) {
     );
   }
 
-  if (isErrorOpeningHours || openingHours == undefined) {
+  if (isErrorOpeningHours || openingHours === undefined) {
     return (
       <ErrorAlert title="Klarte ikke laste inn åpningstider">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
     );
@@ -82,11 +82,9 @@ export default function OpeningHoursList({ branchId }: { branchId: string }) {
 
   if (openingHours.length === 0) {
     return (
-      <>
-        <InfoAlert title="Ingen fremtidige åpningstider">
-          Denne filialen har ingen fremtidige åpningstider.
-        </InfoAlert>
-      </>
+      <InfoAlert title="Ingen fremtidige åpningstider">
+        Denne filialen har ingen fremtidige åpningstider.
+      </InfoAlert>
     );
   }
 

@@ -5,11 +5,12 @@ export class OrderHookBefore {
   validate(requestJsonBody: any): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (Object.prototype.toString.call(requestJsonBody) === "[object Array]") {
-        return reject(
+        reject(
           new BlError("request is an array but should be a object")
             .store("requestBody", requestJsonBody)
             .code(701),
         );
+        return;
       }
 
       try {

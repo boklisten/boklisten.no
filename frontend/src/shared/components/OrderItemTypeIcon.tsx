@@ -31,6 +31,8 @@ export default function OrderItemTypeIcon({ type }: { type: OrderItemType }) {
     case "return": {
       return <IconCheckbox size={18} />;
     }
+    default: {
+      return <IconInfoCircle size={18} />;
+    }
   }
-  return <IconInfoCircle size={18} />;
 }

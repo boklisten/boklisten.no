@@ -7,7 +7,7 @@ import { blidActiveItemUpdateValidator } from "#validators/blid_search";
 export default class BlidSearchController {
   async lookup(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
-    return await BlidSearchService.lookup(ctx.request.param("blid"));
+    return BlidSearchService.lookup(ctx.request.param("blid"));
   }
 
   async updateActiveItem(ctx: HttpContext) {

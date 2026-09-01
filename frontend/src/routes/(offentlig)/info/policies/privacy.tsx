@@ -6,7 +6,10 @@ import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/info/policies/privacy")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(editableTextQueryOptions("personvernavtale"));
+    await context.queryClient.query({
+      ...editableTextQueryOptions("personvernavtale"),
+      staleTime: "static",
+    });
   },
   head: () =>
     seo({

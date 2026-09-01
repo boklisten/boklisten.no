@@ -78,8 +78,9 @@ export const SignatureGalleryService = {
       signedByGuardian: signature.signedByGuardian,
       signedAtText: formatSignedDate(signature.createdAt),
       image: signature.image.toString("base64"),
-      branchName:
-        (customer.branchMembership && context.branchNames.get(customer.branchMembership)) || null,
+      branchName: customer.branchMembership
+        ? (context.branchNames.get(customer.branchMembership) ?? null)
+        : null,
       permission: context.permissions.get(customer.id) ?? "customer",
     };
   },

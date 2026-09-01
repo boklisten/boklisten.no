@@ -483,6 +483,7 @@ function ancestorChain(
       break;
     }
     // Use localName at deeper levels; the root usually only has a full name.
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- legacy data can hold "" localName, which must fall through to name
     chain.push({ id: currentId, name: branch.localName || branch.name });
     currentId = branch.parentBranch;
   }

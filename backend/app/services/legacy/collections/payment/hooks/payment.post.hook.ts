@@ -19,7 +19,7 @@ export class PaymentPostHook extends Hook {
   }
 
   public override async after(payments: Payment[]): Promise<Payment[]> {
-    if (!payments || payments.length != 1) {
+    if (!payments || payments.length !== 1) {
       throw new BlError("payments is empty or undefined");
     }
 

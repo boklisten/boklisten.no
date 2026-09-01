@@ -136,7 +136,7 @@ export default class BulkCollectionController {
     const branchId = customerItem.handoutInfo?.handoutById;
     const [item, branch, customerDetail, recipientCustomerId] = await Promise.all([
       StorageService.Items.get(customerItem.item),
-      branchId ? StorageService.Branches.get(branchId) : Promise.resolve(undefined),
+      branchId ? StorageService.Branches.get(branchId) : Promise.resolve(),
       StorageService.UserDetails.get(customerItem.customer),
       PeerObligations.findPeerRecipient(customerItem.customer, customerItem.item),
     ]);

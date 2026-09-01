@@ -10,7 +10,7 @@ export default class PublicBlidLookupController {
 
     const blid = ctx.request.param("blid");
 
-    return await StorageService.CustomerItems.aggregate<PublicBlidLookupResult>([
+    return StorageService.CustomerItems.aggregate<PublicBlidLookupResult>([
       {
         $match: {
           returned: false,

@@ -23,7 +23,7 @@ export default class OrdersController {
   async getOpenOrders(ctx: HttpContext) {
     const { detailsId } = PermissionService.authenticate(ctx);
 
-    return await OrderService.getOpenOrderItems(detailsId);
+    return OrderService.getOpenOrderItems(detailsId);
   }
 
   async getPlacedOrders(ctx: HttpContext) {

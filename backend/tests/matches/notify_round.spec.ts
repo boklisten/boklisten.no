@@ -68,7 +68,7 @@ test.group("notify", (group) => {
       () => {
         throw new Error("expected notify to refuse a draft round");
       },
-      () => undefined,
+      () => {},
     );
 
     assert.isTrue(getManyStub.notCalled);

@@ -104,7 +104,7 @@ test.group("CustomerItemPostHook", (group) => {
 
     sandbox.stub(customerItemValidator, "validate").callsFake(() => {
       if (!validateCustomerItem) {
-        return Promise.reject("could not validate");
+        return Promise.reject(new BlError("could not validate"));
       }
       return Promise.resolve(true);
     });

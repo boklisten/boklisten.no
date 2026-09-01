@@ -17,16 +17,14 @@ export class OrderItemBuyValidator {
       await this.validateOrderItemPriceTypeBuy(orderItem, item);
     } catch (error) {
       if (error instanceof BlError) {
-        return Promise.reject(error);
+        throw error;
       }
-      return Promise.reject(
-        new BlError(
-          `unknown error, could not validate price of orderItems, error: ${
-            // @ts-expect-error fixme: auto ignored
-            error.message
-          }`,
-        ).store("error", error),
-      );
+      throw new BlError(
+        `unknown error, could not validate price of orderItems, error: ${
+          // @ts-expect-error fixme: auto ignored
+          error.message
+        }`,
+      ).store("error", error);
     }
 
     return true;
@@ -78,14 +76,14 @@ export class OrderItemBuyValidator {
 
   private async validateOrderItemPriceTypeBuy(orderItem: OrderItem, item: Item): Promise<boolean> {
     if (orderItem.movedFromOrder !== undefined && orderItem.movedFromOrder !== null) {
-      return await this.validateIfMovedFromOrder(orderItem, item.price);
+      return this.validateIfMovedFromOrder(orderItem, item.price);
     }
 
     const price = this.priceService.sanitize(item.price);
 
     const expectedPrice = this.priceService.round(price);
 
-    if (orderItem.amount != expectedPrice) {
+    if (orderItem.amount !== expectedPrice) {
       throw new BlError(
         `orderItem.amount "${orderItem.amount}" is not equal to item.price "${item.price}" = "${expectedPrice}" when type is "buy"`,
       );

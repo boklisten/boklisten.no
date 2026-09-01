@@ -12,7 +12,7 @@ import { tokenValidator } from "#validators/auth_validators";
 
 async function getUserFromVerifiedRefreshToken(verifiedRefreshToken: jwt.JwtPayload) {
   const userDetail = await UserDetailService.getByEmail(verifiedRefreshToken["username"]);
-  return await UserService.getByUserDetailsId(userDetail?.id);
+  return UserService.getByUserDetailsId(userDetail?.id);
 }
 
 export default class TokensController {
@@ -23,7 +23,7 @@ export default class TokensController {
       const verifiedRefreshToken = jwt.verify(refreshToken, env.get("REFRESH_TOKEN_SECRET"));
 
       if (typeof verifiedRefreshToken === "string") {
-        throw new Error("Invalid refresh token");
+        throw new TypeError("Invalid refresh token");
       }
 
       try {
