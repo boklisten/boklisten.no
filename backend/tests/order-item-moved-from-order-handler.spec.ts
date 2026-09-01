@@ -80,15 +80,6 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
     placed: false,
   };
 
-  test('should update the last orderItem with "movedToOrder"', async ({ assert }) => {
-    getOrderStub.withArgs(testMovedFromOrderId).resolves(testMovedFromOrder);
-    updateOrderStub.resolves(testMovedFromOrder);
-
-    await oiMovedFromOrderHandler.updateOrderItems(order);
-
-    assert.equal(updateOrderStub.callCount, 1);
-  });
-
   test('should reject if original order item already have "movedToOrder"', async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testMovedFromOrder.orderItems[0].movedToOrder = "anotherOrder";

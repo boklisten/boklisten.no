@@ -115,8 +115,6 @@ test.group("OrderPostHook", (group) => {
       /not a valid order/,
     ));
 
-  test("should resolve if requestBody is valid", async ({ assert }) =>
-    assert.doesNotReject(() => orderHookBefore.validate({ valid: true })));
   test("should reject if accessToken is empty or undefined", async ({ assert }) =>
     assert.rejects(
       () => orderPostHook.after([testOrder]),

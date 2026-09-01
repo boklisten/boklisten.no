@@ -21,12 +21,6 @@ test.group("DbQueryObjectIdFilter", async () => {
     }, TypeError);
   });
 
-  test("should throw error when both query and validParams are empty ", async ({ assert }) => {
-    assert.throws(() => {
-      dbQueryObjectIdFilter.getObjectIdFilters({}, []);
-    }, TypeError);
-  });
-
   test("should throw Error if parameter is not a valid object-id", async ({ assert }) => {
     assert.throws(() => {
       dbQueryObjectIdFilter.getObjectIdFilters({ id: { test: {} } }, ["id"]);

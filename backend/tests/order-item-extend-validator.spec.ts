@@ -158,21 +158,6 @@ test.group("OrderItemExtendValidator", (group) => {
     );
   });
 
-  test("should reject if orderItem.info.numberOfPeriods is greater than the maxNumberOfPeriods on branch", async () => {
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].info.numberOfPeriods = 3;
-
-    // @ts-expect-error fixme: auto ignored
-    testBranch.paymentInfo.extendPeriods = [
-      {
-        type: "semester",
-        price: 100,
-        date: new Date(),
-        maxNumberOfPeriods: 1,
-      },
-    ];
-  });
-
   test("should reject if orderItem.info is not defined", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].info = null;

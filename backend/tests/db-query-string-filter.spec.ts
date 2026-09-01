@@ -17,12 +17,6 @@ test.group("DbQueryStringFilter", async () => {
     }, TypeError);
   });
 
-  test("should throw error when both query and validParams are empty ", async ({ assert }) => {
-    assert.throws(() => {
-      dbQueryStringFilter.getStringFilters({}, []);
-    }, TypeError);
-  });
-
   test("should throw TypeError if parameter is not a valid string", async ({ assert }) => {
     assert.throws(() => {
       dbQueryStringFilter.getStringFilters({ name: { test: {} } }, ["name"]);

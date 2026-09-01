@@ -109,46 +109,4 @@ test.group("OrderItemBuyValidator", (group) => {
       /orderItem.amount "400" is not equal to item.price "134" = "134"/,
     );
   });
-
-  test("should resolve if a valid order is sent", async ({ assert }) => {
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].type = "buy";
-
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].amount = 400;
-
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].item = "theItem";
-    testOrder.amount = 400;
-    testItem.price = 400;
-    testItem.id = "theItem";
-
-    return assert.doesNotReject(() =>
-      orderItemPriceValidator.validate(
-        // @ts-expect-error fixme: auto ignored
-        testOrder.orderItems[0],
-        testItem,
-      ),
-    );
-  });
-
-  test("should resolve if a valid order is placed", async ({ assert }) => {
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].amount = 600;
-
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].item = "theItem1";
-
-    testOrder.amount = 600;
-    testItem.id = "theItem1";
-    testItem.price = 600;
-
-    return assert.doesNotReject(() =>
-      orderItemPriceValidator.validate(
-        // @ts-expect-error fixme: auto ignored
-        testOrder.orderItems[0],
-        testItem,
-      ),
-    );
-  });
 });

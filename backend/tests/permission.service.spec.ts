@@ -30,18 +30,6 @@ test.group("PermissionSerivice", async () => {
     assert.isFalse(PermissionService.haveRestrictedDocumentPermission(userId, "employee", doc));
   });
 
-  test("should return false if userId is not equal to document.user.id and user.permission is customer", async ({
-    assert,
-  }) => {
-    const userId = "abc";
-    const doc: BlDocument = {
-      id: "doc1",
-      user: { id: "123", permission: "admin" },
-    };
-    // oxlint-disable-next-line no-unused-expressions
-    assert.isFalse(PermissionService.haveRestrictedDocumentPermission(userId, "employee", doc));
-  });
-
   test("should return true if userId is not equal to document.user.id but UserPermission is over the document.user.permission", async ({
     assert,
   }) => {
