@@ -9,9 +9,7 @@ import type { Order } from "#shared/order/order";
 async function toPresent(order: Order) {
   const branch = await StorageService.Branches.getOrNull(order.branch);
   const payments = (
-    await Promise.all(
-      (order.payments ?? []).map((payment) => StorageService.Payments.getOrNull(payment)),
-    )
+    await Promise.all(order.payments.map((payment) => StorageService.Payments.getOrNull(payment)))
   )
     .filter((payment) => payment !== null)
     .map((payment) => ({

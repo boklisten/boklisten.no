@@ -320,7 +320,7 @@ export class OrderPlaceOperation implements Operation {
     const userDetail = await StorageService.UserDetails.get(customerId);
 
     await StorageService.UserDetails.update(customerId, {
-      customerItems: [...(userDetail.customerItems ?? []), ...customerItemIds],
+      customerItems: [...userDetail.customerItems, ...customerItemIds],
     });
 
     return true;

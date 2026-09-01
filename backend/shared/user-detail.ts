@@ -12,12 +12,10 @@ export interface UserDetail extends BlDocument {
   guardian?: {
     name: string;
     email: string;
-    emailConfirmed?: boolean;
     phone: string;
-    confirmed?: boolean;
   };
-  orders?: string[];
-  customerItems?: string[];
+  orders: string[];
+  customerItems: string[];
   blid: string;
   branchMembership?: string | undefined; // The branch the customer belongs to
   tasks?: {

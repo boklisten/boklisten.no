@@ -31,8 +31,10 @@ export const OrderCancellationService = {
       byCustomer: !employeeDetailsId,
       ...(employeeDetailsId && { employee: employeeDetailsId }),
       notification: { email: notifyCustomer },
+      handoutByDelivery: false,
       orderItems: orderItems.map((orderItem) => ({
         movedFromOrder: originalOrder.id,
+        handout: false,
         delivered: true,
         item: orderItem.item,
         title: orderItem.title,
@@ -47,7 +49,7 @@ export const OrderCancellationService = {
     // The customer may no longer exist (GDPR cleanup); the cancellation itself must still go through
     try {
       const customerDetail = await StorageService.UserDetails.get(originalOrder.customer);
-      const orders = customerDetail.orders ?? [];
+      const orders = customerDetail.orders;
       if (!orders.includes(cancelOrder.id)) {
         await StorageService.UserDetails.update(originalOrder.customer, {
           orders: [...orders, cancelOrder.id],

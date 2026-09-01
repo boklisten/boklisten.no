@@ -12,11 +12,13 @@ export const InvoiceSchema: BlSchema<Invoice> = new Schema({
   customerHavePayed: {
     type: Boolean,
     default: false,
+    required: true,
   },
   branch: { type: Schema.Types.ObjectId, ref: BlSchemaName.Branches },
   toCreditNote: {
     type: Boolean,
     default: false,
+    required: true,
   },
   type: {
     type: String,
@@ -24,10 +26,12 @@ export const InvoiceSchema: BlSchema<Invoice> = new Schema({
   toDebtCollection: {
     type: Boolean,
     default: false,
+    required: true,
   },
   toLossNote: {
     type: Boolean,
     default: false,
+    required: true,
   },
   customerItemPayments: {
     type: [

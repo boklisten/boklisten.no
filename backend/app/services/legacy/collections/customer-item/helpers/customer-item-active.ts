@@ -4,9 +4,9 @@ export class CustomerItemActive {
   public isActive(customerItem: CustomerItem): boolean {
     return !(
       customerItem.returned ||
-      (customerItem.buyout ?? false) ||
-      (customerItem.cancel ?? false) ||
-      (customerItem.buyback ?? false)
+      customerItem.buyout ||
+      customerItem.cancel ||
+      customerItem.buyback
     );
   }
 }

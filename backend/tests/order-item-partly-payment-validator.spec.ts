@@ -11,6 +11,8 @@ test.group("OrderItemPartlyPaymentValidator", async () => {
 
   test('should reject if orderItem.type is not "partly-payment"', async ({ assert }) => {
     const orderItem: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "buy",
       item: "item1",
       title: "someTitle",

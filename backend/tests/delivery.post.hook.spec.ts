@@ -67,6 +67,7 @@ test.group("DeliveryPostHook", (group) => {
     };
 
     testOrder = {
+      handoutByDelivery: false,
       id: "order1",
       customer: "customer1",
       amount: 100,
@@ -75,6 +76,8 @@ test.group("DeliveryPostHook", (group) => {
       branch: "branch1",
       orderItems: [
         {
+          handout: false,
+          delivered: false,
           item: "item1",
           title: "signatur 3",
           amount: 100,

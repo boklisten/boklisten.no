@@ -23,7 +23,7 @@ export default class SubjectsController {
       if (!selectedOption) {
         continue;
       }
-      for (const category of branchItem.categories ?? []) {
+      for (const category of branchItem.categories) {
         const cartItems = subjectsMap.get(category) ?? [];
         subjectsMap.set(category, [
           ...cartItems,

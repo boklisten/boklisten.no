@@ -73,6 +73,7 @@ test.group("OrderPlaceOperation", (group) => {
   });
 
   const validOrder: Order = {
+    handoutByDelivery: false,
     id: "validOrder1",
     amount: 100,
 
@@ -100,6 +101,8 @@ test.group("OrderPlaceOperation", (group) => {
   };
 
   const userDetailWithSignatures: UserDetail = {
+    orders: [],
+    customerItems: [],
     name: "",
     email: "",
     phone: "",

@@ -17,7 +17,7 @@ export class OrderPlacedValidator {
         return;
       }
 
-      if (isNullish(order.payments) || order.payments.length <= 0) {
+      if (order.payments.length <= 0) {
         resolve(true); // if there are no payments, there is no need do do more validation
         return;
       }
@@ -56,7 +56,7 @@ export class OrderPlacedValidator {
     return new Promise((resolve, reject) => {
       const totalOrderAmount = order.amount + (delivery ? delivery.amount : 0);
 
-      StorageService.Payments.getMany(order.payments ?? [])
+      StorageService.Payments.getMany(order.payments)
         .then((payments: Payment[]) => {
           let paymentTotal = 0;
 

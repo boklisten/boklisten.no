@@ -42,11 +42,14 @@ test.group("OrderPostHook", (group) => {
     orderValidated = true;
 
     testOrder = {
+      handoutByDelivery: false,
       id: "order1",
       customer: "customer1",
       amount: 400,
       orderItems: [
         {
+          handout: false,
+          delivered: false,
           type: "buy",
           amount: 300,
           item: "i1",
@@ -54,6 +57,8 @@ test.group("OrderPostHook", (group) => {
           unitPrice: 300,
         },
         {
+          handout: false,
+          delivered: false,
           type: "rent",
           amount: 100,
           item: "i1",

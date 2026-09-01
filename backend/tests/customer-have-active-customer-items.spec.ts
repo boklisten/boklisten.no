@@ -30,6 +30,10 @@ test.group("CustomerHaveActiveCustomerItems", (group) => {
 
   test("should resolve with false if no customerItems was active", async ({ assert }) => {
     const nonActiveCustomerItem: CustomerItem = {
+      buyout: false,
+      cancel: false,
+      buyback: false,
+      orders: [],
       id: "customerItem1",
       item: "item1",
       type: "rent",
@@ -46,6 +50,10 @@ test.group("CustomerHaveActiveCustomerItems", (group) => {
 
   test("should resolve with true if at least one customerItem was active", async ({ assert }) => {
     const nonActiveCustomerItem: CustomerItem = {
+      buyout: false,
+      cancel: false,
+      buyback: false,
+      orders: [],
       id: "customerItem1",
       item: "item1",
       type: "rent",
@@ -56,6 +64,10 @@ test.group("CustomerHaveActiveCustomerItems", (group) => {
     };
 
     const activeCustomerItem: CustomerItem = {
+      buyout: false,
+      cancel: false,
+      buyback: false,
+      orders: [],
       id: "customerItem1",
       item: "item1",
       type: "rent",

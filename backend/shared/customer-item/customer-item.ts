@@ -30,24 +30,24 @@ export interface CustomerItem extends BlDocument {
     time: Date; //the time of return
   };
 
-  buyout?: boolean; // if customerItem was bought out this is set to true
+  buyout: boolean; // if customerItem was bought out this is set to true
   buyoutInfo?: {
     order?: string; // the id of the order made when buyout
     time?: Date;
   };
 
-  cancel?: boolean;
+  cancel: boolean;
   cancelInfo?: {
     order?: string;
     time: Date;
   };
 
-  buyback?: boolean;
+  buyback: boolean;
   buybackInfo?: {
     order: string;
   };
 
-  orders?: string[]; // what orders are this customerItem a part of, must be at least one, the order placement
+  orders: string[]; // what orders are this customerItem a part of, must be at least one, the order placement
 
   //--------- When type is "partly-payment"
   // when the deadline is approaching the customer can buyout the item

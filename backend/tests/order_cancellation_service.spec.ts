@@ -64,6 +64,7 @@ test.group("OrderCancellationService", (group) => {
     assert.deepEqual(added.orderItems, [
       {
         movedFromOrder: "order1",
+        handout: false,
         delivered: true,
         item: "item1",
         title: "Bok 1",

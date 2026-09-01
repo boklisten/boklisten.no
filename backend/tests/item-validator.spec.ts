@@ -32,6 +32,8 @@ test.group("ItemValidator", (group) => {
     };
 
     testOrderItem = {
+      handout: false,
+      delivered: false,
       item: "i1",
       title: "signatur 3",
       unitPrice: 100,

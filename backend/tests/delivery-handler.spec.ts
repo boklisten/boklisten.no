@@ -18,6 +18,8 @@ let sandbox: sinon.SinonSandbox;
 test.group("DeliveryHandler", (group) => {
   group.each.setup(() => {
     testOrder = {
+      payments: [],
+      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [],

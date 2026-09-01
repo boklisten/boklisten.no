@@ -28,6 +28,10 @@ test.group("OrderItemExtendValidator", (group) => {
     });
 
     testCustomerItem = {
+      buyout: false,
+      cancel: false,
+      buyback: false,
+      orders: [],
       id: "customerItem1",
       item: "item1",
       type: "rent",
@@ -52,11 +56,15 @@ test.group("OrderItemExtendValidator", (group) => {
     };
 
     testOrder = {
+      payments: [],
+      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       customer: "",
       orderItems: [
         {
+          handout: false,
+          delivered: false,
           item: "item1",
           title: "Spinn",
           amount: 100,

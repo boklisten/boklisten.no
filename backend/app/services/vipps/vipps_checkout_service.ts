@@ -215,7 +215,7 @@ export const VippsCheckoutService = {
     });
 
     order = await StorageService.Orders.update(order.id, {
-      payments: [...(order.payments ?? []), payment.id],
+      payments: [...order.payments, payment.id],
     });
 
     await new OrderPlacedHandler().placeOrder(order, order.customer);

@@ -36,11 +36,14 @@ test.group("OrderItemValidator", (group) => {
 
   group.each.setup(() => {
     testOrder = {
+      handoutByDelivery: false,
       id: "order1",
       amount: 300,
       customer: "",
       orderItems: [
         {
+          handout: false,
+          delivered: false,
           item: "item2",
           title: "Spinn",
           amount: 300,
@@ -146,6 +149,8 @@ test.group("OrderItemValidator", (group) => {
   test("should resolve if price amount is valid", async ({ assert }) => {
     testOrder.orderItems = [
       {
+        handout: false,
+        delivered: false,
         type: "rent",
         item: "item1",
         title: "signatur 3",
@@ -165,6 +170,8 @@ test.group("OrderItemValidator", (group) => {
   test("should reject if deadline is in the past and user is not admin", async ({ assert }) => {
     testOrder.orderItems = [
       {
+        handout: false,
+        delivered: false,
         type: "rent",
         item: "item1",
         title: "signatur 3",
@@ -191,6 +198,8 @@ test.group("OrderItemValidator", (group) => {
     deadline.setDate(deadline.getDate() + 1);
     testOrder.orderItems = [
       {
+        handout: false,
+        delivered: false,
         type: "rent",
         item: "item1",
         title: "signatur 3",
@@ -212,6 +221,8 @@ test.group("OrderItemValidator", (group) => {
   test("should fulfill if deadline is in the past and user is admin", async ({ assert }) => {
     testOrder.orderItems = [
       {
+        handout: false,
+        delivered: false,
         type: "rent",
         item: "item1",
         title: "signatur 3",
@@ -234,6 +245,8 @@ test.group("OrderItemValidator", (group) => {
     deadline.setDate(deadline.getDate() + 1);
     testOrder.orderItems = [
       {
+        handout: false,
+        delivered: false,
         type: "rent",
         item: "item1",
         title: "signatur 3",

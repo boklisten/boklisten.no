@@ -8,6 +8,9 @@ test.group("CustomerItemActive", async () => {
 
   test("should resolve false if customerItem.returned is set to true", async ({ assert }) => {
     const customerItem: CustomerItem = {
+      cancel: false,
+      buyback: false,
+      orders: [],
       id: "customerItem1",
       item: "item1",
       type: "rent",
@@ -25,6 +28,9 @@ test.group("CustomerItemActive", async () => {
 
   test("should resolve false if customerItem.buyout is set to true", async ({ assert }) => {
     const customerItem: CustomerItem = {
+      cancel: false,
+      buyback: false,
+      orders: [],
       id: "customerItem1",
       item: "item1",
       type: "rent",
@@ -42,6 +48,8 @@ test.group("CustomerItemActive", async () => {
 
   test("should resolve false if customerItem.cancel is set to true", async ({ assert }) => {
     const customerItem: CustomerItem = {
+      buyback: false,
+      orders: [],
       id: "customerItem1",
       item: "item1",
       type: "rent",
@@ -60,6 +68,7 @@ test.group("CustomerItemActive", async () => {
 
   test("should resolve false if customerItem.buyback is set to true", async ({ assert }) => {
     const customerItem: CustomerItem = {
+      orders: [],
       id: "customerItem1",
       item: "item1",
       type: "rent",
@@ -79,6 +88,9 @@ test.group("CustomerItemActive", async () => {
 
   test("should resolve true if customerItem is active", async ({ assert }) => {
     const customerItem: CustomerItem = {
+      cancel: false,
+      buyback: false,
+      orders: [],
       id: "customerItem1",
       item: "item1",
       type: "rent",

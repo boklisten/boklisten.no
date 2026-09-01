@@ -48,6 +48,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     const today = new Date();
 
     const orderItem: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "partly-payment",
       item: "item1",
       title: "signatur",
@@ -65,6 +67,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
+      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [orderItem],
@@ -95,6 +98,9 @@ test.group("OrderToCustomerItemGenerator", (group) => {
           time: today,
         },
         returned: false,
+        buyout: false,
+        cancel: false,
+        buyback: false,
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem.info.amountLeftToPay,
         totalAmount: orderItem.amount,
@@ -124,6 +130,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     const today = new Date();
 
     const orderItem: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "partly-payment",
       item: "item1",
       title: "signatur",
@@ -141,6 +149,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const orderItem2: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "partly-payment",
       item: "item1",
       title: "signatur",
@@ -158,6 +168,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
+      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [orderItem, orderItem2],
@@ -188,6 +199,9 @@ test.group("OrderToCustomerItemGenerator", (group) => {
           time: today,
         },
         returned: false,
+        buyout: false,
+        cancel: false,
+        buyback: false,
         blid: orderItem.blid,
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem.info.amountLeftToPay,
@@ -222,6 +236,9 @@ test.group("OrderToCustomerItemGenerator", (group) => {
           time: today,
         },
         returned: false,
+        buyout: false,
+        cancel: false,
+        buyback: false,
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem2.info.amountLeftToPay,
         totalAmount: orderItem2.amount,
@@ -249,6 +266,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     const today = new Date();
 
     const orderItem: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "extend",
       item: "item1",
       title: "signatur",
@@ -265,6 +284,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const orderItem2: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "buy",
       item: "item1",
       title: "signatur",
@@ -281,6 +302,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
+      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [orderItem, orderItem2],
@@ -303,6 +325,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     const today = new Date();
 
     const orderItem: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "rent",
       item: "item1",
       title: "signatur",
@@ -318,6 +342,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
+      handoutByDelivery: false,
       id: "order1",
       amount: 0,
       orderItems: [orderItem],
@@ -350,6 +375,9 @@ test.group("OrderToCustomerItemGenerator", (group) => {
           time: today,
         },
         returned: false,
+        buyout: false,
+        cancel: false,
+        buyback: false,
         totalAmount: orderItem.amount,
         orders: [order.id],
         customerInfo: {
@@ -373,6 +401,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     const today = new Date();
 
     const orderItem: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "rent",
       item: "item1",
       title: "signatur",
@@ -388,6 +418,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const orderItem2: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "rent",
       item: "item1",
       title: "signatur 2",
@@ -403,6 +435,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
+      handoutByDelivery: false,
       id: "order1",
       amount: 0,
       orderItems: [orderItem, orderItem2],
@@ -435,6 +468,9 @@ test.group("OrderToCustomerItemGenerator", (group) => {
           time: today,
         },
         returned: false,
+        buyout: false,
+        cancel: false,
+        buyback: false,
         totalAmount: orderItem.amount,
         orders: [order.id],
         customerInfo: {
@@ -465,6 +501,9 @@ test.group("OrderToCustomerItemGenerator", (group) => {
           time: today,
         },
         returned: false,
+        buyout: false,
+        cancel: false,
+        buyback: false,
         totalAmount: orderItem2.amount,
         orders: [order.id],
         customerInfo: {
@@ -490,6 +529,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     const today = new Date();
 
     const orderItem2: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "rent",
       item: "item1",
       title: "signatur 2",
@@ -505,6 +546,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const orderItem3: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "partly-payment",
       item: "item1",
       title: "signatur 3",
@@ -520,6 +563,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const orderItem4: OrderItem = {
+      handout: false,
+      delivered: false,
       type: "buy",
       item: "item1",
       title: "signatur 4",
@@ -535,6 +580,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
+      handoutByDelivery: false,
       id: "order1",
       amount: 0,
       orderItems: [orderItem2, orderItem3, orderItem4],
@@ -567,6 +613,9 @@ test.group("OrderToCustomerItemGenerator", (group) => {
           time: today,
         },
         returned: false,
+        buyout: false,
+        cancel: false,
+        buyback: false,
         totalAmount: orderItem2.amount,
         orders: [order.id],
         customerInfo: {
@@ -597,6 +646,9 @@ test.group("OrderToCustomerItemGenerator", (group) => {
           time: today,
         },
         returned: false,
+        buyout: false,
+        cancel: false,
+        buyback: false,
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem3.info.amountLeftToPay,
         totalAmount: orderItem3.amount,

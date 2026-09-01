@@ -133,6 +133,7 @@ async function createMatchReceiveOrder(
     branch: branch.id,
     customer: userDetailId,
     byCustomer: true,
+    handoutByDelivery: false,
     orderItems: [
       {
         movedFromOrder,
@@ -140,6 +141,8 @@ async function createMatchReceiveOrder(
         title: item.title,
         blid: requireHandoverBlid(customerItem.blid),
         type: "match-receive",
+        handout: false,
+        delivered: false,
         amount: 0,
         unitPrice: 0,
         info: {
@@ -175,6 +178,7 @@ async function createMatchDeliverOrder(
     branch: branch.id,
     customer: userDetailId,
     byCustomer: true,
+    handoutByDelivery: false,
     orderItems: [
       {
         item: item.id,
@@ -182,6 +186,8 @@ async function createMatchDeliverOrder(
         blid: requireHandoverBlid(customerItem.blid),
         customerItem: customerItem.id,
         type: "match-deliver",
+        handout: false,
+        delivered: false,
         amount: 0,
         unitPrice: 0,
       },

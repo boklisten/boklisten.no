@@ -38,6 +38,7 @@ test.group("OrderPatchHook", (group) => {
     orderPlacedConfirmed = true;
 
     testUserDetail = {
+      customerItems: [],
       id: "userDetail1",
       name: "albert",
       email: "bill@b.com",
@@ -52,6 +53,8 @@ test.group("OrderPatchHook", (group) => {
     };
 
     testOrder = {
+      payments: [],
+      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [],

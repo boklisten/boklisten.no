@@ -98,13 +98,13 @@ export class OrderItemRentPeriodValidator {
 
     return StorageService.Orders.get(orderItem.movedFromOrder)
       .then((order: Order) => {
-        if ((!order.payments || order.payments.length <= 0) && orderItem.amount === 0) {
+        if (order.payments.length <= 0 && orderItem.amount === 0) {
           throw new BlError(
             'the original order has not been payed, but current orderItem.amount is "0"',
           );
         }
 
-        if (order.payments && order.payments.length > 0) {
+        if (order.payments.length > 0) {
           // the order is payed
           const movedFromOrderItem = this.getOrderItemFromOrder(orderItem.item, order);
 

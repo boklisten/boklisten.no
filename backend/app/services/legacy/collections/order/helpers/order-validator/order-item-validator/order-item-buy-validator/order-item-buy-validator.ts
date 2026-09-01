@@ -40,7 +40,7 @@ export class OrderItemBuyValidator {
 
     await StorageService.Orders.get(orderItem.movedFromOrder)
       .then((order: Order) => {
-        if ((!order.payments || order.payments.length <= 0) && orderItem.amount === 0) {
+        if (order.payments.length <= 0 && orderItem.amount === 0) {
           throw new BlError('the original order has not been payed, but orderItem.amount is "0"');
         }
 

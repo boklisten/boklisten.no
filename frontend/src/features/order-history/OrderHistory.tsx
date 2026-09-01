@@ -43,7 +43,7 @@ export default function OrderHistory() {
           id={order.id}
           creationTime={order.creationTime}
           orderItems={order.orderItems}
-          payments={order.payments ?? []}
+          payments={order.payments}
           branchName={order.branchName}
         />
       ))}

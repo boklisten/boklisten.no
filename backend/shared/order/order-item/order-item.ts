@@ -8,9 +8,9 @@ export interface OrderItem {
   title: string; //the title of item
   amount: number; //the amount to pay
   unitPrice: number; //item.price * rentRate (or item.price * branchItem.partlyPaymentRate if type is "partly-payment")
-  handout?: boolean; // if set, this orderItem is the "handout" of this item
+  handout: boolean; // if set, this orderItem is the "handout" of this item
   info?: OrderItemInfo; //if the type is rent or extend, this object contains info about the rental period
-  delivered?: boolean; // if the orderItem is delivered out or not
+  delivered: boolean; // if the orderItem is delivered out or not
   customerItem?: string; // if this orderItem is for a customerItem, this is the id of the customerItem
   match?: string; // if the orderItem is part of a match
   movedToOrder?: string; // if the orderItem is added again in a new order, this points to it

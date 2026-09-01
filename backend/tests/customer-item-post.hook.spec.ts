@@ -47,6 +47,9 @@ test.group("CustomerItemPostHook", (group) => {
     });
 
     testCustomerItem = {
+      buyout: false,
+      cancel: false,
+      buyback: false,
       id: "customerItem1",
       customer: "userDetail1",
       item: "item1",
@@ -64,10 +67,13 @@ test.group("CustomerItemPostHook", (group) => {
     };
 
     testOrder = {
+      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [
         {
+          handout: false,
+          delivered: false,
           type: "rent",
           item: "item1",
           title: "Signatur 1",
@@ -219,6 +225,8 @@ test.group("CustomerItemPostHook", (group) => {
   test("should update order.orderItems with the customerItem", async ({ assert }) => {
     testOrder.orderItems = [
       {
+        handout: false,
+        delivered: false,
         type: "rent",
         item: "item1",
         title: "Signatur 1",
@@ -235,6 +243,8 @@ test.group("CustomerItemPostHook", (group) => {
 
     const expectedOrderUpdateParameter = [
       {
+        handout: false,
+        delivered: false,
         type: "rent",
         item: "item1",
         title: "Signatur 1",

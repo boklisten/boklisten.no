@@ -75,19 +75,22 @@ export const UserDetailService = {
   },
   async createVippsUserDetail(vippsUser: VippsUser) {
     const blid = BlidService.createUserBlid("vipps", vippsUser.id);
+    // fixme: it is janky to just add this without all the details
+    const userDetail: Omit<UserDetail, "id" | "dob"> = {
+      email: vippsUser.email,
+      blid,
+      emailConfirmed: vippsUser.emailVerified,
+      phone: vippsUser.phoneNumber,
+      name: vippsUser.name,
+      address: vippsUser.address,
+      postCode: vippsUser.postalCode,
+      postCity: vippsUser.postalCity,
+      orders: [],
+      customerItems: [],
+    };
     return StorageService.UserDetails.add(
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- fixme: it is janky to just add this without all the details
-      {
-        email: vippsUser.email,
-        blid,
-        emailConfirmed: vippsUser.emailVerified,
-        phone: vippsUser.phoneNumber,
-        name: vippsUser.name,
-        address: vippsUser.address,
-        postCode: vippsUser.postalCode,
-        postCity: vippsUser.postalCity,
-        // fixme: it is janky to just add this without all the details
-      } as UserDetail,
+      userDetail as UserDetail,
       { id: blid, permission: "customer" },
     );
   },
@@ -119,6 +122,8 @@ export const UserDetailService = {
           email: guardian?.email ?? "",
           phone: guardian?.phone ?? "",
         },
+        orders: [],
+        customerItems: [],
         blid,
       },
       { id: blid, permission: "customer" },

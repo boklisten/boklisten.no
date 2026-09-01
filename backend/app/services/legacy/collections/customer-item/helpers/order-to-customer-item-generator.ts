@@ -71,6 +71,9 @@ export class OrderToCustomerItemGenerator {
       // @ts-expect-error fixme: auto ignored
       handoutInfo: this.createHandoutInfo(order),
       returned: false,
+      buyout: false,
+      cancel: false,
+      buyback: false,
       // @ts-expect-error fixme: auto ignored
       amountLeftToPay: orderItem.info.amountLeftToPay,
       totalAmount: orderItem.amount,
@@ -98,6 +101,9 @@ export class OrderToCustomerItemGenerator {
       // @ts-expect-error fixme: auto ignored
       handoutInfo: this.createHandoutInfo(order),
       returned: false,
+      buyout: false,
+      cancel: false,
+      buyback: false,
       totalAmount: orderItem.amount,
       orders: [order.id],
       customerInfo: this.createCustomerInfo(customerDetail),

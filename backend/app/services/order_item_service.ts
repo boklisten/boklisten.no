@@ -14,7 +14,7 @@ function isSameDeadlineDay(a: Date, b: Date): boolean {
 export const OrderItemService = {
   async createBuyoutOrderItem(customerItem: CustomerItem, item: Item) {
     const branch = await StorageService.Branches.get(customerItem.handoutInfo?.handoutById);
-    const order = await StorageService.Orders.getOrNull(customerItem.orders?.at(-1));
+    const order = await StorageService.Orders.getOrNull(customerItem.orders.at(-1));
     const orderItem = order?.orderItems.find((oi) => oi.customerItem === customerItem.id);
     const buyoutPercentage =
       branch?.paymentInfo?.partlyPaymentPeriods?.find(
@@ -32,6 +32,7 @@ export const OrderItemService = {
       type: "buyout",
       item: item.id,
       title: item.title,
+      handout: false,
       delivered: false,
       amount: price,
       unitPrice: price,
@@ -60,6 +61,7 @@ export const OrderItemService = {
       type: "extend",
       item: item.id,
       title: item.title,
+      handout: false,
       delivered: false,
       amount: extendPeriod.price,
       unitPrice: extendPeriod.price,
@@ -78,6 +80,7 @@ export const OrderItemService = {
       type: "buy",
       item: item.id,
       title: item.title,
+      handout: false,
       delivered: false,
       amount: price,
       unitPrice: price,
@@ -98,6 +101,7 @@ export const OrderItemService = {
       type: "rent",
       item: item.id,
       title: item.title,
+      handout: false,
       delivered: false,
       amount: branch.paymentInfo?.responsible ? 0 : item.price,
       unitPrice: branch.paymentInfo?.responsible ? 0 : item.price,
@@ -127,6 +131,7 @@ export const OrderItemService = {
       type: "partly-payment",
       item: item.id,
       title: item.title,
+      handout: false,
       delivered: false,
       amount: branch.paymentInfo?.responsible ? 0 : priceUpFront,
       unitPrice: branch.paymentInfo?.responsible ? 0 : priceUpFront,

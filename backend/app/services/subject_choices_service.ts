@@ -459,6 +459,7 @@ export const SubjectChoicesService = {
             title: orderItem.title,
             amount: 0,
             unitPrice: 0,
+            handout: false,
             delivered: false,
             info: {
               from: new Date(),
@@ -472,6 +473,7 @@ export const SubjectChoicesService = {
           byCustomer: true,
           placed: true,
           payments: [],
+          handoutByDelivery: false,
         });
         summary.ordersCreated++;
         summary.booksOrdered += order.orderItems.length;

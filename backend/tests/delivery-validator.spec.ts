@@ -52,6 +52,8 @@ test.group("DeliveryValidator", (group) => {
       amount: 0,
     };
     testOrder = {
+      payments: [],
+      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       branch: "branch1",

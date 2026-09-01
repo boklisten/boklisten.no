@@ -95,8 +95,6 @@ export class DeliveryHandler {
               // @ts-expect-error fixme: auto ignored
               delivery.info["shipmentAddress"],
               items,
-
-              // @ts-expect-error fixme: auto ignored
               freeDelivery,
             )
             .then((deliveryInfoBring: DeliveryInfoBring) => {

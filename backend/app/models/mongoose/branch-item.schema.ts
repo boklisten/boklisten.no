@@ -21,43 +21,53 @@ export const BranchItemSchema: BlSchema<BranchItem> = new Schema({
   rent: {
     type: Boolean,
     default: false,
+    required: true,
   },
   partlyPayment: {
     type: Boolean,
     default: false,
+    required: true,
   },
   buy: {
     type: Boolean,
     default: false,
+    required: true,
   },
   sell: {
     type: Boolean,
     default: false,
+    required: true,
   },
   live: {
     type: Boolean,
     default: false,
+    required: true,
   },
 
   rentAtBranch: {
     type: Boolean,
     default: false,
+    required: true,
   },
   partlyPaymentAtBranch: {
     type: Boolean,
     default: false,
+    required: true,
   },
   buyAtBranch: {
     type: Boolean,
     default: false,
+    required: true,
   },
   sellAtBranch: {
     type: Boolean,
     default: false,
+    required: true,
   },
   liveAtBranch: {
     type: Boolean,
     default: false,
+    required: true,
   },
 
   categories: {

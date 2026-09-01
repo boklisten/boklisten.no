@@ -84,6 +84,7 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
   cancel: {
     type: Boolean,
     default: false,
+    required: true,
   },
   cancelInfo: {
     order: { type: Schema.Types.ObjectId, ref: BlSchemaName.Orders },
@@ -92,6 +93,7 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
   buyout: {
     type: Boolean,
     default: false,
+    required: true,
   },
   buyoutInfo: {
     order: { type: Schema.Types.ObjectId, ref: BlSchemaName.Orders },
@@ -100,12 +102,16 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
   buyback: {
     type: Boolean,
     default: false,
+    required: true,
   },
   buybackInfo: {
     order: { type: Schema.Types.ObjectId, ref: BlSchemaName.Orders },
   },
 
-  orders: [{ type: Schema.Types.ObjectId, ref: BlSchemaName.Orders }],
+  orders: {
+    type: [{ type: Schema.Types.ObjectId, ref: BlSchemaName.Orders }],
+    default: [],
+  },
   periodExtends: {
     type: [
       {

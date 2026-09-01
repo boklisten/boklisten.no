@@ -101,7 +101,7 @@ async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch 
   }
 
   const item = await StorageService.Items.getOrNull(customerItem.item);
-  const order = await StorageService.Orders.getOrNull(customerItem.orders?.at(-1));
+  const order = await StorageService.Orders.getOrNull(customerItem.orders.at(-1));
   const orderItem = order?.orderItems.find((oi) => oi.customerItem === customerItem.id);
   const buyoutPercentage =
     branch?.paymentInfo?.partlyPaymentPeriods?.find(

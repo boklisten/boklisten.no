@@ -139,7 +139,7 @@ export class OrderPlacedHandler {
     return new Promise((resolve, reject) => {
       StorageService.UserDetails.get(order.customer)
         .then((userDetail: UserDetail) => {
-          const orders = userDetail.orders ?? [];
+          const orders = userDetail.orders;
 
           if (orders.includes(order.id)) {
             return resolve(true);

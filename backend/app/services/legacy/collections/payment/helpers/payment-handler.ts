@@ -5,7 +5,7 @@ import type { Payment } from "#shared/payment/payment";
 
 export class PaymentHandler {
   public async confirmPayments(order: Order): Promise<Payment[]> {
-    if (!order.payments || order.payments.length <= 0) {
+    if (order.payments.length <= 0) {
       return [];
     }
 

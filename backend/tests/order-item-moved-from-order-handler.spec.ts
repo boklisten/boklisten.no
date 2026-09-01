@@ -52,10 +52,14 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
   });
 
   const order: Order = {
+    payments: [],
+    handoutByDelivery: false,
     id: "testOrder1",
     amount: 0,
     orderItems: [
       {
+        handout: false,
+        delivered: false,
         type: "rent",
         item: "item2",
         title: "Signatur 3: Tekstsammling",

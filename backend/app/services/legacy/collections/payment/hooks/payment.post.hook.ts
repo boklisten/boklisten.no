@@ -48,7 +48,7 @@ export class PaymentPostHook extends Hook {
       throw new BlError("could not get order when adding payment id");
     }
 
-    const paymentIds = order.payments ?? [];
+    const paymentIds = order.payments;
     if (paymentIds.includes(payment.id)) {
       throw new BlError(`order.payments already includes payment "${payment.id}"`);
     }

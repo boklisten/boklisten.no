@@ -36,7 +36,7 @@ export const OrderEmailHandler = {
     await DispatchService.sendOrderReceipt(emailUser, emailOrder, this.paymentNeeded(order));
   },
   paymentNeeded(order: Order) {
-    return order.amount > 0 && (!Array.isArray(order.payments) || order.payments.length === 0);
+    return order.amount > 0 && order.payments.length === 0;
   },
   async orderToEmailOrder(order: Order) {
     const emailOrder: EmailOrder = {
@@ -88,7 +88,7 @@ export const OrderEmailHandler = {
   extractEmailOrderPaymentFromOrder(
     order: Order,
   ): Promise<{ payment: unknown; showPayment: boolean }> {
-    if (!Array.isArray(order.payments) || order.payments.length === 0) {
+    if (order.payments.length === 0) {
       return Promise.resolve({ payment: null, showPayment: false });
     }
 

@@ -58,15 +58,9 @@ export const UserDetailSchema: BlSchema<UserDetail> = new Schema({
       trim: true,
       lowercase: true,
     },
-    emailConfirmed: {
-      type: Boolean,
-    },
     phone: {
       type: String,
       trim: true,
-    },
-    confirmed: {
-      type: Boolean,
     },
   },
   customerItems: [{ type: Schema.Types.ObjectId, ref: BlSchemaName.CustomerItems }],

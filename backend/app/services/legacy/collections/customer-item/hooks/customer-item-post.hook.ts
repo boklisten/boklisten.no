@@ -86,26 +86,11 @@ export class CustomerItemPostHook extends Hook {
         });
       })
       .then(() => StorageService.UserDetails.get(customerItem.customer))
-      .then((userDetail: UserDetail) => {
-        // @ts-expect-error fixme: auto ignored
-        let newCustomerItems = [];
-
-        if (
-          !userDetail.customerItems ||
-          (userDetail.customerItems && userDetail.customerItems.length === 0)
-        ) {
-          newCustomerItems.push(customerItem.id);
-        } else if (userDetail.customerItems && userDetail.customerItems.length > 0) {
-          newCustomerItems = userDetail.customerItems;
-          newCustomerItems.push(customerItem.id);
-        }
-
-        return StorageService.UserDetails.update(
-          userDetail.id,
-          // @ts-expect-error fixme: auto ignored
-          { customerItems: newCustomerItems },
-        );
-      })
+      .then((userDetail: UserDetail) =>
+        StorageService.UserDetails.update(userDetail.id, {
+          customerItems: [...userDetail.customerItems, customerItem.id],
+        }),
+      )
       .then(() => [customerItem])
       .catch((blError: BlError) => {
         throw blError.store("userDetail", accessToken.sub).store("customerItemId", customerItem.id);

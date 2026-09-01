@@ -27,6 +27,8 @@ test.group("UserDetailValidOperation", (group) => {
     });
 
     testUserDetail = {
+      orders: [],
+      customerItems: [],
       id: "userDetail1",
       name: "Freddy Mercury",
       email: "freddy@blapi.co",

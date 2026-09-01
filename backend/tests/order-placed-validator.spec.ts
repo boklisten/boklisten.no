@@ -19,10 +19,13 @@ test.group("OrderPlacedValidator", (group) => {
 
   group.each.setup(() => {
     testOrder = {
+      handoutByDelivery: false,
       id: "order1",
       amount: 450,
       orderItems: [
         {
+          handout: false,
+          delivered: false,
           type: "buy",
           amount: 300,
           item: "i1",
@@ -30,6 +33,8 @@ test.group("OrderPlacedValidator", (group) => {
           unitPrice: 300,
         },
         {
+          handout: false,
+          delivered: false,
           type: "rent",
           amount: 150,
           item: "i2",

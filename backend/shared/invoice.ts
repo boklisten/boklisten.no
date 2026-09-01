@@ -5,10 +5,10 @@ import type { CustomerItemType } from "#shared/customer-item/customer-item-type"
 export interface Invoice extends BlDocument {
   duedate: Date;
   type?: CustomerItemType;
-  customerHavePayed?: boolean;
-  toDebtCollection?: boolean;
-  toCreditNote?: boolean;
-  toLossNote?: boolean;
+  customerHavePayed: boolean;
+  toDebtCollection: boolean;
+  toCreditNote: boolean;
+  toLossNote: boolean;
   branch?: string;
   customerItemPayments: {
     customerItem?: string;

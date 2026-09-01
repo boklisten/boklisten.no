@@ -15,11 +15,14 @@ test.group("OrderItemBuyValidator", (group) => {
 
   group.each.setup(() => {
     testOrder = {
+      handoutByDelivery: false,
       id: "order1",
       amount: 600,
       customer: "",
       orderItems: [
         {
+          handout: false,
+          delivered: false,
           item: "item1",
           title: "Spinn",
           amount: 600,

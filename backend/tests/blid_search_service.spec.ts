@@ -40,7 +40,12 @@ function baseSources(overrides: Partial<BlidSearchSources> = {}): BlidSearchSour
   };
 }
 
-function makeOrder(overrides: Partial<Order> & { orderItems: OrderItem[] }): Order {
+type TestOrderItem = Omit<OrderItem, "handout" | "delivered"> &
+  Partial<Pick<OrderItem, "handout" | "delivered">>;
+
+function makeOrder(
+  overrides: Omit<Partial<Order>, "orderItems"> & { orderItems: TestOrderItem[] },
+): Order {
   return {
     id: "order-1",
     amount: 0,
@@ -49,8 +54,15 @@ function makeOrder(overrides: Partial<Order> & { orderItems: OrderItem[] }): Ord
     byCustomer: false,
     employee: EMPLOYEE,
     placed: true,
+    payments: [],
+    handoutByDelivery: false,
     creationTime: T1,
     ...overrides,
+    orderItems: overrides.orderItems.map((orderItem) => ({
+      handout: false,
+      delivered: false,
+      ...orderItem,
+    })),
   };
 }
 
@@ -70,6 +82,10 @@ function makeCustomerItem(overrides: Partial<CustomerItem> = {}): CustomerItem {
       time: T1,
     },
     returned: false,
+    buyout: false,
+    cancel: false,
+    buyback: false,
+    orders: [],
     ...overrides,
   };
 }

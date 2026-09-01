@@ -100,10 +100,13 @@ test.group("OrderPlacedHandler", (group) => {
     userDeatilUpdate = true;
 
     testOrder = {
+      handoutByDelivery: false,
       id: "branch1",
       amount: 100,
       orderItems: [
         {
+          handout: false,
+          delivered: false,
           type: "rent",
           item: "item2",
           title: "Signatur 3: Tekstsammling",
@@ -151,6 +154,8 @@ test.group("OrderPlacedHandler", (group) => {
     };
 
     testUserDetail = {
+      orders: [],
+      customerItems: [],
       id: "customer1",
       name: "",
       email: "",

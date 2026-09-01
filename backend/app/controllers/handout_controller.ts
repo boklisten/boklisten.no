@@ -207,10 +207,12 @@ export default class HandoutController {
       customer: customerId,
       byCustomer: false,
       employee: employeeId,
+      handoutByDelivery: false,
       orderItems: [
         {
           movedFromOrder,
           handout: true,
+          delivered: false,
           // The scanned copy's own item: an order for one edition may be fulfilled with an
           // equivalent edition, and the record must say which book the customer actually got.
           item: itemId,
@@ -270,9 +272,11 @@ export default class HandoutController {
       customer: customerId,
       byCustomer: false,
       employee: employeeId,
+      handoutByDelivery: false,
       orderItems: [
         {
           handout: true,
+          delivered: false,
           item: itemId,
           title: item.title,
           blid,

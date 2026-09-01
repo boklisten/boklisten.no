@@ -26,6 +26,8 @@ function makeUserDetail(overrides: Partial<UserDetail> = {}): UserDetail {
     dob: new Date(1990, 0, 1),
     emailConfirmed: false,
     blid: "u#test",
+    orders: [],
+    customerItems: [],
     ...overrides,
   };
 }
@@ -48,6 +50,7 @@ function makeRentOrder(overrides: Partial<Order> = {}): Order {
     byCustomer: true,
     branch: "branch1",
     payments: [],
+    handoutByDelivery: false,
     orderItems: [
       {
         type: "rent",
@@ -55,12 +58,12 @@ function makeRentOrder(overrides: Partial<Order> = {}): Order {
         title: "Some Book",
         amount: 100,
         unitPrice: 100,
-        taxRate: 0,
-        taxAmount: 0,
+        handout: false,
+        delivered: false,
       },
     ],
     ...overrides,
-  } as Order;
+  };
 }
 
 function makeCustomerItem(overrides: Partial<CustomerItem> = {}): CustomerItem {
@@ -72,6 +75,10 @@ function makeCustomerItem(overrides: Partial<CustomerItem> = {}): CustomerItem {
     deadline: new Date(),
     handout: true,
     returned: false,
+    buyout: false,
+    cancel: false,
+    buyback: false,
+    orders: [],
     ...overrides,
   };
 }
@@ -163,8 +170,16 @@ test.group("reconcileSignatureTask", (group) => {
     orders = [
       makeRentOrder({
         orderItems: [
-          { type: "partly-payment", item: "item1", title: "A", amount: 100, unitPrice: 100 },
-        ] as Order["orderItems"],
+          {
+            type: "partly-payment",
+            item: "item1",
+            title: "A",
+            amount: 100,
+            unitPrice: 100,
+            handout: false,
+            delivered: false,
+          },
+        ],
       }),
     ];
     const userDetail = makeUserDetail();
@@ -179,8 +194,16 @@ test.group("reconcileSignatureTask", (group) => {
     orders = [
       makeRentOrder({
         orderItems: [
-          { type: "buy", item: "item2", title: "B", amount: 100, unitPrice: 100 },
-        ] as Order["orderItems"],
+          {
+            type: "buy",
+            item: "item2",
+            title: "B",
+            amount: 100,
+            unitPrice: 100,
+            handout: false,
+            delivered: false,
+          },
+        ],
       }),
     ];
     const userDetail = makeUserDetail();
@@ -194,8 +217,16 @@ test.group("reconcileSignatureTask", (group) => {
     orders = [
       makeRentOrder({
         orderItems: [
-          { type: "rent", item: "item1", title: "A", amount: 0, unitPrice: 0, handout: true },
-        ] as Order["orderItems"],
+          {
+            type: "rent",
+            item: "item1",
+            title: "A",
+            amount: 0,
+            unitPrice: 0,
+            handout: true,
+            delivered: false,
+          },
+        ],
       }),
     ];
     const userDetail = makeUserDetail();

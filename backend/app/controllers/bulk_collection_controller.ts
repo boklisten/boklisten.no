@@ -103,6 +103,8 @@ export default class BulkCollectionController {
         amount: 0,
         unitPrice: 0,
         customerItem: customerItem.id,
+        handout: false,
+        delivered: false,
       }));
 
       const order = await StorageService.Orders.add({
@@ -113,6 +115,7 @@ export default class BulkCollectionController {
         byCustomer: false,
         placed: false,
         payments: [],
+        handoutByDelivery: false,
       });
 
       await placeOperation.run({ documentId: order.id, user });
