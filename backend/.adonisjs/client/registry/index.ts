@@ -498,6 +498,12 @@ const routes = {
     tokens: [{"old":"/v2/admin/users/duplicates","type":0,"val":"v2","end":""},{"old":"/v2/admin/users/duplicates","type":0,"val":"admin","end":""},{"old":"/v2/admin/users/duplicates","type":0,"val":"users","end":""},{"old":"/v2/admin/users/duplicates","type":0,"val":"duplicates","end":""}],
     types: placeholder as Registry['user_management.duplicates']['types'],
   },
+  'user_management.merge_preview': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/admin/users/merge-preview/:fromDetailsId/:toDetailsId',
+    tokens: [{"old":"/v2/admin/users/merge-preview/:fromDetailsId/:toDetailsId","type":0,"val":"v2","end":""},{"old":"/v2/admin/users/merge-preview/:fromDetailsId/:toDetailsId","type":0,"val":"admin","end":""},{"old":"/v2/admin/users/merge-preview/:fromDetailsId/:toDetailsId","type":0,"val":"users","end":""},{"old":"/v2/admin/users/merge-preview/:fromDetailsId/:toDetailsId","type":0,"val":"merge-preview","end":""},{"old":"/v2/admin/users/merge-preview/:fromDetailsId/:toDetailsId","type":1,"val":"fromDetailsId","end":""},{"old":"/v2/admin/users/merge-preview/:fromDetailsId/:toDetailsId","type":1,"val":"toDetailsId","end":""}],
+    types: placeholder as Registry['user_management.merge_preview']['types'],
+  },
   'user_management.merge': {
     methods: ["POST"],
     pattern: '/v2/admin/users/merge',

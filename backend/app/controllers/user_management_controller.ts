@@ -1,5 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import BadRequestException from "#exceptions/bad_request_exception";
 import { PermissionService } from "#services/permission_service";
 import { UserDuplicatesService } from "#services/user_duplicates_service";
 import { UserManagementService } from "#services/user_management_service";
@@ -15,6 +16,22 @@ export default class UserManagementController {
   async duplicates(ctx: HttpContext) {
     PermissionService.adminOrFail(ctx);
     return UserDuplicatesService.findDuplicateCustomers();
+  }
+
+  async mergePreview(ctx: HttpContext) {
+    PermissionService.adminOrFail(ctx);
+    const fromDetailsId = ctx.request.param("fromDetailsId");
+    const toDetailsId = ctx.request.param("toDetailsId");
+    const summaries = await UserDuplicatesService.summarizeUserDetails([
+      fromDetailsId,
+      toDetailsId,
+    ]);
+    const from = summaries.find((summary) => summary.detailsId === fromDetailsId);
+    const to = summaries.find((summary) => summary.detailsId === toDetailsId);
+    if (!from || !to) {
+      throw new BadRequestException("Fant ikke begge kundene");
+    }
+    return { from, to };
   }
 
   async merge(ctx: HttpContext) {

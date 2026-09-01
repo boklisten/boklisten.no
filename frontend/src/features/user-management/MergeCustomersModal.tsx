@@ -1,5 +1,5 @@
-import { Alert, Badge, Button, Group, Modal, Paper, Stack, Text, ThemeIcon } from "@mantine/core";
-import { IconArrowDown, IconArrowsExchange, IconTrash, IconUserCheck } from "@tabler/icons-react";
+import { Alert, Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { IconArrowDown, IconArrowsExchange } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -7,66 +7,14 @@ import type {
   DuplicatePair,
   DuplicateUserSummary,
 } from "@/features/user-management/duplicateTypes";
+import MergeRoleCard from "@/features/user-management/MergeRoleCard";
 import useBranchNames from "@/features/user-management/useBranchNames";
 import useApiClient from "@/shared/hooks/useApiClient";
-import { norwegianTime } from "@/shared/utils/dayjs";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 function totalActivity(user: DuplicateUserSummary) {
   return user.activeBooks + user.orderedItems + user.activeMatches;
-}
-
-function MergeRoleCard({
-  user,
-  mergeRole,
-  branchName,
-}: {
-  user: DuplicateUserSummary;
-  mergeRole: "delete" | "keep";
-  branchName?: string;
-}) {
-  const isKeep = mergeRole === "keep";
-  return (
-    <Paper
-      withBorder
-      radius="md"
-      p="sm"
-      style={{
-        borderColor: `var(--mantine-color-${isKeep ? "green" : "red"}-6)`,
-      }}
-    >
-      <Group wrap="nowrap" align="flex-start">
-        <ThemeIcon variant="light" color={isKeep ? "green" : "red"} radius="md">
-          {isKeep ? <IconUserCheck size={18} /> : <IconTrash size={18} />}
-        </ThemeIcon>
-        <Stack gap={2} miw={0}>
-          <Text size="xs" fw={700} c={isKeep ? "green" : "red"} tt="uppercase">
-            {isKeep ? "Beholdes" : "Slettes"}
-          </Text>
-          <Group gap="xs">
-            <Text fw={600}>{user.name || "Uten navn"}</Text>
-            {branchName && (
-              <Badge variant="light" size="sm">
-                {branchName}
-              </Badge>
-            )}
-          </Group>
-          <Text size="sm" c="dimmed" style={{ overflowWrap: "anywhere" }}>
-            {user.email}
-            {user.phone ? ` · ${user.phone}` : ""}
-          </Text>
-          <Text size="sm" c="dimmed">
-            {user.activeBooks} aktive bøker · {user.orderedItems} bestilte bøker ·{" "}
-            {user.activeMatches} aktive overleveringer
-          </Text>
-          <Text size="sm" c="dimmed">
-            Sist aktiv: {user.lastActive ? norwegianTime(user.lastActive).fromNow() : "aldri"}
-          </Text>
-        </Stack>
-      </Group>
-    </Paper>
-  );
 }
 
 export default function MergeCustomersModal({

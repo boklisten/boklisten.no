@@ -92,7 +92,11 @@ function CustomerSearchPage() {
               <Text fz="sm" fw={500} c="dimmed">
                 Valgt kunde
               </Text>
-              <SelectedCustomerCard customer={customer} onDeselect={deselect} />
+              <SelectedCustomerCard
+                customer={customer}
+                onDeselect={deselect}
+                onMerged={(toDetailsId) => void navigate({ search: { kunde: toDetailsId } })}
+              />
             </Stack>
             <EmailConfirmationWarning customer={customer} />
             <SignatureStatusBanner userDetail={customer} />

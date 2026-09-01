@@ -278,6 +278,45 @@ async function countActiveMatches(detailsIds: string[]) {
   return counts;
 }
 
+async function buildSummarizer(involvedIds: string[]) {
+  const [accounts, activeBooks, orderedItems, activeMatches] = await Promise.all([
+    findUserAccounts(involvedIds),
+    countActiveBooks(involvedIds),
+    countOrderedItems(involvedIds),
+    countActiveMatches(involvedIds),
+  ]);
+
+  return (source: DuplicateCandidateSource): DuplicateUserSummary => {
+    const account = accounts.get(source.id);
+    return {
+      detailsId: source.id,
+      name: source.name ?? "",
+      email: source.email ?? "",
+      phone: source.phone ?? "",
+      permission: account?.permission ?? "customer",
+      branchMembership: source.branchMembership ?? null,
+      lastActive: account?.lastActive ? new Date(account.lastActive).toISOString() : null,
+      activeBooks: activeBooks.get(source.id) ?? 0,
+      orderedItems: orderedItems.get(source.id) ?? 0,
+      activeMatches: activeMatches.get(source.id) ?? 0,
+    };
+  };
+}
+
+/** Activity summaries for specific users, e.g. to preview a merge. Unknown ids are omitted. */
+async function summarizeUserDetails(detailsIds: string[]): Promise<DuplicateUserSummary[]> {
+  const validIds = detailsIds.filter((id) => ObjectId.isValid(id));
+  if (validIds.length === 0) {
+    return [];
+  }
+  const sources = await StorageService.UserDetails.aggregate<DuplicateCandidateSource>([
+    { $match: { _id: { $in: validIds.map((id) => new ObjectId(id)) } } },
+    { $project: { name: 1, email: 1, phone: 1, branchMembership: 1 } },
+  ]);
+  const summarize = await buildSummarizer(sources.map((source) => source.id));
+  return sources.map((source) => summarize(source));
+}
+
 async function findDuplicateCustomers(): Promise<DuplicateCustomersResult> {
   const sources = await StorageService.UserDetails.aggregate<DuplicateCandidateSource>([
     {
@@ -298,28 +337,7 @@ async function findDuplicateCustomers(): Promise<DuplicateCustomersResult> {
   const allPairs = findDuplicateCandidatePairs(sources);
   const pairs = allPairs.slice(0, MAX_PAIRS);
   const involvedIds = [...new Set(pairs.flatMap((pair) => [pair.a.id, pair.b.id]))];
-  const [accounts, activeBooks, orderedItems, activeMatches] = await Promise.all([
-    findUserAccounts(involvedIds),
-    countActiveBooks(involvedIds),
-    countOrderedItems(involvedIds),
-    countActiveMatches(involvedIds),
-  ]);
-
-  const summarize = (source: DuplicateCandidateSource): DuplicateUserSummary => {
-    const account = accounts.get(source.id);
-    return {
-      detailsId: source.id,
-      name: source.name ?? "",
-      email: source.email ?? "",
-      phone: source.phone ?? "",
-      permission: account?.permission ?? "customer",
-      branchMembership: source.branchMembership ?? null,
-      lastActive: account?.lastActive ? new Date(account.lastActive).toISOString() : null,
-      activeBooks: activeBooks.get(source.id) ?? 0,
-      orderedItems: orderedItems.get(source.id) ?? 0,
-      activeMatches: activeMatches.get(source.id) ?? 0,
-    };
-  };
+  const summarize = await buildSummarizer(involvedIds);
 
   return {
     totalPairCount: allPairs.length,
@@ -333,4 +351,5 @@ async function findDuplicateCustomers(): Promise<DuplicateCustomersResult> {
 
 export const UserDuplicatesService = {
   findDuplicateCustomers,
+  summarizeUserDetails,
 };

@@ -991,6 +991,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['duplicates']>>>
     }
   }
+  'user_management.merge_preview': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/users/merge-preview/:fromDetailsId/:toDetailsId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { fromDetailsId: ParamValue; toDetailsId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['mergePreview']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_management_controller').default['mergePreview']>>>
+    }
+  }
   'user_management.merge': {
     methods: ["POST"]
     pattern: '/v2/admin/users/merge'

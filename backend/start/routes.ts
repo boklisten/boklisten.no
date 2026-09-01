@@ -259,6 +259,10 @@ router.post("/v2/employee/user_details/:detailsId/confirm_email", [
  */
 router.get("/v2/admin/users/metrics", [controllers.UserManagement, "metrics"]);
 router.get("/v2/admin/users/duplicates", [controllers.UserManagement, "duplicates"]);
+router.get("/v2/admin/users/merge-preview/:fromDetailsId/:toDetailsId", [
+  controllers.UserManagement,
+  "mergePreview",
+]);
 router.post("/v2/admin/users/merge", [controllers.UserManagement, "merge"]);
 router.get("/v2/admin/users/employees", [controllers.UserManagement, "employees"]);
 router.post("/v2/admin/users/permission", [controllers.UserManagement, "setPermission"]);

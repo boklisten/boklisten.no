@@ -28,10 +28,12 @@ export default function AdministrateUserForm({
   userDetail,
   onSaved,
   onDeleted,
+  onMerged,
 }: {
   userDetail: UserDetail & { permission: UserPermission };
   onSaved?: (() => void) | undefined;
   onDeleted?: (() => void) | undefined;
+  onMerged?: ((toDetailsId: string) => void) | undefined;
 }) {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -167,7 +169,7 @@ export default function AdministrateUserForm({
       {isAdmin && (
         <>
           <Space />
-          <UserDangerZone userDetail={userDetail} onDeleted={onDeleted} />
+          <UserDangerZone userDetail={userDetail} onDeleted={onDeleted} onMerged={onMerged} />
         </>
       )}
     </Stack>

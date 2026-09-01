@@ -25,9 +25,11 @@ const ADMINISTRATE_USER_MODAL_ID = "administrate-user";
 export default function SelectedCustomerCard({
   customer,
   onDeselect,
+  onMerged,
 }: {
   customer: UserDetail & { permission: UserPermission };
   onDeselect: () => void;
+  onMerged: (toDetailsId: string) => void;
 }) {
   const { api } = useApiClient();
   const { data: branch } = useQuery(
@@ -75,6 +77,10 @@ export default function SelectedCustomerCard({
                         onDeleted={() => {
                           modals.close(ADMINISTRATE_USER_MODAL_ID);
                           onDeselect();
+                        }}
+                        onMerged={(toDetailsId) => {
+                          modals.close(ADMINISTRATE_USER_MODAL_ID);
+                          onMerged(toDetailsId);
                         }}
                       />
                     ),

@@ -131,6 +131,7 @@ export interface ApiDefinition {
   userManagement: {
     metrics: typeof routes['user_management.metrics']
     duplicates: typeof routes['user_management.duplicates']
+    mergePreview: typeof routes['user_management.merge_preview']
     merge: typeof routes['user_management.merge']
     employees: typeof routes['user_management.employees']
     setPermission: typeof routes['user_management.set_permission']
