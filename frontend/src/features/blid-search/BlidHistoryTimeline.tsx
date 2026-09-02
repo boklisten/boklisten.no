@@ -109,7 +109,8 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
       if (to) {
         return (
           <>
-            <Party party={to} /> {byCustomer ? "skannet boka" : "fikk boka gjennom en overlevering"}
+            <Party party={to} />{" "}
+            {byCustomer ? "skannet og overtok boka" : "fikk boka gjennom en overlevering"}
           </>
         );
       }
@@ -153,7 +154,7 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
         return "Boka ble solgt tilbake til Boklisten";
       }
       if (employee) {
-        return <>{employee} kjøpte tilbake boka</>;
+        return <>Boka ble solgt tilbake til Boklisten hos {employee}</>;
       }
       return (
         <>
