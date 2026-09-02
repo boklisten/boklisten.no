@@ -1,5 +1,5 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import { Box, Button, CopyButton, Group, Skeleton, Stack } from "@mantine/core";
+import { Box, Button, CopyButton, Group, Skeleton, Stack, Text } from "@mantine/core";
 import { IconCopy, IconSend } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
@@ -51,33 +51,60 @@ export default function AdministrateUserSignatures({ userDetail }: { userDetail:
     );
   }
 
+  const signingLinkActions = (
+    <Group>
+      <CopyButton value={`${window.location.origin}/signering/${userDetail.id}`}>
+        {({ copy }) => (
+          <Button
+            leftSection={<IconCopy />}
+            onClick={() => {
+              copy();
+              showSuccessNotification("Signeringslenke ble kopiert!");
+            }}
+          >
+            Kopier signeringslenke
+          </Button>
+        )}
+      </CopyButton>
+      <Button
+        leftSection={<IconSend />}
+        loading={requestSignatureMutation.isPending}
+        onClick={() => requestSignatureMutation.mutate({ params: { detailsId: userDetail.id } })}
+      >
+        Send signeringslenke
+      </Button>
+    </Group>
+  );
+
+  const outgrown = data.outgrownGuardianSignature;
+  if (outgrown) {
+    return (
+      <Stack align="center">
+        <Box style={{ border: "1px solid #ccc", borderRadius: 2, p: 1 }}>
+          <Image
+            src={`data:image/webp;base64,${outgrown.image}`}
+            alt="Foresatt sin signatur"
+            width={300}
+            height={100}
+          />
+        </Box>
+        <WarningAlert title="Foresatt sin signatur gjelder ikke lenger">
+          <Stack gap="xs">
+            <Text>
+              {outgrown.signingName} (foresatt) signerte kontrakten på vegne av {userDetail.name}{" "}
+              {outgrown.signedAtText}. {userDetail.name} har fylt 18 år og må signere selv.
+            </Text>
+            {signingLinkActions}
+          </Stack>
+        </WarningAlert>
+      </Stack>
+    );
+  }
+
   return (
     <Stack align="center">
       <WarningAlert title="Denne kunden har ikke gyldig signatur">
-        <Group>
-          <CopyButton value={`${window.location.origin}/signering/${userDetail.id}`}>
-            {({ copy }) => (
-              <Button
-                leftSection={<IconCopy />}
-                onClick={() => {
-                  copy();
-                  showSuccessNotification("Signeringslenke ble kopiert!");
-                }}
-              >
-                Kopier signeringslenke
-              </Button>
-            )}
-          </CopyButton>
-          <Button
-            leftSection={<IconSend />}
-            loading={requestSignatureMutation.isPending}
-            onClick={() =>
-              requestSignatureMutation.mutate({ params: { detailsId: userDetail.id } })
-            }
-          >
-            Send signeringslenke
-          </Button>
-        </Group>
+        {signingLinkActions}
       </WarningAlert>
     </Stack>
   );

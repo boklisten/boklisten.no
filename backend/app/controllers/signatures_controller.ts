@@ -25,22 +25,30 @@ async function getSignatureStatus(detailsId: string) {
   }
 
   userDetail = await reconcileSignatureTask(userDetail);
-  const validSignature = await Signature.validForCustomer(userDetail);
-  if (validSignature) {
+  const newestSignature = await Signature.newestForCustomer(userDetail.id);
+  if (newestSignature?.isValidFor(userDetail)) {
     return {
-      image: validSignature.image.toString("base64"),
+      image: newestSignature.image.toString("base64"),
       isSignatureValid: true,
       signatureRequired: false,
-      signedByGuardian: validSignature.signedByGuardian,
-      signingName: validSignature.signingName,
-      signedAtText: formatSignedDate(validSignature.createdAt),
-      expiresAtText: formatSignedDate(validSignature.expiresAtFor(userDetail)),
+      signedByGuardian: newestSignature.signedByGuardian,
+      signingName: newestSignature.signingName,
+      signedAtText: formatSignedDate(newestSignature.createdAt),
+      expiresAtText: formatSignedDate(newestSignature.expiresAtFor(userDetail)),
     };
   }
 
   return {
     isSignatureValid: false,
     signatureRequired: userDetail.tasks?.signAgreement === true,
+    // A guardian signature the customer has outgrown is shown until they sign for themselves.
+    outgrownGuardianSignature: newestSignature?.isOutgrownGuardianFor(userDetail)
+      ? {
+          image: newestSignature.image.toString("base64"),
+          signingName: newestSignature.signingName,
+          signedAtText: formatSignedDate(newestSignature.createdAt),
+        }
+      : null,
   };
 }
 

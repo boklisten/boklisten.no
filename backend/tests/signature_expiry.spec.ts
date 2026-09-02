@@ -53,3 +53,27 @@ test.group("Signature.expiresAtFor", () => {
     );
   });
 });
+
+test.group("Signature.isOutgrownGuardianFor", () => {
+  test("is true for a guardian signature once the customer is an adult", ({ assert }) => {
+    assert.isTrue(makeSignature(true).isOutgrownGuardianFor({ dob: dobForAge(18) }));
+  });
+
+  test("is true when the customer has no dob, since they count as an adult", ({ assert }) => {
+    assert.isTrue(makeSignature(true).isOutgrownGuardianFor({ dob: null }));
+  });
+
+  test("is false while the customer is still underage", ({ assert }) => {
+    assert.isFalse(makeSignature(true).isOutgrownGuardianFor({ dob: dobForAge(16) }));
+  });
+
+  test("is false for the customer's own signature", ({ assert }) => {
+    assert.isFalse(makeSignature(false).isOutgrownGuardianFor({ dob: dobForAge(18) }));
+  });
+
+  test("is false once the guardian signature has run out of its validity window", ({ assert }) => {
+    const signature = makeSignature(true);
+    signature.createdAt = DateTime.now().minus({ months: SIGNATURE_NUM_MONTHS_VALID + 1 });
+    assert.isFalse(signature.isOutgrownGuardianFor({ dob: dobForAge(18) }));
+  });
+});

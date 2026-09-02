@@ -34,9 +34,19 @@ export default function MySignatureStatus() {
     return null;
   }
 
+  const outgrown = data.outgrownGuardianSignature;
   return (
-    <WarningAlert title="Du mangler gyldig signatur" mt="md">
+    <WarningAlert
+      title={outgrown ? "Du har fylt 18 år og må signere selv" : "Du mangler gyldig signatur"}
+      mt="md"
+    >
       <Stack align="flex-start" gap="xs">
+        {outgrown && (
+          <Text>
+            {outgrown.signingName} (foresatt) signerte låneavtalen på dine vegne{" "}
+            {outgrown.signedAtText}.
+          </Text>
+        )}
         <Text>Bøker kan ikke deles ut før låneavtalen er signert.</Text>
         <TanStackButton to="/oppgaver" leftSection={<IconSignature />}>
           Signer låneavtale

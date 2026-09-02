@@ -83,6 +83,45 @@ export default function SignatureStatusBanner({ userDetail }: { userDetail: User
     return null;
   }
 
+  if (data.outgrownGuardianSignature) {
+    return (
+      <UnstyledButton
+        onClick={openSignatureModal}
+        aria-label="Signert av foresatt, må signeres på nytt – ordne signatur"
+        w="100%"
+      >
+        <Paper
+          withBorder
+          radius="md"
+          px="md"
+          py="xs"
+          bg="orange.0"
+          style={{ borderColor: "var(--mantine-color-orange-3)" }}
+        >
+          <Group justify="space-between" wrap="nowrap">
+            <Group gap="sm" wrap="nowrap">
+              <IconAlertTriangleFilled color="var(--mantine-color-orange-8)" />
+              <Stack gap={0}>
+                <Text fw={600} c="orange.9" size="sm">
+                  Signert av foresatt, må signeres på nytt
+                </Text>
+                <Text size="xs" c="dimmed">
+                  Kunden har fylt 18 år og må signere selv før bøker kan deles ut.
+                </Text>
+              </Stack>
+            </Group>
+            <Group gap={4} wrap="nowrap">
+              <Text size="sm" c="orange.9">
+                Ordne signatur
+              </Text>
+              <IconChevronRight size={16} color="var(--mantine-color-orange-9)" />
+            </Group>
+          </Group>
+        </Paper>
+      </UnstyledButton>
+    );
+  }
+
   return (
     <UnstyledButton
       onClick={openSignatureModal}

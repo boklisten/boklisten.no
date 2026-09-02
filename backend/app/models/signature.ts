@@ -19,11 +19,15 @@ export default class Signature extends SignatureSchema {
     id: string;
     dob?: Date | null;
   }): Promise<Signature | null> {
-    const newestSignature = await this.query()
-      .where("customerDetailsId", userDetail.id)
+    const newestSignature = await this.newestForCustomer(userDetail.id);
+    return newestSignature?.isValidFor(userDetail) ? newestSignature : null;
+  }
+
+  static async newestForCustomer(customerDetailsId: string): Promise<Signature | null> {
+    return this.query()
+      .where("customerDetailsId", customerDetailsId)
       .withScopes((scopes) => scopes.newestFirst())
       .first();
-    return newestSignature?.isValidFor(userDetail) ? newestSignature : null;
   }
 
   /**
@@ -78,6 +82,14 @@ export default class Signature extends SignatureSchema {
       return false;
     }
     return isUnderage(userDetail) === this.signedByGuardian;
+  }
+
+  /**
+   * A guardian signature that only stopped counting because the customer has turned 18: still
+   * inside the validity window, but the customer must now sign for themselves.
+   */
+  isOutgrownGuardianFor(userDetail: { dob?: Date | null }): boolean {
+    return this.signedByGuardian && !this.isExpired() && !isUnderage(userDetail);
   }
 
   private isExpired(): boolean {
