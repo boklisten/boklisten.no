@@ -5,12 +5,12 @@ import { useState } from "react";
 import type { SubmitEvent } from "react";
 
 import { isValidBlid } from "@/features/blid-search/validateBlid";
-import useWedgeScanner from "@/features/blid-search/useWedgeScanner";
 import openScannerModal from "@/shared/components/scanner/openScannerModal";
+import useWedgeScanner from "@/shared/hooks/useWedgeScanner";
 
 /**
- * The shared entry point for Boksøk: scan with the camera, type an ID, or use a physical
- * barcode scanner at any time. Renders as a centered hero before the first search and as a
+ * The entry point for the public book lookup: scan with the camera, type an ID, or use a
+ * physical barcode scanner at any time. Renders as a centered hero before the first search and as a
  * compact row once a result is showing, so the next book is always one scan away.
  */
 export default function BlidSearchControls({
@@ -24,7 +24,7 @@ export default function BlidSearchControls({
   instruction?: string;
 }) {
   const [manualOpened, { open: openManual, close: closeManual }] = useDisclosure(false);
-  useWedgeScanner(onSubmit);
+  useWedgeScanner({ accepts: ["blid"], onScan: onSubmit });
 
   const scanButton = (
     <Button

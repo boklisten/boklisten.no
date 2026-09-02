@@ -49,6 +49,9 @@ function locateHint(type: ScanCodeType): string {
     case "isbn": {
       return "Skann bokas ISBN — strekkoden med 13 siffer, vanligvis på baksiden av boka.";
     }
+    case "customerId": {
+      return "Kunden finner kunde-ID-en sin under «Vis kunde-ID» på boklisten.no.";
+    }
     default: {
       return "Prøv igjen, eller ta kontakt med stand for hjelp.";
     }

@@ -64,3 +64,14 @@ export interface BlidSearchResult {
   /** Sorted newest first. */
   history: BlidHistoryEvent[];
 }
+
+/** A partial or complete blid as typed into the admin search field: alphanumeric only. */
+export const BLID_PREFIX_PATTERN = /^[\dA-Za-z]{3,12}$/;
+
+/** A book matched by a blid prefix in the admin search field. */
+export interface BlidSearchHit {
+  blid: string;
+  title: string;
+  /** The customer currently holding the book, or null when it is at the stand. */
+  holder: { detailsId: string; name: string } | null;
+}

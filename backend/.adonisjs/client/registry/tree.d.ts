@@ -94,6 +94,7 @@ export interface ApiDefinition {
     lookup: typeof routes['public_blid_lookup.lookup']
   }
   blidSearch: {
+    search: typeof routes['blid_search.search']
     lookup: typeof routes['blid_search.lookup']
     updateActiveItem: typeof routes['blid_search.update_active_item']
   }

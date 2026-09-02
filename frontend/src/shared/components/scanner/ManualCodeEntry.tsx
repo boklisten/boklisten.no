@@ -6,7 +6,6 @@ import {
   describeScanCodeFormat,
   determineScanCodeType,
   listScanCodeTypes,
-  nameScanCodeType,
 } from "@/shared/utils/scanCodes";
 import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
@@ -27,9 +26,12 @@ function validateCode(value: string, accepts: ScanCodeType[] | undefined): strin
 
 export default function ManualCodeEntry({
   accepts,
+  submitLabel = "Bekreft",
   onSubmit,
 }: {
   accepts?: ScanCodeType[] | undefined;
+  /** Name the outcome ("Legg til i listen") when the form feeds a flow rather than a lookup. */
+  submitLabel?: string;
   onSubmit: (code: string) => void | Promise<void>;
 }) {
   const soleType = soleAcceptedType(accepts);
@@ -57,16 +59,18 @@ export default function ManualCodeEntry({
             <field.TextField
               required
               label={
-                soleType === null ? "Skriv inn koden" : `Skriv inn ${nameScanCodeType(soleType)}`
+                accepts === undefined || accepts.length === 0
+                  ? "Skriv inn koden"
+                  : `Skriv inn ${listScanCodeTypes(accepts)}`
               }
-              placeholder={soleType === null ? "Kode" : describeScanCodeFormat(soleType)}
+              placeholder={soleType === null ? undefined : describeScanCodeFormat(soleType)}
             />
           )}
         </form.AppField>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" loading={isSubmitting}>
-              Bekreft
+              {submitLabel}
             </Button>
           )}
         </form.Subscribe>

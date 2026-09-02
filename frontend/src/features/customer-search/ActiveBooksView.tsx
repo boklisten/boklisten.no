@@ -2,13 +2,14 @@ import type { ActiveCustomerItem } from "@boklisten/backend/shared/customer-item
 import type { CustomerItemType } from "@boklisten/backend/shared/customer-item/customer-item-type";
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
-import { Badge, Box, Card, Code, Group, Skeleton, Stack, Table, Text } from "@mantine/core";
+import { Badge, Box, Card, Group, Skeleton, Stack, Table, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import { buildPeerBooks } from "@/features/customer-search/handoutBooks";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";
+import EntityLink from "@/shared/components/EntityLink";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
@@ -32,6 +33,21 @@ function DeadlineText({ book }: { book: ActiveCustomerItem }) {
     <Text size="sm" c={overdue ? "red" : "dimmed"} fw={overdue ? 600 : undefined}>
       {deadlineLabel(book)}
     </Text>
+  );
+}
+
+/** The unique ID doubles as the way into the book's own history. */
+function BlidLink({ blid }: { blid: string }) {
+  return (
+    <EntityLink
+      to="/admin/kasse"
+      search={{ blid }}
+      size="sm"
+      ff="monospace"
+      aria-label={`Se historikken til bok ${blid}`}
+    >
+      {blid}
+    </EntityLink>
   );
 }
 
@@ -94,11 +110,7 @@ function BookCards({
                 <DeadlineText book={book} />
                 {isOverdue(book.deadline) && <OverdueBadge />}
               </Group>
-              {book.blid && (
-                <Text size="sm" c="dimmed" ff="monospace">
-                  {book.blid}
-                </Text>
-              )}
+              {book.blid && <BlidLink blid={book.blid} />}
             </Group>
           </Card>
         );
@@ -135,7 +147,7 @@ function BookTable({
                     {deliverToName && <PeerBadge>Leveres til {deliverToName}</PeerBadge>}
                   </Stack>
                 </Table.Td>
-                <Table.Td>{book.blid ? <Code>{book.blid}</Code> : "–"}</Table.Td>
+                <Table.Td>{book.blid ? <BlidLink blid={book.blid} /> : "–"}</Table.Td>
                 <Table.Td>
                   <Group gap={6} wrap="nowrap">
                     <DeadlineText book={book} />

@@ -26,10 +26,8 @@ import { Route as offentligOverleveringerRouteRouteImport } from './routes/(offe
 import { Route as offentligSjekkRouteImport } from './routes/(offentlig)/sjekk'
 import { Route as offentligUserSettingsRouteImport } from './routes/(offentlig)/user-settings'
 import { Route as administrasjonAdminIndexRouteImport } from './routes/(administrasjon)/admin/index'
-import { Route as administrasjonAdminBoksokRouteImport } from './routes/(administrasjon)/admin/boksok'
 import { Route as administrasjonAdminFakturaRouteImport } from './routes/(administrasjon)/admin/faktura'
-import { Route as administrasjonAdminHurtiginnsamlingRouteImport } from './routes/(administrasjon)/admin/hurtiginnsamling'
-import { Route as administrasjonAdminKundesokRouteImport } from './routes/(administrasjon)/admin/kundesok'
+import { Route as administrasjonAdminKasseRouteImport } from './routes/(administrasjon)/admin/kasse'
 import { Route as administrasjonAdminOrdreoversiktRouteImport } from './routes/(administrasjon)/admin/ordreoversikt'
 import { Route as administrasjonAdminOverleveringerRouteRouteImport } from './routes/(administrasjon)/admin/overleveringer/route'
 import { Route as administrasjonAdminScannerRouteImport } from './routes/(administrasjon)/admin/scanner'
@@ -175,28 +173,16 @@ const administrasjonAdminIndexRoute =
     path: '/',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminBoksokRoute =
-  administrasjonAdminBoksokRouteImport.update({
-    id: '/boksok',
-    path: '/boksok',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
 const administrasjonAdminFakturaRoute =
   administrasjonAdminFakturaRouteImport.update({
     id: '/faktura',
     path: '/faktura',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminHurtiginnsamlingRoute =
-  administrasjonAdminHurtiginnsamlingRouteImport.update({
-    id: '/hurtiginnsamling',
-    path: '/hurtiginnsamling',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminKundesokRoute =
-  administrasjonAdminKundesokRouteImport.update({
-    id: '/kundesok',
-    path: '/kundesok',
+const administrasjonAdminKasseRoute =
+  administrasjonAdminKasseRouteImport.update({
+    id: '/kasse',
+    path: '/kasse',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
 const administrasjonAdminOrdreoversiktRoute =
@@ -539,10 +525,8 @@ export interface FileRoutesByFullPath {
   '/admin/overleveringer': typeof administrasjonAdminOverleveringerRouteRouteWithChildren
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
-  '/admin/boksok': typeof administrasjonAdminBoksokRoute
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
-  '/admin/hurtiginnsamling': typeof administrasjonAdminHurtiginnsamlingRoute
-  '/admin/kundesok': typeof administrasjonAdminKundesokRoute
+  '/admin/kasse': typeof administrasjonAdminKasseRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/scanner': typeof administrasjonAdminScannerRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
@@ -615,10 +599,8 @@ export interface FileRoutesByTo {
   '/user-settings': typeof offentligUserSettingsRoute
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
-  '/admin/boksok': typeof administrasjonAdminBoksokRoute
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
-  '/admin/hurtiginnsamling': typeof administrasjonAdminHurtiginnsamlingRoute
-  '/admin/kundesok': typeof administrasjonAdminKundesokRoute
+  '/admin/kasse': typeof administrasjonAdminKasseRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/scanner': typeof administrasjonAdminScannerRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
@@ -696,10 +678,8 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/overleveringer': typeof administrasjonAdminOverleveringerRouteRouteWithChildren
   '/(offentlig)/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/(offentlig)/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
-  '/(administrasjon)/admin/boksok': typeof administrasjonAdminBoksokRoute
   '/(administrasjon)/admin/faktura': typeof administrasjonAdminFakturaRoute
-  '/(administrasjon)/admin/hurtiginnsamling': typeof administrasjonAdminHurtiginnsamlingRoute
-  '/(administrasjon)/admin/kundesok': typeof administrasjonAdminKundesokRoute
+  '/(administrasjon)/admin/kasse': typeof administrasjonAdminKasseRoute
   '/(administrasjon)/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/(administrasjon)/admin/scanner': typeof administrasjonAdminScannerRoute
   '/(administrasjon)/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
@@ -777,10 +757,8 @@ export interface FileRouteTypes {
     | '/admin/overleveringer'
     | '/info/branch'
     | '/info/policies'
-    | '/admin/boksok'
     | '/admin/faktura'
-    | '/admin/hurtiginnsamling'
-    | '/admin/kundesok'
+    | '/admin/kasse'
     | '/admin/ordreoversikt'
     | '/admin/scanner'
     | '/admin/user-settings'
@@ -853,10 +831,8 @@ export interface FileRouteTypes {
     | '/user-settings'
     | '/info/branch'
     | '/info/policies'
-    | '/admin/boksok'
     | '/admin/faktura'
-    | '/admin/hurtiginnsamling'
-    | '/admin/kundesok'
+    | '/admin/kasse'
     | '/admin/ordreoversikt'
     | '/admin/scanner'
     | '/admin/user-settings'
@@ -933,10 +909,8 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/overleveringer'
     | '/(offentlig)/info/branch'
     | '/(offentlig)/info/policies'
-    | '/(administrasjon)/admin/boksok'
     | '/(administrasjon)/admin/faktura'
-    | '/(administrasjon)/admin/hurtiginnsamling'
-    | '/(administrasjon)/admin/kundesok'
+    | '/(administrasjon)/admin/kasse'
     | '/(administrasjon)/admin/ordreoversikt'
     | '/(administrasjon)/admin/scanner'
     | '/(administrasjon)/admin/user-settings'
@@ -1134,13 +1108,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminIndexRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(administrasjon)/admin/boksok': {
-      id: '/(administrasjon)/admin/boksok'
-      path: '/boksok'
-      fullPath: '/admin/boksok'
-      preLoaderRoute: typeof administrasjonAdminBoksokRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
     '/(administrasjon)/admin/faktura': {
       id: '/(administrasjon)/admin/faktura'
       path: '/faktura'
@@ -1148,18 +1115,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminFakturaRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(administrasjon)/admin/hurtiginnsamling': {
-      id: '/(administrasjon)/admin/hurtiginnsamling'
-      path: '/hurtiginnsamling'
-      fullPath: '/admin/hurtiginnsamling'
-      preLoaderRoute: typeof administrasjonAdminHurtiginnsamlingRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/kundesok': {
-      id: '/(administrasjon)/admin/kundesok'
-      path: '/kundesok'
-      fullPath: '/admin/kundesok'
-      preLoaderRoute: typeof administrasjonAdminKundesokRouteImport
+    '/(administrasjon)/admin/kasse': {
+      id: '/(administrasjon)/admin/kasse'
+      path: '/kasse'
+      fullPath: '/admin/kasse'
+      preLoaderRoute: typeof administrasjonAdminKasseRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
     '/(administrasjon)/admin/ordreoversikt': {
@@ -1719,10 +1679,8 @@ const administrasjonAdminOverleveringerRouteRouteWithChildren =
 
 interface administrasjonAdminRouteRouteChildren {
   administrasjonAdminOverleveringerRouteRoute: typeof administrasjonAdminOverleveringerRouteRouteWithChildren
-  administrasjonAdminBoksokRoute: typeof administrasjonAdminBoksokRoute
   administrasjonAdminFakturaRoute: typeof administrasjonAdminFakturaRoute
-  administrasjonAdminHurtiginnsamlingRoute: typeof administrasjonAdminHurtiginnsamlingRoute
-  administrasjonAdminKundesokRoute: typeof administrasjonAdminKundesokRoute
+  administrasjonAdminKasseRoute: typeof administrasjonAdminKasseRoute
   administrasjonAdminOrdreoversiktRoute: typeof administrasjonAdminOrdreoversiktRoute
   administrasjonAdminScannerRoute: typeof administrasjonAdminScannerRoute
   administrasjonAdminUserSettingsRoute: typeof administrasjonAdminUserSettingsRoute
@@ -1745,11 +1703,8 @@ const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildr
   {
     administrasjonAdminOverleveringerRouteRoute:
       administrasjonAdminOverleveringerRouteRouteWithChildren,
-    administrasjonAdminBoksokRoute: administrasjonAdminBoksokRoute,
     administrasjonAdminFakturaRoute: administrasjonAdminFakturaRoute,
-    administrasjonAdminHurtiginnsamlingRoute:
-      administrasjonAdminHurtiginnsamlingRoute,
-    administrasjonAdminKundesokRoute: administrasjonAdminKundesokRoute,
+    administrasjonAdminKasseRoute: administrasjonAdminKasseRoute,
     administrasjonAdminOrdreoversiktRoute:
       administrasjonAdminOrdreoversiktRoute,
     administrasjonAdminScannerRoute: administrasjonAdminScannerRoute,

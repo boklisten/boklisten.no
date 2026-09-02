@@ -10,6 +10,7 @@ import type {
   BlidActiveItem,
   BlidHistoryEvent,
   BlidParty,
+  BlidSearchHit,
   BlidSearchResult,
   BlidStatus,
 } from "#shared/blid_search";
@@ -40,6 +41,33 @@ export interface BlidSearchSources {
 }
 
 const FALLBACK_NAME = "Ukjent";
+
+/** Enough to fill the search dropdown; a longer prefix narrows the list instead. */
+const SEARCH_HIT_LIMIT = 10;
+
+export interface BlidSearchHitSources {
+  /** Already in the order they should be shown. */
+  uniqueItems: { blid: string; title: string }[];
+  /** blid → user detail id of the customer actively holding the book. */
+  holders: Map<string, string>;
+  /** User detail id → display name. */
+  userDetails: Map<string, string>;
+}
+
+/** Attaches the holding customer to each matched book. */
+export function assembleBlidSearchHits(sources: BlidSearchHitSources): BlidSearchHit[] {
+  return sources.uniqueItems.map(({ blid, title }) => {
+    const detailsId = sources.holders.get(blid);
+    return {
+      blid,
+      title,
+      holder:
+        detailsId === undefined
+          ? null
+          : { detailsId, name: sources.userDetails.get(detailsId) ?? FALLBACK_NAME },
+    };
+  });
+}
 
 function isoOrUndefined(date: Date | undefined): string | undefined {
   return date === undefined ? undefined : new Date(date).toISOString();
@@ -603,6 +631,54 @@ export const BlidSearchService = {
     if (result.matchedCount === 0) {
       throw new BadRequestException("Boka er ikke aktivt utdelt");
     }
+  },
+
+  /**
+   * Sorted by blid so the list stays stable while the user types; an exact match is the shortest
+   * blid with that prefix, so it lands first on its own.
+   *
+   * @param query An alphanumeric blid prefix (the validator guarantees no regex metacharacters).
+   */
+  async search(query: string): Promise<BlidSearchHit[]> {
+    const uniqueItems = await StorageService.UniqueItems.aggregate<{ blid: string; title: string }>(
+      [
+        { $match: { blid: { $regex: `^${query}`, $options: "i" } } },
+        { $sort: { blid: 1 } },
+        { $limit: SEARCH_HIT_LIMIT },
+        { $project: { _id: 0, blid: 1, title: 1 } },
+      ],
+    );
+    if (uniqueItems.length === 0) {
+      return [];
+    }
+
+    const activeItems = await StorageService.CustomerItems.aggregate<{
+      blid: string;
+      customer: ObjectId;
+    }>([
+      {
+        $match: {
+          blid: { $in: uniqueItems.map((uniqueItem) => uniqueItem.blid) },
+          ...ACTIVE_CUSTOMER_ITEM_MATCH,
+          buyback: { $ne: true },
+        },
+      },
+      { $project: { _id: 0, blid: 1, customer: 1 } },
+    ]);
+    const holders = new Map(activeItems.map((item) => [item.blid, String(item.customer)]));
+    const userDetails =
+      holders.size === 0
+        ? []
+        : await StorageService.UserDetails.getMany(
+            [...new Set(holders.values())],
+            USER_PERMISSION.ADMIN,
+          );
+
+    return assembleBlidSearchHits({
+      uniqueItems,
+      holders,
+      userDetails: new Map(userDetails.map((detail) => [detail.id, detail.name])),
+    });
   },
 
   async lookup(blid: string): Promise<BlidSearchResult> {

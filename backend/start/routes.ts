@@ -211,6 +211,7 @@ router.get("/public_blid_lookup/:blid", [controllers.PublicBlidLookup, "lookup"]
 /**
  * blid search (admin Boksøk)
  */
+router.get("/v2/admin/blid_search", [controllers.BlidSearch, "search"]);
 router.get("/v2/admin/blid_search/:blid", [controllers.BlidSearch, "lookup"]);
 router.patch("/v2/admin/blid_search/active_item", [controllers.BlidSearch, "updateActiveItem"]);
 

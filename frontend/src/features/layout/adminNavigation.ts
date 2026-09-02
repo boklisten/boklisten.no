@@ -1,27 +1,28 @@
 import type { Icon } from "@tabler/icons-react";
 import {
-  IconArrowsExchange,
   IconBarcode,
   IconBell,
   IconBooks,
   IconBuildings,
-  IconBuildingStore,
+  IconCashRegister,
   IconChartBar,
   IconDatabase,
   IconEdit,
   IconFileDollar,
+  IconHeartHandshake,
   IconHourglassLow,
   IconMailFast,
   IconQrcode,
   IconReceipt,
-  IconSearch,
+  IconSchool,
   IconSend,
   IconSignature,
   IconTimeline,
   IconUsers,
-  IconUserSearch,
 } from "@tabler/icons-react";
 import type { LinkProps } from "@tanstack/react-router";
+
+import { KASSE_DESCRIPTION, KASSE_TITLE } from "@/features/kasse/kasseDescription";
 
 export interface AdminNavLink {
   label: string;
@@ -46,22 +47,10 @@ export const ADMIN_NAV_SECTIONS = [
     label: "Verktøy",
     links: [
       {
-        label: "Boksøk",
-        description: "Skann og se historikken til bøker",
-        to: "/admin/boksok",
-        icon: IconSearch,
-      },
-      {
-        label: "Kundesøk",
-        description: "Finn en elev og håndter bøkene deres",
-        to: "/admin/kundesok",
-        icon: IconUserSearch,
-      },
-      {
-        label: "Hurtiginnsamling",
-        description: "Samle inn mange bøker på rad",
-        to: "/admin/hurtiginnsamling",
-        icon: IconQrcode,
+        label: KASSE_TITLE,
+        description: KASSE_DESCRIPTION,
+        to: "/admin/kasse",
+        icon: IconCashRegister,
       },
       {
         label: "Ordreoversikt",
@@ -85,7 +74,7 @@ export const ADMIN_NAV_SECTIONS = [
         label: "Overleveringer",
         description: "Følg opp overleveringer mellom elever",
         to: "/admin/overleveringer",
-        icon: IconArrowsExchange,
+        icon: IconHeartHandshake,
       },
     ],
   },
@@ -145,7 +134,7 @@ export const ADMIN_NAV_SECTIONS = [
             label: "Filialer",
             description: "Rediger filialer og åpningstider",
             to: "/admin/database/filialer",
-            icon: IconBuildingStore,
+            icon: IconSchool,
           },
           {
             label: "Brukere",

@@ -59,6 +59,7 @@ export type ScannedRoutes = {
     'email_verification.send': { paramsTuple?: []; params?: {} }
     'email_verification.verify': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'public_blid_lookup.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'blid_search.search': { paramsTuple?: []; params?: {} }
     'blid_search.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'blid_search.update_active_item': { paramsTuple?: []; params?: {} }
     'matches.notify': { paramsTuple?: []; params?: {} }
@@ -215,6 +216,7 @@ export type ScannedRoutes = {
     'questions_and_answers.get_all': { paramsTuple?: []; params?: {} }
     'email_verification.verify': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'public_blid_lookup.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'blid_search.search': { paramsTuple?: []; params?: {} }
     'blid_search.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'matches.get_my_matches': { paramsTuple?: []; params?: {} }
     'matches.get_matches_for_customer': { paramsTuple: [ParamValue]; params: {'customerId': ParamValue} }
@@ -309,6 +311,7 @@ export type ScannedRoutes = {
     'questions_and_answers.get_all': { paramsTuple?: []; params?: {} }
     'email_verification.verify': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'public_blid_lookup.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'blid_search.search': { paramsTuple?: []; params?: {} }
     'blid_search.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'matches.get_my_matches': { paramsTuple?: []; params?: {} }
     'matches.get_matches_for_customer': { paramsTuple: [ParamValue]; params: {'customerId': ParamValue} }

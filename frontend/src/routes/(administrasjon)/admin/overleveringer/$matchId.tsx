@@ -8,7 +8,7 @@ import AdminMatchDetail from "@/features/matches/adminOverview/AdminMatchDetail"
 import { validateAdminMatchListSearch } from "@/features/matches/adminOverview/adminMatchListSearch";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import EntityLink from "@/shared/components/EntityLink";
 import useApiClient from "@/shared/hooks/useApiClient";
 
 export const Route = createFileRoute("/(administrasjon)/admin/overleveringer/$matchId")({
@@ -34,9 +34,9 @@ function AdminMatchDetailPage() {
   return (
     <Container size="lg" py="lg">
       <Stack gap="lg">
-        <TanStackAnchor to="/admin/overleveringer" search={(previous) => previous}>
+        <EntityLink to="/admin/overleveringer" search={(previous) => previous}>
           ← Alle overleveringer
-        </TanStackAnchor>
+        </EntityLink>
         {isLoading ? (
           <Skeleton height={200} />
         ) : error ? (

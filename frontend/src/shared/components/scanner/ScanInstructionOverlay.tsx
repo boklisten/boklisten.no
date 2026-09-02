@@ -27,6 +27,32 @@ const BARS_TOP = 8;
 const BARS_BOTTOM = 42;
 const GUARD_BOTTOM = 49;
 
+/**
+ * The exact artwork the stand prints (rendered by the backend's unique-ID generator with an example
+ * ID), so the employee sees the sticker itself rather than a generic barcode.
+ */
+function BlidLabelIllustration() {
+  return (
+    <img
+      src="/images/blid-label.png"
+      alt=""
+      aria-hidden="true"
+      width={88}
+      height={34}
+      style={{
+        flexShrink: 0,
+        display: "block",
+        width: 88,
+        height: 34,
+        objectFit: "contain",
+        background: "#FFFFFF",
+        borderRadius: 4,
+        padding: 2,
+      }}
+    />
+  );
+}
+
 function BarcodeIllustration({ type }: { type: ScanCodeType }) {
   const totalModules = BAR_RUNS.reduce((sum, run) => sum + run, 0);
   const scale = (LABEL_WIDTH - QUIET_ZONE * 2) / totalModules;
@@ -83,9 +109,7 @@ function locateHint(type: ScanCodeType): string | null {
     case "isbn": {
       return "Strekkoden med 13 siffer, vanligvis på baksiden av boka";
     }
-    case "blid": {
-      return "Klistremerket med bokas unike ID";
-    }
+    // A blid needs no hint: the label artwork shown beside the text already says where to look.
     default: {
       return null;
     }
@@ -121,9 +145,8 @@ export default function ScanInstructionOverlay({ instruction }: { instruction: S
 
   return (
     <div style={scrimStyle} role="status">
-      {instruction.illustrate !== undefined && instruction.illustrate !== "unknown" && (
-        <BarcodeIllustration type={instruction.illustrate} />
-      )}
+      {instruction.illustrate === "blid" && <BlidLabelIllustration />}
+      {instruction.illustrate === "isbn" && <BarcodeIllustration type="isbn" />}
       <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
         <span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.3 }}>{instruction.text}</span>
         {hint !== null && (

@@ -64,7 +64,7 @@ function UserSummary({ user, branchName }: { user: DuplicateUserSummary; branchN
       </Tooltip>
       <CountsLine user={user} />
       <TanStackButton
-        to="/admin/kundesok"
+        to="/admin/kasse"
         search={{ kunde: user.detailsId }}
         variant="subtle"
         size="compact-sm"
@@ -72,7 +72,7 @@ function UserSummary({ user, branchName }: { user: DuplicateUserSummary; branchN
         w="fit-content"
         px={0}
       >
-        Åpne i kundesøk
+        Gå til kunde
       </TanStackButton>
     </Stack>
   );

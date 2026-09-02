@@ -5,7 +5,6 @@ import type {
 } from "@boklisten/backend/shared/blid_search";
 import { Badge, Group, Text, ThemeIcon, Timeline } from "@mantine/core";
 import {
-  IconArrowsExchange,
   IconBookDownload,
   IconBookUpload,
   IconBuildingStore,
@@ -14,28 +13,23 @@ import {
   IconCalendarX,
   IconCoins,
   IconFileInvoice,
+  IconHeartHandshake,
   IconShoppingCart,
   IconX,
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 import ActiveItemChips from "@/features/blid-search/ActiveItemChips";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import EntityLink from "@/shared/components/EntityLink";
 import useAuth from "@/shared/hooks/useAuth";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
 /** A named person in an event sentence: bold like plain text, but a link to their customer page. */
 function PersonLink({ detailsId, name }: { detailsId: string; name: string }) {
   return (
-    <TanStackAnchor
-      to="/admin/kundesok"
-      search={{ kunde: detailsId }}
-      c="inherit"
-      fw={700}
-      underline="hover"
-    >
+    <EntityLink to="/admin/kasse" search={{ kunde: detailsId }}>
       {name}
-    </TanStackAnchor>
+    </EntityLink>
   );
 }
 
@@ -187,7 +181,7 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
 const EVENT_APPEARANCE = {
   handout: { icon: IconBookUpload, color: "green" },
   return: { icon: IconBookDownload, color: "blue" },
-  "match-transfer": { icon: IconArrowsExchange, color: "violet" },
+  "match-transfer": { icon: IconHeartHandshake, color: "violet" },
   extend: { icon: IconCalendarPlus, color: "orange" },
   buyout: { icon: IconShoppingCart, color: "teal" },
   "invoice-paid": { icon: IconFileInvoice, color: "teal" },

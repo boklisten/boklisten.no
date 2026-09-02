@@ -667,6 +667,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/public_blid_lookup_controller').default['lookup']>>>
     }
   }
+  'blid_search.search': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/blid_search'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/blid_search').blidSearchQueryValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['search']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['search']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'blid_search.lookup': {
     methods: ["GET","HEAD"]
     pattern: '/v2/admin/blid_search/:blid'

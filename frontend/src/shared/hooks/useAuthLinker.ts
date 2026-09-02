@@ -57,7 +57,8 @@ export default function useAuthLinker() {
     localStorage.removeItem(localStorageKeys.redirect);
 
     if (!caller) {
-      void navigate({ to: `/${redirect}` });
+      // The login/token page is a waypoint, not a destination: Back must skip it.
+      void navigate({ to: `/${redirect}`, replace: true });
       return;
     }
 

@@ -41,12 +41,17 @@ export default function AdminBlidSearchResult({
   }
 
   return (
-    <Paper withBorder radius="md" p="md">
-      <Stack gap="md">
-        <BlidBookHeader result={data} onClear={onClear} />
-        <Divider />
-        <BlidHistoryTimeline history={data.history} activeItem={data.activeItem} />
-      </Stack>
-    </Paper>
+    <Stack gap={6}>
+      <Text fz="sm" fw={500} c="dimmed">
+        Valgt bok
+      </Text>
+      <Paper withBorder radius="md" p="md">
+        <Stack gap="md">
+          <BlidBookHeader result={data} onClear={onClear} />
+          <Divider />
+          <BlidHistoryTimeline history={data.history} activeItem={data.activeItem} />
+        </Stack>
+      </Paper>
+    </Stack>
   );
 }

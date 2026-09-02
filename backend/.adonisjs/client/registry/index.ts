@@ -336,6 +336,12 @@ const routes = {
     tokens: [{"old":"/public_blid_lookup/:blid","type":0,"val":"public_blid_lookup","end":""},{"old":"/public_blid_lookup/:blid","type":1,"val":"blid","end":""}],
     types: placeholder as Registry['public_blid_lookup.lookup']['types'],
   },
+  'blid_search.search': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/admin/blid_search',
+    tokens: [{"old":"/v2/admin/blid_search","type":0,"val":"v2","end":""},{"old":"/v2/admin/blid_search","type":0,"val":"admin","end":""},{"old":"/v2/admin/blid_search","type":0,"val":"blid_search","end":""}],
+    types: placeholder as Registry['blid_search.search']['types'],
+  },
   'blid_search.lookup': {
     methods: ["GET","HEAD"],
     pattern: '/v2/admin/blid_search/:blid',

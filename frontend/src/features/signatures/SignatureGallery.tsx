@@ -64,7 +64,7 @@ function SignatureCard({ signature }: { signature: GallerySignature }) {
   return (
     <CardLink
       ref={ref}
-      to="/admin/kundesok"
+      to="/admin/kasse"
       search={{ kunde: signature.customerDetailsId }}
       aria-label={`Åpne ${signature.customerName} i kundesøk`}
       withBorder

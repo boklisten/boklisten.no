@@ -2,11 +2,11 @@ import { Button, Group, Progress, SimpleGrid, Skeleton, Stack, Text } from "@man
 import { BarChart } from "@mantine/charts";
 import {
   IconAlertTriangle,
-  IconArrowsExchange,
   IconArrowsShuffle,
   IconBook,
   IconBuildingStore,
   IconDownload,
+  IconHeartHandshake,
   IconUsers,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
@@ -214,7 +214,7 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
         <StatTile
           label="Elevoverleveringer"
           value={data.userMatchCount}
-          icon={<IconArrowsExchange />}
+          icon={<IconHeartHandshake />}
           color="teal"
         />
         <StatTile

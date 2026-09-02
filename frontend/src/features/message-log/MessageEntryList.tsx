@@ -20,7 +20,7 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import EntityLink from "@/shared/components/EntityLink";
 import { eventLabel, STATUS_META, TYPE_LABELS } from "@/features/message-log/meta";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
@@ -138,13 +138,13 @@ function MessageEntry({
           )}
           <EventTrail entry={entry} />
           {withCustomerLink && entry.regardingCustomerDetailsId && (
-            <TanStackAnchor
+            <EntityLink
               size="sm"
-              to="/admin/kundesok"
+              to="/admin/kasse"
               search={{ kunde: entry.regardingCustomerDetailsId, visning: "meldinger" }}
             >
-              Åpne kunden i kundesøk
-            </TanStackAnchor>
+              Gå til kunden
+            </EntityLink>
           )}
         </Stack>
       </Collapse>

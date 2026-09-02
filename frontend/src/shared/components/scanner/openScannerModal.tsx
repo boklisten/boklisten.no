@@ -5,10 +5,20 @@ import type { ScannerPanelProps } from "@/shared/components/scanner/ScannerPanel
 
 const SCANNER_MODAL_ID = "scanner";
 
+export function closeScannerModal() {
+  modals.close(SCANNER_MODAL_ID);
+}
+
+/**
+ * Opens the camera in a modal. By default a successful scan closes it; pass `keepOpen` for flows
+ * that take one code after another (bulk collection), where closing after every hit would cost a
+ * tap per book.
+ */
 export default function openScannerModal({
   title,
+  keepOpen = false,
   ...panelProps
-}: { title: string } & ScannerPanelProps) {
+}: { title: string; keepOpen?: boolean } & ScannerPanelProps) {
   modals.open({
     modalId: SCANNER_MODAL_ID,
     title,
@@ -17,7 +27,9 @@ export default function openScannerModal({
         {...panelProps}
         onSuccess={() => {
           panelProps.onSuccess?.();
-          modals.close(SCANNER_MODAL_ID);
+          if (!keepOpen) {
+            closeScannerModal();
+          }
         }}
       />
     ),
