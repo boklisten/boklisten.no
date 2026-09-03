@@ -34,10 +34,16 @@ declare const classes: {
   readonly timeline: string;
   readonly timelineStop: string;
   readonly timelineStopHighlight: string;
+  readonly timelineNode: string;
+  readonly timelineHead: string;
   readonly month: string;
+  readonly timelineTag: string;
   readonly iconBadge: string;
   readonly formCard: string;
   readonly paperMock: string;
+  readonly graphFigure: string;
+  readonly graphSvg: string;
+  readonly graphCaption: string;
   readonly paperLine: string;
   readonly csvRow: string;
   readonly csvHead: string;

@@ -18,7 +18,7 @@ const CHALLENGES: { icon: ReactNode; title: string; text: string }[] = [
   },
   {
     icon: <IconFileInvoice size={26} />,
-    title: "Etterarbeid med tapte bøker",
+    title: "Merarbeid med tapte bøker",
     text: "Elever som mister bøker gir fakturaer, purringer og oppfølging langt inn i neste semester.",
   },
   {

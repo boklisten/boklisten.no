@@ -15,12 +15,12 @@ export default function StatTile({
   color: string;
 }) {
   return (
-    <Card withBorder padding="lg" radius="md" h="100%">
-      <Group wrap="nowrap">
+    <Card withBorder padding="md" radius="md" h="100%">
+      <Group wrap="nowrap" gap="sm">
         <ThemeIcon size="xl" radius="md" variant="light" color={color}>
           {icon}
         </ThemeIcon>
-        <div>
+        <div style={{ minWidth: 0 }}>
           <Text size="sm" c="dimmed">
             {label}
           </Text>

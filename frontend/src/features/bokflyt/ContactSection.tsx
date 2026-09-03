@@ -102,7 +102,7 @@ export default function ContactSection() {
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing={{ base: "xl", md: 64 }}>
           <Stack gap="md">
             <SectionHeading
-              title="Ta en uforpliktende prat"
+              title="Avtal en uforpliktende prat"
               lead="Fortell oss kort om skolen deres, så tar vi kontakt. Vi kommer gjerne innom for å vise løsningen, svare på spørsmål og gi et konkret tilbud."
             />
             <Text c="dimmed">
@@ -113,7 +113,7 @@ export default function ContactSection() {
           <div className={classes.formCard}>
             {sent ? (
               <SuccessAlert title="Takk for henvendelsen">
-                Vi tar kontakt på e-post eller telefon i løpet av et par virkedager.
+                Vi tar kontakt på e-post eller telefon i løpet av kort tid.
               </SuccessAlert>
             ) : (
               <ContactForm onSent={() => setSent(true)} />

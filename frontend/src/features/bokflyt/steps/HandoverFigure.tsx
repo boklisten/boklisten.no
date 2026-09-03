@@ -4,7 +4,6 @@ import { useMemo, useRef } from "react";
 
 import classes from "@/features/bokflyt/bokflyt.module.css";
 import { HANDOVER_BOOKS, noraViewerMatches } from "@/features/bokflyt/mockMatches";
-import ReplayButton from "@/features/bokflyt/ReplayButton";
 import Reveal from "@/features/bokflyt/Reveal";
 import ScanFigure from "@/features/bokflyt/steps/ScanFigure";
 import StudentMatches from "@/features/bokflyt/steps/StudentMatches";
@@ -23,9 +22,9 @@ const SCANS: PlaybackStep<number>[] = HANDOVER_BOOKS.map((_, index) => ({
  */
 export default function HandoverFigure() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.4 });
+  const inView = useInView(ref, { amount: 0.4 });
   const reduceMotion = useReducedMotion() ?? false;
-  const { value: booksReceived, replay } = useTimedPlayback(0, SCANS, inView && !reduceMotion);
+  const booksReceived = useTimedPlayback(0, SCANS, inView && !reduceMotion);
 
   const shown = reduceMotion ? HANDOVER_BOOKS.length : booksReceived;
   const viewerMatches = useMemo(() => noraViewerMatches(shown), [shown]);
@@ -37,7 +36,6 @@ export default function HandoverFigure() {
           <ScanFigure booksReceived={shown} animated={!reduceMotion} />
           <StudentMatches viewerMatches={viewerMatches} />
         </div>
-        {!reduceMotion && <ReplayButton onClick={replay} />}
       </Stack>
     </Reveal>
   );

@@ -19,6 +19,14 @@ const CATEGORY_META = {
   standOnly: { label: "Kun standoverlevering", color: "red.6" },
 } as const;
 
+/**
+ * Only the one series a row belongs to has a value; the other stacked series
+ * are undefined and must not print anything at the end of the bar.
+ */
+function formatBarValue(value: unknown) {
+  return typeof value === "number" && value > 0 ? value.toLocaleString("nb-NO") : "";
+}
+
 export interface RoundOverviewProps {
   userMatchCount: number;
   standMatchCount: number;
@@ -33,10 +41,10 @@ export default function RoundOverview({
   studentReach,
   distribution,
 }: RoundOverviewProps) {
-  // The labels read "2 elevoverleveringer, 1 standoverlevering": on a laptop they get a wide
-  // column, on a phone they wrap after the comma instead, so each row needs to be taller.
-  const labelColumnWidth = useMatches({ base: 175, sm: 210 });
-  const rowHeight = useMatches({ base: 56, sm: 32 });
+  // The longest row label is "2 elev- og 1 standoverlevering": one line on a laptop, two on a
+  // phone, where the label column is kept narrow so the bars keep most of the width.
+  const labelColumnWidth = useMatches({ base: 130, sm: 200 });
+  const rowHeight = useMatches({ base: 48, sm: 32 });
 
   const distributionData = distribution.map((entry) => ({
     config: entry.label,
@@ -57,13 +65,13 @@ export default function RoundOverview({
           color="blue"
         />
         <StatTile
-          label="Elevoverleveringer"
+          label="Mellom elever"
           value={userMatchCount}
           icon={<IconHeartHandshake />}
           color="teal"
         />
         <StatTile
-          label="Standoverleveringer"
+          label="På stand"
           value={standMatchCount}
           icon={<IconBuildingStore />}
           color="grape"
@@ -98,6 +106,10 @@ export default function RoundOverview({
           yAxisProps={{ width: labelColumnWidth }}
           series={distributionSeries}
           withLegend
+          withXAxis={false}
+          gridAxis="none"
+          withBarValueLabel
+          valueLabelProps={{ formatter: formatBarValue }}
         />
       </ChartCard>
     </Stack>

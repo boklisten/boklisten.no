@@ -16,7 +16,7 @@ export type MatchConfigCategory = "userOnly" | "both" | "standOnly";
 
 /**
  * How many students ended up with a given combination of handovers,
- * e.g. "2 elevoverleveringer, 1 standoverlevering": 42 students.
+ * e.g. "2 elev- og 1 standoverlevering": 42 students.
  */
 export interface MatchConfigDistributionEntry {
   userMatches: number;
@@ -26,9 +26,23 @@ export interface MatchConfigDistributionEntry {
   category: MatchConfigCategory;
 }
 
-/** Norwegian count label, pluralised with a trailing "er", e.g. "2 elevoverleveringer". */
-function countLabel(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? "" : "er"}`;
+/** Norwegian plural suffix for "overlevering". */
+function plural(count: number): string {
+  return count === 1 ? "" : "er";
+}
+
+/**
+ * Short Norwegian label for a combination of handovers. Zero counts are left
+ * out, and a mix uses the suspended compound: "2 elev- og 1 standoverlevering".
+ */
+function configLabel(userMatches: number, standMatches: number): string {
+  if (standMatches === 0) {
+    return `${userMatches} elevoverlevering${plural(userMatches)}`;
+  }
+  if (userMatches === 0) {
+    return `${standMatches} standoverlevering${plural(standMatches)}`;
+  }
+  return `${userMatches} elev- og ${standMatches} standoverlevering${plural(standMatches)}`;
 }
 
 /** How a combination of handovers is labelled and classified, shared so mock-ups read like the real thing. */
@@ -39,7 +53,7 @@ export function describeMatchConfig(
   return {
     userMatches,
     standMatches,
-    label: `${countLabel(userMatches, "elevoverlevering")}, ${countLabel(standMatches, "standoverlevering")}`,
+    label: configLabel(userMatches, standMatches),
     category: userMatches === 0 ? "standOnly" : standMatches === 0 ? "userOnly" : "both",
   };
 }

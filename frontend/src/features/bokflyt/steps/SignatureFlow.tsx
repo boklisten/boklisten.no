@@ -4,10 +4,10 @@ import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/rea
 import { useRef } from "react";
 
 import classes from "@/features/bokflyt/bokflyt.module.css";
+import { handoverDateText, signatureExpiryText } from "@/features/bokflyt/mockDates";
 import PhoneFrame from "@/features/bokflyt/PhoneFrame";
 import { useTimedPlayback } from "@/features/bokflyt/useTimedPlayback";
 import type { PlaybackStep } from "@/features/bokflyt/useTimedPlayback";
-import ReplayButton from "@/features/bokflyt/ReplayButton";
 import { signaturePrompt } from "@/features/signatures/signaturePrompt";
 import SignedContractDetails from "@/features/signatures/SignedContractDetails";
 import { SIGNATURE_BOX_STYLE } from "@/shared/components/form/fields/complex/SignatureCanvasField";
@@ -99,8 +99,8 @@ function DoneStage() {
         signedByGuardian
         signingName={GUARDIAN}
         name={STUDENT}
-        signedAtText="16. juni 2026"
-        expiresAtText="16. juni 2027"
+        signedAtText={handoverDateText()}
+        expiresAtText={signatureExpiryText()}
       />
     </Stack>
   );
@@ -112,9 +112,9 @@ function DoneStage() {
  */
 export default function SignatureFlow() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.5 });
+  const inView = useInView(ref, { amount: 0.5 });
   const reduceMotion = useReducedMotion() ?? false;
-  const { value: stage, replay } = useTimedPlayback<Stage>("sms", STAGES, inView && !reduceMotion);
+  const stage = useTimedPlayback<Stage>("sms", STAGES, inView && !reduceMotion);
 
   const shownStage: Stage = reduceMotion ? "done" : stage;
 
@@ -135,7 +135,6 @@ export default function SignatureFlow() {
           </motion.div>
         </AnimatePresence>
       </PhoneFrame>
-      {!reduceMotion && <ReplayButton onClick={replay} />}
     </Stack>
   );
 }

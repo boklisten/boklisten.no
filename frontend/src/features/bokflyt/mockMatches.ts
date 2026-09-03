@@ -5,6 +5,7 @@ import type {
   MatchObligationDto,
 } from "@boklisten/backend/shared/match/match-dto";
 
+import { inHandoverYear } from "@/features/bokflyt/mockDates";
 import { forViewer } from "@/features/matches/forViewer";
 import type { ViewerMatch, ViewerObligation } from "@/features/matches/forViewer";
 
@@ -30,7 +31,7 @@ export const HANDOVER_BOOKS = [
 ] as const;
 
 function handover(id: string, blid: string, from: HandoverParty, to: HandoverParty): HandoverDto {
-  return { id, blid, occurredAt: "2026-06-16T12:20:00+02:00", from, to };
+  return { id, blid, occurredAt: inHandoverYear("06-16T12:20:00+02:00"), from, to };
 }
 
 /** Books outside the scanned handover only need some id. */
@@ -64,7 +65,7 @@ function matches(booksReceived: number): MatchDto[] {
       roundId: "juni",
       isStandMatch: false,
       meetingLocation: "Utenfor biblioteket",
-      meetingTime: "2026-06-16T12:15:00+02:00",
+      meetingTime: inHandoverYear("06-16T12:15:00+02:00"),
       participants: [RONJA, ESPEN],
       obligations: HANDOVER_BOOKS.map((book, index) =>
         obligation(book.id, book.title, RONJA, ESPEN, index < booksReceived, book.blid),
@@ -75,7 +76,7 @@ function matches(booksReceived: number): MatchDto[] {
       roundId: "juni",
       isStandMatch: true,
       meetingLocation: "Stand i kantina",
-      meetingTime: "2026-08-18T10:00:00+02:00",
+      meetingTime: inHandoverYear("08-18T10:00:00+02:00"),
       participants: [RONJA, STAND],
       obligations: [obligation("engelsk", "Engelsk 1, ny utgave", STAND, RONJA, false)],
     },
@@ -84,7 +85,7 @@ function matches(booksReceived: number): MatchDto[] {
       roundId: "juni",
       isStandMatch: false,
       meetingLocation: "Ved hovedinngangen",
-      meetingTime: "2026-06-12T13:00:00+02:00",
+      meetingTime: inHandoverYear("06-12T13:00:00+02:00"),
       participants: [PEER, RONJA],
       obligations: [
         obligation("historie", "Historie VG3", PEER, RONJA, true),

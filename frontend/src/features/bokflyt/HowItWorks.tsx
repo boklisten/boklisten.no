@@ -8,7 +8,7 @@ import SectionHeading from "@/features/bokflyt/SectionHeading";
 import AgreementFigure from "@/features/bokflyt/steps/AgreementFigure";
 import ExportFigure from "@/features/bokflyt/steps/ExportFigure";
 import HandoverFigure from "@/features/bokflyt/steps/HandoverFigure";
-import MatchInsights from "@/features/bokflyt/steps/MatchInsights";
+import MatchGraph from "@/features/bokflyt/steps/MatchGraph";
 import SignatureFlow from "@/features/bokflyt/steps/SignatureFlow";
 
 interface StepContent {
@@ -35,12 +35,12 @@ const STEPS: StepContent[] = [
   },
   {
     title: "Vi setter opp overleveringene",
-    text: "Ut fra fagvalgene regner vi ut hvem som skal gi bøker til hvem, og setter opp tid og sted. Dette gjør vi, ikke skolen. Dere får likevel full oversikt: hvor mange elever som bytter direkte med hverandre, og hvor mange som må innom stand.",
-    figure: <MatchInsights />,
+    text: "Vår algoritme finner ut hvem som skal gi bøker til hvem, og setter opp tid og sted.",
+    figure: <MatchGraph />,
   },
   {
     title: "Elevene møtes og bytter bøker",
-    text: "Hver elev ser på mobilen hvem de skal møte, hvor og når, og hvilke bøker som skal byttes. Overleveringen bekreftes ved å skanne boken, så vi alltid vet hvor hver bok er. De få som må innom stand, får tid og sted.",
+    text: "Hver elev ser hvem de skal møte, hvor og når, og hvilke bøker som skal byttes. Overleveringen bekreftes ved å skanne bøkene, så vi alltid vet hvor hver bok er. De få som må innom stand, får tid og sted.",
     figure: <HandoverFigure />,
   },
 ];

@@ -15,8 +15,8 @@ export default function Hero() {
               Lærebøkene går rett fra elev til elev.
             </Title>
             <Text className={classes.lead}>
-              Bokflyt setter opp direkte overleveringer av lærebøker ut fra elevenes fagvalg. Skolen
-              slipper utlevering, lagring og etterarbeid, og elevene har neste års bøker før
+              Bokflyt setter opp direkte overleveringer av lærebøker basert på elevenes fagvalg.
+              Skolen slipper utlevering, lagring og merarbeid, og elevene har neste års bøker før
               sommerferien.
             </Text>
             <Group gap="sm">
@@ -28,7 +28,7 @@ export default function Hero() {
                 radius="xl"
                 color={BOKFLYT_COLORS.deep}
               >
-                Book en uforpliktende prat
+                Avtal en uforpliktende prat
               </Button>
               <Button
                 component="a"

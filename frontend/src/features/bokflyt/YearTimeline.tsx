@@ -6,7 +6,7 @@ import SectionHeading from "@/features/bokflyt/SectionHeading";
 const STOPS: { month: string; text: string; highlight?: boolean }[] = [
   {
     month: "Vår",
-    text: "Fagvalgene og boklistene for neste skoleår sendes til oss. Elever og foresatte signerer låneavtalen på mobilen.",
+    text: "Fagvalgene og boklistene for neste skoleår sendes til oss.",
   },
   {
     month: "Juni",
@@ -19,18 +19,18 @@ const STOPS: { month: string; text: string; highlight?: boolean }[] = [
   },
   {
     month: "August",
-    text: "Elevene som gikk VG1 har hatt bøkene hjemme i ferien, og gir dem til de nye VG1-elevene. Standen trengs bare når et fag får flere eller færre elever, eller når skolen bytter tittel.",
+    text: "Nye elever signerer låneavtalen. Bøker til VG1 overleveres direkte fra elev til elev, basert på fagvalg.",
     highlight: true,
   },
 ];
 
 export default function YearTimeline() {
   return (
-    <section className={`${classes.section} ${classes.wash}`}>
+    <section className={classes.section}>
       <Container size="lg">
         <SectionHeading
           title="Skoleåret med Bokflyt"
-          lead="Det meste skjer i juni, før elevene drar på ferie. Resten tar vi i august."
+          lead="Det meste skjer i juni, før elevene drar på ferie. Resten i august."
         />
         <ol className={classes.timeline}>
           {STOPS.map((stop) => (
@@ -38,8 +38,12 @@ export default function YearTimeline() {
               key={stop.month}
               className={`${classes.timelineStop} ${stop.highlight ? classes.timelineStopHighlight : ""}`}
             >
+              <span className={classes.timelineNode} aria-hidden />
               <Stack gap={6}>
-                <span className={classes.month}>{stop.month}</span>
+                <div className={classes.timelineHead}>
+                  <span className={classes.month}>{stop.month}</span>
+                  {stop.highlight && <span className={classes.timelineTag}>Overlevering</span>}
+                </div>
                 <Text c="dimmed">{stop.text}</Text>
               </Stack>
             </li>

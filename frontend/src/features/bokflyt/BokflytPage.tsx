@@ -17,10 +17,10 @@ export default function BokflytPage() {
       <main>
         <Hero />
         <Challenges />
-        <HowItWorks />
         <Benefits />
-        <BookLifeStory />
         <YearTimeline />
+        <BookLifeStory />
+        <HowItWorks />
         <Pricing />
         <ContactSection />
       </main>
