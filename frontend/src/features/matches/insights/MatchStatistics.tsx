@@ -1,18 +1,11 @@
 import { Button, Group, Progress, SimpleGrid, Skeleton, Stack, Text } from "@mantine/core";
 import { BarChart } from "@mantine/charts";
-import {
-  IconAlertTriangle,
-  IconArrowsShuffle,
-  IconBook,
-  IconBuildingStore,
-  IconDownload,
-  IconHeartHandshake,
-  IconUsers,
-} from "@tabler/icons-react";
+import { IconAlertTriangle, IconArrowsShuffle, IconBook, IconDownload } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
 import ChartCard from "@/shared/components/charts/ChartCard";
 import DataFreshness from "@/features/matches/insights/DataFreshness";
+import RoundOverview from "@/features/matches/insights/RoundOverview";
 import DonutWithLegend from "@/shared/components/charts/DonutWithLegend";
 import StatTile from "@/shared/components/StatTile";
 import SunburstChart from "@/features/matches/insights/SunburstChart";
@@ -23,15 +16,6 @@ import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
 const REFRESH_INTERVAL_MS = 30_000;
-
-// Coloured by how good the outcome is: only student handovers is best,
-// student + stand is acceptable, stand only is the least desirable.
-const CATEGORY_ORDER = ["userOnly", "both", "standOnly"] as const;
-const CATEGORY_META = {
-  userOnly: { label: "Kun elevoverlevering", color: "teal.6" },
-  both: { label: "Elevoverlevering + stand", color: "yellow.6" },
-  standOnly: { label: "Kun standoverlevering", color: "red.6" },
-} as const;
 
 const LOCATION_PALETTE = [
   "blue.6",
@@ -108,8 +92,6 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
     return <ErrorAlert title="Kunne ikke laste statistikken">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>;
   }
 
-  const { studentReach } = data;
-
   const userCompletionDonut = [
     { name: "Fullført", value: data.userMatchCompletion.completed, color: "teal.6" },
     { name: "Påbegynt", value: data.userMatchCompletion.started, color: "yellow.6" },
@@ -147,15 +129,6 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
     type: label,
     Forventet: expected,
     Overført: transferred,
-  }));
-
-  const distributionData = data.distribution.map((entry) => ({
-    config: entry.label,
-    [CATEGORY_META[entry.category].label]: entry.students,
-  }));
-  const distributionSeries = CATEGORY_ORDER.map((category) => ({
-    name: CATEGORY_META[category].label,
-    color: CATEGORY_META[category].color,
   }));
 
   const booksOutData = [...data.standBookExpectations]
@@ -204,57 +177,12 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
         onRefresh={() => refetch()}
       />
 
-      <SimpleGrid cols={{ base: 1, sm: 3 }}>
-        <StatTile
-          label="Antall elever"
-          value={studentReach.totalStudents}
-          icon={<IconUsers />}
-          color="blue"
-        />
-        <StatTile
-          label="Elevoverleveringer"
-          value={data.userMatchCount}
-          icon={<IconHeartHandshake />}
-          color="teal"
-        />
-        <StatTile
-          label="Standoverleveringer"
-          value={data.standMatchCount}
-          icon={<IconBuildingStore />}
-          color="grape"
-        />
-      </SimpleGrid>
-
-      <ChartCard title="Hvor mange må innom stand?">
-        <DonutWithLegend
-          centerLabel={studentReach.totalStudents.toLocaleString("nb-NO")}
-          data={[
-            {
-              name: "Kun elevoverlevering",
-              value: studentReach.onlyUserHandovers,
-              color: "teal.6",
-            },
-            { name: "Må møte på stand", value: studentReach.mustVisitStand, color: "grape.6" },
-          ]}
-        />
-      </ChartCard>
-
-      <ChartCard
-        title="Fordeling av overleveringer per elev"
-        description="Antall elever per kombinasjon av overleveringer, fargelagt etter hvor gunstig løsningen er"
-        isEmpty={distributionData.length === 0}
-      >
-        <BarChart
-          h={Math.max(300, distributionData.length * 32)}
-          data={distributionData}
-          dataKey="config"
-          type="stacked"
-          orientation="vertical"
-          yAxisProps={{ width: 210 }}
-          series={distributionSeries}
-          withLegend
-        />
-      </ChartCard>
+      <RoundOverview
+        userMatchCount={data.userMatchCount}
+        standMatchCount={data.standMatchCount}
+        studentReach={data.studentReach}
+        distribution={data.distribution}
+      />
 
       <ChartCard
         title="Fullføringsgrad"

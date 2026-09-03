@@ -86,6 +86,9 @@ export interface ApiDefinition {
     update: typeof routes['questions_and_answers.update']
     destroy: typeof routes['questions_and_answers.destroy']
   }
+  bokflyt: {
+    contact: typeof routes['bokflyt.contact']
+  }
   emailVerification: {
     send: typeof routes['email_verification.send']
     verify: typeof routes['email_verification.verify']

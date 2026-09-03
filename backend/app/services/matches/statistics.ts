@@ -21,12 +21,8 @@ import type {
   StandBookExpectation,
   UserAttendanceSlot,
 } from "#shared/match/match-statistics";
+import { describeMatchConfig } from "#shared/match/match-statistics";
 import { USER_PERMISSION } from "#shared/user-permission";
-
-/** Norwegian count label, pluralised with a trailing "er", e.g. "2 elevoverleveringer". */
-function countLabel(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? "" : "er"}`;
-}
 
 /** Sort meeting slots chronologically, keeping the "no time" bucket (null) last. */
 function compareSlots(a: string | null, b: string | null): number {
@@ -308,13 +304,7 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
     if (existing) {
       existing.students++;
     } else {
-      distributionCounts.set(key, {
-        userMatches: u,
-        standMatches: s,
-        label: `${countLabel(u, "elevoverlevering")}, ${countLabel(s, "standoverlevering")}`,
-        students: 1,
-        category: u === 0 ? "standOnly" : s === 0 ? "userOnly" : "both",
-      });
+      distributionCounts.set(key, { ...describeMatchConfig(u, s), students: 1 });
     }
   }
 

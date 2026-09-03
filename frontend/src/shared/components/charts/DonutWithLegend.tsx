@@ -18,7 +18,7 @@ export default function DonutWithLegend({
   const share = (value: number) => (total === 0 ? 0 : Math.round((value / total) * 100));
 
   return (
-    <Group wrap="nowrap" align="center" gap="xl">
+    <Group align="center" gap="xl">
       <DonutChart
         data={total === 0 ? [{ name: "Ingen data", value: 1, color: "gray.2" }] : data}
         size={140}

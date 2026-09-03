@@ -16,7 +16,8 @@ export default function BlidBookHeader({
   onClear,
 }: {
   result: BlidSearchResult;
-  onClear: () => void;
+  /** Shows a close button; leave out where the card cannot be dismissed. */
+  onClear?: () => void;
 }) {
   const { label, color } = STATUS_BADGE[result.status];
   return (
@@ -38,7 +39,7 @@ export default function BlidBookHeader({
         <Badge variant="light" color={color}>
           {label}
         </Badge>
-        <CloseButton aria-label="Lukk boksøket" onClick={onClear} />
+        {onClear && <CloseButton aria-label="Lukk boksøket" onClick={onClear} />}
       </Group>
     </Group>
   );

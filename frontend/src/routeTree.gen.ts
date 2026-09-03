@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as offentligRouteRouteImport } from './routes/(offentlig)/route'
+import { Route as BokflytRouteImport } from './routes/bokflyt'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
@@ -94,6 +95,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const offentligRouteRoute = offentligRouteRouteImport.update({
   id: '/(offentlig)',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BokflytRoute = BokflytRouteImport.update({
+  id: '/bokflyt',
+  path: '/bokflyt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HealthRoute = HealthRouteImport.update({
@@ -515,6 +521,7 @@ const offentligAuthEmailVerifyVerificationIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bokflyt': typeof BokflytRoute
   '/health': typeof HealthRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -593,6 +600,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bokflyt': typeof BokflytRoute
   '/health': typeof HealthRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -670,6 +678,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/(offentlig)': typeof offentligRouteRouteWithChildren
+  '/bokflyt': typeof BokflytRoute
   '/health': typeof HealthRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -750,6 +759,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bokflyt'
     | '/health'
     | '/llms.txt'
     | '/robots.txt'
@@ -828,6 +838,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bokflyt'
     | '/health'
     | '/llms.txt'
     | '/robots.txt'
@@ -904,6 +915,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/(offentlig)'
+    | '/bokflyt'
     | '/health'
     | '/llms.txt'
     | '/robots.txt'
@@ -984,6 +996,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   offentligRouteRoute: typeof offentligRouteRouteWithChildren
+  BokflytRoute: typeof BokflytRoute
   HealthRoute: typeof HealthRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
@@ -1014,6 +1027,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof offentligRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bokflyt': {
+      id: '/bokflyt'
+      path: '/bokflyt'
+      fullPath: '/bokflyt'
+      preLoaderRoute: typeof BokflytRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/health': {
@@ -1765,6 +1785,7 @@ const administrasjonAdminRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   offentligRouteRoute: offentligRouteRouteWithChildren,
+  BokflytRoute: BokflytRoute,
   HealthRoute: HealthRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,

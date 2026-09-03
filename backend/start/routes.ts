@@ -197,6 +197,11 @@ router.patch("/questions_and_answers/:id", [controllers.QuestionsAndAnswers, "up
 router.delete("/questions_and_answers/:id", [controllers.QuestionsAndAnswers, "destroy"]);
 
 /**
+ * bokflyt sales page
+ */
+router.post("/bokflyt/contact", [controllers.Bokflyt, "contact"]).use(throttle);
+
+/**
  * email verification
  */
 router.post("/email_verification", [controllers.EmailVerification, "send"]);

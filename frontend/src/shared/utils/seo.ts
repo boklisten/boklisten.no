@@ -4,7 +4,7 @@ export const SITE_URL = "https://boklisten.no";
 export const SITE_NAME = "Boklisten.no";
 export const OG_IMAGE_PATH = "/images/og-image.png";
 
-const INDEXABLE_PATHS = new Set(["/", "/auth/login", "/auth/register", "/bestilling"]);
+const INDEXABLE_PATHS = new Set(["/", "/auth/login", "/auth/register", "/bestilling", "/bokflyt"]);
 const INDEXABLE_PATH_PREFIXES = ["/info"];
 
 const LAYOUT_ONLY_PATHS = new Set(["/info", "/info/policies"]);

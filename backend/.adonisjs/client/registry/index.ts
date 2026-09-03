@@ -318,6 +318,12 @@ const routes = {
     tokens: [{"old":"/questions_and_answers/:id","type":0,"val":"questions_and_answers","end":""},{"old":"/questions_and_answers/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['questions_and_answers.destroy']['types'],
   },
+  'bokflyt.contact': {
+    methods: ["POST"],
+    pattern: '/bokflyt/contact',
+    tokens: [{"old":"/bokflyt/contact","type":0,"val":"bokflyt","end":""},{"old":"/bokflyt/contact","type":0,"val":"contact","end":""}],
+    types: placeholder as Registry['bokflyt.contact']['types'],
+  },
   'email_verification.send': {
     methods: ["POST"],
     pattern: '/email_verification',

@@ -1,0 +1,556 @@
+.page {
+  --bf-deep: #1b5a7a;
+  --bf-ink: #15303f;
+  --bf-light: #6fa3cf;
+  --bf-wash: #eaf2f8;
+  --bf-wash-strong: #d6e6f2;
+  --bf-paper: #fff;
+  --bf-display: "Sora", "Segoe UI", system-ui, sans-serif;
+
+  color: var(--bf-ink);
+  background: var(--bf-paper);
+  overflow-x: clip;
+}
+
+.display {
+  font-family: var(--bf-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--bf-deep);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.heroTitle {
+  font-size: clamp(2.4rem, 6vw, 4.3rem);
+}
+
+.sectionTitle {
+  font-size: clamp(1.8rem, 3.6vw, 2.7rem);
+}
+
+.stepTitle {
+  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+}
+
+.lead {
+  font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+  line-height: 1.55;
+  max-width: 34em;
+}
+
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgb(255 255 255 / 86%);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--bf-wash-strong);
+}
+
+.topBarInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+}
+
+.logo {
+  display: block;
+  height: 46px;
+  width: 154px;
+  object-fit: cover;
+}
+
+.section {
+  padding: clamp(3.5rem, 8vw, 7rem) 0;
+}
+
+/* In-page links land below the sticky top bar instead of under it. */
+.page section[id] {
+  scroll-margin-top: 4.5rem;
+}
+
+.wash {
+  background: var(--bf-wash);
+}
+
+.hero {
+  padding: clamp(2.5rem, 6vw, 5rem) 0 clamp(3rem, 7vw, 6rem);
+  background: linear-gradient(180deg, var(--bf-paper) 0%, var(--bf-wash) 100%);
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (min-width: 62em) {
+  .heroGrid {
+    grid-template-columns: 1.05fr 1fr;
+    gap: 3rem;
+  }
+}
+
+.diagram {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.steps {
+  position: relative;
+  display: grid;
+  gap: clamp(3.5rem, 7vw, 6rem);
+  padding-left: 3.4rem;
+  margin: 0;
+  list-style: none;
+}
+
+.rail {
+  position: absolute;
+  left: 1.05rem;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  width: 4px;
+  background: var(--bf-wash-strong);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.railFill {
+  position: absolute;
+  inset: 0;
+  background: var(--bf-light);
+  transform-origin: top;
+  border-radius: 4px;
+}
+
+.step {
+  position: relative;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  align-items: center;
+}
+
+@media (min-width: 62em) {
+  .step {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 3.5rem;
+  }
+}
+
+.stepMarker {
+  position: absolute;
+  left: -3.4rem;
+  top: 0;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--bf-paper);
+  border: 3px solid var(--bf-wash-strong);
+  color: var(--bf-deep);
+  font-family: var(--bf-display);
+  font-weight: 700;
+  transition:
+    border-color 0.4s,
+    background 0.4s,
+    color 0.4s;
+}
+
+.stepMarkerActive {
+  border-color: var(--bf-light);
+  background: var(--bf-deep);
+  color: #fff;
+}
+
+.stepFigure {
+  min-width: 0;
+}
+
+.phone {
+  width: min(100%, 340px);
+  margin: 0 auto;
+  border-radius: 2.4rem;
+  background: #0f1f2a;
+  padding: 10px;
+  box-shadow: 0 34px 60px -32px rgb(21 48 63 / 55%);
+}
+
+.phoneScreen {
+  position: relative;
+  background: #fff;
+  border-radius: 1.9rem;
+  overflow: hidden;
+  height: 560px;
+  display: flex;
+  flex-direction: column;
+}
+
+.phoneNotch {
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+  flex: none;
+}
+
+.phoneNotch::before {
+  content: "";
+  width: 90px;
+  height: 6px;
+  border-radius: 999px;
+  background: #0f1f2a;
+  opacity: 0.85;
+}
+
+.phoneBody {
+  padding: 1rem;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.phoneFade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 70px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0%), #fff);
+  pointer-events: none;
+}
+
+.noInteraction {
+  pointer-events: none;
+  user-select: none;
+}
+
+.smsThread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.smsBubble {
+  align-self: flex-start;
+  max-width: 92%;
+  background: #e9e9eb;
+  color: #111;
+  border-radius: 1.1rem;
+  border-bottom-left-radius: 0.3rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Fills the real signature box, whose style is shared with the signing form. */
+.signatureStroke {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.signatureLine {
+  border-bottom: 1.5px solid var(--bf-ink);
+  height: 22px;
+}
+
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 1.75rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48em) {
+  .timeline {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+.timelineStop {
+  position: relative;
+  padding-top: 1.25rem;
+  border-top: 3px solid var(--bf-wash-strong);
+}
+
+.timelineStop::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 0;
+  width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  background: var(--bf-light);
+  border: 3px solid var(--bf-paper);
+}
+
+.timelineStopHighlight {
+  border-top-color: var(--bf-light);
+}
+
+.timelineStopHighlight::before {
+  background: var(--bf-deep);
+}
+
+.month {
+  font-family: var(--bf-display);
+  font-weight: 700;
+  color: var(--bf-deep);
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.iconBadge {
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  border-radius: 1rem;
+  display: grid;
+  place-items: center;
+  background: var(--bf-wash);
+  color: var(--bf-deep);
+}
+
+.formCard {
+  background: #fff;
+  border-radius: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  box-shadow: 0 30px 60px -36px rgb(21 48 63 / 45%);
+}
+
+.paperMock {
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 24px 50px -30px rgb(21 48 63 / 40%);
+  border: 1px solid var(--bf-wash-strong);
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.paperLine {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bf-wash-strong);
+}
+
+.csvRow {
+  display: grid;
+  grid-template-columns: 2fr 1.4fr 1fr;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--bf-wash);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.csvHead {
+  color: var(--bf-deep);
+  font-weight: 600;
+}
+
+.phonePair {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  justify-items: center;
+}
+
+@media (min-width: 40em) {
+  .phonePair {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.phonePair .phone {
+  width: min(100%, 300px);
+}
+
+.phonePair .phoneScreen {
+  height: 520px;
+}
+
+.viewfinder {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 20%, #2a4457 0%, #101d27 70%);
+  display: grid;
+  place-items: start center;
+}
+
+/* Sits high enough that the sticker stays clear of the toast along the bottom edge. */
+.bookCover {
+  width: 60%;
+  aspect-ratio: 3 / 3.3;
+  margin-top: -12%;
+  border-radius: 4px;
+  padding: 0.55rem;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 14px 24px -12px rgb(0 0 0 / 70%);
+}
+
+.bookCoverTitle {
+  font-family: var(--bf-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  line-height: 1.15;
+}
+
+.blidLabel {
+  display: grid;
+  grid-template-columns: 1fr 2.6fr;
+  gap: 4%;
+  align-items: center;
+  background: #fff;
+  padding: 4% 5%;
+  border-radius: 3px;
+}
+
+.blidQr {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.blidBarcode {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.proof {
+  background: var(--bf-deep);
+  color: #fff;
+}
+
+.onDeep {
+  color: #fff;
+}
+
+.onDeepMuted {
+  color: rgb(255 255 255 / 82%);
+}
+
+.proofGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (min-width: 62em) {
+  .proofGrid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 4rem;
+  }
+}
+
+.proofFacts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.proofFacts li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  font-size: 1.05rem;
+}
+
+.proofFacts svg {
+  flex: none;
+  margin-top: 0.15rem;
+  color: var(--bf-light);
+}
+
+.proofCard {
+  background: #fff;
+  color: var(--bf-ink);
+  border-radius: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  box-shadow: 0 30px 60px -30px rgb(0 0 0 / 50%);
+}
+
+.proofLabel {
+  width: min(100%, 220px);
+  border: 1px solid var(--bf-wash-strong);
+  border-radius: 6px;
+}
+
+.scanFrame {
+  position: absolute;
+  inset: 10% 12%;
+  border: 2px solid rgb(255 255 255 / 55%);
+  border-radius: 10px;
+  box-shadow: 0 0 0 999px rgb(0 0 0 / 30%);
+  pointer-events: none;
+}
+
+.scanLine {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  background: #5ee39a;
+  box-shadow: 0 0 12px #5ee39a;
+}
+
+.scanFlash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  pointer-events: none;
+}
+
+.scanDone {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(16 29 39 / 70%);
+  color: #5ee39a;
+}
+
+.scanToast {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  background: var(--mantine-color-green-filled);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .railFill {
+    transform: none !important;
+  }
+}

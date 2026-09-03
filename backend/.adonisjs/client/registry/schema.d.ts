@@ -631,6 +631,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/questions_and_answers_controller').default['destroy']>>>
     }
   }
+  'bokflyt.contact': {
+    methods: ["POST"]
+    pattern: '/bokflyt/contact'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/bokflyt').bokflytContactValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/bokflyt').bokflytContactValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/bokflyt_controller').default['contact']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/bokflyt_controller').default['contact']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'email_verification.send': {
     methods: ["POST"]
     pattern: '/email_verification'

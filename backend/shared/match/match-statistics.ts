@@ -26,6 +26,24 @@ export interface MatchConfigDistributionEntry {
   category: MatchConfigCategory;
 }
 
+/** Norwegian count label, pluralised with a trailing "er", e.g. "2 elevoverleveringer". */
+function countLabel(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "er"}`;
+}
+
+/** How a combination of handovers is labelled and classified, shared so mock-ups read like the real thing. */
+export function describeMatchConfig(
+  userMatches: number,
+  standMatches: number,
+): Omit<MatchConfigDistributionEntry, "students"> {
+  return {
+    userMatches,
+    standMatches,
+    label: `${countLabel(userMatches, "elevoverlevering")}, ${countLabel(standMatches, "standoverlevering")}`,
+    category: userMatches === 0 ? "standOnly" : standMatches === 0 ? "userOnly" : "both",
+  };
+}
+
 /** Expected vs actual books in to and out from the stand, per title. */
 export interface StandBookExpectation {
   itemId: string;

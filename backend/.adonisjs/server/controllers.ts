@@ -11,6 +11,7 @@ export const controllers = {
     Vipps: () => import('#controllers/auth/vipps_controller'),
   },
   BlidSearch: () => import('#controllers/blid_search_controller'),
+  Bokflyt: () => import('#controllers/bokflyt_controller'),
   BranchItems: () => import('#controllers/branch_items_controller'),
   branches: {
     BranchBooks: () => import('#controllers/branches/branch_books_controller'),

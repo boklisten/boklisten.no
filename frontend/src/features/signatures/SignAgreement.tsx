@@ -7,6 +7,7 @@ import {
   OUTGROWN_SIGNATURE_TITLE,
   describeOutgrownSignature,
 } from "@/features/signatures/outgrownSignatureCopy";
+import { signaturePrompt } from "@/features/signatures/signaturePrompt";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import EditableTextReadOnly from "@/shared/components/EditableTextReadOnly";
@@ -107,7 +108,7 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
         >
           {(field) => (
             <field.SignatureCanvasField
-              label={`Signer her på at du er${data.isUnderage ? " foresatt til" : ""} ${data.name} og godkjenner betingelsene${data.isUnderage ? " på hans eller hennes vegne" : ""}:`}
+              label={signaturePrompt(data.name ?? "", data.isUnderage ?? false)}
             />
           )}
         </form.AppField>

@@ -1,10 +1,19 @@
 import { ActionIcon, Box, Stack, Text, Tooltip } from "@mantine/core";
 import { IconEraser } from "@tabler/icons-react";
 import { Activity, useEffect, useEffectEvent, useRef } from "react";
+import type { CSSProperties } from "react";
 import { SignatureCanvas } from "react-signature-canvas";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { useFieldContext } from "@/shared/hooks/form";
+
+/** The box the customer draws in. Shared so illustrations of the signing step look the same. */
+export const SIGNATURE_BOX_STYLE: CSSProperties = {
+  border: "2px solid gray",
+  borderRadius: 5,
+  aspectRatio: 3,
+  position: "relative",
+};
 
 export default function SignatureCanvasField(props: { label: string }) {
   const sigCanvas = useRef<SignatureCanvas>(null);
@@ -38,15 +47,7 @@ export default function SignatureCanvasField(props: { label: string }) {
       <Text size="sm" fw={500}>
         {props.label}
       </Text>
-      <Box
-        ref={containerRef}
-        style={{
-          border: "2px solid gray",
-          borderRadius: 5,
-          aspectRatio: 3,
-          position: "relative",
-        }}
-      >
+      <Box ref={containerRef} style={SIGNATURE_BOX_STYLE}>
         <SignatureCanvas
           onEnd={() => {
             if (!sigCanvas.current) {
