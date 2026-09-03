@@ -43,6 +43,7 @@ export const controllers = {
   Reminders: () => import('#controllers/reminders_controller'),
   Reports: () => import('#controllers/reports_controller'),
   Signatures: () => import('#controllers/signatures_controller'),
+  StandCheckout: () => import('#controllers/stand_checkout_controller'),
   Subjects: () => import('#controllers/subjects_controller'),
   UniqueIds: () => import('#controllers/unique_ids_controller'),
   UniqueItems: () => import('#controllers/unique_items_controller'),

@@ -1,3 +1,4 @@
+import type { CustomerItemAction } from "#shared/customer-item/actionable_customer_item";
 import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
 
 /** A book a customer is currently holding, as shown to employees at the stand. */
@@ -9,4 +10,6 @@ export interface ActiveCustomerItem {
   blid: string | null;
   type: CustomerItemType;
   deadline: Date;
+  /** Extension and buyout, priced and gated by the same rules the customer sees. */
+  actions: CustomerItemAction[];
 }

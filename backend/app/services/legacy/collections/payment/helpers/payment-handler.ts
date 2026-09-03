@@ -42,7 +42,7 @@ export class PaymentHandler {
       return Promise.resolve(true);
     }
 
-    if (payment.method === "vipps-checkout") {
+    if (payment.method === "vipps-checkout" || payment.method === "vipps-epayment") {
       return Promise.resolve(true);
     }
 

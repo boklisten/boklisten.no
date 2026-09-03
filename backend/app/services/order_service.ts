@@ -71,7 +71,15 @@ export const OrderService = {
     });
   },
 
-  async createFromCart(customerId: string, cartItems: CheckoutCartItem[]) {
+  /**
+   * Builds an unplaced order from cart lines. Orders made at the stand are recorded as the
+   * employee's, which is also what lets the payment be settled by card or cash.
+   */
+  async createFromCart(
+    customerId: string,
+    cartItems: CheckoutCartItem[],
+    placedBy?: { byCustomer: true } | { byCustomer: false; employee: string },
+  ) {
     if (new Set(cartItems.map((cartItem) => cartItem.id)).size !== cartItems.length) {
       throw new BadRequestException("Du kan ikke bestille flere av samme bok");
     }
@@ -168,7 +176,8 @@ export const OrderService = {
       branch: branchId,
       customer: customerId,
       placed: false,
-      byCustomer: true,
+      byCustomer: placedBy?.byCustomer ?? true,
+      ...(placedBy?.byCustomer === false ? { employee: placedBy.employee } : {}),
       payments: [],
       handoutByDelivery: false,
     });

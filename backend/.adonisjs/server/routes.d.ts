@@ -114,6 +114,9 @@ export type ScannedRoutes = {
     'checkout.confirm_checkout': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.handle_vipps_callback': { paramsTuple?: []; params?: {} }
     'checkout.poll_payment': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'stand_checkout.start': { paramsTuple?: []; params?: {} }
+    'stand_checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'stand_checkout.cancel': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'subjects.get_branch_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_items.get_branch_items': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_items.set_branch_items': { paramsTuple?: []; params?: {} }
@@ -247,6 +250,7 @@ export type ScannedRoutes = {
     'order_history.get_my_orders': { paramsTuple?: []; params?: {} }
     'order_history.get_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'checkout.poll_payment': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'stand_checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'subjects.get_branch_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_items.get_branch_items': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'postal.lookup_postal_code': { paramsTuple: [ParamValue]; params: {'postalCode': ParamValue} }
@@ -343,6 +347,7 @@ export type ScannedRoutes = {
     'order_history.get_my_orders': { paramsTuple?: []; params?: {} }
     'order_history.get_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'checkout.poll_payment': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'stand_checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'subjects.get_branch_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_items.get_branch_items': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'postal.lookup_postal_code': { paramsTuple: [ParamValue]; params: {'postalCode': ParamValue} }
@@ -428,6 +433,8 @@ export type ScannedRoutes = {
     'checkout.initialize_checkout': { paramsTuple?: []; params?: {} }
     'checkout.confirm_checkout': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.handle_vipps_callback': { paramsTuple?: []; params?: {} }
+    'stand_checkout.start': { paramsTuple?: []; params?: {} }
+    'stand_checkout.cancel': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'branch_items.set_branch_items': { paramsTuple?: []; params?: {} }
     'companies.add_company': { paramsTuple?: []; params?: {} }
     'opening_hours.add': { paramsTuple?: []; params?: {} }

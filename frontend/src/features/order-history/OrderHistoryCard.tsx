@@ -406,7 +406,7 @@ function DetailsSection({
       )}
       {order.checkoutState && (
         <Text size="sm" c="dimmed">
-          Vipps Checkout: {order.checkoutState}
+          Vipps: {order.checkoutState}
         </Text>
       )}
       {/* Last and quiet: staff copy it into other tools, nobody reads it. */}

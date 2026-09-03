@@ -666,6 +666,24 @@ const routes = {
     tokens: [{"old":"/checkout/poll/:orderId","type":0,"val":"checkout","end":""},{"old":"/checkout/poll/:orderId","type":0,"val":"poll","end":""},{"old":"/checkout/poll/:orderId","type":1,"val":"orderId","end":""}],
     types: placeholder as Registry['checkout.poll_payment']['types'],
   },
+  'stand_checkout.start': {
+    methods: ["POST"],
+    pattern: '/v2/employee/stand_checkout',
+    tokens: [{"old":"/v2/employee/stand_checkout","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_checkout","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_checkout","type":0,"val":"stand_checkout","end":""}],
+    types: placeholder as Registry['stand_checkout.start']['types'],
+  },
+  'stand_checkout.status': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/employee/stand_checkout/:orderId/status',
+    tokens: [{"old":"/v2/employee/stand_checkout/:orderId/status","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_checkout/:orderId/status","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_checkout/:orderId/status","type":0,"val":"stand_checkout","end":""},{"old":"/v2/employee/stand_checkout/:orderId/status","type":1,"val":"orderId","end":""},{"old":"/v2/employee/stand_checkout/:orderId/status","type":0,"val":"status","end":""}],
+    types: placeholder as Registry['stand_checkout.status']['types'],
+  },
+  'stand_checkout.cancel': {
+    methods: ["POST"],
+    pattern: '/v2/employee/stand_checkout/:orderId/cancel',
+    tokens: [{"old":"/v2/employee/stand_checkout/:orderId/cancel","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_checkout/:orderId/cancel","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_checkout/:orderId/cancel","type":0,"val":"stand_checkout","end":""},{"old":"/v2/employee/stand_checkout/:orderId/cancel","type":1,"val":"orderId","end":""},{"old":"/v2/employee/stand_checkout/:orderId/cancel","type":0,"val":"cancel","end":""}],
+    types: placeholder as Registry['stand_checkout.cancel']['types'],
+  },
   'subjects.get_branch_subjects': {
     methods: ["GET","HEAD"],
     pattern: '/subjects/:branchId',

@@ -6,6 +6,7 @@ import { createSandbox } from "sinon";
 import CustomerItemsController from "#controllers/customer_items_controller";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
+import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { mock } from "#tests/test-doubles";
 
 const DETAILS_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
@@ -79,16 +80,40 @@ test.group("CustomerItemsController.getActiveCustomerItemsForCustomer", (group) 
     assert.equal(matchStage(aggregateStub)["handout"], true);
   });
 
-  test("passes the aggregated books through", async ({ assert }) => {
+  test("passes the aggregated books through, priced with the customer's own rules", async ({
+    assert,
+  }) => {
     const book = {
       id: "ci1",
+      item: "item1",
       title: "Mønster 1T",
       blid: "abc123",
       type: "rent",
       deadline: new Date("2027-09-01"),
     };
     aggregateStub.resolves([book]);
+    sandbox.stub(StorageService, "CustomerItems").value({
+      aggregate: aggregateStub,
+      getMany: sandbox.stub().resolves([
+        mock<CustomerItem>({
+          id: "ci1",
+          item: "item1",
+          deadline: book.deadline,
+          orders: [],
+          handoutInfo: { handoutBy: "branch", handoutById: "branch1", time: new Date() },
+        }),
+      ]),
+    });
+    sandbox.stub(StorageService, "Branches").value({ getOrNull: sandbox.stub().resolves(null) });
     const result = await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
-    assert.deepEqual(result, [book]);
+    assert.lengthOf(result, 1);
+    assert.include(result[0], book);
+    assert.deepEqual(
+      result[0]?.actions.map((action) => [action.type, action.available]),
+      [
+        ["extend", false],
+        ["buyout", false],
+      ],
+    );
   });
 });

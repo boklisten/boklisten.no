@@ -1327,6 +1327,42 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout_controller').default['pollPayment']>>>
     }
   }
+  'stand_checkout.start': {
+    methods: ["POST"]
+    pattern: '/v2/employee/stand_checkout'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/stand_checkout').startStandCheckoutValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/stand_checkout').startStandCheckoutValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['start']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['start']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'stand_checkout.status': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/employee/stand_checkout/:orderId/status'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { orderId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['status']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['status']>>>
+    }
+  }
+  'stand_checkout.cancel': {
+    methods: ["POST"]
+    pattern: '/v2/employee/stand_checkout/:orderId/cancel'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { orderId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['cancel']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['cancel']>>>
+    }
+  }
   'subjects.get_branch_subjects': {
     methods: ["GET","HEAD"]
     pattern: '/subjects/:branchId'

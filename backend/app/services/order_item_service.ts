@@ -1,11 +1,13 @@
 import { DateTime } from "luxon";
 
+import { periodTypeOfLastOrder, resolveBuyoutPrice } from "#services/customer_item_actions_service";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 
-function isSameDeadlineDay(a: Date, b: Date): boolean {
+/** Deadlines are compared as Oslo calendar days, so a date picked in a form matches the branch period. */
+export function isSameDeadlineDay(a: Date, b: Date): boolean {
   return DateTime.fromJSDate(a)
     .setZone("Europe/Oslo")
     .hasSame(DateTime.fromJSDate(b).setZone("Europe/Oslo"), "day");
@@ -13,21 +15,18 @@ function isSameDeadlineDay(a: Date, b: Date): boolean {
 
 export const OrderItemService = {
   async createBuyoutOrderItem(customerItem: CustomerItem, item: Item) {
-    const branch = await StorageService.Branches.get(customerItem.handoutInfo?.handoutById);
-    const order = await StorageService.Orders.getOrNull(customerItem.orders.at(-1));
-    const orderItem = order?.orderItems.find((oi) => oi.customerItem === customerItem.id);
-    const buyoutPercentage =
-      branch?.paymentInfo?.partlyPaymentPeriods?.find(
-        (period) => period.type === orderItem?.info?.periodType,
-      )?.percentageBuyout ?? branch?.paymentInfo?.buyout?.percentage;
+    const branch = await StorageService.Branches.getOrNull(customerItem.handoutInfo?.handoutById);
+    const price = resolveBuyoutPrice({
+      customerItem,
+      item,
+      branch,
+      periodType: await periodTypeOfLastOrder(customerItem),
+    });
 
-    if (!buyoutPercentage) {
+    if (price === null) {
       throw new Error("Could not find buyout percentage in checkout!");
     }
 
-    const price =
-      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- amountLeftToPay can be 0, which deliberately falls through to the computed buyout price
-      customerItem.amountLeftToPay || Math.floor((item.price * buyoutPercentage) / 10) * 10;
     return {
       type: "buyout",
       item: item.id,

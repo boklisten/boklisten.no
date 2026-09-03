@@ -2,10 +2,25 @@ import type { ActiveCustomerItem } from "@boklisten/backend/shared/customer-item
 import type { CustomerItemType } from "@boklisten/backend/shared/customer-item/customer-item-type";
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
-import { Badge, Box, Card, Group, Skeleton, Stack, Table, Text } from "@mantine/core";
+import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import {
+  Badge,
+  Box,
+  Button,
+  Card,
+  Group,
+  Skeleton,
+  Stack,
+  Table,
+  Text,
+  Tooltip,
+} from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { buildPeerBooks } from "@/features/customer-search/handoutBooks";
+import StandCheckoutModal from "@/features/customer-search/StandCheckoutModal";
+import type { StandCheckoutRequest } from "@/features/customer-search/StandCheckoutModal";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";
@@ -51,6 +66,57 @@ function BlidLink({ blid }: { blid: string }) {
   );
 }
 
+type BookActionType = StandCheckoutRequest["type"];
+
+const ACTION_LABELS: Record<BookActionType, string> = { extend: "Forleng", buyout: "Kjøp ut" };
+
+/** Why an action is blocked, or null when the customer could do it themselves too. */
+function blockedReason(book: ActiveCustomerItem, type: BookActionType): string | null {
+  const actions = book.actions.filter((action) => action.type === type);
+  if (actions.some((action) => action.available)) {
+    return null;
+  }
+  return actions[0]?.tooltip ?? "Ikke tilgjengelig for denne boka";
+}
+
+/**
+ * The two things an employee can settle for a book on the spot. A blocked button keeps hover
+ * events (data-disabled, not disabled) so the tooltip can say why.
+ */
+function BookActions({
+  book,
+  onAction,
+}: {
+  book: ActiveCustomerItem;
+  onAction: (type: BookActionType) => void;
+}) {
+  return (
+    <Group gap={6} wrap="nowrap">
+      {(["extend", "buyout"] as const).map((type) => {
+        const reason = blockedReason(book, type);
+        return (
+          <Tooltip key={type} label={reason} disabled={reason === null} multiline maw={280}>
+            <Button
+              variant="light"
+              size="compact-sm"
+              data-disabled={reason !== null || undefined}
+              onClick={(event) => {
+                if (reason !== null) {
+                  event.preventDefault();
+                  return;
+                }
+                onAction(type);
+              }}
+            >
+              {ACTION_LABELS[type]}
+            </Button>
+          </Tooltip>
+        );
+      })}
+    </Group>
+  );
+}
+
 function OverdueBadge() {
   return (
     <Badge color="red" variant="filled" size="sm" style={{ flexShrink: 0 }}>
@@ -87,9 +153,11 @@ function buildDeliverToNames(
 function BookCards({
   books,
   deliverToNames,
+  onAction,
 }: {
   books: ActiveCustomerItem[];
   deliverToNames: Map<string, string>;
+  onAction: (request: StandCheckoutRequest) => void;
 }) {
   return (
     <Stack gap="xs" hiddenFrom="sm">
@@ -112,6 +180,9 @@ function BookCards({
               </Group>
               {book.blid && <BlidLink blid={book.blid} />}
             </Group>
+            <Group mt="sm">
+              <BookActions book={book} onAction={(type) => onAction({ book, type })} />
+            </Group>
           </Card>
         );
       })}
@@ -122,9 +193,11 @@ function BookCards({
 function BookTable({
   books,
   deliverToNames,
+  onAction,
 }: {
   books: ActiveCustomerItem[];
   deliverToNames: Map<string, string>;
+  onAction: (request: StandCheckoutRequest) => void;
 }) {
   return (
     <Box visibleFrom="sm">
@@ -134,6 +207,7 @@ function BookTable({
             <Table.Th>Tittel</Table.Th>
             <Table.Th>Unik ID</Table.Th>
             <Table.Th>Frist</Table.Th>
+            <Table.Th>Handlinger</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
@@ -154,6 +228,9 @@ function BookTable({
                     {isOverdue(book.deadline) && <OverdueBadge />}
                   </Group>
                 </Table.Td>
+                <Table.Td>
+                  <BookActions book={book} onAction={(type) => onAction({ book, type })} />
+                </Table.Td>
               </Table.Tr>
             );
           })}
@@ -163,8 +240,10 @@ function BookTable({
   );
 }
 
-export default function ActiveBooksView({ customerId }: { customerId: string }) {
+export default function ActiveBooksView({ customer }: { customer: UserDetail }) {
+  const customerId = customer.id;
   const { api } = useApiClient();
+  const [checkout, setCheckout] = useState<StandCheckoutRequest | null>(null);
   const {
     data: books,
     isPending,
@@ -211,8 +290,13 @@ export default function ActiveBooksView({ customerId }: { customerId: string }) 
           </Badge>
         )}
       </Group>
-      <BookCards books={books} deliverToNames={deliverToNames} />
-      <BookTable books={books} deliverToNames={deliverToNames} />
+      <BookCards books={books} deliverToNames={deliverToNames} onAction={setCheckout} />
+      <BookTable books={books} deliverToNames={deliverToNames} onAction={setCheckout} />
+      <StandCheckoutModal
+        request={checkout}
+        customer={customer}
+        onClose={() => setCheckout(null)}
+      />
     </Stack>
   );
 }

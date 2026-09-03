@@ -337,6 +337,13 @@ router.post("/checkout/vipps/callback", [controllers.Checkout, "handleVippsCallb
 router.get("/checkout/poll/:orderId", [controllers.Checkout, "pollPayment"]);
 
 /**
+ * Stand checkout: extend or buy out a book for a customer who is at the stand
+ */
+router.post("/v2/employee/stand_checkout", [controllers.StandCheckout, "start"]);
+router.get("/v2/employee/stand_checkout/:orderId/status", [controllers.StandCheckout, "status"]);
+router.post("/v2/employee/stand_checkout/:orderId/cancel", [controllers.StandCheckout, "cancel"]);
+
+/**
  * Subjects
  */
 router.get("/subjects/:branchId", [controllers.Subjects, "getBranchSubjects"]);

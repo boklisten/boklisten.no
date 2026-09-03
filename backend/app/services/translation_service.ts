@@ -40,6 +40,7 @@ export const TranslationService = {
       card: "kort",
       vipps: "Vipps",
       "vipps-checkout": "Vipps Checkout",
+      "vipps-epayment": "Vipps-forespørsel",
       dibs: "kort (nettbetaling)",
     }[paymentMethod];
   },

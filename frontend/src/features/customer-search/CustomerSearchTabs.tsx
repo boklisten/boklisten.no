@@ -144,7 +144,7 @@ export default function CustomerSearchTabs({
         <HandoutView customer={customer} />
       </Tabs.Panel>
       <Tabs.Panel value="boker">
-        <ActiveBooksView customerId={customer.id} />
+        <ActiveBooksView customer={customer} />
       </Tabs.Panel>
       <Tabs.Panel value="overleveringer">
         <CustomerMatchesView customerId={customer.id} />
