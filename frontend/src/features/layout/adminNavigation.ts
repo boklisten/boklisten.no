@@ -16,6 +16,7 @@ import {
   IconReceipt,
   IconSchool,
   IconSend,
+  IconShoppingCart,
   IconSignature,
   IconTimeline,
   IconUsers,
@@ -51,6 +52,12 @@ export const ADMIN_NAV_SECTIONS = [
         description: KASSE_DESCRIPTION,
         to: "/admin/kasse",
         icon: IconCashRegister,
+      },
+      {
+        label: "Handlekurv",
+        description: "Gammel kasse i bl-admin",
+        to: "/admin/handlekurv",
+        icon: IconShoppingCart,
       },
       {
         label: "Ordreoversikt",

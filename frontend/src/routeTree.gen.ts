@@ -27,6 +27,7 @@ import { Route as offentligSjekkRouteImport } from './routes/(offentlig)/sjekk'
 import { Route as offentligUserSettingsRouteImport } from './routes/(offentlig)/user-settings'
 import { Route as administrasjonAdminIndexRouteImport } from './routes/(administrasjon)/admin/index'
 import { Route as administrasjonAdminFakturaRouteImport } from './routes/(administrasjon)/admin/faktura'
+import { Route as administrasjonAdminHandlekurvRouteImport } from './routes/(administrasjon)/admin/handlekurv'
 import { Route as administrasjonAdminKasseRouteImport } from './routes/(administrasjon)/admin/kasse'
 import { Route as administrasjonAdminOrdreoversiktRouteImport } from './routes/(administrasjon)/admin/ordreoversikt'
 import { Route as administrasjonAdminOverleveringerRouteRouteImport } from './routes/(administrasjon)/admin/overleveringer/route'
@@ -177,6 +178,12 @@ const administrasjonAdminFakturaRoute =
   administrasjonAdminFakturaRouteImport.update({
     id: '/faktura',
     path: '/faktura',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
+const administrasjonAdminHandlekurvRoute =
+  administrasjonAdminHandlekurvRouteImport.update({
+    id: '/handlekurv',
+    path: '/handlekurv',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
 const administrasjonAdminKasseRoute =
@@ -526,6 +533,7 @@ export interface FileRoutesByFullPath {
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
+  '/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/admin/kasse': typeof administrasjonAdminKasseRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/scanner': typeof administrasjonAdminScannerRoute
@@ -600,6 +608,7 @@ export interface FileRoutesByTo {
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
+  '/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/admin/kasse': typeof administrasjonAdminKasseRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/scanner': typeof administrasjonAdminScannerRoute
@@ -679,6 +688,7 @@ export interface FileRoutesById {
   '/(offentlig)/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/(offentlig)/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/(administrasjon)/admin/faktura': typeof administrasjonAdminFakturaRoute
+  '/(administrasjon)/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/(administrasjon)/admin/kasse': typeof administrasjonAdminKasseRoute
   '/(administrasjon)/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/(administrasjon)/admin/scanner': typeof administrasjonAdminScannerRoute
@@ -758,6 +768,7 @@ export interface FileRouteTypes {
     | '/info/branch'
     | '/info/policies'
     | '/admin/faktura'
+    | '/admin/handlekurv'
     | '/admin/kasse'
     | '/admin/ordreoversikt'
     | '/admin/scanner'
@@ -832,6 +843,7 @@ export interface FileRouteTypes {
     | '/info/branch'
     | '/info/policies'
     | '/admin/faktura'
+    | '/admin/handlekurv'
     | '/admin/kasse'
     | '/admin/ordreoversikt'
     | '/admin/scanner'
@@ -910,6 +922,7 @@ export interface FileRouteTypes {
     | '/(offentlig)/info/branch'
     | '/(offentlig)/info/policies'
     | '/(administrasjon)/admin/faktura'
+    | '/(administrasjon)/admin/handlekurv'
     | '/(administrasjon)/admin/kasse'
     | '/(administrasjon)/admin/ordreoversikt'
     | '/(administrasjon)/admin/scanner'
@@ -1113,6 +1126,13 @@ declare module '@tanstack/react-router' {
       path: '/faktura'
       fullPath: '/admin/faktura'
       preLoaderRoute: typeof administrasjonAdminFakturaRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/handlekurv': {
+      id: '/(administrasjon)/admin/handlekurv'
+      path: '/handlekurv'
+      fullPath: '/admin/handlekurv'
+      preLoaderRoute: typeof administrasjonAdminHandlekurvRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
     '/(administrasjon)/admin/kasse': {
@@ -1680,6 +1700,7 @@ const administrasjonAdminOverleveringerRouteRouteWithChildren =
 interface administrasjonAdminRouteRouteChildren {
   administrasjonAdminOverleveringerRouteRoute: typeof administrasjonAdminOverleveringerRouteRouteWithChildren
   administrasjonAdminFakturaRoute: typeof administrasjonAdminFakturaRoute
+  administrasjonAdminHandlekurvRoute: typeof administrasjonAdminHandlekurvRoute
   administrasjonAdminKasseRoute: typeof administrasjonAdminKasseRoute
   administrasjonAdminOrdreoversiktRoute: typeof administrasjonAdminOrdreoversiktRoute
   administrasjonAdminScannerRoute: typeof administrasjonAdminScannerRoute
@@ -1704,6 +1725,7 @@ const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildr
     administrasjonAdminOverleveringerRouteRoute:
       administrasjonAdminOverleveringerRouteRouteWithChildren,
     administrasjonAdminFakturaRoute: administrasjonAdminFakturaRoute,
+    administrasjonAdminHandlekurvRoute: administrasjonAdminHandlekurvRoute,
     administrasjonAdminKasseRoute: administrasjonAdminKasseRoute,
     administrasjonAdminOrdreoversiktRoute:
       administrasjonAdminOrdreoversiktRoute,
