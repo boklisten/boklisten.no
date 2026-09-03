@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import CustomerMessagesView from "@/features/message-log/CustomerMessagesView";
 import ActiveBooksView, { isOverdue } from "@/features/customer-search/ActiveBooksView";
 import CustomerMatchesView, { peerMatches } from "@/features/customer-search/CustomerMatchesView";
+import CustomerOrderHistoryView from "@/features/customer-search/CustomerOrderHistoryView";
 import { countStandBooksToHandOut } from "@/features/customer-search/handoutBooks";
 import HandoutView from "@/features/customer-search/HandoutView";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -15,6 +16,7 @@ export const CUSTOMER_SEARCH_TABS = [
   "boker",
   "overleveringer",
   "meldinger",
+  "ordrehistorikk",
 ] as const;
 export type CustomerSearchTab = (typeof CUSTOMER_SEARCH_TABS)[number];
 
@@ -26,6 +28,7 @@ const TAB_LABELS: Record<CustomerSearchTab, { short: string; full: string }> = {
   boker: { short: "Bøker", full: "Kundens bøker" },
   overleveringer: { short: "Overleveringer", full: "Overleveringer" },
   meldinger: { short: "Meldinger", full: "Meldinger" },
+  ordrehistorikk: { short: "Ordre", full: "Ordrehistorikk" },
 };
 
 function TabLabel({
@@ -130,6 +133,10 @@ export default function CustomerSearchTabs({
         <Tabs.Tab value="meldinger" px={{ base: 8, sm: "md" }}>
           <TabLabel tab="meldinger" count={failedMessages} alert={failedMessages > 0} />
         </Tabs.Tab>
+        {/* No badge: a history total is neither a task nor a problem. */}
+        <Tabs.Tab value="ordrehistorikk" px={{ base: 8, sm: "md" }}>
+          <TabLabel tab="ordrehistorikk" count={0} />
+        </Tabs.Tab>
       </Tabs.List>
 
       {/* Kept mounted so the scan-progress ticks survive a visit to another tab. */}
@@ -144,6 +151,9 @@ export default function CustomerSearchTabs({
       </Tabs.Panel>
       <Tabs.Panel value="meldinger">
         <CustomerMessagesView customer={customer} />
+      </Tabs.Panel>
+      <Tabs.Panel value="ordrehistorikk">
+        <CustomerOrderHistoryView customerId={customer.id} />
       </Tabs.Panel>
     </Tabs>
   );

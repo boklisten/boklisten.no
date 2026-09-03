@@ -320,6 +320,11 @@ router.post("/unique_items/add", [controllers.UniqueItems, "add"]);
 router.get("/order_history/me/:orderId", [controllers.OrderHistory, "getMyOrder"]);
 
 router.get("/order_history/me", [controllers.OrderHistory, "getMyOrders"]);
+router.get("/v2/employee/user_details/:detailsId/orders", [
+  controllers.OrderHistory,
+  "getForCustomer",
+]);
+router.patch("/v2/admin/orders/:orderId/branch", [controllers.OrderHistory, "updateBranch"]);
 
 /**
  * Checkout

@@ -1255,6 +1255,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['getMyOrders']>>>
     }
   }
+  'order_history.get_for_customer': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/employee/user_details/:detailsId/orders'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { detailsId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['getForCustomer']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['getForCustomer']>>>
+    }
+  }
+  'order_history.update_branch': {
+    methods: ["PATCH"]
+    pattern: '/v2/admin/orders/:orderId/branch'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/order_history').orderBranchUpdateValidator)>>
+      paramsTuple: [ParamValue]
+      params: { orderId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/order_history').orderBranchUpdateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['updateBranch']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['updateBranch']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'checkout.initialize_checkout': {
     methods: ["POST"]
     pattern: '/checkout'

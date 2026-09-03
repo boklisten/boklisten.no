@@ -630,6 +630,18 @@ const routes = {
     tokens: [{"old":"/order_history/me","type":0,"val":"order_history","end":""},{"old":"/order_history/me","type":0,"val":"me","end":""}],
     types: placeholder as Registry['order_history.get_my_orders']['types'],
   },
+  'order_history.get_for_customer': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/employee/user_details/:detailsId/orders',
+    tokens: [{"old":"/v2/employee/user_details/:detailsId/orders","type":0,"val":"v2","end":""},{"old":"/v2/employee/user_details/:detailsId/orders","type":0,"val":"employee","end":""},{"old":"/v2/employee/user_details/:detailsId/orders","type":0,"val":"user_details","end":""},{"old":"/v2/employee/user_details/:detailsId/orders","type":1,"val":"detailsId","end":""},{"old":"/v2/employee/user_details/:detailsId/orders","type":0,"val":"orders","end":""}],
+    types: placeholder as Registry['order_history.get_for_customer']['types'],
+  },
+  'order_history.update_branch': {
+    methods: ["PATCH"],
+    pattern: '/v2/admin/orders/:orderId/branch',
+    tokens: [{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"v2","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"admin","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"orders","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":1,"val":"orderId","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"branch","end":""}],
+    types: placeholder as Registry['order_history.update_branch']['types'],
+  },
   'checkout.initialize_checkout': {
     methods: ["POST"],
     pattern: '/checkout',

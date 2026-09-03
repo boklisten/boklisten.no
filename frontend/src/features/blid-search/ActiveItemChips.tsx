@@ -1,10 +1,10 @@
 import type { BlidActiveItem } from "@boklisten/backend/shared/blid_search";
 import { Button, Group, Modal, Stack, TreeSelect } from "@mantine/core";
-import { IconBuildingStore, IconCalendarDue, IconPencil } from "@tabler/icons-react";
+import { IconBuildingStore, IconCalendarDue } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import type { ReactNode } from "react";
 
+import ChipButton from "@/shared/components/ChipButton";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { toBranchTreeNodeData } from "@/shared/utils/branchTree";
@@ -140,41 +140,9 @@ function ChangeDeadlineModal({
   );
 }
 
-/** A chip-shaped button: styled like the timeline's badges, but with Mantine's hover and focus. */
-function ChipButton({
-  icon: Icon,
-  color,
-  title,
-  onClick,
-  children,
-}: {
-  icon: typeof IconBuildingStore;
-  color: string;
-  title: string;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <Button
-      variant="light"
-      color={color}
-      size="compact-xs"
-      radius="xl"
-      fw={500}
-      title={title}
-      leftSection={<Icon size={12} aria-hidden />}
-      rightSection={<IconPencil size={12} aria-hidden />}
-      onClick={onClick}
-    >
-      {children}
-    </Button>
-  );
-}
-
 /**
  * The live entry's chips double as the admin's corrections to the active loan: clicking the
- * branch or frist chip opens the matching modal. The pencil marks them as editable — hover
- * alone would leave touch screens without a cue.
+ * branch or frist chip opens the matching modal.
  */
 export default function ActiveItemChips({
   activeItem,

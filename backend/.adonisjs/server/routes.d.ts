@@ -108,6 +108,8 @@ export type ScannedRoutes = {
     'unique_items.add': { paramsTuple?: []; params?: {} }
     'order_history.get_my_order': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'order_history.get_my_orders': { paramsTuple?: []; params?: {} }
+    'order_history.get_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
+    'order_history.update_branch': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.initialize_checkout': { paramsTuple?: []; params?: {} }
     'checkout.confirm_checkout': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.handle_vipps_callback': { paramsTuple?: []; params?: {} }
@@ -243,6 +245,7 @@ export type ScannedRoutes = {
     'unique_ids.download_unique_id_pdf': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'order_history.get_my_order': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'order_history.get_my_orders': { paramsTuple?: []; params?: {} }
+    'order_history.get_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'checkout.poll_payment': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'subjects.get_branch_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_items.get_branch_items': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -338,6 +341,7 @@ export type ScannedRoutes = {
     'unique_ids.download_unique_id_pdf': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'order_history.get_my_order': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'order_history.get_my_orders': { paramsTuple?: []; params?: {} }
+    'order_history.get_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'checkout.poll_payment': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'subjects.get_branch_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_items.get_branch_items': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -472,6 +476,7 @@ export type ScannedRoutes = {
     'questions_and_answers.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'blid_search.update_active_item': { paramsTuple?: []; params?: {} }
     'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'order_history.update_branch': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'collection.branches.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branchitems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.customeritems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

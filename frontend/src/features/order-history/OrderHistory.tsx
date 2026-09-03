@@ -1,27 +1,28 @@
-import { Skeleton } from "@mantine/core";
+import { Skeleton, Stack } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
+import OrderHistoryList from "@/features/order-history/OrderHistoryList";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import OrderCard from "@/shared/components/OrderCard";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 export default function OrderHistory() {
   const { api } = useApiClient();
-  const { data, isLoading, isError } = useQuery(api.orderHistory.getMyOrders.queryOptions());
+  const { data, isPending, isError } = useQuery(api.orderHistory.getMyOrders.queryOptions());
 
-  if (isLoading) {
+  if (isPending) {
     return (
-      <>
+      <Stack gap="xs">
+        <Skeleton h={20} w="40%" radius="sm" />
         {[0, 1, 2, 3].map((index) => (
-          <Skeleton h={80} radius="md" key={`skeleton-${index}`} />
+          <Skeleton h={72} radius="md" key={`skeleton-${index}`} />
         ))}
-      </>
+      </Stack>
     );
   }
 
-  if (isError || data === undefined) {
+  if (isError) {
     return (
       <ErrorAlert title="Klarte ikke laste inn ordrehistorikk">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
     );
@@ -35,18 +36,5 @@ export default function OrderHistory() {
     );
   }
 
-  return (
-    <>
-      {data.map((order) => (
-        <OrderCard
-          key={order.id}
-          id={order.id}
-          creationTime={order.creationTime}
-          orderItems={order.orderItems}
-          payments={order.payments}
-          branchName={order.branchName}
-        />
-      ))}
-    </>
-  );
+  return <OrderHistoryList entries={data} variant="customer" />;
 }
