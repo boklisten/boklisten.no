@@ -4,8 +4,11 @@
   --bf-light: #6fa3cf;
   --bf-wash: #eaf2f8;
   --bf-wash-strong: #d6e6f2;
+  --bf-body: #3d5260;
   --bf-paper: #fff;
   --bf-display: "Sora", "Segoe UI", system-ui, sans-serif;
+
+  --mantine-color-dimmed: var(--bf-body);
 
   color: var(--bf-ink);
   background: var(--bf-paper);

@@ -20,14 +20,14 @@ function student(detailsId: string, name: string): BlidParty {
 
 /**
  * A real book from Ullern, exactly as its history reads in our admin tool. The book, the
- * dates and the deadlines are the real ones; the students' names are made up, and the id
+ * dates and the deadlines are the real ones; the students are named after storybook characters, and the id
  * is an example.
  */
-const AMALIE = student("amalie", "Amalie Strand");
-const HENRIK = student("henrik", "Henrik Dahl");
-const INGRID = student("ingrid", "Ingrid Moen");
-const SANDER = student("sander", "Sander Lie");
-const TUVA = student("tuva", "Tuva Berg");
+const SOLVEIG = student("solveig", "Solveig Gynt");
+const KASPER = student("kasper", "Kasper Røver");
+const PIPPI = student("pippi", "Pippi Langstrømpe");
+const JONATAN = student("jonatan", "Jonatan Løvehjerte");
+const ANNIKA = student("annika", "Annika Settergren");
 
 function transfer(
   time: string,
@@ -51,15 +51,15 @@ const EXAMPLE_BOOK: BlidSearchResult = {
   book: { title: "Mønster R1 2021", isbn: "9788205548718" },
   status: "handed-out",
   history: [
-    transfer("2026-06-17T12:31:00+02:00", SANDER, TUVA, "2027-07-01T00:00:00+02:00"),
-    transfer("2025-06-18T11:52:00+02:00", INGRID, SANDER, "2026-07-01T00:00:00+02:00"),
-    transfer("2024-06-19T13:07:00+02:00", HENRIK, INGRID, "2025-06-30T00:00:00+02:00"),
-    transfer("2023-06-19T12:44:00+02:00", AMALIE, HENRIK, "2024-06-30T00:00:00+02:00"),
+    transfer("2026-06-17T12:31:00+02:00", JONATAN, ANNIKA, "2027-07-01T00:00:00+02:00"),
+    transfer("2025-06-18T11:52:00+02:00", PIPPI, JONATAN, "2026-07-01T00:00:00+02:00"),
+    transfer("2024-06-19T13:07:00+02:00", KASPER, PIPPI, "2025-06-30T00:00:00+02:00"),
+    transfer("2023-06-19T12:44:00+02:00", SOLVEIG, KASPER, "2024-06-30T00:00:00+02:00"),
     {
       time: "2022-08-24T10:12:00+02:00",
       action: "handout",
       from: STAND,
-      to: AMALIE,
+      to: SOLVEIG,
       employee: { detailsId: "ansatt", name: "en ansatt" },
       byCustomer: false,
       branchName: BRANCH,
@@ -86,7 +86,7 @@ export default function BookLifeStory() {
               order={2}
               className={`${classes.display} ${classes.sectionTitle} ${classes.onDeep}`}
             >
-              Denne boka har ikke vært innom en ansatt siden 2022.
+              Denne boka har ikke vært innom stand siden 2022.
             </Title>
             <Text className={`${classes.lead} ${classes.onDeepMuted}`}>
               Et ekte eksempel fra Ullern videregående skole. Matematikkboka ble delt ut på stand i

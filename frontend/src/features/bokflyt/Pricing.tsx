@@ -10,11 +10,11 @@ const POINTS: { title: string; text: string }[] = [
   },
   {
     title: "Ett overføringsmøte",
-    text: "Innføringen gjøres i et to timers møte hos dere, mellom oss og skolens bibliotekar. Vår utvikler hjelper med eksporten fra biblioteksystemet.",
+    text: "Innføringen gjøres i ett møte hos dere, mellom oss og skolens bibliotekar. Vår utvikler hjelper med eksporten fra biblioteksystemet.",
   },
   {
     title: "Tett oppfølging",
-    text: "Vi tar inn én til to nye skoler per skoleår, slik at hver skole får tett oppfølging det første året.",
+    text: "Vi tar inn én til to nye skoler per semester, slik at hver skole får tett oppfølging det første året.",
   },
 ];
 
@@ -24,7 +24,7 @@ export default function Pricing() {
       <Container size="lg">
         <SectionHeading
           title="Pris og innkjøp"
-          lead="Vi gir et konkret tilbud i den første samtalen. Dette vet dere allerede nå:"
+          lead="Vi gir et konkret tilbud etter den første samtalen. Dette vet dere allerede nå:"
         />
         <SimpleGrid cols={{ base: 1, md: 3 }} spacing={{ base: "xl", md: 40 }}>
           {POINTS.map((point) => (

@@ -6,10 +6,10 @@ import Reveal from "@/features/bokflyt/Reveal";
 import { BOKFLYT_COLORS } from "@/features/bokflyt/theme";
 
 const ROWS: [string, string, string][] = [
-  ["Jonas Lie", "3STA", "6 bøker"],
-  ["Nora Hansen", "2STA", "6 bøker"],
-  ["Emil Berg", "1STB", "7 bøker"],
-  ["Mia Solberg", "2STC", "5 bøker"],
+  ["Peer Gynt", "3STA", "6 bøker"],
+  ["Ronja Røverdatter", "2STA", "6 bøker"],
+  ["Espen Askeladd", "1STB", "7 bøker"],
+  ["Kari Trestakk", "2STC", "5 bøker"],
 ];
 
 /** An exported student list on its way into Bokflyt. */

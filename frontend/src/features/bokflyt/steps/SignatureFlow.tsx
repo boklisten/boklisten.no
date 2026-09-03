@@ -19,8 +19,8 @@ const STAGES: PlaybackStep<Stage>[] = [
   { at: 5800, value: "done" },
 ];
 
-const STUDENT = "Nora Hansen";
-const GUARDIAN = "Kari Hansen";
+const STUDENT = "Ronja Røverdatter";
+const GUARDIAN = "Lovis Røver";
 
 /** A loose cursive scrawl, drawn stroke by stroke inside the signature box. */
 const SIGNATURE_PATH =
@@ -39,7 +39,7 @@ function SmsStage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          Hei. {STUDENT} skal snart motta bøker fra skolen via Boklisten.no. Siden Nora er under 18
+          Hei. {STUDENT} skal snart motta bøker fra skolen via Boklisten.no. Siden Ronja er under 18
           år, krever vi at du som foresatt signerer låneavtalen.
         </motion.div>
         <motion.div

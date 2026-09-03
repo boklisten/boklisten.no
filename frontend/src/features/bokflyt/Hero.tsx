@@ -43,8 +43,8 @@ export default function Hero() {
               </Button>
             </Group>
             <Text size="sm" c="dimmed">
-              Boklisten har levert skolebøker siden 1990. Bokflyt er utviklet sammen med Ullern
-              videregående skole, der ordningen er i full drift.
+              Boklisten har levert skolebøker siden 1990. Bokflyt er utviklet av oss og testet på
+              Ullern videregående skole, der ordningen er i full drift.
             </Text>
           </Stack>
 
@@ -52,7 +52,7 @@ export default function Hero() {
             <BookFlowDiagram />
             <Text size="sm" c="dimmed" ta="center">
               Bøkene går rett til eleven som trenger dem neste år. Standen dekker bare endringen i
-              antall bøker fra et år til det neste.
+              antall bøker fra et år til det neste, eller når skolen bytter til en ny tittel.
             </Text>
           </Stack>
         </div>

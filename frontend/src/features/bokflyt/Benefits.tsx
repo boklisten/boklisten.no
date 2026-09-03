@@ -51,7 +51,7 @@ export default function Benefits() {
       <Container size="lg">
         <SectionHeading
           title="Det skolen sitter igjen med"
-          lead="Bokflyt tar hele ansvaret for at bøkene kommer frem, kommer tilbake og blir betalt for."
+          lead="Bokflyt tar hele ansvaret for at bøkene kommer frem, kommer tilbake eller blir betalt for."
         />
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing={{ base: "xl", md: 40 }}>
           {BENEFITS.map((benefit) => (

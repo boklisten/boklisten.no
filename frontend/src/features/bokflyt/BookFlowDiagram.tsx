@@ -14,10 +14,10 @@ interface Person {
 }
 
 const PEOPLE: Person[] = [
-  { x: 100, name: "Jonas", detail: "går ut av VG3", color: DEEP },
-  { x: 273, name: "Nora", detail: "starter i VG3", color: LIGHT },
-  { x: 447, name: "Emil", detail: "starter i VG2", color: DEEP },
-  { x: 620, name: "Sara", detail: "starter i VG1", color: LIGHT },
+  { x: 100, name: "Peer", detail: "går ut av VG3", color: DEEP },
+  { x: 273, name: "Ronja", detail: "starter i VG3", color: LIGHT },
+  { x: 447, name: "Espen", detail: "starter i VG2", color: DEEP },
+  { x: 620, name: "Pippi", detail: "starter i VG1", color: LIGHT },
 ];
 
 interface Arc {
@@ -111,7 +111,7 @@ export default function BookFlowDiagram() {
       viewBox="0 0 720 290"
       className={classes.diagram}
       role="img"
-      aria-label="Bøker går fra Jonas, som går ut av VG3, til Nora, som starter i VG3, videre til Emil, som starter i VG2, og til Sara, som starter i VG1."
+      aria-label="Bøker går fra Peer, som går ut av VG3, til Ronja, som starter i VG3, videre til Espen, som starter i VG2, og til Pippi, som starter i VG1."
     >
       <defs>
         <marker

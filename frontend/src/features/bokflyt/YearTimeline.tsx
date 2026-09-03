@@ -19,7 +19,7 @@ const STOPS: { month: string; text: string; highlight?: boolean }[] = [
   },
   {
     month: "August",
-    text: "Elevene som gikk VG1 har hatt bøkene hjemme i ferien, og gir dem til de nye VG1-elevene. Standen leverer eller tar imot bare differansen når antall elever i et fag endrer seg.",
+    text: "Elevene som gikk VG1 har hatt bøkene hjemme i ferien, og gir dem til de nye VG1-elevene. Standen trengs bare når et fag får flere eller færre elever, eller når skolen bytter tittel.",
     highlight: true,
   },
 ];

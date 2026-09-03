@@ -12,7 +12,7 @@ export interface BokflytContactRequest {
   message?: string;
 }
 
-export const BOKFLYT_CONTACT_RECIPIENT = "info@boklisten.no";
+export const BOKFLYT_CONTACT_RECIPIENT = "bokflyt@boklisten.no";
 
 /**
  * A plain-text mail to the sales inbox, so a lead from the Bokflyt page arrives

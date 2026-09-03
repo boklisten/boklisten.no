@@ -44,7 +44,7 @@ export default function ScanFigure({
   const coverIndex = Math.min(booksReceived, HANDOVER_BOOKS.length - 1);
 
   return (
-    <PhoneFrame label="Emil skanner bøkene han mottar fra Nora, og hver bok blir registrert">
+    <PhoneFrame label="Espen skanner bøkene han mottar fra Ronja, og hver bok blir registrert">
       <Stack gap="sm">
         <Title order={4}>Skann bøker</Title>
         <div className={classes.viewfinder}>

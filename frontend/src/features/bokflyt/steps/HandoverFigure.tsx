@@ -11,15 +11,15 @@ import StudentMatches from "@/features/bokflyt/steps/StudentMatches";
 import { useTimedPlayback } from "@/features/bokflyt/useTimedPlayback";
 import type { PlaybackStep } from "@/features/bokflyt/useTimedPlayback";
 
-/** Emil scans one book every 1.8 s from the moment the figure comes into view. */
+/** Espen scans one book every 1.8 s from the moment the figure comes into view. */
 const SCANS: PlaybackStep<number>[] = HANDOVER_BOOKS.map((_, index) => ({
   at: 1800 * (index + 1),
   value: index + 1,
 }));
 
 /**
- * Both sides of a handover: Emil scans the books he receives on his phone,
- * and Nora watches the match complete on hers.
+ * Both sides of a handover: Espen scans the books he receives on his phone,
+ * and Ronja watches the match complete on hers.
  */
 export default function HandoverFigure() {
   const ref = useRef<HTMLDivElement>(null);

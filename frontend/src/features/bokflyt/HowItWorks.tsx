@@ -25,7 +25,7 @@ const STEPS: StepContent[] = [
   },
   {
     title: "Send oss elevlister og bestillinger",
-    text: "Eksporter oversikten over hvem som har hvilke bøker fra biblioteksystemet deres, sammen med elevlister og fagvalg. Vår utvikler hjelper til med eksporten, og elevene trenger ikke gjøre noe selv.",
+    text: "Vi hjelper dere med å eksportere oversikten over hvem som har hvilke bøker fra biblioteksystemet deres, sammen med elevlister og fagvalg. Elevene trenger ikke gjøre noe selv.",
     figure: <ExportFigure />,
   },
   {
@@ -35,7 +35,7 @@ const STEPS: StepContent[] = [
   },
   {
     title: "Vi setter opp overleveringene",
-    text: "Ut fra fagvalgene regner vi ut hvem som skal gi bøker til hvem. Dere ser fordelingen med en gang: hvor mange elever som bytter direkte med hverandre, og hvor mange som må innom stand.",
+    text: "Ut fra fagvalgene regner vi ut hvem som skal gi bøker til hvem, og setter opp tid og sted. Dette gjør vi, ikke skolen. Dere får likevel full oversikt: hvor mange elever som bytter direkte med hverandre, og hvor mange som må innom stand.",
     figure: <MatchInsights />,
   },
   {

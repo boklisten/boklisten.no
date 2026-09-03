@@ -8,21 +8,21 @@ import type {
 import { forViewer } from "@/features/matches/forViewer";
 import type { ViewerMatch, ViewerObligation } from "@/features/matches/forViewer";
 
-/** The student whose phone we are looking at: Nora, who starts VG3 and hands her VG2 books on. */
+/** The student whose phone we are looking at: Ronja, who starts VG3 and hands her VG2 books on. */
 const VIEWER_ID = "nora";
-/** The student receiving Nora's books, who starts VG2. */
+/** The student receiving Ronja's books, who starts VG2. */
 const RECEIVER_ID = "emil";
 
 function student(customerId: string, name: string): HandoverParty {
   return { kind: "customer", customerId, name, phone: "", email: "" };
 }
 
-const NORA = student(VIEWER_ID, "Nora Hansen");
-const EMIL = student(RECEIVER_ID, "Emil Berg");
-const JONAS = student("jonas", "Jonas Lie");
+const RONJA = student(VIEWER_ID, "Ronja Røverdatter");
+const ESPEN = student(RECEIVER_ID, "Espen Askeladd");
+const PEER = student("peer", "Peer Gynt");
 const STAND: HandoverParty = { kind: "stand" };
 
-/** The books Nora hands to Emil, in the order he scans them. */
+/** The books Ronja hands to Espen, in the order he scans them. */
 export const HANDOVER_BOOKS = [
   { id: "r1", title: "Matematikk R1", blid: "K3fQ8pL2xA7d" },
   { id: "fysikk1", title: "Fysikk 1", blid: "b9TzW4mR1cVq" },
@@ -56,50 +56,50 @@ function obligation(
   };
 }
 
-/** Nora's matches, with the first `booksReceived` of her books to Emil already scanned. */
+/** Ronja's matches, with the first `booksReceived` of her books to Espen already scanned. */
 function matches(booksReceived: number): MatchDto[] {
   return [
     {
-      id: "nora-emil",
+      id: "ronja-espen",
       roundId: "juni",
       isStandMatch: false,
       meetingLocation: "Utenfor biblioteket",
       meetingTime: "2026-06-16T12:15:00+02:00",
-      participants: [NORA, EMIL],
+      participants: [RONJA, ESPEN],
       obligations: HANDOVER_BOOKS.map((book, index) =>
-        obligation(book.id, book.title, NORA, EMIL, index < booksReceived, book.blid),
+        obligation(book.id, book.title, RONJA, ESPEN, index < booksReceived, book.blid),
       ),
     },
     {
-      id: "nora-stand",
+      id: "ronja-stand",
       roundId: "juni",
       isStandMatch: true,
       meetingLocation: "Stand i kantina",
       meetingTime: "2026-08-18T10:00:00+02:00",
-      participants: [NORA, STAND],
-      obligations: [obligation("engelsk", "Engelsk 1, ny utgave", STAND, NORA, false)],
+      participants: [RONJA, STAND],
+      obligations: [obligation("engelsk", "Engelsk 1, ny utgave", STAND, RONJA, false)],
     },
     {
-      id: "jonas-nora",
+      id: "peer-ronja",
       roundId: "juni",
       isStandMatch: false,
       meetingLocation: "Ved hovedinngangen",
       meetingTime: "2026-06-12T13:00:00+02:00",
-      participants: [JONAS, NORA],
+      participants: [PEER, RONJA],
       obligations: [
-        obligation("historie", "Historie VG3", JONAS, NORA, true),
-        obligation("r2", "Matematikk R2", JONAS, NORA, true),
+        obligation("historie", "Historie VG3", PEER, RONJA, true),
+        obligation("r2", "Matematikk R2", PEER, RONJA, true),
       ],
     },
   ];
 }
 
-/** Nora's matches, exactly as the student page would present them. */
+/** Ronja's matches, exactly as the student page would present them. */
 export function noraViewerMatches(booksReceived: number): ViewerMatch[] {
   return matches(booksReceived).map((match) => forViewer(match, VIEWER_ID));
 }
 
-/** What Emil's scanner lists while he receives Nora's books. */
+/** What Espen's scanner lists while he receives Ronja's books. */
 export function emilReceiving(booksReceived: number): ViewerObligation[] {
   return forViewer(matches(booksReceived)[0]!, RECEIVER_ID).toReceive;
 }
