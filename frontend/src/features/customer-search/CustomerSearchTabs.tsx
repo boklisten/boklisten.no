@@ -6,19 +6,12 @@ import { useQuery } from "@tanstack/react-query";
 import CustomerMessagesView from "@/features/message-log/CustomerMessagesView";
 import ActiveBooksView, { isOverdue } from "@/features/customer-search/ActiveBooksView";
 import CustomerMatchesView, { peerMatches } from "@/features/customer-search/CustomerMatchesView";
+import { CUSTOMER_SEARCH_TABS } from "@/features/customer-search/customerSearchTab";
+import type { CustomerSearchTab } from "@/features/customer-search/customerSearchTab";
 import CustomerOrderHistoryView from "@/features/customer-search/CustomerOrderHistoryView";
 import { countStandBooksToHandOut } from "@/features/customer-search/handoutBooks";
 import HandoutView from "@/features/customer-search/HandoutView";
 import useApiClient from "@/shared/hooks/useApiClient";
-
-export const CUSTOMER_SEARCH_TABS = [
-  "bestillinger",
-  "boker",
-  "overleveringer",
-  "meldinger",
-  "ordrehistorikk",
-] as const;
-export type CustomerSearchTab = (typeof CUSTOMER_SEARCH_TABS)[number];
 
 const POLL_INTERVAL_MS = 5000;
 

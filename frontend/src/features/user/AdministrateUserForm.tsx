@@ -103,9 +103,18 @@ export default function AdministrateUserForm({
         })
         .safe();
 
-      await queryClient.invalidateQueries({
-        queryKey: api.userDetail.getById.queryKey({ params: { detailsId: userDetail.id } }),
-      });
+      // The signature status depends on the date of birth (a guardian's signature stops counting
+      // at 18), so it is refetched along with the details.
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: api.userDetail.getById.queryKey({ params: { detailsId: userDetail.id } }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: api.signatures.getSignature.queryKey({
+            params: { detailsId: userDetail.id },
+          }),
+        }),
+      ]);
 
       if (error) {
         if (error.isValidationError()) {

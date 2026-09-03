@@ -18,6 +18,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { showBookSearch } from "@/features/kasse/kasseParams";
 import { buildPeerBooks } from "@/features/customer-search/handoutBooks";
 import StandCheckoutModal from "@/features/customer-search/StandCheckoutModal";
 import type { StandCheckoutRequest } from "@/features/customer-search/StandCheckoutModal";
@@ -56,7 +57,7 @@ function BlidLink({ blid }: { blid: string }) {
   return (
     <EntityLink
       to="/admin/kasse"
-      search={{ blid }}
+      search={showBookSearch(blid)}
       size="sm"
       ff="monospace"
       aria-label={`Se historikken til bok ${blid}`}

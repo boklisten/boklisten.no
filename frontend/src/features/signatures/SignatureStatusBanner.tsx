@@ -55,24 +55,27 @@ export default function SignatureStatusBanner({ userDetail }: { userDetail: User
           style={{ borderColor: "var(--mantine-color-green-3)" }}
         >
           <Group justify="space-between" wrap="nowrap">
-            <Group gap="sm" wrap="nowrap">
+            <Group gap="sm" wrap="nowrap" miw={0}>
               <IconCircleCheckFilled color="var(--mantine-color-green-8)" />
               <Stack gap={0}>
                 <Text fw={600} c="green.9" size="sm">
                   Gyldig signatur
                 </Text>
                 <Text size="xs" c="dimmed">
-                  Signert av {data.signingName}
-                  {data.signedByGuardian ? " (foresatt)" : ""} · gyldig til {data.expiresAtText}
+                  {/* Non-breaking spaces keep the dot with the first half and the date with
+                      "gyldig til", so a narrow card wraps into two tidy lines. */}
+                  Signert av {data.signedByGuardian ? "foresatt" : "kunden selv"}
+                  {"\u00A0· gyldig\u00A0til\u00A0"}
+                  {data.expiresAtText}
                 </Text>
               </Stack>
             </Group>
-            <Group gap={4} wrap="nowrap">
-              <Text size="sm" c="green.9">
-                Se signatur
-              </Text>
-              <IconChevronRight size={16} color="var(--mantine-color-green-9)" />
-            </Group>
+            <IconChevronRight
+              size={20}
+              color="var(--mantine-color-green-9)"
+              style={{ flexShrink: 0 }}
+              aria-hidden
+            />
           </Group>
         </Paper>
       </UnstyledButton>
@@ -99,23 +102,24 @@ export default function SignatureStatusBanner({ userDetail }: { userDetail: User
           style={{ borderColor: "var(--mantine-color-orange-3)" }}
         >
           <Group justify="space-between" wrap="nowrap">
-            <Group gap="sm" wrap="nowrap">
+            <Group gap="sm" wrap="nowrap" miw={0}>
               <IconAlertTriangleFilled color="var(--mantine-color-orange-8)" />
               <Stack gap={0}>
                 <Text fw={600} c="orange.9" size="sm">
                   Signert av foresatt, må signeres på nytt
                 </Text>
                 <Text size="xs" c="dimmed">
-                  Kunden har fylt 18 år og må signere selv før bøker kan deles ut.
+                  Kunden har fylt 18 år og må signere selv før bøker kan deles ut. Trykk her for å
+                  ordne signaturen.
                 </Text>
               </Stack>
             </Group>
-            <Group gap={4} wrap="nowrap">
-              <Text size="sm" c="orange.9">
-                Ordne signatur
-              </Text>
-              <IconChevronRight size={16} color="var(--mantine-color-orange-9)" />
-            </Group>
+            <IconChevronRight
+              size={20}
+              color="var(--mantine-color-orange-9)"
+              style={{ flexShrink: 0 }}
+              aria-hidden
+            />
           </Group>
         </Paper>
       </UnstyledButton>
@@ -130,23 +134,18 @@ export default function SignatureStatusBanner({ userDetail }: { userDetail: User
     >
       <Paper radius="md" px="md" py="xs" bg="red.7">
         <Group justify="space-between" wrap="nowrap">
-          <Group gap="sm" wrap="nowrap">
+          <Group gap="sm" wrap="nowrap" miw={0}>
             <IconAlertTriangleFilled color="white" />
             <Stack gap={0}>
               <Text fw={700} c="white" size="sm">
                 Mangler gyldig signatur
               </Text>
               <Text size="xs" c="red.0">
-                Bøker kan ikke deles ut før kontrakten er signert.
+                Bøker kan ikke deles ut før kontrakten er signert. Trykk her for å ordne signaturen.
               </Text>
             </Stack>
           </Group>
-          <Group gap={4} wrap="nowrap">
-            <Text size="sm" fw={600} c="white">
-              Ordne signatur
-            </Text>
-            <IconChevronRight size={16} color="white" />
-          </Group>
+          <IconChevronRight size={20} color="white" style={{ flexShrink: 0 }} aria-hidden />
         </Group>
       </Paper>
     </UnstyledButton>

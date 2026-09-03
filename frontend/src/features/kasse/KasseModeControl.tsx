@@ -1,20 +1,10 @@
-import { Center, SegmentedControl } from "@mantine/core";
-import { IconPackageImport, IconSearch } from "@tabler/icons-react";
-import type { ReactNode } from "react";
+import { Center, InputLabel, SegmentedControl, Stack } from "@mantine/core";
+import { useId } from "react";
 
-export const KASSE_MODES = ["sok", "innsamling"] as const;
-export type KasseMode = (typeof KASSE_MODES)[number];
+import { KASSE_MODES, KASSE_MODE_CONFIG } from "@/features/kasse/kasseModes";
+import type { KasseMode } from "@/features/kasse/kasseModes";
 
-function ModeLabel({ icon, children }: { icon: ReactNode; children: string }) {
-  return (
-    <Center style={{ gap: 6 }}>
-      {icon}
-      <span>{children}</span>
-    </Center>
-  );
-}
-
-/** Søk looks a customer or book up; Samle inn stacks scanned books for one return delivery. */
+/** One tap switches what the next scan does. The hero below explains the chosen mode. */
 export default function KasseModeControl({
   value,
   onChange,
@@ -22,23 +12,27 @@ export default function KasseModeControl({
   value: KasseMode;
   onChange: (mode: KasseMode) => void;
 }) {
+  const labelId = useId();
   return (
-    <SegmentedControl
-      value={value}
-      onChange={(next) => onChange(next === "innsamling" ? "innsamling" : "sok")}
-      w={{ base: "100%", xs: "auto" }}
-      data={[
-        {
-          value: "sok",
-          label: <ModeLabel icon={<IconSearch size={16} aria-hidden />}>Søk</ModeLabel>,
-        },
-        {
-          value: "innsamling",
-          label: (
-            <ModeLabel icon={<IconPackageImport size={16} aria-hidden />}>Samle inn</ModeLabel>
-          ),
-        },
-      ]}
-    />
+    <Stack gap={4}>
+      <InputLabel id={labelId}>Modus</InputLabel>
+      <SegmentedControl
+        aria-labelledby={labelId}
+        value={value}
+        onChange={(next) => onChange(KASSE_MODES.find((mode) => mode === next) ?? "kunde")}
+        data={KASSE_MODES.map((mode) => {
+          const { label, icon: IconComponent } = KASSE_MODE_CONFIG[mode];
+          return {
+            value: mode,
+            label: (
+              <Center style={{ gap: 6 }}>
+                <IconComponent size={16} aria-hidden />
+                <span>{label}</span>
+              </Center>
+            ),
+          };
+        })}
+      />
+    </Stack>
   );
 }

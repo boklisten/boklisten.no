@@ -1,5 +1,7 @@
+import { QRCodeSVG } from "qrcode.react";
 import type { CSSProperties } from "react";
 
+import { describeScanCodeLocation } from "@/shared/utils/scanCodes";
 import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
 export interface ScanInstruction {
@@ -50,6 +52,29 @@ function BlidLabelIllustration() {
         padding: 2,
       }}
     />
+  );
+}
+
+// Same shape as a real details id (24 hex characters) so the code is as dense as the one the
+// customer will hold up, but not an id anyone has.
+const EXAMPLE_CUSTOMER_ID = "0123456789abcdef01234567";
+
+/** The QR code the customer shows from «Vis kunde-ID», drawn by the same component. */
+function CustomerIdIllustration() {
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        flexShrink: 0,
+        display: "block",
+        background: "#FFFFFF",
+        borderRadius: 4,
+        padding: 3,
+        lineHeight: 0,
+      }}
+    >
+      <QRCodeSVG value={EXAMPLE_CUSTOMER_ID} size={34} level="L" />
+    </div>
   );
 }
 
@@ -104,18 +129,6 @@ function BarcodeIllustration({ type }: { type: ScanCodeType }) {
   );
 }
 
-function locateHint(type: ScanCodeType): string | null {
-  switch (type) {
-    case "isbn": {
-      return "Strekkoden med 13 siffer, vanligvis på baksiden av boka";
-    }
-    // A blid needs no hint: the label artwork shown beside the text already says where to look.
-    default: {
-      return null;
-    }
-  }
-}
-
 /**
  * The overlay floats on live video, so it carries its own contrast rather than following the
  * Mantine theme — the camera output behind it is arbitrary in either light or dark mode.
@@ -141,11 +154,13 @@ const scrimStyle: CSSProperties = {
 };
 
 export default function ScanInstructionOverlay({ instruction }: { instruction: ScanInstruction }) {
-  const hint = instruction.illustrate === undefined ? null : locateHint(instruction.illustrate);
+  const hint =
+    instruction.illustrate === undefined ? null : describeScanCodeLocation(instruction.illustrate);
 
   return (
     <div style={scrimStyle} role="status">
       {instruction.illustrate === "blid" && <BlidLabelIllustration />}
+      {instruction.illustrate === "customerId" && <CustomerIdIllustration />}
       {instruction.illustrate === "isbn" && <BarcodeIllustration type="isbn" />}
       <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
         <span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.3 }}>{instruction.text}</span>

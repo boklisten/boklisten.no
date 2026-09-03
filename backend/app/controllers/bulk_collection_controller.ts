@@ -113,6 +113,8 @@ export default class BulkCollectionController {
         branch: handoutInfo!.handoutById,
         customer,
         byCustomer: false,
+        // The book's history and the customer's order history name the employee from the order.
+        employee: detailsId,
         placed: false,
         payments: [],
         handoutByDelivery: false,

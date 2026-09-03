@@ -1,5 +1,4 @@
 import { BLID_PREFIX_PATTERN } from "@boklisten/backend/shared/blid_search";
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import { Badge, Group, Loader, Stack, Text, ThemeIcon } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { Spotlight, createSpotlight } from "@mantine/spotlight";
@@ -9,7 +8,6 @@ import { useEffect, useState } from "react";
 
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import useApiClient from "@/shared/hooks/useApiClient";
-import { isValidBlid } from "@/features/blid-search/validateBlid";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -47,7 +45,9 @@ export function openSearchSpotlight() {
 }
 
 const customerQueryKey = (searchTerm: string) => ["userDetail", "search", searchTerm] as const;
-const blidQueryKey = (searchTerm: string) => ["blidSearch", "search", searchTerm] as const;
+/** Prefix of the book search cache, so a delivery can invalidate every cached term at once. */
+export const BLID_SEARCH_QUERY_KEY = ["blidSearch", "search"] as const;
+const blidQueryKey = (searchTerm: string) => [...BLID_SEARCH_QUERY_KEY, searchTerm] as const;
 
 // Results for "pett" are still relevant while the user types "petter" (or backspaces), but when
 // the term is replaced entirely the old results must not show while the new fetch is in flight.
@@ -76,16 +76,16 @@ function selectFirstResult() {
 }
 
 /**
- * One search field for customers and books. Customers match on name, phone, e-mail and address;
- * books match on the start of their unique ID. Both groups are shown whenever both have hits, with
- * the group the query most looks like on top.
+ * The manual way in: customers match on name, phone, e-mail and address; books match on the start
+ * of their unique ID. The mode decides which of the two is searched, and a pick hands the
+ * customer's id or the book's unique ID to the same code handling as a scan.
  */
 export default function SearchSpotlight({
-  onSelectCustomer,
-  onSelectBlid,
+  kind,
+  onSelect,
 }: {
-  onSelectCustomer: (userDetail: UserDetail) => void;
-  onSelectBlid: (blid: string) => void;
+  kind: "customers" | "books";
+  onSelect: (code: string) => void;
 }) {
   const { api, client } = useApiClient();
   const [searchValue, setSearchValue] = useState("");
@@ -97,13 +97,15 @@ export default function SearchSpotlight({
     trimmedSearch.length >= MIN_SEARCH_LENGTH &&
     debouncedSearch.length >= MIN_SEARCH_LENGTH &&
     isRelatedSearch(trimmedSearch, debouncedSearch);
-  const blidSearchActive = searchActive && BLID_PREFIX_PATTERN.test(debouncedSearch);
+  const customerSearchActive = searchActive && kind === "customers";
+  const blidSearchActive =
+    searchActive && kind === "books" && BLID_PREFIX_PATTERN.test(debouncedSearch);
 
   const { data: customers, isFetching: fetchingCustomers } = useQuery({
     queryKey: customerQueryKey(debouncedSearch),
     queryFn: async () =>
       (await client.api.userDetail.search({ body: { searchStr: debouncedSearch } })) ?? [],
-    enabled: searchActive,
+    enabled: customerSearchActive,
     placeholderData: (previousData, previousQuery) => {
       const previousSearch = previousQuery?.queryKey.at(-1);
       return typeof previousSearch === "string" && isRelatedSearch(previousSearch, debouncedSearch)
@@ -124,10 +126,13 @@ export default function SearchSpotlight({
   });
   const isFetching = fetchingCustomers || fetchingBooks;
 
-  const { data: branches } = useQuery(api.branches.getAll.queryOptions());
+  const { data: branches } = useQuery({
+    ...api.branches.getAll.queryOptions(),
+    enabled: kind === "customers",
+  });
   const branchNames = new Map((branches ?? []).map((branch) => [branch.id, branch.name]));
 
-  const customerHits = searchActive ? (customers ?? []) : [];
+  const customerHits = customerSearchActive ? (customers ?? []) : [];
   const bookHits = blidSearchActive ? (books ?? []) : [];
   const nothingFound =
     searchActive && !isFetching && customerHits.length === 0 && bookHits.length === 0;
@@ -138,83 +143,12 @@ export default function SearchSpotlight({
     }
   }, [customers, books]);
 
-  const bookGroup = bookHits.length > 0 && (
-    <Spotlight.ActionsGroup label="Bøker">
-      {bookHits.map((book) => (
-        <Spotlight.Action
-          key={book.blid}
-          onClick={() => {
-            setSearchValue("");
-            onSelectBlid(book.blid);
-          }}
-        >
-          <Group gap="sm" wrap="nowrap" w="100%">
-            <ThemeIcon variant="light" radius="xl" size="lg">
-              <IconBook2 size={18} aria-hidden />
-            </ThemeIcon>
-            <Stack gap={2} miw={0} style={{ flex: 1 }}>
-              <Text fw={600} lineClamp={1}>
-                {book.title}
-              </Text>
-              <Text size="sm" ff="monospace" opacity={0.7}>
-                {book.blid}
-              </Text>
-            </Stack>
-            <Badge variant="light" color={book.holder ? "green" : "gray"} tt="none">
-              {book.holder ? `Hos ${book.holder.name}` : "Ikke utdelt"}
-            </Badge>
-          </Group>
-        </Spotlight.Action>
-      ))}
-    </Spotlight.ActionsGroup>
-  );
-
-  const customerGroup = customerHits.length > 0 && (
-    <Spotlight.ActionsGroup label="Kunder">
-      {customerHits.map((userDetail) => (
-        <Spotlight.Action
-          key={userDetail.id}
-          onClick={() => {
-            // The modal's exit transition is interrupted by the navigation this triggers, so
-            // Mantine's clearQueryOnClose (which runs onExited) never fires — clear ourselves.
-            setSearchValue("");
-            onSelectCustomer(userDetail);
-          }}
-        >
-          <Stack gap={4} w="100%">
-            <Group gap="xs" justify="space-between">
-              <Text fw={600}>{userDetail.name}</Text>
-              <Group gap={6}>
-                <PermissionBadge permission={userDetail.permission} size="sm" />
-                {userDetail.branchMembership && branchNames.has(userDetail.branchMembership) && (
-                  <Badge variant="light" size="sm">
-                    {branchNames.get(userDetail.branchMembership)}
-                  </Badge>
-                )}
-              </Group>
-            </Group>
-            <Group gap="md" fz="sm" opacity={0.7}>
-              {userDetail.phone && (
-                <Group gap={4}>
-                  <IconPhone size={16} aria-hidden />
-                  <Text size="sm">{userDetail.phone}</Text>
-                </Group>
-              )}
-              {userDetail.email && (
-                <Group gap={4}>
-                  <IconMail size={16} aria-hidden />
-                  <Text size="sm">{userDetail.email}</Text>
-                </Group>
-              )}
-            </Group>
-          </Stack>
-        </Spotlight.Action>
-      ))}
-    </Spotlight.ActionsGroup>
-  );
-
-  // A complete blid is almost certainly meant as one; anything else reads as a person first.
-  const booksFirst = isValidBlid(debouncedSearch);
+  // The modal's exit transition is interrupted by the navigation a pick triggers, so Mantine's
+  // clearQueryOnClose (which runs onExited) never fires — clear ourselves.
+  const pick = (code: string) => {
+    setSearchValue("");
+    onSelect(code);
+  };
 
   return (
     <Spotlight.Root
@@ -226,7 +160,9 @@ export default function SearchSpotlight({
       maxHeight="60vh"
     >
       <Spotlight.Search
-        placeholder="Navn, telefon, e-post eller bokas unike ID"
+        placeholder={
+          kind === "customers" ? "Navn, telefon, e-post eller adresse" : "Bokas unike ID"
+        }
         leftSection={<IconSearch size={20} aria-hidden />}
         rightSection={isFetching ? <Loader size="xs" /> : undefined}
         spellCheck={false}
@@ -239,19 +175,61 @@ export default function SearchSpotlight({
           <Spotlight.Empty>Skriv minst {MIN_SEARCH_LENGTH} tegn for å søke.</Spotlight.Empty>
         )}
         {nothingFound && (
-          <Spotlight.Empty>Fant ingen kunder eller bøker for «{debouncedSearch}».</Spotlight.Empty>
+          <Spotlight.Empty>
+            Fant ingen {kind === "customers" ? "kunder" : "bøker"} for «{debouncedSearch}».
+          </Spotlight.Empty>
         )}
-        {booksFirst ? (
-          <>
-            {bookGroup}
-            {customerGroup}
-          </>
-        ) : (
-          <>
-            {customerGroup}
-            {bookGroup}
-          </>
-        )}
+        {bookHits.map((book) => (
+          <Spotlight.Action key={book.blid} onClick={() => pick(book.blid)}>
+            <Group gap="sm" wrap="nowrap" w="100%">
+              <ThemeIcon variant="light" radius="xl" size="lg">
+                <IconBook2 size={18} aria-hidden />
+              </ThemeIcon>
+              <Stack gap={2} miw={0} style={{ flex: 1 }}>
+                <Text fw={600} lineClamp={1}>
+                  {book.title}
+                </Text>
+                <Text size="sm" ff="monospace" opacity={0.7}>
+                  {book.blid}
+                </Text>
+              </Stack>
+              <Badge variant="light" color={book.holder ? "green" : "gray"} tt="none">
+                {book.holder ? `Hos ${book.holder.name}` : "Ikke utdelt"}
+              </Badge>
+            </Group>
+          </Spotlight.Action>
+        ))}
+        {customerHits.map((userDetail) => (
+          <Spotlight.Action key={userDetail.id} onClick={() => pick(userDetail.id)}>
+            <Stack gap={4} w="100%">
+              <Group gap="xs" justify="space-between">
+                <Text fw={600}>{userDetail.name}</Text>
+                <Group gap={6}>
+                  <PermissionBadge permission={userDetail.permission} size="sm" />
+                  {userDetail.branchMembership && branchNames.has(userDetail.branchMembership) && (
+                    <Badge variant="light" size="sm">
+                      {branchNames.get(userDetail.branchMembership)}
+                    </Badge>
+                  )}
+                </Group>
+              </Group>
+              <Group gap="md" fz="sm" opacity={0.7}>
+                {userDetail.phone && (
+                  <Group gap={4}>
+                    <IconPhone size={16} aria-hidden />
+                    <Text size="sm">{userDetail.phone}</Text>
+                  </Group>
+                )}
+                {userDetail.email && (
+                  <Group gap={4}>
+                    <IconMail size={16} aria-hidden />
+                    <Text size="sm">{userDetail.email}</Text>
+                  </Group>
+                )}
+              </Group>
+            </Stack>
+          </Spotlight.Action>
+        ))}
       </Spotlight.ActionsList>
     </Spotlight.Root>
   );

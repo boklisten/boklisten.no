@@ -11,7 +11,6 @@ import {
   Radio,
   Stack,
   Text,
-  TextInput,
   Title,
 } from "@mantine/core";
 import { IconCreditCard, IconSend } from "@tabler/icons-react";
@@ -22,7 +21,9 @@ import { useEffect, useState } from "react";
 import OrderHistoryCard from "@/features/order-history/OrderHistoryCard";
 import { formatAmount } from "@/features/order-history/orderHistoryGroups";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
+import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
+import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import { errorMessage } from "@/shared/utils/errorMessage";
@@ -77,7 +78,6 @@ function ConfirmStep({
   request,
   customer,
   phoneNumber,
-  onPhoneNumberChange,
   onSendVipps,
   onChooseCard,
   sending,
@@ -85,7 +85,6 @@ function ConfirmStep({
   request: StandCheckoutRequest;
   customer: UserDetail;
   phoneNumber: string;
-  onPhoneNumberChange: (phoneNumber: string) => void;
   onSendVipps: (option: CheckoutOption, phoneNumber: string) => void;
   onChooseCard: (option: CheckoutOption) => void;
   sending: boolean;
@@ -95,12 +94,18 @@ function ConfirmStep({
   );
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selected = options[selectedIndex] ?? options[0];
+  const form = useAppForm({
+    defaultValues: { phoneNumber },
+    onSubmit: ({ value }) => {
+      if (selected) {
+        onSendVipps(selected, value.phoneNumber);
+      }
+    },
+  });
 
   if (!selected) {
     return <ErrorAlert>Denne handlingen er ikke tilgjengelig for boka lenger.</ErrorAlert>;
   }
-
-  const phoneIsValid = /^(?:\+?47)?\d{8}$/.test(phoneNumber.replaceAll(/\s/g, ""));
 
   return (
     <Stack>
@@ -141,21 +146,23 @@ function ConfirmStep({
       <Divider />
 
       <Stack gap="xs">
-        <TextInput
-          label="Kundens mobilnummer"
-          description="Forespørselen sendes til Vipps på dette nummeret"
-          value={phoneNumber}
-          onChange={(event) => onPhoneNumberChange(event.currentTarget.value)}
-          inputMode="tel"
-          autoComplete="off"
-          error={phoneNumber.length > 0 && !phoneIsValid ? "Skriv inn et norsk mobilnummer" : null}
-        />
+        <form.AppField
+          name="phoneNumber"
+          validators={{ onSubmit: ({ value }) => phoneNumberFieldValidator(value, "personal") }}
+        >
+          {(field) => (
+            <field.PhoneNumberField
+              label="Kundens mobilnummer"
+              description="Forespørselen sendes på Vipps til dette nummeret"
+              autoComplete="off"
+            />
+          )}
+        </form.AppField>
         <Button
           color={VIPPS_ORANGE}
           leftSection={<IconSend size={18} aria-hidden />}
           loading={sending}
-          disabled={!phoneIsValid}
-          onClick={() => onSendVipps(selected, phoneNumber)}
+          onClick={form.handleSubmit}
         >
           Send Vipps-forespørsel
         </Button>
@@ -350,7 +357,7 @@ function StandCheckoutFlow({
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   const [phase, setPhase] = useState<Phase>({ kind: "confirm" });
-  // Lives here so "Prøv igjen" comes back with the number the employee typed, not the one on file
+  // Kept across attempts so "Prøv igjen" comes back with the number last sent, not the one on file
   const [phoneNumber, setPhoneNumber] = useState(customer.phone ?? "");
 
   useEffect(() => {
@@ -420,8 +427,10 @@ function StandCheckoutFlow({
           request={request}
           customer={customer}
           phoneNumber={phoneNumber}
-          onPhoneNumberChange={setPhoneNumber}
-          onSendVipps={(option, sendTo) => start(option, { method: "vipps", phoneNumber: sendTo })}
+          onSendVipps={(option, sendTo) => {
+            setPhoneNumber(sendTo);
+            start(option, { method: "vipps", phoneNumber: sendTo });
+          }}
           onChooseCard={(option) => setPhase({ kind: "cardConfirm", option })}
           sending={startMutation.isPending}
         />

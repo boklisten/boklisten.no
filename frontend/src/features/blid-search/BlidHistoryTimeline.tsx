@@ -19,6 +19,7 @@ import {
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
+import { showCustomerSearch } from "@/features/kasse/kasseParams";
 import ActiveItemChips from "@/features/blid-search/ActiveItemChips";
 import EntityLink from "@/shared/components/EntityLink";
 import useAuth from "@/shared/hooks/useAuth";
@@ -27,7 +28,7 @@ import { norwegianTime } from "@/shared/utils/dayjs";
 /** A named person in an event sentence: bold like plain text, but a link to their customer page. */
 function PersonLink({ detailsId, name }: { detailsId: string; name: string }) {
   return (
-    <EntityLink to="/admin/kasse" search={{ kunde: detailsId }}>
+    <EntityLink to="/admin/kasse" search={showCustomerSearch(detailsId)}>
       {name}
     </EntityLink>
   );

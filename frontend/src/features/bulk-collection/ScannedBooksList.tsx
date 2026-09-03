@@ -3,6 +3,7 @@ import { Badge, Button, Card, Group, SimpleGrid, Stack, Text } from "@mantine/co
 import { IconAlertTriangle, IconUsers } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
+import { showBookSearch, showCustomerSearch } from "@/features/kasse/kasseParams";
 import { formatDeadline, isOverdue } from "@/features/bulk-collection/deadline";
 import EntityLink from "@/shared/components/EntityLink";
 
@@ -69,7 +70,7 @@ export default function ScannedBooksList({
                 <DetailItem label="Unik ID">
                   <EntityLink
                     to="/admin/kasse"
-                    search={{ blid: book.blid }}
+                    search={showBookSearch(book.blid)}
                     size="sm"
                     ff="monospace"
                     aria-label={`Se historikken til bok ${book.blid}`}
@@ -78,7 +79,11 @@ export default function ScannedBooksList({
                   </EntityLink>
                 </DetailItem>
                 <DetailItem label="Lånt av">
-                  <EntityLink to="/admin/kasse" search={{ kunde: book.customerId }} size="sm">
+                  <EntityLink
+                    to="/admin/kasse"
+                    search={showCustomerSearch(book.customerId)}
+                    size="sm"
+                  >
                     {book.customerName}
                   </EntityLink>
                 </DetailItem>

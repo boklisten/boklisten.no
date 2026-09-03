@@ -1,10 +1,10 @@
-import { Skeleton, Stack, Text } from "@mantine/core";
+import { Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import CustomerSearchTabs from "@/features/customer-search/CustomerSearchTabs";
-import type { CustomerSearchTab } from "@/features/customer-search/CustomerSearchTabs";
+import type { CustomerSearchTab } from "@/features/customer-search/customerSearchTab";
 import EmailConfirmationWarning from "@/features/customer-search/EmailConfirmationWarning";
-import SelectedCustomerCard from "@/features/customer-search/SelectedCustomerCard";
+import CustomerHeader from "@/features/customer-search/CustomerHeader";
 import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -43,21 +43,23 @@ export default function CustomerResult({
   }
 
   return (
-    <Stack>
-      <Stack gap={6}>
-        <Text fz="sm" fw={500} c="dimmed">
-          Valgt kunde
-        </Text>
-        <SelectedCustomerCard customer={customer} onDeselect={onDeselect} onMerged={onMerged} />
-      </Stack>
-      <EmailConfirmationWarning customer={customer} />
-      <SignatureStatusBanner userDetail={customer} />
-      <CustomerSearchTabs
-        key={customer.id}
-        customer={customer}
-        activeTab={tab}
-        onTabChange={onTabChange}
-      />
+    <Stack gap={6}>
+      <Text fz="sm" fw={500} c="dimmed">
+        Valgt kunde
+      </Text>
+      <Paper withBorder radius="md" p="md">
+        <Stack gap="md">
+          <CustomerHeader customer={customer} onDeselect={onDeselect} onMerged={onMerged} />
+          <EmailConfirmationWarning customer={customer} />
+          <SignatureStatusBanner userDetail={customer} />
+          <CustomerSearchTabs
+            key={customer.id}
+            customer={customer}
+            activeTab={tab}
+            onTabChange={onTabChange}
+          />
+        </Stack>
+      </Paper>
     </Stack>
   );
 }

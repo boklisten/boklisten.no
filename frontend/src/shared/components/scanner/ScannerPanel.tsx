@@ -1,6 +1,5 @@
 import type { IScannerError } from "@yudiel/react-qr-scanner";
 import { Button, Modal, Stack } from "@mantine/core";
-import type { NotificationData } from "@mantine/notifications";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { IconForms } from "@tabler/icons-react";
 import { useState } from "react";
@@ -14,11 +13,7 @@ import ScanInstructionOverlay from "@/shared/components/scanner/ScanInstructionO
 import type { ScanInstruction } from "@/shared/components/scanner/ScanInstructionOverlay";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import {
-  determineScanCodeType,
-  listScanCodeTypes,
-  nameScanCodeType,
-} from "@/shared/utils/scanCodes";
+import { describeRejectedScan, determineScanCodeType } from "@/shared/utils/scanCodes";
 import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
 export interface ScanNotice {
@@ -40,35 +35,6 @@ export interface ScannerPanelProps {
 // have to outrank the host rather than rely on portal ordering.
 const MANUAL_ENTRY_Z_INDEX = 300;
 const NOTICE_Z_INDEX = 400;
-
-function locateHint(type: ScanCodeType): string {
-  switch (type) {
-    case "blid": {
-      return "Bruk bokas unike ID — se instruksjoner for hjelp.";
-    }
-    case "isbn": {
-      return "Skann bokas ISBN — strekkoden med 13 siffer, vanligvis på baksiden av boka.";
-    }
-    case "customerId": {
-      return "Kunden finner kunde-ID-en sin under «Vis kunde-ID» på boklisten.no.";
-    }
-    default: {
-      return "Prøv igjen, eller ta kontakt med stand for hjelp.";
-    }
-  }
-}
-
-function describeRejectedScan(scanned: ScanCodeType, accepted: ScanCodeType[]): NotificationData {
-  const hint =
-    accepted.length === 1 && accepted[0] !== undefined
-      ? locateHint(accepted[0])
-      : `Skann ${listScanCodeTypes(accepted)}.`;
-
-  if (scanned === "unknown") {
-    return { title: "Ugyldig strekkode", message: `Denne koden kjenner vi ikke igjen. ${hint}` };
-  }
-  return { title: "Feil strekkode", message: `Du skannet ${nameScanCodeType(scanned)}. ${hint}` };
-}
 
 function vibrate() {
   if (typeof navigator === "undefined") {

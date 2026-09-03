@@ -107,10 +107,19 @@ export default class SignaturesController {
       };
     }
 
+    // Tell a customer who has turned 18 why they are asked to sign again. The guardian's
+    // signature itself stays private to the admin view.
+    const newestSignature = await Signature.newestForCustomer(userDetail.id);
     return {
       isSignatureValid: false,
       name: userDetail.name,
       isUnderage: isUnderage(userDetail),
+      outgrownGuardianSignature: newestSignature?.isOutgrownGuardianFor(userDetail)
+        ? {
+            signingName: newestSignature.signingName,
+            signedAtText: formatSignedDate(newestSignature.createdAt),
+          }
+        : null,
     };
   }
   async sign(ctx: HttpContext) {

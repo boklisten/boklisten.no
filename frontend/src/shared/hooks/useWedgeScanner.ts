@@ -1,11 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { showErrorNotification } from "@/shared/utils/notifications";
-import {
-  determineScanCodeType,
-  listScanCodeTypes,
-  nameScanCodeType,
-} from "@/shared/utils/scanCodes";
+import { describeRejectedScan, determineScanCodeType } from "@/shared/utils/scanCodes";
 import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
 // Physical barcode scanners act as HID keyboards: they "type" the code as a rapid burst of
@@ -67,10 +63,7 @@ export default function useWedgeScanner({
           onScanRef.current(buffer, type);
         } else if (type !== "unknown") {
           event.preventDefault();
-          showErrorNotification({
-            title: "Feil strekkode",
-            message: `Du skannet ${nameScanCodeType(type)}. Skann ${listScanCodeTypes(acceptsRef.current)} i stedet.`,
-          });
+          showErrorNotification(describeRejectedScan(type, acceptsRef.current));
         }
         buffer = "";
         return;

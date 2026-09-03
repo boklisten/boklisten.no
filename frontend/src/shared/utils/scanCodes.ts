@@ -60,3 +60,40 @@ export function listScanCodeTypes(types: ScanCodeType[]): string {
   }
   return `${names.slice(0, -1).join(", ")} eller ${names.at(-1)}`;
 }
+
+/** Where the code is found, shown beside the camera and in a rejection notice. */
+export function describeScanCodeLocation(type: ScanCodeType): string | null {
+  switch (type) {
+    case "blid": {
+      return "Klistremerke på baksiden eller på første side i omslaget";
+    }
+    case "customerId": {
+      return "QR-koden under «Vis kunde-ID» på boklisten.no";
+    }
+    case "isbn": {
+      return "Strekkoden med 13 siffer, vanligvis på baksiden av boka";
+    }
+    default: {
+      return null;
+    }
+  }
+}
+
+function scanInsteadHint(accepted: ScanCodeType[]): string {
+  const [only] = accepted;
+  const location = accepted.length === 1 && only ? describeScanCodeLocation(only) : null;
+  const instruction = `Skann ${listScanCodeTypes(accepted)}.`;
+  return location ? `${instruction} ${location}.` : instruction;
+}
+
+/** The notice for a code that was recognised (or not) but is not one of the accepted types. */
+export function describeRejectedScan(
+  scanned: ScanCodeType,
+  accepted: ScanCodeType[],
+): { title: string; message: string } {
+  const hint = scanInsteadHint(accepted);
+  if (scanned === "unknown") {
+    return { title: "Ugyldig strekkode", message: `Denne koden kjenner vi ikke igjen. ${hint}` };
+  }
+  return { title: "Feil strekkode", message: `Du skannet ${nameScanCodeType(scanned)}. ${hint}` };
+}

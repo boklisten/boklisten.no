@@ -3,7 +3,12 @@ import { IconChecks } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import SignedContractDetails from "@/features/signatures/SignedContractDetails";
+import {
+  OUTGROWN_SIGNATURE_TITLE,
+  describeOutgrownSignature,
+} from "@/features/signatures/outgrownSignatureCopy";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
+import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import EditableTextReadOnly from "@/shared/components/EditableTextReadOnly";
 import { useAppForm } from "@/shared/hooks/form";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
@@ -78,8 +83,15 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
     );
   }
 
+  const outgrown = "outgrownGuardianSignature" in data ? data.outgrownGuardianSignature : null;
+
   return (
     <Stack>
+      {outgrown && (
+        <InfoAlert title={OUTGROWN_SIGNATURE_TITLE}>
+          {describeOutgrownSignature(outgrown)}
+        </InfoAlert>
+      )}
       <Spoiler maxHeight={165} showLabel="Vis mer" hideLabel="Vis mindre">
         <EditableTextReadOnly dataKey="betingelser" />
       </Spoiler>

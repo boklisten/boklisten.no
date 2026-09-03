@@ -2,6 +2,10 @@ import { Box, Stack, Text } from "@mantine/core";
 import { IconSignature } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
+import {
+  OUTGROWN_SIGNATURE_TITLE,
+  describeOutgrownSignature,
+} from "@/features/signatures/outgrownSignatureCopy";
 import SignedContractDetails from "@/features/signatures/SignedContractDetails";
 import TanStackButton from "@/shared/components/TanStackButton";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
@@ -37,16 +41,11 @@ export default function MySignatureStatus() {
   const outgrown = data.outgrownGuardianSignature;
   return (
     <WarningAlert
-      title={outgrown ? "Du har fylt 18 år og må signere selv" : "Du mangler gyldig signatur"}
+      title={outgrown ? OUTGROWN_SIGNATURE_TITLE : "Du mangler gyldig signatur"}
       mt="md"
     >
       <Stack align="flex-start" gap="xs">
-        {outgrown && (
-          <Text>
-            {outgrown.signingName} (foresatt) signerte låneavtalen på dine vegne{" "}
-            {outgrown.signedAtText}.
-          </Text>
-        )}
+        {outgrown && <Text>{describeOutgrownSignature(outgrown)}</Text>}
         <Text>Bøker kan ikke deles ut før låneavtalen er signert.</Text>
         <TanStackButton to="/oppgaver" leftSection={<IconSignature />}>
           Signer låneavtale

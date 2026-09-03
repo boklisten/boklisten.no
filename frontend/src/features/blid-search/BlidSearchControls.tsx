@@ -1,6 +1,6 @@
 import { Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconBarcode, IconKeyboard, IconObjectScan } from "@tabler/icons-react";
+import { IconKeyboard, IconObjectScan } from "@tabler/icons-react";
 import { useState } from "react";
 import type { SubmitEvent } from "react";
 
@@ -72,10 +72,6 @@ export default function BlidSearchControls({
           )}
           {scanButton}
           {manualButton}
-          <Group gap={6} c="dimmed" fz="xs">
-            <IconBarcode size={16} aria-hidden />
-            <Text size="xs">En fysisk strekkodeskanner kan brukes når som helst</Text>
-          </Group>
         </Stack>
       )}
       <ManualBlidModal

@@ -4,10 +4,11 @@ import type {
 } from "@boklisten/backend/shared/bulk-collection/bulk-collection-dtos";
 import { Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
 import { isOverdue } from "@/features/bulk-collection/deadline";
+import { BLID_SEARCH_QUERY_KEY } from "@/features/kasse/SearchSpotlight";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -53,15 +54,25 @@ function confirmPeerBook(book: ScannedBook): Promise<boolean> {
  * so the list survives a detour into a customer's page and back.
  */
 export default function useCollectionSession(): CollectionSession {
-  const { client } = useApiClient();
+  const { api, client } = useApiClient();
+  const queryClient = useQueryClient();
   const [scannedBooks, setScannedBooks] = useState<ScannedBook[]>([]);
   const [receipt, setReceipt] = useState<CustomerCollectionReceipt[] | null>(null);
   // The scanner modal captures registerBlid when it opens and stays open across many scans, so
   // the duplicate check must read the current list rather than the one from that render.
   const scannedBooksRef = useRef(scannedBooks);
+  const receiptRef = useRef(receipt);
   useEffect(() => {
     scannedBooksRef.current = scannedBooks;
-  }, [scannedBooks]);
+    receiptRef.current = receipt;
+  }, [scannedBooks, receipt]);
+
+  const scanMore = () => {
+    scannedBooksRef.current = [];
+    receiptRef.current = null;
+    setScannedBooks([]);
+    setReceipt(null);
+  };
 
   const overdueBooks = scannedBooks.filter((book) => isOverdue(book.deadline));
 
@@ -87,11 +98,27 @@ export default function useCollectionSession(): CollectionSession {
         return;
       }
       setReceipt(result.receipt);
+      // The books are no longer on loan, so a customer or book left open in Kunde or Boksøk
+      // (and the holder badge in the book search) must not keep showing them as such.
+      for (const key of [
+        api.customerItems.getActiveCustomerItemsForCustomer.pathKey(),
+        api.matches.getMatchesForCustomer.pathKey(),
+        api.orderHistory.getForCustomer.pathKey(),
+        api.orders.getPlacedOrders.pathKey(),
+        api.blidSearch.lookup.pathKey(),
+        BLID_SEARCH_QUERY_KEY,
+      ]) {
+        void queryClient.invalidateQueries({ queryKey: key });
+      }
     },
     onError: () => showErrorNotification(GENERIC_ERROR_TEXT),
   });
 
   const registerBlid = async (blid: string): Promise<ScanNotice | undefined> => {
+    // A scan on the receipt screen starts the next batch, like the "Skann flere" button does.
+    if (receiptRef.current !== null) {
+      scanMore();
+    }
     if (scannedBooksRef.current.some((book) => book.blid === blid)) {
       return { title: "Allerede registrert", message: "Boka ligger allerede i listen." };
     }
@@ -137,9 +164,6 @@ export default function useCollectionSession(): CollectionSession {
     removeBook: (blid) =>
       setScannedBooks((previous) => previous.filter((book) => book.blid !== blid)),
     deliver,
-    scanMore: () => {
-      setScannedBooks([]);
-      setReceipt(null);
-    },
+    scanMore,
   };
 }

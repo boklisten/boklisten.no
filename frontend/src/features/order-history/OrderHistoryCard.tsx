@@ -20,6 +20,7 @@ import type { ReactNode } from "react";
 import { IconCheck, IconChevronDown, IconCopy, IconExclamationCircle } from "@tabler/icons-react";
 import { useState } from "react";
 
+import { showBookSearch, showCustomerSearch } from "@/features/kasse/kasseParams";
 import OrderBranchChip from "@/features/order-history/OrderBranchChip";
 import { DeliveryBadge, PaymentStatusBadge } from "@/features/order-history/OrderStatusBadges";
 import { capitalize, formatAmount, pluralBooks } from "@/features/order-history/orderHistoryGroups";
@@ -104,7 +105,7 @@ function PersonName({
     return party.name;
   }
   return (
-    <EntityLink to="/admin/kasse" search={{ kunde: party.detailsId }} size="inherit">
+    <EntityLink to="/admin/kasse" search={showCustomerSearch(party.detailsId)} size="inherit">
       {party.name}
     </EntityLink>
   );
@@ -216,7 +217,7 @@ function ItemRow({
               (variant === "admin" ? (
                 <EntityLink
                   to="/admin/kasse"
-                  search={{ blid: item.blid }}
+                  search={showBookSearch(item.blid)}
                   size="sm"
                   ff="monospace"
                   lh={1.3}
