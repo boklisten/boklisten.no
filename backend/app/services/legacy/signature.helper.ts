@@ -81,14 +81,37 @@ async function possessesSignatureRequiringItem(customerId: string): Promise<bool
   );
 }
 
-export async function verifyCustomerSignature(customerId: string): Promise<string | null> {
-  const userDetail = await StorageService.UserDetails.getOrNull(customerId);
-  if (!userDetail) {
-    return "Kunden mangler gyldig signatur, og kan derfor ikke få utdelt bøker. Be kunden signere først.";
-  }
+export const SIGNATURE_EXCEPTION_REASONS = {
+  neverSigned: "Aldri signert",
+  expired: "Signaturen er utløpt",
+  outgrownGuardian: "Signert av foresatt, kunden har fylt 18",
+  underageWithoutGuardian: "Signert uten foresatt, kunden er under 18",
+} as const;
+
+export type SignatureExceptionReason =
+  (typeof SIGNATURE_EXCEPTION_REASONS)[keyof typeof SIGNATURE_EXCEPTION_REASONS];
+
+/**
+ * Why handing books out to this customer is an exception, or null when the customer either has a
+ * valid signature or needs none. The wording is what the exception report to the administrator
+ * carries, so it names the state of the newest signature rather than what the customer must do.
+ */
+export async function findSignatureException(
+  userDetail: UserDetail,
+): Promise<SignatureExceptionReason | null> {
   const reconciled = await reconcileSignatureTask(userDetail);
-  if (reconciled.tasks?.signAgreement) {
-    return "Kunden mangler gyldig signatur, og kan derfor ikke få utdelt bøker. Be kunden signere først.";
+  if (!reconciled.tasks?.signAgreement) {
+    return null;
   }
-  return null;
+  const newestSignature = await Signature.newestForCustomer(userDetail.id);
+  if (!newestSignature) {
+    return SIGNATURE_EXCEPTION_REASONS.neverSigned;
+  }
+  if (newestSignature.isExpired()) {
+    return SIGNATURE_EXCEPTION_REASONS.expired;
+  }
+  if (newestSignature.isOutgrownGuardianFor(userDetail)) {
+    return SIGNATURE_EXCEPTION_REASONS.outgrownGuardian;
+  }
+  return SIGNATURE_EXCEPTION_REASONS.underageWithoutGuardian;
 }

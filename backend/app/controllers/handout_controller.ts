@@ -14,7 +14,9 @@ import { OrderValidator } from "#services/legacy/collections/order/helpers/order
 import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
 import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
 import { findUniqueItemByBlid } from "#services/item_lookup";
-import { verifyCustomerSignature } from "#services/legacy/signature.helper";
+import { findSignatureException } from "#services/legacy/signature.helper";
+import type { SignatureExceptionReason } from "#services/legacy/signature.helper";
+import { HandoutExceptions } from "#services/handout_exceptions";
 import { handoutValidator } from "#validators/handout_validator";
 import { PermissionService } from "#services/permission_service";
 import BlidService from "#services/blid_service";
@@ -22,6 +24,15 @@ import { itemsAreEquivalent } from "#shared/item-equivalence";
 import { findFutureRentPeriod } from "#shared/rent-periods";
 
 const blidNotActiveFeedback = "Denne unike IDen er ikke koblet til noen bok.";
+
+interface FinishedHandout {
+  blid: string;
+  itemId: string;
+  title: string;
+  customerId: string;
+  employeeId: string;
+  signatureException: SignatureExceptionReason | null;
+}
 
 export default class HandoutController {
   async handout(ctx: HttpContext) {
@@ -32,10 +43,14 @@ export default class HandoutController {
     if (!BlidService.isValidBlid(blid)) {
       return { feedback: "Denne bliden er ikke gyldig." };
     }
-    const signatureFeedback = await verifyCustomerSignature(customerId);
-    if (signatureFeedback) {
-      return { feedback: signatureFeedback };
+    const customer = await StorageService.UserDetails.getOrNull(customerId);
+    if (!customer) {
+      return { feedback: "Fant ikke kunden. Prøv å søke opp kunden på nytt." };
     }
+    // A missing signature no longer stops the handout: the employee has confirmed it in the
+    // frontend, and the administrator is told about every book handed out this way. The reason is
+    // fixed before the handout so it describes the state the employee was warned about.
+    const signatureException = await findSignatureException(customer);
 
     const userFeedback = await this.verifyBlidNotActive(blid, customerId);
     if (userFeedback) {
@@ -60,6 +75,15 @@ export default class HandoutController {
       };
     }
 
+    const handout: FinishedHandout = {
+      blid,
+      itemId: uniqueItemOrFeedback.item,
+      title: uniqueItemOrFeedback.title,
+      customerId,
+      employeeId,
+      signatureException,
+    };
+
     const placedRentOrder = await this.placeRentOrder(
       blid,
       uniqueItemOrFeedback.item,
@@ -70,8 +94,7 @@ export default class HandoutController {
       return { feedback: placedRentOrder };
     }
     if (placedRentOrder !== null) {
-      await this.recordStandHandover(blid, uniqueItemOrFeedback.item, customerId, placedRentOrder);
-      await this.createCustomerItem(placedRentOrder);
+      await this.finishHandout(placedRentOrder, handout);
       return { feedback: "" };
     }
 
@@ -97,11 +120,30 @@ export default class HandoutController {
     if (typeof noOrderResult === "string") {
       return { feedback: noOrderResult };
     }
-    await this.recordStandHandover(blid, uniqueItemOrFeedback.item, customerId, noOrderResult);
-    await this.createCustomerItem(noOrderResult);
+    await this.finishHandout(noOrderResult, handout);
     // Tells the frontend the ordered path did not win after all, so only then does it add a
     // synthetic row for a book the orders poll will never list.
     return { feedback: "", handedOutWithoutOrder: true, itemId: uniqueItemOrFeedback.item };
+  }
+
+  /**
+   * Everything that follows a placed handout order, whichever path placed it: the handover record,
+   * the customer item, and the report to the administrator when the customer lacks a signature.
+   */
+  private async finishHandout(placedHandoutOrder: Order, handout: FinishedHandout): Promise<void> {
+    await this.recordStandHandover(
+      handout.blid,
+      handout.itemId,
+      handout.customerId,
+      placedHandoutOrder,
+    );
+    await this.createCustomerItem(placedHandoutOrder);
+    // The book is already handed out, so a lost report goes to Sentry rather than failing the scan.
+    try {
+      await HandoutExceptions.reportMissingSignature(handout);
+    } catch (error) {
+      Sentry.captureException(error);
+    }
   }
 
   /**

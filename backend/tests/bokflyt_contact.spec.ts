@@ -1,16 +1,14 @@
-import sgMail from "@sendgrid/mail";
 import { test } from "@japa/runner";
 import { errors } from "@vinejs/vine";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import DispatchService from "#services/dispatch_service";
 import {
   BOKFLYT_CONTACT_RECIPIENT,
   BokflytContactService,
   buildBokflytContactMail,
 } from "#services/bokflyt_contact_service";
-import env from "#start/env";
-import { unchecked } from "#tests/test-doubles";
 import { bokflytContactValidator } from "#validators/bokflyt";
 
 const VALID_REQUEST = {
@@ -69,28 +67,20 @@ test.group("Bokflyt contact request", (group) => {
     assert.include(mail.text, "(ingen melding)");
   });
 
-  test("outside production the mail is logged, not sent", async ({ assert }) => {
-    const send = sandbox.stub(sgMail, "send").resolves(unchecked([{ statusCode: 202 }, {}]));
+  test("the mail is sent through the dispatch service under its own message type", async ({
+    assert,
+  }) => {
+    const sendPlainEmail = sandbox
+      .stub(DispatchService, "sendPlainEmail")
+      .resolves({ success: true });
 
     await BokflytContactService.send(VALID_REQUEST);
 
-    assert.isFalse(send.called);
-  });
-
-  test("in production the mail is handed to SendGrid", async ({ assert }) => {
-    const send = sandbox.stub(sgMail, "send").resolves(unchecked([{ statusCode: 202 }, {}]));
-    const originalGet = env.get.bind(env);
-    sandbox
-      .stub(env, "get")
-      .callsFake(
-        unchecked((key: string) =>
-          key === "API_ENV" ? "production" : originalGet(unchecked(key)),
-        ),
-      );
-
-    await BokflytContactService.send(VALID_REQUEST);
-
-    assert.isTrue(send.calledOnce);
-    assert.deepInclude(send.firstCall.args[0], { to: BOKFLYT_CONTACT_RECIPIENT });
+    assert.isTrue(sendPlainEmail.calledOnce);
+    const mail = sendPlainEmail.firstCall.args[0];
+    assert.equal(mail.to, BOKFLYT_CONTACT_RECIPIENT);
+    assert.equal(mail.subject, "Bokflyt: henvendelse fra Eksempel videregående skole");
+    assert.deepEqual(mail.replyTo, { email: VALID_REQUEST.email, name: VALID_REQUEST.name });
+    assert.deepEqual(mail.context, { messageType: "bokflyt-contact" });
   });
 });

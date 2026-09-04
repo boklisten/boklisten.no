@@ -5,7 +5,7 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import Signature from "#models/signature";
-import { verifyCustomerSignature } from "#services/legacy/signature.helper";
+import { findSignatureException } from "#services/legacy/signature.helper";
 import { StorageService } from "#services/storage_service";
 import type { Order } from "#shared/order/order";
 import type { UserDetail } from "#shared/user-detail";
@@ -44,16 +44,14 @@ function openOrderWith(type: OrderItemType): Order {
   });
 }
 
-test.group("verifyCustomerSignature", (group) => {
+test.group("findSignatureException", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let userDetailStub: sinon.SinonStub;
   let orders: Order[];
 
   group.each.setup(() => testUtils.db().truncate());
 
   group.each.setup(() => {
     sandbox = createSandbox();
-    userDetailStub = sandbox.stub(StorageService.UserDetails, "getOrNull");
     sandbox.stub(StorageService.UserDetails, "update").callsFake((id, data) =>
       Promise.resolve(
         mock<UserDetail>({
@@ -72,90 +70,75 @@ test.group("verifyCustomerSignature", (group) => {
     sandbox.restore();
   });
 
-  test("should return feedback when the customer does not exist", async ({ assert }) => {
-    userDetailStub.resolves(null);
-
-    const feedback = await verifyCustomerSignature("missing-customer");
-
-    assert.typeOf(feedback, "string");
-    assert.include(feedback, "signatur");
-  });
-
-  test("should return feedback when an unsigned customer has an open rent order", async ({
-    assert,
-  }) => {
+  test("an unsigned customer with an open rent order has never signed", async ({ assert }) => {
     orders = [openOrderWith("rent")];
-    userDetailStub.resolves(userDetailWith({}));
 
-    const feedback = await verifyCustomerSignature(CUSTOMER_ID);
+    const reason = await findSignatureException(userDetailWith({}));
 
-    assert.typeOf(feedback, "string");
-    assert.include(feedback, "signatur");
+    assert.equal(reason, "Aldri signert");
   });
 
-  test("should return feedback when the signature task is requested", async ({ assert }) => {
-    userDetailStub.resolves(userDetailWith({ tasks: { signAgreement: true } }));
+  test("a requested signature task counts as never signed", async ({ assert }) => {
+    const reason = await findSignatureException(userDetailWith({ tasks: { signAgreement: true } }));
 
-    const feedback = await verifyCustomerSignature(CUSTOMER_ID);
-
-    assert.typeOf(feedback, "string");
-    assert.include(feedback, "signatur");
+    assert.equal(reason, "Aldri signert");
   });
 
-  test("should return feedback when an unsigned customer has an open partly-payment order", async ({
+  test("an unsigned customer with an open partly-payment order has never signed", async ({
     assert,
   }) => {
     orders = [openOrderWith("partly-payment")];
-    userDetailStub.resolves(userDetailWith({}));
 
-    const feedback = await verifyCustomerSignature(CUSTOMER_ID);
+    const reason = await findSignatureException(userDetailWith({}));
 
-    assert.typeOf(feedback, "string");
-    assert.include(feedback, "signatur");
+    assert.equal(reason, "Aldri signert");
   });
 
-  test("should return null for an unsigned customer with only a buy order", async ({ assert }) => {
+  test("an unsigned customer with only a buy order needs no signature", async ({ assert }) => {
     orders = [openOrderWith("buy")];
-    userDetailStub.resolves(userDetailWith({}));
 
-    const feedback = await verifyCustomerSignature(CUSTOMER_ID);
+    const reason = await findSignatureException(userDetailWith({}));
 
-    assert.equal(feedback, null);
+    assert.isNull(reason);
   });
 
-  test("should return feedback when the newest signature is expired and a rent order is open", async ({
+  test("an expired signature with an open rent order is reported as expired", async ({
     assert,
   }) => {
     orders = [openOrderWith("rent")];
-    userDetailStub.resolves(userDetailWith({}));
     await createSignature({ createdAt: DateTime.local(2000, 1, 1) });
 
-    const feedback = await verifyCustomerSignature(CUSTOMER_ID);
+    const reason = await findSignatureException(userDetailWith({}));
 
-    assert.typeOf(feedback, "string");
-    assert.include(feedback, "signatur");
+    assert.equal(reason, "Signaturen er utløpt");
   });
 
-  test("should return feedback when an underage customer signed without a guardian", async ({
+  test("an underage customer who signed without a guardian is reported as such", async ({
     assert,
   }) => {
     orders = [openOrderWith("rent")];
-    userDetailStub.resolves(userDetailWith({ dob: childDob }));
     await createSignature();
 
-    const feedback = await verifyCustomerSignature(CUSTOMER_ID);
+    const reason = await findSignatureException(userDetailWith({ dob: childDob }));
 
-    assert.typeOf(feedback, "string");
-    assert.include(feedback, "signatur");
+    assert.equal(reason, "Signert uten foresatt, kunden er under 18");
   });
 
-  test("should return null when the customer has a valid signature", async ({ assert }) => {
+  test("an adult with a guardian signature is reported as outgrown", async ({ assert }) => {
     orders = [openOrderWith("rent")];
-    userDetailStub.resolves(userDetailWith({}));
+    await createSignature({ signedByGuardian: true });
+
+    const reason = await findSignatureException(userDetailWith({}));
+
+    assert.equal(reason, "Signert av foresatt, kunden har fylt 18");
+  });
+
+  test("a customer with a valid signature has no exception", async ({ assert }) => {
+    orders = [openOrderWith("rent")];
     await createSignature();
 
-    const feedback = await verifyCustomerSignature(CUSTOMER_ID);
+    const reason = await findSignatureException(userDetailWith({}));
 
-    assert.equal(feedback, null);
+    assert.isNull(reason);
   });
 });

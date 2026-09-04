@@ -92,7 +92,7 @@ export default class Signature extends SignatureSchema {
     return this.signedByGuardian && !this.isExpired() && !isUnderage(userDetail);
   }
 
-  private isExpired(): boolean {
+  isExpired(): boolean {
     if (!this.createdAt) {
       return false;
     }

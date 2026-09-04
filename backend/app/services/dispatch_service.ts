@@ -4,6 +4,7 @@ import sgMail from "@sendgrid/mail";
 import moment from "moment-timezone";
 import twilio from "twilio";
 
+import type Message from "#models/message";
 import { OrderEmailHandler } from "#services/legacy/order_email_handler";
 import { isUnderage } from "#models/signature";
 import { userHasValidSignature } from "#services/legacy/signature.helper";
@@ -26,6 +27,51 @@ const twilioClient = twilio(env.get("TWILIO_SMS_SID"), env.get("TWILIO_SMS_AUTH_
   autoRetry: true,
   maxRetries: 5,
 });
+
+export interface PlainEmail {
+  to: string;
+  subject: string;
+  text: string;
+  replyTo?: { email: string; name?: string };
+  context: MessageLogContext;
+}
+
+const SKIPPED_OUTSIDE_PRODUCTION_REASON = "Utenfor produksjon sendes e-post bare til ansatte";
+
+/** Outside production only employees receive real mail; everyone else gets a skipped log row. */
+async function mayReceiveOutsideProduction(email: string): Promise<boolean> {
+  const userDetail = await UserDetailService.getByEmail(email);
+  const user = userDetail ? await UserService.getByUserDetailsId(userDetail.id) : null;
+  return user !== null && PermissionService.isPermissionEqualOrOver(user.permission, "employee");
+}
+
+/**
+ * Hands one SendGrid request over and records the outcome on every log row it carried. Returns
+ * whether SendGrid accepted it.
+ */
+async function deliverAndRecord(
+  logEntries: (Message | null)[],
+  send: () => ReturnType<typeof sgMail.send>,
+): Promise<boolean> {
+  let result: { status: "sent" | "send-failed"; reason?: string };
+  try {
+    const [sendGridResponse] = await send();
+    const ok = sendGridResponse.statusCode === 202;
+    if (!ok) {
+      logger.error(`SendGrid send failed with status ${sendGridResponse.statusCode}`);
+    }
+    result = ok
+      ? { status: "sent" }
+      : { status: "send-failed", reason: `SendGrid svarte ${sendGridResponse.statusCode}` };
+  } catch (error) {
+    logger.error(`SendGrid send error: ${String(error)}`);
+    result = { status: "send-failed", reason: String(error) };
+  }
+  for (const logEntry of logEntries) {
+    await MessageLogService.recordSendResult(logEntry, result);
+  }
+  return result.status === "sent";
+}
 
 interface SmsMessage {
   to: string;
@@ -143,19 +189,17 @@ const EmailService = {
       personalizations = [];
       const skipped: EmailRecipient[] = [];
       for (const personalization of _personalizations) {
-        const userDetail = await UserDetailService.getByEmail(personalization.to);
-        const user = userDetail ? await UserService.getByUserDetailsId(userDetail.id) : null;
-        if (!user || !PermissionService.isPermissionEqualOrOver(user.permission, "employee")) {
+        if (await mayReceiveOutsideProduction(personalization.to)) {
+          personalizations.push(personalization);
+        } else {
           skipped.push(personalization);
-          continue;
         }
-        personalizations.push(personalization);
       }
       for (const personalization of skipped) {
         const logEntry = await this.logEmail(template, personalization, context);
         await MessageLogService.recordSendResult(logEntry, {
           status: "skipped",
-          reason: "Utenfor produksjon sendes e-post bare til ansatte",
+          reason: SKIPPED_OUTSIDE_PRODUCTION_REASON,
         });
       }
     }
@@ -167,12 +211,12 @@ const EmailService = {
 
     let success = true;
     for (const batch of batches) {
-      const logEntries: Awaited<ReturnType<typeof EmailService.logEmail>>[] = [];
+      const logEntries: (Message | null)[] = [];
       for (const personalization of batch) {
         logEntries.push(await this.logEmail(template, personalization, context));
       }
-      try {
-        const [sendGridResponse] = await sgMail.send({
+      const batchOk = await deliverAndRecord(logEntries, () =>
+        sgMail.send({
           from: template.sender,
           templateId: template.templateId,
           personalizations: batch.map((personalization, index) => ({
@@ -183,31 +227,52 @@ const EmailService = {
               bl_api_env: env.get("API_ENV"),
             },
           })),
-        });
-
-        const batchOk = sendGridResponse.statusCode === 202;
-        if (!batchOk) {
-          logger.error(`SendGrid batch failed with status ${sendGridResponse.statusCode}`);
-          success = false;
-        }
-        for (const logEntry of logEntries) {
-          await MessageLogService.recordSendResult(logEntry, {
-            status: batchOk ? "sent" : "send-failed",
-            reason: batchOk ? undefined : `SendGrid svarte ${sendGridResponse.statusCode}`,
-          });
-        }
-      } catch (error) {
-        logger.error(`SendGrid send error: ${String(error)}`);
-        for (const logEntry of logEntries) {
-          await MessageLogService.recordSendResult(logEntry, {
-            status: "send-failed",
-            reason: String(error),
-          });
-        }
-        success = false;
-      }
+        }),
+      );
+      success &&= batchOk;
     }
 
+    return { success };
+  },
+  /**
+   * A one-off mail with its subject and body written here rather than in a SendGrid template:
+   * notices to Boklisten's own inboxes. Same log row, non-production filter and send result
+   * bookkeeping as templated mail, with the body kept on the log row so the log page shows it.
+   */
+  async sendPlainEmail({ to, subject, text, replyTo, context }: PlainEmail) {
+    const logEntry = await MessageLogService.logOutgoingMessage({
+      channel: "email",
+      recipient: to,
+      context,
+      subject,
+      templateData: { text },
+    });
+
+    if (env.get("API_ENV") !== "production" && !(await mayReceiveOutsideProduction(to))) {
+      logger.info(
+        { to, subject, text },
+        "Since API_ENV !== production, the mail is logged, not sent",
+      );
+      await MessageLogService.recordSendResult(logEntry, {
+        status: "skipped",
+        reason: SKIPPED_OUTSIDE_PRODUCTION_REASON,
+      });
+      return { success: true };
+    }
+
+    const success = await deliverAndRecord([logEntry], () =>
+      sgMail.send({
+        from: EMAIL_SENDER.NO_REPLY,
+        to,
+        subject,
+        text,
+        ...(replyTo === undefined ? {} : { replyTo }),
+        customArgs: {
+          bl_message_id: logEntry?.id ?? "",
+          bl_api_env: env.get("API_ENV"),
+        },
+      }),
+    );
     return { success };
   },
   async logEmail(template: EmailTemplate, recipient: EmailRecipient, context: MessageLogContext) {
@@ -472,6 +537,9 @@ const DispatchService = {
   },
   async getEmailTemplates() {
     return EmailService.getEmailTemplates();
+  },
+  async sendPlainEmail(mail: PlainEmail) {
+    return EmailService.sendPlainEmail(mail);
   },
 };
 

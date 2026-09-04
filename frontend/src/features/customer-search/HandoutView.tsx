@@ -177,6 +177,37 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
     });
   }
 
+  /**
+   * A missing signature no longer blocks the stand, but the employee must knowingly accept that
+   * every book handed out this way is reported to the administrator.
+   */
+  async function confirmHandoutWithoutSignature(): Promise<boolean> {
+    return asyncConfirmModal({
+      title: signatureStatus?.outgrownGuardianSignature
+        ? "Signert av foresatt, må signeres på nytt"
+        : "Kunden mangler gyldig signatur",
+      children: (
+        <Stack gap="xs">
+          <Text>
+            Bøker skal normalt ikke deles ut uten gyldig signatur. Deler du ut likevel, sendes en
+            unntaksmelding til administrator for hver bok, med navn på deg og kunden.
+          </Text>
+          <Text>Be kunden signere så snart som mulig.</Text>
+        </Stack>
+      ),
+      confirmLabel: "Del ut likevel",
+      confirmColor: "red",
+      zIndex: CONFIRM_Z_INDEX,
+    });
+  }
+
+  async function openScanner() {
+    if (signatureStatus?.signatureRequired && !(await confirmHandoutWithoutSignature())) {
+      return;
+    }
+    open();
+  }
+
   async function confirmPeerMatch(deliverFromName: string): Promise<boolean> {
     return asyncConfirmModal({
       title: "Skal mottas fra en annen elev",
@@ -318,12 +349,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
       )}
 
       <Box>
-        <Button
-          color="green"
-          leftSection={<IconObjectScan />}
-          onClick={open}
-          disabled={signatureStatus?.signatureRequired}
-        >
+        <Button color="green" leftSection={<IconObjectScan />} onClick={openScanner}>
           Scan bøker
         </Button>
       </Box>

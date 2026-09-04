@@ -32,6 +32,8 @@ export const TYPE_LABELS: Record<MessageType, string> = {
   "password-reset": "Passordtilbakestilling",
   "email-verification": "E-postbekreftelse",
   onboarding: "Velkomstmelding",
+  "exception-report": "Unntaksmelding",
+  "bokflyt-contact": "Bokflyt-henvendelse",
 };
 
 export const CHANNEL_LABELS: Record<MessageChannel, string> = {

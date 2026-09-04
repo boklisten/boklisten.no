@@ -175,6 +175,29 @@ test.group("MessageLogService", (group) => {
     assert.sameMembers(recipients.email, ["elev@example.com", "foresatt@example.com"]);
   });
 
+  test("customerLog includes mail about the customer that went to someone else", async ({
+    assert,
+  }) => {
+    sandbox
+      .stub(StorageService.UserDetails, "get")
+      .resolves(unchecked({ id: CUSTOMER, email: "elev@example.com", phone: "91234567" }));
+
+    await MessageLogService.logOutgoingMessage({
+      channel: "email",
+      recipient: "info@boklisten.no",
+      context: { messageType: "exception-report", regardingCustomerDetailsId: CUSTOMER },
+    });
+    await MessageLogService.logOutgoingMessage({
+      channel: "email",
+      recipient: "info@boklisten.no",
+      context: { messageType: "exception-report", regardingCustomerDetailsId: "other" },
+    });
+
+    const { entries } = await MessageLogService.customerLog(CUSTOMER);
+    assert.lengthOf(entries, 1);
+    assert.equal(entries[0]?.messageType, "exception-report");
+  });
+
   test("metrics fills every day in the period and counts failures", async ({ assert }) => {
     const sms = await logSms("91234567");
     await MessageLogService.recordSendResult(sms, { status: "send-failed", reason: "boom" });

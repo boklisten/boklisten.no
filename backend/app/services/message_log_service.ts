@@ -273,12 +273,13 @@ async function customerLog(detailsId: string): Promise<{
     .filter((phone): phone is string => (phone?.length ?? 0) > 0)
     .map((phone) => normalizeRecipient("sms", phone));
   const recipients = [...new Set([...emails, ...phones])];
-  if (recipients.length === 0) {
-    return { entries: [], recipients: { email: [], phone: [] } };
-  }
 
-  const messages = await Message.query()
-    .whereIn("recipient", recipients)
+  // Mail about the customer that went to someone else (an exception report to the office) belongs
+  // in their log too, so the regarding-customer column is matched alongside the recipients.
+  const aboutCustomer = Message.query().where("regardingCustomerDetailsId", detailsId);
+  const messages = await (
+    recipients.length > 0 ? aboutCustomer.orWhereIn("recipient", recipients) : aboutCustomer
+  )
     .preload("events")
     .preload("sendout")
     .orderBy("createdAt", "desc")
