@@ -165,6 +165,10 @@ export interface ApiDefinition {
   uniqueItems: {
     add: typeof routes['unique_items.add']
   }
+  blidRegistration: {
+    lookupLink: typeof routes['blid_registration.lookup_link']
+    register: typeof routes['blid_registration.register']
+  }
   orderHistory: {
     getMyOrder: typeof routes['order_history.get_my_order']
     getMyOrders: typeof routes['order_history.get_my_orders']

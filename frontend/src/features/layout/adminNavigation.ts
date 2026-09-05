@@ -1,6 +1,5 @@
 import type { Icon } from "@tabler/icons-react";
 import {
-  IconBarcode,
   IconBell,
   IconBooks,
   IconBuildings,
@@ -18,12 +17,14 @@ import {
   IconSend,
   IconShoppingCart,
   IconSignature,
+  IconTag,
   IconTimeline,
   IconUsers,
 } from "@tabler/icons-react";
 import type { LinkProps } from "@tanstack/react-router";
 
 import { KASSE_DESCRIPTION, KASSE_TITLE } from "@/features/kasse/kasseDescription";
+import { MERKING_DESCRIPTION, MERKING_TITLE } from "@/features/merking/merkingDescription";
 
 export interface AdminNavLink {
   label: string;
@@ -72,10 +73,10 @@ export const ADMIN_NAV_SECTIONS = [
         icon: IconHourglassLow,
       },
       {
-        label: "Scanner",
-        description: "Koble sammen unike IDer med ISBN",
-        to: "/admin/scanner",
-        icon: IconBarcode,
+        label: MERKING_TITLE,
+        description: MERKING_DESCRIPTION,
+        to: "/admin/merking",
+        icon: IconTag,
       },
       {
         label: "Overleveringer",

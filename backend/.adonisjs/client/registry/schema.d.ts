@@ -1243,6 +1243,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_items_controller').default['add']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'blid_registration.lookup_link': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/employee/unique_items/:blid/link'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { blid: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/blid_registration_controller').default['lookupLink']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/blid_registration_controller').default['lookupLink']>>>
+    }
+  }
+  'blid_registration.register': {
+    methods: ["POST"]
+    pattern: '/v2/employee/unique_items/batch'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/blid_registration').blidRegistrationValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/blid_registration').blidRegistrationValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/blid_registration_controller').default['register']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/blid_registration_controller').default['register']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'order_history.get_my_order': {
     methods: ["GET","HEAD"]
     pattern: '/order_history/me/:orderId'

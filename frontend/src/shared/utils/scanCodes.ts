@@ -65,13 +65,13 @@ export function listScanCodeTypes(types: ScanCodeType[]): string {
 export function describeScanCodeLocation(type: ScanCodeType): string | null {
   switch (type) {
     case "blid": {
-      return "Klistremerke på baksiden eller på første side i omslaget";
+      return "Klistremerket på baksiden eller på første side i omslaget";
     }
     case "customerId": {
       return "QR-koden under «Vis kunde-ID» på boklisten.no";
     }
     case "isbn": {
-      return "Strekkoden med 13 siffer, vanligvis på baksiden av boka";
+      return "Strekkoden med 13 siffer på baksiden av boka";
     }
     default: {
       return null;

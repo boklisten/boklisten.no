@@ -624,6 +624,18 @@ const routes = {
     tokens: [{"old":"/unique_items/add","type":0,"val":"unique_items","end":""},{"old":"/unique_items/add","type":0,"val":"add","end":""}],
     types: placeholder as Registry['unique_items.add']['types'],
   },
+  'blid_registration.lookup_link': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/employee/unique_items/:blid/link',
+    tokens: [{"old":"/v2/employee/unique_items/:blid/link","type":0,"val":"v2","end":""},{"old":"/v2/employee/unique_items/:blid/link","type":0,"val":"employee","end":""},{"old":"/v2/employee/unique_items/:blid/link","type":0,"val":"unique_items","end":""},{"old":"/v2/employee/unique_items/:blid/link","type":1,"val":"blid","end":""},{"old":"/v2/employee/unique_items/:blid/link","type":0,"val":"link","end":""}],
+    types: placeholder as Registry['blid_registration.lookup_link']['types'],
+  },
+  'blid_registration.register': {
+    methods: ["POST"],
+    pattern: '/v2/employee/unique_items/batch',
+    tokens: [{"old":"/v2/employee/unique_items/batch","type":0,"val":"v2","end":""},{"old":"/v2/employee/unique_items/batch","type":0,"val":"employee","end":""},{"old":"/v2/employee/unique_items/batch","type":0,"val":"unique_items","end":""},{"old":"/v2/employee/unique_items/batch","type":0,"val":"batch","end":""}],
+    types: placeholder as Registry['blid_registration.register']['types'],
+  },
   'order_history.get_my_order': {
     methods: ["GET","HEAD"],
     pattern: '/order_history/me/:orderId',

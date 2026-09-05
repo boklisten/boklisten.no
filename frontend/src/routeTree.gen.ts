@@ -30,9 +30,9 @@ import { Route as administrasjonAdminIndexRouteImport } from './routes/(administ
 import { Route as administrasjonAdminFakturaRouteImport } from './routes/(administrasjon)/admin/faktura'
 import { Route as administrasjonAdminHandlekurvRouteImport } from './routes/(administrasjon)/admin/handlekurv'
 import { Route as administrasjonAdminKasseRouteImport } from './routes/(administrasjon)/admin/kasse'
+import { Route as administrasjonAdminMerkingRouteImport } from './routes/(administrasjon)/admin/merking'
 import { Route as administrasjonAdminOrdreoversiktRouteImport } from './routes/(administrasjon)/admin/ordreoversikt'
 import { Route as administrasjonAdminOverleveringerRouteRouteImport } from './routes/(administrasjon)/admin/overleveringer/route'
-import { Route as administrasjonAdminScannerRouteImport } from './routes/(administrasjon)/admin/scanner'
 import { Route as administrasjonAdminUserSettingsRouteImport } from './routes/(administrasjon)/admin/user-settings'
 import { Route as administrasjonAdminVentelisteRouteImport } from './routes/(administrasjon)/admin/venteliste'
 import { Route as legacyAuthMenuRouteImport } from './routes/(legacy)/auth/menu'
@@ -198,6 +198,12 @@ const administrasjonAdminKasseRoute =
     path: '/kasse',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
+const administrasjonAdminMerkingRoute =
+  administrasjonAdminMerkingRouteImport.update({
+    id: '/merking',
+    path: '/merking',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
 const administrasjonAdminOrdreoversiktRoute =
   administrasjonAdminOrdreoversiktRouteImport.update({
     id: '/ordreoversikt',
@@ -208,12 +214,6 @@ const administrasjonAdminOverleveringerRouteRoute =
   administrasjonAdminOverleveringerRouteRouteImport.update({
     id: '/overleveringer',
     path: '/overleveringer',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminScannerRoute =
-  administrasjonAdminScannerRouteImport.update({
-    id: '/scanner',
-    path: '/scanner',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
 const administrasjonAdminUserSettingsRoute =
@@ -542,8 +542,8 @@ export interface FileRoutesByFullPath {
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
   '/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/admin/kasse': typeof administrasjonAdminKasseRoute
+  '/admin/merking': typeof administrasjonAdminMerkingRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
-  '/admin/scanner': typeof administrasjonAdminScannerRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/admin/venteliste': typeof administrasjonAdminVentelisteRoute
   '/auth/menu': typeof legacyAuthMenuRoute
@@ -618,8 +618,8 @@ export interface FileRoutesByTo {
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
   '/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/admin/kasse': typeof administrasjonAdminKasseRoute
+  '/admin/merking': typeof administrasjonAdminMerkingRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
-  '/admin/scanner': typeof administrasjonAdminScannerRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/admin/venteliste': typeof administrasjonAdminVentelisteRoute
   '/auth/menu': typeof legacyAuthMenuRoute
@@ -699,8 +699,8 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/faktura': typeof administrasjonAdminFakturaRoute
   '/(administrasjon)/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/(administrasjon)/admin/kasse': typeof administrasjonAdminKasseRoute
+  '/(administrasjon)/admin/merking': typeof administrasjonAdminMerkingRoute
   '/(administrasjon)/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
-  '/(administrasjon)/admin/scanner': typeof administrasjonAdminScannerRoute
   '/(administrasjon)/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/(administrasjon)/admin/venteliste': typeof administrasjonAdminVentelisteRoute
   '/(legacy)/auth/menu': typeof legacyAuthMenuRoute
@@ -780,8 +780,8 @@ export interface FileRouteTypes {
     | '/admin/faktura'
     | '/admin/handlekurv'
     | '/admin/kasse'
+    | '/admin/merking'
     | '/admin/ordreoversikt'
-    | '/admin/scanner'
     | '/admin/user-settings'
     | '/admin/venteliste'
     | '/auth/menu'
@@ -856,8 +856,8 @@ export interface FileRouteTypes {
     | '/admin/faktura'
     | '/admin/handlekurv'
     | '/admin/kasse'
+    | '/admin/merking'
     | '/admin/ordreoversikt'
-    | '/admin/scanner'
     | '/admin/user-settings'
     | '/admin/venteliste'
     | '/auth/menu'
@@ -936,8 +936,8 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/faktura'
     | '/(administrasjon)/admin/handlekurv'
     | '/(administrasjon)/admin/kasse'
+    | '/(administrasjon)/admin/merking'
     | '/(administrasjon)/admin/ordreoversikt'
-    | '/(administrasjon)/admin/scanner'
     | '/(administrasjon)/admin/user-settings'
     | '/(administrasjon)/admin/venteliste'
     | '/(legacy)/auth/menu'
@@ -1162,6 +1162,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminKasseRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
+    '/(administrasjon)/admin/merking': {
+      id: '/(administrasjon)/admin/merking'
+      path: '/merking'
+      fullPath: '/admin/merking'
+      preLoaderRoute: typeof administrasjonAdminMerkingRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
     '/(administrasjon)/admin/ordreoversikt': {
       id: '/(administrasjon)/admin/ordreoversikt'
       path: '/ordreoversikt'
@@ -1174,13 +1181,6 @@ declare module '@tanstack/react-router' {
       path: '/overleveringer'
       fullPath: '/admin/overleveringer'
       preLoaderRoute: typeof administrasjonAdminOverleveringerRouteRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/scanner': {
-      id: '/(administrasjon)/admin/scanner'
-      path: '/scanner'
-      fullPath: '/admin/scanner'
-      preLoaderRoute: typeof administrasjonAdminScannerRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
     '/(administrasjon)/admin/user-settings': {
@@ -1722,8 +1722,8 @@ interface administrasjonAdminRouteRouteChildren {
   administrasjonAdminFakturaRoute: typeof administrasjonAdminFakturaRoute
   administrasjonAdminHandlekurvRoute: typeof administrasjonAdminHandlekurvRoute
   administrasjonAdminKasseRoute: typeof administrasjonAdminKasseRoute
+  administrasjonAdminMerkingRoute: typeof administrasjonAdminMerkingRoute
   administrasjonAdminOrdreoversiktRoute: typeof administrasjonAdminOrdreoversiktRoute
-  administrasjonAdminScannerRoute: typeof administrasjonAdminScannerRoute
   administrasjonAdminUserSettingsRoute: typeof administrasjonAdminUserSettingsRoute
   administrasjonAdminVentelisteRoute: typeof administrasjonAdminVentelisteRoute
   administrasjonAdminIndexRoute: typeof administrasjonAdminIndexRoute
@@ -1747,9 +1747,9 @@ const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildr
     administrasjonAdminFakturaRoute: administrasjonAdminFakturaRoute,
     administrasjonAdminHandlekurvRoute: administrasjonAdminHandlekurvRoute,
     administrasjonAdminKasseRoute: administrasjonAdminKasseRoute,
+    administrasjonAdminMerkingRoute: administrasjonAdminMerkingRoute,
     administrasjonAdminOrdreoversiktRoute:
       administrasjonAdminOrdreoversiktRoute,
-    administrasjonAdminScannerRoute: administrasjonAdminScannerRoute,
     administrasjonAdminUserSettingsRoute: administrasjonAdminUserSettingsRoute,
     administrasjonAdminVentelisteRoute: administrasjonAdminVentelisteRoute,
     administrasjonAdminIndexRoute: administrasjonAdminIndexRoute,

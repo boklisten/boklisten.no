@@ -317,6 +317,8 @@ router.post("/v2/branches/:branchId/users/provision", [controllers.UserProvision
  * Unique Items
  */
 router.post("/unique_items/add", [controllers.UniqueItems, "add"]);
+router.get("/v2/employee/unique_items/:blid/link", [controllers.BlidRegistration, "lookupLink"]);
+router.post("/v2/employee/unique_items/batch", [controllers.BlidRegistration, "register"]);
 
 /**
  * Order History

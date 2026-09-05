@@ -1,132 +1,12 @@
-import { QRCodeSVG } from "qrcode.react";
 import type { CSSProperties } from "react";
 
+import ScanCodeIllustration from "@/shared/components/scanner/ScanCodeIllustration";
 import { describeScanCodeLocation } from "@/shared/utils/scanCodes";
 import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
 export interface ScanInstruction {
   text: string;
   illustrate?: ScanCodeType | undefined;
-}
-
-/**
- * Alternating bar/space run widths, in abstract modules.
- *
- * Not a decodable barcode on purpose — it illustrates the *shape* to hunt for. Widths are fixed
- * rather than generated so the drawing is identical on the server and the client.
- */
-const BAR_RUNS = [
-  1, 1, 1, 3, 2, 1, 2, 2, 1, 1, 3, 1, 2, 1, 1, 2, 2, 3, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 2, 2, 1, 3, 2,
-  1, 1, 1, 2, 1, 3, 1, 1, 2, 2, 1, 1, 3, 1, 2, 2, 1, 1, 1, 3, 1, 2, 2, 1, 1, 2, 3, 1, 1, 1, 2,
-];
-
-/** Guard bars sit at both edges and the centre, and hang below the digits — an EAN-13 tell. */
-const GUARD_RUNS = new Set([0, 2, 30, 32, 60, 62]);
-
-const LABEL_WIDTH = 112;
-const QUIET_ZONE = 8;
-const BARS_TOP = 8;
-const BARS_BOTTOM = 42;
-const GUARD_BOTTOM = 49;
-
-/**
- * The exact artwork the stand prints (rendered by the backend's unique-ID generator with an example
- * ID), so the employee sees the sticker itself rather than a generic barcode.
- */
-function BlidLabelIllustration() {
-  return (
-    <img
-      src="/images/blid-label.png"
-      alt=""
-      aria-hidden="true"
-      width={88}
-      height={34}
-      style={{
-        flexShrink: 0,
-        display: "block",
-        width: 88,
-        height: 34,
-        objectFit: "contain",
-        background: "#FFFFFF",
-        borderRadius: 4,
-        padding: 2,
-      }}
-    />
-  );
-}
-
-// Same shape as a real details id (24 hex characters) so the code is as dense as the one the
-// customer will hold up, but not an id anyone has.
-const EXAMPLE_CUSTOMER_ID = "0123456789abcdef01234567";
-
-/** The QR code the customer shows from «Vis kunde-ID», drawn by the same component. */
-function CustomerIdIllustration() {
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        flexShrink: 0,
-        display: "block",
-        background: "#FFFFFF",
-        borderRadius: 4,
-        padding: 3,
-        lineHeight: 0,
-      }}
-    >
-      <QRCodeSVG value={EXAMPLE_CUSTOMER_ID} size={34} level="L" />
-    </div>
-  );
-}
-
-function BarcodeIllustration({ type }: { type: ScanCodeType }) {
-  const totalModules = BAR_RUNS.reduce((sum, run) => sum + run, 0);
-  const scale = (LABEL_WIDTH - QUIET_ZONE * 2) / totalModules;
-
-  let cursor = QUIET_ZONE;
-  const bars = [];
-  for (const [index, run] of BAR_RUNS.entries()) {
-    const x = cursor;
-    cursor += run * scale;
-    if (index % 2 !== 0) {
-      continue;
-    }
-    const isGuard = GUARD_RUNS.has(index);
-    bars.push(
-      <rect
-        key={index}
-        x={x}
-        y={BARS_TOP}
-        width={run * scale}
-        height={(isGuard ? GUARD_BOTTOM : BARS_BOTTOM) - BARS_TOP}
-        fill="#111318"
-      />,
-    );
-  }
-
-  return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      viewBox={`0 0 ${LABEL_WIDTH} 60`}
-      width={64}
-      height={34}
-      style={{ flexShrink: 0, display: "block" }}
-    >
-      <rect x={0} y={0} width={LABEL_WIDTH} height={60} rx={4} fill="#F7F7F4" />
-      {bars}
-      <text
-        x={LABEL_WIDTH / 2}
-        y={57}
-        textAnchor="middle"
-        fontSize={7}
-        fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
-        letterSpacing={0.4}
-        fill="#111318"
-      >
-        {type === "isbn" ? "9 788203 208119" : "12345678"}
-      </text>
-    </svg>
-  );
 }
 
 /**
@@ -159,9 +39,9 @@ export default function ScanInstructionOverlay({ instruction }: { instruction: S
 
   return (
     <div style={scrimStyle} role="status">
-      {instruction.illustrate === "blid" && <BlidLabelIllustration />}
-      {instruction.illustrate === "customerId" && <CustomerIdIllustration />}
-      {instruction.illustrate === "isbn" && <BarcodeIllustration type="isbn" />}
+      {instruction.illustrate !== undefined && (
+        <ScanCodeIllustration type={instruction.illustrate} />
+      )}
       <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
         <span style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.3 }}>{instruction.text}</span>
         {hint !== null && (
