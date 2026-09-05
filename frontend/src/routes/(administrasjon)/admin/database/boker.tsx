@@ -1,10 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import RedirectToBlAdmin from "@/features/auth-linker/RedirectToBlAdmin";
+
+import AuthGuard from "@/features/auth/AuthGuard";
+import BookManager from "@/features/book-management/BookManager";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(administrasjon)/admin/database/boker")({
+  head: () =>
+    seo({
+      title: "Bøker | bl-admin",
+    }),
   component: DatabaseBooksPage,
 });
 
 function DatabaseBooksPage() {
-  return <RedirectToBlAdmin path="database/books" />;
+  return (
+    <AuthGuard requiredPermission="admin">
+      <BookManager />
+    </AuthGuard>
+  );
 }

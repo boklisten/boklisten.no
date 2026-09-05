@@ -133,6 +133,9 @@ export type ScannedRoutes = {
     'items.get': { paramsTuple?: []; params?: {} }
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'items.get_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
+    'items.get_all_for_admin': { paramsTuple?: []; params?: {} }
+    'items.create': { paramsTuple?: []; params?: {} }
+    'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'message_logs.customer_log': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
@@ -263,6 +266,7 @@ export type ScannedRoutes = {
     'items.get': { paramsTuple?: []; params?: {} }
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'items.get_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
+    'items.get_all_for_admin': { paramsTuple?: []; params?: {} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'message_logs.customer_log': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'message_logs.feed': { paramsTuple?: []; params?: {} }
@@ -361,6 +365,7 @@ export type ScannedRoutes = {
     'items.get': { paramsTuple?: []; params?: {} }
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'items.get_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
+    'items.get_all_for_admin': { paramsTuple?: []; params?: {} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'message_logs.customer_log': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'message_logs.feed': { paramsTuple?: []; params?: {} }
@@ -445,6 +450,7 @@ export type ScannedRoutes = {
     'branch_items.set_branch_items': { paramsTuple?: []; params?: {} }
     'companies.add_company': { paramsTuple?: []; params?: {} }
     'opening_hours.add': { paramsTuple?: []; params?: {} }
+    'items.create': { paramsTuple?: []; params?: {} }
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'webhooks.sendgrid_events': { paramsTuple?: []; params?: {} }
     'webhooks.twilio_sms_event': { paramsTuple: [ParamValue]; params: {'messageId': ParamValue} }
@@ -491,6 +497,7 @@ export type ScannedRoutes = {
     'blid_search.update_active_item': { paramsTuple?: []; params?: {} }
     'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'order_history.update_branch': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branches.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.branchitems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.customeritems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

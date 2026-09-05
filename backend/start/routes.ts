@@ -384,6 +384,9 @@ router.delete("/opening_hours/:id", [controllers.OpeningHours, "delete"]);
 router.get("/v2/items", [controllers.Items, "get"]);
 router.get("/v2/items/buyback", [controllers.Items, "getBuybackItems"]);
 router.get("/v2/items/by_isbn/:isbn", [controllers.Items, "getByIsbn"]);
+router.get("/v2/admin/items", [controllers.Items, "getAllForAdmin"]);
+router.post("/v2/admin/items", [controllers.Items, "create"]);
+router.patch("/v2/admin/items/:id", [controllers.Items, "update"]);
 
 /**
  * Dispatch

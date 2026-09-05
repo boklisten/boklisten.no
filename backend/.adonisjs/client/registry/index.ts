@@ -780,6 +780,24 @@ const routes = {
     tokens: [{"old":"/v2/items/by_isbn/:isbn","type":0,"val":"v2","end":""},{"old":"/v2/items/by_isbn/:isbn","type":0,"val":"items","end":""},{"old":"/v2/items/by_isbn/:isbn","type":0,"val":"by_isbn","end":""},{"old":"/v2/items/by_isbn/:isbn","type":1,"val":"isbn","end":""}],
     types: placeholder as Registry['items.get_by_isbn']['types'],
   },
+  'items.get_all_for_admin': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/admin/items',
+    tokens: [{"old":"/v2/admin/items","type":0,"val":"v2","end":""},{"old":"/v2/admin/items","type":0,"val":"admin","end":""},{"old":"/v2/admin/items","type":0,"val":"items","end":""}],
+    types: placeholder as Registry['items.get_all_for_admin']['types'],
+  },
+  'items.create': {
+    methods: ["POST"],
+    pattern: '/v2/admin/items',
+    tokens: [{"old":"/v2/admin/items","type":0,"val":"v2","end":""},{"old":"/v2/admin/items","type":0,"val":"admin","end":""},{"old":"/v2/admin/items","type":0,"val":"items","end":""}],
+    types: placeholder as Registry['items.create']['types'],
+  },
+  'items.update': {
+    methods: ["PATCH"],
+    pattern: '/v2/admin/items/:id',
+    tokens: [{"old":"/v2/admin/items/:id","type":0,"val":"v2","end":""},{"old":"/v2/admin/items/:id","type":0,"val":"admin","end":""},{"old":"/v2/admin/items/:id","type":0,"val":"items","end":""},{"old":"/v2/admin/items/:id","type":1,"val":"id","end":""}],
+    types: placeholder as Registry['items.update']['types'],
+  },
   'dispatch.get_email_templates': {
     methods: ["GET","HEAD"],
     pattern: '/dispatch/email_templates',

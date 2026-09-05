@@ -1555,6 +1555,42 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/items_controller').default['getByIsbn']>>>
     }
   }
+  'items.get_all_for_admin': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/items'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/items_controller').default['getAllForAdmin']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/items_controller').default['getAllForAdmin']>>>
+    }
+  }
+  'items.create': {
+    methods: ["POST"]
+    pattern: '/v2/admin/items'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/items').createItemValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/items').createItemValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/items_controller').default['create']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/items_controller').default['create']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'items.update': {
+    methods: ["PATCH"]
+    pattern: '/v2/admin/items/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/items').updateItemValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/items').updateItemValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/items_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/items_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'dispatch.get_email_templates': {
     methods: ["GET","HEAD"]
     pattern: '/dispatch/email_templates'

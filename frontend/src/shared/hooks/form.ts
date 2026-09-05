@@ -1,6 +1,7 @@
 import { createFormHookContexts, createFormHook } from "@tanstack/react-form";
 
 import ErrorSummary from "@/shared/components/form/ErrorSummary";
+import AutocompleteField from "@/shared/components/form/fields/basic/AutocompleteField";
 import CheckboxField from "@/shared/components/form/fields/basic/CheckboxField";
 import ChipsField from "@/shared/components/form/fields/basic/ChipsField";
 import DateField from "@/shared/components/form/fields/basic/DateField";
@@ -39,6 +40,7 @@ const { useAppForm, withFieldGroup } = createFormHook({
   fieldComponents: {
     // Basic
     TextField,
+    AutocompleteField,
     TextAreaField,
     NumberField,
     DateField,
