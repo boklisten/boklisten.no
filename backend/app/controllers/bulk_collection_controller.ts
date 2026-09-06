@@ -2,6 +2,7 @@ import type { HttpContext } from "@adonisjs/core/http";
 import { DateTime } from "luxon";
 
 import BlidService from "#services/blid_service";
+import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
 import { CustomerItemActive } from "#services/customer_items/customer_item_active";
 import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
 import { OrderPlaceOperation } from "#services/legacy/collections/order/operations/place/order-place.operation";
@@ -120,6 +121,12 @@ export default class BulkCollectionController {
       });
 
       await placeOperation.run({ documentId: order.id, user });
+      await BulkCollectionMonitoring.reportOverdueBooks({
+        employee: { detailsId, permission },
+        customerItems: items,
+        titles: new Map([...itemsMap].map(([id, item]) => [id, item.title])),
+        now: new Date(),
+      });
 
       const collected = collectedByCustomer.get(customer) ?? [];
       for (const customerItem of items) {

@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import ChipButton from "@/shared/components/ChipButton";
+import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { toBranchTreeNodeData } from "@/shared/utils/branchTree";
@@ -47,6 +48,9 @@ function ChangeBranchModal({
   return (
     <Modal opened onClose={onClose} title="Endre filial">
       <Stack>
+        <MonitoringNotice>
+          Endrer du filialen, sendes et varsel til administrator med navn på deg og kunden.
+        </MonitoringNotice>
         <TreeSelect
           label="Filial"
           description="Boka regnes som utdelt fra denne filialen"
@@ -111,6 +115,9 @@ function ChangeDeadlineModal({
   return (
     <Modal opened onClose={onClose} title="Endre frist">
       <Stack>
+        <MonitoringNotice>
+          Endrer du fristen, sendes et varsel til administrator med navn på deg og kunden.
+        </MonitoringNotice>
         <form.AppField name="deadline">
           {(field) => (
             <field.DeadlinePickerField
@@ -141,8 +148,9 @@ function ChangeDeadlineModal({
 }
 
 /**
- * The live entry's chips double as the admin's corrections to the active loan: clicking the
- * branch or frist chip opens the matching modal.
+ * The live entry's chips double as the employee's corrections to the active loan: clicking the
+ * branch or frist chip opens the matching modal. Both changes are monitored, so each modal says
+ * so before the form.
  */
 export default function ActiveItemChips({
   activeItem,

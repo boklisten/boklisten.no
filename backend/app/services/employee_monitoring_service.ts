@@ -18,6 +18,9 @@ export const EMPLOYEE_MONITORING_RECIPIENT = "info@boklisten.no";
 export const MONITORED_ACTIONS = {
   "handout-without-signature": "Bok delt ut uten gyldig signatur",
   "order-deleted": "Ordre slettet",
+  "active-item-deadline-changed": "Frist endret på utlånt bok",
+  "active-item-branch-changed": "Filial endret på utlånt bok",
+  "overdue-book-collected": "Bok levert etter fristen",
 } as const;
 
 export type MonitoredAction = keyof typeof MONITORED_ACTIONS;

@@ -2,7 +2,10 @@ import { ObjectId } from "mongodb";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
+import { ActiveItemMonitoring, FALLBACK_BRANCH_NAME } from "#services/active_item_monitoring";
 import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
+import type { MonitoredEmployee } from "#services/employee_monitoring_service";
+import { isMonitored } from "#services/employee_monitoring_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
@@ -651,15 +654,24 @@ export const BlidSearchService = {
    * Correct the deadline and/or handout branch on an actively held customer item. A deliberate
    * data correction: only the customer item is touched, the orders behind it stay as they were.
    */
-  async updateActiveItem({
-    customerItemId,
-    deadline,
-    branchId,
-  }: {
-    customerItemId: string;
-    deadline?: string;
-    branchId?: string;
-  }): Promise<void> {
+  /**
+   * Corrects the deadline and/or handout branch of an active loan. Any employee may do it; the
+   * change is reported to the administrator afterwards unless the employee is an admin.
+   */
+  async updateActiveItem(
+    {
+      customerItemId,
+      deadline,
+      branchId,
+    }: {
+      customerItemId: string;
+      deadline?: string;
+      branchId?: string;
+    },
+    employee: MonitoredEmployee,
+  ): Promise<void> {
+    // Read before writing so the report can say what the values were.
+    const previous = await StorageService.CustomerItems.getOrNull(customerItemId);
     const set: Record<string, unknown> = { lastUpdated: new Date() };
     if (deadline) {
       set["deadline"] = new Date(deadline);
@@ -678,8 +690,37 @@ export const BlidSearchService = {
       },
       { $set: set },
     );
-    if (result.matchedCount === 0) {
+    if (result.matchedCount === 0 || !previous) {
       throw new BadRequestException("Boka er ikke aktivt utdelt");
+    }
+    if (!isMonitored(employee)) {
+      return;
+    }
+    const item = await StorageService.Items.getOrNull(previous.item);
+    const reported = {
+      employee,
+      customerId: previous.customer,
+      title: item?.title ?? "",
+      blid: previous.blid ?? "",
+    };
+    if (deadline) {
+      await ActiveItemMonitoring.reportDeadlineChange({
+        ...reported,
+        previousDeadline: new Date(previous.deadline),
+        deadline: new Date(deadline),
+      });
+    }
+    if (branchId) {
+      const previousBranchId = previous.handoutInfo?.handoutById ?? null;
+      const [previousBranch, branch] = await Promise.all([
+        previousBranchId ? StorageService.Branches.getOrNull(previousBranchId) : null,
+        StorageService.Branches.getOrNull(branchId),
+      ]);
+      await ActiveItemMonitoring.reportBranchChange({
+        ...reported,
+        previousBranchName: previousBranch?.name ?? null,
+        branchName: branch?.name ?? FALLBACK_BRANCH_NAME,
+      });
     }
   },
 

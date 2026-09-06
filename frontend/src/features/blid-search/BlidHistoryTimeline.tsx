@@ -22,7 +22,6 @@ import type { ReactNode } from "react";
 import { showCustomerSearch } from "@/features/kasse/kasseParams";
 import ActiveItemChips from "@/features/blid-search/ActiveItemChips";
 import EntityLink from "@/shared/components/EntityLink";
-import useAuth from "@/shared/hooks/useAuth";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
 /** A named person in an event sentence: bold like plain text, but a link to their customer page. */
@@ -282,12 +281,11 @@ export default function BlidHistoryTimeline({
   history: BlidHistoryEvent[];
   activeItem?: BlidActiveItem;
 }) {
-  const { isAdmin } = useAuth();
   if (history.length === 0) {
     return <Text c="dimmed">Ingen hendelser er registrert på denne boka.</Text>;
   }
   // The newest entry that is not the synthetic expiry carries the book's current branch and
-  // deadline; for admins those chips open the corrections to the active loan.
+  // deadline; those chips open the corrections to the active loan.
   const liveIndex = activeItem
     ? history.findIndex((event) => event.action !== "deadline-expired")
     : -1;
@@ -317,7 +315,7 @@ export default function BlidHistoryTimeline({
               event={event}
               live={
                 index === liveIndex && activeItem
-                  ? { item: activeItem, editable: isAdmin, expired }
+                  ? { item: activeItem, editable: true, expired }
                   : undefined
               }
             />

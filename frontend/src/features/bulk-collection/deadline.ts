@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+import { isDeadlineOverdue } from "@boklisten/backend/shared/deadline";
 
 import { norwegianTime } from "@/shared/utils/dayjs";
 
@@ -7,10 +7,7 @@ export function formatDeadline(isoDeadline: string): string {
   return norwegianTime(isoDeadline).format("DD/MM/YYYY");
 }
 
-/**
- * Whether a deadline has passed, with one day of grace (matches the old bl-admin behavior:
- * `moment().isAfter(moment(deadline).add(1, "day"))`).
- */
+/** Whether a deadline has passed, by the same one-day-of-grace rule the backend reports on. */
 export function isOverdue(isoDeadline: string): boolean {
-  return dayjs().isAfter(dayjs(isoDeadline).add(1, "day"));
+  return isDeadlineOverdue(isoDeadline, new Date());
 }

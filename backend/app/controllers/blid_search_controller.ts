@@ -18,14 +18,14 @@ export default class BlidSearchController {
   }
 
   async updateActiveItem(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+    const employee = PermissionService.employeeOrFail(ctx);
     const { customerItemId, deadline, branchId } = await ctx.request.validateUsing(
       blidActiveItemUpdateValidator,
     );
     if (!deadline && !branchId) {
       return ctx.response.badRequest();
     }
-    await BlidSearchService.updateActiveItem({ customerItemId, deadline, branchId });
+    await BlidSearchService.updateActiveItem({ customerItemId, deadline, branchId }, employee);
     return ctx.response.noContent();
   }
 }

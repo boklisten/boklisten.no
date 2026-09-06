@@ -2,14 +2,16 @@ import type {
   CustomerCollectionReceipt,
   ScannedBook,
 } from "@boklisten/backend/shared/bulk-collection/bulk-collection-dtos";
-import { Text } from "@mantine/core";
+import { Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
+import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
 import { isOverdue } from "@/features/bulk-collection/deadline";
 import { BLID_SEARCH_QUERY_KEY } from "@/features/search/SearchSpotlight";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
+import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import useApiClient from "@/shared/hooks/useApiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
@@ -146,7 +148,18 @@ export default function useCollectionSession(): CollectionSession {
     if (overdueBooks.length > 0) {
       modals.openConfirmModal({
         title: "Utløpt frist",
-        children: "Noen av bøkene har utløpt frist! Er du sikker på at du vil levere?",
+        children: (
+          <Stack gap="xs">
+            <Text>
+              {bookCountLabel(overdueBooks.length)} har utløpt frist. Er du sikker på at du vil
+              levere?
+            </Text>
+            <MonitoringNotice>
+              Leverer du likevel, sendes et varsel til administrator for hver bok med utløpt frist,
+              med navn på deg og kunden.
+            </MonitoringNotice>
+          </Stack>
+        ),
         labels: { confirm: "Lever", cancel: "Avbryt" },
         onConfirm: deliverNow,
       });
