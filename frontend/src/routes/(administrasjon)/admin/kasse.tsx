@@ -95,6 +95,7 @@ function KassePage() {
           icon={config.icon}
           instruction={config.description}
           scanLabel={config.scanLabel}
+          accepts={config.accepts}
           onScan={scanner.openScanner}
         />
         {mode === "kunde" && kunde !== undefined && (

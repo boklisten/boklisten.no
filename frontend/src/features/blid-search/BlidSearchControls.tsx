@@ -1,10 +1,11 @@
 import { Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconKeyboard, IconObjectScan } from "@tabler/icons-react";
+import { IconKeyboard } from "@tabler/icons-react";
 import { useState } from "react";
 import type { SubmitEvent } from "react";
 
 import { isValidBlid } from "@/features/blid-search/validateBlid";
+import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
 import openScannerModal from "@/shared/components/scanner/openScannerModal";
 import useWedgeScanner from "@/shared/hooks/useWedgeScanner";
 
@@ -30,7 +31,7 @@ export default function BlidSearchControls({
     <Button
       size={compact ? "sm" : "lg"}
       radius="md"
-      leftSection={<IconObjectScan size={compact ? 20 : 24} aria-hidden />}
+      leftSection={<ScanCodeIcon accepts={["blid"]} size={compact ? 20 : 24} />}
       onClick={() =>
         openScannerModal({
           title: "Skann bøker",

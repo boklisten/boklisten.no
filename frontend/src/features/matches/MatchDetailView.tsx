@@ -1,6 +1,5 @@
 import { Button, Modal, Stack, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconObjectScan } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import { Activity, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,6 +16,7 @@ import { MatchHeader } from "@/shared/components/matches/matches-helper";
 import MatchItemTable from "@/shared/components/matches/MatchItemTable";
 import MatchScannerContent from "@/shared/components/matches/MatchScannerContent";
 import ProgressBar from "@/shared/components/ProgressBar";
+import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
 import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
 import ScannerTutorial from "@/shared/components/scanner/ScannerTutorial";
 import ShowCustomerIdButton from "@/shared/components/ShowCustomerIdButton";
@@ -136,7 +136,7 @@ export default function MatchDetailView({
           <MatchHeader>Når du skal motta bøker</MatchHeader>
           <Text>For å motta bøker må du skanne dem</Text>
           <ScannerTutorial />
-          <Button color="green" leftSection={<IconObjectScan />} onClick={open}>
+          <Button color="green" leftSection={<ScanCodeIcon accepts={["blid"]} />} onClick={open}>
             Skann bøker
           </Button>
           <Modal opened={opened} onClose={close} title="Skann bøker">

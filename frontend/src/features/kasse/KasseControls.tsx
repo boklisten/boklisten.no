@@ -1,9 +1,11 @@
 import { Box, Button, Flex, Group, Kbd, Stack, Text, ThemeIcon } from "@mantine/core";
 import { useOs } from "@mantine/hooks";
 import type { Icon } from "@tabler/icons-react";
-import { IconObjectScan, IconSearch } from "@tabler/icons-react";
+import { IconSearch } from "@tabler/icons-react";
 
 import { openSearchSpotlight } from "@/features/kasse/SearchSpotlight";
+import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
+import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
 /** The shortcut only exists on a desktop keyboard, so the line is not rendered anywhere else. */
 function DesktopTip() {
@@ -31,12 +33,15 @@ export default function KasseControls({
   icon: IconComponent,
   instruction,
   scanLabel,
+  accepts,
   onScan,
 }: {
   compact: boolean;
   icon: Icon;
   instruction: string;
   scanLabel: string;
+  /** What the scan button expects; picks its icon. */
+  accepts: ScanCodeType[];
   onScan: () => void;
 }) {
   if (compact) {
@@ -54,7 +59,7 @@ export default function KasseControls({
           <Button
             px="sm"
             flex={{ base: "1 1 auto", sm: "0 0 auto" }}
-            leftSection={<IconObjectScan size={18} aria-hidden />}
+            leftSection={<ScanCodeIcon accepts={accepts} size={18} />}
             onClick={onScan}
           >
             {scanLabel}
@@ -84,7 +89,7 @@ export default function KasseControls({
       <Button
         size="lg"
         radius="md"
-        leftSection={<IconObjectScan size={24} aria-hidden />}
+        leftSection={<ScanCodeIcon accepts={accepts} size={24} />}
         onClick={onScan}
       >
         {scanLabel}

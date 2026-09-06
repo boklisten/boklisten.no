@@ -2,7 +2,6 @@ import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import { Box, Button, Modal, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconObjectScan } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -18,6 +17,7 @@ import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import type { ItemStatus } from "@/shared/components/matches/matches-helper";
 import { ItemStatusTable } from "@/shared/components/matches/MatchItemTable";
 import { StandScannerProgress } from "@/shared/components/matches/MatchScannerContent";
+import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
 import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -349,8 +349,12 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
       )}
 
       <Box>
-        <Button color="green" leftSection={<IconObjectScan />} onClick={openScanner}>
-          Scan bøker
+        <Button
+          color="green"
+          leftSection={<ScanCodeIcon accepts={["blid"]} />}
+          onClick={openScanner}
+        >
+          Skann bøker
         </Button>
       </Box>
 
