@@ -1,8 +1,6 @@
 import { Accordion, Button, Stack, Table } from "@mantine/core";
 import { IconExternalLink } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
-
 import useApiClient from "@/shared/hooks/useApiClient";
 
 export default function EmailTemplateDropdown() {
@@ -24,9 +22,10 @@ export default function EmailTemplateDropdown() {
               }}
             />
             <Button
-              component={TanStackAnchor}
+              component="a"
               href="https://mc.sendgrid.com/dynamic-templates"
               target="_blank"
+              rel="noreferrer"
               leftSection={<IconExternalLink />}
             >
               Administrer maler

@@ -2,6 +2,7 @@ import type { ActiveCustomerItem } from "@boklisten/backend/shared/customer-item
 import type { CustomerItemAction } from "@boklisten/backend/shared/customer-item/actionable_customer_item";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import {
+  Anchor,
   Button,
   Divider,
   Group,
@@ -13,6 +14,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { useOs } from "@mantine/hooks";
 import { IconCreditCard, IconSend } from "@tabler/icons-react";
 import type { Route } from "@tuyau/core/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +34,10 @@ import { showErrorNotification } from "@/shared/utils/notifications";
 /** Vipps' own orange, so the button reads as "this goes to Vipps" the way the app does. */
 const VIPPS_ORANGE = "#ff5b24";
 const STATUS_POLL_INTERVAL_MS = 2000;
+
+const VIPPSKASSA_APP_STORE_URL = "https://apps.apple.com/no/app/mobile-point-of-sale/id6472654638";
+const VIPPSKASSA_PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.vippsmobilepay.vmpos";
 
 type StandCheckoutState = Route.Response<"stand_checkout.status">;
 type FailedStatus = Exclude<StandCheckoutState["status"], "pending" | "paid">;
@@ -183,9 +189,9 @@ function ConfirmStep({
 }
 
 /**
- * Card is taken in Vipps MobilePay's own app on the employee's phone, which nothing can open or
- * prefill from here. So the employee is walked through it and must vouch that it went through
- * before the order is placed.
+ * Card is taken in Vipps MobilePay's own app on the employee's phone, which nothing can prefill
+ * from here (only its store listing can be opened, see {@link VIPPSKASSA_APP_STORE_URL}). So the
+ * employee is walked through it and must vouch that it went through before the order is placed.
  */
 function CardConfirmStep({
   amount,
@@ -198,15 +204,24 @@ function CardConfirmStep({
   onBack: () => void;
   busy: boolean;
 }) {
+  const os = useOs();
+  const storeUrl = os === "ios" ? VIPPSKASSA_PLAY_STORE_URL : VIPPSKASSA_APP_STORE_URL;
   return (
     <Stack>
       <Text fw={600}>Ta betalt {formatAmount(amount)} med kort</Text>
       <List type="ordered" spacing="xs">
         <List.Item>
           Åpne{" "}
-          <Text span fw={600}>
+          <Anchor
+            href={storeUrl}
+            target="_blank"
+            rel="noreferrer"
+            c="inherit"
+            fw={600}
+            underline="hover"
+          >
             Vippskassa
-          </Text>{" "}
+          </Anchor>{" "}
           på telefonen din.
         </List.Item>
         <List.Item>Legg inn {formatAmount(amount)} og 0% Mva.</List.Item>
