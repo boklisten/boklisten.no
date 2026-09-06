@@ -180,3 +180,25 @@ export function isAdminNavLinkActive(link: AdminNavLink, pathname: string) {
 export function visibleAdminNavSections(isAdmin: boolean) {
   return ADMIN_NAV_SECTIONS.filter((section) => !section.adminOnly || isAdmin);
 }
+
+/** A page as one flat entry, with the group it sits in (if any) for context outside the sidebar. */
+export interface AdminPage extends AdminNavLink {
+  group?: string;
+}
+
+/**
+ * Every page the user may open, in sidebar order, so that search and other lists never keep a
+ * second copy of the page names.
+ */
+export function visibleAdminPages(isAdmin: boolean): AdminPage[] {
+  const pages: AdminPage[] = [];
+  for (const section of visibleAdminNavSections(isAdmin)) {
+    pages.push(...section.links);
+    for (const group of section.groups ?? []) {
+      for (const link of group.links) {
+        pages.push({ ...link, group: group.label });
+      }
+    }
+  }
+  return pages;
+}

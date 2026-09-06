@@ -65,13 +65,23 @@ export interface BlidSearchResult {
   history: BlidHistoryEvent[];
 }
 
-/** A partial or complete blid as typed into the admin search field: alphanumeric only. */
-export const BLID_PREFIX_PATTERN = /^[\dA-Za-z]{3,12}$/;
+/** Any part of a blid as typed into the admin search field: alphanumeric only. */
+export const BLID_SEARCH_PATTERN = /^[\dA-Za-z]{3,12}$/;
 
-/** A book matched by a blid prefix in the admin search field. */
+/** A book whose blid contains the text typed into the admin search field. */
 export interface BlidSearchHit {
   blid: string;
   title: string;
   /** The customer currently holding the book, or null when it is at the stand. */
   holder: { detailsId: string; name: string } | null;
+}
+
+export interface BlidSearchResponse {
+  /**
+   * Best match first: exact blid, then blids starting with the text, ending with it, containing it;
+   * in each position the typed casing beats ignoring it. Books a customer holds lead each tier.
+   */
+  hits: BlidSearchHit[];
+  /** True when the list was cut short; a longer text narrows it. */
+  hasMore: boolean;
 }

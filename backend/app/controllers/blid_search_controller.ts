@@ -10,7 +10,7 @@ export default class BlidSearchController {
     return BlidSearchService.lookup(ctx.request.param("blid"));
   }
 
-  /** Books whose blid starts with the typed text, for the admin search field. */
+  /** Books whose blid contains the typed text, for the admin search field. */
   async search(ctx: HttpContext) {
     PermissionService.employeeOrFail(ctx);
     const { q } = await ctx.request.validateUsing(blidSearchQueryValidator);

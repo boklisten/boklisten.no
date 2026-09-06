@@ -1,13 +1,15 @@
-import { BLID_PREFIX_PATTERN } from "@boklisten/backend/shared/blid_search";
+import { BLID_SEARCH_PATTERN } from "@boklisten/backend/shared/blid_search";
 import { Badge, Group, Loader, Stack, Text, ThemeIcon } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { Spotlight } from "@mantine/spotlight";
 import type { createSpotlight } from "@mantine/spotlight";
 import { IconBook2, IconMail, IconPhone, IconSearch } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
+import type { AdminPage } from "@/features/layout/adminNavigation";
+import { searchPages } from "@/features/search/searchPages";
 import useApiClient from "@/shared/hooks/useApiClient";
 
 const MIN_SEARCH_LENGTH = 3;
@@ -49,24 +51,30 @@ const PLACEHOLDERS = {
   customers: "Navn, telefon, e-post eller adresse",
   books: "Bokas unike ID",
   all: "Kunde eller bokas unike ID",
+  withPages: "Side, kunde eller bokas unike ID",
 } as const;
 
 /**
- * The manual way in: customers match on name, phone, e-mail and address; books match on the start
+ * The manual way in: customers match on name, phone, e-mail and address; books match on any part
  * of their unique ID. Searches one kind or both, and hands a pick's code (the customer's id or the
- * book's unique ID) to the caller. Keyboard shortcuts are bound elsewhere, so that a page can put
- * its own instance in front of the global one.
+ * book's unique ID) to the caller. Given a list of pages it also matches those on title and
+ * description from the first character, and lists them above everything else. Keyboard shortcuts
+ * are bound elsewhere, so that a page can put its own instance in front of the global one.
  */
 export default function SearchSpotlight({
   store,
   kinds,
+  pages,
   onSelectCustomer,
   onSelectBook,
+  onSelectPage,
 }: {
   store: SpotlightStore;
   kinds: { customers: boolean; books: boolean };
+  pages?: AdminPage[];
   onSelectCustomer?: (detailsId: string) => void;
   onSelectBook?: (blid: string) => void;
+  onSelectPage?: (page: AdminPage) => void;
 }) {
   const { api, client } = useApiClient();
   const [searchValue, setSearchValue] = useState("");
@@ -79,7 +87,7 @@ export default function SearchSpotlight({
     debouncedSearch.length >= MIN_SEARCH_LENGTH &&
     isRelatedSearch(trimmedSearch, debouncedSearch);
   const customerSearchActive = searchActive && kinds.customers;
-  const blidSearchActive = searchActive && kinds.books && BLID_PREFIX_PATTERN.test(debouncedSearch);
+  const blidSearchActive = searchActive && kinds.books && BLID_SEARCH_PATTERN.test(debouncedSearch);
 
   const { data: customers, isFetching: fetchingCustomers } = useQuery({
     queryKey: customerQueryKey(debouncedSearch),
@@ -93,7 +101,7 @@ export default function SearchSpotlight({
         : undefined;
     },
   });
-  const { data: books, isFetching: fetchingBooks } = useQuery({
+  const { data: bookSearch, isFetching: fetchingBooks } = useQuery({
     queryKey: blidQueryKey(debouncedSearch),
     queryFn: () => client.api.blidSearch.search({ query: { q: debouncedSearch } }),
     enabled: blidSearchActive,
@@ -112,18 +120,35 @@ export default function SearchSpotlight({
   });
   const branchNames = new Map((branches ?? []).map((branch) => [branch.id, branch.name]));
 
+  // Pages are local data, so they match on every keystroke without the debounce or the length gate.
+  const pageHits = useMemo(
+    () => (pages ? searchPages(pages, trimmedSearch) : []),
+    [pages, trimmedSearch],
+  );
   const customerHits = customerSearchActive ? (customers ?? []) : [];
-  const bookHits = blidSearchActive ? (books ?? []) : [];
+  const bookHits = blidSearchActive ? (bookSearch?.hits ?? []) : [];
+  const moreBooks = blidSearchActive && bookSearch?.hasMore === true;
   const nothingFound =
-    searchActive && !isFetching && customerHits.length === 0 && bookHits.length === 0;
+    searchActive &&
+    !isFetching &&
+    pageHits.length === 0 &&
+    customerHits.length === 0 &&
+    bookHits.length === 0;
+  const searchedForKinds = [
+    ...(pages ? ["sider"] : []),
+    ...(kinds.customers ? ["kunder"] : []),
+    ...(kinds.books ? ["bøker"] : []),
+  ];
   const searchedFor =
-    kinds.customers && kinds.books ? "kunder eller bøker" : kinds.customers ? "kunder" : "bøker";
+    searchedForKinds.length > 1
+      ? `${searchedForKinds.slice(0, -1).join(", ")} eller ${searchedForKinds.at(-1)}`
+      : searchedForKinds[0];
 
   useEffect(() => {
-    if ((customers?.length ?? 0) > 0 || (books?.length ?? 0) > 0) {
+    if (pageHits.length > 0 || (customers?.length ?? 0) > 0 || (bookSearch?.hits.length ?? 0) > 0) {
       selectFirstResult(store);
     }
-  }, [customers, books, store]);
+  }, [pageHits, customers, bookSearch, store]);
 
   // The modal's exit transition is interrupted by the navigation a pick triggers, so Mantine's
   // clearQueryOnClose (which runs onExited) never fires — clear ourselves.
@@ -135,6 +160,36 @@ export default function SearchSpotlight({
     setSearchValue("");
     onSelectBook?.(blid);
   };
+  const pickPage = (page: AdminPage) => {
+    setSearchValue("");
+    onSelectPage?.(page);
+  };
+
+  const pageActions = pageHits.map((page) => {
+    const PageIcon = page.icon;
+    return (
+      <Spotlight.Action key={page.to} onClick={() => pickPage(page)}>
+        <Group gap="sm" wrap="nowrap" w="100%">
+          <ThemeIcon variant="light" radius="xl" size="lg">
+            <PageIcon size={18} aria-hidden />
+          </ThemeIcon>
+          <Stack gap={2} miw={0} style={{ flex: 1 }}>
+            <Text fw={600} lineClamp={1}>
+              {page.label}
+            </Text>
+            <Text size="sm" opacity={0.7} lineClamp={1}>
+              {page.description}
+            </Text>
+          </Stack>
+          {page.group && (
+            <Badge variant="light" color="gray" tt="none" visibleFrom="xs">
+              {page.group}
+            </Badge>
+          )}
+        </Group>
+      </Spotlight.Action>
+    );
+  });
 
   const customerActions = customerHits.map((userDetail) => (
     <Spotlight.Action key={userDetail.id} onClick={() => pickCustomer(userDetail.id)}>
@@ -167,6 +222,12 @@ export default function SearchSpotlight({
       </Stack>
     </Spotlight.Action>
   ));
+  // Plain text, not an action, so the arrow keys skip it.
+  const moreBooksHint = moreBooks && (
+    <Text key="more-books" size="sm" opacity={0.7} px="md" py="xs">
+      Viser de {bookHits.length} første treffene. Skriv mer av IDen for å snevre inn.
+    </Text>
+  );
   const bookActions = bookHits.map((book) => (
     <Spotlight.Action key={book.blid} onClick={() => pickBook(book.blid)}>
       <Group gap="sm" wrap="nowrap" w="100%">
@@ -187,13 +248,15 @@ export default function SearchSpotlight({
       </Group>
     </Spotlight.Action>
   ));
-  // Group labels only earn their place when the list can mix the two kinds.
-  const grouped = kinds.customers && kinds.books;
-  const placeholder = grouped
-    ? PLACEHOLDERS.all
-    : kinds.customers
-      ? PLACEHOLDERS.customers
-      : PLACEHOLDERS.books;
+  // Group labels only earn their place when the list can mix kinds.
+  const grouped = pages !== undefined || (kinds.customers && kinds.books);
+  const placeholder = pages
+    ? PLACEHOLDERS.withPages
+    : grouped
+      ? PLACEHOLDERS.all
+      : kinds.customers
+        ? PLACEHOLDERS.customers
+        : PLACEHOLDERS.books;
 
   return (
     <Spotlight.Root
@@ -214,7 +277,7 @@ export default function SearchSpotlight({
         autoComplete="off"
       />
       <Spotlight.ActionsList>
-        {trimmedSearch.length < MIN_SEARCH_LENGTH && (
+        {trimmedSearch.length < MIN_SEARCH_LENGTH && pageHits.length === 0 && (
           <Spotlight.Empty>Skriv minst {MIN_SEARCH_LENGTH} tegn for å søke.</Spotlight.Empty>
         )}
         {nothingFound && (
@@ -224,17 +287,24 @@ export default function SearchSpotlight({
         )}
         {grouped ? (
           <>
+            {pageActions.length > 0 && (
+              <Spotlight.ActionsGroup label="Sider">{pageActions}</Spotlight.ActionsGroup>
+            )}
             {customerActions.length > 0 && (
               <Spotlight.ActionsGroup label="Kunder">{customerActions}</Spotlight.ActionsGroup>
             )}
             {bookActions.length > 0 && (
-              <Spotlight.ActionsGroup label="Bøker">{bookActions}</Spotlight.ActionsGroup>
+              <Spotlight.ActionsGroup label="Bøker">
+                {bookActions}
+                {moreBooksHint}
+              </Spotlight.ActionsGroup>
             )}
           </>
         ) : (
           <>
             {customerActions}
             {bookActions}
+            {moreBooksHint}
           </>
         )}
       </Spotlight.ActionsList>

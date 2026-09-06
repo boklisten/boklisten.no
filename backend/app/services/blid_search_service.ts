@@ -4,6 +4,7 @@ import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
 import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
+import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import type {
@@ -11,6 +12,7 @@ import type {
   BlidHistoryEvent,
   BlidParty,
   BlidSearchHit,
+  BlidSearchResponse,
   BlidSearchResult,
   BlidStatus,
 } from "#shared/blid_search";
@@ -42,8 +44,56 @@ export interface BlidSearchSources {
 
 const FALLBACK_NAME = "Ukjent";
 
-/** Enough to fill the search dropdown; a longer prefix narrows the list instead. */
+/** Enough to fill the search dropdown; a longer text narrows the list instead. */
 const SEARCH_HIT_LIMIT = 10;
+
+/**
+ * Where the text sits in the blid, best first; in each position a match in the typed casing beats
+ * one that ignores it. Containing the text ignoring case is what the search matched on, so it is
+ * the fallthrough tier rather than a branch.
+ */
+const MATCH_TIERS = [
+  { anchor: "exact", caseSensitive: true },
+  { anchor: "exact", caseSensitive: false },
+  { anchor: "prefix", caseSensitive: true },
+  { anchor: "prefix", caseSensitive: false },
+  { anchor: "suffix", caseSensitive: true },
+  { anchor: "suffix", caseSensitive: false },
+  { anchor: "contains", caseSensitive: true },
+] as const;
+
+const ANCHORED_PATTERN: Record<(typeof MATCH_TIERS)[number]["anchor"], (query: string) => string> =
+  {
+    exact: (query) => `^${query}$`,
+    prefix: (query) => `^${query}`,
+    suffix: (query) => `${query}$`,
+    contains: (query) => query,
+  };
+
+/**
+ * The aggregation expression that ranks a blid against the typed text: the index of the first
+ * tier it satisfies, lower being better.
+ *
+ * @param query Alphanumeric text (the validator guarantees no regex metacharacters).
+ */
+export function blidMatchTierExpression(query: string) {
+  return {
+    $switch: {
+      branches: MATCH_TIERS.map((tier, index) => ({
+        case: {
+          $regexMatch: {
+            input: "$blid",
+            regex: ANCHORED_PATTERN[tier.anchor](query),
+            ...(tier.caseSensitive ? {} : { options: "i" }),
+          },
+        },
+        // oxlint-disable-next-line unicorn/no-thenable -- the key $switch requires
+        then: index,
+      })),
+      default: MATCH_TIERS.length,
+    },
+  };
+}
 
 export interface BlidSearchHitSources {
   /** Already in the order they should be shown. */
@@ -634,38 +684,63 @@ export const BlidSearchService = {
   },
 
   /**
-   * Sorted by blid so the list stays stable while the user types; an exact match is the shortest
-   * blid with that prefix, so it lands first on its own.
+   * Ranked in the database: by tier, then books a customer currently holds before books at the
+   * stand, then by blid. Only the holder names need a second query.
    *
-   * @param query An alphanumeric blid prefix (the validator guarantees no regex metacharacters).
+   * @param query Alphanumeric text (the validator guarantees no regex metacharacters).
    */
-  async search(query: string): Promise<BlidSearchHit[]> {
-    const uniqueItems = await StorageService.UniqueItems.aggregate<{ blid: string; title: string }>(
-      [
-        { $match: { blid: { $regex: `^${query}`, $options: "i" } } },
-        { $sort: { blid: 1 } },
-        { $limit: SEARCH_HIT_LIMIT },
-        { $project: { _id: 0, blid: 1, title: 1 } },
-      ],
-    );
-    if (uniqueItems.length === 0) {
-      return [];
-    }
-
-    const activeItems = await StorageService.CustomerItems.aggregate<{
+  async search(query: string): Promise<BlidSearchResponse> {
+    const rows = await StorageService.UniqueItems.aggregate<{
       blid: string;
-      customer: ObjectId;
+      title: string;
+      holder: ObjectId | null;
     }>([
+      { $match: { blid: { $regex: query, $options: "i" } } },
       {
-        $match: {
-          blid: { $in: uniqueItems.map((uniqueItem) => uniqueItem.blid) },
-          ...ACTIVE_CUSTOMER_ITEM_MATCH,
-          buyback: { $ne: true },
+        $lookup: {
+          from: BlSchemaName.CustomerItems,
+          let: { blid: "$blid" },
+          pipeline: [
+            {
+              $match: {
+                // The customer items blid index is partial (string blid, not returned, not bought
+                // out); the planner only uses it when the filter spells those predicates out, and
+                // a localField/foreignField join cannot, so the join is written as an $expr.
+                blid: { $type: "string" },
+                ...ACTIVE_CUSTOMER_ITEM_MATCH,
+                buyback: { $ne: true },
+                $expr: { $eq: ["$blid", "$$blid"] },
+              },
+            },
+            { $limit: 1 },
+            { $project: { _id: 0, customer: 1 } },
+          ],
+          as: "activeItems",
         },
       },
-      { $project: { _id: 0, blid: 1, customer: 1 } },
+      {
+        $addFields: {
+          tier: blidMatchTierExpression(query),
+          held: { $gt: [{ $size: "$activeItems" }, 0] },
+        },
+      },
+      { $sort: { tier: 1, held: -1, blid: 1 } },
+      // One past the limit tells whether the list was cut short.
+      { $limit: SEARCH_HIT_LIMIT + 1 },
+      {
+        $project: {
+          _id: 0,
+          blid: 1,
+          title: 1,
+          holder: { $ifNull: [{ $first: "$activeItems.customer" }, null] },
+        },
+      },
     ]);
-    const holders = new Map(activeItems.map((item) => [item.blid, String(item.customer)]));
+    const hasMore = rows.length > SEARCH_HIT_LIMIT;
+    const winners = rows.slice(0, SEARCH_HIT_LIMIT);
+    const holders = new Map(
+      winners.flatMap((row) => (row.holder ? [[row.blid, String(row.holder)] as const] : [])),
+    );
     const userDetails =
       holders.size === 0
         ? []
@@ -674,11 +749,14 @@ export const BlidSearchService = {
             USER_PERMISSION.ADMIN,
           );
 
-    return assembleBlidSearchHits({
-      uniqueItems,
-      holders,
-      userDetails: new Map(userDetails.map((detail) => [detail.id, detail.name])),
-    });
+    return {
+      hits: assembleBlidSearchHits({
+        uniqueItems: winners.map(({ blid, title }) => ({ blid, title })),
+        holders,
+        userDetails: new Map(userDetails.map((detail) => [detail.id, detail.name])),
+      }),
+      hasMore,
+    };
   },
 
   async lookup(blid: string): Promise<BlidSearchResult> {
