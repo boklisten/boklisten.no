@@ -21,6 +21,7 @@ import { IconCheck, IconChevronDown, IconCopy, IconExclamationCircle } from "@ta
 import { useState } from "react";
 
 import { showBookSearch, showCustomerSearch } from "@/features/kasse/kasseParams";
+import DeleteOrderButton from "@/features/order-history/DeleteOrderButton";
 import OrderBranchChip from "@/features/order-history/OrderBranchChip";
 import { DeliveryBadge, PaymentStatusBadge } from "@/features/order-history/OrderStatusBadges";
 import { capitalize, formatAmount, pluralBooks } from "@/features/order-history/orderHistoryGroups";
@@ -525,6 +526,12 @@ export default function OrderHistoryCard({
           <PaymentsSection order={order} variant={variant} />
           <DeliverySection order={order} />
           <DetailsSection order={order} variant={variant} />
+          {/* The one destructive action stands alone after the facts, for every employee. */}
+          {variant === "admin" && (
+            <Group justify="flex-end">
+              <DeleteOrderButton order={order} />
+            </Group>
+          )}
         </Stack>
       </Collapse>
     </Card>

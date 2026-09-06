@@ -185,17 +185,17 @@ test.group("MessageLogService", (group) => {
     await MessageLogService.logOutgoingMessage({
       channel: "email",
       recipient: "info@boklisten.no",
-      context: { messageType: "exception-report", regardingCustomerDetailsId: CUSTOMER },
+      context: { messageType: "employee-monitoring", regardingCustomerDetailsId: CUSTOMER },
     });
     await MessageLogService.logOutgoingMessage({
       channel: "email",
       recipient: "info@boklisten.no",
-      context: { messageType: "exception-report", regardingCustomerDetailsId: "other" },
+      context: { messageType: "employee-monitoring", regardingCustomerDetailsId: "other" },
     });
 
     const { entries } = await MessageLogService.customerLog(CUSTOMER);
     assert.lengthOf(entries, 1);
-    assert.equal(entries[0]?.messageType, "exception-report");
+    assert.equal(entries[0]?.messageType, "employee-monitoring");
   });
 
   test("metrics fills every day in the period and counts failures", async ({ assert }) => {

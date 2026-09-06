@@ -113,6 +113,7 @@ export type ScannedRoutes = {
     'order_history.get_my_orders': { paramsTuple?: []; params?: {} }
     'order_history.get_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'order_history.update_branch': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'order_history.delete_order': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.initialize_checkout': { paramsTuple?: []; params?: {} }
     'checkout.confirm_checkout': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.handle_vipps_callback': { paramsTuple?: []; params?: {} }
@@ -462,6 +463,7 @@ export type ScannedRoutes = {
     'match_rounds.destroy_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'user_management.destroy': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
+    'order_history.delete_order': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'companies.delete_company': { paramsTuple: [ParamValue]; params: {'companyId': ParamValue} }
     'opening_hours.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.orders.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

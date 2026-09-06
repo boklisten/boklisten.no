@@ -1,20 +1,21 @@
-import { ExceptionReportService } from "#services/exception_report_service";
+import type { MonitoredEmployee } from "#services/employee_monitoring_service";
+import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import type { SignatureExceptionReason } from "#services/signature_helper";
 
 /**
- * The exceptions an employee can commit at the stand while handing out books. Each is reported to
- * the administrator after the handout has gone through, never instead of it.
+ * The monitored actions an employee can commit at the stand while handing out books. Each is
+ * reported to the administrator after the handout has gone through, never instead of it.
  */
-export const HandoutExceptions = {
+export const HandoutMonitoring = {
   async reportMissingSignature({
     signatureException,
-    employeeId,
+    employee,
     customerId,
     title,
     blid,
   }: {
     signatureException: SignatureExceptionReason | null;
-    employeeId: string;
+    employee: MonitoredEmployee;
     customerId: string;
     title: string;
     blid: string;
@@ -22,9 +23,9 @@ export const HandoutExceptions = {
     if (signatureException === null) {
       return;
     }
-    await ExceptionReportService.report({
-      kind: "handout-without-signature",
-      employeeId,
+    await EmployeeMonitoringService.report({
+      action: "handout-without-signature",
+      employee,
       customerId,
       details: [
         { label: "Bok", value: `«${title}»` },

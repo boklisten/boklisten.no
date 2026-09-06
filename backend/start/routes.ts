@@ -332,6 +332,7 @@ router.get("/v2/employee/user_details/:detailsId/orders", [
   "getForCustomer",
 ]);
 router.patch("/v2/admin/orders/:orderId/branch", [controllers.OrderHistory, "updateBranch"]);
+router.delete("/v2/employee/orders/:orderId", [controllers.OrderHistory, "deleteOrder"]);
 
 /**
  * Checkout

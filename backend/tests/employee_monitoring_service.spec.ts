@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
@@ -5,10 +6,10 @@ import { createSandbox } from "sinon";
 
 import DispatchService from "#services/dispatch_service";
 import {
-  buildExceptionReportMail,
-  EXCEPTION_REPORT_RECIPIENT,
-  ExceptionReportService,
-} from "#services/exception_report_service";
+  buildMonitoringMail,
+  EMPLOYEE_MONITORING_RECIPIENT,
+  EmployeeMonitoringService,
+} from "#services/employee_monitoring_service";
 import { StorageService } from "#services/storage_service";
 import type { UserDetail } from "#shared/user-detail";
 import env from "#start/env";
@@ -16,6 +17,9 @@ import { mock } from "#tests/test-doubles";
 
 const EMPLOYEE_ID = "5f7f7f7f7f7f7f7f7f7f7f7e";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
+
+const EMPLOYEE = { detailsId: EMPLOYEE_ID, permission: "employee" as const };
+const ADMIN = { detailsId: EMPLOYEE_ID, permission: "admin" as const };
 
 const employee = mock<UserDetail>({
   id: EMPLOYEE_ID,
@@ -30,8 +34,26 @@ const customer = mock<UserDetail>({
   phone: "91234567",
 });
 
+/**
+ * Sentry is never initialised under API_ENV=test, so stand up a throwaway client whose beforeSend
+ * records what was forwarded and then drops it.
+ */
+function recordEventsSentToSentry(): string[] {
+  const captured: string[] = [];
+  Sentry.init({
+    dsn: "https://public@o0.ingest.sentry.io/0",
+    enabled: true,
+    defaultIntegrations: false,
+    beforeSend(event) {
+      captured.push(event.exception?.values?.[0]?.value ?? "");
+      return null;
+    },
+  });
+  return captured;
+}
+
 const REPORT = {
-  kind: "handout-without-signature" as const,
+  action: "handout-without-signature" as const,
   employee,
   customer,
   details: [
@@ -41,7 +63,7 @@ const REPORT = {
   occurredAt: DateTime.fromISO("2026-09-04T08:05:00Z"),
 };
 
-test.group("ExceptionReportService", (group) => {
+test.group("EmployeeMonitoringService", (group) => {
   let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {
@@ -49,13 +71,14 @@ test.group("ExceptionReportService", (group) => {
   });
   group.each.teardown(() => sandbox.restore());
 
-  test("the mail names the exception, the employee, the customer with a kasse link, and the details", ({
+  test("the mail names the action, the employee, the customer with a kasse link, and the details", ({
     assert,
   }) => {
-    const mail = buildExceptionReportMail(REPORT);
+    const mail = buildMonitoringMail(REPORT);
 
-    assert.equal(mail.to, EXCEPTION_REPORT_RECIPIENT);
-    assert.equal(mail.subject, "Unntaksmelding: Bok delt ut uten gyldig signatur");
+    assert.equal(mail.to, EMPLOYEE_MONITORING_RECIPIENT);
+    assert.equal(mail.subject, "Ansattvarsel: Bok delt ut uten gyldig signatur");
+    assert.include(mail.text, "Ansattvarsel fra Boklisten.no");
     assert.include(mail.text, "Hva: Bok delt ut uten gyldig signatur");
     assert.include(mail.text, "Tidspunkt: 4. september 2026 kl. 10:05");
     assert.include(mail.text, "Ansatt: Ansatt Ansattsen (ansatt@boklisten.no)");
@@ -68,7 +91,7 @@ test.group("ExceptionReportService", (group) => {
   });
 
   test("a report without a customer leaves the customer section out", ({ assert }) => {
-    const mail = buildExceptionReportMail({ ...REPORT, customer: null });
+    const mail = buildMonitoringMail({ ...REPORT, customer: null });
 
     assert.notInclude(mail.text, "Kunde:");
     assert.notInclude(mail.text, "admin/kasse");
@@ -84,38 +107,56 @@ test.group("ExceptionReportService", (group) => {
       .stub(DispatchService, "sendPlainEmail")
       .resolves({ success: true });
 
-    await ExceptionReportService.report({
-      kind: "handout-without-signature",
-      employeeId: EMPLOYEE_ID,
+    await EmployeeMonitoringService.report({
+      action: "handout-without-signature",
+      employee: EMPLOYEE,
       customerId: CUSTOMER_ID,
       details: REPORT.details,
     });
 
     assert.isTrue(sendPlainEmail.calledOnce);
     const mail = sendPlainEmail.firstCall.args[0];
-    assert.equal(mail.to, EXCEPTION_REPORT_RECIPIENT);
+    assert.equal(mail.to, EMPLOYEE_MONITORING_RECIPIENT);
     assert.include(mail.text, "Ansatt: Ansatt Ansattsen");
     assert.include(mail.text, "Kunde: Kari Kunde");
     assert.deepEqual(mail.context, {
-      messageType: "exception-report",
+      messageType: "employee-monitoring",
       regardingCustomerDetailsId: CUSTOMER_ID,
     });
   });
 
-  test("report() fails loudly when the people cannot be looked up", async ({ assert }) => {
-    sandbox.stub(StorageService.UserDetails, "get").rejects(new Error("mongo down"));
+  test("report() does nothing when the employee is an admin", async ({ assert }) => {
+    const get = sandbox.stub(StorageService.UserDetails, "get");
     const sendPlainEmail = sandbox.stub(DispatchService, "sendPlainEmail");
 
-    await assert.rejects(
-      () =>
-        ExceptionReportService.report({
-          kind: "handout-without-signature",
-          employeeId: EMPLOYEE_ID,
-          customerId: CUSTOMER_ID,
-          details: [],
-        }),
-      "mongo down",
-    );
+    await EmployeeMonitoringService.report({
+      action: "order-deleted",
+      employee: ADMIN,
+      customerId: CUSTOMER_ID,
+      details: [],
+    });
+
+    assert.isFalse(get.called);
     assert.isFalse(sendPlainEmail.called);
+  });
+
+  test("report() sends a failed report to Sentry instead of failing the caller", async ({
+    assert,
+  }) => {
+    sandbox.stub(StorageService.UserDetails, "get").rejects(new Error("mongo down"));
+    const sendPlainEmail = sandbox.stub(DispatchService, "sendPlainEmail");
+    const captured = recordEventsSentToSentry();
+
+    await EmployeeMonitoringService.report({
+      action: "handout-without-signature",
+      employee: EMPLOYEE,
+      customerId: CUSTOMER_ID,
+      details: [],
+    });
+    await Sentry.flush(2000);
+    await Sentry.close();
+
+    assert.isFalse(sendPlainEmail.called);
+    assert.deepEqual(captured, ["mongo down"]);
   });
 });

@@ -3,6 +3,8 @@ import { ObjectId } from "mongodb";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
+import type { MonitoredEmployee } from "#services/employee_monitoring_service";
+import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import type { Delivery } from "#shared/delivery/delivery";
@@ -442,5 +444,33 @@ export const OrderHistoryService = {
       throw new BadRequestException("Ordren finnes ikke");
     }
     await StorageService.Orders.update(orderId, { branch: new ObjectId(branchId) });
+  },
+
+  /**
+   * Delete an order outright. Only the order document goes; the customer items, payments,
+   * deliveries and handovers it produced stay as they are, exactly as the legacy admin delete
+   * left them. Any employee may do it, and everyone below admin is reported to the administrator.
+   */
+  async deleteOrder(orderId: string, employee: MonitoredEmployee): Promise<void> {
+    const order = await StorageService.Orders.getOrNull(orderId);
+    if (!order) {
+      throw new BadRequestException("Ordren finnes ikke");
+    }
+    const branch = await StorageService.Branches.getOrNull(order.branch);
+    await StorageService.Orders.remove(orderId);
+    await EmployeeMonitoringService.report({
+      action: "order-deleted",
+      employee,
+      customerId: order.customer,
+      details: [
+        { label: "Ordre-ID", value: order.id },
+        { label: "Filial", value: branch?.name ?? FALLBACK_BRANCH_NAME },
+        { label: "Beløp", value: `${order.amount} kr` },
+        {
+          label: "Bøker",
+          value: order.orderItems.map((orderItem) => `«${orderItem.title}»`).join(", "),
+        },
+      ],
+    });
   },
 };

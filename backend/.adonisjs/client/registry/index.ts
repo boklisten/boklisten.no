@@ -660,6 +660,12 @@ const routes = {
     tokens: [{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"v2","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"admin","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"orders","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":1,"val":"orderId","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"branch","end":""}],
     types: placeholder as Registry['order_history.update_branch']['types'],
   },
+  'order_history.delete_order': {
+    methods: ["DELETE"],
+    pattern: '/v2/employee/orders/:orderId',
+    tokens: [{"old":"/v2/employee/orders/:orderId","type":0,"val":"v2","end":""},{"old":"/v2/employee/orders/:orderId","type":0,"val":"employee","end":""},{"old":"/v2/employee/orders/:orderId","type":0,"val":"orders","end":""},{"old":"/v2/employee/orders/:orderId","type":1,"val":"orderId","end":""}],
+    types: placeholder as Registry['order_history.delete_order']['types'],
+  },
   'checkout.initialize_checkout': {
     methods: ["POST"],
     pattern: '/checkout',

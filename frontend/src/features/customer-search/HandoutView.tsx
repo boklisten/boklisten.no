@@ -17,6 +17,7 @@ import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import type { ItemStatus } from "@/shared/components/matches/matches-helper";
 import { ItemStatusTable } from "@/shared/components/matches/MatchItemTable";
 import { StandScannerProgress } from "@/shared/components/matches/MatchScannerContent";
+import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
 import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
@@ -179,7 +180,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
 
   /**
    * A missing signature no longer blocks the stand, but the employee must knowingly accept that
-   * every book handed out this way is reported to the administrator.
+   * every book handed out this way is reported to the administrator (admins are exempt).
    */
   async function confirmHandoutWithoutSignature(): Promise<boolean> {
     return asyncConfirmModal({
@@ -188,11 +189,11 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
         : "Kunden mangler gyldig signatur",
       children: (
         <Stack gap="xs">
-          <Text>
-            Bøker skal normalt ikke deles ut uten gyldig signatur. Deler du ut likevel, sendes en
-            unntaksmelding til administrator for hver bok, med navn på deg og kunden.
-          </Text>
-          <Text>Be kunden signere så snart som mulig.</Text>
+          <Text>Bøker skal normalt ikke deles ut uten gyldig signatur.</Text>
+          <MonitoringNotice>
+            Deler du ut likevel, sendes et varsel til administrator for hver bok, med navn på deg og
+            kunden.
+          </MonitoringNotice>
         </Stack>
       ),
       confirmLabel: "Del ut likevel",

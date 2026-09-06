@@ -29,4 +29,11 @@ export default class OrderHistoryController {
     await OrderHistoryService.updateBranch(orderId, branchId);
     return ctx.response.noContent();
   }
+
+  async deleteOrder(ctx: HttpContext) {
+    const employee = PermissionService.employeeOrFail(ctx);
+    const orderId = ctx.request.param("orderId");
+    await OrderHistoryService.deleteOrder(orderId, employee);
+    return ctx.response.noContent();
+  }
 }

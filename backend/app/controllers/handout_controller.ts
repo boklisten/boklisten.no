@@ -16,8 +16,9 @@ import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_a
 import { findUniqueItemByBlid } from "#services/item_lookup";
 import { findSignatureException } from "#services/signature_helper";
 import type { SignatureExceptionReason } from "#services/signature_helper";
-import { HandoutExceptions } from "#services/handout_exceptions";
+import { HandoutMonitoring } from "#services/handout_monitoring";
 import { handoutValidator } from "#validators/handout_validator";
+import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { PermissionService } from "#services/permission_service";
 import BlidService from "#services/blid_service";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
@@ -30,13 +31,14 @@ interface FinishedHandout {
   itemId: string;
   title: string;
   customerId: string;
-  employeeId: string;
+  employee: MonitoredEmployee;
   signatureException: SignatureExceptionReason | null;
 }
 
 export default class HandoutController {
   async handout(ctx: HttpContext) {
-    const { detailsId: employeeId } = PermissionService.employeeOrFail(ctx);
+    const employee = PermissionService.employeeOrFail(ctx);
+    const { detailsId: employeeId } = employee;
     const { blid, customerId, force, branchId, deadline } =
       await ctx.request.validateUsing(handoutValidator);
 
@@ -80,7 +82,7 @@ export default class HandoutController {
       itemId: uniqueItemOrFeedback.item,
       title: uniqueItemOrFeedback.title,
       customerId,
-      employeeId,
+      employee,
       signatureException,
     };
 
@@ -138,12 +140,7 @@ export default class HandoutController {
       placedHandoutOrder,
     );
     await this.createCustomerItem(placedHandoutOrder);
-    // The book is already handed out, so a lost report goes to Sentry rather than failing the scan.
-    try {
-      await HandoutExceptions.reportMissingSignature(handout);
-    } catch (error) {
-      Sentry.captureException(error);
-    }
+    await HandoutMonitoring.reportMissingSignature(handout);
   }
 
   /**

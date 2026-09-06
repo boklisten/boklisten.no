@@ -1315,6 +1315,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['updateBranch']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'order_history.delete_order': {
+    methods: ["DELETE"]
+    pattern: '/v2/employee/orders/:orderId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { orderId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['deleteOrder']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['deleteOrder']>>>
+    }
+  }
   'checkout.initialize_checkout': {
     methods: ["POST"]
     pattern: '/checkout'

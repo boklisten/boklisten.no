@@ -2,28 +2,28 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { ExceptionReportService } from "#services/exception_report_service";
-import { HandoutExceptions } from "#services/handout_exceptions";
+import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
+import { HandoutMonitoring } from "#services/handout_monitoring";
 
-const EMPLOYEE_ID = "5f7f7f7f7f7f7f7f7f7f7f7e";
+const EMPLOYEE = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 
-test.group("HandoutExceptions.reportMissingSignature", (group) => {
+test.group("HandoutMonitoring.reportMissingSignature", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
 
   group.each.setup(() => {
     sandbox = createSandbox();
-    report = sandbox.stub(ExceptionReportService, "report").resolves();
+    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
   });
   group.each.teardown(() => sandbox.restore());
 
   test("a handout to a customer without a valid signature is reported with book and reason", async ({
     assert,
   }) => {
-    await HandoutExceptions.reportMissingSignature({
+    await HandoutMonitoring.reportMissingSignature({
       signatureException: "Aldri signert",
-      employeeId: EMPLOYEE_ID,
+      employee: EMPLOYEE,
       customerId: CUSTOMER_ID,
       title: "Matematikk R1",
       blid: "12345678",
@@ -31,8 +31,8 @@ test.group("HandoutExceptions.reportMissingSignature", (group) => {
 
     assert.isTrue(report.calledOnce);
     assert.deepEqual(report.firstCall.args[0], {
-      kind: "handout-without-signature",
-      employeeId: EMPLOYEE_ID,
+      action: "handout-without-signature",
+      employee: EMPLOYEE,
       customerId: CUSTOMER_ID,
       details: [
         { label: "Bok", value: "«Matematikk R1»" },
@@ -43,9 +43,9 @@ test.group("HandoutExceptions.reportMissingSignature", (group) => {
   });
 
   test("nothing is reported when the customer's signature is in order", async ({ assert }) => {
-    await HandoutExceptions.reportMissingSignature({
+    await HandoutMonitoring.reportMissingSignature({
       signatureException: null,
-      employeeId: EMPLOYEE_ID,
+      employee: EMPLOYEE,
       customerId: CUSTOMER_ID,
       title: "Matematikk R1",
       blid: "12345678",

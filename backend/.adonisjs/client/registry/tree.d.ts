@@ -174,6 +174,7 @@ export interface ApiDefinition {
     getMyOrders: typeof routes['order_history.get_my_orders']
     getForCustomer: typeof routes['order_history.get_for_customer']
     updateBranch: typeof routes['order_history.update_branch']
+    deleteOrder: typeof routes['order_history.delete_order']
   }
   checkout: {
     initializeCheckout: typeof routes['checkout.initialize_checkout']

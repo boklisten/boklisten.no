@@ -1,11 +1,17 @@
 import { test } from "@japa/runner";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
+import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import type { OrderHistorySources } from "#services/order_history_service";
-import { presentOrderHistory } from "#services/order_history_service";
+import { OrderHistoryService, presentOrderHistory } from "#services/order_history_service";
+import { StorageService } from "#services/storage_service";
+import type { Branch } from "#shared/branch";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Payment } from "#shared/payment/payment";
+import { mock } from "#tests/test-doubles";
 
 const IDA = "ida-id";
 const PETRA = "petra-id";
@@ -484,5 +490,58 @@ test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
     const [entry] = presentOrderHistory(baseSources());
 
     assert.isNull(entry?.delivery);
+  });
+});
+
+test.group("OrderHistoryService.deleteOrder()", (group) => {
+  let sandbox: sinon.SinonSandbox;
+  let remove: sinon.SinonStub;
+  let report: sinon.SinonStub;
+  const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
+
+  group.each.setup(() => {
+    sandbox = createSandbox();
+    remove = sandbox.stub(StorageService.Orders, "remove").resolves(makeOrder());
+    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
+    sandbox
+      .stub(StorageService.Branches, "getOrNull")
+      .resolves(mock<Branch>({ id: BRANCH, name: "Ullern VGS" }));
+  });
+  group.each.teardown(() => sandbox.restore());
+
+  test("removes the order document and reports the deletion with what the order held", async ({
+    assert,
+  }) => {
+    sandbox.stub(StorageService.Orders, "getOrNull").resolves(
+      makeOrder({
+        amount: 250,
+        orderItems: [rentItem(), rentItem({ item: "item-2", title: "Sinus 1P", blid: "87654321" })],
+      }),
+    );
+
+    await OrderHistoryService.deleteOrder("order-1", employee);
+
+    assert.isTrue(remove.calledOnceWithExactly("order-1"));
+    assert.isTrue(report.calledOnce);
+    assert.deepEqual(report.firstCall.args[0], {
+      action: "order-deleted",
+      employee,
+      customerId: IDA,
+      details: [
+        { label: "Ordre-ID", value: "order-1" },
+        { label: "Filial", value: "Ullern VGS" },
+        { label: "Beløp", value: "250 kr" },
+        { label: "Bøker", value: "«Sinus 1T», «Sinus 1P»" },
+      ],
+    });
+  });
+
+  test("refuses when the order does not exist, and reports nothing", async ({ assert }) => {
+    sandbox.stub(StorageService.Orders, "getOrNull").resolves(null);
+
+    await assert.rejects(() => OrderHistoryService.deleteOrder("missing", employee));
+
+    assert.isFalse(remove.called);
+    assert.isFalse(report.called);
   });
 });

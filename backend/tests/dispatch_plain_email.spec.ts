@@ -14,10 +14,10 @@ const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 
 const PLAIN_MAIL = {
   to: "Info@Boklisten.no",
-  subject: "Unntaksmelding: test",
+  subject: "Ansattvarsel: test",
   text: "Linje 1\nLinje 2",
   replyTo: { email: "kari@example.com", name: "Kari" },
-  context: { messageType: "exception-report" as const, regardingCustomerDetailsId: CUSTOMER_ID },
+  context: { messageType: "employee-monitoring" as const, regardingCustomerDetailsId: CUSTOMER_ID },
 };
 
 function runAsProduction(sandbox: sinon.SinonSandbox) {
@@ -51,9 +51,9 @@ test.group("DispatchService.sendPlainEmail", (group) => {
     const logged = await Message.query().firstOrFail();
     assert.equal(logged.recipient, "info@boklisten.no");
     assert.equal(logged.status, "skipped");
-    assert.equal(logged.messageType, "exception-report");
+    assert.equal(logged.messageType, "employee-monitoring");
     assert.equal(logged.regardingCustomerDetailsId, CUSTOMER_ID);
-    assert.equal(logged.subject, "Unntaksmelding: test");
+    assert.equal(logged.subject, "Ansattvarsel: test");
     assert.deepEqual(logged.templateData, { text: "Linje 1\nLinje 2" });
   });
 
@@ -70,7 +70,7 @@ test.group("DispatchService.sendPlainEmail", (group) => {
     assert.deepInclude(send.firstCall.args[0], {
       from: "ikkesvar@boklisten.no",
       to: "Info@Boklisten.no",
-      subject: "Unntaksmelding: test",
+      subject: "Ansattvarsel: test",
       text: "Linje 1\nLinje 2",
       replyTo: { email: "kari@example.com", name: "Kari" },
       customArgs: { bl_message_id: logged.id, bl_api_env: "production" },

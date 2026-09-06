@@ -32,7 +32,7 @@ export const TYPE_LABELS: Record<MessageType, string> = {
   "password-reset": "Passordtilbakestilling",
   "email-verification": "E-postbekreftelse",
   onboarding: "Velkomstmelding",
-  "exception-report": "Unntaksmelding",
+  "employee-monitoring": "Ansattvarsel",
   "bokflyt-contact": "Bokflyt-henvendelse",
 };
 
