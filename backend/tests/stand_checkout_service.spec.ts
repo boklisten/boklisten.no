@@ -3,7 +3,7 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
-import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
+import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderHistoryService } from "#services/order_history_service";
 import { OrderService } from "#services/order_service";
 import { StandCheckoutService, toMsisdn } from "#services/stand_checkout_service";

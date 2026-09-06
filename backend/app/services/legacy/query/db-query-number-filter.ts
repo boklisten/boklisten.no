@@ -1,11 +1,4 @@
-export interface NumberFilter {
-  fieldName: string;
-  op: {
-    $lt?: number;
-    $gt?: number;
-    $eq?: number;
-  };
-}
+import type { NumberFilter } from "#models/mongoose/storage/db-query";
 
 export class DbQueryNumberFilter {
   private readonly operationIdentifiers = [

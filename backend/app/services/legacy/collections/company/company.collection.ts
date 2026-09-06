@@ -9,36 +9,6 @@ export const CompanyCollection: BlCollection = {
       restriction: {
         permission: "admin",
       },
-      validQueryParams: [
-        {
-          fieldName: "name",
-          type: "string",
-        },
-      ],
-    },
-    {
-      method: "getId",
-      restriction: {
-        permission: "admin",
-      },
-    },
-    {
-      method: "post",
-      restriction: {
-        permission: "admin",
-      },
-    },
-    {
-      method: "patch",
-      restriction: {
-        permission: "admin",
-      },
-    },
-    {
-      method: "delete",
-      restriction: {
-        permission: "admin",
-      },
     },
   ],
 };

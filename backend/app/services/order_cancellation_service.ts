@@ -1,7 +1,7 @@
 import logger from "@adonisjs/core/services/logger";
 
-import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
-import { OrderEmailHandler } from "#services/legacy/order_email_handler";
+import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
+import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { StorageService } from "#services/storage_service";
 
 export interface CancellableOrderItem {

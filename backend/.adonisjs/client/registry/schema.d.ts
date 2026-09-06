@@ -1795,66 +1795,6 @@ export interface Registry {
       errorResponse: unknown
     }
   }
-  'collection.branches.post': {
-    methods: ["POST"]
-    pattern: '/branches'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.branches.patch': {
-    methods: ["PATCH"]
-    pattern: '/branches/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.branchitems.getId': {
-    methods: ["GET","HEAD"]
-    pattern: '/branchitems/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.branchitems.post': {
-    methods: ["POST"]
-    pattern: '/branchitems'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.branchitems.patch': {
-    methods: ["PATCH"]
-    pattern: '/branchitems/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
   'collection.branchitems.getAll': {
     methods: ["GET","HEAD"]
     pattern: '/branchitems'
@@ -1862,18 +1802,6 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.branchitems.delete': {
-    methods: ["DELETE"]
-    pattern: '/branchitems/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
       query: {}
       response: unknown
       errorResponse: unknown
@@ -1898,18 +1826,6 @@ export interface Registry {
       body: {}
       paramsTuple: [ParamValue]
       params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.customeritems.post': {
-    methods: ["POST"]
-    pattern: '/customeritems'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
       query: {}
       response: unknown
       errorResponse: unknown
@@ -1951,44 +1867,8 @@ export interface Registry {
       errorResponse: unknown
     }
   }
-  'collection.deliveries.getAll': {
-    methods: ["GET","HEAD"]
-    pattern: '/deliveries'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
   'collection.deliveries.getId': {
     methods: ["GET","HEAD"]
-    pattern: '/deliveries/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.deliveries.patch': {
-    methods: ["PATCH"]
-    pattern: '/deliveries/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.deliveries.delete': {
-    methods: ["DELETE"]
     pattern: '/deliveries/:id'
     types: {
       body: {}
@@ -2018,30 +1898,6 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.items.post': {
-    methods: ["POST"]
-    pattern: '/items'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.items.patch': {
-    methods: ["PATCH"]
-    pattern: '/items/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
       query: {}
       response: unknown
       errorResponse: unknown
@@ -2119,18 +1975,6 @@ export interface Registry {
       errorResponse: unknown
     }
   }
-  'collection.orders.operation.get_customer_orders.getId': {
-    methods: ["GET","HEAD"]
-    pattern: '/orders/:id/get_customer_orders'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
   'collection.orders.getAll': {
     methods: ["GET","HEAD"]
     pattern: '/orders'
@@ -2194,18 +2038,6 @@ export interface Registry {
   'collection.userdetails.getId': {
     methods: ["GET","HEAD"]
     pattern: '/userdetails/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.userdetails.operation.valid.getId': {
-    methods: ["GET","HEAD"]
-    pattern: '/userdetails/:id/valid'
     types: {
       body: {}
       paramsTuple: [ParamValue]
@@ -2311,54 +2143,6 @@ export interface Registry {
       errorResponse: unknown
     }
   }
-  'collection.companies.getId': {
-    methods: ["GET","HEAD"]
-    pattern: '/companies/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.companies.post': {
-    methods: ["POST"]
-    pattern: '/companies'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.companies.patch': {
-    methods: ["PATCH"]
-    pattern: '/companies/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.companies.delete': {
-    methods: ["DELETE"]
-    pattern: '/companies/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
   'collection.uniqueitems.post': {
     methods: ["POST"]
     pattern: '/uniqueitems'
@@ -2366,18 +2150,6 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
-      response: unknown
-      errorResponse: unknown
-    }
-  }
-  'collection.uniqueitems.getId': {
-    methods: ["GET","HEAD"]
-    pattern: '/uniqueitems/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
       query: {}
       response: unknown
       errorResponse: unknown

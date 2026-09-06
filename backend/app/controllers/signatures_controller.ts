@@ -4,8 +4,8 @@ import type { DateTime } from "luxon";
 
 import Signature, { isUnderage } from "#models/signature";
 import DispatchService from "#services/dispatch_service";
-import { DateService } from "#services/legacy/date.service";
-import { reconcileSignatureTask, userHasValidSignature } from "#services/legacy/signature.helper";
+import { DateService } from "#services/date_service";
+import { reconcileSignatureTask, userHasValidSignature } from "#services/signature_helper";
 import { PermissionService } from "#services/permission_service";
 import { SignatureGalleryService } from "#services/signature_gallery_service";
 import { StorageService } from "#services/storage_service";

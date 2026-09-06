@@ -2,8 +2,8 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
-import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
+import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
+import { OrderValidator } from "#services/orders/validation/order_validator";
 import { OrderPatchHook } from "#services/legacy/collections/order/hooks/order.patch.hook";
 import { StorageService } from "#services/storage_service";
 import type { AccessToken } from "#shared/access-token";

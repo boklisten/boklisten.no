@@ -1,4 +1,4 @@
-import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
+import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 import { StorageService } from "#services/storage_service";
 import type { AccessToken } from "#shared/access-token";

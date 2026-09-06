@@ -2,10 +2,10 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
+import { OrderValidator } from "#services/orders/validation/order_validator";
 import { OrderHookBefore } from "#services/legacy/collections/order/hooks/order-hook-before";
 import { OrderPostHook } from "#services/legacy/collections/order/hooks/order.post.hook";
-import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpers/user-detail.helper";
+import { UserDetailHelper } from "#services/user_detail_helper";
 import { StorageService } from "#services/storage_service";
 import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";

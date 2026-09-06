@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { buildCustomerItemActions, calculateStatus } from "#services/customer_item_actions_service";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import type { ActiveCustomerItem } from "#shared/customer-item/active-customer-item";

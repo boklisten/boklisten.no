@@ -1,6 +1,6 @@
 export interface ValidParameter {
   fieldName: string;
-  type: "string" | "number" | "boolean" | "date" | "expand" | "object-id";
+  type: "string" | "number" | "boolean" | "date" | "object-id";
 }
 
 export class DbQueryValidParams {
@@ -28,14 +28,6 @@ export class DbQueryValidParams {
 
   public getValidDateParams(): string[] {
     return this.getValidParamsBasedOnType("date");
-  }
-
-  public getValidExpandParams(): string[] {
-    return this.getValidParamsBasedOnType("expand");
-  }
-
-  public getAllValidParams(): string[] {
-    return this.validParams.map((validParameter) => validParameter.fieldName);
   }
 
   private getValidParamsBasedOnType(type: string) {

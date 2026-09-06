@@ -1,6 +1,6 @@
 import { test } from "@japa/runner";
 
-import { OrderFieldValidator } from "#services/legacy/collections/order/helpers/order-validator/order-field-validator/order-field-validator";
+import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
 import { BlError } from "#shared/bl-error";
 import type { Order } from "#shared/order/order";
 

@@ -12,26 +12,14 @@ export class BranchGetHook extends Hook {
     return Promise.resolve(branches);
   }
 
+  /** Admins always see the branch items; employees only when they are live at the branch. */
   private resolveBranchItems(branch: Branch, accessToken: AccessToken) {
-    if (branch.isBranchItemsLive !== undefined && branch.isBranchItemsLive !== null) {
-      if (accessToken) {
-        if (PermissionService.isPermissionEqualOrOver(accessToken.permission, "admin")) {
-          return; // admin should always get the branchItems
-        }
-
-        // have a user
-        if (PermissionService.isPermissionEqualOrOver(accessToken.permission, "employee")) {
-          if (!branch.isBranchItemsLive.atBranch) {
-            branch.branchItems = [];
-          }
-        } else if (!branch.isBranchItemsLive.online) {
-          // user is customer and must be "online" (bl-web)
-          branch.branchItems = [];
-        }
-      } else if (!branch.isBranchItemsLive.online) {
-        // no user found, must be "online" (bl-web); should not show branchItems
-        branch.branchItems = [];
-      }
+    if (
+      branch.isBranchItemsLive &&
+      !branch.isBranchItemsLive.atBranch &&
+      !PermissionService.isPermissionEqualOrOver(accessToken.permission, "admin")
+    ) {
+      branch.branchItems = [];
     }
   }
 }

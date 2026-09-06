@@ -245,20 +245,13 @@ export interface ApiDefinition {
     branches: {
       getId: typeof routes['collection.branches.getId']
       getAll: typeof routes['collection.branches.getAll']
-      post: typeof routes['collection.branches.post']
-      patch: typeof routes['collection.branches.patch']
     }
     branchitems: {
-      getId: typeof routes['collection.branchitems.getId']
-      post: typeof routes['collection.branchitems.post']
-      patch: typeof routes['collection.branchitems.patch']
       getAll: typeof routes['collection.branchitems.getAll']
-      delete: typeof routes['collection.branchitems.delete']
     }
     customeritems: {
       getId: typeof routes['collection.customeritems.getId']
       patch: typeof routes['collection.customeritems.patch']
-      post: typeof routes['collection.customeritems.post']
       operation: {
         generateReport: {
           post: typeof routes['collection.customeritems.operation.generate-report.post']
@@ -268,16 +261,11 @@ export interface ApiDefinition {
     }
     deliveries: {
       post: typeof routes['collection.deliveries.post']
-      getAll: typeof routes['collection.deliveries.getAll']
       getId: typeof routes['collection.deliveries.getId']
-      patch: typeof routes['collection.deliveries.patch']
-      delete: typeof routes['collection.deliveries.delete']
     }
     items: {
       getId: typeof routes['collection.items.getId']
       getAll: typeof routes['collection.items.getAll']
-      post: typeof routes['collection.items.post']
-      patch: typeof routes['collection.items.patch']
     }
     orders: {
       post: typeof routes['collection.orders.post']
@@ -289,9 +277,6 @@ export interface ApiDefinition {
         }
         confirm: {
           patch: typeof routes['collection.orders.operation.confirm.patch']
-        }
-        getCustomerOrders: {
-          getId: typeof routes['collection.orders.operation.get_customer_orders.getId']
         }
       }
       getId: typeof routes['collection.orders.getId']
@@ -306,9 +291,6 @@ export interface ApiDefinition {
     userdetails: {
       getId: typeof routes['collection.userdetails.getId']
       operation: {
-        valid: {
-          getId: typeof routes['collection.userdetails.operation.valid.getId']
-        }
         permission: {
           getId: typeof routes['collection.userdetails.operation.permission.getId']
         }
@@ -324,14 +306,9 @@ export interface ApiDefinition {
     }
     companies: {
       getAll: typeof routes['collection.companies.getAll']
-      getId: typeof routes['collection.companies.getId']
-      post: typeof routes['collection.companies.post']
-      patch: typeof routes['collection.companies.patch']
-      delete: typeof routes['collection.companies.delete']
     }
     uniqueitems: {
       post: typeof routes['collection.uniqueitems.post']
-      getId: typeof routes['collection.uniqueitems.getId']
       operation: {
         active: {
           getId: typeof routes['collection.uniqueitems.operation.active.getId']

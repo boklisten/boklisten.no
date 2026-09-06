@@ -3,32 +3,13 @@ import jwt from "jsonwebtoken";
 
 import NotAllowedException from "#exceptions/not_allowed_exception";
 import UnauthorizedException from "#exceptions/unauthorized_exception";
-import { APP_CONFIG } from "#services/legacy/application-config";
-import type { BlDocument } from "#shared/bl-document";
+import { APP_CONFIG } from "#services/application_config";
 import type { UserPermission } from "#shared/user-permission";
 import { USER_PERMISSION } from "#shared/user-permission";
 import env from "#start/env";
-import type { BlDocumentPermission } from "#types/bl-collection";
 
 function isAdmin(userPermission: UserPermission | null) {
   return userPermission === USER_PERMISSION.ADMIN;
-}
-
-function haveRestrictedDocumentPermission(
-  userId: string,
-  userPermission: UserPermission,
-  document: BlDocument,
-  documentPermission?: BlDocumentPermission,
-): boolean {
-  if (document.user?.id === userId || isPermissionOver(userPermission, document.user?.permission)) {
-    return true;
-  }
-
-  if (documentPermission?.viewableForPermission) {
-    return isPermissionEqualOrOver(userPermission, documentPermission.viewableForPermission);
-  }
-
-  return false;
 }
 
 function isPermissionEqualOrOver(
@@ -154,7 +135,6 @@ function employeeOrFail(ctx: HttpContext) {
 
 export const PermissionService = {
   isAdmin,
-  haveRestrictedDocumentPermission,
   isPermissionEqualOrOver,
   isPermissionOver,
   // Deliberately still exported for the legacy collection endpoints; the deprecation

@@ -3,12 +3,12 @@ import type { Infer } from "@vinejs/vine/types";
 import { DateTime } from "luxon";
 
 import BlidService from "#services/blid_service";
-import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
-import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
-import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
-import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
-import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
-import { isNullish } from "#services/legacy/typescript-helpers";
+import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
+import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
+import { OrderActive } from "#services/orders/order_active";
+import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
+import { OrderValidator } from "#services/orders/validation/order_validator";
+import { isNullish } from "#services/typescript_helpers";
 import { extendRemainingCopyDeadlines } from "#services/matches/copy_deadlines";
 import {
   isDischargeConflict,

@@ -2,7 +2,7 @@ import type { HttpContext } from "@adonisjs/core/http";
 import moment from "moment";
 
 import { BranchRelationshipService } from "#services/branch_relationship_service";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { updateBranchMembershipValidator } from "#validators/branch_membership";

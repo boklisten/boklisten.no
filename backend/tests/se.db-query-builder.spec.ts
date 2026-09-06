@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 
 import type { ValidParameter } from "#services/legacy/query/db-query-valid-params";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
 
 test.group("DbQueryBuilder", async () => {
@@ -14,28 +14,12 @@ test.group("DbQueryBuilder", async () => {
     );
   });
 
-  test("should return SedbQuery with skip equal to 5", async ({ assert }) => {
-    const result = new SEDbQuery();
-    result.skipFilter = { skip: 5 };
-
-    assert.deepEqual(dbQueryBuilder.getDbQuery({ skip: "5" }, []), result);
-  });
-
-  test("should return SeDbQuery with limit to 4", async ({ assert }) => {
-    const result = new SEDbQuery();
-    result.limitFilter = { limit: 4 };
-    assert.deepEqual(dbQueryBuilder.getDbQuery({ limit: "4" }, []), result);
-  });
-
   test("should return SeDbQuery with correct filters", async ({ assert }) => {
     const result = new SEDbQuery();
     result.numberFilters = [
       { fieldName: "age", op: { $gt: 12, $lt: 60 } },
       { fieldName: "price", op: { $eq: 120 } },
     ];
-
-    result.limitFilter = { limit: 3 };
-    result.onlyGetFilters = [{ fieldName: "name", value: 1 }];
 
     const validParams: ValidParameter[] = [
       { fieldName: "name", type: "string" },
@@ -44,31 +28,14 @@ test.group("DbQueryBuilder", async () => {
     ];
 
     assert.deepEqual(
-      dbQueryBuilder.getDbQuery(
-        { age: [">12", "<60"], price: "120", limit: "3", og: "name" },
-        validParams,
-      ),
+      dbQueryBuilder.getDbQuery({ age: [">12", "<60"], price: "120" }, validParams),
       result,
     );
-  });
-
-  test("should throw TypeError when limit is under 0", async ({ assert }) => {
-    assert.throws(() => {
-      dbQueryBuilder.getDbQuery({ limit: "-6" }, []);
-    }, TypeError);
   });
 
   test("should throw TypeError when a number field is not a number", async ({ assert }) => {
     assert.throws(() => {
       dbQueryBuilder.getDbQuery({ age: "albert" }, [{ fieldName: "age", type: "number" }]);
     }, TypeError);
-  });
-
-  test("should throw ReferenceError when a field is not in validQueryParams", async ({
-    assert,
-  }) => {
-    assert.throws(() => {
-      dbQueryBuilder.getDbQuery({ og: ["name", "age"] }, [{ fieldName: "age", type: "number" }]);
-    }, ReferenceError);
   });
 });

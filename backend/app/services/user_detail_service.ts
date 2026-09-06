@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import BlidService from "#services/blid_service";
 import CryptoService from "#services/crypto_service";
 import DispatchService from "#services/dispatch_service";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import type { UserDetail } from "#shared/user-detail";
 import type { UserPermission } from "#shared/user-permission";

@@ -12,12 +12,7 @@ function createUri(
   operationMethod: BlEndpointMethod,
 ): string {
   let uri = collectionUri;
-  if (
-    operationMethod === "getId" ||
-    operationMethod === "patch" ||
-    operationMethod === "put" ||
-    operationMethod === "delete"
-  ) {
+  if (operationMethod === "getId" || operationMethod === "patch" || operationMethod === "delete") {
     uri += "/:id";
   }
   uri += `/${operationName}`;
@@ -56,20 +51,12 @@ function create(collectionName: string, method: BlEndpointMethod, operation: BlE
       router.get(uri, createRequestHandler(operation)).as(routeName);
       break;
     }
-    case "getAll": {
-      router.get(uri, createRequestHandler(operation)).as(routeName);
-      break;
-    }
     case "patch": {
       router.patch(uri, createRequestHandler(operation)).as(routeName);
       break;
     }
     case "post": {
       router.post(uri, createRequestHandler(operation)).as(routeName);
-      break;
-    }
-    case "put": {
-      router.put(uri, createRequestHandler(operation)).as(routeName);
       break;
     }
     default: {

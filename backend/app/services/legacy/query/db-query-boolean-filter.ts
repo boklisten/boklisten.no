@@ -1,9 +1,5 @@
 import type { ParsedQs } from "qs";
-
-export interface BooleanFilter {
-  fieldName: string;
-  value: boolean;
-}
+import type { BooleanFilter } from "#models/mongoose/storage/db-query";
 
 export class DbQueryBooleanFilter {
   public getBooleanFilters(query: ParsedQs, validBooleanParams: string[]): BooleanFilter[] {

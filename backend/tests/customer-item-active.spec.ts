@@ -1,6 +1,6 @@
 import { test } from "@japa/runner";
 
-import { CustomerItemActive } from "#services/legacy/collections/customer-item/helpers/customer-item-active";
+import { CustomerItemActive } from "#services/customer_items/customer_item_active";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 
 test.group("CustomerItemActive", async () => {

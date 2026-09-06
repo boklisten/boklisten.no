@@ -29,13 +29,6 @@ export class MongooseModelCreator<T> {
           permission: String,
         },
       },
-      viewableFor: {
-        type: [String],
-        default: [],
-      },
-      viewableForPermission: {
-        type: String,
-      },
       editableFor: {
         type: [String],
         default: [],

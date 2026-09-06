@@ -1,6 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { branchItemsValidator } from "#validators/branch_items";

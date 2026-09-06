@@ -1,7 +1,7 @@
 import env from "#start/env";
 import { bringPostalCodeResponseValidator } from "#validators/bring_validators";
 import { DateTime } from "luxon";
-import { APP_CONFIG } from "#services/legacy/application-config";
+import { APP_CONFIG } from "#services/application_config";
 import createClient from "openapi-fetch";
 import type { paths as shippingGuidePaths } from "#services/bring/openapi/shippingguide";
 

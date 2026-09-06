@@ -3,8 +3,8 @@ import type { Infer } from "@vinejs/vine/types";
 
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import DispatchService from "#services/dispatch_service";
-import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpers/user-detail.helper";
-import { userHasValidSignature } from "#services/legacy/signature.helper";
+import { UserDetailHelper } from "#services/user_detail_helper";
+import { userHasValidSignature } from "#services/signature_helper";
 import { StorageService } from "#services/storage_service";
 import type { UserDetail } from "#shared/user-detail";
 import { UserDetailService } from "#services/user_detail_service";

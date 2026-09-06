@@ -4,7 +4,7 @@ import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
 import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import type {
   BlidActiveItem,

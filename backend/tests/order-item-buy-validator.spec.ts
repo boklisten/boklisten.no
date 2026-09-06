@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 
-import { OrderItemBuyValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-buy-validator/order-item-buy-validator";
-import { PriceService } from "#services/legacy/price.service";
+import { OrderItemBuyValidator } from "#services/orders/validation/order_item_buy_validator";
+import { PriceService } from "#services/price_service";
 import { BlError } from "#shared/bl-error";
 import type { Item } from "#shared/item";
 import type { Order } from "#shared/order/order";

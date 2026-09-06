@@ -7,8 +7,8 @@ import {
   calculateBuyoutStatus,
   calculateExtensionStatus,
 } from "#services/customer_item_actions_service";
-import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
-import { DateService } from "#services/legacy/date.service";
+import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
+import { DateService } from "#services/date_service";
 import { OrderHistoryService } from "#services/order_history_service";
 import { isSameDeadlineDay } from "#services/order_item_service";
 import { OrderService } from "#services/order_service";

@@ -5,7 +5,7 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import Signature from "#models/signature";
-import { reconcileSignatureTask } from "#services/legacy/signature.helper";
+import { reconcileSignatureTask } from "#services/signature_helper";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";

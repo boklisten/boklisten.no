@@ -1,7 +1,4 @@
-export interface StringFilter {
-  fieldName: string;
-  value: string;
-}
+import type { StringFilter } from "#models/mongoose/storage/db-query";
 
 export class DbQueryStringFilter {
   getStringFilters(query: any, validStringParams: string[]): StringFilter[] {

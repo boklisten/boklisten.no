@@ -4,7 +4,7 @@ import { findItemByIsbn } from "#services/item_lookup";
 import { ItemManagementService } from "#services/item_management_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { createItemValidator, updateItemValidator } from "#validators/items";
 
 export default class ItemsController {

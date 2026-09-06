@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { OrderActive } from "#services/legacy/collections/order/helpers/order-active/order-active";
+import { OrderActive } from "#services/orders/order_active";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Order } from "#shared/order/order";

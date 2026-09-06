@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import type { Delivery } from "#shared/delivery/delivery";

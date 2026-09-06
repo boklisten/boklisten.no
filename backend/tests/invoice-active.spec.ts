@@ -1,6 +1,6 @@
 import { test } from "@japa/runner";
 
-import { InvoiceActive } from "#services/legacy/collections/invoice/helpers/invoice-active";
+import { InvoiceActive } from "#services/invoices/invoice_active";
 import type { Invoice } from "#shared/invoice";
 
 test.group("InvoiceActive", async () => {

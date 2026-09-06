@@ -10,7 +10,7 @@ import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import { USER_PERMISSION } from "#shared/user-permission";
 import { cancelOrderItemValidator } from "#validators/cancel_order_item_validator";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 
 function findOpenOrderItem(order: Order, itemId: string) {
   return order.orderItems.find(

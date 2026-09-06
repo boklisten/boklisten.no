@@ -1,12 +1,11 @@
 import type { JwtPayload } from "jsonwebtoken";
 import type { ParsedQs } from "qs";
 
-import CollectionEndpointDocumentAuth from "#services/legacy/collection-endpoint/collection-endpoint-document-auth";
 import { Hook } from "#services/legacy/hook";
-import type { SEDbQuery } from "#services/legacy/query/se.db-query";
+import type { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
-import { isBoolean, isNotNullish } from "#services/legacy/typescript-helpers";
-import type { BlStorageData, BlStorageHandler } from "#services/storage_service";
+import { isBoolean, isNotNullish } from "#services/typescript_helpers";
+import type { BlStorageData } from "#services/storage_service";
 import type { BlDocument } from "#shared/bl-document";
 import { BlError } from "#shared/bl-error";
 import { parsePermission } from "#shared/user-permission";
@@ -41,7 +40,7 @@ function onGetAll(collection: BlCollection, endpoint: BlEndpoint) {
         );
       }
 
-      return collection.storage.getByQuery(databaseQuery, endpoint.nestedDocuments);
+      return collection.storage.getByQuery(databaseQuery);
     }
     // if no query, give back all objects in collection
     let permission = undefined;
@@ -84,17 +83,6 @@ function onPost(collection: BlCollection) {
   };
 }
 
-function onPut(collection: BlCollection) {
-  return async function onRequest(blApiRequest: BlApiRequest) {
-    await collection.storage.put(
-      // @ts-expect-error fixme: auto ignored
-      blApiRequest.documentId,
-      blApiRequest.data,
-    );
-    return [];
-  };
-}
-
 function onPatch(collection: BlCollection) {
   return async function onRequest(blApiRequest: BlApiRequest) {
     const doc = await collection.storage
@@ -118,40 +106,19 @@ function onDelete(collection: BlCollection) {
   };
 }
 
-async function validateDocumentPermission(
-  blApiRequest: BlApiRequest,
-  storageHandler: BlStorageHandler,
-  method: string,
-) {
-  const document_ = await storageHandler.get(blApiRequest.documentId ?? "");
-  if (
-    document_ &&
-    blApiRequest.user?.permission === "customer" &&
-    document_.user?.id !== blApiRequest.user.id
-  ) {
-    throw new BlError(
-      `user "${blApiRequest.user?.id}" cannot ${method} document owned by ${document_.user?.id}`,
-    ).code(904);
-  }
-}
-
 async function handleEndpointRequest({
   endpoint,
-  collection,
   accessToken,
   requestData,
   documentId,
   query,
-  checkDocumentPermission,
   onRequest,
 }: {
   endpoint: BlEndpoint;
-  collection: BlCollection;
   accessToken: JwtPayload | undefined;
   requestData: unknown;
   documentId: string | undefined;
   query: ParsedQs;
-  checkDocumentPermission: boolean;
   onRequest: (blApiRequest: BlApiRequest) => Promise<BlStorageData>;
 }): Promise<BlDocument[]> {
   const hook = endpoint.hook ?? new Hook();
@@ -170,18 +137,7 @@ async function handleEndpointRequest({
       : undefined,
   };
 
-  if (checkDocumentPermission) {
-    await validateDocumentPermission(blApiRequest, collection.storage, endpoint.method);
-  }
-
   const responseData = await onRequest(blApiRequest);
-
-  await CollectionEndpointDocumentAuth.validate(
-    endpoint.restriction,
-    responseData,
-    blApiRequest,
-    collection.documentPermission,
-  );
 
   return hook.after(responseData, accessToken);
 }
@@ -190,7 +146,6 @@ const CollectionEndpointHandler = {
   onGetAll,
   onGetId,
   onPost,
-  onPut,
   onPatch,
   onDelete,
   handleEndpointRequest,

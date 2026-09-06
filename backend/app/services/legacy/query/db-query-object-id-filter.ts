@@ -1,10 +1,6 @@
 import { ObjectId } from "mongodb";
 import { Types } from "mongoose";
-
-export interface ObjectIdFilter {
-  fieldName: string;
-  value: Types.ObjectId | string | (Types.ObjectId | string)[];
-}
+import type { ObjectIdFilter } from "#models/mongoose/storage/db-query";
 
 export class DbQueryObjectIdFilter {
   getObjectIdFilters(query: any, validStringParams: string[]): ObjectIdFilter[] {

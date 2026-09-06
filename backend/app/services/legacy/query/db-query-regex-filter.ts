@@ -1,10 +1,4 @@
-export interface RegexFilter {
-  fieldName: string;
-  op: {
-    $regex: string;
-    $options: string;
-  };
-}
+import type { RegexFilter } from "#models/mongoose/storage/db-query";
 
 export class DbQueryRegexFilter {
   getRegexFilters(query: any, validRegexParams: string[]): RegexFilter[] {

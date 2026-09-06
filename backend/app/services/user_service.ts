@@ -1,4 +1,4 @@
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { PasswordService } from "#services/password_service";
 import { StorageService } from "#services/storage_service";
 import type { User } from "#types/user";

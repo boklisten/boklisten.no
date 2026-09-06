@@ -2,7 +2,7 @@ import type { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
 import Signature from "#models/signature";
-import { DateService } from "#services/legacy/date.service";
+import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
 import type { UserPermission } from "#shared/user-permission";
 

@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 import moment from "moment-timezone";
 
-import { DateService } from "#services/legacy/date.service";
+import { DateService } from "#services/date_service";
 
 test.group("DateService", async () => {
   test("should convert {reason} to Oslo local time")

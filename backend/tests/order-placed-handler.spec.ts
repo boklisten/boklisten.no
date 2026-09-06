@@ -2,11 +2,11 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { CustomerItemHandler } from "#services/legacy/collections/customer-item/helpers/customer-item-handler";
-import { OrderItemMovedFromOrderHandler } from "#services/legacy/collections/order/helpers/order-item-moved-from-order-handler/order-item-moved-from-order-handler";
-import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
-import { PaymentHandler } from "#services/legacy/collections/payment/helpers/payment-handler";
-import { OrderEmailHandler } from "#services/legacy/order_email_handler";
+import { CustomerItemHandler } from "#services/customer_items/customer_item_handler";
+import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
+import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
+import { PaymentHandler } from "#services/orders/payment_handler";
+import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { StorageService } from "#services/storage_service";
 import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";

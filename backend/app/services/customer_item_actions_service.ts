@@ -1,6 +1,6 @@
 import { DateTime } from "luxon";
 
-import { DateService } from "#services/legacy/date.service";
+import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
 import type {

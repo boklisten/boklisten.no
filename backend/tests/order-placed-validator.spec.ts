@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { OrderPlacedValidator } from "#services/legacy/collections/order/helpers/order-validator/order-placed-validator/order-placed-validator";
+import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Delivery } from "#shared/delivery/delivery";

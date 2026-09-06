@@ -5,7 +5,7 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import Signature from "#models/signature";
-import { findSignatureException } from "#services/legacy/signature.helper";
+import { findSignatureException } from "#services/signature_helper";
 import { StorageService } from "#services/storage_service";
 import type { Order } from "#shared/order/order";
 import type { UserDetail } from "#shared/user-detail";

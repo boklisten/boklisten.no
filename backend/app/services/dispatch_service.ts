@@ -5,9 +5,9 @@ import moment from "moment-timezone";
 import twilio from "twilio";
 
 import type Message from "#models/message";
-import { OrderEmailHandler } from "#services/legacy/order_email_handler";
+import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { isUnderage } from "#models/signature";
-import { userHasValidSignature } from "#services/legacy/signature.helper";
+import { userHasValidSignature } from "#services/signature_helper";
 import type { MessageLogContext } from "#services/message_log_service";
 import { MessageLogService } from "#services/message_log_service";
 import { PermissionService } from "#services/permission_service";

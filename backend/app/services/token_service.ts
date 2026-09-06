@@ -1,7 +1,7 @@
 import type { JwtPayload } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 
-import { APP_CONFIG } from "#services/legacy/application-config";
+import { APP_CONFIG } from "#services/application_config";
 import { StorageService } from "#services/storage_service";
 import env from "#start/env";
 import type { User } from "#types/user";

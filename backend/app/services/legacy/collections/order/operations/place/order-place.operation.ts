@@ -1,11 +1,11 @@
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
-import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
-import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
-import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
+import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
+import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
+import { OrderValidator } from "#services/orders/validation/order_validator";
 import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
-import { isNotNullish } from "#services/legacy/typescript-helpers";
+import { isNotNullish } from "#services/typescript_helpers";
 import { MatchRepository } from "#services/matches/match_repository";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";

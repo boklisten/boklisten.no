@@ -2,10 +2,10 @@ import type { HttpContext } from "@adonisjs/core/http";
 import { DateTime } from "luxon";
 
 import BlidService from "#services/blid_service";
-import { CustomerItemActive } from "#services/legacy/collections/customer-item/helpers/customer-item-active";
-import { CustomerItemActiveBlid } from "#services/legacy/collections/customer-item/helpers/customer-item-active-blid";
+import { CustomerItemActive } from "#services/customer_items/customer_item_active";
+import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
 import { OrderPlaceOperation } from "#services/legacy/collections/order/operations/place/order-place.operation";
-import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { PeerObligations } from "#services/matches/peer_obligations";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
@@ -22,7 +22,6 @@ import type { OrderItem } from "#shared/order/order-item/order-item";
 import { bulkCollectionCollectValidator } from "#validators/bulk_collection_validator";
 
 export default class BulkCollectionController {
-  private readonly queryBuilder = new SEDbQueryBuilder();
   private readonly customerItemActive = new CustomerItemActive();
 
   /**
@@ -185,9 +184,8 @@ export default class BulkCollectionController {
 
   /** The customer's still-active books (after this collection), used for "Gjenværende bøker". */
   private async getRemainingBooks(customerId: string) {
-    const databaseQuery = this.queryBuilder.getDbQuery({ customer: customerId }, [
-      { fieldName: "customer", type: "object-id" },
-    ]);
+    const databaseQuery = new SEDbQuery();
+    databaseQuery.objectIdFilters = [{ fieldName: "customer", value: customerId }];
     const customerItems = await StorageService.CustomerItems.getByQuery(databaseQuery).catch(
       () => [] as CustomerItem[],
     );

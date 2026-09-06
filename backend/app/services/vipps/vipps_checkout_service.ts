@@ -2,10 +2,10 @@ import logger from "@adonisjs/core/services/logger";
 import * as Sentry from "@sentry/node";
 import moment from "moment-timezone";
 
-import { APP_CONFIG } from "#services/legacy/application-config";
+import { APP_CONFIG } from "#services/application_config";
 import { DeliveryService } from "#services/delivery_service";
-import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
-import { DateService } from "#services/legacy/date.service";
+import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
+import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";

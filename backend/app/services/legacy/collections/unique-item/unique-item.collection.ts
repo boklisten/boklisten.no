@@ -4,9 +4,6 @@ import type { BlCollection } from "#types/bl-collection";
 
 export const UniqueItemCollection: BlCollection = {
   storage: StorageService.UniqueItems,
-  documentPermission: {
-    viewableForPermission: "employee",
-  },
   endpoints: [
     {
       method: "post",
@@ -16,18 +13,14 @@ export const UniqueItemCollection: BlCollection = {
     },
     {
       method: "getId",
-      restriction: {
-        permission: "employee",
-      },
+      operationsOnly: true,
       operations: [
         {
           name: "active",
           operation: new UniqueItemActiveOperation(),
-          /*
           restriction: {
-            permissions: [""employee", "manager", "admin"]
-          }
-          */
+            permission: "employee",
+          },
         },
       ],
     },
@@ -36,10 +29,7 @@ export const UniqueItemCollection: BlCollection = {
       restriction: {
         permission: "employee",
       },
-      validQueryParams: [
-        { fieldName: "blid", type: "string" },
-        { fieldName: "item", type: "object-id" },
-      ],
+      validQueryParams: [{ fieldName: "blid", type: "string" }],
     },
   ],
 };

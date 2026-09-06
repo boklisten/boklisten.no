@@ -1,4 +1,4 @@
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import type { Item } from "#shared/item";
 import type { UniqueItem } from "#shared/unique-item";

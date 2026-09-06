@@ -2,11 +2,11 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { OrderFieldValidator } from "#services/legacy/collections/order/helpers/order-validator/order-field-validator/order-field-validator";
-import { OrderItemValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-validator";
-import { OrderPlacedValidator } from "#services/legacy/collections/order/helpers/order-validator/order-placed-validator/order-placed-validator";
-import { OrderUserDetailValidator } from "#services/legacy/collections/order/helpers/order-validator/order-user-detail-validator/order-user-detail-validator";
-import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
+import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
+import { OrderItemValidator } from "#services/orders/validation/order_item_validator";
+import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
+import { OrderUserDetailValidator } from "#services/orders/validation/order_user_detail_validator";
+import { OrderValidator } from "#services/orders/validation/order_validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";

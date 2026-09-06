@@ -1,7 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import UnauthorizedException from "#exceptions/unauthorized_exception";
-import { OrderPlacedHandler } from "#services/legacy/collections/order/helpers/order-placed-handler/order-placed-handler";
+import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderService } from "#services/order_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";

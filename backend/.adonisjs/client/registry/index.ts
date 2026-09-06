@@ -900,47 +900,11 @@ const routes = {
     tokens: [{"old":"/branches","type":0,"val":"branches","end":""}],
     types: placeholder as Registry['collection.branches.getAll']['types'],
   },
-  'collection.branches.post': {
-    methods: ["POST"],
-    pattern: '/branches',
-    tokens: [{"old":"/branches","type":0,"val":"branches","end":""}],
-    types: placeholder as Registry['collection.branches.post']['types'],
-  },
-  'collection.branches.patch': {
-    methods: ["PATCH"],
-    pattern: '/branches/:id',
-    tokens: [{"old":"/branches/:id","type":0,"val":"branches","end":""},{"old":"/branches/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.branches.patch']['types'],
-  },
-  'collection.branchitems.getId': {
-    methods: ["GET","HEAD"],
-    pattern: '/branchitems/:id',
-    tokens: [{"old":"/branchitems/:id","type":0,"val":"branchitems","end":""},{"old":"/branchitems/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.branchitems.getId']['types'],
-  },
-  'collection.branchitems.post': {
-    methods: ["POST"],
-    pattern: '/branchitems',
-    tokens: [{"old":"/branchitems","type":0,"val":"branchitems","end":""}],
-    types: placeholder as Registry['collection.branchitems.post']['types'],
-  },
-  'collection.branchitems.patch': {
-    methods: ["PATCH"],
-    pattern: '/branchitems/:id',
-    tokens: [{"old":"/branchitems/:id","type":0,"val":"branchitems","end":""},{"old":"/branchitems/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.branchitems.patch']['types'],
-  },
   'collection.branchitems.getAll': {
     methods: ["GET","HEAD"],
     pattern: '/branchitems',
     tokens: [{"old":"/branchitems","type":0,"val":"branchitems","end":""}],
     types: placeholder as Registry['collection.branchitems.getAll']['types'],
-  },
-  'collection.branchitems.delete': {
-    methods: ["DELETE"],
-    pattern: '/branchitems/:id',
-    tokens: [{"old":"/branchitems/:id","type":0,"val":"branchitems","end":""},{"old":"/branchitems/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.branchitems.delete']['types'],
   },
   'collection.customeritems.getId': {
     methods: ["GET","HEAD"],
@@ -953,12 +917,6 @@ const routes = {
     pattern: '/customeritems/:id',
     tokens: [{"old":"/customeritems/:id","type":0,"val":"customeritems","end":""},{"old":"/customeritems/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['collection.customeritems.patch']['types'],
-  },
-  'collection.customeritems.post': {
-    methods: ["POST"],
-    pattern: '/customeritems',
-    tokens: [{"old":"/customeritems","type":0,"val":"customeritems","end":""}],
-    types: placeholder as Registry['collection.customeritems.post']['types'],
   },
   'collection.customeritems.operation.generate-report.post': {
     methods: ["POST"],
@@ -978,29 +936,11 @@ const routes = {
     tokens: [{"old":"/deliveries","type":0,"val":"deliveries","end":""}],
     types: placeholder as Registry['collection.deliveries.post']['types'],
   },
-  'collection.deliveries.getAll': {
-    methods: ["GET","HEAD"],
-    pattern: '/deliveries',
-    tokens: [{"old":"/deliveries","type":0,"val":"deliveries","end":""}],
-    types: placeholder as Registry['collection.deliveries.getAll']['types'],
-  },
   'collection.deliveries.getId': {
     methods: ["GET","HEAD"],
     pattern: '/deliveries/:id',
     tokens: [{"old":"/deliveries/:id","type":0,"val":"deliveries","end":""},{"old":"/deliveries/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['collection.deliveries.getId']['types'],
-  },
-  'collection.deliveries.patch': {
-    methods: ["PATCH"],
-    pattern: '/deliveries/:id',
-    tokens: [{"old":"/deliveries/:id","type":0,"val":"deliveries","end":""},{"old":"/deliveries/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.deliveries.patch']['types'],
-  },
-  'collection.deliveries.delete': {
-    methods: ["DELETE"],
-    pattern: '/deliveries/:id',
-    tokens: [{"old":"/deliveries/:id","type":0,"val":"deliveries","end":""},{"old":"/deliveries/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.deliveries.delete']['types'],
   },
   'collection.items.getId': {
     methods: ["GET","HEAD"],
@@ -1013,18 +953,6 @@ const routes = {
     pattern: '/items',
     tokens: [{"old":"/items","type":0,"val":"items","end":""}],
     types: placeholder as Registry['collection.items.getAll']['types'],
-  },
-  'collection.items.post': {
-    methods: ["POST"],
-    pattern: '/items',
-    tokens: [{"old":"/items","type":0,"val":"items","end":""}],
-    types: placeholder as Registry['collection.items.post']['types'],
-  },
-  'collection.items.patch': {
-    methods: ["PATCH"],
-    pattern: '/items/:id',
-    tokens: [{"old":"/items/:id","type":0,"val":"items","end":""},{"old":"/items/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.items.patch']['types'],
   },
   'collection.orders.post': {
     methods: ["POST"],
@@ -1062,12 +990,6 @@ const routes = {
     tokens: [{"old":"/orders/:id","type":0,"val":"orders","end":""},{"old":"/orders/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['collection.orders.getId']['types'],
   },
-  'collection.orders.operation.get_customer_orders.getId': {
-    methods: ["GET","HEAD"],
-    pattern: '/orders/:id/get_customer_orders',
-    tokens: [{"old":"/orders/:id/get_customer_orders","type":0,"val":"orders","end":""},{"old":"/orders/:id/get_customer_orders","type":1,"val":"id","end":""},{"old":"/orders/:id/get_customer_orders","type":0,"val":"get_customer_orders","end":""}],
-    types: placeholder as Registry['collection.orders.operation.get_customer_orders.getId']['types'],
-  },
   'collection.orders.getAll': {
     methods: ["GET","HEAD"],
     pattern: '/orders',
@@ -1103,12 +1025,6 @@ const routes = {
     pattern: '/userdetails/:id',
     tokens: [{"old":"/userdetails/:id","type":0,"val":"userdetails","end":""},{"old":"/userdetails/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['collection.userdetails.getId']['types'],
-  },
-  'collection.userdetails.operation.valid.getId': {
-    methods: ["GET","HEAD"],
-    pattern: '/userdetails/:id/valid',
-    tokens: [{"old":"/userdetails/:id/valid","type":0,"val":"userdetails","end":""},{"old":"/userdetails/:id/valid","type":1,"val":"id","end":""},{"old":"/userdetails/:id/valid","type":0,"val":"valid","end":""}],
-    types: placeholder as Registry['collection.userdetails.operation.valid.getId']['types'],
   },
   'collection.userdetails.operation.permission.getId': {
     methods: ["GET","HEAD"],
@@ -1158,41 +1074,11 @@ const routes = {
     tokens: [{"old":"/companies","type":0,"val":"companies","end":""}],
     types: placeholder as Registry['collection.companies.getAll']['types'],
   },
-  'collection.companies.getId': {
-    methods: ["GET","HEAD"],
-    pattern: '/companies/:id',
-    tokens: [{"old":"/companies/:id","type":0,"val":"companies","end":""},{"old":"/companies/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.companies.getId']['types'],
-  },
-  'collection.companies.post': {
-    methods: ["POST"],
-    pattern: '/companies',
-    tokens: [{"old":"/companies","type":0,"val":"companies","end":""}],
-    types: placeholder as Registry['collection.companies.post']['types'],
-  },
-  'collection.companies.patch': {
-    methods: ["PATCH"],
-    pattern: '/companies/:id',
-    tokens: [{"old":"/companies/:id","type":0,"val":"companies","end":""},{"old":"/companies/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.companies.patch']['types'],
-  },
-  'collection.companies.delete': {
-    methods: ["DELETE"],
-    pattern: '/companies/:id',
-    tokens: [{"old":"/companies/:id","type":0,"val":"companies","end":""},{"old":"/companies/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.companies.delete']['types'],
-  },
   'collection.uniqueitems.post': {
     methods: ["POST"],
     pattern: '/uniqueitems',
     tokens: [{"old":"/uniqueitems","type":0,"val":"uniqueitems","end":""}],
     types: placeholder as Registry['collection.uniqueitems.post']['types'],
-  },
-  'collection.uniqueitems.getId': {
-    methods: ["GET","HEAD"],
-    pattern: '/uniqueitems/:id',
-    tokens: [{"old":"/uniqueitems/:id","type":0,"val":"uniqueitems","end":""},{"old":"/uniqueitems/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['collection.uniqueitems.getId']['types'],
   },
   'collection.uniqueitems.operation.active.getId': {
     methods: ["GET","HEAD"],

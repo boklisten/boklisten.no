@@ -6,51 +6,21 @@ export const ItemCollection: BlCollection = {
   endpoints: [
     {
       method: "getId",
+      restriction: {
+        permission: "employee",
+      },
     },
     {
       method: "getAll",
+      restriction: {
+        permission: "employee",
+      },
       validQueryParams: [
-        {
-          fieldName: "title",
-          type: "string",
-        },
-        {
-          fieldName: "type",
-          type: "string",
-        },
-        {
-          fieldName: "info.isbn",
-          type: "number",
-        },
-        {
-          fieldName: "buyback",
-          type: "boolean",
-        },
-        {
-          fieldName: "creationTime",
-          type: "date",
-        },
-        {
-          fieldName: "price",
-          type: "number",
-        },
-        {
-          fieldName: "active",
-          type: "boolean",
-        },
+        { fieldName: "title", type: "string" },
+        { fieldName: "type", type: "string" },
+        { fieldName: "info.isbn", type: "number" },
+        { fieldName: "active", type: "boolean" },
       ],
-    },
-    {
-      method: "post",
-      restriction: {
-        permission: "admin",
-      },
-    },
-    {
-      method: "patch",
-      restriction: {
-        permission: "admin",
-      },
     },
   ],
 };

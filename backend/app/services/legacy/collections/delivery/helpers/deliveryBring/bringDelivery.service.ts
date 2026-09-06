@@ -1,9 +1,9 @@
 import moment from "moment";
 import { stringify } from "qs";
 
-import { APP_CONFIG } from "#services/legacy/application-config";
+import { APP_CONFIG } from "#services/application_config";
 import type { BringDelivery } from "#services/legacy/collections/delivery/helpers/deliveryBring/bringDelivery";
-import { isNullish } from "#services/legacy/typescript-helpers";
+import { isNullish } from "#services/typescript_helpers";
 import { BlError } from "#shared/bl-error";
 import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
 import type { Item } from "#shared/item";

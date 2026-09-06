@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { OrderItemRentPeriodValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-rent-validator/order-item-rent-period-validator/order-item-rent-period-validator";
+import { OrderItemRentPeriodValidator } from "#services/orders/validation/order_item_rent_period_validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { BranchPaymentInfo } from "#shared/branch-payment-info";

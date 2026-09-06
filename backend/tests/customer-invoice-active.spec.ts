@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { CustomerInvoiceActive } from "#services/legacy/collections/invoice/helpers/customer-invoice-active";
+import { CustomerInvoiceActive } from "#services/invoices/customer_invoice_active";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Invoice } from "#shared/invoice";

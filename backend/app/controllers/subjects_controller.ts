@@ -1,7 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import { CartService } from "#services/cart_service";
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import type { CartItem } from "#shared/cart_item";
 

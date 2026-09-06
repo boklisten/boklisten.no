@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { CustomerHaveActiveCustomerItems } from "#services/legacy/collections/customer-item/helpers/customer-have-active-customer-items";
+import { CustomerHaveActiveCustomerItems } from "#services/customer_items/customer_have_active_customer_items";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { CustomerItem } from "#shared/customer-item/customer-item";

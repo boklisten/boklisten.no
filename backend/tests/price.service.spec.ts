@@ -1,6 +1,6 @@
 import { test } from "@japa/runner";
 
-import { PriceService } from "#services/legacy/price.service";
+import { PriceService } from "#services/price_service";
 
 test.group("PriceService", async () => {
   test("should return 30 when given 33", async ({ assert }) => {

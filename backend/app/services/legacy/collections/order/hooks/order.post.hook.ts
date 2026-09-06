@@ -1,6 +1,6 @@
-import { OrderValidator } from "#services/legacy/collections/order/helpers/order-validator/order-validator";
+import { OrderValidator } from "#services/orders/validation/order_validator";
 import { OrderHookBefore } from "#services/legacy/collections/order/hooks/order-hook-before";
-import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpers/user-detail.helper";
+import { UserDetailHelper } from "#services/user_detail_helper";
 import { Hook } from "#services/legacy/hook";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";

@@ -1,25 +1,9 @@
 import { test } from "@japa/runner";
-import { createSandbox } from "sinon";
 
 import { UserDetailUpdateHook } from "#services/legacy/collections/user-detail/hooks/user-detail-update.hook";
-import { StorageService } from "#services/storage_service";
-import type { AccessToken } from "#shared/access-token";
-import { mock } from "#tests/test-doubles";
 
-const customerAccessToken = mock<AccessToken>({ permission: "customer" });
-const adminAccessToken = mock<AccessToken>({ permission: "admin" });
-
-test.group("UserDetailUpdateHook", async (group) => {
+test.group("UserDetailUpdateHook", async () => {
   const userDetailUpdateHook = new UserDetailUpdateHook();
-
-  let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    sandbox.stub(StorageService.UserDetails, "getByQuery").callsFake(() => Promise.resolve([]));
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
-  });
 
   test("should do proper capitalization with latin letters", async ({ assert }) => {
     const body = {
@@ -32,7 +16,7 @@ test.group("UserDetailUpdateHook", async (group) => {
       address: "Portalgata 15c",
       postCity: "Bartebyen",
     };
-    const result = await userDetailUpdateHook.before(body, customerAccessToken);
+    const result = await userDetailUpdateHook.before(body);
     assert.deepEqual(result, expected);
   });
 
@@ -47,7 +31,7 @@ test.group("UserDetailUpdateHook", async (group) => {
       address: "Øygatæn",
       postCity: "Æresgøta",
     };
-    const result = await userDetailUpdateHook.before(body, customerAccessToken);
+    const result = await userDetailUpdateHook.before(body);
     assert.deepEqual(result, expected);
   });
 
@@ -62,7 +46,7 @@ test.group("UserDetailUpdateHook", async (group) => {
       address: "Łfełłlo 12ł",
       postCity: "Æresgøta",
     };
-    const result = await userDetailUpdateHook.before(body, customerAccessToken);
+    const result = await userDetailUpdateHook.before(body);
     assert.deepEqual(result, expected);
   });
 
@@ -77,29 +61,22 @@ test.group("UserDetailUpdateHook", async (group) => {
       address: "Johnson St 2",
       postCity: "Æresgøta",
     };
-    const result = await userDetailUpdateHook.before(body, customerAccessToken);
+    const result = await userDetailUpdateHook.before(body);
     assert.deepEqual(result, expected);
   });
 
-  test("should disallow email-confirmed status change by customer", async ({ assert }) => {
-    const body = {
-      emailConfirmed: true,
-    };
-    await assert.rejects(() => userDetailUpdateHook.before(body, customerAccessToken));
-  });
-
-  test("should allow email-confirmed status change by admin", async ({ assert }) => {
+  test("should allow email-confirmed status change", async ({ assert }) => {
     const body = {
       emailConfirmed: true,
     };
     const expected = {
       emailConfirmed: true,
     };
-    const result = await userDetailUpdateHook.before(body, adminAccessToken);
+    const result = await userDetailUpdateHook.before(body);
     assert.deepEqual(result, expected);
   });
 
-  test("should allow patch by customer", async ({ assert }) => {
+  test("should allow patch", async ({ assert }) => {
     const body = {
       name: "1",
       postCode: "3",
@@ -109,13 +86,13 @@ test.group("UserDetailUpdateHook", async (group) => {
       dob: "2023-02-02",
     };
     const expected = { ...body };
-    const result = await userDetailUpdateHook.before(body, customerAccessToken);
+    const result = await userDetailUpdateHook.before(body);
     assert.deepEqual(result, expected);
   });
 
   test("should error on wrongly-typed {$self}")
     .with(["name", "address", "phone", "postCity", "postCode", "dob", "emailConfirmed"])
     .run(({ assert }, property) =>
-      assert.rejects(() => userDetailUpdateHook.before({ [property]: 2 }, adminAccessToken)),
+      assert.rejects(() => userDetailUpdateHook.before({ [property]: 2 })),
     );
 });

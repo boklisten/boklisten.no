@@ -1,6 +1,6 @@
 import { test } from "@japa/runner";
 
-import { OrderItemPartlyPaymentValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-partly-payment-validator/order-item-partly-payment-validator";
+import { OrderItemPartlyPaymentValidator } from "#services/orders/validation/order_item_partly_payment_validator";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
 import type { OrderItem } from "#shared/order/order-item/order-item";

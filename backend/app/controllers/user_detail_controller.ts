@@ -1,7 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
-import { UserDetailHelper } from "#services/legacy/collections/user-detail/helpers/user-detail.helper";
-import { reconcileSignatureTask } from "#services/legacy/signature.helper";
+import { UserDetailHelper } from "#services/user_detail_helper";
+import { reconcileSignatureTask } from "#services/signature_helper";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { UserDetailService } from "#services/user_detail_service";

@@ -12,14 +12,12 @@ import type {
 import { Types } from "mongoose";
 
 import { MongooseModelCreator } from "#models/mongoose/storage/mongoose-schema-creator";
-import type { ExpandFilter } from "#services/legacy/query/db-query-expand-filter";
-import type { SEDbQuery } from "#services/legacy/query/se.db-query";
+import type { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { PermissionService } from "#services/permission_service";
 import type { BlSchema } from "#services/storage_service";
 import type { BlDocument } from "#shared/bl-document";
 import { BlError } from "#shared/bl-error";
 import type { UserPermission } from "#shared/user-permission";
-import type { NestedDocument } from "#types/nested-document";
 
 export class MongodbHandler<T extends BlDocument> {
   private readonly mongooseModel: Model<T>;
@@ -58,21 +56,14 @@ export class MongodbHandler<T extends BlDocument> {
     }
   }
 
-  public async getByQuery(
-    databaseQuery: SEDbQuery,
-    allowedNestedDocuments?: NestedDocument[],
-  ): Promise<T[]> {
+  public async getByQuery(databaseQuery: SEDbQuery): Promise<T[]> {
     logger.trace(
-      `${this.path}.find(${JSON.stringify(databaseQuery.getFilter())}, ${JSON.stringify(
-        databaseQuery.getOgFilter(),
-      )}).limit(${databaseQuery.getLimitFilter()}).skip(${databaseQuery.getSkipFilter()}).sort(${JSON.stringify(
+      `${this.path}.find(${JSON.stringify(databaseQuery.getFilter())}).sort(${JSON.stringify(
         databaseQuery.getSortFilter(),
       )})`,
     );
     const docs = (await this.mongooseModel
-      .find(databaseQuery.getFilter(), databaseQuery.getOgFilter())
-      .limit(databaseQuery.getLimitFilter())
-      .skip(databaseQuery.getSkipFilter())
+      .find(databaseQuery.getFilter())
       // oxlint-disable-next-line unicorn/no-array-sort -- Mongoose Query#sort, not Array#sort
       .sort(databaseQuery.getSortFilter())
       .lean({ transform: MongooseModelCreator.transformObject })
@@ -85,18 +76,12 @@ export class MongodbHandler<T extends BlDocument> {
       throw new BlError("not found").code(702);
     }
 
-    const expandFilters = databaseQuery.getExpandFilter();
-    return allowedNestedDocuments && allowedNestedDocuments.length > 0
-      ? this.retrieveNestedDocuments(docs, allowedNestedDocuments, expandFilters)
-      : docs;
+    return docs;
   }
 
-  public async getByQueryOrNull(
-    databaseQuery: SEDbQuery,
-    allowedNestedDocuments?: NestedDocument[],
-  ) {
+  public async getByQueryOrNull(databaseQuery: SEDbQuery) {
     try {
-      return await this.getByQuery(databaseQuery, allowedNestedDocuments);
+      return await this.getByQuery(databaseQuery);
     } catch {
       return null;
     }
@@ -170,7 +155,7 @@ export class MongodbHandler<T extends BlDocument> {
     } catch (error) {
       logger.error(error);
       throw this.handleError(
-        new BlError("error when trying to add document").data(document_),
+        new BlError("error when trying to add document").store("document", document_),
         error,
       );
     }
@@ -208,22 +193,6 @@ export class MongodbHandler<T extends BlDocument> {
     return this.mongooseModel.updateMany(filter as QueryFilter<T>, update, options);
   }
 
-  public async put(id: string, data: T): Promise<void> {
-    await this.mongooseModel
-      .replaceOne({ _id: id }, data, {
-        upsert: true,
-      })
-      .catch((error) => {
-        throw this.handleError(
-          new BlError("failed to PUT document").store("data", {
-            data,
-            _id: id,
-          }),
-          error,
-        );
-      });
-  }
-
   public async remove(id: string) {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the mongo/typed boundary: lean() documents have the shape the schema for T defines
     const document_ = (await this.mongooseModel
@@ -240,14 +209,6 @@ export class MongodbHandler<T extends BlDocument> {
     return document_;
   }
 
-  public async exists(id: string) {
-    try {
-      await this.get(id);
-      return true;
-    } catch {
-      throw new BlError(`document with id ${id} does not exist`).code(702);
-    }
-  }
   public async search(searchStr: string, excludedPaths: string[] = []): Promise<T[]> {
     const normalized = searchStr.trim();
 
@@ -278,72 +239,6 @@ export class MongodbHandler<T extends BlDocument> {
       .lean({ transform: MongooseModelCreator.transformObject })
       .exec();
   }
-  /**
-   * Tries to fetch all nested values on the specified documents.
-   * @param {BlDocument[]} docs the documents to search through
-   * @param allowedNestedDocuments
-   * @param {ExpandFilter} expandFilters the nested documents to fetch
-   */
-
-  private async retrieveNestedDocuments(
-    docs: T[],
-    allowedNestedDocuments: NestedDocument[],
-    expandFilters: ExpandFilter[],
-  ) {
-    if (!expandFilters || expandFilters.length <= 0) {
-      return docs;
-    }
-    const expandedNestedDocuments = allowedNestedDocuments.filter((nestedDocument) =>
-      expandFilters.some((expandFilter) => expandFilter.fieldName === nestedDocument.field),
-    );
-
-    try {
-      return await Promise.all(
-        docs.map((document_) => this.getNestedDocuments(document_, expandedNestedDocuments)),
-      );
-    } catch (error) {
-      throw (
-        new BlError("could not retrieve nested documents")
-          .code(702)
-
-          // @ts-expect-error fixme: auto ignored
-          .add(error)
-      );
-    }
-  }
-
-  private async getNestedDocuments(document_: T, nestedDocuments: NestedDocument[]) {
-    const nestedDocumentsPromArray = nestedDocuments.flatMap((nestedDocument) =>
-      // @ts-expect-error fixme: auto ignored
-      document_ && document_[nestedDocument.field]
-        ? [
-            this.getNestedDocument(
-              // @ts-expect-error fixme: auto ignored
-              document_[nestedDocument.field],
-              nestedDocument,
-            ),
-          ]
-        : [],
-    );
-
-    try {
-      const nestedDocs = await Promise.all(nestedDocumentsPromArray);
-
-      for (const [index, nestedDocument] of nestedDocuments.entries()) {
-        // @ts-expect-error fixme: auto ignored
-        document_[nestedDocument.field] = nestedDocs[index];
-      }
-
-      return document_;
-    } catch {
-      return document_;
-    }
-  }
-
-  private getNestedDocument(id: string, nestedDocument: NestedDocument) {
-    return nestedDocument.storage.get(id);
-  }
-
   private handleError(blError: BlError, error: unknown): BlError {
     if (error && error instanceof Error) {
       if (error.name === "CastError") {

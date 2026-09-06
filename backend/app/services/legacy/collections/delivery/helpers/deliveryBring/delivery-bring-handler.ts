@@ -1,4 +1,4 @@
-import { isNullish } from "#services/legacy/typescript-helpers";
+import { isNullish } from "#services/typescript_helpers";
 import { BlError } from "#shared/bl-error";
 import type { Delivery } from "#shared/delivery/delivery";
 

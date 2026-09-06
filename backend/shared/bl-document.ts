@@ -9,7 +9,5 @@ export interface BlDocument {
     id: string;
     permission?: UserPermission;
   };
-  viewableFor?: string[];
-  viewableForPermission?: UserPermission;
   editableFor?: string[];
 }

@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { OrderToCustomerItemGenerator } from "#services/legacy/collections/customer-item/helpers/order-to-customer-item-generator";
+import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Order } from "#shared/order/order";
@@ -105,7 +105,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         amountLeftToPay: orderItem.info.amountLeftToPay,
         totalAmount: orderItem.amount,
         blid: orderItem.blid,
-        viewableFor: [userDetail.blid],
         orders: [order.id],
         customerInfo: {
           name: userDetail.name,
@@ -206,7 +205,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem.info.amountLeftToPay,
         totalAmount: orderItem.amount,
-        viewableFor: [userDetail.blid],
         orders: [order.id],
         customerInfo: {
           name: userDetail.name,
@@ -227,7 +225,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
 
         // @ts-expect-error fixme: auto ignored
         deadline: orderItem2.info.to,
-        viewableFor: [userDetail.blid],
         handout: true,
         handoutInfo: {
           handoutBy: "branch",
@@ -366,7 +363,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         // @ts-expect-error fixme: auto ignored
         deadline: orderItem.info.to,
         handout: true,
-        viewableFor: [userDetail.blid],
         blid: orderItem.blid,
         handoutInfo: {
           handoutBy: "branch",
@@ -458,7 +454,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
 
         // @ts-expect-error fixme: auto ignored
         deadline: orderItem.info.to,
-        viewableFor: [userDetail.blid],
         blid: orderItem.blid,
         handout: true,
         handoutInfo: {
@@ -491,7 +486,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
 
         // @ts-expect-error fixme: auto ignored
         deadline: orderItem2.info.to,
-        viewableFor: [userDetail.blid],
         blid: orderItem2.blid,
         handout: true,
         handoutInfo: {
@@ -603,7 +597,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
 
         // @ts-expect-error fixme: auto ignored
         deadline: orderItem2.info.to,
-        viewableFor: [userDetail.blid],
         blid: orderItem2.blid,
         handout: true,
         handoutInfo: {
@@ -636,7 +629,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
 
         // @ts-expect-error fixme: auto ignored
         deadline: orderItem3.info.to,
-        viewableFor: [userDetail.blid],
         blid: orderItem3.blid,
         handout: true,
         handoutInfo: {

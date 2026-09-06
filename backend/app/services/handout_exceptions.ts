@@ -1,5 +1,5 @@
 import { ExceptionReportService } from "#services/exception_report_service";
-import type { SignatureExceptionReason } from "#services/legacy/signature.helper";
+import type { SignatureExceptionReason } from "#services/signature_helper";
 
 /**
  * The exceptions an employee can commit at the stand while handing out books. Each is reported to

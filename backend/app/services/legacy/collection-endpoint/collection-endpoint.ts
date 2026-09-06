@@ -13,9 +13,7 @@ import type { BlCollection, BlEndpoint } from "#types/bl-collection";
 
 function createRequestHandler(
   endpoint: BlEndpoint,
-  collection: BlCollection,
   onRequest: (blApiRequest: BlApiRequest) => Promise<BlStorageData>,
-  checkDocumentPermission: boolean,
 ) {
   return async function handleRequest(ctx: HttpContext) {
     try {
@@ -23,12 +21,10 @@ function createRequestHandler(
 
       const responseData = await CollectionEndpointHandler.handleEndpointRequest({
         endpoint,
-        collection,
         accessToken,
         requestData: ctx.request.body(),
         documentId: ctx.request.params()["id"],
         query: ctx.request.qs(),
-        checkDocumentPermission,
         onRequest,
       });
 
@@ -42,7 +38,6 @@ function createRequestHandler(
 function create(endpoint: BlEndpoint, collection: BlCollection) {
   const collectionUri = `/${collection.storage.path}`;
   let onRequest: (blApiRequest: BlApiRequest) => Promise<BlStorageData>;
-  let checkDocumentPermission = false;
   let uri = collectionUri;
   let createRoute: (path: string, handler: (ctx: HttpContext) => void) => void;
   const routeName = `collection.${collection.storage.path}.${endpoint.method}`;
@@ -69,29 +64,23 @@ function create(endpoint: BlEndpoint, collection: BlCollection) {
       uri += "/:id";
       createRoute = (path, handler) => router.patch(path, handler).as(routeName);
       onRequest = CollectionEndpointHandler.onPatch(collection);
-      checkDocumentPermission = true;
       break;
     }
     case "delete": {
       uri += "/:id";
       createRoute = (path, handler) => router.delete(path, handler).as(routeName);
       onRequest = CollectionEndpointHandler.onDelete(collection);
-      checkDocumentPermission = true;
-      break;
-    }
-    case "put": {
-      uri += "/:id";
-      createRoute = (path, handler) => router.put(path, handler).as(routeName);
-      onRequest = CollectionEndpointHandler.onPut(collection);
-      checkDocumentPermission = true;
       break;
     }
     default: {
-      throw new BlError(`the endpoint method "${endpoint.method}" is not supported`);
+      const unsupported: never = endpoint.method;
+      throw new BlError(`the endpoint method "${String(unsupported)}" is not supported`);
     }
   }
 
-  createRoute(uri, createRequestHandler(endpoint, collection, onRequest, checkDocumentPermission));
+  if (!endpoint.operationsOnly) {
+    createRoute(uri, createRequestHandler(endpoint, onRequest));
+  }
 
   if (endpoint.operations) {
     for (const operation of endpoint.operations) {

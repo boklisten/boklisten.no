@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { OrderEmailHandler } from "#services/legacy/order_email_handler";
+import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { OrderCancellationService } from "#services/order_cancellation_service";
 import { StorageService } from "#services/storage_service";
 

@@ -2,11 +2,11 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { OrderFieldValidator } from "#services/legacy/collections/order/helpers/order-validator/order-field-validator/order-field-validator";
-import { OrderItemBuyValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-buy-validator/order-item-buy-validator";
-import { OrderItemExtendValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-extend-validator/order-item-extend-validator";
-import { OrderItemRentValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-rent-validator/order-item-rent-validator";
-import { OrderItemValidator } from "#services/legacy/collections/order/helpers/order-validator/order-item-validator/order-item-validator";
+import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
+import { OrderItemBuyValidator } from "#services/orders/validation/order_item_buy_validator";
+import { OrderItemExtendValidator } from "#services/orders/validation/order_item_extend_validator";
+import { OrderItemRentValidator } from "#services/orders/validation/order_item_rent_validator";
+import { OrderItemValidator } from "#services/orders/validation/order_item_validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";

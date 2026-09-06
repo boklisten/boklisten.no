@@ -1,6 +1,6 @@
 import { test } from "@japa/runner";
 
-import { SEDbQuery } from "#services/legacy/query/se.db-query";
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 
 test.group("SEDbQuery", async () => {
   const dbQuery: SEDbQuery = new SEDbQuery();
@@ -31,22 +31,6 @@ test.group("SEDbQuery", async () => {
     };
 
     assert.deepEqual(dbQuery.getFilter(), result);
-  });
-
-  test("should return correct ogFilterObj based on ogFilter array", async ({ assert }) => {
-    const query: SEDbQuery = new SEDbQuery();
-
-    query.onlyGetFilters = [
-      { fieldName: "name", value: 1 },
-      { fieldName: "age", value: 1 },
-    ];
-
-    const result = {
-      name: 1,
-      age: 1,
-    };
-
-    assert.deepEqual(query.getOgFilter(), result);
   });
 
   test("should return correct sortFilter object based on sortFilter array", async ({ assert }) => {

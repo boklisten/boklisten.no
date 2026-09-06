@@ -1,13 +1,5 @@
 import moment from "moment";
-
-export interface DateFilter {
-  fieldName: string;
-  op: {
-    $lt?: Date;
-    $gt?: Date;
-    $eq?: Date;
-  };
-}
+import type { DateFilter } from "#models/mongoose/storage/db-query";
 
 export class DbQueryDateFilter {
   private readonly operationIdentifiers: {
