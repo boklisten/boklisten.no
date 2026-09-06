@@ -27,7 +27,6 @@ import { DeliveryBadge, PaymentStatusBadge } from "@/features/order-history/Orde
 import { capitalize, formatAmount, pluralBooks } from "@/features/order-history/orderHistoryGroups";
 import EntityLink from "@/shared/components/EntityLink";
 import OrderItemTypeIcon from "@/shared/components/OrderItemTypeIcon";
-import useAuth from "@/shared/hooks/useAuth";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
 /** Admin cards link to books and people and can move the order; customer cards only tell. */
@@ -372,7 +371,6 @@ function DetailsSection({
   order: OrderHistoryEntry;
   variant: OrderHistoryVariant;
 }) {
-  const { isAdmin } = useAuth();
   const placedBy = order.byCustomer ? (
     variant === "customer" ? (
       "Bestilt av deg"
@@ -391,8 +389,8 @@ function DetailsSection({
     <Stack gap={6}>
       <SectionLabel>Detaljer</SectionLabel>
       <Text size="sm">{placedBy}</Text>
-      {/* The branch is already in the card header; only the admin's control to move it is new. */}
-      {variant === "admin" && isAdmin && (
+      {/* The branch is already in the card header; only the control to move it is new. */}
+      {variant === "admin" && (
         <Group gap={6}>
           <OrderBranchChip
             orderId={order.id}

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import ChipButton from "@/shared/components/ChipButton";
+import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { toBranchTreeNodeData } from "@/shared/utils/branchTree";
 import { errorMessage } from "@/shared/utils/errorMessage";
@@ -36,6 +37,7 @@ function ChangeBranchModal({
   return (
     <Modal opened onClose={onClose} title="Endre filial">
       <Stack>
+        <MonitoringNotice>Administrator får beskjed hvis du endrer filialen.</MonitoringNotice>
         <TreeSelect
           label="Filial"
           description="Ordren regnes som lagt inn på denne filialen. Bøkene som ble delt ut beholder filialen sin."
@@ -71,8 +73,9 @@ function ChangeBranchModal({
 }
 
 /**
- * The order's branch as an editable chip, for admins. Changing it moves the order alone: the
- * customer items it created keep the branch they were handed out from.
+ * The order's branch as an editable chip. Changing it moves the order alone: the customer items
+ * it created keep the branch they were handed out from. Any employee may do it; the change is
+ * monitored, so the modal says so before the form.
  */
 export default function OrderBranchChip({
   orderId,

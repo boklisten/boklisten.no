@@ -13,6 +13,12 @@ export const blidActiveItemUpdateValidator = vine.create(
   }),
 );
 
+export const blidRelinkValidator = vine.create(
+  vine.object({
+    itemId: vine.string().regex(OBJECT_ID_PATTERN),
+  }),
+);
+
 export const blidSearchQueryValidator = vine.create(
   vine.object({
     q: vine.string().trim().regex(BLID_SEARCH_PATTERN),

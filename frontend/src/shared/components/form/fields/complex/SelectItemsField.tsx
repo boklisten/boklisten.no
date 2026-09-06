@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useFieldContext } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
+import { itemSelectFilter, toItemSelectData } from "@/shared/utils/itemSelectFilter";
 
 export default function SelectItemsField(props: MultiSelectProps) {
   const field = useFieldContext<{ id: string; title: string }[]>();
@@ -17,19 +18,8 @@ export default function SelectItemsField(props: MultiSelectProps) {
       searchable
       clearable
       description="Søk etter tittel eller ISBN"
-      data={items?.map((item) => ({ label: item.title, value: item.id })) ?? []}
-      filter={({ options, search }) =>
-        options.filter((option) => {
-          if (!("value" in option)) {
-            return false;
-          }
-          if (option.label.toLowerCase().trim().includes(search.toLowerCase().trim())) {
-            return true;
-          }
-          const isbn = items?.find((item) => item.id === option.value)?.info.isbn.toString();
-          return isbn?.includes(search.trim()) ?? false;
-        })
-      }
+      data={toItemSelectData(items)}
+      filter={itemSelectFilter(items)}
       {...props}
       value={field.state.value.map((v) => v.id)}
       onChange={(values) =>

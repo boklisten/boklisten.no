@@ -103,6 +103,8 @@ export interface ApiDefinition {
     search: typeof routes['blid_search.search']
     lookup: typeof routes['blid_search.lookup']
     updateActiveItem: typeof routes['blid_search.update_active_item']
+    relink: typeof routes['blid_search.relink']
+    remove: typeof routes['blid_search.remove']
   }
   matches: {
     notify: typeof routes['matches.notify']

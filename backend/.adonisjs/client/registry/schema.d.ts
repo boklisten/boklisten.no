@@ -727,6 +727,30 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['updateActiveItem']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'blid_search.relink': {
+    methods: ["PATCH"]
+    pattern: '/v2/admin/blid_search/:blid/item'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/blid_search').blidRelinkValidator)>>
+      paramsTuple: [ParamValue]
+      params: { blid: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/blid_search').blidRelinkValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['relink']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['relink']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'blid_search.remove': {
+    methods: ["DELETE"]
+    pattern: '/v2/admin/blid_search/:blid'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { blid: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['remove']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/blid_search_controller').default['remove']>>>
+    }
+  }
   'matches.notify': {
     methods: ["POST"]
     pattern: '/matches/notify'

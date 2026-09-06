@@ -1,8 +1,10 @@
 import { Button, Divider, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import BlidBookHeader from "@/features/blid-search/BlidBookHeader";
 import BlidHistoryTimeline from "@/features/blid-search/BlidHistoryTimeline";
+import EditBlidModal from "@/features/blid-search/EditBlidModal";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -18,6 +20,7 @@ export default function AdminBlidSearchResult({
   const { data, isPending, isError } = useQuery(
     api.blidSearch.lookup.queryOptions({ params: { blid } }),
   );
+  const [editing, setEditing] = useState(false);
 
   if (isPending) {
     return <Skeleton height={280} radius="md" />;
@@ -47,11 +50,26 @@ export default function AdminBlidSearchResult({
       </Text>
       <Paper withBorder radius="md" p="md">
         <Stack gap="md">
-          <BlidBookHeader result={data} onClear={onClear} />
+          <BlidBookHeader
+            result={data}
+            // A blid known only from old customer items has no unique item to edit or delete.
+            onEdit={data.registered ? () => setEditing(true) : undefined}
+            onClear={onClear}
+          />
           <Divider />
           <BlidHistoryTimeline history={data.history} activeItem={data.activeItem} />
         </Stack>
       </Paper>
+      {editing && (
+        <EditBlidModal
+          result={data}
+          onClose={() => setEditing(false)}
+          onDeleted={() => {
+            setEditing(false);
+            onClear();
+          }}
+        />
+      )}
     </Stack>
   );
 }

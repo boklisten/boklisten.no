@@ -1,6 +1,16 @@
 import type { BlidSearchResult, BlidStatus } from "@boklisten/backend/shared/blid_search";
-import { Badge, CloseButton, Group, Stack, Text, ThemeIcon, Title } from "@mantine/core";
-import { IconBook2 } from "@tabler/icons-react";
+import {
+  ActionIcon,
+  Badge,
+  CloseButton,
+  Group,
+  Stack,
+  Text,
+  ThemeIcon,
+  Title,
+  Tooltip,
+} from "@mantine/core";
+import { IconBook2, IconPencil } from "@tabler/icons-react";
 
 // A buyback leaves the book at the stand, so it shows as "Ikke utdelt"; only a buyout means
 // the customer keeps the book.
@@ -13,9 +23,12 @@ const STATUS_BADGE = {
 /** Card header for a searched book: what it is, its identifiers, and where it stands. */
 export default function BlidBookHeader({
   result,
+  onEdit,
   onClear,
 }: {
   result: BlidSearchResult;
+  /** Shows the pen; leave out where the book cannot be edited. */
+  onEdit?: () => void;
   /** Shows a close button; leave out where the card cannot be dismissed. */
   onClear?: () => void;
 }) {
@@ -39,6 +52,19 @@ export default function BlidBookHeader({
         <Badge variant="light" color={color}>
           {label}
         </Badge>
+        {onEdit && (
+          <Tooltip label="Rediger bok">
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="lg"
+              aria-label="Rediger bok"
+              onClick={onEdit}
+            >
+              <IconPencil size={20} aria-hidden />
+            </ActionIcon>
+          </Tooltip>
+        )}
         {onClear && <CloseButton aria-label="Lukk boksøket" onClick={onClear} />}
       </Group>
     </Group>

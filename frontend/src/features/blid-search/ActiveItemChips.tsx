@@ -48,9 +48,7 @@ function ChangeBranchModal({
   return (
     <Modal opened onClose={onClose} title="Endre filial">
       <Stack>
-        <MonitoringNotice>
-          Endrer du filialen, sendes et varsel til administrator med navn på deg og kunden.
-        </MonitoringNotice>
+        <MonitoringNotice>Administrator får beskjed hvis du endrer filialen.</MonitoringNotice>
         <TreeSelect
           label="Filial"
           description="Boka regnes som utdelt fra denne filialen"
@@ -115,9 +113,7 @@ function ChangeDeadlineModal({
   return (
     <Modal opened onClose={onClose} title="Endre frist">
       <Stack>
-        <MonitoringNotice>
-          Endrer du fristen, sendes et varsel til administrator med navn på deg og kunden.
-        </MonitoringNotice>
+        <MonitoringNotice>Administrator får beskjed hvis du endrer fristen.</MonitoringNotice>
         <form.AppField name="deadline">
           {(field) => (
             <field.DeadlinePickerField

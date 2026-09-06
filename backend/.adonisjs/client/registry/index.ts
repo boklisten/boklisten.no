@@ -366,6 +366,18 @@ const routes = {
     tokens: [{"old":"/v2/admin/blid_search/active_item","type":0,"val":"v2","end":""},{"old":"/v2/admin/blid_search/active_item","type":0,"val":"admin","end":""},{"old":"/v2/admin/blid_search/active_item","type":0,"val":"blid_search","end":""},{"old":"/v2/admin/blid_search/active_item","type":0,"val":"active_item","end":""}],
     types: placeholder as Registry['blid_search.update_active_item']['types'],
   },
+  'blid_search.relink': {
+    methods: ["PATCH"],
+    pattern: '/v2/admin/blid_search/:blid/item',
+    tokens: [{"old":"/v2/admin/blid_search/:blid/item","type":0,"val":"v2","end":""},{"old":"/v2/admin/blid_search/:blid/item","type":0,"val":"admin","end":""},{"old":"/v2/admin/blid_search/:blid/item","type":0,"val":"blid_search","end":""},{"old":"/v2/admin/blid_search/:blid/item","type":1,"val":"blid","end":""},{"old":"/v2/admin/blid_search/:blid/item","type":0,"val":"item","end":""}],
+    types: placeholder as Registry['blid_search.relink']['types'],
+  },
+  'blid_search.remove': {
+    methods: ["DELETE"],
+    pattern: '/v2/admin/blid_search/:blid',
+    tokens: [{"old":"/v2/admin/blid_search/:blid","type":0,"val":"v2","end":""},{"old":"/v2/admin/blid_search/:blid","type":0,"val":"admin","end":""},{"old":"/v2/admin/blid_search/:blid","type":0,"val":"blid_search","end":""},{"old":"/v2/admin/blid_search/:blid","type":1,"val":"blid","end":""}],
+    types: placeholder as Registry['blid_search.remove']['types'],
+  },
   'matches.notify': {
     methods: ["POST"],
     pattern: '/matches/notify',

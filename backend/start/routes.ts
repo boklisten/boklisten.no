@@ -226,6 +226,8 @@ router.get("/public_blid_lookup/:blid", [controllers.PublicBlidLookup, "lookup"]
 router.get("/v2/admin/blid_search", [controllers.BlidSearch, "search"]);
 router.get("/v2/admin/blid_search/:blid", [controllers.BlidSearch, "lookup"]);
 router.patch("/v2/admin/blid_search/active_item", [controllers.BlidSearch, "updateActiveItem"]);
+router.patch("/v2/admin/blid_search/:blid/item", [controllers.BlidSearch, "relink"]);
+router.delete("/v2/admin/blid_search/:blid", [controllers.BlidSearch, "remove"]);
 
 /**
  * matches

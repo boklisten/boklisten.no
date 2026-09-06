@@ -25,7 +25,8 @@ const NOW = new Date("2026-08-30T12:00:00.000Z");
 function baseSources(overrides: Partial<BlidSearchSources> = {}): BlidSearchSources {
   return {
     blid: BLID,
-    item: { title: "Sinus 1T", isbn: "9788202419676" },
+    item: { id: "item-1", title: "Sinus 1T", isbn: "9788202419676" },
+    registered: true,
     customerItems: [],
     orders: [],
     handovers: [],
@@ -93,7 +94,7 @@ function makeCustomerItem(overrides: Partial<CustomerItem> = {}): CustomerItem {
 test.group("BlidSearchService.assembleBlidSearch() – book", () => {
   test("returns book info and empty history when nothing references the blid", ({ assert }) => {
     const result = assembleBlidSearch(baseSources());
-    assert.deepEqual(result.book, { title: "Sinus 1T", isbn: "9788202419676" });
+    assert.deepEqual(result.book, { id: "item-1", title: "Sinus 1T", isbn: "9788202419676" });
     assert.lengthOf(result.history, 0);
   });
 

@@ -48,7 +48,8 @@ function transfer(
 
 const EXAMPLE_BOOK: BlidSearchResult = {
   blid: "eksempelBLID",
-  book: { title: "Mønster R1 2021", isbn: "9788205548718" },
+  book: { id: "eksempel", title: "Mønster R1 2021", isbn: "9788205548718" },
+  registered: true,
   status: "handed-out",
   history: [
     transfer("2026-06-17T12:31:00+02:00", JONATAN, ANNIKA, "2027-07-01T00:00:00+02:00"),

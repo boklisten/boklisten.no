@@ -34,7 +34,9 @@ export interface HandoverRow {
 
 export interface BlidSearchSources {
   blid: string;
-  item: { title: string; isbn: string } | null;
+  item: { id: string; title: string; isbn: string } | null;
+  /** Whether a unique item exists for the blid. */
+  registered: boolean;
   customerItems: CustomerItem[];
   orders: Order[];
   handovers: HandoverRow[];
@@ -581,6 +583,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   return {
     blid: sources.blid,
     book: sources.item,
+    registered: sources.registered,
     status: deriveStatus(sources.customerItems),
     activeItem: deriveActiveItem(sources.customerItems),
     history: events,
@@ -826,7 +829,11 @@ export const BlidSearchService = {
 
     return assembleBlidSearch({
       blid,
-      item: item === null ? null : { title: item.title, isbn: String(item.info?.isbn ?? "") },
+      item:
+        item === null
+          ? null
+          : { id: item.id, title: item.title, isbn: String(item.info?.isbn ?? "") },
+      registered: uniqueItem !== null,
       customerItems,
       orders,
       handovers,

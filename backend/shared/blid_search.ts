@@ -58,7 +58,9 @@ export interface BlidActiveItem {
 export interface BlidSearchResult {
   blid: string;
   /** null when the blid has never been connected to an item. */
-  book: { title: string; isbn: string } | null;
+  book: { id: string; title: string; isbn: string } | null;
+  /** Whether a unique item exists for the blid, i.e. there is a link to edit or delete. */
+  registered: boolean;
   status: BlidStatus;
   activeItem?: BlidActiveItem;
   /** Sorted newest first. */

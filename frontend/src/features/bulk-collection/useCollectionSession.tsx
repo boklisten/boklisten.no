@@ -155,8 +155,7 @@ export default function useCollectionSession(): CollectionSession {
               levere?
             </Text>
             <MonitoringNotice>
-              Leverer du likevel, sendes et varsel til administrator for hver bok med utløpt frist,
-              med navn på deg og kunden.
+              Leverer du likevel, får administrator beskjed om hver bok med utløpt frist.
             </MonitoringNotice>
           </Stack>
         ),

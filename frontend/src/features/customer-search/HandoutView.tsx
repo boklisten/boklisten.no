@@ -191,8 +191,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
         <Stack gap="xs">
           <Text>Bøker skal normalt ikke deles ut uten gyldig signatur.</Text>
           <MonitoringNotice>
-            Deler du ut likevel, sendes et varsel til administrator for hver bok, med navn på deg og
-            kunden.
+            Deler du ut likevel, får administrator beskjed om hver bok.
           </MonitoringNotice>
         </Stack>
       ),

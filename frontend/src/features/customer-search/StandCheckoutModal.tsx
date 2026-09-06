@@ -205,7 +205,7 @@ function CardConfirmStep({
   busy: boolean;
 }) {
   const os = useOs();
-  const storeUrl = os === "ios" ? VIPPSKASSA_PLAY_STORE_URL : VIPPSKASSA_APP_STORE_URL;
+  const storeUrl = os === "ios" ? VIPPSKASSA_APP_STORE_URL : VIPPSKASSA_PLAY_STORE_URL;
   return (
     <Stack>
       <Text fw={600}>Ta betalt {formatAmount(amount)} med kort</Text>

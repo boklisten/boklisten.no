@@ -23,10 +23,10 @@ export default class OrderHistoryController {
   }
 
   async updateBranch(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+    const employee = PermissionService.employeeOrFail(ctx);
     const orderId = ctx.request.param("orderId");
     const { branchId } = await ctx.request.validateUsing(orderBranchUpdateValidator);
-    await OrderHistoryService.updateBranch(orderId, branchId);
+    await OrderHistoryService.updateBranch(orderId, branchId, employee);
     return ctx.response.noContent();
   }
 

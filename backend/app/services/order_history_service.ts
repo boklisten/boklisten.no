@@ -432,9 +432,14 @@ export const OrderHistoryService = {
 
   /**
    * Move an order to another branch. A deliberate bookkeeping correction: only the order is
-   * touched; the customer items it created keep the branch they were handed out from.
+   * touched; the customer items it created keep the branch they were handed out from. Any
+   * employee may do it, and everyone below admin is reported to the administrator.
    */
-  async updateBranch(orderId: string, branchId: string): Promise<void> {
+  async updateBranch(
+    orderId: string,
+    branchId: string,
+    employee: MonitoredEmployee,
+  ): Promise<void> {
     const branch = await StorageService.Branches.getOrNull(branchId);
     if (!branch) {
       throw new BadRequestException("Filialen finnes ikke");
@@ -444,6 +449,17 @@ export const OrderHistoryService = {
       throw new BadRequestException("Ordren finnes ikke");
     }
     await StorageService.Orders.update(orderId, { branch: new ObjectId(branchId) });
+    const previousBranch = await StorageService.Branches.getOrNull(order.branch);
+    await EmployeeMonitoringService.report({
+      action: "order-branch-changed",
+      employee,
+      customerId: order.customer,
+      details: [
+        { label: "Ordre-ID", value: order.id },
+        { label: "Gammel filial", value: previousBranch?.name ?? FALLBACK_BRANCH_NAME },
+        { label: "Ny filial", value: branch.name },
+      ],
+    });
   },
 
   /**

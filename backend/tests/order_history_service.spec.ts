@@ -545,3 +545,55 @@ test.group("OrderHistoryService.deleteOrder()", (group) => {
     assert.isFalse(report.called);
   });
 });
+
+test.group("OrderHistoryService.updateBranch()", (group) => {
+  let sandbox: sinon.SinonSandbox;
+  let update: sinon.SinonStub;
+  let report: sinon.SinonStub;
+  const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
+  // A real ObjectId: the service casts it before writing.
+  const NEW_BRANCH = "5f7f7f7f7f7f7f7f7f7f7f72";
+  const branches: Record<string, Branch> = {
+    [BRANCH]: mock<Branch>({ id: BRANCH, name: "Ullern VGS" }),
+    [NEW_BRANCH]: mock<Branch>({ id: NEW_BRANCH, name: "Persbråten VGS" }),
+  };
+
+  group.each.setup(() => {
+    sandbox = createSandbox();
+    update = sandbox.stub(StorageService.Orders, "update").resolves(makeOrder());
+    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
+    sandbox
+      .stub(StorageService.Branches, "getOrNull")
+      .callsFake((id) => Promise.resolve(id === undefined ? null : (branches[id] ?? null)));
+    sandbox
+      .stub(StorageService.Orders, "getOrNull")
+      .callsFake((id) => Promise.resolve(id === "order-1" ? makeOrder() : null));
+  });
+  group.each.teardown(() => sandbox.restore());
+
+  test("moves the order and reports the change with both branch names", async ({ assert }) => {
+    await OrderHistoryService.updateBranch("order-1", NEW_BRANCH, employee);
+
+    assert.isTrue(update.calledOnce);
+    assert.equal(update.firstCall.args[0], "order-1");
+    assert.isTrue(report.calledOnce);
+    assert.deepEqual(report.firstCall.args[0], {
+      action: "order-branch-changed",
+      employee,
+      customerId: IDA,
+      details: [
+        { label: "Ordre-ID", value: "order-1" },
+        { label: "Gammel filial", value: "Ullern VGS" },
+        { label: "Ny filial", value: "Persbråten VGS" },
+      ],
+    });
+  });
+
+  test("refuses an unknown branch or order, and reports nothing", async ({ assert }) => {
+    await assert.rejects(() => OrderHistoryService.updateBranch("order-1", "missing", employee));
+    await assert.rejects(() => OrderHistoryService.updateBranch("missing", NEW_BRANCH, employee));
+
+    assert.isFalse(update.called);
+    assert.isFalse(report.called);
+  });
+});
