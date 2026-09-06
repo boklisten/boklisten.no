@@ -10,6 +10,8 @@ export interface ActiveCustomerItem {
   blid: string | null;
   type: CustomerItemType;
   deadline: Date;
+  /** The branch the book was handed out from; null on legacy items where none was recorded. */
+  handoutBranch: { id: string; name: string } | null;
   /** Extension and buyout, priced and gated by the same rules the customer sees. */
   actions: CustomerItemAction[];
 }

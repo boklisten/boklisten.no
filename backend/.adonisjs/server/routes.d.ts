@@ -116,6 +116,7 @@ export type ScannedRoutes = {
     'order_history.get_my_orders': { paramsTuple?: []; params?: {} }
     'order_history.get_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'order_history.update_branch': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'order_history.update_item_deadline': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'order_history.delete_order': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.initialize_checkout': { paramsTuple?: []; params?: {} }
     'checkout.confirm_checkout': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
@@ -486,6 +487,7 @@ export type ScannedRoutes = {
     'blid_search.relink': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'order_history.update_branch': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'order_history.update_item_deadline': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'invoices.set_status': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'invoices.set_line_cancelled': { paramsTuple: [ParamValue,ParamValue]; params: {'invoiceId': ParamValue,'lineIndex': ParamValue} }

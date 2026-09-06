@@ -1,76 +1,12 @@
-import { Button, Group, Modal, Stack, TreeSelect } from "@mantine/core";
 import { IconBuildingStore } from "@tabler/icons-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import ChipButton from "@/shared/components/ChipButton";
-import MonitoringNotice from "@/shared/components/MonitoringNotice";
+import ChangeBranchModal from "@/shared/components/corrections/ChangeBranchModal";
 import useApiClient from "@/shared/hooks/useApiClient";
-import { toBranchTreeNodeData } from "@/shared/utils/branchTree";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-
-function ChangeBranchModal({
-  orderId,
-  branchId: currentBranchId,
-  onClose,
-}: {
-  orderId: string;
-  branchId: string;
-  onClose: () => void;
-}) {
-  const { api } = useApiClient();
-  const queryClient = useQueryClient();
-  const { data: branches } = useQuery(api.branches.getAll.queryOptions());
-  const [branchId, setBranchId] = useState<string | null>(currentBranchId);
-  const updateMutation = useMutation(
-    api.orderHistory.updateBranch.mutationOptions({
-      onSuccess: () => {
-        showSuccessNotification("Filialen ble endret");
-        onClose();
-      },
-      onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke endre filialen")),
-      onSettled: () =>
-        queryClient.invalidateQueries({ queryKey: api.orderHistory.getForCustomer.pathKey() }),
-    }),
-  );
-  return (
-    <Modal opened onClose={onClose} title="Endre filial">
-      <Stack>
-        <MonitoringNotice>Administrator får beskjed hvis du endrer filialen.</MonitoringNotice>
-        <TreeSelect
-          label="Filial"
-          description="Ordren regnes som lagt inn på denne filialen. Bøkene som ble delt ut beholder filialen sin."
-          placeholder="Velg filial"
-          data={toBranchTreeNodeData(branches ?? [])}
-          // Parents must be selectable too, so no expandOnClick: the chevron alone expands.
-          searchable
-          nothingFoundMessage="Fant ingen filialer"
-          // Wait for the branch data so the current name can be rendered.
-          value={branches ? branchId : null}
-          onChange={setBranchId}
-        />
-        <Group justify="flex-end">
-          <Button variant="default" onClick={onClose}>
-            Avbryt
-          </Button>
-          <Button
-            loading={updateMutation.isPending}
-            disabled={branchId === null || branchId === currentBranchId}
-            onClick={() => {
-              if (branchId === null) {
-                return;
-              }
-              updateMutation.mutate({ params: { orderId }, body: { branchId } });
-            }}
-          >
-            Endre filial
-          </Button>
-        </Group>
-      </Stack>
-    </Modal>
-  );
-}
 
 /**
  * The order's branch as an editable chip. Changing it moves the order alone: the customer items
@@ -81,12 +17,32 @@ export default function OrderBranchChip({
   orderId,
   branchId,
   branchName,
+  onChanged,
 }: {
   orderId: string;
   branchId: string;
   branchName: string;
+  /** For callers that list the order somewhere other than the order history. */
+  onChanged?: () => void;
 }) {
+  const { api } = useApiClient();
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const updateMutation = useMutation(
+    api.orderHistory.updateBranch.mutationOptions({
+      onSuccess: () => {
+        showSuccessNotification("Filialen ble endret");
+        setEditing(false);
+      },
+      onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke endre filialen")),
+      onSettled: () => {
+        onChanged?.();
+        return queryClient.invalidateQueries({
+          queryKey: api.orderHistory.getForCustomer.pathKey(),
+        });
+      },
+    }),
+  );
   return (
     <>
       <ChipButton
@@ -99,9 +55,13 @@ export default function OrderBranchChip({
       </ChipButton>
       {editing && (
         <ChangeBranchModal
-          orderId={orderId}
-          branchId={branchId}
+          currentBranchId={branchId}
+          description="Ordren regnes som lagt inn på denne filialen. Alle bestilte bøker i ordren flyttes med, mens bøker som allerede er delt ut beholder filialen sin."
+          isPending={updateMutation.isPending}
           onClose={() => setEditing(false)}
+          onSubmit={(newBranchId) =>
+            updateMutation.mutate({ params: { orderId }, body: { branchId: newBranchId } })
+          }
         />
       )}
     </>

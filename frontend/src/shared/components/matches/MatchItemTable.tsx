@@ -6,7 +6,7 @@ import type { ViewerObligation } from "@/features/matches/forViewer";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";
 import type { ItemStatus } from "@/shared/components/matches/matches-helper";
 
-function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: string }) {
+export function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: string }) {
   return (
     <Tooltip label={label}>
       <Table.Td>

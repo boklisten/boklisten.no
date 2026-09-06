@@ -1,5 +1,4 @@
 import type { ActiveCustomerItem } from "@boklisten/backend/shared/customer-item/active-customer-item";
-import type { CustomerItemType } from "@boklisten/backend/shared/customer-item/customer-item-type";
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
@@ -19,6 +18,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { showBookSearch } from "@/features/kasse/kasseParams";
+import {
+  ActiveBookBranchChip,
+  ActiveBookDeadlineChip,
+  isOverdue,
+} from "@/features/customer-search/ActiveBookChips";
 import { buildPeerBooks } from "@/features/customer-search/handoutBooks";
 import StandCheckoutModal from "@/features/customer-search/StandCheckoutModal";
 import type { StandCheckoutRequest } from "@/features/customer-search/StandCheckoutModal";
@@ -27,30 +31,6 @@ import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";
 import EntityLink from "@/shared/components/EntityLink";
 import useApiClient from "@/shared/hooks/useApiClient";
-import { norwegianTime } from "@/shared/utils/dayjs";
-
-const TYPE_LABELS: Record<CustomerItemType, string> = {
-  rent: "Lån",
-  "partly-payment": "Delbetaling",
-};
-
-export function isOverdue(deadline: string | Date): boolean {
-  return norwegianTime(deadline).endOf("day").isBefore(norwegianTime());
-}
-
-function deadlineLabel(book: ActiveCustomerItem): string {
-  const date = norwegianTime(book.deadline).format("DD.MM.YYYY");
-  return `${TYPE_LABELS[book.type]} til ${date}`;
-}
-
-function DeadlineText({ book }: { book: ActiveCustomerItem }) {
-  const overdue = isOverdue(book.deadline);
-  return (
-    <Text size="sm" c={overdue ? "red" : "dimmed"} fw={overdue ? 600 : undefined}>
-      {deadlineLabel(book)}
-    </Text>
-  );
-}
 
 /** The unique ID doubles as the way into the book's own history. */
 function BlidLink({ blid }: { blid: string }) {
@@ -118,14 +98,6 @@ function BookActions({
   );
 }
 
-function OverdueBadge() {
-  return (
-    <Badge color="red" variant="filled" size="sm" style={{ flexShrink: 0 }}>
-      Over frist
-    </Badge>
-  );
-}
-
 /**
  * The peer each book is due to be given to, keyed by customer-item id. Matching is
  * edition-tolerant, and each pending obligation is consumed by at most one book so two copies of
@@ -169,17 +141,19 @@ function BookCards({
             <Text fw={600} lh={1.3}>
               {book.title}
             </Text>
+            {book.blid && (
+              <Group mt={2}>
+                <BlidLink blid={book.blid} />
+              </Group>
+            )}
             {deliverToName && (
               <Group mt={4}>
                 <PeerBadge>Leveres til {deliverToName}</PeerBadge>
               </Group>
             )}
-            <Group justify="space-between" gap={6} mt={4}>
-              <Group gap={6}>
-                <DeadlineText book={book} />
-                {isOverdue(book.deadline) && <OverdueBadge />}
-              </Group>
-              {book.blid && <BlidLink blid={book.blid} />}
+            <Group gap={6} mt={6}>
+              <ActiveBookBranchChip book={book} />
+              <ActiveBookDeadlineChip book={book} />
             </Group>
             <Group mt="sm">
               <BookActions book={book} onAction={(type) => onAction({ book, type })} />
@@ -207,6 +181,7 @@ function BookTable({
           <Table.Tr>
             <Table.Th>Tittel</Table.Th>
             <Table.Th>Unik ID</Table.Th>
+            <Table.Th>Filial</Table.Th>
             <Table.Th>Frist</Table.Th>
             <Table.Th>Handlinger</Table.Th>
           </Table.Tr>
@@ -224,10 +199,10 @@ function BookTable({
                 </Table.Td>
                 <Table.Td>{book.blid ? <BlidLink blid={book.blid} /> : "–"}</Table.Td>
                 <Table.Td>
-                  <Group gap={6} wrap="nowrap">
-                    <DeadlineText book={book} />
-                    {isOverdue(book.deadline) && <OverdueBadge />}
-                  </Group>
+                  <ActiveBookBranchChip book={book} />
+                </Table.Td>
+                <Table.Td>
+                  <ActiveBookDeadlineChip book={book} />
                 </Table.Td>
                 <Table.Td>
                   <BookActions book={book} onAction={(type) => onAction({ book, type })} />

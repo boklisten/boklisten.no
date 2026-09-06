@@ -1351,6 +1351,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['updateBranch']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'order_history.update_item_deadline': {
+    methods: ["PATCH"]
+    pattern: '/v2/admin/orders/:orderId/item_deadline'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/order_history').orderItemDeadlineUpdateValidator)>>
+      paramsTuple: [ParamValue]
+      params: { orderId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/order_history').orderItemDeadlineUpdateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['updateItemDeadline']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_history_controller').default['updateItemDeadline']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'order_history.delete_order': {
     methods: ["DELETE"]
     pattern: '/v2/employee/orders/:orderId'

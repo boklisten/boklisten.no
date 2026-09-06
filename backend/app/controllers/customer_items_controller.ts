@@ -80,6 +80,15 @@ export default class CustomerItemsController {
       },
       { $unwind: { path: "$item", preserveNullAndEmptyArrays: true } },
       {
+        $lookup: {
+          from: BlSchemaName.Branches,
+          localField: "handoutInfo.handoutById",
+          foreignField: "_id",
+          as: "handoutBranch",
+        },
+      },
+      { $unwind: { path: "$handoutBranch", preserveNullAndEmptyArrays: true } },
+      {
         $project: {
           _id: 0,
           id: { $toString: "$_id" },
@@ -88,6 +97,13 @@ export default class CustomerItemsController {
           blid: { $ifNull: ["$blid", null] },
           type: "$type",
           deadline: "$deadline",
+          handoutBranch: {
+            $cond: [
+              { $eq: [{ $ifNull: ["$handoutBranch", null] }, null] },
+              null,
+              { id: { $toString: "$handoutBranch._id" }, name: "$handoutBranch.name" },
+            ],
+          },
         },
       },
       { $sort: { deadline: 1, title: 1 } },

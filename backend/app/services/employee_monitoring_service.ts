@@ -19,6 +19,7 @@ export const MONITORED_ACTIONS = {
   "handout-without-signature": "Bok delt ut uten gyldig signatur",
   "order-deleted": "Ordre slettet",
   "order-branch-changed": "Filial endret på ordre",
+  "order-item-deadline-changed": "Frist endret på bestilt bok",
   "active-item-deadline-changed": "Frist endret på utlånt bok",
   "active-item-branch-changed": "Filial endret på utlånt bok",
   "overdue-book-collected": "Bok levert etter fristen",

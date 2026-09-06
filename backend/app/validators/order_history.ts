@@ -7,3 +7,10 @@ export const orderBranchUpdateValidator = vine.create(
     branchId: vine.string().regex(OBJECT_ID_PATTERN),
   }),
 );
+
+export const orderItemDeadlineUpdateValidator = vine.create(
+  vine.object({
+    itemId: vine.string().regex(OBJECT_ID_PATTERN),
+    deadline: vine.date({ formats: ["iso8601"] }),
+  }),
+);

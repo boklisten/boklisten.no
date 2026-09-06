@@ -597,3 +597,106 @@ test.group("OrderHistoryService.updateBranch()", (group) => {
     assert.isFalse(report.called);
   });
 });
+
+test.group("OrderHistoryService.updateItemDeadline()", (group) => {
+  let sandbox: sinon.SinonSandbox;
+  let updateMany: sinon.SinonStub;
+  let report: sinon.SinonStub;
+  const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
+  // Real ObjectIds: the service casts both before writing.
+  const ORDER = "5f7f7f7f7f7f7f7f7f7f7f70";
+  const ITEM = "5f7f7f7f7f7f7f7f7f7f7f71";
+  const NEW_DEADLINE = new Date("2027-12-01T00:00:00.000Z");
+  let order: Order | null;
+
+  group.each.setup(() => {
+    sandbox = createSandbox();
+    order = makeOrder({ id: ORDER, orderItems: [rentItem({ item: ITEM })] });
+    updateMany = sandbox
+      .stub(StorageService.Orders, "updateMany")
+      .resolves({
+        matchedCount: 1,
+        modifiedCount: 1,
+        acknowledged: true,
+        upsertedCount: 0,
+        upsertedId: null,
+      });
+    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
+    sandbox.stub(StorageService.Orders, "getOrNull").callsFake(() => Promise.resolve(order));
+  });
+  group.each.teardown(() => sandbox.restore());
+
+  test("moves the period end of the open item and reports both deadlines", async ({ assert }) => {
+    await OrderHistoryService.updateItemDeadline(
+      { orderId: ORDER, itemId: ITEM, deadline: NEW_DEADLINE },
+      employee,
+    );
+
+    assert.isTrue(updateMany.calledOnce);
+    const [filter, update] = updateMany.firstCall.args;
+    assert.equal(String(filter._id), ORDER);
+    assert.equal(String(filter.orderItems.$elemMatch.item), ITEM);
+    assert.equal(update.$set["orderItems.$.info.to"], NEW_DEADLINE);
+    assert.isTrue(report.calledOnce);
+    assert.deepEqual(report.firstCall.args[0], {
+      action: "order-item-deadline-changed",
+      employee,
+      customerId: IDA,
+      details: [
+        { label: "Bok", value: "«Sinus 1T»" },
+        { label: "Ordre-ID", value: ORDER },
+        { label: "Gammel frist", value: "01.07.2027" },
+        { label: "Ny frist", value: "01.12.2027" },
+      ],
+    });
+  });
+
+  test("refuses a handed-out item, a moved item and a missing order", async ({ assert }) => {
+    order = makeOrder({ id: ORDER, orderItems: [rentItem({ item: ITEM, handout: true })] });
+    await assert.rejects(() =>
+      OrderHistoryService.updateItemDeadline(
+        { orderId: ORDER, itemId: ITEM, deadline: NEW_DEADLINE },
+        employee,
+      ),
+    );
+    order = makeOrder({
+      id: ORDER,
+      orderItems: [rentItem({ item: ITEM, movedToOrder: "order-2" })],
+    });
+    await assert.rejects(() =>
+      OrderHistoryService.updateItemDeadline(
+        { orderId: ORDER, itemId: ITEM, deadline: NEW_DEADLINE },
+        employee,
+      ),
+    );
+    order = null;
+    await assert.rejects(() =>
+      OrderHistoryService.updateItemDeadline(
+        { orderId: ORDER, itemId: ITEM, deadline: NEW_DEADLINE },
+        employee,
+      ),
+    );
+
+    assert.isFalse(updateMany.called);
+    assert.isFalse(report.called);
+  });
+
+  test("refuses when the item was handed out between the read and the write", async ({
+    assert,
+  }) => {
+    updateMany.resolves({
+      matchedCount: 0,
+      modifiedCount: 0,
+      acknowledged: true,
+      upsertedCount: 0,
+      upsertedId: null,
+    });
+    await assert.rejects(() =>
+      OrderHistoryService.updateItemDeadline(
+        { orderId: ORDER, itemId: ITEM, deadline: NEW_DEADLINE },
+        employee,
+      ),
+    );
+    assert.isFalse(report.called);
+  });
+});

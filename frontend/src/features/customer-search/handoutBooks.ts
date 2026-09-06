@@ -35,14 +35,29 @@ export function calculateUnfulfilledOrderItems(orders: Order[]): OrderItem[] {
     .flatMap((order) => order.orderItems.filter(isOpenOrderItem));
 }
 
-/** The open order behind each unfulfilled item, and whether the customer has paid for it. */
-export function buildOpenOrderInfo(
-  orders: Order[],
-): Map<string, { orderId: string; paid: boolean }> {
-  const openOrderInfo = new Map<string, { orderId: string; paid: boolean }>();
+export interface OpenOrderInfo {
+  orderId: string;
+  /** Whether the customer has paid for it. */
+  paid: boolean;
+  type: OrderItem["type"];
+  /** The order's branch, shared by every book in it. */
+  branchId: string;
+  /** The period end the order was placed with; legacy items may lack one. */
+  deadline: Date | undefined;
+}
+
+/** The open order behind each unfulfilled item. */
+export function buildOpenOrderInfo(orders: Order[]): Map<string, OpenOrderInfo> {
+  const openOrderInfo = new Map<string, OpenOrderInfo>();
   for (const order of orders.filter(isOpenCustomerOrder)) {
     for (const orderItem of order.orderItems.filter(isOpenOrderItem)) {
-      openOrderInfo.set(orderItem.item, { orderId: order.id, paid: order.amount !== 0 });
+      openOrderInfo.set(orderItem.item, {
+        orderId: order.id,
+        paid: order.amount !== 0,
+        type: orderItem.type,
+        branchId: order.branch,
+        deadline: orderItem.info?.to,
+      });
     }
   }
   return openOrderInfo;

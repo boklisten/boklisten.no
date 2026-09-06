@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
 import BadRequestException from "#exceptions/bad_request_exception";
@@ -403,6 +404,31 @@ async function fetchPlacedOrders(customerId: string): Promise<Order[]> {
   return (await StorageService.Orders.getByQueryOrNull(databaseQuery)) ?? [];
 }
 
+function formatDeadline(deadline: Date | string): string {
+  return DateTime.fromJSDate(new Date(deadline)).setZone("Europe/Oslo").toFormat("dd.MM.yyyy");
+}
+
+/** Ordered, not handed out, and not carried on into a later order. */
+function isOpenOrderItem(orderItem: OrderItem): boolean {
+  return (
+    (orderItem.type === "rent" || orderItem.type === "partly-payment") &&
+    !orderItem.handout &&
+    !orderItem.delivered &&
+    !orderItem.movedToOrder
+  );
+}
+
+/** The same rule as `isOpenOrderItem`, as an `$elemMatch` body so the write cannot race a handout. */
+function openOrderItemFilter(itemId: string) {
+  return {
+    item: new ObjectId(itemId),
+    type: { $in: ["rent", "partly-payment"] },
+    handout: { $ne: true },
+    delivered: { $ne: true },
+    movedToOrder: null,
+  };
+}
+
 export const OrderHistoryService = {
   /** Every placed order of the customer, newest first. */
   async getForCustomer(
@@ -458,6 +484,59 @@ export const OrderHistoryService = {
         { label: "Ordre-ID", value: order.id },
         { label: "Gammel filial", value: previousBranch?.name ?? FALLBACK_BRANCH_NAME },
         { label: "Ny filial", value: branch.name },
+      ],
+    });
+  },
+
+  /**
+   * Change the deadline of one book the customer has ordered but not yet been handed. Only the
+   * order item's period end moves; the handout copies it onto the customer item later. Any
+   * employee may do it, and everyone below admin is reported to the administrator.
+   */
+  async updateItemDeadline(
+    {
+      orderId,
+      itemId,
+      deadline,
+    }: {
+      orderId: string;
+      itemId: string;
+      deadline: Date;
+    },
+    employee: MonitoredEmployee,
+  ): Promise<void> {
+    const order = await StorageService.Orders.getOrNull(orderId);
+    if (!order) {
+      throw new BadRequestException("Ordren finnes ikke");
+    }
+    const orderItem = order.orderItems.find(
+      (candidate) => candidate.item === itemId && isOpenOrderItem(candidate),
+    );
+    if (!orderItem) {
+      throw new BadRequestException("Boka er ikke lenger bestilt");
+    }
+    const result = await StorageService.Orders.updateMany(
+      {
+        _id: new ObjectId(orderId),
+        orderItems: { $elemMatch: openOrderItemFilter(itemId) },
+      },
+      { $set: { "orderItems.$.info.to": deadline, lastUpdated: new Date() } },
+    );
+    if (result.matchedCount === 0) {
+      throw new BadRequestException("Boka er ikke lenger bestilt");
+    }
+    await EmployeeMonitoringService.report({
+      action: "order-item-deadline-changed",
+      employee,
+      customerId: order.customer,
+      details: [
+        { label: "Bok", value: `«${orderItem.title}»` },
+        { label: "Ordre-ID", value: order.id },
+        {
+          label: "Gammel frist",
+          value: orderItem.info?.to ? formatDeadline(orderItem.info.to) : "Ingen",
+        },
+        { label: "Ny frist", value: formatDeadline(deadline) },
       ],
     });
   },

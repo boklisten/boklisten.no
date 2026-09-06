@@ -12,10 +12,10 @@ import {
   calculateUnfulfilledOrderItems,
 } from "@/features/customer-search/handoutBooks";
 import NoOrderHandoutModal from "@/features/customer-search/NoOrderHandoutModal";
+import HandoutBooksTable from "@/features/customer-search/HandoutBooksTable";
 import type { NoOrderChoice } from "@/features/customer-search/NoOrderHandoutModal";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import type { ItemStatus } from "@/shared/components/matches/matches-helper";
-import { ItemStatusTable } from "@/shared/components/matches/MatchItemTable";
 import { StandScannerProgress } from "@/shared/components/matches/MatchScannerContent";
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
@@ -23,6 +23,7 @@ import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import useApiClient from "@/shared/hooks/useApiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
+import { publicApi } from "@/shared/utils/publicApiClient";
 
 // Above the scanner's manual-entry modal (300) so a decision is always reachable, and below its
 // notice modal (400), which only appears once a decision has been made.
@@ -53,6 +54,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
+  const { data: branches } = useQuery(publicApi.branches.getAll.queryOptions());
   const [opened, { open, close }] = useDisclosure(false);
   const [itemStatuses, setItemStatuses] = useState<ItemStatus[]>([]);
   const [pendingBlid, setPendingBlid] = useState<string | null>(null);
@@ -345,7 +347,13 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
       {nothingToShow && <InfoAlert>Denne kunden har for øyeblikket ingen bestilte bøker</InfoAlert>}
 
       {bookRows.length > 0 && (
-        <ItemStatusTable itemStatuses={bookRows} isSender renderAction={renderCancelAction} />
+        <HandoutBooksTable
+          rows={bookRows}
+          openOrderInfo={openOrderInfo}
+          branches={branches}
+          onChanged={invalidate}
+          renderAction={renderCancelAction}
+        />
       )}
 
       <Box>

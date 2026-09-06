@@ -2,7 +2,10 @@ import type { HttpContext } from "@adonisjs/core/http";
 
 import { OrderHistoryService } from "#services/order_history_service";
 import { PermissionService } from "#services/permission_service";
-import { orderBranchUpdateValidator } from "#validators/order_history";
+import {
+  orderBranchUpdateValidator,
+  orderItemDeadlineUpdateValidator,
+} from "#validators/order_history";
 
 export default class OrderHistoryController {
   async getMyOrder(ctx: HttpContext) {
@@ -27,6 +30,14 @@ export default class OrderHistoryController {
     const orderId = ctx.request.param("orderId");
     const { branchId } = await ctx.request.validateUsing(orderBranchUpdateValidator);
     await OrderHistoryService.updateBranch(orderId, branchId, employee);
+    return ctx.response.noContent();
+  }
+
+  async updateItemDeadline(ctx: HttpContext) {
+    const employee = PermissionService.employeeOrFail(ctx);
+    const orderId = ctx.request.param("orderId");
+    const { itemId, deadline } = await ctx.request.validateUsing(orderItemDeadlineUpdateValidator);
+    await OrderHistoryService.updateItemDeadline({ orderId, itemId, deadline }, employee);
     return ctx.response.noContent();
   }
 

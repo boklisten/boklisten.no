@@ -4,7 +4,8 @@ import { Badge, Group, Indicator, Tabs, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import CustomerMessagesView from "@/features/message-log/CustomerMessagesView";
-import ActiveBooksView, { isOverdue } from "@/features/customer-search/ActiveBooksView";
+import { isOverdue } from "@/features/customer-search/ActiveBookChips";
+import ActiveBooksView from "@/features/customer-search/ActiveBooksView";
 import CustomerMatchesView, { peerMatches } from "@/features/customer-search/CustomerMatchesView";
 import { CUSTOMER_SEARCH_TABS } from "@/features/customer-search/customerSearchTab";
 import type { CustomerSearchTab } from "@/features/customer-search/customerSearchTab";

@@ -678,6 +678,12 @@ const routes = {
     tokens: [{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"v2","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"admin","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"orders","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":1,"val":"orderId","end":""},{"old":"/v2/admin/orders/:orderId/branch","type":0,"val":"branch","end":""}],
     types: placeholder as Registry['order_history.update_branch']['types'],
   },
+  'order_history.update_item_deadline': {
+    methods: ["PATCH"],
+    pattern: '/v2/admin/orders/:orderId/item_deadline',
+    tokens: [{"old":"/v2/admin/orders/:orderId/item_deadline","type":0,"val":"v2","end":""},{"old":"/v2/admin/orders/:orderId/item_deadline","type":0,"val":"admin","end":""},{"old":"/v2/admin/orders/:orderId/item_deadline","type":0,"val":"orders","end":""},{"old":"/v2/admin/orders/:orderId/item_deadline","type":1,"val":"orderId","end":""},{"old":"/v2/admin/orders/:orderId/item_deadline","type":0,"val":"item_deadline","end":""}],
+    types: placeholder as Registry['order_history.update_item_deadline']['types'],
+  },
   'order_history.delete_order': {
     methods: ["DELETE"],
     pattern: '/v2/employee/orders/:orderId',
