@@ -8,6 +8,7 @@ import AgGridColorSchemeSync from "@/shared/components/AgGridColorSchemeSync";
 import AuthGuard from "@/features/auth/AuthGuard";
 import AdminPageHeader from "@/features/layout/AdminPageHeader";
 import AdminPageNavigation from "@/features/layout/AdminPageNavigation";
+import GlobalSearch from "@/features/search/GlobalSearch";
 
 export const Route = createFileRoute("/(administrasjon)/admin")({
   head: () =>
@@ -34,6 +35,7 @@ function AdminPageLayout() {
         <AuthGuard requiredPermission={USER_PERMISSION.EMPLOYEE}>
           <AgGridProvider modules={[AllCommunityModule]}>
             <AgGridColorSchemeSync />
+            <GlobalSearch />
             <Outlet />
           </AgGridProvider>
         </AuthGuard>

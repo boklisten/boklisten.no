@@ -1,27 +1,10 @@
-import { Box, Button, Flex, Group, Kbd, Stack, Text, ThemeIcon } from "@mantine/core";
-import { useOs } from "@mantine/hooks";
+import { Box, Button, Flex, Stack, Text, ThemeIcon } from "@mantine/core";
 import type { Icon } from "@tabler/icons-react";
 import { IconSearch } from "@tabler/icons-react";
 
-import { openSearchSpotlight } from "@/features/kasse/SearchSpotlight";
+import { openSearch } from "@/features/search/openSearch";
 import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
 import type { ScanCodeType } from "@/shared/utils/scanCodes";
-
-/** The shortcut only exists on a desktop keyboard, so the line is not rendered anywhere else. */
-function DesktopTip() {
-  const os = useOs();
-  const desktop = os === "macos" || os === "windows" || os === "linux";
-  if (!desktop) {
-    return null;
-  }
-  return (
-    <Group gap={4} justify="center" wrap="nowrap" c="dimmed">
-      <Kbd size="xs">{os === "macos" ? "⌘" : "Ctrl"}</Kbd>
-      <Kbd size="xs">K</Kbd>
-      <Text size="xs">åpner søk når som helst, også mens en kunde eller bok er åpen</Text>
-    </Group>
-  );
-}
 
 /**
  * The two ways into the Kasse: the camera and the manual search. Renders as a centered hero while
@@ -69,7 +52,7 @@ export default function KasseControls({
             flex={{ base: "1 1 auto", sm: "0 0 auto" }}
             variant="default"
             leftSection={<IconSearch size={18} aria-hidden />}
-            onClick={openSearchSpotlight}
+            onClick={openSearch}
           >
             Søk manuelt
           </Button>
@@ -98,11 +81,10 @@ export default function KasseControls({
         variant="subtle"
         color="gray"
         leftSection={<IconSearch size={18} aria-hidden />}
-        onClick={openSearchSpotlight}
+        onClick={openSearch}
       >
         Søk manuelt
       </Button>
-      <DesktopTip />
     </Stack>
   );
 }

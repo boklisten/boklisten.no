@@ -1,7 +1,8 @@
 import { BLID_PREFIX_PATTERN } from "@boklisten/backend/shared/blid_search";
 import { Badge, Group, Loader, Stack, Text, ThemeIcon } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
-import { Spotlight, createSpotlight } from "@mantine/spotlight";
+import { Spotlight } from "@mantine/spotlight";
+import type { createSpotlight } from "@mantine/spotlight";
 import { IconBook2, IconMail, IconPhone, IconSearch } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -11,38 +12,7 @@ import useApiClient from "@/shared/hooks/useApiClient";
 
 const MIN_SEARCH_LENGTH = 3;
 
-const [searchStore, searchSpotlight] = createSpotlight();
-
-export { searchSpotlight };
-
-// iOS Safari only shows the keyboard when focus() runs synchronously inside the tap's call stack,
-// but the Spotlight input mounts async after the modal opens. Focus a throwaway input during the
-// tap and let Mantine's focus trap take over — iOS keeps the keyboard up when focus moves between
-// text inputs. Touch devices only: with the decoy focused at open time, Mantine's focus trap
-// would try to return focus to it (removed by then) on close instead of the triggering button.
-export function openSearchSpotlight() {
-  if (!window.matchMedia("(pointer: coarse)").matches) {
-    searchSpotlight.open();
-    return;
-  }
-  const decoy = document.createElement("input");
-  decoy.setAttribute("type", "text");
-  decoy.style.position = "fixed";
-  decoy.style.top = "0";
-  decoy.style.left = "0";
-  decoy.style.height = "1px";
-  decoy.style.width = "1px";
-  decoy.style.opacity = "0";
-  // Anything below 16px makes iOS zoom the page when the decoy gains focus.
-  decoy.style.fontSize = "16px";
-  document.body.append(decoy);
-  const remove = () => decoy.remove();
-  decoy.addEventListener("blur", remove, { once: true });
-  decoy.focus({ preventScroll: true });
-  searchSpotlight.open();
-  // Fallback in case nothing ever steals focus from the decoy (e.g. the spotlight failed to open).
-  setTimeout(remove, 2000);
-}
+type SpotlightStore = ReturnType<typeof createSpotlight>[0];
 
 const customerQueryKey = (searchTerm: string) => ["userDetail", "search", searchTerm] as const;
 /** Prefix of the book search cache, so a delivery can invalidate every cached term at once. */
@@ -57,8 +27,8 @@ const isRelatedSearch = (a: string, b: string) => a.startsWith(b) || b.startsWit
 // have rendered, so the imperative data-selected attribute lands on stale DOM and Enter usually
 // does nothing. Its selectAction helper is not exported, so mirror its DOM contract
 // (data-action/data-selected) through the public store once the fresh list is in the DOM.
-function selectFirstResult() {
-  const { listId } = searchStore.getState();
+function selectFirstResult(store: SpotlightStore) {
+  const { listId } = store.getState();
   // oxlint-disable-next-line unicorn/prefer-query-selector -- Mantine useId() ids contain colons, which are invalid in querySelector syntax
   const list = listId ? document.getElementById(listId) : null;
   if (!list) {
@@ -72,20 +42,31 @@ function selectFirstResult() {
   if (first) {
     first.dataset["selected"] = "true";
   }
-  searchStore.updateState((state) => ({ ...state, selected: first ? 0 : -1 }));
+  store.updateState((state) => ({ ...state, selected: first ? 0 : -1 }));
 }
+
+const PLACEHOLDERS = {
+  customers: "Navn, telefon, e-post eller adresse",
+  books: "Bokas unike ID",
+  all: "Kunde eller bokas unike ID",
+} as const;
 
 /**
  * The manual way in: customers match on name, phone, e-mail and address; books match on the start
- * of their unique ID. The mode decides which of the two is searched, and a pick hands the
- * customer's id or the book's unique ID to the same code handling as a scan.
+ * of their unique ID. Searches one kind or both, and hands a pick's code (the customer's id or the
+ * book's unique ID) to the caller. Keyboard shortcuts are bound elsewhere, so that a page can put
+ * its own instance in front of the global one.
  */
 export default function SearchSpotlight({
-  kind,
-  onSelect,
+  store,
+  kinds,
+  onSelectCustomer,
+  onSelectBook,
 }: {
-  kind: "customers" | "books";
-  onSelect: (code: string) => void;
+  store: SpotlightStore;
+  kinds: { customers: boolean; books: boolean };
+  onSelectCustomer?: (detailsId: string) => void;
+  onSelectBook?: (blid: string) => void;
 }) {
   const { api, client } = useApiClient();
   const [searchValue, setSearchValue] = useState("");
@@ -97,9 +78,8 @@ export default function SearchSpotlight({
     trimmedSearch.length >= MIN_SEARCH_LENGTH &&
     debouncedSearch.length >= MIN_SEARCH_LENGTH &&
     isRelatedSearch(trimmedSearch, debouncedSearch);
-  const customerSearchActive = searchActive && kind === "customers";
-  const blidSearchActive =
-    searchActive && kind === "books" && BLID_PREFIX_PATTERN.test(debouncedSearch);
+  const customerSearchActive = searchActive && kinds.customers;
+  const blidSearchActive = searchActive && kinds.books && BLID_PREFIX_PATTERN.test(debouncedSearch);
 
   const { data: customers, isFetching: fetchingCustomers } = useQuery({
     queryKey: customerQueryKey(debouncedSearch),
@@ -128,7 +108,7 @@ export default function SearchSpotlight({
 
   const { data: branches } = useQuery({
     ...api.branches.getAll.queryOptions(),
-    enabled: kind === "customers",
+    enabled: kinds.customers,
   });
   const branchNames = new Map((branches ?? []).map((branch) => [branch.id, branch.name]));
 
@@ -136,33 +116,96 @@ export default function SearchSpotlight({
   const bookHits = blidSearchActive ? (books ?? []) : [];
   const nothingFound =
     searchActive && !isFetching && customerHits.length === 0 && bookHits.length === 0;
+  const searchedFor =
+    kinds.customers && kinds.books ? "kunder eller bøker" : kinds.customers ? "kunder" : "bøker";
 
   useEffect(() => {
     if ((customers?.length ?? 0) > 0 || (books?.length ?? 0) > 0) {
-      selectFirstResult();
+      selectFirstResult(store);
     }
-  }, [customers, books]);
+  }, [customers, books, store]);
 
   // The modal's exit transition is interrupted by the navigation a pick triggers, so Mantine's
   // clearQueryOnClose (which runs onExited) never fires — clear ourselves.
-  const pick = (code: string) => {
+  const pickCustomer = (detailsId: string) => {
     setSearchValue("");
-    onSelect(code);
+    onSelectCustomer?.(detailsId);
   };
+  const pickBook = (blid: string) => {
+    setSearchValue("");
+    onSelectBook?.(blid);
+  };
+
+  const customerActions = customerHits.map((userDetail) => (
+    <Spotlight.Action key={userDetail.id} onClick={() => pickCustomer(userDetail.id)}>
+      <Stack gap={4} w="100%">
+        <Group gap="xs" justify="space-between">
+          <Text fw={600}>{userDetail.name}</Text>
+          <Group gap={6}>
+            <PermissionBadge permission={userDetail.permission} size="sm" />
+            {userDetail.branchMembership && branchNames.has(userDetail.branchMembership) && (
+              <Badge variant="light" size="sm">
+                {branchNames.get(userDetail.branchMembership)}
+              </Badge>
+            )}
+          </Group>
+        </Group>
+        <Group gap="md" fz="sm" opacity={0.7}>
+          {userDetail.phone && (
+            <Group gap={4}>
+              <IconPhone size={16} aria-hidden />
+              <Text size="sm">{userDetail.phone}</Text>
+            </Group>
+          )}
+          {userDetail.email && (
+            <Group gap={4}>
+              <IconMail size={16} aria-hidden />
+              <Text size="sm">{userDetail.email}</Text>
+            </Group>
+          )}
+        </Group>
+      </Stack>
+    </Spotlight.Action>
+  ));
+  const bookActions = bookHits.map((book) => (
+    <Spotlight.Action key={book.blid} onClick={() => pickBook(book.blid)}>
+      <Group gap="sm" wrap="nowrap" w="100%">
+        <ThemeIcon variant="light" radius="xl" size="lg">
+          <IconBook2 size={18} aria-hidden />
+        </ThemeIcon>
+        <Stack gap={2} miw={0} style={{ flex: 1 }}>
+          <Text fw={600} lineClamp={1}>
+            {book.title}
+          </Text>
+          <Text size="sm" ff="monospace" opacity={0.7}>
+            {book.blid}
+          </Text>
+        </Stack>
+        <Badge variant="light" color={book.holder ? "green" : "gray"} tt="none">
+          {book.holder ? `Hos ${book.holder.name}` : "Ikke utdelt"}
+        </Badge>
+      </Group>
+    </Spotlight.Action>
+  ));
+  // Group labels only earn their place when the list can mix the two kinds.
+  const grouped = kinds.customers && kinds.books;
+  const placeholder = grouped
+    ? PLACEHOLDERS.all
+    : kinds.customers
+      ? PLACEHOLDERS.customers
+      : PLACEHOLDERS.books;
 
   return (
     <Spotlight.Root
-      store={searchStore}
+      store={store}
       query={searchValue}
       onQueryChange={setSearchValue}
-      shortcut={["mod + K"]}
+      shortcut={null}
       scrollable
       maxHeight="60vh"
     >
       <Spotlight.Search
-        placeholder={
-          kind === "customers" ? "Navn, telefon, e-post eller adresse" : "Bokas unike ID"
-        }
+        placeholder={placeholder}
         leftSection={<IconSearch size={20} aria-hidden />}
         rightSection={isFetching ? <Loader size="xs" /> : undefined}
         spellCheck={false}
@@ -176,60 +219,24 @@ export default function SearchSpotlight({
         )}
         {nothingFound && (
           <Spotlight.Empty>
-            Fant ingen {kind === "customers" ? "kunder" : "bøker"} for «{debouncedSearch}».
+            Fant ingen {searchedFor} for «{debouncedSearch}».
           </Spotlight.Empty>
         )}
-        {bookHits.map((book) => (
-          <Spotlight.Action key={book.blid} onClick={() => pick(book.blid)}>
-            <Group gap="sm" wrap="nowrap" w="100%">
-              <ThemeIcon variant="light" radius="xl" size="lg">
-                <IconBook2 size={18} aria-hidden />
-              </ThemeIcon>
-              <Stack gap={2} miw={0} style={{ flex: 1 }}>
-                <Text fw={600} lineClamp={1}>
-                  {book.title}
-                </Text>
-                <Text size="sm" ff="monospace" opacity={0.7}>
-                  {book.blid}
-                </Text>
-              </Stack>
-              <Badge variant="light" color={book.holder ? "green" : "gray"} tt="none">
-                {book.holder ? `Hos ${book.holder.name}` : "Ikke utdelt"}
-              </Badge>
-            </Group>
-          </Spotlight.Action>
-        ))}
-        {customerHits.map((userDetail) => (
-          <Spotlight.Action key={userDetail.id} onClick={() => pick(userDetail.id)}>
-            <Stack gap={4} w="100%">
-              <Group gap="xs" justify="space-between">
-                <Text fw={600}>{userDetail.name}</Text>
-                <Group gap={6}>
-                  <PermissionBadge permission={userDetail.permission} size="sm" />
-                  {userDetail.branchMembership && branchNames.has(userDetail.branchMembership) && (
-                    <Badge variant="light" size="sm">
-                      {branchNames.get(userDetail.branchMembership)}
-                    </Badge>
-                  )}
-                </Group>
-              </Group>
-              <Group gap="md" fz="sm" opacity={0.7}>
-                {userDetail.phone && (
-                  <Group gap={4}>
-                    <IconPhone size={16} aria-hidden />
-                    <Text size="sm">{userDetail.phone}</Text>
-                  </Group>
-                )}
-                {userDetail.email && (
-                  <Group gap={4}>
-                    <IconMail size={16} aria-hidden />
-                    <Text size="sm">{userDetail.email}</Text>
-                  </Group>
-                )}
-              </Group>
-            </Stack>
-          </Spotlight.Action>
-        ))}
+        {grouped ? (
+          <>
+            {customerActions.length > 0 && (
+              <Spotlight.ActionsGroup label="Kunder">{customerActions}</Spotlight.ActionsGroup>
+            )}
+            {bookActions.length > 0 && (
+              <Spotlight.ActionsGroup label="Bøker">{bookActions}</Spotlight.ActionsGroup>
+            )}
+          </>
+        ) : (
+          <>
+            {customerActions}
+            {bookActions}
+          </>
+        )}
       </Spotlight.ActionsList>
     </Spotlight.Root>
   );

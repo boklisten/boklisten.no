@@ -23,6 +23,11 @@ export interface KasseSearchParams extends KasseSearchInput {
 export function validateKasseSearch(
   search: KasseSearchInput & SearchSchemaInput,
 ): KasseSearchParams {
+  return readKasseSearch(search);
+}
+
+/** Reads the Kasse params out of any search object, e.g. the current location seen from outside the route. */
+export function readKasseSearch(search: object): KasseSearchParams {
   // Anything can be pasted into the URL, so trust nothing. A pasted ?blid=88375301 reaches us as
   // a number (TanStack parses search values as JSON).
   const untrusted: Partial<Record<keyof KasseSearchInput, unknown>> = search;

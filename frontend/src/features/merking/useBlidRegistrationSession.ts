@@ -7,7 +7,7 @@ import type {
   ScannedBlidRow,
   SelectedBook,
 } from "@/features/merking/registrationRows";
-import { BLID_SEARCH_QUERY_KEY } from "@/features/kasse/SearchSpotlight";
+import { BLID_SEARCH_QUERY_KEY } from "@/features/search/SearchSpotlight";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";

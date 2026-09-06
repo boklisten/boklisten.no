@@ -3,13 +3,13 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import LegacyAppLink from "@/features/auth-linker/LegacyAppLink";
 import AdminBlidSearchResult from "@/features/blid-search/AdminBlidSearchResult";
+import CollectionSearch from "@/features/bulk-collection/CollectionSearch";
 import CollectionView from "@/features/bulk-collection/CollectionView";
 import useCollectionSession from "@/features/bulk-collection/useCollectionSession";
 import type { CustomerSearchTab } from "@/features/customer-search/customerSearchTab";
 import CustomerResult from "@/features/kasse/CustomerResult";
 import KasseControls from "@/features/kasse/KasseControls";
 import KasseModeControl from "@/features/kasse/KasseModeControl";
-import SearchSpotlight from "@/features/kasse/SearchSpotlight";
 import { KASSE_DESCRIPTION, KASSE_TITLE } from "@/features/kasse/kasseDescription";
 import { KASSE_MODE_CONFIG } from "@/features/kasse/kasseModes";
 import type { KasseMode } from "@/features/kasse/kasseModes";
@@ -93,7 +93,9 @@ function KassePage() {
           <LegacyAppLink path="cart" label="Gå til gammel handlekurv" />
         </Group>
         <KasseModeControl value={mode} onChange={selectMode} />
-        <SearchSpotlight kind={config.search} onSelect={(code) => void scanner.submitCode(code)} />
+        {mode === "innsamling" && (
+          <CollectionSearch onSelectBook={(scanned) => void scanner.submitCode(scanned)} />
+        )}
         <KasseControls
           compact={compact[mode]}
           icon={config.icon}

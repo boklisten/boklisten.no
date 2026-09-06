@@ -16,6 +16,7 @@ import { Image } from "@unpic/react";
 
 import { visibleAdminNavSections } from "@/features/layout/adminNavigation";
 import type { AdminNavLink } from "@/features/layout/adminNavigation";
+import SearchShortcutHint from "@/features/search/SearchShortcutHint";
 import ColorSchemeSelector from "@/features/user/ColorSchemeSelector";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
@@ -135,6 +136,7 @@ export default function AdminDashboard() {
             })}
           </Stack>
         ))}
+        <SearchShortcutHint />
       </Stack>
     </Container>
   );

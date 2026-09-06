@@ -16,8 +16,6 @@ export interface KasseModeConfig {
   scanLabel: string;
   /** What every scanner on the page (camera, physical scanner, manual entry) lets through. */
   accepts: ScanCodeType[];
-  /** What the manual search looks for. */
-  search: "customers" | "books";
   scanner: {
     title: string;
     instruction: ScanInstruction;
@@ -37,7 +35,6 @@ export const KASSE_MODE_CONFIG: Record<KasseMode, KasseModeConfig> = {
     description: "Skann kunde-ID for å se kundens bestillinger og bøker.",
     scanLabel: "Skann kunde-ID",
     accepts: ["customerId"],
-    search: "customers",
     scanner: {
       title: "Skann kunde-ID",
       instruction: { text: "Kunde-ID", illustrate: "customerId" },
@@ -50,7 +47,6 @@ export const KASSE_MODE_CONFIG: Record<KasseMode, KasseModeConfig> = {
     description: "Skann bokas unike ID for å se hvem som har boka og hva som har skjedd med den.",
     scanLabel: "Skann bokas unike ID",
     accepts: ["blid"],
-    search: "books",
     scanner: {
       title: "Skann bok",
       instruction: { text: "Bokas unike ID", illustrate: "blid" },
@@ -63,7 +59,6 @@ export const KASSE_MODE_CONFIG: Record<KasseMode, KasseModeConfig> = {
     description: "Skann flere bøker etter hverandre og lever dem inn samlet.",
     scanLabel: "Skann bøker",
     accepts: ["blid"],
-    search: "books",
     scanner: {
       title: "Skann bøker som leveres inn",
       instruction: { text: "Bokas unike ID", illustrate: "blid" },

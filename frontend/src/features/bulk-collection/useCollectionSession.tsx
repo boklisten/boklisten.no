@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
 import { isOverdue } from "@/features/bulk-collection/deadline";
-import { BLID_SEARCH_QUERY_KEY } from "@/features/kasse/SearchSpotlight";
+import { BLID_SEARCH_QUERY_KEY } from "@/features/search/SearchSpotlight";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import useApiClient from "@/shared/hooks/useApiClient";
