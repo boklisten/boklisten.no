@@ -19,7 +19,7 @@ export default function InvoiceManager() {
       <Group justify="space-between" align="flex-start" wrap="wrap">
         <Stack gap={4}>
           <Title>Faktura</Title>
-          <Text c="dimmed">Se, eksporter og opprett fakturaer</Text>
+          <Text c="dimmed">Opprett, se og eksporter fakturaer</Text>
         </Stack>
         <LegacyAppLink path="invoices" label="Gå til gammelt faktura-system" />
       </Group>

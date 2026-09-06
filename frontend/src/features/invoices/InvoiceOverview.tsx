@@ -10,10 +10,9 @@ import {
   Select,
   Stack,
   Text,
-  TextInput,
   Transition,
 } from "@mantine/core";
-import { IconChevronDown, IconFileDownload, IconSearch } from "@tabler/icons-react";
+import { IconChevronDown, IconFileDownload } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { useState } from "react";
@@ -40,7 +39,6 @@ export default function InvoiceOverview() {
   const { api, client } = useApiClient();
   const { fakturarunde, faktura } = route.useSearch();
   const navigate = route.useNavigate();
-  const [search, setSearch] = useState("");
   const [statuses, setStatuses] = useState<InvoiceStatus[]>([...INVOICE_STATUSES]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -80,30 +78,19 @@ export default function InvoiceOverview() {
 
   return (
     <Stack>
-      <Group align="flex-end" wrap="wrap" gap="sm">
-        <Select
-          label="Fakturarunde"
-          placeholder={batches.isLoading ? "Laster …" : "Velg runde"}
-          data={(batches.data ?? []).map((candidate) => ({
-            value: candidate.prefix,
-            label: batchLabel(candidate),
-          }))}
-          value={batch ?? null}
-          onChange={selectBatch}
-          searchable
-          allowDeselect={false}
-          w={{ base: "100%", sm: 340 }}
-        />
-        <TextInput
-          label="Søk"
-          aria-label="Søk i fakturarunden"
-          placeholder="Navn eller fakturanummer"
-          leftSection={<IconSearch size={16} />}
-          value={search}
-          onChange={(event) => setSearch(event.currentTarget.value)}
-          w={{ base: "100%", sm: 260 }}
-        />
-      </Group>
+      <Select
+        label="Fakturarunde"
+        placeholder={batches.isLoading ? "Laster …" : "Velg runde"}
+        data={(batches.data ?? []).map((candidate) => ({
+          value: candidate.prefix,
+          label: batchLabel(candidate),
+        }))}
+        value={batch ?? null}
+        onChange={selectBatch}
+        searchable
+        allowDeselect={false}
+        w={{ base: "100%", sm: 340 }}
+      />
       <Chip.Group
         multiple
         value={statuses}
@@ -126,7 +113,6 @@ export default function InvoiceOverview() {
       <InvoiceGrid
         rows={visibleRows}
         loading={batches.isLoading || invoices.isLoading}
-        quickFilterText={search}
         onOpen={openInvoice}
         onSelectionChange={setSelectedIds}
       />

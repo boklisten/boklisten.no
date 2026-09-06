@@ -40,14 +40,12 @@ function StatusCell({ value }: ICellRendererParams<InvoiceListRow, InvoiceListRo
 export default function InvoiceGrid({
   rows,
   loading,
-  quickFilterText,
   height = "calc(100vh - 340px)",
   onOpen,
   onSelectionChange,
 }: {
   rows: InvoiceListRow[];
   loading: boolean;
-  quickFilterText?: string;
   height?: string;
   onOpen?: (invoiceId: string) => void;
   onSelectionChange?: (invoiceIds: string[]) => void;
@@ -115,7 +113,6 @@ export default function InvoiceGrid({
         getRowId={({ data }) => data.id}
         localeText={AG_GRID_LOCALE_NO}
         loading={loading}
-        quickFilterText={quickFilterText ?? ""}
         rowStyle={onOpen ? { cursor: "pointer" } : undefined}
         onCellClicked={onCellClicked}
         rowSelection={

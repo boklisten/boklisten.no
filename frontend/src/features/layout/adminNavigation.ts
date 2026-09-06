@@ -85,7 +85,7 @@ export const ADMIN_NAV_SECTIONS = [
     links: [
       {
         label: "Faktura",
-        description: "Se og opprett fakturaer",
+        description: "Opprett, se og eksporter fakturaer",
         to: "/admin/faktura",
         icon: IconFileDollar,
       },
