@@ -41,6 +41,8 @@ export default await Env.create(new URL("../", import.meta.url), {
   VIPPS_MT_SUBSCRIPTION_KEY: Env.schema.string(),
   SENDGRID_API_KEY: Env.schema.string(),
   SENDGRID_WEBHOOK_PUBLIC_KEY: Env.schema.string.optional(),
+  /** Dedicated key with only the "Email Address Validation" scope; form feedback is skipped without it. */
+  SENDGRID_EMAIL_VALIDATION_API_KEY: Env.schema.string.optional(),
   TWILIO_SMS_AUTH_TOKEN: Env.schema.string(),
   TWILIO_SMS_SID: Env.schema.string(),
   BRING_API_KEY: Env.schema.string(),

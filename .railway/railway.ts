@@ -72,6 +72,7 @@ export default defineRailway((ctx) => {
       LOG_LEVEL: preserve(),
       REFRESH_TOKEN_SECRET: preserve(),
       SENDGRID_API_KEY: preserve(),
+      SENDGRID_EMAIL_VALIDATION_API_KEY: preserve(),
       SENDGRID_WEBHOOK_PUBLIC_KEY: preserve(),
       SESSION_SECRET: preserve(),
       TWILIO_SMS_AUTH_TOKEN: preserve(),

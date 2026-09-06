@@ -336,6 +336,12 @@ const routes = {
     tokens: [{"old":"/email_verification/:id","type":0,"val":"email_verification","end":""},{"old":"/email_verification/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['email_verification.verify']['types'],
   },
+  'email_validation.validate': {
+    methods: ["POST"],
+    pattern: '/v2/email_validation',
+    tokens: [{"old":"/v2/email_validation","type":0,"val":"v2","end":""},{"old":"/v2/email_validation","type":0,"val":"email_validation","end":""}],
+    types: placeholder as Registry['email_validation.validate']['types'],
+  },
   'public_blid_lookup.lookup': {
     methods: ["GET","HEAD"],
     pattern: '/public_blid_lookup/:blid',

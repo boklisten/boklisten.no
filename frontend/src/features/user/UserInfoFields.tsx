@@ -42,7 +42,7 @@ export const userInfoFieldDefaultValues: UserInfoFieldValues = {
 const UserInfoFields = withFieldGroup({
   defaultValues: userInfoFieldDefaultValues,
   props: {
-    perspective: "personal",
+    perspective: "personal" as "personal" | "administrate",
   },
   render: ({ group, perspective }) => (
     <>
@@ -132,6 +132,7 @@ const UserInfoFields = withFieldGroup({
                       label="Foresatt sin e-post"
                       placeholder="reodor.felgen@gmail.com"
                       autoComplete="section-guardian email"
+                      deliverabilityFeedback={{ source: "guardian", perspective }}
                     />
                   )}
                 </group.AppField>

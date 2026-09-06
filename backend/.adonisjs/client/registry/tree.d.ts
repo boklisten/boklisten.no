@@ -93,6 +93,9 @@ export interface ApiDefinition {
     send: typeof routes['email_verification.send']
     verify: typeof routes['email_verification.verify']
   }
+  emailValidation: {
+    validate: typeof routes['email_validation.validate']
+  }
   publicBlidLookup: {
     lookup: typeof routes['public_blid_lookup.lookup']
   }

@@ -29,6 +29,7 @@ export const controllers = {
   CustomerItems: () => import('#controllers/customer_items_controller'),
   Dispatch: () => import('#controllers/dispatch_controller'),
   EditableTexts: () => import('#controllers/editable_texts_controller'),
+  EmailValidation: () => import('#controllers/email_validation_controller'),
   EmailVerification: () => import('#controllers/email_verification_controller'),
   Handout: () => import('#controllers/handout_controller'),
   Invoices: () => import('#controllers/invoices_controller'),

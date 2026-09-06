@@ -117,7 +117,11 @@ export default function SignupForm() {
           onBlur: ({ value }) => emailFieldValidator(value, "personal"),
         }}
       >
-        {(field) => <field.EmailField />}
+        {(field) => (
+          <field.EmailField
+            deliverabilityFeedback={{ source: "signup", perspective: "personal" }}
+          />
+        )}
       </form.AppField>
       <form.Subscribe selector={(state) => state.values.email}>
         {(email) => (

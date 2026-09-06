@@ -59,6 +59,7 @@ export type ScannedRoutes = {
     'bokflyt.contact': { paramsTuple?: []; params?: {} }
     'email_verification.send': { paramsTuple?: []; params?: {} }
     'email_verification.verify': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'email_validation.validate': { paramsTuple?: []; params?: {} }
     'public_blid_lookup.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'blid_search.search': { paramsTuple?: []; params?: {} }
     'blid_search.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
@@ -411,6 +412,7 @@ export type ScannedRoutes = {
     'questions_and_answers.store': { paramsTuple?: []; params?: {} }
     'bokflyt.contact': { paramsTuple?: []; params?: {} }
     'email_verification.send': { paramsTuple?: []; params?: {} }
+    'email_validation.validate': { paramsTuple?: []; params?: {} }
     'matches.notify': { paramsTuple?: []; params?: {} }
     'matches.transfer_item': { paramsTuple?: []; params?: {} }
     'matches.send_to_stand': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }

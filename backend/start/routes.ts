@@ -3,7 +3,7 @@ import router from "@adonisjs/core/services/router";
 import { controllers } from "#generated/controllers";
 import CollectionEndpoint from "#services/legacy/collection-endpoint/collection-endpoint";
 import BlCollections from "#services/legacy/collections/bl-collections";
-import { throttle } from "#start/limiter";
+import { emailValidationThrottle, throttle } from "#start/limiter";
 
 /**
  * static
@@ -207,6 +207,13 @@ router.post("/bokflyt/contact", [controllers.Bokflyt, "contact"]).use(throttle);
 router.post("/email_verification", [controllers.EmailVerification, "send"]);
 
 router.get("/email_verification/:id", [controllers.EmailVerification, "verify"]);
+
+/**
+ * email validation (advisory deliverability feedback in forms)
+ */
+router
+  .post("/v2/email_validation", [controllers.EmailValidation, "validate"])
+  .use(emailValidationThrottle);
 
 /**
  * public blid lookup

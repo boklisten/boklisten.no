@@ -142,6 +142,7 @@ export default function AdministrateUserForm({
           >
             {(field) => (
               <field.EmailField
+                deliverabilityFeedback={{ source: "administrate", perspective: "administrate" }}
                 rightSection={
                   <Tooltip label={emailVerified ? "Bekreftet" : "Ikke bekreftet"}>
                     {emailVerified ? (

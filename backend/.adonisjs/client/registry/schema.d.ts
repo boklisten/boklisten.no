@@ -667,6 +667,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/email_verification_controller').default['verify']>>>
     }
   }
+  'email_validation.validate': {
+    methods: ["POST"]
+    pattern: '/v2/email_validation'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/email_validation').emailValidationValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/email_validation').emailValidationValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/email_validation_controller').default['validate']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/email_validation_controller').default['validate']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'public_blid_lookup.lookup': {
     methods: ["GET","HEAD"]
     pattern: '/public_blid_lookup/:blid'
