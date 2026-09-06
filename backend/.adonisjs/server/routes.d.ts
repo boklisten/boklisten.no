@@ -136,6 +136,15 @@ export type ScannedRoutes = {
     'items.get_all_for_admin': { paramsTuple?: []; params?: {} }
     'items.create': { paramsTuple?: []; params?: {} }
     'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invoices.batches': { paramsTuple?: []; params?: {} }
+    'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
+    'invoices.generate': { paramsTuple?: []; params?: {} }
+    'invoices.create_company_invoice': { paramsTuple?: []; params?: {} }
+    'invoices.export': { paramsTuple?: []; params?: {} }
+    'invoices.list': { paramsTuple?: []; params?: {} }
+    'invoices.get': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
+    'invoices.set_status': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
+    'invoices.set_line_cancelled': { paramsTuple: [ParamValue,ParamValue]; params: {'invoiceId': ParamValue,'lineIndex': ParamValue} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'message_logs.customer_log': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
@@ -248,6 +257,10 @@ export type ScannedRoutes = {
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'items.get_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
     'items.get_all_for_admin': { paramsTuple?: []; params?: {} }
+    'invoices.batches': { paramsTuple?: []; params?: {} }
+    'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
+    'invoices.list': { paramsTuple?: []; params?: {} }
+    'invoices.get': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'message_logs.customer_log': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'message_logs.feed': { paramsTuple?: []; params?: {} }
@@ -341,6 +354,10 @@ export type ScannedRoutes = {
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'items.get_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
     'items.get_all_for_admin': { paramsTuple?: []; params?: {} }
+    'invoices.batches': { paramsTuple?: []; params?: {} }
+    'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
+    'invoices.list': { paramsTuple?: []; params?: {} }
+    'invoices.get': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'dispatch.get_email_templates': { paramsTuple?: []; params?: {} }
     'message_logs.customer_log': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'message_logs.feed': { paramsTuple?: []; params?: {} }
@@ -420,6 +437,9 @@ export type ScannedRoutes = {
     'companies.add_company': { paramsTuple?: []; params?: {} }
     'opening_hours.add': { paramsTuple?: []; params?: {} }
     'items.create': { paramsTuple?: []; params?: {} }
+    'invoices.generate': { paramsTuple?: []; params?: {} }
+    'invoices.create_company_invoice': { paramsTuple?: []; params?: {} }
+    'invoices.export': { paramsTuple?: []; params?: {} }
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'webhooks.sendgrid_events': { paramsTuple?: []; params?: {} }
     'webhooks.twilio_sms_event': { paramsTuple: [ParamValue]; params: {'messageId': ParamValue} }
@@ -459,6 +479,8 @@ export type ScannedRoutes = {
     'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'order_history.update_branch': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invoices.set_status': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
+    'invoices.set_line_cancelled': { paramsTuple: [ParamValue,ParamValue]; params: {'invoiceId': ParamValue,'lineIndex': ParamValue} }
     'collection.customeritems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.orders.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'collection.orders.operation.place.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { jsonToCsv } from "@/features/reports/jsonToCsv";
+import { downloadTextFile } from "@/shared/utils/downloadTextFile";
 import { showErrorNotification } from "@/shared/utils/notifications";
 
 interface UseReportDownloadOptions {
@@ -20,16 +21,8 @@ export default function useReportDownload({
     setIsLoading(true);
     try {
       const rows = await fetchRows();
-      const csv = jsonToCsv(rows);
-      const blob = new Blob([`﻿${csv}`], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = filename;
-      document.body.append(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
+      // The BOM makes Excel read the file as UTF-8.
+      downloadTextFile(filename, `﻿${jsonToCsv(rows)}`);
     } catch {
       showErrorNotification(errorMessage);
     }

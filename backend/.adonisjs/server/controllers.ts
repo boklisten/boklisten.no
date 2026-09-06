@@ -31,6 +31,7 @@ export const controllers = {
   EditableTexts: () => import('#controllers/editable_texts_controller'),
   EmailVerification: () => import('#controllers/email_verification_controller'),
   Handout: () => import('#controllers/handout_controller'),
+  Invoices: () => import('#controllers/invoices_controller'),
   Items: () => import('#controllers/items_controller'),
   MatchRounds: () => import('#controllers/match_rounds_controller'),
   MatchStatistics: () => import('#controllers/match_statistics_controller'),

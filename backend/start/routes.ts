@@ -389,6 +389,22 @@ router.post("/v2/admin/items", [controllers.Items, "create"]);
 router.patch("/v2/admin/items/:id", [controllers.Items, "update"]);
 
 /**
+ * Invoices
+ */
+router.get("/v2/admin/invoices/batches", [controllers.Invoices, "batches"]);
+router.get("/v2/admin/invoices/generation_defaults", [controllers.Invoices, "generationDefaults"]);
+router.post("/v2/admin/invoices/generate", [controllers.Invoices, "generate"]);
+router.post("/v2/admin/invoices/company", [controllers.Invoices, "createCompanyInvoice"]);
+router.post("/v2/admin/invoices/export", [controllers.Invoices, "export"]);
+router.get("/v2/admin/invoices", [controllers.Invoices, "list"]);
+router.get("/v2/admin/invoices/:invoiceId", [controllers.Invoices, "get"]);
+router.patch("/v2/admin/invoices/:invoiceId/status", [controllers.Invoices, "setStatus"]);
+router.patch("/v2/admin/invoices/:invoiceId/lines/:lineIndex", [
+  controllers.Invoices,
+  "setLineCancelled",
+]);
+
+/**
  * Dispatch
  */
 router.get("/dispatch/email_templates", [controllers.Dispatch, "getEmailTemplates"]);

@@ -1,6 +1,7 @@
-import { Container, Stack, Text, Title } from "@mantine/core";
+import { Container, Group, Stack, Text, Title } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
 
+import LegacyAppLink from "@/features/auth-linker/LegacyAppLink";
 import AdminBlidSearchResult from "@/features/blid-search/AdminBlidSearchResult";
 import CollectionView from "@/features/bulk-collection/CollectionView";
 import useCollectionSession from "@/features/bulk-collection/useCollectionSession";
@@ -84,10 +85,13 @@ function KassePage() {
   return (
     <Container>
       <Stack>
-        <Stack gap={4}>
-          <Title>{KASSE_TITLE}</Title>
-          <Text c="dimmed">{KASSE_DESCRIPTION}</Text>
-        </Stack>
+        <Group justify="space-between" align="flex-start" wrap="wrap">
+          <Stack gap={4}>
+            <Title>{KASSE_TITLE}</Title>
+            <Text c="dimmed">{KASSE_DESCRIPTION}</Text>
+          </Stack>
+          <LegacyAppLink path="cart" label="Gå til gammel handlekurv" />
+        </Group>
         <KasseModeControl value={mode} onChange={selectMode} />
         <SearchSpotlight kind={config.search} onSelect={(code) => void scanner.submitCode(code)} />
         <KasseControls

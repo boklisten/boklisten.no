@@ -1,11 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import RedirectToBlAdmin from "@/features/auth-linker/RedirectToBlAdmin";
+
+import AuthGuard from "@/features/auth/AuthGuard";
+import InvoiceManager from "@/features/invoices/InvoiceManager";
+import { validateInvoiceSearch } from "@/features/invoices/invoiceParams";
+import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(administrasjon)/admin/faktura")({
+  validateSearch: validateInvoiceSearch,
+  head: () =>
+    seo({
+      title: "Faktura | bl-admin",
+    }),
   component: InvoicesPage,
 });
 
 function InvoicesPage() {
-  // apply auth guard once implemented       <AuthGuard requiredPermission={USER_PERMISSION.ADMIN} />
-  return <RedirectToBlAdmin path="invoices" />;
+  return (
+    <AuthGuard requiredPermission="admin">
+      <InvoiceManager />
+    </AuthGuard>
+  );
 }

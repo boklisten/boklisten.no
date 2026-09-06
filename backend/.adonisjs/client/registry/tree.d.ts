@@ -214,6 +214,17 @@ export interface ApiDefinition {
     create: typeof routes['items.create']
     update: typeof routes['items.update']
   }
+  invoices: {
+    batches: typeof routes['invoices.batches']
+    generationDefaults: typeof routes['invoices.generation_defaults']
+    generate: typeof routes['invoices.generate']
+    createCompanyInvoice: typeof routes['invoices.create_company_invoice']
+    export: typeof routes['invoices.export']
+    list: typeof routes['invoices.list']
+    get: typeof routes['invoices.get']
+    setStatus: typeof routes['invoices.set_status']
+    setLineCancelled: typeof routes['invoices.set_line_cancelled']
+  }
   dispatch: {
     getEmailTemplates: typeof routes['dispatch.get_email_templates']
     createDispatch: typeof routes['dispatch.create_dispatch']

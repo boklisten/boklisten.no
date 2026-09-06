@@ -1591,6 +1591,114 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/items_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'invoices.batches': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/invoices/batches'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['batches']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['batches']>>>
+    }
+  }
+  'invoices.generation_defaults': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/invoices/generation_defaults'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/invoices').invoiceGenerationDefaultsValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['generationDefaults']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['generationDefaults']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'invoices.generate': {
+    methods: ["POST"]
+    pattern: '/v2/admin/invoices/generate'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/invoices').invoiceGenerationValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/invoices').invoiceGenerationValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['generate']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['generate']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'invoices.create_company_invoice': {
+    methods: ["POST"]
+    pattern: '/v2/admin/invoices/company'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/invoices').companyInvoiceValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/invoices').companyInvoiceValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['createCompanyInvoice']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['createCompanyInvoice']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'invoices.export': {
+    methods: ["POST"]
+    pattern: '/v2/admin/invoices/export'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/invoices').invoiceExportValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/invoices').invoiceExportValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['export']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['export']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'invoices.list': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/invoices'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/invoices').invoiceBatchQueryValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['list']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['list']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'invoices.get': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/admin/invoices/:invoiceId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { invoiceId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['get']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['get']>>>
+    }
+  }
+  'invoices.set_status': {
+    methods: ["PATCH"]
+    pattern: '/v2/admin/invoices/:invoiceId/status'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/invoices').invoiceStatusValidator)>>
+      paramsTuple: [ParamValue]
+      params: { invoiceId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/invoices').invoiceStatusValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['setStatus']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['setStatus']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'invoices.set_line_cancelled': {
+    methods: ["PATCH"]
+    pattern: '/v2/admin/invoices/:invoiceId/lines/:lineIndex'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/invoices').invoiceLineCancelValidator)>>
+      paramsTuple: [ParamValue, ParamValue]
+      params: { invoiceId: ParamValue; lineIndex: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/invoices').invoiceLineCancelValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['setLineCancelled']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['setLineCancelled']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'dispatch.get_email_templates': {
     methods: ["GET","HEAD"]
     pattern: '/dispatch/email_templates'
