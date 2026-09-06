@@ -135,14 +135,12 @@ GitHub Actions runs: format check → typecheck → lint → build backend → b
 
 ## Deployment
 
-Both services deploy to **Railway** via per-service config-as-code:
+Both environments deploy to **Railway**. The whole project (all services, databases, volumes, domains and variable names) is described in `.railway/railway.ts` (Railway Infrastructure as Code); differences between staging and production are branches on `ctx.isEnvironment("production")` inside that file. Only deliberately chosen settings are listed there; everything else uses Railway's defaults.
 
-- `frontend/railway.json` → frontend service (Service Settings → Config-as-code Path: `/frontend/railway.json`)
-- `backend/railway.json` → backend service (Service Settings → Config-as-code Path: `/backend/railway.json`)
-
-Both services have `root_dir` empty so Bun workspace deps resolve at build time. Both pinned to `europe-west4-drams3a` (Amsterdam). Staging is serverless (`sleepApplication: true`); production stays warm. Backend runs `bun migrate:backend` via `preDeployCommand` on every deploy in every environment.
-
-Custom domains and env vars (e.g. `VITE_API_URL`, `POSTGRES_URL`) are dashboard-only — they cannot be set in `railway.json`.
+- `railway config plan` / `railway config apply` act on the environment this directory is linked to (`railway environment link staging|production`). Never run `apply` without the user's explicit go-ahead.
+- Railway does not read `.railway/railway.ts` when a commit is pushed. `.github/workflows/railway.yml` runs `railway config apply` on pushes to `main` (staging) and `production`, using a per-environment project token from the GitHub environment of the same name. Destructive changes fail there on purpose and must be applied by hand.
+- Both services keep an empty root directory so Bun workspace deps resolve at build time, are pinned to `europe-west4-drams3a` (Amsterdam), and staging sleeps when idle while production stays warm. Backend runs `bun migrate:backend` as a pre-deploy command on every deploy in every environment.
+- Secret values are never written to the file (`preserve()`); change them in the Railway dashboard.
 
 ## Key External Integrations
 

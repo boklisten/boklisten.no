@@ -1,2 +1,4 @@
 [install]
 minimumReleaseAge = 259200
+# The Railway CLI must track Railway's server; older patch versions have applied wrong IaC plans.
+minimumReleaseAgeExcludes = ["@railway/cli"]
