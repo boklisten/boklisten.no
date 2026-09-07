@@ -612,15 +612,13 @@ test.group("OrderHistoryService.updateItemDeadline()", (group) => {
   group.each.setup(() => {
     sandbox = createSandbox();
     order = makeOrder({ id: ORDER, orderItems: [rentItem({ item: ITEM })] });
-    updateMany = sandbox
-      .stub(StorageService.Orders, "updateMany")
-      .resolves({
-        matchedCount: 1,
-        modifiedCount: 1,
-        acknowledged: true,
-        upsertedCount: 0,
-        upsertedId: null,
-      });
+    updateMany = sandbox.stub(StorageService.Orders, "updateMany").resolves({
+      matchedCount: 1,
+      modifiedCount: 1,
+      acknowledged: true,
+      upsertedCount: 0,
+      upsertedId: null,
+    });
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
     sandbox.stub(StorageService.Orders, "getOrNull").callsFake(() => Promise.resolve(order));
   });
