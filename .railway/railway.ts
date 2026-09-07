@@ -31,8 +31,8 @@ export default defineRailway((ctx) => {
     mongoDb.deploy = { sleepApplication: true };
   }
 
-  const postgresVolume = volume("postgres-volume", { region: REGION, sizeMB: 20_000 });
-  const mongodbVolume = volume("mongodb-volume", { region: REGION, sizeMB: 5000 });
+  const postgresVolume = volume("postgres-volume", { region: REGION, sizeMB: 50_000 });
+  const mongodbVolume = volume("mongodb-volume", { region: REGION, sizeMB: 20_000 });
 
   const frontend = service("boklisten.no", {
     source: github(MONOREPO, { branch, checkSuites: true }),
