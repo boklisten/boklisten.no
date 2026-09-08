@@ -1,5 +1,6 @@
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
+import { isOpenOrderItem } from "@boklisten/backend/shared/order/open-order-item";
 import type { Order } from "@boklisten/backend/shared/order/order";
 import type { OrderItem } from "@boklisten/backend/shared/order/order-item/order-item";
 
@@ -17,28 +18,19 @@ export interface PeerBook {
   personName: string;
 }
 
-function isOpenCustomerOrder(order: Order) {
-  return order.byCustomer && !order.handoutByDelivery;
-}
-
-function isOpenOrderItem(orderItem: OrderItem) {
-  return (
-    !orderItem.movedToOrder &&
-    !orderItem.handout &&
-    (orderItem.type === "rent" || orderItem.type === "partly-payment")
-  );
-}
-
-export function calculateUnfulfilledOrderItems(orders: Order[]): OrderItem[] {
+/**
+ * Any placed order may hold books still to be handed out: the customer's own, and the ones the
+ * stand wrote when it moved an order to another branch or period without handing out.
+ */
+function calculateUnfulfilledOrderItems(orders: Order[]): OrderItem[] {
   return orders
-    .filter(isOpenCustomerOrder)
+    .filter((order) => order.placed)
     .flatMap((order) => order.orderItems.filter(isOpenOrderItem));
 }
 
 export interface OpenOrderInfo {
   orderId: string;
-  /** Whether the customer has paid for it. */
-  paid: boolean;
+  title: string;
   type: OrderItem["type"];
   /** The order's branch, shared by every book in it. */
   branchId: string;
@@ -49,11 +41,11 @@ export interface OpenOrderInfo {
 /** The open order behind each unfulfilled item. */
 export function buildOpenOrderInfo(orders: Order[]): Map<string, OpenOrderInfo> {
   const openOrderInfo = new Map<string, OpenOrderInfo>();
-  for (const order of orders.filter(isOpenCustomerOrder)) {
+  for (const order of orders.filter((placedOrder) => placedOrder.placed)) {
     for (const orderItem of order.orderItems.filter(isOpenOrderItem)) {
       openOrderInfo.set(orderItem.item, {
         orderId: order.id,
-        paid: order.amount !== 0,
+        title: orderItem.title,
         type: orderItem.type,
         branchId: order.branch,
         deadline: orderItem.info?.to,

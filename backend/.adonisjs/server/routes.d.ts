@@ -46,7 +46,6 @@ export type ScannedRoutes = {
     'orders.get_open_orders': { paramsTuple?: []; params?: {} }
     'orders.get_placed_orders': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'orders.cancel_order_item': { paramsTuple?: []; params?: {} }
-    'orders.cancel_order_item_as_employee': { paramsTuple?: []; params?: {} }
     'editable_texts.get': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'editable_texts.get_all': { paramsTuple?: []; params?: {} }
     'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -122,9 +121,10 @@ export type ScannedRoutes = {
     'checkout.confirm_checkout': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.handle_vipps_callback': { paramsTuple?: []; params?: {} }
     'checkout.poll_payment': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
-    'stand_checkout.start': { paramsTuple?: []; params?: {} }
-    'stand_checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
-    'stand_checkout.cancel': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'stand_cart.resolve_line': { paramsTuple?: []; params?: {} }
+    'stand_cart.checkout': { paramsTuple?: []; params?: {} }
+    'stand_cart.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'stand_cart.cancel': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'subjects.get_branch_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_items.get_branch_items': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_items.set_branch_items': { paramsTuple?: []; params?: {} }
@@ -158,7 +158,6 @@ export type ScannedRoutes = {
     'message_logs.sendouts': { paramsTuple?: []; params?: {} }
     'webhooks.sendgrid_events': { paramsTuple?: []; params?: {} }
     'webhooks.twilio_sms_event': { paramsTuple: [ParamValue]; params: {'messageId': ParamValue} }
-    'handout.handout': { paramsTuple?: []; params?: {} }
     'bulk_collection.lookup': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'bulk_collection.collect': { paramsTuple?: []; params?: {} }
     'reports.get_customer_items_report': { paramsTuple?: []; params?: {} }
@@ -252,7 +251,7 @@ export type ScannedRoutes = {
     'order_history.get_my_orders': { paramsTuple?: []; params?: {} }
     'order_history.get_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'checkout.poll_payment': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
-    'stand_checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'stand_cart.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'subjects.get_branch_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_items.get_branch_items': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'postal.lookup_postal_code': { paramsTuple: [ParamValue]; params: {'postalCode': ParamValue} }
@@ -349,7 +348,7 @@ export type ScannedRoutes = {
     'order_history.get_my_orders': { paramsTuple?: []; params?: {} }
     'order_history.get_for_customer': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'checkout.poll_payment': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
-    'stand_checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'stand_cart.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'subjects.get_branch_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_items.get_branch_items': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'postal.lookup_postal_code': { paramsTuple: [ParamValue]; params: {'postalCode': ParamValue} }
@@ -411,7 +410,6 @@ export type ScannedRoutes = {
     'branch_subjects.import_subjects': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.cancel_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'orders.cancel_order_item': { paramsTuple?: []; params?: {} }
-    'orders.cancel_order_item_as_employee': { paramsTuple?: []; params?: {} }
     'questions_and_answers.store': { paramsTuple?: []; params?: {} }
     'bokflyt.contact': { paramsTuple?: []; params?: {} }
     'email_verification.send': { paramsTuple?: []; params?: {} }
@@ -437,8 +435,9 @@ export type ScannedRoutes = {
     'checkout.initialize_checkout': { paramsTuple?: []; params?: {} }
     'checkout.confirm_checkout': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.handle_vipps_callback': { paramsTuple?: []; params?: {} }
-    'stand_checkout.start': { paramsTuple?: []; params?: {} }
-    'stand_checkout.cancel': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'stand_cart.resolve_line': { paramsTuple?: []; params?: {} }
+    'stand_cart.checkout': { paramsTuple?: []; params?: {} }
+    'stand_cart.cancel': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'branch_items.set_branch_items': { paramsTuple?: []; params?: {} }
     'companies.add_company': { paramsTuple?: []; params?: {} }
     'opening_hours.add': { paramsTuple?: []; params?: {} }
@@ -449,7 +448,6 @@ export type ScannedRoutes = {
     'dispatch.create_dispatch': { paramsTuple?: []; params?: {} }
     'webhooks.sendgrid_events': { paramsTuple?: []; params?: {} }
     'webhooks.twilio_sms_event': { paramsTuple: [ParamValue]; params: {'messageId': ParamValue} }
-    'handout.handout': { paramsTuple?: []; params?: {} }
     'bulk_collection.collect': { paramsTuple?: []; params?: {} }
     'collection.customeritems.operation.generate-report.post': { paramsTuple?: []; params?: {} }
     'collection.deliveries.post': { paramsTuple?: []; params?: {} }

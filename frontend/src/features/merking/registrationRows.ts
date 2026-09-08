@@ -53,11 +53,12 @@ export function blidCountLabel(count: number): string {
 
 /** Why the batch cannot be confirmed yet, or null when it can. */
 export function describeBlocker(rows: ScannedBlidRow[], book: SelectedBook | null): string | null {
+  // Worded as what is missing, not as the ask: the cards above already say what to scan
   if (book === null) {
-    return "Skann bokas ISBN.";
+    return "Ingen bok er valgt.";
   }
   if (rows.length === 0) {
-    return "Skann unik ID på hver bok.";
+    return "Ingen unike IDer er skannet.";
   }
   const states = new Set(rows.map((row) => rowState(row, book)));
   if (states.has("checking")) {

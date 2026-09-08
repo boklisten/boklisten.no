@@ -71,7 +71,6 @@ export interface ApiDefinition {
     getOpenOrders: typeof routes['orders.get_open_orders']
     getPlacedOrders: typeof routes['orders.get_placed_orders']
     cancelOrderItem: typeof routes['orders.cancel_order_item']
-    cancelOrderItemAsEmployee: typeof routes['orders.cancel_order_item_as_employee']
   }
   editableTexts: {
     get: typeof routes['editable_texts.get']
@@ -188,10 +187,11 @@ export interface ApiDefinition {
     handleVippsCallback: typeof routes['checkout.handle_vipps_callback']
     pollPayment: typeof routes['checkout.poll_payment']
   }
-  standCheckout: {
-    start: typeof routes['stand_checkout.start']
-    status: typeof routes['stand_checkout.status']
-    cancel: typeof routes['stand_checkout.cancel']
+  standCart: {
+    resolveLine: typeof routes['stand_cart.resolve_line']
+    checkout: typeof routes['stand_cart.checkout']
+    status: typeof routes['stand_cart.status']
+    cancel: typeof routes['stand_cart.cancel']
   }
   subjects: {
     getBranchSubjects: typeof routes['subjects.get_branch_subjects']
@@ -245,9 +245,6 @@ export interface ApiDefinition {
   webhooks: {
     sendgridEvents: typeof routes['webhooks.sendgrid_events']
     twilioSmsEvent: typeof routes['webhooks.twilio_sms_event']
-  }
-  handout: {
-    handout: typeof routes['handout.handout']
   }
   bulkCollection: {
     lookup: typeof routes['bulk_collection.lookup']

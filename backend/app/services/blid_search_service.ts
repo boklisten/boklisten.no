@@ -1,8 +1,8 @@
-import { ObjectId } from "mongodb";
+import type { ObjectId } from "mongodb";
 
-import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
 import { ActiveItemMonitoring, FALLBACK_BRANCH_NAME } from "#services/active_item_monitoring";
+import { ActiveItemCorrections } from "#services/active_item_corrections";
 import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { isMonitored } from "#services/employee_monitoring_service";
@@ -654,10 +654,6 @@ async function fetchOrders(blid: string, customerItems: CustomerItem[]): Promise
 
 export const BlidSearchService = {
   /**
-   * Correct the deadline and/or handout branch on an actively held customer item. A deliberate
-   * data correction: only the customer item is touched, the orders behind it stay as they were.
-   */
-  /**
    * Corrects the deadline and/or handout branch of an active loan. Any employee may do it; the
    * change is reported to the administrator afterwards unless the employee is an admin.
    */
@@ -673,29 +669,11 @@ export const BlidSearchService = {
     },
     employee: MonitoredEmployee,
   ): Promise<void> {
-    // Read before writing so the report can say what the values were.
-    const previous = await StorageService.CustomerItems.getOrNull(customerItemId);
-    const set: Record<string, unknown> = { lastUpdated: new Date() };
-    if (deadline) {
-      set["deadline"] = new Date(deadline);
-    }
-    if (branchId) {
-      // handoutInfo may be missing entirely on legacy items; set both keys so the pair
-      // stays coherent.
-      set["handoutInfo.handoutBy"] = "branch";
-      set["handoutInfo.handoutById"] = new ObjectId(branchId);
-    }
-    const result = await StorageService.CustomerItems.updateMany(
-      {
-        _id: new ObjectId(customerItemId),
-        ...ACTIVE_CUSTOMER_ITEM_MATCH,
-        buyback: { $ne: true },
-      },
-      { $set: set },
-    );
-    if (result.matchedCount === 0 || !previous) {
-      throw new BadRequestException("Boka er ikke aktivt utdelt");
-    }
+    const previous = await ActiveItemCorrections.write({
+      customerItemId,
+      deadline: deadline ? new Date(deadline) : undefined,
+      branchId,
+    });
     if (!isMonitored(employee)) {
       return;
     }

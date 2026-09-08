@@ -35,7 +35,7 @@ export default function ChangeDeadlineModal({
   return (
     <Modal opened onClose={onClose} title="Endre frist">
       <Stack>
-        <MonitoringNotice>Administrator får beskjed hvis du endrer fristen.</MonitoringNotice>
+        <MonitoringNotice />
         <form.AppField name="deadline">
           {(field) => <field.DeadlinePickerField clearable={false} description={description} />}
         </form.AppField>

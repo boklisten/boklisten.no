@@ -12,8 +12,7 @@ import type {
 } from "@/features/merking/registrationRows";
 import { showBookSearch } from "@/features/kasse/kasseParams";
 import EntityLink from "@/shared/components/EntityLink";
-import ScanCodeIllustration from "@/shared/components/scanner/ScanCodeIllustration";
-import { describeScanCodeLocation } from "@/shared/utils/scanCodes";
+import ScanPrompt from "@/shared/components/scanner/ScanPrompt";
 
 function RowStatus({ state, row }: { state: RowState; row: ScannedBlidRow }) {
   const linkedTitle = row.check.status === "checked" ? row.check.linkedTo?.title : undefined;
@@ -135,15 +134,7 @@ export default function ScannedBlidList({
         {receipt !== null && <RegistrationReceipt receipt={receipt} onDismiss={onDismissReceipt} />}
 
         {rows.length === 0 && receipt === null && (
-          <Stack align="center" gap="xs" py="md">
-            <ScanCodeIllustration type="blid" scale={2} />
-            <Text ta="center" fw={500} mt="xs">
-              Skann unik ID på hver bok.
-            </Text>
-            <Text ta="center" size="sm" c="dimmed" maw={280}>
-              {describeScanCodeLocation("blid")}.
-            </Text>
-          </Stack>
+          <ScanPrompt type="blid">Skann unik ID på hver bok</ScanPrompt>
         )}
 
         {rows.length > 0 && (

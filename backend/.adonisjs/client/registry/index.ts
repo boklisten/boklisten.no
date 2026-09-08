@@ -258,12 +258,6 @@ const routes = {
     tokens: [{"old":"/v2/orders/cancel_order_item","type":0,"val":"v2","end":""},{"old":"/v2/orders/cancel_order_item","type":0,"val":"orders","end":""},{"old":"/v2/orders/cancel_order_item","type":0,"val":"cancel_order_item","end":""}],
     types: placeholder as Registry['orders.cancel_order_item']['types'],
   },
-  'orders.cancel_order_item_as_employee': {
-    methods: ["POST"],
-    pattern: '/v2/orders/cancel_order_item_as_employee',
-    tokens: [{"old":"/v2/orders/cancel_order_item_as_employee","type":0,"val":"v2","end":""},{"old":"/v2/orders/cancel_order_item_as_employee","type":0,"val":"orders","end":""},{"old":"/v2/orders/cancel_order_item_as_employee","type":0,"val":"cancel_order_item_as_employee","end":""}],
-    types: placeholder as Registry['orders.cancel_order_item_as_employee']['types'],
-  },
   'editable_texts.get': {
     methods: ["GET","HEAD"],
     pattern: '/editable_texts/:id',
@@ -714,23 +708,29 @@ const routes = {
     tokens: [{"old":"/checkout/poll/:orderId","type":0,"val":"checkout","end":""},{"old":"/checkout/poll/:orderId","type":0,"val":"poll","end":""},{"old":"/checkout/poll/:orderId","type":1,"val":"orderId","end":""}],
     types: placeholder as Registry['checkout.poll_payment']['types'],
   },
-  'stand_checkout.start': {
+  'stand_cart.resolve_line': {
     methods: ["POST"],
-    pattern: '/v2/employee/stand_checkout',
-    tokens: [{"old":"/v2/employee/stand_checkout","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_checkout","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_checkout","type":0,"val":"stand_checkout","end":""}],
-    types: placeholder as Registry['stand_checkout.start']['types'],
+    pattern: '/v2/employee/stand_cart/lines',
+    tokens: [{"old":"/v2/employee/stand_cart/lines","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_cart/lines","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_cart/lines","type":0,"val":"stand_cart","end":""},{"old":"/v2/employee/stand_cart/lines","type":0,"val":"lines","end":""}],
+    types: placeholder as Registry['stand_cart.resolve_line']['types'],
   },
-  'stand_checkout.status': {
+  'stand_cart.checkout': {
+    methods: ["POST"],
+    pattern: '/v2/employee/stand_cart/checkout',
+    tokens: [{"old":"/v2/employee/stand_cart/checkout","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_cart/checkout","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_cart/checkout","type":0,"val":"stand_cart","end":""},{"old":"/v2/employee/stand_cart/checkout","type":0,"val":"checkout","end":""}],
+    types: placeholder as Registry['stand_cart.checkout']['types'],
+  },
+  'stand_cart.status': {
     methods: ["GET","HEAD"],
-    pattern: '/v2/employee/stand_checkout/:orderId/status',
-    tokens: [{"old":"/v2/employee/stand_checkout/:orderId/status","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_checkout/:orderId/status","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_checkout/:orderId/status","type":0,"val":"stand_checkout","end":""},{"old":"/v2/employee/stand_checkout/:orderId/status","type":1,"val":"orderId","end":""},{"old":"/v2/employee/stand_checkout/:orderId/status","type":0,"val":"status","end":""}],
-    types: placeholder as Registry['stand_checkout.status']['types'],
+    pattern: '/v2/employee/stand_cart/:orderId/status',
+    tokens: [{"old":"/v2/employee/stand_cart/:orderId/status","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_cart/:orderId/status","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_cart/:orderId/status","type":0,"val":"stand_cart","end":""},{"old":"/v2/employee/stand_cart/:orderId/status","type":1,"val":"orderId","end":""},{"old":"/v2/employee/stand_cart/:orderId/status","type":0,"val":"status","end":""}],
+    types: placeholder as Registry['stand_cart.status']['types'],
   },
-  'stand_checkout.cancel': {
+  'stand_cart.cancel': {
     methods: ["POST"],
-    pattern: '/v2/employee/stand_checkout/:orderId/cancel',
-    tokens: [{"old":"/v2/employee/stand_checkout/:orderId/cancel","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_checkout/:orderId/cancel","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_checkout/:orderId/cancel","type":0,"val":"stand_checkout","end":""},{"old":"/v2/employee/stand_checkout/:orderId/cancel","type":1,"val":"orderId","end":""},{"old":"/v2/employee/stand_checkout/:orderId/cancel","type":0,"val":"cancel","end":""}],
-    types: placeholder as Registry['stand_checkout.cancel']['types'],
+    pattern: '/v2/employee/stand_cart/:orderId/cancel',
+    tokens: [{"old":"/v2/employee/stand_cart/:orderId/cancel","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_cart/:orderId/cancel","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_cart/:orderId/cancel","type":0,"val":"stand_cart","end":""},{"old":"/v2/employee/stand_cart/:orderId/cancel","type":1,"val":"orderId","end":""},{"old":"/v2/employee/stand_cart/:orderId/cancel","type":0,"val":"cancel","end":""}],
+    types: placeholder as Registry['stand_cart.cancel']['types'],
   },
   'subjects.get_branch_subjects': {
     methods: ["GET","HEAD"],
@@ -929,12 +929,6 @@ const routes = {
     pattern: '/webhooks/twilio/:messageId',
     tokens: [{"old":"/webhooks/twilio/:messageId","type":0,"val":"webhooks","end":""},{"old":"/webhooks/twilio/:messageId","type":0,"val":"twilio","end":""},{"old":"/webhooks/twilio/:messageId","type":1,"val":"messageId","end":""}],
     types: placeholder as Registry['webhooks.twilio_sms_event']['types'],
-  },
-  'handout.handout': {
-    methods: ["POST"],
-    pattern: '/handout',
-    tokens: [{"old":"/handout","type":0,"val":"handout","end":""}],
-    types: placeholder as Registry['handout.handout']['types'],
   },
   'bulk_collection.lookup': {
     methods: ["GET","HEAD"],

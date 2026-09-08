@@ -84,7 +84,7 @@ export default function EditBlidModal({
           onChange={setItemId}
           allowDeselect={false}
         />
-        <MonitoringNotice>Administrator får beskjed hvis du endrer boka.</MonitoringNotice>
+        <MonitoringNotice />
         <Group>
           <Button
             loading={relinkMutation.isPending}
@@ -111,11 +111,7 @@ export default function EditBlidModal({
               ? HELD_REASON
               : "Sletter koblingen mellom den unike ID-en og boka. Kundenes historikk beholdes."}
           </Text>
-          {!held && (
-            <MonitoringNotice>
-              Administrator får beskjed hvis du sletter den unike ID-en.
-            </MonitoringNotice>
-          )}
+          {!held && <MonitoringNotice />}
           {!confirmingDelete && (
             <Group>
               <Button

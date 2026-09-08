@@ -19,7 +19,8 @@ import {
   validateKasseSearch,
 } from "@/features/kasse/kasseParams";
 import useKasseScanner from "@/features/kasse/useKasseScanner";
-import type { CodeHandler } from "@/features/kasse/useKasseScanner";
+import type { CodeChannel, CodeHandler } from "@/features/kasse/useKasseScanner";
+import useStandCart from "@/features/stand-cart/useStandCart";
 import { seo } from "@/shared/utils/seo";
 import { showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -43,6 +44,7 @@ function KassePage() {
   const { kunde, blid, visning, modus: mode } = Route.useSearch();
   const navigate = Route.useNavigate();
   const collection = useCollectionSession();
+  const cart = useStandCart(kunde ?? null);
   const config = KASSE_MODE_CONFIG[mode];
 
   const selectMode = (next: KasseMode) =>
@@ -50,10 +52,13 @@ function KassePage() {
   const showCustomer = (detailsId: string) =>
     void navigate({ search: showCustomerSearch(detailsId) });
   const showBlid = (scanned: string) => void navigate({ search: showBookSearch(scanned) });
-  const clearCustomer = () =>
+  // Deselecting the customer ends the visit: whatever was in their cart is dropped with them
+  const clearCustomer = () => {
+    cart.clear();
     void navigate({
       search: (previous) => ({ ...previous, kunde: undefined, visning: undefined }),
     });
+  };
   const clearBlid = () =>
     void navigate({ search: (previous) => ({ ...previous, blid: undefined }) });
   const selectTab = (tab: CustomerSearchTab) =>
@@ -74,7 +79,24 @@ function KassePage() {
     boksok: showBlid,
     innsamling: addToCollection,
   };
-  const scanner = useKasseScanner(mode, codeHandlers[mode]);
+  // The physical scanner reads barcodes only, so in Kunde mode a book is the most it can offer:
+  // it goes into the customer's cart, or looks the book up while no customer is on screen. A
+  // sticker it scanned that is on no book yet makes it an ISBN reader until the link is done.
+  const wedgeInKunde = (): CodeChannel => {
+    if (kunde === undefined) {
+      return { accepts: ["blid"], onCode: showBlid };
+    }
+    if (cart.cart.linking?.via === "wedge") {
+      return { accepts: ["isbn"], onCode: cart.proposeLink };
+    }
+    return { accepts: ["blid"], onCode: (scanned) => cart.addBlid(scanned, "wedge") };
+  };
+  const wedge: Record<KasseMode, CodeChannel | undefined> = {
+    kunde: wedgeInKunde(),
+    boksok: undefined,
+    innsamling: undefined,
+  };
+  const scanner = useKasseScanner(config, codeHandlers[mode], wedge[mode]);
 
   const compact: Record<KasseMode, boolean> = {
     kunde: kunde !== undefined,

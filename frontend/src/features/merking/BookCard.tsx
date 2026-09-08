@@ -2,8 +2,7 @@ import { CloseButton, Group, Paper, Stack, Text } from "@mantine/core";
 
 import StepLabel from "@/features/merking/StepLabel";
 import type { SelectedBook } from "@/features/merking/registrationRows";
-import ScanCodeIllustration from "@/shared/components/scanner/ScanCodeIllustration";
-import { describeScanCodeLocation } from "@/shared/utils/scanCodes";
+import ScanPrompt from "@/shared/components/scanner/ScanPrompt";
 
 /** The one book of the batch: an instruction until an ISBN is scanned, then the title. */
 export default function BookCard({
@@ -23,15 +22,9 @@ export default function BookCard({
           {book !== null && <CloseButton aria-label={`Fjern «${book.title}»`} onClick={onClear} />}
         </Group>
         {book === null ? (
-          <Stack align="center" gap="xs" py="md" flex={1} justify="center">
-            <ScanCodeIllustration type="isbn" scale={2} />
-            <Text ta="center" fw={500} mt="xs">
-              Skann bokas ISBN.
-            </Text>
-            <Text ta="center" size="sm" c="dimmed">
-              {describeScanCodeLocation("isbn")}.
-            </Text>
-          </Stack>
+          <ScanPrompt type="isbn" flex={1} justify="center">
+            Skann bokas ISBN
+          </ScanPrompt>
         ) : (
           <Stack gap="xs" flex={1} justify="center">
             <Text fz="lg" fw={600} lh={1.3}>

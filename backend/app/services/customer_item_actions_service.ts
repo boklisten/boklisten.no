@@ -13,15 +13,21 @@ import type { Period } from "#shared/period";
 
 export type ExtendPeriod = NonNullable<Branch["paymentInfo"]>["extendPeriods"][number];
 
-function isHandedOutWithinTheLastTwoWeeks(customerItem: CustomerItem) {
+export function isHandedOutWithinTheLastTwoWeeks(
+  customerItem: CustomerItem,
+  now: DateTime = DateTime.now(),
+) {
   const handedOutAt = customerItem.creationTime
     ? DateTime.fromJSDate(customerItem.creationTime)
-    : DateTime.now();
-  return DateTime.now() <= handedOutAt.plus({ weeks: 2 });
+    : now;
+  return now <= handedOutAt.plus({ weeks: 2 });
 }
 
-function isDeadlineWithGracePeriodExpired(customerItem: CustomerItem) {
-  const now = DateTime.now().setZone("Europe/Oslo");
+export function isDeadlineWithGracePeriodExpired(
+  customerItem: CustomerItem,
+  at: DateTime = DateTime.now(),
+) {
+  const now = at.setZone("Europe/Oslo");
 
   // December grace period: allow buyout/extension through the holidays until Jan 1 next year.
   const graceDeadline =
@@ -35,9 +41,16 @@ function isDeadlineWithGracePeriodExpired(customerItem: CustomerItem) {
   return now > graceDeadline;
 }
 
-function periodsAfterDeadline(customerItem: CustomerItem, branch: Branch): ExtendPeriod[] {
+/** The branch's extend periods that would move the deadline forward: after it, and still ahead of today. */
+function periodsAfterDeadline(
+  customerItem: CustomerItem,
+  branch: Branch,
+  now: Date,
+): ExtendPeriod[] {
   return (branch.paymentInfo?.extendPeriods ?? []).filter(
-    (period) => customerItem.deadline.getTime() < period.date.getTime(),
+    (period) =>
+      customerItem.deadline.getTime() < period.date.getTime() &&
+      now.getTime() < period.date.getTime(),
   );
 }
 
@@ -45,14 +58,22 @@ function periodsAfterDeadline(customerItem: CustomerItem, branch: Branch): Exten
  * The extend periods this book still qualifies for. Every extension counts against a period's
  * cap, whatever type it was; that is also how the order item is validated at checkout.
  */
-export function availableExtendPeriods(customerItem: CustomerItem, branch: Branch): ExtendPeriod[] {
+export function availableExtendPeriods(
+  customerItem: CustomerItem,
+  branch: Branch,
+  now: Date = new Date(),
+): ExtendPeriod[] {
   const timesExtended = customerItem.periodExtends?.length ?? 0;
-  return periodsAfterDeadline(customerItem, branch).filter(
+  return periodsAfterDeadline(customerItem, branch, now).filter(
     (period) => timesExtended < period.maxNumberOfPeriods,
   );
 }
 
-export function calculateExtensionStatus(customerItem: CustomerItem, branch: Branch | null) {
+export function calculateExtensionStatus(
+  customerItem: CustomerItem,
+  branch: Branch | null,
+  now: Date = new Date(),
+) {
   if (!branch) {
     return {
       canExtend: false,
@@ -67,14 +88,14 @@ export function calculateExtensionStatus(customerItem: CustomerItem, branch: Bra
     } as const;
   }
 
-  if (periodsAfterDeadline(customerItem, branch).length === 0) {
+  if (periodsAfterDeadline(customerItem, branch, now).length === 0) {
     return {
       canExtend: false,
       feedback: "Denne filialen tilbyr for øyeblikket ikke forlenging",
     } as const;
   }
 
-  const options = availableExtendPeriods(customerItem, branch);
+  const options = availableExtendPeriods(customerItem, branch, now);
   if (options.length === 0) {
     return {
       canExtend: false,

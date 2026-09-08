@@ -2,30 +2,18 @@ import type { ActiveCustomerItem } from "@boklisten/backend/shared/customer-item
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import {
-  Badge,
-  Box,
-  Button,
-  Card,
-  Group,
-  Skeleton,
-  Stack,
-  Table,
-  Text,
-  Tooltip,
-} from "@mantine/core";
+import { Badge, Box, Group, Skeleton, Stack, Table, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 
-import { showBookSearch } from "@/features/kasse/kasseParams";
+import { isOverdue } from "@/features/bulk-collection/deadline";
 import {
   ActiveBookBranchChip,
   ActiveBookDeadlineChip,
-  isOverdue,
 } from "@/features/customer-search/ActiveBookChips";
+import BookRowCard from "@/features/customer-search/BookRowCard";
 import { buildPeerBooks } from "@/features/customer-search/handoutBooks";
-import StandCheckoutModal from "@/features/customer-search/StandCheckoutModal";
-import type { StandCheckoutRequest } from "@/features/customer-search/StandCheckoutModal";
+import { showBookSearch } from "@/features/kasse/kasseParams";
+import AddToCartButton from "@/features/stand-cart/AddToCartButton";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";
@@ -44,57 +32,6 @@ function BlidLink({ blid }: { blid: string }) {
     >
       {blid}
     </EntityLink>
-  );
-}
-
-type BookActionType = StandCheckoutRequest["type"];
-
-const ACTION_LABELS: Record<BookActionType, string> = { extend: "Forleng", buyout: "Kjøp ut" };
-
-/** Why an action is blocked, or null when the customer could do it themselves too. */
-function blockedReason(book: ActiveCustomerItem, type: BookActionType): string | null {
-  const actions = book.actions.filter((action) => action.type === type);
-  if (actions.some((action) => action.available)) {
-    return null;
-  }
-  return actions[0]?.tooltip ?? "Ikke tilgjengelig for denne boka";
-}
-
-/**
- * The two things an employee can settle for a book on the spot. A blocked button keeps hover
- * events (data-disabled, not disabled) so the tooltip can say why.
- */
-function BookActions({
-  book,
-  onAction,
-}: {
-  book: ActiveCustomerItem;
-  onAction: (type: BookActionType) => void;
-}) {
-  return (
-    <Group gap={6} wrap="nowrap">
-      {(["extend", "buyout"] as const).map((type) => {
-        const reason = blockedReason(book, type);
-        return (
-          <Tooltip key={type} label={reason} disabled={reason === null} multiline maw={280}>
-            <Button
-              variant="light"
-              size="compact-sm"
-              data-disabled={reason !== null || undefined}
-              onClick={(event) => {
-                if (reason !== null) {
-                  event.preventDefault();
-                  return;
-                }
-                onAction(type);
-              }}
-            >
-              {ACTION_LABELS[type]}
-            </Button>
-          </Tooltip>
-        );
-      })}
-    </Group>
   );
 }
 
@@ -123,42 +60,55 @@ function buildDeliverToNames(
   return names;
 }
 
+function cartButton(customerId: string, book: ActiveCustomerItem, compact = false) {
+  return (
+    <AddToCartButton
+      customerId={customerId}
+      source={{ kind: "customerItem", customerItemId: book.id }}
+      compact={compact}
+    />
+  );
+}
+
 function BookCards({
+  customerId,
   books,
   deliverToNames,
-  onAction,
 }: {
+  customerId: string;
   books: ActiveCustomerItem[];
   deliverToNames: Map<string, string>;
-  onAction: (request: StandCheckoutRequest) => void;
 }) {
   return (
-    <Stack gap="xs" hiddenFrom="sm">
+    <Stack gap="xs" hiddenFrom="md">
       {books.map((book) => {
         const deliverToName = deliverToNames.get(book.id);
         return (
-          <Card key={book.id} withBorder radius="md" padding="sm">
-            <Text fw={600} lh={1.3}>
-              {book.title}
-            </Text>
-            {book.blid && (
-              <Group mt={2}>
-                <BlidLink blid={book.blid} />
-              </Group>
-            )}
-            {deliverToName && (
-              <Group mt={4}>
-                <PeerBadge>Leveres til {deliverToName}</PeerBadge>
-              </Group>
-            )}
-            <Group gap={6} mt={6}>
-              <ActiveBookBranchChip book={book} />
-              <ActiveBookDeadlineChip book={book} />
-            </Group>
-            <Group mt="sm">
-              <BookActions book={book} onAction={(type) => onAction({ book, type })} />
-            </Group>
-          </Card>
+          <BookRowCard
+            key={book.id}
+            title={book.title}
+            action={cartButton(customerId, book, true)}
+            notes={
+              <>
+                {book.blid && (
+                  <Group>
+                    <BlidLink blid={book.blid} />
+                  </Group>
+                )}
+                {deliverToName && (
+                  <Group>
+                    <PeerBadge>Leveres til {deliverToName}</PeerBadge>
+                  </Group>
+                )}
+              </>
+            }
+            chips={
+              <>
+                <ActiveBookBranchChip book={book} />
+                <ActiveBookDeadlineChip book={book} />
+              </>
+            }
+          />
         );
       })}
     </Stack>
@@ -166,16 +116,16 @@ function BookCards({
 }
 
 function BookTable({
+  customerId,
   books,
   deliverToNames,
-  onAction,
 }: {
+  customerId: string;
   books: ActiveCustomerItem[];
   deliverToNames: Map<string, string>;
-  onAction: (request: StandCheckoutRequest) => void;
 }) {
   return (
-    <Box visibleFrom="sm">
+    <Box visibleFrom="md">
       <Table striped>
         <Table.Thead>
           <Table.Tr>
@@ -183,7 +133,7 @@ function BookTable({
             <Table.Th>Unik ID</Table.Th>
             <Table.Th>Filial</Table.Th>
             <Table.Th>Frist</Table.Th>
-            <Table.Th>Handlinger</Table.Th>
+            <Table.Th>Handling</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
@@ -204,9 +154,7 @@ function BookTable({
                 <Table.Td>
                   <ActiveBookDeadlineChip book={book} />
                 </Table.Td>
-                <Table.Td>
-                  <BookActions book={book} onAction={(type) => onAction({ book, type })} />
-                </Table.Td>
+                <Table.Td>{cartButton(customerId, book)}</Table.Td>
               </Table.Tr>
             );
           })}
@@ -219,7 +167,6 @@ function BookTable({
 export default function ActiveBooksView({ customer }: { customer: UserDetail }) {
   const customerId = customer.id;
   const { api } = useApiClient();
-  const [checkout, setCheckout] = useState<StandCheckoutRequest | null>(null);
   const {
     data: books,
     isPending,
@@ -251,7 +198,7 @@ export default function ActiveBooksView({ customer }: { customer: UserDetail }) 
     return <InfoAlert>Kunden har ingen aktive bøker.</InfoAlert>;
   }
 
-  const overdueCount = books.filter((book) => isOverdue(book.deadline)).length;
+  const overdueCount = books.filter((book) => isOverdue(String(book.deadline))).length;
   const deliverToNames = buildDeliverToNames(books, matches ?? [], customerId);
 
   return (
@@ -266,13 +213,8 @@ export default function ActiveBooksView({ customer }: { customer: UserDetail }) 
           </Badge>
         )}
       </Group>
-      <BookCards books={books} deliverToNames={deliverToNames} onAction={setCheckout} />
-      <BookTable books={books} deliverToNames={deliverToNames} onAction={setCheckout} />
-      <StandCheckoutModal
-        request={checkout}
-        customer={customer}
-        onClose={() => setCheckout(null)}
-      />
+      <BookCards customerId={customerId} books={books} deliverToNames={deliverToNames} />
+      <BookTable customerId={customerId} books={books} deliverToNames={deliverToNames} />
     </Stack>
   );
 }

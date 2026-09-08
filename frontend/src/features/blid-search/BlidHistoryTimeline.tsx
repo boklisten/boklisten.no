@@ -4,23 +4,12 @@ import type {
   BlidParty,
 } from "@boklisten/backend/shared/blid_search";
 import { Badge, Group, Text, ThemeIcon, Timeline } from "@mantine/core";
-import {
-  IconBookDownload,
-  IconBookUpload,
-  IconBuildingStore,
-  IconCalendarDue,
-  IconCalendarPlus,
-  IconCalendarX,
-  IconCoins,
-  IconFileInvoice,
-  IconHeartHandshake,
-  IconShoppingCart,
-  IconX,
-} from "@tabler/icons-react";
+import { IconBuildingStore, IconCalendarDue } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 import { showCustomerSearch } from "@/features/kasse/kasseParams";
 import ActiveItemChips from "@/features/blid-search/ActiveItemChips";
+import { BOOK_EVENT_APPEARANCE } from "@/shared/components/bookEventAppearance";
 import EntityLink from "@/shared/components/EntityLink";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
@@ -178,18 +167,6 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
   }
 }
 
-const EVENT_APPEARANCE = {
-  handout: { icon: IconBookUpload, color: "green" },
-  return: { icon: IconBookDownload, color: "blue" },
-  "match-transfer": { icon: IconHeartHandshake, color: "violet" },
-  extend: { icon: IconCalendarPlus, color: "orange" },
-  buyout: { icon: IconShoppingCart, color: "teal" },
-  "invoice-paid": { icon: IconFileInvoice, color: "teal" },
-  buyback: { icon: IconCoins, color: "pink" },
-  cancel: { icon: IconX, color: "red" },
-  "deadline-expired": { icon: IconCalendarX, color: "red" },
-} as const satisfies Record<BlidHistoryEvent["action"], unknown>;
-
 function formatDate(iso: string): string {
   return norwegianTime(iso).format("DD.MM.YYYY");
 }
@@ -294,7 +271,7 @@ export default function BlidHistoryTimeline({
   return (
     <Timeline bulletSize={28} lineWidth={2}>
       {history.map((event, index) => {
-        const { icon: Icon, color } = EVENT_APPEARANCE[event.action];
+        const { icon: Icon, color } = BOOK_EVENT_APPEARANCE[event.action];
         return (
           <Timeline.Item
             // History is append-only and render-only, so the position identifies the row.

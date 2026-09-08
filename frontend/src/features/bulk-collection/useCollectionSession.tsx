@@ -154,9 +154,7 @@ export default function useCollectionSession(): CollectionSession {
               {bookCountLabel(overdueBooks.length)} har utløpt frist. Er du sikker på at du vil
               levere?
             </Text>
-            <MonitoringNotice>
-              Leverer du likevel, får administrator beskjed om hver bok med utløpt frist.
-            </MonitoringNotice>
+            <MonitoringNotice />
           </Stack>
         ),
         labels: { confirm: "Lever", cancel: "Avbryt" },

@@ -22,7 +22,6 @@ export const OrderService = {
         $match: {
           customer: new ObjectId(customerId),
           placed: true,
-          byCustomer: true,
         },
       },
       {
@@ -30,11 +29,14 @@ export const OrderService = {
           path: "$orderItems",
         },
       },
+      // Not handed out and not carried on into a later order. The stand's own orders count too:
+      // a book moved to another branch or period without a handout is still an open order.
       {
         $match: {
           "orderItems.type": { $in: types },
+          "orderItems.handout": { $ne: true },
+          "orderItems.delivered": { $ne: true },
           "orderItems.movedToOrder": null,
-          "orderItems.movedFromOrder": null,
         },
       },
       {

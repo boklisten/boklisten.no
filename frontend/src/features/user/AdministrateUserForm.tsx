@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { useState } from "react";
 
+import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
 import UserDangerZone from "@/features/user/UserDangerZone";
 import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
 import UserInfoFields from "@/features/user/UserInfoFields";
@@ -161,6 +162,8 @@ export default function AdministrateUserForm({
         {(field) => <field.SwitchField label="E-post bekreftet" />}
       </form.AppField>
       <Space />
+      {/* Above the customer's own details: the contract is the first thing to check on them */}
+      <SignatureStatusBanner userDetail={userDetail} inForm />
       <UserInfoFields
         perspective="administrate"
         fields={createFieldMap(defaultValues)}

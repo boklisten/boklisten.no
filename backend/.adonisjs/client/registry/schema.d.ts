@@ -511,18 +511,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['cancelOrderItem']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'orders.cancel_order_item_as_employee': {
-    methods: ["POST"]
-    pattern: '/v2/orders/cancel_order_item_as_employee'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/cancel_order_item_validator').cancelOrderItemValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/cancel_order_item_validator').cancelOrderItemValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['cancelOrderItemAsEmployee']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['cancelOrderItemAsEmployee']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
   'editable_texts.get': {
     methods: ["GET","HEAD"]
     pattern: '/editable_texts/:id'
@@ -1423,40 +1411,52 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/checkout_controller').default['pollPayment']>>>
     }
   }
-  'stand_checkout.start': {
+  'stand_cart.resolve_line': {
     methods: ["POST"]
-    pattern: '/v2/employee/stand_checkout'
+    pattern: '/v2/employee/stand_cart/lines'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/stand_checkout').startStandCheckoutValidator)>>
+      body: ExtractBody<InferInput<(typeof import('#validators/stand_cart').standCartResolveValidator)>>
       paramsTuple: []
       params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/stand_checkout').startStandCheckoutValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['start']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['start']>>> | { status: 422; response: { errors: SimpleError[] } }
+      query: ExtractQuery<InferInput<(typeof import('#validators/stand_cart').standCartResolveValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['resolveLine']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['resolveLine']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'stand_checkout.status': {
-    methods: ["GET","HEAD"]
-    pattern: '/v2/employee/stand_checkout/:orderId/status'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { orderId: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['status']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['status']>>>
-    }
-  }
-  'stand_checkout.cancel': {
+  'stand_cart.checkout': {
     methods: ["POST"]
-    pattern: '/v2/employee/stand_checkout/:orderId/cancel'
+    pattern: '/v2/employee/stand_cart/checkout'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/stand_cart').standCartCheckoutValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/stand_cart').standCartCheckoutValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['checkout']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['checkout']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'stand_cart.status': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/employee/stand_cart/:orderId/status'
     types: {
       body: {}
       paramsTuple: [ParamValue]
       params: { orderId: ParamValue }
       query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['cancel']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_checkout_controller').default['cancel']>>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['status']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['status']>>>
+    }
+  }
+  'stand_cart.cancel': {
+    methods: ["POST"]
+    pattern: '/v2/employee/stand_cart/:orderId/cancel'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { orderId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['cancel']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['cancel']>>>
     }
   }
   'subjects.get_branch_subjects': {
@@ -1853,18 +1853,6 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['twilioSmsEvent']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/webhooks_controller').default['twilioSmsEvent']>>>
-    }
-  }
-  'handout.handout': {
-    methods: ["POST"]
-    pattern: '/handout'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/handout_validator').handoutValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/handout_validator').handoutValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/handout_controller').default['handout']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/handout_controller').default['handout']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'bulk_collection.lookup': {

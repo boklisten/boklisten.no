@@ -4,6 +4,7 @@ import { IconBuildingStore, IconCalendarDue } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { isOverdue } from "@/features/bulk-collection/deadline";
 import ChipButton from "@/shared/components/ChipButton";
 import ChangeBranchModal from "@/shared/components/corrections/ChangeBranchModal";
 import ChangeDeadlineModal from "@/shared/components/corrections/ChangeDeadlineModal";
@@ -16,10 +17,6 @@ const TYPE_LABELS: Record<CustomerItemType, string> = {
   rent: "Lån",
   "partly-payment": "Delbetaling",
 };
-
-export function isOverdue(deadline: string | Date): boolean {
-  return norwegianTime(deadline).endOf("day").isBefore(norwegianTime());
-}
 
 /**
  * The write behind both chips. The book is listed by customer here, by blid in Boksøk and by
@@ -85,8 +82,8 @@ export function ActiveBookBranchChip({ book }: { book: ActiveCustomerItem }) {
 
 /**
  * When a handed-out book is due back, as an editable chip: red once the deadline has passed.
- * Unlike "Forleng", this moves the date without charging the customer, so it is monitored and
- * the modal says so before the form.
+ * Moving the date is a correction, not a priced extension, so it is monitored and the modal says
+ * so before the form.
  */
 export function ActiveBookDeadlineChip({ book }: { book: ActiveCustomerItem }) {
   const [editing, setEditing] = useState(false);
@@ -95,7 +92,7 @@ export function ActiveBookDeadlineChip({ book }: { book: ActiveCustomerItem }) {
     <>
       <ChipButton
         icon={IconCalendarDue}
-        color={isOverdue(book.deadline) ? "red" : "gray"}
+        color={isOverdue(String(book.deadline)) ? "red" : "gray"}
         title="Endre frist"
         onClick={() => setEditing(true)}
       >

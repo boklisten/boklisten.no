@@ -1,5 +1,6 @@
 import { Button, Group, Modal, Stack, TreeSelect } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { useState } from "react";
 
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
@@ -13,6 +14,7 @@ import { publicApi } from "@/shared/utils/publicApiClient";
 export default function ChangeBranchModal({
   currentBranchId,
   description,
+  consequences,
   isPending,
   onClose,
   onSubmit,
@@ -21,6 +23,8 @@ export default function ChangeBranchModal({
   currentBranchId: string | null;
   /** What the branch means for this thing, shown under the picker label. */
   description: string;
+  /** What else the change reaches, shown under the picker. */
+  consequences?: ReactNode;
   isPending: boolean;
   onClose: () => void;
   onSubmit: (branchId: string) => void;
@@ -30,7 +34,7 @@ export default function ChangeBranchModal({
   return (
     <Modal opened onClose={onClose} title="Endre filial">
       <Stack>
-        <MonitoringNotice>Administrator får beskjed hvis du endrer filialen.</MonitoringNotice>
+        <MonitoringNotice />
         <TreeSelect
           label="Filial"
           description={description}
@@ -45,6 +49,7 @@ export default function ChangeBranchModal({
           value={branches ? branchId : null}
           onChange={setBranchId}
         />
+        {consequences}
         <Group justify="flex-end">
           <Button variant="default" onClick={onClose}>
             Avbryt

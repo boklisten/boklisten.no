@@ -3,8 +3,6 @@ import { IconAlertSquareFilled, IconSquareCheckFilled } from "@tabler/icons-reac
 
 import { describeObligation, isObligationSettled } from "@/features/matches/forViewer";
 import type { ViewerObligation } from "@/features/matches/forViewer";
-import { PeerBadge } from "@/shared/components/matches/matches-helper";
-import type { ItemStatus } from "@/shared/components/matches/matches-helper";
 
 export function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: string }) {
   return (
@@ -20,14 +18,13 @@ export function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: st
   );
 }
 
-function TableFrame({ children, hasActions }: { children: React.ReactNode; hasActions?: boolean }) {
+function TableFrame({ children }: { children: React.ReactNode }) {
   return (
     <Table>
       <Table.Thead>
         <Table.Tr>
           <Table.Th>Tittel</Table.Th>
           <Table.Th>Status</Table.Th>
-          {hasActions && <Table.Th>Handling</Table.Th>}
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>{children}</Table.Tbody>
@@ -91,48 +88,6 @@ export default function MatchItemTable({
             </Table.Tr>
           );
         })}
-    </TableFrame>
-  );
-}
-
-export function ItemStatusTable({
-  itemStatuses,
-  isSender,
-  renderAction,
-}: {
-  itemStatuses: ItemStatus[];
-  isSender: boolean;
-  /** Adds a "Handling" column with the returned node per row. */
-  renderAction?: (item: ItemStatus) => React.ReactNode;
-}) {
-  const verb = isSender ? "levert" : "mottatt";
-  return (
-    <TableFrame hasActions={renderAction !== undefined}>
-      {[...itemStatuses]
-        .toSorted((a, b) => Number(a.fulfilled) - Number(b.fulfilled))
-        .map((item) => (
-          <Table.Tr key={item.id}>
-            <Table.Td>
-              {item.receiveFromName === undefined ? (
-                item.title
-              ) : (
-                <Stack gap={2} align="flex-start">
-                  <Text size="sm">{item.title}</Text>
-                  <PeerBadge>Mottas fra {item.receiveFromName}</PeerBadge>
-                </Stack>
-              )}
-            </Table.Td>
-            <StatusIcon
-              fulfilled={item.fulfilled}
-              label={
-                item.fulfilled
-                  ? `Denne boken er registrert som ${verb}`
-                  : `Denne boken har ikke blitt registrert som ${verb}`
-              }
-            />
-            {renderAction && <Table.Td>{renderAction(item)}</Table.Td>}
-          </Table.Tr>
-        ))}
     </TableFrame>
   );
 }

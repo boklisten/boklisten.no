@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import initials from "@/features/customer-search/initials";
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
+import shortName from "@/features/customer-search/shortName";
 import AdministrateUserForm from "@/features/user/AdministrateUserForm";
 import useApiClient from "@/shared/hooks/useApiClient";
 
@@ -38,7 +39,11 @@ export default function CustomerHeader({
             {initials(customer.name)}
           </Avatar>
           <Stack gap={4} miw={0}>
-            <Title order={2} size="h4" lh={1.2}>
+            {/* Middle names are cut to initials on a phone, where the full name would wrap */}
+            <Title order={2} size="h4" lh={1.2} hiddenFrom="sm">
+              {shortName(customer.name)}
+            </Title>
+            <Title order={2} size="h4" lh={1.2} visibleFrom="sm">
               {customer.name}
             </Title>
             {(Boolean(branch) || customer.permission !== "customer") && (

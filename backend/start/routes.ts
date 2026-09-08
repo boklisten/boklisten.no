@@ -170,10 +170,6 @@ router.post("/v2/branches/:branchId/ordered_books/cancel", [
 router.get("/v2/orders/open_orders", [controllers.Orders, "getOpenOrders"]);
 router.get("/v2/orders/placed_orders/:detailsId", [controllers.Orders, "getPlacedOrders"]);
 router.post("/v2/orders/cancel_order_item", [controllers.Orders, "cancelOrderItem"]);
-router.post("/v2/orders/cancel_order_item_as_employee", [
-  controllers.Orders,
-  "cancelOrderItemAsEmployee",
-]);
 
 /**
  * editable texts
@@ -358,11 +354,12 @@ router.post("/checkout/vipps/callback", [controllers.Checkout, "handleVippsCallb
 router.get("/checkout/poll/:orderId", [controllers.Checkout, "pollPayment"]);
 
 /**
- * Stand checkout: extend or buy out a book for a customer who is at the stand
+ * Stand cart: everything an employee does with a customer's books at the stand, in one order
  */
-router.post("/v2/employee/stand_checkout", [controllers.StandCheckout, "start"]);
-router.get("/v2/employee/stand_checkout/:orderId/status", [controllers.StandCheckout, "status"]);
-router.post("/v2/employee/stand_checkout/:orderId/cancel", [controllers.StandCheckout, "cancel"]);
+router.post("/v2/employee/stand_cart/lines", [controllers.StandCart, "resolveLine"]);
+router.post("/v2/employee/stand_cart/checkout", [controllers.StandCart, "checkout"]);
+router.get("/v2/employee/stand_cart/:orderId/status", [controllers.StandCart, "status"]);
+router.post("/v2/employee/stand_cart/:orderId/cancel", [controllers.StandCart, "cancel"]);
 
 /**
  * Subjects
@@ -437,11 +434,6 @@ router.get("/v2/message_logs/sendouts", [controllers.MessageLogs, "sendouts"]);
  */
 router.post("/webhooks/sendgrid", [controllers.Webhooks, "sendgridEvents"]);
 router.post("/webhooks/twilio/:messageId", [controllers.Webhooks, "twilioSmsEvent"]);
-
-/**
- * Handout
- */
-router.post("/handout", [controllers.Handout, "handout"]);
 
 /**
  * Bulk collection (Hurtiginnsamling)

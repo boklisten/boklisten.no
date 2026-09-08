@@ -67,6 +67,17 @@ test.group("availableExtendPeriods", () => {
     assert.deepEqual(periods, []);
   });
 
+  test("leaves out periods that have already ended, however late the deadline was", ({
+    assert,
+  }) => {
+    const periods = availableExtendPeriods(
+      customerItemWith(0),
+      branchWith([{ date: LATER, maxNumberOfPeriods: 5 }]),
+      new Date("2027-08-01T00:00:00.000Z"),
+    );
+    assert.deepEqual(periods, []);
+  });
+
   test("counts every earlier extension against the cap, whatever period type it was", ({
     assert,
   }) => {

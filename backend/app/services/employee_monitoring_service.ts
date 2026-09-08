@@ -22,6 +22,7 @@ export const MONITORED_ACTIONS = {
   "order-item-deadline-changed": "Frist endret på bestilt bok",
   "active-item-deadline-changed": "Frist endret på utlånt bok",
   "active-item-branch-changed": "Filial endret på utlånt bok",
+  "active-item-action-outside-rules": "Handling utenfor reglene på utlånt bok",
   "overdue-book-collected": "Bok levert etter fristen",
   "unique-item-relinked": "Unik ID flyttet til annen bok",
   "unique-item-deleted": "Unik ID slettet",

@@ -44,6 +44,8 @@ interface OrderHistoryCardProps {
   defaultExpanded?: boolean;
   /** Show the full date in the header, for a card that is not under a day heading. */
   standalone?: boolean;
+  /** The facts only: no control to move or delete the order, as on a receipt just issued. */
+  readOnly?: boolean;
 }
 
 /** Only the moved-item notes need to know about other orders. */
@@ -367,9 +369,11 @@ function DeliverySection({ order }: { order: OrderHistoryEntry }) {
 function DetailsSection({
   order,
   variant,
+  readOnly,
 }: {
   order: OrderHistoryEntry;
   variant: OrderHistoryVariant;
+  readOnly: boolean;
 }) {
   const placedBy = order.byCustomer ? (
     variant === "customer" ? (
@@ -390,7 +394,7 @@ function DetailsSection({
       <SectionLabel>Detaljer</SectionLabel>
       <Text size="sm">{placedBy}</Text>
       {/* The branch is already in the card header; only the control to move it is new. */}
-      {variant === "admin" && (
+      {variant === "admin" && !readOnly && (
         <Group gap={6}>
           <OrderBranchChip
             orderId={order.id}
@@ -444,6 +448,7 @@ export default function OrderHistoryCard({
   onToggle,
   defaultExpanded = false,
   standalone = false,
+  readOnly = false,
 }: OrderHistoryCardProps) {
   const [ownExpanded, setOwnExpanded] = useState(defaultExpanded);
   const isExpanded = expanded ?? ownExpanded;
@@ -523,9 +528,9 @@ export default function OrderHistoryCard({
           </Stack>
           <PaymentsSection order={order} variant={variant} />
           <DeliverySection order={order} />
-          <DetailsSection order={order} variant={variant} />
+          <DetailsSection order={order} variant={variant} readOnly={readOnly} />
           {/* The one destructive action stands alone after the facts, for every employee. */}
-          {variant === "admin" && (
+          {variant === "admin" && !readOnly && (
             <Group justify="flex-end">
               <DeleteOrderButton order={order} />
             </Group>

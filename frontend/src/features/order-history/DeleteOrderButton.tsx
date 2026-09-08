@@ -31,7 +31,7 @@ export default function DeleteOrderButton({ order }: { order: OrderHistoryEntry 
       children: (
         <Stack gap="xs">
           <Text>Er du sikker på at du vil slette ordren? Dette kan ikke angres.</Text>
-          <MonitoringNotice>Administrator får beskjed hvis du sletter ordren.</MonitoringNotice>
+          <MonitoringNotice />
         </Stack>
       ),
       confirmLabel: "Slett ordre",
