@@ -732,6 +732,30 @@ const routes = {
     tokens: [{"old":"/v2/employee/stand_cart/:orderId/cancel","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_cart/:orderId/cancel","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_cart/:orderId/cancel","type":0,"val":"stand_cart","end":""},{"old":"/v2/employee/stand_cart/:orderId/cancel","type":1,"val":"orderId","end":""},{"old":"/v2/employee/stand_cart/:orderId/cancel","type":0,"val":"cancel","end":""}],
     types: placeholder as Registry['stand_cart.cancel']['types'],
   },
+  'order_manager.list_open_orders': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/employee/order_manager/orders',
+    tokens: [{"old":"/v2/employee/order_manager/orders","type":0,"val":"v2","end":""},{"old":"/v2/employee/order_manager/orders","type":0,"val":"employee","end":""},{"old":"/v2/employee/order_manager/orders","type":0,"val":"order_manager","end":""},{"old":"/v2/employee/order_manager/orders","type":0,"val":"orders","end":""}],
+    types: placeholder as Registry['order_manager.list_open_orders']['types'],
+  },
+  'order_manager.get_order': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/employee/order_manager/orders/:orderId',
+    tokens: [{"old":"/v2/employee/order_manager/orders/:orderId","type":0,"val":"v2","end":""},{"old":"/v2/employee/order_manager/orders/:orderId","type":0,"val":"employee","end":""},{"old":"/v2/employee/order_manager/orders/:orderId","type":0,"val":"order_manager","end":""},{"old":"/v2/employee/order_manager/orders/:orderId","type":0,"val":"orders","end":""},{"old":"/v2/employee/order_manager/orders/:orderId","type":1,"val":"orderId","end":""}],
+    types: placeholder as Registry['order_manager.get_order']['types'],
+  },
+  'order_manager.orders_report': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/employee/order_manager/reports/orders',
+    tokens: [{"old":"/v2/employee/order_manager/reports/orders","type":0,"val":"v2","end":""},{"old":"/v2/employee/order_manager/reports/orders","type":0,"val":"employee","end":""},{"old":"/v2/employee/order_manager/reports/orders","type":0,"val":"order_manager","end":""},{"old":"/v2/employee/order_manager/reports/orders","type":0,"val":"reports","end":""},{"old":"/v2/employee/order_manager/reports/orders","type":0,"val":"orders","end":""}],
+    types: placeholder as Registry['order_manager.orders_report']['types'],
+  },
+  'order_manager.bring_report': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/employee/order_manager/reports/bring',
+    tokens: [{"old":"/v2/employee/order_manager/reports/bring","type":0,"val":"v2","end":""},{"old":"/v2/employee/order_manager/reports/bring","type":0,"val":"employee","end":""},{"old":"/v2/employee/order_manager/reports/bring","type":0,"val":"order_manager","end":""},{"old":"/v2/employee/order_manager/reports/bring","type":0,"val":"reports","end":""},{"old":"/v2/employee/order_manager/reports/bring","type":0,"val":"bring","end":""}],
+    types: placeholder as Registry['order_manager.bring_report']['types'],
+  },
   'subjects.get_branch_subjects': {
     methods: ["GET","HEAD"],
     pattern: '/subjects/:branchId',

@@ -11,8 +11,15 @@ import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
  * into an ISBN reader, and the ISBN into a question, so the employee never leaves the modal to
  * finish the link. Reads the cart store live, since the modal lives outside the page's tree.
  */
-export default function StandCartScanner({ customerId }: { customerId: string }) {
-  const cart = useStandCart(customerId);
+export default function StandCartScanner({
+  customerId,
+  orderId,
+}: {
+  customerId: string;
+  /** Only copies on this order may enter the cart. */
+  orderId?: string;
+}) {
+  const cart = useStandCart(customerId, orderId === undefined ? undefined : { orderId });
   const linking = cart.cart.linking?.via === "camera" ? cart.cart.linking : null;
 
   if (linking === null) {

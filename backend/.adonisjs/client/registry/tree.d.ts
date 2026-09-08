@@ -193,6 +193,12 @@ export interface ApiDefinition {
     status: typeof routes['stand_cart.status']
     cancel: typeof routes['stand_cart.cancel']
   }
+  orderManager: {
+    listOpenOrders: typeof routes['order_manager.list_open_orders']
+    getOrder: typeof routes['order_manager.get_order']
+    ordersReport: typeof routes['order_manager.orders_report']
+    bringReport: typeof routes['order_manager.bring_report']
+  }
   subjects: {
     getBranchSubjects: typeof routes['subjects.get_branch_subjects']
   }

@@ -362,6 +362,14 @@ router.get("/v2/employee/stand_cart/:orderId/status", [controllers.StandCart, "s
 router.post("/v2/employee/stand_cart/:orderId/cancel", [controllers.StandCart, "cancel"]);
 
 /**
+ * order manager
+ */
+router.get("/v2/employee/order_manager/orders", [controllers.OrderManager, "listOpenOrders"]);
+router.get("/v2/employee/order_manager/orders/:orderId", [controllers.OrderManager, "getOrder"]);
+router.get("/v2/employee/order_manager/reports/orders", [controllers.OrderManager, "ordersReport"]);
+router.get("/v2/employee/order_manager/reports/bring", [controllers.OrderManager, "bringReport"]);
+
+/**
  * Subjects
  */
 router.get("/subjects/:branchId", [controllers.Subjects, "getBranchSubjects"]);

@@ -452,8 +452,16 @@ export const OrderHistoryService = {
     if (!order || order.customer !== customerId) {
       return null;
     }
-    const [entry] = presentOrderHistory(await loadSources(customerId, audience, [order]));
-    return entry ?? null;
+    return OrderHistoryService.presentOrder(order, audience);
+  },
+
+  /** An order already in hand, presented the same way. */
+  async presentOrder(order: Order, audience: OrderHistoryAudience): Promise<OrderHistoryEntry> {
+    const [entry] = presentOrderHistory(await loadSources(order.customer, audience, [order]));
+    if (entry === undefined) {
+      throw new Error(`order ${order.id} could not be presented`);
+    }
+    return entry;
   },
 
   /**

@@ -286,7 +286,7 @@ function PaymentRow({
   );
 }
 
-function PaymentsSection({
+export function PaymentsSection({
   order,
   variant,
 }: {
@@ -312,7 +312,7 @@ function PaymentsSection({
   );
 }
 
-function DeliverySection({ order }: { order: OrderHistoryEntry }) {
+export function DeliverySection({ order }: { order: OrderHistoryEntry }) {
   const { delivery } = order;
   if (delivery === null) {
     return null;

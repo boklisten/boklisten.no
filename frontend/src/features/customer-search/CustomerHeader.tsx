@@ -17,10 +17,14 @@ const ADMINISTRATE_USER_MODAL_ID = "administrate-user";
 export default function CustomerHeader({
   customer,
   onDeselect,
+  withDeselect = true,
   onMerged,
 }: {
   customer: UserDetail & { permission: UserPermission };
+  /** Called when the customer leaves the screen: the X here, or the customer being deleted. */
   onDeselect: () => void;
+  /** The X that drops the customer; off where the page has its own way back. */
+  withDeselect?: boolean;
   onMerged: (toDetailsId: string) => void;
 }) {
   const { api } = useApiClient();
@@ -85,17 +89,19 @@ export default function CustomerHeader({
               <IconPencil size={20} aria-hidden />
             </ActionIcon>
           </Tooltip>
-          <Tooltip label="Fjern valgt kunde">
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="lg"
-              aria-label="Fjern valgt kunde"
-              onClick={onDeselect}
-            >
-              <IconX size={20} aria-hidden />
-            </ActionIcon>
-          </Tooltip>
+          {withDeselect && (
+            <Tooltip label="Fjern valgt kunde">
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="lg"
+                aria-label="Fjern valgt kunde"
+                onClick={onDeselect}
+              >
+                <IconX size={20} aria-hidden />
+              </ActionIcon>
+            </Tooltip>
+          )}
         </Group>
       </Group>
       <Group gap="md" c="dimmed" style={{ rowGap: 4 }}>

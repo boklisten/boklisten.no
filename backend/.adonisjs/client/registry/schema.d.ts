@@ -1459,6 +1459,54 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['cancel']>>>
     }
   }
+  'order_manager.list_open_orders': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/employee/order_manager/orders'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/order_manager').orderManagerListValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/order_manager_controller').default['listOpenOrders']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_manager_controller').default['listOpenOrders']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'order_manager.get_order': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/employee/order_manager/orders/:orderId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { orderId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/order_manager_controller').default['getOrder']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_manager_controller').default['getOrder']>>>
+    }
+  }
+  'order_manager.orders_report': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/employee/order_manager/reports/orders'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/order_manager').orderManagerReportValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/order_manager_controller').default['ordersReport']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_manager_controller').default['ordersReport']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'order_manager.bring_report': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/employee/order_manager/reports/bring'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/order_manager').orderManagerBringReportValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/order_manager_controller').default['bringReport']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/order_manager_controller').default['bringReport']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'subjects.get_branch_subjects': {
     methods: ["GET","HEAD"]
     pattern: '/subjects/:branchId'

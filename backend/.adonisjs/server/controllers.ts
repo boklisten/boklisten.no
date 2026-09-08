@@ -39,6 +39,7 @@ export const controllers = {
   MessageLogs: () => import('#controllers/message_logs_controller'),
   OpeningHours: () => import('#controllers/opening_hours_controller'),
   OrderHistory: () => import('#controllers/order_history_controller'),
+  OrderManager: () => import('#controllers/order_manager_controller'),
   Orders: () => import('#controllers/orders_controller'),
   Postal: () => import('#controllers/postal_controller'),
   PublicBlidLookup: () => import('#controllers/public_blid_lookup_controller'),

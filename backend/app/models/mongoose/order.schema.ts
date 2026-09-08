@@ -138,3 +138,6 @@ export const OrderSchema: BlSchema<Order> = new Schema({
   },
   checkoutState: String,
 });
+
+// The order manager walks placed orders newest first; production gets this index from a migration
+OrderSchema.index({ placed: 1, creationTime: -1 });

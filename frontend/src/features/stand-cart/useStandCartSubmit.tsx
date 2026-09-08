@@ -85,6 +85,8 @@ export default function useStandCartSubmit({
       api.matches.getMatchesForCustomer.pathKey(),
       api.orderHistory.getForCustomer.pathKey(),
       api.blidSearch.lookup.pathKey(),
+      api.orderManager.listOpenOrders.pathKey(),
+      api.orderManager.getOrder.pathKey(),
     ]) {
       void queryClient.invalidateQueries({ queryKey: key });
     }

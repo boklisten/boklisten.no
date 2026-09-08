@@ -20,15 +20,18 @@ export function closeStandCartScanner() {
 export default function StandCartScanButton({
   cart,
   customerId,
+  orderId,
 }: {
   cart: StandCart;
   customerId: string;
+  /** Only copies on this order may enter the cart. */
+  orderId?: string;
 }) {
   const scan = () =>
     modals.open({
       modalId: SCANNER_MODAL_ID,
       title: "Skann bøker",
-      children: <StandCartScanner customerId={customerId} />,
+      children: <StandCartScanner customerId={customerId} orderId={orderId} />,
       onClose: () => cart.cancelLink("camera"),
     });
 

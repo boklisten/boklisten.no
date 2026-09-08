@@ -1,6 +1,7 @@
 import type { OrderItemType } from "@boklisten/backend/shared/order/order-item/order-item-type";
 import type { StandCartSource } from "@boklisten/backend/shared/stand_cart";
 import { Badge, Box, Stack, Table, Text } from "@mantine/core";
+import type { MantineBreakpoint } from "@mantine/core";
 
 import BookRowCard from "@/features/customer-search/BookRowCard";
 import OrderItemDeadlineChip from "@/features/customer-search/OrderItemDeadlineChip";
@@ -117,11 +118,14 @@ export default function HandoutBooksTable({
   customerId,
   rows,
   onChanged,
+  tableFrom = "md",
 }: {
   customerId: string;
   rows: HandoutRow[];
   /** Called after a branch or deadline was changed, so the lists behind the rows refresh. */
   onChanged: () => void;
+  /** The viewport width from which the table replaces the cards; wider where the table shares the row. */
+  tableFrom?: MantineBreakpoint;
 }) {
   const cartButton = (row: HandoutRow, compact: boolean) =>
     row.cartSource === null ? null : (
@@ -129,7 +133,7 @@ export default function HandoutBooksTable({
     );
   return (
     <>
-      <Stack gap="xs" hiddenFrom="md">
+      <Stack gap="xs" hiddenFrom={tableFrom}>
         {rows.map((row) => (
           <BookRowCard
             key={row.key}
@@ -147,7 +151,7 @@ export default function HandoutBooksTable({
           />
         ))}
       </Stack>
-      <Box visibleFrom="md">
+      <Box visibleFrom={tableFrom}>
         <Table striped>
           <Table.Thead>
             <Table.Tr>

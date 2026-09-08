@@ -91,12 +91,17 @@ export function lineProblem({ line, choice, problem }: StoredLine): string | nul
   return null;
 }
 
+/** Restricts scans to one order, for the order manager, where each shipment is packed alone. */
+export interface StandCartScope {
+  orderId: string;
+}
+
 /**
  * The employee's cart for one customer: lines resolved and priced by the backend, the choices
  * made on them, and the cart branch. Every way of adding a line goes through here, so a click on
  * a row and a scan from any scanner behave the same.
  */
-export default function useStandCart(customerId: string | null) {
+export default function useStandCart(customerId: string | null, scope?: StandCartScope) {
   const { api, client } = useApiClient();
   const cart = useStandCartState(customerId);
   // Scanner modals capture their callbacks when they open, so those read the live cart here
@@ -239,7 +244,36 @@ export default function useStandCart(customerId: string | null) {
       update((current) => ({ ...current, linking: { blid, via, candidate: null } }));
       return undefined;
     }
+    const offScope = scopeNotice(result.line);
+    if (offScope !== undefined) {
+      return offScope;
+    }
     return accept(result.line, branchId, { notify: true });
+  }
+
+  /**
+   * Under an order scope, a copy the backend placed anywhere but on that order stays out of the
+   * cart: the same title on another order, or a book nobody ordered, must not ship with this one.
+   */
+  function scopeNotice(line: StandCartLine): ScanNotice | undefined {
+    if (scope === undefined) {
+      return undefined;
+    }
+    if (line.source.kind === "order" && line.source.orderId === scope.orderId) {
+      return undefined;
+    }
+    const alreadyFromOrder = cartRef.current.lines.some(
+      (stored) =>
+        stored.line.itemId === line.itemId &&
+        stored.line.source.kind === "order" &&
+        stored.line.source.orderId === scope.orderId,
+    );
+    return {
+      title: "Ikke på denne bestillingen",
+      message: alreadyFromOrder
+        ? `«${line.title}» fra bestillingen ligger allerede i handlekurven. Bestillingen har ikke flere eksemplarer.`
+        : `«${line.title}» er ikke på bestillingen du har valgt.`,
+    };
   }
 
   /** The ISBN scanned for the blid waiting to be linked: looks the title up for the employee's yes. */

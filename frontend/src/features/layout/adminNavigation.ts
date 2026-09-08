@@ -23,6 +23,10 @@ import {
 import type { LinkProps } from "@tanstack/react-router";
 
 import { KASSE_DESCRIPTION, KASSE_TITLE } from "@/features/kasse/kasseDescription";
+import {
+  ORDER_MANAGER_DESCRIPTION,
+  ORDER_MANAGER_TITLE,
+} from "@/features/order-manager/orderManagerDescription";
 import { MERKING_DESCRIPTION, MERKING_TITLE } from "@/features/merking/merkingDescription";
 
 export interface AdminNavLink {
@@ -54,8 +58,8 @@ export const ADMIN_NAV_SECTIONS = [
         icon: IconCashRegister,
       },
       {
-        label: "Ordreoversikt",
-        description: "Finn en ordre og se levering og betaling",
+        label: ORDER_MANAGER_TITLE,
+        description: ORDER_MANAGER_DESCRIPTION,
         to: "/admin/ordreoversikt",
         icon: IconReceipt,
       },
