@@ -17,6 +17,7 @@ import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { Payment } from "#shared/payment/payment";
 import { USER_PERMISSION } from "#shared/user-permission";
 
 function isTakenBack(orderItem: OrderItem): boolean {
@@ -33,6 +34,12 @@ async function loadHeldBooks(order: Order): Promise<Map<string, CustomerItem>> {
   return new Map(customerItems.map((customerItem) => [customerItem.id, customerItem]));
 }
 
+async function loadPayments(order: Order): Promise<Payment[]> {
+  return order.payments.length === 0
+    ? []
+    : StorageService.Payments.getMany(order.payments, USER_PERMISSION.ADMIN);
+}
+
 async function collectReports(
   order: Order,
   heldBooks: Map<string, CustomerItem>,
@@ -44,6 +51,7 @@ async function collectReports(
   return derivePlacementReports({
     order,
     customerItemsBefore: heldBooks,
+    payments: await loadPayments(order),
     signatureException,
     now,
   });

@@ -12,6 +12,7 @@ import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { Payment } from "#shared/payment/payment";
 import type { UserDetail } from "#shared/user-detail";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
 
@@ -85,6 +86,7 @@ test.group("StandCartPlacement.place", (group) => {
       .callsFake((customerItem) => Promise.resolve({ ...customerItem, id: "new-ci" }));
     sandbox.stub(StorageService.CustomerItems, "getMany").resolves([]);
     sandbox.stub(StorageService.CustomerItems, "getOrNull").resolves(null);
+    sandbox.stub(StorageService.Payments, "getMany").resolves([]);
     ordersUpdate = sandbox
       .stub(StorageService.Orders, "update")
       .callsFake((id, data) => Promise.resolve({ ...handoutOrder, ...data, id }));
@@ -184,6 +186,23 @@ test.group("StandCartPlacement.place", (group) => {
     assert.isTrue(report.calledOnce);
     assert.include(report.firstCall.args[0], {
       action: "handout-without-signature",
+      employee: EMPLOYEE,
+      customerId: CUSTOMER_ID,
+    });
+  });
+
+  test("tells the administrator about cash taken at the stand", async ({ assert }) => {
+    const paidInCash = orderWith([{ type: "buy", handout: true, amount: 250, unitPrice: 250 }]);
+    paidInCash.payments = ["payment1"];
+    paidInCash.amount = 250;
+    asStub(StorageService.Payments.getMany).resolves([
+      mock<Payment>({ id: "payment1", method: "cash", amount: 250 }),
+    ]);
+    await StandCartPlacement.place(paidInCash, EMPLOYEE);
+    assert.isTrue(asStub(StorageService.Payments.getMany).calledOnceWith(["payment1"]));
+    assert.isTrue(report.calledOnce);
+    assert.include(report.firstCall.args[0], {
+      action: "cash-payment-received",
       employee: EMPLOYEE,
       customerId: CUSTOMER_ID,
     });

@@ -40,6 +40,7 @@ import type {
   StandCartSubmitter,
 } from "@/features/stand-cart/useStandCartSubmit";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
+import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import { useAppForm } from "@/shared/hooks/form";
@@ -375,6 +376,7 @@ function CashConfirmStep({
         <List.Item>Tell opp pengene og gi tilbake eventuelle vekslepenger.</List.Item>
         <List.Item>Legg pengene i kassen.</List.Item>
       </List>
+      <MonitoringNotice />
       <Group justify="flex-end">
         <Button leftSection={<IconCash size={18} aria-hidden />} loading={busy} onClick={onConfirm}>
           Bekreft betaling

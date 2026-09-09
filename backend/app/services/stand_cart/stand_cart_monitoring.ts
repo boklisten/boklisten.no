@@ -11,6 +11,7 @@ import { HeldBookRules } from "#services/stand_cart/stand_cart_rules";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { Payment } from "#shared/payment/payment";
 
 export interface PlacementReport {
   action: MonitoredAction;
@@ -22,6 +23,8 @@ export interface PlacementReportInput {
   order: Order;
   /** The held books the order acts on, as they were before placement, by customer item id. */
   customerItemsBefore: Map<string, CustomerItem>;
+  /** The payments recorded on the order, in whatever way the money moved. */
+  payments: Payment[];
   signatureException: SignatureExceptionReason | null;
   now: Date;
 }
@@ -107,12 +110,28 @@ function heldBookReports(input: PlacementReportInput): PlacementReport[] {
   });
 }
 
+/** Cash never leaves a trace of its own, so every order paid in cash is reported as a whole. */
+function cashReports(input: PlacementReportInput): PlacementReport[] {
+  return input.payments
+    .filter((payment) => payment.method === "cash")
+    .map((payment) => ({
+      action: "cash-payment-received",
+      details: [
+        { label: "Beløp", value: `${payment.amount} kr` },
+        {
+          label: "Bøker",
+          value: input.order.orderItems.map((orderItem) => `«${orderItem.title}»`).join(", "),
+        },
+      ],
+    }));
+}
+
 /**
  * Pure: everything the administrator is told about one placed stand order. Held books are judged
  * by the same rules that warned the employee when the line was priced.
  */
 export function derivePlacementReports(input: PlacementReportInput): PlacementReport[] {
-  return [...signatureReports(input), ...heldBookReports(input)];
+  return [...signatureReports(input), ...heldBookReports(input), ...cashReports(input)];
 }
 
 export const StandCartMonitoring = {

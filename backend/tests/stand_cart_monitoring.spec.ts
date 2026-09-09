@@ -5,6 +5,7 @@ import type { PlacementReportInput } from "#services/stand_cart/stand_cart_monit
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { Payment } from "#shared/payment/payment";
 import { mock } from "#tests/test-doubles";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
@@ -48,6 +49,7 @@ function orderWith(orderItems: Partial<OrderItem>[]): Order {
 function input(overrides: Partial<PlacementReportInput> & { order: Order }): PlacementReportInput {
   return {
     customerItemsBefore: new Map([["ci1", customerItemWith()]]),
+    payments: [],
     signatureException: null,
     now: NOW,
     ...overrides,
@@ -142,5 +144,38 @@ test.group("derivePlacementReports", () => {
     );
     assert.equal(reports[0]?.details[2]?.value, "Kjøpt ut");
     assert.equal(reports[1]?.details[2]?.value, "Kansellert");
+  });
+
+  test("cash taken at the stand is reported once for the order, with the amount and the books", ({
+    assert,
+  }) => {
+    const reports = derivePlacementReports(
+      input({
+        order: orderWith([
+          { type: "buy", handout: true, amount: 250, unitPrice: 250 },
+          { type: "buy", handout: true, amount: 100, unitPrice: 100, title: "Kosmos SF" },
+        ]),
+        payments: [mock<Payment>({ method: "cash", amount: 350 })],
+      }),
+    );
+    assert.deepEqual(reports, [
+      {
+        action: "cash-payment-received",
+        details: [
+          { label: "Beløp", value: "350 kr" },
+          { label: "Bøker", value: "«Sinus 1T», «Kosmos SF»" },
+        ],
+      },
+    ]);
+  });
+
+  test("card and Vipps payments are not reported", ({ assert }) => {
+    const reports = derivePlacementReports(
+      input({
+        order: orderWith([{ type: "buy", handout: true, amount: 250, unitPrice: 250 }]),
+        payments: [mock<Payment>({ method: "card", amount: 250 })],
+      }),
+    );
+    assert.deepEqual(reports, []);
   });
 });
