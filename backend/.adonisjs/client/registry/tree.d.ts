@@ -234,6 +234,7 @@ export interface ApiDefinition {
     createCompanyInvoice: typeof routes['invoices.create_company_invoice']
     export: typeof routes['invoices.export']
     list: typeof routes['invoices.list']
+    setStatuses: typeof routes['invoices.set_statuses']
     get: typeof routes['invoices.get']
     setStatus: typeof routes['invoices.set_status']
     setLineCancelled: typeof routes['invoices.set_line_cancelled']

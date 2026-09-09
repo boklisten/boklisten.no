@@ -241,3 +241,9 @@ export interface InvoiceStatusChangeResult {
   invoice: Invoice;
   warnings: string[];
 }
+
+/** Every invoice was updated; the warnings name the invoice they concern. */
+export interface InvoiceBulkStatusChangeResult {
+  invoices: Invoice[];
+  warnings: string[];
+}

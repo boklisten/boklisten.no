@@ -19,6 +19,13 @@ export const invoiceStatusValidator = vine.create(
   }),
 );
 
+export const invoiceBulkStatusValidator = vine.create(
+  vine.object({
+    invoiceIds: vine.array(objectIdField.clone()).minLength(1),
+    status: vine.enum(INVOICE_STATUSES),
+  }),
+);
+
 export const invoiceLineCancelValidator = vine.create(
   vine.object({
     cancel: vine.boolean(),

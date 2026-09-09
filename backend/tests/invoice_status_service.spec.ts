@@ -6,6 +6,7 @@ import {
   invoicePaidLineAmount,
   setInvoiceLineCancelled,
   setInvoiceStatus,
+  setInvoiceStatuses,
 } from "#services/invoices/invoice_status_service";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { StorageService } from "#services/storage_service";
@@ -222,6 +223,42 @@ test.group("invoice status changes", (group) => {
     assert.isTrue(orders.add.notCalled);
     assert.isTrue(orders.remove.notCalled);
     assert.isTrue(customerItems.update.notCalled);
+  });
+
+  test("a bulk change applies to every invoice in order and names the invoice in each warning", async ({
+    assert,
+  }) => {
+    getInvoice.callsFake((id: string) =>
+      Promise.resolve(
+        id === "inv2"
+          ? invoice({ id: "inv2", invoiceId: "20263072", customerHavePayed: true })
+          : invoice(),
+      ),
+    );
+    updateInvoice.callsFake((id: string, patch: Partial<Invoice>) =>
+      Promise.resolve(
+        invoice({ ...patch, id, invoiceId: id === "inv2" ? "20263072" : "20263071" }),
+      ),
+    );
+
+    const { invoices, warnings } = await setInvoiceStatuses(
+      ["inv1", "inv2"],
+      "lossNote",
+      EMPLOYEE_ID,
+    );
+
+    assert.deepEqual(
+      updateInvoice.args.map(([id]) => id),
+      ["inv1", "inv2"],
+    );
+    assert.deepEqual(
+      invoices.map((updated) => [updated.id, updated.toLossNote]),
+      [
+        ["inv1", true],
+        ["inv2", true],
+      ],
+    );
+    assert.deepEqual(warnings, ["20263072: Fant ingen ordre for betalingen å fjerne fra kunden."]);
   });
 
   test("cancelling a line keeps the other lines as they are", async ({ assert }) => {

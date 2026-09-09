@@ -1,31 +1,34 @@
-import type { InvoiceExportFormat, InvoiceStatus } from "@boklisten/backend/shared/invoice";
+import type {
+  InvoiceExportFormat,
+  InvoiceListRow,
+  InvoiceStatus,
+} from "@boklisten/backend/shared/invoice";
 import { INVOICE_EXPORT_FORMATS, INVOICE_STATUSES } from "@boklisten/backend/shared/invoice";
 import {
   Affix,
   Button,
-  Chip,
+  Divider,
   Group,
   Menu,
+  MultiSelect,
   Paper,
-  Select,
   Stack,
   Text,
   Transition,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { IconChevronDown, IconFileDownload } from "@tabler/icons-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { useState } from "react";
 
 import InvoiceDetailDrawer from "@/features/invoices/InvoiceDetailDrawer";
 import InvoiceGrid from "@/features/invoices/InvoiceGrid";
-import {
-  EXPORT_FORMAT_LABELS,
-  INVOICE_STATUS_COLORS,
-  INVOICE_STATUS_LABELS,
-  batchLabel,
-  formatKroner,
-} from "@/features/invoices/invoiceLabels";
+import InvoiceStatusControl from "@/features/invoices/InvoiceStatusControl";
+import InvoiceStatusSummary from "@/features/invoices/InvoiceStatusSummary";
+import { EXPORT_FORMAT_LABELS, batchLabel, formatKroner } from "@/features/invoices/invoiceLabels";
+import { joinBatchPrefixes, parseBatchPrefixes } from "@/features/invoices/invoiceParams";
+import useInvoiceStatusChange from "@/features/invoices/useInvoiceStatusChange";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
@@ -35,18 +38,39 @@ import { showErrorNotification } from "@/shared/utils/notifications";
 
 const route = getRouteApi("/(administrasjon)/admin/faktura");
 
+/** The status every selected invoice shares, or null when the selection is mixed. */
+function commonStatus(rows: InvoiceListRow[]): InvoiceStatus | null {
+  const [first, ...rest] = rows;
+  return first && rest.every((row) => row.status === first.status) ? first.status : null;
+}
+
 export default function InvoiceOverview() {
   const { api, client } = useApiClient();
   const { fakturarunde, faktura } = route.useSearch();
   const navigate = route.useNavigate();
+  const narrow = useMediaQuery("(max-width: 48em)") ?? false;
   const [statuses, setStatuses] = useState<InvoiceStatus[]>([...INVOICE_STATUSES]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const statusChange = useInvoiceStatusChange();
 
   const batches = useQuery(api.invoices.batches.queryOptions());
-  const batch = fakturarunde ?? batches.data?.[0]?.prefix;
-  const invoices = useQuery({
-    ...api.invoices.list.queryOptions({ query: { batch: batch ?? "" } }),
-    enabled: batch !== undefined,
+  const newestBatch = batches.data?.[0]?.prefix;
+  const selectedBatches =
+    fakturarunde === undefined
+      ? newestBatch === undefined
+        ? []
+        : [newestBatch]
+      : parseBatchPrefixes(fakturarunde);
+  const invoices = useQueries({
+    queries: selectedBatches.map((batch) => api.invoices.list.queryOptions({ query: { batch } })),
+    combine: (results) => ({
+      rows: results
+        .flatMap((result) => result.data ?? [])
+        .toSorted((a, b) => a.invoiceId.localeCompare(b.invoiceId)),
+      loading: results.some((result) => result.isLoading),
+      loaded: results.length > 0 && results.every((result) => result.data !== undefined),
+      error: results.find((result) => result.error)?.error,
+    }),
   });
 
   const exportInvoices = useMutation({
@@ -56,11 +80,11 @@ export default function InvoiceOverview() {
     onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke lage eksportfilen")),
   });
 
-  const selectBatch = (prefix: string | null) =>
+  const selectBatches = (prefixes: string[]) =>
     void navigate({
       search: (previous) => ({
         ...previous,
-        fakturarunde: prefix ?? undefined,
+        fakturarunde: joinBatchPrefixes(prefixes) ?? "",
         faktura: undefined,
       }),
     });
@@ -71,71 +95,82 @@ export default function InvoiceOverview() {
     return <ErrorAlert title="Klarte ikke laste inn fakturaer">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>;
   }
 
-  const rows = invoices.data ?? [];
-  const countByStatus = Map.groupBy(rows, (row) => row.status);
+  const { rows } = invoices;
   const visibleRows = rows.filter((row) => statuses.includes(row.status));
-  const total = visibleRows.reduce((sum, row) => sum + row.totalIncludingFee, 0);
+  const selectedRows = rows.filter((row) => selectedIds.includes(row.id));
+  const selectedTotal = selectedRows.reduce((sum, row) => sum + row.totalIncludingFee, 0);
 
   return (
     <Stack>
-      <Select
+      <MultiSelect
         label="Fakturarunde"
-        placeholder={batches.isLoading ? "Laster …" : "Velg runde"}
+        placeholder={
+          batches.isLoading ? "Laster …" : selectedBatches.length === 0 ? "Velg runde" : ""
+        }
         data={(batches.data ?? []).map((candidate) => ({
           value: candidate.prefix,
           label: batchLabel(candidate),
         }))}
-        value={batch ?? null}
-        onChange={selectBatch}
+        value={selectedBatches}
+        onChange={selectBatches}
         searchable
-        allowDeselect={false}
-        w={{ base: "100%", sm: 340 }}
+        clearable
+        clearButtonProps={{ "aria-label": "Fjern alle runder" }}
+        w={{ base: "100%", sm: 520 }}
       />
-      <Chip.Group
-        multiple
-        value={statuses}
-        onChange={(next) => setStatuses(INVOICE_STATUSES.filter((status) => next.includes(status)))}
-      >
-        <Group gap="xs">
-          {INVOICE_STATUSES.map((status) => (
-            <Chip
-              key={status}
-              value={status}
-              color={INVOICE_STATUS_COLORS[status]}
-              variant="light"
-              size="sm"
-            >
-              {INVOICE_STATUS_LABELS[status]} {countByStatus.get(status)?.length ?? 0}
-            </Chip>
-          ))}
-        </Group>
-      </Chip.Group>
+      <InvoiceStatusSummary rows={rows} active={statuses} onChange={setStatuses} />
       <InvoiceGrid
         rows={visibleRows}
-        loading={batches.isLoading || invoices.isLoading}
+        loading={batches.isLoading || invoices.loading}
+        showBatch={selectedBatches.length > 1}
+        statusBusy={statusChange.pending}
         onOpen={openInvoice}
         onSelectionChange={setSelectedIds}
+        onStatusChange={(row, status) => void statusChange.change([row], status)}
       />
-      {invoices.data !== undefined && (
+      {selectedBatches.length === 0 && !batches.isLoading ? (
         <Text size="sm" c="dimmed">
-          {visibleRows.length} av {rows.length} fakturaer, {formatKroner(total)} til sammen. Klikk
-          på en faktura for å se detaljer, huk av for å eksportere.
+          Velg minst én fakturarunde for å se fakturaene.
         </Text>
+      ) : (
+        invoices.loaded && (
+          <Text size="sm" c="dimmed">
+            {visibleRows.length} av {rows.length} fakturaer. Klikk på en faktura for å se detaljer,
+            huk av for å endre eller eksportere flere samtidig.
+          </Text>
+        )
       )}
 
       <Affix position={{ bottom: 16, left: 0, right: 0 }} zIndex={150}>
-        <Transition transition="slide-up" mounted={selectedIds.length > 0}>
+        <Transition transition="slide-up" mounted={selectedRows.length > 0}>
           {(style) => (
             <Group justify="center" style={style} px="md">
-              <Paper shadow="lg" radius="xl" withBorder px="md" py="xs">
-                <Group gap="sm" wrap="nowrap">
-                  <Text fw={600} size="sm" style={{ whiteSpace: "nowrap" }}>
-                    {selectedIds.length} valgt
-                  </Text>
+              <Paper shadow="lg" radius="lg" withBorder px="md" py="xs">
+                <Group gap="md" wrap={narrow ? "wrap" : "nowrap"} justify="center">
+                  <Stack gap={0} style={{ whiteSpace: "nowrap" }}>
+                    <Text fw={600} size="sm">
+                      {selectedRows.length} valgt
+                    </Text>
+                    <Text size="xs" c="dimmed" style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {formatKroner(selectedTotal)}
+                    </Text>
+                  </Stack>
+                  {!narrow && <Divider orientation="vertical" />}
+                  <InvoiceStatusControl
+                    value={commonStatus(selectedRows)}
+                    compact={narrow}
+                    size={narrow ? "xs" : "sm"}
+                    disabled={statusChange.pending}
+                    onChange={(status) => void statusChange.change(selectedRows, status)}
+                    ariaLabel="Status for valgte fakturaer"
+                    dropdownZIndex={200}
+                  />
+                  {!narrow && <Divider orientation="vertical" />}
                   <Menu position="top" shadow="md" withinPortal>
                     <Menu.Target>
                       <Button
                         size="compact-md"
+                        variant="light"
                         leftSection={<IconFileDownload size={16} />}
                         rightSection={<IconChevronDown size={14} />}
                         loading={exportInvoices.isPending}

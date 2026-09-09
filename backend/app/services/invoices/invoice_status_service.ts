@@ -7,7 +7,12 @@ import { StorageService } from "#services/storage_service";
 import { isNotNullish } from "#services/typescript_helpers";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { invoiceStatus, invoiceStatusFlags } from "#shared/invoice";
-import type { Invoice, InvoiceStatus, InvoiceStatusChangeResult } from "#shared/invoice";
+import type {
+  Invoice,
+  InvoiceBulkStatusChangeResult,
+  InvoiceStatus,
+  InvoiceStatusChangeResult,
+} from "#shared/invoice";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 
 /**
@@ -146,6 +151,28 @@ export async function setInvoiceStatus(
     warnings = await revertPayment(invoice);
   }
   return { invoice, warnings };
+}
+
+/**
+ * Changes several invoices one after the other, so each one's side effects run as they would
+ * for a single change. Warnings are prefixed with the invoice number so the admin can tell
+ * which invoice needs a look.
+ */
+export async function setInvoiceStatuses(
+  invoiceIds: string[],
+  status: InvoiceStatus,
+  employeeDetailsId: string,
+): Promise<InvoiceBulkStatusChangeResult> {
+  const invoices: Invoice[] = [];
+  const warnings: string[] = [];
+  for (const invoiceId of invoiceIds) {
+    const result = await setInvoiceStatus(invoiceId, status, employeeDetailsId);
+    invoices.push(result.invoice);
+    warnings.push(
+      ...result.warnings.map((warning) => `${result.invoice.invoiceId ?? invoiceId}: ${warning}`),
+    );
+  }
+  return { invoices, warnings };
 }
 
 export async function setInvoiceLineCancelled(

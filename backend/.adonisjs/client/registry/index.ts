@@ -888,6 +888,12 @@ const routes = {
     tokens: [{"old":"/v2/admin/invoices","type":0,"val":"v2","end":""},{"old":"/v2/admin/invoices","type":0,"val":"admin","end":""},{"old":"/v2/admin/invoices","type":0,"val":"invoices","end":""}],
     types: placeholder as Registry['invoices.list']['types'],
   },
+  'invoices.set_statuses': {
+    methods: ["PATCH"],
+    pattern: '/v2/admin/invoices/status',
+    tokens: [{"old":"/v2/admin/invoices/status","type":0,"val":"v2","end":""},{"old":"/v2/admin/invoices/status","type":0,"val":"admin","end":""},{"old":"/v2/admin/invoices/status","type":0,"val":"invoices","end":""},{"old":"/v2/admin/invoices/status","type":0,"val":"status","end":""}],
+    types: placeholder as Registry['invoices.set_statuses']['types'],
+  },
   'invoices.get': {
     methods: ["GET","HEAD"],
     pattern: '/v2/admin/invoices/:invoiceId',

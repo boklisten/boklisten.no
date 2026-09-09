@@ -13,11 +13,13 @@ import {
 import {
   setInvoiceLineCancelled,
   setInvoiceStatus,
+  setInvoiceStatuses,
 } from "#services/invoices/invoice_status_service";
 import { PermissionService } from "#services/permission_service";
 import {
   companyInvoiceValidator,
   invoiceBatchQueryValidator,
+  invoiceBulkStatusValidator,
   invoiceExportValidator,
   invoiceGenerationDefaultsValidator,
   invoiceGenerationValidator,
@@ -46,6 +48,12 @@ export default class InvoicesController {
     const { detailsId } = PermissionService.adminOrFail(ctx);
     const { status } = await ctx.request.validateUsing(invoiceStatusValidator);
     return setInvoiceStatus(ctx.request.param("invoiceId"), status, detailsId);
+  }
+
+  async setStatuses(ctx: HttpContext) {
+    const { detailsId } = PermissionService.adminOrFail(ctx);
+    const { invoiceIds, status } = await ctx.request.validateUsing(invoiceBulkStatusValidator);
+    return setInvoiceStatuses(invoiceIds, status, detailsId);
   }
 
   async setLineCancelled(ctx: HttpContext) {

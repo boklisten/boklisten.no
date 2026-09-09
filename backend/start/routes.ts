@@ -416,6 +416,7 @@ router.post("/v2/admin/invoices/generate", [controllers.Invoices, "generate"]);
 router.post("/v2/admin/invoices/company", [controllers.Invoices, "createCompanyInvoice"]);
 router.post("/v2/admin/invoices/export", [controllers.Invoices, "export"]);
 router.get("/v2/admin/invoices", [controllers.Invoices, "list"]);
+router.patch("/v2/admin/invoices/status", [controllers.Invoices, "setStatuses"]);
 router.get("/v2/admin/invoices/:invoiceId", [controllers.Invoices, "get"]);
 router.patch("/v2/admin/invoices/:invoiceId/status", [controllers.Invoices, "setStatus"]);
 router.patch("/v2/admin/invoices/:invoiceId/lines/:lineIndex", [

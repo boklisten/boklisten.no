@@ -1771,6 +1771,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['list']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'invoices.set_statuses': {
+    methods: ["PATCH"]
+    pattern: '/v2/admin/invoices/status'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/invoices').invoiceBulkStatusValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/invoices').invoiceBulkStatusValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['setStatuses']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['setStatuses']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'invoices.get': {
     methods: ["GET","HEAD"]
     pattern: '/v2/admin/invoices/:invoiceId'

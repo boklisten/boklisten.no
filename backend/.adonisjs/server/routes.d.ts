@@ -151,6 +151,7 @@ export type ScannedRoutes = {
     'invoices.create_company_invoice': { paramsTuple?: []; params?: {} }
     'invoices.export': { paramsTuple?: []; params?: {} }
     'invoices.list': { paramsTuple?: []; params?: {} }
+    'invoices.set_statuses': { paramsTuple?: []; params?: {} }
     'invoices.get': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'invoices.set_status': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'invoices.set_line_cancelled': { paramsTuple: [ParamValue,ParamValue]; params: {'invoiceId': ParamValue,'lineIndex': ParamValue} }
@@ -499,6 +500,7 @@ export type ScannedRoutes = {
     'order_history.update_branch': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'order_history.update_item_deadline': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invoices.set_statuses': { paramsTuple?: []; params?: {} }
     'invoices.set_status': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'invoices.set_line_cancelled': { paramsTuple: [ParamValue,ParamValue]; params: {'invoiceId': ParamValue,'lineIndex': ParamValue} }
     'collection.customeritems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

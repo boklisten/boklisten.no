@@ -6,7 +6,6 @@ import {
   Divider,
   Drawer,
   Group,
-  Select,
   Skeleton,
   Stack,
   Table,
@@ -19,18 +18,13 @@ import { IconArrowBackUp, IconBan } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { showCustomerSearch } from "@/features/kasse/kasseParams";
-import {
-  INVOICE_STATUS_OPTIONS,
-  INVOICE_TYPE_LABELS,
-  formatDate,
-  formatKroner,
-  parseInvoiceStatus,
-} from "@/features/invoices/invoiceLabels";
+import InvoiceStatusControl from "@/features/invoices/InvoiceStatusControl";
+import { INVOICE_TYPE_LABELS, formatDate, formatKroner } from "@/features/invoices/invoiceLabels";
+import { confirmPaymentChange } from "@/features/invoices/useInvoiceStatusChange";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import EntityLink from "@/shared/components/EntityLink";
 import useApiClient from "@/shared/hooks/useApiClient";
-import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -67,12 +61,14 @@ function InvoiceDocument({
   onStatusChange,
   onLineCancel,
   busy,
+  compact,
   warnings,
 }: {
   invoice: Invoice;
   onStatusChange: (status: InvoiceStatus) => void;
   onLineCancel: (lineIndex: number, cancel: boolean) => void;
   busy: boolean;
+  compact: boolean;
   warnings: string[];
 }) {
   const { customerInfo, payment } = invoice;
@@ -92,20 +88,13 @@ function InvoiceDocument({
             {invoice.invoiceId}
           </Title>
         </Stack>
-        <Select
-          aria-label="Status"
-          data={INVOICE_STATUS_OPTIONS}
+        <InvoiceStatusControl
           value={invoiceStatus(invoice)}
-          onChange={(value) => {
-            const status = parseInvoiceStatus(value);
-            if (status) {
-              onStatusChange(status);
-            }
-          }}
-          allowDeselect={false}
+          onChange={onStatusChange}
           disabled={busy}
-          w={160}
-          comboboxProps={{ zIndex: 1100 }}
+          compact={compact}
+          size="sm"
+          dropdownZIndex={1100}
         />
       </Group>
       {warnings.map((warning) => (
@@ -297,19 +286,11 @@ export default function InvoiceDetailDrawer({
       return;
     }
     const wasPaid = invoiceStatus(invoice.data) === "paid";
-    if (status === "paid" || wasPaid) {
-      const confirmed = await asyncConfirmModal({
-        title: status === "paid" ? "Merk fakturaen som betalt?" : "Fjern betalingen?",
-        children:
-          status === "paid"
-            ? "Bøkene på fakturaen blir registrert som kjøpt ut, og betalingen legges i kundens ordrehistorikk."
-            : "Bøkene blir ikke lenger registrert som kjøpt ut, og betalingen fjernes fra kundens ordrehistorikk.",
-        confirmLabel: status === "paid" ? "Merk som betalt" : "Fjern betalingen",
-        zIndex: 1200,
-      });
-      if (!confirmed) {
-        return;
-      }
+    if (
+      (status === "paid" || wasPaid) &&
+      !(await confirmPaymentChange({ count: 1, toPaid: status === "paid", zIndex: 1200 }))
+    ) {
+      return;
     }
     changeStatus.mutate(status);
   }
@@ -338,6 +319,7 @@ export default function InvoiceDetailDrawer({
           onStatusChange={(status) => void onStatusChange(status)}
           onLineCancel={(lineIndex, cancel) => cancelLine.mutate({ lineIndex, cancel })}
           busy={changeStatus.isPending || cancelLine.isPending}
+          compact={narrow ?? false}
           warnings={warnings}
         />
       ) : (
