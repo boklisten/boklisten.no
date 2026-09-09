@@ -1,5 +1,6 @@
 import type { OrderManagerFilter } from "@boklisten/backend/shared/order_manager";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 import useApiClient from "@/shared/hooks/useApiClient";
 
@@ -20,13 +21,15 @@ export default function useOpenOrders(filter: OrderManagerFilter) {
     ),
     refetchInterval: ORDER_MANAGER_POLL_MS,
   });
+  const { fetchNextPage } = query;
+  const fetchNext = useCallback(() => void fetchNextPage(), [fetchNextPage]);
   return {
     rows: query.data?.pages.flatMap((page) => page.rows) ?? [],
     isPending: query.isPending,
     isError: query.isError,
     hasNextPage: query.hasNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
-    fetchNextPage: () => void query.fetchNextPage(),
+    fetchNextPage: fetchNext,
     dataUpdatedAt: query.dataUpdatedAt,
   };
 }

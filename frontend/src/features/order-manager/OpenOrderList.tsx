@@ -1,6 +1,7 @@
 import type { OrderManagerFilter } from "@boklisten/backend/shared/order_manager";
-import { Box, Button, Divider, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
-import { Fragment } from "react";
+import { Box, Center, Divider, Group, Loader, Paper, Skeleton, Stack, Text } from "@mantine/core";
+import { useIntersection } from "@mantine/hooks";
+import { Fragment, useEffect } from "react";
 
 import OpenOrderRow from "@/features/order-manager/OpenOrderRow";
 import useOpenOrders from "@/features/order-manager/useOpenOrders";
@@ -9,8 +10,16 @@ import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
 /**
+ * How far above the end of the list the next page starts loading. The list scrolls inside its own
+ * box on wide screens, where an observer margin on the viewport would not help, so the sentinel
+ * is a block this tall laid over the tail of the list instead; it takes no space of its own.
+ */
+const PREFETCH_OFFSET_PX = 600;
+
+/**
  * The queue of open orders, newest first. Polls on its own; the count and the time of the last
- * look tell the employee the list is alive without anything moving.
+ * look tell the employee the list is alive without anything moving. Older pages load as the
+ * employee scrolls towards the end.
  */
 export default function OpenOrderList({
   filter,
@@ -22,6 +31,15 @@ export default function OpenOrderList({
   onSelect: (orderId: string) => void;
 }) {
   const orders = useOpenOrders(filter);
+  const { ref: sentinelRef, entry } = useIntersection({ rootMargin: `${PREFETCH_OFFSET_PX}px` });
+  const nearingEnd = entry?.isIntersecting ?? false;
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = orders;
+
+  useEffect(() => {
+    if (nearingEnd && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [nearingEnd, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (orders.isPending) {
     return (
@@ -72,18 +90,27 @@ export default function OpenOrderList({
                 />
               </Fragment>
             ))}
-            {orders.hasNextPage && (
+            <Box
+              ref={sentinelRef}
+              aria-hidden
+              h={PREFETCH_OFFSET_PX}
+              mt={-PREFETCH_OFFSET_PX}
+              style={{ pointerEvents: "none" }}
+            />
+            {orders.isFetchingNextPage && (
               <>
                 <Divider />
-                <Button
-                  variant="subtle"
-                  color="gray"
-                  radius={0}
-                  loading={orders.isFetchingNextPage}
-                  onClick={orders.fetchNextPage}
-                >
-                  Vis eldre bestillinger
-                </Button>
+                <Center py="sm">
+                  <Loader size="sm" />
+                </Center>
+              </>
+            )}
+            {!orders.hasNextPage && (
+              <>
+                <Divider />
+                <Text ta="center" c="dimmed" size="sm" py="sm">
+                  Ingen flere bestillinger
+                </Text>
               </>
             )}
           </Stack>
