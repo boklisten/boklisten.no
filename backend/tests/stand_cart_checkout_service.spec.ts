@@ -647,7 +647,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       reference: NEW_ORDER_ID,
       userFlow: "PUSH_MESSAGE",
       customerInteraction: "CUSTOMER_PRESENT",
-      paymentDescription: "Boklisten: «Sinus 1T»",
+      paymentDescription: "Ola sin ordre fra Boklisten.no",
     });
     assert.deepEqual(vipps.create.firstCall.args[0].amount, { currency: "NOK", value: 25_000 });
     assert.deepEqual(vipps.create.firstCall.args[0].customer, { phoneNumber: "4791234567" });

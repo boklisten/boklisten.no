@@ -190,9 +190,9 @@ async function attachDelivery(
   return StorageService.Orders.update(order.id, { delivery: delivery.id, handoutByDelivery: true });
 }
 
-function describeForVipps(lines: CheckoutLine[]): string {
-  const titles = lines.map(({ line }) => `«${line.title}»`);
-  return titles.length === 1 ? `Boklisten: ${titles[0]}` : `Boklisten: ${titles.length} bøker`;
+/** Same wording as Vipps Checkout, so the customer recognises the payment request. */
+function describeForVipps(customer: UserDetail): string {
+  return `${customer.name} sin ordre fra Boklisten.no`;
 }
 
 /** How the money moves, decided before anything is written so a bad request leaves no order behind. */
@@ -354,7 +354,7 @@ export const StandCartCheckoutService = {
 
     switch (money.kind) {
       case "vipps-push": {
-        await StandCartPayment.requestVipps(order, money.msisdn, describeForVipps(lines));
+        await StandCartPayment.requestVipps(order, money.msisdn, describeForVipps(customer));
         return present(order, "pending");
       }
       case "vipps-refund": {
