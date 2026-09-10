@@ -1,6 +1,6 @@
 import type { OrderManagerDetail } from "@boklisten/backend/shared/order_manager";
 import { Badge, Button, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
-import { IconArrowLeft, IconBasketPlus, IconUser } from "@tabler/icons-react";
+import { IconArrowLeft, IconBasketPlus } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -20,7 +20,6 @@ import StandCartScanButton, {
 import type { StandCart } from "@/features/stand-cart/useStandCart";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import TanStackButton from "@/shared/components/TanStackButton";
 import useApiClient from "@/shared/hooks/useApiClient";
 import {
   showErrorNotification,
@@ -144,6 +143,7 @@ export default function OrderDetail({
           <CustomerHeader
             customer={customer}
             withDeselect={false}
+            linkToKasse
             onDeselect={onBack}
             onMerged={onBack}
           />
@@ -163,15 +163,6 @@ export default function OrderDetail({
           <Group gap="sm" wrap="wrap">
             <StandCartScanButton cart={cart} customerId={customer.id} orderId={order.id} />
             <AddAllButton cart={cart} rows={rows} />
-            <TanStackButton
-              variant="subtle"
-              color="gray"
-              to="/admin/kasse"
-              search={{ kunde: customer.id }}
-              leftSection={<IconUser size={18} aria-hidden />}
-            >
-              Åpne kunden i Kasse
-            </TanStackButton>
           </Group>
           {rows.length === 0 ? (
             <InfoAlert>Alle bøkene på bestillingen er delt ut.</InfoAlert>

@@ -9,6 +9,7 @@ import initials from "@/features/customer-search/initials";
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import shortName from "@/features/customer-search/shortName";
 import AdministrateUserForm from "@/features/user/AdministrateUserForm";
+import EntityLink from "@/shared/components/EntityLink";
 import useApiClient from "@/shared/hooks/useApiClient";
 
 const ADMINISTRATE_USER_MODAL_ID = "administrate-user";
@@ -18,6 +19,7 @@ export default function CustomerHeader({
   customer,
   onDeselect,
   withDeselect = true,
+  linkToKasse = false,
   onMerged,
 }: {
   customer: UserDetail & { permission: UserPermission };
@@ -25,6 +27,8 @@ export default function CustomerHeader({
   onDeselect: () => void;
   /** The X that drops the customer; off where the page has its own way back. */
   withDeselect?: boolean;
+  /** Makes the name a link to the customer in Kasse; off where Kasse is the page itself. */
+  linkToKasse?: boolean;
   onMerged: (toDetailsId: string) => void;
 }) {
   const { api } = useApiClient();
@@ -34,6 +38,14 @@ export default function CustomerHeader({
       { enabled: Boolean(customer.branchMembership) },
     ),
   );
+  const name = (text: string) =>
+    linkToKasse ? (
+      <EntityLink to="/admin/kasse" search={{ kunde: customer.id }} fw="inherit">
+        {text}
+      </EntityLink>
+    ) : (
+      text
+    );
 
   return (
     <Stack gap="sm">
@@ -45,10 +57,10 @@ export default function CustomerHeader({
           <Stack gap={4} miw={0}>
             {/* Middle names are cut to initials on a phone, where the full name would wrap */}
             <Title order={2} size="h4" lh={1.2} hiddenFrom="sm">
-              {shortName(customer.name)}
+              {name(shortName(customer.name))}
             </Title>
             <Title order={2} size="h4" lh={1.2} visibleFrom="sm">
-              {customer.name}
+              {name(customer.name)}
             </Title>
             {(Boolean(branch) || customer.permission !== "customer") && (
               <Group gap={6}>
