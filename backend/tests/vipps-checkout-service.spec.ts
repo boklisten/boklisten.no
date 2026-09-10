@@ -25,7 +25,6 @@ test.group("VippsCheckoutService.update", (group) => {
   group.each.setup(() => {
     testOrder = {
       payments: [],
-      handoutByDelivery: false,
       id: "order1",
       amount: 400,
       orderItems: [],

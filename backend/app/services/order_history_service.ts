@@ -117,9 +117,12 @@ function presentPayments(order: Order, sources: OrderHistorySources): OrderHisto
 }
 
 function presentDelivery(order: Order, sources: OrderHistorySources): OrderHistoryDelivery | null {
-  const delivery = order.delivery ? sources.deliveries.get(order.delivery) : undefined;
+  if (!order.delivery) {
+    return null;
+  }
+  const delivery = sources.deliveries.get(order.delivery);
   if (delivery === undefined) {
-    return order.handoutByDelivery ? { method: "missing" } : null;
+    return { method: "missing" };
   }
   if (delivery.method === "branch") {
     const branchId = isBranchInfo(delivery.info) ? delivery.info.branch : null;
@@ -261,7 +264,6 @@ function presentOrder(order: Order, sources: OrderHistorySources): OrderHistoryE
     employee: forStaff && order.employee ? customerParty(order.employee, sources) : null,
     emailSuppressed: forStaff && order.notification?.email === false,
     checkoutState: forStaff ? (order.checkoutState ?? null) : null,
-    handoutByDelivery: order.handoutByDelivery,
     paymentStatus: derivePaymentStatus(order, payments),
     payments,
     delivery: presentDelivery(order, sources),

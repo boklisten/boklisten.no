@@ -325,7 +325,7 @@ export function DeliverySection({ order }: { order: OrderHistoryEntry }) {
       )}
       {delivery.method === "missing" && (
         <Text size="sm" c="red">
-          Sendt i posten, men leveringsinformasjonen mangler.
+          Leveringsinformasjonen mangler.
         </Text>
       )}
       {delivery.method === "bring" && (

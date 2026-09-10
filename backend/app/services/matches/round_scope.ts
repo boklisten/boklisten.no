@@ -34,7 +34,6 @@ function orderedBooksAt(branchIds: string[]): PipelineStage[] {
       $match: {
         placed: true,
         byCustomer: true,
-        handoutByDelivery: { $ne: true },
         branch: { $in: toObjectIds(branchIds) },
       },
     },

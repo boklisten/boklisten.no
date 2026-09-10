@@ -473,7 +473,6 @@ export const SubjectChoicesService = {
           byCustomer: true,
           placed: true,
           payments: [],
-          handoutByDelivery: false,
         });
         summary.ordersCreated++;
         summary.booksOrdered += order.orderItems.length;

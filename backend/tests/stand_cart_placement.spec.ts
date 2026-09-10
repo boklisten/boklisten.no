@@ -50,7 +50,6 @@ function orderWith(orderItems: Partial<OrderItem>[]): Order {
     byCustomer: false,
     payments: [],
     amount: 0,
-    handoutByDelivery: false,
     orderItems: orderItems.map((orderItem) => ({
       type: "rent",
       item: "item1",

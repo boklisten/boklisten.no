@@ -181,7 +181,6 @@ export const OrderService = {
       byCustomer: placedBy?.byCustomer ?? true,
       ...(placedBy?.byCustomer === false ? { employee: placedBy.employee } : {}),
       payments: [],
-      handoutByDelivery: false,
     });
   },
 };

@@ -40,6 +40,8 @@ export interface BlidSearchSources {
   customerItems: CustomerItem[];
   orders: Order[];
   handovers: HandoverRow[];
+  /** Orders whose delivery document is a Bring shipment: their handouts went by mail. */
+  bringDeliveryOrderIds: Set<string>;
   /** User detail id → display name. */
   userDetails: Map<string, string>;
   branchNames: Map<string, string>;
@@ -256,6 +258,8 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   };
   const branchName = (id: string | undefined) =>
     id === undefined ? undefined : (sources.branchNames.get(id) ?? FALLBACK_NAME);
+  const byMailOf = (order: Order | undefined) =>
+    order !== undefined && sources.bringDeliveryOrderIds.has(order.id) ? true : undefined;
 
   const ordersById = new Map(sources.orders.map((order) => [order.id, order]));
 
@@ -313,6 +317,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       branchName: branchName(order?.branch),
       deadline: isoOrUndefined(relevantOrderItem?.info?.to),
       handoutType: action === "handout" ? handoutTypeOf(relevantOrderItem) : undefined,
+      byMail: action === "handout" ? byMailOf(order) : undefined,
       orderId: handover.orderId ?? undefined,
     };
     events.push(event);
@@ -335,7 +340,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
 
       let event: Pick<
         BlidHistoryEvent,
-        "action" | "from" | "to" | "deadline" | "previousDeadline" | "handoutType"
+        "action" | "from" | "to" | "deadline" | "previousDeadline" | "handoutType" | "byMail"
       >;
       switch (orderItem.type) {
         case "rent":
@@ -349,6 +354,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
             to: customerParty(order.customer),
             deadline: isoOrUndefined(orderItem.info?.to),
             handoutType: orderItem.type,
+            byMail: byMailOf(order),
           };
           break;
         }
@@ -652,6 +658,18 @@ async function fetchOrders(blid: string, customerItems: CustomerItem[]): Promise
   return [...byBlid, ...byCustomerItem];
 }
 
+/** The ids of the orders whose delivery document is a Bring shipment. */
+async function fetchBringDeliveryOrderIds(orders: Order[]): Promise<Set<string>> {
+  const deliveryIds = orders.flatMap((order) => (order.delivery ? [order.delivery] : []));
+  if (deliveryIds.length === 0) {
+    return new Set();
+  }
+  const deliveries = await StorageService.Deliveries.getMany(deliveryIds, USER_PERMISSION.ADMIN);
+  return new Set(
+    deliveries.filter((delivery) => delivery.method === "bring").map((delivery) => delivery.order),
+  );
+}
+
 export const BlidSearchService = {
   /**
    * Corrects the deadline and/or handout branch of an active loan. Any employee may do it; the
@@ -788,6 +806,7 @@ export const BlidSearchService = {
       BookHandover.query().where("blid", blid).orderBy("occurredAt", "asc"),
     ]);
     const orders = await fetchOrders(blid, customerItems);
+    const bringDeliveryOrderIds = await fetchBringDeliveryOrderIds(orders);
 
     const itemId = uniqueItem?.item ?? customerItems[0]?.item;
     const item = itemId === undefined ? null : await StorageService.Items.getOrNull(itemId);
@@ -815,6 +834,7 @@ export const BlidSearchService = {
       customerItems,
       orders,
       handovers,
+      bringDeliveryOrderIds,
       userDetails: new Map(userDetails.map((detail) => [detail.id, detail.name])),
       branchNames: new Map(branches.map((branch) => [branch.id, branch.name])),
       now: new Date(),

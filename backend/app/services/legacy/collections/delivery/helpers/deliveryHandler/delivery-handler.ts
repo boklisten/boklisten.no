@@ -84,8 +84,7 @@ export class DeliveryHandler {
     return new Promise((resolve, reject) => {
       StorageService.Branches.get(order.branch)
         .then((branch: Branch) => {
-          const freeDelivery =
-            (branch.paymentInfo?.responsibleForDelivery ?? false) || order.handoutByDelivery;
+          const freeDelivery = branch.paymentInfo?.responsibleForDelivery ?? false;
 
           return this.bringDeliveryService
             .getDeliveryInfoBring(

@@ -266,7 +266,6 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       byCustomer: false,
       employee: EMPLOYEE.detailsId,
       placed: false,
-      handoutByDelivery: false,
     });
     assert.deepEqual(ordersAdd.firstCall.args[0].notification, { email: true });
     assert.equal(ordersAdd.firstCall.args[0].orderItems[0].blid, BLID);
@@ -622,10 +621,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       amount: 0,
       taxAmount: 0,
     });
-    assert.deepEqual(ordersUpdate.firstCall.args, [
-      NEW_ORDER_ID,
-      { delivery: "new-delivery", handoutByDelivery: true },
-    ]);
+    assert.deepEqual(ordersUpdate.firstCall.args, [NEW_ORDER_ID, { delivery: "new-delivery" }]);
     assert.equal(place.firstCall.args[0].delivery, "new-delivery");
   });
 

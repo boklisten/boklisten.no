@@ -44,7 +44,7 @@ export class OrderPlaceOperation implements Operation {
     for (const order of orders) {
       if (order.orderItems) {
         for (const orderItem of order.orderItems) {
-          if (order.handoutByDelivery || !order.byCustomer) {
+          if (!order.byCustomer) {
             continue;
           }
 

@@ -199,7 +199,10 @@ test.group("derivePlacementReports", () => {
         action: "vipps-refund-made",
         details: [
           { label: "Beløp", value: "350 kr" },
-          { label: "Bøker", value: "«Sinus 1T»: kansellert, 250 kr; «Kosmos SF»: tilbakekjøp, 100 kr" },
+          {
+            label: "Bøker",
+            value: "«Sinus 1T»: kansellert, 250 kr; «Kosmos SF»: tilbakekjøp, 100 kr",
+          },
         ],
       },
     ]);

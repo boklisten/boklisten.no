@@ -80,7 +80,6 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
         employee: employeeDetailsId,
         placed: false,
         payments: [],
-        handoutByDelivery: false,
         notification: { email: false },
       });
       await new OrderPlacedHandler().placeOrder(order, employeeDetailsId);

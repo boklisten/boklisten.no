@@ -72,7 +72,6 @@ function orderWith(overrides: Partial<Order>): Order {
     byCustomer: true,
     payments: [],
     amount: 0,
-    handoutByDelivery: false,
     orderItems: [
       {
         type: "rent",
@@ -249,7 +248,6 @@ test.group("StandCartLineResolver.resolve", (group) => {
         amount: 250,
         payments: ["payment1"],
         delivery: DELIVERY_ID,
-        handoutByDelivery: true,
         orderItems: [
           {
             type: "rent",

@@ -53,7 +53,6 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
 
   const order: Order = {
     payments: [],
-    handoutByDelivery: false,
     id: "testOrder1",
     amount: 0,
     orderItems: [

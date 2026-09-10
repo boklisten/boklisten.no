@@ -71,7 +71,7 @@ export type OrderHistoryDelivery =
       productLabel: string | null;
       amount: number;
     }
-  /** The order claims delivery by mail, but its delivery document is gone. */
+  /** The order points at a delivery document that is gone. */
   | { method: "missing" };
 
 export interface OrderHistoryEntry {
@@ -87,7 +87,6 @@ export interface OrderHistoryEntry {
   emailSuppressed: boolean;
   /** Vipps Checkout session state, present only on online checkout orders. Staff only. */
   checkoutState: string | null;
-  handoutByDelivery: boolean;
   paymentStatus: OrderPaymentStatus;
   payments: OrderHistoryPayment[];
   delivery: OrderHistoryDelivery | null;

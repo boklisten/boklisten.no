@@ -133,7 +133,6 @@ async function createMatchReceiveOrder(
     branch: branch.id,
     customer: userDetailId,
     byCustomer: true,
-    handoutByDelivery: false,
     orderItems: [
       {
         movedFromOrder,
@@ -178,7 +177,6 @@ async function createMatchDeliverOrder(
     branch: branch.id,
     customer: userDetailId,
     byCustomer: true,
-    handoutByDelivery: false,
     orderItems: [
       {
         item: item.id,

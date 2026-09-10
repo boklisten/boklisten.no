@@ -117,7 +117,6 @@ export default class BulkCollectionController {
         employee: detailsId,
         placed: false,
         payments: [],
-        handoutByDelivery: false,
       });
 
       await placeOperation.run({ documentId: order.id, user });

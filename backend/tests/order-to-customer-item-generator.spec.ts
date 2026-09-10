@@ -67,7 +67,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
-      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [orderItem],
@@ -167,7 +166,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
-      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [orderItem, orderItem2],
@@ -299,7 +297,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
-      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [orderItem, orderItem2],
@@ -339,7 +336,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
-      handoutByDelivery: false,
       id: "order1",
       amount: 0,
       orderItems: [orderItem],
@@ -431,7 +427,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
-      handoutByDelivery: false,
       id: "order1",
       amount: 0,
       orderItems: [orderItem, orderItem2],
@@ -574,7 +569,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     };
 
     const order: Order = {
-      handoutByDelivery: false,
       id: "order1",
       amount: 0,
       orderItems: [orderItem2, orderItem3, orderItem4],

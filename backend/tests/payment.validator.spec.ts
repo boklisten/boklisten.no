@@ -33,7 +33,6 @@ test.group("PaymentValidator", (group) => {
 
     testOrder = {
       payments: [],
-      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       customer: "customer1",

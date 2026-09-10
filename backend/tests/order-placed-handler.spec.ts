@@ -100,7 +100,6 @@ test.group("OrderPlacedHandler", (group) => {
     userDeatilUpdate = true;
 
     testOrder = {
-      handoutByDelivery: false,
       id: "branch1",
       amount: 100,
       orderItems: [

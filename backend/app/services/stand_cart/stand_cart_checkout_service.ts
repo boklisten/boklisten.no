@@ -187,7 +187,7 @@ async function attachDelivery(
       taxAmount: 0,
     },
   });
-  return StorageService.Orders.update(order.id, { delivery: delivery.id, handoutByDelivery: true });
+  return StorageService.Orders.update(order.id, { delivery: delivery.id });
 }
 
 /** Same wording as Vipps Checkout, so the customer recognises the payment request. */
@@ -345,7 +345,6 @@ export const StandCartCheckoutService = {
       byCustomer: false,
       employee: employee.detailsId,
       payments: [],
-      handoutByDelivery: false,
       notification: { email: request.notifyByEmail },
     });
     if (bringDelivery && request.delivery) {

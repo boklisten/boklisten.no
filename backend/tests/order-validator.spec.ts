@@ -77,7 +77,6 @@ test.group("OrderValidator", (group) => {
     orderUserDetailValidatorShouldResolve = true;
 
     testOrder = {
-      handoutByDelivery: false,
       id: "order1",
       amount: 300,
       customer: "",

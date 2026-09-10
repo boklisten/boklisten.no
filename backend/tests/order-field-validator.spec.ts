@@ -10,7 +10,6 @@ test.group("OrderFieldValidator", (group) => {
 
   group.each.setup(() => {
     testOrder = {
-      handoutByDelivery: false,
       id: "order1",
       amount: 300,
       customer: "",

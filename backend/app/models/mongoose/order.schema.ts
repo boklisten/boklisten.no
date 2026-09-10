@@ -128,11 +128,6 @@ export const OrderSchema: BlSchema<Order> = new Schema({
     type: Schema.Types.ObjectId,
     ref: BlSchemaName.Deliveries,
   },
-  handoutByDelivery: {
-    type: Boolean,
-    required: true,
-    default: false,
-  },
   notification: {
     email: Boolean,
   },

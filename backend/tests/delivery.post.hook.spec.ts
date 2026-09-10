@@ -67,7 +67,6 @@ test.group("DeliveryPostHook", (group) => {
     };
 
     testOrder = {
-      handoutByDelivery: false,
       id: "order1",
       customer: "customer1",
       amount: 100,

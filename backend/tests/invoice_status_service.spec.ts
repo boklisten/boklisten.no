@@ -147,7 +147,6 @@ test.group("invoice status changes", (group) => {
       employee: EMPLOYEE_ID,
       placed: false,
       payments: [],
-      handoutByDelivery: false,
       notification: { email: false },
     });
     assert.equal(placeOrder.firstCall.args[0].id, "order1");

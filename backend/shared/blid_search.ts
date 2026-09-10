@@ -37,6 +37,8 @@ export interface BlidHistoryEvent {
   previousDeadline?: string;
   /** For handouts: whether the book was rented/loaned out or partly paid. Missing when unknown. */
   handoutType?: CustomerItemType;
+  /** For handouts: the book was sent to the customer by mail rather than handed over at the stand. */
+  byMail?: boolean;
   orderId?: string;
 }
 

@@ -30,7 +30,6 @@ test.group("OrderActive", (group) => {
   test("should resolve with false if orders was found but none was active", async ({ assert }) => {
     const nonActiveOrder: Order = {
       payments: [],
-      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [],
@@ -50,7 +49,6 @@ test.group("OrderActive", (group) => {
   }) => {
     const nonActiveOrder: Order = {
       payments: [],
-      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [],
@@ -62,7 +60,6 @@ test.group("OrderActive", (group) => {
 
     const activeOrder: Order = {
       payments: [],
-      handoutByDelivery: false,
       id: "order2",
       amount: 200,
       orderItems: [
@@ -92,7 +89,6 @@ test.group("OrderActive", (group) => {
   }) => {
     const nonActiveOrder: Order = {
       payments: [],
-      handoutByDelivery: false,
       id: "order1",
       amount: 100,
       orderItems: [
@@ -114,7 +110,6 @@ test.group("OrderActive", (group) => {
 
     const nonActiveOrder2: Order = {
       payments: [],
-      handoutByDelivery: false,
       id: "order2",
       amount: 200,
       orderItems: [

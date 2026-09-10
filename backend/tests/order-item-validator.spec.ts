@@ -36,7 +36,6 @@ test.group("OrderItemValidator", (group) => {
 
   group.each.setup(() => {
     testOrder = {
-      handoutByDelivery: false,
       id: "order1",
       amount: 300,
       customer: "",

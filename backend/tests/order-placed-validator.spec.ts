@@ -19,7 +19,6 @@ test.group("OrderPlacedValidator", (group) => {
 
   group.each.setup(() => {
     testOrder = {
-      handoutByDelivery: false,
       id: "order1",
       amount: 450,
       orderItems: [

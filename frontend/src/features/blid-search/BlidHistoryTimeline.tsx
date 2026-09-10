@@ -36,7 +36,7 @@ function Party({ party }: { party: BlidParty }) {
  * Employees are woven into the sentence rather than appended as metadata.
  */
 function describeEvent(event: BlidHistoryEvent): ReactNode {
-  const { action, from, to, byCustomer, handoutType } = event;
+  const { action, from, to, byCustomer, handoutType, byMail } = event;
   const employee = event.employee && (
     <PersonLink detailsId={event.employee.detailsId} name={event.employee.name} />
   );
@@ -53,23 +53,29 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
           </>
         );
       }
-      if (handoutType === "partly-payment") {
+      const verb =
+        handoutType === "partly-payment"
+          ? "delbetalte"
+          : handoutType === undefined
+            ? "fikk"
+            : "lånte";
+      if (byMail) {
+        // The employee packed and posted the book rather than meeting the customer.
         return (
           <>
-            <Party party={to} /> delbetalte boka på stand{employee && <> hos {employee}</>}
-          </>
-        );
-      }
-      if (handoutType !== undefined) {
-        return (
-          <>
-            <Party party={to} /> lånte boka på stand{employee && <> hos {employee}</>}
+            <Party party={to} /> {verb} boka, sendt i posten{employee && <> av {employee}</>}
           </>
         );
       }
       return (
         <>
-          <Party party={to} /> fikk boka på stand{employee && <> fra {employee}</>}
+          <Party party={to} /> {verb} boka på stand
+          {employee && (
+            <>
+              {" "}
+              {handoutType === undefined ? "fra" : "hos"} {employee}
+            </>
+          )}
         </>
       );
     }

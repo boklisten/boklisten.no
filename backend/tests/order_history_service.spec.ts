@@ -43,7 +43,6 @@ function makeOrder(
     employee: EMPLOYEE,
     placed: true,
     payments: [],
-    handoutByDelivery: false,
     creationTime: T1,
     ...rest,
     orderItems: orderItems.map(completeOrderItem),
@@ -445,7 +444,7 @@ test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
         product: "3584",
       },
     };
-    const order = makeOrder({ handoutByDelivery: true, delivery: "delivery-1" });
+    const order = makeOrder({ delivery: "delivery-1" });
 
     const [entry] = presentOrderHistory(
       baseSources({ orders: [order], deliveries: new Map([["delivery-1", delivery]]) }),
@@ -478,8 +477,8 @@ test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
     assert.deepEqual(entry?.delivery, { method: "branch", branchName: "Nydalen VGS" });
   });
 
-  test("marks a mail order whose delivery document is gone", ({ assert }) => {
-    const order = makeOrder({ handoutByDelivery: true, delivery: "gone" });
+  test("marks an order whose delivery document is gone", ({ assert }) => {
+    const order = makeOrder({ delivery: "gone" });
 
     const [entry] = presentOrderHistory(baseSources({ orders: [order] }));
 

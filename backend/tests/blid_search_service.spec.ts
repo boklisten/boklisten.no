@@ -30,6 +30,7 @@ function baseSources(overrides: Partial<BlidSearchSources> = {}): BlidSearchSour
     customerItems: [],
     orders: [],
     handovers: [],
+    bringDeliveryOrderIds: new Set(),
     userDetails: new Map([
       [IDA, "Ida"],
       [PETRA, "Petra"],
@@ -56,7 +57,6 @@ function makeOrder(
     employee: EMPLOYEE,
     placed: true,
     payments: [],
-    handoutByDelivery: false,
     creationTime: T1,
     ...overrides,
     orderItems: overrides.orderItems.map((orderItem) => ({
@@ -101,6 +101,85 @@ test.group("BlidSearchService.assembleBlidSearch() – book", () => {
   test("returns null book when the blid was never connected", ({ assert }) => {
     const result = assembleBlidSearch(baseSources({ item: null }));
     assert.isNull(result.book);
+  });
+});
+
+test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
+  const rentItem = {
+    type: "rent",
+    item: "item-1",
+    blid: BLID,
+    title: "Sinus 1T",
+    amount: 0,
+    unitPrice: 0,
+    handout: true,
+    info: { to: DEADLINE_1 },
+  } as const;
+
+  test("marks an order-item handout whose order has a Bring delivery as sent by mail", ({
+    assert,
+  }) => {
+    const order = makeOrder({ delivery: "delivery-1", orderItems: [rentItem] });
+    const result = assembleBlidSearch(
+      baseSources({ orders: [order], bringDeliveryOrderIds: new Set(["order-1"]) }),
+    );
+    const [event] = result.history;
+    assert.equal(event?.action, "handout");
+    assert.isTrue(event?.byMail);
+    assert.equal(event?.handoutType, "rent");
+    assert.deepEqual(event?.employee, { detailsId: EMPLOYEE, name: "Emil Ansatt" });
+  });
+
+  test("marks a handover-row handout whose order has a Bring delivery as sent by mail", ({
+    assert,
+  }) => {
+    const order = makeOrder({ delivery: "delivery-1", orderItems: [rentItem] });
+    const result = assembleBlidSearch(
+      baseSources({
+        orders: [order],
+        handovers: [
+          { fromUserDetailId: null, toUserDetailId: IDA, occurredAt: T1, orderId: "order-1" },
+        ],
+        bringDeliveryOrderIds: new Set(["order-1"]),
+      }),
+    );
+    assert.lengthOf(result.history, 1);
+    assert.isTrue(result.history[0]?.byMail);
+  });
+
+  test("marks a blid-less legacy handout as sent by mail through its customer item's order", ({
+    assert,
+  }) => {
+    const order = makeOrder({
+      delivery: "delivery-1",
+      orderItems: [
+        { ...rentItem, blid: undefined, info: { to: DEADLINE_1, customerItem: "customer-item-1" } },
+      ],
+    });
+    const result = assembleBlidSearch(
+      baseSources({
+        orders: [order],
+        customerItems: [makeCustomerItem({ orders: ["order-1"] })],
+        bringDeliveryOrderIds: new Set(["order-1"]),
+      }),
+    );
+    const handouts = result.history.filter((event) => event.action === "handout");
+    assert.lengthOf(handouts, 1);
+    assert.isTrue(handouts[0]?.byMail);
+  });
+
+  test("leaves a stand handout without the mail marker", ({ assert }) => {
+    const order = makeOrder({ orderItems: [rentItem] });
+    const result = assembleBlidSearch(baseSources({ orders: [order] }));
+    assert.isUndefined(result.history[0]?.byMail);
+  });
+
+  test("does not mark a handout by mail when the order's delivery is a branch pickup", ({
+    assert,
+  }) => {
+    const order = makeOrder({ delivery: "delivery-1", orderItems: [rentItem] });
+    const result = assembleBlidSearch(baseSources({ orders: [order] }));
+    assert.isUndefined(result.history[0]?.byMail);
   });
 });
 

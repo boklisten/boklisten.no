@@ -50,7 +50,6 @@ function makeRentOrder(overrides: Partial<Order> = {}): Order {
     byCustomer: true,
     branch: "branch1",
     payments: [],
-    handoutByDelivery: false,
     orderItems: [
       {
         type: "rent",
