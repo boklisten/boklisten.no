@@ -27,8 +27,8 @@ export default defineRailway((ctx) => {
   if (!isProduction) {
     postgresDb.networking = { tcpProxies: { "5432": {} } };
     mongoDb.networking = { tcpProxies: { "27017": {} } };
-    postgresDb.deploy = { sleepApplication: true };
     mongoDb.deploy = { sleepApplication: true };
+    // Do not sleep Postgres in staging to allow for migrations
   }
 
   const postgresVolume = volume("postgres-volume", { region: REGION, sizeMB: 50_000 });
