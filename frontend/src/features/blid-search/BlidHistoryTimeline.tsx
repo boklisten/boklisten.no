@@ -4,7 +4,7 @@ import type {
   BlidParty,
 } from "@boklisten/backend/shared/blid_search";
 import { Badge, Group, Text, ThemeIcon, Timeline } from "@mantine/core";
-import { IconBuildingStore, IconCalendarDue } from "@tabler/icons-react";
+import { IconBuildingStore, IconCalendarDue, IconTruckDelivery } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 import { showCustomerSearch } from "@/features/kasse/kasseParams";
@@ -277,7 +277,9 @@ export default function BlidHistoryTimeline({
   return (
     <Timeline bulletSize={28} lineWidth={2}>
       {history.map((event, index) => {
-        const { icon: Icon, color } = BOOK_EVENT_APPEARANCE[event.action];
+        const { icon, color } = BOOK_EVENT_APPEARANCE[event.action];
+        // A posted book keeps the handout colour but shows how it travelled.
+        const Icon = event.byMail ? IconTruckDelivery : icon;
         return (
           <Timeline.Item
             // History is append-only and render-only, so the position identifies the row.
