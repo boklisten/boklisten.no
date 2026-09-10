@@ -34,6 +34,7 @@ export function getRouter() {
         Sentry.replayIntegration(),
         Sentry.feedbackIntegration({
           colorScheme: "system",
+          autoInject: !window.matchMedia("(max-width: 48em)").matches,
         }),
       ],
       tracesSampleRate: 0.1,
