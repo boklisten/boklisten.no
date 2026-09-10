@@ -1,14 +1,22 @@
 import { BLID_SEARCH_PATTERN } from "@boklisten/backend/shared/blid_search";
-import { Badge, Group, Loader, Stack, Text, ThemeIcon } from "@mantine/core";
+import { ActionIcon, Badge, Group, Loader, Stack, Text, ThemeIcon } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { Spotlight } from "@mantine/spotlight";
 import type { createSpotlight } from "@mantine/spotlight";
-import { IconBook2, IconMail, IconPhone, IconSearch } from "@tabler/icons-react";
+import {
+  IconAbc,
+  IconBook2,
+  IconMail,
+  IconNumber123,
+  IconPhone,
+  IconSearch,
+} from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import type { AdminPage } from "@/features/layout/adminNavigation";
+import { createKeyboardDecoy, requestedSearchKeyboard } from "@/features/search/openSearch";
 import { searchPages } from "@/features/search/searchPages";
 import useApiClient from "@/shared/hooks/useApiClient";
 
@@ -24,6 +32,75 @@ const blidQueryKey = (searchTerm: string) => [...BLID_SEARCH_QUERY_KEY, searchTe
 // Results for "pett" are still relevant while the user types "petter" (or backspaces), but when
 // the term is replaced entirely the old results must not show while the new fetch is in flight.
 const isRelatedSearch = (a: string, b: string) => a.startsWith(b) || b.startsWith(a);
+
+/**
+ * The search input, with a way back to letters when it opened on the number pad (which has none).
+ * Lives inside the spotlight, so every open mounts it afresh on the keyboard that open asked for.
+ */
+function SearchField({ placeholder, isFetching }: { placeholder: string; isFetching: boolean }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [keyboard, setKeyboard] = useState(requestedSearchKeyboard);
+  const switchable = requestedSearchKeyboard() === "numeric";
+
+  const switchKeyboard = () => {
+    const next = keyboard === "numeric" ? "text" : "numeric";
+    setKeyboard(next);
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+    // iOS ignores a changed inputmode on the focused input, and a blur/focus of the same element.
+    // It does honour focus moving to another input, so hop through a decoy with the new layout.
+    // The decoy sits next to the input so the modal's focus trap sees nothing leave; the state
+    // update above has reached the DOM by the time the frame comes.
+    const decoy = createKeyboardDecoy(next);
+    input.after(decoy);
+    decoy.focus({ preventScroll: true });
+    requestAnimationFrame(() => {
+      input.focus({ preventScroll: true });
+      decoy.remove();
+    });
+  };
+
+  const toggle = switchable && (
+    <ActionIcon
+      variant="subtle"
+      color="gray"
+      size="lg"
+      aria-label={keyboard === "numeric" ? "Bytt til bokstaver" : "Bytt til tall"}
+      // Keep focus (and the keyboard) on the input while the button is tapped.
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={switchKeyboard}
+    >
+      {keyboard === "numeric" ? (
+        <IconAbc size={22} aria-hidden />
+      ) : (
+        <IconNumber123 size={22} aria-hidden />
+      )}
+    </ActionIcon>
+  );
+
+  return (
+    <Spotlight.Search
+      ref={inputRef}
+      placeholder={placeholder}
+      inputMode={keyboard}
+      leftSection={<IconSearch size={20} aria-hidden />}
+      rightSection={
+        <Group gap={4} wrap="nowrap">
+          {isFetching && <Loader size="xs" />}
+          {toggle}
+        </Group>
+      }
+      rightSectionWidth={switchable ? (isFetching ? 72 : 48) : undefined}
+      rightSectionPointerEvents={switchable ? "all" : "none"}
+      spellCheck={false}
+      autoCorrect="off"
+      autoCapitalize="off"
+      autoComplete="off"
+    />
+  );
+}
 
 // Mantine preselects the first action on every keystroke, but that runs before our async results
 // have rendered, so the imperative data-selected attribute lands on stale DOM and Enter usually
@@ -267,15 +344,7 @@ export default function SearchSpotlight({
       scrollable
       maxHeight="60vh"
     >
-      <Spotlight.Search
-        placeholder={placeholder}
-        leftSection={<IconSearch size={20} aria-hidden />}
-        rightSection={isFetching ? <Loader size="xs" /> : undefined}
-        spellCheck={false}
-        autoCorrect="off"
-        autoCapitalize="off"
-        autoComplete="off"
-      />
+      <SearchField placeholder={placeholder} isFetching={isFetching} />
       <Spotlight.ActionsList>
         {trimmedSearch.length < MIN_SEARCH_LENGTH && pageHits.length === 0 && (
           <Spotlight.Empty>Skriv minst {MIN_SEARCH_LENGTH} tegn for å søke.</Spotlight.Empty>

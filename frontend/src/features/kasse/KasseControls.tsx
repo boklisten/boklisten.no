@@ -27,6 +27,9 @@ export default function KasseControls({
   accepts: ScanCodeType[];
   onScan: () => void;
 }) {
+  // Without a customer ID to scan, the employee asks for the phone number instead.
+  const searchManually = () =>
+    openSearch({ keyboard: accepts.includes("customerId") ? "numeric" : "text" });
   if (compact) {
     return (
       <Box
@@ -52,7 +55,7 @@ export default function KasseControls({
             flex={{ base: "1 1 auto", sm: "0 0 auto" }}
             variant="default"
             leftSection={<IconSearch size={18} aria-hidden />}
-            onClick={openSearch}
+            onClick={searchManually}
           >
             Søk manuelt
           </Button>
@@ -81,7 +84,7 @@ export default function KasseControls({
         variant="subtle"
         color="gray"
         leftSection={<IconSearch size={18} aria-hidden />}
-        onClick={openSearch}
+        onClick={searchManually}
       >
         Søk manuelt
       </Button>

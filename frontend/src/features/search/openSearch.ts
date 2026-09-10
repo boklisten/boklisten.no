@@ -2,6 +2,37 @@ import { createSpotlight } from "@mantine/spotlight";
 
 type SpotlightHandle = ReturnType<typeof createSpotlight>[1];
 
+/** Which keyboard a phone shows for the search: numeric where a phone number is the usual query. */
+export type SearchKeyboard = "text" | "numeric";
+
+let requestedKeyboard: SearchKeyboard = "text";
+
+/** What the latest open asked for. The search field reads it when it mounts, once per open. */
+export const requestedSearchKeyboard = () => requestedKeyboard;
+
+/**
+ * A hidden input that carries a keyboard layout. iOS picks the layout only when focus lands on an
+ * input, so moving focus through one of these is how the search gets its layout while the
+ * keyboard stays up. Anything below 16px would make iOS zoom the page when it gains focus.
+ */
+export function createKeyboardDecoy(keyboard: SearchKeyboard): HTMLInputElement {
+  const decoy = document.createElement("input");
+  decoy.type = "text";
+  decoy.inputMode = keyboard;
+  decoy.tabIndex = -1;
+  decoy.setAttribute("aria-hidden", "true");
+  Object.assign(decoy.style, {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    height: "1px",
+    width: "1px",
+    opacity: "0",
+    fontSize: "16px",
+  });
+  return decoy;
+}
+
 /**
  * Opens a spotlight in a way that also brings up the keyboard on touch devices. iOS Safari only
  * shows the keyboard when focus() runs synchronously inside the tap's call stack, but the
@@ -10,21 +41,15 @@ type SpotlightHandle = ReturnType<typeof createSpotlight>[1];
  * inputs. Touch devices only: with the decoy focused at open time, Mantine's focus trap would try
  * to return focus to it (removed by then) on close instead of the triggering button.
  */
-export function openSpotlight(spotlight: SpotlightHandle) {
-  if (!window.matchMedia("(pointer: coarse)").matches) {
+export function openSpotlight(spotlight: SpotlightHandle, options?: { keyboard?: SearchKeyboard }) {
+  const touch = window.matchMedia("(pointer: coarse)").matches;
+  // Desktops have every key, so only a touch device gets a keyboard other than text.
+  requestedKeyboard = touch ? (options?.keyboard ?? "text") : "text";
+  if (!touch) {
     spotlight.open();
     return;
   }
-  const decoy = document.createElement("input");
-  decoy.setAttribute("type", "text");
-  decoy.style.position = "fixed";
-  decoy.style.top = "0";
-  decoy.style.left = "0";
-  decoy.style.height = "1px";
-  decoy.style.width = "1px";
-  decoy.style.opacity = "0";
-  // Anything below 16px makes iOS zoom the page when the decoy gains focus.
-  decoy.style.fontSize = "16px";
+  const decoy = createKeyboardDecoy(requestedKeyboard);
   document.body.append(decoy);
   const remove = () => decoy.remove();
   decoy.addEventListener("blur", remove, { once: true });
@@ -52,10 +77,10 @@ export function registerSearchOverride(open: () => void) {
 }
 
 /** The one way to open search from anywhere in the admin: keyboard shortcut or page button. */
-export function openSearch() {
+export function openSearch(options?: { keyboard?: SearchKeyboard }) {
   if (override) {
     override();
     return;
   }
-  openSpotlight(globalSearchSpotlight);
+  openSpotlight(globalSearchSpotlight, options);
 }
