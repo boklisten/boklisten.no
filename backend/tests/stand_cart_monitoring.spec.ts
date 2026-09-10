@@ -178,4 +178,40 @@ test.group("derivePlacementReports", () => {
     );
     assert.deepEqual(reports, []);
   });
+
+  test("a refund sent back via Vipps is reported once for the order, with the amount and what was refunded", ({
+    assert,
+  }) => {
+    const reports = derivePlacementReports(
+      input({
+        order: orderWith([
+          { type: "cancel", amount: -250, unitPrice: -250 },
+          { type: "buyback", amount: -100, unitPrice: -100, title: "Kosmos SF" },
+        ]),
+        payments: [
+          mock<Payment>({ method: "vipps-epayment", amount: -250 }),
+          mock<Payment>({ method: "vipps-checkout", amount: -100 }),
+        ],
+      }),
+    );
+    assert.deepEqual(reports, [
+      {
+        action: "vipps-refund-made",
+        details: [
+          { label: "Beløp", value: "350 kr" },
+          { label: "Bøker", value: "«Sinus 1T»: kansellert, 250 kr; «Kosmos SF»: tilbakekjøp, 100 kr" },
+        ],
+      },
+    ]);
+  });
+
+  test("a refund the administrator transfers by hand is not reported", ({ assert }) => {
+    const reports = derivePlacementReports(
+      input({
+        order: orderWith([{ type: "cancel", amount: -250, unitPrice: -250 }]),
+        payments: [mock<Payment>({ method: "bank-transfer", amount: -250 })],
+      }),
+    );
+    assert.deepEqual(reports, []);
+  });
 });

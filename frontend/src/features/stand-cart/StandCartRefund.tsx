@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
 import { checkoutLines } from "@/features/stand-cart/useStandCartSubmit";
 import type { Payment } from "@/features/stand-cart/useStandCartSubmit";
+import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import VippsStyledButton, { VIPPS_ORANGE } from "@/shared/components/VippsStyledButton";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
@@ -41,6 +42,7 @@ function VippsRefundStep({
           administrator overføre beløpet.
         </ErrorAlert>
       )}
+      <MonitoringNotice />
       <VippsStyledButton loading={busy} onClick={onRefund}>
         Refunder via Vipps
       </VippsStyledButton>

@@ -25,6 +25,7 @@ export const MONITORED_ACTIONS = {
   "active-item-action-outside-rules": "Handling utenfor reglene på utlånt bok",
   "overdue-book-collected": "Bok levert etter fristen",
   "cash-payment-received": "Betalt kontant på stand",
+  "vipps-refund-made": "Refusjon sendt via Vipps",
   "unique-item-relinked": "Unik ID flyttet til annen bok",
   "unique-item-deleted": "Unik ID slettet",
 } as const;

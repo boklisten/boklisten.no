@@ -8,6 +8,7 @@ import type {
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import type { SignatureExceptionReason } from "#services/signature_helper";
 import { HeldBookRules } from "#services/stand_cart/stand_cart_rules";
+import { TranslationService } from "#services/translation_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
@@ -126,12 +127,55 @@ function cashReports(input: PlacementReportInput): PlacementReport[] {
     }));
 }
 
+function isVippsRefund(payment: Payment): boolean {
+  return (
+    (payment.method === "vipps-epayment" || payment.method === "vipps-checkout") &&
+    payment.amount < 0
+  );
+}
+
+/**
+ * Money sent back through Vipps leaves the till on the employee's word alone, so every order
+ * refunded that way is reported as a whole. A refund the administrator transfers by hand is not:
+ * the refund request already lands on their desk.
+ */
+function vippsRefundReports(input: PlacementReportInput): PlacementReport[] {
+  const refunded = input.payments
+    .filter(isVippsRefund)
+    .reduce((sum, payment) => sum - payment.amount, 0);
+  if (refunded <= 0) {
+    return [];
+  }
+  return [
+    {
+      action: "vipps-refund-made",
+      details: [
+        { label: "Beløp", value: `${refunded} kr` },
+        {
+          label: "Bøker",
+          value: input.order.orderItems
+            .map(
+              (orderItem) =>
+                `«${orderItem.title}»: ${TranslationService.translateOrderItemTypePastTense(orderItem.type)}, ${Math.abs(orderItem.amount)} kr`,
+            )
+            .join("; "),
+        },
+      ],
+    },
+  ];
+}
+
 /**
  * Pure: everything the administrator is told about one placed stand order. Held books are judged
  * by the same rules that warned the employee when the line was priced.
  */
 export function derivePlacementReports(input: PlacementReportInput): PlacementReport[] {
-  return [...signatureReports(input), ...heldBookReports(input), ...cashReports(input)];
+  return [
+    ...signatureReports(input),
+    ...heldBookReports(input),
+    ...cashReports(input),
+    ...vippsRefundReports(input),
+  ];
 }
 
 export const StandCartMonitoring = {
