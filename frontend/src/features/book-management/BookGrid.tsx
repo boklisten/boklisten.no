@@ -2,9 +2,14 @@ import type { Item } from "@boklisten/backend/shared/item";
 import { ActionIcon, Box, Switch, Tooltip } from "@mantine/core";
 import { IconEdit } from "@tabler/icons-react";
 import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
-import type { ColDef, ICellRendererParams, NewValueParams } from "ag-grid-community";
+import type {
+  ColDef,
+  ICellRendererParams,
+  NewValueParams,
+  SelectionChangedEvent,
+} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 
 export type BookPatch = Partial<Pick<Item, "price" | "active" | "buyback">>;
 export interface BookPatchRequest {
@@ -20,6 +25,14 @@ function CenteredCell({ children }: { children: ReactNode }) {
   );
 }
 
+const YES = "Ja";
+const NO = "Nei";
+
+/** The grid opens showing only active books; the Aktiv column menu clears the filter. */
+const DEFAULT_FILTER_MODEL = {
+  active: { filterType: "text", type: "equals", filter: YES },
+};
+
 function switchColumn(
   field: "active" | "buyback",
   headerName: string,
@@ -31,6 +44,14 @@ function switchColumn(
     width: 110,
     flex: 0,
     cellDataType: "boolean",
+    filter: "agTextColumnFilter",
+    filterValueGetter: ({ data }) => (data?.[field] ? YES : NO),
+    filterParams: {
+      filterOptions: ["equals"],
+      maxNumConditions: 1,
+      filterPlaceholder: `${YES} eller ${NO}`,
+      buttons: ["reset"],
+    },
     cellRenderer: ({ data, value }: ICellRendererParams<Item, boolean>) =>
       data && (
         <CenteredCell>
@@ -47,17 +68,19 @@ function switchColumn(
 }
 
 export default function BookGrid({
+  gridRef,
   items,
   loading,
-  quickFilterText,
   onPatch,
   onEdit,
+  onSelectionChange,
 }: {
+  gridRef: RefObject<AgGridReact<Item> | null>;
   items: Item[];
   loading: boolean;
-  quickFilterText: string;
   onPatch: (request: BookPatchRequest) => void;
   onEdit: (item: Item) => void;
+  onSelectionChange: (selected: Item[]) => void;
 }) {
   const columnDefs: ColDef<Item>[] = [
     { field: "title", headerName: "Tittel", flex: 2, minWidth: 220 },
@@ -120,13 +143,24 @@ export default function BookGrid({
   return (
     <Box h="calc(100vh - 260px)" mih={420}>
       <AgGridReact<Item>
+        ref={gridRef}
         rowData={items}
         columnDefs={columnDefs}
         defaultColDef={{ flex: 1, sortable: true, filter: true }}
         getRowId={({ data }) => data.id}
+        initialState={{ filter: { filterModel: DEFAULT_FILTER_MODEL } }}
+        rowSelection={{
+          mode: "multiRow",
+          selectAll: "filtered",
+          enableClickSelection: false,
+          headerCheckbox: true,
+        }}
+        selectionColumnDef={{ width: 48, pinned: "left" }}
+        onSelectionChanged={(event: SelectionChangedEvent<Item>) =>
+          onSelectionChange(event.api.getSelectedRows())
+        }
         localeText={AG_GRID_LOCALE_NO}
         loading={loading}
-        quickFilterText={quickFilterText}
         enterNavigatesVertically
         enterNavigatesVerticallyAfterEdit
         stopEditingWhenCellsLoseFocus

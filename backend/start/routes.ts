@@ -407,6 +407,7 @@ router.get("/v2/items/by_isbn/:isbn", [controllers.Items, "getByIsbn"]);
 router.get("/v2/admin/items", [controllers.Items, "getAllForAdmin"]);
 router.post("/v2/admin/items", [controllers.Items, "create"]);
 router.patch("/v2/admin/items/:id", [controllers.Items, "update"]);
+router.post("/v2/admin/items/bulk", [controllers.Items, "bulkUpsert"]);
 
 /**
  * Invoices

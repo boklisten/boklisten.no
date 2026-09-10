@@ -146,6 +146,7 @@ export type ScannedRoutes = {
     'items.get_all_for_admin': { paramsTuple?: []; params?: {} }
     'items.create': { paramsTuple?: []; params?: {} }
     'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'items.bulk_upsert': { paramsTuple?: []; params?: {} }
     'invoices.batches': { paramsTuple?: []; params?: {} }
     'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
     'invoices.generate': { paramsTuple?: []; params?: {} }
@@ -457,6 +458,7 @@ export type ScannedRoutes = {
     'companies.add_company': { paramsTuple?: []; params?: {} }
     'opening_hours.add': { paramsTuple?: []; params?: {} }
     'items.create': { paramsTuple?: []; params?: {} }
+    'items.bulk_upsert': { paramsTuple?: []; params?: {} }
     'invoices.generate': { paramsTuple?: []; params?: {} }
     'invoices.create_company_invoice': { paramsTuple?: []; params?: {} }
     'invoices.export': { paramsTuple?: []; params?: {} }

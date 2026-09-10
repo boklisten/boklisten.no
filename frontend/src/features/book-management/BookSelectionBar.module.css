@@ -1,0 +1,8 @@
+/* The bar's Affix stretches an invisible strip across the screen; let clicks pass through it. */
+:global(.mantine-Affix-root):has(> .bar) {
+  pointer-events: none;
+}
+
+.bar {
+  pointer-events: auto;
+}

@@ -120,6 +120,7 @@
         "react-signature-canvas": "1.1.0-alpha.2",
         "recharts": "^3.10.1",
         "validator": "^13.15.35",
+        "xlsx": "0.18.5",
         "xss": "^1.0.15",
       },
       "devDependencies": {

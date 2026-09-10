@@ -227,6 +227,7 @@ export interface ApiDefinition {
     getAllForAdmin: typeof routes['items.get_all_for_admin']
     create: typeof routes['items.create']
     update: typeof routes['items.update']
+    bulkUpsert: typeof routes['items.bulk_upsert']
   }
   invoices: {
     batches: typeof routes['invoices.batches']

@@ -20,6 +20,15 @@ export interface ItemInput {
 
 export type ItemPatch = Partial<ItemInput>;
 
+/** A spreadsheet row: the book, plus the id the row was downloaded with when it has one. */
+export type BulkUpsertRow = ItemInput & { id?: string };
+
+export interface BulkUpsertSummary {
+  createdCount: number;
+  updatedCount: number;
+  errors: { isbn: number; title: string; message: string }[];
+}
+
 export function currentPriceYear(now = new Date()): string {
   return String(now.getFullYear());
 }
@@ -69,6 +78,19 @@ async function assertIsbnAvailable(isbn: number, exceptItemId?: string) {
   }
 }
 
+/** Values that occur more than once, each listed once in first-seen order. */
+export function duplicates<T>(values: T[]): T[] {
+  const seen = new Set<T>();
+  const repeated = new Set<T>();
+  for (const value of values) {
+    if (seen.has(value)) {
+      repeated.add(value);
+    }
+    seen.add(value);
+  }
+  return [...repeated];
+}
+
 async function create(input: ItemInput): Promise<Item> {
   await assertIsbnAvailable(input.isbn);
   return StorageService.Items.add(buildNewItem(input, currentPriceYear()));
@@ -81,4 +103,52 @@ async function update(id: string, patch: ItemPatch): Promise<Item> {
   return StorageService.Items.update(id, buildItemUpdate(patch, currentPriceYear()));
 }
 
-export const ItemManagementService = { create, update };
+/**
+ * Spreadsheet upload, matching legacy bl-admin: a row with an id updates that book (its ISBN may
+ * change), a row without one updates the book with the same ISBN or creates a new book.
+ * Rows are written one by one (no transaction), so a failing row is reported and the rest still land.
+ */
+async function bulkUpsert(rows: BulkUpsertRow[]): Promise<BulkUpsertSummary> {
+  const repeatedIsbns = duplicates(rows.map((row) => row.isbn));
+  if (repeatedIsbns.length > 0) {
+    throw new BadRequestException(
+      `Filen inneholder samme ISBN flere ganger: ${repeatedIsbns.join(", ")}`,
+    );
+  }
+  const repeatedIds = duplicates(rows.flatMap((row) => (row.id === undefined ? [] : [row.id])));
+  if (repeatedIds.length > 0) {
+    throw new BadRequestException(
+      `Filen inneholder samme id flere ganger: ${repeatedIds.join(", ")}`,
+    );
+  }
+  const year = currentPriceYear();
+  const summary: BulkUpsertSummary = { createdCount: 0, updatedCount: 0, errors: [] };
+  for (const { id, ...input } of rows) {
+    try {
+      const existing =
+        id === undefined
+          ? await findItemByIsbn(String(input.isbn))
+          : await StorageService.Items.getOrNull(id);
+      if (id !== undefined && existing === null) {
+        throw new BadRequestException(`Fant ingen bok med id ${id}`);
+      }
+      if (existing === null) {
+        await StorageService.Items.add(buildNewItem(input, year));
+        summary.createdCount++;
+      } else {
+        await assertIsbnAvailable(input.isbn, existing.id);
+        await StorageService.Items.update(existing.id, buildItemUpdate(input, year));
+        summary.updatedCount++;
+      }
+    } catch (error) {
+      summary.errors.push({
+        isbn: input.isbn,
+        title: input.title,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  return summary;
+}
+
+export const ItemManagementService = { create, update, bulkUpsert };

@@ -1711,6 +1711,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/items_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'items.bulk_upsert': {
+    methods: ["POST"]
+    pattern: '/v2/admin/items/bulk'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/items').bulkUpsertItemsValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/items').bulkUpsertItemsValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/items_controller').default['bulkUpsert']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/items_controller').default['bulkUpsert']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'invoices.batches': {
     methods: ["GET","HEAD"]
     pattern: '/v2/admin/invoices/batches'

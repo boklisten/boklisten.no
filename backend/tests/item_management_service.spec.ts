@@ -1,7 +1,16 @@
 import { test } from "@japa/runner";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
-import { buildItemUpdate, buildNewItem, currentPriceYear } from "#services/item_management_service";
+import {
+  ItemManagementService,
+  buildItemUpdate,
+  buildNewItem,
+  currentPriceYear,
+  duplicates,
+} from "#services/item_management_service";
 import type { ItemInput } from "#services/item_management_service";
+import { StorageService } from "#services/storage_service";
 
 const SINUS: ItemInput = {
   title: "Sinus 1T",
@@ -88,5 +97,128 @@ test.group("buildNewItem", () => {
         publisher: "cd",
       },
     });
+  });
+});
+
+test.group("duplicates", () => {
+  test("lists each value that occurs more than once, once", ({ assert }) => {
+    assert.deepEqual(duplicates([1, 2, 1, 1, 3, 3]), [1, 3]);
+    assert.deepEqual(duplicates(["a"]), []);
+  });
+});
+
+test.group("ItemManagementService.bulkUpsert", (group) => {
+  let sandbox: sinon.SinonSandbox;
+  let itemsStub: {
+    getByQueryOrNull: sinon.SinonStub;
+    getOrNull: sinon.SinonStub;
+    add: sinon.SinonStub;
+    update: sinon.SinonStub;
+  };
+
+  group.each.setup(() => {
+    sandbox = createSandbox();
+    itemsStub = {
+      getByQueryOrNull: sandbox.stub().resolves(null),
+      getOrNull: sandbox.stub().resolves(null),
+      add: sandbox.stub().callsFake(async (item) => ({ id: "new", ...item })),
+      update: sandbox.stub().callsFake(async (id, patch) => ({ id, ...patch })),
+    };
+    sandbox.stub(StorageService, "Items").value(itemsStub);
+  });
+
+  group.each.teardown(() => {
+    sandbox.restore();
+  });
+
+  test("refuses the whole batch when the file repeats an isbn", async ({ assert }) => {
+    await assert.rejects(
+      () => ItemManagementService.bulkUpsert([SINUS, { ...SINUS, title: "Sinus 1T (kopi)" }]),
+      /9788202516260/,
+    );
+    assert.isFalse(itemsStub.add.called);
+    assert.isFalse(itemsStub.update.called);
+  });
+
+  test("refuses the whole batch when the file repeats an id", async ({ assert }) => {
+    await assert.rejects(
+      () =>
+        ItemManagementService.bulkUpsert([
+          { ...SINUS, id: "sinus-id" },
+          { ...SINUS, id: "sinus-id", isbn: 9_788_202_516_291 },
+        ]),
+      /sinus-id/,
+    );
+    assert.isFalse(itemsStub.add.called);
+    assert.isFalse(itemsStub.update.called);
+  });
+
+  test("updates rows whose isbn exists and creates the rest", async ({ assert }) => {
+    const existing = { id: "sinus-id", title: "Sinus 1T (gammel)", info: { isbn: SINUS.isbn } };
+    itemsStub.getByQueryOrNull.callsFake(async (query) =>
+      query.stringFilters[0].value === String(SINUS.isbn) ? [existing] : null,
+    );
+    const newBook = { ...SINUS, isbn: 9_788_202_516_291, title: "Sinus R1" };
+
+    const summary = await ItemManagementService.bulkUpsert([SINUS, newBook]);
+
+    assert.deepEqual(summary, { createdCount: 1, updatedCount: 1, errors: [] });
+    assert.equal(itemsStub.update.firstCall.args[0], "sinus-id");
+    assert.equal(itemsStub.update.firstCall.args[1].title, "Sinus 1T");
+    assert.equal(itemsStub.add.firstCall.args[0].title, "Sinus R1");
+  });
+
+  test("a row with an id updates that book even when its isbn changed", async ({ assert }) => {
+    const existing = { id: "sinus-id", title: "Sinus 1T", info: { isbn: SINUS.isbn } };
+    itemsStub.getOrNull.callsFake(async (id) => (id === "sinus-id" ? existing : null));
+    const newIsbn = 9_788_202_516_291;
+
+    const summary = await ItemManagementService.bulkUpsert([
+      { ...SINUS, id: "sinus-id", isbn: newIsbn },
+    ]);
+
+    assert.deepEqual(summary, { createdCount: 0, updatedCount: 1, errors: [] });
+    assert.equal(itemsStub.update.firstCall.args[0], "sinus-id");
+    assert.equal(itemsStub.update.firstCall.args[1]["info.isbn"], newIsbn);
+    assert.isFalse(itemsStub.add.called);
+  });
+
+  test("a row with an unknown id is reported, not created", async ({ assert }) => {
+    const summary = await ItemManagementService.bulkUpsert([{ ...SINUS, id: "gone" }]);
+
+    assert.equal(summary.createdCount, 0);
+    assert.equal(summary.updatedCount, 0);
+    assert.deepEqual(summary.errors, [
+      { isbn: SINUS.isbn, title: "Sinus 1T", message: "Fant ingen bok med id gone" },
+    ]);
+    assert.isFalse(itemsStub.add.called);
+  });
+
+  test("a row whose new isbn belongs to another book is reported", async ({ assert }) => {
+    const existing = { id: "sinus-id", title: "Sinus 1T", info: { isbn: SINUS.isbn } };
+    const other = { id: "other-id", title: "Sinus R1", info: { isbn: 9_788_202_516_291 } };
+    itemsStub.getOrNull.resolves(existing);
+    itemsStub.getByQueryOrNull.resolves([other]);
+
+    const summary = await ItemManagementService.bulkUpsert([
+      { ...SINUS, id: "sinus-id", isbn: other.info.isbn },
+    ]);
+
+    assert.equal(summary.updatedCount, 0);
+    assert.match(summary.errors[0]?.message ?? "", /Sinus R1/);
+    assert.isFalse(itemsStub.update.called);
+  });
+
+  test("keeps going after a failing row and reports it", async ({ assert }) => {
+    itemsStub.add.onFirstCall().rejects(new Error("boom")).onSecondCall().resolves({ id: "ok" });
+
+    const summary = await ItemManagementService.bulkUpsert([
+      SINUS,
+      { ...SINUS, isbn: 9_788_202_516_291, title: "Sinus R1" },
+    ]);
+
+    assert.equal(summary.createdCount, 1);
+    assert.equal(summary.updatedCount, 0);
+    assert.deepEqual(summary.errors, [{ isbn: SINUS.isbn, title: "Sinus 1T", message: "boom" }]);
   });
 });

@@ -5,7 +5,11 @@ import { ItemManagementService } from "#services/item_management_service";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
-import { createItemValidator, updateItemValidator } from "#validators/items";
+import {
+  bulkUpsertItemsValidator,
+  createItemValidator,
+  updateItemValidator,
+} from "#validators/items";
 
 export default class ItemsController {
   async getBuybackItems() {
@@ -45,5 +49,11 @@ export default class ItemsController {
     PermissionService.adminOrFail(ctx);
     const patch = await ctx.request.validateUsing(updateItemValidator);
     return ItemManagementService.update(ctx.request.param("id"), patch);
+  }
+
+  async bulkUpsert(ctx: HttpContext) {
+    PermissionService.adminOrFail(ctx);
+    const { items } = await ctx.request.validateUsing(bulkUpsertItemsValidator);
+    return ItemManagementService.bulkUpsert(items);
   }
 }

@@ -16,6 +16,15 @@ const itemFields = {
 
 export const createItemValidator = vine.create(vine.object(itemFields));
 
+/** A spreadsheet row carries the id it was downloaded with; a row without one is a new book or matched by ISBN. */
+export const bulkUpsertItemsValidator = vine.create(
+  vine.object({
+    items: vine
+      .array(vine.object({ id: vine.string().trim().minLength(1).optional(), ...itemFields }))
+      .minLength(1),
+  }),
+);
+
 export const updateItemValidator = vine.create(
   vine.object({
     title: itemFields.title.optional(),

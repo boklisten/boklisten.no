@@ -1,14 +1,17 @@
 import type { Item } from "@boklisten/backend/shared/item";
-import { Button, Group, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Button, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { IconPlus, IconSearch } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import type { AgGridReact } from "ag-grid-react";
+import { useRef, useState } from "react";
 
 import BookFormModal from "@/features/book-management/BookFormModal";
 import type { BookSuggestions } from "@/features/book-management/BookFormModal";
 import BookGrid from "@/features/book-management/BookGrid";
 import type { BookPatchRequest } from "@/features/book-management/BookGrid";
+import BookSelectionBar from "@/features/book-management/BookSelectionBar";
+import BookUpload from "@/features/book-management/BookUpload";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
@@ -32,7 +35,8 @@ function suggestionsFrom(items: Item[]): BookSuggestions {
 export default function BookManager() {
   const { api, client } = useApiClient();
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Item[]>([]);
+  const gridRef = useRef<AgGridReact<Item>>(null);
 
   const itemsQuery = api.items.getAllForAdmin.queryOptions();
   const { data: items, isLoading, error } = useQuery(itemsQuery);
@@ -92,28 +96,28 @@ export default function BookManager() {
             </Text>
           )}
         </Stack>
-        <Button leftSection={<IconPlus size={18} />} onClick={() => openBookModal()}>
-          Legg til bok
-        </Button>
+        <Group gap="xs">
+          <BookUpload items={allItems} />
+          <Button leftSection={<IconPlus size={18} />} onClick={() => openBookModal()}>
+            Legg til bok
+          </Button>
+        </Group>
       </Group>
-      <TextInput
-        aria-label="Søk etter bok"
-        placeholder="Søk på tittel, ISBN, fag eller forlag"
-        leftSection={<IconSearch size={16} />}
-        value={search}
-        onChange={(event) => setSearch(event.currentTarget.value)}
-        maw={480}
-      />
       <BookGrid
+        gridRef={gridRef}
         items={allItems}
         loading={isLoading}
-        quickFilterText={search}
         onPatch={patchBook}
         onEdit={openBookModal}
+        onSelectionChange={setSelected}
       />
       <Text size="xs" c="dimmed">
-        Klikk på en pris for å endre den. Enter lagrer og hopper til neste bok, Escape angrer.
+        Tabellen viser bare aktive bøker til du fjerner filteret på Aktiv-kolonnen. Søk med
+        filterikonet i kolonnene. Klikk på en pris for å endre den. Enter lagrer og hopper til neste
+        bok, Escape angrer. Huk av bøker for å laste dem ned som Excel. Filen kan endres og lastes
+        opp igjen.
       </Text>
+      <BookSelectionBar selected={selected} onClear={() => gridRef.current?.api.deselectAll()} />
     </Stack>
   );
 }
