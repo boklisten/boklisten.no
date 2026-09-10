@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import CustomerHeader from "@/features/customer-search/CustomerHeader";
+import EmailConfirmationWarning from "@/features/customer-search/EmailConfirmationWarning";
 import HandoutBooksTable from "@/features/customer-search/HandoutBooksTable";
 import { openOrderRows } from "@/features/order-manager/openOrderRows";
 import { describeOrderTime } from "@/features/order-manager/orderTime";
@@ -147,6 +148,7 @@ export default function OrderDetail({
             onDeselect={onBack}
             onMerged={onBack}
           />
+          <EmailConfirmationWarning customer={customer} />
           <SignatureStatusBanner userDetail={customer} />
           <Stack gap={6}>
             <Group gap="xs" align="baseline" wrap="wrap">
