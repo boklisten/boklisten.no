@@ -130,6 +130,7 @@ export function ActionControl({
       aria-label="Handling"
       // One width for every line, so the selects stack evenly whatever the price beside them
       w={ACTION_SELECT_WIDTH}
+      size="md"
       flex="0 0 auto"
       allowDeselect={false}
       value={offered ? choiceKey(choice) : null}

@@ -179,6 +179,7 @@ function CartBody({
       <Select
         label="Filial"
         description="Bøkene deles ut og registreres på denne filialen"
+        size="md"
         searchable={!narrow}
         autoComplete="off"
         autoCorrect="off"
