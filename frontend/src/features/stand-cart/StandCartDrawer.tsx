@@ -2,6 +2,7 @@ import { findOption } from "@boklisten/backend/shared/stand_cart";
 import type { StandCartCheckoutState } from "@boklisten/backend/shared/stand_cart";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import {
+  ActionIcon,
   Badge,
   Drawer,
   Group,
@@ -12,19 +13,22 @@ import {
   Switch,
   Text,
   ThemeIcon,
+  Tooltip,
   useMatches,
 } from "@mantine/core";
 import {
+  IconArrowLeft,
   IconBasket,
   IconCreditCard,
   IconReceipt,
   IconReceiptRefund,
   IconTruck,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import StandCartCheckout, { NextStepButton } from "@/features/stand-cart/StandCartCheckout";
 import type { CheckoutStep } from "@/features/stand-cart/StandCartCheckout";
+import StandCartCustomerCard from "@/features/stand-cart/StandCartCustomerCard";
 import StandCartLines from "@/features/stand-cart/StandCartLines";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
 import useStandCartSubmit, { isPlaced } from "@/features/stand-cart/useStandCartSubmit";
@@ -49,10 +53,40 @@ const STEP_TITLES: Record<Step | "refund", { label: string; icon: typeof IconBas
   done: { label: "Kvittering", icon: IconReceipt },
 };
 
-function StepTitle({ step, refund }: { step: Step; refund: boolean }) {
+/**
+ * The drawer's navigation bar: the way back at the far left where the step can be left, then the
+ * step's icon and name. One line, so Mantine's close button stays level with it.
+ */
+function StepTitle({
+  step,
+  refund,
+  onBack,
+  backDisabled,
+}: {
+  step: Step;
+  /** A negative total: the payment step is a refund. */
+  refund: boolean;
+  /** Absent where there is nothing to go back to: the cart, the receipt, a Vipps request under way. */
+  onBack: (() => void) | null;
+  backDisabled?: boolean;
+}) {
   const { label, icon: Icon } = STEP_TITLES[step === "pay" && refund ? "refund" : step];
   return (
-    <Group gap="xs" wrap="nowrap">
+    <Group gap="sm" wrap="nowrap">
+      {onBack && (
+        <Tooltip label="Tilbake">
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            size="md"
+            aria-label="Tilbake"
+            onClick={onBack}
+            disabled={backDisabled}
+          >
+            <IconArrowLeft size={20} aria-hidden />
+          </ActionIcon>
+        </Tooltip>
+      )}
       <ThemeIcon variant="light" size="md" radius="xl">
         <Icon size={18} aria-hidden />
       </ThemeIcon>
@@ -283,16 +317,32 @@ export default function StandCartDrawer({
     }
   }
 
-  /** The step before the current one, for "Tilbake". */
-  function back() {
-    setStep(step === "pay" && cart.hasBringDelivery ? "delivery" : "cart");
-  }
+  /** The step before the current one, for "Tilbake". Stable, so the payment step can report it back up. */
+  const back = useCallback(() => {
+    setStep((current) => (current === "pay" && cart.hasBringDelivery ? "delivery" : "cart"));
+  }, [cart.hasBringDelivery]);
+  // The payment step's own way back, which depends on where within the step the employee is
+  const [payBack, setPayBack] = useState<(() => void) | null>(null);
+  // Wrapped, since a bare function handed to a state setter would run as an updater
+  const reportPayBack = useCallback(
+    (handler: (() => void) | null) => setPayBack(() => handler),
+    [],
+  );
+  // Where "Tilbake" in the title leads from each step; nowhere from the cart or the receipt
+  const titleBack = { cart: null, delivery: back, pay: payBack, done: null }[step];
 
   return (
     <Drawer
       opened={opened}
       onClose={onClose}
-      title={<StepTitle step={step} refund={cart.total < 0} />}
+      title={
+        <StepTitle
+          step={step}
+          refund={cart.total < 0}
+          onBack={titleBack}
+          backDisabled={submitter.isPending}
+        />
+      }
       position={narrow ? "bottom" : "right"}
       // Wide enough on a desk for the table to keep a title on one line beside the actions
       size={narrow ? "92%" : "xl"}
@@ -308,6 +358,7 @@ export default function StandCartDrawer({
       }}
     >
       <Stack gap="md" pb="md" flex={1}>
+        <StandCartCustomerCard customer={customer} onNavigate={onClose} />
         {step === "cart" ? (
           <CartBody
             cart={cart}
@@ -327,6 +378,7 @@ export default function StandCartDrawer({
             onDelivery={answerDelivery}
             onPlaced={finish}
             onBack={back}
+            onBackChange={reportPayBack}
             onDone={onClose}
             onWaitingChange={setWaiting}
           />

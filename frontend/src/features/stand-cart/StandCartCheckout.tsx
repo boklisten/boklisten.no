@@ -17,7 +17,6 @@ import {
 } from "@mantine/core";
 import { useOs } from "@mantine/hooks";
 import {
-  IconArrowLeft,
   IconCash,
   IconCheck,
   IconCreditCard,
@@ -93,23 +92,6 @@ function NewTabIcon() {
   );
 }
 
-/** The way back, in the top left corner of every step the employee can leave. */
-export function BackLink({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
-  return (
-    <Button
-      variant="subtle"
-      color="gray"
-      size="compact-sm"
-      leftSection={<IconArrowLeft size={16} aria-hidden />}
-      style={{ alignSelf: "flex-start" }}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      Tilbake
-    </Button>
-  );
-}
-
 /**
  * The button that moves the flow on, centred and named after where it goes: the next step, or
  * "Bekreft" when nothing is left to pay and the cart becomes an order right here.
@@ -171,12 +153,10 @@ function DeliveryStep({
   nothingToPay,
   busy,
   onNext,
-  onBack,
 }: {
   nothingToPay: boolean;
   busy: boolean;
   onNext: (delivery: Delivery) => void;
-  onBack: () => void;
 }) {
   const [mode, setMode] = useState<DeliveryMode>("post");
   const [trackingNumber, setTrackingNumber] = useState("");
@@ -184,7 +164,6 @@ function DeliveryStep({
   const trimmed = trackingNumber.trim();
   return (
     <Stack>
-      <BackLink onClick={onBack} disabled={busy} />
       {/* The drawer's own title already says "Levering", so the control is named only for assistive tech */}
       <SegmentedControl
         aria-label="Levering"
@@ -487,6 +466,7 @@ function PayFlow({
   submitter,
   onPlaced,
   onBack,
+  onBackChange,
   onWaitingChange,
 }: {
   cart: StandCart;
@@ -496,6 +476,11 @@ function PayFlow({
   onPlaced: (state: StandCartCheckoutState) => void;
   /** Leaves the payment step for the one before it. */
   onBack: () => void;
+  /**
+   * The drawer's title holds the way back. Within the step it returns to the choice of method,
+   * from the choice to the step before, and while a Vipps request is out there is none.
+   */
+  onBackChange: (back: (() => void) | null) => void;
   onWaitingChange: (waiting: boolean) => void;
 }) {
   const [phase, setPhase] = useState<PayPhase>({ kind: "choose" });
@@ -505,6 +490,16 @@ function PayFlow({
   useEffect(() => {
     onWaitingChange(phase.kind === "waiting");
   }, [phase.kind, onWaitingChange]);
+
+  useEffect(() => {
+    if (phase.kind === "waiting") {
+      onBackChange(null);
+    } else if (phase.kind === "choose") {
+      onBackChange(onBack);
+    } else {
+      onBackChange(() => setPhase({ kind: "choose" }));
+    }
+  }, [phase.kind, onBack, onBackChange]);
 
   function settle(state: StandCartCheckoutState) {
     submitter.settle(state);
@@ -540,12 +535,8 @@ function PayFlow({
     return isPlaced(state);
   }
 
-  // Within the step, "Tilbake" returns to the choice of method; from the choice, to the step before
-  const back = phase.kind === "choose" ? onBack : () => setPhase({ kind: "choose" });
-
   return (
     <Stack>
-      {phase.kind !== "waiting" && <BackLink onClick={back} disabled={submitter.isPending} />}
       <TotalHero cart={cart} />
       <Divider />
       {payPhaseContent()}
@@ -624,6 +615,7 @@ export default function StandCartCheckout({
   onDelivery,
   onPlaced,
   onBack,
+  onBackChange,
   onDone,
   onWaitingChange,
 }: {
@@ -636,8 +628,10 @@ export default function StandCartCheckout({
   /** The delivery step's answer; the drawer moves on to payment, or places the order. */
   onDelivery: (delivery: Delivery) => void;
   onPlaced: (state: StandCartCheckoutState) => void;
-  /** "Tilbake": the drawer knows which step came before. */
+  /** "Tilbake" from the choice of payment method: the drawer knows which step came before. */
   onBack: () => void;
+  /** The payment step's own way back, for the drawer's title; see PayFlow. */
+  onBackChange: (back: (() => void) | null) => void;
   onDone: () => void;
   onWaitingChange: (waiting: boolean) => void;
 }) {
@@ -647,7 +641,6 @@ export default function StandCartCheckout({
         <DeliveryStep
           nothingToPay={cart.total === 0}
           busy={submitter.isPending}
-          onBack={onBack}
           onNext={onDelivery}
         />
       );
@@ -661,6 +654,7 @@ export default function StandCartCheckout({
           submitter={submitter}
           onPlaced={onPlaced}
           onBack={onBack}
+          onBackChange={onBackChange}
           onWaitingChange={onWaitingChange}
         />
       );

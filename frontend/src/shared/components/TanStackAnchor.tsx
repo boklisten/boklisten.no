@@ -3,8 +3,13 @@ import type { LinkComponent } from "@tanstack/react-router";
 import { Anchor } from "@mantine/core";
 import type { AnchorProps } from "@mantine/core";
 import { forwardRef } from "react";
+import type { ComponentPropsWithoutRef } from "react";
 
-const MantineLinkComponent = forwardRef<HTMLAnchorElement, Omit<AnchorProps, "href">>(
+/** Mantine's own props plus the anchor's native ones, so handlers like onClick type-check. */
+type MantineLinkProps = Omit<AnchorProps, "href"> &
+  Omit<ComponentPropsWithoutRef<"a">, keyof AnchorProps | "href">;
+
+const MantineLinkComponent = forwardRef<HTMLAnchorElement, MantineLinkProps>(
   // oxlint-disable-next-line react/function-component-definition
   (props, ref) => <Anchor ref={ref} {...props} />,
 );

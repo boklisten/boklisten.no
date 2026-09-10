@@ -1,10 +1,11 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
-import { ActionIcon, Avatar, Badge, Group, Stack, Text, Title, Tooltip } from "@mantine/core";
+import { ActionIcon, Avatar, Badge, Group, Stack, Title, Tooltip } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { IconMail, IconPencil, IconPhone, IconX } from "@tabler/icons-react";
+import { IconPencil, IconX } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
+import CustomerContactRow from "@/features/customer-search/CustomerContactRow";
 import initials from "@/features/customer-search/initials";
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import shortName from "@/features/customer-search/shortName";
@@ -55,7 +56,7 @@ export default function CustomerHeader({
             {initials(customer.name)}
           </Avatar>
           <Stack gap={4} miw={0}>
-            {/* Middle names are cut to initials on a phone, where the full name would wrap */}
+            {/* Only the first and last name on a phone, where the full name would wrap */}
             <Title order={2} size="h4" lh={1.2} hiddenFrom="sm">
               {name(shortName(customer.name))}
             </Title>
@@ -116,22 +117,7 @@ export default function CustomerHeader({
           )}
         </Group>
       </Group>
-      <Group gap="md" c="dimmed" style={{ rowGap: 4 }}>
-        {customer.phone && (
-          <Group gap={6} wrap="nowrap">
-            <IconPhone size={16} aria-hidden />
-            <Text size="sm">{customer.phone}</Text>
-          </Group>
-        )}
-        {customer.email && (
-          <Group gap={6} wrap="nowrap">
-            <IconMail size={16} aria-hidden />
-            <Text size="sm" style={{ overflowWrap: "anywhere" }}>
-              {customer.email}
-            </Text>
-          </Group>
-        )}
-      </Group>
+      <CustomerContactRow customer={customer} />
     </Stack>
   );
 }
