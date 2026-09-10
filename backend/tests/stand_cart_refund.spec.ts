@@ -302,7 +302,7 @@ test.group("StandCartRefund.plan", (group) => {
     );
     assert.deepEqual(plan, {
       kind: "manual",
-      reasons: ["«Sinus 1T» ble betalt med kort", "«Kosmos SF» ble betalt manuelt i Vipps"],
+      reasons: ["«Sinus 1T» ble betalt med kort", "«Kosmos SF» ble betalt manuelt med Vipps"],
     });
   });
 
@@ -357,7 +357,7 @@ test.group("StandCartRefund.plan", (group) => {
     const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID, ["p1"]))], NOW);
     assert.deepEqual(plan, {
       kind: "manual",
-      reasons: ["Fant ikke betalingen for «Sinus 1T»"],
+      reasons: ["Fant ingen Vipps-betaling for «Sinus 1T»"],
     });
   });
 
