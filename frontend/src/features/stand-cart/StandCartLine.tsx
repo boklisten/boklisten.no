@@ -128,7 +128,6 @@ export function ActionControl({
   return (
     <Select
       aria-label="Handling"
-      size="sm"
       // One width for every line, so the selects stack evenly whatever the price beside them
       w={ACTION_SELECT_WIDTH}
       flex="0 0 auto"

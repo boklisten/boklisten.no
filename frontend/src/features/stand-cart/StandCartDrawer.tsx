@@ -12,8 +12,8 @@ import {
   Switch,
   Text,
   ThemeIcon,
+  useMatches,
 } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
 import {
   IconBasket,
   IconCreditCard,
@@ -150,6 +150,7 @@ function CartBody({
   onNext: () => void;
 }) {
   const [switchingBranch, setSwitchingBranch] = useState(false);
+  const narrow = useMatches({ base: true, sm: false });
   const blocked = cart.problems.length > 0 || cart.cart.branchId === null;
 
   async function switchBranch(branchId: string | null) {
@@ -178,7 +179,11 @@ function CartBody({
       <Select
         label="Filial"
         description="Bøkene deles ut og registreres på denne filialen"
-        searchable
+        searchable={!narrow}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="none"
+        spellCheck={false}
         allowDeselect={false}
         nothingFoundMessage="Fant ingen filial"
         data={cart.branches.map((branch) => ({ value: branch.id, label: branch.name }))}
@@ -221,7 +226,7 @@ export default function StandCartDrawer({
   const [placed, setPlaced] = useState<StandCartCheckoutState | null>(null);
   // While a Vipps request is out, the only way out is "Avbryt forespørsel", so the order never dangles
   const [waiting, setWaiting] = useState(false);
-  const narrow = useMediaQuery("(max-width: 48em)");
+  const narrow = useMatches({ base: true, sm: false });
   const submitter = useStandCartSubmit({
     cart,
     customer,
