@@ -146,7 +146,36 @@ export type StandCartResolveResult =
 export const STAND_CART_CONFIRMATIONS = ["peer-match", "missing-signature"] as const;
 export type StandCartConfirmation = (typeof STAND_CART_CONFIRMATIONS)[number];
 
-export type StandCartPaymentMethod = "cash" | "card" | "vipps";
+/**
+ * How the money moves at checkout. For an amount to pay: cash or card on the employee's word, or
+ * a Vipps request pushed to the phone number. For a refund: back on the Vipps transactions the
+ * customer paid with, or by the administrator's bank transfer to the account number given.
+ */
+export type StandCartCheckoutPayment =
+  | { method: "cash" | "card" }
+  | { method: "vipps"; phoneNumber?: string | undefined }
+  | { method: "vipps-refund" }
+  | { method: "bank-transfer"; accountNumber: string; comment: string | null };
+
+/** The Vipps payment methods that leave a transaction the ePayment API can refund. */
+export type RefundableVippsMethod = "vipps-checkout" | "vipps-epayment";
+
+/** One Vipps transaction that a refund goes back on, and how much of the refund it takes. */
+export interface StandCartVippsRefund {
+  /** The paid order; its id is the Vipps reference. */
+  orderId: string;
+  method: RefundableVippsMethod;
+  /** Positive: what goes back to the customer on this transaction. */
+  amount: number;
+}
+
+/**
+ * How a cart's refund goes back to the customer: automatically on the Vipps transactions that
+ * were paid, or by hand from the administrator when any of the money did not come through Vipps.
+ */
+export type StandCartRefundPlan =
+  | { kind: "vipps"; refunds: StandCartVippsRefund[] }
+  | { kind: "manual"; reasons: string[] };
 
 export type StandCartCheckoutStatus =
   /** Vipps: the request is out, the customer has not answered. */

@@ -82,6 +82,16 @@ export const VippsPaymentService = {
       }
       return cancelled.data;
     },
+    /** Sends money back on a captured payment; Vipps allows it for a year after the payment. */
+    refund: async (reference: string, amountInMinorUnits: number) => {
+      const refunded = await client.payment.refund(await getAccessToken(), reference, {
+        modificationAmount: { currency: "NOK", value: amountInMinorUnits },
+      });
+      if (!refunded.ok) {
+        throw new Error(JSON.stringify(refunded.error));
+      }
+      return refunded.data;
+    },
     capture: async (reference: string, amountInMinorUnits: number) => {
       const capture = await client.payment.capture(await getAccessToken(), reference, {
         modificationAmount: {

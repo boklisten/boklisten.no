@@ -357,6 +357,7 @@ router.get("/checkout/poll/:orderId", [controllers.Checkout, "pollPayment"]);
  * Stand cart: everything an employee does with a customer's books at the stand, in one order
  */
 router.post("/v2/employee/stand_cart/lines", [controllers.StandCart, "resolveLine"]);
+router.post("/v2/employee/stand_cart/refund_plan", [controllers.StandCart, "refundPlan"]);
 router.post("/v2/employee/stand_cart/checkout", [controllers.StandCart, "checkout"]);
 router.get("/v2/employee/stand_cart/:orderId/status", [controllers.StandCart, "status"]);
 router.post("/v2/employee/stand_cart/:orderId/cancel", [controllers.StandCart, "cancel"]);

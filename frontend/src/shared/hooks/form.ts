@@ -15,6 +15,7 @@ import TextAreaField from "@/shared/components/form/fields/basic/TextAreaField";
 import TextField from "@/shared/components/form/fields/basic/TextField";
 import TimePickerField from "@/shared/components/form/fields/basic/TimePickerField";
 import AddressField from "@/shared/components/form/fields/complex/AddressField";
+import BankAccountField from "@/shared/components/form/fields/complex/BankAccountField";
 import CsvFileField from "@/shared/components/form/fields/complex/CsvFileField";
 import CurrencyField from "@/shared/components/form/fields/complex/CurrencyField";
 import DeadlinePickerField from "@/shared/components/form/fields/complex/DeadlinePickerField";
@@ -59,6 +60,7 @@ const { useAppForm, withFieldGroup } = createFormHook({
     PhoneNumberField,
     NameField,
     AddressField,
+    BankAccountField,
     PostalCodeField,
     PasswordField,
     NewPasswordField,

@@ -51,32 +51,59 @@ export const standCartResolveValidator = vine.create(
   }),
 );
 
+const linesSchema = vine
+  .array(
+    vine.object({
+      source: sourceSchema,
+      choice: vine.object({
+        type: vine.enum(STAND_CART_ACTION_TYPES),
+        /** ISO timestamp. */
+        to: vine.string().optional(),
+      }),
+      blid: vine.string().trim().optional(),
+      /** The price the cart showed; the checkout refuses when the server's differs. */
+      expectedPrice: vine.number(),
+    }),
+  )
+  .minLength(1);
+
+const ofMethod = (method: string) => (value: Record<string, unknown>) => value["method"] === method;
+
+/** How the money moves; which fields apply follows from `method`. */
+const paymentSchema = vine.union([
+  vine.union.if(
+    ofMethod("vipps"),
+    vine.object({
+      method: vine.literal("vipps"),
+      /** The phone the request is pushed to. */
+      phoneNumber: vine.string().trim().optional(),
+    }),
+  ),
+  vine.union.if(ofMethod("vipps-refund"), vine.object({ method: vine.literal("vipps-refund") })),
+  vine.union.if(
+    ofMethod("bank-transfer"),
+    vine.object({
+      method: vine.literal("bank-transfer"),
+      /** The customer's Norwegian bank account number, written any way. */
+      accountNumber: vine.string().trim(),
+      /** The employee's note to the administrator about why. */
+      comment: vine.string().trim().nullable(),
+    }),
+  ),
+  vine.union.else(vine.object({ method: vine.enum(["cash", "card"]) })),
+]);
+
+/** The lines a refund plan is asked for: the same lines checkout would get. */
+export const standCartRefundPlanValidator = vine.create(
+  vine.object({ customerId: objectId(), branchId: objectId(), lines: linesSchema }),
+);
+
 export const standCartCheckoutValidator = vine.create(
   vine.object({
     customerId: objectId(),
     branchId: objectId(),
-    lines: vine
-      .array(
-        vine.object({
-          source: sourceSchema,
-          choice: vine.object({
-            type: vine.enum(STAND_CART_ACTION_TYPES),
-            /** ISO timestamp. */
-            to: vine.string().optional(),
-          }),
-          blid: vine.string().trim().optional(),
-          /** The price the cart showed; the checkout refuses when the server's differs. */
-          expectedPrice: vine.number(),
-        }),
-      )
-      .minLength(1),
-    payment: vine
-      .object({
-        method: vine.enum(["cash", "card", "vipps"]),
-        /** Only for Vipps: the phone the request is pushed to. */
-        phoneNumber: vine.string().trim().optional(),
-      })
-      .nullable(),
+    lines: linesSchema,
+    payment: paymentSchema.nullable(),
     delivery: vine.object({ trackingNumber: vine.string().trim().minLength(1) }).nullable(),
     notifyByEmail: vine.boolean(),
     confirmed: vine.array(vine.enum(STAND_CART_CONFIRMATIONS)),

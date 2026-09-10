@@ -23,7 +23,6 @@ import {
   IconCreditCard,
   IconExternalLink,
   IconHandStop,
-  IconSend,
   IconTruck,
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -31,8 +30,10 @@ import { useEffect, useState } from "react";
 
 import OrderHistoryCard from "@/features/order-history/OrderHistoryCard";
 import { TotalHero } from "@/features/stand-cart/StandCartAmounts";
+import RefundStep from "@/features/stand-cart/StandCartRefund";
 import { formatAmount } from "@/features/stand-cart/standCartLabels";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
+import { isPlaced } from "@/features/stand-cart/useStandCartSubmit";
 import type {
   Delivery,
   FailedStatus,
@@ -40,6 +41,7 @@ import type {
   StandCartSubmitter,
 } from "@/features/stand-cart/useStandCartSubmit";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
+import VippsStyledButton, { VIPPS_ORANGE } from "@/shared/components/VippsStyledButton";
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
@@ -48,11 +50,8 @@ import useApiClient from "@/shared/hooks/useApiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification } from "@/shared/utils/notifications";
 
-/** Vipps' own orange, so the button reads as "this goes to Vipps" the way the app does. */
-const VIPPS_ORANGE = "#ff5b24";
 const STATUS_POLL_INTERVAL_MS = 2000;
 
-const VIPPS_PORTAL_URL = "https://portal.vippsmobilepay.com";
 const VIPPSKASSA_APP_STORE_URL = "https://apps.apple.com/no/app/mobile-point-of-sale/id6472654638";
 const VIPPSKASSA_PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.vippsmobilepay.vmpos";
@@ -228,16 +227,12 @@ function DeliveryStep({
 }
 
 function PayStep({
-  cart,
-  customer,
   phoneNumber,
   onPay,
   onChooseCard,
   onChooseCash,
   busy,
 }: {
-  cart: StandCart;
-  customer: UserDetail;
   phoneNumber: string;
   onPay: (payment: Payment) => void;
   onChooseCard: () => void;
@@ -249,22 +244,6 @@ function PayStep({
     onSubmit: ({ value }) => onPay({ method: "vipps", phoneNumber: value.phoneNumber }),
   });
 
-  if (cart.total < 0) {
-    return (
-      <Stack>
-        <RefundInstructions amount={cart.total} customerName={customer.name} />
-        <Group justify="flex-end">
-          <Button
-            leftSection={<IconSend size={18} aria-hidden />}
-            loading={busy}
-            onClick={() => onPay({ method: "vipps" })}
-          >
-            Bekreft refusjon
-          </Button>
-        </Group>
-      </Stack>
-    );
-  }
   return (
     <Stack>
       <Stack gap="xs">
@@ -282,14 +261,9 @@ function PayStep({
             />
           )}
         </form.AppField>
-        <Button
-          color={VIPPS_ORANGE}
-          leftSection={<IconSend size={18} aria-hidden />}
-          loading={busy}
-          onClick={form.handleSubmit}
-        >
+        <VippsStyledButton loading={busy} onClick={() => void form.handleSubmit()}>
           Send Vipps-forespørsel
-        </Button>
+        </VippsStyledButton>
       </Stack>
       <Divider label="eller" labelPosition="center" />
       <Group grow>
@@ -398,43 +372,6 @@ function VippskassaLink() {
   );
 }
 
-/**
- * A refund goes back through Vipps's business portal, outside this app, so the employee is
- * walked through it the same way as taking a payment and vouches for it with the confirm
- * button. The steps follow Vipps's own help centre.
- */
-function RefundInstructions({ amount, customerName }: { amount: number; customerName: string }) {
-  return (
-    <Stack gap="xs">
-      <Title order={4}>Refunder i Vipps</Title>
-      <List type="ordered" spacing="xs">
-        <List.Item>
-          Åpne{" "}
-          <Anchor
-            href={VIPPS_PORTAL_URL}
-            target="_blank"
-            rel="noreferrer"
-            c="inherit"
-            fw={600}
-            underline="hover"
-          >
-            bedriftsportalen til Vipps
-            <NewTabIcon />
-          </Anchor>
-          .
-        </List.Item>
-        <List.Item>
-          Velg «Transaksjoner» i sidemenyen og finn betalingen til {customerName}.
-        </List.Item>
-        <List.Item>Trykk på transaksjonen og velg «Refunder».</List.Item>
-        <List.Item>
-          Skriv inn <Sum amount={Math.abs(amount)} /> og bekreft.
-        </List.Item>
-      </List>
-    </Stack>
-  );
-}
-
 function WaitingStep({
   orderId,
   phoneNumber,
@@ -498,7 +435,15 @@ function WaitingStep({
 
 function doneTitle(state: StandCartCheckoutState): string {
   if (state.order !== null && state.order.amount < 0) {
-    return "Refusjonen er registrert";
+    const methods = new Set(state.order.payments.map((payment) => payment.method));
+    const byTransfer = methods.has("bank-transfer");
+    const byVipps = methods.has("vipps-epayment") || methods.has("vipps-checkout");
+    if (byTransfer && byVipps) {
+      return "Deler av refusjonen er sendt via Vipps, resten til administrator";
+    }
+    return byTransfer
+      ? "Refusjonsforespørselen er sendt til administrator"
+      : "Refusjonen er sendt via Vipps";
   }
   return state.status === "paid" ? "Betalingen er registrert" : "Ordren er registrert";
 }
@@ -578,19 +523,21 @@ function PayFlow({
     }
   }
 
-  async function pay(payment: Payment) {
-    if (payment.phoneNumber !== undefined) {
+  /** Resolves with whether the order went through; a Vipps push is not through until the customer answers. */
+  async function pay(payment: Payment): Promise<boolean> {
+    if (payment.method === "vipps" && payment.phoneNumber !== undefined) {
       setPhoneNumber(payment.phoneNumber);
     }
     const state = await submitter.submit(payment, delivery);
     if (state === null) {
-      return;
+      return false;
     }
-    if (state.status === "pending" && payment.phoneNumber !== undefined) {
+    if (state.status === "pending" && payment.method === "vipps" && payment.phoneNumber) {
       setPhase({ kind: "waiting", orderId: state.orderId, phoneNumber: payment.phoneNumber });
-      return;
+      return false;
     }
     settle(state);
+    return isPlaced(state);
   }
 
   // Within the step, "Tilbake" returns to the choice of method; from the choice, to the step before
@@ -609,10 +556,13 @@ function PayFlow({
   function payPhaseContent() {
     switch (phase.kind) {
       case "choose": {
+        if (cart.total < 0) {
+          return (
+            <RefundStep cart={cart} customer={customer} busy={submitter.isPending} onPay={pay} />
+          );
+        }
         return (
           <PayStep
-            cart={cart}
-            customer={customer}
             phoneNumber={phoneNumber}
             onPay={(payment) => void pay(payment)}
             onChooseCard={() => setPhase({ kind: "cardConfirm" })}

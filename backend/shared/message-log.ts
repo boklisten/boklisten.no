@@ -12,6 +12,7 @@ export const MESSAGE_TYPES = [
   "email-verification",
   "onboarding",
   "employee-monitoring",
+  "refund-request",
   "bokflyt-contact",
 ] as const;
 export type MessageType = (typeof MESSAGE_TYPES)[number];

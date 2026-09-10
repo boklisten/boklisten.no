@@ -714,6 +714,12 @@ const routes = {
     tokens: [{"old":"/v2/employee/stand_cart/lines","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_cart/lines","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_cart/lines","type":0,"val":"stand_cart","end":""},{"old":"/v2/employee/stand_cart/lines","type":0,"val":"lines","end":""}],
     types: placeholder as Registry['stand_cart.resolve_line']['types'],
   },
+  'stand_cart.refund_plan': {
+    methods: ["POST"],
+    pattern: '/v2/employee/stand_cart/refund_plan',
+    tokens: [{"old":"/v2/employee/stand_cart/refund_plan","type":0,"val":"v2","end":""},{"old":"/v2/employee/stand_cart/refund_plan","type":0,"val":"employee","end":""},{"old":"/v2/employee/stand_cart/refund_plan","type":0,"val":"stand_cart","end":""},{"old":"/v2/employee/stand_cart/refund_plan","type":0,"val":"refund_plan","end":""}],
+    types: placeholder as Registry['stand_cart.refund_plan']['types'],
+  },
   'stand_cart.checkout': {
     methods: ["POST"],
     pattern: '/v2/employee/stand_cart/checkout',

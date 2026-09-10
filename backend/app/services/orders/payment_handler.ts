@@ -35,7 +35,7 @@ export class PaymentHandler {
   }
 
   private confirmPayment(order: Order, payment: Payment): Promise<boolean> {
-    if (["card", "cash", "vipps"].includes(payment.method)) {
+    if (["card", "cash", "vipps", "bank-transfer"].includes(payment.method)) {
       if (order.byCustomer) {
         throw new BlError(`payment method "${payment.method}" is not permitted for customer`);
       }

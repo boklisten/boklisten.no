@@ -9,7 +9,7 @@ export const PaymentSchema: BlSchema<Payment> = new Schema({
     type: String,
     required: true,
     // "dibs" is a retired payment gateway; kept for pre-2020 documents
-    enum: ["card", "cash", "vipps", "vipps-checkout", "vipps-epayment", "dibs"],
+    enum: ["card", "cash", "vipps", "vipps-checkout", "vipps-epayment", "bank-transfer", "dibs"],
   },
   order: {
     type: Schema.Types.ObjectId,

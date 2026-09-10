@@ -110,10 +110,13 @@ async function isBringDelivery(order: Order): Promise<boolean> {
 }
 
 /**
- * What the customer paid to get the book. The handout order carries the copy at 0 kr and points
- * back to the order the customer actually paid, so the refund follows that link.
+ * The order the customer paid to get the book, and its line for the book. The handout order
+ * carries the copy at 0 kr and points back to the order the customer actually paid, so the
+ * refund follows that link. Null when the book was never paid for through an order.
  */
-async function paidForCustomerItem(customerItem: CustomerItem): Promise<number> {
+export async function findPaidOrderForCustomerItem(
+  customerItem: CustomerItem,
+): Promise<{ order: Order; orderItem: OrderItem } | null> {
   const handoutOrder = await StorageService.Orders.getOrNull(customerItem.orders[0]);
   const handoutItem = handoutOrder?.orderItems.find(
     (orderItem) =>
@@ -121,16 +124,22 @@ async function paidForCustomerItem(customerItem: CustomerItem): Promise<number> 
       (orderItem.customerItem === undefined && orderItem.item === customerItem.item),
   );
   if (!handoutOrder || !handoutItem) {
-    return 0;
+    return null;
   }
   if (!handoutItem.movedFromOrder) {
-    return alreadyPaidFor(handoutOrder, handoutItem);
+    return { order: handoutOrder, orderItem: handoutItem };
   }
   const original = await StorageService.Orders.getOrNull(handoutItem.movedFromOrder);
   const originalItem = original?.orderItems.find((orderItem) =>
     itemsAreEquivalent(orderItem.item, customerItem.item),
   );
-  return original && originalItem ? alreadyPaidFor(original, originalItem) : 0;
+  return original && originalItem ? { order: original, orderItem: originalItem } : null;
+}
+
+/** What the customer paid to get the book. */
+async function paidForCustomerItem(customerItem: CustomerItem): Promise<number> {
+  const paid = await findPaidOrderForCustomerItem(customerItem);
+  return paid ? alreadyPaidFor(paid.order, paid.orderItem) : 0;
 }
 
 type Unlinked = Extract<StandCartResolveResult, { kind: "unlinked" }>;

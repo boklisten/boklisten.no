@@ -5,6 +5,7 @@ import { createSandbox } from "sinon";
 import BadRequestException from "#exceptions/bad_request_exception";
 import Signature from "#models/signature";
 import { OrderHistoryService } from "#services/order_history_service";
+import { RefundRequestService } from "#services/refund_request_service";
 import { StandCartCheckoutService } from "#services/stand_cart/stand_cart_checkout_service";
 import type { StandCartCheckoutRequest } from "#services/stand_cart/stand_cart_checkout_service";
 import { StandCartLineResolver } from "#services/stand_cart/stand_cart_line_resolver";
@@ -13,6 +14,7 @@ import type {
   StandCartResolution,
 } from "#services/stand_cart/stand_cart_line_resolver";
 import { StandCartPlacement } from "#services/stand_cart/stand_cart_placement";
+import { StandCartRefund } from "#services/stand_cart/stand_cart_refund";
 import { StorageService } from "#services/storage_service";
 import { UserService } from "#services/user_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
@@ -22,7 +24,12 @@ import type { Delivery } from "#shared/delivery/delivery";
 import type { Item } from "#shared/item";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
-import type { StandCartLine, StandCartOption, StandCartSource } from "#shared/stand_cart";
+import type {
+  StandCartLine,
+  StandCartOption,
+  StandCartSource,
+  StandCartVippsRefund,
+} from "#shared/stand_cart";
 import type { UserDetail } from "#shared/user-detail";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
 
@@ -152,24 +159,44 @@ function request(overrides: Partial<StandCartCheckoutRequest> = {}): StandCartCh
   };
 }
 
+const CANCEL_LINE = {
+  source: ORDER_SOURCE,
+  choice: { type: "cancel" as const },
+  expectedPrice: -250,
+};
+
+function cancelOption(): StandCartOption {
+  return { type: "cancel", price: -250, available: true, monitored: false };
+}
+
+function vippsRefund(orderId: string, amount: number): StandCartVippsRefund {
+  return { orderId, method: "vipps-epayment", amount };
+}
+
 test.group("StandCartCheckoutService.checkout", (group) => {
   let sandbox: sinon.SinonSandbox;
   let resolve: sinon.SinonStub;
   let ordersAdd: sinon.SinonStub;
   let ordersUpdate: sinon.SinonStub;
   let ordersRemove: sinon.SinonStub;
+  let deliveriesRemove: sinon.SinonStub;
   let paymentsAdd: sinon.SinonStub;
   let deliveriesAdd: sinon.SinonStub;
   let place: sinon.SinonStub;
+  let plan: sinon.SinonStub;
+  let sendRefundRequest: sinon.SinonStub;
   let vipps: {
     create: sinon.SinonStub;
     info: sinon.SinonStub;
     cancel: sinon.SinonStub;
     capture: sinon.SinonStub;
+    refund: sinon.SinonStub;
   };
 
   group.each.setup(() => {
     sandbox = createSandbox();
+    plan = sandbox.stub(StandCartRefund, "plan").resolves(null);
+    sendRefundRequest = sandbox.stub(RefundRequestService, "send").resolves();
     resolve = sandbox
       .stub(StandCartLineResolver, "resolveWithContext")
       .resolves(resolution(ORDER_SOURCE, [rentOption()], { blid: BLID }));
@@ -188,6 +215,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
         Promise.resolve(mock<Order>({ ...ordersAdd.firstCall?.returnValue, ...data, id })),
       );
     ordersRemove = sandbox.stub(StorageService.Orders, "remove").resolves();
+    deliveriesRemove = sandbox.stub(StorageService.Deliveries, "remove").resolves();
     paymentsAdd = sandbox
       .stub(StorageService.Payments, "add")
       .resolves(unchecked({ id: "payment1" }));
@@ -208,6 +236,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       info: sandbox.stub().resolves({ state: "CREATED" }),
       cancel: sandbox.stub().resolves({}),
       capture: sandbox.stub().resolves({}),
+      refund: sandbox.stub().resolves({}),
     };
     sandbox.stub(VippsPaymentService, "payment").value(vipps);
   });
@@ -266,40 +295,146 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     assert.equal(state.status, "paid");
   });
 
-  test("a refund is recorded as a negative Vipps payment, as the legacy stand did", async ({
+  test("a Vipps refund goes back on the traced transaction before the order is placed", async ({
     assert,
   }) => {
-    resolve.resolves(
-      resolution(ORDER_SOURCE, [
-        { type: "cancel", price: -250, available: true, monitored: false },
-      ]),
-    );
-    const state = await checkout({
-      lines: [{ source: ORDER_SOURCE, choice: { type: "cancel" }, expectedPrice: -250 }],
-      payment: { method: "vipps" },
-    });
+    resolve.resolves(resolution(ORDER_SOURCE, [cancelOption()]));
+    plan.resolves({ kind: "vipps", refunds: [vippsRefund(ORDER_ID, 250)] });
+    const state = await checkout({ lines: [CANCEL_LINE], payment: { method: "vipps-refund" } });
     assert.equal(ordersAdd.firstCall.args[0].amount, -250);
-    // The same record the legacy stand wrote: the refunded amount, negative, on the method used
-    assert.include(paymentsAdd.firstCall.args[0], { method: "vipps", amount: -250 });
-    assert.isFalse(vipps.create.called);
+    assert.isTrue(vipps.refund.calledOnceWith(ORDER_ID, 25_000));
+    assert.include(paymentsAdd.firstCall.args[0], {
+      method: "vipps-epayment",
+      amount: -250,
+      order: NEW_ORDER_ID,
+    });
+    assert.deepEqual(place.firstCall.args[0].payments, ["payment1"]);
+    assert.isFalse(sendRefundRequest.called);
     assert.equal(state.status, "paid");
   });
 
-  test("refuses a refund until the employee vouches that it was made in Vipps", async ({
+  test("refuses a Vipps refund the plan says must be made by hand, before any order exists", async ({
     assert,
   }) => {
-    resolve.resolves(
-      resolution(ORDER_SOURCE, [
-        { type: "cancel", price: -250, available: true, monitored: false },
-      ]),
+    resolve.resolves(resolution(ORDER_SOURCE, [cancelOption()]));
+    plan.resolves({ kind: "manual", reasons: ["«Sinus 1T» ble betalt kontant"] });
+    await assert.rejects(
+      () => checkout({ lines: [CANCEL_LINE], payment: { method: "vipps-refund" } }),
+      BadRequestException,
+      /manuelt/,
     );
+    assert.isFalse(ordersAdd.called);
+    assert.isFalse(vipps.refund.called);
+  });
+
+  test("drops the order when Vipps refuses the refund, so it can be registered by hand", async ({
+    assert,
+  }) => {
+    resolve.resolves(resolution(ORDER_SOURCE, [cancelOption()]));
+    plan.resolves({ kind: "vipps", refunds: [vippsRefund(ORDER_ID, 250)] });
+    vipps.refund.rejects(new Error("boom"));
+    await assert.rejects(
+      () => checkout({ lines: [CANCEL_LINE], payment: { method: "vipps-refund" } }),
+      BadRequestException,
+      /manuelt/,
+    );
+    assert.deepEqual(ordersRemove.firstCall.args, [NEW_ORDER_ID]);
+    assert.isFalse(paymentsAdd.called);
+    assert.isFalse(place.called);
+  });
+
+  test("a refund Vipps only partly made is placed with the rest left to the administrator", async ({
+    assert,
+  }) => {
+    const otherOrderId = "5f7f7f7f7f7f7f7f7f7f7f32";
+    resolve.resolves(resolution(ORDER_SOURCE, [{ ...cancelOption(), price: -650 }]));
+    plan.resolves({
+      kind: "vipps",
+      refunds: [vippsRefund(ORDER_ID, 250), vippsRefund(otherOrderId, 400)],
+    });
+    vipps.refund.withArgs(otherOrderId).rejects(new Error("boom"));
+    const state = await checkout({
+      lines: [{ ...CANCEL_LINE, expectedPrice: -650 }],
+      payment: { method: "vipps-refund" },
+    });
+    assert.include(paymentsAdd.firstCall.args[0], { method: "vipps-epayment", amount: -250 });
+    assert.include(paymentsAdd.secondCall.args[0], { method: "bank-transfer", amount: -400 });
+    assert.isTrue(place.calledOnce);
+    assert.include(sendRefundRequest.firstCall.args[0], {
+      employeeDetailsId: EMPLOYEE.detailsId,
+      amount: 400,
+      accountNumber: null,
+      comment: null,
+    });
+    assert.equal(state.status, "paid");
+  });
+
+  test("a manual refund records a bank transfer and asks the administrator to make it", async ({
+    assert,
+  }) => {
+    resolve.resolves(resolution(ORDER_SOURCE, [cancelOption()]));
+    const state = await checkout({
+      lines: [CANCEL_LINE],
+      payment: {
+        method: "bank-transfer",
+        accountNumber: "1234.56.78903",
+        comment: "Kunden har byttet skole",
+      },
+    });
+    assert.include(paymentsAdd.firstCall.args[0], {
+      method: "bank-transfer",
+      amount: -250,
+      order: NEW_ORDER_ID,
+    });
+    assert.isTrue(place.calledOnce);
+    assert.isFalse(vipps.refund.called);
+    assert.include(sendRefundRequest.firstCall.args[0], {
+      employeeDetailsId: EMPLOYEE.detailsId,
+      amount: 250,
+      accountNumber: "12345678903",
+      comment: "Kunden har byttet skole",
+    });
+    assert.equal(sendRefundRequest.firstCall.args[0].order.id, NEW_ORDER_ID);
+    assert.equal(state.status, "paid");
+  });
+
+  test("refuses a manual refund with an invalid account number before any order exists", async ({
+    assert,
+  }) => {
+    resolve.resolves(resolution(ORDER_SOURCE, [cancelOption()]));
     await assert.rejects(
       () =>
         checkout({
-          lines: [{ source: ORDER_SOURCE, choice: { type: "cancel" }, expectedPrice: -250 }],
+          lines: [CANCEL_LINE],
+          payment: { method: "bank-transfer", accountNumber: "1234.56.78904", comment: null },
         }),
       BadRequestException,
-      /refusjonen er gjort i Vipps/,
+      /kontonummer/i,
+    );
+    assert.isFalse(ordersAdd.called);
+  });
+
+  test("refuses a refund by any method that is not a refund", async ({ assert }) => {
+    resolve.resolves(resolution(ORDER_SOURCE, [cancelOption()]));
+    await assert.rejects(
+      () => checkout({ lines: [CANCEL_LINE], payment: { method: "vipps" } }),
+      BadRequestException,
+      /refusjon/i,
+    );
+    await assert.rejects(
+      () => checkout({ lines: [CANCEL_LINE], payment: null }),
+      BadRequestException,
+      /refusjon/i,
+    );
+    assert.isFalse(ordersAdd.called);
+  });
+
+  test("refuses a refund method when there is something to pay", async ({ assert }) => {
+    resolve.resolves(resolution(ORDER_SOURCE, [rentOption(250)], { blid: BLID }));
+    await assert.rejects(
+      () => checkout({ lines: [paidLine()], payment: { method: "vipps-refund" } }),
+      BadRequestException,
+      /Velg betalingsmåte/,
     );
     assert.isFalse(ordersAdd.called);
   });
@@ -436,9 +571,8 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     assert.equal(state.status, "placed");
   });
 
-  test("sends the order by mail when the original order had a Bring delivery", async ({
-    assert,
-  }) => {
+  /** The source order was sent by Bring, so the cart may send the new order the same way. */
+  function givenBringDelivery(price = 0) {
     asStub(StorageService.Deliveries.getOrNull).resolves(
       mock<Delivery>({
         id: DELIVERY_ID,
@@ -458,12 +592,18 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     );
     const withDelivery = { ...originalOrder, delivery: DELIVERY_ID };
     resolve.resolves({
-      ...resolution(ORDER_SOURCE, [rentOption()], {
+      ...resolution(ORDER_SOURCE, [rentOption(price)], {
         blid: BLID,
         notes: [{ kind: "bring-delivery" }],
       }),
       context: { kind: "order", order: withDelivery, orderItem: orderedItem, item },
     });
+  }
+
+  test("sends the order by mail when the original order had a Bring delivery", async ({
+    assert,
+  }) => {
+    givenBringDelivery();
 
     await checkout({ delivery: { trackingNumber: "TR123" } });
 
@@ -533,6 +673,23 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       /ikke registrert i Vipps/,
     );
     assert.deepEqual(ordersRemove.firstCall.args, [NEW_ORDER_ID]);
+    assert.isFalse(deliveriesRemove.called);
+  });
+
+  test("a dropped order takes the delivery copied onto it along", async ({ assert }) => {
+    givenBringDelivery(250);
+    vipps.create.rejects(new Error("boom"));
+    await assert.rejects(
+      () =>
+        checkout({
+          lines: [paidLine()],
+          payment: { method: "vipps", phoneNumber: "91234567" },
+          delivery: { trackingNumber: "TR123" },
+        }),
+      BadRequestException,
+    );
+    assert.deepEqual(deliveriesRemove.firstCall.args, ["new-delivery"]);
+    assert.deepEqual(ordersRemove.firstCall.args, [NEW_ORDER_ID]);
   });
 
   test("rejects a bad phone number before any order exists", async ({ assert }) => {
@@ -542,6 +699,56 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
     );
     assert.isFalse(ordersAdd.called);
+  });
+});
+
+test.group("StandCartCheckoutService.refundPlan", (group) => {
+  let sandbox: sinon.SinonSandbox;
+  let plan: sinon.SinonStub;
+
+  group.each.setup(() => {
+    sandbox = createSandbox();
+    sandbox
+      .stub(StandCartLineResolver, "resolveWithContext")
+      .resolves(
+        resolution(ORDER_SOURCE, [
+          { type: "cancel", price: -250, available: true, monitored: false },
+        ]),
+      );
+    plan = sandbox.stub(StandCartRefund, "plan").resolves({ kind: "manual", reasons: ["x"] });
+  });
+  group.each.teardown(() => sandbox.restore());
+
+  test("re-resolves the lines the way checkout does and returns their refund plan", async ({
+    assert,
+  }) => {
+    const result = await StandCartCheckoutService.refundPlan(
+      {
+        customerId: CUSTOMER_ID,
+        branchId: BRANCH_ID,
+        lines: [{ source: ORDER_SOURCE, choice: { type: "cancel" }, expectedPrice: -250 }],
+      },
+      NOW,
+    );
+    assert.deepEqual(result, { kind: "manual", reasons: ["x"] });
+    assert.equal(plan.firstCall.args[0][0].option.price, -250);
+    assert.deepEqual(plan.firstCall.args[1], NOW);
+  });
+
+  test("refuses a line whose price moved, like checkout", async ({ assert }) => {
+    await assert.rejects(
+      () =>
+        StandCartCheckoutService.refundPlan(
+          {
+            customerId: CUSTOMER_ID,
+            branchId: BRANCH_ID,
+            lines: [{ source: ORDER_SOURCE, choice: { type: "cancel" }, expectedPrice: -100 }],
+          },
+          NOW,
+        ),
+      BadRequestException,
+      /har fått ny pris/,
+    );
   });
 });
 

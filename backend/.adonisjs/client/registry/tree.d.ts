@@ -189,6 +189,7 @@ export interface ApiDefinition {
   }
   standCart: {
     resolveLine: typeof routes['stand_cart.resolve_line']
+    refundPlan: typeof routes['stand_cart.refund_plan']
     checkout: typeof routes['stand_cart.checkout']
     status: typeof routes['stand_cart.status']
     cancel: typeof routes['stand_cart.cancel']

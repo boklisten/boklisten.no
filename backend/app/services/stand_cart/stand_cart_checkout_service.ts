@@ -1,6 +1,7 @@
 import BadRequestException from "#exceptions/bad_request_exception";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { OrderHistoryService } from "#services/order_history_service";
+import { RefundRequestService } from "#services/refund_request_service";
 import { findSignatureException } from "#services/signature_helper";
 import { StandCartLineResolver } from "#services/stand_cart/stand_cart_line_resolver";
 import { planCheckout } from "#services/stand_cart/stand_cart_order_builder";
@@ -11,18 +12,22 @@ import {
   VIPPS_REQUEST_STATE,
 } from "#services/stand_cart/stand_cart_payment";
 import { StandCartPlacement } from "#services/stand_cart/stand_cart_placement";
+import { StandCartRefund } from "#services/stand_cart/stand_cart_refund";
 import { StorageService } from "#services/storage_service";
 import { UserService } from "#services/user_service";
+import { normalizeBankAccount } from "#shared/bank_account";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
 import type { Order } from "#shared/order/order";
 import type {
+  StandCartCheckoutPayment,
   StandCartCheckoutState,
   StandCartCheckoutStatus,
   StandCartChoice,
   StandCartConfirmation,
-  StandCartPaymentMethod,
+  StandCartRefundPlan,
   StandCartSource,
+  StandCartVippsRefund,
 } from "#shared/stand_cart";
 import {
   BLID_REQUIRED_ACTION_TYPES,
@@ -44,12 +49,7 @@ export interface StandCartCheckoutRequest {
     /** The price the cart showed the employee; the checkout refuses when the server's differs. */
     expectedPrice: number;
   }[];
-  /**
-   * How the money moves. For an amount to pay, Vipps pushes a request to the phone number. A
-   * refund is always made in Vipps's business portal, and the method is the employee's word
-   * that it was.
-   */
-  payment: { method: StandCartPaymentMethod; phoneNumber?: string | undefined } | null;
+  payment: StandCartCheckoutPayment | null;
   /** Set when the books go by mail; only valid when a source order had a Bring delivery. */
   delivery: { trackingNumber: string } | null;
   notifyByEmail: boolean;
@@ -58,8 +58,14 @@ export interface StandCartCheckoutRequest {
 
 export const CART_CHANGED_MESSAGE = "Handlekurven har endret seg. Se over den og prøv igjen.";
 
+/** The lines of a checkout, and the customer and branch they belong to. */
+export type StandCartLinesRequest = Pick<
+  StandCartCheckoutRequest,
+  "customerId" | "branchId" | "lines"
+>;
+
 /** Every line priced again by the server, so no price or option the browser sent is trusted. */
-async function resolveLines(request: StandCartCheckoutRequest, now: Date): Promise<CheckoutLine[]> {
+async function resolveLines(request: StandCartLinesRequest, now: Date): Promise<CheckoutLine[]> {
   const lines: CheckoutLine[] = [];
   for (const submitted of request.lines) {
     const resolution = await StandCartLineResolver.resolveWithContext(
@@ -189,24 +195,71 @@ function describeForVipps(lines: CheckoutLine[]): string {
   return titles.length === 1 ? `Boklisten: ${titles[0]}` : `Boklisten: ${titles.length} bøker`;
 }
 
-/**
- * The phone number to push a Vipps request to, when that is how the total is paid. Resolved
- * before anything is written, so a bad number never leaves an orphaned order behind.
- */
-function vippsPushNumber(request: StandCartCheckoutRequest, total: number): string | null {
-  if (total > 0 && request.payment === null) {
-    throw new BadRequestException("Velg betalingsmåte");
+/** How the money moves, decided before anything is written so a bad request leaves no order behind. */
+type MoneyPlan =
+  | { kind: "none" }
+  | { kind: "record"; method: "cash" | "card" }
+  | { kind: "vipps-push"; msisdn: string }
+  | { kind: "vipps-refund"; refunds: StandCartVippsRefund[] }
+  | { kind: "bank-transfer"; accountNumber: string; comment: string | null };
+
+export const REFUND_NEEDS_MANUAL_MESSAGE =
+  "Refusjonen kan ikke gjøres via Vipps og må registreres manuelt";
+
+async function planRefund(
+  payment: StandCartCheckoutPayment | null,
+  lines: CheckoutLine[],
+  now: Date,
+): Promise<MoneyPlan> {
+  switch (payment?.method) {
+    case "vipps-refund": {
+      const plan = await StandCartRefund.plan(lines, now);
+      if (plan?.kind !== "vipps") {
+        throw new BadRequestException(REFUND_NEEDS_MANUAL_MESSAGE);
+      }
+      return { kind: "vipps-refund", refunds: plan.refunds };
+    }
+    case "bank-transfer": {
+      const accountNumber = normalizeBankAccount(payment.accountNumber);
+      if (accountNumber === null) {
+        throw new BadRequestException("Oppgi et gyldig norsk kontonummer");
+      }
+      return { kind: "bank-transfer", accountNumber, comment: payment.comment };
+    }
+    default: {
+      throw new BadRequestException("Velg hvordan refusjonen skal gjøres");
+    }
   }
-  if (total < 0 && request.payment?.method !== "vipps") {
-    throw new BadRequestException("Bekreft at refusjonen er gjort i Vipps");
+}
+
+function planPayment(payment: StandCartCheckoutPayment | null): MoneyPlan {
+  switch (payment?.method) {
+    case "cash":
+    case "card": {
+      return { kind: "record", method: payment.method };
+    }
+    case "vipps": {
+      if (!payment.phoneNumber) {
+        throw new BadRequestException("Oppgi kundens telefonnummer for Vipps");
+      }
+      return { kind: "vipps-push", msisdn: toMsisdn(payment.phoneNumber) };
+    }
+    default: {
+      throw new BadRequestException("Velg betalingsmåte");
+    }
   }
-  if (total <= 0 || request.payment?.method !== "vipps") {
-    return null;
+}
+
+async function planMoney(
+  request: StandCartCheckoutRequest,
+  lines: CheckoutLine[],
+  total: number,
+  now: Date,
+): Promise<MoneyPlan> {
+  if (total === 0) {
+    return { kind: "none" };
   }
-  if (!request.payment.phoneNumber) {
-    throw new BadRequestException("Oppgi kundens telefonnummer for Vipps");
-  }
-  return toMsisdn(request.payment.phoneNumber);
+  return total < 0 ? planRefund(request.payment, lines, now) : planPayment(request.payment);
 }
 
 async function present(
@@ -281,7 +334,7 @@ export const StandCartCheckoutService = {
 
     const orderItems = planCheckout(lines, now);
     const total = orderItems.reduce((sum, orderItem) => sum + orderItem.amount, 0);
-    const msisdn = vippsPushNumber(request, total);
+    const money = await planMoney(request, lines, total, now);
 
     let order = await StorageService.Orders.add({
       amount: total,
@@ -298,17 +351,59 @@ export const StandCartCheckoutService = {
     if (bringDelivery && request.delivery) {
       order = await attachDelivery(order, bringDelivery, request.delivery.trackingNumber);
     }
-    if (msisdn !== null) {
-      await StandCartPayment.requestVipps(order, msisdn, describeForVipps(lines));
-      return present(order, "pending");
-    }
 
-    const payment = total === 0 ? null : request.payment;
-    if (payment) {
-      order = await StandCartPayment.record(order, payment.method);
+    switch (money.kind) {
+      case "vipps-push": {
+        await StandCartPayment.requestVipps(order, money.msisdn, describeForVipps(lines));
+        return present(order, "pending");
+      }
+      case "vipps-refund": {
+        const refunded = await StandCartPayment.refundVipps(order, money.refunds);
+        const placed = await StandCartPlacement.place(refunded.order, employee, now);
+        if (refunded.shortfall > 0) {
+          await RefundRequestService.send({
+            order: placed,
+            employeeDetailsId: employee.detailsId,
+            amount: refunded.shortfall,
+            accountNumber: null,
+            comment: null,
+          });
+        }
+        return present(placed, "paid");
+      }
+      case "bank-transfer": {
+        order = await StandCartPayment.record(order, "bank-transfer");
+        const placed = await StandCartPlacement.place(order, employee, now);
+        await RefundRequestService.send({
+          order: placed,
+          employeeDetailsId: employee.detailsId,
+          amount: -total,
+          accountNumber: money.accountNumber,
+          comment: money.comment,
+        });
+        return present(placed, "paid");
+      }
+      case "record": {
+        order = await StandCartPayment.record(order, money.method);
+        return present(await StandCartPlacement.place(order, employee, now), "paid");
+      }
+      default: {
+        return present(await StandCartPlacement.place(order, employee, now), "placed");
+      }
     }
-    const placed = await StandCartPlacement.place(order, employee, now);
-    return present(placed, payment ? "paid" : "placed");
+  },
+
+  /**
+   * How a refund would go back to the customer, for the pay step to show before the employee
+   * confirms. The lines are priced again the way checkout prices them. Null when nothing is
+   * refunded.
+   */
+  async refundPlan(
+    request: StandCartLinesRequest,
+    now = new Date(),
+  ): Promise<StandCartRefundPlan | null> {
+    const lines = await resolveLines(request, now);
+    return StandCartRefund.plan(lines, now);
   },
 
   /**

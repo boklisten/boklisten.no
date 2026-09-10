@@ -2,6 +2,7 @@
 // a payment can be split into one cash and one card payment, but not two of either.
 // "vipps" is manual Vipps payment at a branch, "vipps-checkout" is the online checkout,
 // "vipps-epayment" is a payment request pushed to the customer's phone from the stand.
+// "bank-transfer" is a refund the administrator transfers to the customer's bank account by hand.
 // "dibs" is a retired payment gateway; it only occurs on historic documents and is
 // never written for new payments.
 export type PaymentMethod =
@@ -10,4 +11,5 @@ export type PaymentMethod =
   | "vipps"
   | "vipps-checkout"
   | "vipps-epayment"
+  | "bank-transfer"
   | "dibs";

@@ -1423,6 +1423,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['resolveLine']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'stand_cart.refund_plan': {
+    methods: ["POST"]
+    pattern: '/v2/employee/stand_cart/refund_plan'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/stand_cart').standCartRefundPlanValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/stand_cart').standCartRefundPlanValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['refundPlan']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/stand_cart_controller').default['refundPlan']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'stand_cart.checkout': {
     methods: ["POST"]
     pattern: '/v2/employee/stand_cart/checkout'

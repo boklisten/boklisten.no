@@ -6,6 +6,7 @@ import { StorageService } from "#services/storage_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { Order } from "#shared/order/order";
 import type { PaymentMethod } from "#shared/payment/payment-method/payment-method";
+import type { StandCartVippsRefund } from "#shared/stand_cart";
 
 /**
  * Where a Vipps request stands. The Vipps Checkout vocabulary is reused on `order.checkoutState`
@@ -48,13 +49,28 @@ function toVippsCreateError(error: unknown): BadRequestException {
   );
 }
 
+function toVippsRefundError(error: unknown): BadRequestException {
+  Sentry.captureException(error);
+  return new BadRequestException(
+    "Vipps kunne ikke refundere betalingen. Prøv igjen, eller registrer refusjonen manuelt.",
+  );
+}
+
+/** Removes a half-made order that never reached the customer, and the delivery copied onto it. */
+async function discard(order: Order): Promise<void> {
+  if (order.delivery) {
+    await StorageService.Deliveries.remove(order.delivery);
+  }
+  await StorageService.Orders.remove(order.id);
+}
+
 export const StandCartPayment = {
-  /** Records an unconfirmed payment for the whole order and returns the order pointing at it. */
-  async record(order: Order, method: PaymentMethod): Promise<Order> {
+  /** Records an unconfirmed payment, for the whole order unless told otherwise, and returns the order pointing at it. */
+  async record(order: Order, method: PaymentMethod, amount = order.amount): Promise<Order> {
     const payment = await StorageService.Payments.add({
       method,
       order: order.id,
-      amount: order.amount,
+      amount,
       customer: order.customer,
       branch: order.branch,
       confirmed: false,
@@ -78,10 +94,43 @@ export const StandCartPayment = {
         paymentDescription: description,
       });
     } catch (error) {
-      await StorageService.Orders.remove(order.id);
+      await discard(order);
       throw toVippsCreateError(error);
     }
     await StorageService.Orders.update(order.id, { checkoutState: VIPPS_REQUEST_STATE.created });
+  },
+
+  /**
+   * Sends the refund back on each transaction, recording a negative payment on the original
+   * method for each that Vipps accepts. When Vipps refuses the very first, nothing has moved
+   * and the half-made order is removed so the employee can register the refund by hand. When it
+   * refuses a later one, the money already sent cannot be recalled, so the rest is recorded as a
+   * bank transfer for the administrator to make and returned as the shortfall.
+   */
+  async refundVipps(
+    order: Order,
+    refunds: StandCartVippsRefund[],
+  ): Promise<{ order: Order; shortfall: number }> {
+    let current = order;
+    let shortfall = 0;
+    for (const [index, refund] of refunds.entries()) {
+      try {
+        await VippsPaymentService.payment.refund(refund.orderId, refund.amount * 100);
+      } catch (error) {
+        if (index === 0) {
+          await discard(order);
+          throw toVippsRefundError(error);
+        }
+        Sentry.captureException(error, { extra: { orderId: order.id, refund } });
+        shortfall = refunds.slice(index).reduce((sum, rest) => sum + rest.amount, 0);
+        break;
+      }
+      current = await StandCartPayment.record(current, refund.method, -refund.amount);
+    }
+    if (shortfall > 0) {
+      current = await StandCartPayment.record(current, "bank-transfer", -shortfall);
+    }
+    return { order: current, shortfall };
   },
 
   /** Asks Vipps how the request went. */

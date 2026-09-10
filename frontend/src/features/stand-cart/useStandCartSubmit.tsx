@@ -1,7 +1,7 @@
 import type {
+  StandCartCheckoutPayment,
   StandCartCheckoutState,
   StandCartConfirmation,
-  StandCartPaymentMethod,
 } from "@boklisten/backend/shared/stand_cart";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import { Stack, Text } from "@mantine/core";
@@ -17,12 +17,19 @@ import { showErrorNotification } from "@/shared/utils/notifications";
 // Above the drawer (260), so a decision is always reachable
 const CONFIRM_Z_INDEX = 350;
 
-export interface Payment {
-  method: StandCartPaymentMethod;
-  phoneNumber?: string;
-}
+export type Payment = StandCartCheckoutPayment;
 export type Delivery = { trackingNumber: string } | null;
 export type FailedStatus = Exclude<StandCartCheckoutState["status"], "pending" | "paid" | "placed">;
+
+/** The cart's lines as the checkout and the refund plan want them, prices included so the server can refuse a stale one. */
+export function checkoutLines(cart: StandCart) {
+  return cart.lines.map(({ line, choice, resolved }) => ({
+    source: line.source,
+    choice,
+    ...(line.blid === null ? {} : { blid: line.blid }),
+    expectedPrice: resolved?.price ?? 0,
+  }));
+}
 
 /** Whether the backend's answer means the order went through. */
 export function isPlaced(state: StandCartCheckoutState): boolean {
@@ -156,12 +163,7 @@ export default function useStandCartSubmit({
         body: {
           customerId: customer.id,
           branchId: cart.cart.branchId,
-          lines: cart.lines.map(({ line, choice, resolved }) => ({
-            source: line.source,
-            choice,
-            ...(line.blid === null ? {} : { blid: line.blid }),
-            expectedPrice: resolved?.price ?? 0,
-          })),
+          lines: checkoutLines(cart),
           payment: cart.total === 0 ? null : payment,
           delivery,
           notifyByEmail,
