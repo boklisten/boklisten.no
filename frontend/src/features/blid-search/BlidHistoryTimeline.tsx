@@ -9,15 +9,20 @@ import type { ReactNode } from "react";
 
 import { showCustomerSearch } from "@/features/kasse/kasseParams";
 import ActiveItemChips from "@/features/blid-search/ActiveItemChips";
+import useDisplayName from "@/features/customer-search/useDisplayName";
 import { BOOK_EVENT_APPEARANCE } from "@/shared/components/bookEventAppearance";
 import EntityLink from "@/shared/components/EntityLink";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
-/** A named person in an event sentence: bold like plain text, but a link to their customer page. */
+/**
+ * A named person in an event sentence: bold like plain text, but a link to their customer page.
+ * On a phone the sentence has to fit beside the timeline bullet, so the name is shortened there.
+ */
 function PersonLink({ detailsId, name }: { detailsId: string; name: string }) {
+  const displayName = useDisplayName();
   return (
     <EntityLink to="/admin/kasse" search={showCustomerSearch(detailsId)}>
-      {name}
+      {displayName(name)}
     </EntityLink>
   );
 }

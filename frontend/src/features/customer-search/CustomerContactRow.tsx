@@ -9,11 +9,17 @@ import { IconMail, IconPhone } from "@tabler/icons-react";
  */
 export default function CustomerContactRow({
   customer,
+  inheritColor = false,
 }: {
   customer: Pick<UserDetail, "phone" | "email">;
+  /**
+   * Fade by opacity instead of the dimmed colour, for rows whose background changes when selected
+   * (a spotlight action turns brand-filled with white text, where dimmed gray is unreadable).
+   */
+  inheritColor?: boolean;
 }) {
   return (
-    <Group gap="md" c="dimmed" wrap="nowrap">
+    <Group gap="md" wrap="nowrap" {...(inheritColor ? { opacity: 0.7 } : { c: "dimmed" })}>
       {customer.phone && (
         <Group gap={6} wrap="nowrap" flex="0 0 auto">
           <IconPhone size={16} aria-hidden />

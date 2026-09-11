@@ -3,18 +3,13 @@ import { ActionIcon, Badge, Group, Loader, Stack, Text, ThemeIcon } from "@manti
 import { useDebouncedValue } from "@mantine/hooks";
 import { Spotlight } from "@mantine/spotlight";
 import type { createSpotlight } from "@mantine/spotlight";
-import {
-  IconAbc,
-  IconBook2,
-  IconMail,
-  IconNumber123,
-  IconPhone,
-  IconSearch,
-} from "@tabler/icons-react";
+import { IconAbc, IconBook2, IconNumber123, IconSearch } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import CustomerContactRow from "@/features/customer-search/CustomerContactRow";
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
+import useDisplayName from "@/features/customer-search/useDisplayName";
 import type { AdminPage } from "@/features/layout/adminNavigation";
 import { createKeyboardDecoy, requestedSearchKeyboard } from "@/features/search/openSearch";
 import { searchPages } from "@/features/search/searchPages";
@@ -242,6 +237,8 @@ export default function SearchSpotlight({
     onSelectPage?.(page);
   };
 
+  const displayName = useDisplayName();
+
   const pageActions = pageHits.map((page) => {
     const PageIcon = page.icon;
     return (
@@ -270,9 +267,10 @@ export default function SearchSpotlight({
 
   const customerActions = customerHits.map((userDetail) => (
     <Spotlight.Action key={userDetail.id} onClick={() => pickCustomer(userDetail.id)}>
-      <Stack gap={4} w="100%">
+      {/* The list sizes to its widest row's minimum width; a no-wrap e-mail must not set it. */}
+      <Stack gap={4} w="100%" style={{ contain: "inline-size" }}>
         <Group gap="xs" justify="space-between">
-          <Text fw={600}>{userDetail.name}</Text>
+          <Text fw={600}>{displayName(userDetail.name)}</Text>
           <Group gap={6}>
             <PermissionBadge permission={userDetail.permission} size="sm" />
             {userDetail.branchMembership && branchNames.has(userDetail.branchMembership) && (
@@ -282,20 +280,7 @@ export default function SearchSpotlight({
             )}
           </Group>
         </Group>
-        <Group gap="md" fz="sm" opacity={0.7}>
-          {userDetail.phone && (
-            <Group gap={4}>
-              <IconPhone size={16} aria-hidden />
-              <Text size="sm">{userDetail.phone}</Text>
-            </Group>
-          )}
-          {userDetail.email && (
-            <Group gap={4}>
-              <IconMail size={16} aria-hidden />
-              <Text size="sm">{userDetail.email}</Text>
-            </Group>
-          )}
-        </Group>
+        <CustomerContactRow customer={userDetail} inheritColor />
       </Stack>
     </Spotlight.Action>
   ));
@@ -320,7 +305,7 @@ export default function SearchSpotlight({
           </Text>
         </Stack>
         <Badge variant="light" color={book.holder ? "green" : "gray"} tt="none">
-          {book.holder ? `Hos ${book.holder.name}` : "Ikke utdelt"}
+          {book.holder ? `Hos ${displayName(book.holder.name)}` : "Ikke utdelt"}
         </Badge>
       </Group>
     </Spotlight.Action>

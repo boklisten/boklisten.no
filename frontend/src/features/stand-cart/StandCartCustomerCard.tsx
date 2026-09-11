@@ -1,9 +1,9 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import { Avatar, Group, Paper, Stack, Text, useMatches } from "@mantine/core";
+import { Avatar, Group, Paper, Stack, Text } from "@mantine/core";
 
 import CustomerContactRow from "@/features/customer-search/CustomerContactRow";
 import initials from "@/features/customer-search/initials";
-import shortName from "@/features/customer-search/shortName";
+import useDisplayName from "@/features/customer-search/useDisplayName";
 import EntityLink from "@/shared/components/EntityLink";
 
 /**
@@ -19,8 +19,7 @@ export default function StandCartCustomerCard({
   /** The name was followed: the cart closes, since the customer is where the employee is going. */
   onNavigate: () => void;
 }) {
-  // Only the first and last name on a phone, as in the Kunde card
-  const name = useMatches({ base: shortName(customer.name), sm: customer.name });
+  const displayName = useDisplayName();
   return (
     // Labelled the way Kasse labels its Kunde card
     <Stack gap={6}>
@@ -35,7 +34,7 @@ export default function StandCartCustomerCard({
           <Stack gap={4} miw={0}>
             <Text lh={1.2}>
               <EntityLink to="/admin/kasse" search={{ kunde: customer.id }} onClick={onNavigate}>
-                {name}
+                {displayName(customer.name)}
               </EntityLink>
             </Text>
             <CustomerContactRow customer={customer} />

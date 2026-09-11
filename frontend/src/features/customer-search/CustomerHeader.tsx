@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import CustomerContactRow from "@/features/customer-search/CustomerContactRow";
 import initials from "@/features/customer-search/initials";
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
-import shortName from "@/features/customer-search/shortName";
+import useDisplayName from "@/features/customer-search/useDisplayName";
 import AdministrateUserForm from "@/features/user/AdministrateUserForm";
 import EntityLink from "@/shared/components/EntityLink";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -39,6 +39,7 @@ export default function CustomerHeader({
       { enabled: Boolean(customer.branchMembership) },
     ),
   );
+  const displayName = useDisplayName();
   const name = (text: string) =>
     linkToKasse ? (
       <EntityLink to="/admin/kasse" search={{ kunde: customer.id }} fw="inherit">
@@ -56,12 +57,8 @@ export default function CustomerHeader({
             {initials(customer.name)}
           </Avatar>
           <Stack gap={4} miw={0}>
-            {/* Only the first and last name on a phone, where the full name would wrap */}
-            <Title order={2} size="h4" lh={1.2} hiddenFrom="sm">
-              {name(shortName(customer.name))}
-            </Title>
-            <Title order={2} size="h4" lh={1.2} visibleFrom="sm">
-              {name(customer.name)}
+            <Title order={2} size="h4" lh={1.2}>
+              {name(displayName(customer.name))}
             </Title>
             {(Boolean(branch) || customer.permission !== "customer") && (
               <Group gap={6}>
