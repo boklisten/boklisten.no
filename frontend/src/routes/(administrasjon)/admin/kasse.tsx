@@ -48,9 +48,6 @@ export const Route = createFileRoute("/(administrasjon)/admin/kasse")({
   component: KassePage,
 });
 
-/** The camera opens by itself only where there is no barcode reader: on touch devices. */
-const coarsePointer = () => window.matchMedia("(pointer: coarse)").matches;
-
 /**
  * Kasse holds at most one list with something in it: a customer's cart or the Innsamling batch. A
  * book about to go into a cart while the batch has books asks first; yes throws the batch away.
@@ -216,14 +213,6 @@ function KasseContent() {
     }
   }, [cameraLinking, openScanner]);
 
-  // The camera opens by itself only as the result of this press, and only where there is no reader
-  const startInnsamling = () => {
-    openInnsamling();
-    if (coarsePointer()) {
-      scanner.openScanner();
-    }
-  };
-
   return (
     <Container>
       <Stack>
@@ -235,7 +224,7 @@ function KasseContent() {
           <Text c="dimmed">{KASSE_DESCRIPTION}</Text>
         </Stack>
         <KasseSearch onCode={(code) => void scanner.submitCode(code)} />
-        <KasseControls view={view} onScan={scanner.openScanner} onOpenInnsamling={startInnsamling}>
+        <KasseControls view={view} onScan={scanner.openScanner} onOpenInnsamling={openInnsamling}>
           <KasseListBar
             view={view}
             cart={waitingStandCart}
