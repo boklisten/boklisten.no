@@ -161,6 +161,7 @@ export interface ApiDefinition {
   uniqueIds: {
     getToken: typeof routes['unique_ids.get_token']
     downloadUniqueIdPdf: typeof routes['unique_ids.download_unique_id_pdf']
+    label: typeof routes['unique_ids.label']
   }
   userProvisioning: {
     evaluate: typeof routes['user_provisioning.evaluate']

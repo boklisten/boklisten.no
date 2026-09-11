@@ -311,6 +311,7 @@ router.post("/signatures/sign/:detailsId", [controllers.Signatures, "sign"]);
  */
 router.get("/unique_ids/token", [controllers.UniqueIds, "getToken"]);
 router.get("/unique_ids/download_pdf/:token", [controllers.UniqueIds, "downloadUniqueIdPdf"]);
+router.get("/v2/employee/unique_ids/:blid/label", [controllers.UniqueIds, "label"]);
 
 /**
  * User Provisioning

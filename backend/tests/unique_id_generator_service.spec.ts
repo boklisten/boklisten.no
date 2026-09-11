@@ -133,4 +133,36 @@ test.group("UniqueIdGeneratorService", (group) => {
     assert.equal(left, 0);
     assert.equal(right, 150 + 20 + 5 + 167 * 3);
   }).timeout(15_000);
+
+  test("lays the screen label out exactly like the printed one", ({ assert }) => {
+    const { rects, caption } = UniqueIdGeneratorService.layoutLabel("qx09og2bkfm1");
+
+    // The 25 x 25 QR starts flush left, 40 pt down; the bars start 5 pt into the barcode area.
+    const qrModules = rects.filter((rect) => rect.width === 6);
+    const bars = rects.filter((rect) => rect.width === 3);
+    assert.equal(Math.min(...qrModules.map((rect) => rect.x)), 0);
+    assert.equal(Math.min(...qrModules.map((rect) => rect.y)), 40);
+    assert.equal(Math.max(...qrModules.map((rect) => rect.y + rect.height)), 40 + 25 * 6);
+    assert.equal(Math.min(...bars.map((rect) => rect.x)), 150 + 20 + 5);
+    assert.isTrue(bars.every((rect) => rect.y === 5 && rect.height === 210));
+    assert.deepEqual(caption, {
+      text: "BL-qx09og2bkfm1",
+      left: 175,
+      top: 5 + 210 + 2,
+      width: 167 * 3,
+    });
+  });
+
+  test("renders the label as a self-contained svg with the caption as outlines", ({ assert }) => {
+    const svg = UniqueIdGeneratorService.labelSvg("qx09og2bkfm1");
+
+    assert.isTrue(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 696 271"'));
+    assert.include(svg, "M0 40h6v6h-6z"); // the QR's top-left finder module
+    assert.notInclude(svg, "<text"); // glyph outlines, so no font is needed to show it
+    // "BL-" and the twelve id characters, each scaled from font units and flipped upright.
+    assert.lengthOf(svg.match(/<path transform="translate\(/g) ?? [], 15);
+    assert.include(svg, "scale(0.04 -0.04)");
+    // pdfkit puts the baseline one ascender (984/1000 em) below the top of the caption box.
+    assert.include(svg, `${217 + 0.984 * 40})`);
+  });
 });

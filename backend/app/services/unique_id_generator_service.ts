@@ -1,6 +1,8 @@
 import { randomInt } from "node:crypto";
 
 import app from "@adonisjs/core/services/app";
+import type { Font } from "fontkit";
+import { openSync as openFont } from "fontkit";
 import JsBarcode from "jsbarcode";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
@@ -85,52 +87,133 @@ function encodeBarcode(id: string): string {
   return encoding.data;
 }
 
-/** Draws one sticker as vector shapes on the current page: QR code left, barcode and caption right. */
-function drawLabel(doc: PDFKit.PDFDocument, id: string) {
+interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** One sticker as plain geometry: filled rectangles for the codes, and where the caption goes. */
+interface LabelLayout {
+  rects: Rect[];
+  caption: { text: string; left: number; top: number; width: number };
+}
+
+/**
+ * Where everything on a sticker sits, independent of what draws it. This is the single source of
+ * the layout: the PDF the printer gets and the on-screen preview are both painted from it.
+ */
+function layoutLabel(id: string): LabelLayout {
+  const rects: Rect[] = [];
+
   const qr = QRCode.create(id, { errorCorrectionLevel: "H" });
   const modules = qr.modules.size;
   const qrSize = modules * QRCODE.moduleSize;
-  doc.fillColor("black");
   for (let row = 0; row < modules; row++) {
     for (let column = 0; column < modules; column++) {
       if (qr.modules.get(row, column)) {
-        doc.rect(
-          column * QRCODE.moduleSize,
-          QRCODE.top + row * QRCODE.moduleSize,
-          QRCODE.moduleSize,
-          QRCODE.moduleSize,
-        );
+        rects.push({
+          x: column * QRCODE.moduleSize,
+          y: QRCODE.top + row * QRCODE.moduleSize,
+          width: QRCODE.moduleSize,
+          height: QRCODE.moduleSize,
+        });
       }
     }
   }
-  doc.fill();
 
   const bars = encodeBarcode(id);
   const barsLeft = qrSize + LABEL.spaceBetween + BARCODE.margin;
   for (let module = 0; module < bars.length; module++) {
     if (bars[module] === "1") {
-      doc.rect(
-        barsLeft + module * BARCODE.moduleWidth,
-        BARCODE.margin,
-        BARCODE.moduleWidth,
-        BARCODE.height,
-      );
+      rects.push({
+        x: barsLeft + module * BARCODE.moduleWidth,
+        y: BARCODE.margin,
+        width: BARCODE.moduleWidth,
+        height: BARCODE.height,
+      });
     }
+  }
+
+  return {
+    rects,
+    caption: {
+      text: `BL-${id}`,
+      left: barsLeft,
+      top: BARCODE.margin + BARCODE.height + BARCODE.textMargin,
+      width: bars.length * BARCODE.moduleWidth,
+    },
+  };
+}
+
+/** Paints one sticker as vector shapes on the current page: QR code left, barcode and caption right. */
+function drawLabel(doc: PDFKit.PDFDocument, id: string) {
+  const { rects, caption } = layoutLabel(id);
+  doc.fillColor("black");
+  for (const rect of rects) {
+    doc.rect(rect.x, rect.y, rect.width, rect.height);
   }
   doc.fill();
 
-  doc
-    .font(CAPTION_FONT)
-    .fontSize(BARCODE.fontSize)
-    .text(`BL-${id}`, barsLeft, BARCODE.margin + BARCODE.height + BARCODE.textMargin, {
-      width: bars.length * BARCODE.moduleWidth,
-      align: "center",
-      lineBreak: false,
-    });
+  doc.font(CAPTION_FONT).fontSize(BARCODE.fontSize).text(caption.text, caption.left, caption.top, {
+    width: caption.width,
+    align: "center",
+    lineBreak: false,
+  });
+}
+
+let captionFont: Font | undefined;
+function loadCaptionFont(): Font {
+  if (captionFont === undefined) {
+    const opened = openFont(CAPTION_FONT);
+    if (!("layout" in opened)) {
+      throw new Error("The caption font file is a collection, expected a single font");
+    }
+    captionFont = opened;
+  }
+  return captionFont;
+}
+
+/**
+ * The same sticker as an SVG, for showing on a screen. The codes are the layout's rectangles; the
+ * caption is the font's own glyph outlines placed the way pdfkit places text in a box: centred
+ * horizontally on the string's advance width, baseline one ascender below the top of the box.
+ * Outlines instead of <text> so the image needs no font and matches the PDF wherever it is shown.
+ */
+function labelSvg(id: string): string {
+  const { rects, caption } = layoutLabel(id);
+  const codes = rects.map(
+    (rect) => `M${rect.x} ${rect.y}h${rect.width}v${rect.height}h${-rect.width}z`,
+  );
+
+  const font = loadCaptionFont();
+  const run = font.layout(caption.text);
+  const scale = BARCODE.fontSize / font.unitsPerEm;
+  let x = caption.left + (caption.width - run.advanceWidth * scale) / 2;
+  const baseline = caption.top + font.ascent * scale;
+  const glyphs = run.glyphs.map((glyph, index) => {
+    const position = run.positions[index];
+    const originX = x + (position?.xOffset ?? 0) * scale;
+    const originY = baseline - (position?.yOffset ?? 0) * scale;
+    x += (position?.xAdvance ?? glyph.advanceWidth) * scale;
+    // Glyph outlines are in font units with y pointing up; flip and scale them into the label.
+    return `<path transform="translate(${originX} ${originY}) scale(${scale} ${-scale})" d="${glyph.path.toSVG()}"/>`;
+  });
+
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${LABEL.width} ${LABEL.height}" width="${LABEL.width}" height="${LABEL.height}">`,
+    `<rect width="${LABEL.width}" height="${LABEL.height}" fill="#fff"/>`,
+    `<path fill="#000" d="${codes.join("")}"/>`,
+    `<g fill="#000">${glyphs.join("")}</g>`,
+    "</svg>",
+  ].join("");
 }
 
 const UniqueIdGeneratorService = {
   generateUnusedUniqueIds,
+  layoutLabel,
+  labelSvg,
 
   async generateUniqueIdPdf(): Promise<Buffer> {
     const ids = await generateUnusedUniqueIds(IDS_PER_PDF);

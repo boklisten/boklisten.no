@@ -1231,6 +1231,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['downloadUniqueIdPdf']>>>
     }
   }
+  'unique_ids.label': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/employee/unique_ids/:blid/label'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { blid: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['label']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['label']>>>
+    }
+  }
   'user_provisioning.evaluate': {
     methods: ["POST"]
     pattern: '/v2/branches/:branchId/users/evaluate'

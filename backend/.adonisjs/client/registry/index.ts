@@ -618,6 +618,12 @@ const routes = {
     tokens: [{"old":"/unique_ids/download_pdf/:token","type":0,"val":"unique_ids","end":""},{"old":"/unique_ids/download_pdf/:token","type":0,"val":"download_pdf","end":""},{"old":"/unique_ids/download_pdf/:token","type":1,"val":"token","end":""}],
     types: placeholder as Registry['unique_ids.download_unique_id_pdf']['types'],
   },
+  'unique_ids.label': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/employee/unique_ids/:blid/label',
+    tokens: [{"old":"/v2/employee/unique_ids/:blid/label","type":0,"val":"v2","end":""},{"old":"/v2/employee/unique_ids/:blid/label","type":0,"val":"employee","end":""},{"old":"/v2/employee/unique_ids/:blid/label","type":0,"val":"unique_ids","end":""},{"old":"/v2/employee/unique_ids/:blid/label","type":1,"val":"blid","end":""},{"old":"/v2/employee/unique_ids/:blid/label","type":0,"val":"label","end":""}],
+    types: placeholder as Registry['unique_ids.label']['types'],
+  },
   'user_provisioning.evaluate': {
     methods: ["POST"],
     pattern: '/v2/branches/:branchId/users/evaluate',

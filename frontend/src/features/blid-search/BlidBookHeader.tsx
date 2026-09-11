@@ -1,6 +1,7 @@
 import type { BlidSearchResult, BlidStatus } from "@boklisten/backend/shared/blid_search";
 import {
   ActionIcon,
+  Anchor,
   Badge,
   CloseButton,
   Group,
@@ -25,10 +26,13 @@ export default function BlidBookHeader({
   result,
   onEdit,
   onClear,
+  onShowLabel,
 }: {
   result: BlidSearchResult;
   /** Shows the pen; leave out where the book cannot be edited. */
   onEdit?: () => void;
+  /** Makes the blid clickable; leave out where the sticker cannot be shown. */
+  onShowLabel?: () => void;
   /** Shows a close button; leave out where the card cannot be dismissed. */
   onClear?: () => void;
 }) {
@@ -44,7 +48,22 @@ export default function BlidBookHeader({
             {result.book?.title ?? "Ukjent tittel"}
           </Title>
           <Text size="sm" c="dimmed">
-            {result.book?.isbn ? `ISBN ${result.book.isbn} · ` : ""}Unik ID {result.blid}
+            {result.book?.isbn ? `ISBN ${result.book.isbn} · ` : ""}Unik ID{" "}
+            {onShowLabel ? (
+                <Anchor
+                  component="button"
+                  type="button"
+                  c="inherit"
+                  fz="inherit"
+                  fw="inherit"
+                  underline="hover"
+                  onClick={onShowLabel}
+                >
+                  {result.blid}
+                </Anchor>
+            ) : (
+              result.blid
+            )}
           </Text>
         </Stack>
       </Group>
