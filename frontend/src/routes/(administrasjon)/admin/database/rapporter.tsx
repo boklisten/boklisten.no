@@ -15,7 +15,7 @@ function DatabaseReportsPage() {
   return (
     <Container size="md" py="lg">
       <Stack gap="lg">
-        <Group justify="space-between" align="flex-start">
+        <Group gap="xs">
           <Title order={1}>Rapporter</Title>
           <LegacyAppLink path="database/reports" label="Gå til gammelt rapport-system" />
         </Group>

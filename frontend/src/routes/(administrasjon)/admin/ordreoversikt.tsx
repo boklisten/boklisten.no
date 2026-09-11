@@ -106,13 +106,13 @@ function OrderManagerPage() {
   return (
     <Container size="xl">
       <Stack>
-        <Group justify="space-between" align="flex-start" wrap="wrap">
-          <Stack gap={4}>
+        <Stack gap={4}>
+          <Group gap="xs">
             <Title>{ORDER_MANAGER_TITLE}</Title>
-            <Text c="dimmed">{ORDER_MANAGER_DESCRIPTION}</Text>
-          </Stack>
-          <LegacyAppLink path="order-manager" label="Gå til gammel ordreoversikt" />
-        </Group>
+            <LegacyAppLink path="order-manager" label="Gå til gammel ordreoversikt" />
+          </Group>
+          <Text c="dimmed">{ORDER_MANAGER_DESCRIPTION}</Text>
+        </Stack>
         {/* On a phone the order takes the screen; the filters wait behind "Tilbake til listen" */}
         <Box display={{ base: showingDetail ? "none" : "block", md: "block" }}>
           <OrderFilters params={params} onChange={update} />

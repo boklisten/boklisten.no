@@ -107,13 +107,13 @@ function KassePage() {
   return (
     <Container>
       <Stack>
-        <Group justify="space-between" align="flex-start" wrap="wrap">
-          <Stack gap={4}>
+        <Stack gap={4}>
+          <Group gap="xs">
             <Title>{KASSE_TITLE}</Title>
-            <Text c="dimmed">{KASSE_DESCRIPTION}</Text>
-          </Stack>
-          <LegacyAppLink path="cart" label="Gå til gammel handlekurv" />
-        </Group>
+            <LegacyAppLink path="cart" label="Gå til gammel handlekurv" />
+          </Group>
+          <Text c="dimmed">{KASSE_DESCRIPTION}</Text>
+        </Stack>
         <KasseModeControl value={mode} onChange={selectMode} />
         {mode === "innsamling" && (
           <CollectionSearch onSelectBook={(scanned) => void scanner.submitCode(scanned)} />

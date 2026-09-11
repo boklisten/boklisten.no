@@ -16,13 +16,13 @@ export default function InvoiceManager() {
 
   return (
     <Stack>
-      <Group justify="space-between" align="flex-start" wrap="wrap">
-        <Stack gap={4}>
+      <Stack gap={4}>
+        <Group gap="xs">
           <Title>Faktura</Title>
-          <Text c="dimmed">Opprett, se og eksporter fakturaer</Text>
-        </Stack>
-        <LegacyAppLink path="invoices" label="Gå til gammelt faktura-system" />
-      </Group>
+          <LegacyAppLink path="invoices" label="Gå til gammelt faktura-system" />
+        </Group>
+        <Text c="dimmed">Opprett, se og eksporter fakturaer</Text>
+      </Stack>
       <Tabs
         value={fakturaFane ?? "oversikt"}
         onChange={(value) =>
