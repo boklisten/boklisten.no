@@ -8,7 +8,7 @@ import { findOption, needsBlid } from "@boklisten/backend/shared/stand_cart";
 import { ActionIcon, Card, Group, Select, Stack, Table, Text, ThemeIcon } from "@mantine/core";
 import { IconAlertTriangle, IconX } from "@tabler/icons-react";
 
-import { showBookSearch } from "@/features/kasse/kasseParams";
+import { showBlid } from "@/features/kasse/kasseParams";
 import { Amount } from "@/features/stand-cart/StandCartAmounts";
 import { actionLabel, formatAmount, formatDeadline } from "@/features/stand-cart/standCartLabels";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
@@ -80,7 +80,7 @@ export function LineCopy({ line, choice }: { line: CartLine; choice: StandCartCh
     return (
       <EntityLink
         to="/admin/kasse"
-        search={showBookSearch(line.blid)}
+        search={showBlid(line.blid)}
         size="sm"
         ff="monospace"
         aria-label={`Se historikken til bok ${line.blid}`}

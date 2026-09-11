@@ -15,11 +15,11 @@ const RETRY_WORTH_IT = new Set<ScannerErrorKind>([
 const CAMERA_ERROR_COPY: Record<ScannerErrorKind, { title: string; message: string }> = {
   "permission-denied": {
     title: "Ingen tilgang til kameraet",
-    message: "Gi nettleseren tilgang til kameraet for å skanne, eller skriv inn koden manuelt.",
+    message: "Gi nettleseren tilgang til kameraet for å skanne.",
   },
   "no-camera": {
     title: "Fant ikke noe kamera",
-    message: "Denne enheten har ikke et kamera vi kan bruke. Skriv inn koden manuelt.",
+    message: "Denne enheten har ikke et kamera vi kan bruke.",
   },
   "in-use": {
     title: "Kameraet er i bruk",
@@ -27,19 +27,19 @@ const CAMERA_ERROR_COPY: Record<ScannerErrorKind, { title: string; message: stri
   },
   "insecure-context": {
     title: "Kameraet krever en sikker tilkobling",
-    message: "Siden må åpnes over https for å bruke kameraet. Skriv inn koden manuelt.",
+    message: "Siden må åpnes over https for å bruke kameraet.",
   },
   unsupported: {
     title: "Skanning støttes ikke",
-    message: "Nettleseren din støtter ikke skanning. Skriv inn koden manuelt.",
+    message: "Nettleseren din støtter ikke skanning.",
   },
   overconstrained: {
     title: "Kameraet støtter ikke innstillingene",
-    message: "Prøv igjen, eller skriv inn koden manuelt.",
+    message: "Prøv igjen.",
   },
   aborted: {
     title: "Kameraet startet ikke",
-    message: "Prøv igjen, eller skriv inn koden manuelt.",
+    message: "Prøv igjen.",
   },
   security: {
     title: "Nettleseren blokkerte kameraet",
@@ -47,19 +47,25 @@ const CAMERA_ERROR_COPY: Record<ScannerErrorKind, { title: string; message: stri
   },
   "type-error": {
     title: "Klarte ikke starte kameraet",
-    message: "Prøv igjen, eller skriv inn koden manuelt.",
+    message: "Prøv igjen.",
   },
   unknown: {
     title: "Klarte ikke starte kameraet",
-    message: "Prøv igjen, eller skriv inn koden manuelt.",
+    message: "Prøv igjen.",
   },
 };
 
+/** The way out when the camera will not start, where the panel offers one. */
+const MANUAL_ENTRY_HINT = "Du kan også skrive inn koden manuelt.";
+
 export default function CameraErrorAlert({
   error,
+  manualEntry,
   onRetry,
 }: {
   error: IScannerError;
+  /** Whether the panel shows its manual entry under this alert. */
+  manualEntry: boolean;
   onRetry: () => void;
 }) {
   const copy = CAMERA_ERROR_COPY[error.kind] ?? CAMERA_ERROR_COPY.unknown;
@@ -67,7 +73,7 @@ export default function CameraErrorAlert({
   return (
     <WarningAlert title={copy.title}>
       <Stack gap="xs" align="flex-start">
-        {copy.message}
+        {manualEntry ? `${copy.message} ${MANUAL_ENTRY_HINT}` : copy.message}
         {RETRY_WORTH_IT.has(error.kind) && (
           <Button size="xs" variant="outline" onClick={onRetry}>
             Prøv igjen

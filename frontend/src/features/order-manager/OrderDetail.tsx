@@ -19,6 +19,7 @@ import StandCartScanButton, {
   closeStandCartScanner,
 } from "@/features/stand-cart/StandCartScanButton";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
+import StickyToolbar from "@/shared/components/StickyToolbar";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -136,9 +137,20 @@ export default function OrderDetail({
   }
 
   return (
-    // Room under the card for the floating cart bar, so the last rows are never hidden behind it
-    <Stack gap="xs" pb={cart.isEmpty ? 0 : 80}>
+    <Stack gap="xs">
       {backButton}
+      {!cart.isEmpty && (
+        <StickyToolbar>
+          <StandCartBar
+            cart={cart}
+            onOpen={() => {
+              // The drawer must not open behind the scanner
+              closeStandCartScanner();
+              setCartOpen(true);
+            }}
+          />
+        </StickyToolbar>
+      )}
       <Paper withBorder radius="md" p="md">
         <Stack gap="md">
           <CustomerHeader
@@ -179,14 +191,6 @@ export default function OrderDetail({
           )}
         </Stack>
       </Paper>
-      <StandCartBar
-        cart={cart}
-        onOpen={() => {
-          // The bar floats above the scanner; the drawer must not open behind it
-          closeStandCartScanner();
-          setCartOpen(true);
-        }}
-      />
       <StandCartDrawer
         cart={cart}
         customer={customer}

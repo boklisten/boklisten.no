@@ -3,8 +3,9 @@ import { Badge, Button, Card, Group, SimpleGrid, Stack, Text } from "@mantine/co
 import { IconAlertTriangle, IconUsers } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
-import { showBookSearch, showCustomerSearch } from "@/features/kasse/kasseParams";
 import { formatDeadline, isOverdue } from "@/features/bulk-collection/deadline";
+import useDisplayName from "@/features/customer-search/useDisplayName";
+import { showBlid, showCustomer } from "@/features/kasse/kasseParams";
 import EntityLink from "@/shared/components/EntityLink";
 
 function DetailItem({ label, children }: { label: string; children: ReactNode }) {
@@ -27,6 +28,7 @@ export default function ScannedBooksList({
   books: ScannedBook[];
   onRemove: (blid: string) => void;
 }) {
+  const displayName = useDisplayName();
   return (
     <Stack gap="sm">
       {books.map((book) => {
@@ -62,7 +64,7 @@ export default function ScannedBooksList({
                     label: { whiteSpace: "normal", lineHeight: 1.3 },
                   }}
                 >
-                  Skulle egentlig til {book.deliverToName}
+                  Skulle egentlig til {displayName(book.deliverToName)}
                 </Badge>
               )}
 
@@ -70,7 +72,7 @@ export default function ScannedBooksList({
                 <DetailItem label="Unik ID">
                   <EntityLink
                     to="/admin/kasse"
-                    search={showBookSearch(book.blid)}
+                    search={showBlid(book.blid)}
                     size="sm"
                     ff="monospace"
                     aria-label={`Se historikken til bok ${book.blid}`}
@@ -79,12 +81,8 @@ export default function ScannedBooksList({
                   </EntityLink>
                 </DetailItem>
                 <DetailItem label="Lånt av">
-                  <EntityLink
-                    to="/admin/kasse"
-                    search={showCustomerSearch(book.customerId)}
-                    size="sm"
-                  >
-                    {book.customerName}
+                  <EntityLink to="/admin/kasse" search={showCustomer(book.customerId)} size="sm">
+                    {displayName(book.customerName)}
                   </EntityLink>
                 </DetailItem>
                 <DetailItem label="Utdelt på">{book.handoutBranchName}</DetailItem>

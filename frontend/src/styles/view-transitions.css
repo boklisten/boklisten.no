@@ -1,0 +1,34 @@
+/*
+ * Pages that opt into the View Transitions API (the Kasse hero opening a view) get the browser's
+ * default cross-fade and shared-element morphs. Anyone who asked for less motion gets the plain
+ * cut instead.
+ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/*
+ * The Kasse's Innsamling entry grows into its card and shrinks back. The button has no business
+ * at card size, so it is out of the picture the moment it is pressed, and on the way back it only
+ * reappears once the box has landed. The box itself keeps the default morph; the route tags the
+ * direction with a view transition type.
+ */
+@keyframes kasse-vt-hidden-until-end {
+  from {
+    opacity: 0;
+  }
+}
+
+html:active-view-transition-type(kasse-grow)::view-transition-old(kasse-innsamling) {
+  animation: none;
+  opacity: 0;
+}
+
+html:active-view-transition-type(kasse-shrink)::view-transition-new(kasse-innsamling) {
+  animation-name: kasse-vt-hidden-until-end;
+  animation-timing-function: step-end;
+}

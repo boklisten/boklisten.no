@@ -7,7 +7,7 @@ import { Badge, Group, Text, ThemeIcon, Timeline } from "@mantine/core";
 import { IconBuildingStore, IconCalendarDue, IconTruckDelivery } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
-import { showCustomerSearch } from "@/features/kasse/kasseParams";
+import { showCustomer } from "@/features/kasse/kasseParams";
 import ActiveItemChips from "@/features/blid-search/ActiveItemChips";
 import useDisplayName from "@/features/customer-search/useDisplayName";
 import { BOOK_EVENT_APPEARANCE } from "@/shared/components/bookEventAppearance";
@@ -21,7 +21,7 @@ import { norwegianTime } from "@/shared/utils/dayjs";
 function PersonLink({ detailsId, name }: { detailsId: string; name: string }) {
   const displayName = useDisplayName();
   return (
-    <EntityLink to="/admin/kasse" search={showCustomerSearch(detailsId)}>
+    <EntityLink to="/admin/kasse" search={showCustomer(detailsId)}>
       {displayName(name)}
     </EntityLink>
   );

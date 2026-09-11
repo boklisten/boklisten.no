@@ -12,7 +12,7 @@ import {
 } from "@/features/customer-search/ActiveBookChips";
 import BookRowCard from "@/features/customer-search/BookRowCard";
 import { buildPeerBooks } from "@/features/customer-search/handoutBooks";
-import { showBookSearch } from "@/features/kasse/kasseParams";
+import { showBlid } from "@/features/kasse/kasseParams";
 import AddToCartButton from "@/features/stand-cart/AddToCartButton";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
@@ -25,7 +25,7 @@ function BlidLink({ blid }: { blid: string }) {
   return (
     <EntityLink
       to="/admin/kasse"
-      search={showBookSearch(blid)}
+      search={showBlid(blid)}
       size="sm"
       ff="monospace"
       aria-label={`Se historikken til bok ${blid}`}

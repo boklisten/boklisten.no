@@ -3,68 +3,61 @@ import type { SearchSchemaInput } from "@tanstack/react-router";
 import { isValidBlid } from "@/features/blid-search/validateBlid";
 import { CUSTOMER_SEARCH_TABS } from "@/features/customer-search/customerSearchTab";
 import type { CustomerSearchTab } from "@/features/customer-search/customerSearchTab";
-import { KASSE_MODES } from "@/features/kasse/kasseModes";
-import type { KasseMode } from "@/features/kasse/kasseModes";
+import type { KasseView } from "@/features/kasse/kasseViews";
 
-/** What a link may pass. The mode is optional here; the page always sees a resolved one. */
-export interface KasseSearchInput {
-  modus?: KasseMode;
-  /** Details id of the customer shown in Kunde mode. Kept in the URL while in the other modes. */
+/**
+ * The URL says which view is open and nothing else. The three view params are meant to be
+ * mutually exclusive: the helpers below each write exactly one of them.
+ */
+export interface KasseSearchParams {
+  /** Details id of the open customer. */
   kunde?: string;
+  /** The open customer's tab; only meaningful with `kunde`. */
   visning?: CustomerSearchTab;
-  /** Unique ID of the book shown in Boksøk mode. Kept in the URL while in the other modes. */
+  /** Unique ID of the open book. */
   blid?: string;
-}
-
-export interface KasseSearchParams extends KasseSearchInput {
-  modus: KasseMode;
-}
-
-export function validateKasseSearch(
-  search: KasseSearchInput & SearchSchemaInput,
-): KasseSearchParams {
-  return readKasseSearch(search);
-}
-
-/** Reads the Kasse params out of any search object, e.g. the current location seen from outside the route. */
-export function readKasseSearch(search: object): KasseSearchParams {
-  // Anything can be pasted into the URL, so trust nothing. A pasted ?blid=88375301 reaches us as
-  // a number (TanStack parses search values as JSON).
-  const untrusted: Partial<Record<keyof KasseSearchInput, unknown>> = search;
-  const rawBlid =
-    typeof untrusted["blid"] === "number" ? String(untrusted["blid"]) : untrusted["blid"];
-  const blid = typeof rawBlid === "string" && isValidBlid(rawBlid) ? rawBlid : undefined;
-  const kunde =
-    typeof untrusted["kunde"] === "string" && untrusted["kunde"] !== ""
-      ? untrusted["kunde"]
-      : undefined;
-  // Kunde is the default. Only links from outside the page omit the mode; the in-page updaters
-  // below always write it, so clearing a result never flips the mode. Links from before Boksøk
-  // was its own mode (bl-admin, bookmarks) carry only ?blid=.
-  const modus =
-    KASSE_MODES.find((mode) => mode === untrusted["modus"]) ??
-    (blid !== undefined && kunde === undefined ? "boksok" : "kunde");
-  return {
-    modus,
-    kunde,
-    visning: CUSTOMER_SEARCH_TABS.find((tab) => tab === untrusted["visning"]),
-    blid,
-  };
+  /** bl-admin deep-links to the Innsamling by it. */
+  modus?: "innsamling";
 }
 
 /**
- * Search updaters for opening a customer or a book. They merge into the current search rather than
- * replace it, so the other modes keep their result and the employee can go back and forth.
+ * Anything can be pasted into the URL, so trust nothing: unknown or malformed values are dropped
+ * (a pasted ?blid=88375301 reaches us as a number, since TanStack parses search values as JSON).
+ * Several view params may survive here; `resolveKasseView` picks one, and the next in-page
+ * navigation drops the rest.
  */
-export const showCustomerSearch =
-  (kunde: string) =>
-  (previous: KasseSearchInput): KasseSearchParams => ({
-    ...previous,
-    modus: "kunde",
-    kunde,
-    visning: undefined,
-  });
+export function validateKasseSearch(
+  search: KasseSearchParams & SearchSchemaInput,
+): KasseSearchParams {
+  const untrusted: Partial<Record<keyof KasseSearchParams, unknown>> = search;
+  const rawBlid =
+    typeof untrusted["blid"] === "number" ? String(untrusted["blid"]) : untrusted["blid"];
+  return {
+    kunde:
+      typeof untrusted["kunde"] === "string" && untrusted["kunde"] !== ""
+        ? untrusted["kunde"]
+        : undefined,
+    visning: CUSTOMER_SEARCH_TABS.find((tab) => tab === untrusted["visning"]),
+    blid: typeof rawBlid === "string" && isValidBlid(rawBlid) ? rawBlid : undefined,
+    modus: untrusted["modus"] === "innsamling" ? "innsamling" : undefined,
+  };
+}
 
-export const showBookSearch =
-  (blid: string) =>
-  (previous: KasseSearchInput): KasseSearchParams => ({ ...previous, modus: "boksok", blid });
+/** Which view a URL opens. A hand-typed URL with several view params resolves by fixed precedence. */
+export function resolveKasseView(search: KasseSearchParams): KasseView {
+  if (search.kunde !== undefined) {
+    return "kunde";
+  }
+  if (search.blid !== undefined) {
+    return "blid";
+  }
+  if (search.modus === "innsamling") {
+    return "innsamling";
+  }
+  return "empty";
+}
+
+/** The only three ways to write a Kasse URL; every link into the page uses one of them. */
+export const showCustomer = (kunde: string): KasseSearchParams => ({ kunde });
+export const showBlid = (blid: string): KasseSearchParams => ({ blid });
+export const showInnsamling = (): KasseSearchParams => ({ modus: "innsamling" });

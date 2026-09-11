@@ -5,6 +5,7 @@ import "@mantine/notifications/styles.css";
 import "@mantine/spotlight/styles.css";
 import "@mantine/tiptap/styles.css";
 import "@mantine/charts/styles.css";
+import "@/styles/view-transitions.css";
 import "@/shared/utils/dayjs";
 
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";

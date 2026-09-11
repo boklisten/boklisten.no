@@ -23,19 +23,26 @@ export interface StoredCart {
   /** The branch every handout is priced from and recorded on; set by the first line added. */
   branchId: string | null;
   lines: StoredLine[];
+  /** Whose cart it is, so a page can name the customer without a query while the cart waits. */
+  customerName: string | null;
   /** Transient: a half-finished link belongs to the scanner it started in, not to the session. */
   linking: StandCartLinking | null;
 }
 
-export const EMPTY_CART: StoredCart = { branchId: null, lines: [], linking: null };
+export const EMPTY_CART: StoredCart = {
+  branchId: null,
+  lines: [],
+  customerName: null,
+  linking: null,
+};
 
 const STORAGE_KEY = "stand-cart";
 
 /**
- * One cart at a time, for the customer on screen: switching customer starts afresh. Kept in
- * session storage so a reload or a detour into Boksøk keeps it, and read through a tiny
- * external store so the row buttons, the drawer and the scanner modal (which lives outside the
- * page's React tree) all see the same cart.
+ * One cart at a time, for one customer, kept until it is paid or given up: it follows the employee
+ * through other customers, books and the Innsamling, and a reload keeps it too. Read through a
+ * tiny external store so the row buttons, the drawer, the list bar and the scanner all see the
+ * same cart. Another customer's reads see an empty cart; their first add asks before replacing it.
  */
 let current: { customerId: string; cart: StoredCart } | null = null;
 const listeners = new Set<() => void>();
@@ -63,25 +70,36 @@ function readStored(): typeof current {
   }
 }
 
-/** The previous customer's cart goes with them when another customer comes on screen. */
-function forget(): void {
+function notify(): void {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+/** Drops the cart: paid, given up, or its customer merged away. */
+export function forget(): void {
   current = null;
   try {
     window.sessionStorage.removeItem(STORAGE_KEY);
   } catch {
     // Nothing stored to forget
   }
+  notify();
 }
 
-export function getStandCart(customerId: string): StoredCart {
+/** The cart with unpaid lines, whoever it belongs to; null while no cart waits. */
+export function peekStandCart(): { customerId: string; cart: StoredCart } | null {
   current ??= readStored();
-  if (current !== null && current.customerId !== customerId) {
-    forget();
-  }
-  return current?.cart ?? EMPTY_CART;
+  return current !== null && current.cart.lines.length > 0 ? current : null;
 }
 
-export function setStandCart(customerId: string, cart: StoredCart): void {
+/** This customer's cart; empty while the stored cart belongs to someone else. */
+function getStandCart(customerId: string): StoredCart {
+  current ??= readStored();
+  return current !== null && current.customerId === customerId ? current.cart : EMPTY_CART;
+}
+
+function setStandCart(customerId: string, cart: StoredCart): void {
   current = { customerId, cart };
   try {
     window.sessionStorage.setItem(
@@ -91,16 +109,20 @@ export function setStandCart(customerId: string, cart: StoredCart): void {
   } catch {
     // Storage is a convenience; the in-memory cart still works for this page load
   }
-  for (const listener of listeners) {
-    listener();
-  }
+  notify();
 }
 
 export function updateStandCart(
   customerId: string,
   update: (cart: StoredCart) => StoredCart,
 ): StoredCart {
-  const next = update(getStandCart(customerId));
+  const before = getStandCart(customerId);
+  const next = update(before);
+  // A no-op must not replace a waiting cart. Another customer's clear or cancel is one: their view
+  // of the cart is the shared EMPTY_CART, which is also what a clear writes back.
+  if (next === before) {
+    return next;
+  }
   setStandCart(customerId, next);
   return next;
 }
@@ -116,4 +138,9 @@ export function useStandCartState(customerId: string | null): StoredCart {
     () => (customerId === null ? EMPTY_CART : getStandCart(customerId)),
     () => EMPTY_CART,
   );
+}
+
+/** The waiting cart as seen from a view that shows no customer, e.g. a book's history. */
+export function useWaitingStandCart(): { customerId: string; cart: StoredCart } | null {
+  return useSyncExternalStore(subscribe, peekStandCart, () => null);
 }

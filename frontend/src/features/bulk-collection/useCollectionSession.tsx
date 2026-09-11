@@ -1,27 +1,28 @@
-import type {
-  CustomerCollectionReceipt,
-  ScannedBook,
-} from "@boklisten/backend/shared/bulk-collection/bulk-collection-dtos";
+import type { ScannedBook } from "@boklisten/backend/shared/bulk-collection/bulk-collection-dtos";
 import { Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
 
 import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
+import {
+  getCollection,
+  updateCollection,
+  useCollectionState,
+} from "@/features/bulk-collection/collectionStore";
+import type { StoredCollection } from "@/features/bulk-collection/collectionStore";
 import { isOverdue } from "@/features/bulk-collection/deadline";
+import useDisplayName from "@/features/customer-search/useDisplayName";
 import { BLID_SEARCH_QUERY_KEY } from "@/features/search/SearchSpotlight";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import useApiClient from "@/shared/hooks/useApiClient";
-import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
+import asyncConfirmModal, { CONFIRM_OVER_SCANNER_Z_INDEX } from "@/shared/utils/asyncConfirmModal";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification } from "@/shared/utils/notifications";
 
-export interface CollectionSession {
-  scannedBooks: ScannedBook[];
+export interface CollectionSession extends StoredCollection {
   overdueBooks: ScannedBook[];
-  receipt: CustomerCollectionReceipt[] | null;
   isDelivering: boolean;
   /** Resolves to a notice when the book did not join the list, so any scanner can show why. */
   registerBlid: (blid: string) => Promise<ScanNotice | undefined>;
@@ -32,57 +33,53 @@ export interface CollectionSession {
   scanMore: () => void;
 }
 
+/** Clears the receipt and the list, ready for the next batch. */
+const scanMore = () => updateCollection(() => ({ scannedBooks: [], receipt: null }));
+
+const addBook = (book: ScannedBook) => {
+  updateCollection((current) =>
+    current.scannedBooks.some((existing) => existing.blid === book.blid)
+      ? current
+      : { ...current, scannedBooks: [book, ...current.scannedBooks] },
+  );
+};
+
+function PeerBookQuestion({ book }: { book: ScannedBook }) {
+  const displayName = useDisplayName();
+  return (
+    <Text size="sm">
+      Denne boka skal {displayName(book.customerName)} egentlig overlevere til{" "}
+      <Text span fw={600}>
+        {book.deliverToName === undefined ? "" : displayName(book.deliverToName)}
+      </Text>
+      . Er du sikker på at du vil ta den imot her?
+    </Text>
+  );
+}
+
 // A book the customer is supposed to give to another student may still be collected here, but
 // only after the employee has confirmed it.
 function confirmPeerBook(book: ScannedBook): Promise<boolean> {
   return asyncConfirmModal({
     title: "Skal overleveres til en annen elev",
-    children: (
-      <Text size="sm">
-        Denne boka skal {book.customerName} egentlig overlevere til{" "}
-        <Text span fw={600}>
-          {book.deliverToName}
-        </Text>{" "}
-        Er du sikker på at du vil ta den imot her?
-      </Text>
-    ),
+    children: <PeerBookQuestion book={book} />,
     confirmLabel: "Ta imot likevel",
     confirmColor: "red",
+    zIndex: CONFIRM_OVER_SCANNER_Z_INDEX,
   });
 }
 
 /**
- * The state of one return-delivery batch. Lives on the Kasse page rather than in the collection view
- * so the list survives a detour into a customer's page and back.
+ * One return-delivery batch: the books scanned so far, or the receipt of the delivery just made.
+ * The batch itself lives in the collection store, so it waits while the employee opens a customer
+ * or a book and survives a reload; this hook adds the lookups, the delivery and the questions.
  */
 export default function useCollectionSession(): CollectionSession {
   const { api, client } = useApiClient();
   const queryClient = useQueryClient();
-  const [scannedBooks, setScannedBooks] = useState<ScannedBook[]>([]);
-  const [receipt, setReceipt] = useState<CustomerCollectionReceipt[] | null>(null);
-  // The scanner modal captures registerBlid when it opens and stays open across many scans, so
-  // the duplicate check must read the current list rather than the one from that render.
-  const scannedBooksRef = useRef(scannedBooks);
-  const receiptRef = useRef(receipt);
-  useEffect(() => {
-    scannedBooksRef.current = scannedBooks;
-    receiptRef.current = receipt;
-  }, [scannedBooks, receipt]);
-
-  const scanMore = () => {
-    scannedBooksRef.current = [];
-    receiptRef.current = null;
-    setScannedBooks([]);
-    setReceipt(null);
-  };
+  const { scannedBooks, receipt } = useCollectionState();
 
   const overdueBooks = scannedBooks.filter((book) => isOverdue(book.deadline));
-
-  const addBook = (book: ScannedBook) => {
-    setScannedBooks((previous) =>
-      previous.some((existing) => existing.blid === book.blid) ? previous : [book, ...previous],
-    );
-  };
 
   const lookupMutation = useMutation({
     mutationFn: (blid: string) => client.api.bulkCollection.lookup({ params: { blid } }),
@@ -99,8 +96,8 @@ export default function useCollectionSession(): CollectionSession {
         });
         return;
       }
-      setReceipt(result.receipt);
-      // The books are no longer on loan, so a customer or book left open in Kunde or Boksøk
+      updateCollection(() => ({ scannedBooks: [], receipt: result.receipt }));
+      // The books are no longer on loan, so a customer or book left open elsewhere on the page
       // (and the holder badge in the book search) must not keep showing them as such.
       for (const key of [
         api.customerItems.getActiveCustomerItemsForCustomer.pathKey(),
@@ -116,12 +113,13 @@ export default function useCollectionSession(): CollectionSession {
     onError: () => showErrorNotification(GENERIC_ERROR_TEXT),
   });
 
+  // Scanners keep running across many scans, so every check reads the store rather than this render
   const registerBlid = async (blid: string): Promise<ScanNotice | undefined> => {
-    // A scan on the receipt screen starts the next batch, like the "Skann flere" button does.
-    if (receiptRef.current !== null) {
+    // A scan on the receipt screen starts the next batch; the receipt has no button for it.
+    if (getCollection().receipt !== null) {
       scanMore();
     }
-    if (scannedBooksRef.current.some((book) => book.blid === blid)) {
+    if (getCollection().scannedBooks.some((book) => book.blid === blid)) {
       return { title: "Allerede registrert", message: "Boka ligger allerede i listen." };
     }
     let result;
@@ -141,7 +139,7 @@ export default function useCollectionSession(): CollectionSession {
   };
 
   const deliverNow = () => {
-    collectMutation.mutate(scannedBooks.map((book) => book.customerItemId));
+    collectMutation.mutate(getCollection().scannedBooks.map((book) => book.customerItemId));
   };
 
   const deliver = () => {
@@ -172,7 +170,10 @@ export default function useCollectionSession(): CollectionSession {
     isDelivering: collectMutation.isPending,
     registerBlid,
     removeBook: (blid) =>
-      setScannedBooks((previous) => previous.filter((book) => book.blid !== blid)),
+      updateCollection((current) => ({
+        ...current,
+        scannedBooks: current.scannedBooks.filter((book) => book.blid !== blid),
+      })),
     deliver,
     scanMore,
   };

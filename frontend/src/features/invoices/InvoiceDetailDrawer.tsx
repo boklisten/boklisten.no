@@ -17,7 +17,7 @@ import { useMediaQuery } from "@mantine/hooks";
 import { IconArrowBackUp, IconBan } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { showCustomerSearch } from "@/features/kasse/kasseParams";
+import { showCustomer } from "@/features/kasse/kasseParams";
 import InvoiceStatusControl from "@/features/invoices/InvoiceStatusControl";
 import { INVOICE_TYPE_LABELS, formatDate, formatKroner } from "@/features/invoices/invoiceLabels";
 import { confirmPaymentChange } from "@/features/invoices/useInvoiceStatusChange";
@@ -112,7 +112,7 @@ function InvoiceDocument({
       <Stack gap={4}>
         <Text fw={600}>
           {customerInfo.userDetail ? (
-            <EntityLink to="/admin/kasse" search={showCustomerSearch(customerInfo.userDetail)}>
+            <EntityLink to="/admin/kasse" search={showCustomer(customerInfo.userDetail)}>
               {customerInfo.name}
             </EntityLink>
           ) : (

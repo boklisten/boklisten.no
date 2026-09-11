@@ -1,20 +1,22 @@
 import type { CustomerCollectionReceipt } from "@boklisten/backend/shared/bulk-collection/bulk-collection-dtos";
 import { CloseButton, Divider, Group, Paper, Stack, Text, ThemeIcon, Title } from "@mantine/core";
-import { IconPackageImport } from "@tabler/icons-react";
+import { IconCheck } from "@tabler/icons-react";
 import { Fragment } from "react";
 
 import CustomerReceiptItem from "@/features/bulk-collection/CustomerReceiptItem";
 import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
 
 /**
- * What one delivery did, per customer. Presented like a selected customer or book: a card with a
- * close button, with the scan controls still above it so the next batch is one scan away.
+ * What the last delivery did, per customer: a card of its own inside the Innsamling card, where
+ * the list was, so its cross plainly closes just the receipt while the outer cross ends the
+ * Innsamling. It gives way to the next list the moment a book is scanned.
  */
 export default function CollectionReceipt({
   receipt,
   onDismiss,
 }: {
   receipt: CustomerCollectionReceipt[];
+  /** Clears the receipt and shows the empty list. */
   onDismiss: () => void;
 }) {
   const totalDelivered = receipt.reduce((sum, entry) => sum + entry.deliveredCount, 0);
@@ -23,38 +25,40 @@ export default function CollectionReceipt({
   const customerCount = `${receipt.length} ${receipt.length === 1 ? "kunde" : "kunder"}`;
 
   return (
-    <Stack gap={6}>
-      <Text fz="sm" fw={500} c="dimmed">
-        Kvittering
-      </Text>
-      <Paper withBorder radius="md" p="md">
-        <Stack gap="md">
-          <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
-            <Group gap="sm" align="center" wrap="nowrap" miw={0}>
-              <ThemeIcon variant="light" color="green" size="lg" radius="xl">
-                <IconPackageImport size={20} aria-hidden />
-              </ThemeIcon>
-              <Stack gap={2} miw={0}>
-                <Title order={2} size="h4" lh={1.2}>
-                  {bookCountLabel(totalDelivered)} levert
-                </Title>
-                <Text size="sm" c="dimmed">
-                  {time !== undefined && `kl. ${time} · `}
-                  {customerCount}
-                </Text>
-              </Stack>
-            </Group>
-            <CloseButton aria-label="Lukk kvitteringen" onClick={onDismiss} />
-          </Group>
-          <Divider />
-          {receipt.map((entry, index) => (
-            <Fragment key={entry.customerId}>
-              {index > 0 && <Divider />}
-              <CustomerReceiptItem receipt={entry} />
-            </Fragment>
-          ))}
-        </Stack>
-      </Paper>
-    </Stack>
+    <Paper withBorder radius="md" p="md">
+      <Stack gap="md">
+        <Group justify="space-between" align="center" wrap="nowrap" gap="xs">
+          <Title order={3} size="h5">
+            Kvittering
+          </Title>
+          <CloseButton aria-label="Lukk kvitteringen" onClick={onDismiss} />
+        </Group>
+        <Group gap="sm" align="center" wrap="nowrap">
+          <ThemeIcon variant="light" color="green" size="lg" radius="xl">
+            <IconCheck size={20} aria-hidden />
+          </ThemeIcon>
+          <Stack gap={2} miw={0}>
+            <Text fw={600} lh={1.2}>
+              {bookCountLabel(totalDelivered)} levert
+            </Text>
+            <Text size="sm" c="dimmed">
+              {time !== undefined && `kl. ${time} · `}
+              {customerCount}
+            </Text>
+          </Stack>
+        </Group>
+        <Divider />
+        {receipt.map((entry, index) => (
+          <Fragment key={entry.customerId}>
+            {index > 0 && <Divider />}
+            <CustomerReceiptItem receipt={entry} />
+          </Fragment>
+        ))}
+        <Divider />
+        <Text size="sm" c="dimmed">
+          Kvitteringen lukkes automatisk når du skanner neste bok
+        </Text>
+      </Stack>
+    </Paper>
   );
 }

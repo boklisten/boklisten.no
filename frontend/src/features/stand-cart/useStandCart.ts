@@ -23,8 +23,12 @@ import type {
   StoredCart,
   StoredLine,
 } from "@/features/stand-cart/standCartStore";
+import { useStandCartGuard } from "@/features/stand-cart/StandCartGuard";
+import confirmDropCart from "@/features/stand-cart/confirmDropCart";
 import {
   EMPTY_CART,
+  forget,
+  peekStandCart,
   updateStandCart,
   useStandCartState,
 } from "@/features/stand-cart/standCartStore";
@@ -91,6 +95,9 @@ export function lineProblem({ line, choice, problem }: StoredLine): string | nul
   return null;
 }
 
+/** What the employee sees when the page's guard said no to an add. */
+const REFUSED_ADD_MESSAGE = "Boka ble ikke lagt i handlekurven.";
+
 /** Restricts scans to one order, for the order manager, where each shipment is packed alone. */
 export interface StandCartScope {
   orderId: string;
@@ -104,6 +111,8 @@ export interface StandCartScope {
 export default function useStandCart(customerId: string | null, scope?: StandCartScope) {
   const { api, client } = useApiClient();
   const cart = useStandCartState(customerId);
+  // A page may put a question in front of every add (the Kasse: a waiting Innsamling batch)
+  const beforeAdd = useStandCartGuard();
   // Scanner modals capture their callbacks when they open, so those read the live cart here
   const cartRef = useRef(cart);
   useEffect(() => {
@@ -125,6 +134,29 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     const next = updateStandCart(customerId, change);
     cartRef.current = next;
     return next;
+  }
+
+  /**
+   * Whether a line may be added: the page's guard first (a waiting Innsamling batch), then another
+   * customer's cart still holding unpaid lines, which the employee must knowingly give up.
+   */
+  async function mayAdd(): Promise<boolean> {
+    if (!(await beforeAdd())) {
+      return false;
+    }
+    const waiting = peekStandCart();
+    if (waiting === null || waiting.customerId === customerId) {
+      return true;
+    }
+    const confirmed = await confirmDropCart({
+      customerName: waiting.cart.customerName,
+      lineCount: waiting.cart.lines.length,
+      destination: "cart",
+    });
+    if (confirmed) {
+      forget();
+    }
+    return confirmed;
   }
 
   /** The branch a resolve is priced from: the cart's, else the customer's own with periods. */
@@ -188,6 +220,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     update((current) => ({
       ...current,
       branchId: naturalBranchId,
+      customerName: current.customerName ?? customer?.name ?? null,
       lines: [
         ...current.lines.filter((stored) => stored.line.key !== line.key),
         storedLine(
@@ -203,6 +236,9 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
   }
 
   async function add(source: StandCartSource): Promise<ScanNotice | undefined> {
+    if (!(await mayAdd())) {
+      return { message: REFUSED_ADD_MESSAGE };
+    }
     const branchId = provisionalBranchId();
     if (branchId === null) {
       return { message: "Fant ingen filial å legge boka på" };
@@ -223,6 +259,10 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
    * filled in. A sticker on no book yet starts a link step in the scanner it came from.
    */
   async function addBlid(blid: string, via: StandCartLinkSource): Promise<ScanNotice | undefined> {
+    // Asked before any lookup, so no link step ever starts against a waiting list
+    if (!(await mayAdd())) {
+      return { message: REFUSED_ADD_MESSAGE };
+    }
     const branchId = provisionalBranchId();
     if (branchId === null) {
       return { message: "Fant ingen filial å legge boka på" };

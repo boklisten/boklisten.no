@@ -5,15 +5,18 @@ import { Spotlight } from "@mantine/spotlight";
 import type { createSpotlight } from "@mantine/spotlight";
 import { IconAbc, IconBook2, IconNumber123, IconSearch } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import CustomerContactRow from "@/features/customer-search/CustomerContactRow";
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import useDisplayName from "@/features/customer-search/useDisplayName";
+import { visibleAdminPages } from "@/features/layout/adminNavigation";
 import type { AdminPage } from "@/features/layout/adminNavigation";
 import { createKeyboardDecoy, requestedSearchKeyboard } from "@/features/search/openSearch";
 import { searchPages } from "@/features/search/searchPages";
 import useApiClient from "@/shared/hooks/useApiClient";
+import useAuth from "@/shared/hooks/useAuth";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -129,26 +132,25 @@ const PLACEHOLDERS = {
 /**
  * The manual way in: customers match on name, phone, e-mail and address; books match on any part
  * of their unique ID. Searches one kind or both, and hands a pick's code (the customer's id or the
- * book's unique ID) to the caller. Given a list of pages it also matches those on title and
- * description from the first character, and lists them above everything else. Keyboard shortcuts
- * are bound elsewhere, so that a page can put its own instance in front of the global one.
+ * book's unique ID) to the caller. With pages on, it also finds the admin pages the user may open,
+ * by the same names as the sidebar, on title and description from the first character, listed
+ * above everything else; a pick opens the page. Keyboard shortcuts are bound elsewhere, so that a
+ * page can put its own instance in front of the global one.
  */
 export default function SearchSpotlight({
   store,
   kinds,
-  pages,
   onSelectCustomer,
   onSelectBook,
-  onSelectPage,
 }: {
   store: SpotlightStore;
-  kinds: { customers: boolean; books: boolean };
-  pages?: AdminPage[];
+  kinds: { customers: boolean; books: boolean; pages: boolean };
   onSelectCustomer?: (detailsId: string) => void;
   onSelectBook?: (blid: string) => void;
-  onSelectPage?: (page: AdminPage) => void;
 }) {
   const { api, client } = useApiClient();
+  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearch] = useDebouncedValue(searchValue.trim(), 250);
   const trimmedSearch = searchValue.trim();
@@ -194,8 +196,8 @@ export default function SearchSpotlight({
 
   // Pages are local data, so they match on every keystroke without the debounce or the length gate.
   const pageHits = useMemo(
-    () => (pages ? searchPages(pages, trimmedSearch) : []),
-    [pages, trimmedSearch],
+    () => (kinds.pages ? searchPages(visibleAdminPages(isAdmin), trimmedSearch) : []),
+    [kinds.pages, isAdmin, trimmedSearch],
   );
   const customerHits = customerSearchActive ? (customers ?? []) : [];
   const bookHits = blidSearchActive ? (bookSearch?.hits ?? []) : [];
@@ -207,7 +209,7 @@ export default function SearchSpotlight({
     customerHits.length === 0 &&
     bookHits.length === 0;
   const searchedForKinds = [
-    ...(pages ? ["sider"] : []),
+    ...(kinds.pages ? ["sider"] : []),
     ...(kinds.customers ? ["kunder"] : []),
     ...(kinds.books ? ["bøker"] : []),
   ];
@@ -234,7 +236,7 @@ export default function SearchSpotlight({
   };
   const pickPage = (page: AdminPage) => {
     setSearchValue("");
-    onSelectPage?.(page);
+    void navigate({ to: page.to });
   };
 
   const displayName = useDisplayName();
@@ -311,8 +313,8 @@ export default function SearchSpotlight({
     </Spotlight.Action>
   ));
   // Group labels only earn their place when the list can mix kinds.
-  const grouped = pages !== undefined || (kinds.customers && kinds.books);
-  const placeholder = pages
+  const grouped = kinds.pages || (kinds.customers && kinds.books);
+  const placeholder = kinds.pages
     ? PLACEHOLDERS.withPages
     : grouped
       ? PLACEHOLDERS.all

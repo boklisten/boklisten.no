@@ -10,7 +10,7 @@ import type {
   ScannedBlidRow,
   SelectedBook,
 } from "@/features/merking/registrationRows";
-import { showBookSearch } from "@/features/kasse/kasseParams";
+import { showBlid } from "@/features/kasse/kasseParams";
 import EntityLink from "@/shared/components/EntityLink";
 import ScanPrompt from "@/shared/components/scanner/ScanPrompt";
 
@@ -83,7 +83,7 @@ function BlidRow({
       <Stack gap={2} miw={0}>
         <EntityLink
           to="/admin/kasse"
-          search={showBookSearch(row.blid)}
+          search={showBlid(row.blid)}
           ff="monospace"
           fw={blocking ? 600 : 500}
           c={blocking ? "red" : "inherit"}

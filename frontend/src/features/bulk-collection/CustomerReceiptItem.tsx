@@ -2,17 +2,13 @@ import type { CustomerCollectionReceipt } from "@boklisten/backend/shared/bulk-c
 import { Badge, Group, Paper, SimpleGrid, Stack, Text, ThemeIcon } from "@mantine/core";
 import type { MantineColor } from "@mantine/core";
 import type { Icon } from "@tabler/icons-react";
-import {
-  IconAlertTriangle,
-  IconBook2,
-  IconCalendar,
-  IconCheck,
-  IconPackageImport,
-} from "@tabler/icons-react";
+import { IconAlertTriangle, IconBook2, IconCalendar, IconCheck } from "@tabler/icons-react";
 
 import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
+import { InnsamlingIcon } from "@/features/bulk-collection/innsamlingIcon";
 import { formatDeadline, isOverdue } from "@/features/bulk-collection/deadline";
-import { showCustomerSearch } from "@/features/kasse/kasseParams";
+import useDisplayName from "@/features/customer-search/useDisplayName";
+import { showCustomer } from "@/features/kasse/kasseParams";
 import EntityLink from "@/shared/components/EntityLink";
 
 interface ReceiptBook {
@@ -157,18 +153,19 @@ function ProgressBadge({ receipt }: { receipt: CustomerCollectionReceipt }) {
 /** One customer's part of the delivery: what came in now, and what they still have. */
 export default function CustomerReceiptItem({ receipt }: { receipt: CustomerCollectionReceipt }) {
   const hasRemaining = receipt.remainingBooks.length > 0;
+  const displayName = useDisplayName();
   return (
     <Stack gap="sm">
       <Group justify="space-between" wrap="nowrap" gap="xs" align="flex-start">
-        <EntityLink to="/admin/kasse" search={showCustomerSearch(receipt.customerId)} miw={0}>
-          {receipt.customerName}
+        <EntityLink to="/admin/kasse" search={showCustomer(receipt.customerId)} miw={0}>
+          {displayName(receipt.customerName)}
         </EntityLink>
         <ProgressBadge receipt={receipt} />
       </Group>
       <SimpleGrid cols={{ base: 1, sm: hasRemaining ? 2 : 1 }} spacing="sm">
         <BookPanel
           heading="Levert nå"
-          icon={IconPackageImport}
+          icon={InnsamlingIcon}
           rowIcon={IconCheck}
           color="green"
           books={receipt.collectedBooks}

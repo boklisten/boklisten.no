@@ -1,5 +1,5 @@
 import type { IScannerError } from "@yudiel/react-qr-scanner";
-import { Button, Modal, Stack } from "@mantine/core";
+import { Box, Button, Modal, Stack } from "@mantine/core";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { IconForms } from "@tabler/icons-react";
 import { useState } from "react";
@@ -9,8 +9,8 @@ import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import CameraErrorAlert from "@/shared/components/scanner/CameraErrorAlert";
 import CameraScanner from "@/shared/components/scanner/CameraScanner";
 import ManualCodeEntry from "@/shared/components/scanner/ManualCodeEntry";
-import ScanInstructionOverlay from "@/shared/components/scanner/ScanInstructionOverlay";
-import type { ScanInstruction } from "@/shared/components/scanner/ScanInstructionOverlay";
+import ScanInstructionBlock from "@/shared/components/scanner/ScanInstructionBlock";
+import type { ScanInstruction } from "@/shared/components/scanner/ScanInstructionBlock";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 import { describeRejectedScan, determineScanCodeType } from "@/shared/utils/scanCodes";
@@ -25,11 +25,20 @@ export interface ScannerPanelProps {
   onScan: (code: string) => Promise<ScanNotice | void> | ScanNotice | void;
   accepts?: ScanCodeType[] | undefined;
   instruction?: ScanInstruction | null | undefined;
+  /** Rendered inside the instruction strip, under the instruction (a type picker). */
+  instructionAddon?: ReactNode;
   successMessage?: string | undefined;
   onSuccess?: (() => void) | undefined;
+  /**
+   * true: always offer typing the code; false: never (the page has another way, e.g. a search);
+   * unset: only as a way out when the camera will not start.
+   */
   allowManualEntry?: boolean | undefined;
   children?: ReactNode;
 }
+
+/** The scanner's housing: dark in either colour scheme, since the video it frames is arbitrary. */
+const SCANNER_HOUSING_COLOR = "rgb(9, 11, 16)";
 
 // Mantine modals default to z-index 200. The panel usually renders inside one, so its own modals
 // have to outrank the host rather than rely on portal ordering.
@@ -51,6 +60,7 @@ export default function ScannerPanel({
   onScan,
   accepts,
   instruction,
+  instructionAddon,
   successMessage,
   onSuccess,
   allowManualEntry,
@@ -96,23 +106,45 @@ export default function ScannerPanel({
     }
   };
 
-  const manualEntryAvailable = allowManualEntry === true || cameraError !== null;
+  // Nobody types a customer's 24-character id by hand; the manual entry is for stickers and ISBNs
+  // whose print is unreadable. So it takes every accepted type but that one.
+  const manualAccepts = accepts?.filter((type) => type !== "customerId");
+  const manualEntryAvailable =
+    manualAccepts?.length !== 0 &&
+    (allowManualEntry === true || (allowManualEntry === undefined && cameraError !== null));
 
   return (
     <Stack>
       {cameraError === null ? (
-        <CameraScanner
-          key={cameraAttempt}
-          accepts={accepts}
-          active={notice?.open !== true && !manualEntryOpen}
-          onCode={handleCode}
-          onCameraError={setCameraError}
+        // One dark block, like the scanner's own housing: the video framed inside it, with the
+        // instruction and its controls underneath on the same ground
+        <Box
+          p="xs"
+          style={{
+            borderRadius: "var(--mantine-radius-md)",
+            background: SCANNER_HOUSING_COLOR,
+            color: "#FFFFFF",
+          }}
         >
-          {instruction ? <ScanInstructionOverlay instruction={instruction} /> : null}
-        </CameraScanner>
+          <Box style={{ borderRadius: "var(--mantine-radius-sm)", overflow: "hidden" }}>
+            <CameraScanner
+              key={cameraAttempt}
+              accepts={accepts}
+              active={notice?.open !== true && !manualEntryOpen}
+              onCode={handleCode}
+              onCameraError={setCameraError}
+            />
+          </Box>
+          {instruction && (
+            <ScanInstructionBlock instruction={instruction}>
+              {instructionAddon}
+            </ScanInstructionBlock>
+          )}
+        </Box>
       ) : (
         <CameraErrorAlert
           error={cameraError}
+          manualEntry={manualEntryAvailable}
           onRetry={() => {
             setCameraError(null);
             setCameraAttempt((attempt) => attempt + 1);
@@ -138,7 +170,7 @@ export default function ScannerPanel({
         title="Manuell registrering"
         zIndex={MANUAL_ENTRY_Z_INDEX}
       >
-        <ManualCodeEntry accepts={accepts} onSubmit={handleCode} />
+        <ManualCodeEntry accepts={manualAccepts} onSubmit={handleCode} />
       </Modal>
 
       <Modal
