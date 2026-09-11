@@ -12,6 +12,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { IconBook2, IconPencil } from "@tabler/icons-react";
+import type { ReactNode } from "react";
 
 // A buyback leaves the book at the stand, so it shows as "Ikke utdelt"; only a buyout means
 // the customer keeps the book.
@@ -26,15 +27,18 @@ export default function BlidBookHeader({
   result,
   onEdit,
   onClear,
+  onShowIsbn,
   onShowLabel,
 }: {
   result: BlidSearchResult;
   /** Shows the pen; leave out where the book cannot be edited. */
   onEdit?: () => void;
-  /** Makes the blid clickable; leave out where the sticker cannot be shown. */
-  onShowLabel?: () => void;
   /** Shows a close button; leave out where the card cannot be dismissed. */
   onClear?: () => void;
+  /** Makes the ISBN clickable; leave out where its barcode cannot be shown. */
+  onShowIsbn?: () => void;
+  /** Makes the blid clickable; leave out where the sticker cannot be shown. */
+  onShowLabel?: () => void;
 }) {
   const { label, color } = STATUS_BADGE[result.status];
   return (
@@ -48,22 +52,13 @@ export default function BlidBookHeader({
             {result.book?.title ?? "Ukjent tittel"}
           </Title>
           <Text size="sm" c="dimmed">
-            {result.book?.isbn ? `ISBN ${result.book.isbn} · ` : ""}Unik ID{" "}
-            {onShowLabel ? (
-                <Anchor
-                  component="button"
-                  type="button"
-                  c="inherit"
-                  fz="inherit"
-                  fw="inherit"
-                  underline="hover"
-                  onClick={onShowLabel}
-                >
-                  {result.blid}
-                </Anchor>
-            ) : (
-              result.blid
+            {result.book?.isbn && (
+              <>
+                ISBN <Identifier onClick={onShowIsbn}>{result.book.isbn}</Identifier>
+                {" · "}
+              </>
             )}
+            Unik ID <Identifier onClick={onShowLabel}>{result.blid}</Identifier>
           </Text>
         </Stack>
       </Group>
@@ -87,5 +82,28 @@ export default function BlidBookHeader({
         {onClear && <CloseButton aria-label="Lukk boksøket" onClick={onClear} />}
       </Group>
     </Group>
+  );
+}
+
+/**
+ * An identifier that reads like the dimmed text around it and only reveals itself as clickable
+ * on hover and focus; plain text when there is nothing to open.
+ */
+function Identifier({ onClick, children }: { onClick?: () => void; children: ReactNode }) {
+  if (!onClick) {
+    return children;
+  }
+  return (
+    <Anchor
+      component="button"
+      type="button"
+      c="inherit"
+      fz="inherit"
+      fw="inherit"
+      underline="hover"
+      onClick={onClick}
+    >
+      {children}
+    </Anchor>
   );
 }

@@ -59,7 +59,12 @@ export default function CustomerResult({
       </Text>
       <Paper withBorder radius="md" p="md">
         <Stack gap="md">
-          <CustomerHeader customer={customer} onDeselect={onDeselect} onMerged={onMerged} />
+          <CustomerHeader
+            customer={customer}
+            onDeselect={onDeselect}
+            onMerged={onMerged}
+            withCustomerId
+          />
           <EmailConfirmationWarning customer={customer} />
           <SignatureStatusBanner userDetail={customer} />
           <CustomerSearchTabs

@@ -6,6 +6,7 @@ import BlidBookHeader from "@/features/blid-search/BlidBookHeader";
 import BlidHistoryTimeline from "@/features/blid-search/BlidHistoryTimeline";
 import BlidLabelModal from "@/features/blid-search/BlidLabelModal";
 import EditBlidModal from "@/features/blid-search/EditBlidModal";
+import IsbnBarcodeModal from "@/features/blid-search/IsbnBarcodeModal";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -23,6 +24,7 @@ export default function AdminBlidSearchResult({
   );
   const [editing, setEditing] = useState(false);
   const [showingLabel, setShowingLabel] = useState(false);
+  const [showingIsbn, setShowingIsbn] = useState(false);
 
   if (isPending) {
     return <Skeleton height={280} radius="md" />;
@@ -57,6 +59,7 @@ export default function AdminBlidSearchResult({
             // A blid known only from old customer items has no unique item to edit or delete.
             onEdit={data.registered ? () => setEditing(true) : undefined}
             onClear={onClear}
+            onShowIsbn={data.book?.isbn ? () => setShowingIsbn(true) : undefined}
             onShowLabel={() => setShowingLabel(true)}
           />
           <Divider />
@@ -64,6 +67,13 @@ export default function AdminBlidSearchResult({
         </Stack>
       </Paper>
       <BlidLabelModal blid={blid} opened={showingLabel} onClose={() => setShowingLabel(false)} />
+      {data.book?.isbn && (
+        <IsbnBarcodeModal
+          isbn={data.book.isbn}
+          opened={showingIsbn}
+          onClose={() => setShowingIsbn(false)}
+        />
+      )}
       {editing && (
         <EditBlidModal
           result={data}

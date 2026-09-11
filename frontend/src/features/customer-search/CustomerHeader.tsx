@@ -1,6 +1,6 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
-import { ActionIcon, Avatar, Badge, Group, Stack, Title, Tooltip } from "@mantine/core";
+import { ActionIcon, Anchor, Avatar, Badge, Group, Stack, Title, Tooltip } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconPencil, IconX } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +11,7 @@ import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import useDisplayName from "@/features/customer-search/useDisplayName";
 import AdministrateUserForm from "@/features/user/AdministrateUserForm";
 import EntityLink from "@/shared/components/EntityLink";
+import { openCustomerIdModal } from "@/shared/components/ShowCustomerIdButton";
 import useApiClient from "@/shared/hooks/useApiClient";
 
 const ADMINISTRATE_USER_MODAL_ID = "administrate-user";
@@ -21,6 +22,7 @@ export default function CustomerHeader({
   onDeselect,
   withDeselect = true,
   linkToKasse = false,
+  withCustomerId = false,
   onMerged,
 }: {
   customer: UserDetail & { permission: UserPermission };
@@ -30,6 +32,8 @@ export default function CustomerHeader({
   withDeselect?: boolean;
   /** Makes the name a link to the customer in Kasse; off where Kasse is the page itself. */
   linkToKasse?: boolean;
+  /** Makes the name open the customer's ID as a QR code; only in the customer view. */
+  withCustomerId?: boolean;
   onMerged: (toDetailsId: string) => void;
 }) {
   const { api } = useApiClient();
@@ -40,14 +44,34 @@ export default function CustomerHeader({
     ),
   );
   const displayName = useDisplayName();
-  const name = (text: string) =>
-    linkToKasse ? (
-      <EntityLink to="/admin/kasse" search={{ kunde: customer.id }} fw="inherit">
-        {text}
-      </EntityLink>
-    ) : (
-      text
-    );
+  const name = (text: string) => {
+    if (linkToKasse) {
+      return (
+        <EntityLink to="/admin/kasse" search={{ kunde: customer.id }} fw="inherit">
+          {text}
+        </EntityLink>
+      );
+    }
+    if (withCustomerId) {
+      return (
+        <Anchor
+          component="button"
+          type="button"
+          c="inherit"
+          ff="inherit"
+          fz="inherit"
+          fw="inherit"
+          lh="inherit"
+          ta="left"
+          underline="hover"
+          onClick={() => openCustomerIdModal(customer.id)}
+        >
+          {text}
+        </Anchor>
+      );
+    }
+    return text;
+  };
 
   return (
     <Stack gap="sm">

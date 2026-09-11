@@ -1,4 +1,4 @@
-import { Modal, Skeleton, Stack, Text } from "@mantine/core";
+import { Modal, Skeleton, Stack } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
