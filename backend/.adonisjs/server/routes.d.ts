@@ -43,6 +43,7 @@ export type ScannedRoutes = {
     'branch_books.get_ordered_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.bulk_update_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.cancel_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_insights.get_book_movements': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'orders.get_open_orders': { paramsTuple?: []; params?: {} }
     'orders.get_placed_orders': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'orders.cancel_order_item': { paramsTuple?: []; params?: {} }
@@ -222,6 +223,7 @@ export type ScannedRoutes = {
     'branch_books.get_active_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_ordered_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_insights.get_book_movements': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'orders.get_open_orders': { paramsTuple?: []; params?: {} }
     'orders.get_placed_orders': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'editable_texts.get': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -324,6 +326,7 @@ export type ScannedRoutes = {
     'branch_books.get_active_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_ordered_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_insights.get_book_movements': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'orders.get_open_orders': { paramsTuple?: []; params?: {} }
     'orders.get_placed_orders': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'editable_texts.get': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

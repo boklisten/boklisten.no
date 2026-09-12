@@ -5,6 +5,7 @@ import {
   IconBooks,
   IconBuildingStore,
   IconCashRegister,
+  IconChartAreaLine,
   IconClock,
   IconHierarchy3,
   IconPlus,
@@ -17,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 
 import ActiveBooksTab from "@/features/branches/branch-books/ActiveBooksTab";
+import BranchBookMovements from "@/features/branches/insights/BranchBookMovements";
 import OrderedBooksTab from "@/features/branches/branch-books/OrderedBooksTab";
 import BranchGeneralSettings from "@/features/branches/BranchGeneralSettings";
 import BranchItemSettings from "@/features/branches/BranchItemSettings";
@@ -42,6 +44,7 @@ export const BRANCH_MANAGER_TABS = [
   "signatures",
   "active-books",
   "ordered-books",
+  "insights",
 ] as const;
 export type BranchManagerTab = (typeof BRANCH_MANAGER_TABS)[number];
 
@@ -149,6 +152,9 @@ export default function BranchManager() {
                   <Tabs.Tab value="ordered-books" leftSection={<IconShoppingCart />}>
                     Bestilte bøker
                   </Tabs.Tab>
+                  <Tabs.Tab value="insights" leftSection={<IconChartAreaLine />}>
+                    Innsikt
+                  </Tabs.Tab>
                 </Tabs.List>
                 <Tabs.Panel value="general">
                   <BranchGeneralSettings key={selectedBranchId} existingBranch={selectedBranch} />
@@ -188,6 +194,9 @@ export default function BranchManager() {
                       branchName={selectedBranch.name}
                     />
                   </Stack>
+                </Tabs.Panel>
+                <Tabs.Panel value="insights">
+                  <BranchBookMovements key={selectedBranch.id} branchId={selectedBranch.id} />
                 </Tabs.Panel>
               </Tabs>
             </Stack>

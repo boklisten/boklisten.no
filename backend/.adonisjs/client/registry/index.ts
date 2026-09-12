@@ -240,6 +240,12 @@ const routes = {
     tokens: [{"old":"/v2/branches/:branchId/ordered_books/cancel","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/ordered_books/cancel","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/ordered_books/cancel","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/ordered_books/cancel","type":0,"val":"ordered_books","end":""},{"old":"/v2/branches/:branchId/ordered_books/cancel","type":0,"val":"cancel","end":""}],
     types: placeholder as Registry['branch_books.cancel_ordered_books']['types'],
   },
+  'branch_insights.get_book_movements': {
+    methods: ["GET","HEAD"],
+    pattern: '/v2/branches/:branchId/insights/book_movements',
+    tokens: [{"old":"/v2/branches/:branchId/insights/book_movements","type":0,"val":"v2","end":""},{"old":"/v2/branches/:branchId/insights/book_movements","type":0,"val":"branches","end":""},{"old":"/v2/branches/:branchId/insights/book_movements","type":1,"val":"branchId","end":""},{"old":"/v2/branches/:branchId/insights/book_movements","type":0,"val":"insights","end":""},{"old":"/v2/branches/:branchId/insights/book_movements","type":0,"val":"book_movements","end":""}],
+    types: placeholder as Registry['branch_insights.get_book_movements']['types'],
+  },
   'orders.get_open_orders': {
     methods: ["GET","HEAD"],
     pattern: '/v2/orders/open_orders',

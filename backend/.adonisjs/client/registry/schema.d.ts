@@ -475,6 +475,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_books_controller').default['cancelOrderedBooks']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'branch_insights.get_book_movements': {
+    methods: ["GET","HEAD"]
+    pattern: '/v2/branches/:branchId/insights/book_movements'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_insights_controller').default['getBookMovements']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_insights_controller').default['getBookMovements']>>>
+    }
+  }
   'orders.get_open_orders': {
     methods: ["GET","HEAD"]
     pattern: '/v2/orders/open_orders'

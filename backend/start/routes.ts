@@ -165,6 +165,14 @@ router.post("/v2/branches/:branchId/ordered_books/cancel", [
 ]);
 
 /**
+ * branch insights
+ */
+router.get("/v2/branches/:branchId/insights/book_movements", [
+  controllers.branches.BranchInsights,
+  "getBookMovements",
+]);
+
+/**
  * orders
  */
 router.get("/v2/orders/open_orders", [controllers.Orders, "getOpenOrders"]);
