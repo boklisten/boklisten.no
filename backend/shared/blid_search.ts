@@ -14,7 +14,11 @@ export type BlidHistoryAction =
   | "buyback"
   | "cancel"
   /** Synthetic: the book is still held and its deadline has passed. */
-  | "deadline-expired";
+  | "deadline-expired"
+  /** The unique ID was created, i.e. the blid was first linked to a book. */
+  | "registered"
+  /** The unique ID record was last changed; only its latest change is known. */
+  | "edited";
 
 /** One event in a book's life, assembled from orders, customer items and book handovers. */
 export interface BlidHistoryEvent {

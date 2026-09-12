@@ -27,6 +27,7 @@ function baseSources(overrides: Partial<BlidSearchSources> = {}): BlidSearchSour
     blid: BLID,
     item: { id: "item-1", title: "Sinus 1T", isbn: "9788202419676" },
     registered: true,
+    registration: null,
     customerItems: [],
     orders: [],
     handovers: [],
@@ -1219,6 +1220,64 @@ test.group("BlidSearchService.assembleBlidSearch() – ordering", () => {
       result.history.map((event) => event.time),
       [T3.toISOString(), T2.toISOString(), T1.toISOString()],
     );
+  });
+});
+
+test.group("BlidSearchService.assembleBlidSearch() – unique ID registration", () => {
+  const REGISTERED_AT = new Date("2026-07-20T09:00:00.000Z");
+
+  test("adds a registered event at the unique item's creation time", ({ assert }) => {
+    const result = assembleBlidSearch(
+      baseSources({ registration: { createdAt: REGISTERED_AT, updatedAt: REGISTERED_AT } }),
+    );
+    assert.lengthOf(result.history, 1);
+    assert.equal(result.history[0]?.action, "registered");
+    assert.equal(result.history[0]?.time, REGISTERED_AT.toISOString());
+    assert.isFalse(result.history[0]?.byCustomer);
+  });
+
+  test("hides the edited event when the update is within a second of creation", ({ assert }) => {
+    // Mongoose stamps the two timestamps in separate calls on insert, so they can drift by
+    // a millisecond without anyone having edited the record.
+    const drifted = new Date(REGISTERED_AT.getTime() + 999);
+    const result = assembleBlidSearch(
+      baseSources({ registration: { createdAt: REGISTERED_AT, updatedAt: drifted } }),
+    );
+    assert.deepEqual(
+      result.history.map((event) => event.action),
+      ["registered"],
+    );
+  });
+
+  test("adds an edited event at the last update when it came later", ({ assert }) => {
+    const result = assembleBlidSearch(
+      baseSources({ registration: { createdAt: REGISTERED_AT, updatedAt: T3 } }),
+    );
+    assert.deepEqual(
+      result.history.map((event) => [event.action, event.time]),
+      [
+        ["edited", T3.toISOString()],
+        ["registered", REGISTERED_AT.toISOString()],
+      ],
+    );
+  });
+
+  test("sorts the registration events by time among the custody events", ({ assert }) => {
+    const result = assembleBlidSearch(
+      baseSources({
+        registration: { createdAt: REGISTERED_AT, updatedAt: T3 },
+        customerItems: [makeCustomerItem({ deadline: EXPIRED_DEADLINE })],
+      }),
+    );
+    assert.deepEqual(
+      result.history.map((event) => event.action),
+      ["deadline-expired", "edited", "handout", "registered"],
+    );
+  });
+
+  test("adds no registration events when the unique item is gone", ({ assert }) => {
+    const result = assembleBlidSearch(baseSources({ registered: false, registration: null }));
+    assert.lengthOf(result.history, 0);
   });
 });
 

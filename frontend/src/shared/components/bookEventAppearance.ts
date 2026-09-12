@@ -9,6 +9,8 @@ import {
   IconCoins,
   IconFileInvoice,
   IconHeartHandshake,
+  IconPlugConnected,
+  IconReplace,
   IconShoppingCart,
   IconX,
 } from "@tabler/icons-react";
@@ -33,6 +35,9 @@ export const BOOK_EVENT_APPEARANCE: Record<BlidHistoryAction, BookEventAppearanc
   buyback: { icon: IconCoins, color: "pink" },
   cancel: { icon: IconX, color: "red" },
   "deadline-expired": { icon: IconCalendarX, color: "red" },
+  // Bookkeeping about the unique ID record, not a movement of the book: kept neutral.
+  registered: { icon: IconPlugConnected, color: "gray" },
+  edited: { icon: IconReplace, color: "gray" },
 };
 
 /** The history entry each cart action ends up as. */

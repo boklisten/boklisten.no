@@ -37,6 +37,8 @@ export interface BlidSearchSources {
   item: { id: string; title: string; isbn: string } | null;
   /** Whether a unique item exists for the blid. */
   registered: boolean;
+  /** When the unique item was created and last changed; null when it is gone or undated. */
+  registration: { createdAt: Date; updatedAt: Date } | null;
   customerItems: CustomerItem[];
   orders: Order[];
   handovers: HandoverRow[];
@@ -50,6 +52,12 @@ export interface BlidSearchSources {
 }
 
 const FALLBACK_NAME = "Ukjent";
+
+/**
+ * Mongoose stamps creation and update in separate calls on insert, so the two drift by a
+ * millisecond on untouched records; anything closer than this counts as never edited.
+ */
+const EDIT_TOLERANCE_MS = 1000;
 
 /** Enough to fill the search dropdown; a longer text narrows the list instead. */
 const SEARCH_HIT_LIMIT = 10;
@@ -521,6 +529,24 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
     }
   }
 
+  // The unique item record itself: when the blid was first linked to a book, and — only the
+  // latest, since the record keeps no log — when it was last changed.
+  if (sources.registration) {
+    const { createdAt, updatedAt } = sources.registration;
+    events.push({
+      time: new Date(createdAt).toISOString(),
+      action: "registered",
+      byCustomer: false,
+    });
+    if (new Date(updatedAt).getTime() - new Date(createdAt).getTime() >= EDIT_TOLERANCE_MS) {
+      events.push({
+        time: new Date(updatedAt).toISOString(),
+        action: "edited",
+        byCustomer: false,
+      });
+    }
+  }
+
   // A held book past its deadline gets a synthetic event, timed at the deadline itself. It
   // vanishes once the book is returned or the deadline extended.
   const heldCustomerItem = sources.customerItems.find(isActivelyHeld);
@@ -831,6 +857,10 @@ export const BlidSearchService = {
           ? null
           : { id: item.id, title: item.title, isbn: String(item.info?.isbn ?? "") },
       registered: uniqueItem !== null,
+      registration:
+        uniqueItem?.creationTime && uniqueItem.lastUpdated
+          ? { createdAt: uniqueItem.creationTime, updatedAt: uniqueItem.lastUpdated }
+          : null,
       customerItems,
       orders,
       handovers,

@@ -1,5 +1,6 @@
 import type {
   BlidActiveItem,
+  BlidHistoryAction,
   BlidHistoryEvent,
   BlidParty,
 } from "@boklisten/backend/shared/blid_search";
@@ -13,6 +14,13 @@ import useDisplayName from "@/features/customer-search/useDisplayName";
 import { BOOK_EVENT_APPEARANCE } from "@/shared/components/bookEventAppearance";
 import EntityLink from "@/shared/components/EntityLink";
 import { norwegianTime } from "@/shared/utils/dayjs";
+
+/** Entries that describe a state or the unique ID record rather than a hand-over of the book. */
+const NON_CUSTODY_ACTIONS = new Set<BlidHistoryAction>([
+  "deadline-expired",
+  "registered",
+  "edited",
+]);
 
 /**
  * A named person in an event sentence: bold like plain text, but a link to their customer page.
@@ -172,6 +180,12 @@ function describeEvent(event: BlidHistoryEvent): ReactNode {
         </>
       );
     }
+    case "registered": {
+      return "Boka ble registrert";
+    }
+    case "edited": {
+      return "Boka ble oppdatert";
+    }
     default: {
       return "Ukjent hendelse";
     }
@@ -272,10 +286,11 @@ export default function BlidHistoryTimeline({
   if (history.length === 0) {
     return <Text c="dimmed">Ingen hendelser er registrert på denne boka.</Text>;
   }
-  // The newest entry that is not the synthetic expiry carries the book's current branch and
-  // deadline; those chips open the corrections to the active loan.
+  // The newest custody entry carries the book's current branch and deadline; those chips open
+  // the corrections to the active loan. The synthetic expiry and the unique ID bookkeeping say
+  // nothing about custody, so they are skipped.
   const liveIndex = activeItem
-    ? history.findIndex((event) => event.action !== "deadline-expired")
+    ? history.findIndex((event) => !NON_CUSTODY_ACTIONS.has(event.action))
     : -1;
   // The synthetic expiry always sorts first, so its presence means the live deadline is overdue.
   const expired = history[0]?.action === "deadline-expired";
