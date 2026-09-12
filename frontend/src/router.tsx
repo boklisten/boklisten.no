@@ -7,6 +7,11 @@ import { routeTree } from "@/routeTree.gen";
 import ErrorBoundary from "@/features/layout/ErrorBoundary";
 import NotFoundPage from "@/features/NotFoundPage";
 
+/** Anything can be thrown; the error page and Sentry want an Error with a name, message and stack. */
+function asError(thrown: unknown): Error {
+  return thrown instanceof Error ? thrown : new Error(String(thrown));
+}
+
 export function getRouter() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -20,7 +25,9 @@ export function getRouter() {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    defaultErrorComponent: ({ error }) => <ErrorBoundary error={error} withLogo href="/" />,
+    defaultErrorComponent: ({ error }) => (
+      <ErrorBoundary error={asError(error)} withLogo href="/" />
+    ),
     defaultNotFoundComponent: NotFoundPage,
   });
 

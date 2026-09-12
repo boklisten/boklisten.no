@@ -1,6 +1,6 @@
 import { Container, Group, Stack, Text, Title } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { ViewTransition, useDeferredValue, useEffect, useState } from "react";
 
 import LegacyAppLink from "@/features/auth-linker/LegacyAppLink";
 import AdminBlidSearchResult from "@/features/blid-search/AdminBlidSearchResult";
@@ -84,6 +84,9 @@ function KasseContent() {
   const search = Route.useSearch();
   const { kunde, blid, visning } = search;
   const view = resolveKasseView(search);
+  // The router commits URL changes synchronously and <ViewTransition> only animates transitions,
+  // so the page is drawn from a deferred copy of the view. Scans and store clean-up follow the URL.
+  const shownView = useDeferredValue(view);
   const navigate = Route.useNavigate();
   const collection = useCollectionSession();
   const cart = useStandCart(kunde ?? null);
@@ -104,24 +107,10 @@ function KasseContent() {
     }
   }, [view]);
 
-  // Leaving or returning to the hero animates (the buttons glide into the sticky row, the
-  // Innsamling entry grows into its card); between the other views a cut is calmer.
-  const viewTransition = view === "empty";
-  const openCustomer = (detailsId: string) =>
-    void navigate({ search: showCustomer(detailsId), viewTransition });
-  const openBlid = (scanned: string) =>
-    void navigate({ search: showBlid(scanned), viewTransition });
-  // The types let the stylesheet hide the Innsamling button while its box is card-sized
-  const openInnsamling = () =>
-    void navigate({
-      search: showInnsamling(),
-      viewTransition: viewTransition ? { types: ["kasse-grow"] } : false,
-    });
-  const openEmpty = () =>
-    void navigate({
-      search: {},
-      viewTransition: view === "innsamling" ? { types: ["kasse-shrink"] } : true,
-    });
+  const openCustomer = (detailsId: string) => void navigate({ search: showCustomer(detailsId) });
+  const openBlid = (scanned: string) => void navigate({ search: showBlid(scanned) });
+  const openInnsamling = () => void navigate({ search: showInnsamling() });
+  const openEmpty = () => void navigate({ search: {} });
   const selectTab = (tab: CustomerSearchTab) =>
     void navigate({
       search: (previous) => ({ ...previous, visning: tab === "bestillinger" ? undefined : tab }),
@@ -224,16 +213,20 @@ function KasseContent() {
           <Text c="dimmed">{KASSE_DESCRIPTION}</Text>
         </Stack>
         <KasseSearch onCode={(code) => void scanner.submitCode(code)} />
-        <KasseControls view={view} onScan={scanner.openScanner} onOpenInnsamling={openInnsamling}>
+        <KasseControls
+          view={shownView}
+          onScan={scanner.openScanner}
+          onOpenInnsamling={openInnsamling}
+        >
           <KasseListBar
-            view={view}
+            view={shownView}
             cart={waitingStandCart}
             cartCustomerId={waitingCart?.customerId ?? null}
             onOpenCart={openCart}
             onOpenInnsamling={openInnsamling}
           />
         </KasseControls>
-        {view === "kunde" && kunde !== undefined && (
+        {shownView === "kunde" && kunde !== undefined && (
           <CustomerResult
             detailsId={kunde}
             cart={cart}
@@ -249,11 +242,20 @@ function KasseContent() {
             onCartClose={() => setCartOpen(false)}
           />
         )}
-        {view === "blid" && blid !== undefined && (
+        {shownView === "blid" && blid !== undefined && (
           <AdminBlidSearchResult blid={blid} onClear={() => void leaveToStart()} />
         )}
-        {view === "innsamling" && (
-          <CollectionView session={collection} onClose={() => void leaveToStart()} />
+        {shownView === "innsamling" && (
+          // Paired with the hero's Innsamling button, which grows into the card and shrinks back;
+          // from any other view the card simply appears
+          <ViewTransition
+            name="kasse-innsamling"
+            share="kasse-innsamling-card"
+            enter="none"
+            exit="none"
+          >
+            <CollectionView session={collection} onClose={() => void leaveToStart()} />
+          </ViewTransition>
         )}
       </Stack>
       <KasseScannerModal

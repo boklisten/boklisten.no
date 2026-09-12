@@ -1,5 +1,6 @@
 import { Button, Flex, Stack, Text, ThemeIcon } from "@mantine/core";
 import { IconScan, IconSearch } from "@tabler/icons-react";
+import { ViewTransition } from "react";
 import type { ReactNode } from "react";
 
 import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
@@ -8,6 +9,7 @@ import type { StoredCollection } from "@/features/bulk-collection/collectionStor
 import { InnsamlingIcon } from "@/features/bulk-collection/innsamlingIcon";
 import { KASSE_HERO_TEXT, KASSE_VIEW_CONFIG } from "@/features/kasse/kasseViews";
 import type { KasseView } from "@/features/kasse/kasseViews";
+import classes from "@/features/kasse/KasseControls.module.css";
 import { openSearch } from "@/features/search/openSearch";
 import StickyToolbar from "@/shared/components/StickyToolbar";
 import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
@@ -50,25 +52,28 @@ export default function KasseControls({
       <StickyToolbar>
         <Stack gap="xs">
           <Flex gap="xs" wrap="wrap" justify={{ base: "center", sm: "flex-start" }}>
-            <Button
-              px="sm"
-              flex={{ base: "1 1 auto", sm: "0 0 auto" }}
-              style={{ viewTransitionName: "kasse-scan" }}
-              leftSection={<ScanCodeIcon accepts={[defaultScanType]} size={18} />}
-              onClick={onScan}
-            >
-              {scanLabel}
-            </Button>
-            <Button
-              px="sm"
-              flex={{ base: "1 1 auto", sm: "0 0 auto" }}
-              variant="default"
-              style={{ viewTransitionName: "kasse-search" }}
-              leftSection={<IconSearch size={18} aria-hidden />}
-              onClick={searchManually}
-            >
-              Søk manuelt
-            </Button>
+            {/* Named like the hero's buttons, so those glide into these; a new label is a cut */}
+            <ViewTransition name="kasse-scan" update="none">
+              <Button
+                px="sm"
+                className={classes.rowButton}
+                leftSection={<ScanCodeIcon accepts={[defaultScanType]} size={18} />}
+                onClick={onScan}
+              >
+                {scanLabel}
+              </Button>
+            </ViewTransition>
+            <ViewTransition name="kasse-search" update="none">
+              <Button
+                px="sm"
+                className={classes.rowButton}
+                variant="default"
+                leftSection={<IconSearch size={18} aria-hidden />}
+                onClick={searchManually}
+              >
+                Søk manuelt
+              </Button>
+            </ViewTransition>
           </Flex>
           {children}
         </Stack>
@@ -84,35 +89,37 @@ export default function KasseControls({
       <Text c="dimmed" ta="center" maw={420}>
         {KASSE_HERO_TEXT}
       </Text>
-      {/* The named elements glide into the compact row when a view opens (View Transitions API) */}
-      <Button
-        size="lg"
-        radius="md"
-        style={{ viewTransitionName: "kasse-scan" }}
-        leftSection={<ScanCodeIcon accepts={[defaultScanType]} size={24} />}
-        onClick={onScan}
-      >
-        {scanLabel}
-      </Button>
-      <Button
-        variant="subtle"
-        color="gray"
-        style={{ viewTransitionName: "kasse-search" }}
-        leftSection={<IconSearch size={18} aria-hidden />}
-        onClick={searchManually}
-      >
-        Søk manuelt
-      </Button>
-      <Button
-        mt="md"
-        variant="default"
-        // Shares its name with the Innsamling card, so the button expands into it
-        style={{ viewTransitionName: "kasse-innsamling" }}
-        leftSection={<InnsamlingIcon size={18} aria-hidden />}
-        onClick={onOpenInnsamling}
-      >
-        {innsamlingLabel(collection)}
-      </Button>
+      <ViewTransition name="kasse-scan" update="none">
+        <Button
+          size="lg"
+          radius="md"
+          leftSection={<ScanCodeIcon accepts={[defaultScanType]} size={24} />}
+          onClick={onScan}
+        >
+          {scanLabel}
+        </Button>
+      </ViewTransition>
+      <ViewTransition name="kasse-search" update="none">
+        <Button
+          variant="subtle"
+          color="gray"
+          leftSection={<IconSearch size={18} aria-hidden />}
+          onClick={searchManually}
+        >
+          Søk manuelt
+        </Button>
+      </ViewTransition>
+      {/* Paired with the Innsamling card; the share class lets the stylesheet hide the button while its box is card-sized */}
+      <ViewTransition name="kasse-innsamling" share="kasse-innsamling-button">
+        <Button
+          mt="md"
+          variant="default"
+          leftSection={<InnsamlingIcon size={18} aria-hidden />}
+          onClick={onOpenInnsamling}
+        >
+          {innsamlingLabel(collection)}
+        </Button>
+      </ViewTransition>
     </Stack>
   );
 }

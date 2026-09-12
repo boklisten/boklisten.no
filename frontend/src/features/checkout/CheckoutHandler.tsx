@@ -1,8 +1,8 @@
 import type { CartItem } from "@boklisten/backend/shared/cart_item";
 import { Loader, Title } from "@mantine/core";
-import { useMounted } from "@mantine/hooks";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { use, useEffect, useRef } from "react";
+import { browser } from "react-dom";
 
 import useApiClient from "@/shared/hooks/useApiClient";
 import useCart from "@/shared/hooks/useCart";
@@ -11,14 +11,25 @@ import { showErrorNotification } from "@/shared/utils/notifications";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import { useNavigate } from "@tanstack/react-router";
 
-export default function CheckoutHandler() {
-  const cart = useCart();
-  const { client } = useApiClient();
-  const mounted = useMounted();
-  const navigate = useNavigate();
-  const [hasStarted, setHasStarted] = useState(false);
+/** Shown while the checkout starts, and by the server while the cart is still only in the browser. */
+export function CheckoutPending() {
+  return (
+    <>
+      <Title>Ett øyeblikk...</Title>
+      <Loader />
+    </>
+  );
+}
 
-  const initializeCheckoutMutation = useMutation({
+/** The cart lives in the browser, so the checkout can only start there. */
+export default function CheckoutHandler() {
+  use(browser());
+  const cart = useCart({ immediately: true });
+  const { client } = useApiClient();
+  const navigate = useNavigate();
+  const started = useRef(false);
+
+  const { mutate: initializeCheckout } = useMutation({
     mutationFn: async (cartItems: CartItem[]) =>
       client.api.checkout.initializeCheckout({
         body: {
@@ -58,29 +69,18 @@ export default function CheckoutHandler() {
     },
   });
 
-  function initializeCheckout() {
-    if (hasStarted) {
+  // Once, after the first render: the cart is a new object every render, hence the ref
+  useEffect(() => {
+    if (started.current) {
       return;
     }
-    setHasStarted(true);
-    initializeCheckoutMutation.mutate(cart.get());
-  }
+    started.current = true;
+    if (cart.isEmpty()) {
+      void navigate({ to: "/handlekurv" });
+      return;
+    }
+    initializeCheckout(cart.get());
+  }, [cart, initializeCheckout, navigate]);
 
-  if (!mounted) {
-    return null;
-  }
-
-  if (cart.isEmpty()) {
-    void navigate({ to: "/handlekurv" });
-    return null;
-  }
-
-  initializeCheckout();
-
-  return (
-    <>
-      <Title>Ett øyeblikk...</Title>
-      <Loader />
-    </>
-  );
+  return <CheckoutPending />;
 }

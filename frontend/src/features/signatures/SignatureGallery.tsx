@@ -23,7 +23,8 @@ import {
 import { IconArrowRight } from "@tabler/icons-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { createLink } from "@tanstack/react-router";
-import { forwardRef, useEffect } from "react";
+import { useEffect } from "react";
+import type { Ref } from "react";
 
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
 
@@ -34,11 +35,9 @@ import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 const GRID_COLS = { base: 1, xs: 2, md: 3, lg: 4, xl: 5 };
 
-// oxlint-disable-next-line react/function-component-definition
-const CardAnchor = forwardRef<HTMLAnchorElement, Omit<CardProps, "component">>((props, ref) => (
-  <Card ref={ref} component="a" {...props} />
-));
-CardAnchor.displayName = "CardAnchor";
+function CardAnchor(props: Omit<CardProps, "component"> & { ref?: Ref<HTMLAnchorElement> }) {
+  return <Card component="a" {...props} />;
+}
 const CardLink = createLink(CardAnchor);
 
 interface GallerySignature {

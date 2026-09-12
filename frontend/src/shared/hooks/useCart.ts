@@ -19,10 +19,15 @@ const translations = {
   "match-deliver": "overlevere til elev",
 } satisfies Record<OrderItemType, string>;
 
-export default function useCart() {
+/**
+ * The customer's cart in session storage. It is read after the first render so hydration matches
+ * the server; a component that never renders on the server (`use(browser())`) reads it `immediately`.
+ */
+export default function useCart({ immediately = false }: { immediately?: boolean } = {}) {
   const [cart, setCart, clear] = useSessionStorage<CartItem[]>({
     key: "cart",
     defaultValue: [],
+    getInitialValueInEffect: !immediately,
   });
   function remove(itemId: string) {
     setCart((prev) => prev.filter((cartItem) => cartItem.id !== itemId));

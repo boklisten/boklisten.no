@@ -1,0 +1,12 @@
+/*
+ * The sticky row's buttons share a phone's width and sit side by side from tablet up. A class
+ * rather than a responsive style prop: the prop adds a <style> element beside the button, which
+ * gives its <ViewTransition> two DOM nodes to name instead of one.
+ */
+.rowButton {
+  flex: 1 1 auto;
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    flex: 0 0 auto;
+  }
+}

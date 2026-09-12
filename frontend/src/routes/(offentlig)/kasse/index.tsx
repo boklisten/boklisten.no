@@ -1,7 +1,8 @@
 import { Container, Stack } from "@mantine/core";
+import { Suspense } from "react";
 
 import AuthGuard from "@/features/auth/AuthGuard";
-import CheckoutHandler from "@/features/checkout/CheckoutHandler";
+import CheckoutHandler, { CheckoutPending } from "@/features/checkout/CheckoutHandler";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 
@@ -18,7 +19,9 @@ function CheckoutPage() {
     <AuthGuard>
       <Container size="md">
         <Stack align="center" gap="xs">
-          <CheckoutHandler />
+          <Suspense fallback={<CheckoutPending />}>
+            <CheckoutHandler />
+          </Suspense>
         </Stack>
       </Container>
     </AuthGuard>

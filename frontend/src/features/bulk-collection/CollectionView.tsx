@@ -36,8 +36,7 @@ export default function CollectionView({
   const { scannedBooks, overdueBooks, receipt } = session;
 
   return (
-    // Named like the hero's Innsamling entry, so opening the view grows the button into this card
-    <Stack gap={6} style={{ viewTransitionName: "kasse-innsamling" }}>
+    <Stack gap={6}>
       <Text fz="sm" fw={500} c="dimmed">
         Innsamling
       </Text>
