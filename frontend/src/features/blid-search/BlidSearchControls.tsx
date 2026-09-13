@@ -6,8 +6,34 @@ import type { SubmitEvent } from "react";
 
 import { isValidBlid } from "@/features/blid-search/validateBlid";
 import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
+import ScanCodeIllustration from "@/shared/components/scanner/ScanCodeIllustration";
+import type { ScanInstruction } from "@/shared/components/scanner/ScanInstructionBlock";
 import openScannerModal from "@/shared/components/scanner/openScannerModal";
 import useWedgeScanner from "@/shared/hooks/useWedgeScanner";
+import { describeScanCodeLocation } from "@/shared/utils/scanCodes";
+
+/** The same caption the Kasse camera shows for a book, so the sticker looks familiar everywhere. */
+const BLID_SCAN_INSTRUCTION: ScanInstruction = { text: "Bokas unike ID", illustrate: "blid" };
+
+/**
+ * What to hunt for: the printed sticker itself next to where it sits on the book. Shown where the
+ * customer is about to scan or type, since most have never noticed the sticker before.
+ */
+function BlidStickerHint({ scale }: { scale: number }) {
+  return (
+    <Group gap="sm" wrap="nowrap" justify="center">
+      <ScanCodeIllustration type="blid" scale={scale} />
+      <Stack gap={2} miw={0}>
+        <Text fw={600} size="sm" lh={1.3}>
+          {BLID_SCAN_INSTRUCTION.text}
+        </Text>
+        <Text size="sm" c="dimmed" lh={1.3}>
+          {describeScanCodeLocation("blid")}
+        </Text>
+      </Stack>
+    </Group>
+  );
+}
 
 /**
  * The entry point for the public book lookup: scan with the camera, type an ID, or use a
@@ -17,12 +43,9 @@ import useWedgeScanner from "@/shared/hooks/useWedgeScanner";
 export default function BlidSearchControls({
   onSubmit,
   compact,
-  instruction,
 }: {
   onSubmit: (blid: string) => void;
   compact: boolean;
-  /** Dimmed hero text above the buttons. Omit when the page already explains the search. */
-  instruction?: string;
 }) {
   const [manualOpened, { open: openManual, close: closeManual }] = useDisclosure(false);
   useWedgeScanner({ accepts: ["blid"], onScan: onSubmit });
@@ -36,6 +59,7 @@ export default function BlidSearchControls({
         openScannerModal({
           title: "Skann bøker",
           accepts: ["blid"],
+          instruction: BLID_SCAN_INSTRUCTION,
           onScan: (blid) => {
             onSubmit(blid);
           },
@@ -66,11 +90,6 @@ export default function BlidSearchControls({
         </Group>
       ) : (
         <Stack align="center" gap="md" py="xl">
-          {instruction !== undefined && (
-            <Text c="dimmed" ta="center">
-              {instruction}
-            </Text>
-          )}
           {scanButton}
           {manualButton}
         </Stack>
@@ -122,6 +141,7 @@ function ManualBlidModal({
     >
       <form onSubmit={handleSubmit}>
         <Stack>
+          <BlidStickerHint scale={1.5} />
           <TextInput
             // Mantine's modal focus trap moves focus on open; data-autofocus points it here.
             data-autofocus

@@ -7,6 +7,8 @@ const limiterConfig = defineConfig({
     database: stores.database({
       tableName: "rate_limits",
     }),
+    /** For unit tests of code that counts with a limiter; nothing in production uses it. */
+    memory: stores.memory({}),
   },
 });
 

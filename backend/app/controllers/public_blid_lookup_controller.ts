@@ -1,61 +1,22 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import { PermissionService } from "#services/permission_service";
+import { PublicBlidLookupService } from "#services/public_blid_lookup_service";
 import { StorageService } from "#services/storage_service";
-import type { PublicBlidLookupResult } from "#shared/public_blid_lookup";
+import type { PublicBlidLookupResponse } from "#shared/public_blid_lookup";
+import { publicBlidMissLimiter } from "#start/limiter";
 
 export default class PublicBlidLookupController {
-  async lookup(ctx: HttpContext) {
-    PermissionService.authenticate(ctx);
-
-    const blid = ctx.request.param("blid");
-
-    return StorageService.CustomerItems.aggregate<PublicBlidLookupResult>([
-      {
-        $match: {
-          returned: false,
-          buyout: false,
-          cancel: false,
-          buyback: false,
-          blid,
-        },
-      },
-      {
-        $lookup: {
-          from: "branches",
-          localField: "handoutInfo.handoutById",
-          foreignField: "_id",
-          as: "branchInfo",
-        },
-      },
-      {
-        $lookup: {
-          from: "items",
-          localField: "item",
-          foreignField: "_id",
-          as: "itemInfo",
-        },
-      },
-      {
-        $lookup: {
-          from: "userdetails",
-          localField: "customer",
-          foreignField: "_id",
-          as: "customerInfo",
-        },
-      },
-      {
-        $project: {
-          handoutBranch: { $first: "$branchInfo.name" },
-          handoutTime: "$handoutInfo.time",
-          deadline: 1,
-          title: { $first: "$itemInfo.title" },
-          isbn: { $toString: { $first: "$itemInfo.info.isbn" } },
-          name: { $first: "$customerInfo.name" },
-          email: { $first: "$customerInfo.email" },
-          phone: { $first: "$customerInfo.phone" },
-        },
-      },
-    ]);
+  async lookup(ctx: HttpContext): Promise<PublicBlidLookupResponse> {
+    const { detailsId } = PermissionService.authenticate(ctx);
+    const userDetail = await StorageService.UserDetails.get(detailsId);
+    const opensAt = PublicBlidLookupService.opensAt(userDetail.creationTime);
+    if (opensAt !== null) {
+      return { status: "notOpenYet", opensAt: opensAt.toISOString() };
+    }
+    return PublicBlidLookupService.guardedLookup(
+      { detailsId, blid: ctx.request.param("blid") },
+      publicBlidMissLimiter,
+    );
   }
 }

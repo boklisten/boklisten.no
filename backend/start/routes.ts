@@ -3,7 +3,7 @@ import router from "@adonisjs/core/services/router";
 import { controllers } from "#generated/controllers";
 import CollectionEndpoint from "#services/legacy/collection-endpoint/collection-endpoint";
 import BlCollections from "#services/legacy/collections/bl-collections";
-import { emailValidationThrottle, throttle } from "#start/limiter";
+import { emailValidationThrottle, publicBlidLookupThrottle, throttle } from "#start/limiter";
 
 /**
  * static
@@ -222,7 +222,9 @@ router
 /**
  * public blid lookup
  */
-router.get("/public_blid_lookup/:blid", [controllers.PublicBlidLookup, "lookup"]);
+router
+  .get("/public_blid_lookup/:blid", [controllers.PublicBlidLookup, "lookup"])
+  .use(publicBlidLookupThrottle);
 
 /**
  * blid search (admin Boksøk)

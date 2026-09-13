@@ -7,7 +7,7 @@ const corsConfig = defineConfig({
   origin: env.get("URI_WHITELIST").split(" "),
   methods: ["HEAD", "GET", "PUT", "PATCH", "POST", "DELETE"],
   headers: true,
-  exposeHeaders: [],
+  exposeHeaders: ["retry-after", "x-ratelimit-reset"],
   credentials: true,
   maxAge: 90,
 });
