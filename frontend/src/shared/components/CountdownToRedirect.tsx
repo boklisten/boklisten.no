@@ -1,5 +1,4 @@
 import { Progress, Stack, Title } from "@mantine/core";
-import { useWindowScroll } from "@mantine/hooks";
 import { useEffect, useEffectEvent, useState } from "react";
 
 import useAuthLinker from "@/shared/hooks/useAuthLinker";
@@ -20,41 +19,31 @@ function CountdownToRedirect({
   const [progress, setProgress] = useState(100);
   const navigate = useNavigate();
 
-  const [, scrollTo] = useWindowScroll();
-
-  const onIntervalStart = useEffectEvent(() => {
-    scrollTo({ y: 0 });
-    const interval = setInterval(() => {
-      setProgress((previousProgress) => {
-        if (previousProgress <= 0) {
-          clearInterval(interval);
-          return 0;
-        }
-        return previousProgress - 10 / seconds;
-      });
-    }, 100);
-    return interval;
-  });
-  useEffect(() => {
-    const interval = onIntervalStart();
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-
-  const onIntervalEnd = useEffectEvent(() => {
+  const redirect = useEffectEvent(() => {
     if (shouldRedirectToCaller) {
-      return redirectToCaller();
+      redirectToCaller();
+      return;
     }
     if (path) {
       void navigate({ to: path, replace: shouldReplaceInHistory });
     }
   });
+
   useEffect(() => {
-    if (progress <= 0) {
-      onIntervalEnd();
-    }
-  }, [progress]);
+    window.scrollTo({ top: 0 });
+    const startedAt = Date.now();
+    const interval = setInterval(() => {
+      const elapsedSeconds = (Date.now() - startedAt) / 1000;
+      if (elapsedSeconds < seconds) {
+        setProgress(100 - (elapsedSeconds / seconds) * 100);
+        return;
+      }
+      clearInterval(interval);
+      setProgress(0);
+      redirect();
+    }, 100);
+    return () => clearInterval(interval);
+  }, [seconds]);
 
   return (
     <Stack>

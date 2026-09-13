@@ -16,14 +16,10 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 
 export default function Tasks() {
   const { api } = useApiClient();
-  const { data, isLoading, isError } = useQuery(
-    api.userDetail.getMyDetails.queryOptions(
-      {},
-      {
-        refetchInterval: 5000,
-      },
-    ),
-  );
+  const { data, isLoading, isError } = useQuery({
+    ...api.userDetail.getMyDetails.queryOptions(),
+    refetchInterval: 5000,
+  });
   const requestSignatureMutation = useMutation(
     api.signatures.sendSignatureLinkAsCustomer.mutationOptions({
       onSuccess: () => showSuccessNotification("Signaturforespørsel har blitt sendt!"),

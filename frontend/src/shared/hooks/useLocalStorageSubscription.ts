@@ -1,5 +1,13 @@
 import { useSyncExternalStore } from "react";
 
+function readLocalStorage(key: string) {
+  try {
+    return localStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+}
+
 export default function useLocalStorageSubscription(key: string) {
   return useSyncExternalStore(
     (callback) => {
@@ -11,7 +19,7 @@ export default function useLocalStorageSubscription(key: string) {
       window.addEventListener("storage", onStorage);
       return () => window.removeEventListener("storage", onStorage);
     },
-    () => localStorage.getItem(key) ?? "",
+    () => readLocalStorage(key),
     () => null,
   );
 }

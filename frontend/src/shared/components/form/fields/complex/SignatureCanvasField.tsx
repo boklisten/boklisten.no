@@ -2,7 +2,7 @@ import { ActionIcon, Box, Stack, Text, Tooltip } from "@mantine/core";
 import { IconEraser } from "@tabler/icons-react";
 import { Activity, useEffect, useEffectEvent, useRef } from "react";
 import type { CSSProperties } from "react";
-import { SignatureCanvas } from "react-signature-canvas";
+import SignaturePad from "signature_pad";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { useFieldContext } from "@/shared/hooks/form";
@@ -15,31 +15,51 @@ export const SIGNATURE_BOX_STYLE: CSSProperties = {
   position: "relative",
 };
 
+const PNG_DATA_URL_HEADER = "data:image/png;base64,";
+
 export default function SignatureCanvasField(props: { label: string }) {
-  const sigCanvas = useRef<SignatureCanvas>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const padRef = useRef<SignaturePad>(null);
   const field = useFieldContext<string>();
 
+  const onStrokeEnd = useEffectEvent(() => {
+    const dataUrl = padRef.current?.toDataURL("image/png") ?? "";
+    field.setValue(dataUrl.slice(PNG_DATA_URL_HEADER.length));
+  });
   const clearField = useEffectEvent(() => field.setValue(""));
 
   useEffect(() => {
-    const resize = () => {
-      if (!sigCanvas.current) {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return undefined;
+    }
+    const pad = new SignaturePad(canvas);
+    padRef.current = pad;
+    pad.addEventListener("endStroke", onStrokeEnd);
+
+    // The bitmap has to match the box, and changing it wipes the drawing, so only a change in
+    // width counts: on phones the toolbar sliding away changes the height mid-signature.
+    let bitmapWidth = 0;
+    const fitCanvasToBox = () => {
+      const { offsetWidth, offsetHeight } = canvas;
+      if (offsetWidth === bitmapWidth) {
         return;
       }
-      const canvas = sigCanvas.current.getCanvas();
-      const box = containerRef.current;
-      if (canvas && box) {
-        canvas.width = box.offsetWidth;
-        canvas.height = box.offsetHeight;
-        sigCanvas.current.clear();
-        clearField();
-      }
+      bitmapWidth = offsetWidth;
+      canvas.width = offsetWidth;
+      canvas.height = offsetHeight;
+      pad.clear();
+      clearField();
     };
-    // Ensure everything is rendered properly before resize is called
-    setTimeout(resize, 10);
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
+    fitCanvasToBox();
+    const observer = new ResizeObserver(fitCanvasToBox);
+    observer.observe(canvas);
+
+    return () => {
+      observer.disconnect();
+      pad.off();
+      padRef.current = null;
+    };
   }, []);
 
   return (
@@ -47,20 +67,10 @@ export default function SignatureCanvasField(props: { label: string }) {
       <Text size="sm" fw={500}>
         {props.label}
       </Text>
-      <Box ref={containerRef} style={SIGNATURE_BOX_STYLE}>
-        <SignatureCanvas
-          onEnd={() => {
-            if (!sigCanvas.current) {
-              return;
-            }
-            const header = "data:image/png;base64,";
-            const dataUrl = sigCanvas.current.toDataURL("image/png");
-            field.setValue(dataUrl.slice(header.length));
-          }}
-          canvasProps={{
-            style: { position: "absolute" },
-          }}
-          ref={sigCanvas}
+      <Box style={SIGNATURE_BOX_STYLE}>
+        <canvas
+          ref={canvasRef}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
         />
         <Tooltip label="Tøm">
           <ActionIcon
@@ -71,7 +81,7 @@ export default function SignatureCanvasField(props: { label: string }) {
             right={0}
             bottom={0}
             onClick={() => {
-              sigCanvas.current?.clear();
+              padRef.current?.clear();
               field.setValue("");
             }}
           >
