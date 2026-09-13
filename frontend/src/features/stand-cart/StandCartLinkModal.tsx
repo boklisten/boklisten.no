@@ -45,7 +45,7 @@ export default function StandCartLinkModal({ cart }: { cart: StandCart }) {
         (linking.candidate === null ? (
           <IsbnPrompt blid={linking.blid} />
         ) : (
-          <StandCartLinkConfirm cart={cart} blid={linking.blid} title={linking.candidate.title} />
+          <StandCartLinkConfirm cart={cart} blid={linking.blid} book={linking.candidate} />
         ))}
     </Modal>
   );

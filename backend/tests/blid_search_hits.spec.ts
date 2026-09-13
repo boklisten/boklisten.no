@@ -9,9 +9,9 @@ const PETRA = "petra-id";
 function sources(overrides: Partial<BlidSearchHitSources> = {}): BlidSearchHitSources {
   return {
     uniqueItems: [
-      { blid: "12340000", title: "Kosmos SF" },
-      { blid: "12345678", title: "Sinus 1T" },
-      { blid: "1234abcdEFGH", title: "Gyldendal Norsk" },
+      { blid: "12340000", title: "Kosmos SF", isbn: "9788202590949" },
+      { blid: "12345678", title: "Sinus 1T", isbn: "9788202696153" },
+      { blid: "1234abcdEFGH", title: "Gyldendal Norsk", isbn: null },
     ],
     holders: new Map([
       ["12345678", IDA],
@@ -37,6 +37,14 @@ test.group("assembleBlidSearchHits", () => {
     assert.deepEqual(byBlid.get("12345678"), { detailsId: IDA, name: "Ida" });
     assert.deepEqual(byBlid.get("1234abcdEFGH"), { detailsId: PETRA, name: "Ukjent" });
     assert.isNull(byBlid.get("12340000"));
+  });
+
+  test("passes the ISBN through, null when the item is gone", ({ assert }) => {
+    const hits = assembleBlidSearchHits(sources());
+    assert.deepEqual(
+      hits.map((hit) => hit.isbn),
+      ["9788202590949", "9788202696153", null],
+    );
   });
 
   test("returns an empty list when nothing matched", ({ assert }) => {

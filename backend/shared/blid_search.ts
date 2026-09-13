@@ -80,6 +80,8 @@ export const BLID_SEARCH_PATTERN = /^[\dA-Za-z]{3,12}$/;
 export interface BlidSearchHit {
   blid: string;
   title: string;
+  /** For showing the cover; null when the linked item is gone. */
+  isbn: string | null;
   /** The customer currently holding the book, or null when it is at the stand. */
   holder: { detailsId: string; name: string } | null;
 }

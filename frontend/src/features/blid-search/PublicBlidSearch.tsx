@@ -14,12 +14,13 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
-import { IconBook2, IconClock, IconMail, IconPhone } from "@tabler/icons-react";
+import { IconClock, IconMail, IconPhone } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { ReactNode } from "react";
 
 import BlidSearchControls from "@/features/blid-search/BlidSearchControls";
+import BookCover from "@/features/book-cover/BookCover";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
@@ -167,9 +168,7 @@ function BookCard({
       <Stack gap="sm">
         <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
           <Group gap="sm" align="center" wrap="nowrap" miw={0}>
-            <ThemeIcon variant="light" size="xl" radius="xl">
-              <IconBook2 aria-hidden />
-            </ThemeIcon>
+            <BookCover isbn={book.isbn} title={book.title} />
             <Stack gap={4} miw={0}>
               <Title order={2} size="h4" lh={1.2}>
                 {book.title}

@@ -112,7 +112,7 @@ export function blidMatchTierExpression(query: string) {
 
 export interface BlidSearchHitSources {
   /** Already in the order they should be shown. */
-  uniqueItems: { blid: string; title: string }[];
+  uniqueItems: { blid: string; title: string; isbn: string | null }[];
   /** blid → user detail id of the customer actively holding the book. */
   holders: Map<string, string>;
   /** User detail id → display name. */
@@ -121,11 +121,12 @@ export interface BlidSearchHitSources {
 
 /** Attaches the holding customer to each matched book. */
 export function assembleBlidSearchHits(sources: BlidSearchHitSources): BlidSearchHit[] {
-  return sources.uniqueItems.map(({ blid, title }) => {
+  return sources.uniqueItems.map(({ blid, title, isbn }) => {
     const detailsId = sources.holders.get(blid);
     return {
       blid,
       title,
+      isbn,
       holder:
         detailsId === undefined
           ? null
@@ -759,6 +760,7 @@ export const BlidSearchService = {
     const rows = await StorageService.UniqueItems.aggregate<{
       blid: string;
       title: string;
+      isbn: string | null;
       holder: ObjectId | null;
     }>([
       { $match: { blid: { $regex: query, $options: "i" } } },
@@ -793,11 +795,22 @@ export const BlidSearchService = {
       { $sort: { tier: 1, held: -1, blid: 1 } },
       // One past the limit tells whether the list was cut short.
       { $limit: SEARCH_HIT_LIMIT + 1 },
+      // After the limit, so only the shown rows pay for the join.
+      {
+        $lookup: {
+          from: BlSchemaName.Items,
+          localField: "item",
+          foreignField: "_id",
+          pipeline: [{ $project: { _id: 0, isbn: "$info.isbn" } }],
+          as: "items",
+        },
+      },
       {
         $project: {
           _id: 0,
           blid: 1,
           title: 1,
+          isbn: { $ifNull: [{ $toString: { $first: "$items.isbn" } }, null] },
           holder: { $ifNull: [{ $first: "$activeItems.customer" }, null] },
         },
       },
@@ -817,7 +830,7 @@ export const BlidSearchService = {
 
     return {
       hits: assembleBlidSearchHits({
-        uniqueItems: winners.map(({ blid, title }) => ({ blid, title })),
+        uniqueItems: winners,
         holders,
         userDetails: new Map(userDetails.map((detail) => [detail.id, detail.name])),
       }),

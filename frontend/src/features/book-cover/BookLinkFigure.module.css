@@ -1,0 +1,35 @@
+.figure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-block: var(--mantine-spacing-xs);
+}
+
+.side {
+  flex: 9 1 0;
+  min-width: 0;
+  max-width: 180px;
+}
+
+/* A title is longer than a unique ID, so the book side gets more of the width. */
+.bookSide {
+  flex-grow: 11;
+  max-width: 220px;
+}
+
+.wrap {
+  overflow-wrap: anywhere;
+}
+
+.connector {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  width: 44px;
+}
+
+.line {
+  flex: 1 1 0;
+  border-top: 2px solid var(--mantine-primary-color-filled);
+}

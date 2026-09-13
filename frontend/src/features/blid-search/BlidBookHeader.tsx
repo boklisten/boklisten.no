@@ -7,12 +7,13 @@ import {
   Group,
   Stack,
   Text,
-  ThemeIcon,
   Title,
   Tooltip,
 } from "@mantine/core";
-import { IconBook2, IconPencil } from "@tabler/icons-react";
+import { IconPencil } from "@tabler/icons-react";
 import type { ReactNode } from "react";
+
+import BookCover from "@/features/book-cover/BookCover";
 
 // A buyback leaves the book at the stand, so it shows as "Ikke utdelt"; only a buyout means
 // the customer keeps the book.
@@ -44,9 +45,7 @@ export default function BlidBookHeader({
   return (
     <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
       <Group gap="sm" align="center" wrap="nowrap" miw={0}>
-        <ThemeIcon variant="light" size="xl" radius="xl">
-          <IconBook2 aria-hidden />
-        </ThemeIcon>
+        <BookCover isbn={result.book?.isbn} title={result.book?.title} />
         <Stack gap={4} miw={0}>
           <Title order={2} size="h4" lh={1.2}>
             {result.book?.title ?? "Ukjent tittel"}

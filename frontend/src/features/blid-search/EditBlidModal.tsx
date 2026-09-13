@@ -4,6 +4,7 @@ import { IconTrash } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import BookLinkFigure from "@/features/book-cover/BookLinkFigure";
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
@@ -65,12 +66,14 @@ export default function EditBlidModal({
   );
   const busy = relinkMutation.isPending || deleteMutation.isPending;
 
+  // The book the blid will be linked to after "Endre bok": today's until another is picked.
+  const picked = items?.find((item) => item.id === itemId && item.id !== currentItemId);
+  const target = picked ? { title: picked.title, isbn: picked.info.isbn } : result.book;
+
   return (
     <Modal opened onClose={onClose} title="Rediger bok">
       <Stack>
-        <Text size="sm" c="dimmed">
-          Unik ID {result.blid} er koblet til «{result.book?.title ?? "Ukjent tittel"}».
-        </Text>
+        {target && <BookLinkFigure blid={result.blid} isbn={target.isbn} title={target.title} />}
         <Select
           label="Endre bok"
           description="Historikken til den unike ID-en oppdateres med den nye boka"

@@ -3,11 +3,12 @@ import { ActionIcon, Badge, Group, Loader, Stack, Text, ThemeIcon } from "@manti
 import { useDebouncedValue } from "@mantine/hooks";
 import { Spotlight } from "@mantine/spotlight";
 import type { createSpotlight } from "@mantine/spotlight";
-import { IconAbc, IconBook2, IconNumber123, IconSearch } from "@tabler/icons-react";
+import { IconAbc, IconNumber123, IconSearch } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import BookCover from "@/features/book-cover/BookCover";
 import CustomerContactRow from "@/features/customer-search/CustomerContactRow";
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import useDisplayName from "@/features/customer-search/useDisplayName";
@@ -295,9 +296,7 @@ export default function SearchSpotlight({
   const bookActions = bookHits.map((book) => (
     <Spotlight.Action key={book.blid} onClick={() => pickBook(book.blid)}>
       <Group gap="sm" wrap="nowrap" w="100%">
-        <ThemeIcon variant="light" radius="xl" size="lg">
-          <IconBook2 size={18} aria-hidden />
-        </ThemeIcon>
+        <BookCover isbn={book.isbn} title={book.title} size="sm" enlargeable={false} />
         <Stack gap={2} miw={0} style={{ flex: 1 }}>
           <Text fw={600} lineClamp={1}>
             {book.title}

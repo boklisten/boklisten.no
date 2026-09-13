@@ -1,0 +1,46 @@
+/* One portrait frame for every state, so nothing shifts when the picture arrives or fails to. */
+.frame {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 60px;
+  overflow: hidden;
+  color: var(--mantine-primary-color-light-color);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+  background-color: var(--mantine-primary-color-light);
+
+  &[data-size="sm"] {
+    width: 34px;
+    height: 46px;
+  }
+
+  &[data-size="lg"] {
+    width: 66px;
+    height: 90px;
+  }
+
+  &[data-size="xl"] {
+    width: 88px;
+    height: 120px;
+  }
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Sized by its own pixels (capped in the component), never wider than the modal. */
+.enlarged {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+}

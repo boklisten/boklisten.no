@@ -1,21 +1,24 @@
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 
+import BookLinkFigure from "@/features/book-cover/BookLinkFigure";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
+import { BOOK_EVENT_APPEARANCE } from "@/shared/components/bookEventAppearance";
 import { showErrorNotification } from "@/shared/utils/notifications";
 
-/**
- * The last step of a link, the same in both scanners: the title the ISBN resolved to, and the
- * employee's yes before the sticker is bound to it for good.
- */
+// The icons of the history entries each button leads to.
+const LinkIcon = BOOK_EVENT_APPEARANCE.registered.icon;
+const SwapIcon = BOOK_EVENT_APPEARANCE.edited.icon;
+
+/** The last step of a link, the same in both scanners: the book the ISBN resolved to, and the employee's yes. */
 export default function StandCartLinkConfirm({
   cart,
   blid,
-  title,
+  book,
 }: {
   cart: StandCart;
   blid: string;
-  title: string;
+  book: { title: string; isbn: string };
 }) {
   const [confirming, setConfirming] = useState(false);
 
@@ -36,23 +39,24 @@ export default function StandCartLinkConfirm({
 
   return (
     <Stack>
-      <Text>
-        Unik ID{" "}
-        <Text span fw={700}>
-          {blid}
-        </Text>{" "}
-        blir koblet til{" "}
-        <Text span fw={700}>
-          «{title}»
-        </Text>
-        . Er dette riktig?
-      </Text>
+      <BookLinkFigure blid={blid} isbn={book.isbn} title={book.title} />
+      <Text>Er dette riktig?</Text>
       <Group>
-        <Button loading={confirming} onClick={() => void confirm()} data-autofocus>
+        <Button
+          leftSection={<LinkIcon size={18} aria-hidden />}
+          loading={confirming}
+          onClick={() => void confirm()}
+          data-autofocus
+        >
           Koble til
         </Button>
-        <Button variant="default" disabled={confirming} onClick={cart.retryLink}>
-          Skann på nytt
+        <Button
+          variant="default"
+          leftSection={<SwapIcon size={18} aria-hidden />}
+          disabled={confirming}
+          onClick={cart.retryLink}
+        >
+          Bytt bok
         </Button>
       </Group>
     </Stack>

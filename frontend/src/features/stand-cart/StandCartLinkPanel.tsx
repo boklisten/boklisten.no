@@ -18,7 +18,7 @@ export default function StandCartLinkPanel({
   linking: StandCartLinking;
 }) {
   if (linking.candidate !== null) {
-    return <StandCartLinkConfirm cart={cart} blid={linking.blid} title={linking.candidate.title} />;
+    return <StandCartLinkConfirm cart={cart} blid={linking.blid} book={linking.candidate} />;
   }
 
   return (
