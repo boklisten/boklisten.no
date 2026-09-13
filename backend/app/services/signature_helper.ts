@@ -1,16 +1,39 @@
+import BadRequestException from "#exceptions/bad_request_exception";
 import Signature from "#models/signature";
 import { CustomerItemActive } from "#services/customer_items/customer_item_active";
 import { OrderActive } from "#services/orders/order_active";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
+import { SIGNATURE_REQUIRING_CART_ITEM_TYPES } from "#shared/cart_item";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { UserDetail } from "#shared/user-detail";
 
-const signatureRequiringOrderItemTypes = new Set(["rent", "partly-payment"]);
+const signatureRequiringOrderItemTypes = new Set<string>(SIGNATURE_REQUIRING_CART_ITEM_TYPES);
+
+export const SIGNATURE_REQUIRED_TO_ORDER_MESSAGE =
+  "Du må signere låneavtalen før du kan bestille bøker.";
 
 export async function userHasValidSignature(userDetail: UserDetail): Promise<boolean> {
   return (await Signature.validForCustomer(userDetail)) != null;
+}
+
+/**
+ * The customer checkout's gate: a customer may not create an order for books to borrow without a
+ * valid signature. The signing step in the checkout flow normally clears this before the order is
+ * created, so failing here means the step was skipped (a stale tab, a direct request).
+ */
+export async function assertSignedForCheckout(
+  userDetail: UserDetail,
+  cartItems: { type: string }[],
+): Promise<void> {
+  if (!cartItems.some((cartItem) => signatureRequiringOrderItemTypes.has(cartItem.type))) {
+    return;
+  }
+  if (await userHasValidSignature(userDetail)) {
+    return;
+  }
+  throw new BadRequestException(SIGNATURE_REQUIRED_TO_ORDER_MESSAGE);
 }
 
 /**

@@ -1,6 +1,7 @@
 import { Container, Stack, Title } from "@mantine/core";
 import AuthGuard from "@/features/auth/AuthGuard";
 import OrderHistory from "@/features/order-history/OrderHistory";
+import MySignatureStatusCard from "@/features/signatures/MySignatureStatusCard";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 
@@ -19,6 +20,7 @@ function OrdersPage() {
       <Container size="md">
         <Stack>
           <Title>Ordrehistorikk</Title>
+          <MySignatureStatusCard />
           <OrderHistory />
         </Stack>
       </Container>

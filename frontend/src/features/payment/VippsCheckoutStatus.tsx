@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, useEffect, useEffectEvent, useState } from "react";
 
 import OrderReceipt from "@/features/payment/OrderReceipt";
+import MySignatureStatusCard from "@/features/signatures/MySignatureStatusCard";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -73,9 +74,9 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
 
   const onPaymentSuccessful = useEffectEvent(() => {
     cart.clear();
-    // Ordering a loan makes the backend demand a signature, so refresh the tasks while the user
-    // is still on the receipt; otherwise AuthGuard reads a pre-order cache and skips the signing
-    // page when they move on
+    // The placed order may change the customer's tasks (the backend reconciles the signature
+    // demand on placement), so refresh them while the user is still on the receipt rather than
+    // let AuthGuard read a pre-order cache when they move on
     void queryClient.invalidateQueries({
       queryKey: api.userDetail.getMyDetails.pathKey(),
     });
@@ -155,6 +156,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
           Kvittering har blitt sendt på e-post. Du kan se dine nåværende bøker ved å trykke på "Dine
           bøker"
         </SuccessAlert>
+        <MySignatureStatusCard />
         <OrderReceipt orderId={orderId} />
         <NavLink
           component={TanStackAnchor}

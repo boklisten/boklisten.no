@@ -17,8 +17,9 @@ export default function ConfirmOrder({ orderId }: { orderId: string }) {
       onError: () => showErrorNotification("Klarte ikke bekrefte ordre!"),
       onSuccess: async () => {
         cart.clear();
-        // Ordering a loan makes the backend demand a signature, so refresh the tasks before
-        // navigating; otherwise AuthGuard reads a pre-order cache and skips the signing page
+        // The placed order may change the customer's tasks (the backend reconciles the signature
+        // demand on placement), so refresh them before navigating rather than let AuthGuard read
+        // a pre-order cache
         await queryClient.invalidateQueries({
           queryKey: api.userDetail.getMyDetails.pathKey(),
         });

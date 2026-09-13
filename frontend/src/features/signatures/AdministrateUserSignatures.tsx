@@ -4,7 +4,7 @@ import { IconCopy, IconSend } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
 
-import SignedContractDetails from "@/features/signatures/SignedContractDetails";
+import SignedSignatureDetails from "@/features/signatures/SignedSignatureDetails";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
@@ -30,25 +30,7 @@ export default function AdministrateUserSignatures({ userDetail }: { userDetail:
   }
 
   if (data.isSignatureValid) {
-    return (
-      <Stack align="center">
-        <Box style={{ border: "1px solid #ccc", borderRadius: 2, p: 1 }}>
-          <Image
-            src={`data:image/webp;base64,${data.image}`}
-            alt="Kundens signatur"
-            width={300}
-            height={100}
-          />
-        </Box>
-        <SignedContractDetails
-          signedByGuardian={data.signedByGuardian ?? false}
-          signingName={data.signingName ?? ""}
-          name={userDetail.name}
-          signedAtText={data.signedAtText ?? ""}
-          expiresAtText={data.expiresAtText ?? ""}
-        />
-      </Stack>
-    );
+    return <SignedSignatureDetails signature={data} name={userDetail.name} />;
   }
 
   const signingLinkActions = (
@@ -80,7 +62,7 @@ export default function AdministrateUserSignatures({ userDetail }: { userDetail:
   if (outgrown) {
     return (
       <Stack align="center">
-        <Box style={{ border: "1px solid #ccc", borderRadius: 2, p: 1 }}>
+        <Box style={{ border: "1px solid #ccc", borderRadius: 2, padding: 1 }}>
           <Image
             src={`data:image/webp;base64,${outgrown.image}`}
             alt="Foresatt sin signatur"

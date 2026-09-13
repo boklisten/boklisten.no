@@ -1,3 +1,4 @@
+import { SIGNATURE_REQUIRING_CART_ITEM_TYPES } from "@boklisten/backend/shared/cart_item";
 import type { CartItem, CartItemOption } from "@boklisten/backend/shared/cart_item";
 import type { OrderItemType } from "@boklisten/backend/shared/order/order-item/order-item-type";
 import { useSessionStorage } from "@mantine/hooks";
@@ -55,6 +56,13 @@ export default function useCart({ immediately = false }: { immediately?: boolean
     );
   }
 
+  /** Whether ordering this cart needs a signed loan agreement: any book the customer borrows. */
+  function requiresSignature() {
+    return cart.some((cartItem) =>
+      SIGNATURE_REQUIRING_CART_ITEM_TYPES.includes(getSelectedOption(cartItem).type),
+    );
+  }
+
   function getOptionLabel(option?: CartItemOption) {
     if (!option) {
       throw new Error("Invalid cart item option!");
@@ -72,5 +80,6 @@ export default function useCart({ immediately = false }: { immediately?: boolean
     getOptionLabel,
     calculateTotal,
     calculatePayLater,
+    requiresSignature,
   };
 }

@@ -1,6 +1,6 @@
 import type { CartItem } from "@boklisten/backend/shared/cart_item";
 import { Loader, Title } from "@mantine/core";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { use, useEffect, useRef } from "react";
 import { browser } from "react-dom";
 
@@ -21,13 +21,21 @@ export function CheckoutPending() {
   );
 }
 
-/** The cart lives in the browser, so the checkout can only start there. */
+/**
+ * The cart lives in the browser, so the checkout can only start there. Books to borrow need a
+ * signed agreement first, so the customer is sent to the signing step before any order exists.
+ */
 export default function CheckoutHandler() {
   use(browser());
   const cart = useCart({ immediately: true });
-  const { client } = useApiClient();
+  const { api, client } = useApiClient();
   const navigate = useNavigate();
   const started = useRef(false);
+  // Always fresh: the customer may have signed seconds ago on the signing step
+  const { data: signature, isPending: signaturePending } = useQuery({
+    ...api.signatures.getMySignature.queryOptions(),
+    staleTime: 0,
+  });
 
   const { mutate: initializeCheckout } = useMutation({
     mutationFn: async (cartItems: CartItem[]) =>
@@ -69,9 +77,9 @@ export default function CheckoutHandler() {
     },
   });
 
-  // Once, after the first render: the cart is a new object every render, hence the ref
+  // Once, as soon as the signature status is known: the cart is a new object every render, hence the ref
   useEffect(() => {
-    if (started.current) {
+    if (started.current || signaturePending) {
       return;
     }
     started.current = true;
@@ -79,8 +87,13 @@ export default function CheckoutHandler() {
       void navigate({ to: "/handlekurv" });
       return;
     }
+    // A failed status lookup also lands on the signing step, which shows the error and retries
+    if (cart.requiresSignature() && signature?.isSignatureValid !== true) {
+      void navigate({ to: "/kasse/signering", replace: true });
+      return;
+    }
     initializeCheckout(cart.get());
-  }, [cart, initializeCheckout, navigate]);
+  }, [cart, initializeCheckout, navigate, signature, signaturePending]);
 
   return <CheckoutPending />;
 }
