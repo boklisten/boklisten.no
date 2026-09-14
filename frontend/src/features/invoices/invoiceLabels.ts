@@ -1,12 +1,13 @@
 import type { MantineColor } from "@mantine/core";
 import type {
-  InvoiceBatch,
   InvoiceExportFormat,
   InvoiceStatus,
   InvoiceType,
 } from "@boklisten/backend/shared/invoice";
 import { INVOICE_STATUSES } from "@boklisten/backend/shared/invoice";
 import dayjs from "dayjs";
+
+import type { InvoiceBatch } from "@/features/invoices/invoiceBatches";
 
 export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   unpaid: "Ubetalt",
@@ -19,7 +20,7 @@ export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
 export const INVOICE_STATUS_COLORS: Record<InvoiceStatus, MantineColor> = {
   unpaid: "orange",
   paid: "green",
-  creditNote: "gray",
+  creditNote: "blue",
   debtCollection: "red",
   lossNote: "violet",
 };
@@ -54,10 +55,15 @@ function batchSeason(firstCreated: Date | null): string {
   return `${created.month() < 6 ? "vår" : "høst"} ${created.year()}`;
 }
 
+/** "20261 · Delbetaling høst 2026", short enough for two pills per row in the round picker. */
+export function batchPillLabel(batch: InvoiceBatch): string {
+  return `${batch.prefix} · ${invoiceKindLabel(batch)} ${batchSeason(batch.firstCreated)}`;
+}
+
 /** "20261 · Delbetaling høst 2026 · 295 fakturaer" */
 export function batchLabel(batch: InvoiceBatch): string {
   const count = batch.count === 1 ? "1 faktura" : `${batch.count} fakturaer`;
-  return `${batch.prefix} · ${invoiceKindLabel(batch)} ${batchSeason(batch.firstCreated)} · ${count}`;
+  return `${batchPillLabel(batch)} · ${count}`;
 }
 
 export const EXPORT_FORMAT_LABELS: Record<InvoiceExportFormat, string> = {

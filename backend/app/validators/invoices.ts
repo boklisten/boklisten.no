@@ -7,12 +7,6 @@ import {
   INVOICE_STATUSES,
 } from "#shared/invoice";
 
-export const invoiceBatchQueryValidator = vine.create(
-  vine.object({
-    batch: vine.string().regex(/^\d{5}$/),
-  }),
-);
-
 export const invoiceStatusValidator = vine.create(
   vine.object({
     status: vine.enum(INVOICE_STATUSES),

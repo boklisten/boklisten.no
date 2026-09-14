@@ -78,7 +78,6 @@ export default function CompanyInvoiceTab() {
       }),
     onSuccess: (invoice) => {
       showSuccessNotification(`Faktura ${invoice.invoiceId} ble opprettet`);
-      void queryClient.invalidateQueries({ queryKey: api.invoices.batches.pathKey() });
       void queryClient.invalidateQueries({ queryKey: api.invoices.list.pathKey() });
       void navigate({
         search: {

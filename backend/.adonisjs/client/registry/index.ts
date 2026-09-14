@@ -876,12 +876,6 @@ const routes = {
     tokens: [{"old":"/v2/admin/items/bulk","type":0,"val":"v2","end":""},{"old":"/v2/admin/items/bulk","type":0,"val":"admin","end":""},{"old":"/v2/admin/items/bulk","type":0,"val":"items","end":""},{"old":"/v2/admin/items/bulk","type":0,"val":"bulk","end":""}],
     types: placeholder as Registry['items.bulk_upsert']['types'],
   },
-  'invoices.batches': {
-    methods: ["GET","HEAD"],
-    pattern: '/v2/admin/invoices/batches',
-    tokens: [{"old":"/v2/admin/invoices/batches","type":0,"val":"v2","end":""},{"old":"/v2/admin/invoices/batches","type":0,"val":"admin","end":""},{"old":"/v2/admin/invoices/batches","type":0,"val":"invoices","end":""},{"old":"/v2/admin/invoices/batches","type":0,"val":"batches","end":""}],
-    types: placeholder as Registry['invoices.batches']['types'],
-  },
   'invoices.generation_defaults': {
     methods: ["GET","HEAD"],
     pattern: '/v2/admin/invoices/generation_defaults',

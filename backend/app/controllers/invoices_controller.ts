@@ -5,11 +5,7 @@ import { createCompanyInvoice } from "#services/invoices/company_invoice_service
 import { generationDefaults } from "#services/invoices/invoice_defaults_service";
 import { exportInvoices } from "#services/invoices/invoice_export_service";
 import { generateInvoices } from "#services/invoices/invoice_generator_service";
-import {
-  getInvoice,
-  listInvoiceBatches,
-  listInvoicesInBatch,
-} from "#services/invoices/invoice_query_service";
+import { getInvoice, listInvoices } from "#services/invoices/invoice_query_service";
 import {
   setInvoiceLineCancelled,
   setInvoiceStatus,
@@ -18,7 +14,6 @@ import {
 import { PermissionService } from "#services/permission_service";
 import {
   companyInvoiceValidator,
-  invoiceBatchQueryValidator,
   invoiceBulkStatusValidator,
   invoiceExportValidator,
   invoiceGenerationDefaultsValidator,
@@ -28,15 +23,9 @@ import {
 } from "#validators/invoices";
 
 export default class InvoicesController {
-  async batches(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
-    return listInvoiceBatches();
-  }
-
   async list(ctx: HttpContext) {
     PermissionService.adminOrFail(ctx);
-    const { batch } = await ctx.request.validateUsing(invoiceBatchQueryValidator);
-    return listInvoicesInBatch(batch);
+    return listInvoices();
   }
 
   async get(ctx: HttpContext) {

@@ -423,7 +423,6 @@ router.post("/v2/admin/items/bulk", [controllers.Items, "bulkUpsert"]);
 /**
  * Invoices
  */
-router.get("/v2/admin/invoices/batches", [controllers.Invoices, "batches"]);
 router.get("/v2/admin/invoices/generation_defaults", [controllers.Invoices, "generationDefaults"]);
 router.post("/v2/admin/invoices/generate", [controllers.Invoices, "generate"]);
 router.post("/v2/admin/invoices/company", [controllers.Invoices, "createCompanyInvoice"]);

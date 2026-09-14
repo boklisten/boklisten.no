@@ -1747,18 +1747,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/items_controller').default['bulkUpsert']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'invoices.batches': {
-    methods: ["GET","HEAD"]
-    pattern: '/v2/admin/invoices/batches'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['batches']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['batches']>>>
-    }
-  }
   'invoices.generation_defaults': {
     methods: ["GET","HEAD"]
     pattern: '/v2/admin/invoices/generation_defaults'
@@ -1814,9 +1802,9 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: ExtractQueryForGet<InferInput<(typeof import('#validators/invoices').invoiceBatchQueryValidator)>>
+      query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['list']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['list']>>> | { status: 422; response: { errors: SimpleError[] } }
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['list']>>>
     }
   }
   'invoices.set_statuses': {

@@ -234,7 +234,6 @@ export interface ApiDefinition {
     bulkUpsert: typeof routes['items.bulk_upsert']
   }
   invoices: {
-    batches: typeof routes['invoices.batches']
     generationDefaults: typeof routes['invoices.generation_defaults']
     generate: typeof routes['invoices.generate']
     createCompanyInvoice: typeof routes['invoices.create_company_invoice']

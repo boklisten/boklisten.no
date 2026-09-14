@@ -97,6 +97,7 @@ function previewRows(result: InvoiceGenerationResult): InvoiceListRow[] {
     customerName: invoice.customerInfo.name,
     organizationNumber: null,
     type: invoice.type ?? null,
+    created: invoice.creationTime ?? null,
     duedate: invoice.duedate,
     totalIncludingFee: invoice.payment.totalIncludingFee,
     status: "unpaid",
@@ -151,7 +152,6 @@ export default function GenerateInvoicesTab() {
         return;
       }
       showSuccessNotification(`${result.invoices.length} fakturaer ble lagret`);
-      void queryClient.invalidateQueries({ queryKey: api.invoices.batches.pathKey() });
       void queryClient.invalidateQueries({ queryKey: api.invoices.list.pathKey() });
       setPreview(null);
       void navigate({

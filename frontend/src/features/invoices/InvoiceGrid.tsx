@@ -1,4 +1,5 @@
 import type { InvoiceListRow, InvoiceStatus } from "@boklisten/backend/shared/invoice";
+import { invoiceBatchPrefix } from "@boklisten/backend/shared/invoice";
 import { Badge, Box } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
@@ -22,12 +23,16 @@ import {
 
 const SELECTION_COLUMN_ID = "ag-Grid-SelectionColumn";
 const STATUS_COLUMN_ID = "status";
-const BATCH_PREFIX_LENGTH = 5;
 
 interface StatusCellParams extends ICellRendererParams<InvoiceListRow, InvoiceStatus> {
   compact: boolean;
   busy: boolean;
   onStatusChange: ((row: InvoiceListRow, status: InvoiceStatus) => void) | undefined;
+}
+
+function statusLabel(value: unknown): string {
+  const status = parseInvoiceStatus(value);
+  return status ? INVOICE_STATUS_LABELS[status] : "";
 }
 
 function StatusCell({ value, data, compact, busy, onStatusChange }: StatusCellParams) {
@@ -64,6 +69,7 @@ export default function InvoiceGrid({
   height = "calc(100vh - 340px)",
   showBatch = false,
   statusBusy = false,
+  quickFilterText,
   onOpen,
   onSelectionChange,
   onStatusChange,
@@ -74,6 +80,8 @@ export default function InvoiceGrid({
   /** Adds a round column, for when the list spans several rounds. */
   showBatch?: boolean;
   statusBusy?: boolean;
+  /** Keeps the rows where every word matches some column, as the admin reads it. */
+  quickFilterText?: string;
   onOpen?: (invoiceId: string) => void;
   onSelectionChange?: (invoiceIds: string[]) => void;
   onStatusChange?: (row: InvoiceListRow, status: InvoiceStatus) => void;
@@ -92,7 +100,7 @@ export default function InvoiceGrid({
       width: 110,
       flex: 0,
       hide: !showBatch,
-      valueGetter: ({ data }) => data?.invoiceId.slice(0, BATCH_PREFIX_LENGTH) ?? "",
+      valueGetter: ({ data }) => (data ? invoiceBatchPrefix(data.invoiceId) : ""),
     },
     { field: "customerName", headerName: "Kunde", flex: 2, minWidth: 160 },
     {
@@ -114,6 +122,7 @@ export default function InvoiceGrid({
       hide: narrow,
       cellDataType: "text",
       valueFormatter: ({ value }) => formatDate(value),
+      getQuickFilterText: ({ value }) => formatDate(value),
       comparator: (a: Date, b: Date) => new Date(a).getTime() - new Date(b).getTime(),
     },
     {
@@ -124,6 +133,9 @@ export default function InvoiceGrid({
       cellDataType: "number",
       type: "rightAligned",
       valueFormatter: ({ value }) => (typeof value === "number" ? formatKroner(value) : ""),
+      // Both "1 152 kr" and "1152" should find the row.
+      getQuickFilterText: ({ value }) =>
+        typeof value === "number" ? `${formatKroner(value)} ${value}` : "",
       cellStyle: { fontVariantNumeric: "tabular-nums" },
     },
     {
@@ -134,10 +146,8 @@ export default function InvoiceGrid({
       flex: 0,
       cellRenderer: StatusCell,
       cellRendererParams: statusCellParams,
-      valueFormatter: ({ value }) => {
-        const status = parseInvoiceStatus(value);
-        return status ? INVOICE_STATUS_LABELS[status] : "";
-      },
+      valueFormatter: ({ value }) => statusLabel(value),
+      getQuickFilterText: ({ value }) => statusLabel(value),
     },
   ];
 
@@ -159,6 +169,9 @@ export default function InvoiceGrid({
         getRowId={({ data }) => data.id}
         localeText={AG_GRID_LOCALE_NO}
         loading={loading}
+        quickFilterText={quickFilterText}
+        includeHiddenColumnsInQuickFilter
+        cacheQuickFilter
         rowStyle={onOpen ? { cursor: "pointer" } : undefined}
         onCellClicked={onCellClicked}
         rowSelection={

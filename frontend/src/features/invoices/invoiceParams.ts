@@ -5,10 +5,7 @@ export type InvoiceTab = (typeof INVOICE_TABS)[number];
 
 export interface InvoiceSearchParams {
   fakturaFane?: InvoiceTab;
-  /**
-   * The five-digit batch prefixes shown in the overview, comma-separated. Missing means the
-   * newest round; an empty string means the admin cleared every round.
-   */
+  /** The five-digit batch prefixes the overview is narrowed to, comma-separated. Missing means all. */
   fakturarunde?: string;
   /** Document id of the invoice open in the detail drawer. */
   faktura?: string;
@@ -33,13 +30,9 @@ export function joinBatchPrefixes(prefixes: string[]): string | undefined {
 
 export function validateInvoiceSearch(search: Record<string, unknown>): InvoiceSearchParams {
   const invoice = stringParam(search["faktura"]);
-  const rounds = search["fakturarunde"];
   return {
     fakturaFane: parseInvoiceTab(search["fakturaFane"]),
-    fakturarunde:
-      rounds === undefined
-        ? undefined
-        : (joinBatchPrefixes(parseBatchPrefixes(stringParam(rounds))) ?? ""),
+    fakturarunde: joinBatchPrefixes(parseBatchPrefixes(stringParam(search["fakturarunde"]))),
     faktura: /^[\da-f]{24}$/i.test(invoice) ? invoice : undefined,
   };
 }

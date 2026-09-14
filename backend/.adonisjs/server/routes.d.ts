@@ -149,7 +149,6 @@ export type ScannedRoutes = {
     'items.create': { paramsTuple?: []; params?: {} }
     'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'items.bulk_upsert': { paramsTuple?: []; params?: {} }
-    'invoices.batches': { paramsTuple?: []; params?: {} }
     'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
     'invoices.generate': { paramsTuple?: []; params?: {} }
     'invoices.create_company_invoice': { paramsTuple?: []; params?: {} }
@@ -276,7 +275,6 @@ export type ScannedRoutes = {
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'items.get_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
     'items.get_all_for_admin': { paramsTuple?: []; params?: {} }
-    'invoices.batches': { paramsTuple?: []; params?: {} }
     'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
     'invoices.list': { paramsTuple?: []; params?: {} }
     'invoices.get': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
@@ -379,7 +377,6 @@ export type ScannedRoutes = {
     'items.get_buyback_items': { paramsTuple?: []; params?: {} }
     'items.get_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
     'items.get_all_for_admin': { paramsTuple?: []; params?: {} }
-    'invoices.batches': { paramsTuple?: []; params?: {} }
     'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
     'invoices.list': { paramsTuple?: []; params?: {} }
     'invoices.get': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }

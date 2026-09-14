@@ -134,12 +134,10 @@ export type InvoiceExportFormat = (typeof INVOICE_EXPORT_FORMATS)[number];
  * Invoices are numbered YYYY + a batch digit + a running number, so the first five digits
  * identify the batch (a generation run, or the year's company invoices).
  */
-export interface InvoiceBatch {
-  prefix: string;
-  count: number;
-  type: InvoiceType | null;
-  company: boolean;
-  firstCreated: Date | null;
+export const INVOICE_BATCH_PREFIX_LENGTH = 5;
+
+export function invoiceBatchPrefix(invoiceId: string): string {
+  return invoiceId.slice(0, INVOICE_BATCH_PREFIX_LENGTH);
 }
 
 /** One row of the invoice list. The full document is fetched when a row is opened. */
@@ -149,6 +147,8 @@ export interface InvoiceListRow {
   customerName: string;
   organizationNumber: string | null;
   type: InvoiceType | null;
+  /** Missing on the oldest invoices. */
+  created: Date | null;
   duedate: Date;
   totalIncludingFee: number;
   status: InvoiceStatus;
