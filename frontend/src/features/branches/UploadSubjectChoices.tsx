@@ -24,7 +24,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
-import { cellToString, normalizeNorwegianDate } from "@/features/branches/csvNormalizers";
+import { cellToString, normalizeNorwegianDate } from "@/shared/utils/csvNormalizers";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification } from "@/shared/utils/notifications";
 

@@ -22,7 +22,7 @@ import {
   cellToString,
   normalizeNorwegianDate,
   normalizeNorwegianPhone,
-} from "@/features/branches/csvNormalizers";
+} from "@/shared/utils/csvNormalizers";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 

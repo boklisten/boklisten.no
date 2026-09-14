@@ -3,7 +3,7 @@ import type { Column, ImportResult, Validator } from "@importcsv/react";
 import dayjs from "dayjs";
 import { utils, writeFile } from "xlsx";
 
-import { cellToString } from "@/features/branches/csvNormalizers";
+import { cellToString } from "@/shared/utils/csvNormalizers";
 
 /** One spreadsheet row, the same flat shape the bulk endpoint validates. */
 export interface BookRow {

@@ -16,7 +16,6 @@ import TextField from "@/shared/components/form/fields/basic/TextField";
 import TimePickerField from "@/shared/components/form/fields/basic/TimePickerField";
 import AddressField from "@/shared/components/form/fields/complex/AddressField";
 import BankAccountField from "@/shared/components/form/fields/complex/BankAccountField";
-import CsvFileField from "@/shared/components/form/fields/complex/CsvFileField";
 import CurrencyField from "@/shared/components/form/fields/complex/CurrencyField";
 import DeadlinePickerField from "@/shared/components/form/fields/complex/DeadlinePickerField";
 import EmailField from "@/shared/components/form/fields/complex/EmailField";
@@ -53,7 +52,6 @@ const { useAppForm, withFieldGroup } = createFormHook({
     ChipsField,
     SwitchField,
     TagsField,
-    CsvFileField,
 
     // Complex
     EmailField,
