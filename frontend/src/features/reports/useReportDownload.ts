@@ -1,11 +1,11 @@
 import { useState } from "react";
 
-import { jsonToCsv } from "@/features/reports/jsonToCsv";
-import { downloadTextFile } from "@/shared/utils/downloadTextFile";
+import { downloadXlsx } from "@/shared/utils/downloadXlsx";
 import { showErrorNotification } from "@/shared/utils/notifications";
 
 interface UseReportDownloadOptions {
   fetchRows: () => Promise<unknown[]>;
+  /** Ends with .xlsx; the rows are always handed out as an Excel workbook. */
   filename: string;
   errorMessage?: string;
 }
@@ -20,9 +20,7 @@ export default function useReportDownload({
   async function download() {
     setIsLoading(true);
     try {
-      const rows = await fetchRows();
-      // The BOM makes Excel read the file as UTF-8.
-      downloadTextFile(filename, `﻿${jsonToCsv(rows)}`);
+      downloadXlsx(filename, await fetchRows());
     } catch {
       showErrorNotification(errorMessage);
     }

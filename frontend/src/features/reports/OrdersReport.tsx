@@ -31,13 +31,13 @@ export default function OrdersReport() {
       const rows = await client.api.reports.getOrdersReport({ query });
       return rows ?? [];
     },
-    filename: `orders-${dayjs().format("YYYY-MM-DD")}.csv`,
+    filename: `orders-${dayjs().format("YYYY-MM-DD")}.xlsx`,
   });
 
   return (
     <ReportCard
       title="Ordrer"
-      description="Eksporter en CSV med alle plasserte ordrer, filtrert på filial og tid."
+      description="Eksporter en Excel-fil med alle plasserte ordrer, filtrert på filial og tid."
       isLoading={isLoading}
       onDownload={download}
     >

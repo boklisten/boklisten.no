@@ -31,13 +31,13 @@ export default function PaymentsReport() {
       const rows = await client.api.reports.getPaymentsReport({ query });
       return rows ?? [];
     },
-    filename: `payments-${dayjs().format("YYYY-MM-DD")}.csv`,
+    filename: `payments-${dayjs().format("YYYY-MM-DD")}.xlsx`,
   });
 
   return (
     <ReportCard
       title="Betalinger"
-      description="Eksporter en CSV med alle betalinger, filtrert på filial og tid."
+      description="Eksporter en Excel-fil med alle betalinger, filtrert på filial og tid."
       isLoading={isLoading}
       onDownload={download}
     >

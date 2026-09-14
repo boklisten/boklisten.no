@@ -1,4 +1,4 @@
-/** Hands a generated text file to the browser as a download. */
+/** Hands a generated text file to the browser as a download. Tabular exports use downloadXlsx instead. */
 export function downloadTextFile(filename: string, content: string, type = "text/csv") {
   const url = URL.createObjectURL(new Blob([content], { type: `${type};charset=utf-8` }));
   const anchor = document.createElement("a");

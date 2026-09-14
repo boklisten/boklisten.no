@@ -68,7 +68,7 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
             Gjenstår: Math.max(0, book.expectedOut - book.actualOut),
           })),
       ),
-    filename: "plukkliste-stand.csv",
+    filename: "plukkliste-stand.xlsx",
     errorMessage: "Klarte ikke å laste ned plukklisten",
   });
 
@@ -275,7 +275,7 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
               loading={pickupListDownload.isLoading}
               onClick={pickupListDownload.download}
             >
-              Last ned plukkliste (CSV)
+              Last ned plukkliste (Excel)
             </Button>
           </Group>
           <BarChart

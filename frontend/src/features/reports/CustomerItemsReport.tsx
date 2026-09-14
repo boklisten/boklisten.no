@@ -45,13 +45,13 @@ export default function CustomerItemsReport() {
       const rows = await client.api.reports.getCustomerItemsReport({ query });
       return rows ?? [];
     },
-    filename: `customer_items-${dayjs().format("YYYY-MM-DD")}.csv`,
+    filename: `customer_items-${dayjs().format("YYYY-MM-DD")}.xlsx`,
   });
 
   return (
     <ReportCard
       title="Kunders bøker"
-      description="Eksporter en CSV med alle kunders bøker, filtrert på filial og tid."
+      description="Eksporter en Excel-fil med alle kunders bøker, filtrert på filial og tid."
       isLoading={isLoading}
       onDownload={download}
     >

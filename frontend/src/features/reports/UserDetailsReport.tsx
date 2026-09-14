@@ -22,13 +22,13 @@ export default function UserDetailsReport() {
       const rows = await client.api.reports.getUserDetailsReport({ query });
       return rows ?? [];
     },
-    filename: `user_details-${dayjs().format("YYYY-MM-DD")}.csv`,
+    filename: `user_details-${dayjs().format("YYYY-MM-DD")}.xlsx`,
   });
 
   return (
     <ReportCard
       title="Kunder"
-      description="Eksporter en CSV med alle kunder, filtrert på filialtilhørighet."
+      description="Eksporter en Excel-fil med alle kunder, filtrert på filialtilhørighet."
       isLoading={isLoading}
       onDownload={download}
     >

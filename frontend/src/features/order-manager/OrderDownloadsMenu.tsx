@@ -17,17 +17,17 @@ export default function OrderDownloadsMenu({ filter }: { filter: OrderManagerFil
   const stamp = dayjs().format("YYYY-MM-DD");
   const overview = useReportDownload({
     fetchRows: () => client.api.orderManager.ordersReport({ query: filter }),
-    filename: `bestillinger-${stamp}.csv`,
+    filename: `bestillinger-${stamp}.xlsx`,
   });
   const mailbox = useReportDownload({
     fetchRows: () =>
       client.api.orderManager.bringReport({ query: { ...filter, parcelType: "postkasse" } }),
-    filename: `bring-postkasse-${stamp}.csv`,
+    filename: `bring-postkasse-${stamp}.xlsx`,
   });
   const pickup = useReportDownload({
     fetchRows: () =>
       client.api.orderManager.bringReport({ query: { ...filter, parcelType: "hentested" } }),
-    filename: `bring-hentested-${stamp}.csv`,
+    filename: `bring-hentested-${stamp}.xlsx`,
   });
   const busy = overview.isLoading || mailbox.isLoading || pickup.isLoading;
 
@@ -45,13 +45,13 @@ export default function OrderDownloadsMenu({ filter }: { filter: OrderManagerFil
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>Alle bestillinger i listen</Menu.Label>
-        <Menu.Item onClick={() => void overview.download()}>Ordreoversikt (CSV)</Menu.Item>
+        <Menu.Item onClick={() => void overview.download()}>Ordreoversikt (Excel)</Menu.Item>
         <Menu.Label>Bring-leveranser, for import i Mybring</Menu.Label>
         <Menu.Item onClick={() => void mailbox.download()}>
-          {BRING_PARCEL_LABELS.postkasse} (CSV)
+          {BRING_PARCEL_LABELS.postkasse} (Excel)
         </Menu.Item>
         <Menu.Item onClick={() => void pickup.download()}>
-          {BRING_PARCEL_LABELS.hentested} (CSV)
+          {BRING_PARCEL_LABELS.hentested} (Excel)
         </Menu.Item>
       </Menu.Dropdown>
     </Menu>
