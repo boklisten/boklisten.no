@@ -6,6 +6,7 @@ import CryptoService from "#services/crypto_service";
 import DispatchService from "#services/dispatch_service";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
+import { UserDetailHelper } from "#services/user_detail_helper";
 import type { UserDetail } from "#shared/user-detail";
 import type { UserPermission } from "#shared/user-permission";
 import type { VippsUser } from "#types/user";
@@ -58,6 +59,18 @@ export const UserDetailService = {
         )
         .map(({ userDetail }) => userDetail)
     );
+  },
+  /**
+   * Employees may save details that are incomplete, typically an underage customer whose guardian
+   * they know nothing about. The customer is then asked to complete them on their next login.
+   */
+  async updateAsEmployee(
+    detailsId: string,
+    changes: Parameters<typeof StorageService.UserDetails.update>[1],
+  ): Promise<UserDetail> {
+    const updated = await StorageService.UserDetails.update(detailsId, changes);
+    const confirmDetails = new UserDetailHelper().getInvalidUserDetailFields(updated).length > 0;
+    return StorageService.UserDetails.update(detailsId, { "tasks.confirmDetails": confirmDetails });
   },
   async getByPhoneNumber(phone: string): Promise<UserDetail | null> {
     const databaseQuery = new SEDbQuery();

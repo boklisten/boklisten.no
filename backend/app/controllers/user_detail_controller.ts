@@ -93,7 +93,7 @@ export default class UserDetailsController {
         detailsId: targetUserDetailsId,
       },
     });
-    await StorageService.UserDetails.update(targetUserDetailsId, {
+    await UserDetailService.updateAsEmployee(targetUserDetailsId, {
       emailConfirmed: emailVerified,
       email,
       phone: phoneNumber,
@@ -104,7 +104,6 @@ export default class UserDetailsController {
       dob,
       branchMembership,
       guardian,
-      "tasks.confirmDetails": false,
     });
   }
 }

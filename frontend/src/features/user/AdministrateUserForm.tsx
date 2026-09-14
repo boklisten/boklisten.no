@@ -1,6 +1,6 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
-import { Button, Space, Stack, Tooltip } from "@mantine/core";
+import { Button, Group, Modal, Space, Stack, Text, Tooltip } from "@mantine/core";
 import { IconCheck, IconInfoCircleFilled } from "@tabler/icons-react";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,10 +20,29 @@ import useAuth from "@/shared/hooks/useAuth";
 import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
+/**
+ * Above the manager modal this form usually lives in (Mantine's default 200); both render into the
+ * same portal, so equal z-indexes would leave the confirm hidden behind the form.
+ */
+const CONFIRM_Z_INDEX = 250;
+
 type AdministrateUserFormValues = {
   email: string;
   emailVerified: boolean;
 } & UserInfoFieldValues;
+
+/**
+ * Employees correcting a date of birth rarely know the customer's guardian. With nothing at all
+ * filled in they may save anyway (after confirming); anything typed in must still be valid.
+ */
+function isSavingUnderageWithoutGuardian(values: UserInfoFieldValues): boolean {
+  return (
+    isUnder18(new Date(values.birthday)) &&
+    [values.guardianName, values.guardianEmail, values.guardianPhoneNumber].every(
+      (value) => value.trim().length === 0,
+    )
+  );
+}
 
 export default function AdministrateUserForm({
   userDetail,
@@ -55,12 +74,19 @@ export default function AdministrateUserForm({
     guardianPhoneNumber: userDetail.guardian?.phone ?? "",
     branchMembership: userDetail.branchMembership ?? "",
   };
+  const [confirmingWithoutGuardian, setConfirmingWithoutGuardian] = useState(false);
   const form = useAppForm({
     defaultValues,
-    onSubmit: () => updateUserDetailsMutation.mutate(),
+    onSubmit: ({ value }) => {
+      if (isSavingUnderageWithoutGuardian(value)) {
+        setConfirmingWithoutGuardian(true);
+        return;
+      }
+      updateUserDetailsMutation.mutate();
+    },
     validators: {
       onSubmit: ({ value }) => {
-        if (isUnder18(new Date(value.birthday))) {
+        if (isUnder18(new Date(value.birthday)) && !isSavingUnderageWithoutGuardian(value)) {
           return {
             fields: {
               guardianName: nameFieldValidator(value.guardianName, "guardian"),
@@ -175,10 +201,45 @@ export default function AdministrateUserForm({
       <Space />
       <Button
         loading={form.state.isValidating || updateUserDetailsMutation.isPending}
-        onClick={form.handleSubmit}
+        onClick={async () => {
+          // handleSubmit only runs field-level validators before giving up on an invalid form, so
+          // guardian errors a previous attempt left on untouched fields would keep blocking even
+          // after the fields were cleared. Recompute the form-level errors first.
+          await form.validate("submit");
+          await form.handleSubmit();
+        }}
       >
         Lagre
       </Button>
+      {/* A plain Modal rather than the modals manager: this form usually lives inside a manager
+          modal, and stacking another manager modal on top would unmount it and reset the form. */}
+      <Modal
+        opened={confirmingWithoutGuardian}
+        onClose={() => setConfirmingWithoutGuardian(false)}
+        title="Lagre uten foresatt?"
+        zIndex={CONFIRM_Z_INDEX}
+      >
+        <Stack>
+          <Text size="sm">
+            Kunden er under 18, men informasjon om foresatt er ikke fylt ut. Kunden må selv fylle ut
+            dette neste gang de logger inn.
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setConfirmingWithoutGuardian(false)}>
+              Avbryt
+            </Button>
+            <Button
+              loading={updateUserDetailsMutation.isPending}
+              onClick={async () => {
+                await updateUserDetailsMutation.mutateAsync();
+                setConfirmingWithoutGuardian(false);
+              }}
+            >
+              Lagre uten foresatt
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
       {isAdmin && (
         <>
           <Space />
