@@ -34,6 +34,9 @@ const CUSTOMER_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f41";
 const DELIVERY_ID = "5f7f7f7f7f7f7f7f7f7f7f51";
 const BLID = "12345678";
 const OTHER_BLID = "87654321";
+// One title in two editions
+const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
+const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
 
 const items: Record<string, Item> = {
   [ITEM_ID]: mock<Item>({ id: ITEM_ID, title: "Sinus 1T", price: 500, buyback: false }),
@@ -138,15 +141,16 @@ function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
       ),
     );
   sandbox.stub(StorageService.CustomerItems, "getOrNull").callsFake(byId(world.customerItems));
-  sandbox
-    .stub(StorageService.CustomerItems, "getByQueryOrNull")
-    .callsFake((query) =>
-      Promise.resolve(
-        world.customerItems.filter(
-          (customerItem) => customerItem.blid === stringFilter(query, "blid"),
-        ),
+  sandbox.stub(StorageService.CustomerItems, "getByQueryOrNull").callsFake((query) => {
+    const customer = objectIdFilter(query, "customer");
+    return Promise.resolve(
+      world.customerItems.filter((customerItem) =>
+        customer === undefined
+          ? customerItem.blid === stringFilter(query, "blid")
+          : customerItem.customer === customer,
       ),
     );
+  });
   sandbox
     .stub(StorageService.Items, "getOrNull")
     .callsFake((id) => Promise.resolve(id === undefined ? null : (items[id] ?? null)));
@@ -331,6 +335,53 @@ test.group("StandCartLineResolver.resolve", (group) => {
       kind: "refused",
       message: "Denne boka er allerede delt ut til en annen kunde. Sjekk boka i Boksøk.",
     });
+  });
+
+  test("notes every copy of the title the customer is holding, equivalent editions included", async ({
+    assert,
+  }) => {
+    items[GYMNOS_2009] = mock<Item>({ id: GYMNOS_2009, title: "GYMNOS 2009", price: 400 });
+    items[GYMNOS_2012] = mock<Item>({ id: GYMNOS_2012, title: "GYMNOS 2012", price: 400 });
+    world.orders = [
+      orderWith({
+        orderItems: [
+          {
+            type: "rent",
+            item: GYMNOS_2012,
+            title: "GYMNOS 2012",
+            amount: 0,
+            unitPrice: 0,
+            handout: false,
+            delivered: false,
+            info: { to: SEMESTER_END, periodType: "semester" },
+          },
+        ],
+      }),
+    ];
+    world.customerItems = [
+      { ...activeCustomerItem, id: "held-2009", item: GYMNOS_2009, blid: "11111111" },
+      { ...activeCustomerItem, id: "held-sinus", blid: "22222222" },
+      {
+        ...activeCustomerItem,
+        id: "returned-2012",
+        item: GYMNOS_2012,
+        blid: "33333333",
+        returned: true,
+      },
+    ];
+    const resolved = line(await resolve({ kind: "order", orderId: ORDER_ID, itemId: GYMNOS_2012 }));
+    assert.deepEqual(resolved.notes, [
+      { kind: "already-held", customerItemId: "held-2009", title: "GYMNOS 2009" },
+    ]);
+  });
+
+  test("notes a held copy on a scanned copy nobody ordered", async ({ assert }) => {
+    world.orders = [];
+    world.customerItems = [{ ...activeCustomerItem, id: "held", blid: "11111111" }];
+    const resolved = line(await resolve({ kind: "item", itemId: ITEM_ID, blid: BLID }));
+    assert.deepEqual(resolved.notes, [
+      { kind: "already-held", customerItemId: "held", title: "Sinus 1T" },
+    ]);
   });
 
   test("notes a book the customer is due to get from another student", async ({ assert }) => {

@@ -49,9 +49,9 @@ export interface StandCartSubmitter {
 
 /**
  * Turning the cart into an order, for whichever step does it: the cart step itself when there is
- * nothing to pay, the payment step otherwise. The two things the employee must knowingly
- * override, a missing signature and a book due from another student, are confirmed right before
- * the order is sent.
+ * nothing to pay, the payment step otherwise. The things the employee must knowingly override, a
+ * missing signature, a book due from another student and, for an administrator, a second copy
+ * of a title, are confirmed right before the order is sent.
  */
 export default function useStandCartSubmit({
   cart,
@@ -123,6 +123,29 @@ export default function useStandCartSubmit({
         return null;
       }
       confirmed.push("peer-match");
+    }
+    // Only an administrator gets this far with an extra copy; an employee's cart refuses the line
+    const [extra] = cart.extraCopies;
+    if (extra) {
+      const ok = await asyncConfirmModal({
+        title: extra.reason,
+        children: (
+          <Text>
+            Er du sikker på at du vil dele ut et ekstra eksemplar til{" "}
+            <Text span fw={700}>
+              {customer.name}
+            </Text>
+            ?
+          </Text>
+        ),
+        confirmLabel: "Del ut likevel",
+        confirmColor: "red",
+        zIndex: CONFIRM_Z_INDEX,
+      });
+      if (!ok) {
+        return null;
+      }
+      confirmed.push("extra-copy");
     }
     if (cart.hasLoanHandout && signatureStatus?.signatureRequired) {
       const ok = await asyncConfirmModal({

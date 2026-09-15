@@ -31,6 +31,7 @@ import type {
 } from "#shared/stand_cart";
 import {
   BLID_REQUIRED_ACTION_TYPES,
+  findExtraCopies,
   findOption,
   HANDOUT_ACTION_TYPES,
   needsBlid,
@@ -116,6 +117,29 @@ function assertLinesAreSound(lines: CheckoutLine[]): void {
     if (needsBlid(line.blid, option.type)) {
       throw new BadRequestException(`«${line.title}» må skannes før den kan deles ut`);
     }
+  }
+}
+
+/**
+ * A second copy of a title goes out only from an administrator, and only knowingly. An employee
+ * is stopped with the reason and told who can help.
+ */
+function assertExtraCopies(
+  lines: CheckoutLine[],
+  employee: MonitoredEmployee,
+  confirmed: StandCartConfirmation[],
+): void {
+  const [extra] = findExtraCopies(lines.map(({ line, option }) => ({ line, type: option.type })));
+  if (!extra) {
+    return;
+  }
+  if (employee.permission !== USER_PERMISSION.ADMIN) {
+    throw new BadRequestException(extra.message);
+  }
+  if (!confirmed.includes("extra-copy")) {
+    throw new BadRequestException(
+      `${extra.reason}. Bekreft at et ekstra eksemplar skal deles ut likevel.`,
+    );
   }
 }
 
@@ -326,6 +350,7 @@ export const StandCartCheckoutService = {
 
     const lines = await resolveLines(request, now);
     assertLinesAreSound(lines);
+    assertExtraCopies(lines, employee, request.confirmed);
     await assertConfirmed(lines, customer, request.confirmed);
     const bringDelivery = request.delivery === null ? null : await findBringDelivery(lines);
     if (request.delivery !== null && bringDelivery === null) {

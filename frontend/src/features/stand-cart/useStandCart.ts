@@ -9,6 +9,7 @@ import type {
 } from "@boklisten/backend/shared/stand_cart";
 import {
   BLID_REQUIRED_ACTION_TYPES,
+  findExtraCopies,
   findOption,
   HANDOUT_ACTION_TYPES,
   needsBlid,
@@ -455,6 +456,10 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     /** Handouts due from another student, which the employee must knowingly override. */
     peerNotes: handoutLines.flatMap(({ line }) =>
       line.notes.filter((note) => note.kind === "peer-match"),
+    ),
+    /** Second copies of a title going out; the drawer stops an employee and warns an administrator. */
+    extraCopies: findExtraCopies(
+      cart.lines.map(({ line, choice }) => ({ line, type: choice.type })),
     ),
     /** Loans handed out, for which the customer's signature matters. */
     hasLoanHandout: handoutLines.some(({ choice }) =>

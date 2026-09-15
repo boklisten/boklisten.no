@@ -85,6 +85,27 @@ async function findHolder(blid: string): Promise<CustomerItem | null> {
   return customerItems.find((customerItem) => isActiveCustomerItem(customerItem)) ?? null;
 }
 
+/** One note per copy of the title the customer is holding, named by the edition in hand. */
+async function alreadyHeldNotes(customerId: string, itemId: string): Promise<StandCartNote[]> {
+  const query = new SEDbQuery();
+  query.objectIdFilters = [{ fieldName: "customer", value: customerId }];
+  const customerItems = (await StorageService.CustomerItems.getByQueryOrNull(query)) ?? [];
+  const held = customerItems.filter(
+    (customerItem) =>
+      isActiveCustomerItem(customerItem) && itemsAreEquivalent(customerItem.item, itemId),
+  );
+  return Promise.all(
+    held.map(async (customerItem) => {
+      const heldItem = await StorageService.Items.getOrNull(customerItem.item);
+      return {
+        kind: "already-held",
+        customerItemId: customerItem.id,
+        title: heldItem?.title ?? "boka",
+      };
+    }),
+  );
+}
+
 async function placedOrdersOf(customerId: string): Promise<Order[]> {
   const query = new SEDbQuery();
   query.objectIdFilters = [{ fieldName: "customer", value: customerId }];
@@ -192,13 +213,15 @@ async function resolveOrderLine(
     item = copy;
   }
 
-  const [branchItem, blockedItemIds, peerNote, orderBranch, bringDelivery] = await Promise.all([
-    findBranchItem(branchId, item.id),
-    itemIdsInActiveUserMatches(customerId),
-    peerMatchNote(customerId, item.id),
-    StorageService.Branches.getOrNull(order.branch),
-    isBringDelivery(order),
-  ]);
+  const [branchItem, blockedItemIds, peerNote, heldNotes, orderBranch, bringDelivery] =
+    await Promise.all([
+      findBranchItem(branchId, item.id),
+      itemIdsInActiveUserMatches(customerId),
+      peerMatchNote(customerId, item.id),
+      alreadyHeldNotes(customerId, item.id),
+      StorageService.Branches.getOrNull(order.branch),
+      isBringDelivery(order),
+    ]);
   const priced = priceOrderLine({
     branch,
     item,
@@ -210,7 +233,7 @@ async function resolveOrderLine(
     now,
   });
   const alreadyPaid = alreadyPaidFor(order, orderItem);
-  const notes: StandCartNote[] = [];
+  const notes: StandCartNote[] = [...heldNotes];
   if (peerNote) {
     notes.push(peerNote);
   }
@@ -299,9 +322,10 @@ async function resolveItemLine(
   if (item.id !== source.itemId) {
     return refused(`Unik ID ${source.blid} er «${item.title}»`);
   }
-  const [branchItem, peerNote] = await Promise.all([
+  const [branchItem, peerNote, heldNotes] = await Promise.all([
     findBranchItem(branchId, item.id),
     peerMatchNote(customerId, item.id),
+    alreadyHeldNotes(customerId, item.id),
   ]);
   return {
     kind: "line",
@@ -313,7 +337,7 @@ async function resolveItemLine(
       blid: source.blid,
       ...priceItemLine({ branch, item, branchItem, now }),
       originalBranch: null,
-      notes: peerNote ? [peerNote] : [],
+      notes: peerNote ? [...heldNotes, peerNote] : heldNotes,
     },
     context: { kind: "item", item },
   };

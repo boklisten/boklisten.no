@@ -1,3 +1,4 @@
+import { canonicalItemId } from "#shared/item-equivalence";
 import type { OrderHistoryEntry } from "#shared/order/order-history";
 import type { Period } from "#shared/period";
 
@@ -90,7 +91,9 @@ export type StandCartNote =
   /** The original order is to be sent by mail. */
   | { kind: "bring-delivery" }
   /** The customer already paid this much for the book online. */
-  | { kind: "prepaid"; amount: number };
+  | { kind: "prepaid"; amount: number }
+  /** The customer is already holding a copy of this title; which one, and what it is called. */
+  | { kind: "already-held"; customerItemId: string; title: string };
 
 export interface StandCartLine {
   key: string;
@@ -143,8 +146,67 @@ export type StandCartResolveResult =
   | { kind: "refused"; message: string };
 
 /** The obstacles the employee can knowingly override at submit. */
-export const STAND_CART_CONFIRMATIONS = ["peer-match", "missing-signature"] as const;
+export const STAND_CART_CONFIRMATIONS = ["peer-match", "missing-signature", "extra-copy"] as const;
 export type StandCartConfirmation = (typeof STAND_CART_CONFIRMATIONS)[number];
+
+/** The actions that take a held copy back from the customer. */
+const RETURNING_ACTION_TYPES = new Set<StandCartActionType>(["return", "cancel", "buyback"]);
+
+export const CONTACT_ADMIN_FOR_EXTRA_COPY =
+  "Kontakt en administrator for å dele ut et ekstra eksemplar.";
+
+/** A handout that would leave the customer with two copies of one title. */
+export interface StandCartExtraCopy {
+  /** The line that is one too many. */
+  key: string;
+  /** Why, without a full stop: «Kunden har allerede «Gymnos»». */
+  reason: string;
+  /** The reason, and what an employee can do about it. */
+  message: string;
+}
+
+/**
+ * The handouts that would give the customer a second copy of a title: a copy the customer is
+ * already holding, unless this cart takes that copy back, or another handout of the same title
+ * earlier in the cart. Equivalent editions are one title. Only an administrator may hand out an
+ * extra copy, so the frontend and the checkout both ask this and never disagree.
+ */
+export function findExtraCopies(
+  lines: {
+    line: Pick<StandCartLine, "key" | "source" | "itemId" | "title" | "notes">;
+    type: StandCartActionType;
+  }[],
+): StandCartExtraCopy[] {
+  const takenBack = new Set(
+    lines.flatMap(({ line, type }) =>
+      line.source.kind === "customerItem" && RETURNING_ACTION_TYPES.has(type)
+        ? [line.source.customerItemId]
+        : [],
+    ),
+  );
+  const handedOut = new Set<string>();
+  const extras: StandCartExtraCopy[] = [];
+  for (const { line, type } of lines) {
+    if (!HANDOUT_ACTION_TYPES.includes(type)) {
+      continue;
+    }
+    const held = line.notes.find(
+      (note) => note.kind === "already-held" && !takenBack.has(note.customerItemId),
+    );
+    const titleKey = canonicalItemId(line.itemId);
+    const reason =
+      held?.kind === "already-held"
+        ? `Kunden har allerede «${held.title}»`
+        : handedOut.has(titleKey)
+          ? `«${line.title}» ligger allerede i handlekurven`
+          : null;
+    if (reason !== null) {
+      extras.push({ key: line.key, reason, message: `${reason}. ${CONTACT_ADMIN_FOR_EXTRA_COPY}` });
+    }
+    handedOut.add(titleKey);
+  }
+  return extras;
+}
 
 /**
  * How the money moves at checkout. For an amount to pay: cash or card on the employee's word, or

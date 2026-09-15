@@ -1,4 +1,4 @@
-import { findOption } from "@boklisten/backend/shared/stand_cart";
+import { findOption, CONTACT_ADMIN_FOR_EXTRA_COPY } from "@boklisten/backend/shared/stand_cart";
 import type { StandCartCheckoutState } from "@boklisten/backend/shared/stand_cart";
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import {
@@ -33,7 +33,9 @@ import StandCartLines from "@/features/stand-cart/StandCartLines";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
 import useStandCartSubmit, { isPlaced } from "@/features/stand-cart/useStandCartSubmit";
 import type { Delivery } from "@/features/stand-cart/useStandCartSubmit";
+import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
+import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import useAuth from "@/shared/hooks/useAuth";
 import { showErrorNotification } from "@/shared/utils/notifications";
@@ -169,6 +171,33 @@ function nextStep(cart: StandCart): "delivery" | "pay" | "confirm" {
   return cart.total === 0 ? "confirm" : "pay";
 }
 
+/**
+ * The second copies of a title in the cart. Only an administrator may hand one out, and
+ * knowingly: the submit asks first. Everyone else is stopped here and told who can help.
+ */
+function ExtraCopySummary({ cart, isAdmin }: { cart: StandCart; isAdmin: boolean }) {
+  if (cart.extraCopies.length === 0) {
+    return null;
+  }
+  const Notice = isAdmin ? WarningAlert : ErrorAlert;
+  return (
+    <Notice>
+      <Stack gap={4}>
+        {cart.extraCopies.map((extra) => (
+          <Text key={extra.key} size="sm" fw={600}>
+            {extra.reason}.
+          </Text>
+        ))}
+        <Text size="sm">
+          {isAdmin
+            ? "Du blir bedt om å bekrefte det ekstra eksemplaret når du fullfører."
+            : CONTACT_ADMIN_FOR_EXTRA_COPY}
+        </Text>
+      </Stack>
+    </Notice>
+  );
+}
+
 function CartBody({
   cart,
   notifyByEmail,
@@ -185,7 +214,11 @@ function CartBody({
 }) {
   const [switchingBranch, setSwitchingBranch] = useState(false);
   const narrow = useMatches({ base: true, sm: false });
-  const blocked = cart.problems.length > 0 || cart.cart.branchId === null;
+  const { isAdmin } = useAuth();
+  const blocked =
+    cart.problems.length > 0 ||
+    cart.cart.branchId === null ||
+    (!isAdmin && cart.extraCopies.length > 0);
 
   async function switchBranch(branchId: string | null) {
     if (branchId === null || branchId === cart.cart.branchId) {
@@ -231,6 +264,7 @@ function CartBody({
 
       <StandCartLines cart={cart} />
 
+      <ExtraCopySummary cart={cart} isAdmin={isAdmin} />
       <MonitoredSummary cart={cart} />
 
       <NextStepButton to={nextStep(cart)} disabled={blocked} loading={busy} onClick={onNext} />

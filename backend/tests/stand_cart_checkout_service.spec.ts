@@ -558,6 +558,76 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     assert.equal(state.status, "placed");
   });
 
+  test("an employee cannot hand out a copy of a title the customer is holding", async ({
+    assert,
+  }) => {
+    resolve.resolves(
+      resolution(ORDER_SOURCE, [rentOption()], {
+        blid: BLID,
+        notes: [{ kind: "already-held", customerItemId: CUSTOMER_ITEM_ID, title: "Sinus 1T" }],
+      }),
+    );
+    await assert.rejects(
+      () => checkout({ confirmed: ["extra-copy"] }),
+      BadRequestException,
+      /^Kunden har allerede «Sinus 1T»\. Kontakt en administrator for å dele ut et ekstra eksemplar\.$/,
+    );
+    assert.isFalse(ordersAdd.called);
+  });
+
+  test("an administrator hands out the extra copy, but only knowingly", async ({ assert }) => {
+    resolve.resolves(
+      resolution(ORDER_SOURCE, [rentOption()], {
+        blid: BLID,
+        notes: [{ kind: "already-held", customerItemId: CUSTOMER_ITEM_ID, title: "Sinus 1T" }],
+      }),
+    );
+    const admin = { ...EMPLOYEE, permission: "admin" as const };
+    await assert.rejects(
+      () => StandCartCheckoutService.checkout(request(), admin, NOW),
+      BadRequestException,
+      /^Kunden har allerede «Sinus 1T»\. Bekreft at et ekstra eksemplar skal deles ut likevel\.$/,
+    );
+    const state = await StandCartCheckoutService.checkout(
+      request({ confirmed: ["extra-copy"] }),
+      admin,
+      NOW,
+    );
+    assert.equal(state.status, "placed");
+  });
+
+  test("an employee cannot hand out two copies of one title in one cart", async ({ assert }) => {
+    const secondSource: StandCartSource = { kind: "item", itemId: item.id, blid: "87654321" };
+    resolve.callsFake((incoming: { source: StandCartSource }) =>
+      Promise.resolve(
+        incoming.source.kind === "item"
+          ? resolution(secondSource, [rentOption()], { key: "k2", blid: "87654321" })
+          : resolution(ORDER_SOURCE, [rentOption()], { blid: BLID }),
+      ),
+    );
+    await assert.rejects(
+      () =>
+        checkout({
+          lines: [
+            {
+              source: ORDER_SOURCE,
+              choice: { type: "rent", to: SEMESTER_END },
+              blid: BLID,
+              expectedPrice: 0,
+            },
+            {
+              source: secondSource,
+              choice: { type: "rent", to: SEMESTER_END },
+              blid: "87654321",
+              expectedPrice: 0,
+            },
+          ],
+        }),
+      BadRequestException,
+      /«Sinus 1T» ligger allerede i handlekurven/,
+    );
+  });
+
   test("a loan to a customer without a valid signature needs the employee's say-so", async ({
     assert,
   }) => {
