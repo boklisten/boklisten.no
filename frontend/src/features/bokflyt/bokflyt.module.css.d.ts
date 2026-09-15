@@ -51,6 +51,7 @@ declare const classes: {
   readonly viewfinder: string;
   readonly bookCover: string;
   readonly bookCoverTitle: string;
+  readonly bookCoverImage: string;
   readonly blidLabel: string;
   readonly blidQr: string;
   readonly blidBarcode: string;
@@ -60,7 +61,6 @@ declare const classes: {
   readonly proofGrid: string;
   readonly proofFacts: string;
   readonly proofCard: string;
-  readonly proofLabel: string;
   readonly scanFrame: string;
   readonly scanLine: string;
   readonly scanFlash: string;

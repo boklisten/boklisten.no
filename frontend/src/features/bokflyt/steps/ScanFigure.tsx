@@ -2,6 +2,7 @@ import { Stack, Title } from "@mantine/core";
 import { IconCircleCheck } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
 
+import { useBookCoverImage } from "@/features/book-cover/bookCoverQuery";
 import BlidLabel from "@/features/bokflyt/BlidLabel";
 import classes from "@/features/bokflyt/bokflyt.module.css";
 import { emilReceiving, HANDOVER_BOOKS } from "@/features/bokflyt/mockMatches";
@@ -11,11 +12,16 @@ import MatchScannerContent from "@/shared/components/matches/MatchScannerContent
 
 const COVER_COLORS = [BOKFLYT_COLORS.deep, "#3f6f5a", "#8a4b3b"];
 
+/**
+ * The book under the camera: its real cover when Nasjonalbiblioteket has one, otherwise a
+ * plain coloured cover with the title. The sticker sits on top either way.
+ */
 function BookCover({ index }: { index: number }) {
-  const book = HANDOVER_BOOKS[index]!;
+  const copy = HANDOVER_BOOKS[index]!;
+  const { src, onError } = useBookCoverImage(copy.book.isbn);
   return (
     <motion.div
-      key={book.id}
+      key={copy.id}
       className={classes.bookCover}
       style={{ background: COVER_COLORS[index] }}
       initial={{ opacity: 0, y: 24, rotate: -4 }}
@@ -23,8 +29,12 @@ function BookCover({ index }: { index: number }) {
       exit={{ opacity: 0, y: -24, rotate: -4 }}
       transition={{ duration: 0.35 }}
     >
-      <span className={classes.bookCoverTitle}>{book.title}</span>
-      <BlidLabel id={book.blid} />
+      {src === null ? (
+        <span className={classes.bookCoverTitle}>{copy.book.title}</span>
+      ) : (
+        <img src={src} alt="" className={classes.bookCoverImage} onError={onError} />
+      )}
+      <BlidLabel id={copy.blid} />
     </motion.div>
   );
 }

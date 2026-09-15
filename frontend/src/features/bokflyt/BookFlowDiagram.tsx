@@ -2,46 +2,82 @@ import { useReducedMotion } from "motion/react";
 import { useId } from "react";
 
 import classes from "@/features/bokflyt/bokflyt.module.css";
+import { MOCK_BOOKS } from "@/features/bokflyt/mockBooks";
+import type { MockBook } from "@/features/bokflyt/mockBooks";
+import { personaAvatar } from "@/features/bokflyt/personas";
+import type { Persona } from "@/features/bokflyt/personas";
+import SvgBookCover from "@/features/bokflyt/SvgBookCover";
 import { BOKFLYT_COLORS } from "@/features/bokflyt/theme";
 
-const { deep: DEEP, light: LIGHT, ink: INK } = BOKFLYT_COLORS;
+const { light: LIGHT, ink: INK } = BOKFLYT_COLORS;
 
 interface Person {
   x: number;
-  name: string;
+  name: Persona;
   detail: string;
-  color: string;
 }
 
 const PEOPLE: Person[] = [
-  { x: 100, name: "Peer", detail: "går ut av VG3", color: DEEP },
-  { x: 273, name: "Ronja", detail: "starter i VG3", color: LIGHT },
-  { x: 447, name: "Espen", detail: "starter i VG2", color: DEEP },
-  { x: 620, name: "Pippi", detail: "starter i VG1", color: LIGHT },
+  { x: 100, name: "Peer", detail: "går ut av VG3" },
+  { x: 273, name: "Ronja", detail: "starter i VG3" },
+  { x: 447, name: "Espen", detail: "starter i VG2" },
+  { x: 620, name: "Pippi", detail: "starter i VG1" },
 ];
+
+const AVATAR_Y = 170;
+const AVATAR_R = 52;
+const COVER = { width: 40, height: 54 };
 
 interface Arc {
   key: string;
   d: string;
   /** The point halfway along the curve, where a book rests when motion is off. */
   mid: [number, number];
-  begin: string;
+  begin: number;
+  /** The books this student hands on, one per pass; the same set as in the matching step. */
+  books: MockBook[];
 }
 
 /** Books travelling along the chain, one student to the next. */
 const CHAIN: Arc[] = [
-  { key: "jonas-nora", d: "M 118 114 Q 186 20 255 114", mid: [186, 67], begin: "0s" },
-  { key: "nora-emil", d: "M 291 114 Q 360 20 429 114", mid: [360, 67], begin: "1.2s" },
-  { key: "emil-sara", d: "M 465 114 Q 534 20 602 114", mid: [534, 67], begin: "2.4s" },
+  {
+    key: "peer-ronja",
+    d: "M 144 142 Q 186 20 229 142",
+    mid: [186, 81],
+    begin: 0,
+    books: [MOCK_BOOKS.religionOgEtikk, MOCK_BOOKS.matematikkR2, MOCK_BOOKS.gripTekstenVg3],
+  },
+  {
+    key: "ronja-espen",
+    d: "M 317 142 Q 360 20 403 142",
+    mid: [360, 81],
+    begin: 1.2,
+    books: [MOCK_BOOKS.tidslinjer1, MOCK_BOOKS.kraft1, MOCK_BOOKS.psykologi1],
+  },
+  {
+    key: "espen-pippi",
+    d: "M 491 142 Q 534 20 576 142",
+    mid: [534, 81],
+    begin: 2.4,
+    books: [MOCK_BOOKS.gripTekstenVg1, MOCK_BOOKS.fokusSamfunnskunnskap, MOCK_BOOKS.pasos],
+  },
 ];
 
-const BOOK_DURATION = "3.6s";
+/** One pass along an arc; an arc with several books shows them in turn, one pass each. */
+const PASS_S = 3.6;
 
+/** The student as a bust straight on the page: no disc or ring, just the face. */
 function PersonNode({ person }: { person: Person }) {
+  const size = AVATAR_R * 2;
   return (
     <g>
-      <circle cx={person.x} cy={150} r={24} fill={person.color} />
-      <path d={`M ${person.x - 44} 224 A 44 44 0 0 1 ${person.x + 44} 224 Z`} fill={person.color} />
+      <image
+        href={personaAvatar(person.name)}
+        x={person.x - AVATAR_R}
+        y={AVATAR_Y - AVATAR_R}
+        width={size}
+        height={size}
+      />
       <text
         x={person.x}
         y={256}
@@ -60,40 +96,45 @@ function PersonNode({ person }: { person: Person }) {
   );
 }
 
-function BookCover() {
-  return (
-    <g transform="translate(-14 -10)">
-      <rect width={28} height={20} rx={2.5} fill={DEEP} />
-      <rect x={3} width={3.5} height={20} fill={LIGHT} />
-      <rect x={10} y={5} width={13} height={2.5} rx={1} fill="#fff" opacity={0.8} />
-      <rect x={10} y={10} width={9} height={2.5} rx={1} fill="#fff" opacity={0.6} />
-    </g>
-  );
-}
-
-function ChainBook({ arc, animated }: { arc: Arc; animated: boolean }) {
+/**
+ * The books on one arc. Each book owns a slot of the arc's cycle: it travels during its slot
+ * and stays hidden for the rest, so the books take turns without ever overlapping.
+ */
+function ChainBooks({ arc, animated }: { arc: Arc; animated: boolean }) {
   if (!animated) {
     return (
       <g transform={`translate(${arc.mid[0]} ${arc.mid[1]})`}>
-        <BookCover />
+        <SvgBookCover book={arc.books[0]!} width={COVER.width} height={COVER.height} />
       </g>
     );
   }
 
-  return (
-    <g>
-      <BookCover />
-      <animateMotion dur={BOOK_DURATION} begin={arc.begin} repeatCount="indefinite" path={arc.d} />
+  const slots = arc.books.length;
+  const cycle = `${PASS_S * slots}s`;
+  const slot = 1 / slots;
+  // Hidden until its first slot starts, and again once the animation hands back the base value.
+  return arc.books.map((book, index) => (
+    <g key={book.isbn} opacity={0}>
+      <SvgBookCover book={book} width={COVER.width} height={COVER.height} />
+      <animateMotion
+        dur={cycle}
+        begin={`${arc.begin + PASS_S * index}s`}
+        repeatCount="indefinite"
+        path={arc.d}
+        calcMode="linear"
+        keyPoints="0;1;1"
+        keyTimes={`0;${slot};1`}
+      />
       <animate
         attributeName="opacity"
-        values="0;1;1;0"
-        keyTimes="0;0.12;0.88;1"
-        dur={BOOK_DURATION}
-        begin={arc.begin}
+        values="0;1;1;0;0"
+        keyTimes={`0;${0.12 * slot};${0.88 * slot};${slot};1`}
+        dur={cycle}
+        begin={`${arc.begin + PASS_S * index}s`}
         repeatCount="indefinite"
       />
     </g>
-  );
+  ));
 }
 
 /**
@@ -144,7 +185,7 @@ export default function BookFlowDiagram() {
       ))}
 
       {CHAIN.map((arc) => (
-        <ChainBook key={arc.key} arc={arc} animated={animated} />
+        <ChainBooks key={arc.key} arc={arc} animated={animated} />
       ))}
     </svg>
   );

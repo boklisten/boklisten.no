@@ -1,9 +1,22 @@
 import { Group, Stack, Text } from "@mantine/core";
-import { motion, useInView, useReducedMotion } from "motion/react";
-import { useRef } from "react";
+import {
+  animate,
+  motion,
+  useInView,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+} from "motion/react";
+import { ClientOnly } from "@tanstack/react-router";
+import { useEffect, useId, useRef } from "react";
 
 import classes from "@/features/bokflyt/bokflyt.module.css";
+import { MOCK_BOOKS } from "@/features/bokflyt/mockBooks";
+import type { MockBook } from "@/features/bokflyt/mockBooks";
+import { personaAvatar } from "@/features/bokflyt/personas";
+import type { Persona } from "@/features/bokflyt/personas";
 import Reveal from "@/features/bokflyt/Reveal";
+import SvgBookCover from "@/features/bokflyt/SvgBookCover";
 import { BOKFLYT_COLORS } from "@/features/bokflyt/theme";
 import { useTimedPlayback } from "@/features/bokflyt/useTimedPlayback";
 import type { PlaybackStep } from "@/features/bokflyt/useTimedPlayback";
@@ -14,7 +27,15 @@ const STAND = "stand";
  * Seven students around a ring, clockwise from the top. The two who deal with
  * the stand sit on the right, nearest to it, so those arrows stay short.
  */
-const STUDENTS = ["Espen", "Lillekort", "Tyrihans", "Solveig", "Kari", "Peer", "Ronja"] as const;
+const STUDENTS = [
+  "Espen",
+  "Lillekort",
+  "Tyrihans",
+  "Solveig",
+  "Kari",
+  "Peer",
+  "Ronja",
+] as const satisfies readonly Persona[];
 
 type Student = (typeof STUDENTS)[number];
 type Node = Student | typeof STAND;
@@ -33,26 +54,26 @@ const NAME_SIDE: Record<Student, "above" | "below" | "left"> = {
 interface Transfer {
   from: Node;
   to: Node;
-  title: string;
+  book: MockBook;
 }
 
 /**
  * One book per arrow. Peer hands his VG3 books to Ronja, who hands her VG2
  * books to Espen, and so on. Tyrihans has nobody to give to, so his set goes
- * to the stand; Lillekort has nobody to get from, so her set comes from it.
+ * to the stand; Lillekort has nobody to get from, so his set comes from it.
  */
 const TRANSFERS: Transfer[] = [
-  { from: "Peer", to: "Ronja", title: "Historie VG3" },
-  { from: "Peer", to: "Ronja", title: "Matematikk R2" },
-  { from: "Ronja", to: "Espen", title: "Matematikk R1" },
-  { from: "Ronja", to: "Espen", title: "Fysikk 1" },
-  { from: "Ronja", to: "Espen", title: "Norsk for VG2" },
-  { from: "Kari", to: "Solveig", title: "Kjemi 1" },
-  { from: "Kari", to: "Solveig", title: "Norsk for VG2" },
-  { from: "Tyrihans", to: STAND, title: "Matematikk S1" },
-  { from: "Tyrihans", to: STAND, title: "Samfunnsøkonomi 1" },
-  { from: STAND, to: "Lillekort", title: "Matematikk R1" },
-  { from: STAND, to: "Lillekort", title: "Fysikk 1" },
+  { from: "Peer", to: "Ronja", book: MOCK_BOOKS.religionOgEtikk },
+  { from: "Peer", to: "Ronja", book: MOCK_BOOKS.matematikkR2 },
+  { from: "Ronja", to: "Espen", book: MOCK_BOOKS.tidslinjer1 },
+  { from: "Ronja", to: "Espen", book: MOCK_BOOKS.kraft1 },
+  { from: "Ronja", to: "Espen", book: MOCK_BOOKS.psykologi1 },
+  { from: "Kari", to: "Solveig", book: MOCK_BOOKS.jussOgSamfunn1 },
+  { from: "Kari", to: "Solveig", book: MOCK_BOOKS.fokusSosiologi },
+  { from: "Tyrihans", to: STAND, book: MOCK_BOOKS.pareto2 },
+  { from: "Tyrihans", to: STAND, book: MOCK_BOOKS.ergo2 },
+  { from: STAND, to: "Lillekort", book: MOCK_BOOKS.tidslinjer1 },
+  { from: STAND, to: "Lillekort", book: MOCK_BOOKS.kraft1 },
 ];
 
 const VIA_STAND_COUNT = TRANSFERS.filter(
@@ -77,6 +98,10 @@ const NODE_R = 19;
 const STAND_HALF = { x: 32, y: 20 };
 const NAME_SIZE = 17;
 const NAME_OFFSET = NODE_R + 8;
+const COVER = { width: 16, height: 22 };
+/** How long a book takes to travel its arrow, and how long it lingers before it is put away. */
+const TRAVEL_S = 0.55;
+const LINGER_S = 0.3;
 
 interface Point {
   x: number;
@@ -110,6 +135,10 @@ interface Arrow extends Transfer {
   path: string;
   head: string;
   color: string;
+  /** The curve's three points, for moving a book along it. */
+  start: Point;
+  control: Point;
+  end: Point;
 }
 
 /**
@@ -154,7 +183,14 @@ function arrowFor(transfer: Transfer, offset: number): Arrow {
     path: `M ${round(start.x)} ${round(start.y)} Q ${round(control.x)} ${round(control.y)} ${round(end.x)} ${round(end.y)}`,
     head,
     color: viaStand ? STAND_ARROW : STUDENT_ARROW,
+    start,
+    control,
+    end,
   };
+}
+
+function arrowKey(arrow: Arrow) {
+  return `${arrow.from}-${arrow.to}-${arrow.book.isbn}`;
 }
 
 const ARROWS: Arrow[] = TRANSFERS.map((transfer) => {
@@ -175,12 +211,12 @@ function captionFor(transfer: Transfer | undefined, finished: boolean) {
     return "Finner ut hvem som skal gi bøker til hvem …";
   }
   if (transfer.from === STAND) {
-    return `${transfer.to} får ${transfer.title} på standen.`;
+    return `${transfer.to} får ${transfer.book.title} på standen.`;
   }
   if (transfer.to === STAND) {
-    return `${transfer.from} leverer ${transfer.title} på standen.`;
+    return `${transfer.from} leverer ${transfer.book.title} på standen.`;
   }
-  return `${transfer.from} gir ${transfer.title} til ${transfer.to}.`;
+  return `${transfer.from} gir ${transfer.book.title} til ${transfer.to}.`;
 }
 
 function nameLayout(student: Student) {
@@ -195,34 +231,52 @@ function nameLayout(student: Student) {
   return { x: x - NAME_OFFSET, y, dy: "0.35em", textAnchor: "end" } as const;
 }
 
+/** A point on the quadratic curve, 0 at the start and 1 at the arrowhead. */
+function alongArrow(arrow: Arrow, t: number): Point {
+  const rest = 1 - t;
+  return {
+    x: rest * rest * arrow.start.x + 2 * rest * t * arrow.control.x + t * t * arrow.end.x,
+    y: rest * rest * arrow.start.y + 2 * rest * t * arrow.control.y + t * t * arrow.end.y,
+  };
+}
+
 function StudentNode({ student, active }: { student: Student; active: boolean }) {
   const { x, y } = positionOf(student);
   const name = nameLayout(student);
+  const clipId = useId();
   return (
     <g>
       <motion.circle
         cx={round(x)}
         cy={round(y)}
-        r={NODE_R}
-        stroke={STUDENT_ARROW}
-        strokeWidth={2}
+        r={NODE_R + 6}
+        fill={STUDENT_ARROW}
         initial={false}
-        animate={{ fill: active ? STUDENT_ARROW : "#ffffff" }}
+        animate={{ opacity: active ? 0.18 : 0 }}
         transition={{ duration: 0.25 }}
       />
-      <motion.text
-        x={round(x)}
-        y={round(y)}
-        dy="0.36em"
-        textAnchor="middle"
-        fontSize={16}
-        fontWeight={700}
+      <clipPath id={clipId}>
+        <circle cx={round(x)} cy={round(y)} r={NODE_R} />
+      </clipPath>
+      <circle cx={round(x)} cy={round(y)} r={NODE_R} fill="#ffffff" />
+      <image
+        href={personaAvatar(student)}
+        x={round(x - NODE_R)}
+        y={round(y - NODE_R)}
+        width={NODE_R * 2}
+        height={NODE_R * 2}
+        clipPath={`url(#${clipId})`}
+      />
+      <motion.circle
+        cx={round(x)}
+        cy={round(y)}
+        r={NODE_R}
+        fill="none"
+        stroke={STUDENT_ARROW}
         initial={false}
-        animate={{ fill: active ? "#ffffff" : STUDENT_ARROW }}
+        animate={{ strokeWidth: active ? 3.5 : 2 }}
         transition={{ duration: 0.25 }}
-      >
-        {student[0]}
-      </motion.text>
+      />
       <text
         x={round(name.x)}
         y={round(name.y)}
@@ -269,6 +323,43 @@ function StandNode({ active }: { active: boolean }) {
   );
 }
 
+/**
+ * The book itself, riding its arrow from giver to receiver as the arrow draws,
+ * then put away once it has arrived. Hidden entirely when motion is off.
+ */
+function TravellingCover({ arrow, travelling }: { arrow: Arrow; travelling: boolean }) {
+  const progress = useMotionValue(0);
+  const opacity = useMotionValue(0);
+  const x = useTransform(progress, (t) => alongArrow(arrow, t).x);
+  const y = useTransform(progress, (t) => alongArrow(arrow, t).y);
+
+  useEffect(() => {
+    if (!travelling) {
+      progress.jump(0);
+      opacity.jump(0);
+      return undefined;
+    }
+    const controls = [
+      animate(progress, [0, 1], { duration: TRAVEL_S, ease: "easeOut" }),
+      animate(opacity, [1, 1, 0], {
+        duration: TRAVEL_S + LINGER_S,
+        times: [0, TRAVEL_S / (TRAVEL_S + LINGER_S), 1],
+      }),
+    ];
+    return () => {
+      for (const control of controls) {
+        control.stop();
+      }
+    };
+  }, [travelling, progress, opacity]);
+
+  return (
+    <motion.g style={{ x, y, opacity }}>
+      <SvgBookCover book={arrow.book} width={COVER.width} height={COVER.height} />
+    </motion.g>
+  );
+}
+
 function LegendSwatch({ color }: { color: string }) {
   return (
     <svg width={26} height={10} viewBox="0 0 26 10" aria-hidden>
@@ -309,8 +400,8 @@ export default function MatchGraph() {
             {ARROWS.map((arrow, index) => {
               const drawn = index < shown;
               return (
-                <g key={`${arrow.from}-${arrow.to}-${arrow.title}`}>
-                  <title>{arrow.title}</title>
+                <g key={arrowKey(arrow)}>
+                  <title>{arrow.book.title}</title>
                   <motion.path
                     d={arrow.path}
                     fill="none"
@@ -339,6 +430,14 @@ export default function MatchGraph() {
             {STUDENTS.map((student) => (
               <StudentNode key={student} student={student} active={isActive(student)} />
             ))}
+            {/* Motion values serialise differently on the server, so these mount in the browser only. */}
+            {animated && (
+              <ClientOnly>
+                {ARROWS.map((arrow, index) => (
+                  <TravellingCover key={arrowKey(arrow)} arrow={arrow} travelling={index < shown} />
+                ))}
+              </ClientOnly>
+            )}
           </svg>
 
           <Text ta="center" fz="sm" className={classes.graphCaption}>

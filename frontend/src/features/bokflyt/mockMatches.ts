@@ -5,6 +5,7 @@ import type {
   MatchObligationDto,
 } from "@boklisten/backend/shared/match/match-dto";
 
+import { MOCK_BOOKS } from "@/features/bokflyt/mockBooks";
 import { inHandoverYear } from "@/features/bokflyt/mockDates";
 import { forViewer } from "@/features/matches/forViewer";
 import type { ViewerMatch, ViewerObligation } from "@/features/matches/forViewer";
@@ -25,9 +26,9 @@ const STAND: HandoverParty = { kind: "stand" };
 
 /** The books Ronja hands to Espen, in the order he scans them. */
 export const HANDOVER_BOOKS = [
-  { id: "r1", title: "Matematikk R1", blid: "K3fQ8pL2xA7d" },
-  { id: "fysikk1", title: "Fysikk 1", blid: "b9TzW4mR1cVq" },
-  { id: "norsk2", title: "Norsk for VG2", blid: "Hs6Ye2nP0dJk" },
+  { id: "tidslinjer", book: MOCK_BOOKS.tidslinjer1, blid: "K3fQ8pL2xA7d" },
+  { id: "kraft", book: MOCK_BOOKS.kraft1, blid: "b9TzW4mR1cVq" },
+  { id: "psykologi", book: MOCK_BOOKS.psykologi1, blid: "Hs6Ye2nP0dJk" },
 ] as const;
 
 function handover(id: string, blid: string, from: HandoverParty, to: HandoverParty): HandoverDto {
@@ -67,8 +68,8 @@ function matches(booksReceived: number): MatchDto[] {
       meetingLocation: "Utenfor biblioteket",
       meetingTime: inHandoverYear("06-16T12:15:00+02:00"),
       participants: [RONJA, ESPEN],
-      obligations: HANDOVER_BOOKS.map((book, index) =>
-        obligation(book.id, book.title, RONJA, ESPEN, index < booksReceived, book.blid),
+      obligations: HANDOVER_BOOKS.map((copy, index) =>
+        obligation(copy.id, copy.book.title, RONJA, ESPEN, index < booksReceived, copy.blid),
       ),
     },
     {
@@ -88,8 +89,8 @@ function matches(booksReceived: number): MatchDto[] {
       meetingTime: inHandoverYear("06-12T13:00:00+02:00"),
       participants: [PEER, RONJA],
       obligations: [
-        obligation("historie", "Historie VG3", PEER, RONJA, true),
-        obligation("r2", "Matematikk R2", PEER, RONJA, true),
+        obligation("religion", MOCK_BOOKS.religionOgEtikk.title, PEER, RONJA, true),
+        obligation("r2", MOCK_BOOKS.matematikkR2.title, PEER, RONJA, true),
       ],
     },
   ];

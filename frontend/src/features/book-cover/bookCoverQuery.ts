@@ -1,4 +1,5 @@
 import { queryOptions, skipToken, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 /** Nasjonalbiblioteket's public catalogue: every book published in Norway is deposited there. */
 const NB_ITEMS_URL = "https://api.nb.no/catalog/v1/items";
@@ -69,7 +70,12 @@ export function bookCoverQueryOptions(isbn: Isbn) {
   });
 }
 
-/** The cover URL for an ISBN, or null while loading, when there is no ISBN, or when none is on file. */
-export function useBookCoverUrl(isbn: Isbn): string | null {
-  return useQuery(bookCoverQueryOptions(isbn)).data ?? null;
+/**
+ * The cover as an image source with its error handler. `src` is null while loading, when there is
+ * no ISBN or no cover on file, and after the image itself failed to load.
+ */
+export function useBookCoverImage(isbn: Isbn): { src: string | null; onError: () => void } {
+  const url = useQuery(bookCoverQueryOptions(isbn)).data ?? null;
+  const [brokenUrl, setBrokenUrl] = useState<string | null>(null);
+  return { src: url !== null && url !== brokenUrl ? url : null, onError: () => setBrokenUrl(url) };
 }

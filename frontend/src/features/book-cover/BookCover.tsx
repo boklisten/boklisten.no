@@ -3,7 +3,7 @@ import { IconBook2 } from "@tabler/icons-react";
 import { useState } from "react";
 
 import classes from "@/features/book-cover/BookCover.module.css";
-import { useBookCoverUrl } from "@/features/book-cover/bookCoverQuery";
+import { useBookCoverImage } from "@/features/book-cover/bookCoverQuery";
 import type { Isbn } from "@/features/book-cover/bookCoverQuery";
 
 // Nasjonalbiblioteket serves covers at roughly 130–250 px tall; enlarging further only blurs.
@@ -31,17 +31,16 @@ export default function BookCover({
   /** Off inside rows that are themselves clickable. */
   enlargeable?: boolean;
 }) {
-  const coverUrl = useBookCoverUrl(isbn);
-  const [brokenUrl, setBrokenUrl] = useState<string | null>(null);
+  const { src, onError } = useBookCoverImage(isbn);
   const [enlarged, setEnlarged] = useState(false);
-  const showCover = coverUrl !== null && coverUrl !== brokenUrl;
 
-  const content = showCover ? (
-    <img src={coverUrl} alt="" className={classes.image} onError={() => setBrokenUrl(coverUrl)} />
-  ) : (
-    <IconBook2 size={ICON_SIZE[size]} />
-  );
-  if (!showCover || !enlargeable) {
+  const content =
+    src === null ? (
+      <IconBook2 size={ICON_SIZE[size]} />
+    ) : (
+      <img src={src} alt="" className={classes.image} onError={onError} />
+    );
+  if (src === null || !enlargeable) {
     return (
       <div className={classes.frame} data-size={size} aria-hidden>
         {content}
@@ -67,7 +66,7 @@ export default function BookCover({
         size="sm"
         centered
       >
-        <EnlargedCover src={coverUrl} alt={`Omslaget til ${bookName}`} />
+        <EnlargedCover src={src} alt={`Omslaget til ${bookName}`} />
       </Modal>
     </>
   );

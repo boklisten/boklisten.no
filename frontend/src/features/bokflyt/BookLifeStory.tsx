@@ -8,7 +8,6 @@ import { IconCircleCheck } from "@tabler/icons-react";
 
 import BlidBookHeader from "@/features/blid-search/BlidBookHeader";
 import BlidHistoryTimeline from "@/features/blid-search/BlidHistoryTimeline";
-import BlidLabel from "@/features/bokflyt/BlidLabel";
 import classes from "@/features/bokflyt/bokflyt.module.css";
 
 const BRANCH = "Ullern VG2 ST";
@@ -48,7 +47,7 @@ function transfer(
 
 const EXAMPLE_BOOK: BlidSearchResult = {
   blid: "eksempelBLID",
-  book: { id: "eksempel", title: "Mønster R1 2021", isbn: "9788205548718" },
+  book: { id: "eksempel", title: "Tidslinjer 1", isbn: "9788203334047" },
   registered: true,
   status: "handed-out",
   history: [
@@ -90,7 +89,7 @@ export default function BookLifeStory() {
               Denne boka har ikke vært innom stand siden 2022.
             </Title>
             <Text className={`${classes.lead} ${classes.onDeepMuted}`}>
-              Et ekte eksempel fra Ullern videregående skole. Matematikkboka ble delt ut på stand i
+              Et ekte eksempel fra Ullern videregående skole. Historieboka ble delt ut på stand i
               august 2022. Siden har den gått rett fra elev til elev hver juni, og hver gang har
               eleven som overtok den, skannet den inn selv.
             </Text>
@@ -110,9 +109,6 @@ export default function BookLifeStory() {
           <div className={`${classes.proofCard} ${classes.noInteraction}`} inert>
             <Stack gap="md">
               <BlidBookHeader result={EXAMPLE_BOOK} />
-              <div className={classes.proofLabel}>
-                <BlidLabel id={EXAMPLE_BOOK.blid} />
-              </div>
               <BlidHistoryTimeline history={EXAMPLE_BOOK.history} />
             </Stack>
           </div>

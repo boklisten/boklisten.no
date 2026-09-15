@@ -474,25 +474,56 @@
   place-items: start center;
 }
 
-/* Sits high enough that the sticker stays clear of the toast along the bottom edge. */
+/* The book lies under the camera with the sticker in the middle of the frame: the sticker sits
+   in the bottom right corner of the back cover, so most of the book is out of frame. The card is
+   far bigger than the viewfinder and offset so that corner lands in the centre, and it pivots
+   around the sticker so the tilt does not move it. */
 .bookCover {
-  width: 60%;
-  aspect-ratio: 3 / 3.3;
-  margin-top: -12%;
-  border-radius: 4px;
-  padding: 0.55rem;
+  position: absolute;
+  right: 22.7%;
+  bottom: 29.5%;
+  width: 135%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 6px;
+  /* Only the right 57 % of the card is in the frame, so content starts at that edge. */
+  padding: 5% 5% 5% 60%;
   color: #fff;
   display: flex;
-  flex-direction: column;
+  align-items: flex-end;
   justify-content: space-between;
+  gap: 5%;
+  transform-origin: 80% 91%;
   box-shadow: 0 14px 24px -12px rgb(0 0 0 / 70%);
 }
 
 .bookCoverTitle {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-bottom: 5%;
   font-family: var(--bf-display);
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   line-height: 1.15;
+}
+
+/* The real cover fills the card; the sticker stays on top of it like on a real book. */
+.bookCoverImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A 62 x 29 mm label on a textbook roughly 190 mm wide: a third of the card, which is 52 % of
+   the card's content box once the padding is taken off. */
+.bookCover .blidLabel {
+  position: relative;
+  width: 52%;
+  margin-left: auto;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 35%);
 }
 
 .blidLabel {
@@ -571,12 +602,6 @@
   border-radius: 1.25rem;
   padding: clamp(1.25rem, 3vw, 2rem);
   box-shadow: 0 30px 60px -30px rgb(0 0 0 / 50%);
-}
-
-.proofLabel {
-  width: min(100%, 220px);
-  border: 1px solid var(--bf-wash-strong);
-  border-radius: 6px;
 }
 
 .scanFrame {
