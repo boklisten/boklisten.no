@@ -1,4 +1,5 @@
 import type { Branch } from "@boklisten/backend/shared/branch";
+import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import { futureRentPeriods } from "@boklisten/backend/shared/rent-periods";
 import type {
   StandCartChoice,
@@ -74,6 +75,21 @@ function storedLine(line: StandCartLine, previous?: StoredLine): StoredLine {
     choice: gainedCopy || previous === undefined ? defaultChoice(line) : previous.choice,
     problem: null,
   };
+}
+
+/**
+ * The line a new one takes the place of: the same line, or a sticker-less copy of the same title
+ * that the newly scanned sticker now identifies. The choice carries over from it.
+ */
+function replacedBy(line: StandCartLine, lines: StoredLine[]): StoredLine | undefined {
+  return lines.find(
+    (stored) =>
+      stored.line.key === line.key ||
+      (line.blid !== null &&
+        stored.line.source.kind === "item" &&
+        stored.line.blid === null &&
+        itemsAreEquivalent(stored.line.itemId, line.itemId)),
+  );
 }
 
 export function lineProblem({ line, choice, problem }: StoredLine): string | null {
@@ -218,18 +234,18 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
       }
       line = again.line;
     }
-    update((current) => ({
-      ...current,
-      branchId: naturalBranchId,
-      customerName: current.customerName ?? customer?.name ?? null,
-      lines: [
-        ...current.lines.filter((stored) => stored.line.key !== line.key),
-        storedLine(
-          line,
-          current.lines.find((stored) => stored.line.key === line.key),
-        ),
-      ],
-    }));
+    update((current) => {
+      const replaced = replacedBy(line, current.lines);
+      return {
+        ...current,
+        branchId: naturalBranchId,
+        customerName: current.customerName ?? customer?.name ?? null,
+        lines: [
+          ...current.lines.filter((stored) => stored !== replaced),
+          storedLine(line, replaced),
+        ],
+      };
+    });
     if (notify) {
       showSuccessNotification(`«${line.title}» er lagt i handlekurven`);
     }
@@ -254,19 +270,24 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     return accept(result.line, branchId, { notify: false });
   }
 
+  /** The one thing every scan does before its lookup: asks whether a line may be added at all. */
+  async function scanBranchId(): Promise<string | ScanNotice> {
+    // Asked before any lookup, so no link step ever starts against a waiting list
+    if (!(await mayAdd())) {
+      return { message: REFUSED_ADD_MESSAGE };
+    }
+    return provisionalBranchId() ?? { message: "Fant ingen filial å legge boka på" };
+  }
+
   /**
    * A scanned copy: the backend says which line it is. Order lines that already carry a blid are
    * taken, so a second copy of the same title becomes its own line; a blid-less order line is
    * filled in. A sticker on no book yet starts a link step in the scanner it came from.
    */
   async function addBlid(blid: string, via: StandCartLinkSource): Promise<ScanNotice | undefined> {
-    // Asked before any lookup, so no link step ever starts against a waiting list
-    if (!(await mayAdd())) {
-      return { message: REFUSED_ADD_MESSAGE };
-    }
-    const branchId = provisionalBranchId();
-    if (branchId === null) {
-      return { message: "Fant ingen filial å legge boka på" };
+    const branchId = await scanBranchId();
+    if (typeof branchId !== "string") {
+      return branchId;
     }
     if (cartRef.current.lines.some((stored) => stored.line.blid === blid)) {
       return {
@@ -274,10 +295,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
         message: `Unik ID ${blid} ligger allerede i handlekurven.`,
       };
     }
-    const takenKeys = cartRef.current.lines
-      .filter((stored) => stored.line.blid !== null)
-      .map((stored) => stored.line.key);
-    const result = await resolve({ kind: "blid", blid }, branchId, { takenKeys });
+    const result = await resolve({ kind: "blid", blid }, branchId, { takenKeys: stickeredKeys() });
     if (result.kind === "refused") {
       return { message: result.message };
     }
@@ -285,11 +303,39 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
       update((current) => ({ ...current, linking: { blid, via, candidate: null } }));
       return undefined;
     }
-    const offScope = scopeNotice(result.line);
-    if (offScope !== undefined) {
-      return offScope;
+    return scopeNotice(result.line) ?? accept(result.line, branchId, { notify: true });
+  }
+
+  /**
+   * A scanned ISBN: a copy without a sticker, which fills the customer's open order for the title
+   * or becomes a copy nobody ordered, to be sold to the stand or bought. Without a sticker two
+   * copies of a title cannot be told apart, so the same title is refused the second time.
+   */
+  async function addIsbn(isbn: string): Promise<ScanNotice | undefined> {
+    const branchId = await scanBranchId();
+    if (typeof branchId !== "string") {
+      return branchId;
     }
-    return accept(result.line, branchId, { notify: true });
+    const result = await resolve({ kind: "isbn", isbn }, branchId, { takenKeys: stickeredKeys() });
+    if (result.kind !== "line") {
+      return {
+        message: result.kind === "refused" ? result.message : unlinkedBlidMessage(result.blid),
+      };
+    }
+    if (cartRef.current.lines.some((stored) => stored.line.key === result.line.key)) {
+      return {
+        title: "Allerede i handlekurven",
+        message: `«${result.line.title}» ligger allerede i handlekurven. Skann bokas unike ID for å legge til et eksemplar til.`,
+      };
+    }
+    return scopeNotice(result.line) ?? accept(result.line, branchId, { notify: true });
+  }
+
+  /** The lines a scan may not join: those that already identify their copy. */
+  function stickeredKeys(): string[] {
+    return cartRef.current.lines
+      .filter((stored) => stored.line.blid !== null)
+      .map((stored) => stored.line.key);
   }
 
   /**
@@ -473,6 +519,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     has: (key: string) => cart.lines.some((stored) => stored.line.key === key),
     add,
     addBlid,
+    addIsbn,
     remove,
     choose,
     setBranch: reprice,

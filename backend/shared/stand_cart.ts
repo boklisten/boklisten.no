@@ -11,11 +11,17 @@ export type StandCartSource =
   | { kind: "order"; orderId: string; itemId: string }
   /** A book the customer is holding. */
   | { kind: "customerItem"; customerItemId: string }
-  /** A scanned copy the customer never ordered and does not hold. */
-  | { kind: "item"; itemId: string; blid: string };
+  /**
+   * A copy the customer never ordered and does not hold: scanned by its sticker, or by its ISBN
+   * when it has no sticker yet, as a book the customer sells to the stand or buys outright.
+   */
+  | { kind: "item"; itemId: string; blid: string | null };
 
 /** What a resolve request may point at: a line source, or a bare scan the server places. */
-export type StandCartLookup = StandCartSource | { kind: "blid"; blid: string };
+export type StandCartLookup =
+  | StandCartSource
+  | { kind: "blid"; blid: string }
+  | { kind: "isbn"; isbn: string };
 
 /** Unique within a cart, and the same on both sides of the API. */
 export function lineKey(source: StandCartSource): string {
@@ -27,7 +33,8 @@ export function lineKey(source: StandCartSource): string {
       return `customerItem:${source.customerItemId}`;
     }
     case "item": {
-      return `item:${source.blid}`;
+      // Stickers and item ids never look alike, so the two never collide
+      return `item:${source.blid ?? source.itemId}`;
     }
     default: {
       throw new Error(`unknown source ${JSON.stringify(source)}`);
@@ -57,6 +64,11 @@ export const BLID_REQUIRED_ACTION_TYPES: StandCartActionType[] = ["rent", "partl
 /** A handout that cannot go through without a scanned copy, and none is in hand yet. */
 export function needsBlid(blid: string | null, type: StandCartActionType): boolean {
   return blid === null && BLID_REQUIRED_ACTION_TYPES.includes(type);
+}
+
+/** Whether the action can be picked for a line without a scanned copy. */
+export function allowedWithoutBlid(type: StandCartActionType): boolean {
+  return !BLID_REQUIRED_ACTION_TYPES.includes(type);
 }
 
 export function unlinkedBlidMessage(blid: string): string {

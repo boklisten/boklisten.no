@@ -15,7 +15,7 @@ import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Period } from "#shared/period";
 import { futureRentPeriods } from "#shared/rent-periods";
-import { findOption } from "#shared/stand_cart";
+import { allowedWithoutBlid, findOption } from "#shared/stand_cart";
 import type { StandCartActionType, StandCartOption } from "#shared/stand_cart";
 
 /**
@@ -106,13 +106,18 @@ export function alreadyPaidFor(order: Order, orderItem: OrderItem): number {
   return order.payments.length > 0 ? orderItem.amount : 0;
 }
 
-/** The handout options a branch offers a copy of this item, priced from the cart branch. */
+/**
+ * The handout options a branch offers a copy of this item, priced from the cart branch. A loan
+ * needs the sticker that identifies the copy, so without one only a sale is offered; a book sold
+ * outright rarely gets a sticker at all.
+ */
 function handoutOptions({
   branch,
   item,
   branchItem,
   alwaysAllow,
   alreadyPaid,
+  scanned,
   now,
 }: {
   branch: Branch;
@@ -121,12 +126,15 @@ function handoutOptions({
   /** The type the customer ordered is offered whatever the branch item says. */
   alwaysAllow: StandCartActionType | null;
   alreadyPaid: number;
+  /** A copy with a sticker is in hand. */
+  scanned: boolean;
   now: Date;
 }): StandCartOption[] {
   // A branch without an entry for the book still lends it: that is what happens when a book
   // nobody ordered is scanned at the stand today.
   const allows = (type: StandCartActionType, flag: boolean | undefined) =>
-    type === alwaysAllow || (branchItem ? flag === true : type === "rent");
+    (scanned || allowedWithoutBlid(type)) &&
+    (type === alwaysAllow || (branchItem ? flag === true : type === "rent"));
   const options: StandCartOption[] = [];
 
   if (allows("rent", branchItem?.rentAtBranch)) {
@@ -162,7 +170,7 @@ function indexOfType(options: StandCartOption[], type: StandCartActionType): num
   return index === -1 ? 0 : index;
 }
 
-/** The option the customer ordered: same type and period end, else the first of the type. */
+/** The option the customer ordered: same type and period end, else the first of the type; -1 when not offered. */
 function indexOfOrderedOption(options: StandCartOption[], orderItem: OrderItem): number {
   const type = orderedActionType(orderItem);
   const orderedTo = orderItem.info?.to;
@@ -170,10 +178,9 @@ function indexOfOrderedOption(options: StandCartOption[], orderItem: OrderItem):
     type !== null && orderedTo !== undefined
       ? findOption({ options }, { type, to: iso(orderedTo) })
       : null;
-  const index = ordered
+  return ordered
     ? options.indexOf(ordered)
     : options.findIndex((candidate) => candidate.type === type);
-  return index === -1 ? 0 : index;
 }
 
 export function priceOrderLine({
@@ -193,32 +200,32 @@ export function priceOrderLine({
   originalOrderItem: OrderItem;
   /** A user match in an active round depends on this book, so it may not be cancelled. */
   blockedByMatch: boolean;
-  /** A copy is in hand. Without one the order can only be cancelled, never handed out. */
+  /** A copy with a sticker is in hand. Without one the order cannot go out as a loan. */
   scanned: boolean;
   now: Date;
 }): PricedLine {
   const alreadyPaid = alreadyPaidFor(originalOrder, originalOrderItem);
   const options = [
-    ...(scanned
-      ? handoutOptions({
-          branch,
-          item,
-          branchItem,
-          alwaysAllow: orderedActionType(originalOrderItem),
-          alreadyPaid,
-          now,
-        })
-      : []),
+    ...handoutOptions({
+      branch,
+      item,
+      branchItem,
+      alwaysAllow: orderedActionType(originalOrderItem),
+      alreadyPaid,
+      scanned,
+      now,
+    }),
     option("cancel", refund(alreadyPaid), {
       available: !blockedByMatch,
       ...(blockedByMatch ? { reason: MATCH_BLOCKS_CANCEL_REASON } : {}),
     }),
   ];
+  // What the customer ordered, when it can be handed out as it stands; otherwise the order is
+  // only cancelled, never quietly turned into another handout
+  const ordered = indexOfOrderedOption(options, originalOrderItem);
   return {
     options,
-    defaultOptionIndex: scanned
-      ? indexOfOrderedOption(options, originalOrderItem)
-      : indexOfType(options, "cancel"),
+    defaultOptionIndex: ordered === -1 ? indexOfType(options, "cancel") : ordered,
     unavailableReason: null,
   };
 }
@@ -298,15 +305,23 @@ export function priceCustomerItemLine({
   };
 }
 
+/**
+ * A copy nobody ordered: handed out, or bought from the customer. Scanned by its sticker it is
+ * most likely going out, so the first handout is the default; scanned by its ISBN alone it is
+ * most likely a book the customer sells to the stand, so that comes first when it is offered.
+ */
 export function priceItemLine({
   branch,
   item,
   branchItem,
+  scanned,
   now,
 }: {
   branch: Branch;
   item: Item;
   branchItem: BranchItem | null;
+  /** A copy with a sticker is in hand. */
+  scanned: boolean;
   now: Date;
 }): PricedLine {
   const options = handoutOptions({
@@ -315,6 +330,7 @@ export function priceItemLine({
     branchItem,
     alwaysAllow: null,
     alreadyPaid: 0,
+    scanned,
     now,
   });
   const sellPercentage = branch.paymentInfo?.sell?.percentage;
@@ -323,7 +339,7 @@ export function priceItemLine({
   }
   return {
     options,
-    defaultOptionIndex: 0,
+    defaultOptionIndex: scanned ? 0 : indexOfType(options, "sell"),
     unavailableReason: options.length === 0 ? nothingOfferedReason(branch, branchItem) : null,
   };
 }

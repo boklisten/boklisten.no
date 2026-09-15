@@ -38,9 +38,24 @@ const OTHER_BLID = "87654321";
 const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
 const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
 
+const ISBN = 9_788_202_000_001;
+const OTHER_ISBN = 9_788_202_000_002;
+
 const items: Record<string, Item> = {
-  [ITEM_ID]: mock<Item>({ id: ITEM_ID, title: "Sinus 1T", price: 500, buyback: false }),
-  [OTHER_ITEM_ID]: mock<Item>({ id: OTHER_ITEM_ID, title: "Kosmos SF", price: 600, buyback: true }),
+  [ITEM_ID]: mock<Item>({
+    id: ITEM_ID,
+    title: "Sinus 1T",
+    price: 500,
+    buyback: false,
+    info: { isbn: ISBN },
+  }),
+  [OTHER_ITEM_ID]: mock<Item>({
+    id: OTHER_ITEM_ID,
+    title: "Kosmos SF",
+    price: 600,
+    buyback: true,
+    info: { isbn: OTHER_ISBN },
+  }),
 };
 
 const branches: Record<string, Branch> = {
@@ -154,6 +169,15 @@ function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
   sandbox
     .stub(StorageService.Items, "getOrNull")
     .callsFake((id) => Promise.resolve(id === undefined ? null : (items[id] ?? null)));
+  sandbox
+    .stub(StorageService.Items, "getByQueryOrNull")
+    .callsFake((query) =>
+      Promise.resolve(
+        Object.values(items).filter(
+          (item) => String(item.info?.isbn) === stringFilter(query, "info.isbn"),
+        ),
+      ),
+    );
   sandbox
     .stub(StorageService.Branches, "getOrNull")
     .callsFake((id) => Promise.resolve(id === undefined ? null : (branches[id] ?? null)));
@@ -497,6 +521,76 @@ test.group("StandCartLineResolver.resolve", (group) => {
   test("a scanned blid nobody ordered becomes a copy line", async ({ assert }) => {
     const resolved = line(await resolve({ kind: "blid", blid: OTHER_BLID }));
     assert.deepEqual(resolved.source, { kind: "item", itemId: OTHER_ITEM_ID, blid: OTHER_BLID });
+  });
+
+  test("a scanned ISBN attaches to the customer's open order for that book without a sticker", async ({
+    assert,
+  }) => {
+    const resolved = line(await resolve({ kind: "isbn", isbn: String(ISBN) }));
+    assert.deepEqual(resolved.source, { kind: "order", orderId: ORDER_ID, itemId: ITEM_ID });
+    assert.isNull(resolved.blid);
+    // A loan cannot go out unscanned, so the order can only be cancelled as it stands
+    assert.equal(resolved.options[resolved.defaultOptionIndex]?.type, "cancel");
+  });
+
+  test("a scanned ISBN of an ordered buy goes out as bought, sticker or not", async ({
+    assert,
+  }) => {
+    world.orders = [
+      orderWith({
+        orderItems: [
+          {
+            type: "buy",
+            item: ITEM_ID,
+            title: "Sinus 1T",
+            amount: 500,
+            unitPrice: 500,
+            handout: false,
+            delivered: false,
+          },
+        ],
+      }),
+    ];
+    const resolved = line(await resolve({ kind: "isbn", isbn: String(ISBN) }));
+    assert.deepEqual(resolved.source, { kind: "order", orderId: ORDER_ID, itemId: ITEM_ID });
+    assert.equal(resolved.options[resolved.defaultOptionIndex]?.type, "buy");
+  });
+
+  test("a scanned ISBN nobody ordered becomes a sticker-less copy line, sold to the stand by default", async ({
+    assert,
+  }) => {
+    branches[BRANCH_ID]!.paymentInfo!.sell = { percentage: 0.333 };
+    const resolved = line(await resolve({ kind: "isbn", isbn: String(OTHER_ISBN) }));
+    assert.deepEqual(resolved.source, { kind: "item", itemId: OTHER_ITEM_ID, blid: null });
+    assert.equal(resolved.key, `item:${OTHER_ITEM_ID}`);
+    assert.isNull(resolved.blid);
+    assert.equal(resolved.options[resolved.defaultOptionIndex]?.type, "sell");
+    delete branches[BRANCH_ID]!.paymentInfo!.sell;
+  });
+
+  test("a scanned ISBN skips order lines already in the cart", async ({ assert }) => {
+    const resolved = line(
+      await resolve(
+        { kind: "isbn", isbn: String(ISBN) },
+        { takenKeys: [`order:${ORDER_ID}:${ITEM_ID}`] },
+      ),
+    );
+    assert.deepEqual(resolved.source, { kind: "item", itemId: ITEM_ID, blid: null });
+  });
+
+  test("refuses an ISBN no book has", async ({ assert }) => {
+    const result = await resolve({ kind: "isbn", isbn: "9780000000000" });
+    assert.deepEqual(result, {
+      kind: "refused",
+      message: "Fant ingen bok med ISBN 9780000000000. Sjekk at du skannet riktig strekkode.",
+    });
+  });
+
+  test("a sticker-less copy line resolves from the item alone", async ({ assert }) => {
+    const resolved = line(await resolve({ kind: "item", itemId: OTHER_ITEM_ID, blid: null }));
+    assert.equal(resolved.title, "Kosmos SF");
+    assert.isNull(resolved.blid);
+    assert.isFalse(resolved.options.some((option) => option.type === "rent"));
   });
 
   test("refuses an order that does not exist", async ({ assert }) => {

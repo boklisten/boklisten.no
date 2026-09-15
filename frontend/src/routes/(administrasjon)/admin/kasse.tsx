@@ -27,7 +27,7 @@ import {
   showInnsamling,
   validateKasseSearch,
 } from "@/features/kasse/kasseParams";
-import { KASSE_ACCEPTS, KASSE_VIEW_CONFIG } from "@/features/kasse/kasseViews";
+import { KASSE_VIEW_CONFIG } from "@/features/kasse/kasseViews";
 import useKasseScanner from "@/features/kasse/useKasseScanner";
 import type { CodeChannel, CodeHandler } from "@/features/kasse/useKasseScanner";
 import StandCartBar from "@/features/stand-cart/StandCartBar";
@@ -142,6 +142,7 @@ function KasseContent() {
     setCartOpen(true);
   };
 
+  const { scanTypes } = KASSE_VIEW_CONFIG[view];
   const routeCode: CodeHandler = async (code, via) => {
     const type = determineScanCodeType(code);
     if (type === "customerId") {
@@ -149,8 +150,12 @@ function KasseContent() {
       openCustomer(code);
       return undefined;
     }
+    if (type === "isbn") {
+      // A book without a sticker: only a customer's cart has a use for it
+      return view === "kunde" ? cart.addIsbn(code) : describeRejectedScan(type, scanTypes);
+    }
     if (type !== "blid") {
-      return describeRejectedScan(type, KASSE_ACCEPTS);
+      return describeRejectedScan(type, scanTypes);
     }
     switch (view) {
       case "kunde": {
@@ -183,13 +188,13 @@ function KasseContent() {
       }
     }
   };
-  const camera: CodeChannel = { accepts: KASSE_ACCEPTS, onCode: routeCode };
+  const camera: CodeChannel = { accepts: scanTypes, onCode: routeCode };
   // The physical scanner reads barcodes only: a book in every view, and the ISBN while a sticker
   // it scanned is waiting to be linked to one.
   const wedge: CodeChannel =
     view === "kunde" && cart.cart.linking?.via === "wedge"
       ? { accepts: ["isbn"], onCode: cart.proposeLink }
-      : { accepts: ["blid"], onCode: routeCode };
+      : { accepts: scanTypes.filter((type) => type !== "customerId"), onCode: routeCode };
   const scanner = useKasseScanner(camera, wedge);
 
   // A link step the camera is to finish is shown in the camera, however the sticker arrived: a
@@ -260,7 +265,7 @@ function KasseContent() {
       </Stack>
       <KasseScannerModal
         opened={scanner.opened}
-        defaultType={KASSE_VIEW_CONFIG[view].defaultScanType}
+        view={view}
         onClose={scanner.closeScanner}
         onCode={routeCode}
         cart={view === "kunde" ? cart : null}

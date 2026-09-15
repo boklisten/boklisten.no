@@ -257,6 +257,43 @@ test.group("planCheckout", () => {
     ]);
   });
 
+  test("a bought book without a sticker goes out with no blid on the order item", ({ assert }) => {
+    const plan = planCheckout(
+      [checkoutLine(orderContext, optionWith({ type: "buy", price: 500 }), { blid: null })],
+      NOW,
+    );
+    assert.deepEqual(plan, [
+      {
+        type: "buy",
+        item: ITEM.id,
+        title: ITEM.title,
+        amount: 500,
+        unitPrice: 500,
+        handout: true,
+        delivered: false,
+        movedFromOrder: "order1",
+      },
+    ]);
+  });
+
+  test("a book sold to the stand without a sticker is a sell item with no blid", ({ assert }) => {
+    const plan = planCheckout(
+      [checkoutLine(itemContext, optionWith({ type: "sell", price: -160 }), { blid: null })],
+      NOW,
+    );
+    assert.deepEqual(plan, [
+      {
+        type: "sell",
+        item: ITEM.id,
+        title: ITEM.title,
+        amount: -160,
+        unitPrice: -160,
+        handout: false,
+        delivered: false,
+      },
+    ]);
+  });
+
   test("selling a book to the stand is a negative sell item with the blid", ({ assert }) => {
     const plan = planCheckout(
       [checkoutLine(itemContext, optionWith({ type: "sell", price: -160 }), { blid: "12345678" })],

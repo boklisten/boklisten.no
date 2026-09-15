@@ -1,6 +1,6 @@
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { periodTypeOfLastOrder } from "#services/customer_item_actions_service";
-import { findUniqueItemByBlid } from "#services/item_lookup";
+import { findItemByIsbn, findUniqueItemByBlid } from "#services/item_lookup";
 import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
 import { PeerObligations } from "#services/matches/peer_obligations";
 import {
@@ -309,18 +309,31 @@ async function resolveCustomerItemLine(
   };
 }
 
+/** The copy behind an item source: the book its sticker is linked to, or the item itself when it has none. */
+async function loadItemSourceCopy(
+  source: Extract<StandCartSource, { kind: "item" }>,
+  customerId: string,
+): Promise<Item | Refused> {
+  if (source.blid === null) {
+    const item = await StorageService.Items.getOrNull(source.itemId);
+    return item ?? refused("Fant ikke boka");
+  }
+  const copy = await loadFreeCopy(source.blid, customerId);
+  if ("kind" in copy) {
+    return copy.kind === "unlinked" ? refused(unlinkedBlidMessage(source.blid)) : copy;
+  }
+  return copy.id === source.itemId ? copy : refused(`Unik ID ${source.blid} er «${copy.title}»`);
+}
+
 async function resolveItemLine(
   { customerId, branchId }: StandCartResolveRequest,
   source: Extract<StandCartSource, { kind: "item" }>,
   branch: Branch,
   now: Date,
 ): Promise<StandCartResolution> {
-  const item = await loadFreeCopy(source.blid, customerId);
+  const item = await loadItemSourceCopy(source, customerId);
   if ("kind" in item) {
-    return item.kind === "unlinked" ? refused(unlinkedBlidMessage(source.blid)) : item;
-  }
-  if (item.id !== source.itemId) {
-    return refused(`Unik ID ${source.blid} er «${item.title}»`);
+    return item;
   }
   const [branchItem, peerNote, heldNotes] = await Promise.all([
     findBranchItem(branchId, item.id),
@@ -335,7 +348,7 @@ async function resolveItemLine(
       itemId: item.id,
       title: item.title,
       blid: source.blid,
-      ...priceItemLine({ branch, item, branchItem, now }),
+      ...priceItemLine({ branch, item, branchItem, scanned: source.blid !== null, now }),
       originalBranch: null,
       notes: peerNote ? [...heldNotes, peerNote] : heldNotes,
     },
@@ -344,10 +357,41 @@ async function resolveItemLine(
 }
 
 /**
- * Where a scanned copy belongs: the customer's own active book, an open order for that title,
- * or a copy nobody ordered. Order lines the cart already holds are skipped so a second copy of
- * the same title becomes its own line.
+ * Where a copy of a title belongs in the cart: an open order for that title, or a copy nobody
+ * ordered. Order lines the cart already holds are skipped so a second copy of the same title
+ * becomes its own line. With a sticker the line goes out as ordered; without one (scanned by its
+ * ISBN) it can only be sold or bought, and an ordered loan stays a line to be scanned or
+ * cancelled. The ordered edition is what the line records; an equivalent edition in hand is only
+ * told apart by its sticker.
  */
+async function placeCopy(
+  request: StandCartResolveRequest,
+  copy: Item,
+  blid: string | null,
+  branch: Branch,
+  now: Date,
+): Promise<StandCartResolution> {
+  const taken = new Set(request.takenKeys);
+  for (const order of await placedOrdersOf(request.customerId)) {
+    for (const orderItem of order.orderItems) {
+      if (!isOpenOrderItem(orderItem) || !itemsAreEquivalent(orderItem.item, copy.id)) {
+        continue;
+      }
+      const source = { kind: "order", orderId: order.id, itemId: orderItem.item } as const;
+      if (!taken.has(lineKey(source))) {
+        return resolveOrderLine(
+          { ...request, ...(blid === null ? {} : { blid }) },
+          source,
+          branch,
+          now,
+        );
+      }
+    }
+  }
+  return resolveItemLine(request, { kind: "item", itemId: copy.id, blid }, branch, now);
+}
+
+/** A scanned sticker: the customer's own active book, else wherever a copy of its title belongs. */
 async function resolveBlid(
   request: StandCartResolveRequest,
   blid: string,
@@ -367,19 +411,21 @@ async function resolveBlid(
       now,
     );
   }
-  const taken = new Set(request.takenKeys);
-  for (const order of await placedOrdersOf(request.customerId)) {
-    for (const orderItem of order.orderItems) {
-      if (!isOpenOrderItem(orderItem) || !itemsAreEquivalent(orderItem.item, copy.id)) {
-        continue;
-      }
-      const source = { kind: "order", orderId: order.id, itemId: orderItem.item } as const;
-      if (!taken.has(lineKey(source))) {
-        return resolveOrderLine({ ...request, blid }, source, branch, now);
-      }
-    }
+  return placeCopy(request, copy, blid, branch, now);
+}
+
+/** A scanned ISBN: a copy without a sticker, which nobody can be holding on record. */
+async function resolveIsbn(
+  request: StandCartResolveRequest,
+  isbn: string,
+  branch: Branch,
+  now: Date,
+): Promise<StandCartResolution> {
+  const item = await findItemByIsbn(isbn);
+  if (item === null) {
+    return refused(`Fant ingen bok med ISBN ${isbn}. Sjekk at du skannet riktig strekkode.`);
   }
-  return resolveItemLine(request, { kind: "item", itemId: copy.id, blid }, branch, now);
+  return placeCopy(request, item, null, branch, now);
 }
 
 export const StandCartLineResolver = {
@@ -414,6 +460,9 @@ export const StandCartLineResolver = {
       }
       case "blid": {
         return resolveBlid(request, source.blid, branch, now);
+      }
+      case "isbn": {
+        return resolveIsbn(request, source.isbn, branch, now);
       }
       default: {
         throw new Error(`unknown lookup ${JSON.stringify(source)}`);

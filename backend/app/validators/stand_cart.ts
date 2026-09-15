@@ -18,9 +18,11 @@ const customerItemSource = vine.object({
 const itemSource = vine.object({
   kind: vine.literal("item"),
   itemId: objectId(),
-  blid: vine.string().trim(),
+  /** Null for a copy without a sticker, scanned by its ISBN. */
+  blid: vine.string().trim().nullable(),
 });
 const blidLookup = vine.object({ kind: vine.literal("blid"), blid: vine.string().trim() });
+const isbnLookup = vine.object({ kind: vine.literal("isbn"), isbn: vine.string().trim() });
 
 const ofKind = (kind: string) => (value: Record<string, unknown>) => value["kind"] === kind;
 
@@ -37,6 +39,7 @@ const lookupSchema = vine.union([
   vine.union.if(ofKind("customerItem"), customerItemSource),
   vine.union.if(ofKind("item"), itemSource),
   vine.union.if(ofKind("blid"), blidLookup),
+  vine.union.if(ofKind("isbn"), isbnLookup),
 ]);
 
 export const standCartResolveValidator = vine.create(

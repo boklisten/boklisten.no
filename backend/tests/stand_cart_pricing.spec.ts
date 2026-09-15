@@ -82,11 +82,41 @@ function orderLine(overrides: Partial<Parameters<typeof priceOrderLine>[0]> = {}
 }
 
 test.group("priceOrderLine", () => {
-  test("without a scanned copy offers only cancel", ({ assert }) => {
+  test("without a scanned copy a loan order offers only cancel", ({ assert }) => {
     const line = orderLine({ scanned: false });
     assert.deepEqual(
       line.options.map((option) => option.type),
       ["cancel"],
+    );
+    assert.equal(line.options[line.defaultOptionIndex]?.type, "cancel");
+  });
+
+  test("without a scanned copy a bought book still goes out as bought", ({ assert }) => {
+    const line = orderLine({
+      scanned: false,
+      originalOrder: orderWith({ type: "buy", amount: 500, info: undefined }),
+    });
+    assert.deepEqual(
+      line.options.map((option) => option.type),
+      ["buy", "cancel"],
+    );
+    assert.equal(line.options[line.defaultOptionIndex]?.type, "buy");
+  });
+
+  test("without a scanned copy a loan order may be bought instead, but defaults to cancel", ({
+    assert,
+  }) => {
+    const line = orderLine({
+      scanned: false,
+      branchItem: mock<BranchItem>({
+        rentAtBranch: true,
+        partlyPaymentAtBranch: true,
+        buyAtBranch: true,
+      }),
+    });
+    assert.deepEqual(
+      line.options.map((option) => option.type),
+      ["buy", "cancel"],
     );
     assert.equal(line.options[line.defaultOptionIndex]?.type, "cancel");
   });
@@ -481,6 +511,7 @@ function itemLine(overrides: Partial<Parameters<typeof priceItemLine>[0]> = {}) 
     branch: branchWith(),
     item: ITEM,
     branchItem: null,
+    scanned: true,
     now: NOW,
     ...overrides,
   });
@@ -565,6 +596,50 @@ test.group("priceItemLine", () => {
   test("does not offer sell when the item is not bought back", ({ assert }) => {
     const line = itemLine({ branch: branchWith({ sell: { percentage: 0.333 } }) });
     assert.lengthOf(options(line, "sell"), 0);
+  });
+
+  test("without a sticker a copy can be sold to the stand or bought, and is sold by default", ({
+    assert,
+  }) => {
+    const line = itemLine({
+      scanned: false,
+      branch: branchWith({ sell: { percentage: 0.333 } }),
+      item: mock<Item>({ ...ITEM, buyback: true }),
+      branchItem: mock<BranchItem>({
+        rentAtBranch: true,
+        partlyPaymentAtBranch: false,
+        buyAtBranch: true,
+      }),
+    });
+    assert.deepEqual(
+      line.options.map((option) => option.type),
+      ["buy", "sell"],
+    );
+    assert.equal(line.options[line.defaultOptionIndex]?.type, "sell");
+  });
+
+  test("without a sticker a copy the stand does not buy back defaults to buy", ({ assert }) => {
+    const line = itemLine({
+      scanned: false,
+      branchItem: mock<BranchItem>({
+        rentAtBranch: true,
+        partlyPaymentAtBranch: false,
+        buyAtBranch: true,
+      }),
+    });
+    assert.deepEqual(
+      line.options.map((option) => option.type),
+      ["buy"],
+    );
+    assert.equal(line.defaultOptionIndex, 0);
+  });
+
+  test("without a sticker and a branch item nothing can be offered for a book nobody buys back", ({
+    assert,
+  }) => {
+    const line = itemLine({ scanned: false });
+    assert.isEmpty(line.options);
+    assert.equal(line.unavailableReason, "Boka står ikke i boklisten til Ullern VGS");
   });
 });
 

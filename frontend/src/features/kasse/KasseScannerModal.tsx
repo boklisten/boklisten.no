@@ -3,8 +3,12 @@ import { IconScan } from "@tabler/icons-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
 
-import { KASSE_ACCEPTS, KASSE_SCAN_TYPES, scanInstructionFor } from "@/features/kasse/kasseViews";
-import type { KasseScanType } from "@/features/kasse/kasseViews";
+import {
+  KASSE_VIEW_CONFIG,
+  scanInstructionFor,
+  scanTypePickerData,
+} from "@/features/kasse/kasseViews";
+import type { KasseView } from "@/features/kasse/kasseViews";
 import type { CodeHandler } from "@/features/kasse/useKasseScanner";
 import StandCartLinkPanel from "@/features/stand-cart/StandCartLinkPanel";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
@@ -15,20 +19,20 @@ import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
  * question raised by a scan (a waiting batch, a waiting cart, a peer book) opens on top of it
  * without unmounting it. A segmented control under the instruction says what the employee is about
  * to scan and drives that instruction; it is preselected for the open view, and the camera reads
- * both codes whatever it says. Closing drops a link the camera had started, so the next open begins
- * with a clean sticker scan.
+ * every code of the view whatever it says. Closing drops a link the camera had started, so the
+ * next open begins with a clean sticker scan.
  */
 export default function KasseScannerModal({
   opened,
-  defaultType,
+  view,
   onClose,
   onCode,
   cart,
   footer,
 }: {
   opened: boolean;
-  /** What the open view usually scans; selected every time the camera opens. */
-  defaultType: KasseScanType;
+  /** The open view: which codes the camera reads and which one is selected when it opens. */
+  view: KasseView;
   onClose: () => void;
   onCode: CodeHandler;
   /** Under the manual entry: the cart bar while the cart has lines, so it is one tap away here too. */
@@ -56,7 +60,7 @@ export default function KasseScannerModal({
       {cart !== null && linking !== null ? (
         <StandCartLinkPanel cart={cart} linking={linking} />
       ) : (
-        <KasseCamera defaultType={defaultType} onCode={onCode} footer={footer} />
+        <KasseCamera view={view} onCode={onCode} footer={footer} />
       )}
     </Modal>
   );
@@ -68,22 +72,23 @@ export default function KasseScannerModal({
  * any state to reset.
  */
 function KasseCamera({
-  defaultType,
+  view,
   onCode,
   footer,
 }: {
-  defaultType: KasseScanType;
+  view: KasseView;
   onCode: CodeHandler;
   footer: ReactNode | undefined;
 }) {
-  const [type, setType] = useState<KasseScanType>(defaultType);
+  const { scanTypes, defaultScanType } = KASSE_VIEW_CONFIG[view];
+  const [type, setType] = useState(defaultScanType);
   return (
     <Stack>
       <ScannerPanel
         // "Søk manuelt" on the page is the way in without a camera, so no typing of codes here
         allowManualEntry={false}
-        accepts={KASSE_ACCEPTS}
-        instruction={scanInstructionFor(type)}
+        accepts={scanTypes}
+        instruction={scanInstructionFor(type, scanTypes)}
         // In the dark strip with the instruction it drives, within thumb's reach on a phone
         instructionAddon={
           <SegmentedControl
@@ -91,9 +96,12 @@ function KasseCamera({
             size="sm"
             value={type}
             onChange={(value) =>
-              setType(KASSE_SCAN_TYPES.find((entry) => entry.value === value)?.value ?? "blid")
+              setType(scanTypes.find((candidate) => candidate === value) ?? defaultScanType)
             }
-            data={KASSE_SCAN_TYPES}
+            data={scanTypePickerData(scanTypes)}
+            // On the scanner's dark ground; the separators between the unselected entries would
+            // read as a stray white line, so the indicator alone marks the choice
+            withItemsBorders={false}
             styles={{
               root: { background: "rgba(255, 255, 255, 0.1)" },
               indicator: { background: "rgba(255, 255, 255, 0.22)", boxShadow: "none" },
