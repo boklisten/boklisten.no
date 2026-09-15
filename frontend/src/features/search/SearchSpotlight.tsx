@@ -9,6 +9,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import BookCover from "@/features/book-cover/BookCover";
+import CustomerAvatar from "@/features/customer-search/CustomerAvatar";
 import CustomerContactRow from "@/features/customer-search/CustomerContactRow";
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import useDisplayName from "@/features/customer-search/useDisplayName";
@@ -270,21 +271,24 @@ export default function SearchSpotlight({
 
   const customerActions = customerHits.map((userDetail) => (
     <Spotlight.Action key={userDetail.id} onClick={() => pickCustomer(userDetail.id)}>
-      {/* The list sizes to its widest row's minimum width; a no-wrap e-mail must not set it. */}
-      <Stack gap={4} w="100%" style={{ contain: "inline-size" }}>
-        <Group gap="xs" justify="space-between">
-          <Text fw={600}>{displayName(userDetail.name)}</Text>
-          <Group gap={6}>
-            <PermissionBadge permission={userDetail.permission} size="sm" />
-            {userDetail.branchMembership && branchNames.has(userDetail.branchMembership) && (
-              <Badge variant="light" size="sm">
-                {branchNames.get(userDetail.branchMembership)}
-              </Badge>
-            )}
+      <Group gap="sm" wrap="nowrap" w="100%">
+        <CustomerAvatar detailsId={userDetail.id} />
+        {/* The list sizes to its widest row's minimum width; a no-wrap e-mail must not set it. */}
+        <Stack gap={4} miw={0} flex={1} style={{ contain: "inline-size" }}>
+          <Group gap="xs" justify="space-between">
+            <Text fw={600}>{displayName(userDetail.name)}</Text>
+            <Group gap={6}>
+              <PermissionBadge permission={userDetail.permission} size="sm" />
+              {userDetail.branchMembership && branchNames.has(userDetail.branchMembership) && (
+                <Badge variant="light" size="sm">
+                  {branchNames.get(userDetail.branchMembership)}
+                </Badge>
+              )}
+            </Group>
           </Group>
-        </Group>
-        <CustomerContactRow customer={userDetail} inheritColor />
-      </Stack>
+          <CustomerContactRow customer={userDetail} inheritColor />
+        </Stack>
+      </Group>
     </Spotlight.Action>
   ));
   // Plain text, not an action, so the arrow keys skip it.

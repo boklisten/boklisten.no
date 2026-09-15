@@ -2,6 +2,7 @@ import type { UserPermission } from "@boklisten/backend/shared/user-permission";
 import {
   Box,
   Button,
+  Group,
   Select,
   SimpleGrid,
   Skeleton,
@@ -15,9 +16,11 @@ import { IconShieldStar, IconUserCog, IconUserPlus, IconUserShield } from "@tabl
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import CustomerAvatar from "@/features/customer-search/CustomerAvatar";
 import AddEmployeesModal from "@/features/user-management/AddEmployeesModal";
 import { PERMISSION_LABELS } from "@/features/user-management/permissionLabels";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
+import EntityLink from "@/shared/components/EntityLink";
 import StatTile from "@/shared/components/StatTile";
 import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
@@ -145,12 +148,23 @@ export default function EmployeesTab() {
             {employees.map((employee) => (
               <Table.Tr key={employee.detailsId}>
                 <Table.Td>
-                  <Text size="sm" fw={600}>
-                    {employee.name || "Uten navn"}
-                  </Text>
-                  <Text size="xs" c="dimmed" style={{ overflowWrap: "anywhere" }}>
-                    {employee.email}
-                  </Text>
+                  <Group gap="sm" wrap="nowrap">
+                    <CustomerAvatar
+                      detailsId={employee.detailsId}
+                      name={employee.name || employee.email}
+                      enlargeable
+                    />
+                    <Stack gap={0} miw={0}>
+                      <Text size="sm" lh={1.3}>
+                        <EntityLink to="/admin/kasse" search={{ kunde: employee.detailsId }}>
+                          {employee.name || "Uten navn"}
+                        </EntityLink>
+                      </Text>
+                      <Text size="xs" c="dimmed" style={{ overflowWrap: "anywhere" }}>
+                        {employee.email}
+                      </Text>
+                    </Stack>
+                  </Group>
                 </Table.Td>
                 <Table.Td>
                   <Select

@@ -84,6 +84,8 @@
       "dependencies": {
         "@ag-grid-community/locale": "^36.1.0",
         "@boklisten/backend": "workspace:*",
+        "@dicebear/core": "^10.7.0",
+        "@dicebear/styles": "^10.6.0",
         "@importcsv/react": "0.6.1",
         "@mantine/charts": "^9.6.1",
         "@mantine/core": "^9.6.1",
@@ -261,6 +263,10 @@
     "@boringnode/encryption": ["@boringnode/encryption@1.0.1", "", { "dependencies": { "@poppinss/utils": "^7.0.1" } }, "sha512-+UL9erFUngnxNEDdXSKCnGQA8D62C/x2vxLF5vc9zaX7T2JolV/bGjpZAvFLzlY2gIffHyw+KsqsEWod5+zV0w=="],
 
     "@colors/colors": ["@colors/colors@1.5.0", "", {}, "sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ=="],
+
+    "@dicebear/core": ["@dicebear/core@10.7.0", "", {}, "sha512-JUOzKOd8RUByJJo8ZL+C7YE/pvEsWewfpbWUmR8OIQZWv/PvUQHnohdevySC3icyyxe6EIU/8B/rQgA42us1QA=="],
+
+    "@dicebear/styles": ["@dicebear/styles@10.6.0", "", {}, "sha512-KhxbEVI+z8TaenX58+ZhIRFBt7adggu/F+8g6ZYLu43H2/lgLuWA3Kg8vHBrCVWdfTTTt1p2wUhQomIkkypTuQ=="],
 
     "@emnapi/core": ["@emnapi/core@1.11.1", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.2", "tslib": "^2.4.0" } }, "sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ=="],
 

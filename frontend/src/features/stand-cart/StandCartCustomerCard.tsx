@@ -1,8 +1,8 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import { Avatar, Group, Paper, Stack, Text } from "@mantine/core";
+import { Group, Paper, Stack, Text } from "@mantine/core";
 
 import CustomerContactRow from "@/features/customer-search/CustomerContactRow";
-import initials from "@/features/customer-search/initials";
+import CustomerAvatar from "@/features/customer-search/CustomerAvatar";
 import useDisplayName from "@/features/customer-search/useDisplayName";
 import EntityLink from "@/shared/components/EntityLink";
 
@@ -28,9 +28,7 @@ export default function StandCartCustomerCard({
       </Text>
       <Paper withBorder radius="md" px="md" py="sm">
         <Group gap="sm" wrap="nowrap" align="flex-start">
-          <Avatar color="brand" radius="xl">
-            {initials(customer.name)}
-          </Avatar>
+          <CustomerAvatar detailsId={customer.id} />
           <Stack gap={4} miw={0}>
             <Text lh={1.2}>
               <EntityLink to="/admin/kasse" search={{ kunde: customer.id }} onClick={onNavigate}>

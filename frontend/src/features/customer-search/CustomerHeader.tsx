@@ -1,12 +1,12 @@
 import type { UserDetail } from "@boklisten/backend/shared/user-detail";
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
-import { ActionIcon, Anchor, Avatar, Badge, Group, Stack, Title, Tooltip } from "@mantine/core";
+import { ActionIcon, Anchor, Badge, Group, Stack, Title, Tooltip } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconPencil, IconX } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
 import CustomerContactRow from "@/features/customer-search/CustomerContactRow";
-import initials from "@/features/customer-search/initials";
+import CustomerAvatar from "@/features/customer-search/CustomerAvatar";
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import useDisplayName from "@/features/customer-search/useDisplayName";
 import AdministrateUserForm from "@/features/user/AdministrateUserForm";
@@ -44,6 +44,7 @@ export default function CustomerHeader({
     ),
   );
   const displayName = useDisplayName();
+  const shownName = displayName(customer.name);
   const name = (text: string) => {
     if (linkToKasse) {
       return (
@@ -77,12 +78,10 @@ export default function CustomerHeader({
     <Stack gap="sm">
       <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
         <Group gap="sm" align="center" wrap="nowrap" miw={0}>
-          <Avatar color="brand" radius="xl">
-            {initials(customer.name)}
-          </Avatar>
+          <CustomerAvatar detailsId={customer.id} name={shownName} enlargeable />
           <Stack gap={4} miw={0}>
             <Title order={2} size="h4" lh={1.2}>
-              {name(displayName(customer.name))}
+              {name(shownName)}
             </Title>
             {(Boolean(branch) || customer.permission !== "customer") && (
               <Group gap={6}>
