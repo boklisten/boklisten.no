@@ -20,6 +20,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 import { defaultChoice, describeChoice } from "@/features/stand-cart/standCartLabels";
+import { STAND_CART_SCAN_TYPES } from "@/features/stand-cart/standCartScan";
+import type { StandCartScanType } from "@/features/stand-cart/standCartScan";
 import type {
   StandCartLinkSource,
   StoredCart,
@@ -39,6 +41,8 @@ import useApiClient from "@/shared/hooks/useApiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showSuccessNotification } from "@/shared/utils/notifications";
 import { publicApi } from "@/shared/utils/publicApiClient";
+import { describeRejectedScan, determineScanCodeType } from "@/shared/utils/scanCodes";
+import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
 /**
  * The first branch from the customer's own and upwards through the tree that has a future rent
@@ -90,6 +94,14 @@ function replacedBy(line: StandCartLine, lines: StoredLine[]): StoredLine | unde
         stored.line.blid === null &&
         itemsAreEquivalent(stored.line.itemId, line.itemId)),
   );
+}
+
+/**
+ * The codes a scanner feeding this cart lets through: the ISBN alone while a sticker that scanner
+ * read waits to be linked to a book, else everything the cart reads.
+ */
+function scanTypesOf(cart: StoredCart, via: StandCartLinkSource): StandCartScanType[] {
+  return cart.linking?.via === via ? ["isbn"] : STAND_CART_SCAN_TYPES;
 }
 
 export function lineProblem({ line, choice, problem }: StoredLine): string | null {
@@ -339,6 +351,23 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
   }
 
   /**
+   * A code from a scanner that feeds this cart, whatever kind it is: the ISBN for a sticker that
+   * scanner is linking, a sticker, or the ISBN of a book without one. Every scanner routes
+   * through here, so what a code does to a cart is decided in one place.
+   */
+  async function scan(code: string, via: StandCartLinkSource): Promise<ScanNotice | undefined> {
+    const type = determineScanCodeType(code);
+    const accepted: ScanCodeType[] = scanTypesOf(cartRef.current, via);
+    if (!accepted.includes(type)) {
+      return describeRejectedScan(type, accepted);
+    }
+    if (cartRef.current.linking?.via === via) {
+      return proposeLink(code);
+    }
+    return type === "isbn" ? addIsbn(code) : addBlid(code, via);
+  }
+
+  /**
    * Under an order scope, a copy the backend placed anywhere but on that order stays out of the
    * cart: the same title on another order, or a book nobody ordered, must not ship with this one.
    */
@@ -520,6 +549,9 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     add,
     addBlid,
     addIsbn,
+    scan,
+    /** What a scanner of the given kind should let through right now. */
+    scanTypes: (via: StandCartLinkSource) => scanTypesOf(cart, via),
     remove,
     choose,
     setBranch: reprice,

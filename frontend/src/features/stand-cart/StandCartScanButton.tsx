@@ -2,6 +2,7 @@ import { Button } from "@mantine/core";
 import { modals } from "@mantine/modals";
 
 import StandCartScanner from "@/features/stand-cart/StandCartScanner";
+import { STAND_CART_SCAN_TYPES } from "@/features/stand-cart/standCartScan";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
 import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
 
@@ -39,7 +40,7 @@ export default function StandCartScanButton({
     <Button
       w={{ base: "100%", sm: "auto" }}
       style={{ alignSelf: "flex-start" }}
-      leftSection={<ScanCodeIcon accepts={["blid"]} size={18} />}
+      leftSection={<ScanCodeIcon accepts={STAND_CART_SCAN_TYPES} size={18} />}
       onClick={scan}
     >
       Skann bøker

@@ -150,17 +150,14 @@ function KasseContent() {
       openCustomer(code);
       return undefined;
     }
-    if (type === "isbn") {
-      // A book without a sticker: only a customer's cart has a use for it
-      return view === "kunde" ? cart.addIsbn(code) : describeRejectedScan(type, scanTypes);
+    if (view === "kunde") {
+      // Every book code goes to the cart, which decides what it does and what it takes
+      return cart.scan(code, via === "wedge" ? "wedge" : "camera");
     }
     if (type !== "blid") {
       return describeRejectedScan(type, scanTypes);
     }
     switch (view) {
-      case "kunde": {
-        return cart.addBlid(code, via === "wedge" ? "wedge" : "camera");
-      }
       case "innsamling": {
         // One list at a time: a cart with unpaid lines gives way, but only knowingly
         if (waitingCart !== null) {
@@ -189,12 +186,12 @@ function KasseContent() {
     }
   };
   const camera: CodeChannel = { accepts: scanTypes, onCode: routeCode };
-  // The physical scanner reads barcodes only: a book in every view, and the ISBN while a sticker
-  // it scanned is waiting to be linked to one.
-  const wedge: CodeChannel =
-    view === "kunde" && cart.cart.linking?.via === "wedge"
-      ? { accepts: ["isbn"], onCode: cart.proposeLink }
-      : { accepts: scanTypes.filter((type) => type !== "customerId"), onCode: routeCode };
+  // The physical scanner reads barcodes only: with a customer open whatever the cart takes right
+  // now (the ISBN alone while a sticker it read waits to be linked), a sticker in every other view
+  const wedge: CodeChannel = {
+    accepts: view === "kunde" ? cart.scanTypes("wedge") : ["blid"],
+    onCode: routeCode,
+  };
   const scanner = useKasseScanner(camera, wedge);
 
   // A link step the camera is to finish is shown in the camera, however the sticker arrived: a

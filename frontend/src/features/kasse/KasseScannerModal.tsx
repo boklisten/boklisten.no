@@ -1,18 +1,13 @@
-import { Group, Modal, SegmentedControl, Stack, Text } from "@mantine/core";
+import { Group, Modal, Stack, Text } from "@mantine/core";
 import { IconScan } from "@tabler/icons-react";
-import { useState } from "react";
 import type { ReactNode } from "react";
 
-import {
-  KASSE_VIEW_CONFIG,
-  scanInstructionFor,
-  scanTypePickerData,
-} from "@/features/kasse/kasseViews";
+import { KASSE_VIEW_CONFIG } from "@/features/kasse/kasseViews";
 import type { KasseView } from "@/features/kasse/kasseViews";
 import type { CodeHandler } from "@/features/kasse/useKasseScanner";
 import StandCartLinkPanel from "@/features/stand-cart/StandCartLinkPanel";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
-import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
+import TypedScannerPanel from "@/shared/components/scanner/TypedScannerPanel";
 
 /**
  * The Kasse's camera. Rendered by the page rather than through the modal manager so that a
@@ -67,9 +62,8 @@ export default function KasseScannerModal({
 }
 
 /**
- * The camera, the instruction with its type picker, the manual entry, then the cart bar. Mounted
- * afresh every time the modal opens, so the picker starts on the open view's usual code without
- * any state to reset.
+ * The camera with its type picker, then the cart bar. Mounted afresh every time the modal opens,
+ * so the picker starts on the open view's usual code without any state to reset.
  */
 function KasseCamera({
   view,
@@ -81,34 +75,13 @@ function KasseCamera({
   footer: ReactNode | undefined;
 }) {
   const { scanTypes, defaultScanType } = KASSE_VIEW_CONFIG[view];
-  const [type, setType] = useState(defaultScanType);
   return (
     <Stack>
-      <ScannerPanel
+      <TypedScannerPanel
         // "Søk manuelt" on the page is the way in without a camera, so no typing of codes here
         allowManualEntry={false}
-        accepts={scanTypes}
-        instruction={scanInstructionFor(type, scanTypes)}
-        // In the dark strip with the instruction it drives, within thumb's reach on a phone
-        instructionAddon={
-          <SegmentedControl
-            fullWidth
-            size="sm"
-            value={type}
-            onChange={(value) =>
-              setType(scanTypes.find((candidate) => candidate === value) ?? defaultScanType)
-            }
-            data={scanTypePickerData(scanTypes)}
-            // On the scanner's dark ground; the separators between the unselected entries would
-            // read as a stray white line, so the indicator alone marks the choice
-            withItemsBorders={false}
-            styles={{
-              root: { background: "rgba(255, 255, 255, 0.1)" },
-              indicator: { background: "rgba(255, 255, 255, 0.22)", boxShadow: "none" },
-              label: { color: "#FFFFFF" },
-            }}
-          />
-        }
+        types={scanTypes}
+        defaultType={defaultScanType}
         onScan={(code) => onCode(code, "camera")}
       />
       {footer}
