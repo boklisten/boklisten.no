@@ -19,7 +19,7 @@ const ITEM_ID = "6294d66878497a0046f9b3e6";
 const CUSTOMER_ITEM_ID = "68a725b6dae0db228265cfd2";
 const BRANCH_ID = "5b6442ecd2e733002fae8a44";
 
-/** A rent invoice as bl-admin generated it in July 2026 (staging data, anonymised). */
+/** A rent invoice as legacy bl-admin generated it in July 2026 (staging data, anonymised). */
 function rentInvoice(overrides: Partial<Invoice> = {}): Invoice {
   return mock<Invoice>({
     id: "6a68aa7decdfd227ebc8f6dd",
@@ -228,7 +228,7 @@ test.group("invoice export: customer numbers", () => {
   });
 
   test("newer invoices pair the epoch and the counter of the user detail id", ({ assert }) => {
-    // Computed by bl-admin's InvoiceVismaService for the same id.
+    // Computed by legacy bl-admin's InvoiceVismaService for the same id.
     assert.equal(invoiceMiniId(rentInvoice()), 93_996);
   });
 

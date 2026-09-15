@@ -4,7 +4,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import useApiClient from "@/shared/hooks/useApiClient";
-import useAuthLinker from "@/shared/hooks/useAuthLinker";
+import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { hasPendingTasks } from "@/shared/utils/tasks";
 import { useEffect, useEffectEvent, useState } from "react";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/(offentlig)/auth/token")({
 
 function TokenPage() {
   const { client } = useApiClient();
-  const { redirectToCaller } = useAuthLinker();
+  const { redirectToTarget } = useLoginRedirect();
   const { refreshToken, accessToken } = Route.useSearch();
   const navigate = useNavigate();
   const [attempt, setAttempt] = useState(0);
@@ -49,7 +49,7 @@ function TokenPage() {
     if (hasPendingTasks(userDetail)) {
       void navigate({ to: "/oppgaver" });
     } else {
-      redirectToCaller();
+      redirectToTarget();
     }
   });
   useEffect(() => {

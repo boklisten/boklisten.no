@@ -1,8 +1,6 @@
 import router from "@adonisjs/core/services/router";
 
 import { controllers } from "#generated/controllers";
-import CollectionEndpoint from "#services/legacy/collection-endpoint/collection-endpoint";
-import BlCollections from "#services/legacy/collections/bl-collections";
 import { emailValidationThrottle, publicBlidLookupThrottle, throttle } from "#start/limiter";
 
 /**
@@ -16,7 +14,6 @@ router.get("/health", () => ({ status: "ok" }));
 /**
  * auth token
  */
-router.post("/token", [controllers.auth.Tokens, "legacyToken"]);
 router.post("/v2/token", [controllers.auth.Tokens, "token"]);
 
 /**
@@ -469,12 +466,3 @@ router.get("/reports/customer_items", [controllers.Reports, "getCustomerItemsRep
 router.get("/reports/orders", [controllers.Reports, "getOrdersReport"]);
 router.get("/reports/payments", [controllers.Reports, "getPaymentsReport"]);
 router.get("/reports/user_details", [controllers.Reports, "getUserDetailsReport"]);
-
-/**
- * Generate legacy bl-collection endpoints
- */
-for (const collection of BlCollections) {
-  for (const endpoint of collection.endpoints) {
-    CollectionEndpoint.create(endpoint, collection);
-  }
-}

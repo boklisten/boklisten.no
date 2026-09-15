@@ -49,7 +49,7 @@ const KVITSUND_LINES: CompanyInvoiceLine[] = [
 ];
 
 test.group("company invoice arithmetic", () => {
-  test("a line is priced as bl-admin did: units times discounted price, two decimals", ({
+  test("a line is priced as legacy bl-admin did: units times discounted price, two decimals", ({
     assert,
   }) => {
     assert.deepEqual(companyLinePayment(KVITSUND_LINES[0]!), {

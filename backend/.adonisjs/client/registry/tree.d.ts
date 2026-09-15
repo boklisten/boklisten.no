@@ -3,7 +3,6 @@ import type { routes } from './index.ts'
 
 export interface ApiDefinition {
   tokens: {
-    legacyToken: typeof routes['tokens.legacy_token']
     token: typeof routes['tokens.token']
   }
   vipps: {
@@ -267,81 +266,5 @@ export interface ApiDefinition {
     getOrdersReport: typeof routes['reports.get_orders_report']
     getPaymentsReport: typeof routes['reports.get_payments_report']
     getUserDetailsReport: typeof routes['reports.get_user_details_report']
-  }
-  collection: {
-    branches: {
-      getId: typeof routes['collection.branches.getId']
-      getAll: typeof routes['collection.branches.getAll']
-    }
-    branchitems: {
-      getAll: typeof routes['collection.branchitems.getAll']
-    }
-    customeritems: {
-      getId: typeof routes['collection.customeritems.getId']
-      patch: typeof routes['collection.customeritems.patch']
-      operation: {
-        generateReport: {
-          post: typeof routes['collection.customeritems.operation.generate-report.post']
-        }
-      }
-      getAll: typeof routes['collection.customeritems.getAll']
-    }
-    deliveries: {
-      post: typeof routes['collection.deliveries.post']
-      getId: typeof routes['collection.deliveries.getId']
-    }
-    items: {
-      getId: typeof routes['collection.items.getId']
-      getAll: typeof routes['collection.items.getAll']
-    }
-    orders: {
-      post: typeof routes['collection.orders.post']
-      delete: typeof routes['collection.orders.delete']
-      patch: typeof routes['collection.orders.patch']
-      operation: {
-        place: {
-          patch: typeof routes['collection.orders.operation.place.patch']
-        }
-        confirm: {
-          patch: typeof routes['collection.orders.operation.confirm.patch']
-        }
-      }
-      getId: typeof routes['collection.orders.getId']
-      getAll: typeof routes['collection.orders.getAll']
-    }
-    payments: {
-      post: typeof routes['collection.payments.post']
-      getAll: typeof routes['collection.payments.getAll']
-      getId: typeof routes['collection.payments.getId']
-      delete: typeof routes['collection.payments.delete']
-    }
-    userdetails: {
-      getId: typeof routes['collection.userdetails.getId']
-      operation: {
-        permission: {
-          getId: typeof routes['collection.userdetails.operation.permission.getId']
-        }
-      }
-      patch: typeof routes['collection.userdetails.patch']
-      getAll: typeof routes['collection.userdetails.getAll']
-    }
-    invoices: {
-      getId: typeof routes['collection.invoices.getId']
-      getAll: typeof routes['collection.invoices.getAll']
-      post: typeof routes['collection.invoices.post']
-      patch: typeof routes['collection.invoices.patch']
-    }
-    companies: {
-      getAll: typeof routes['collection.companies.getAll']
-    }
-    uniqueitems: {
-      post: typeof routes['collection.uniqueitems.post']
-      operation: {
-        active: {
-          getId: typeof routes['collection.uniqueitems.operation.active.getId']
-        }
-      }
-      getAll: typeof routes['collection.uniqueitems.getAll']
-    }
   }
 }

@@ -8,14 +8,14 @@ import { passwordFieldValidator } from "@/shared/components/form/fields/complex/
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { useAppForm } from "@/shared/hooks/form";
 import useAuth, { login } from "@/shared/hooks/useAuth";
-import useAuthLinker from "@/shared/hooks/useAuthLinker";
+import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { publicApi } from "@/shared/utils/publicApiClient";
 
 export default function LocalSignIn() {
   const [apiError, setApiError] = useState<string | null>(null);
   const { isLoggedIn } = useAuth();
-  const { redirectAfterLogin } = useAuthLinker();
+  const { redirectAfterLogin } = useLoginRedirect();
 
   const signInMutation = useMutation(
     publicApi.local.login.mutationOptions({
@@ -47,7 +47,7 @@ export default function LocalSignIn() {
 
   const onAlreadyLoggedIn = useEffectEvent(() => void redirectAfterLogin());
   useEffect(() => {
-    // We might have valid tokens, even though bl-admin might not. If so, the user is redirected automatically.
+    // Someone who is already logged in has nothing to do here and is redirected automatically.
     // isIdle guards against double-redirecting after a sign-in, which onSuccess already handles.
     if (isLoggedIn && signInMutation.isIdle) {
       onAlreadyLoggedIn();

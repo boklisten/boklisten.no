@@ -24,7 +24,7 @@ export interface BookRow {
 /**
  * The spreadsheet format is the one legacy bl-admin used: the book flattened with dot-separated
  * paths as headers. The importer matches file headers to these labels, so every file downloaded
- * from bl-admin over the years maps itself on upload.
+ * from legacy bl-admin over the years maps itself on upload.
  */
 const FIELDS = {
   id: "id",
@@ -41,7 +41,7 @@ const FIELDS = {
   buyback: "buyback",
 } as const satisfies Record<keyof BookRow, string>;
 
-/** bl-admin put these first and appended every other field of the book in document order. */
+/** Legacy bl-admin put these first and appended every other field of the book in document order. */
 const LEADING_FIELDS = [
   FIELDS.id,
   FIELDS.title,
@@ -211,7 +211,7 @@ export function toBookRows(result: ImportResult): BookRow[] {
   });
 }
 
-/** `{ info: { isbn: 1 } }` becomes `{ "info.isbn": 1 }`; nulls are dropped like bl-admin dropped them. */
+/** `{ info: { isbn: 1 } }` becomes `{ "info.isbn": 1 }`; nulls are dropped like legacy bl-admin dropped them. */
 function flatten(value: object, prefix = ""): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(value).flatMap(([key, entry]) => {
@@ -226,7 +226,7 @@ function flatten(value: object, prefix = ""): Record<string, unknown> {
   );
 }
 
-/** The same file bl-admin produced: every field of the book, including each year's price. */
+/** The same file legacy bl-admin produced: every field of the book, including each year's price. */
 export function downloadBooksXlsx(items: Item[]) {
   const rows = items.map((item) => flatten(item));
   const header = LEADING_FIELDS.filter((field) => rows.some((row) => field in row));

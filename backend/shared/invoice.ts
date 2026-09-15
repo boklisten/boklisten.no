@@ -2,7 +2,7 @@ import type { BlDocument } from "#shared/bl-document";
 import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
 
 /**
- * "loan" was a type option in bl-admin's invoice generator until 2021. It selected the same
+ * "loan" was a type option in legacy bl-admin's invoice generator until 2021. It selected the same
  * customer items as "rent" and only tagged the invoice differently, so it is no longer offered,
  * but the invoices it produced still exist and export like rent invoices.
  */
@@ -84,7 +84,7 @@ export interface InvoiceComment {
 }
 
 /**
- * The four status flags on an invoice are mutually exclusive in practice (bl-admin cleared the
+ * The four status flags on an invoice are mutually exclusive in practice (legacy bl-admin cleared the
  * others whenever one was set), so the API presents them as one status.
  */
 export const INVOICE_STATUSES = [
@@ -101,7 +101,7 @@ type InvoiceStatusFlags = Pick<
   "customerHavePayed" | "toCreditNote" | "toDebtCollection" | "toLossNote"
 >;
 
-/** Old data may have several flags set; the first match wins, in the order bl-admin coloured rows. */
+/** Old data may have several flags set; the first match wins, in the order legacy bl-admin coloured rows. */
 export function invoiceStatus(flags: InvoiceStatusFlags): InvoiceStatus {
   if (flags.toDebtCollection) {
     return "debtCollection";
@@ -210,7 +210,7 @@ export interface CompanyInvoiceLine {
 }
 
 /**
- * bl-admin's line arithmetic, kept as it was so new company invoices match the ones already in
+ * Legacy bl-admin's line arithmetic, kept as it was so new company invoices match the ones already in
  * the books: VAT is one unit's tax before discount, and the gross is rounded to two decimals.
  */
 export function companyLinePayment(line: CompanyInvoiceLine) {

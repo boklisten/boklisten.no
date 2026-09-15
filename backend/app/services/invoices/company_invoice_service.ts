@@ -14,7 +14,7 @@ export function companyInvoiceTotal(lines: CompanyInvoiceLine[]) {
     gross: payments.reduce((sum, payment) => sum + payment.gross, 0),
     net: payments.reduce((sum, payment) => sum + payment.net, 0),
     vat: payments.reduce((sum, payment) => sum + payment.vat, 0),
-    // bl-admin summed the line discounts here, so this is not a percentage of the total.
+    // Legacy bl-admin summed the line discounts here, so this is not a percentage of the total.
     discount: payments.reduce((sum, payment) => sum + payment.discount, 0),
   };
 }

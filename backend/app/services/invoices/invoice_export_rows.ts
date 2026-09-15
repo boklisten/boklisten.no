@@ -8,11 +8,11 @@ import type { Item } from "#shared/item";
 
 /**
  * Row builders for the Visma and Tripletex invoice imports, ported field for field from
- * bl-admin's InvoiceVismaService. The files are uploaded to external accounting systems, so the
+ * Legacy bl-admin's InvoiceVismaService. The files are uploaded to external accounting systems, so the
  * values must stay exactly as they were, quirks included. Each quirk that is kept on purpose is
  * commented at the place it happens.
  *
- * bl-admin formatted dates in the browser's timezone; employees sit in Norway, so this formats
+ * Legacy bl-admin formatted dates in the browser's timezone; employees sit in Norway, so this formats
  * in Europe/Oslo regardless of where the server runs.
  */
 const TIMEZONE = "Europe/Oslo";
@@ -32,7 +32,7 @@ const TEXT_LINES = {
 const NEW_MINI_ID_FROM = "2023-01-25";
 
 function formatExportDate(date: Date | string | undefined, format: string): string {
-  // bl-admin called moment(undefined), which is "now". A missing date of birth therefore printed
+  // Legacy bl-admin called moment(undefined), which is "now". A missing date of birth therefore printed
   // as today's date, and still does.
   return moment.tz(date, TIMEZONE).format(format);
 }
@@ -72,7 +72,7 @@ export function invoiceMiniId(invoice: Invoice): number {
     : newMongoMiniId(userDetail);
 }
 
-/** bl-admin treated an empty string like a missing value in these fields. */
+/** Legacy bl-admin treated an empty string like a missing value in these fields. */
 function nonEmpty(value: string | undefined): string | undefined {
   return value === undefined || value === "" ? undefined : value;
 }
@@ -446,7 +446,7 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
         String(item.info.isbn),
         item.title,
         "",
-        // bl-admin exported the stored amount, which is 0 for books moved between orders.
+        // Legacy bl-admin exported the stored amount, which is 0 for books moved between orders.
         String(customerItem.amountLeftToPay),
         "1",
         "0",

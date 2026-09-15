@@ -6,7 +6,6 @@ const BL_CONFIG = {
   login: {
     localStorageKeys: {
       redirect: "bl-redirect",
-      caller: "bl-caller",
     },
   },
 } as const;

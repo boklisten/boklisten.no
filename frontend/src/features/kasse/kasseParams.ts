@@ -16,7 +16,7 @@ export interface KasseSearchParams {
   visning?: CustomerSearchTab;
   /** Unique ID of the open book. */
   blid?: string;
-  /** bl-admin deep-links to the Innsamling by it. */
+  /** The legacy bl-admin deep-linked to the Innsamling by it; the global search still does. */
   modus?: "innsamling";
 }
 

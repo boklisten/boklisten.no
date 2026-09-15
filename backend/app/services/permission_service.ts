@@ -72,15 +72,6 @@ function verifyAccessToken(token: string) {
 }
 
 /**
- * @deprecated use Permission_service.authenticate() instead
- *
- */
-function authenticateLegacy({ request }: HttpContext) {
-  const authHeader = request.headers().authorization;
-  return verifyAccessToken(extractBearerToken(authHeader));
-}
-
-/**
  *
  * @throws UnauthorizedException if token is not valid
  * @throws NotAllowedException if user does not have permission
@@ -116,16 +107,6 @@ function adminOrFail(ctx: HttpContext) {
 /**
  *
  * @throws UnauthorizedException if token is not valid
- * @throws NotAllowedException if user is not manager
- * @returns the detailsId and permission for the customer
- */
-function managerOrFail(ctx: HttpContext) {
-  return authenticate(ctx, USER_PERMISSION.MANAGER);
-}
-
-/**
- *
- * @throws UnauthorizedException if token is not valid
  * @throws NotAllowedException if user is not employee
  * @returns the detailsId and permission for the customer
  */
@@ -136,13 +117,7 @@ function employeeOrFail(ctx: HttpContext) {
 export const PermissionService = {
   isAdmin,
   isPermissionEqualOrOver,
-  isPermissionOver,
-  // Deliberately still exported for the legacy collection endpoints; the deprecation
-  // marker is there to stop new usages
-  // oxlint-disable-next-line typescript/no-deprecated
-  authenticateLegacy,
   authenticate,
   adminOrFail,
-  managerOrFail,
   employeeOrFail,
 };

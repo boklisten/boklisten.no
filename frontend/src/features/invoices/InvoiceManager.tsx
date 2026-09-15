@@ -1,8 +1,7 @@
-import { Group, Stack, Tabs, Text, Title } from "@mantine/core";
+import { Stack, Tabs, Text, Title } from "@mantine/core";
 import { IconBuildingBank, IconFileInvoice, IconUsersGroup } from "@tabler/icons-react";
 import { getRouteApi } from "@tanstack/react-router";
 
-import LegacyAppLink from "@/features/auth-linker/LegacyAppLink";
 import CompanyInvoiceTab from "@/features/invoices/CompanyInvoiceTab";
 import GenerateInvoicesTab from "@/features/invoices/GenerateInvoicesTab";
 import InvoiceOverview from "@/features/invoices/InvoiceOverview";
@@ -17,10 +16,7 @@ export default function InvoiceManager() {
   return (
     <Stack>
       <Stack gap={4}>
-        <Group gap="xs">
-          <Title>Faktura</Title>
-          <LegacyAppLink path="invoices" label="Gå til gammelt faktura-system" />
-        </Group>
+        <Title>Faktura</Title>
         <Text c="dimmed">Opprett, se og eksporter fakturaer</Text>
       </Stack>
       <Tabs

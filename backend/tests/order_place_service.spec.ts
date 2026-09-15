@@ -12,11 +12,10 @@ import MatchParticipant from "#models/match_participant";
 import { createTestRound } from "#tests/matches/match-testing-utils";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
+import { OrderPlaceService } from "#services/orders/order_place_service";
 import { OrderValidator } from "#services/orders/validation/order_validator";
-import { OrderPlaceOperation } from "#services/legacy/collections/order/operations/place/order-place.operation";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import { BlapiResponse } from "#shared/blapi-response";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { UserDetail } from "#shared/user-detail";
@@ -32,12 +31,12 @@ function createValidSignature() {
   });
 }
 
-test.group("OrderPlaceOperation", (group) => {
+test.group("OrderPlaceService", (group) => {
   const orderToCustomerItemGenerator = new OrderToCustomerItemGenerator();
   const orderPlacedHandler = new OrderPlacedHandler();
   const orderValidator = new OrderValidator();
 
-  const orderPlaceOperation = new OrderPlaceOperation(
+  const orderPlaceService = new OrderPlaceService(
     orderToCustomerItemGenerator,
     orderPlacedHandler,
     orderValidator,
@@ -118,7 +117,7 @@ test.group("OrderPlaceOperation", (group) => {
     getOrderStub.rejects(new BlError('order "randomOrder" not found'));
 
     return assert.rejects(
-      () => orderPlaceOperation.run({ documentId: "randomOrder" }),
+      () => orderPlaceService.place("randomOrder"),
       /order "randomOrder" not found/,
     );
   });
@@ -131,10 +130,7 @@ test.group("OrderPlaceOperation", (group) => {
     getUserDetailStub.resolves(userDetailWithSignatures);
 
     await assert.rejects(() =>
-      orderPlaceOperation.run({
-        documentId: validOrder.id,
-        user: { id: "user1", permission: "admin", details: "" },
-      }),
+      orderPlaceService.place(validOrder.id, { id: "user1", permission: "admin", details: "" }),
     );
   });
 
@@ -147,10 +143,7 @@ test.group("OrderPlaceOperation", (group) => {
     getUserDetailStub.resolves(userDetailWithSignatures);
 
     return assert.rejects(() =>
-      orderPlaceOperation.run({
-        documentId: validOrder.id,
-        user: { id: "user1", permission: "admin", details: "" },
-      }),
+      orderPlaceService.place(validOrder.id, { id: "user1", permission: "admin", details: "" }),
     );
   });
 
@@ -174,17 +167,18 @@ test.group("OrderPlaceOperation", (group) => {
     validateOrderStub.resolves(true);
     getUserDetailStub.resolves(userDetailWithSignatures);
 
-    const result = await orderPlaceOperation.run({
-      documentId: validOrder.id,
-      user: { id: "user1", permission: "admin", details: "" },
+    const result = await orderPlaceService.place(validOrder.id, {
+      id: "user1",
+      permission: "admin",
+      details: "",
     });
 
-    assert.deepEqual(result, new BlapiResponse([order]));
+    assert.deepEqual(result, order);
   });
 
   /*
    * Stand movements are handovers with the stand on one side. These replace the four arrays of
-   * blids and item ids the operation used to append to.
+   * blids and item ids the service used to append to.
    */
 
   const CUSTOMER = "5d765db5fc8c47001c408d81";
@@ -242,7 +236,7 @@ test.group("OrderPlaceOperation", (group) => {
       { id: "ci1", customer: CUSTOMER, item: ITEM, blid: BLID },
     );
 
-    await orderPlaceOperation.run({ documentId: order.id, user: asAdmin });
+    await orderPlaceService.place(order.id, asAdmin);
 
     const handovers = await BookHandover.all();
     assert.lengthOf(handovers, 1);
@@ -259,7 +253,7 @@ test.group("OrderPlaceOperation", (group) => {
       { id: "ci2", customer: CUSTOMER, item: ITEM, blid: BLID },
     );
 
-    await orderPlaceOperation.run({ documentId: order.id, user: asAdmin });
+    await orderPlaceService.place(order.id, asAdmin);
 
     const handovers = await BookHandover.all();
     assert.lengthOf(handovers, 1);
@@ -274,7 +268,7 @@ test.group("OrderPlaceOperation", (group) => {
       { id: "ci1", customer: CUSTOMER, item: ITEM, blid: BLID },
     );
 
-    await orderPlaceOperation.run({ documentId: order.id, user: asAdmin });
+    await orderPlaceService.place(order.id, asAdmin);
 
     const handovers = await BookHandover.all();
     assert.lengthOf(handovers, 1, "the chain of custody records it even with no obligation");
@@ -288,7 +282,7 @@ test.group("OrderPlaceOperation", (group) => {
       { id: "ci1", customer: CUSTOMER, item: ITEM },
     );
 
-    await orderPlaceOperation.run({ documentId: order.id, user: asAdmin });
+    await orderPlaceService.place(order.id, asAdmin);
 
     const handovers = await BookHandover.all();
     assert.lengthOf(handovers, 1);

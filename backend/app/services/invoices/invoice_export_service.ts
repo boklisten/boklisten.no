@@ -60,7 +60,7 @@ async function tripletexLookups(invoices: Invoice[]): Promise<TripletexLookups> 
   return { customerItems: byId(customerItems), items: byId(items), branches: byId(branches) };
 }
 
-/** bl-admin named the files after the year and the hour of the export, e.g. 202614_visma_invoice.csv. */
+/** Legacy bl-admin named the files after the year and the hour of the export, e.g. 202614_visma_invoice.csv. */
 function filename(system: "visma" | "tripletex"): string {
   const now = moment.tz("Europe/Oslo");
   return `${now.year()}${now.hour()}_${system}_invoice.csv`;

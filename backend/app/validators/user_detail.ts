@@ -4,30 +4,6 @@ import { emailField, phoneField, postalCodeField } from "#validators/common/fiel
 import { uniqueEmail, uniquePhoneNumber } from "#validators/common/rules";
 import { cleanUserInput } from "#validators/common/transformers";
 
-// Legacy for bl-admin user detail patching
-export const userDetailPatchValidator = vine.create(
-  vine.object({
-    name: vine
-      .string()
-      .optional()
-      .transform((value) => cleanUserInput(value)),
-    dob: vine.string().optional(),
-    phone: vine.string().optional(),
-    address: vine
-      .string()
-      .optional()
-      .transform((value) => cleanUserInput(value)),
-    postCity: vine
-      .string()
-      .optional()
-      .transform((value) => cleanUserInput(value)),
-    postCode: vine.string().optional(),
-    branchMembership: vine.string().optional(),
-    emailConfirmed: vine.boolean().optional(),
-    guardian: vine.any().optional(),
-  }),
-);
-
 // Only fields that customers are allowed to adjust after registration
 const customerUpdateUserDetailsSchema = vine.object({
   phoneNumber: phoneField.clone().use(uniquePhoneNumber()),

@@ -4,7 +4,6 @@ type ParamValue = string | number | bigint | boolean
 
 export type ScannedRoutes = {
   ALL: {
-    'tokens.legacy_token': { paramsTuple?: []; params?: {} }
     'tokens.token': { paramsTuple?: []; params?: {} }
     'vipps.redirect': { paramsTuple?: []; params?: {} }
     'vipps.callback': { paramsTuple?: []; params?: {} }
@@ -172,40 +171,6 @@ export type ScannedRoutes = {
     'reports.get_orders_report': { paramsTuple?: []; params?: {} }
     'reports.get_payments_report': { paramsTuple?: []; params?: {} }
     'reports.get_user_details_report': { paramsTuple?: []; params?: {} }
-    'collection.branches.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.branches.getAll': { paramsTuple?: []; params?: {} }
-    'collection.branchitems.getAll': { paramsTuple?: []; params?: {} }
-    'collection.customeritems.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.customeritems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.customeritems.operation.generate-report.post': { paramsTuple?: []; params?: {} }
-    'collection.customeritems.getAll': { paramsTuple?: []; params?: {} }
-    'collection.deliveries.post': { paramsTuple?: []; params?: {} }
-    'collection.deliveries.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.items.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.items.getAll': { paramsTuple?: []; params?: {} }
-    'collection.orders.post': { paramsTuple?: []; params?: {} }
-    'collection.orders.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.operation.place.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.operation.confirm.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.getAll': { paramsTuple?: []; params?: {} }
-    'collection.payments.post': { paramsTuple?: []; params?: {} }
-    'collection.payments.getAll': { paramsTuple?: []; params?: {} }
-    'collection.payments.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.payments.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.operation.permission.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.getAll': { paramsTuple?: []; params?: {} }
-    'collection.invoices.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.invoices.getAll': { paramsTuple?: []; params?: {} }
-    'collection.invoices.post': { paramsTuple?: []; params?: {} }
-    'collection.invoices.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.companies.getAll': { paramsTuple?: []; params?: {} }
-    'collection.uniqueitems.post': { paramsTuple?: []; params?: {} }
-    'collection.uniqueitems.operation.active.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.uniqueitems.getAll': { paramsTuple?: []; params?: {} }
   }
   GET: {
     'vipps.redirect': { paramsTuple?: []; params?: {} }
@@ -288,26 +253,6 @@ export type ScannedRoutes = {
     'reports.get_orders_report': { paramsTuple?: []; params?: {} }
     'reports.get_payments_report': { paramsTuple?: []; params?: {} }
     'reports.get_user_details_report': { paramsTuple?: []; params?: {} }
-    'collection.branches.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.branches.getAll': { paramsTuple?: []; params?: {} }
-    'collection.branchitems.getAll': { paramsTuple?: []; params?: {} }
-    'collection.customeritems.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.customeritems.getAll': { paramsTuple?: []; params?: {} }
-    'collection.deliveries.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.items.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.items.getAll': { paramsTuple?: []; params?: {} }
-    'collection.orders.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.getAll': { paramsTuple?: []; params?: {} }
-    'collection.payments.getAll': { paramsTuple?: []; params?: {} }
-    'collection.payments.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.operation.permission.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.getAll': { paramsTuple?: []; params?: {} }
-    'collection.invoices.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.invoices.getAll': { paramsTuple?: []; params?: {} }
-    'collection.companies.getAll': { paramsTuple?: []; params?: {} }
-    'collection.uniqueitems.operation.active.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.uniqueitems.getAll': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
     'vipps.redirect': { paramsTuple?: []; params?: {} }
@@ -390,29 +335,8 @@ export type ScannedRoutes = {
     'reports.get_orders_report': { paramsTuple?: []; params?: {} }
     'reports.get_payments_report': { paramsTuple?: []; params?: {} }
     'reports.get_user_details_report': { paramsTuple?: []; params?: {} }
-    'collection.branches.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.branches.getAll': { paramsTuple?: []; params?: {} }
-    'collection.branchitems.getAll': { paramsTuple?: []; params?: {} }
-    'collection.customeritems.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.customeritems.getAll': { paramsTuple?: []; params?: {} }
-    'collection.deliveries.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.items.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.items.getAll': { paramsTuple?: []; params?: {} }
-    'collection.orders.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.getAll': { paramsTuple?: []; params?: {} }
-    'collection.payments.getAll': { paramsTuple?: []; params?: {} }
-    'collection.payments.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.operation.permission.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.getAll': { paramsTuple?: []; params?: {} }
-    'collection.invoices.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.invoices.getAll': { paramsTuple?: []; params?: {} }
-    'collection.companies.getAll': { paramsTuple?: []; params?: {} }
-    'collection.uniqueitems.operation.active.getId': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.uniqueitems.getAll': { paramsTuple?: []; params?: {} }
   }
   POST: {
-    'tokens.legacy_token': { paramsTuple?: []; params?: {} }
     'tokens.token': { paramsTuple?: []; params?: {} }
     'local.login': { paramsTuple?: []; params?: {} }
     'local.register': { paramsTuple?: []; params?: {} }
@@ -469,12 +393,6 @@ export type ScannedRoutes = {
     'webhooks.sendgrid_events': { paramsTuple?: []; params?: {} }
     'webhooks.twilio_sms_event': { paramsTuple: [ParamValue]; params: {'messageId': ParamValue} }
     'bulk_collection.collect': { paramsTuple?: []; params?: {} }
-    'collection.customeritems.operation.generate-report.post': { paramsTuple?: []; params?: {} }
-    'collection.deliveries.post': { paramsTuple?: []; params?: {} }
-    'collection.orders.post': { paramsTuple?: []; params?: {} }
-    'collection.payments.post': { paramsTuple?: []; params?: {} }
-    'collection.invoices.post': { paramsTuple?: []; params?: {} }
-    'collection.uniqueitems.post': { paramsTuple?: []; params?: {} }
   }
   DELETE: {
     'waiting_list_customer.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -490,8 +408,6 @@ export type ScannedRoutes = {
     'order_history.delete_order': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'companies.delete_company': { paramsTuple: [ParamValue]; params: {'companyId': ParamValue} }
     'opening_hours.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.payments.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   PATCH: {
     'branches.update': { paramsTuple?: []; params?: {} }
@@ -510,12 +426,6 @@ export type ScannedRoutes = {
     'invoices.set_statuses': { paramsTuple?: []; params?: {} }
     'invoices.set_status': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'invoices.set_line_cancelled': { paramsTuple: [ParamValue,ParamValue]; params: {'invoiceId': ParamValue,'lineIndex': ParamValue} }
-    'collection.customeritems.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.operation.place.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.orders.operation.confirm.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.userdetails.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'collection.invoices.patch': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   PUT: {
     'branch_subjects.update_subject': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }

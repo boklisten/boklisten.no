@@ -14,9 +14,8 @@ export const Route = createFileRoute("/(offentlig)/auth/register")({
       description:
         "Opprett en bruker hos Boklisten for å bestille pensumbøker til videregående skole eller privatisteksamen.",
     }),
-  validateSearch: (search): { redirect?: string; caller?: string } => ({
+  validateSearch: (search): { redirect?: string } => ({
     redirect: stringParam(search["redirect"]),
-    caller: stringParam(search["caller"]),
   }),
   component: RegisterPage,
 });

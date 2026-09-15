@@ -13,7 +13,7 @@ import { phoneNumberFieldValidator } from "@/shared/components/form/fields/compl
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { useAppForm } from "@/shared/hooks/form";
 import { login } from "@/shared/hooks/useAuth";
-import useAuthLinker from "@/shared/hooks/useAuthLinker";
+import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
 import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification } from "@/shared/utils/notifications";
 import { publicApiClient } from "@/shared/utils/publicApiClient";
@@ -43,7 +43,7 @@ const defaultValues: SignupFormValues = {
 };
 
 export default function SignupForm() {
-  const { redirectAfterLogin } = useAuthLinker();
+  const { redirectAfterLogin } = useLoginRedirect();
   const form = useAppForm({
     defaultValues,
     onSubmit: () => registerMutation.mutate(),

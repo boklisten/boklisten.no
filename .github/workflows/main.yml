@@ -77,7 +77,6 @@ jobs:
       - name: Build Frontend
         env:
           VITE_API_URL: https://staging.api.boklisten.no
-          VITE_BL_ADMIN_URL: https://staging.bladmin.boklisten.no
         run: bun build:frontend
 
   test_backend:

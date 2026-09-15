@@ -1,9 +1,8 @@
-import { Box, Container, Flex, Group, Skeleton, Stack, Text, Title } from "@mantine/core";
+import { Box, Container, Flex, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import LegacyAppLink from "@/features/auth-linker/LegacyAppLink";
 import OpenOrderList from "@/features/order-manager/OpenOrderList";
 import OrderDetail from "@/features/order-manager/OrderDetail";
 import OrderFilters from "@/features/order-manager/OrderFilters";
@@ -107,10 +106,7 @@ function OrderManagerPage() {
     <Container size="xl">
       <Stack>
         <Stack gap={4}>
-          <Group gap="xs">
-            <Title>{ORDER_MANAGER_TITLE}</Title>
-            <LegacyAppLink path="order-manager" label="Gå til gammel ordreoversikt" />
-          </Group>
+          <Title>{ORDER_MANAGER_TITLE}</Title>
           <Text c="dimmed">{ORDER_MANAGER_DESCRIPTION}</Text>
         </Stack>
         {/* On a phone the order takes the screen; the filters wait behind "Tilbake til listen" */}

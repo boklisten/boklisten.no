@@ -104,7 +104,7 @@ test.group("invoice status changes", (group) => {
     sandbox.restore();
   });
 
-  test("order line amounts are whole kroner truncated to tens, as bl-admin's price service did", ({
+  test("order line amounts are whole kroner truncated to tens, as legacy bl-admin's price service did", ({
     assert,
   }) => {
     assert.equal(invoicePaidLineAmount(1154), 1150);

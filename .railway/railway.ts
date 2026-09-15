@@ -46,7 +46,6 @@ export default defineRailway((ctx) => {
       SENTRY_AUTH_TOKEN: ctx.shared.SENTRY_AUTH_TOKEN,
       VITE_APP_ENV: railwayVariable("RAILWAY_ENVIRONMENT_NAME"),
       VITE_API_URL: preserve(),
-      VITE_BL_ADMIN_URL: preserve(),
     },
   });
 
@@ -90,18 +89,6 @@ export default defineRailway((ctx) => {
     },
   });
 
-  const bladmin = service("bladmin.boklisten.no", {
-    source: github("boklisten/bladmin.boklisten.no", {
-      branch: isProduction ? "production" : "master",
-      checkSuites: true,
-    }),
-    start: "yarn serve",
-    deploy: { sleepApplication: true },
-    replicas: { [REGION]: 1 },
-    domains: [host("bladmin.boklisten.no")],
-    env: { ANGULAR_ENV: preserve() },
-  });
-
   type ServiceConfig = NonNullable<Parameters<typeof service>[1]>;
   const cronJob = (
     name: string,
@@ -140,15 +127,6 @@ export default defineRailway((ctx) => {
     : [];
 
   return project("boklisten.no", {
-    resources: [
-      frontend,
-      backend,
-      bladmin,
-      postgresDb,
-      mongoDb,
-      postgresVolume,
-      mongodbVolume,
-      ...cronJobs,
-    ],
+    resources: [frontend, backend, postgresDb, mongoDb, postgresVolume, mongodbVolume, ...cronJobs],
   });
 });

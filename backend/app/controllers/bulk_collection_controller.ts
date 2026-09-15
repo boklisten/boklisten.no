@@ -5,7 +5,7 @@ import BlidService from "#services/blid_service";
 import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
 import { CustomerItemActive } from "#services/customer_items/customer_item_active";
 import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
-import { OrderPlaceOperation } from "#services/legacy/collections/order/operations/place/order-place.operation";
+import { OrderPlaceService } from "#services/orders/order_place_service";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { PeerObligations } from "#services/matches/peer_obligations";
 import { PermissionService } from "#services/permission_service";
@@ -90,7 +90,7 @@ export default class BulkCollectionController {
     // items are generated), so the detailsId is sufficient for the place operation.
     const user = { id: detailsId, details: detailsId, permission };
     const collectedAt = DateTime.now().setZone("Europe/Oslo").toFormat("HH:mm:ss");
-    const placeOperation = new OrderPlaceOperation();
+    const orderPlaceService = new OrderPlaceService();
     const collectedByCustomer = new Map<string, CollectedBook[]>();
 
     for (const items of this.groupByCustomerAndBranch(customerItems).values()) {
@@ -119,7 +119,7 @@ export default class BulkCollectionController {
         payments: [],
       });
 
-      await placeOperation.run({ documentId: order.id, user });
+      await orderPlaceService.place(order.id, user);
       await BulkCollectionMonitoring.reportOverdueBooks({
         employee: { detailsId, permission },
         customerItems: items,

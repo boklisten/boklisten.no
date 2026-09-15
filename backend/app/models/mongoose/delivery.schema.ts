@@ -5,7 +5,7 @@ import type { BlSchema } from "#services/storage_service";
 import type { Delivery } from "#shared/delivery/delivery";
 
 // Shared shape for both methods: "branch" uses only { branch }, "bring" uses the rest.
-// bl-admin's tracking-number flow also writes { branch, estimatedDelivery: null } on bring
+// Legacy bl-admin's tracking-number flow also writes { branch, estimatedDelivery: null } on bring
 // deliveries, and omits amount/taxAmount/product when the Bring API regeneration fails.
 const deliveryInfoSchema = new Schema(
   {

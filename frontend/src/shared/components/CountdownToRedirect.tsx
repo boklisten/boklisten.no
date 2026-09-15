@@ -1,27 +1,28 @@
 import { Progress, Stack, Title } from "@mantine/core";
 import { useEffect, useEffectEvent, useState } from "react";
 
-import useAuthLinker from "@/shared/hooks/useAuthLinker";
+import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
 import { useNavigate } from "@tanstack/react-router";
 
 function CountdownToRedirect({
   seconds,
   path,
   shouldReplaceInHistory,
-  shouldRedirectToCaller,
+  shouldRedirectToLoginTarget,
 }: {
   seconds: number;
   path?: string;
   shouldReplaceInHistory?: boolean;
-  shouldRedirectToCaller?: boolean;
+  /** Go where the login was heading (the `redirect` param) instead of `path`. */
+  shouldRedirectToLoginTarget?: boolean;
 }) {
-  const { redirectToCaller } = useAuthLinker();
+  const { redirectToTarget } = useLoginRedirect();
   const [progress, setProgress] = useState(100);
   const navigate = useNavigate();
 
   const redirect = useEffectEvent(() => {
-    if (shouldRedirectToCaller) {
-      redirectToCaller();
+    if (shouldRedirectToLoginTarget) {
+      redirectToTarget();
       return;
     }
     if (path) {

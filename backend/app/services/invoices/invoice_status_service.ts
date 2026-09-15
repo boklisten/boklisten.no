@@ -16,7 +16,7 @@ import type {
 import type { OrderItem } from "#shared/order/order-item/order-item";
 
 /**
- * The amount bl-admin put on an "invoice-paid" order line: the invoiced net amount, rounded to
+ * The amount legacy bl-admin put on an "invoice-paid" order line: the invoiced net amount, rounded to
  * whole kroner and then truncated to a multiple of ten, as its price service did for every order
  * line.
  */
@@ -33,7 +33,7 @@ async function customerItemsOf(invoice: Invoice): Promise<CustomerItem[]> {
 }
 
 /**
- * Marks the invoiced books as bought out. bl-admin recorded the payment of an invoice as an
+ * Marks the invoiced books as bought out. Legacy bl-admin recorded the payment of an invoice as an
  * "invoice-paid" order on the customer, so the books show up as paid for in the order history,
  * and set buyout on every invoiced customer item.
  */

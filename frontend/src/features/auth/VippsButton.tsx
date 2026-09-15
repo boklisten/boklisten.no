@@ -17,9 +17,6 @@ export default function VippsButton({ verb }: { verb: "login" | "register" }) {
   return (
     <Center
       onClick={() => {
-        if (search.caller) {
-          localStorage.setItem(BL_CONFIG.login.localStorageKeys.caller, search.caller);
-        }
         if (search.redirect) {
           localStorage.setItem(BL_CONFIG.login.localStorageKeys.redirect, search.redirect);
         }

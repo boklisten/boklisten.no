@@ -1,7 +1,7 @@
 export type CsvCell = string | number | null | undefined;
 
 /**
- * Serialises rows the way bl-admin's invoice exports did, so the files keep working in the
+ * Serialises rows the way legacy bl-admin's invoice exports did, so the files keep working in the
  * Visma and Tripletex imports:
  *
  * - fields are separated by ";" and rows end with "\n"

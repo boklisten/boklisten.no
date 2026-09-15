@@ -41,7 +41,7 @@ export default function Tasks() {
     return (
       <Stack>
         <SuccessAlert>Du har fullført alle utestående oppgaver</SuccessAlert>
-        <CountdownToRedirect shouldRedirectToCaller seconds={5} />
+        <CountdownToRedirect shouldRedirectToLoginTarget seconds={5} />
       </Stack>
     );
   }

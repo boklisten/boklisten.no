@@ -1,9 +1,9 @@
 export interface DeliveryInfoBring {
-  // amount/taxAmount/product are missing on pre-2020 documents and when bl-admin's
+  // amount/taxAmount/product are missing on pre-2020 documents and when legacy bl-admin's
   // tracking-number flow stores info without a successful Bring API regeneration
   amount?: number;
   taxAmount?: number;
-  // null is written by bl-admin's tracking-number flow
+  // null is written by legacy bl-admin's tracking-number flow
   estimatedDelivery?: Date | null;
   facilityAddress: {
     address: string;

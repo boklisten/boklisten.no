@@ -1,12 +1,9 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import jwt from "jsonwebtoken";
 
-import BlResponseHandler from "#services/legacy/bl-response.handler";
 import TokenService from "#services/token_service";
 import { UserDetailService } from "#services/user_detail_service";
 import { UserService } from "#services/user_service";
-import { BlError } from "#shared/bl-error";
-import { BlapiResponse } from "#shared/blapi-response";
 import env from "#start/env";
 import { tokenValidator } from "#validators/auth_validators";
 
@@ -16,50 +13,6 @@ async function getUserFromVerifiedRefreshToken(verifiedRefreshToken: jwt.JwtPayl
 }
 
 export default class TokensController {
-  // @deprecated Only used for bl-admin, use token for new adoptions
-  async legacyToken(ctx: HttpContext) {
-    const { refreshToken } = await ctx.request.validateUsing(tokenValidator);
-    try {
-      const verifiedRefreshToken = jwt.verify(refreshToken, env.get("REFRESH_TOKEN_SECRET"));
-
-      if (typeof verifiedRefreshToken === "string") {
-        throw new TypeError("Invalid refresh token");
-      }
-
-      try {
-        const user = await getUserFromVerifiedRefreshToken(verifiedRefreshToken);
-        if (!user) {
-          throw new Error("Could not find user");
-        }
-        const tokens = await TokenService.createTokens(user);
-
-        if (!tokens) {
-          throw new Error("Could not create tokens");
-        }
-
-        return new BlapiResponse([
-          { accessToken: tokens.accessToken },
-          { refreshToken: tokens.refreshToken },
-        ]);
-      } catch (error) {
-        return BlResponseHandler.createErrorResponse(
-          ctx,
-          new BlError("could not create tokens")
-            .store("oldRefreshToken", refreshToken)
-            .code(906)
-            .add(error instanceof BlError ? error : new BlError(String(error))),
-        );
-      }
-    } catch (error) {
-      return BlResponseHandler.createErrorResponse(
-        ctx,
-        new BlError("refreshToken not valid")
-          .code(909)
-          .add(error instanceof BlError ? error : new BlError(String(error))),
-      );
-    }
-  }
-
   async token(ctx: HttpContext) {
     const { refreshToken } = await ctx.request.validateUsing(tokenValidator);
     try {

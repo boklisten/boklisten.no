@@ -17,7 +17,6 @@ import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as administrasjonAdminRouteRouteImport } from './routes/(administrasjon)/admin/route'
-import { Route as legacyWelcomeRouteImport } from './routes/(legacy)/welcome'
 import { Route as offentligHandlekurvRouteImport } from './routes/(offentlig)/handlekurv'
 import { Route as offentligInfoRouteRouteImport } from './routes/(offentlig)/info/route'
 import { Route as offentligItemsRouteImport } from './routes/(offentlig)/items'
@@ -28,17 +27,12 @@ import { Route as offentligSjekkRouteImport } from './routes/(offentlig)/sjekk'
 import { Route as offentligUserSettingsRouteImport } from './routes/(offentlig)/user-settings'
 import { Route as administrasjonAdminIndexRouteImport } from './routes/(administrasjon)/admin/index'
 import { Route as administrasjonAdminFakturaRouteImport } from './routes/(administrasjon)/admin/faktura'
-import { Route as administrasjonAdminHandlekurvRouteImport } from './routes/(administrasjon)/admin/handlekurv'
 import { Route as administrasjonAdminKasseRouteImport } from './routes/(administrasjon)/admin/kasse'
 import { Route as administrasjonAdminMerkingRouteImport } from './routes/(administrasjon)/admin/merking'
 import { Route as administrasjonAdminOrdreoversiktRouteImport } from './routes/(administrasjon)/admin/ordreoversikt'
 import { Route as administrasjonAdminOverleveringerRouteRouteImport } from './routes/(administrasjon)/admin/overleveringer/route'
 import { Route as administrasjonAdminUserSettingsRouteImport } from './routes/(administrasjon)/admin/user-settings'
 import { Route as administrasjonAdminVentelisteRouteImport } from './routes/(administrasjon)/admin/venteliste'
-import { Route as legacyAuthMenuRouteImport } from './routes/(legacy)/auth/menu'
-import { Route as legacyAuthSuccessRouteImport } from './routes/(legacy)/auth/success'
-import { Route as legacyDatabaseCompaniesRouteImport } from './routes/(legacy)/database.companies'
-import { Route as legacyUEditRouteImport } from './routes/(legacy)/u.edit'
 import { Route as offentligAuthFailureRouteImport } from './routes/(offentlig)/auth/failure'
 import { Route as offentligAuthForgotRouteImport } from './routes/(offentlig)/auth/forgot'
 import { Route as offentligAuthLoginRouteImport } from './routes/(offentlig)/auth/login'
@@ -75,10 +69,6 @@ import { Route as administrasjonAdminKommunikasjonPaminnelserRouteImport } from 
 import { Route as administrasjonAdminKommunikasjonUtsendelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/utsendelser'
 import { Route as administrasjonAdminOverleveringerIndexRouteImport } from './routes/(administrasjon)/admin/overleveringer/index'
 import { Route as administrasjonAdminOverleveringerMatchIdRouteImport } from './routes/(administrasjon)/admin/overleveringer/$matchId'
-import { Route as legacyAuthLoginForgotRouteImport } from './routes/(legacy)/auth/login.forgot'
-import { Route as legacyAuthRegisterDetailRouteImport } from './routes/(legacy)/auth/register.detail'
-import { Route as legacyAuthSocialFailureRouteImport } from './routes/(legacy)/auth/social.failure'
-import { Route as legacyDatabaseBranchesEditRouteImport } from './routes/(legacy)/database.branches.edit'
 import { Route as offentligAuthPermissionDeniedRouteImport } from './routes/(offentlig)/auth/permission.denied'
 import { Route as offentligAuthResetIdRouteImport } from './routes/(offentlig)/auth/reset.$id'
 import { Route as offentligInfoBranchBranchIdRouteImport } from './routes/(offentlig)/info/branch/$branchId'
@@ -129,11 +119,6 @@ const administrasjonAdminRouteRoute =
     path: '/admin',
     getParentRoute: () => rootRouteImport,
   } as any)
-const legacyWelcomeRoute = legacyWelcomeRouteImport.update({
-  id: '/(legacy)/welcome',
-  path: '/welcome',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const offentligHandlekurvRoute = offentligHandlekurvRouteImport.update({
   id: '/handlekurv',
   path: '/handlekurv',
@@ -187,12 +172,6 @@ const administrasjonAdminFakturaRoute =
     path: '/faktura',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminHandlekurvRoute =
-  administrasjonAdminHandlekurvRouteImport.update({
-    id: '/handlekurv',
-    path: '/handlekurv',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
 const administrasjonAdminKasseRoute =
   administrasjonAdminKasseRouteImport.update({
     id: '/kasse',
@@ -229,26 +208,6 @@ const administrasjonAdminVentelisteRoute =
     path: '/venteliste',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const legacyAuthMenuRoute = legacyAuthMenuRouteImport.update({
-  id: '/(legacy)/auth/menu',
-  path: '/auth/menu',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const legacyAuthSuccessRoute = legacyAuthSuccessRouteImport.update({
-  id: '/(legacy)/auth/success',
-  path: '/auth/success',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const legacyDatabaseCompaniesRoute = legacyDatabaseCompaniesRouteImport.update({
-  id: '/(legacy)/database/companies',
-  path: '/database/companies',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const legacyUEditRoute = legacyUEditRouteImport.update({
-  id: '/(legacy)/u/edit',
-  path: '/u/edit',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const offentligAuthFailureRoute = offentligAuthFailureRouteImport.update({
   id: '/auth/failure',
   path: '/auth/failure',
@@ -449,28 +408,6 @@ const administrasjonAdminOverleveringerMatchIdRoute =
     path: '/$matchId',
     getParentRoute: () => administrasjonAdminOverleveringerRouteRoute,
   } as any)
-const legacyAuthLoginForgotRoute = legacyAuthLoginForgotRouteImport.update({
-  id: '/(legacy)/auth/login/forgot',
-  path: '/auth/login/forgot',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const legacyAuthRegisterDetailRoute =
-  legacyAuthRegisterDetailRouteImport.update({
-    id: '/(legacy)/auth/register/detail',
-    path: '/auth/register/detail',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const legacyAuthSocialFailureRoute = legacyAuthSocialFailureRouteImport.update({
-  id: '/(legacy)/auth/social/failure',
-  path: '/auth/social/failure',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const legacyDatabaseBranchesEditRoute =
-  legacyDatabaseBranchesEditRouteImport.update({
-    id: '/(legacy)/database/branches/edit',
-    path: '/database/branches/edit',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const offentligAuthPermissionDeniedRoute =
   offentligAuthPermissionDeniedRouteImport.update({
     id: '/auth/permission/denied',
@@ -535,7 +472,6 @@ export interface FileRoutesByFullPath {
   '/admin': typeof administrasjonAdminRouteRouteWithChildren
   '/info': typeof offentligInfoRouteRouteWithChildren
   '/overleveringer': typeof offentligOverleveringerRouteRouteWithChildren
-  '/welcome': typeof legacyWelcomeRoute
   '/handlekurv': typeof offentligHandlekurvRoute
   '/items': typeof offentligItemsRoute
   '/oppgaver': typeof offentligOppgaverRoute
@@ -546,16 +482,11 @@ export interface FileRoutesByFullPath {
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
-  '/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/admin/kasse': typeof administrasjonAdminKasseRoute
   '/admin/merking': typeof administrasjonAdminMerkingRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/admin/venteliste': typeof administrasjonAdminVentelisteRoute
-  '/auth/menu': typeof legacyAuthMenuRoute
-  '/auth/success': typeof legacyAuthSuccessRoute
-  '/database/companies': typeof legacyDatabaseCompaniesRoute
-  '/u/edit': typeof legacyUEditRoute
   '/auth/failure': typeof offentligAuthFailureRoute
   '/auth/forgot': typeof offentligAuthForgotRoute
   '/auth/login': typeof offentligAuthLoginRoute
@@ -590,10 +521,6 @@ export interface FileRoutesByFullPath {
   '/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
   '/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
   '/admin/overleveringer/$matchId': typeof administrasjonAdminOverleveringerMatchIdRoute
-  '/auth/login/forgot': typeof legacyAuthLoginForgotRoute
-  '/auth/register/detail': typeof legacyAuthRegisterDetailRoute
-  '/auth/social/failure': typeof legacyAuthSocialFailureRoute
-  '/database/branches/edit': typeof legacyDatabaseBranchesEditRoute
   '/auth/permission/denied': typeof offentligAuthPermissionDeniedRoute
   '/auth/reset/$id': typeof offentligAuthResetIdRoute
   '/info/branch/$branchId': typeof offentligInfoBranchBranchIdRoute
@@ -613,7 +540,6 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/info': typeof offentligInfoRouteRouteWithChildren
-  '/welcome': typeof legacyWelcomeRoute
   '/handlekurv': typeof offentligHandlekurvRoute
   '/items': typeof offentligItemsRoute
   '/oppgaver': typeof offentligOppgaverRoute
@@ -623,16 +549,11 @@ export interface FileRoutesByTo {
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
-  '/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/admin/kasse': typeof administrasjonAdminKasseRoute
   '/admin/merking': typeof administrasjonAdminMerkingRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/admin/venteliste': typeof administrasjonAdminVentelisteRoute
-  '/auth/menu': typeof legacyAuthMenuRoute
-  '/auth/success': typeof legacyAuthSuccessRoute
-  '/database/companies': typeof legacyDatabaseCompaniesRoute
-  '/u/edit': typeof legacyUEditRoute
   '/auth/failure': typeof offentligAuthFailureRoute
   '/auth/forgot': typeof offentligAuthForgotRoute
   '/auth/login': typeof offentligAuthLoginRoute
@@ -667,10 +588,6 @@ export interface FileRoutesByTo {
   '/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
   '/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
   '/admin/overleveringer/$matchId': typeof administrasjonAdminOverleveringerMatchIdRoute
-  '/auth/login/forgot': typeof legacyAuthLoginForgotRoute
-  '/auth/register/detail': typeof legacyAuthRegisterDetailRoute
-  '/auth/social/failure': typeof legacyAuthSocialFailureRoute
-  '/database/branches/edit': typeof legacyDatabaseBranchesEditRoute
   '/auth/permission/denied': typeof offentligAuthPermissionDeniedRoute
   '/auth/reset/$id': typeof offentligAuthResetIdRoute
   '/info/branch/$branchId': typeof offentligInfoBranchBranchIdRoute
@@ -694,7 +611,6 @@ export interface FileRoutesById {
   '/(administrasjon)/admin': typeof administrasjonAdminRouteRouteWithChildren
   '/(offentlig)/info': typeof offentligInfoRouteRouteWithChildren
   '/(offentlig)/overleveringer': typeof offentligOverleveringerRouteRouteWithChildren
-  '/(legacy)/welcome': typeof legacyWelcomeRoute
   '/(offentlig)/handlekurv': typeof offentligHandlekurvRoute
   '/(offentlig)/items': typeof offentligItemsRoute
   '/(offentlig)/oppgaver': typeof offentligOppgaverRoute
@@ -705,16 +621,11 @@ export interface FileRoutesById {
   '/(offentlig)/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/(offentlig)/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/(administrasjon)/admin/faktura': typeof administrasjonAdminFakturaRoute
-  '/(administrasjon)/admin/handlekurv': typeof administrasjonAdminHandlekurvRoute
   '/(administrasjon)/admin/kasse': typeof administrasjonAdminKasseRoute
   '/(administrasjon)/admin/merking': typeof administrasjonAdminMerkingRoute
   '/(administrasjon)/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/(administrasjon)/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/(administrasjon)/admin/venteliste': typeof administrasjonAdminVentelisteRoute
-  '/(legacy)/auth/menu': typeof legacyAuthMenuRoute
-  '/(legacy)/auth/success': typeof legacyAuthSuccessRoute
-  '/(legacy)/database/companies': typeof legacyDatabaseCompaniesRoute
-  '/(legacy)/u/edit': typeof legacyUEditRoute
   '/(offentlig)/auth/failure': typeof offentligAuthFailureRoute
   '/(offentlig)/auth/forgot': typeof offentligAuthForgotRoute
   '/(offentlig)/auth/login': typeof offentligAuthLoginRoute
@@ -749,10 +660,6 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
   '/(administrasjon)/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
   '/(administrasjon)/admin/overleveringer/$matchId': typeof administrasjonAdminOverleveringerMatchIdRoute
-  '/(legacy)/auth/login/forgot': typeof legacyAuthLoginForgotRoute
-  '/(legacy)/auth/register/detail': typeof legacyAuthRegisterDetailRoute
-  '/(legacy)/auth/social/failure': typeof legacyAuthSocialFailureRoute
-  '/(legacy)/database/branches/edit': typeof legacyDatabaseBranchesEditRoute
   '/(offentlig)/auth/permission/denied': typeof offentligAuthPermissionDeniedRoute
   '/(offentlig)/auth/reset/$id': typeof offentligAuthResetIdRoute
   '/(offentlig)/info/branch/$branchId': typeof offentligInfoBranchBranchIdRoute
@@ -776,7 +683,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/info'
     | '/overleveringer'
-    | '/welcome'
     | '/handlekurv'
     | '/items'
     | '/oppgaver'
@@ -787,16 +693,11 @@ export interface FileRouteTypes {
     | '/info/branch'
     | '/info/policies'
     | '/admin/faktura'
-    | '/admin/handlekurv'
     | '/admin/kasse'
     | '/admin/merking'
     | '/admin/ordreoversikt'
     | '/admin/user-settings'
     | '/admin/venteliste'
-    | '/auth/menu'
-    | '/auth/success'
-    | '/database/companies'
-    | '/u/edit'
     | '/auth/failure'
     | '/auth/forgot'
     | '/auth/login'
@@ -831,10 +732,6 @@ export interface FileRouteTypes {
     | '/admin/kommunikasjon/paminnelser'
     | '/admin/kommunikasjon/utsendelser'
     | '/admin/overleveringer/$matchId'
-    | '/auth/login/forgot'
-    | '/auth/register/detail'
-    | '/auth/social/failure'
-    | '/database/branches/edit'
     | '/auth/permission/denied'
     | '/auth/reset/$id'
     | '/info/branch/$branchId'
@@ -854,7 +751,6 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/info'
-    | '/welcome'
     | '/handlekurv'
     | '/items'
     | '/oppgaver'
@@ -864,16 +760,11 @@ export interface FileRouteTypes {
     | '/info/branch'
     | '/info/policies'
     | '/admin/faktura'
-    | '/admin/handlekurv'
     | '/admin/kasse'
     | '/admin/merking'
     | '/admin/ordreoversikt'
     | '/admin/user-settings'
     | '/admin/venteliste'
-    | '/auth/menu'
-    | '/auth/success'
-    | '/database/companies'
-    | '/u/edit'
     | '/auth/failure'
     | '/auth/forgot'
     | '/auth/login'
@@ -908,10 +799,6 @@ export interface FileRouteTypes {
     | '/admin/kommunikasjon/paminnelser'
     | '/admin/kommunikasjon/utsendelser'
     | '/admin/overleveringer/$matchId'
-    | '/auth/login/forgot'
-    | '/auth/register/detail'
-    | '/auth/social/failure'
-    | '/database/branches/edit'
     | '/auth/permission/denied'
     | '/auth/reset/$id'
     | '/info/branch/$branchId'
@@ -934,7 +821,6 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin'
     | '/(offentlig)/info'
     | '/(offentlig)/overleveringer'
-    | '/(legacy)/welcome'
     | '/(offentlig)/handlekurv'
     | '/(offentlig)/items'
     | '/(offentlig)/oppgaver'
@@ -945,16 +831,11 @@ export interface FileRouteTypes {
     | '/(offentlig)/info/branch'
     | '/(offentlig)/info/policies'
     | '/(administrasjon)/admin/faktura'
-    | '/(administrasjon)/admin/handlekurv'
     | '/(administrasjon)/admin/kasse'
     | '/(administrasjon)/admin/merking'
     | '/(administrasjon)/admin/ordreoversikt'
     | '/(administrasjon)/admin/user-settings'
     | '/(administrasjon)/admin/venteliste'
-    | '/(legacy)/auth/menu'
-    | '/(legacy)/auth/success'
-    | '/(legacy)/database/companies'
-    | '/(legacy)/u/edit'
     | '/(offentlig)/auth/failure'
     | '/(offentlig)/auth/forgot'
     | '/(offentlig)/auth/login'
@@ -989,10 +870,6 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/kommunikasjon/paminnelser'
     | '/(administrasjon)/admin/kommunikasjon/utsendelser'
     | '/(administrasjon)/admin/overleveringer/$matchId'
-    | '/(legacy)/auth/login/forgot'
-    | '/(legacy)/auth/register/detail'
-    | '/(legacy)/auth/social/failure'
-    | '/(legacy)/database/branches/edit'
     | '/(offentlig)/auth/permission/denied'
     | '/(offentlig)/auth/reset/$id'
     | '/(offentlig)/info/branch/$branchId'
@@ -1014,15 +891,6 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   administrasjonAdminRouteRoute: typeof administrasjonAdminRouteRouteWithChildren
-  legacyWelcomeRoute: typeof legacyWelcomeRoute
-  legacyAuthMenuRoute: typeof legacyAuthMenuRoute
-  legacyAuthSuccessRoute: typeof legacyAuthSuccessRoute
-  legacyDatabaseCompaniesRoute: typeof legacyDatabaseCompaniesRoute
-  legacyUEditRoute: typeof legacyUEditRoute
-  legacyAuthLoginForgotRoute: typeof legacyAuthLoginForgotRoute
-  legacyAuthRegisterDetailRoute: typeof legacyAuthRegisterDetailRoute
-  legacyAuthSocialFailureRoute: typeof legacyAuthSocialFailureRoute
-  legacyDatabaseBranchesEditRoute: typeof legacyDatabaseBranchesEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1081,13 +949,6 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof administrasjonAdminRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/welcome': {
-      id: '/(legacy)/welcome'
-      path: '/welcome'
-      fullPath: '/welcome'
-      preLoaderRoute: typeof legacyWelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(offentlig)/handlekurv': {
@@ -1160,13 +1021,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminFakturaRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(administrasjon)/admin/handlekurv': {
-      id: '/(administrasjon)/admin/handlekurv'
-      path: '/handlekurv'
-      fullPath: '/admin/handlekurv'
-      preLoaderRoute: typeof administrasjonAdminHandlekurvRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
     '/(administrasjon)/admin/kasse': {
       id: '/(administrasjon)/admin/kasse'
       path: '/kasse'
@@ -1208,34 +1062,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/venteliste'
       preLoaderRoute: typeof administrasjonAdminVentelisteRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(legacy)/auth/menu': {
-      id: '/(legacy)/auth/menu'
-      path: '/auth/menu'
-      fullPath: '/auth/menu'
-      preLoaderRoute: typeof legacyAuthMenuRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/auth/success': {
-      id: '/(legacy)/auth/success'
-      path: '/auth/success'
-      fullPath: '/auth/success'
-      preLoaderRoute: typeof legacyAuthSuccessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/database/companies': {
-      id: '/(legacy)/database/companies'
-      path: '/database/companies'
-      fullPath: '/database/companies'
-      preLoaderRoute: typeof legacyDatabaseCompaniesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/u/edit': {
-      id: '/(legacy)/u/edit'
-      path: '/u/edit'
-      fullPath: '/u/edit'
-      preLoaderRoute: typeof legacyUEditRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/(offentlig)/auth/failure': {
       id: '/(offentlig)/auth/failure'
@@ -1489,34 +1315,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminOverleveringerMatchIdRouteImport
       parentRoute: typeof administrasjonAdminOverleveringerRouteRoute
     }
-    '/(legacy)/auth/login/forgot': {
-      id: '/(legacy)/auth/login/forgot'
-      path: '/auth/login/forgot'
-      fullPath: '/auth/login/forgot'
-      preLoaderRoute: typeof legacyAuthLoginForgotRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/auth/register/detail': {
-      id: '/(legacy)/auth/register/detail'
-      path: '/auth/register/detail'
-      fullPath: '/auth/register/detail'
-      preLoaderRoute: typeof legacyAuthRegisterDetailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/auth/social/failure': {
-      id: '/(legacy)/auth/social/failure'
-      path: '/auth/social/failure'
-      fullPath: '/auth/social/failure'
-      preLoaderRoute: typeof legacyAuthSocialFailureRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(legacy)/database/branches/edit': {
-      id: '/(legacy)/database/branches/edit'
-      path: '/database/branches/edit'
-      fullPath: '/database/branches/edit'
-      preLoaderRoute: typeof legacyDatabaseBranchesEditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/(offentlig)/auth/permission/denied': {
       id: '/(offentlig)/auth/permission/denied'
       path: '/auth/permission/denied'
@@ -1741,7 +1539,6 @@ const administrasjonAdminOverleveringerRouteRouteWithChildren =
 interface administrasjonAdminRouteRouteChildren {
   administrasjonAdminOverleveringerRouteRoute: typeof administrasjonAdminOverleveringerRouteRouteWithChildren
   administrasjonAdminFakturaRoute: typeof administrasjonAdminFakturaRoute
-  administrasjonAdminHandlekurvRoute: typeof administrasjonAdminHandlekurvRoute
   administrasjonAdminKasseRoute: typeof administrasjonAdminKasseRoute
   administrasjonAdminMerkingRoute: typeof administrasjonAdminMerkingRoute
   administrasjonAdminOrdreoversiktRoute: typeof administrasjonAdminOrdreoversiktRoute
@@ -1766,7 +1563,6 @@ const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildr
     administrasjonAdminOverleveringerRouteRoute:
       administrasjonAdminOverleveringerRouteRouteWithChildren,
     administrasjonAdminFakturaRoute: administrasjonAdminFakturaRoute,
-    administrasjonAdminHandlekurvRoute: administrasjonAdminHandlekurvRoute,
     administrasjonAdminKasseRoute: administrasjonAdminKasseRoute,
     administrasjonAdminMerkingRoute: administrasjonAdminMerkingRoute,
     administrasjonAdminOrdreoversiktRoute:
@@ -1812,15 +1608,6 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   administrasjonAdminRouteRoute: administrasjonAdminRouteRouteWithChildren,
-  legacyWelcomeRoute: legacyWelcomeRoute,
-  legacyAuthMenuRoute: legacyAuthMenuRoute,
-  legacyAuthSuccessRoute: legacyAuthSuccessRoute,
-  legacyDatabaseCompaniesRoute: legacyDatabaseCompaniesRoute,
-  legacyUEditRoute: legacyUEditRoute,
-  legacyAuthLoginForgotRoute: legacyAuthLoginForgotRoute,
-  legacyAuthRegisterDetailRoute: legacyAuthRegisterDetailRoute,
-  legacyAuthSocialFailureRoute: legacyAuthSocialFailureRoute,
-  legacyDatabaseBranchesEditRoute: legacyDatabaseBranchesEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

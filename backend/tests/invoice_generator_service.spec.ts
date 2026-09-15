@@ -119,7 +119,7 @@ test.group("invoice generation", (group) => {
     }
   });
 
-  test("one invoice per customer, numbered in order, with bl-admin's rent arithmetic", async ({
+  test("one invoice per customer, numbered in order, with legacy bl-admin's rent arithmetic", async ({
     assert,
   }) => {
     aggregate.resolves([

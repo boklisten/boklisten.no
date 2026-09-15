@@ -1,8 +1,7 @@
-import { Container, Group, Stack, Text, Title } from "@mantine/core";
+import { Container, Stack, Text, Title } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
 import { ViewTransition, useDeferredValue, useEffect, useState } from "react";
 
-import LegacyAppLink from "@/features/auth-linker/LegacyAppLink";
 import AdminBlidSearchResult from "@/features/blid-search/AdminBlidSearchResult";
 import CollectionView from "@/features/bulk-collection/CollectionView";
 import {
@@ -208,10 +207,7 @@ function KasseContent() {
     <Container>
       <Stack>
         <Stack gap={4}>
-          <Group gap="xs">
-            <Title>{KASSE_TITLE}</Title>
-            <LegacyAppLink path="cart" label="Gå til gammel handlekurv" />
-          </Group>
+          <Title>{KASSE_TITLE}</Title>
           <Text c="dimmed">{KASSE_DESCRIPTION}</Text>
         </Stack>
         <KasseSearch onCode={(code) => void scanner.submitCode(code)} />

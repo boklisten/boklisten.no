@@ -15,11 +15,11 @@ import type { UserDetail } from "#shared/user-detail";
 
 /**
  * Generates invoices for books that were neither returned nor bought out by their deadline, one
- * invoice per customer, the way bl-admin's InvoiceGeneratorService did. The amounts are computed
+ * invoice per customer, the way legacy bl-admin's InvoiceGeneratorService did. The amounts are computed
  * with the same arithmetic so the invoices come out the same.
  */
 
-/** bl-admin's price service rounded every amount to whole kroner. */
+/** Legacy bl-admin's price service rounded every amount to whole kroner. */
 function wholeKroner(amount: number): number {
   return Number(amount.toFixed(0));
 }

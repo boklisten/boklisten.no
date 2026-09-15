@@ -1,26 +1,33 @@
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
+import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
+import { MatchRepository } from "#services/matches/match_repository";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderValidator } from "#services/orders/validation/order_validator";
-import { SEDbQueryBuilder } from "#services/legacy/query/se.db-query-builder";
-import { isNotNullish } from "#services/typescript_helpers";
-import { MatchRepository } from "#services/matches/match_repository";
 import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
+import { isNotNullish } from "#services/typescript_helpers";
 import { BlError } from "#shared/bl-error";
-import { BlapiResponse } from "#shared/blapi-response";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import type { UserPermission } from "#shared/user-permission";
-import type { BlApiRequest } from "#types/bl-api-request";
-import type { Operation } from "#types/operation";
 
-export class OrderPlaceOperation implements Operation {
-  private readonly queryBuilder = new SEDbQueryBuilder();
+/** The user placing the order: the employee at the stand, or the customer for their own order. */
+export interface PlacingUser {
+  id: string;
+  details: string;
+  permission: UserPermission;
+}
+
+/**
+ * Places a stored order: generates the customer items it hands out, marks it placed, validates it
+ * and records the books it moved between the stand and the customer.
+ */
+export class OrderPlaceService {
   private readonly orderToCustomerItemGenerator: OrderToCustomerItemGenerator;
   private readonly orderPlacedHandler: OrderPlacedHandler;
   private readonly orderValidator: OrderValidator;
@@ -70,13 +77,9 @@ export class OrderPlaceOperation implements Operation {
   }
 
   private async hasOpenOrderWithOrderItems(order: Order) {
-    const databaseQuery = this.queryBuilder.getDbQuery(
-      { customer: order.customer, placed: "true" },
-      [
-        { fieldName: "customer", type: "object-id" },
-        { fieldName: "placed", type: "boolean" },
-      ],
-    );
+    const databaseQuery = new SEDbQuery();
+    databaseQuery.objectIdFilters = [{ fieldName: "customer", value: order.customer }];
+    databaseQuery.booleanFilters = [{ fieldName: "placed", value: true }];
 
     try {
       const existingOrders = await StorageService.Orders.getByQuery(databaseQuery);
@@ -106,7 +109,7 @@ export class OrderPlaceOperation implements Operation {
   /**
    * Check whether a blid in the order is already handed out
    *
-   * Unable to check against legacy customeritems which have no blid, but there
+   * Unable to check against old customer items which have no blid, but there
    * are very few of those which are not returned. Only checks whether a blid is
    * already handed out if the handout order type of the item in this order is
    * "buy", "rent" or "partly-payment".
@@ -124,8 +127,7 @@ export class OrderPlaceOperation implements Operation {
     }
 
     try {
-      // Use an aggregation because the query builder does not support checking against a list of blids,
-      // and we would otherwise have to send a query for every single order item.
+      // One aggregation for every blid in the order instead of a query per order item.
       const unreturnedItems = await StorageService.CustomerItems.aggregate([
         {
           $match: {
@@ -213,13 +215,19 @@ export class OrderPlaceOperation implements Operation {
     }
   }
 
-  public async run(blApiRequest: BlApiRequest) {
+  /**
+   * Places the order with the given id.
+   * @returns the placed order
+   * @throws ReferenceError if the order does not exist
+   * @throws BlError if the order cannot be placed
+   */
+  public async place(orderId: string, user?: PlacingUser): Promise<Order> {
     let order: Order;
 
     try {
-      order = await StorageService.Orders.get(blApiRequest.documentId);
+      order = await StorageService.Orders.get(orderId);
     } catch {
-      throw new ReferenceError(`order "${blApiRequest.documentId}" not found`);
+      throw new ReferenceError(`order "${orderId}" not found`);
     }
 
     if (order.byCustomer) {
@@ -247,28 +255,19 @@ export class OrderPlaceOperation implements Operation {
     let customerItems = await this.orderToCustomerItemGenerator.generate(order);
 
     if (customerItems && customerItems.length > 0) {
-      customerItems = await this.addCustomerItems(
-        customerItems,
-        // @ts-expect-error // fixme: bad enums
-        blApiRequest.user,
-      );
+      customerItems = await this.addCustomerItems(customerItems, user);
       order = this.addCustomerItemIdToOrderItems(order, customerItems);
 
-      await StorageService.Orders.update(
-        order.id,
-        {
-          orderItems: order.orderItems,
-        },
-        // @ts-expect-error // fixme: bad enums
-        blApiRequest.user,
-      );
+      await StorageService.Orders.update(order.id, {
+        orderItems: order.orderItems,
+      });
     }
 
-    await this.orderPlacedHandler.placeOrder(order, blApiRequest.user?.details ?? "");
+    await this.orderPlacedHandler.placeOrder(order, user?.details ?? "");
 
     const isAdmin =
-      blApiRequest.user?.permission !== undefined &&
-      PermissionService.isPermissionEqualOrOver(blApiRequest.user?.permission, "admin");
+      user?.permission !== undefined &&
+      PermissionService.isPermissionEqualOrOver(user.permission, "admin");
 
     await this.orderValidator.validate(order, isAdmin);
 
@@ -286,21 +285,16 @@ export class OrderPlaceOperation implements Operation {
     if (customerItems && customerItems.length > 0) {
       try {
         // should add customerItems to customer if present
-        await this.addCustomerItemsToCustomer(
-          customerItems,
-          order.customer,
-          // @ts-expect-error // fixme: bad enums
-          blApiRequest.user,
-        );
+        await this.addCustomerItemsToCustomer(customerItems, order.customer);
         // fixme: probably not a good idea to ignore this error...
       } catch {}
     }
-    return new BlapiResponse([order]);
+    return order;
   }
 
   private async addCustomerItems(
     customerItems: CustomerItem[],
-    user: { id: string; permission: UserPermission },
+    user?: PlacingUser,
   ): Promise<CustomerItem[]> {
     const addedCustomerItems = [];
     for (const customerItem of customerItems) {
