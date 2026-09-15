@@ -12,7 +12,7 @@ const IGNORED_PAIRS_STORAGE_KEY = "bl-ignored-duplicate-pairs";
 
 export default function DuplicateCustomers() {
   const { api } = useApiClient();
-  const { data, isPending, isError } = useQuery(api.userManagement.duplicates.queryOptions());
+  const { data, isPending, isError } = useQuery(api.users.duplicates.queryOptions());
   const [ignoredKeys, setIgnoredKeys] = useLocalStorage<string[]>({
     key: IGNORED_PAIRS_STORAGE_KEY,
     defaultValue: [],

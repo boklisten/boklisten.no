@@ -22,18 +22,18 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   const { data: orders } = useQuery(
-    api.orders.getPlacedOrders.queryOptions(
+    api.orders.placedForCustomer.queryOptions(
       { params: { detailsId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
   const { data: matchData } = useQuery(
-    api.matches.getMatchesForCustomer.queryOptions(
-      { params: { customerId: customer.id } },
+    api.matches.forCustomer.queryOptions(
+      { params: { detailsId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
-  const { data: branches } = useQuery(publicApi.branches.getAll.queryOptions());
+  const { data: branches } = useQuery(publicApi.branches.index.queryOptions());
 
   const openOrderInfo = buildOpenOrderInfo(orders ?? []);
   const { receiveBooks } = buildPeerBooks(matchData ?? [], customer.id);
@@ -89,7 +89,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
   }
 
   const refreshOrders = () =>
-    void queryClient.invalidateQueries({ queryKey: api.orders.getPlacedOrders.pathKey() });
+    void queryClient.invalidateQueries({ queryKey: api.orders.placedForCustomer.pathKey() });
 
   return (
     <Stack gap="lg">

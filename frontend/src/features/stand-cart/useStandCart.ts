@@ -148,9 +148,9 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     cartRef.current = cart;
   }, [cart]);
 
-  const { data: branches } = useQuery(publicApi.branches.getAll.queryOptions());
+  const { data: branches } = useQuery(publicApi.branches.index.queryOptions());
   const { data: customer } = useQuery(
-    api.userDetail.getById.queryOptions(
+    api.userDetails.show.queryOptions(
       { params: { detailsId: customerId ?? "" } },
       { enabled: customerId !== null },
     ),
@@ -397,7 +397,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     if (cartRef.current.linking === null) {
       return { message: "Ingen unik ID venter på kobling" };
     }
-    const item = await client.api.items.getByIsbn({ params: { isbn } });
+    const item = await client.api.items.showByIsbn({ params: { isbn } });
     if (!item) {
       return {
         title: "Ukjent ISBN",
@@ -418,7 +418,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     if (linking === null || linking.candidate === null) {
       return { message: "Ingen kobling å bekrefte" };
     }
-    const connection = await client.api.uniqueItems.add({
+    const connection = await client.api.blids.registerOne({
       body: { blid: linking.blid, isbn: linking.candidate.isbn },
     });
     if (connection.feedback) {

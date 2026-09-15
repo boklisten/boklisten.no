@@ -6,7 +6,6 @@ import { deadlineWindow } from "#services/deadline_window";
 import DispatchService from "#services/dispatch_service";
 import type { MessageLogContext } from "#services/message_log_service";
 import { MessageLogService } from "#services/message_log_service";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { reminderValidator } from "#validators/reminder";
 
@@ -143,16 +142,14 @@ async function sendReminderEmail(
 
 export default class RemindersController {
   async countRecipients(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
-
     const { deadlineISO, customerItemType, branchIDs } =
       await ctx.request.validateUsing(reminderValidator);
     const customers = await aggregateCustomersToRemind(customerItemType, branchIDs, deadlineISO);
     return { recipientCount: customers.length };
   }
 
-  async remind(ctx: HttpContext) {
-    const { detailsId } = PermissionService.adminOrFail(ctx);
+  async send(ctx: HttpContext) {
+    const { detailsId } = ctx.authUser;
 
     const { deadlineISO, customerItemType, branchIDs, emailTemplateId, smsText } =
       await ctx.request.validateUsing(reminderValidator);

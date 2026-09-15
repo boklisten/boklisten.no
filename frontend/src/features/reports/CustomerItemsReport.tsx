@@ -42,7 +42,7 @@ export default function CustomerItemsReport() {
         ...(includeReturned && { includeReturned }),
         ...(includeBuyout && { includeBuyout }),
       };
-      const rows = await client.api.reports.getCustomerItemsReport({ query });
+      const rows = await client.api.reports.customerItems({ query });
       return rows ?? [];
     },
     filename: `customer_items-${dayjs().format("YYYY-MM-DD")}.xlsx`,

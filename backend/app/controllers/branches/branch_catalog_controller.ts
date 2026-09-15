@@ -5,8 +5,9 @@ import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import type { CartItem } from "#shared/cart_item";
 
-export default class SubjectsController {
-  async getBranchSubjects(ctx: HttpContext) {
+/** The books a branch offers for ordering, grouped by subject and priced per option. */
+export default class BranchCatalogController {
+  async show(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
     const databaseQuery = new SEDbQuery();
     databaseQuery.objectIdFilters = [{ fieldName: "branch", value: branchId }];

@@ -39,10 +39,10 @@ export default function CheckoutSignature() {
   const navigate = useNavigate();
 
   const { data: userDetail, isError: userDetailFailed } = useQuery(
-    api.userDetail.getMyDetails.queryOptions(),
+    api.userDetails.me.queryOptions(),
   );
   const { data: signature, isError: signatureFailed } = useQuery({
-    ...api.signatures.getMySignature.queryOptions(),
+    ...api.signatures.me.queryOptions(),
     refetchInterval: POLL_INTERVAL_MS,
     staleTime: 0,
   });

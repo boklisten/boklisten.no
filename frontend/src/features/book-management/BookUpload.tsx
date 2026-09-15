@@ -86,8 +86,7 @@ export default function BookUpload({ items }: { items: Item[] }) {
       }
     },
     onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke laste opp bøkene")),
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: api.items.getAllForAdmin.queryKey() }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: api.items.all.queryKey() }),
   });
 
   const preview = previewUpload(rows ?? [], items);

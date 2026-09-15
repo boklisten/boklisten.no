@@ -1,23 +1,19 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import { BranchSubjectsService } from "#services/branch_subjects_service";
-import { PermissionService } from "#services/permission_service";
 import { branchSubjectValidator } from "#validators/branch_subjects";
 
 export default class BranchSubjectsController {
-  async getSubjects(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async index(ctx: HttpContext) {
     return BranchSubjectsService.list(ctx.request.param("branchId"));
   }
 
-  async createSubject(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async store(ctx: HttpContext) {
     const input = await ctx.request.validateUsing(branchSubjectValidator);
     await BranchSubjectsService.create(ctx.request.param("branchId"), input);
   }
 
-  async updateSubject(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async update(ctx: HttpContext) {
     const input = await ctx.request.validateUsing(branchSubjectValidator);
     await BranchSubjectsService.update(
       ctx.request.param("branchId"),
@@ -26,16 +22,14 @@ export default class BranchSubjectsController {
     );
   }
 
-  async deleteSubject(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async destroy(ctx: HttpContext) {
     await BranchSubjectsService.destroy(
       ctx.request.param("branchId"),
       Number(ctx.request.param("subjectId")),
     );
   }
 
-  async importSubjects(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async import(ctx: HttpContext) {
     return BranchSubjectsService.importFromBranchItems(ctx.request.param("branchId"));
   }
 }

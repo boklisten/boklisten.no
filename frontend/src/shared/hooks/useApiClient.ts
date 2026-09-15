@@ -53,7 +53,7 @@ export default function useApiClient() {
 
           let retryRequest: Request;
           try {
-            const newTokens = await publicApiClient.api.tokens.token({
+            const newTokens = await publicApiClient.api.tokens.refresh({
               body: {
                 refreshToken,
               },

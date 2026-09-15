@@ -1,15 +1,15 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { branchItemsValidator } from "#validators/branch_items";
 
 export default class BranchItemsController {
-  async setBranchItems(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  /** Replaces the branch's item list wholesale. */
+  async update(ctx: HttpContext) {
     const databaseQuery = new SEDbQuery();
-    const { branchId, branchItems } = await ctx.request.validateUsing(branchItemsValidator);
+    const branchId = ctx.request.param("branchId");
+    const { branchItems } = await ctx.request.validateUsing(branchItemsValidator);
     databaseQuery.objectIdFilters = [{ fieldName: "branch", value: branchId }];
     const existingBranchItems =
       (await StorageService.BranchItems.getByQueryOrNull(databaseQuery)) ?? [];
@@ -33,8 +33,7 @@ export default class BranchItemsController {
       newBranchItems.map((nbi) => nbi.id),
     );
   }
-  async getBranchItems(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async index(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
     const databaseQuery = new SEDbQuery();
     databaseQuery.objectIdFilters = [{ fieldName: "branch", value: branchId }];

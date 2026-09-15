@@ -34,7 +34,7 @@ export default function QuestionsAndAnswersTable() {
     api.questionsAndAnswers.destroy.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.questionsAndAnswers.getAll.pathKey(),
+          queryKey: api.questionsAndAnswers.index.pathKey(),
         }),
       onSuccess: () => showSuccessNotification("Spørsmål og svar ble slettet!"),
       onError: () => showErrorNotification("Klarte ikke slette spørsmål og svar!"),
@@ -45,7 +45,7 @@ export default function QuestionsAndAnswersTable() {
     api.questionsAndAnswers.updateOrder.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.questionsAndAnswers.getAll.pathKey(),
+          queryKey: api.questionsAndAnswers.index.pathKey(),
         }),
       onError: () => showErrorNotification("Klarte ikke endre rekkefølgen!"),
     }),
@@ -55,7 +55,7 @@ export default function QuestionsAndAnswersTable() {
     data: questionsAndAnswers,
     isLoading,
     error,
-  } = useQuery(api.questionsAndAnswers.getAll.queryOptions({}));
+  } = useQuery(api.questionsAndAnswers.index.queryOptions({}));
 
   if (error) {
     return (

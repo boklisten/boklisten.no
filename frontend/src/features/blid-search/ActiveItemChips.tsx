@@ -14,7 +14,7 @@ function useActiveItemUpdate(successMessage: string, onSaved: () => void) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   return useMutation(
-    api.blidSearch.updateActiveItem.mutationOptions({
+    api.blids.updateActiveItem.mutationOptions({
       onSuccess: () => {
         showSuccessNotification(successMessage);
         onSaved();
@@ -22,7 +22,7 @@ function useActiveItemUpdate(successMessage: string, onSaved: () => void) {
       onError: () => showErrorNotification("Klarte ikke oppdatere utlånet"),
       onSettled: () =>
         Promise.all([
-          queryClient.invalidateQueries({ queryKey: api.blidSearch.lookup.pathKey() }),
+          queryClient.invalidateQueries({ queryKey: api.blids.show.pathKey() }),
           queryClient.invalidateQueries({ queryKey: api.branchBooks.getActiveBooks.pathKey() }),
           queryClient.invalidateQueries({
             queryKey: api.branchBooks.getActiveBookDetails.pathKey(),

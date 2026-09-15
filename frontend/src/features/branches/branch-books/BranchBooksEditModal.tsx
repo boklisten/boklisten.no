@@ -38,7 +38,7 @@ export default function BranchBooksEditModal({
   onClose: () => void;
 }) {
   const { api } = useApiClient();
-  const { data: branches } = useQuery(api.branches.getAll.queryOptions());
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   const form = useAppForm({
     defaultValues: { deadline: null as string | null },

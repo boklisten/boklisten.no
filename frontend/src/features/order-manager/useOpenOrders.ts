@@ -11,7 +11,7 @@ export const ORDER_MANAGER_POLL_MS = 10_000;
 export default function useOpenOrders(filter: OrderManagerFilter) {
   const { api } = useApiClient();
   const query = useInfiniteQuery({
-    ...api.orderManager.listOpenOrders.infiniteQueryOptions(
+    ...api.orders.index.infiniteQueryOptions(
       { query: filter },
       {
         pageParamKey: "cursor",

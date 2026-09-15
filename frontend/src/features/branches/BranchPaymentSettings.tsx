@@ -12,7 +12,6 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
 
   const form = useAppForm({
     defaultValues: {
-      id: existingBranch.id,
       deliveryMethods: {
         branch: existingBranch.deliveryMethods?.branch ?? false,
         byMail: existingBranch.deliveryMethods?.byMail ?? false,
@@ -43,7 +42,8 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
         },
       },
     },
-    onSubmit: ({ value }) => updateBranchMutation.mutate({ body: value }),
+    onSubmit: ({ value }) =>
+      updateBranchMutation.mutate({ params: { branchId: existingBranch.id }, body: value }),
   });
 
   return (

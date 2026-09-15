@@ -56,7 +56,7 @@ function StatusChip({ status }: { status: CustomerItemStatus }) {
 export default function CustomerItemCard({
   actionableCustomerItem,
 }: {
-  actionableCustomerItem: Route.Response<"customer_items.get_customer_items">[number];
+  actionableCustomerItem: Route.Response<"customer_items.me">[number];
 }) {
   const cart = useCart();
   const cartItem = cart.get().find((entry) => entry.id === actionableCustomerItem.item.id);

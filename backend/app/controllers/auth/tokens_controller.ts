@@ -13,7 +13,7 @@ async function getUserFromVerifiedRefreshToken(verifiedRefreshToken: jwt.JwtPayl
 }
 
 export default class TokensController {
-  async token(ctx: HttpContext) {
+  async refresh(ctx: HttpContext) {
     const { refreshToken } = await ctx.request.validateUsing(tokenValidator);
     try {
       const verifiedRefreshToken = jwt.verify(refreshToken, env.get("REFRESH_TOKEN_SECRET"));

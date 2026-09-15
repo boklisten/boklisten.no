@@ -8,7 +8,7 @@ import useApiClient from "@/shared/hooks/useApiClient";
 export default function SelectEmailTemplateField(props: SelectProps) {
   const field = useFieldContext<string | null>();
   const { api } = useApiClient();
-  const { data: emailTemplates } = useQuery(api.dispatch.getEmailTemplates.queryOptions());
+  const { data: emailTemplates } = useQuery(api.dispatch.emailTemplates.queryOptions());
 
   return (
     <Select

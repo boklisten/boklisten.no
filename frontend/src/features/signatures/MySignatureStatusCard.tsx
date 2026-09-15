@@ -16,9 +16,9 @@ import useApiClient from "@/shared/hooks/useApiClient";
 export default function MySignatureStatusCard() {
   const { api } = useApiClient();
   const navigate = useNavigate();
-  const { data: userDetail } = useQuery(api.userDetail.getMyDetails.queryOptions());
+  const { data: userDetail } = useQuery(api.userDetails.me.queryOptions());
   const { data, isError } = useQuery({
-    ...api.signatures.getMySignature.queryOptions(),
+    ...api.signatures.me.queryOptions(),
     staleTime: 0,
   });
 

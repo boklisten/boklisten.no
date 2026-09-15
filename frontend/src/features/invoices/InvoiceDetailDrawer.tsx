@@ -247,11 +247,11 @@ export default function InvoiceDetailDrawer({
   const narrow = useMediaQuery("(max-width: 48em)");
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  const detailQuery = api.invoices.get.queryOptions({ params: { invoiceId: invoiceId ?? "" } });
+  const detailQuery = api.invoices.show.queryOptions({ params: { invoiceId: invoiceId ?? "" } });
   const invoice = useQuery({ ...detailQuery, enabled: invoiceId !== undefined });
 
   const refreshList = () =>
-    queryClient.invalidateQueries({ queryKey: api.invoices.list.pathKey() });
+    queryClient.invalidateQueries({ queryKey: api.invoices.index.pathKey() });
 
   const changeStatus = useMutation({
     mutationFn: (status: InvoiceStatus) =>

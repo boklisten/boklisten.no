@@ -37,7 +37,7 @@ export default function QuestionAndAnswerEditor({
     api.questionsAndAnswers.store.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.questionsAndAnswers.getAll.queryKey(),
+          queryKey: api.questionsAndAnswers.index.queryKey(),
         }),
       onSuccess: () => {
         showSuccessNotification("Spørsmål og svar ble lagret!");
@@ -51,7 +51,7 @@ export default function QuestionAndAnswerEditor({
     api.questionsAndAnswers.update.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.questionsAndAnswers.getAll.pathKey(),
+          queryKey: api.questionsAndAnswers.index.pathKey(),
         }),
       onSuccess: () => {
         showSuccessNotification("Dynamisk innhold ble oppdatert!");

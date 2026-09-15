@@ -47,7 +47,7 @@ function OrderManagerPage() {
   const selectedId = params.ordre;
 
   const detailQuery = useQuery(
-    api.orderManager.getOrder.queryOptions(
+    api.orders.show.queryOptions(
       { params: { orderId: selectedId ?? "" } },
       { enabled: selectedId !== undefined, refetchInterval: ORDER_MANAGER_POLL_MS },
     ),

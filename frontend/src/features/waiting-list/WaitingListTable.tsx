@@ -13,7 +13,7 @@ import CreateWaitingListEntry from "@/features/waiting-list/CreateWaitingListEnt
 import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-type WaitingListEntry = Route.Response<"waiting_list_customer.get_all">[number];
+type WaitingListEntry = Route.Response<"waiting_list_customers.index">[number];
 
 export default function WaitingListTable({
   loading,
@@ -24,16 +24,16 @@ export default function WaitingListTable({
   loading: boolean;
   items: Item[];
   branches: Branch[];
-  waitingList: Route.Response<"waiting_list_customer.get_all">;
+  waitingList: Route.Response<"waiting_list_customers.index">;
 }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
 
   const { mutate: destroyWaitingListEntry, isPending: isDestroying } = useMutation(
-    api.waitingListCustomer.destroy.mutationOptions({
+    api.waitingListCustomers.destroy.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.waitingListCustomer.getAll.pathKey(),
+          queryKey: api.waitingListCustomers.index.pathKey(),
         }),
       onSuccess: () => showSuccessNotification("Ventelisteoppføring ble slettet!"),
       onError: () => showErrorNotification("Klarte ikke slette ventelisteoppføring!"),

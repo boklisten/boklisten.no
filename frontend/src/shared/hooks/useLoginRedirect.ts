@@ -26,7 +26,7 @@ export default function useLoginRedirect() {
   async function redirectAfterLogin() {
     let userDetail;
     try {
-      userDetail = await client.api.userDetail.getMyDetails({});
+      userDetail = await client.api.userDetails.me({});
     } catch {
       redirectToTarget();
       return;

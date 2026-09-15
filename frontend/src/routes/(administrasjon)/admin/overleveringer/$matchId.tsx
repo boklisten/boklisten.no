@@ -27,9 +27,7 @@ function AdminMatchDetailPage() {
     data: match,
     error,
     isLoading,
-  } = useQuery(
-    api.matches.getMatchById.queryOptions({ params: { matchId } }, { staleTime: 30_000 }),
-  );
+  } = useQuery(api.matches.show.queryOptions({ params: { matchId } }, { staleTime: 30_000 }));
 
   return (
     <Container size="lg" py="lg">

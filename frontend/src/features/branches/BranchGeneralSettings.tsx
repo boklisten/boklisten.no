@@ -20,15 +20,15 @@ export default function BranchGeneralSettings({
   const { api } = useApiClient();
 
   const addBranchMutation = useMutation(
-    api.branches.add.mutationOptions({
+    api.branches.store.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.branches.getAll.pathKey(),
+          queryKey: api.branches.index.pathKey(),
         }),
       onSuccess: async (newBranch) => {
         showSuccessNotification("Filial ble opprettet!");
         await queryClient.invalidateQueries({
-          queryKey: api.branches.getAll.pathKey(),
+          queryKey: api.branches.index.pathKey(),
         });
         onSuccess?.(newBranch);
       },
@@ -55,7 +55,7 @@ export default function BranchGeneralSettings({
     onSubmit: ({ value }) =>
       !existingBranch
         ? addBranchMutation.mutate({ body: value })
-        : updateBranchMutation.mutate({ body: { id: existingBranch.id, ...value } }),
+        : updateBranchMutation.mutate({ params: { branchId: existingBranch.id }, body: value }),
   });
 
   return (

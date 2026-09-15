@@ -27,7 +27,7 @@ export function guardianRecipientsOf(customer: UserDetail): ReadonlySet<string> 
 export default function CustomerMessagesView({ customer }: { customer: UserDetail }) {
   const { api } = useApiClient();
   const { data, isPending, error, errorUpdateCount } = useQuery(
-    api.messageLogs.customerLog.queryOptions(
+    api.messageLogs.forCustomer.queryOptions(
       { params: { detailsId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),

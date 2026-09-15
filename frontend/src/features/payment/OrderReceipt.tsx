@@ -9,7 +9,7 @@ import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 export default function OrderReceipt({ orderId }: { orderId: string }) {
   const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery(
-    api.orderHistory.getMyOrder.queryOptions({ params: { orderId } }),
+    api.orders.showMe.queryOptions({ params: { orderId } }),
   );
 
   if (isLoading) {

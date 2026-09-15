@@ -51,8 +51,8 @@ function compareSlots(a: string | null, b: string | null) {
 export default function MatchStatistics({ roundId }: { roundId: string }) {
   const { api } = useApiClient();
   const { data, isLoading, isError, isFetching, dataUpdatedAt, refetch } = useQuery(
-    api.matchStatistics.getStatisticsForRound.queryOptions(
-      { params: { roundId } },
+    api.matchRounds.statistics.queryOptions(
+      { params: { id: roundId } },
       { refetchInterval: REFRESH_INTERVAL_MS },
     ),
   );

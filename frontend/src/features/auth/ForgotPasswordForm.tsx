@@ -21,7 +21,7 @@ export default function ForgotPasswordForm() {
   const requestPasswordResetMutation = useMutation({
     mutationFn: async ({ email }: ForgotFields) => {
       setApiError(null);
-      const { message } = await publicApiClient.api.passwordReset.requestPasswordReset({
+      const { message } = await publicApiClient.api.passwordReset.request({
         body: {
           email,
         },

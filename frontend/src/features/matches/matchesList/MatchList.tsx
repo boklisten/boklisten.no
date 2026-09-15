@@ -12,9 +12,7 @@ import useAuth from "@/shared/hooks/useAuth";
 export default function MatchList() {
   const { api } = useApiClient();
   const { detailsId } = useAuth();
-  const { data, error, isLoading } = useQuery(
-    api.matches.getMyMatches.queryOptions({}, { staleTime: 5000 }),
-  );
+  const { data, error, isLoading } = useQuery(api.matches.me.queryOptions({}, { staleTime: 5000 }));
 
   if (isLoading) {
     return <Skeleton height={110} />;

@@ -116,7 +116,7 @@ export default function PlannedRoundCard({
 }) {
   const { api } = useApiClient();
   const { isAdmin } = useAuth();
-  const { data: branches } = useQuery(api.branches.getAll.queryOptions());
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   const meetingDay = dayjs(round.meetingDate);
 

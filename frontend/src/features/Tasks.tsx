@@ -15,7 +15,7 @@ import { isUnder18 } from "@/shared/utils/dates";
 export default function Tasks() {
   const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery({
-    ...api.userDetail.getMyDetails.queryOptions(),
+    ...api.userDetails.me.queryOptions(),
     refetchInterval: 5000,
   });
 

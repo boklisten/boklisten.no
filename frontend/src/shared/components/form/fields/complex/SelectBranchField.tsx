@@ -11,7 +11,7 @@ export default function SelectBranchField({
   ...props
 }: Omit<TreeSelectProps, "data"> & { perspective: string }) {
   const field = useFieldContext<string | null>();
-  const { data: branches } = useQuery(publicApi.branches.getAll.queryOptions());
+  const { data: branches } = useQuery(publicApi.branches.index.queryOptions());
 
   const subject = perspective === "personal" ? "din" : "kundens";
 

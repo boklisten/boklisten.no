@@ -4,7 +4,6 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import CustomerItemsController from "#controllers/customer_items_controller";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { mock } from "#tests/test-doubles";
@@ -12,7 +11,10 @@ import { mock } from "#tests/test-doubles";
 const DETAILS_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 
 function contextFor(detailsId: string) {
-  return mock<HttpContext>({ request: { param: () => detailsId } });
+  return mock<HttpContext>({
+    request: { param: () => detailsId },
+    authUser: { permission: "employee", detailsId: "someone-else" },
+  });
 }
 
 /** The $match stage of the aggregate the controller ran. */
@@ -25,41 +27,31 @@ function matchStage(aggregateStub: sinon.SinonStub): Record<string, unknown> {
   return stage;
 }
 
-test.group("CustomerItemsController.getActiveCustomerItemsForCustomer", (group) => {
+test.group("CustomerItemsController.forCustomer", (group) => {
   let sandbox: sinon.SinonSandbox;
   let aggregateStub: sinon.SinonStub;
-  let employeeStub: sinon.SinonStub;
   let controller: CustomerItemsController;
 
   group.each.setup(() => {
     sandbox = createSandbox();
     aggregateStub = sandbox.stub().resolves([]);
     sandbox.stub(StorageService, "CustomerItems").value({ aggregate: aggregateStub });
-    employeeStub = sandbox.stub(PermissionService, "employeeOrFail").returns({
-      permission: "employee",
-      detailsId: "someone-else",
-    });
     controller = new CustomerItemsController();
   });
   group.each.teardown(() => {
     sandbox.restore();
   });
 
-  test("requires employee permission", async ({ assert }) => {
-    await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
-    assert.equal(employeeStub.calledOnce, true);
-  });
-
   test("returns nothing for an id that is not an object id, without querying", async ({
     assert,
   }) => {
-    const result = await controller.getActiveCustomerItemsForCustomer(contextFor("not-an-id"));
+    const result = await controller.forCustomer(contextFor("not-an-id"));
     assert.deepEqual(result, []);
     assert.equal(aggregateStub.called, false);
   });
 
   test("scopes the query to the requested customer", async ({ assert }) => {
-    await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
+    await controller.forCustomer(contextFor(DETAILS_ID));
     assert.equal(String(matchStage(aggregateStub)["customer"]), DETAILS_ID);
   });
 
@@ -68,7 +60,7 @@ test.group("CustomerItemsController.getActiveCustomerItemsForCustomer", (group) 
   }) => {
     // Regression guard: { cancel: false } does not match documents where the field is absent, and
     // hundreds of older customer items omit it. isCustomerItemActive reads absent as falsy.
-    await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
+    await controller.forCustomer(contextFor(DETAILS_ID));
     const match = matchStage(aggregateStub);
     for (const flag of ["returned", "buyout", "cancel", "buyback"]) {
       assert.deepEqual(match[flag], { $ne: true }, `${flag} must use $ne: true, not false`);
@@ -76,7 +68,7 @@ test.group("CustomerItemsController.getActiveCustomerItemsForCustomer", (group) 
   });
 
   test("only counts books actually handed out", async ({ assert }) => {
-    await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
+    await controller.forCustomer(contextFor(DETAILS_ID));
     assert.equal(matchStage(aggregateStub)["handout"], true);
   });
 
@@ -105,7 +97,7 @@ test.group("CustomerItemsController.getActiveCustomerItemsForCustomer", (group) 
       ]),
     });
     sandbox.stub(StorageService, "Branches").value({ getOrNull: sandbox.stub().resolves(null) });
-    const result = await controller.getActiveCustomerItemsForCustomer(contextFor(DETAILS_ID));
+    const result = await controller.forCustomer(contextFor(DETAILS_ID));
     assert.lengthOf(result, 1);
     assert.include(result[0], book);
     assert.deepEqual(

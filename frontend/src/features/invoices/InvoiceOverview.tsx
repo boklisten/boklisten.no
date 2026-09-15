@@ -73,7 +73,7 @@ export default function InvoiceOverview() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const statusChange = useInvoiceStatusChange();
 
-  const invoices = useQuery(api.invoices.list.queryOptions());
+  const invoices = useQuery(api.invoices.index.queryOptions());
   const allRows = invoices.data ?? [];
   const batches = useMemo(() => invoiceBatches(invoices.data ?? []), [invoices.data]);
   const selectedBatches = parseBatchPrefixes(fakturarunde);

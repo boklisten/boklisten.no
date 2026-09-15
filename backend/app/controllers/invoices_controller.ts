@@ -11,7 +11,6 @@ import {
   setInvoiceStatus,
   setInvoiceStatuses,
 } from "#services/invoices/invoice_status_service";
-import { PermissionService } from "#services/permission_service";
 import {
   companyInvoiceValidator,
   invoiceBulkStatusValidator,
@@ -23,30 +22,27 @@ import {
 } from "#validators/invoices";
 
 export default class InvoicesController {
-  async list(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async index() {
     return listInvoices();
   }
 
-  async get(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async show(ctx: HttpContext) {
     return getInvoice(ctx.request.param("invoiceId"));
   }
 
   async setStatus(ctx: HttpContext) {
-    const { detailsId } = PermissionService.adminOrFail(ctx);
+    const { detailsId } = ctx.authUser;
     const { status } = await ctx.request.validateUsing(invoiceStatusValidator);
     return setInvoiceStatus(ctx.request.param("invoiceId"), status, detailsId);
   }
 
   async setStatuses(ctx: HttpContext) {
-    const { detailsId } = PermissionService.adminOrFail(ctx);
+    const { detailsId } = ctx.authUser;
     const { invoiceIds, status } = await ctx.request.validateUsing(invoiceBulkStatusValidator);
     return setInvoiceStatuses(invoiceIds, status, detailsId);
   }
 
   async setLineCancelled(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const { cancel } = await ctx.request.validateUsing(invoiceLineCancelValidator);
     const lineIndex = Number(ctx.request.param("lineIndex"));
     if (!Number.isInteger(lineIndex) || lineIndex < 0) {
@@ -56,19 +52,16 @@ export default class InvoicesController {
   }
 
   async export(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const { invoiceIds, format } = await ctx.request.validateUsing(invoiceExportValidator);
     return exportInvoices(invoiceIds, format);
   }
 
   async generationDefaults(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const { type } = await ctx.request.validateUsing(invoiceGenerationDefaultsValidator);
     return generationDefaults(type);
   }
 
   async generate(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const { dryRun, deadlineFrom, deadlineTo, ...settings } = await ctx.request.validateUsing(
       invoiceGenerationValidator,
     );
@@ -81,7 +74,6 @@ export default class InvoicesController {
   }
 
   async createCompanyInvoice(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const { duedate, ...input } = await ctx.request.validateUsing(companyInvoiceValidator);
     return createCompanyInvoice({ ...input, duedate: new Date(duedate) });
   }

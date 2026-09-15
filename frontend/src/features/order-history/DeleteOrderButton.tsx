@@ -17,7 +17,7 @@ export default function DeleteOrderButton({ order }: { order: OrderHistoryEntry 
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   const deleteMutation = useMutation(
-    api.orderHistory.deleteOrder.mutationOptions({
+    api.orders.destroy.mutationOptions({
       onSuccess: () => showSuccessNotification("Ordren ble slettet"),
       onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke slette ordren")),
       // A gone order changes the customer's books, open orders and branch lists alike.

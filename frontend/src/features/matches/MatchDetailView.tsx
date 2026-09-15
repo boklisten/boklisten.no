@@ -147,7 +147,7 @@ export default function MatchDetailView({
               onScan={async (blid) => {
                 const response = await client.api.matches.transferItem({ body: { blid } });
                 await queryClient.invalidateQueries({
-                  queryKey: api.matches.getMyMatches.queryKey(),
+                  queryKey: api.matches.me.queryKey(),
                 });
                 return response.feedback ? { message: response.feedback } : undefined;
               }}

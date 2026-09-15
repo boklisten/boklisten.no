@@ -68,7 +68,7 @@ export default function useStandCartSubmit({
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   const { data: signatureStatus } = useQuery(
-    api.signatures.getSignature.queryOptions({ params: { detailsId: customer.id } }),
+    api.signatures.show.queryOptions({ params: { detailsId: customer.id } }),
   );
   const checkoutMutation = useMutation(
     api.standCart.checkout.mutationOptions({
@@ -87,13 +87,13 @@ export default function useStandCartSubmit({
   /** The order changed what every list on the customer shows. */
   function invalidate() {
     for (const key of [
-      api.orders.getPlacedOrders.pathKey(),
-      api.customerItems.getActiveCustomerItemsForCustomer.pathKey(),
-      api.matches.getMatchesForCustomer.pathKey(),
-      api.orderHistory.getForCustomer.pathKey(),
-      api.blidSearch.lookup.pathKey(),
-      api.orderManager.listOpenOrders.pathKey(),
-      api.orderManager.getOrder.pathKey(),
+      api.orders.placedForCustomer.pathKey(),
+      api.customerItems.forCustomer.pathKey(),
+      api.matches.forCustomer.pathKey(),
+      api.orders.forCustomer.pathKey(),
+      api.blids.show.pathKey(),
+      api.orders.index.pathKey(),
+      api.orders.show.pathKey(),
     ]) {
       void queryClient.invalidateQueries({ queryKey: key });
     }

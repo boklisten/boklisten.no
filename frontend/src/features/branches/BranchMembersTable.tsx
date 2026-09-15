@@ -7,7 +7,7 @@ import type { Route } from "@tuyau/core/types";
 
 import MoveBranchMemberModal from "@/features/branches/MoveBranchMemberModal";
 
-type BranchMember = Route.Response<"branch_membership.get_members">["directMembers"][number];
+type BranchMember = Route.Response<"branch_members.index">["directMembers"][number];
 
 export default function BranchMembersTable({
   branchId,

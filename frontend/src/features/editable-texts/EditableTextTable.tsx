@@ -13,7 +13,7 @@ import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-type EditableText = Route.Response<"editable_texts.get_all">[number];
+type EditableText = Route.Response<"editable_texts.index">[number];
 
 function openEditorModal(editableText?: EditableText) {
   const modalId = modals.open({
@@ -33,7 +33,7 @@ export default function EditableTextTable() {
     api.editableTexts.destroy.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.editableTexts.getAll.queryKey(),
+          queryKey: api.editableTexts.index.queryKey(),
         }),
       onSuccess: () => showSuccessNotification("Dynamisk innhold ble slettet!"),
       onError: () => showErrorNotification("Klarte ikke slette dynamisk innhold!"),
@@ -44,7 +44,7 @@ export default function EditableTextTable() {
     data: editableTexts,
     isLoading,
     error,
-  } = useQuery(api.editableTexts.getAll.queryOptions({}));
+  } = useQuery(api.editableTexts.index.queryOptions({}));
 
   if (error) {
     return (

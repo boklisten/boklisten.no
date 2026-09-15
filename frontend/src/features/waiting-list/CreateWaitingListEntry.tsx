@@ -31,12 +31,12 @@ export default function CreateWaitingListEntry({
   const { api, client } = useApiClient();
   const queryClient = useQueryClient();
 
-  const { data: branches } = useQuery(api.branches.getPublic.queryOptions());
+  const { data: branches } = useQuery(api.branches.indexPublic.queryOptions());
 
   const addWaitingListCustomer = useMutation({
     mutationFn: async (data: WaitingListEntryForm) => {
       for (const itemId of data.itemIds) {
-        await client.api.waitingListCustomer.create({
+        await client.api.waitingListCustomers.store({
           body: {
             name: data.name,
             phoneNumber: data.phoneNumber,
@@ -53,7 +53,7 @@ export default function CreateWaitingListEntry({
     onError: () => showErrorNotification("Klarte ikke legge til kunde i venteliste"),
     onSettled: () =>
       queryClient.invalidateQueries({
-        queryKey: api.waitingListCustomer.getAll.pathKey(),
+        queryKey: api.waitingListCustomers.index.pathKey(),
       }),
   });
   const form = useAppForm({

@@ -14,7 +14,7 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 export default function GuardianSignatureRequest({ userDetail }: { userDetail: UserDetail }) {
   const { api } = useApiClient();
   const requestSignatureMutation = useMutation(
-    api.signatures.sendSignatureLinkAsCustomer.mutationOptions({
+    api.signatures.sendLinkMe.mutationOptions({
       onSuccess: () => showSuccessNotification("Signaturforespørsel har blitt sendt!"),
       onError: () => showErrorNotification("Klarte ikke sende signaturforespørsel"),
     }),

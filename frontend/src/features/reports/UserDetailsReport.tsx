@@ -19,7 +19,7 @@ export default function UserDetailsReport() {
       const query: UserDetailsReportQuery = {
         ...(branchFilter.length > 0 && { branchFilter }),
       };
-      const rows = await client.api.reports.getUserDetailsReport({ query });
+      const rows = await client.api.reports.userDetails({ query });
       return rows ?? [];
     },
     filename: `user_details-${dayjs().format("YYYY-MM-DD")}.xlsx`,

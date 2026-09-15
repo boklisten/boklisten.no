@@ -30,7 +30,7 @@ export default function UserDangerZone({
   const confirmPhrase = userDetail.name || userDetail.email;
 
   const deleteMutation = useMutation({
-    mutationFn: () => client.api.userManagement.destroy({ params: { detailsId: userDetail.id } }),
+    mutationFn: () => client.api.users.destroy({ params: { detailsId: userDetail.id } }),
     onSuccess: () => {
       showSuccessNotification("Kunden ble slettet");
       onDeleted?.();

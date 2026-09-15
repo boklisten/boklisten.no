@@ -42,7 +42,7 @@ function formatPercent(count: number, total: number): string {
 export default function BranchSignatureStatus({ branchId }: { branchId: string }) {
   const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery(
-    api.branchSignatureStatus.getStatus.queryOptions({ params: { branchId } }),
+    api.branchSignatureStatus.show.queryOptions({ params: { branchId } }),
   );
 
   if (isError) {

@@ -13,19 +13,19 @@ import type { Route } from "@tuyau/core/types";
 function OpeningHourRow({
   openingHour,
 }: {
-  openingHour: Route.Response<"opening_hours.get">[number];
+  openingHour: Route.Response<"opening_hours.index">[number];
 }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   const deleteOpeningHourMutation = useMutation(
-    api.openingHours.delete.mutationOptions({
+    api.openingHours.destroy.mutationOptions({
       onError: () => showErrorNotification("Klarte ikke slette åpningstid"),
       onSuccess: () => {
         showSuccessNotification("Åpningstid ble slettet!");
       },
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.openingHours.get.queryKey({ params: { branchId: openingHour.branchId } }),
+          queryKey: api.openingHours.index.queryKey({ params: { branchId: openingHour.branchId } }),
         }),
     }),
   );
@@ -60,7 +60,7 @@ export default function OpeningHoursList({ branchId }: { branchId: string }) {
     data: openingHours,
     isLoading: isLoadingOpeningHours,
     isError: isErrorOpeningHours,
-  } = useQuery(publicApi.openingHours.get.queryOptions({ params: { branchId } }));
+  } = useQuery(publicApi.openingHours.index.queryOptions({ params: { branchId } }));
 
   if (isLoadingOpeningHours) {
     return (

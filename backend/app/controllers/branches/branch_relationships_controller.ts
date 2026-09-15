@@ -1,6 +1,5 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { branchRelationshipValidator } from "#validators/branch";
 
@@ -94,9 +93,8 @@ async function assertValidBranchUpdate(
   }
 }
 
-export default class BranchRelationshipController {
+export default class BranchRelationshipsController {
   async update(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const relationshipData = await ctx.request.validateUsing(branchRelationshipValidator);
 
     try {

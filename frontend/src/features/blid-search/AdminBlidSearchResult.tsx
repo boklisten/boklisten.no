@@ -19,9 +19,7 @@ export default function AdminBlidSearchResult({
   onClear: () => void;
 }) {
   const { api } = useApiClient();
-  const { data, isPending, isError } = useQuery(
-    api.blidSearch.lookup.queryOptions({ params: { blid } }),
-  );
+  const { data, isPending, isError } = useQuery(api.blids.show.queryOptions({ params: { blid } }));
   const [editing, setEditing] = useState(false);
   const [showingLabel, setShowingLabel] = useState(false);
   const [showingIsbn, setShowingIsbn] = useState(false);

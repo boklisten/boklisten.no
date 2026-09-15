@@ -19,15 +19,15 @@ export default function BranchItemSettings({ branchId }: { branchId: string }) {
     data: branchItems,
     isLoading,
     isError,
-  } = useQuery(api.branchItems.getBranchItems.queryOptions({ params: { branchId } }));
+  } = useQuery(api.branchItems.index.queryOptions({ params: { branchId } }));
 
   const saveMutation = useMutation(
-    api.branchItems.setBranchItems.mutationOptions({
+    api.branchItems.update.mutationOptions({
       onSuccess: () => showSuccessNotification("Endringene ble lagret!"),
       onError: () => showErrorNotification("Klarte ikke lagre endringene"),
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.branchItems.getBranchItems.pathKey(),
+          queryKey: api.branchItems.index.pathKey(),
         }),
     }),
   );
@@ -44,10 +44,8 @@ export default function BranchItemSettings({ branchId }: { branchId: string }) {
     },
     onSubmit: ({ value }) =>
       saveMutation.mutate({
-        body: {
-          branchId,
-          branchItems: value.branchItems,
-        },
+        params: { branchId },
+        body: { branchItems: value.branchItems },
       }),
   });
 

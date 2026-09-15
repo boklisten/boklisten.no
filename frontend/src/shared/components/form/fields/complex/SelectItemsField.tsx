@@ -9,7 +9,7 @@ import { itemSelectFilter, toItemSelectData } from "@/shared/utils/itemSelectFil
 export default function SelectItemsField(props: MultiSelectProps) {
   const field = useFieldContext<{ id: string; title: string }[]>();
   const { api } = useApiClient();
-  const { data: items } = useQuery(api.items.get.queryOptions());
+  const { data: items } = useQuery(api.items.index.queryOptions());
 
   return (
     <MultiSelect

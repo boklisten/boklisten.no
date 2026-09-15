@@ -82,7 +82,7 @@ export default function useCollectionSession(): CollectionSession {
   const overdueBooks = scannedBooks.filter((book) => isOverdue(book.deadline));
 
   const lookupMutation = useMutation({
-    mutationFn: (blid: string) => client.api.bulkCollection.lookup({ params: { blid } }),
+    mutationFn: (blid: string) => client.api.bulkCollection.show({ params: { blid } }),
   });
 
   const collectMutation = useMutation({
@@ -100,11 +100,11 @@ export default function useCollectionSession(): CollectionSession {
       // The books are no longer on loan, so a customer or book left open elsewhere on the page
       // (and the holder badge in the book search) must not keep showing them as such.
       for (const key of [
-        api.customerItems.getActiveCustomerItemsForCustomer.pathKey(),
-        api.matches.getMatchesForCustomer.pathKey(),
-        api.orderHistory.getForCustomer.pathKey(),
-        api.orders.getPlacedOrders.pathKey(),
-        api.blidSearch.lookup.pathKey(),
+        api.customerItems.forCustomer.pathKey(),
+        api.matches.forCustomer.pathKey(),
+        api.orders.forCustomer.pathKey(),
+        api.orders.placedForCustomer.pathKey(),
+        api.blids.show.pathKey(),
         BLID_SEARCH_QUERY_KEY,
       ]) {
         void queryClient.invalidateQueries({ queryKey: key });

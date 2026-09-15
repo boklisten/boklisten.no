@@ -52,12 +52,12 @@ export default function CartContent() {
   const { api } = useApiClient();
   // The conflict flags must reflect orders placed seconds ago, so bypass the global staleTime
   const { data: openOrderItems } = useQuery({
-    ...api.orders.getOpenOrders.queryOptions(),
+    ...api.orders.openItemsMe.queryOptions(),
     enabled: isLoggedIn,
     staleTime: 0,
   });
   const { data: customerItems } = useQuery({
-    ...api.customerItems.getCustomerItems.queryOptions(),
+    ...api.customerItems.me.queryOptions(),
     enabled: isLoggedIn,
     staleTime: 0,
   });

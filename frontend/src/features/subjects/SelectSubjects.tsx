@@ -18,7 +18,7 @@ export default function SelectSubjects({ branchId }: { branchId: string }) {
   const cart = useCart();
   const selectedSubjects = useSet<string>();
   const { data: subjects } = useQuery(
-    publicApi.subjects.getBranchSubjects.queryOptions({ params: { branchId } }),
+    publicApi.branchCatalog.show.queryOptions({ params: { branchId } }),
   );
 
   if (!subjects) {

@@ -172,12 +172,12 @@ export default function ActiveBooksView({ customer }: { customer: UserDetail }) 
     isPending,
     isError,
   } = useQuery(
-    api.customerItems.getActiveCustomerItemsForCustomer.queryOptions({
+    api.customerItems.forCustomer.queryOptions({
       params: { detailsId: customerId },
     }),
   );
   const { data: matches } = useQuery(
-    api.matches.getMatchesForCustomer.queryOptions({ params: { customerId } }),
+    api.matches.forCustomer.queryOptions({ params: { detailsId: customerId } }),
   );
 
   if (isPending) {

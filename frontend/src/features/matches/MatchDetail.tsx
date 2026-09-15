@@ -15,7 +15,7 @@ function MatchDetail({ matchId }: { matchId: string }) {
   const { detailsId } = useAuth();
 
   const { data, isLoading, isError } = useQuery(
-    api.matches.getMyMatches.queryOptions({}, { staleTime: 5000 }),
+    api.matches.me.queryOptions({}, { staleTime: 5000 }),
   );
 
   if (isLoading) {

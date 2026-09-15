@@ -11,7 +11,7 @@ export default function useUpdateBranchMutation() {
     api.branches.update.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.branches.getAll.pathKey(),
+          queryKey: api.branches.index.pathKey(),
         }),
       onSuccess: () => showSuccessNotification("Filial ble oppdatert!"),
       onError: () => showErrorNotification("Klarte ikke oppdatere filial!"),

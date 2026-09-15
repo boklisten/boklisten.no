@@ -13,7 +13,7 @@ export default function ConfirmOrder({ orderId }: { orderId: string }) {
   const queryClient = useQueryClient();
 
   const confirmCheckoutMutation = useMutation(
-    api.checkout.confirmCheckout.mutationOptions({
+    api.checkout.confirm.mutationOptions({
       onError: () => showErrorNotification("Klarte ikke bekrefte ordre!"),
       onSuccess: async () => {
         cart.clear();
@@ -21,13 +21,13 @@ export default function ConfirmOrder({ orderId }: { orderId: string }) {
         // demand on placement), so refresh them before navigating rather than let AuthGuard read
         // a pre-order cache
         await queryClient.invalidateQueries({
-          queryKey: api.userDetail.getMyDetails.pathKey(),
+          queryKey: api.userDetails.me.pathKey(),
         });
         void queryClient.invalidateQueries({
-          queryKey: api.orders.getOpenOrders.pathKey(),
+          queryKey: api.orders.openItemsMe.pathKey(),
         });
         void queryClient.invalidateQueries({
-          queryKey: api.customerItems.getCustomerItems.pathKey(),
+          queryKey: api.customerItems.me.pathKey(),
         });
         void navigate({ to: "/order-history" });
       },

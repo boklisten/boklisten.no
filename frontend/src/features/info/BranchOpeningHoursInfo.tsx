@@ -12,7 +12,7 @@ import type { Route } from "@tuyau/core/types";
 function OpeningHourRow({
   openingHour,
 }: {
-  openingHour: Route.Response<"opening_hours.get">[number];
+  openingHour: Route.Response<"opening_hours.index">[number];
 }) {
   const { weekday, date, fromTime, toTime } = formatOpeningHour(openingHour);
   return (
@@ -27,7 +27,7 @@ function OpeningHourRow({
 }
 
 export const branchOpeningHoursQueryOptions = (branchId: string) =>
-  publicApi.openingHours.get.queryOptions({ params: { branchId } });
+  publicApi.openingHours.index.queryOptions({ params: { branchId } });
 
 export default function BranchOpeningHours({ branchId }: { branchId: string }) {
   const {

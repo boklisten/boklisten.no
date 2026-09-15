@@ -14,7 +14,7 @@ export const Route = createFileRoute("/(offentlig)/bestilling/")({
     }),
   loader: async ({ context }) => {
     await context.queryClient.query({
-      ...queryOptions(publicApi.branches.getPublic.queryOptions()),
+      ...queryOptions(publicApi.branches.indexPublic.queryOptions()),
       staleTime: "static",
     });
   },

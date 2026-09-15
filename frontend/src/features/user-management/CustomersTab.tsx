@@ -32,7 +32,7 @@ function monthLabel(month: string) {
 
 export default function CustomersTab() {
   const { api } = useApiClient();
-  const { data: metrics, isPending, isError } = useQuery(api.userManagement.metrics.queryOptions());
+  const { data: metrics, isPending, isError } = useQuery(api.users.metrics.queryOptions());
 
   if (isError) {
     return (

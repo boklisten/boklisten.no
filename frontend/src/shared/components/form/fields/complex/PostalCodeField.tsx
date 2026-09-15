@@ -13,7 +13,7 @@ export async function postalCodeFieldValidator(value: string) {
     return illegalPostalCodeMessage;
   }
 
-  const postalCity = await publicApiClient.api.postal.lookupPostalCode({
+  const postalCity = await publicApiClient.api.postalCodes.show({
     params: {
       postalCode: value,
     },
@@ -31,7 +31,7 @@ export default function PostalCodeField() {
       if (!validator.isPostalCode(code, "NO")) {
         return null;
       }
-      return publicApiClient.api.postal.lookupPostalCode({
+      return publicApiClient.api.postalCodes.show({
         params: {
           postalCode: code,
         },

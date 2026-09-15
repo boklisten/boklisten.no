@@ -17,7 +17,7 @@ export const Route = createFileRoute("/(offentlig)/info/branch")({
 });
 
 function BranchInfoPageLayout() {
-  const { data: branches } = useQuery(publicApi.branches.getPublic.queryOptions());
+  const { data: branches } = useQuery(publicApi.branches.indexPublic.queryOptions());
   const [selectedBranchId, setSelectedBranchId] = useLocalStorage({ key: "selectedBranchId" });
   const navigate = Route.useNavigate();
 

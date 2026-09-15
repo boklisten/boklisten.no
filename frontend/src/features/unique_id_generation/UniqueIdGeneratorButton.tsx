@@ -8,7 +8,7 @@ import { publicApiClient } from "@/shared/utils/publicApiClient";
 
 export default function UniqueIdGeneratorButton() {
   const { api } = useApiClient();
-  const { data, isPending, isError } = useQuery(api.uniqueIds.getToken.queryOptions());
+  const { data, isPending, isError } = useQuery(api.uniqueIds.token.queryOptions());
   if (isError) {
     showErrorNotification("Klarte ikke hente autentiseringstoken for unik ID-generering");
   }
@@ -18,7 +18,7 @@ export default function UniqueIdGeneratorButton() {
       component="a"
       href={
         import.meta.env["VITE_API_URL"] +
-        publicApiClient.urlFor("unique_ids.download_unique_id_pdf", {
+        publicApiClient.urlFor("unique_ids.pdf", {
           token: data ?? "",
         })
       }

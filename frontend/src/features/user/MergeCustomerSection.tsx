@@ -61,7 +61,7 @@ export default function MergeCustomerSection({
   const { data: searchResults, isFetching } = useQuery({
     queryKey: ["userDetail", "search", debouncedSearch] as const,
     queryFn: async () =>
-      (await client.api.userDetail.search({ body: { searchStr: debouncedSearch } })) ?? [],
+      (await client.api.userDetails.search({ body: { searchStr: debouncedSearch } })) ?? [],
     enabled: searchActive,
   });
   const candidates = searchActive
@@ -69,7 +69,7 @@ export default function MergeCustomerSection({
     : [];
 
   const { data: preview, isPending: previewPending } = useQuery(
-    api.userManagement.mergePreview.queryOptions(
+    api.users.mergePreview.queryOptions(
       { params: { fromDetailsId: userDetail.id, toDetailsId: targetId ?? "" } },
       { enabled: Boolean(targetId) },
     ),
@@ -84,7 +84,7 @@ export default function MergeCustomerSection({
 
   const mergeMutation = useMutation({
     mutationFn: (input: { fromDetailsId: string; toDetailsId: string }) =>
-      client.api.userManagement.merge({ body: input }),
+      client.api.users.merge({ body: input }),
     onSuccess: async (_, { toDetailsId }) => {
       showSuccessNotification("Kundene ble slått sammen");
       reset();

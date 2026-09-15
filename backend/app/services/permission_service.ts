@@ -94,30 +94,8 @@ function authenticate({ request }: HttpContext, requiredPermission?: UserPermiss
   return { permission, detailsId };
 }
 
-/**
- *
- * @throws UnauthorizedException if token is not valid
- * @throws NotAllowedException if user is not admin
- * @returns the detailsId and permission for the customer
- */
-function adminOrFail(ctx: HttpContext) {
-  return authenticate(ctx, USER_PERMISSION.ADMIN);
-}
-
-/**
- *
- * @throws UnauthorizedException if token is not valid
- * @throws NotAllowedException if user is not employee
- * @returns the detailsId and permission for the customer
- */
-function employeeOrFail(ctx: HttpContext) {
-  return authenticate(ctx, USER_PERMISSION.EMPLOYEE);
-}
-
 export const PermissionService = {
   isAdmin,
   isPermissionEqualOrOver,
   authenticate,
-  adminOrFail,
-  employeeOrFail,
 };

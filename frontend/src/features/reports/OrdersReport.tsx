@@ -28,7 +28,7 @@ export default function OrdersReport() {
         ...(created.from && { createdAfter: created.from.toISOString() }),
         ...(created.to && { createdBefore: created.to.toISOString() }),
       };
-      const rows = await client.api.reports.getOrdersReport({ query });
+      const rows = await client.api.reports.orders({ query });
       return rows ?? [];
     },
     filename: `orders-${dayjs().format("YYYY-MM-DD")}.xlsx`,

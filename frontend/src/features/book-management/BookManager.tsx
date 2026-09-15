@@ -38,7 +38,7 @@ export default function BookManager() {
   const [selected, setSelected] = useState<Item[]>([]);
   const gridRef = useRef<AgGridReact<Item>>(null);
 
-  const itemsQuery = api.items.getAllForAdmin.queryOptions();
+  const itemsQuery = api.items.all.queryOptions();
   const { data: items, isLoading, error } = useQuery(itemsQuery);
 
   const { mutate: patchBook } = useMutation({

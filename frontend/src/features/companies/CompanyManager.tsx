@@ -19,11 +19,10 @@ function CompanyCard({ company }: { company: Company }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   const deleteCompanyMutation = useMutation(
-    api.companies.deleteCompany.mutationOptions({
+    api.companies.destroy.mutationOptions({
       onSuccess: () => showSuccessNotification(`${company.name} ble slettet!`),
       onError: () => showErrorNotification(`Klarte ikke slette ${company.name}`),
-      onSettled: () =>
-        queryClient.invalidateQueries({ queryKey: api.companies.getCompanies.pathKey() }),
+      onSettled: () => queryClient.invalidateQueries({ queryKey: api.companies.index.pathKey() }),
     }),
   );
   return (
@@ -69,14 +68,13 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   const addCompanyMutation = useMutation(
-    api.companies.addCompany.mutationOptions({
+    api.companies.store.mutationOptions({
       onError: () => showErrorNotification("Klarte ikke opprette selskap!"),
       onSuccess: () => {
         showSuccessNotification(`${form.state.values.name} ble opprettet!`);
         onSuccess();
       },
-      onSettled: () =>
-        queryClient.invalidateQueries({ queryKey: api.companies.getCompanies.pathKey() }),
+      onSettled: () => queryClient.invalidateQueries({ queryKey: api.companies.index.pathKey() }),
     }),
   );
   const form = useAppForm({
@@ -169,7 +167,7 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
 
 export default function CompanyManager() {
   const { api } = useApiClient();
-  const { data, isLoading, isError } = useQuery(api.companies.getCompanies.queryOptions());
+  const { data, isLoading, isError } = useQuery(api.companies.index.queryOptions());
 
   const createModalId = "create-company";
   return (

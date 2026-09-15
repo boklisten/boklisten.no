@@ -26,7 +26,7 @@ function useActiveBookUpdate(successMessage: string, onSaved: () => void) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   return useMutation(
-    api.blidSearch.updateActiveItem.mutationOptions({
+    api.blids.updateActiveItem.mutationOptions({
       onSuccess: () => {
         showSuccessNotification(successMessage);
         onSaved();
@@ -36,9 +36,9 @@ function useActiveBookUpdate(successMessage: string, onSaved: () => void) {
       onSettled: () =>
         Promise.all([
           queryClient.invalidateQueries({
-            queryKey: api.customerItems.getActiveCustomerItemsForCustomer.pathKey(),
+            queryKey: api.customerItems.forCustomer.pathKey(),
           }),
-          queryClient.invalidateQueries({ queryKey: api.blidSearch.lookup.pathKey() }),
+          queryClient.invalidateQueries({ queryKey: api.blids.show.pathKey() }),
           queryClient.invalidateQueries({ queryKey: api.branchBooks.getActiveBooks.pathKey() }),
           queryClient.invalidateQueries({
             queryKey: api.branchBooks.getActiveBookDetails.pathKey(),

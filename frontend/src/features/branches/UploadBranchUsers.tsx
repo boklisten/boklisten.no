@@ -189,7 +189,7 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
     onError: () => showErrorNotification("Klarte ikke å laste opp elevene!"),
     onSettled: () =>
       queryClient.invalidateQueries({
-        queryKey: api.branchMembership.getMembers.queryKey(),
+        queryKey: api.branchMembers.index.queryKey(),
       }),
   });
 

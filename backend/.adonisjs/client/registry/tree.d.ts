@@ -3,7 +3,7 @@ import type { routes } from './index.ts'
 
 export interface ApiDefinition {
   tokens: {
-    token: typeof routes['tokens.token']
+    refresh: typeof routes['tokens.refresh']
   }
   vipps: {
     redirect: typeof routes['vipps.redirect']
@@ -14,48 +14,151 @@ export interface ApiDefinition {
     register: typeof routes['local.register']
   }
   passwordReset: {
-    requestPasswordReset: typeof routes['password_reset.request_password_reset']
-    validatePasswordReset: typeof routes['password_reset.validate_password_reset']
-    resetPassword: typeof routes['password_reset.reset_password']
+    request: typeof routes['password_reset.request']
+    validate: typeof routes['password_reset.validate']
+    reset: typeof routes['password_reset.reset']
   }
-  waitingListCustomer: {
-    getAll: typeof routes['waiting_list_customer.get_all']
-    create: typeof routes['waiting_list_customer.create']
-    destroy: typeof routes['waiting_list_customer.destroy']
+  emailVerification: {
+    verify: typeof routes['email_verification.verify']
+    send: typeof routes['email_verification.send']
   }
-  reminders: {
-    countRecipients: typeof routes['reminders.count_recipients']
-    remind: typeof routes['reminders.remind']
+  emailValidation: {
+    validate: typeof routes['email_validation.validate']
+  }
+  postalCodes: {
+    show: typeof routes['postal_codes.show']
+  }
+  bokflyt: {
+    contact: typeof routes['bokflyt.contact']
   }
   branches: {
-    getPublic: typeof routes['branches.get_public']
-    getAll: typeof routes['branches.get_all']
-    getById: typeof routes['branches.get_by_id']
-    add: typeof routes['branches.add']
+    index: typeof routes['branches.index']
+    indexPublic: typeof routes['branches.index_public']
+    show: typeof routes['branches.show']
+    store: typeof routes['branches.store']
     update: typeof routes['branches.update']
   }
-  branchUpload: {
-    evaluateSubjectChoices: typeof routes['branch_upload.evaluate_subject_choices']
-    uploadSubjectChoices: typeof routes['branch_upload.upload_subject_choices']
+  branchCatalog: {
+    show: typeof routes['branch_catalog.show']
+  }
+  openingHours: {
+    index: typeof routes['opening_hours.index']
+    store: typeof routes['opening_hours.store']
+    destroy: typeof routes['opening_hours.destroy']
+  }
+  items: {
+    buyback: typeof routes['items.buyback']
+    all: typeof routes['items.all']
+    store: typeof routes['items.store']
+    bulkUpsert: typeof routes['items.bulk_upsert']
+    update: typeof routes['items.update']
+    index: typeof routes['items.index']
+    showByIsbn: typeof routes['items.show_by_isbn']
+  }
+  editableTexts: {
+    show: typeof routes['editable_texts.show']
+    index: typeof routes['editable_texts.index']
+    upsert: typeof routes['editable_texts.upsert']
+    destroy: typeof routes['editable_texts.destroy']
+  }
+  questionsAndAnswers: {
+    index: typeof routes['questions_and_answers.index']
+    store: typeof routes['questions_and_answers.store']
+    updateOrder: typeof routes['questions_and_answers.update_order']
+    update: typeof routes['questions_and_answers.update']
+    destroy: typeof routes['questions_and_answers.destroy']
+  }
+  signatures: {
+    valid: typeof routes['signatures.valid']
+    sign: typeof routes['signatures.sign']
+    me: typeof routes['signatures.me']
+    sendLinkMe: typeof routes['signatures.send_link_me']
+    gallery: typeof routes['signatures.gallery']
+    show: typeof routes['signatures.show']
+    sendLink: typeof routes['signatures.send_link']
+  }
+  uniqueIds: {
+    pdf: typeof routes['unique_ids.pdf']
+    token: typeof routes['unique_ids.token']
+    label: typeof routes['unique_ids.label']
+  }
+  checkout: {
+    vippsCallback: typeof routes['checkout.vipps_callback']
+    initialize: typeof routes['checkout.initialize']
+    confirm: typeof routes['checkout.confirm']
+    status: typeof routes['checkout.status']
+  }
+  webhooks: {
+    sendgridEvents: typeof routes['webhooks.sendgrid_events']
+    twilioSmsEvent: typeof routes['webhooks.twilio_sms_event']
+  }
+  publicBlidLookup: {
+    show: typeof routes['public_blid_lookup.show']
+  }
+  userDetails: {
+    me: typeof routes['user_details.me']
+    updateMe: typeof routes['user_details.update_me']
+    search: typeof routes['user_details.search']
+    show: typeof routes['user_details.show']
+    update: typeof routes['user_details.update']
+    confirmEmail: typeof routes['user_details.confirm_email']
+  }
+  customerItems: {
+    me: typeof routes['customer_items.me']
+    forCustomer: typeof routes['customer_items.for_customer']
+  }
+  orders: {
+    indexMe: typeof routes['orders.index_me']
+    openItemsMe: typeof routes['orders.open_items_me']
+    cancelItemMe: typeof routes['orders.cancel_item_me']
+    showMe: typeof routes['orders.show_me']
+    forCustomer: typeof routes['orders.for_customer']
+    placedForCustomer: typeof routes['orders.placed_for_customer']
+    index: typeof routes['orders.index']
+    export: typeof routes['orders.export']
+    exportBring: typeof routes['orders.export_bring']
+    show: typeof routes['orders.show']
+    updateBranch: typeof routes['orders.update_branch']
+    updateItemDeadline: typeof routes['orders.update_item_deadline']
+    destroy: typeof routes['orders.destroy']
+  }
+  matches: {
+    me: typeof routes['matches.me']
+    transferItem: typeof routes['matches.transfer_item']
+    notify: typeof routes['matches.notify']
+    sendToStand: typeof routes['matches.send_to_stand']
+    forCustomer: typeof routes['matches.for_customer']
+    show: typeof routes['matches.show']
+  }
+  branchRelationships: {
+    update: typeof routes['branch_relationships.update']
+  }
+  branchMembers: {
+    update: typeof routes['branch_members.update']
+    index: typeof routes['branch_members.index']
+    destroyDirect: typeof routes['branch_members.destroy_direct']
+    destroyIndirect: typeof routes['branch_members.destroy_indirect']
+  }
+  branchItems: {
+    index: typeof routes['branch_items.index']
+    update: typeof routes['branch_items.update']
   }
   branchSubjects: {
-    getSubjects: typeof routes['branch_subjects.get_subjects']
-    createSubject: typeof routes['branch_subjects.create_subject']
-    updateSubject: typeof routes['branch_subjects.update_subject']
-    deleteSubject: typeof routes['branch_subjects.delete_subject']
-    importSubjects: typeof routes['branch_subjects.import_subjects']
+    index: typeof routes['branch_subjects.index']
+    store: typeof routes['branch_subjects.store']
+    import: typeof routes['branch_subjects.import']
+    update: typeof routes['branch_subjects.update']
+    destroy: typeof routes['branch_subjects.destroy']
+  }
+  branchSubjectChoices: {
+    evaluate: typeof routes['branch_subject_choices.evaluate']
+    upload: typeof routes['branch_subject_choices.upload']
   }
   branchSignatureStatus: {
-    getStatus: typeof routes['branch_signature_status.get_status']
+    show: typeof routes['branch_signature_status.show']
   }
-  branchRelationship: {
-    update: typeof routes['branch_relationship.update']
-  }
-  branchMembership: {
-    getMembers: typeof routes['branch_membership.get_members']
-    updateMembership: typeof routes['branch_membership.update_membership']
-    removeDirectMembers: typeof routes['branch_membership.remove_direct_members']
-    removeIndirectMembers: typeof routes['branch_membership.remove_indirect_members']
+  branchInsights: {
+    getBookMovements: typeof routes['branch_insights.get_book_movements']
   }
   branchBooks: {
     getActiveBooks: typeof routes['branch_books.get_active_books']
@@ -66,129 +169,65 @@ export interface ApiDefinition {
     bulkUpdateOrderedBooks: typeof routes['branch_books.bulk_update_ordered_books']
     cancelOrderedBooks: typeof routes['branch_books.cancel_ordered_books']
   }
-  branchInsights: {
-    getBookMovements: typeof routes['branch_insights.get_book_movements']
-  }
-  orders: {
-    getOpenOrders: typeof routes['orders.get_open_orders']
-    getPlacedOrders: typeof routes['orders.get_placed_orders']
-    cancelOrderItem: typeof routes['orders.cancel_order_item']
-  }
-  editableTexts: {
-    get: typeof routes['editable_texts.get']
-    getAll: typeof routes['editable_texts.get_all']
-    upsert: typeof routes['editable_texts.upsert']
-    destroy: typeof routes['editable_texts.destroy']
-  }
-  questionsAndAnswers: {
-    getAll: typeof routes['questions_and_answers.get_all']
-    store: typeof routes['questions_and_answers.store']
-    updateOrder: typeof routes['questions_and_answers.update_order']
-    update: typeof routes['questions_and_answers.update']
-    destroy: typeof routes['questions_and_answers.destroy']
-  }
-  bokflyt: {
-    contact: typeof routes['bokflyt.contact']
-  }
-  emailVerification: {
-    send: typeof routes['email_verification.send']
-    verify: typeof routes['email_verification.verify']
-  }
-  emailValidation: {
-    validate: typeof routes['email_validation.validate']
-  }
-  publicBlidLookup: {
-    lookup: typeof routes['public_blid_lookup.lookup']
-  }
-  blidSearch: {
-    search: typeof routes['blid_search.search']
-    lookup: typeof routes['blid_search.lookup']
-    updateActiveItem: typeof routes['blid_search.update_active_item']
-    relink: typeof routes['blid_search.relink']
-    remove: typeof routes['blid_search.remove']
-  }
-  matches: {
-    notify: typeof routes['matches.notify']
-    getMyMatches: typeof routes['matches.get_my_matches']
-    getMatchesForCustomer: typeof routes['matches.get_matches_for_customer']
-    getAllMatches: typeof routes['matches.get_all_matches']
-    getMatchesForRound: typeof routes['matches.get_matches_for_round']
-    getMatchById: typeof routes['matches.get_match_by_id']
-    transferItem: typeof routes['matches.transfer_item']
-    sendToStand: typeof routes['matches.send_to_stand']
-  }
-  matchStatistics: {
-    getStatistics: typeof routes['match_statistics.get_statistics']
-    getStatisticsForRound: typeof routes['match_statistics.get_statistics_for_round']
-  }
-  matchRounds: {
-    index: typeof routes['match_rounds.index']
-    store: typeof routes['match_rounds.store']
-    planMetrics: typeof routes['match_rounds.plan_metrics']
-    update: typeof routes['match_rounds.update']
-    generate: typeof routes['match_rounds.generate']
-    destroyMatches: typeof routes['match_rounds.destroy_matches']
-    destroy: typeof routes['match_rounds.destroy']
-  }
-  userDetail: {
-    getById: typeof routes['user_detail.get_by_id']
-    search: typeof routes['user_detail.search']
-    getMyDetails: typeof routes['user_detail.get_my_details']
-    updateAsCustomer: typeof routes['user_detail.update_as_customer']
-    updateAsEmployee: typeof routes['user_detail.update_as_employee']
-    confirmEmail: typeof routes['user_detail.confirm_email']
-  }
-  userManagement: {
-    metrics: typeof routes['user_management.metrics']
-    duplicates: typeof routes['user_management.duplicates']
-    mergePreview: typeof routes['user_management.merge_preview']
-    merge: typeof routes['user_management.merge']
-    employees: typeof routes['user_management.employees']
-    setPermission: typeof routes['user_management.set_permission']
-    destroy: typeof routes['user_management.destroy']
-  }
-  customerItems: {
-    getCustomerItems: typeof routes['customer_items.get_customer_items']
-    getActiveCustomerItemsForCustomer: typeof routes['customer_items.get_active_customer_items_for_customer']
-  }
-  signatures: {
-    gallery: typeof routes['signatures.gallery']
-    sendSignatureLink: typeof routes['signatures.send_signature_link']
-    sendSignatureLinkAsCustomer: typeof routes['signatures.send_signature_link_as_customer']
-    getMySignature: typeof routes['signatures.get_my_signature']
-    hasValidSignature: typeof routes['signatures.has_valid_signature']
-    getSignature: typeof routes['signatures.get_signature']
-    sign: typeof routes['signatures.sign']
-  }
-  uniqueIds: {
-    getToken: typeof routes['unique_ids.get_token']
-    downloadUniqueIdPdf: typeof routes['unique_ids.download_unique_id_pdf']
-    label: typeof routes['unique_ids.label']
-  }
   userProvisioning: {
     evaluate: typeof routes['user_provisioning.evaluate']
     provision: typeof routes['user_provisioning.provision']
   }
-  uniqueItems: {
-    add: typeof routes['unique_items.add']
+  users: {
+    metrics: typeof routes['users.metrics']
+    duplicates: typeof routes['users.duplicates']
+    employees: typeof routes['users.employees']
+    mergePreview: typeof routes['users.merge_preview']
+    merge: typeof routes['users.merge']
+    setPermission: typeof routes['users.set_permission']
+    destroy: typeof routes['users.destroy']
   }
-  blidRegistration: {
-    lookupLink: typeof routes['blid_registration.lookup_link']
-    register: typeof routes['blid_registration.register']
+  matchRounds: {
+    store: typeof routes['match_rounds.store']
+    update: typeof routes['match_rounds.update']
+    generate: typeof routes['match_rounds.generate']
+    destroyMatches: typeof routes['match_rounds.destroy_matches']
+    destroy: typeof routes['match_rounds.destroy']
+    index: typeof routes['match_rounds.index']
+    matches: typeof routes['match_rounds.matches']
+    statistics: typeof routes['match_rounds.statistics']
+    planMetrics: typeof routes['match_rounds.plan_metrics']
   }
-  orderHistory: {
-    getMyOrder: typeof routes['order_history.get_my_order']
-    getMyOrders: typeof routes['order_history.get_my_orders']
-    getForCustomer: typeof routes['order_history.get_for_customer']
-    updateBranch: typeof routes['order_history.update_branch']
-    updateItemDeadline: typeof routes['order_history.update_item_deadline']
-    deleteOrder: typeof routes['order_history.delete_order']
+  invoices: {
+    index: typeof routes['invoices.index']
+    generationDefaults: typeof routes['invoices.generation_defaults']
+    generate: typeof routes['invoices.generate']
+    createCompanyInvoice: typeof routes['invoices.create_company_invoice']
+    export: typeof routes['invoices.export']
+    setStatuses: typeof routes['invoices.set_statuses']
+    show: typeof routes['invoices.show']
+    setStatus: typeof routes['invoices.set_status']
+    setLineCancelled: typeof routes['invoices.set_line_cancelled']
   }
-  checkout: {
-    initializeCheckout: typeof routes['checkout.initialize_checkout']
-    confirmCheckout: typeof routes['checkout.confirm_checkout']
-    handleVippsCallback: typeof routes['checkout.handle_vipps_callback']
-    pollPayment: typeof routes['checkout.poll_payment']
+  companies: {
+    index: typeof routes['companies.index']
+    store: typeof routes['companies.store']
+    destroy: typeof routes['companies.destroy']
+  }
+  reminders: {
+    countRecipients: typeof routes['reminders.count_recipients']
+    send: typeof routes['reminders.send']
+  }
+  dispatch: {
+    emailTemplates: typeof routes['dispatch.email_templates']
+    store: typeof routes['dispatch.store']
+  }
+  reports: {
+    customerItems: typeof routes['reports.customer_items']
+    orders: typeof routes['reports.orders']
+    payments: typeof routes['reports.payments']
+    userDetails: typeof routes['reports.user_details']
+  }
+  messageLogs: {
+    forCustomer: typeof routes['message_logs.for_customer']
+    feed: typeof routes['message_logs.feed']
+    metrics: typeof routes['message_logs.metrics']
+    sendouts: typeof routes['message_logs.sendouts']
   }
   standCart: {
     resolveLine: typeof routes['stand_cart.resolve_line']
@@ -197,74 +236,23 @@ export interface ApiDefinition {
     status: typeof routes['stand_cart.status']
     cancel: typeof routes['stand_cart.cancel']
   }
-  orderManager: {
-    listOpenOrders: typeof routes['order_manager.list_open_orders']
-    getOrder: typeof routes['order_manager.get_order']
-    ordersReport: typeof routes['order_manager.orders_report']
-    bringReport: typeof routes['order_manager.bring_report']
-  }
-  subjects: {
-    getBranchSubjects: typeof routes['subjects.get_branch_subjects']
-  }
-  branchItems: {
-    getBranchItems: typeof routes['branch_items.get_branch_items']
-    setBranchItems: typeof routes['branch_items.set_branch_items']
-  }
-  postal: {
-    lookupPostalCode: typeof routes['postal.lookup_postal_code']
-  }
-  companies: {
-    getCompanies: typeof routes['companies.get_companies']
-    addCompany: typeof routes['companies.add_company']
-    deleteCompany: typeof routes['companies.delete_company']
-  }
-  openingHours: {
-    get: typeof routes['opening_hours.get']
-    add: typeof routes['opening_hours.add']
-    delete: typeof routes['opening_hours.delete']
-  }
-  items: {
-    get: typeof routes['items.get']
-    getBuybackItems: typeof routes['items.get_buyback_items']
-    getByIsbn: typeof routes['items.get_by_isbn']
-    getAllForAdmin: typeof routes['items.get_all_for_admin']
-    create: typeof routes['items.create']
-    update: typeof routes['items.update']
-    bulkUpsert: typeof routes['items.bulk_upsert']
-  }
-  invoices: {
-    generationDefaults: typeof routes['invoices.generation_defaults']
-    generate: typeof routes['invoices.generate']
-    createCompanyInvoice: typeof routes['invoices.create_company_invoice']
-    export: typeof routes['invoices.export']
-    list: typeof routes['invoices.list']
-    setStatuses: typeof routes['invoices.set_statuses']
-    get: typeof routes['invoices.get']
-    setStatus: typeof routes['invoices.set_status']
-    setLineCancelled: typeof routes['invoices.set_line_cancelled']
-  }
-  dispatch: {
-    getEmailTemplates: typeof routes['dispatch.get_email_templates']
-    createDispatch: typeof routes['dispatch.create_dispatch']
-  }
-  messageLogs: {
-    customerLog: typeof routes['message_logs.customer_log']
-    feed: typeof routes['message_logs.feed']
-    metrics: typeof routes['message_logs.metrics']
-    sendouts: typeof routes['message_logs.sendouts']
-  }
-  webhooks: {
-    sendgridEvents: typeof routes['webhooks.sendgrid_events']
-    twilioSmsEvent: typeof routes['webhooks.twilio_sms_event']
-  }
   bulkCollection: {
-    lookup: typeof routes['bulk_collection.lookup']
     collect: typeof routes['bulk_collection.collect']
+    show: typeof routes['bulk_collection.show']
   }
-  reports: {
-    getCustomerItemsReport: typeof routes['reports.get_customer_items_report']
-    getOrdersReport: typeof routes['reports.get_orders_report']
-    getPaymentsReport: typeof routes['reports.get_payments_report']
-    getUserDetailsReport: typeof routes['reports.get_user_details_report']
+  blids: {
+    index: typeof routes['blids.index']
+    register: typeof routes['blids.register']
+    registerOne: typeof routes['blids.register_one']
+    updateActiveItem: typeof routes['blids.update_active_item']
+    show: typeof routes['blids.show']
+    showLink: typeof routes['blids.show_link']
+    relink: typeof routes['blids.relink']
+    destroy: typeof routes['blids.destroy']
+  }
+  waitingListCustomers: {
+    index: typeof routes['waiting_list_customers.index']
+    store: typeof routes['waiting_list_customers.store']
+    destroy: typeof routes['waiting_list_customers.destroy']
   }
 }

@@ -152,7 +152,7 @@ export default function GenerateInvoicesTab() {
         return;
       }
       showSuccessNotification(`${result.invoices.length} fakturaer ble lagret`);
-      void queryClient.invalidateQueries({ queryKey: api.invoices.list.pathKey() });
+      void queryClient.invalidateQueries({ queryKey: api.invoices.index.pathKey() });
       setPreview(null);
       void navigate({
         search: {

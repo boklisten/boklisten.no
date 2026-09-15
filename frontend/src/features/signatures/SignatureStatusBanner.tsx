@@ -30,7 +30,7 @@ export default function SignatureStatusBanner({
   const { api } = useApiClient();
   const [expanded, setExpanded] = useState(false);
   const { data, isPending, isError } = useQuery(
-    api.signatures.getSignature.queryOptions(
+    api.signatures.show.queryOptions(
       { params: { detailsId: userDetail.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),

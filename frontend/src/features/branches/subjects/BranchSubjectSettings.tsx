@@ -27,15 +27,15 @@ export default function BranchSubjectSettings({ branchId }: { branchId: string }
     data: subjects,
     isLoading,
     isError,
-  } = useQuery(api.branchSubjects.getSubjects.queryOptions({ params: { branchId } }));
+  } = useQuery(api.branchSubjects.index.queryOptions({ params: { branchId } }));
 
   const invalidateSubjects = () =>
     queryClient.invalidateQueries({
-      queryKey: api.branchSubjects.getSubjects.pathKey(),
+      queryKey: api.branchSubjects.index.pathKey(),
     });
 
   const importMutation = useMutation(
-    api.branchSubjects.importSubjects.mutationOptions({
+    api.branchSubjects.import.mutationOptions({
       onSuccess: ({ createdSubjects, skippedExisting }) => {
         const skippedText = skippedExisting > 0 ? ` (${skippedExisting} fantes fra før)` : "";
         showSuccessNotification(`Importerte ${createdSubjects} fag${skippedText}`);
@@ -46,7 +46,7 @@ export default function BranchSubjectSettings({ branchId }: { branchId: string }
   );
 
   const deleteMutation = useMutation(
-    api.branchSubjects.deleteSubject.mutationOptions({
+    api.branchSubjects.destroy.mutationOptions({
       onSuccess: () => showSuccessNotification("Faget ble slettet!"),
       onError: () => showErrorNotification("Klarte ikke slette faget"),
       onSettled: invalidateSubjects,

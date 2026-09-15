@@ -10,7 +10,7 @@ export default function BranchRelationshipSettings({ branch }: { branch: Branch 
   const queryClient = useQueryClient();
   const { api } = useApiClient();
 
-  const { data: branches } = useQuery(api.branches.getAll.queryOptions());
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   const branchOptions =
     branches
@@ -21,10 +21,10 @@ export default function BranchRelationshipSettings({ branch }: { branch: Branch 
       })) ?? [];
 
   const updateRelationshipsMutation = useMutation(
-    api.branchRelationship.update.mutationOptions({
+    api.branchRelationships.update.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.branches.getAll.pathKey(),
+          queryKey: api.branches.index.pathKey(),
         }),
       onSuccess: () => showSuccessNotification("Filial ble oppdatert!"),
       onError: () => showErrorNotification("Klarte ikke oppdatere filial!"),

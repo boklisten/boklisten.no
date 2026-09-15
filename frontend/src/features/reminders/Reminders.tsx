@@ -50,7 +50,7 @@ export default function Reminders() {
   );
 
   const sendReminderMutation = useMutation(
-    api.reminders.remind.mutationOptions({
+    api.reminders.send.mutationOptions({
       onError: () => showErrorNotification("Klarte ikke sende påminnelse"),
       onSuccess: () =>
         showSuccessNotification({

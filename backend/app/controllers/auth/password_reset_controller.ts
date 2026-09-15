@@ -37,7 +37,7 @@ async function getPasswordReset({ id, token }: { id: string; token: string }) {
 }
 
 export default class PasswordResetController {
-  async requestPasswordReset({ request }: HttpContext) {
+  async request({ request }: HttpContext) {
     const { email } = await request.validateUsing(forgotPasswordValidator);
     const token = CryptoService.random();
     const tokenHash = await hash.make(token);
@@ -66,7 +66,7 @@ export default class PasswordResetController {
     return {};
   }
 
-  async resetPassword({ request }: HttpContext) {
+  async reset({ request }: HttpContext) {
     const {
       params: { id },
       token,
@@ -87,7 +87,7 @@ export default class PasswordResetController {
     return {};
   }
 
-  async validatePasswordReset(ctx: HttpContext) {
+  async validate(ctx: HttpContext) {
     const id = ctx.request.param("id");
     const token = ctx.request.param("token");
     const result = await getPasswordReset({ id, token });

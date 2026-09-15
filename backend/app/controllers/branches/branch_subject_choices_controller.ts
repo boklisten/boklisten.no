@@ -1,7 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import BadRequestException from "#exceptions/bad_request_exception";
-import { PermissionService } from "#services/permission_service";
 import {
   findInvalidDeadlines,
   findPastDeadlines,
@@ -20,17 +19,15 @@ function assertValidDeadlines(rows: { deadline: string }[]) {
   }
 }
 
-export default class BranchUploadController {
-  async evaluateSubjectChoices(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+export default class BranchSubjectChoicesController {
+  async evaluate(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
     const { rows } = await ctx.request.validateUsing(subjectChoicesValidator);
     assertValidDeadlines(rows);
     return SubjectChoicesService.evaluate(branchId, rows);
   }
 
-  async uploadSubjectChoices(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async upload(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
     const { rows } = await ctx.request.validateUsing(subjectChoicesValidator);
     assertValidDeadlines(rows);

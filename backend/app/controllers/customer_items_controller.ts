@@ -4,14 +4,14 @@ import { ObjectId } from "mongodb";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { buildCustomerItemActions, calculateStatus } from "#services/customer_item_actions_service";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import type { ActiveCustomerItem } from "#shared/customer-item/active-customer-item";
 import type { CustomerItemAction } from "#shared/customer-item/actionable_customer_item";
 
 export default class CustomerItemsController {
-  async getCustomerItems(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
+  /** The caller's own books, with the actions they can take on them. */
+  async me(ctx: HttpContext) {
+    const { detailsId } = ctx.authUser;
     const databaseQuery = new SEDbQuery();
     databaseQuery.stringFilters = [{ fieldName: "customer", value: detailsId }];
     databaseQuery.sortFilters = [{ fieldName: "lastUpdated", direction: -1 }];
@@ -47,11 +47,10 @@ export default class CustomerItemsController {
 
   /**
    * The books a given customer is currently holding, for employees working the stand.
-   * Separate from getCustomerItems because that one is scoped to the caller's own token and
-   * leaves out the rental type.
+   * Separate from `me` because that one is scoped to the caller's own token and leaves out the
+   * rental type.
    */
-  async getActiveCustomerItemsForCustomer(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
+  async forCustomer(ctx: HttpContext) {
     const detailsId = String(ctx.request.param("detailsId"));
     if (!ObjectId.isValid(detailsId)) {
       return [];

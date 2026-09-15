@@ -8,7 +8,7 @@ import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/consta
 import { publicApi } from "@/shared/utils/publicApiClient";
 
 function BuybackList() {
-  const { data: items, error } = useQuery(publicApi.items.getBuybackItems.queryOptions());
+  const { data: items, error } = useQuery(publicApi.items.buyback.queryOptions());
 
   return (
     <>

@@ -33,13 +33,13 @@ export default function CheckoutHandler() {
   const started = useRef(false);
   // Always fresh: the customer may have signed seconds ago on the signing step
   const { data: signature, isPending: signaturePending } = useQuery({
-    ...api.signatures.getMySignature.queryOptions(),
+    ...api.signatures.me.queryOptions(),
     staleTime: 0,
   });
 
   const { mutate: initializeCheckout } = useMutation({
     mutationFn: async (cartItems: CartItem[]) =>
-      client.api.checkout.initializeCheckout({
+      client.api.checkout.initialize({
         body: {
           cartItems: cartItems.map((cartItem) => {
             const selectedOption = cart.getSelectedOption(cartItem);

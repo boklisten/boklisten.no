@@ -15,7 +15,7 @@ import { publicApi } from "@/shared/utils/publicApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 export const questionsAndAnswersQueryOptions = () =>
-  publicApi.questionsAndAnswers.getAll.queryOptions();
+  publicApi.questionsAndAnswers.index.queryOptions();
 
 export default function QuestionsAndAnswersReadOnly() {
   const { data, isLoading } = useQuery(questionsAndAnswersQueryOptions());

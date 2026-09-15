@@ -20,7 +20,7 @@ export default function PasswordReset({ id }: { id: string }) {
   const [apiError, setApiError] = useState<string | null>(null);
 
   const { data, isError } = useQuery(
-    publicApi.passwordReset.validatePasswordReset.queryOptions({
+    publicApi.passwordReset.validate.queryOptions({
       params: { id, token: token ?? "" },
     }),
   );
@@ -28,7 +28,7 @@ export default function PasswordReset({ id }: { id: string }) {
   const resetPasswordMutation = useMutation({
     mutationFn: async ({ newPassword }: PasswordResetFields) => {
       setApiError(null);
-      const { message } = await publicApiClient.api.passwordReset.resetPassword({
+      const { message } = await publicApiClient.api.passwordReset.reset({
         params: {
           id,
         },

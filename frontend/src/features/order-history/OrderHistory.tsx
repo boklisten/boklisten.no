@@ -9,7 +9,7 @@ import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 export default function OrderHistory() {
   const { api } = useApiClient();
-  const { data, isPending, isError } = useQuery(api.orderHistory.getMyOrders.queryOptions());
+  const { data, isPending, isError } = useQuery(api.orders.indexMe.queryOptions());
 
   if (isPending) {
     return (

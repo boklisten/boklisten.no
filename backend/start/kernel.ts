@@ -15,4 +15,6 @@ router.use([
   () => import("@tuyau/superjson/superjson_middleware"),
 ]);
 
-export const middleware = router.named({});
+export const middleware = router.named({
+  auth: () => import("#middleware/auth_middleware"),
+});

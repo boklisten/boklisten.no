@@ -228,7 +228,7 @@ export default function UploadSubjectChoices({
 
   const evaluateMutation = useMutation({
     mutationFn: async (subjectChoiceRows: SubjectChoiceRow[]) =>
-      client.api.branchUpload.evaluateSubjectChoices({
+      client.api.branchSubjectChoices.evaluate({
         params: { branchId },
         body: { rows: subjectChoiceRows },
       }),
@@ -240,7 +240,7 @@ export default function UploadSubjectChoices({
 
   const uploadMutation = useMutation({
     mutationFn: async (subjectChoiceRows: SubjectChoiceRow[]) =>
-      client.api.branchUpload.uploadSubjectChoices({
+      client.api.branchSubjectChoices.upload({
         params: { branchId },
         body: { rows: subjectChoiceRows },
       }),

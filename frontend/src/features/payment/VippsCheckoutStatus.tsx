@@ -40,7 +40,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
   const [secondsBeforeNextAttempt, setSecondsBeforeNextAttempt] = useState(0);
 
   const { data, isLoading, isError } = useQuery(
-    api.checkout.pollPayment.queryOptions({ params: { orderId } }),
+    api.checkout.status.queryOptions({ params: { orderId } }),
   );
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
       const timeout = setTimeout(async () => {
         clearInterval(interval);
         await queryClient.invalidateQueries({
-          queryKey: api.checkout.pollPayment.queryKey({ params: { orderId } }),
+          queryKey: api.checkout.status.queryKey({ params: { orderId } }),
         });
         setAttempt((a) => a + 1);
       }, waitInSeconds * 1000);
@@ -78,13 +78,13 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
     // demand on placement), so refresh them while the user is still on the receipt rather than
     // let AuthGuard read a pre-order cache when they move on
     void queryClient.invalidateQueries({
-      queryKey: api.userDetail.getMyDetails.pathKey(),
+      queryKey: api.userDetails.me.pathKey(),
     });
     void queryClient.invalidateQueries({
-      queryKey: api.orders.getOpenOrders.pathKey(),
+      queryKey: api.orders.openItemsMe.pathKey(),
     });
     void queryClient.invalidateQueries({
-      queryKey: api.customerItems.getCustomerItems.pathKey(),
+      queryKey: api.customerItems.me.pathKey(),
     });
   });
 

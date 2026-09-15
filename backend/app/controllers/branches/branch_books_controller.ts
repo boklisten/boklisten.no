@@ -2,7 +2,6 @@ import type { HttpContext } from "@adonisjs/core/http";
 
 import type { BranchBooksUpdate } from "#services/branch_books_service";
 import { BranchBooksService } from "#services/branch_books_service";
-import { PermissionService } from "#services/permission_service";
 import {
   activeBooksBulkUpdateValidator,
   branchBooksDetailsValidator,
@@ -16,12 +15,10 @@ function hasExactlyOneUpdate(update: BranchBooksUpdate) {
 
 export default class BranchBooksController {
   async getActiveBooks(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     return BranchBooksService.getActiveBooksSummary(ctx.request.param("branchId"));
   }
 
   async getActiveBookDetails(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const { deadlines, itemId } = await ctx.request.validateUsing(branchBooksDetailsValidator);
     return BranchBooksService.getActiveBookDetails({
       branchId: ctx.request.param("branchId"),
@@ -31,7 +28,6 @@ export default class BranchBooksController {
   }
 
   async bulkUpdateActiveBooks(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const { filter, update } = await ctx.request.validateUsing(activeBooksBulkUpdateValidator);
     if (!hasExactlyOneUpdate(update) || (!filter.deadlines && !filter.customerItemIds)) {
       return ctx.response.badRequest();
@@ -44,12 +40,10 @@ export default class BranchBooksController {
   }
 
   async getOrderedBooks(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     return BranchBooksService.getOrderedBooksSummary(ctx.request.param("branchId"));
   }
 
   async getOrderedBookDetails(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const { deadlines, itemId } = await ctx.request.validateUsing(branchBooksDetailsValidator);
     return BranchBooksService.getOrderedBookDetails({
       branchId: ctx.request.param("branchId"),
@@ -59,7 +53,6 @@ export default class BranchBooksController {
   }
 
   async bulkUpdateOrderedBooks(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const { filter, update } = await ctx.request.validateUsing(orderedBooksBulkUpdateValidator);
     if (!hasExactlyOneUpdate(update) || (!filter.deadlines && !filter.orderItemIds)) {
       return ctx.response.badRequest();
@@ -72,7 +65,7 @@ export default class BranchBooksController {
   }
 
   async cancelOrderedBooks(ctx: HttpContext) {
-    const { detailsId } = PermissionService.adminOrFail(ctx);
+    const { detailsId } = ctx.authUser;
     const { filter, notifyCustomers } = await ctx.request.validateUsing(
       orderedBooksCancelValidator,
     );

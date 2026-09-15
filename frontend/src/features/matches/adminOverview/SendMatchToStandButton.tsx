@@ -26,10 +26,10 @@ export default function SendMatchToStandButton({
       onSuccess: () => {
         showSuccessNotification("Overleveringen ble sendt til stand");
         void queryClient.invalidateQueries({
-          queryKey: api.matches.getMatchesForRound.queryKey(),
+          queryKey: api.matchRounds.matches.queryKey(),
         });
         void queryClient.invalidateQueries({
-          queryKey: api.matches.getMatchesForCustomer.queryKey(),
+          queryKey: api.matches.forCustomer.queryKey(),
         });
         setOpened(false);
         onSent?.();

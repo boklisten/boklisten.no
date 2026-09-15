@@ -10,7 +10,7 @@ export default function TasksIndicator({ children }: { children: ReactNode }) {
     data: userDetail,
     isLoading: isLoadingUserDetail,
     isError: isErrorUserDetail,
-  } = useQuery(api.userDetail.getMyDetails.queryOptions());
+  } = useQuery(api.userDetails.me.queryOptions());
 
   const taskCount =
     isLoadingUserDetail || isErrorUserDetail || !userDetail?.tasks

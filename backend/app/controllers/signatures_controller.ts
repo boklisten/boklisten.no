@@ -6,7 +6,6 @@ import Signature, { isUnderage } from "#models/signature";
 import DispatchService from "#services/dispatch_service";
 import { DateService } from "#services/date_service";
 import { reconcileSignatureTask, userHasValidSignature } from "#services/signature_helper";
-import { PermissionService } from "#services/permission_service";
 import { SignatureGalleryService } from "#services/signature_gallery_service";
 import { StorageService } from "#services/storage_service";
 import { signValidator } from "#validators/signature";
@@ -54,20 +53,16 @@ async function getSignatureStatus(detailsId: string) {
 
 export default class SignaturesController {
   async gallery(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const cursor = SignatureGalleryService.decodeCursor(ctx.request.input("cursor"));
     return SignatureGalleryService.getPage(cursor);
   }
-  async getSignature(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
+  async show(ctx: HttpContext) {
     return getSignatureStatus(ctx.request.param("detailsId"));
   }
-  async getMySignature(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
-    return getSignatureStatus(detailsId);
+  async me(ctx: HttpContext) {
+    return getSignatureStatus(ctx.authUser.detailsId);
   }
-  async sendSignatureLink(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
+  async sendLink(ctx: HttpContext) {
     const targetDetailsId = ctx.request.param("detailsId");
 
     const userDetail = await StorageService.UserDetails.getOrNull(targetDetailsId);
@@ -76,8 +71,8 @@ export default class SignaturesController {
       await DispatchService.sendSignatureLink(userDetail, branch?.name ?? "en filial");
     }
   }
-  async sendSignatureLinkAsCustomer(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
+  async sendLinkMe(ctx: HttpContext) {
+    const { detailsId } = ctx.authUser;
 
     const userDetail = await StorageService.UserDetails.getOrNull(detailsId);
     const branch = await StorageService.Branches.getOrNull(userDetail?.branchMembership);
@@ -85,7 +80,7 @@ export default class SignaturesController {
       await DispatchService.sendSignatureLink(userDetail, branch?.name ?? "en filial");
     }
   }
-  async hasValidSignature(ctx: HttpContext) {
+  async valid(ctx: HttpContext) {
     const detailsId = ctx.request.param("detailsId");
     const userDetail = await StorageService.UserDetails.getOrNull(detailsId);
     if (!userDetail) {

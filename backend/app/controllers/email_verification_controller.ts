@@ -1,13 +1,12 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import DispatchService from "#services/dispatch_service";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import EmailVerification from "#models/email_verification";
 
 export default class EmailVerificationController {
   async send(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
+    const { detailsId } = ctx.authUser;
     const userDetail = await StorageService.UserDetails.get(detailsId);
     const emailVerification = await EmailVerification.create({ userDetailId: detailsId });
     await DispatchService.sendEmailVerification(userDetail.email, emailVerification.id);

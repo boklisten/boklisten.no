@@ -79,15 +79,14 @@ export default function BookFormModal({
   const saveBook = useMutation({
     mutationFn: (body: BookPayload) =>
       item === undefined
-        ? client.api.items.create({ body })
+        ? client.api.items.store({ body })
         : client.api.items.update({ params: { id: item.id }, body }),
     onSuccess: () => {
       showSuccessNotification(item === undefined ? "Boka ble lagt til" : "Boka ble lagret");
       onClose();
     },
     onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke lagre boka")),
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: api.items.getAllForAdmin.pathKey() }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: api.items.all.pathKey() }),
   });
 
   const form = useAppForm({

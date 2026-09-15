@@ -9,7 +9,7 @@ function UserSettings() {
   const { api } = useApiClient();
   const navigate = useNavigate();
 
-  const { data, isLoading, isError } = useQuery(api.userDetail.getMyDetails.queryOptions());
+  const { data, isLoading, isError } = useQuery(api.userDetails.me.queryOptions());
 
   if (isLoading) {
     return (

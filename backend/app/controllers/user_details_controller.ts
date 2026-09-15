@@ -2,7 +2,6 @@ import type { HttpContext } from "@adonisjs/core/http";
 
 import { UserDetailHelper } from "#services/user_detail_helper";
 import { reconcileSignatureTask } from "#services/signature_helper";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { UserDetailService } from "#services/user_detail_service";
 import { UserService } from "#services/user_service";
@@ -29,32 +28,12 @@ async function getUserDetail(detailsId: string) {
 }
 
 export default class UserDetailsController {
-  async getMyDetails(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
-    return getUserDetail(detailsId);
+  async me(ctx: HttpContext) {
+    return getUserDetail(ctx.authUser.detailsId);
   }
-  async getById(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
-    return getUserDetail(ctx.request.param("detailsId"));
-  }
-  async search(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
-    const { searchStr } = await ctx.request.validateUsing(userDetailSearchValidator);
-    return UserDetailService.search(searchStr);
-  }
-  /** For when the customer has verbally confirmed their address to an employee at the stand. */
-  async confirmEmail(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
-    const detailsId = ctx.request.param("detailsId");
-    const userDetail = await StorageService.UserDetails.getOrNull(detailsId);
-    if (!userDetail) {
-      return ctx.response.notFound();
-    }
-    await StorageService.UserDetails.update(detailsId, { emailConfirmed: true });
-    return { emailConfirmed: true };
-  }
-  async updateAsCustomer(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
+
+  async updateMe(ctx: HttpContext) {
+    const { detailsId } = ctx.authUser;
     const { phoneNumber, name, address, postalCode, postalCity, dob, branchMembership, guardian } =
       await ctx.request.validateUsing(customerUpdateUserDetailsValidator, {
         meta: {
@@ -74,8 +53,16 @@ export default class UserDetailsController {
     });
   }
 
-  async updateAsEmployee(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
+  async search(ctx: HttpContext) {
+    const { searchStr } = await ctx.request.validateUsing(userDetailSearchValidator);
+    return UserDetailService.search(searchStr);
+  }
+
+  async show(ctx: HttpContext) {
+    return getUserDetail(ctx.request.param("detailsId"));
+  }
+
+  async update(ctx: HttpContext) {
     const targetUserDetailsId = ctx.request.param("detailsId");
     const {
       emailVerified,
@@ -105,5 +92,16 @@ export default class UserDetailsController {
       branchMembership,
       guardian,
     });
+  }
+
+  /** For when the customer has verbally confirmed their address to an employee at the stand. */
+  async confirmEmail(ctx: HttpContext) {
+    const detailsId = ctx.request.param("detailsId");
+    const userDetail = await StorageService.UserDetails.getOrNull(detailsId);
+    if (!userDetail) {
+      return ctx.response.notFound();
+    }
+    await StorageService.UserDetails.update(detailsId, { emailConfirmed: true });
+    return { emailConfirmed: true };
   }
 }

@@ -9,7 +9,7 @@ import type { Branch } from "@boklisten/backend/shared/branch";
 const capitalize = (s: string) => (s.length > 0 ? s[0]?.toUpperCase() + s.slice(1) : "");
 
 export default function SelectOrderBranch() {
-  const { data: branches } = useQuery(publicApi.branches.getPublic.queryOptions());
+  const { data: branches } = useQuery(publicApi.branches.indexPublic.queryOptions());
 
   if (!branches) {
     return (

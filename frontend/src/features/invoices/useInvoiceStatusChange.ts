@@ -65,10 +65,10 @@ export default function useInvoiceStatusChange() {
   const patchRows = (invoiceIds: string[], status: InvoiceStatus) => {
     const changed = new Set(invoiceIds);
     queryClient.setQueriesData<InvoiceListRow[]>(
-      { queryKey: api.invoices.list.pathKey() },
+      { queryKey: api.invoices.index.pathKey() },
       (rows) => rows?.map((row) => (changed.has(row.id) ? { ...row, status } : row)),
     );
-    void queryClient.invalidateQueries({ queryKey: api.invoices.get.pathKey() });
+    void queryClient.invalidateQueries({ queryKey: api.invoices.show.pathKey() });
   };
 
   const mutation = useMutation({

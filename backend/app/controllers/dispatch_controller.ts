@@ -3,13 +3,11 @@ import type { HttpContext } from "@adonisjs/core/http";
 import DispatchService from "#services/dispatch_service";
 import type { MessageLogContext } from "#services/message_log_service";
 import { MessageLogService } from "#services/message_log_service";
-import { PermissionService } from "#services/permission_service";
 import { EMAIL_TEMPLATES } from "#types/email_templates";
 import { createDispatchValidator } from "#validators/dispatch";
 
 export default class DispatchController {
-  async getEmailTemplates(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async emailTemplates() {
     return (await DispatchService.getEmailTemplates())
       .filter(
         (emailTemplate) =>
@@ -19,8 +17,8 @@ export default class DispatchController {
       )
       .toSorted((a, b) => a.name.localeCompare(b.name));
   }
-  async createDispatch(ctx: HttpContext) {
-    const { detailsId } = PermissionService.adminOrFail(ctx);
+  async store(ctx: HttpContext) {
+    const { detailsId } = ctx.authUser;
     const { name, recipients } = await ctx.request.validateUsing(createDispatchValidator);
     const sendout = await MessageLogService.createSendout({
       kind: "custom",

@@ -86,7 +86,7 @@ function AdminNavGrid({ links }: { links: AdminNavLink[] }) {
 export default function AdminDashboard() {
   const { isAdmin } = useAuth();
   const { api } = useApiClient();
-  const { data: userDetail } = useQuery(api.userDetail.getMyDetails.queryOptions());
+  const { data: userDetail } = useQuery(api.userDetails.me.queryOptions());
   const firstName = userDetail?.name.trim().split(" ")[0];
 
   return (

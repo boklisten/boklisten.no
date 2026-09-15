@@ -3,7 +3,6 @@ import moment from "moment";
 
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { updateBranchMembershipValidator } from "#validators/branch_membership";
 
@@ -13,9 +12,8 @@ async function getMembers(branchId: string) {
   return (await StorageService.UserDetails.getByQueryOrNull(databaseQuery)) ?? [];
 }
 
-export default class BranchMembershipController {
-  async getMembers(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+export default class BranchMembersController {
+  async index(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
     const directMembers = await getMembers(branchId);
     const childBranchIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
@@ -35,8 +33,7 @@ export default class BranchMembershipController {
       },
     };
   }
-  async updateMembership(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async update(ctx: HttpContext) {
     const { branchMembership, detailsId } = await ctx.request.validateUsing(
       updateBranchMembershipValidator,
     );
@@ -44,8 +41,7 @@ export default class BranchMembershipController {
       branchMembership,
     });
   }
-  async removeDirectMembers(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async destroyDirect(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
     const directMembers = await getMembers(branchId);
     await Promise.all(
@@ -56,8 +52,7 @@ export default class BranchMembershipController {
       ),
     );
   }
-  async removeIndirectMembers(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async destroyIndirect(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
     const childBranchIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
     const allMembers = (

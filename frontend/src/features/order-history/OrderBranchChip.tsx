@@ -54,7 +54,7 @@ export default function OrderBranchChip({
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const updateMutation = useMutation(
-    api.orderHistory.updateBranch.mutationOptions({
+    api.orders.updateBranch.mutationOptions({
       onSuccess: () => {
         showSuccessNotification("Filialen ble endret");
         setEditing(false);
@@ -63,7 +63,7 @@ export default function OrderBranchChip({
       onSettled: () => {
         onChanged?.();
         return queryClient.invalidateQueries({
-          queryKey: api.orderHistory.getForCustomer.pathKey(),
+          queryKey: api.orders.forCustomer.pathKey(),
         });
       },
     }),

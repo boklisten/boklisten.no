@@ -3,9 +3,10 @@ import { DateTime } from "luxon";
 
 import MatchRound from "#models/match_round";
 import { generateRound } from "#services/matches/generate_round";
+import { getMatchesForRound } from "#services/matches/read_matches";
 import { MatchRepository } from "#services/matches/match_repository";
 import { roundPlanMetrics } from "#services/matches/round_plan_metrics";
-import { PermissionService } from "#services/permission_service";
+import { computeMatchStatistics } from "#services/matches/statistics";
 import { BlError } from "#shared/bl-error";
 import MatchRoundTransformer from "#transformers/match_round_transformer";
 import {
@@ -24,8 +25,6 @@ function roundIdParameter(ctx: HttpContext): number {
 
 export default class MatchRoundsController {
   async index(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
-
     const [rounds, counts] = await Promise.all([
       MatchRound.query().orderBy("id", "desc"),
       MatchRepository.roundCounts(),
@@ -44,7 +43,6 @@ export default class MatchRoundsController {
    * first, looks the plan over, and generates from it as a separate, deliberate step.
    */
   async store(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const plan = await ctx.request.validateUsing(matchRoundCreateValidator);
 
     const round = await MatchRound.create({
@@ -58,7 +56,6 @@ export default class MatchRoundsController {
   }
 
   async update(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const patch = await ctx.request.validateUsing(matchRoundPatchValidator);
     if (Object.keys(patch).length === 0) {
       throw new BlError("No changes supplied").code(701);
@@ -86,26 +83,30 @@ export default class MatchRoundsController {
     return this.serializeRound(ctx, round);
   }
 
+  async matches(ctx: HttpContext) {
+    return ctx.serialize(await getMatchesForRound(roundIdParameter(ctx)));
+  }
+
+  async statistics(ctx: HttpContext) {
+    return ctx.serialize(await computeMatchStatistics(roundIdParameter(ctx)));
+  }
+
   async planMetrics(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
     const round = await MatchRound.findOrFail(roundIdParameter(ctx));
     return ctx.serialize(await roundPlanMetrics(round));
   }
 
   async generate(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const round = await MatchRound.findOrFail(roundIdParameter(ctx));
     return generateRound(round);
   }
 
   async destroyMatches(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const round = await MatchRound.findOrFail(roundIdParameter(ctx));
     await MatchRepository.deleteMatches(round.id);
   }
 
   async destroy(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     await (await MatchRound.findOrFail(roundIdParameter(ctx))).delete();
   }
 }

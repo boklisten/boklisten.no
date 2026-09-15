@@ -21,7 +21,7 @@ function createRefreshToken() {
   );
 }
 
-test.group("TokensController.token()", (group) => {
+test.group("TokensController.refresh()", (group) => {
   let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {
@@ -44,7 +44,7 @@ test.group("TokensController.token()", (group) => {
     const ctx = new HttpContextFactory().create();
     ctx.request.updateBody({ refreshToken: createRefreshToken() });
 
-    const tokens = await new TokensController().token(ctx);
+    const tokens = await new TokensController().refresh(ctx);
 
     assert.isDefined(tokens);
     if (!tokens || !("accessToken" in tokens)) {
@@ -65,7 +65,7 @@ test.group("TokensController.token()", (group) => {
     const ctx = new HttpContextFactory().create();
     ctx.request.updateBody({ refreshToken: createRefreshToken() });
 
-    const tokens = await new TokensController().token(ctx);
+    const tokens = await new TokensController().refresh(ctx);
 
     assert.isUndefined(tokens);
     assert.equal(ctx.response.getStatus(), 401);
@@ -83,7 +83,7 @@ test.group("TokensController.token()", (group) => {
       }),
     });
 
-    const tokens = await new TokensController().token(ctx);
+    const tokens = await new TokensController().refresh(ctx);
 
     assert.isUndefined(tokens);
     assert.equal(ctx.response.getStatus(), 401);

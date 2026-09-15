@@ -6,7 +6,7 @@ import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { publicApi } from "@/shared/utils/publicApiClient";
 
 export const branchQueryOptions = (branchId: string) =>
-  publicApi.branches.getById.queryOptions({ params: { branchId } });
+  publicApi.branches.show.queryOptions({ params: { branchId } });
 
 export default function BranchLocationInfo({ branchId }: { branchId: string }) {
   const { data: branch, isLoading, isError } = useQuery(branchQueryOptions(branchId));

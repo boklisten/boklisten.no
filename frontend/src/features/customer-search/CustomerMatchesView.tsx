@@ -92,8 +92,8 @@ export default function CustomerMatchesView({ customerId }: { customerId: string
     isPending,
     isError,
   } = useQuery(
-    api.matches.getMatchesForCustomer.queryOptions(
-      { params: { customerId } },
+    api.matches.forCustomer.queryOptions(
+      { params: { detailsId: customerId } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );

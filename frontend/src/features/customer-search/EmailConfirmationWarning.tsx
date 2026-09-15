@@ -13,13 +13,13 @@ export default function EmailConfirmationWarning({ customer }: { customer: UserD
   const queryClient = useQueryClient();
 
   const confirmEmailMutation = useMutation(
-    api.userDetail.confirmEmail.mutationOptions({
+    api.userDetails.confirmEmail.mutationOptions({
       onSuccess: () => showSuccessNotification("E-postadressen ble bekreftet"),
       onError: (error) =>
         showErrorNotification(errorMessage(error, "Klarte ikke bekrefte e-postadressen")),
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.userDetail.getById.queryKey({ params: { detailsId: customer.id } }),
+          queryKey: api.userDetails.show.queryKey({ params: { detailsId: customer.id } }),
         }),
     }),
   );

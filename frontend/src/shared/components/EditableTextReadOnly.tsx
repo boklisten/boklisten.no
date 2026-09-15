@@ -11,7 +11,7 @@ import { publicApi } from "@/shared/utils/publicApiClient";
  * already rendered, which shows up as a hydration error.
  */
 export const editableTextQueryOptions = (dataKey: string) =>
-  publicApi.editableTexts.get.queryOptions({ params: { id: dataKey } });
+  publicApi.editableTexts.show.queryOptions({ params: { id: dataKey } });
 
 export default function EditableTextReadOnly({ dataKey }: { dataKey: string }) {
   const { data, isLoading } = useQuery(editableTextQueryOptions(dataKey));

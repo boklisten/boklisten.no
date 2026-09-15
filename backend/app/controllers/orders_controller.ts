@@ -2,12 +2,22 @@ import type { HttpContext } from "@adonisjs/core/http";
 
 import { assertNotBlockedByUserMatch } from "#services/matches/cancellation_block";
 import { OrderCancellationService } from "#services/order_cancellation_service";
+import { OrderHistoryService } from "#services/order_history_service";
+import { OrderManagerService } from "#services/order_manager_service";
 import { OrderService } from "#services/order_service";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import { cancelOrderItemValidator } from "#validators/cancel_order_item_validator";
+import {
+  orderBranchUpdateValidator,
+  orderItemDeadlineUpdateValidator,
+} from "#validators/order_history";
+import {
+  orderManagerBringReportValidator,
+  orderManagerListValidator,
+  orderManagerReportValidator,
+} from "#validators/order_manager";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 
 function findOpenOrderItem(order: Order, itemId: string) {
@@ -17,34 +27,87 @@ function findOpenOrderItem(order: Order, itemId: string) {
   );
 }
 
+/**
+ * Orders as seen by employees (`/orders`, `/user_details/:detailsId/orders`) and by the
+ * customer themselves (`/orders/me`).
+ */
 export default class OrdersController {
-  async getOpenOrders(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
-
-    return OrderService.getOpenOrderItems(detailsId);
+  /** Open orders across branches, for Ordreoversikt. */
+  async index(ctx: HttpContext) {
+    const { branchIds, bringOnly, cursor, limit } =
+      await ctx.request.validateUsing(orderManagerListValidator);
+    return OrderManagerService.listOpenOrders({ branchIds, bringOnly }, cursor, limit);
   }
 
-  async getPlacedOrders(ctx: HttpContext) {
-    PermissionService.employeeOrFail(ctx);
-    const detailsId = ctx.request.param("detailsId");
+  async show(ctx: HttpContext) {
+    return OrderManagerService.getOrder(String(ctx.request.param("orderId")));
+  }
+
+  async export(ctx: HttpContext) {
+    const { branchIds, bringOnly } = await ctx.request.validateUsing(orderManagerReportValidator);
+    return OrderManagerService.ordersReport({ branchIds, bringOnly });
+  }
+
+  async exportBring(ctx: HttpContext) {
+    const { branchIds, bringOnly, parcelType } = await ctx.request.validateUsing(
+      orderManagerBringReportValidator,
+    );
+    return OrderManagerService.bringReport({ branchIds, bringOnly }, parcelType);
+  }
+
+  async updateBranch(ctx: HttpContext) {
+    const orderId = ctx.request.param("orderId");
+    const { branchId } = await ctx.request.validateUsing(orderBranchUpdateValidator);
+    await OrderHistoryService.updateBranch(orderId, branchId, ctx.authUser);
+    return ctx.response.noContent();
+  }
+
+  async updateItemDeadline(ctx: HttpContext) {
+    const orderId = ctx.request.param("orderId");
+    const { itemId, deadline } = await ctx.request.validateUsing(orderItemDeadlineUpdateValidator);
+    await OrderHistoryService.updateItemDeadline({ orderId, itemId, deadline }, ctx.authUser);
+    return ctx.response.noContent();
+  }
+
+  async destroy(ctx: HttpContext) {
+    await OrderHistoryService.deleteOrder(ctx.request.param("orderId"), ctx.authUser);
+    return ctx.response.noContent();
+  }
+
+  /** The order history of a given customer, for the employee view. */
+  async forCustomer(ctx: HttpContext) {
+    return OrderHistoryService.getForCustomer(ctx.request.param("detailsId"), "employee");
+  }
+
+  /** Every placed order of a given customer, as stored. */
+  async placedForCustomer(ctx: HttpContext) {
     const databaseQuery = new SEDbQuery();
-    databaseQuery.booleanFilters = [
-      {
-        fieldName: "placed",
-        value: true,
-      },
-    ];
+    databaseQuery.booleanFilters = [{ fieldName: "placed", value: true }];
     databaseQuery.stringFilters = [
-      {
-        fieldName: "customer",
-        value: detailsId,
-      },
+      { fieldName: "customer", value: ctx.request.param("detailsId") },
     ];
     return (await StorageService.Orders.getByQueryOrNull(databaseQuery)) ?? [];
   }
 
-  async cancelOrderItem(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
+  async indexMe(ctx: HttpContext) {
+    return OrderHistoryService.getForCustomer(ctx.authUser.detailsId, "customer");
+  }
+
+  async showMe(ctx: HttpContext) {
+    return OrderHistoryService.getOne(
+      ctx.request.param("orderId"),
+      ctx.authUser.detailsId,
+      "customer",
+    );
+  }
+
+  /** Order items the customer has ordered but not yet received. */
+  async openItemsMe(ctx: HttpContext) {
+    return OrderService.getOpenOrderItems(ctx.authUser.detailsId);
+  }
+
+  async cancelItemMe(ctx: HttpContext) {
+    const { detailsId } = ctx.authUser;
     const { orderId, itemId } = await ctx.request.validateUsing(cancelOrderItemValidator);
     const order = await StorageService.Orders.get(orderId);
     if (!order || order.customer !== detailsId) {

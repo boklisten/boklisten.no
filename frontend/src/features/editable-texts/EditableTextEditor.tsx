@@ -10,7 +10,7 @@ export default function EditableTextEditor({
   editableText,
   onClose,
 }: {
-  editableText?: Route.Response<"editable_texts.get_all">[number] | undefined;
+  editableText?: Route.Response<"editable_texts.index">[number] | undefined;
   onClose: () => void;
 }) {
   const form = useAppForm({
@@ -35,7 +35,7 @@ export default function EditableTextEditor({
     api.editableTexts.upsert.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.editableTexts.getAll.pathKey(),
+          queryKey: api.editableTexts.index.pathKey(),
         }),
       onSuccess: () => {
         showSuccessNotification("Dynamisk innhold ble lagret!");

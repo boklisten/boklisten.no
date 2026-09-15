@@ -81,11 +81,11 @@ export default function UserSettingsForm({
   const [serverErrors, setServerErrors] = useState<string[]>([]);
 
   const updateUserDetailsMutation = useMutation({
-    mutationFn: async (payload: Route.Request<"user_detail.update_as_customer">["body"]) => {
-      const [, error] = await client.api.userDetail.updateAsCustomer({ body: payload }).safe();
+    mutationFn: async (payload: Route.Request<"user_details.update_me">["body"]) => {
+      const [, error] = await client.api.userDetails.updateMe({ body: payload }).safe();
 
       await queryClient.invalidateQueries({
-        queryKey: api.userDetail.getMyDetails.pathKey(),
+        queryKey: api.userDetails.me.pathKey(),
       });
 
       if (error) {

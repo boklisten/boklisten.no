@@ -15,7 +15,7 @@ export default function CreateOpeningHours({ branchId }: { branchId: string }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   const createOpeningHourMutation = useMutation(
-    api.openingHours.add.mutationOptions({
+    api.openingHours.store.mutationOptions({
       onError: () => showErrorNotification("Klarte ikke legg til åpningstid"),
       onSuccess: () => {
         showSuccessNotification("Åpningstid ble lagt til!");
@@ -23,7 +23,7 @@ export default function CreateOpeningHours({ branchId }: { branchId: string }) {
       },
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.openingHours.get.queryKey({ params: { branchId } }),
+          queryKey: api.openingHours.index.queryKey({ params: { branchId } }),
         }),
     }),
   );

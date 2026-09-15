@@ -51,7 +51,7 @@ export default function useBlidRegistrationSession(): BlidRegistrationSession {
   const selectBook = async (isbn: string): Promise<ScanNotice | undefined> => {
     let item;
     try {
-      item = await client.api.items.getByIsbn({ params: { isbn } });
+      item = await client.api.items.showByIsbn({ params: { isbn } });
     } catch {
       return { message: GENERIC_ERROR_TEXT };
     }
@@ -73,7 +73,7 @@ export default function useBlidRegistrationSession(): BlidRegistrationSession {
     setReceipt(null);
     commitRows([{ blid, check: { status: "checking" } }, ...rowsRef.current]);
     try {
-      const linkedTo = await client.api.blidRegistration.lookupLink({ params: { blid } });
+      const linkedTo = await client.api.blids.showLink({ params: { blid } });
       updateRow(blid, { status: "checked", linkedTo });
     } catch {
       updateRow(blid, { status: "failed" });
@@ -93,8 +93,7 @@ export default function useBlidRegistrationSession(): BlidRegistrationSession {
   };
 
   const registerMutation = useMutation({
-    mutationFn: (body: { isbn: string; blids: string[] }) =>
-      client.api.blidRegistration.register({ body }),
+    mutationFn: (body: { isbn: string; blids: string[] }) => client.api.blids.register({ body }),
     onSuccess: (result) => {
       if (!result.success) {
         showErrorNotification(result.feedback);
@@ -107,7 +106,7 @@ export default function useBlidRegistrationSession(): BlidRegistrationSession {
       setReceipt({ title: result.title, added: result.added, skipped: result.skipped });
       commitRows([]);
       // Boksøk and the search dropdown may hold these blids as unknown.
-      for (const key of [api.blidSearch.lookup.pathKey(), BLID_SEARCH_QUERY_KEY]) {
+      for (const key of [api.blids.show.pathKey(), BLID_SEARCH_QUERY_KEY]) {
         void queryClient.invalidateQueries({ queryKey: key });
       }
     },

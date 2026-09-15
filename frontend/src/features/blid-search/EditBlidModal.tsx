@@ -29,7 +29,7 @@ export default function EditBlidModal({
 }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
-  const { data: items } = useQuery(api.items.get.queryOptions());
+  const { data: items } = useQuery(api.items.index.queryOptions());
   const currentItemId = result.book?.id ?? null;
   const [itemId, setItemId] = useState(currentItemId);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -37,14 +37,14 @@ export default function EditBlidModal({
 
   const invalidate = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: api.blidSearch.lookup.pathKey() }),
-      queryClient.invalidateQueries({ queryKey: api.blidSearch.search.pathKey() }),
+      queryClient.invalidateQueries({ queryKey: api.blids.show.pathKey() }),
+      queryClient.invalidateQueries({ queryKey: api.blids.index.pathKey() }),
       queryClient.invalidateQueries({ queryKey: api.branchBooks.getActiveBooks.pathKey() }),
       queryClient.invalidateQueries({ queryKey: api.branchBooks.getActiveBookDetails.pathKey() }),
     ]);
 
   const relinkMutation = useMutation(
-    api.blidSearch.relink.mutationOptions({
+    api.blids.relink.mutationOptions({
       onSuccess: () => {
         showSuccessNotification("Boka ble endret");
         onClose();
@@ -54,7 +54,7 @@ export default function EditBlidModal({
     }),
   );
   const deleteMutation = useMutation(
-    api.blidSearch.remove.mutationOptions({
+    api.blids.destroy.mutationOptions({
       onSuccess: () => {
         showSuccessNotification("Unik ID-en ble slettet");
         onDeleted();

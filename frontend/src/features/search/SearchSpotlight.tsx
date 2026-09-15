@@ -168,7 +168,7 @@ export default function SearchSpotlight({
   const { data: customers, isFetching: fetchingCustomers } = useQuery({
     queryKey: customerQueryKey(debouncedSearch),
     queryFn: async () =>
-      (await client.api.userDetail.search({ body: { searchStr: debouncedSearch } })) ?? [],
+      (await client.api.userDetails.search({ body: { searchStr: debouncedSearch } })) ?? [],
     enabled: customerSearchActive,
     placeholderData: (previousData, previousQuery) => {
       const previousSearch = previousQuery?.queryKey.at(-1);
@@ -179,7 +179,7 @@ export default function SearchSpotlight({
   });
   const { data: bookSearch, isFetching: fetchingBooks } = useQuery({
     queryKey: blidQueryKey(debouncedSearch),
-    queryFn: () => client.api.blidSearch.search({ query: { q: debouncedSearch } }),
+    queryFn: () => client.api.blids.index({ query: { q: debouncedSearch } }),
     enabled: blidSearchActive,
     placeholderData: (previousData, previousQuery) => {
       const previousSearch = previousQuery?.queryKey.at(-1);
@@ -191,7 +191,7 @@ export default function SearchSpotlight({
   const isFetching = fetchingCustomers || fetchingBooks;
 
   const { data: branches } = useQuery({
-    ...api.branches.getAll.queryOptions(),
+    ...api.branches.index.queryOptions(),
     enabled: kinds.customers,
   });
   const branchNames = new Map((branches ?? []).map((branch) => [branch.id, branch.name]));

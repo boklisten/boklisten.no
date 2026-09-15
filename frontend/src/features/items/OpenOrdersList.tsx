@@ -26,10 +26,10 @@ export default function OpenOrdersList({
   const { api } = useApiClient();
 
   const cancelOrderItemMutation = useMutation(
-    api.orders.cancelOrderItem.mutationOptions({
+    api.orders.cancelItemMe.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.orders.getOpenOrders.pathKey(),
+          queryKey: api.orders.openItemsMe.pathKey(),
         }),
       onSuccess: () => showSuccessNotification("Avbestillingen var vellykket!"),
       onError: () => showErrorNotification("Klarte ikke avbestille bok!"),

@@ -38,7 +38,7 @@ function formatMoment(date: Date | string): string {
 export default function PublicBlidSearch() {
   const [blid, setBlid] = useState<string | null>(null);
   const { api } = useApiClient();
-  const { data: userDetail } = useQuery(api.userDetail.getMyDetails.queryOptions());
+  const { data: userDetail } = useQuery(api.userDetails.me.queryOptions());
 
   const registeredAt = userDetail?.creationTime;
   const opensAt =
@@ -85,7 +85,7 @@ function LookupOpensLater({ opensAt }: { opensAt: Date }) {
 function PublicBlidResult({ blid, onClear }: { blid: string; onClear: () => void }) {
   const { api } = useApiClient();
   const { data, isPending, isError, error } = useQuery({
-    ...api.publicBlidLookup.lookup.queryOptions({ params: { blid } }),
+    ...api.publicBlidLookup.show.queryOptions({ params: { blid } }),
     // Every attempt counts against the daily budget, so a failed one is not retried behind the
     // customer's back.
     retry: false,

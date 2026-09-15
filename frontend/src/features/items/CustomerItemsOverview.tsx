@@ -54,13 +54,13 @@ function CustomerItemsOverviewWrapper({
 export default function CustomerItemsOverview() {
   const { api } = useApiClient();
 
-  const { data, isLoading, isError } = useQuery(api.customerItems.getCustomerItems.queryOptions());
+  const { data, isLoading, isError } = useQuery(api.customerItems.me.queryOptions());
 
   const {
     data: openOrderItems,
     isLoading: isLoadingOpenOrderItems,
     isError: isErrorOpenOrderItems,
-  } = useQuery(api.orders.getOpenOrders.queryOptions());
+  } = useQuery(api.orders.openItemsMe.queryOptions());
 
   if (isLoading || isLoadingOpenOrderItems) {
     return (

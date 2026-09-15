@@ -56,7 +56,7 @@ const route = getRouteApi("/(administrasjon)/admin/database/filialer");
 
 export default function BranchManager() {
   const { api } = useApiClient();
-  const { data: branches } = useQuery(api.branches.getAll.queryOptions());
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   const { filial: selectedBranchId, filialFane } = route.useSearch();
   const navigate = route.useNavigate();

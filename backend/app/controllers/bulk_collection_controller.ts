@@ -8,7 +8,6 @@ import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_a
 import { OrderPlaceService } from "#services/orders/order_place_service";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { PeerObligations } from "#services/matches/peer_obligations";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import type {
   BulkCollectionCollectResponse,
@@ -29,8 +28,7 @@ export default class BulkCollectionController {
    * Resolve a scanned BL-ID into a row for the to-deliver list, verifying the book is currently
    * in someone's possession.
    */
-  async lookup(ctx: HttpContext): Promise<BulkCollectionLookupResponse> {
-    PermissionService.employeeOrFail(ctx);
+  async show(ctx: HttpContext): Promise<BulkCollectionLookupResponse> {
     const blid = ctx.request.param("blid");
 
     if (!BlidService.isValidBlid(blid)) {
@@ -53,7 +51,7 @@ export default class BulkCollectionController {
    * customer items returned, updates matches and sends the receipt email).
    */
   async collect(ctx: HttpContext): Promise<BulkCollectionCollectResponse> {
-    const { permission, detailsId } = PermissionService.employeeOrFail(ctx);
+    const { permission, detailsId } = ctx.authUser;
     const { customerItemIds } = await ctx.request.validateUsing(bulkCollectionCollectValidator);
 
     const customerItems = await StorageService.CustomerItems.getMany(customerItemIds);

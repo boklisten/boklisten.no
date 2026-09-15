@@ -16,17 +16,17 @@ export default function OrderDownloadsMenu({ filter }: { filter: OrderManagerFil
   const { client } = useApiClient();
   const stamp = dayjs().format("YYYY-MM-DD");
   const overview = useReportDownload({
-    fetchRows: () => client.api.orderManager.ordersReport({ query: filter }),
+    fetchRows: () => client.api.orders.export({ query: filter }),
     filename: `bestillinger-${stamp}.xlsx`,
   });
   const mailbox = useReportDownload({
     fetchRows: () =>
-      client.api.orderManager.bringReport({ query: { ...filter, parcelType: "postkasse" } }),
+      client.api.orders.exportBring({ query: { ...filter, parcelType: "postkasse" } }),
     filename: `bring-postkasse-${stamp}.xlsx`,
   });
   const pickup = useReportDownload({
     fetchRows: () =>
-      client.api.orderManager.bringReport({ query: { ...filter, parcelType: "hentested" } }),
+      client.api.orders.exportBring({ query: { ...filter, parcelType: "hentested" } }),
     filename: `bring-hentested-${stamp}.xlsx`,
   });
   const busy = overview.isLoading || mailbox.isLoading || pickup.isLoading;

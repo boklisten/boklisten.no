@@ -28,7 +28,7 @@ export default function PaymentsReport() {
         ...(created.from && { createdAfter: created.from.toISOString() }),
         ...(created.to && { createdBefore: created.to.toISOString() }),
       };
-      const rows = await client.api.reports.getPaymentsReport({ query });
+      const rows = await client.api.reports.payments({ query });
       return rows ?? [];
     },
     filename: `payments-${dayjs().format("YYYY-MM-DD")}.xlsx`,

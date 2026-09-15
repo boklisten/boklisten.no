@@ -1,39 +1,32 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { branchCreateValidator, branchValidator } from "#validators/branch";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 
 export default class BranchesController {
-  async getPublic() {
+  async indexPublic() {
     const databaseQuery = new SEDbQuery();
     databaseQuery.booleanFilters = [{ fieldName: "active", value: true }];
     databaseQuery.booleanFilters = [{ fieldName: "isBranchItemsLive.online", value: true }];
     databaseQuery.sortFilters = [{ fieldName: "name", direction: 1 }];
     return StorageService.Branches.getByQuery(databaseQuery);
   }
-  async getAll() {
+  async index() {
     const databaseQuery = new SEDbQuery();
     databaseQuery.sortFilters = [{ fieldName: "name", direction: 1 }];
     return StorageService.Branches.getByQuery(databaseQuery);
   }
-  async getById(ctx: HttpContext) {
+  async show(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
     return StorageService.Branches.getOrNull(branchId);
   }
-  async add(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async store(ctx: HttpContext) {
     const branchData = await ctx.request.validateUsing(branchCreateValidator);
     return StorageService.Branches.add(branchData);
   }
   async update(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
     const branchData = await ctx.request.validateUsing(branchValidator);
-    if (!branchData?.id) {
-      throw new Error("Id is required to update branch");
-    }
-
-    return StorageService.Branches.update(branchData.id, branchData);
+    return StorageService.Branches.update(ctx.request.param("branchId"), branchData);
   }
 }

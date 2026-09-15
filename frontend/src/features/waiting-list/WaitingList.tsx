@@ -12,19 +12,19 @@ export default function WaitingList() {
     data: items,
     isLoading: isLoadingItems,
     error: itemsError,
-  } = useQuery(api.items.get.queryOptions());
+  } = useQuery(api.items.index.queryOptions());
 
   const {
     data: branches,
     isLoading: isLoadingBranches,
     error: branchesError,
-  } = useQuery(api.branches.getPublic.queryOptions());
+  } = useQuery(api.branches.indexPublic.queryOptions());
 
   const {
     data: waitingList,
     isLoading: isLoadingWaitingList,
     error: waitingListError,
-  } = useQuery(api.waitingListCustomer.getAll.queryOptions());
+  } = useQuery(api.waitingListCustomers.index.queryOptions());
 
   if (itemsError || branchesError || waitingListError) {
     return (

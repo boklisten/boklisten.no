@@ -27,7 +27,7 @@ export function BranchSubjectModal({
 }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
-  const { data: items } = useQuery(api.items.get.queryOptions());
+  const { data: items } = useQuery(api.items.index.queryOptions());
 
   const mutationOptions = {
     onSuccess: () => {
@@ -38,15 +38,11 @@ export function BranchSubjectModal({
       showErrorNotification(errorMessage(error, "Klarte ikke lagre faget")),
     onSettled: () =>
       queryClient.invalidateQueries({
-        queryKey: api.branchSubjects.getSubjects.pathKey(),
+        queryKey: api.branchSubjects.index.pathKey(),
       }),
   };
-  const createMutation = useMutation(
-    api.branchSubjects.createSubject.mutationOptions(mutationOptions),
-  );
-  const updateMutation = useMutation(
-    api.branchSubjects.updateSubject.mutationOptions(mutationOptions),
-  );
+  const createMutation = useMutation(api.branchSubjects.store.mutationOptions(mutationOptions));
+  const updateMutation = useMutation(api.branchSubjects.update.mutationOptions(mutationOptions));
 
   const form = useAppForm({
     defaultValues: {

@@ -15,7 +15,7 @@ export default function BranchMultiSelect({
   label = "Filial",
 }: BranchMultiSelectProps) {
   const { api } = useApiClient();
-  const { data: branches, isPending } = useQuery(api.branches.getAll.queryOptions());
+  const { data: branches, isPending } = useQuery(api.branches.index.queryOptions());
 
   return (
     <MultiSelect

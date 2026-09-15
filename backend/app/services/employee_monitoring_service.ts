@@ -37,7 +37,7 @@ export interface MonitoringDetail {
   value: string;
 }
 
-/** The acting employee as `PermissionService.authenticate()` returns them. */
+/** The acting employee, as the auth middleware exposes them on `ctx.authUser`. */
 export interface MonitoredEmployee {
   detailsId: string;
   permission: UserPermission;

@@ -52,13 +52,13 @@ export default function AddEmployeesModal({
   const { data: searchResults, isFetching } = useQuery({
     queryKey: ["userDetail", "search", debouncedSearch],
     queryFn: async () =>
-      (await client.api.userDetail.search({ body: { searchStr: debouncedSearch } })) ?? [],
+      (await client.api.userDetails.search({ body: { searchStr: debouncedSearch } })) ?? [],
     enabled: searchActive,
   });
 
   const addMutation = useMutation({
     mutationFn: (input: { detailsIds: string[]; permission: UserPermission }) =>
-      client.api.userManagement.setPermission({ body: input }),
+      client.api.users.setPermission({ body: input }),
     onSuccess: async () => {
       showSuccessNotification(
         selectedUsers.length === 1
@@ -67,7 +67,7 @@ export default function AddEmployeesModal({
       );
       closeAndReset();
       await queryClient.invalidateQueries({
-        queryKey: api.userManagement.employees.queryKey(),
+        queryKey: api.users.employees.queryKey(),
       });
     },
     onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke å gi tilgang")),

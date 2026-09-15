@@ -19,22 +19,22 @@ import { publicApi } from "@/shared/utils/publicApiClient";
 export default function SignAgreement({ userDetailId }: { userDetailId: string }) {
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery(
-    publicApi.signatures.hasValidSignature.queryOptions({ params: { detailsId: userDetailId } }),
+    publicApi.signatures.valid.queryOptions({ params: { detailsId: userDetailId } }),
   );
   const signMutation = useMutation(
     publicApi.signatures.sign.mutationOptions({
       onError: () => showErrorNotification("Noe gikk galt under signering"),
       onSettled: () => {
         void queryClient.invalidateQueries({
-          queryKey: publicApi.signatures.hasValidSignature.queryKey({
+          queryKey: publicApi.signatures.valid.queryKey({
             params: { detailsId: userDetailId },
           }),
         });
         void queryClient.invalidateQueries({
-          queryKey: publicApi.signatures.getMySignature.pathKey(),
+          queryKey: publicApi.signatures.me.pathKey(),
         });
         void queryClient.invalidateQueries({
-          queryKey: publicApi.userDetail.getMyDetails.pathKey(),
+          queryKey: publicApi.userDetails.me.pathKey(),
         });
       },
     }),

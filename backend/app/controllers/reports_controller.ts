@@ -1,7 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import { ObjectId } from "mongodb";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import {
   customerItemsReportValidator,
@@ -32,8 +31,7 @@ function firstOrNull(path: string) {
 }
 
 export default class ReportsController {
-  async getCustomerItemsReport(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async customerItems(ctx: HttpContext) {
     const {
       branchFilter,
       createdAfter,
@@ -120,8 +118,7 @@ export default class ReportsController {
     ]);
   }
 
-  async getOrdersReport(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async orders(ctx: HttpContext) {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(ordersReportValidator);
 
@@ -228,8 +225,7 @@ export default class ReportsController {
     ]);
   }
 
-  async getPaymentsReport(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async payments(ctx: HttpContext) {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(paymentsReportValidator);
 
@@ -277,8 +273,7 @@ export default class ReportsController {
     ]);
   }
 
-  async getUserDetailsReport(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async userDetails(ctx: HttpContext) {
     const { branchFilter } = await ctx.request.validateUsing(userDetailsReportValidator);
 
     return StorageService.UserDetails.aggregate([

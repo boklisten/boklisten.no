@@ -12,7 +12,7 @@ export default function BranchMembers({ branchId }: { branchId: string }) {
   const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery(
-    api.branchMembership.getMembers.queryOptions({ params: { branchId } }),
+    api.branchMembers.index.queryOptions({ params: { branchId } }),
   );
 
   const removeMembersMutation = useMutation({
@@ -24,17 +24,17 @@ export default function BranchMembers({ branchId }: { branchId: string }) {
       scope: "direct" | "indirect";
     }) =>
       scope === "direct"
-        ? client.api.branchMembership.removeDirectMembers({
+        ? client.api.branchMembers.destroyDirect({
             params: { branchId: targetBranchId },
           })
-        : client.api.branchMembership.removeIndirectMembers({
+        : client.api.branchMembers.destroyIndirect({
             params: { branchId: targetBranchId },
           }),
     onSuccess: () => showSuccessNotification("Medlemsliste ble oppdatert"),
     onError: () => showErrorNotification("Klarte ikke oppdatere medlemsliste"),
     onSettled: () =>
       queryClient.invalidateQueries({
-        queryKey: api.branchMembership.getMembers.queryKey({ params: { branchId } }),
+        queryKey: api.branchMembers.index.queryKey({ params: { branchId } }),
       }),
   });
 

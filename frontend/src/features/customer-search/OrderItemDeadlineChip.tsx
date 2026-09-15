@@ -36,7 +36,7 @@ export default function OrderItemDeadlineChip({
   const { api } = useApiClient();
   const [editing, setEditing] = useState(false);
   const updateMutation = useMutation(
-    api.orderHistory.updateItemDeadline.mutationOptions({
+    api.orders.updateItemDeadline.mutationOptions({
       onSuccess: () => {
         showSuccessNotification("Fristen ble endret");
         setEditing(false);

@@ -108,8 +108,8 @@ export default function AdministrateUserForm({
   const updateUserDetailsMutation = useMutation({
     mutationFn: async () => {
       const formValues = form.state.values;
-      const [, error] = await client.api.userDetail
-        .updateAsEmployee({
+      const [, error] = await client.api.userDetails
+        .update({
           params: { detailsId: userDetail.id },
           body: {
             email: formValues.email,
@@ -134,10 +134,10 @@ export default function AdministrateUserForm({
       // at 18), so it is refetched along with the details.
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: api.userDetail.getById.queryKey({ params: { detailsId: userDetail.id } }),
+          queryKey: api.userDetails.show.queryKey({ params: { detailsId: userDetail.id } }),
         }),
         queryClient.invalidateQueries({
-          queryKey: api.signatures.getSignature.queryKey({
+          queryKey: api.signatures.show.queryKey({
             params: { detailsId: userDetail.id },
           }),
         }),

@@ -38,7 +38,7 @@ export default function CustomerHeader({
 }) {
   const { api } = useApiClient();
   const { data: branch } = useQuery(
-    api.branches.getById.queryOptions(
+    api.branches.show.queryOptions(
       { params: { branchId: customer.branchMembership ?? "" } },
       { enabled: Boolean(customer.branchMembership) },
     ),

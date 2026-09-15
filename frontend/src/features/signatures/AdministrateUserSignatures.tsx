@@ -14,10 +14,10 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 export default function AdministrateUserSignatures({ userDetail }: { userDetail: UserDetail }) {
   const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery(
-    api.signatures.getSignature.queryOptions({ params: { detailsId: userDetail.id } }),
+    api.signatures.show.queryOptions({ params: { detailsId: userDetail.id } }),
   );
   const requestSignatureMutation = useMutation(
-    api.signatures.sendSignatureLink.mutationOptions({
+    api.signatures.sendLink.mutationOptions({
       onSuccess: () => showSuccessNotification("Signaturforespørsel har blitt sendt!"),
       onError: () => showErrorNotification("Klarte ikke sende signaturforespørsel"),
     }),

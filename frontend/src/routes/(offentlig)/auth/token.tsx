@@ -40,7 +40,7 @@ function TokenPage() {
     }
     let userDetail;
     try {
-      userDetail = await client.api.userDetail.getMyDetails({});
+      userDetail = await client.api.userDetails.me({});
     } catch {
       // Typically a dropped connection; leave the user a way out instead of spinning forever
       setHasFailed(true);

@@ -1,12 +1,10 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { companyValidator } from "#validators/companies_validators";
 
 export default class CompaniesController {
-  async addCompany(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async store(ctx: HttpContext) {
     const { name, organizationNumber, customerNumber, contactInfo } =
       await ctx.request.validateUsing(companyValidator);
     return StorageService.Companies.add({
@@ -22,14 +20,12 @@ export default class CompaniesController {
       },
     });
   }
-  async getCompanies(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async index() {
     return (await StorageService.Companies.getAll()).toSorted((a, b) =>
       a.name.localeCompare(b.name),
     );
   }
-  async deleteCompany(ctx: HttpContext) {
-    PermissionService.adminOrFail(ctx);
+  async destroy(ctx: HttpContext) {
     return StorageService.Companies.remove(ctx.request.param("companyId"));
   }
 }

@@ -3,7 +3,6 @@ import type { HttpContext } from "@adonisjs/core/http";
 import UnauthorizedException from "#exceptions/unauthorized_exception";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderService } from "#services/order_service";
-import { PermissionService } from "#services/permission_service";
 import { assertSignedForCheckout } from "#services/signature_helper";
 import { StorageService } from "#services/storage_service";
 import { VippsCheckoutService } from "#services/vipps/vipps_checkout_service";
@@ -14,8 +13,8 @@ import {
 } from "#validators/checkout_validators";
 
 export default class CheckoutController {
-  async initializeCheckout(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
+  async initialize(ctx: HttpContext) {
+    const { detailsId } = ctx.authUser;
     const { cartItems } = await ctx.request.validateUsing(initializeCheckoutValidator);
     await assertSignedForCheckout(await StorageService.UserDetails.get(detailsId), cartItems);
     const order = await OrderService.createFromCart(detailsId, cartItems);
@@ -29,8 +28,8 @@ export default class CheckoutController {
     const { token, checkoutFrontendUrl } = await VippsCheckoutService.create(order, isDeliveryFree);
     return { nextStep: "payment", token, checkoutFrontendUrl } as const;
   }
-  async confirmCheckout(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
+  async confirm(ctx: HttpContext) {
+    const { detailsId } = ctx.authUser;
     const orderId = ctx.request.param("orderId");
     const order = await StorageService.Orders.get(orderId);
     if (detailsId !== order.customer || order.checkoutState || order.amount > 0) {
@@ -40,7 +39,7 @@ export default class CheckoutController {
     await new OrderPlacedHandler().placeOrder(order, order.customer);
   }
 
-  async handleVippsCallback(ctx: HttpContext) {
+  async vippsCallback(ctx: HttpContext) {
     if (!VippsPaymentService.token.verify(ctx.request.header("Authorization") ?? "")) {
       throw new UnauthorizedException("Authorization header missing or invalid");
     }
@@ -48,8 +47,8 @@ export default class CheckoutController {
     await VippsCheckoutService.update(session);
   }
 
-  async pollPayment(ctx: HttpContext) {
-    const { detailsId } = PermissionService.authenticate(ctx);
+  async status(ctx: HttpContext) {
+    const { detailsId } = ctx.authUser;
     const orderId = ctx.request.param("orderId");
     const order = await StorageService.Orders.get(orderId);
     if (detailsId !== order.customer) {

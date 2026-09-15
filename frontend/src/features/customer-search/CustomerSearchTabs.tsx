@@ -160,25 +160,25 @@ export default function CustomerSearchTabs({
   // The panels below fetch these same queries, so reading them here shares the React Query cache.
   // Polling lives here rather than only in the panels so the counts stay live on every tab.
   const { data: orders } = useQuery(
-    api.orders.getPlacedOrders.queryOptions(
+    api.orders.placedForCustomer.queryOptions(
       { params: { detailsId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
   const { data: matches } = useQuery(
-    api.matches.getMatchesForCustomer.queryOptions(
-      { params: { customerId: customer.id } },
+    api.matches.forCustomer.queryOptions(
+      { params: { detailsId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
   const { data: activeBooks } = useQuery(
-    api.customerItems.getActiveCustomerItemsForCustomer.queryOptions(
+    api.customerItems.forCustomer.queryOptions(
       { params: { detailsId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
   const { data: messageLog } = useQuery(
-    api.messageLogs.customerLog.queryOptions(
+    api.messageLogs.forCustomer.queryOptions(
       { params: { detailsId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),

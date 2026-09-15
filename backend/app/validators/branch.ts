@@ -20,7 +20,6 @@ export const branchCreateValidator = vine.create(
 
 export const branchValidator = vine.create(
   vine.object({
-    id: vine.string().optional(),
     name: vine.string().optional(),
     logo: vine
       .string()

@@ -29,7 +29,7 @@ export default function ChangeBranchModal({
   onClose: () => void;
   onSubmit: (branchId: string) => void;
 }) {
-  const { data: branches } = useQuery(publicApi.branches.getAll.queryOptions());
+  const { data: branches } = useQuery(publicApi.branches.index.queryOptions());
   const [branchId, setBranchId] = useState(currentBranchId);
   return (
     <Modal opened onClose={onClose} title="Endre filial">

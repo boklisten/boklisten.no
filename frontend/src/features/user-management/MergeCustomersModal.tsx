@@ -39,15 +39,15 @@ export default function MergeCustomersModal({
 
   const mergeMutation = useMutation({
     mutationFn: (input: { fromDetailsId: string; toDetailsId: string }) =>
-      client.api.userManagement.merge({ body: input }),
+      client.api.users.merge({ body: input }),
     onSuccess: async () => {
       showSuccessNotification("Kundene ble slått sammen");
       onClose();
       await queryClient.invalidateQueries({
-        queryKey: api.userManagement.duplicates.queryKey(),
+        queryKey: api.users.duplicates.queryKey(),
       });
       await queryClient.invalidateQueries({
-        queryKey: api.userManagement.metrics.queryKey(),
+        queryKey: api.users.metrics.queryKey(),
       });
     },
     onError: (error) =>

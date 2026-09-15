@@ -42,19 +42,15 @@ export default function EmployeesTab() {
   const { detailsId: myDetailsId } = useAuth();
   const queryClient = useQueryClient();
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const {
-    data: employees,
-    isPending,
-    isError,
-  } = useQuery(api.userManagement.employees.queryOptions());
+  const { data: employees, isPending, isError } = useQuery(api.users.employees.queryOptions());
 
   const permissionMutation = useMutation({
     mutationFn: (input: { detailsIds: string[]; permission: UserPermission }) =>
-      client.api.userManagement.setPermission({ body: input }),
+      client.api.users.setPermission({ body: input }),
     onSuccess: async () => {
       showSuccessNotification("Tilgangsnivået ble endret");
       await queryClient.invalidateQueries({
-        queryKey: api.userManagement.employees.queryKey(),
+        queryKey: api.users.employees.queryKey(),
       });
     },
     onError: (error) =>

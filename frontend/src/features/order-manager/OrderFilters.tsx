@@ -16,7 +16,7 @@ export default function OrderFilters({
   onChange: (next: Pick<OrderManagerSearchParams, "filialer" | "bring">) => void;
 }) {
   const { api } = useApiClient();
-  const { data: branches } = useQuery(api.branches.getAll.queryOptions());
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   return (
     <Group align="flex-end" gap="sm" wrap="wrap">

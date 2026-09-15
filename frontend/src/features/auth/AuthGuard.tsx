@@ -36,7 +36,7 @@ export default function AuthGuard({
     isFetching,
     refetch,
   } = useQuery({
-    ...api.userDetail.getMyDetails.queryOptions(),
+    ...api.userDetails.me.queryOptions(),
     enabled: !isLoading && isPermitted,
   });
 

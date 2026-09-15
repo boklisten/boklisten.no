@@ -18,7 +18,7 @@ export default function MoveBranchMemberModal({
   const queryClient = useQueryClient();
 
   const updateBranchMembershipMutation = useMutation(
-    api.branchMembership.updateMembership.mutationOptions({
+    api.branchMembers.update.mutationOptions({
       onSuccess: () => {
         showSuccessNotification("Medlemsskapet ble endret!");
         onClose();
@@ -26,7 +26,7 @@ export default function MoveBranchMemberModal({
       onError: () => showErrorNotification("Klarte ikke endre medlemsskap!"),
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.branchMembership.getMembers.queryKey({ params: { branchId } }),
+          queryKey: api.branchMembers.index.queryKey({ params: { branchId } }),
         }),
     }),
   );

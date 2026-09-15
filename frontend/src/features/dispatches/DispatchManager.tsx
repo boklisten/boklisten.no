@@ -113,9 +113,9 @@ export default function DispatchManager() {
   const { client } = useApiClient();
 
   const sendMutation = useMutation({
-    mutationFn: async (formData: Route.Request<"dispatch.create_dispatch">) => {
+    mutationFn: async (formData: Route.Request<"dispatch.store">) => {
       setServerErrors([]);
-      const [, error] = await client.api.dispatch.createDispatch(formData).safe();
+      const [, error] = await client.api.dispatch.store(formData).safe();
 
       if (error) {
         if (error.isValidationError()) {

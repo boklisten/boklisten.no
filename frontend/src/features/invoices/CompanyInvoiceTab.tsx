@@ -60,8 +60,8 @@ export default function CompanyInvoiceTab() {
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const update = (patch: Partial<Draft>) => setDraft((current) => ({ ...current, ...patch }));
 
-  const companies = useQuery(api.companies.getCompanies.queryOptions());
-  const items = useQuery(api.items.getAllForAdmin.queryOptions());
+  const companies = useQuery(api.companies.index.queryOptions());
+  const items = useQuery(api.items.all.queryOptions());
 
   const create = useMutation({
     mutationFn: () =>
@@ -78,7 +78,7 @@ export default function CompanyInvoiceTab() {
       }),
     onSuccess: (invoice) => {
       showSuccessNotification(`Faktura ${invoice.invoiceId} ble opprettet`);
-      void queryClient.invalidateQueries({ queryKey: api.invoices.list.pathKey() });
+      void queryClient.invalidateQueries({ queryKey: api.invoices.index.pathKey() });
       void navigate({
         search: {
           fakturaFane: undefined,
