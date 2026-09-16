@@ -1,14 +1,15 @@
-import Branch from "#models/branch";
-import Item from "#models/item";
+import type { Branch } from "#shared/branch";
 import type { BranchItem } from "#shared/branch-item";
 import type { CartItemOption } from "#shared/cart_item";
+import type { Item } from "#shared/item";
 
 export const CartService = {
-  async getOptions(branchItem: BranchItem) {
-    const [branch, item] = await Promise.all([
-      Branch.findOrFail(branchItem.branch),
-      Item.findOrFail(branchItem.item),
-    ]);
+  /**
+   * The ways a customer may order `item` from `branch` online, priced from the branch's periods
+   * and the item's price. `branch` and `item` are the two sides of `branchItem`; the caller has
+   * them loaded already (a catalog prices a whole branch against the same branch row).
+   */
+  getOptions(branchItem: BranchItem, branch: Branch, item: Item): CartItemOption[] {
     const options: CartItemOption[] = [];
 
     if (branchItem.rent) {

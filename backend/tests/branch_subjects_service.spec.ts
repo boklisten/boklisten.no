@@ -1,15 +1,12 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
 
+import BranchItem from "#models/branch_item";
 import BranchSubject from "#models/branch_subject";
 import BranchSubjectBook from "#models/branch_subject_book";
 import { BranchSubjectsService, fetchSubjectsForUpload } from "#services/branch_subjects_service";
-import { StorageService } from "#services/storage_service";
 import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
-import { unchecked } from "#tests/test-doubles";
 
 const BRANCH = "5d765db5fc8c47001c408d81";
 const OTHER_BRANCH = "5d765db5fc8c47001c408d82";
@@ -26,8 +23,6 @@ const ALL_OFF = {
 };
 
 test.group("BranchSubjectsService", (group) => {
-  let sandbox: sinon.SinonSandbox;
-
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     await createBranch({ id: BRANCH });
@@ -35,10 +30,6 @@ test.group("BranchSubjectsService", (group) => {
     await createItem({ id: ITEM_KJEMI, title: "Kjemien stemmer" });
     await createItem({ id: ITEM_FYSIKK, title: "Fysikkboka" });
   });
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
 
   test("creates a subject with books and lists it with item titles", async ({ assert }) => {
     await BranchSubjectsService.create(BRANCH, {
@@ -163,17 +154,18 @@ test.group("BranchSubjectsService", (group) => {
   test("import creates one subject per category with the books' options copied", async ({
     assert,
   }) => {
-    sandbox.stub(StorageService.BranchItems, "aggregate").resolves(
-      unchecked([
-        {
-          itemId: ITEM_KJEMI,
-          categories: ["Kjemi 2", "Realfag"],
-          ...ALL_OFF,
-          rent: true,
-        },
-        { itemId: ITEM_FYSIKK, categories: ["Realfag"], ...ALL_OFF, buy: true },
-      ]),
-    );
+    await BranchItem.createMany([
+      {
+        branchId: BRANCH,
+        itemId: ITEM_KJEMI,
+        categories: ["Kjemi 2", "Realfag"],
+        ...ALL_OFF,
+        rent: true,
+      },
+      { branchId: BRANCH, itemId: ITEM_FYSIKK, categories: ["Realfag"], ...ALL_OFF, buy: true },
+      // Another branch's entries are not imported.
+      { branchId: OTHER_BRANCH, itemId: ITEM_FYSIKK, categories: ["Fysikk 1"], ...ALL_OFF },
+    ]);
 
     const result = await BranchSubjectsService.importFromBranchItems(BRANCH);
 
@@ -192,9 +184,12 @@ test.group("BranchSubjectsService", (group) => {
   test("import skips categories that already exist as subjects and is re-runnable", async ({
     assert,
   }) => {
-    sandbox
-      .stub(StorageService.BranchItems, "aggregate")
-      .resolves(unchecked([{ itemId: ITEM_KJEMI, categories: ["Kjemi 2"], ...ALL_OFF }]));
+    await BranchItem.create({
+      branchId: BRANCH,
+      itemId: ITEM_KJEMI,
+      categories: ["Kjemi 2"],
+      ...ALL_OFF,
+    });
     await BranchSubjectsService.create(BRANCH, {
       name: "kjemi2",
       externalName: "noe annet",

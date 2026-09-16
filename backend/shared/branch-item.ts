@@ -1,20 +1,20 @@
-import type { BlDocument } from "#shared/bl-document";
+/**
+ * A title a branch offers. Rows live in Postgres `branch_items`; the model in
+ * `app/models/branch_item.ts` satisfies this shape, and pure pricing code reads it.
+ */
+export interface BranchItem {
+  id: string;
+  branchId: string;
+  itemId: string;
 
-export interface BranchItem extends BlDocument {
-  branch: string;
-  item: string;
+  rent: boolean; // customers may rent this title online
+  partlyPayment: boolean; // customers may partly pay for this title online
+  buy: boolean; // customers may buy this title online
 
-  rent: boolean; // possible to rent this item in webstore
-  sell: boolean; // possible to sell this item in webstore
-  buy: boolean; // possible to buy this item in webstore
-  partlyPayment: boolean; // possible to partly pay this item in webstore
-  live: boolean; // is this item live in webstore
+  rentAtBranch: boolean; // employees may hand it out as a loan at the branch
+  partlyPaymentAtBranch: boolean; // employees may hand it out on partly payment at the branch
+  buyAtBranch: boolean; // employees may sell it at the branch
 
-  rentAtBranch: boolean; // is it possible to rent item in bladmin
-  sellAtBranch: boolean; // is it possible to sell item in bladmin
-  buyAtBranch: boolean; // is it possible to buy item in bladmin
-  partlyPaymentAtBranch: boolean; // is it possible to partly pay item in bladmin
-  liveAtBranch: boolean; // is this item live at branch
-
+  /** The subjects the title is listed under in the branch's catalog, e.g. "Kjemi 2". */
   categories: string[];
 }

@@ -34,6 +34,35 @@ export class BookHandoverSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class BranchItemSchema extends BaseModel {
+  static $columns = ['branchId', 'buy', 'buyAtBranch', 'categories', 'createdAt', 'id', 'itemId', 'partlyPayment', 'partlyPaymentAtBranch', 'rent', 'rentAtBranch', 'updatedAt'] as const
+  $columns = BranchItemSchema.$columns
+  @column()
+  declare branchId: string
+  @column()
+  declare buy: boolean
+  @column()
+  declare buyAtBranch: boolean
+  @column()
+  declare categories: any
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare itemId: string
+  @column()
+  declare partlyPayment: boolean
+  @column()
+  declare partlyPaymentAtBranch: boolean
+  @column()
+  declare rent: boolean
+  @column()
+  declare rentAtBranch: boolean
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class BranchPeriodSchema extends BaseModel {
   static $columns = ['branchId', 'date', 'id', 'kind', 'maxNumberOfPeriods', 'percentage', 'percentageBuyout', 'percentageBuyoutUsed', 'percentageUpFront', 'percentageUpFrontUsed', 'periodType', 'price'] as const
   $columns = BranchPeriodSchema.$columns

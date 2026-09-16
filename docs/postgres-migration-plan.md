@@ -601,12 +601,13 @@ Notes (2026-09-16):
   `branchitems` model once compiled" when the schema file is deleted under HMR; touching
   `start/routes.ts` restarts the child.
 
-## Step 4 — branchitems → `branch_items` — status: not started
+## Step 4 — branchitems → `branch_items` — status: done 2026-09-16 (rehearsed on staging, pending merge)
 
 Target schema `branch_items`: `id string(24) PK`, `branch_id FK CASCADE`, `item_id FK CASCADE`,
-`unique(branch_id, item_id)`, the ten booleans (`rent`, `partly_payment`, `buy`, `sell`, `live`,
-`rent_at_branch`, `partly_payment_at_branch`, `buy_at_branch`, `sell_at_branch`, `live_at_branch`),
-`categories text[]` only if the survey finds non-empty values (otherwise dropped), timestamps.
+`unique(branch_id, item_id)`, six booleans (`rent`, `partly_payment`, `buy`, `rent_at_branch`,
+`partly_payment_at_branch`, `buy_at_branch`), `categories text[] not null default '{}'`,
+timestamps. The plan's first draft listed ten booleans; `sell`, `sell_at_branch`, `live` and
+`live_at_branch` were dropped after the survey (see below).
 
 Code to move (7 refs / 4 files): `branch_books_service.ts` (branch "Bøker" tab), cart/order
 validators checking that a branch offers an item, the two `branch.branchItems` readers from step 3.
@@ -614,7 +615,60 @@ validators checking that a branch offers an item, the two `branch.branchItems` r
 Survey queries: documents whose `branch` or `item` no longer exists (drop and log; a branch item
 without either side is meaningless); duplicate (branch, item) pairs; `categories` non-empty count.
 
-Survey results / notes: (fill in)
+Decisions taken with Adrian after the survey (2026-09-16): drop `sell`, `sellAtBranch`, `live`
+and `liveAtBranch` (false on all but six documents, read by nothing in backend or frontend, and
+the only writer overwrote all four to false on every save); keep `categories` as a `text[]`
+column (it drives the public catalog grouping and the "Fag" tags on the branch's book list; the
+API keeps calling it `subjects`); `PUT /branches/:branchId/items` becomes a diff inside one
+transaction (rows for titles already on the list are updated in place so their id and
+`created_at` survive, new titles are inserted, titles left out are deleted) instead of the old
+delete-all-and-reinsert. The API shape of `GET`/`PUT /branches/:branchId/items` and of
+`GET /branches/:branchId/catalog` is unchanged, so the frontend needed no changes and the
+committed Tuyau client did not change.
+
+Survey results (staging Mongo, 2026-09-16, 1 366 documents):
+
+- Every field present on every document with the declared type: `branch`/`item` ObjectId, the
+  ten booleans `Boolean`, `categories` array, `creationTime`/`lastUpdated` `Date`. Extra keys:
+  `active` (never false), `editableFor` (1 366), `viewableFor` (1 321), `user` (529), `__v`.
+  `required` (removed by `1788518000000_drop_branch_item_required`) on 0.
+- References: `branch` → 52 distinct branches, `item` → 227 distinct items, zero orphans against
+  Postgres `branches` and `items`; zero duplicate (branch, item) pairs (the Mongo unique index
+  `branch_item_unique` held). Nothing else, in Mongo or Postgres, references branch items.
+- Booleans (true count): `rent` 390, `partlyPayment` 911, `buy` 42, `rentAtBranch` 419,
+  `partlyPaymentAtBranch` 910, `buyAtBranch` 830, `sell` 6, `sellAtBranch` 6, `live` 0,
+  `liveAtBranch` 0.
+- `categories`: non-empty on 1 358, 1 470 entries, 163 distinct names (top: "Kjemi 2" 75,
+  "Kjemi 1" 70, "Fysikk 1" 45), no blank or whitespace-padded names, no duplicates within a
+  document.
+
+Notes (2026-09-16):
+
+- Staging rehearsal from a laptop: `branch_items: migrated 1366, skipped 0`, whole migration
+  4.87 s, the Mongo collection dropped. A field-by-field comparison of every row against a JSON
+  dump taken before the run found zero differences; both foreign keys and the unique index are in
+  place. The migration still guards against orphans (an entry whose branch or item is gone is
+  skipped and counted) in case production differs.
+- Migration `1789500000000_create_branch_items_table.ts`; model `app/models/branch_item.ts`
+  (`forBranch` returns the query so callers chain `.preload("item")`, `findPair`, `belongsTo`
+  branch and item); `app/services/branch_items_service.ts` (`list` preloads the items, `replace`
+  with the diff semantics above where Lucid skips the UPDATE for rows whose values did not change,
+  400 on a title listed twice or unknown). `CartService.getOptions` became a pure function taking
+  the branch and item it used to fetch per call, so the public catalog runs four queries (branch,
+  periods, entries, items) instead of three per entry (review, 2026-09-16). The stand cart line
+  resolver and `BranchSubjectsService.importFromBranchItems` (which used to `aggregate` over
+  Mongo) read the model. The shared `BranchItem` type is reshaped to the columns (`branchId`, `itemId`, six
+  flags, `categories`) and no longer extends `BlDocument`; the model satisfies it structurally,
+  so the pure pricing functions and their `mock<BranchItem>` specs are unchanged.
+- Specs: `tests/branch_items_service.spec.ts` (new); `stand_cart_line_resolver.spec.ts` and
+  `branch_subjects_service.spec.ts` lost their `StorageService.BranchItems` stubs (the former had
+  no test using branch items at all, the latter now inserts rows). Verified with Playwright on
+  `/admin/database/filialer?filialFane=books` for "Fri privatist" (57 cards, toggle-save-reload,
+  remove-save-reload, re-add through the "Legg til" modal with a subject tag and two switches) and
+  `/bestilling/:branchId` (45 subjects), at desktop and 375 px.
+- Pre-existing behaviour noticed, left alone: titles starting with punctuation ("¿Sabes? 2022")
+  sort first on the Bøker tab, both with the old plain `localeCompare` and the new
+  `localeCompare(…, "nb")`.
 
 ## Step 5 — userdetails + users → `users` — status: not started
 
@@ -1029,3 +1083,5 @@ Only after step 12 has run in production.
   staging-recovery decision, orders timing dry run).
 - 2026-09-16: step 2 implemented (companies flattened into Postgres, POST body flattened too, all
   columns not null per survey, staging rehearsal 2.9 s).
+- 2026-09-16: step 4 implemented (branch items into Postgres with six flags and `categories text[]`,
+  four dead flags dropped, PUT became an in-place diff, staging rehearsal 4.87 s, zero orphans).

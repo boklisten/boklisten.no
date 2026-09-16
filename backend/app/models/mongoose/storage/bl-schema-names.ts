@@ -1,5 +1,4 @@
 export const BlSchemaName = {
-  BranchItems: "branchitems",
   CustomerItems: "customeritems",
   Deliveries: "deliveries",
   Invoices: "invoices",

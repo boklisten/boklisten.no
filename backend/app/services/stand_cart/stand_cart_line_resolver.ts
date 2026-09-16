@@ -1,4 +1,5 @@
 import BranchModel from "#models/branch";
+import BranchItem from "#models/branch_item";
 import ItemModel from "#models/item";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { periodTypeOfLastOrder } from "#services/customer_item_actions_service";
@@ -13,7 +14,6 @@ import {
 } from "#services/stand_cart/stand_cart_pricing";
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
-import type { BranchItem } from "#shared/branch-item";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
@@ -67,16 +67,6 @@ function isActiveCustomerItem(customerItem: CustomerItem): boolean {
     !customerItem.cancel &&
     !customerItem.buyback
   );
-}
-
-async function findBranchItem(branchId: string, itemId: string): Promise<BranchItem | null> {
-  const query = new SEDbQuery();
-  query.objectIdFilters = [
-    { fieldName: "branch", value: branchId },
-    { fieldName: "item", value: itemId },
-  ];
-  const [branchItem] = (await StorageService.BranchItems.getByQueryOrNull(query)) ?? [];
-  return branchItem ?? null;
 }
 
 /** The customer item, if any, of whoever currently holds the copy. */
@@ -217,7 +207,7 @@ async function resolveOrderLine(
 
   const [branchItem, blockedItemIds, peerNote, heldNotes, orderBranch, bringDelivery] =
     await Promise.all([
-      findBranchItem(branchId, item.id),
+      BranchItem.findPair(branchId, item.id),
       itemIdsInActiveUserMatches(customerId),
       peerMatchNote(customerId, item.id),
       alreadyHeldNotes(customerId, item.id),
@@ -338,7 +328,7 @@ async function resolveItemLine(
     return item;
   }
   const [branchItem, peerNote, heldNotes] = await Promise.all([
-    findBranchItem(branchId, item.id),
+    BranchItem.findPair(branchId, item.id),
     peerMatchNote(customerId, item.id),
     alreadyHeldNotes(customerId, item.id),
   ]);

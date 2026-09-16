@@ -1,10 +1,9 @@
 import db from "@adonisjs/lucid/services/db";
-import { ObjectId } from "mongodb";
 
+import BranchItem from "#models/branch_item";
 import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BranchSubject from "#models/branch_subject";
-import { StorageService } from "#services/storage_service";
 
 export interface BranchSubjectBookInput {
   itemId: string;
@@ -190,26 +189,7 @@ export const BranchSubjectsService = {
    * overwrites manual edits.
    */
   async importFromBranchItems(branchId: string) {
-    const branchItems = await StorageService.BranchItems.aggregate<
-      { itemId: string; categories: string[] } & Record<
-        "rent" | "partlyPayment" | "buy" | "rentAtBranch" | "partlyPaymentAtBranch" | "buyAtBranch",
-        boolean
-      >
-    >([
-      { $match: { branch: new ObjectId(branchId) } },
-      {
-        $project: {
-          itemId: { $toString: "$item" },
-          categories: { $ifNull: ["$categories", []] },
-          rent: { $ifNull: ["$rent", false] },
-          partlyPayment: { $ifNull: ["$partlyPayment", false] },
-          buy: { $ifNull: ["$buy", false] },
-          rentAtBranch: { $ifNull: ["$rentAtBranch", false] },
-          partlyPaymentAtBranch: { $ifNull: ["$partlyPaymentAtBranch", false] },
-          buyAtBranch: { $ifNull: ["$buyAtBranch", false] },
-        },
-      },
-    ]);
+    const branchItems = await BranchItem.forBranch(branchId);
 
     const booksByCategory = new Map<string, { name: string; books: BranchSubjectBookInput[] }>();
     for (const branchItem of branchItems) {

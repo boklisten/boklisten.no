@@ -10,7 +10,6 @@ import { PeerObligations } from "#services/matches/peer_obligations";
 import { StandCartLineResolver } from "#services/stand_cart/stand_cart_line_resolver";
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
-import type { BranchItem } from "#shared/branch-item";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { Order } from "#shared/order/order";
@@ -114,7 +113,6 @@ interface World {
   orders: Order[];
   customerItems: CustomerItem[];
   uniqueItems: UniqueItem[];
-  branchItems: BranchItem[];
   deliveries: Delivery[];
   peerSender: string | null;
 }
@@ -153,17 +151,6 @@ function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
       ),
     );
   });
-  sandbox
-    .stub(StorageService.BranchItems, "getByQueryOrNull")
-    .callsFake((query) =>
-      Promise.resolve(
-        world.branchItems.filter(
-          (branchItem) =>
-            branchItem.branch === objectIdFilter(query, "branch") &&
-            branchItem.item === objectIdFilter(query, "item"),
-        ),
-      ),
-    );
   sandbox
     .stub(StorageService.UniqueItems, "getByQueryOrNull")
     .callsFake((query) =>
@@ -206,7 +193,6 @@ test.group("StandCartLineResolver.resolve", (group) => {
         mock<UniqueItem>({ id: "u1", blid: BLID, item: ITEM_ID, title: "Sinus 1T" }),
         mock<UniqueItem>({ id: "u2", blid: OTHER_BLID, item: OTHER_ITEM_ID, title: "Kosmos SF" }),
       ],
-      branchItems: [],
       deliveries: [],
       peerSender: null,
     };
