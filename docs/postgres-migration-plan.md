@@ -1,0 +1,822 @@
+# MongoDB → Postgres migration plan
+
+Reference document for the work of moving every remaining MongoDB collection into Postgres. It
+records the decisions taken on 2026-09-16, the conventions every step follows, and one section per
+step with the target schema, the relationship changes, the code that has to move, the survey to run
+first, and how to verify. Future agents: read "Ground rules" and "Per-step checklist" in full before
+starting a step, then the step's own section. Update this document when a step lands (tick the
+status, record survey results and anything surprising).
+
+## Goal and constraints
+
+- Everything leaves MongoDB. When the last step lands, the backend has one database.
+- Least risk and least code change. Each step is one collection (or one pair that must move
+  together), lands as one pull request made of small reviewable commits, and is merged as a unit
+  because the migration and the code that reads the new table must deploy together.
+- Small schema fixes are made on the way (relationship direction, naming, types, dropping dead
+  fields). No larger restructuring of services or the API.
+- All data is transferred. Nothing is left behind except what a survey has explicitly classified as
+  garbage and the step's migration logs as skipped.
+
+## Decisions (2026-09-16)
+
+| Topic                     | Decision                                                                                                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary keys              | Migrated tables keep the Mongo 24-char hex id as a `string(24)` primary key. New rows get an app-generated ObjectId hex. URLs, tokens, avatars and existing Postgres id columns keep working.              |
+| Cutover                   | One shot per collection, inside the Lucid migration's `defer` block on Railway predeploy (the signatures pattern). No dual-write period, no reconciliation pass.                                           |
+| Drop of Mongo collection  | In the same migration, right after the transfer. No separate safety net; a broken transfer is fixed forward in Postgres.                                                                                   |
+| Timing                    | No seasonal constraint. Between the drop and Railway switching traffic, the old backend errors on that collection and its writes are lost. Accepted: traffic is low and the window is a few minutes.       |
+| Embedded arrays           | Every embedded array whose elements have identity becomes a child table (order items, period extends, invoice item payments, invoice comments, branch periods).                                            |
+| jsonb                     | Only for payloads whose shape belongs to an external vendor (payment gateway info). Everything the app itself defines becomes columns.                                                                     |
+| Snapshot copies           | Invoice snapshots (customer info, item titles on invoice lines) are kept because invoices are accounting documents. `customerItem.customerInfo`, `uniqueItem.title` and `orderItem.title` are dropped.     |
+| Meta fields               | `creationTime`/`lastUpdated` → `created_at`/`updated_at`. `user` and `editableFor` are dropped. `active` is dropped unless the step's survey finds `active: false` documents that code reads.              |
+| API contract              | The frontend may change in the same step when a shape changes (inverted arrays, dropped fields). No presenter code that fakes the old document shape.                                                      |
+| Access layer              | One Lucid model per table with static query helpers (see `app/models/signature.ts`). Call sites of `StorageService.X` are rewritten to model calls. No Postgres imitation of `MongodbHandler`/`SEDbQuery`. |
+| Orphans                   | Every step starts with a staging survey. The migration then drops, nullifies or keeps orphans explicitly, with a logged count. Foreign keys are always real.                                               |
+| Order/customer-item cycle | Orders first. `order_items.customer_item_id` lands as a plain column; the customer-items step adds the foreign key and drops `customerItem.orders`.                                                        |
+| users + userdetails       | Merged into one table named `users`, keyed by the user-details id (the id everything else references).                                                                                                     |
+| Document location         | This file, `docs/postgres-migration-plan.md`.                                                                                                                                                              |
+
+## Current state (surveyed 2026-09-16 on staging, which is a nightly copy of production)
+
+| Collection    |    Docs | Data size | Backend references (`StorageService.X`) | Notes                                                              |
+| ------------- | ------: | --------: | --------------------------------------- | ------------------------------------------------------------------ |
+| branches      |     115 |    0.1 MB | 56 refs / 26 files                      | self-reference `parentBranch`/`childBranches`, `branchItems` array |
+| branchitems   |   1 366 |    0.5 MB | 7 / 4                                   | unique (branch, item)                                              |
+| companies     |      24 |    0.0 MB | 4 / 2                                   | referenced only from invoice snapshots                             |
+| customeritems | 164 861 |  137.6 MB | 55 / 27                                 | `orders` array, `periodExtends` array, `customerInfo` snapshot     |
+| deliveries    |  59 640 |   27.6 MB | 11 / 10                                 | one per placed order with delivery                                 |
+| invoices      |   7 735 |    9.5 MB | 13 / 9                                  | `customerItemPayments`, `comments` arrays, snapshots               |
+| items         |     685 |    0.3 MB | 37 / 22                                 | `info.price` is a Map                                              |
+| orders        | 185 289 |  189.8 MB | 73 / 30                                 | `orderItems` array, `payments` array, `delivery` ref               |
+| payments      |  59 941 |   31.1 MB | 11 / 10                                 | `info` is Mixed (vendor payload)                                   |
+| uniqueitems   |  51 667 |   13.4 MB | 8 / 6                                   | `title` snapshot                                                   |
+| userdetails   |  16 706 |   12.7 MB | 87 / 41                                 | `orders`, `customerItems` arrays                                   |
+| users         |  16 705 |    4.0 MB | 16 / 11                                 | 1:1 with userdetails; login hashes                                 |
+
+Also present on staging Mongo but already migrated and dropped by earlier migrations: `messages`
+(103 301 docs), `signatures`, `stand_matches`, `user_matches`. They reappear on staging because the
+nightly "Copy Mongo to Staging" cron restores whatever production holds, so production still has
+them. `1789100000000_drop_migrated_mongo_collections` drops all four wherever it runs (step 13 also
+drops them defensively).
+
+Existing Postgres columns that hold Mongo ids as plain strings today and become real foreign keys as
+their target table lands:
+
+| Column                                                    | Target   | Step                                        |
+| --------------------------------------------------------- | -------- | ------------------------------------------- |
+| `branch_subject_books.item_id`                            | items    | 1                                           |
+| `match_obligations.item_id`                               | items    | 1                                           |
+| `book_handovers.item_id`                                  | items    | 1                                           |
+| `branch_subjects.branch_id`                               | branches | 3                                           |
+| `opening_hours.branch_id`                                 | branches | 3                                           |
+| `waiting_list_customers.branch_id`                        | branches | 3                                           |
+| `signatures.customer_details_id`                          | users    | 5                                           |
+| `match_participants.user_detail_id`                       | users    | 5                                           |
+| `book_handovers.from_user_detail_id`, `to_user_detail_id` | users    | 5                                           |
+| `sendouts.initiated_by_details_id`                        | users    | 5                                           |
+| `messages.regarding_customer_details_id`                  | users    | 5                                           |
+| `match_rounds.excluded_customer_ids` (text[])             | users    | 5 (no FK possible on an array; survey only) |
+| `book_handovers.order_id`                                 | orders   | 8                                           |
+
+## Ground rules
+
+### Schema conventions
+
+- Table names plural snake_case; column names snake_case; foreign keys `<singular>_id`;
+  timestamps `<verb>_at` as `timestamptz`. Lucid maps to camelCase automatically.
+- Primary key of a migrated collection: `table.string("id", 24).primary()`. Child tables created
+  from embedded arrays use `table.increments("id")` unless the frontend already addresses the
+  element by its Mongo subdocument `_id` (none does today; verify per step).
+- Foreign keys are declared in the migration with an explicit `onDelete` chosen per relationship:
+  `CASCADE` for children that cannot exist without the parent (order items, period extends),
+  `SET NULL` for optional back-references (employee on an order), `RESTRICT` for references that
+  must never dangle (item on an order item, customer on an order). Write the reason as a comment.
+- Enum-like strings use `table.enu(column, values)` (a check constraint; no native Postgres enum
+  types in this project). Booleans are `notNullable().defaultTo(false)`.
+- Money stays integer NOK unless the survey finds decimals in the collection; then `decimal(10,2)`.
+- Every index the Mongo schema declares gets a Postgres equivalent, including partial unique
+  indexes (`customeritems.unique_active_blid`) via `this.schema.raw("CREATE UNIQUE INDEX … WHERE …")`,
+  see `1786600000002_create_matches_table.ts`.
+- `created_at`/`updated_at` are copied from `creationTime`/`lastUpdated`, falling back to the
+  ObjectId timestamp (`ObjectId.getTimestamp()`) when the document has neither.
+- `database/schema.ts` is generated from the migrations by `node ace migration:run`; never edit it.
+  The generated class gives the columns; the model in `app/models/` adds relationships, scopes and
+  query helpers.
+
+### Model conventions
+
+- One model per table in `app/models/<singular>.ts` extending the generated schema class.
+- Migrated tables declare `static override selfAssignPrimaryKey = true` and a `@beforeCreate` hook
+  calling `assignObjectId(row)` from `app/models/helpers/object_id.ts` (step 0), mirroring
+  `app/models/message.ts`; the snippet is in that file's doc comment. Specs build ids with
+  `fixtureId(n)` from `tests/fixtures.ts`.
+- Query helpers live as static methods on the model (see `Signature.newestPerCustomer`), or in a
+  small repository module under `app/services/<feature>/` when they span several models (see
+  `app/services/matches/match_repository.ts`). Do not create a generic handler with
+  get/getMany/add/update/remove.
+- Aggregations become Lucid query-builder or raw SQL (`Database.rawQuery`) inside those helpers.
+  Report queries in `reports_controller.ts` are the largest group.
+- Serialization: controllers return models or plain objects; Tuyau derives the frontend types from
+  the controller return types, so shape changes reach the frontend at compile time. Regenerate the
+  committed client (`backend/.adonisjs/client/`) whenever a controller's return type or a validator
+  changes; the codegen command has been observed not to exit on its own, so stop it once the files
+  are written.
+
+### Transfer conventions
+
+- The transfer runs in `this.defer(async (database) => …)` inside the same migration that creates
+  the table, guarded by `if (env.get("API_ENV") === "test") return;` so the test database (which has
+  no Mongo) can run the migration. Pattern: `1787932298876_create_signatures_table.ts`; the shared
+  pieces live in `database/helpers/mongo_transfer.ts` (step 0).
+- Mongo is read through `withMongo(fn)`, which opens a dedicated
+  `mongoose.createConnection(env.get("MONGODB_URI"), { dbName })`, where `dbName` is `production`
+  when `API_ENV === "production"` and `staging` otherwise, and closes it in `finally`.
+- `transferCollection({ mongo, database, collection, table, map })` streams the collection through
+  the step's `map` function and inserts rows in batches of 500 with `multiInsert`. `map` returns
+  `{ row, children? }` (child rows keyed by table, inserted right after their parents' batch) or
+  `skip(reason)`. Lucid already runs the whole migration, including the deferred block, inside one
+  transaction, so a failure leaves Postgres exactly as before; do not open a second one.
+- After inserting, the migration calls `assertRowCount(database, table, migrated)` (throws on
+  mismatch, which rolls the transaction back) and then `dropCollection(mongo, name)`.
+- Ids go through `hexId(value)` (nullable references) or `requiredHexId(value, field)`; both throw
+  on anything that is not a Mongo id, so garbage references fail the deploy instead of landing in a
+  foreign-key column. Timestamps come from `timestampsOf(document)`.
+- Postgres checks foreign keys per statement, and documents arrive in cursor order, so a reference
+  that can point at a row of the same table or at a row a later batch inserts (self references like
+  `branches.parent_branch_id`, `order_items.moved_from_order_id` / `moved_to_order_id`) must not be
+  declared on `createTable`. Register the transfer with `this.defer` first and then add the key with
+  `this.schema.alterTable(…)`; Lucid executes tracked `schema` and `defer` calls in registration
+  order, so the key is created after every row is in place (verified in
+  `@adonisjs/lucid` `BaseSchema.executeQueries`). References to tables that are complete before the
+  step starts are declared on `createTable` as usual.
+- Mongo `ObjectId` values are stored as their 24-char hex string; `Date` values as `timestamptz`;
+  missing optional fields as `NULL`. Fields that the survey proved constant are not copied.
+- `transferCollection` prints one summary line per table:
+  `<table>: migrated N, skipped M (<n> <reason>, …); <child_table>: migrated K`. Read it in the
+  Railway predeploy log after every deploy.
+
+### Test conventions
+
+- Specs that stubbed `StorageService.X` with sinon now insert real rows into the test Postgres
+  database and run the code. `group.each.setup(() => testUtils.db().truncate())` resets state
+  (see `tests/branch_subjects_service.spec.ts`).
+- Specs that only tested the Mongoose layer (`tests/mongoDb.spec.ts`, `order_schema_info_casting`)
+  are deleted when the layer they test is deleted.
+- Backend commands need Node 24: prefix with `fnm exec --using=24` when `node -v` disagrees.
+
+### Deploy and environment facts
+
+- `main` deploys to staging, `production` deploys to live. The backend runs `bun migrate:backend`
+  as a predeploy command in both, so the transfer executes inside Railway's private network.
+- Staging Postgres is rebuilt from production every night at 04:00 (`copy_prod_postgres_to_staging`
+  drops the schema and restores the production dump, including the `adonis_schema` table). Staging
+  Mongo is rebuilt at the same time. Consequences:
+  - After the nightly copy, staging Postgres lacks tables that only exist on `main` until the next
+    staging deploy re-runs the pending migrations. Until then the staging backend fails on those
+    tables. Decided in step 0: no automation; redeploy the staging backend by hand (Railway
+    dashboard or `railway redeploy`) after the 04:00 copy whenever `main` is ahead of `production`
+    by a migration. Rerunning the migrations also re-executes the Mongo transfer against the fresh
+    production copy, which is the free rehearsal mentioned below.
+  - Every night the staging cutover is effectively re-tested against fresh production data on the
+    next staging deploy, which is a free rehearsal for the production cutover.
+- Local rehearsal: `backend/.env.local` points at the staging databases, so
+  `cd backend && bun run migrate:backend` from a local machine performs the real staging cutover. Use
+  it to time the transfer and inspect the result before merging. Staging resets nightly, so a
+  rehearsal is disposable.
+- The transfer time measured on staging is the production predeploy time (same data volume).
+
+## Per-step checklist
+
+Copy this list into the pull request description of every step and tick it.
+
+1. **Survey on staging.** Run read-only queries against staging Mongo (and Postgres for existing id
+   columns): document count, orphan references per foreign key, distinct values of every enum-like
+   field, null/absence rate of every optional field, extra keys not in the schema, decimals in
+   money fields, consistency of derivable arrays, count of `active: false` documents (and whether
+   any code reads `active` for that collection; if both are non-zero the column stays). Record the
+   numbers in the PR and under the step's "Survey results" heading in this document.
+2. **Decide orphan handling** per foreign key from the survey, and write it into the migration as
+   code plus a comment.
+3. **Migration**: create table(s), indexes, foreign keys (both new ones and the ones on existing
+   Postgres columns listed above), then the deferred transfer with count assertion and collection
+   drop. For Mongo collections that stay behind for a few more steps but lose their parent-side
+   array, add the Mongo index the child-side lookup now needs (steps 5 and 8).
+4. **Model(s)** with id assignment, relationships, and the static query helpers the call sites need.
+5. **Rewrite call sites**: every `StorageService.X` use for that collection, every `aggregate` over
+   it, every `SEDbQuery` for it. Delete the Mongoose schema file, the `BlSchemaName` entry, the
+   `StorageService` entry, and the shared type or reshape it to the new columns.
+6. **Frontend**: adapt features to the changed return types (Tuyau types drive the compiler),
+   regenerate the committed Tuyau client.
+7. **Tests**: rewrite stubs to Postgres rows, add specs for new query helpers, delete Mongo-only
+   specs.
+8. **Rehearse on staging locally**: run the migration against staging, check the summary line and
+   the timing, spot-check rows against Mongo (before the drop, on a copy, or against production
+   read-only), click through the affected pages with Playwright at desktop and 375px.
+9. **`bun fix`** clean.
+10. **Merge to `main`**, watch the staging predeploy log for the summary line, use staging for a
+    day.
+11. **Merge to `production`**, watch the predeploy log, verify the affected pages on live.
+12. Update this document: status, survey results, surprises.
+
+## Step 0 — Groundwork (no data moves) — status: done 2026-09-16 (pending merge)
+
+Goal: make steps 1–12 mechanical by extracting the shared pieces once.
+
+Deliverables:
+
+- `backend/database/helpers/mongo_transfer.ts` (outside `database/migrations/`, which Lucid scans):
+  `withMongo(fn)` opening and closing the connection with the `API_ENV` rules above;
+  `transferCollection({ collection, table, map, filter?, batchSize = 500 })` returning
+  `{ migrated, skipped }`; `assertRowCount(table, expected)`; `dropCollection(name)` tolerant of
+  `NamespaceNotFound`; `hexId(value)` and `timestampOf(document)` for the id/date conventions.
+  Written so that a migration reads as a mapping function plus a few calls.
+- `backend/app/models/helpers/object_id.ts`: `newObjectId(): string` built on the `ObjectId`
+  class of the `bson` package. Add `bson` as a direct dependency now (it is currently a transitive
+  dependency of `mongodb`) so id generation survives step 13. Keep the format identical to Mongo's
+  (4-byte timestamp, 5-byte random, 3-byte counter) so ids stay time-sortable and cannot collide
+  with transferred ids.
+- Model mixin or documented snippet for `selfAssignPrimaryKey` + `@beforeCreate` id assignment.
+- Test helper for inserting fixture rows with generated ids where the specs need it.
+- Timing dry run: transfer the `orders` collection to a throwaway table against staging locally with
+  the helper (then drop the table), to know the predeploy duration for the largest step before
+  committing to the one-shot approach. Record the number here.
+- Decide how staging recovers after the nightly Postgres copy: either extend
+  `copy_prod_postgres_to_staging` to trigger a staging backend redeploy (Railway CLI in the cron
+  image) or document that a manual redeploy is required. Record the decision here.
+- Confirm on production Mongo whether `messages`, `signatures`, `stand_matches`, `user_matches`
+  still exist; if so, drop them (they are fully migrated) so the nightly copy stops resurrecting
+  them.
+
+Survey results / notes (2026-09-16):
+
+- `backend/database/helpers/mongo_transfer.ts`: `withMongo`, `transferCollection` (with
+  `skip(reason)`, child tables, summary line), `assertRowCount`, `dropCollection`, `hexId`,
+  `requiredHexId`, `timestampOf`, `timestampsOf`. Spec: `tests/mongo_transfer.spec.ts` (runs the
+  batching against scratch tables in the test Postgres).
+- `backend/app/models/helpers/object_id.ts`: `newObjectId`, `isObjectIdHex`, `assignObjectId`;
+  `bson` ^7.3.2 is a direct dependency. The model snippet is the file's doc comment (no mixin: Lucid
+  hooks are decorators, so a four-line snippet per model is clearer than a class factory). Spec:
+  `tests/object_id.spec.ts`.
+- `backend/tests/fixtures.ts`: `fixtureId(n)` for readable deterministic ids in specs.
+- Staging recovery after the nightly Postgres copy: manual redeploy (see "Deploy and environment
+  facts"). Automating it would put Railway credentials in the cron image for a situation that only
+  arises while `main` is ahead of `production` by a migration.
+- Staging Mongo (2026-09-16) still held `messages` 103 301, `signatures` 4 864, `stand_matches` 374
+  and `user_matches` 838 documents, all restored nightly from production even though the migrations
+  that dropped them are on `production`. `1789100000000_drop_migrated_mongo_collections` drops all
+  four again wherever it runs.
+- Timing dry run (orders → throwaway `dry_run_orders` + `dry_run_order_items`, per the step 8
+  schema minus foreign keys, from a laptop over Railway's public TCP proxy, so slower than the
+  predeploy inside the private network): 570 s (9.5 min) for 184 908 orders and 488 898 order
+  items, in one transaction, batches of 500 parents. Round trips dominate (about 0.75 s per insert
+  statement), so the predeploy inside the private network should be well under this; treat
+  10 minutes as the upper bound for step 8 and expect a similar order of magnitude for step 9
+  (customer items). Acceptable for the one-shot approach; deploy steps 8 and 9 in a quiet hour.
+- Early step 8 survey facts from the dry run: 381 orders have no `customer` (skipped in the dry
+  run; step 8 must decide, probably drop them after checking they are unplaced carts); every order
+  item has an `item`; the largest order has 32 lines (the child inserts are chunked in
+  `transferCollection` because 500 parents × 32 lines × 19 columns would exceed Postgres's 65 535
+  bind parameters).
+
+## Step 1 — items → `items` — status: not started
+
+Smallest collection with the widest fan-in: it establishes the string-primary-key pattern and turns
+three existing Postgres columns into real foreign keys.
+
+Target schema `items`:
+
+| Column                 | Type             | From               | Notes                                            |
+| ---------------------- | ---------------- | ------------------ | ------------------------------------------------ |
+| id                     | string(24) PK    | `_id`              |                                                  |
+| title                  | text not null    | `title`            |                                                  |
+| price                  | integer not null | `price`            | survey for decimals                              |
+| isbn                   | bigint unique    | `info.isbn`        | 13 digits exceed int4                            |
+| subject                | text not null    | `info.subject`     |                                                  |
+| year                   | integer not null | `info.year`        |                                                  |
+| weight                 | text not null    | `info.weight`      | survey: if always numeric grams, make it integer |
+| distributor            | text not null    | `info.distributor` |                                                  |
+| discount               | integer/decimal  | `info.discount`    | survey                                           |
+| publisher              | text not null    | `info.publisher`   |                                                  |
+| buyback                | boolean not null | `buyback`          |                                                  |
+| price_* / prices       | see below        | `info.price` (Map) |                                                  |
+| created_at, updated_at | timestamptz      |                    |                                                  |
+
+`info.price` is a `Map<string, number>`. Survey the distinct key set. If it is a fixed small set
+(expected: rent-period keys such as `semester`/`year`), make one nullable integer column per key
+(`price_semester`, `price_year`). If keys vary per item, use a `prices jsonb` column; this is app
+data, so prefer columns whenever the survey allows.
+
+Foreign keys added on existing tables (after orphan survey): `branch_subject_books.item_id`,
+`match_obligations.item_id`, `book_handovers.item_id`, all `RESTRICT` (an item with history must
+not be deleted; item deletion is not a feature).
+
+Code to move (37 refs / 22 files): `item_lookup.ts`, `item_management_service.ts` (PATCH and bulk
+upsert by id/ISBN for `/admin/database/boker`), `blid_registration_service.ts`, `branch_books_service.ts`,
+`branch_subjects_service.ts` (title aggregate → join), `subject_choices_service.ts`, order
+validators that check item existence, stand cart pricing (`price_service.ts`), reports, cart
+service. The frontend book grid consumes the item shape through Tuyau; adjust field paths
+(`info.isbn` → `isbn`).
+
+Tests: `item_lookup.spec.ts`, `item_management_service.spec.ts`, `branch_books_service.spec.ts`,
+`branch_subjects_service.spec.ts` (drop the `stubItemTitles` sinon stub, insert items).
+
+Survey queries (staging Mongo): distinct keys of `info.price`; `price`/`discount` with fractional
+part; `weight` values not matching `^\d+$`; duplicate `isbn`; ids in the three Postgres columns not
+present in `items`.
+
+Survey results / notes: (fill in)
+
+## Step 2 — companies → `companies` — status: not started
+
+Target schema `companies`: `id` string(24) PK, `name` not null, `phone`, `email`, `address`,
+`post_code`, `post_city`, `customer_number`, `organization_number`, timestamps. `contactInfo` is
+flattened. Referenced later by `invoices.company_id` (step 12).
+
+Code to move (4 refs / 2 files): company invoice generation (`services/invoices/`), company admin
+endpoints.
+
+Survey: none beyond counts (24 documents).
+
+Survey results / notes: (fill in)
+
+## Step 3 — branches → `branches` + `branch_periods` — status: not started
+
+Target schema `branches`:
+
+| Column                                | From                                 | Notes          |
+| ------------------------------------- | ------------------------------------ | -------------- |
+| id string(24) PK                      | `_id`                                |                |
+| name not null                         | `name`                               |                |
+| logo                                  | `logo`                               |                |
+| type enu(VGS, privatist) null         | `type`                               |                |
+| parent_branch_id FK branches SET NULL | `parentBranch`                       | self reference |
+| local_name                            | `localName`                          |                |
+| child_label                           | `childLabel`                         |                |
+| payment_responsible bool              | `paymentInfo.responsible`            |                |
+| responsible_for_delivery bool         | `paymentInfo.responsibleForDelivery` | default false  |
+| buyout_percentage decimal             | `paymentInfo.buyout.percentage`      | default 1      |
+| sell_percentage decimal               | `paymentInfo.sell.percentage`        | default 1      |
+| delivery_at_branch bool               | `deliveryMethods.branch`             | default true   |
+| delivery_by_mail bool                 | `deliveryMethods.byMail`             | default true   |
+| branch_items_live_online bool         | `isBranchItemsLive.online`           |                |
+| branch_items_live_at_branch bool      | `isBranchItemsLive.atBranch`         |                |
+| region not null                       | `location.region`                    |                |
+| address                               | `location.address`                   |                |
+| timestamps                            |                                      |                |
+
+Dropped: `childBranches` (derivable from `parent_branch_id`; survey that every child listed has the
+matching `parentBranch`, otherwise `parentBranch` wins and the discrepancy is logged),
+`branchItems` (derivable from `branch_items.branch_id` after step 4; until then the two readers of
+the array query `StorageService.BranchItems` by branch).
+
+Target schema `branch_periods` (one row per entry of `partlyPaymentPeriods`, `rentPeriods`,
+`extendPeriods`): `id increments`, `branch_id FK CASCADE`, `kind enu(partly_payment, rent, extend)`,
+`period_type enu(semester, year)`, `date timestamptz`, `max_number_of_periods int null`,
+`percentage decimal null`, `price int null`, `percentage_buyout`, `percentage_buyout_used`,
+`percentage_up_front`, `percentage_up_front_used` (decimals, null unless kind = partly_payment).
+Index `(branch_id, kind)`. The shared `BranchPaymentInfo` type is reshaped to three arrays built
+from this table by the branch model (`periodsOf(kind)`), so the frontend keeps addressing
+`rentPeriods`, `extendPeriods`, `partlyPaymentPeriods` by name.
+
+Foreign keys added on existing tables: `branch_subjects.branch_id`, `opening_hours.branch_id`,
+`waiting_list_customers.branch_id`, all `CASCADE` (a deleted branch takes its configuration with
+it). The two existing columns are untyped `string`; alter them to `string(24)` first.
+
+Code to move (56 refs / 26 files): `branch_relationship_service.ts` (parent/child tree),
+`branch_signature_status_service.ts`, `branch_insights_service.ts`, `branch_books_service.ts`,
+`deadline_window.ts` and `date_service.ts` (period lookups), order validators (rent/extend/partly
+payment period checks), stand cart pricing, matches `round_scope.ts`, `user_provisioning_service.ts`,
+`/admin/database/filialer` tabs.
+
+Survey queries: `type` values outside the enum; `childBranches` vs `parentBranch` consistency;
+periods with missing `date`/`type`; percentages outside 0..1; `location.region` missing.
+
+Survey results / notes: (fill in)
+
+## Step 4 — branchitems → `branch_items` — status: not started
+
+Target schema `branch_items`: `id string(24) PK`, `branch_id FK CASCADE`, `item_id FK CASCADE`,
+`unique(branch_id, item_id)`, the ten booleans (`rent`, `partly_payment`, `buy`, `sell`, `live`,
+`rent_at_branch`, `partly_payment_at_branch`, `buy_at_branch`, `sell_at_branch`, `live_at_branch`),
+`categories text[]` only if the survey finds non-empty values (otherwise dropped), timestamps.
+
+Code to move (7 refs / 4 files): `branch_books_service.ts` (branch "Bøker" tab), cart/order
+validators checking that a branch offers an item, the two `branch.branchItems` readers from step 3.
+
+Survey queries: documents whose `branch` or `item` no longer exists (drop and log; a branch item
+without either side is meaningless); duplicate (branch, item) pairs; `categories` non-empty count.
+
+Survey results / notes: (fill in)
+
+## Step 5 — userdetails + users → `users` — status: not started
+
+The two collections are 1:1 (16 706 vs 16 705 documents) and merge into a single table keyed by the
+user-details id, since that is the id every token (`details` claim), route, avatar seed and Postgres
+column already carries. The old `users._id` disappears; the survey must confirm nothing stores it
+(tokens use `sub = blid`, not the users id; `StorageService.Users.update(user.id, …)` in
+`token_service.ts`, `password_service.ts` and `local_controller.ts` becomes an update by the merged
+id).
+
+Target schema `users`:
+
+| Column                                                      | From                                   | Notes                                                                                      |
+| ----------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------ |
+| id string(24) PK                                            | `userdetails._id`                      |                                                                                            |
+| name                                                        | `name`                                 |                                                                                            |
+| email unique not null                                       | `email`                                | always present (confirmed 2026-09-16); lowercased on write; unique index on `lower(email)` |
+| phone unique null                                           | `phone`                                | partial unique index `WHERE phone IS NOT NULL`                                             |
+| address, post_code, post_city                               |                                        |                                                                                            |
+| email_confirmed bool                                        | `emailConfirmed`                       |                                                                                            |
+| dob date null                                               | `dob`                                  |                                                                                            |
+| guardian_name, guardian_email, guardian_phone               | `guardian.*`                           |                                                                                            |
+| blid not null                                               | `blid`                                 | token `sub`                                                                                |
+| branch_membership_id FK branches SET NULL                   | `branchMembership`                     |                                                                                            |
+| task_confirm_details bool                                   | `tasks.confirmDetails`                 | default false                                                                              |
+| task_sign_agreement bool                                    | `tasks.signAgreement`                  | default false                                                                              |
+| permission enu(customer, employee, manager, admin) not null | `users.permission`                     | default customer                                                                           |
+| local_hashed_password                                       | `users.login.local.hashedPassword`     | null for Vipps-only users                                                                  |
+| local_last_login timestamptz                                | `users.login.local.lastLogin`          |                                                                                            |
+| vipps_user_id unique null                                   | `users.login.vipps.userId`             |                                                                                            |
+| vipps_last_login timestamptz                                | `users.login.vipps.lastLogin`          |                                                                                            |
+| last_token_issued_at timestamptz                            | `users.login.lastTokenIssuedAt`        |                                                                                            |
+| timestamps                                                  | `userdetails.creationTime/lastUpdated` |                                                                                            |
+
+Dropped: `orders` and `customerItems` arrays. Until steps 8 and 9 land, the readers (4 backend
+files for orders, 6 for customer items, plus the frontend customer views) fetch by
+`StorageService.Orders.getByQuery(customer = id)` / `CustomerItems` likewise. This migration also
+creates Mongo indexes `orders.customer` and `customeritems.customer` (neither exists today), using
+the pattern of `1788900000000_create_orders_open_list_index.ts`.
+
+Foreign keys added on existing tables, after orphan survey (the inactive-user cron has deleted
+users, so orphans are expected): `signatures.customer_details_id` CASCADE (a deleted customer's
+signatures go too), `match_participants.user_detail_id` RESTRICT (NULL means the stand, so SET NULL
+would corrupt meaning; a user with match history cannot be deleted), `book_handovers.from/to`
+SET NULL, `sendouts.initiated_by_details_id` SET NULL, `messages.regarding_customer_details_id`
+SET NULL. Orphans in SET NULL columns are nullified by the migration with a logged count; orphans in
+the RESTRICT/CASCADE columns are surveyed and decided individually.
+
+Code to move (103 refs / ~45 files): `user_detail_service.ts` (search over name/email/phone → `ILIKE`
+with a `pg_trgm` GIN index if the survey of search latency needs it), `user_service.ts`,
+`user_management_service.ts` and `user_duplicates_service.ts` (aggregates → SQL; the merge flow
+moves orders/customer items/signatures to the surviving user), `user_provisioning_service.ts`,
+`user_metrics_service.ts`, `token_service.ts`, `password_service.ts`, `permission_service.ts`, auth
+controllers (local, Vipps, email verification, password reset), `signature_gallery_service.ts`,
+customer search spotlight, Kasse customer view, `/admin/database/brukere`, reports aggregate over
+userdetails. Frontend: `UserDetail` shared type is imported in 20 files; rename to the merged shape
+(or keep `UserDetail` as the exported name of the model's serialized type to limit churn; decide in
+the step).
+
+Also in this step: delete `cron_jobs/database_cleanup/remove_old_order_references.sh` and
+`remove_old_customer_item_references.sh` (they repaired the dropped arrays). Disable
+`remove_inactive_users.sh` (it joins users, userdetails, customeritems and orders inside Mongo, which
+is no longer possible); it is rewritten as SQL in step 9 when orders and customer items are in
+Postgres.
+
+Tests: `auth_middleware.spec.ts`, `checkout_signature_guard.spec.ts`, `branch_signature_status.spec.ts`,
+customer-related order validator specs (`order-user-detail-validator.spec.ts`), plus new specs for
+the query helpers.
+
+Survey queries: users without userdetail and vice versa; userdetails without `email` (expected 0,
+the column is not null); duplicate emails differing only in case; duplicate phones; `permission`
+outside the enum; users with neither local nor Vipps login; `userdetails.active: false` count and
+whether any code reads it (the `active` column is only kept if both are non-zero); orphan ids in
+each Postgres column listed above; ids in `match_rounds.excluded_customer_ids` not in userdetails.
+
+Survey results / notes: (fill in)
+
+## Step 6 — (merged into step 5)
+
+Kept as a placeholder so step numbers in older discussions still line up. Nothing to do.
+
+## Step 7 — uniqueitems → `unique_items` — status: not started
+
+Target schema `unique_items`: `id string(24) PK`, `blid text unique not null`, `item_id FK items
+RESTRICT`, timestamps. `title` is dropped (join `items`).
+
+Indexes: unique on `blid`; blid prefix search (`/admin/kasse` blid search, Boksøk) uses
+`WHERE blid LIKE 'prefix%'`, which the unique b-tree index serves when the database collation is
+`C`; otherwise add a `text_pattern_ops` index. Check `SHOW lc_collate` on staging.
+
+Code to move (8 refs / 6 files): `blid_search_service.ts` (ranked hits), `blid_registration_service.ts`,
+`unique_item_edit_service.ts` (relink/delete blid), `unique_item_monitoring.ts`, Merking page
+endpoints, public `/sjekk` lookup.
+
+Survey queries: `item` ids not in `items`; blids not matching the 8-digit or 12-alphanumeric
+formats; blid duplicates (the unique index would refuse them).
+
+Survey results / notes: (fill in)
+
+## Step 8 — orders → `orders` + `order_items` — status: not started
+
+The largest step by code (73 refs / 30 files) and by rows. Everything referenced by an order except
+customer items and deliveries is already in Postgres at this point.
+
+Target schema `orders`:
+
+| Column                         | From                 | Notes                                                        |
+| ------------------------------ | -------------------- | ------------------------------------------------------------ |
+| id string(24) PK               | `_id`                |                                                              |
+| amount integer not null        | `amount`             |                                                              |
+| branch_id FK branches RESTRICT | `branch`             |                                                              |
+| customer_id FK users RESTRICT  | `customer`           | user deletion must delete orders first (step 9 cron)         |
+| by_customer bool               | `byCustomer`         |                                                              |
+| employee_id FK users SET NULL  | `employee`           |                                                              |
+| placed bool                    | `placed`             |                                                              |
+| delivery_id string(24) null    | `delivery`           | plain column until step 10 removes it                        |
+| notify_by_email bool null      | `notification.email` |                                                              |
+| checkout_state text null       | `checkoutState`      | legacy Vipps Checkout; survey whether any live code reads it |
+| timestamps                     |                      |                                                              |
+
+Dropped: `payments` array (derivable from `payments.order`; this migration creates the Mongo index
+`payments.order` so the interim lookup is cheap).
+
+Indexes: `(placed, created_at desc)` (order manager walks placed orders newest first),
+`(customer_id, created_at desc)`, `(branch_id, created_at desc)`, `(placed, updated_at)` for the
+unplaced-order cleanup.
+
+Target schema `order_items`:
+
+| Column                                                                                                                         | From                       | Notes                                    |
+| ------------------------------------------------------------------------------------------------------------------------------ | -------------------------- | ---------------------------------------- |
+| id increments                                                                                                                  | (subdocument `_id` unused) |                                          |
+| order_id FK orders CASCADE                                                                                                     |                            |                                          |
+| type enu(rent, buy, extend, sell, buyout, return, cancel, partly-payment, buyback, invoice-paid, match-receive, match-deliver) | `type`                     |                                          |
+| item_id FK items RESTRICT                                                                                                      | `item`                     |                                          |
+| blid text null                                                                                                                 | `blid`                     |                                          |
+| amount integer, unit_price integer                                                                                             |                            |                                          |
+| delivered bool, handout bool                                                                                                   |                            |                                          |
+| customer_item_id string(24) null                                                                                               | `customerItem`             | FK added in step 9                       |
+| period_from, period_to timestamptz null                                                                                        | `info.from`, `info.to`     |                                          |
+| number_of_periods int null                                                                                                     | `info.numberOfPeriods`     |                                          |
+| period_type enu(semester, year) null                                                                                           | `info.periodType`          |                                          |
+| amount_left_to_pay int null                                                                                                    | `info.amountLeftToPay`     |                                          |
+| buyback_amount int null                                                                                                        | `info.buybackAmount`       |                                          |
+| moved_from_order_id FK orders SET NULL                                                                                         | `movedFromOrder`           |                                          |
+| moved_to_order_id FK orders SET NULL                                                                                           | `movedToOrder`             |                                          |
+| position smallint                                                                                                              | array index                | preserves the order of lines on receipts |
+
+Dropped: `title` (join `items`; receipts and emails render the current title), `info.customerItem`
+(duplicate of `customerItem`; survey confirms, and where only `info.customerItem` is set the transfer
+copies it into `customer_item_id`). `info` is `strict: false` in Mongoose; the survey lists any
+extra keys so nothing is silently lost.
+
+Indexes: `(order_id, position)`, `customer_item_id`, `blid`, `item_id`.
+
+Code to move: `order_service.ts`, `orders/order_place_service.ts` (its customer-item aggregate stays
+Mongo until step 9), `orders/` validators and handlers (rent/extend/partly-payment/buy validators,
+placed handler, moved-from-order handler, order-to-customer-item generator), `order_item_service.ts`,
+`order_manager_service.ts` (cursor paging over `(created_at, id)`), `order_history_service.ts`,
+`order_cancellation_service.ts`, `refund_request_service.ts`, stand cart placement and Vipps
+engine, invoices generation, `branch_insights_service.ts` and `reports_controller.ts` aggregates
+(→ SQL with `GROUP BY`), matches `generate_round.ts`/`round_scope.ts` (which orders count as a
+customer's expected books), `customer_item_actions_service.ts` line 143 (finds the order item for a
+customer item → query `order_items` by `customer_item_id`), postal handout signal (`delivery_id`
+still a plain column in this step). Frontend: order history tab, order manager, Kasse cart,
+checkout, receipts.
+
+Also in this step: rewrite `cron_jobs/database_cleanup/remove_unplaced_orders.sh` as SQL
+(`DELETE FROM orders WHERE NOT placed AND updated_at < now() - interval '1 year'`, cascading to
+`order_items`) in a `postgres` image with `DATABASE_URL`, and switch the "Database Cleanup" cron in
+`.railway/railway.ts` to the Postgres URL.
+
+Tests: the many `order-*.spec.ts` and `order_*.spec.ts` files. Most stub `StorageService.Orders`;
+they become Postgres-backed. Expect this to be the largest test diff of the whole migration; do it
+in its own commit(s) inside the PR.
+
+Survey queries: `customer`, `branch`, `employee` ids not in Postgres `users`/`branches`; order
+items whose `item` is not in `items`; `movedFromOrder`/`movedToOrder` pointing at missing orders;
+`type` values outside the enum; extra keys in `info`; `info.customerItem` ≠ `customerItem` when both
+set; decimals in `amount`/`unitPrice`; `checkoutState` non-null count and whether any code reads it;
+unplaced orders older than a year (cleanup volume); maximum `orderItems.length`.
+
+Survey results / notes: (fill in; include the measured transfer duration)
+
+## Step 9 — customeritems → `customer_items` + `customer_item_period_extends` — status: not started
+
+Target schema `customer_items`:
+
+| Column                                                         | From                           | Notes                                   |
+| -------------------------------------------------------------- | ------------------------------ | --------------------------------------- |
+| id string(24) PK                                               | `_id`                          |                                         |
+| item_id FK items RESTRICT                                      | `item`                         |                                         |
+| type enu(rent, partly-payment) not null                        | `type`                         |                                         |
+| blid text null                                                 | `blid`                         |                                         |
+| customer_id FK users RESTRICT                                  | `customer`                     |                                         |
+| deadline timestamptz not null                                  | `deadline`                     |                                         |
+| handout bool                                                   | `handout`                      |                                         |
+| handout_branch_id FK branches SET NULL                         | `handoutInfo.handoutById`      | `handoutBy` is always "branch"; dropped |
+| handout_employee_id FK users SET NULL                          | `handoutInfo.handoutEmployee`  |                                         |
+| handed_out_at timestamptz null                                 | `handoutInfo.time`             |                                         |
+| returned bool                                                  | `returned`                     |                                         |
+| return_branch_id FK branches SET NULL                          | `returnInfo.returnedToId`      |                                         |
+| return_employee_id FK users SET NULL                           | `returnInfo.returnEmployee`    |                                         |
+| returned_at timestamptz null                                   | `returnInfo.time`              |                                         |
+| cancel bool, cancel_order_id FK orders SET NULL, cancelled_at  | `cancel`, `cancelInfo.*`       |                                         |
+| buyout bool, buyout_order_id FK orders SET NULL, bought_out_at | `buyout`, `buyoutInfo.*`       |                                         |
+| buyback bool, buyback_order_id FK orders SET NULL              | `buyback`, `buybackInfo.order` |                                         |
+| total_amount int null, amount_left_to_pay int null             | partly payment                 |                                         |
+| timestamps                                                     |                                |                                         |
+
+Partial unique index reproducing `unique_active_blid`:
+`CREATE UNIQUE INDEX customer_items_unique_active_blid ON customer_items (blid) WHERE blid IS NOT NULL AND NOT returned AND NOT buyout`.
+Other indexes: `(customer_id)`, `(blid)`, `(deadline) WHERE NOT returned AND NOT buyout AND NOT cancel`
+for reminders, `(handout_branch_id)`.
+
+Dropped: `orders` array (derivable from `order_items.customer_item_id`) and `customerInfo`
+snapshot. The survey checks that every id in `customerItem.orders` has an `order_items` row with
+that `customer_item_id`; where it does not, the transfer sets `customer_item_id` on the matching
+order item (same order, same item, null `customer_item_id`) and logs the count; leftovers are
+logged and dropped.
+
+Foreign key added on the existing column: `order_items.customer_item_id → customer_items SET NULL`.
+
+Target schema `customer_item_period_extends`: `id increments`, `customer_item_id FK CASCADE`,
+`period_from`, `period_to`, `period_type enu(semester, year)`, `created_at` (from `time`).
+
+Code to move (55 refs / 27 files): `customer_item_service.ts`, `customer_items/` services,
+`customer_item_actions_service.ts`, `active_item_corrections.ts`, `active_item_monitoring.ts`,
+`bulk_collection_monitoring.ts`, `orders/order_place_service.ts` (handout check aggregate → query),
+`order-to-customer-item generator`, `reminders_controller.ts` and `reports_controller.ts`
+aggregates, `blid_search_service.ts` history reconciliation, matches `round_scope.ts` /
+`generate_round.ts`, `branch_insights_service.ts`, invoices generation, deadline extension, the
+Kasse customer view and Overleveringer.
+
+Also in this step: reinstate `remove_inactive_users` as SQL (customers whose `updated_at`, all
+orders and all customer items are older than three years and whose items are all returned,
+cancelled, bought out or bought back), deleting in dependency order: signatures, messages links,
+customer items, order items, orders, then the user.
+
+Tests: `customer-item-*.spec.ts`, `active_customer_items_for_customer.spec.ts`,
+`customer_item_actions_service.spec.ts`, `active_item_monitoring.spec.ts`,
+`bulk_collection_monitoring.spec.ts`, `order_place_service.spec.ts`, matches specs that build
+customer items via `match-testing-utils.ts`.
+
+Survey queries: `customer`/`item` ids missing from Postgres; `handoutById`, `returnedToId` missing
+branches; order ids in `cancelInfo`/`buyoutInfo`/`buybackInfo`/`orders` missing from `orders`;
+`orders` array vs `order_items.customer_item_id` consistency; active blid duplicates that would
+violate the partial unique index; `type` outside the enum; `periodExtends` entries with missing
+fields.
+
+Survey results / notes: (fill in; include the measured transfer duration)
+
+## Step 10 — deliveries → `deliveries` — status: not started
+
+Relationship inverted: the delivery owns `order_id` (unique), and `orders.delivery_id` is dropped.
+Code that read `order.delivery` uses `hasOne` on the order model.
+
+Target schema `deliveries`:
+
+| Column                                                                      | From                            | Notes                                     |
+| --------------------------------------------------------------------------- | ------------------------------- | ----------------------------------------- |
+| id string(24) PK                                                            | `_id`                           |                                           |
+| order_id FK orders CASCADE unique                                           | `order`                         | survey for orders with several deliveries |
+| method enu(branch, bring) not null                                          | `method`                        |                                           |
+| amount integer not null                                                     | `amount`                        |                                           |
+| branch_id FK branches SET NULL                                              | `info.branch`                   | survey: is it always a branch id?         |
+| bring_amount, bring_tax_amount int null                                     | `info.amount`, `info.taxAmount` |                                           |
+| estimated_delivery timestamptz null                                         | `info.estimatedDelivery`        |                                           |
+| facility_address, facility_postal_code, facility_postal_city                | `info.facilityAddress.*`        |                                           |
+| shipment_name, shipment_address, shipment_postal_code, shipment_postal_city | `info.shipmentAddress.*`        |                                           |
+| from_postal_code, to_postal_code                                            | `info.from`, `info.to`          |                                           |
+| product text null                                                           | `info.product`                  | Bring product code                        |
+| tracking_number text null                                                   | `info.trackingNumber`           |                                           |
+| timestamps                                                                  |                                 |                                           |
+
+Everything in `info` is app-defined shape, so it becomes columns; no jsonb here.
+
+Code to move (11 refs / 10 files): `delivery_service.ts`, `bring/` services, order placement,
+order manager Bring CSV export, postal handout signal (postal = delivery with method bring), order
+history.
+
+Survey queries: deliveries whose `order` is missing or unplaced; orders whose `delivery` points at
+a missing delivery; orders with more than one delivery; `info.branch` values that are not branch
+ids; `method` outside the enum.
+
+Survey results / notes: (fill in)
+
+## Step 11 — payments → `payments` — status: not started
+
+Target schema `payments`: `id string(24) PK`, `order_id FK orders CASCADE`, `customer_id FK users
+RESTRICT`, `branch_id FK branches RESTRICT`, `method enu(card, cash, vipps, vipps-checkout,
+vipps-epayment, bank-transfer, dibs)`, `amount integer`, `confirmed bool default false`,
+`info jsonb null` (vendor payload: Vipps/DIBS/bank-transfer details; the only jsonb column of the
+migration), timestamps. Indexes: `(order_id)`, `(customer_id)`, `(branch_id, created_at)` for the
+cash-payment report.
+
+If the survey shows that a specific `info` key is queried (for example a Vipps reference looked up
+by the refund flow or webhooks), promote it to an indexed column in this step rather than querying
+inside jsonb.
+
+Code to move (11 refs / 10 files): `vipps/` services (ePayment create/capture/refund, webhook
+handling), stand cart Vipps engine and refund plan, `refund_request_service.ts`, order placement,
+reports (`payments` aggregate → SQL), employee monitoring cash report.
+
+Survey queries: `order`/`customer`/`branch` ids missing from Postgres; `method` outside the enum;
+`info` key sets per method; payments whose order lists them nowhere (the `orders.payments` array
+was dropped in step 8, so compare against the pre-step-8 array only if a dump exists; otherwise
+skip).
+
+Survey results / notes: (fill in)
+
+## Step 12 — invoices → `invoices` + `invoice_lines` + `invoice_comments` — status: not started
+
+Invoices are accounting documents, so their snapshots survive as columns. Naming fixes: the
+`customerHavePayed` flag becomes `customer_has_paid`; `customerItemPayments` becomes `invoice_lines`.
+
+Target schema `invoices`:
+
+| Column                                                                                                                           | From                                     |
+| -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| id string(24) PK                                                                                                                 | `_id`                                    |
+| due_date timestamptz not null                                                                                                    | `duedate`                                |
+| customer_has_paid bool                                                                                                           | `customerHavePayed`                      |
+| to_credit_note, to_debt_collection, to_loss_note bool                                                                            | flags                                    |
+| type text null                                                                                                                   | `type`                                   |
+| branch_id FK branches SET NULL                                                                                                   | `branch`                                 |
+| customer_id FK users SET NULL                                                                                                    | `customerInfo.userDetail`                |
+| company_id FK companies SET NULL                                                                                                 | `customerInfo.companyDetail`             |
+| customer_number, customer_name, customer_email, customer_phone, customer_dob, customer_branch_name, customer_organization_number | `customerInfo.*` snapshot                |
+| postal_address, postal_city, postal_code, postal_country                                                                         | `customerInfo.postal.*`                  |
+| total_gross, total_net, total_vat, total_discount int                                                                            | `payment.total.*`                        |
+| fee_unit, fee_gross, fee_net, fee_vat, fee_discount int                                                                          | `payment.fee.*`                          |
+| total_including_fee int                                                                                                          | `payment.totalIncludingFee`              |
+| our_reference, invoice_number, reference text                                                                                    | `ourReference`, `invoiceId`, `reference` |
+| timestamps                                                                                                                       |                                          |
+
+Target schema `invoice_lines`: `id increments`, `invoice_id FK CASCADE`, `position smallint`,
+`customer_item_id FK customer_items SET NULL`, `item_id FK items SET NULL`, `title` (snapshot,
+kept), `number_of_items integer` (Mongo stores a string; survey and cast), `customer_number`,
+`cancel bool`, `customer_item_type`, `organization_number`, `product_number`, `unit`, `gross`,
+`net`, `vat`, `discount` integers.
+
+Target schema `invoice_comments`: `id increments`, `invoice_id FK CASCADE`, `user_id FK users SET
+NULL`, `message text`, `created_at` (from `creationTime`; note the Mongo schema default is
+`Date.now()` evaluated once at boot, so many comments share a bogus timestamp; survey and keep as is).
+
+Code to move (13 refs / 9 files): `services/invoices/` (generation, status, export, numbering),
+`/admin/faktura` endpoints and bulk status updates, company invoice flow. The export must remain
+byte-identical: produce the export for the same invoice set on staging before and after the
+cutover and diff.
+
+Survey queries: `branch`/`customerInfo.userDetail`/`companyDetail`/`customerItem`/`item`/`comments.user`
+ids missing from Postgres; `numberOfItems` values not integers; `type` values; decimals in money
+fields; `dob` strings that do not parse as dates.
+
+Survey results / notes: (fill in)
+
+## Step 13 — Decommission MongoDB — status: not started
+
+Only after step 12 has run in production.
+
+- Remove `mongoose` and `mongodb` from `backend/package.json` (keep `bson` for id generation).
+  Delete `app/models/mongoose/` (schemas, `MongodbHandler`, `SEDbQuery`, `MongooseModelCreator`,
+  `BlSchemaName`), `app/services/storage_service.ts`, `start/mongoose.ts`, the `ToSchema` type, and
+  `tests/mongoDb.spec.ts`. Shrink `shared/bl-document.ts` to what is still used, or delete it.
+- Historical migrations that import `mongoose` (`1787932298876`, `1788117209148`, `1788515000000`,
+  `1788516000000`, `1788517000000`, `1788518000000`, `1788600000000`, `1788700000000`,
+  `1788800000000`, `1788900000000`, `1789000000000`, and every transfer migration from steps 1–12)
+  must keep their file names so `adonis_schema` stays consistent, but their bodies change: keep the
+  Postgres DDL, replace the Mongo work with a comment stating what ran and when. A fresh database
+  has no Mongo to copy from, so this loses nothing.
+- Environment: drop `MONGODB_URI` from `start/env.ts`, `.env.example`, `.env.test`, `.env.local`
+  and the Railway variables; update `app/models/mongoose`-related `imports` in `package.json`.
+- Cron jobs: delete `cron_jobs/copy_prod_mongodb_to_staging/` and any remaining mongosh script;
+  the "Database Cleanup" job runs only SQL by now.
+- Railway IaC (`.railway/railway.ts`): remove the `Mongo` service, `mongodb-volume`, the
+  "Copy Mongo to Staging" cron and `MONGODB_URI` on the backend. Deleting a database and volume is
+  destructive, so `railway config apply` refuses it in CI; apply by hand in staging first, then
+  production, each with the user's explicit go-ahead.
+- Docs: update `CLAUDE.md` (dual-DB wording, `MONGODB_URI` requirement, Mongo gotchas in the
+  Playwright playbook), `README.md`, and mark this document complete.
+
+## Risks and mitigations
+
+- **Predeploy duration.** Orders and customer items are ~350 000 documents plus child rows. The
+  step 0 dry run measures it; the same duration applies to the production predeploy, during which
+  the old backend keeps serving from Mongo. No constraint was set; deploy in a quiet hour if the
+  measured duration is long.
+- **Errors and lost writes between drop and traffic switch.** The migration drops the collection
+  right after the transfer, but Railway switches traffic to the new backend only after predeploy
+  finishes. In that window the old backend fails every read of the dropped collection, and its
+  writes create a fresh empty collection that nothing copies. Documents written after the
+  transfer's cursor passed are also not copied. Decided 2026-09-16: accepted without mitigation
+  (no reconciliation pass, no write-freeze) because traffic is low and the window is a few minutes.
+  The `dropCollection` helper must tolerate a collection that already exists again with a handful
+  of documents when a later migration or step 13 drops it defensively.
+- **Count assertion failures** roll back the Postgres transaction and fail the deploy; Mongo is
+  untouched. Fix forward and redeploy.
+- **Tuyau client drift.** Every step regenerates the committed client; a stale client breaks the
+  frontend build in CI.
+- **Nightly staging reset** can leave staging without the new tables until redeploy (see deploy
+  facts). Decide in step 0.
+- **Legacy tokens.** Access tokens live up to a year and carry `details` (the user-details id) and
+  `sub` (blid); both survive step 5 unchanged.
+
+## Change log
+
+- 2026-09-16: plan written; decisions recorded; staging survey counts taken.
+- 2026-09-16 (review): drop-window failure mode stated and accepted, re-read mitigation removed;
+  `active` dropped per survey instead of unconditionally; step 5 email confirmed always present.
+- 2026-09-16: step 0 implemented (helpers, ObjectId generator, fixture ids, drop migration,
+  staging-recovery decision, orders timing dry run).
