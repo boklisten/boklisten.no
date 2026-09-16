@@ -5,6 +5,8 @@ import { createSandbox } from "sinon";
 import type sinon from "sinon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
+import Branch from "#models/branch";
+import Item from "#models/item";
 import {
   bringReportPipeline,
   openOrdersPipeline,
@@ -12,8 +14,8 @@ import {
   ordersReportPipeline,
   toBringReportRow,
 } from "#services/order_manager_service";
+import type { OpenOrderAggregate } from "#services/order_manager_service";
 import { StorageService } from "#services/storage_service";
-import type { OrderManagerRow } from "#shared/order_manager";
 import { mock, unchecked } from "#tests/test-doubles";
 
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
@@ -31,12 +33,32 @@ function firstMatch(pipeline: PipelineStage[]): Record<string, unknown> {
   return unchecked(stage.$match);
 }
 
-function row(index: number): OrderManagerRow {
-  return mock<OrderManagerRow>({
+function row(index: number, branchId = BRANCH_ID): OpenOrderAggregate {
+  return mock<OpenOrderAggregate>({
     id: new ObjectId().toHexString(),
     creationTime: new Date(Date.UTC(2026, 8, 1, 12, 0, index)).toISOString(),
+    branchId,
     openItems: [],
   });
+}
+
+/** Every `$lookup` stage's source collection. */
+function lookupSources(pipeline: PipelineStage[]): string[] {
+  return pipeline.flatMap((stage) => {
+    if (!("$lookup" in stage)) {
+      return [];
+    }
+    const lookup: { from: string } = unchecked(stage.$lookup);
+    return [lookup.from];
+  });
+}
+
+function projection(pipeline: PipelineStage[]): Record<string, unknown> {
+  const stage = pipeline.find((candidate) => "$project" in candidate);
+  if (!stage || !("$project" in stage)) {
+    throw new Error("pipeline has no $project stage");
+  }
+  return unchecked(stage.$project);
 }
 
 test.group("OrderManagerService: open orders pipeline", () => {
@@ -74,6 +96,14 @@ test.group("OrderManagerService: open orders pipeline", () => {
     assert.deepEqual(bringOnly[3], { $match: { "deliveryInfo.method": "bring" } });
   });
 
+  test("the branch is projected as an id, not joined from the emptied Mongo collection", ({
+    assert,
+  }) => {
+    const pipeline = openOrdersPipeline({}, 50);
+    assert.notInclude(lookupSources(pipeline), "branches");
+    assert.deepEqual(projection(pipeline)["branchId"], { $toString: "$branch" });
+  });
+
   test("a cursor continues strictly after the row it was made from", ({ assert }) => {
     const cursor = {
       creationTime: new Date("2026-09-01T12:00:00.000Z"),
@@ -91,7 +121,21 @@ test.group("OrderManagerService: listing", (group) => {
   let sandbox: sinon.SinonSandbox;
   group.each.setup(() => {
     sandbox = createSandbox();
+    sandbox.stub(Branch, "namesByIds").resolves(new Map([[BRANCH_ID, "Ullern VGS"]]));
     return () => sandbox.restore();
+  });
+
+  test("branch names are joined from Postgres, a dangling branch reads as unknown", async ({
+    assert,
+  }) => {
+    const dangling = "5f7f7f7f7f7f7f7f7f7f7f99";
+    sandbox.stub(StorageService.Orders, "aggregate").resolves([row(1), row(0, dangling)]);
+
+    const page = await OrderManagerService.listOpenOrders({}, undefined, 50);
+
+    assert.deepEqual(page.rows[0]?.branch, { id: BRANCH_ID, name: "Ullern VGS" });
+    assert.deepEqual(page.rows[1]?.branch, { id: dangling, name: null });
+    assert.notProperty(page.rows[0], "branchId");
   });
 
   test("a full page carries a cursor made from its last row", async ({ assert }) => {
@@ -148,6 +192,67 @@ test.group("OrderManagerService: reports", () => {
         "orderItems.movedToOrder": null,
       },
     });
+  });
+
+  test("the orders report joins both branch names in code, keeping the column order", async ({
+    assert,
+  }) => {
+    const pipeline = ordersReportPipeline({});
+    assert.notInclude(lookupSources(pipeline), "branches");
+    const project = projection(pipeline);
+    assert.deepEqual(project["schoolId"], { $toString: "$branch" });
+    assert.deepEqual(project["branchMembershipId"], {
+      $toString: { $first: "$customerInfo.branchMembership" },
+    });
+
+    const sandbox = createSandbox();
+    try {
+      const membershipId = "5f7f7f7f7f7f7f7f7f7f7f22";
+      sandbox.stub(Branch, "namesByIds").resolves(
+        new Map([
+          [BRANCH_ID, "Ullern VGS"],
+          [membershipId, "Ullern VG1"],
+        ]),
+      );
+      sandbox.stub(Item, "byIds").resolves(new Map());
+      sandbox.stub(StorageService.Orders, "aggregate").resolves([
+        {
+          name: "Kari",
+          email: null,
+          phone: null,
+          address: null,
+          dob: null,
+          branchMembershipId: membershipId,
+          schoolId: BRANCH_ID,
+          title: "Sinus",
+          itemId: null,
+          orderTime: "2026-09-01T12:00:00.000Z",
+          paid: true,
+          pivot: 1,
+        },
+      ]);
+
+      const [report] = await OrderManagerService.ordersReport({});
+
+      assert.deepEqual(Object.keys(report ?? {}), [
+        "name",
+        "email",
+        "phone",
+        "address",
+        "dob",
+        "branchMembership",
+        "school",
+        "title",
+        "isbn",
+        "orderTime",
+        "paid",
+        "pivot",
+      ]);
+      assert.equal(report?.branchMembership, "Ullern VG1");
+      assert.equal(report?.school, "Ullern VGS");
+    } finally {
+      sandbox.restore();
+    }
   });
 
   test("the Bring report splits on the mailbox product, unknown products go to the pickup file", ({

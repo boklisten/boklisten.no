@@ -2,8 +2,9 @@ import type { PipelineStage } from "mongoose";
 import { ObjectId } from "mongodb";
 
 import BadRequestException from "#exceptions/bad_request_exception";
+import Branch from "#models/branch";
 import { OrderHistoryService } from "#services/order_history_service";
-import { withItemColumns } from "#services/report_columns";
+import { withBranchName, withItemColumns } from "#services/report_columns";
 import { StorageService } from "#services/storage_service";
 import type {
   BringParcelType,
@@ -65,7 +66,6 @@ function lookupOne(from: string, localField: string, as: string, fields: string[
 }
 
 const DELIVERY_LOOKUP = lookupOne("deliveries", "delivery", "deliveryInfo", ["method", "info"]);
-const BRANCH_LOOKUP = lookupOne("branches", "branch", "branchInfo", ["name"]);
 const BRING_ONLY_MATCH = { $match: { "deliveryInfo.method": "bring" } };
 
 /** Legacy orders may hold the customer id as a string, so it is cast before the join. */
@@ -76,6 +76,20 @@ function customerLookup(fields: string[]): PipelineStage[] {
   ];
 }
 const CONTACT_FIELDS = ["name", "email", "phone", "address"];
+
+/**
+ * What the open-orders aggregation yields: the row with the branch as a bare id, since branches
+ * live in Postgres and the name is joined in afterwards.
+ */
+export type OpenOrderAggregate = Omit<OrderManagerRow, "branch"> & { branchId: string };
+
+async function withBranch(rows: OpenOrderAggregate[]): Promise<OrderManagerRow[]> {
+  const names = await Branch.namesByIds(rows.map((row) => row.branchId));
+  return rows.map(({ branchId, ...row }) => ({
+    ...row,
+    branch: { id: branchId, name: names.get(branchId) ?? null },
+  }));
+}
 
 interface Cursor {
   creationTime: Date;
@@ -139,7 +153,6 @@ export function openOrdersPipeline(
       ? [DELIVERY_LOOKUP, BRING_ONLY_MATCH, cutPage]
       : [cutPage, DELIVERY_LOOKUP]),
     ...customerLookup(["name"]),
-    BRANCH_LOOKUP,
     {
       $project: {
         _id: 0,
@@ -149,7 +162,7 @@ export function openOrdersPipeline(
           id: { $toString: "$customer" },
           name: { $ifNull: [{ $first: "$customerInfo.name" }, "Ukjent kunde"] },
         },
-        branch: { id: { $toString: "$branch" }, name: firstOrNull("$branchInfo.name") },
+        branchId: { $toString: "$branch" },
         openItems: {
           $map: {
             input: { $filter: { input: "$orderItems", as: "item", cond: OPEN_ITEM_CONDITION } },
@@ -182,8 +195,6 @@ export function ordersReportPipeline(filter: OrderManagerFilter): PipelineStage[
       ),
     },
     ...customerLookup([...CONTACT_FIELDS, "dob", "branchMembership"]),
-    BRANCH_LOOKUP,
-    lookupOne("branches", "customerInfo.branchMembership", "membershipInfo", ["name"]),
     {
       $project: {
         _id: 0,
@@ -199,10 +210,10 @@ export function ordersReportPipeline(filter: OrderManagerFilter): PipelineStage[
             onNull: null,
           },
         },
-        branchMembership: firstOrNull("$membershipInfo.name"),
-        school: firstOrNull("$branchInfo.name"),
+        // The two branch ids and the item id are replaced by their Postgres columns in code, in place.
+        branchMembershipId: { $toString: { $first: "$customerInfo.branchMembership" } },
+        schoolId: { $toString: "$branch" },
         title: "$orderItems.title",
-        // Replaced by the ISBN from the Postgres catalogue once the rows are in.
         itemId: { $toString: "$orderItems.item" },
         orderTime: { $dateToString: { date: "$creationTime" } },
         paid: PAID_EXPRESSION,
@@ -298,11 +309,11 @@ export const OrderManagerService = {
     cursor?: string,
     limit = ORDER_MANAGER_PAGE_SIZE,
   ): Promise<OrderManagerPage> {
-    const rows = await StorageService.Orders.aggregate<OrderManagerRow>(
+    const rows = await StorageService.Orders.aggregate<OpenOrderAggregate>(
       // An infinite query sends an empty cursor for the first page
       openOrdersPipeline(filter, limit, cursor ? decodeCursor(cursor) : undefined),
     );
-    const page = rows.slice(0, limit);
+    const page = await withBranch(rows.slice(0, limit));
     const last = page.at(-1);
     return {
       rows: page,
@@ -324,9 +335,15 @@ export const OrderManagerService = {
 
   async ordersReport(filter: OrderManagerFilter): Promise<OrderManagerReportRow[]> {
     const rows = await StorageService.Orders.aggregate<
-      Omit<OrderManagerReportRow, "isbn"> & { itemId: string | null }
+      Omit<OrderManagerReportRow, "isbn" | "branchMembership" | "school"> & {
+        itemId: string | null;
+        branchMembershipId: string | null;
+        schoolId: string | null;
+      }
     >(ordersReportPipeline(filter));
-    return withItemColumns(rows, (item) => ({
+    const withMembership = await withBranchName(rows, "branchMembershipId", "branchMembership");
+    const withSchool = await withBranchName(withMembership, "schoolId", "school");
+    return withItemColumns(withSchool, (item) => ({
       isbn: item === undefined ? null : String(item.isbn),
     }));
   },
