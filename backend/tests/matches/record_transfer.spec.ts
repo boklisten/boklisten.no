@@ -9,7 +9,7 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import type MatchRound from "#models/match_round";
-import { createTestRound } from "#tests/matches/match-testing-utils";
+import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import { OrderActive } from "#services/orders/order_active";
@@ -67,6 +67,7 @@ test.group("recordTransfer", (group) => {
   group.each.teardown(() => sandbox.restore());
   // `truncate()` returns the cleanup hook, so this empties the tables after each test.
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
   group.each.setup(async () => {
     // Explicitly active: transfers only discharge obligations in rounds that are switched on.
     round = await createTestRound({ name: "Round", standLocation: "Kantina", status: "active" });
@@ -120,9 +121,6 @@ test.group("recordTransfer", (group) => {
       ]),
     );
 
-    sandbox
-      .stub(StorageService.Items, "get")
-      .callsFake(async (id) => unchecked({ id, title: "Matematikk R1" }));
     // Names for the unexpected-sender feedback. Without this stub the lookup hangs on a Mongo
     // connection that does not exist in this suite.
     sandbox

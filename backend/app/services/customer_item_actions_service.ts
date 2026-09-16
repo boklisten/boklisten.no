@@ -1,5 +1,6 @@
 import { DateTime } from "luxon";
 
+import ItemModel from "#models/item";
 import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
@@ -159,7 +160,7 @@ export async function calculateBuyoutStatus(customerItem: CustomerItem, branch: 
     } as const;
   }
 
-  const item = await StorageService.Items.getOrNull(customerItem.item);
+  const item = await ItemModel.find(customerItem.item);
   const price = item
     ? resolveBuyoutPrice({
         customerItem,

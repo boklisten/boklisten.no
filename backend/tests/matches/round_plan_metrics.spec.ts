@@ -5,7 +5,11 @@ import { createSandbox } from "sinon";
 
 import { roundPlanMetrics } from "#services/matches/round_plan_metrics";
 import { StorageService } from "#services/storage_service";
-import { TEST_DEADLINE, createTestRound } from "#tests/matches/match-testing-utils";
+import {
+  TEST_DEADLINE,
+  createTestRound,
+  seedTestCatalogue,
+} from "#tests/matches/match-testing-utils";
 import { unchecked } from "#tests/test-doubles";
 
 const BRANCH = "5d765db5fc8c47001c408b01";
@@ -19,6 +23,7 @@ test.group("roundPlanMetrics", (group) => {
   });
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   /** Each collection aggregates to the per-student rows its pipeline groups into. */
   function stubMongo({

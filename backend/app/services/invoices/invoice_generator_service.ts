@@ -1,3 +1,4 @@
+import ItemModel from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import { StorageService } from "#services/storage_service";
 import { isNotNullish } from "#services/typescript_helpers";
@@ -224,10 +225,7 @@ export async function generateInvoices(
 
   const [customers, items, branches, lastOrders] = await Promise.all([
     StorageService.UserDetails.getMany([...groups.keys()], "admin"),
-    StorageService.Items.getMany(
-      [...new Set(customerItems.map((customerItem) => customerItem.item))],
-      "admin",
-    ),
+    ItemModel.findMany([...new Set(customerItems.map((customerItem) => customerItem.item))]),
     StorageService.Branches.getMany(
       [
         ...new Set(

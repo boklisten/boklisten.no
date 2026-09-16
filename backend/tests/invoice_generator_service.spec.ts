@@ -1,4 +1,5 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
@@ -10,6 +11,7 @@ import type { InvoiceGenerationSettings } from "#shared/invoice";
 import type { Item } from "#shared/item";
 import type { Order } from "#shared/order/order";
 import type { UserDetail } from "#shared/user-detail";
+import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const BRANCH_ID = "5b6442ecd2e733002fae8a44";
@@ -41,8 +43,8 @@ const customers: UserDetail[] = [
   mock<UserDetail>({ id: "c2", name: "Ola Nordmann", email: "ola@example.com", phone: "40000002" }),
 ];
 const items: Item[] = [
-  mock<Item>({ id: "i1", title: "Psykologi 2 2022", price: 1049 }),
-  mock<Item>({ id: "i2", title: "Matematikk R1", price: 899 }),
+  mock<Item>({ id: "6100000000000000000000b1", title: "Psykologi 2 2022", price: 1049 }),
+  mock<Item>({ id: "6100000000000000000000b2", title: "Matematikk R1", price: 899 }),
 ];
 const branch = mock<Branch>({
   id: BRANCH_ID,
@@ -83,14 +85,17 @@ test.group("invoice generation", (group) => {
   let addInvoice: sinon.SinonStub;
   let getOrders: sinon.SinonStub;
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    for (const item of items) {
+      await createItem({ id: item.id, title: item.title, price: item.price });
+    }
     sandbox = createSandbox();
     aggregate = sandbox.stub().resolves([]);
     sandbox.stub(StorageService, "CustomerItems").value({ aggregate });
     sandbox.stub(StorageService, "UserDetails").value({
       getMany: sandbox.stub().resolves(customers),
     });
-    sandbox.stub(StorageService, "Items").value({ getMany: sandbox.stub().resolves(items) });
     sandbox.stub(StorageService, "Branches").value({ getMany: sandbox.stub().resolves([branch]) });
     getOrders = sandbox.stub().resolves([]);
     sandbox.stub(StorageService, "Orders").value({ getMany: getOrders });
@@ -123,9 +128,9 @@ test.group("invoice generation", (group) => {
     assert,
   }) => {
     aggregate.resolves([
-      customerItem({ id: "ci1", customer: "c1", item: "i1" }),
-      customerItem({ id: "ci2", customer: "c2", item: "i2" }),
-      customerItem({ id: "ci3", customer: "c1", item: "i2" }),
+      customerItem({ id: "ci1", customer: "c1", item: "6100000000000000000000b1" }),
+      customerItem({ id: "ci2", customer: "c2", item: "6100000000000000000000b2" }),
+      customerItem({ id: "ci3", customer: "c1", item: "6100000000000000000000b2" }),
     ]);
 
     const { invoices, skipped } = await generateInvoices(rentSettings, true);
@@ -166,7 +171,9 @@ test.group("invoice generation", (group) => {
   });
 
   test("a dry run saves nothing; a real run saves every invoice", async ({ assert }) => {
-    aggregate.resolves([customerItem({ id: "ci1", customer: "c1", item: "i1" })]);
+    aggregate.resolves([
+      customerItem({ id: "ci1", customer: "c1", item: "6100000000000000000000b1" }),
+    ]);
 
     await generateInvoices(rentSettings, true);
     assert.isTrue(addInvoice.notCalled);
@@ -183,7 +190,7 @@ test.group("invoice generation", (group) => {
       customerItem({
         id: "ci1",
         customer: "c1",
-        item: "i1",
+        item: "6100000000000000000000b1",
         type: "partly-payment",
         amountLeftToPay: 310,
       }),
@@ -217,7 +224,7 @@ test.group("invoice generation", (group) => {
       customerItem({
         id: "ci1",
         customer: "c1",
-        item: "i1",
+        item: "6100000000000000000000b1",
         type: "partly-payment",
         amountLeftToPay: 0,
       }),
@@ -225,7 +232,9 @@ test.group("invoice generation", (group) => {
     getOrders.resolves([
       mock<Order>({
         id: "order1",
-        orderItems: [{ customerItem: "ci1", item: "i1", info: { periodType: "year" } }],
+        orderItems: [
+          { customerItem: "ci1", item: "6100000000000000000000b1", info: { periodType: "year" } },
+        ],
       }),
     ]);
 
@@ -237,8 +246,8 @@ test.group("invoice generation", (group) => {
 
   test("books whose customer no longer exists are skipped and reported", async ({ assert }) => {
     aggregate.resolves([
-      customerItem({ id: "ci1", customer: "gone", item: "i1" }),
-      customerItem({ id: "ci2", customer: "c2", item: "i2" }),
+      customerItem({ id: "ci1", customer: "gone", item: "6100000000000000000000b1" }),
+      customerItem({ id: "ci2", customer: "c2", item: "6100000000000000000000b2" }),
     ]);
 
     const { invoices, skipped } = await generateInvoices(rentSettings, true);

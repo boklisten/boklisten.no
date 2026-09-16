@@ -1,3 +1,4 @@
+import Item from "#models/item";
 import type BookHandover from "#models/book_handover";
 import type Match from "#models/match";
 import MatchRound from "#models/match_round";
@@ -25,13 +26,9 @@ async function getPeople(customerIds: string[]): Promise<Map<string, MatchPerson
   );
 }
 
-/** Admin permission for the same reason: an item deactivated mid-round must keep its title. */
+/** Inactive items keep their title here too: a book deactivated mid-round is still being handed over. */
 async function getTitles(itemIds: string[]): Promise<Map<string, string>> {
-  if (itemIds.length === 0) {
-    return new Map();
-  }
-  const items = await StorageService.Items.getMany(itemIds, USER_PERMISSION.ADMIN);
-  return new Map(items.map((item) => [item.id, item.title]));
+  return Item.titlesByIds(itemIds);
 }
 
 /**

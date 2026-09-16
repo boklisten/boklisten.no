@@ -68,7 +68,7 @@ export default function EditBlidModal({
 
   // The book the blid will be linked to after "Endre bok": today's until another is picked.
   const picked = items?.find((item) => item.id === itemId && item.id !== currentItemId);
-  const target = picked ? { title: picked.title, isbn: picked.info.isbn } : result.book;
+  const target = picked ? { title: picked.title, isbn: picked.isbn } : result.book;
 
   return (
     <Modal opened onClose={onClose} title="Rediger bok">

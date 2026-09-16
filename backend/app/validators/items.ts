@@ -5,8 +5,9 @@ const itemFields = {
   isbn: vine.number().withoutDecimals().positive(),
   subject: vine.string().trim().minLength(1),
   year: vine.number().withoutDecimals().min(1900).max(2100),
-  price: vine.number().min(0),
-  weight: vine.number().min(0),
+  price: vine.number().withoutDecimals().min(0),
+  /** Kilograms; null when the weight is unknown. */
+  weight: vine.number().min(0).nullable(),
   distributor: vine.string().trim().minLength(1),
   discount: vine.number().min(0).max(1),
   publisher: vine.string().trim().minLength(1),

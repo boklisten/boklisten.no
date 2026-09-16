@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import { ObjectId } from "mongodb";
+import { withItemColumns } from "#services/report_item_columns";
 import { StorageService } from "#services/storage_service";
 import {
   customerItemsReportValidator,
@@ -42,7 +43,7 @@ export default class ReportsController {
       includeBuyout,
     } = await ctx.request.validateUsing(customerItemsReportValidator);
 
-    return StorageService.CustomerItems.aggregate([
+    const rows = await StorageService.CustomerItems.aggregate<{ itemId: string | null }>([
       {
         $match: {
           ...branchFieldFilter("handoutInfo.handoutById", branchFilter),
@@ -58,14 +59,6 @@ export default class ReportsController {
           localField: "handoutInfo.handoutById",
           foreignField: "_id",
           as: "branchInfo",
-        },
-      },
-      {
-        $lookup: {
-          from: "items",
-          localField: "item",
-          foreignField: "_id",
-          as: "itemInfo",
         },
       },
       {
@@ -102,8 +95,7 @@ export default class ReportsController {
           returned: 1,
           buyout: 1,
           blid: 1,
-          title: firstOrNull("$itemInfo.title"),
-          isbn: { $toString: { $first: "$itemInfo.info.isbn" } },
+          itemId: { $toString: "$item" },
           name: firstOrNull("$customerInfo.name"),
           email: firstOrNull("$customerInfo.email"),
           phone: firstOrNull("$customerInfo.phone"),
@@ -116,13 +108,17 @@ export default class ReportsController {
         },
       },
     ]);
+    return withItemColumns(rows, (item) => ({
+      title: item?.title ?? null,
+      isbn: item === undefined ? null : String(item.isbn),
+    }));
   }
 
   async orders(ctx: HttpContext) {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(ordersReportValidator);
 
-    return StorageService.Orders.aggregate([
+    const rows = await StorageService.Orders.aggregate<{ itemId: string | null }>([
       {
         $match: {
           placed: true,
@@ -159,14 +155,6 @@ export default class ReportsController {
         },
       },
       {
-        $lookup: {
-          from: "items",
-          localField: "orderItems.item",
-          foreignField: "_id",
-          as: "itemInfo",
-        },
-      },
-      {
         $addFields: {
           customer: { $toObjectId: "$customer" },
         },
@@ -196,7 +184,7 @@ export default class ReportsController {
           employeeNavn: firstOrNull("$employeeInfo.name"),
           customerName: firstOrNull("$customerInfo.name"),
           title: "$orderItems.title",
-          ISBN: { $toString: { $first: "$itemInfo.info.isbn" } },
+          itemId: { $toString: "$orderItems.item" },
           amount: "$orderItems.amount",
           type: "$orderItems.type",
           payed: {
@@ -223,6 +211,9 @@ export default class ReportsController {
         },
       },
     ]);
+    return withItemColumns(rows, (item) => ({
+      ISBN: item === undefined ? null : String(item.isbn),
+    }));
   }
 
   async payments(ctx: HttpContext) {

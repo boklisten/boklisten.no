@@ -13,6 +13,7 @@ import {
   TEST_DEADLINE,
   TEST_MEETING_DATE,
   createTestRound,
+  seedTestCatalogue,
 } from "#tests/matches/match-testing-utils";
 import { unchecked } from "#tests/test-doubles";
 
@@ -42,6 +43,7 @@ test.group("generateRound", (group) => {
   });
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   /** @param wanted aggregated order rows: who wants which items */
   function stubMongo(

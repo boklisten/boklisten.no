@@ -1,5 +1,6 @@
 import type { Limiter } from "@adonisjs/limiter";
 
+import Item from "#models/item";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
@@ -21,7 +22,9 @@ function byBlid(blid: string): SEDbQuery {
 }
 
 async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> {
-  const [row] = await StorageService.CustomerItems.aggregate<Omit<PublicBlidHandedOut, "status">>([
+  const [row] = await StorageService.CustomerItems.aggregate<
+    Omit<PublicBlidHandedOut, "status" | "title" | "isbn"> & { itemId: string | null }
+  >([
     {
       $match: {
         returned: false,
@@ -41,14 +44,6 @@ async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> 
     },
     {
       $lookup: {
-        from: BlSchemaName.Items,
-        localField: "item",
-        foreignField: "_id",
-        as: "itemInfo",
-      },
-    },
-    {
-      $lookup: {
         from: BlSchemaName.UserDetails,
         localField: "customer",
         foreignField: "_id",
@@ -61,15 +56,24 @@ async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> 
         handoutBranch: { $first: "$branchInfo.name" },
         handoutTime: "$handoutInfo.time",
         deadline: 1,
-        title: { $first: "$itemInfo.title" },
-        isbn: { $toString: { $first: "$itemInfo.info.isbn" } },
+        itemId: { $toString: "$item" },
         name: { $first: "$customerInfo.name" },
         email: { $first: "$customerInfo.email" },
         phone: { $first: "$customerInfo.phone" },
       },
     },
   ]);
-  return row === undefined ? null : { status: "handedOut", ...row };
+  if (row === undefined) {
+    return null;
+  }
+  const { itemId, ...handedOut } = row;
+  const item = itemId === null ? null : await Item.find(itemId);
+  return {
+    status: "handedOut",
+    ...handedOut,
+    title: item?.title ?? "",
+    isbn: item === null ? "" : String(item.isbn),
+  };
 }
 
 function activityTime(customerItem: CustomerItem): number {
@@ -96,11 +100,11 @@ async function findNotHandedOut(blid: string): Promise<PublicBlidNotHandedOut | 
   if (itemId === null) {
     return null;
   }
-  const item = await StorageService.Items.getOrNull(itemId);
+  const item = await Item.find(itemId);
   return {
     status: "notHandedOut",
     title: item?.title ?? "",
-    isbn: String(item?.info?.isbn ?? ""),
+    isbn: item === null ? "" : String(item.isbn),
   };
 }
 

@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import { DateTime } from "luxon";
 
+import ItemModel from "#models/item";
 import BlidService from "#services/blid_service";
 import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
 import { CustomerItemActive } from "#services/customer_items/customer_item_active";
@@ -143,7 +144,7 @@ export default class BulkCollectionController {
   private async resolveScannedBook(customerItem: CustomerItem): Promise<ScannedBook> {
     const branchId = customerItem.handoutInfo?.handoutById;
     const [item, branch, customerDetail, recipientCustomerId] = await Promise.all([
-      StorageService.Items.get(customerItem.item),
+      ItemModel.findOrFail(customerItem.item),
       branchId ? StorageService.Branches.get(branchId) : Promise.resolve(),
       StorageService.UserDetails.get(customerItem.customer),
       PeerObligations.findPeerRecipient(customerItem.customer, customerItem.item),
@@ -213,15 +214,9 @@ export default class BulkCollectionController {
   }
 
   private async getItemsMap(itemIds: string[]): Promise<Map<string, Item>> {
-    const uniqueIds = [...new Set(itemIds)];
-    // Use getOrNull (findById, which ignores the `active` flag) rather than getMany: a book that
-    // a customer physically possesses must be returnable even if its catalog Item was deactivated.
-    // getMany filters on `active: true` for non-admin employees and would silently drop such items,
-    // leaving an empty title that fails the required-field validation when placing the order.
-    const items = await Promise.all(uniqueIds.map((id) => StorageService.Items.getOrNull(id)));
-    return new Map(
-      items.filter((item): item is Item => item !== null).map((item) => [item.id, item]),
-    );
+    // Deliberately not filtered on `active`: a book a customer physically possesses must be
+    // returnable even if its catalogue item was deactivated.
+    return ItemModel.byIds(itemIds);
   }
 
   private toIsoDeadline(deadline: Date): string {

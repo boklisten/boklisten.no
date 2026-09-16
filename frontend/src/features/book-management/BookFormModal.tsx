@@ -1,5 +1,5 @@
 import type { Item } from "@boklisten/backend/shared/item";
-import { Button, Group, SimpleGrid, Stack, Table, Text } from "@mantine/core";
+import { Button, Group, NumberInput, SimpleGrid, Stack, Table, Text } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAppForm } from "@/shared/hooks/form";
@@ -19,7 +19,8 @@ interface BookFormValues {
   subject: string;
   year: number;
   price: number;
-  weight: number;
+  /** Kilograms; null when unknown. */
+  weight: number | null;
   distributor: string;
   discountPercent: number;
   publisher: string;
@@ -30,14 +31,14 @@ interface BookFormValues {
 function initialValues(item: Item | undefined): BookFormValues {
   return {
     title: item?.title ?? "",
-    isbn: item?.info.isbn ?? 0,
-    subject: item?.info.subject ?? "",
-    year: item?.info.year ?? new Date().getFullYear(),
+    isbn: item?.isbn ?? 0,
+    subject: item?.subject ?? "",
+    year: item?.year ?? new Date().getFullYear(),
     price: item?.price ?? 0,
-    weight: Number(item?.info.weight ?? 0),
-    distributor: item?.info.distributor ?? "",
-    discountPercent: Math.round((item?.info.discount ?? 0) * 100),
-    publisher: item?.info.publisher ?? "",
+    weight: item?.weight ?? null,
+    distributor: item?.distributor ?? "",
+    discountPercent: Math.round((item?.discount ?? 0) * 100),
+    publisher: item?.publisher ?? "",
     active: item?.active ?? true,
     buyback: item?.buyback ?? false,
   };
@@ -94,7 +95,9 @@ export default function BookFormModal({
     onSubmit: ({ value }) => saveBook.mutate(toPayload(value)),
   });
 
-  const history = Object.entries(item?.info.price ?? {}).toSorted(([a], [b]) => b.localeCompare(a));
+  const history = Object.entries(item?.priceHistory ?? {}).toSorted(([a], [b]) =>
+    b.localeCompare(a),
+  );
 
   return (
     <Stack gap="lg">
@@ -163,20 +166,22 @@ export default function BookFormModal({
             />
           )}
         </form.AppField>
-        <form.AppField
-          name="weight"
-          validators={{
-            onSubmit: ({ value }) => (value >= 0 ? null : "Vekt kan ikke være negativ"),
-          }}
-        >
+        <form.AppField name="weight">
           {(field) => (
-            <field.NumberField
+            // An empty field means the weight is unknown, which the shared number field cannot say.
+            // Negative input is blocked by the control, so there is nothing left to validate.
+            <NumberInput
               label="Vekt"
-              required
+              description="La stå tom hvis vekten er ukjent."
               hideControls
               allowNegative={false}
               decimalScale={3}
+              allowedDecimalSeparators={[",", "."]}
+              decimalSeparator=","
               suffix=" kg"
+              value={field.state.value ?? ""}
+              onChange={(value) => field.handleChange(value === "" ? null : Number(value))}
+              onBlur={field.handleBlur}
             />
           )}
         </form.AppField>

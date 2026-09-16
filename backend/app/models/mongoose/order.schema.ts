@@ -33,7 +33,6 @@ export const OrderSchema: BlSchema<Order> = new Schema({
         },
         item: {
           type: Schema.Types.ObjectId,
-          ref: BlSchemaName.Items,
           required: true,
         },
         blid: {

@@ -104,6 +104,41 @@ export class EmailVerificationSchema extends BaseModel {
   declare userDetailId: string
 }
 
+export class ItemSchema extends BaseModel {
+  static $columns = ['active', 'buyback', 'createdAt', 'discount', 'distributor', 'id', 'isbn', 'price', 'priceHistory', 'publisher', 'subject', 'title', 'updatedAt', 'weight', 'year'] as const
+  $columns = ItemSchema.$columns
+  @column()
+  declare active: boolean
+  @column()
+  declare buyback: boolean
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare discount: number
+  @column()
+  declare distributor: string
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare isbn: bigint | number
+  @column()
+  declare price: number
+  @column()
+  declare priceHistory: any
+  @column()
+  declare publisher: string
+  @column()
+  declare subject: string
+  @column()
+  declare title: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare weight: number | null
+  @column()
+  declare year: number
+}
+
 export class MatchObligationSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'itemId', 'matchId', 'receiverParticipantId', 'senderParticipantId', 'updatedAt'] as const
   $columns = MatchObligationSchema.$columns

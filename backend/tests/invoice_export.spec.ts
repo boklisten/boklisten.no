@@ -258,10 +258,7 @@ test.group("invoice export: Tripletex", () => {
       ],
     ]),
     items: new Map<string, Item>([
-      [
-        ITEM_ID,
-        mock<Item>({ id: ITEM_ID, title: "Psykologi 2 2022", info: { isbn: 9_788_203_402_296 } }),
-      ],
+      [ITEM_ID, mock<Item>({ id: ITEM_ID, title: "Psykologi 2 2022", isbn: 9_788_203_402_296 })],
     ]),
     branches: new Map<string, Branch>([
       [

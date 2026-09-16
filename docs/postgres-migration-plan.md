@@ -20,22 +20,22 @@ status, record survey results and anything surprising).
 
 ## Decisions (2026-09-16)
 
-| Topic                     | Decision                                                                                                                                                                                                   |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Primary keys              | Migrated tables keep the Mongo 24-char hex id as a `string(24)` primary key. New rows get an app-generated ObjectId hex. URLs, tokens, avatars and existing Postgres id columns keep working.              |
-| Cutover                   | One shot per collection, inside the Lucid migration's `defer` block on Railway predeploy (the signatures pattern). No dual-write period, no reconciliation pass.                                           |
-| Drop of Mongo collection  | In the same migration, right after the transfer. No separate safety net; a broken transfer is fixed forward in Postgres.                                                                                   |
-| Timing                    | No seasonal constraint. Between the drop and Railway switching traffic, the old backend errors on that collection and its writes are lost. Accepted: traffic is low and the window is a few minutes.       |
-| Embedded arrays           | Every embedded array whose elements have identity becomes a child table (order items, period extends, invoice item payments, invoice comments, branch periods).                                            |
-| jsonb                     | Only for payloads whose shape belongs to an external vendor (payment gateway info). Everything the app itself defines becomes columns.                                                                     |
-| Snapshot copies           | Invoice snapshots (customer info, item titles on invoice lines) are kept because invoices are accounting documents. `customerItem.customerInfo`, `uniqueItem.title` and `orderItem.title` are dropped.     |
-| Meta fields               | `creationTime`/`lastUpdated` → `created_at`/`updated_at`. `user` and `editableFor` are dropped. `active` is dropped unless the step's survey finds `active: false` documents that code reads.              |
-| API contract              | The frontend may change in the same step when a shape changes (inverted arrays, dropped fields). No presenter code that fakes the old document shape.                                                      |
-| Access layer              | One Lucid model per table with static query helpers (see `app/models/signature.ts`). Call sites of `StorageService.X` are rewritten to model calls. No Postgres imitation of `MongodbHandler`/`SEDbQuery`. |
-| Orphans                   | Every step starts with a staging survey. The migration then drops, nullifies or keeps orphans explicitly, with a logged count. Foreign keys are always real.                                               |
-| Order/customer-item cycle | Orders first. `order_items.customer_item_id` lands as a plain column; the customer-items step adds the foreign key and drops `customerItem.orders`.                                                        |
-| users + userdetails       | Merged into one table named `users`, keyed by the user-details id (the id everything else references).                                                                                                     |
-| Document location         | This file, `docs/postgres-migration-plan.md`.                                                                                                                                                              |
+| Topic                     | Decision                                                                                                                                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary keys              | Migrated tables keep the Mongo 24-char hex id as a `string(24)` primary key. New rows get an app-generated ObjectId hex. URLs, tokens, avatars and existing Postgres id columns keep working.                                                     |
+| Cutover                   | One shot per collection, inside the Lucid migration's `defer` block on Railway predeploy (the signatures pattern). No dual-write period, no reconciliation pass.                                                                                  |
+| Drop of Mongo collection  | In the same migration, right after the transfer. No separate safety net; a broken transfer is fixed forward in Postgres.                                                                                                                          |
+| Timing                    | No seasonal constraint. Between the drop and Railway switching traffic, the old backend errors on that collection and its writes are lost. Accepted: traffic is low and the window is a few minutes.                                              |
+| Embedded arrays           | Every embedded array whose elements have identity becomes a child table (order items, period extends, invoice item payments, invoice comments, branch periods).                                                                                   |
+| jsonb                     | Only for payloads whose shape belongs to an external vendor (payment gateway info). Everything the app itself defines becomes columns. One exception, decided in step 1: `items.price_history` (a year → price map with keys that vary per item). |
+| Snapshot copies           | Invoice snapshots (customer info, item titles on invoice lines) are kept because invoices are accounting documents. `customerItem.customerInfo`, `uniqueItem.title` and `orderItem.title` are dropped.                                            |
+| Meta fields               | `creationTime`/`lastUpdated` → `created_at`/`updated_at`. `user` and `editableFor` are dropped. `active` is dropped unless the step's survey finds `active: false` documents that code reads.                                                     |
+| API contract              | The frontend may change in the same step when a shape changes (inverted arrays, dropped fields). No presenter code that fakes the old document shape.                                                                                             |
+| Access layer              | One Lucid model per table with static query helpers (see `app/models/signature.ts`). Call sites of `StorageService.X` are rewritten to model calls. No Postgres imitation of `MongodbHandler`/`SEDbQuery`.                                        |
+| Orphans                   | Every step starts with a staging survey. The migration then drops, nullifies or keeps orphans explicitly, with a logged count. Foreign keys are always real.                                                                                      |
+| Order/customer-item cycle | Orders first. `order_items.customer_item_id` lands as a plain column; the customer-items step adds the foreign key and drops `customerItem.orders`.                                                                                               |
+| users + userdetails       | Merged into one table named `users`, keyed by the user-details id (the id everything else references).                                                                                                                                            |
+| Document location         | This file, `docs/postgres-migration-plan.md`.                                                                                                                                                                                                     |
 
 ## Current state (surveyed 2026-09-16 on staging, which is a nightly copy of production)
 
@@ -68,6 +68,7 @@ their target table lands:
 | `branch_subject_books.item_id`                            | items    | 1                                           |
 | `match_obligations.item_id`                               | items    | 1                                           |
 | `book_handovers.item_id`                                  | items    | 1                                           |
+| `waiting_list_customers.item_id`                          | items    | 1                                           |
 | `branch_subjects.branch_id`                               | branches | 3                                           |
 | `opening_hours.branch_id`                                 | branches | 3                                           |
 | `waiting_list_customers.branch_id`                        | branches | 3                                           |
@@ -279,53 +280,132 @@ Survey results / notes (2026-09-16):
   `transferCollection` because 500 parents × 32 lines × 19 columns would exceed Postgres's 65 535
   bind parameters).
 
-## Step 1 — items → `items` — status: not started
+## Step 1 — items → `items` — status: done 2026-09-16 (rehearsed on staging, pending merge)
 
 Smallest collection with the widest fan-in: it establishes the string-primary-key pattern and turns
-three existing Postgres columns into real foreign keys.
+four existing Postgres columns into real foreign keys.
 
-Target schema `items`:
+Target schema `items` (decided 2026-09-16 after the survey below):
 
-| Column                 | Type             | From               | Notes                                            |
-| ---------------------- | ---------------- | ------------------ | ------------------------------------------------ |
-| id                     | string(24) PK    | `_id`              |                                                  |
-| title                  | text not null    | `title`            |                                                  |
-| price                  | integer not null | `price`            | survey for decimals                              |
-| isbn                   | bigint unique    | `info.isbn`        | 13 digits exceed int4                            |
-| subject                | text not null    | `info.subject`     |                                                  |
-| year                   | integer not null | `info.year`        |                                                  |
-| weight                 | text not null    | `info.weight`      | survey: if always numeric grams, make it integer |
-| distributor            | text not null    | `info.distributor` |                                                  |
-| discount               | integer/decimal  | `info.discount`    | survey                                           |
-| publisher              | text not null    | `info.publisher`   |                                                  |
-| buyback                | boolean not null | `buyback`          |                                                  |
-| price_* / prices       | see below        | `info.price` (Map) |                                                  |
-| created_at, updated_at | timestamptz      |                    |                                                  |
+| Column                 | Type                           | From               | Notes                                                                    |
+| ---------------------- | ------------------------------ | ------------------ | ------------------------------------------------------------------------ |
+| id                     | string(24) PK                  | `_id`              |                                                                          |
+| title                  | text not null                  | `title`            |                                                                          |
+| price                  | integer not null               | `price`            | survey: always integer                                                   |
+| isbn                   | bigint unique not null         | `info.isbn`        | 13 digits exceed int4; pg returns int8 as string, the model `consume`s   |
+| subject                | text not null                  | `info.subject`     |                                                                          |
+| year                   | integer not null               | `info.year`        |                                                                          |
+| weight                 | double precision null          | `info.weight`      | kilograms; legacy `"?"` (13 docs) becomes NULL                           |
+| distributor            | text not null                  | `info.distributor` |                                                                          |
+| discount               | double precision not null      | `info.discount`    | fraction 0–1 with up to 3 decimals; double so the driver returns numbers |
+| publisher              | text not null                  | `info.publisher`   |                                                                          |
+| active                 | boolean not null default true  | `active`           | kept: 347 of 685 are inactive and code reads it (see below)              |
+| buyback                | boolean not null default false | `buyback`          |                                                                          |
+| price_history          | jsonb not null default '{}'    | `info.price` (Map) | `{ "<calendar year>": price }`, see below                                |
+| created_at, updated_at | timestamptz                    |                    |                                                                          |
 
-`info.price` is a `Map<string, number>`. Survey the distinct key set. If it is a fixed small set
-(expected: rent-period keys such as `semester`/`year`), make one nullable integer column per key
-(`price_semester`, `price_year`). If keys vary per item, use a `prices jsonb` column; this is app
-data, so prefer columns whenever the survey allows.
+`info.price` is keyed by calendar year (2018–2026 on staging, each item holding its own subset), so
+the fixed-column option is out. Decided 2026-09-16 (Adrian): `price_history jsonb` rather than a
+child table, because only the book form reads it (as a history list) and only the management
+service writes it (this year's entry on every price change). This is the one exception to the
+"jsonb only for vendor payloads" decision.
 
-Foreign keys added on existing tables (after orphan survey): `branch_subject_books.item_id`,
-`match_obligations.item_id`, `book_handovers.item_id`, all `RESTRICT` (an item with history must
-not be deleted; item deletion is not a feature).
+`active` is a real feature for items, not a dead meta field: `MongodbHandler.getAll`/`getMany`
+hide inactive items from non-admins, the book grid on `/admin/database/boker` has the Aktiv switch
+and opens filtered on it, and the form and spreadsheet edit it. The Postgres model keeps an
+`active` scope; the admin listing returns everything, the customer listing only active titles.
+Single-id reads never filtered on `active` in Mongo (`findById`) and still do not.
 
-Code to move (37 refs / 22 files): `item_lookup.ts`, `item_management_service.ts` (PATCH and bulk
-upsert by id/ISBN for `/admin/database/boker`), `blid_registration_service.ts`, `branch_books_service.ts`,
-`branch_subjects_service.ts` (title aggregate → join), `subject_choices_service.ts`, order
-validators that check item existence, stand cart pricing (`price_service.ts`), reports, cart
-service. The frontend book grid consumes the item shape through Tuyau; adjust field paths
-(`info.isbn` → `isbn`).
+Dropped: `user`, `editableFor`, `viewableFor` (always empty), `taxRate` (8 documents, never read),
+`info._id` (Mongoose subdocument artefact).
 
-Tests: `item_lookup.spec.ts`, `item_management_service.spec.ts`, `branch_books_service.spec.ts`,
-`branch_subjects_service.spec.ts` (drop the `stubItemTitles` sinon stub, insert items).
+Foreign keys added on existing tables after the transfer (all `RESTRICT`: an item with history
+must not be deleted; item deletion is not a feature): `branch_subject_books.item_id`,
+`match_obligations.item_id`, `book_handovers.item_id`, `waiting_list_customers.item_id` (the last
+one was missing from the table above; it is empty on staging).
 
-Survey queries (staging Mongo): distinct keys of `info.price`; `price`/`discount` with fractional
-part; `weight` values not matching `^\d+$`; duplicate `isbn`; ids in the three Postgres columns not
-present in `items`.
+Code to move (37 `StorageService.Items` refs / 22 files, plus the joins below): `item_lookup.ts`,
+`item_management_service.ts` (PATCH and bulk upsert by id/ISBN for `/admin/database/boker`),
+`blid_registration_service.ts`, `branch_subjects_service.ts` (title aggregate → `Item.byIds`),
+order validators that check item existence, stand cart line resolver and pricing, invoices,
+matches (`read_matches.ts`, `statistics.ts`, `record_transfer.ts`), `delivery_service.ts`,
+`cart_service.ts`, `order_service.ts`, `unique_item_edit_service.ts`, `public_blid_lookup_service.ts`,
+`blid_search_service.ts`, `customer_item_actions_service.ts`, `bulk_collection_controller.ts`,
+`customer_items_controller.ts`, `branch_catalog_controller.ts`, `branch_items_controller.ts`.
 
-Survey results / notes: (fill in)
+Mongo aggregations that `$lookup` into `items` (missed by the first draft of this plan; every one
+becomes an aggregation without the join plus an `Item.byIds` lookup merged in code, keeping the
+CSV column order where the rows feed a report): `reports_controller.ts` (customer items and orders
+reports), `reminders_controller.ts`, `customer_items_controller.forCustomer`,
+`order_service.getOpenOrderItems`, `order_manager_service.ordersReportPipeline`,
+`branch_books_service.ts` (`ITEM_TITLE_STAGES`, two summaries), `public_blid_lookup_service.ts`
+(`findHandedOut`), `blid_search_service.search`.
+
+API shape: the frontend receives the flat row (`isbn`, `subject`, `weight`, … instead of `info.*`)
+through `ItemTransformer`; the shared `Item` type is reshaped to match, so every consumer is caught
+by the compiler. The book spreadsheet keeps the legacy `info.isbn`-style headers (importcsv matches
+on them), mapped explicitly on download and upload.
+
+Tests: `item_lookup.spec.ts`, `item_management_service.spec.ts`, `branch_subjects_service.spec.ts`
+(drop the `stubItemTitles` sinon stub, insert items) and every spec that stubbed
+`StorageService.Items` (14 files) insert real rows into the test Postgres instead.
+
+Survey results (staging Mongo, 2026-09-16, 685 documents):
+
+- `active: false` on 347 documents; `active` present on all. Column kept (see above).
+- `info.price` keys: 2018 (415 docs), 2019 (421), 2020 (465), 2021 (517), 2022 (606), 2023 (476),
+  2024 (484), 2025 (498), 2026 (338). Every value an integer; no document without a price map.
+- `price`: all integers. `info.discount`: {0, 0.15, 0.175, 0.2, 0.23, 0.25, 0.45}.
+- `info.weight`: kilograms with ≤ 3 decimals, stored as a mix of strings and numbers; 13 documents
+  hold `"?"`; none are 0 or empty.
+- `info.isbn`: always a number, always 13 digits (max 9788293092032), unique (the `isbn_unique`
+  index holds). `info.year`: 1998–2026. No empty `title`/`subject`/`distributor`/`publisher`.
+- Extra keys: `taxRate` (8), `viewableFor` (685, always `[]`), `info._id` (519), `__v`. `user` is
+  always an admin `u#…` reference, `editableFor` always `[]`.
+- `creationTime`/`lastUpdated` are `Date` on every document.
+- Postgres id columns: `branch_subject_books.item_id` (67 distinct), `match_obligations.item_id`
+  (62), `book_handovers.item_id` (164), `waiting_list_customers.item_id` (0 rows): zero orphans,
+  all `varchar(24) not null`.
+- Mongo references into items: `branchitems.item` 227 distinct, 0 orphans. `uniqueitems.item`,
+  `customeritems.item` and `orders.orderItems.item` each reference one item id that no longer
+  exists, `5b6441add2e733002fae8723`. Not this step's problem (those collections stay in Mongo for
+  now), but steps 7, 8 and 9 must decide how to handle rows pointing at it before declaring their
+  `item_id` foreign keys (survey the affected documents; `SET NULL` is not an option for a
+  required reference, so it is either a placeholder item or dropping/skipping those documents).
+  `branches.branchItems` holds branchitem ids, not item ids (4 027 distinct), so it is irrelevant
+  here.
+
+Notes (2026-09-16):
+
+- Staging rehearsal from a laptop: `items: migrated 685, skipped 0`, whole migration 4.4 s, the
+  Mongo collection dropped. Row spot-check afterwards matched the survey exactly (685 rows, 347
+  inactive, 13 NULL weights, 685 distinct ISBNs, same discount set and year histogram, the four
+  foreign keys present).
+- Migration `1789200000000_create_items_table.ts`; model `app/models/item.ts` (`activeOnly`
+  scope, `findByIsbn`, `byIds`, `titlesByIds`); `app/transformers/item_transformer.ts` gives the
+  API the flat `Item` shape; `app/services/report_item_columns.ts` (`withItemColumns`) joins
+  catalogue columns into Mongo report rows in place of the projected `itemId`, keeping the CSV
+  column order.
+- The `bigint` ISBN comes back from the pg driver as a string; the model declares
+  `@column({ consume: Number })` on `isbn` and `tests/item_model.spec.ts` guards the round trip.
+  Lucid's schema generator types bigint as `bigint | number`, numeric/decimal as `string` and
+  double precision as `number`, which is why weight and discount are doubles.
+- Specs: every spec that inserts a row referencing `items` now seeds real items
+  (`tests/item_fixtures.ts` `createItem`, `tests/matches/match-testing-utils.ts`
+  `seedTestCatalogue`). `testUtils.db().truncate()` registered as a setup returns the cleanup
+  hook, i.e. it empties tables _after_ each test; seed rows in a separate setup, never by awaiting
+  `truncate()` inside one.
+- Behaviour kept on purpose: the public buyback list never filtered on `active` and still does
+  not; joins that were inner joins (open order items, reminders) still drop rows whose item is
+  gone; outer joins (branch book summaries, customer items for a customer) still fall back to
+  "Ukjent bok". The `BlError` 702 flow in `order_item_validator.ts` is preserved by hand;
+  everywhere else a missing item is `Item.find` → null or `findOrFail` → 404.
+- Frontend: `Item` consumers read `isbn`/`subject`/… directly; the book form's weight field is a
+  bare `NumberInput` so an empty field can mean "unknown" (the shared `NumberField` coerces empty
+  to 0); the spreadsheet keeps the legacy `info.*` headers via an explicit mapping on download,
+  and the weight column is optional on upload.
+- The user's running `bun dev` backend does not survive the step's file changes (Mongoose
+  "Cannot overwrite `branches` model once compiled" under HMR); restart `bun dev` after pulling.
 
 ## Step 2 — companies → `companies` — status: not started
 

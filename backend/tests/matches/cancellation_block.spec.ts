@@ -4,7 +4,7 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import { createTestRound } from "#tests/matches/match-testing-utils";
+import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import {
   assertNotBlockedByUserMatch,
   itemIdsInActiveUserMatches,
@@ -73,6 +73,7 @@ async function createStandMatch({
 
 test.group("cancellation block: itemIdsInActiveUserMatches", (group) => {
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   test("includes items from the customer's user matches, both directions", async ({ assert }) => {
     const round = await createTestRound({ name: "Round", status: "active" });
@@ -141,6 +142,7 @@ test.group("cancellation block: itemIdsInActiveUserMatches", (group) => {
 
 test.group("cancellation block: assertNotBlockedByUserMatch", (group) => {
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   test("throws for an item in one of the customer's user matches", async ({ assert }) => {
     const round = await createTestRound({ name: "Round", status: "active" });

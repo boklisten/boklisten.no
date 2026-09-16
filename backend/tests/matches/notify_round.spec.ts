@@ -5,7 +5,7 @@ import { createSandbox } from "sinon";
 
 import Match from "#models/match";
 import MatchParticipant from "#models/match_participant";
-import { createTestRound } from "#tests/matches/match-testing-utils";
+import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import DispatchService from "#services/dispatch_service";
 import { notify } from "#services/matches/notify_round";
 import { StorageService } from "#services/storage_service";
@@ -30,6 +30,7 @@ test.group("notify", (group) => {
   let getManyStub: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
   group.each.setup(() => {
     sandbox = createSandbox();
     sandbox.stub(DispatchService, "sendMatchInformation").resolves({

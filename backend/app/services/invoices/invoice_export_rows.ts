@@ -443,7 +443,7 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
         "",
         "",
         "",
-        String(item.info.isbn),
+        String(item.isbn),
         item.title,
         "",
         // Legacy bl-admin exported the stored amount, which is 0 for books moved between orders.

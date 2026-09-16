@@ -8,10 +8,15 @@ import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import MatchRound from "#models/match_round";
 import { MatchRepository } from "#services/matches/match_repository";
-import { TEST_DEADLINE, createTestRound } from "#tests/matches/match-testing-utils";
+import {
+  TEST_DEADLINE,
+  createTestRound,
+  seedTestCatalogue,
+} from "#tests/matches/match-testing-utils";
 
 test.group("match round management", (group) => {
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   test("lists rounds newest first", async ({ assert }) => {
     await createTestRound({ name: "Høst 2025", standLocation: "Kantina" });
@@ -189,7 +194,7 @@ test.group("match round management", (group) => {
       matchId: match.id,
       senderParticipantId: receiver.id,
       receiverParticipantId: sender.id,
-      itemId: "5b6441c4d2e733002fae89a7",
+      itemId: "5b6441b2d2e733002fae87a6",
     });
     // One physical handover settling both halves must not be counted twice.
     await BookHandover.create({

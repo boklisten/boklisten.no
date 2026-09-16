@@ -8,7 +8,7 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import type MatchRound from "#models/match_round";
-import { createTestRound } from "#tests/matches/match-testing-utils";
+import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import { MatchRepository } from "#services/matches/match_repository";
 import { computeMatchStatistics } from "#services/matches/statistics";
 import { StorageService } from "#services/storage_service";
@@ -32,12 +32,12 @@ test.group("computeMatchStatistics", (group) => {
 
   group.each.setup(() => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService.Items, "getMany").resolves(unchecked([]));
     sandbox.stub(StorageService.UserDetails, "getMany").resolves(unchecked([]));
     sandbox.stub(StorageService.Branches, "getAll").resolves(unchecked([]));
   });
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
   group.each.setup(async () => {
     round = await createTestRound({
       name: "Round",

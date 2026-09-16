@@ -1,3 +1,4 @@
+import ItemModel from "#models/item";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { periodTypeOfLastOrder } from "#services/customer_item_actions_service";
 import { findItemByIsbn, findUniqueItemByBlid } from "#services/item_lookup";
@@ -96,7 +97,7 @@ async function alreadyHeldNotes(customerId: string, itemId: string): Promise<Sta
   );
   return Promise.all(
     held.map(async (customerItem) => {
-      const heldItem = await StorageService.Items.getOrNull(customerItem.item);
+      const heldItem = await ItemModel.find(customerItem.item);
       return {
         kind: "already-held",
         customerItemId: customerItem.id,
@@ -175,7 +176,7 @@ async function loadFreeCopy(blid: string, customerId: string): Promise<Item | Re
   if (holder !== null && holder.customer !== customerId) {
     return refused(HELD_BY_OTHER_CUSTOMER_MESSAGE);
   }
-  const item = await StorageService.Items.getOrNull(uniqueItem.item);
+  const item = await ItemModel.find(uniqueItem.item);
   return item ?? refused(`Fant ikke boka som unik ID ${blid} er koblet til`);
 }
 
@@ -189,7 +190,7 @@ async function resolveOrderLine(
   if (!order || order.customer !== customerId) {
     return refused("Fant ikke bestillingen");
   }
-  const orderedItem = await StorageService.Items.getOrNull(source.itemId);
+  const orderedItem = await ItemModel.find(source.itemId);
   if (!orderedItem) {
     return refused("Fant ikke boka");
   }
@@ -201,7 +202,7 @@ async function resolveOrderLine(
   }
 
   // The scanned copy may be an equivalent edition; the line then records the edition in hand.
-  let item = orderedItem;
+  let item: Item = orderedItem;
   if (blid !== undefined) {
     const copy = await loadFreeCopy(blid, customerId);
     if ("kind" in copy) {
@@ -272,7 +273,7 @@ async function resolveCustomerItemLine(
   if (!customerItem || customerItem.customer !== customerId) {
     return refused("Fant ikke boka");
   }
-  const item = await StorageService.Items.getOrNull(customerItem.item);
+  const item = await ItemModel.find(customerItem.item);
   if (!item) {
     return refused("Fant ikke boka");
   }
@@ -315,7 +316,7 @@ async function loadItemSourceCopy(
   customerId: string,
 ): Promise<Item | Refused> {
   if (source.blid === null) {
-    const item = await StorageService.Items.getOrNull(source.itemId);
+    const item = await ItemModel.find(source.itemId);
     return item ?? refused("Fant ikke boka");
   }
   const copy = await loadFreeCopy(source.blid, customerId);

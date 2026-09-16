@@ -90,10 +90,10 @@ export default function BookGrid({
       width: 150,
       flex: 0,
       cellDataType: "text",
-      valueGetter: ({ data }) => (data ? String(data.info.isbn) : ""),
+      valueGetter: ({ data }) => (data ? String(data.isbn) : ""),
     },
-    { field: "info.subject", headerName: "Fag", flex: 1, minWidth: 160 },
-    { field: "info.year", headerName: "Utgitt", width: 100, flex: 0, cellDataType: "number" },
+    { field: "subject", headerName: "Fag", flex: 1, minWidth: 160 },
+    { field: "year", headerName: "Utgitt", width: 100, flex: 0, cellDataType: "number" },
     {
       field: "price",
       headerName: "Pris",

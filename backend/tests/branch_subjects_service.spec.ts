@@ -7,6 +7,7 @@ import BranchSubject from "#models/branch_subject";
 import BranchSubjectBook from "#models/branch_subject_book";
 import { BranchSubjectsService, fetchSubjectsForUpload } from "#services/branch_subjects_service";
 import { StorageService } from "#services/storage_service";
+import { createItem } from "#tests/item_fixtures";
 import { unchecked } from "#tests/test-doubles";
 
 const BRANCH = "5d765db5fc8c47001c408d81";
@@ -27,19 +28,16 @@ test.group("BranchSubjectsService", (group) => {
   let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    await createItem({ id: ITEM_KJEMI, title: "Kjemien stemmer" });
+    await createItem({ id: ITEM_FYSIKK, title: "Fysikkboka" });
+  });
   group.each.setup(() => {
     sandbox = createSandbox();
   });
   group.each.teardown(() => sandbox.restore());
 
-  function stubItemTitles(titles: Record<string, string>) {
-    sandbox
-      .stub(StorageService.Items, "aggregate")
-      .resolves(Object.entries(titles).map(([id, title]) => ({ id, title })));
-  }
-
   test("creates a subject with books and lists it with item titles", async ({ assert }) => {
-    stubItemTitles({ [ITEM_KJEMI]: "Kjemien stemmer" });
     await BranchSubjectsService.create(BRANCH, {
       name: "Kjemi 2",
       externalName: "Kjemi 2 programfag",
@@ -56,7 +54,6 @@ test.group("BranchSubjectsService", (group) => {
   });
 
   test("allows a subject with no books", async ({ assert }) => {
-    stubItemTitles({});
     await BranchSubjectsService.create(BRANCH, {
       name: "Gym",
       externalName: "Kroppsøving",
@@ -112,7 +109,6 @@ test.group("BranchSubjectsService", (group) => {
   test("update replaces the book list and keeps the subject's own names valid", async ({
     assert,
   }) => {
-    stubItemTitles({ [ITEM_FYSIKK]: "Fysikkboka" });
     await BranchSubjectsService.create(BRANCH, {
       name: "Kjemi 2",
       externalName: "K2",
@@ -175,7 +171,6 @@ test.group("BranchSubjectsService", (group) => {
         { itemId: ITEM_FYSIKK, categories: ["Realfag"], ...ALL_OFF, buy: true },
       ]),
     );
-    stubItemTitles({ [ITEM_KJEMI]: "Kjemien stemmer", [ITEM_FYSIKK]: "Fysikkboka" });
 
     const result = await BranchSubjectsService.importFromBranchItems(BRANCH);
 
@@ -212,7 +207,6 @@ test.group("BranchSubjectsService", (group) => {
   test("fetchSubjectsForUpload groups subjects by branch with resolved titles", async ({
     assert,
   }) => {
-    stubItemTitles({ [ITEM_KJEMI]: "Kjemien stemmer" });
     await BranchSubjectsService.create(BRANCH, {
       name: "Kjemi 2",
       externalName: "Kjemi 2 programfag",

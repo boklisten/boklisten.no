@@ -1,4 +1,5 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
@@ -10,9 +11,8 @@ import { OrderItemValidator } from "#services/orders/validation/order_item_valid
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
-import type { Item } from "#shared/item";
 import type { Order } from "#shared/order/order";
-import { mock } from "#tests/test-doubles";
+import { createItem } from "#tests/item_fixtures";
 
 test.group("OrderItemValidator", (group) => {
   const orderItemFieldValidator = new OrderFieldValidator();
@@ -34,7 +34,8 @@ test.group("OrderItemValidator", (group) => {
   legalDeadline.setFullYear(legalDeadline.getFullYear() + 1);
   let sandbox: sinon.SinonSandbox;
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
     testOrder = {
       id: "order1",
       amount: 300,
@@ -95,6 +96,8 @@ test.group("OrderItemValidator", (group) => {
       },
     };
 
+    await createItem({ id: "item1" });
+    await createItem({ id: "item2" });
     sandbox = createSandbox();
     sandbox.stub(orderItemRentValidator, "validate").callsFake(() => Promise.resolve(true));
 
@@ -108,8 +111,6 @@ test.group("OrderItemValidator", (group) => {
       }
       return Promise.resolve(testBranch);
     });
-
-    sandbox.stub(StorageService.Items, "get").callsFake(() => Promise.resolve(mock<Item>({})));
   });
   group.each.teardown(() => {
     sandbox.restore();

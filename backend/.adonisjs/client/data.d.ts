@@ -6,6 +6,7 @@
 /// <reference path="./manifest.d.ts" />
 import type { InferData, InferVariants } from '@adonisjs/core/types/transformers'
 import type EditableTextTransformer from '#transformers/editable_text_transformer'
+import type ItemTransformer from '#transformers/item_transformer'
 import type MatchRoundTransformer from '#transformers/match_round_transformer'
 import type MatchTransformer from '#transformers/match_transformer'
 import type OpeningHourTransformer from '#transformers/opening_hour_transformer'
@@ -16,6 +17,10 @@ export namespace Data {
   export type EditableText = InferData<EditableTextTransformer>
   export namespace EditableText {
     export type Variants = InferVariants<EditableTextTransformer>
+  }
+  export type Item = InferData<ItemTransformer>
+  export namespace Item {
+    export type Variants = InferVariants<ItemTransformer>
   }
   export type MatchRound = InferData<MatchRoundTransformer>
   export namespace MatchRound {

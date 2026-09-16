@@ -1,55 +1,53 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import { findItemByIsbn, findUniqueItemByBlid } from "#services/item_lookup";
 import { StorageService } from "#services/storage_service";
+import { createItem } from "#tests/item_fixtures";
 
 test.group("item_lookup", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let itemsStub: { getByQueryOrNull: sinon.SinonStub };
   let uniqueItemsStub: { getByQueryOrNull: sinon.SinonStub };
 
+  group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
-    itemsStub = { getByQueryOrNull: sandbox.stub() };
     uniqueItemsStub = { getByQueryOrNull: sandbox.stub() };
-    sandbox.stub(StorageService, "Items").value(itemsStub);
     sandbox.stub(StorageService, "UniqueItems").value(uniqueItemsStub);
   });
-
   group.each.teardown(() => {
     sandbox.restore();
   });
 
   test("findItemByIsbn returns the item carrying the isbn", async ({ assert }) => {
-    const item = { id: "item1", title: "Matematikk 1T" };
-    itemsStub.getByQueryOrNull.resolves([item]);
+    const item = await createItem({ title: "Matematikk 1T", isbn: 9_788_203_208_119 });
+    await createItem({ title: "Matematikk R1", isbn: 9_788_203_208_126 });
 
-    assert.equal(await findItemByIsbn("9788203208119"), item);
+    const found = await findItemByIsbn("9788203208119");
+
+    assert.equal(found?.id, item.id);
+    assert.equal(found?.title, "Matematikk 1T");
   });
 
-  test("findItemByIsbn filters on the nested isbn field", async ({ assert }) => {
-    itemsStub.getByQueryOrNull.resolves([{ id: "item1", title: "Matematikk 1T" }]);
-
-    await findItemByIsbn("9788203208119");
-
-    const [query] = itemsStub.getByQueryOrNull.firstCall.args;
-    assert.deepEqual(query.stringFilters, [{ fieldName: "info.isbn", value: "9788203208119" }]);
+  test("findItemByIsbn tolerates surrounding whitespace", async ({ assert }) => {
+    const item = await createItem({ isbn: 9_788_203_208_119 });
+    assert.equal((await findItemByIsbn(" 9788203208119 "))?.id, item.id);
   });
 
-  // A book we do not stock is an ordinary outcome, not a server error: getByQuery would throw
-  // BlError("not found") here, which is why the lookup uses getByQueryOrNull.
+  // A book we do not stock is an ordinary outcome, not a server error.
   test("findItemByIsbn returns null when nothing matches", async ({ assert }) => {
-    itemsStub.getByQueryOrNull.resolves(null);
-
-    assert.equal(await findItemByIsbn("9788203208119"), null);
+    await createItem({ isbn: 9_788_203_208_126 });
+    assert.isNull(await findItemByIsbn("9788203208119"));
   });
 
-  test("findItemByIsbn returns null for an empty result", async ({ assert }) => {
-    itemsStub.getByQueryOrNull.resolves([]);
-
-    assert.equal(await findItemByIsbn("9788203208119"), null);
+  test("findItemByIsbn returns null for text that is no isbn instead of querying", async ({
+    assert,
+  }) => {
+    assert.isNull(await findItemByIsbn("abc"));
+    assert.isNull(await findItemByIsbn(""));
+    assert.isNull(await findItemByIsbn("978-82-03-20811-9"));
   });
 
   test("findUniqueItemByBlid returns the unique item a blid is connected to", async ({

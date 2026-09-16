@@ -115,7 +115,7 @@ export function BranchSubjectModal({
                 if (option.label.toLowerCase().trim().includes(search.toLowerCase().trim())) {
                   return true;
                 }
-                const isbn = items?.find((item) => item.id === option.value)?.info.isbn.toString();
+                const isbn = items?.find((item) => item.id === option.value)?.isbn.toString();
                 return isbn?.includes(search.trim()) ?? false;
               })
             }

@@ -1,16 +1,16 @@
 import { test } from "@japa/runner";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import testUtils from "@adonisjs/core/services/test_utils";
 
+import Item from "#models/item";
 import {
   ItemManagementService,
-  buildItemUpdate,
-  buildNewItem,
+  applyPatch,
   currentPriceYear,
   duplicates,
 } from "#services/item_management_service";
 import type { ItemInput } from "#services/item_management_service";
-import { StorageService } from "#services/storage_service";
+import { fixtureId } from "#tests/fixtures";
+import { createItem } from "#tests/item_fixtures";
 
 const SINUS: ItemInput = {
   title: "Sinus 1T",
@@ -25,6 +25,7 @@ const SINUS: ItemInput = {
   active: true,
   buyback: false,
 };
+const OTHER_ISBN = 9_788_202_516_291;
 
 test.group("currentPriceYear", () => {
   test("keys the price history by calendar year", ({ assert }) => {
@@ -33,70 +34,26 @@ test.group("currentPriceYear", () => {
   });
 });
 
-test.group("buildItemUpdate", () => {
+test.group("applyPatch", () => {
   test("writes a price change to both the current price and this year's history entry", ({
     assert,
   }) => {
-    assert.deepEqual(buildItemUpdate({ price: 990 }, "2026"), {
-      price: 990,
-      "info.price.2026": 990,
-    });
+    const item = new Item().merge({ price: 935, priceHistory: { "2025": 900, "2026": 935 } });
+    applyPatch(item, { price: 990 }, "2026");
+    assert.equal(item.price, 990);
+    assert.deepEqual(item.priceHistory, { "2025": 900, "2026": 990 });
   });
 
-  test("touches only the paths that were sent", ({ assert }) => {
-    assert.deepEqual(buildItemUpdate({ active: false }, "2026"), { active: false });
-    assert.deepEqual(buildItemUpdate({ buyback: true, title: "Sinus 1T (2. utg.)" }, "2026"), {
-      buyback: true,
-      title: "Sinus 1T (2. utg.)",
-    });
-    assert.deepEqual(buildItemUpdate({}, "2026"), {});
-  });
-
-  test("maps descriptive fields under info and stores weight as a string", ({ assert }) => {
-    assert.deepEqual(
-      buildItemUpdate(
-        {
-          isbn: 9_788_202_516_291,
-          subject: "Matematikk R1",
-          year: 2021,
-          weight: 1.2,
-          distributor: "SD",
-          discount: 0.2,
-          publisher: "gyl",
-        },
-        "2026",
-      ),
-      {
-        "info.isbn": 9_788_202_516_291,
-        "info.subject": "Matematikk R1",
-        "info.year": 2021,
-        "info.weight": "1.2",
-        "info.distributor": "SD",
-        "info.discount": 0.2,
-        "info.publisher": "gyl",
-      },
-    );
-  });
-});
-
-test.group("buildNewItem", () => {
-  test("starts the price history with this year's price", ({ assert }) => {
-    assert.deepEqual(buildNewItem(SINUS, "2026"), {
-      title: "Sinus 1T",
-      price: 935,
-      active: true,
-      buyback: false,
-      info: {
-        isbn: 9_788_202_516_260,
-        subject: "Matematikk 1T",
-        year: 2020,
-        price: { "2026": 935 },
-        weight: "0.862",
-        distributor: "FS",
-        discount: 0.15,
-        publisher: "cd",
-      },
-    });
+  test("touches only the fields that were sent", ({ assert }) => {
+    const item = new Item().merge({ title: "Sinus 1T", active: true, buyback: false, price: 935 });
+    applyPatch(item, { active: false }, "2026");
+    applyPatch(item, { buyback: true, title: "Sinus 1T (2. utg.)" }, "2026");
+    applyPatch(item, {}, "2026");
+    assert.equal(item.title, "Sinus 1T (2. utg.)");
+    assert.isFalse(item.active);
+    assert.isTrue(item.buyback);
+    assert.equal(item.price, 935);
+    assert.isUndefined(item.priceHistory);
   });
 });
 
@@ -107,118 +64,127 @@ test.group("duplicates", () => {
   });
 });
 
+test.group("ItemManagementService", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("create starts the price history with this year's price", async ({ assert }) => {
+    const created = await ItemManagementService.create(SINUS);
+
+    const stored = await Item.findOrFail(created.id);
+    assert.equal(stored.title, "Sinus 1T");
+    assert.equal(stored.isbn, SINUS.isbn);
+    assert.equal(stored.weight, 0.862);
+    assert.deepEqual(stored.priceHistory, { [currentPriceYear()]: 935 });
+  });
+
+  test("create refuses an isbn another book already carries", async ({ assert }) => {
+    await createItem({ title: "Sinus 1T (gammel)", isbn: SINUS.isbn });
+    await assert.rejects(() => ItemManagementService.create(SINUS), /Sinus 1T \(gammel\)/);
+  });
+
+  test("update changes the sent fields and keeps the rest", async ({ assert }) => {
+    const item = await createItem({ ...SINUS, priceHistory: { "2025": 900 } });
+
+    const updated = await ItemManagementService.update(item.id, { price: 990, weight: null });
+
+    assert.equal(updated.price, 990);
+    assert.isNull(updated.weight);
+    assert.equal(updated.title, "Sinus 1T");
+    assert.deepEqual(updated.priceHistory, { "2025": 900, [currentPriceYear()]: 990 });
+  });
+
+  test("update refuses an isbn another book already carries", async ({ assert }) => {
+    const item = await createItem({ ...SINUS });
+    await createItem({ title: "Sinus R1", isbn: OTHER_ISBN });
+    await assert.rejects(
+      () => ItemManagementService.update(item.id, { isbn: OTHER_ISBN }),
+      /Sinus R1/,
+    );
+  });
+});
+
 test.group("ItemManagementService.bulkUpsert", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  let itemsStub: {
-    getByQueryOrNull: sinon.SinonStub;
-    getOrNull: sinon.SinonStub;
-    add: sinon.SinonStub;
-    update: sinon.SinonStub;
-  };
-
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    itemsStub = {
-      getByQueryOrNull: sandbox.stub().resolves(null),
-      getOrNull: sandbox.stub().resolves(null),
-      add: sandbox.stub().callsFake(async (item) => ({ id: "new", ...item })),
-      update: sandbox.stub().callsFake(async (id, patch) => ({ id, ...patch })),
-    };
-    sandbox.stub(StorageService, "Items").value(itemsStub);
-  });
-
-  group.each.teardown(() => {
-    sandbox.restore();
-  });
+  group.each.setup(() => testUtils.db().truncate());
 
   test("refuses the whole batch when the file repeats an isbn", async ({ assert }) => {
     await assert.rejects(
       () => ItemManagementService.bulkUpsert([SINUS, { ...SINUS, title: "Sinus 1T (kopi)" }]),
       /9788202516260/,
     );
-    assert.isFalse(itemsStub.add.called);
-    assert.isFalse(itemsStub.update.called);
+    assert.lengthOf(await Item.all(), 0);
   });
 
   test("refuses the whole batch when the file repeats an id", async ({ assert }) => {
+    const id = fixtureId(1);
     await assert.rejects(
       () =>
         ItemManagementService.bulkUpsert([
-          { ...SINUS, id: "sinus-id" },
-          { ...SINUS, id: "sinus-id", isbn: 9_788_202_516_291 },
+          { ...SINUS, id },
+          { ...SINUS, id, isbn: OTHER_ISBN },
         ]),
-      /sinus-id/,
+      new RegExp(id),
     );
-    assert.isFalse(itemsStub.add.called);
-    assert.isFalse(itemsStub.update.called);
+    assert.lengthOf(await Item.all(), 0);
   });
 
   test("updates rows whose isbn exists and creates the rest", async ({ assert }) => {
-    const existing = { id: "sinus-id", title: "Sinus 1T (gammel)", info: { isbn: SINUS.isbn } };
-    itemsStub.getByQueryOrNull.callsFake(async (query) =>
-      query.stringFilters[0].value === String(SINUS.isbn) ? [existing] : null,
-    );
-    const newBook = { ...SINUS, isbn: 9_788_202_516_291, title: "Sinus R1" };
+    const existing = await createItem({ title: "Sinus 1T (gammel)", isbn: SINUS.isbn });
+    const newBook = { ...SINUS, isbn: OTHER_ISBN, title: "Sinus R1" };
 
     const summary = await ItemManagementService.bulkUpsert([SINUS, newBook]);
 
     assert.deepEqual(summary, { createdCount: 1, updatedCount: 1, errors: [] });
-    assert.equal(itemsStub.update.firstCall.args[0], "sinus-id");
-    assert.equal(itemsStub.update.firstCall.args[1].title, "Sinus 1T");
-    assert.equal(itemsStub.add.firstCall.args[0].title, "Sinus R1");
+    assert.equal((await Item.findOrFail(existing.id)).title, "Sinus 1T");
+    assert.equal((await Item.findByIsbn(OTHER_ISBN))?.title, "Sinus R1");
   });
 
   test("a row with an id updates that book even when its isbn changed", async ({ assert }) => {
-    const existing = { id: "sinus-id", title: "Sinus 1T", info: { isbn: SINUS.isbn } };
-    itemsStub.getOrNull.callsFake(async (id) => (id === "sinus-id" ? existing : null));
-    const newIsbn = 9_788_202_516_291;
+    const existing = await createItem({ title: "Sinus 1T", isbn: SINUS.isbn });
 
     const summary = await ItemManagementService.bulkUpsert([
-      { ...SINUS, id: "sinus-id", isbn: newIsbn },
+      { ...SINUS, id: existing.id, isbn: OTHER_ISBN },
     ]);
 
     assert.deepEqual(summary, { createdCount: 0, updatedCount: 1, errors: [] });
-    assert.equal(itemsStub.update.firstCall.args[0], "sinus-id");
-    assert.equal(itemsStub.update.firstCall.args[1]["info.isbn"], newIsbn);
-    assert.isFalse(itemsStub.add.called);
+    assert.equal((await Item.findOrFail(existing.id)).isbn, OTHER_ISBN);
+    assert.lengthOf(await Item.all(), 1);
   });
 
   test("a row with an unknown id is reported, not created", async ({ assert }) => {
-    const summary = await ItemManagementService.bulkUpsert([{ ...SINUS, id: "gone" }]);
+    const gone = fixtureId("dead");
+    const summary = await ItemManagementService.bulkUpsert([{ ...SINUS, id: gone }]);
 
     assert.equal(summary.createdCount, 0);
     assert.equal(summary.updatedCount, 0);
     assert.deepEqual(summary.errors, [
-      { isbn: SINUS.isbn, title: "Sinus 1T", message: "Fant ingen bok med id gone" },
+      { isbn: SINUS.isbn, title: "Sinus 1T", message: `Fant ingen bok med id ${gone}` },
     ]);
-    assert.isFalse(itemsStub.add.called);
+    assert.lengthOf(await Item.all(), 0);
   });
 
   test("a row whose new isbn belongs to another book is reported", async ({ assert }) => {
-    const existing = { id: "sinus-id", title: "Sinus 1T", info: { isbn: SINUS.isbn } };
-    const other = { id: "other-id", title: "Sinus R1", info: { isbn: 9_788_202_516_291 } };
-    itemsStub.getOrNull.resolves(existing);
-    itemsStub.getByQueryOrNull.resolves([other]);
+    const existing = await createItem({ title: "Sinus 1T", isbn: SINUS.isbn });
+    await createItem({ title: "Sinus R1", isbn: OTHER_ISBN });
 
     const summary = await ItemManagementService.bulkUpsert([
-      { ...SINUS, id: "sinus-id", isbn: other.info.isbn },
+      { ...SINUS, id: existing.id, isbn: OTHER_ISBN },
     ]);
 
     assert.equal(summary.updatedCount, 0);
     assert.match(summary.errors[0]?.message ?? "", /Sinus R1/);
-    assert.isFalse(itemsStub.update.called);
+    assert.equal((await Item.findOrFail(existing.id)).isbn, SINUS.isbn);
   });
 
   test("keeps going after a failing row and reports it", async ({ assert }) => {
-    itemsStub.add.onFirstCall().rejects(new Error("boom")).onSecondCall().resolves({ id: "ok" });
-
     const summary = await ItemManagementService.bulkUpsert([
-      SINUS,
-      { ...SINUS, isbn: 9_788_202_516_291, title: "Sinus R1" },
+      // Violates the column constraint, so the insert itself fails.
+      { ...SINUS, title: "x".repeat(10), year: Number.NaN },
+      { ...SINUS, isbn: OTHER_ISBN, title: "Sinus R1" },
     ]);
 
     assert.equal(summary.createdCount, 1);
     assert.equal(summary.updatedCount, 0);
-    assert.deepEqual(summary.errors, [{ isbn: SINUS.isbn, title: "Sinus 1T", message: "boom" }]);
+    assert.lengthOf(summary.errors, 1);
+    assert.equal(summary.errors[0]?.isbn, SINUS.isbn);
   });
 });

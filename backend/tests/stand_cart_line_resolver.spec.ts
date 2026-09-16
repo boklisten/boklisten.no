@@ -1,4 +1,5 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
@@ -11,11 +12,11 @@ import type { Branch } from "#shared/branch";
 import type { BranchItem } from "#shared/branch-item";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Delivery } from "#shared/delivery/delivery";
-import type { Item } from "#shared/item";
 import type { Order } from "#shared/order/order";
 import type { StandCartLine } from "#shared/stand_cart";
 import type { UniqueItem } from "#shared/unique-item";
 import type { UserDetail } from "#shared/user-detail";
+import { createItem } from "#tests/item_fixtures";
 import { mock, unchecked } from "#tests/test-doubles";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
@@ -41,22 +42,11 @@ const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
 const ISBN = 9_788_202_000_001;
 const OTHER_ISBN = 9_788_202_000_002;
 
-const items: Record<string, Item> = {
-  [ITEM_ID]: mock<Item>({
-    id: ITEM_ID,
-    title: "Sinus 1T",
-    price: 500,
-    buyback: false,
-    info: { isbn: ISBN },
-  }),
-  [OTHER_ITEM_ID]: mock<Item>({
-    id: OTHER_ITEM_ID,
-    title: "Kosmos SF",
-    price: 600,
-    buyback: true,
-    info: { isbn: OTHER_ISBN },
-  }),
-};
+/** The catalogue rows every test starts from; the Postgres table is seeded with them. */
+const CATALOGUE = [
+  { id: ITEM_ID, title: "Sinus 1T", price: 500, buyback: false, isbn: ISBN },
+  { id: OTHER_ITEM_ID, title: "Kosmos SF", price: 600, buyback: true, isbn: OTHER_ISBN },
+];
 
 const branches: Record<string, Branch> = {
   [BRANCH_ID]: mock<Branch>({
@@ -167,18 +157,6 @@ function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
     );
   });
   sandbox
-    .stub(StorageService.Items, "getOrNull")
-    .callsFake((id) => Promise.resolve(id === undefined ? null : (items[id] ?? null)));
-  sandbox
-    .stub(StorageService.Items, "getByQueryOrNull")
-    .callsFake((query) =>
-      Promise.resolve(
-        Object.values(items).filter(
-          (item) => String(item.info?.isbn) === stringFilter(query, "info.isbn"),
-        ),
-      ),
-    );
-  sandbox
     .stub(StorageService.Branches, "getOrNull")
     .callsFake((id) => Promise.resolve(id === undefined ? null : (branches[id] ?? null)));
   sandbox
@@ -218,7 +196,11 @@ test.group("StandCartLineResolver.resolve", (group) => {
   let sandbox: sinon.SinonSandbox;
   let world: World;
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    for (const item of CATALOGUE) {
+      await createItem(item);
+    }
     sandbox = createSandbox();
     world = {
       orders: [orderWith({})],
@@ -364,8 +346,8 @@ test.group("StandCartLineResolver.resolve", (group) => {
   test("notes every copy of the title the customer is holding, equivalent editions included", async ({
     assert,
   }) => {
-    items[GYMNOS_2009] = mock<Item>({ id: GYMNOS_2009, title: "GYMNOS 2009", price: 400 });
-    items[GYMNOS_2012] = mock<Item>({ id: GYMNOS_2012, title: "GYMNOS 2012", price: 400 });
+    await createItem({ id: GYMNOS_2009, title: "GYMNOS 2009", price: 400 });
+    await createItem({ id: GYMNOS_2012, title: "GYMNOS 2012", price: 400 });
     world.orders = [
       orderWith({
         orderItems: [

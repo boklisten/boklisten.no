@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 
+import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import { CustomerItemService } from "#services/customer_item_service";
 import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
@@ -11,10 +12,9 @@ import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export const OrderService = {
   async getOpenOrderItems(customerId: string, types: CartItemType[] = ["rent", "partly-payment"]) {
-    const openOrderItems = await StorageService.Orders.aggregate<{
+    const rows = await StorageService.Orders.aggregate<{
       orderId: string;
-      itemId: string;
-      title: string;
+      itemId: ObjectId;
       deadline: string;
       cancelable: boolean;
     }>([
@@ -40,28 +40,21 @@ export const OrderService = {
         },
       },
       {
-        $lookup: {
-          from: "items",
-          localField: "orderItems.item",
-          foreignField: "_id",
-          as: "item",
-        },
-      },
-      {
-        $unwind: {
-          path: "$item",
-        },
-      },
-      {
         $project: {
           orderId: "$_id",
           itemId: "$orderItems.item",
-          title: "$item.title",
           deadline: "$orderItems.info.to",
           cancelable: { $eq: ["$amount", 0] },
         },
       },
     ]);
+    // Titles come from the Postgres catalogue. A line whose item is gone from the catalogue is
+    // left out, as the inner join did before the catalogue moved.
+    const titles = await Item.titlesByIds(rows.map((row) => String(row.itemId)));
+    const openOrderItems = rows.flatMap((row) => {
+      const title = titles.get(String(row.itemId));
+      return title === undefined ? [] : [{ ...row, itemId: String(row.itemId), title }];
+    });
 
     // An item a user match depends on is never cancelable, regardless of match lock
     const blockedItemIds = await itemIdsInActiveUserMatches(customerId);
@@ -101,7 +94,7 @@ export const OrderService = {
 
     for (const cartItem of cartItems) {
       const [item, customerItem] = await Promise.all([
-        StorageService.Items.get(cartItem.id),
+        Item.findOrFail(cartItem.id),
         CustomerItemService.getCustomerItemByItemIdOrNull({
           customerId,
           itemId: cartItem.id,

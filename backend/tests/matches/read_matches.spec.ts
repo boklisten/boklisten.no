@@ -7,7 +7,7 @@ import { createSandbox } from "sinon";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import { createTestRound } from "#tests/matches/match-testing-utils";
+import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import { MatchRepository } from "#services/matches/match_repository";
 import { getMatchesForCustomer, getMatchesForRound } from "#services/matches/read_matches";
 import { StorageService } from "#services/storage_service";
@@ -28,6 +28,7 @@ test.group("read matches", (group) => {
   });
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   function stubMongo() {
     sandbox.stub(StorageService.UserDetails, "getMany").callsFake(async (ids) =>
@@ -39,9 +40,6 @@ test.group("read matches", (group) => {
         ].filter((person) => ids.includes(person.id)),
       ),
     );
-    sandbox
-      .stub(StorageService.Items, "getMany")
-      .resolves(unchecked([{ id: ITEM_X, title: "Matematikk R1" }]));
   }
 
   async function seed() {
@@ -157,8 +155,8 @@ test.group("read matches", (group) => {
   test("reads people and items with admin permission so inactive ones keep rendering", async ({
     assert,
   }) => {
-    // getMany without a permission filters on `active: true`; a student or item deactivated
-    // mid-round would silently vanish from their own matches.
+    // getMany without a permission filters on `active: true`; a student deactivated mid-round
+    // would silently vanish from their own matches.
     stubMongo();
     await seed();
 
@@ -168,7 +166,6 @@ test.group("read matches", (group) => {
       asStub(StorageService.UserDetails.getMany).firstCall.args[1],
       USER_PERMISSION.ADMIN,
     );
-    assert.equal(asStub(StorageService.Items.getMany).firstCall.args[1], USER_PERMISSION.ADMIN);
   });
 
   test("reads Mongo once per collection however many matches there are", async ({ assert }) => {
@@ -189,6 +186,5 @@ test.group("read matches", (group) => {
     await getMatchesForRound(round.id);
 
     assert.equal(asStub(StorageService.UserDetails.getMany).callCount, 1);
-    assert.equal(asStub(StorageService.Items.getMany).callCount, 1);
   });
 });

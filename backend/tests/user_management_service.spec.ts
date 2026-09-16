@@ -16,7 +16,7 @@ import { CustomerInvoiceActive } from "#services/invoices/customer_invoice_activ
 import { OrderActive } from "#services/orders/order_active";
 import { StorageService } from "#services/storage_service";
 import { UserManagementService } from "#services/user_management_service";
-import { createTestRound } from "#tests/matches/match-testing-utils";
+import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import type { User } from "#types/user";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
 
@@ -46,6 +46,7 @@ test.group("UserManagementService.mergeUsers", (group) => {
   let invoicesUpdateManyStub: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
   group.each.setup(() => {
     sandbox = createSandbox();
     sandbox.stub(StorageService.UserDetails, "getOrNull").callsFake(async (id) =>
@@ -212,6 +213,7 @@ test.group("UserManagementService.deleteUser", (group) => {
   let activeInvoicesStub: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
   group.each.setup(() => {
     sandbox = createSandbox();
     sandbox.stub(StorageService.UserDetails, "getOrNull").resolves(unchecked({ id: FROM }));

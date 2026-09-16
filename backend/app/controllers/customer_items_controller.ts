@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import { ObjectId } from "mongodb";
 
+import Item from "#models/item";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { buildCustomerItemActions, calculateStatus } from "#services/customer_item_actions_service";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
@@ -22,14 +23,14 @@ export default class CustomerItemsController {
 
     return Promise.all(
       customerItems.map(async (customerItem) => {
-        const item = await StorageService.Items.get(customerItem.item);
+        const item = await Item.findOrFail(customerItem.item);
         const branch = await StorageService.Branches.get(customerItem.handoutInfo?.handoutById);
         return {
           id: customerItem.id,
           item: {
             id: item.id,
             title: item.title,
-            isbn: item.info.isbn.toString(),
+            isbn: String(item.isbn),
           },
           blid: customerItem.blid,
           deadline: customerItem.deadline,
@@ -56,7 +57,9 @@ export default class CustomerItemsController {
       return [];
     }
 
-    const rows = await StorageService.CustomerItems.aggregate<Omit<ActiveCustomerItem, "actions">>([
+    const rows = await StorageService.CustomerItems.aggregate<
+      Omit<ActiveCustomerItem, "actions" | "title">
+    >([
       {
         $match: {
           returned: { $ne: true },
@@ -67,17 +70,6 @@ export default class CustomerItemsController {
           customer: new ObjectId(detailsId),
         },
       },
-      // The $lookup below overwrites "item" with the joined document, so the id is kept aside
-      { $addFields: { itemId: "$item" } },
-      {
-        $lookup: {
-          from: BlSchemaName.Items,
-          localField: "item",
-          foreignField: "_id",
-          as: "item",
-        },
-      },
-      { $unwind: { path: "$item", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: BlSchemaName.Branches,
@@ -91,8 +83,7 @@ export default class CustomerItemsController {
         $project: {
           _id: 0,
           id: { $toString: "$_id" },
-          item: { $toString: "$itemId" },
-          title: { $ifNull: ["$item.title", "Ukjent bok"] },
+          item: { $toString: "$item" },
           blid: { $ifNull: ["$blid", null] },
           type: "$type",
           deadline: "$deadline",
@@ -105,11 +96,19 @@ export default class CustomerItemsController {
           },
         },
       },
-      { $sort: { deadline: 1, title: 1 } },
     ]);
     if (rows.length === 0) {
       return [];
     }
+    // Titles come from the Postgres catalogue; a book whose title is gone still shows up.
+    const titles = await Item.titlesByIds(rows.map((row) => row.item));
+    const listed = rows
+      .map((row) => Object.assign(row, { title: titles.get(row.item) ?? "Ukjent bok" }))
+      .toSorted(
+        (a, b) =>
+          new Date(a.deadline).getTime() - new Date(b.deadline).getTime() ||
+          a.title.localeCompare(b.title, "nb"),
+      );
 
     // The rules need the full documents, so they are priced after the listing query
     const customerItems = await StorageService.CustomerItems.getMany(rows.map((row) => row.id));
@@ -119,7 +118,7 @@ export default class CustomerItemsController {
       actionsById.set(customerItem.id, await buildCustomerItemActions(customerItem, branch));
     }
 
-    return rows.map((row): ActiveCustomerItem =>
+    return listed.map((row): ActiveCustomerItem =>
       Object.assign(row, { actions: actionsById.get(row.id) ?? [] }),
     );
   }

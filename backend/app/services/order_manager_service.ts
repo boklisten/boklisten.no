@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import { OrderHistoryService } from "#services/order_history_service";
+import { withItemColumns } from "#services/report_item_columns";
 import { StorageService } from "#services/storage_service";
 import type {
   BringParcelType,
@@ -183,7 +184,6 @@ export function ordersReportPipeline(filter: OrderManagerFilter): PipelineStage[
     ...customerLookup([...CONTACT_FIELDS, "dob", "branchMembership"]),
     BRANCH_LOOKUP,
     lookupOne("branches", "customerInfo.branchMembership", "membershipInfo", ["name"]),
-    lookupOne("items", "orderItems.item", "itemInfo", ["info.isbn"]),
     {
       $project: {
         _id: 0,
@@ -202,14 +202,8 @@ export function ordersReportPipeline(filter: OrderManagerFilter): PipelineStage[
         branchMembership: firstOrNull("$membershipInfo.name"),
         school: firstOrNull("$branchInfo.name"),
         title: "$orderItems.title",
-        isbn: {
-          $convert: {
-            input: { $first: "$itemInfo.info.isbn" },
-            to: "string",
-            onError: null,
-            onNull: null,
-          },
-        },
+        // Replaced by the ISBN from the Postgres catalogue once the rows are in.
+        itemId: { $toString: "$orderItems.item" },
         orderTime: { $dateToString: { date: "$creationTime" } },
         paid: PAID_EXPRESSION,
         pivot: { $literal: 1 },
@@ -329,7 +323,12 @@ export const OrderManagerService = {
   },
 
   async ordersReport(filter: OrderManagerFilter): Promise<OrderManagerReportRow[]> {
-    return StorageService.Orders.aggregate<OrderManagerReportRow>(ordersReportPipeline(filter));
+    const rows = await StorageService.Orders.aggregate<
+      Omit<OrderManagerReportRow, "isbn"> & { itemId: string | null }
+    >(ordersReportPipeline(filter));
+    return withItemColumns(rows, (item) => ({
+      isbn: item === undefined ? null : String(item.isbn),
+    }));
   },
 
   async bringReport(

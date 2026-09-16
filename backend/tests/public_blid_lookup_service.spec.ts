@@ -1,12 +1,13 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import { PublicBlidLookupService } from "#services/public_blid_lookup_service";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Item } from "#shared/item";
 import type { UniqueItem } from "#shared/unique-item";
+import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const BLID = "12345678";
@@ -18,14 +19,13 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
   let uniqueItems: sinon.SinonStub;
   let customerItems: sinon.SinonStub;
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    await createItem({ id: ITEM_ID, title: "Sinus 1T", isbn: 9_788_202_418_304 });
     sandbox = createSandbox();
     aggregate = sandbox.stub(StorageService.CustomerItems, "aggregate").resolves([]);
     uniqueItems = sandbox.stub(StorageService.UniqueItems, "getByQueryOrNull").resolves(null);
     customerItems = sandbox.stub(StorageService.CustomerItems, "getByQueryOrNull").resolves(null);
-    sandbox
-      .stub(StorageService.Items, "getOrNull")
-      .resolves(mock<Item>({ id: ITEM_ID, title: "Sinus 1T", info: { isbn: 9_788_202_418_304 } }));
   });
   group.each.teardown(() => sandbox.restore());
 
@@ -35,8 +35,7 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
         handoutBranch: "Ullern VGS",
         handoutTime: "2026-08-20T10:00:00.000Z",
         deadline: "2026-12-20T23:00:00.000Z",
-        title: "Sinus 1T",
-        isbn: "9788202418304",
+        itemId: ITEM_ID,
         name: "Ola Nordmann",
         email: "ola@example.com",
         phone: "12345678",
@@ -49,8 +48,10 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
     assert.include(result, {
       name: "Ola Nordmann",
       title: "Sinus 1T",
+      isbn: "9788202418304",
       handoutBranch: "Ullern VGS",
     });
+    assert.notProperty(result, "itemId");
   });
 
   test("a registered book nobody holds is reported as not handed out with its title and ISBN", async ({

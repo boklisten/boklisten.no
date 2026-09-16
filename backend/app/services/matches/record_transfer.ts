@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/node";
 import type { Infer } from "@vinejs/vine/types";
 import { DateTime } from "luxon";
 
+import Item from "#models/item";
 import BlidService from "#services/blid_service";
 import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
@@ -97,11 +98,7 @@ async function createMatchReceiveOrder(
   customerItem: CustomerItem,
   userDetailId: string,
 ): Promise<Omit<Order, "id">> {
-  const item = await StorageService.Items.get(customerItem.item);
-
-  if (!item) {
-    throw new BlError("Failed to get item");
-  }
+  const item = await Item.findOrFail(customerItem.item);
 
   const originalReceiverOrderInfo = await findReceiverRentOrder(userDetailId, customerItem.item);
 
@@ -159,11 +156,7 @@ async function createMatchDeliverOrder(
   customerItem: CustomerItem,
   userDetailId: string,
 ): Promise<Omit<Order, "id">> {
-  const item = await StorageService.Items.get(customerItem.item);
-
-  if (!item) {
-    throw new BlError("Failed to get item");
-  }
+  const item = await Item.findOrFail(customerItem.item);
 
   if (isNullish(customerItem.handoutInfo)) {
     throw new BlError("No handout-info for customerItem").code(200);

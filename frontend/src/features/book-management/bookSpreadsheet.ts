@@ -13,7 +13,8 @@ export interface BookRow {
   subject: string;
   year: number;
   price: number;
-  weight: number;
+  /** Kilograms; null when unknown. */
+  weight: number | null;
   distributor: string;
   discount: number;
   publisher: string;
@@ -54,6 +55,7 @@ const LEADING_FIELDS = [
 const YES = "Ja";
 const NO = "Nei";
 const DECIMAL_PATTERN = String.raw`^\d+([.,]\d+)?$`;
+const OPTIONAL_DECIMAL_PATTERN = String.raw`^(\d+([.,]\d+)?)?$`;
 
 function normalizeDecimal(value: unknown): string {
   return cellToString(value).trim().replace(",", ".");
@@ -131,11 +133,8 @@ export const BOOK_IMPORT_COLUMNS: Column[] = [
   {
     id: "weight",
     label: FIELDS.weight,
-    description: "Kilo, f.eks. 0,862",
-    validators: [
-      ...required(FIELDS.weight),
-      { type: "regex", pattern: DECIMAL_PATTERN, message: "Må være et tall" },
-    ],
+    description: "Kilo, f.eks. 0,862. Tom når vekten er ukjent",
+    validators: [{ type: "regex", pattern: OPTIONAL_DECIMAL_PATTERN, message: "Må være et tall" }],
     transformations: [{ type: "custom", fn: normalizeDecimal, stage: "pre" }],
   },
   {
@@ -201,7 +200,8 @@ export function toBookRows(result: ImportResult): BookRow[] {
       subject: cellText(row, "subject"),
       year: Number(cellText(row, "year")),
       price: Number(normalizeDecimal(row["price"])),
-      weight: Number(normalizeDecimal(row["weight"])),
+      weight:
+        normalizeDecimal(row["weight"]) === "" ? null : Number(normalizeDecimal(row["weight"])),
       distributor: cellText(row, "distributor"),
       discount: Number(normalizeDecimal(row["discount"])),
       publisher: cellText(row, "publisher"),
@@ -211,24 +211,33 @@ export function toBookRows(result: ImportResult): BookRow[] {
   });
 }
 
-/** `{ info: { isbn: 1 } }` becomes `{ "info.isbn": 1 }`; nulls are dropped like legacy bl-admin dropped them. */
-function flatten(value: object, prefix = ""): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(value).flatMap(([key, entry]) => {
-      const path = `${prefix}${key}`;
-      if (entry === null || entry === undefined) {
-        return [];
-      }
-      return typeof entry === "object"
-        ? Object.entries(flatten(entry, `${path}.`))
-        : [[path, entry]];
-    }),
-  );
+/**
+ * One book as legacy bl-admin wrote it: the dot-path headers above plus one `info.price.<year>`
+ * column per year of price history. An unknown weight is left out, as legacy dropped nulls.
+ */
+function toSpreadsheetRow(item: Item): Record<string, unknown> {
+  return {
+    [FIELDS.id]: item.id,
+    [FIELDS.title]: item.title,
+    [FIELDS.isbn]: item.isbn,
+    [FIELDS.price]: item.price,
+    [FIELDS.subject]: item.subject,
+    [FIELDS.year]: item.year,
+    ...(item.weight === null ? {} : { [FIELDS.weight]: item.weight }),
+    [FIELDS.distributor]: item.distributor,
+    [FIELDS.discount]: item.discount,
+    [FIELDS.publisher]: item.publisher,
+    [FIELDS.active]: item.active,
+    [FIELDS.buyback]: item.buyback,
+    ...Object.fromEntries(
+      Object.entries(item.priceHistory).map(([year, price]) => [`info.price.${year}`, price]),
+    ),
+  };
 }
 
 /** The same file legacy bl-admin produced: every field of the book, including each year's price. */
 export function downloadBooksXlsx(items: Item[]) {
-  const rows = items.map((item) => flatten(item));
+  const rows = items.map((item) => toSpreadsheetRow(item));
   const header = LEADING_FIELDS.filter((field) => rows.some((row) => field in row));
   const sheet = utils.json_to_sheet(rows, { header });
   const workbook = utils.book_new();

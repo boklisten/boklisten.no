@@ -1,4 +1,5 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
@@ -6,8 +7,8 @@ import { EmployeeMonitoringService } from "#services/employee_monitoring_service
 import { StorageService } from "#services/storage_service";
 import { UniqueItemEditService } from "#services/unique_item_edit_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Item } from "#shared/item";
 import type { UniqueItem } from "#shared/unique-item";
+import { createItem } from "#tests/item_fixtures";
 import { mock, unchecked } from "#tests/test-doubles";
 
 const BLID = "12345678";
@@ -17,11 +18,6 @@ const NEW_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f72";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 const EMPLOYEE = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
 const ADMIN = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "admin" as const };
-
-const items: Record<string, Item> = {
-  [OLD_ITEM_ID]: mock<Item>({ id: OLD_ITEM_ID, title: "Sinus 1T" }),
-  [NEW_ITEM_ID]: mock<Item>({ id: NEW_ITEM_ID, title: "Sinus 1P" }),
-};
 
 const heldCustomerItem = mock<CustomerItem>({
   id: "5f7f7f7f7f7f7f7f7f7f7f73",
@@ -55,7 +51,10 @@ test.group("UniqueItemEditService", (group) => {
   let removeUniqueItem: sinon.SinonStub;
   let updateManyCustomerItems: sinon.SinonStub;
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    await createItem({ id: OLD_ITEM_ID, title: "Sinus 1T" });
+    await createItem({ id: NEW_ITEM_ID, title: "Sinus 1P" });
     sandbox = createSandbox();
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
     uniqueItems = sandbox
@@ -71,9 +70,6 @@ test.group("UniqueItemEditService", (group) => {
     updateManyCustomerItems = sandbox
       .stub(StorageService.CustomerItems, "updateMany")
       .resolves(unchecked({ matchedCount: 1, modifiedCount: 1 }));
-    sandbox
-      .stub(StorageService.Items, "getOrNull")
-      .callsFake((id) => Promise.resolve(id === undefined ? null : (items[id] ?? null)));
   });
   group.each.teardown(() => sandbox.restore());
 

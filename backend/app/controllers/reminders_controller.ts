@@ -2,6 +2,7 @@ import type { HttpContext } from "@adonisjs/core/http";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
+import Item from "#models/item";
 import { deadlineWindow } from "#services/deadline_window";
 import DispatchService from "#services/dispatch_service";
 import type { MessageLogContext } from "#services/message_log_service";
@@ -23,13 +24,18 @@ interface ReminderCustomer {
   guardian: { phone: string | undefined; email: string | undefined };
 }
 
+/** The aggregation's output: books still carry the item id, titles are joined from Postgres. */
+type RemindedCustomerRow = Omit<ReminderCustomer, "customerItems"> & {
+  customerItems: { blid: string; item: ObjectId; deadline: string }[];
+};
+
 async function aggregateCustomersToRemind(
   customerItemType: "rent" | "partly-payment",
   branchIDs: string[],
   deadlineISO: string,
-) {
+): Promise<ReminderCustomer[]> {
   const { after, before } = deadlineWindow(new Date(deadlineISO));
-  return StorageService.CustomerItems.aggregate<ReminderCustomer>([
+  const rows = await StorageService.CustomerItems.aggregate<RemindedCustomerRow>([
     {
       $match: {
         returned: false,
@@ -43,25 +49,12 @@ async function aggregateCustomersToRemind(
       },
     },
     {
-      $lookup: {
-        from: "items",
-        localField: "item",
-        foreignField: "_id",
-        as: "item",
-      },
-    },
-    {
-      $unwind: {
-        path: "$item",
-      },
-    },
-    {
       $group: {
         _id: "$customer",
         customerItems: {
           $push: {
             blid: "$blid",
-            title: "$item.title",
+            item: "$item",
             deadline: "$deadline",
           },
         },
@@ -95,6 +88,18 @@ async function aggregateCustomersToRemind(
       },
     },
   ]);
+  const titles = await Item.titlesByIds(
+    rows.flatMap((row) => row.customerItems.map((customerItem) => String(customerItem.item))),
+  );
+  // A book whose title is gone from the catalogue is left out, and so is a customer left with no
+  // books, as the inner join did before the catalogue moved to Postgres.
+  return rows.flatMap((row) => {
+    const customerItems = row.customerItems.flatMap(({ item, ...customerItem }) => {
+      const title = titles.get(String(item));
+      return title === undefined ? [] : [{ ...customerItem, title }];
+    });
+    return customerItems.length === 0 ? [] : [{ ...row, customerItems }];
+  });
 }
 
 /**

@@ -1,5 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import Item from "#models/item";
 import { CartService } from "#services/cart_service";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
@@ -17,7 +18,7 @@ export default class BranchCatalogController {
 
     for (const branchItem of branchItems) {
       const [item, options] = await Promise.all([
-        StorageService.Items.get(branchItem.item),
+        Item.findOrFail(branchItem.item),
         CartService.getOptions(branchItem),
       ]);
       const selectedOption = options[0];

@@ -1,16 +1,16 @@
 import BadRequestException from "#exceptions/bad_request_exception";
+import Item from "#models/item";
 import { findItemByIsbn } from "#services/item_lookup";
-import { StorageService } from "#services/storage_service";
-import type { Item } from "#shared/item";
 
-/** The flat shape the admin book form sends; the stored document nests most of it under `info`. */
+/** The flat shape the admin book form sends. */
 export interface ItemInput {
   title: string;
   isbn: number;
   subject: string;
   year: number;
   price: number;
-  weight: number;
+  /** Kilograms; null when unknown. */
+  weight: number | null;
   distributor: string;
   discount: number;
   publisher: string;
@@ -33,42 +33,20 @@ export function currentPriceYear(now = new Date()): string {
   return String(now.getFullYear());
 }
 
-function withoutUndefined(paths: Record<string, unknown>) {
-  return Object.fromEntries(Object.entries(paths).filter(([, value]) => value !== undefined));
+function withoutUndefined<T extends object>(patch: T): Partial<T> {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the entries are T's own, minus the undefined ones
+  return Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined),
+  ) as Partial<T>;
 }
 
 /** A price change also replaces this year's entry in the price history; other years stay. */
-export function buildItemUpdate(patch: ItemPatch, year: string): Record<string, unknown> {
-  const { title, price, active, buyback, weight, ...info } = patch;
-  const infoPaths = Object.entries(info).map(([field, value]) => [`info.${field}`, value]);
-  return withoutUndefined({
-    title,
-    price,
-    active,
-    buyback,
-    ...Object.fromEntries(infoPaths),
-    "info.weight": weight === undefined ? undefined : String(weight),
-    [`info.price.${year}`]: price,
-  });
-}
-
-export function buildNewItem(input: ItemInput, year: string): Omit<Item, "id"> {
-  return {
-    title: input.title,
-    price: input.price,
-    active: input.active,
-    buyback: input.buyback,
-    info: {
-      isbn: input.isbn,
-      subject: input.subject,
-      year: input.year,
-      price: { [year]: input.price },
-      weight: String(input.weight),
-      distributor: input.distributor,
-      discount: input.discount,
-      publisher: input.publisher,
-    },
-  };
+export function applyPatch(item: Item, patch: ItemPatch, year: string): Item {
+  item.merge(withoutUndefined(patch));
+  if (patch.price !== undefined) {
+    item.priceHistory = { ...item.priceHistory, [year]: patch.price };
+  }
+  return item;
 }
 
 async function assertIsbnAvailable(isbn: number, exceptItemId?: string) {
@@ -93,14 +71,15 @@ export function duplicates<T>(values: T[]): T[] {
 
 async function create(input: ItemInput): Promise<Item> {
   await assertIsbnAvailable(input.isbn);
-  return StorageService.Items.add(buildNewItem(input, currentPriceYear()));
+  return Item.create({ ...input, priceHistory: { [currentPriceYear()]: input.price } });
 }
 
 async function update(id: string, patch: ItemPatch): Promise<Item> {
+  const item = await Item.findOrFail(id);
   if (patch.isbn !== undefined) {
     await assertIsbnAvailable(patch.isbn, id);
   }
-  return StorageService.Items.update(id, buildItemUpdate(patch, currentPriceYear()));
+  return applyPatch(item, patch, currentPriceYear()).save();
 }
 
 /**
@@ -126,18 +105,16 @@ async function bulkUpsert(rows: BulkUpsertRow[]): Promise<BulkUpsertSummary> {
   for (const { id, ...input } of rows) {
     try {
       const existing =
-        id === undefined
-          ? await findItemByIsbn(String(input.isbn))
-          : await StorageService.Items.getOrNull(id);
+        id === undefined ? await findItemByIsbn(String(input.isbn)) : await Item.find(id);
       if (id !== undefined && existing === null) {
         throw new BadRequestException(`Fant ingen bok med id ${id}`);
       }
       if (existing === null) {
-        await StorageService.Items.add(buildNewItem(input, year));
+        await Item.create({ ...input, priceHistory: { [year]: input.price } });
         summary.createdCount++;
       } else {
         await assertIsbnAvailable(input.isbn, existing.id);
-        await StorageService.Items.update(existing.id, buildItemUpdate(input, year));
+        await applyPatch(existing, input, year).save();
         summary.updatedCount++;
       }
     } catch (error) {

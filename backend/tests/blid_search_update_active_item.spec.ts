@@ -1,4 +1,5 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
@@ -7,7 +8,8 @@ import { EmployeeMonitoringService } from "#services/employee_monitoring_service
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Item } from "#shared/item";
+import { fixtureId } from "#tests/fixtures";
+import { createItem } from "#tests/item_fixtures";
 import { mock, unchecked } from "#tests/test-doubles";
 
 const CUSTOMER_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f70";
@@ -22,12 +24,16 @@ const branches: Record<string, Branch> = {
   [NEW_BRANCH_ID]: mock<Branch>({ id: NEW_BRANCH_ID, name: "Persbråten VGS" }),
 };
 
+const ITEM_ID = fixtureId("1");
+
 test.group("BlidSearchService.updateActiveItem()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
   let updateMany: sinon.SinonStub;
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    await createItem({ id: ITEM_ID, title: "Sinus 1T" });
     sandbox = createSandbox();
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
     updateMany = sandbox
@@ -36,16 +42,13 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
     sandbox.stub(StorageService.CustomerItems, "getOrNull").resolves(
       mock<CustomerItem>({
         id: CUSTOMER_ITEM_ID,
-        item: "item-1",
+        item: ITEM_ID,
         blid: "12345678",
         customer: CUSTOMER_ID,
         deadline: new Date("2026-06-30T22:00:00.000Z"),
         handoutInfo: { handoutBy: "branch", handoutById: OLD_BRANCH_ID },
       }),
     );
-    sandbox
-      .stub(StorageService.Items, "getOrNull")
-      .resolves(mock<Item>({ id: "item-1", title: "Sinus 1T" }));
     sandbox
       .stub(StorageService.Branches, "getOrNull")
       .callsFake((id) => Promise.resolve(id === undefined ? null : (branches[id] ?? null)));

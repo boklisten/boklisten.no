@@ -1,3 +1,4 @@
+import Item from "#models/item";
 import { StorageService } from "#services/storage_service";
 import type { BranchItem } from "#shared/branch-item";
 import type { CartItemOption } from "#shared/cart_item";
@@ -6,7 +7,7 @@ export const CartService = {
   async getOptions(branchItem: BranchItem) {
     const [branch, item] = await Promise.all([
       StorageService.Branches.get(branchItem.branch),
-      StorageService.Items.get(branchItem.item),
+      Item.findOrFail(branchItem.item),
     ]);
     const options: CartItemOption[] = [];
 

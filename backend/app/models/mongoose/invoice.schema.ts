@@ -41,7 +41,7 @@ export const InvoiceSchema: BlSchema<Invoice> = new Schema({
           ref: BlSchemaName.CustomerItems,
         },
         title: String,
-        item: { type: Schema.Types.ObjectId, ref: BlSchemaName.Items },
+        item: { type: Schema.Types.ObjectId },
         numberOfItems: String,
         customerNumber: String,
         cancel: Boolean,

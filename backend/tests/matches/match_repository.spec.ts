@@ -7,7 +7,7 @@ import Match from "#models/match";
 import MatchParticipant from "#models/match_participant";
 import MatchObligation from "#models/match_obligation";
 import MatchRound from "#models/match_round";
-import { createTestRound } from "#tests/matches/match-testing-utils";
+import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import { isDischargeConflict, MatchRepository } from "#services/matches/match_repository";
 
 const A = "5d765db5fc8c47001c408d81";
@@ -17,6 +17,7 @@ const ITEM_X = "5d765db5fc8c47001c408e01";
 
 test.group("match rounds", (group) => {
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   test("stores a round", async ({ assert }) => {
     const round = await createTestRound({
@@ -53,6 +54,7 @@ async function createRound() {
 
 test.group("match participants", (group) => {
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   test("a user match has two customer participants", async ({ assert }) => {
     const round = await createRound();
@@ -139,6 +141,7 @@ test.group("match participants", (group) => {
 
 test.group("match obligations", (group) => {
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   async function createUserMatch() {
     const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
@@ -214,6 +217,7 @@ test.group("match obligations", (group) => {
 
 test.group("book handovers", (group) => {
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   test("records a stand pickup with the stand as the origin", async ({ assert }) => {
     await BookHandover.create({
@@ -321,6 +325,7 @@ test.group("book handovers", (group) => {
 
 test.group("MatchRepository", (group) => {
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
 
   async function seedUserMatch() {
     const round = await createTestRound({

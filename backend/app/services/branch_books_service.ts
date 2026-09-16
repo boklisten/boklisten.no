@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
+import Item from "#models/item";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import { DEADLINE_PADDING_DAYS } from "#services/deadline_window";
@@ -180,29 +181,26 @@ const CUSTOMER_LOOKUP_STAGES = [
   { $unwind: { path: "$membershipBranch", preserveNullAndEmptyArrays: true } },
 ];
 
-// preserveNullAndEmptyArrays so books referencing a deleted item keep counting in the summary —
-// bulk updates addressed by deadline include them either way
-const ITEM_TITLE_STAGES = [
-  {
-    $lookup: {
-      from: BlSchemaName.Items,
-      localField: "_id.item",
-      foreignField: "_id",
-      as: "item",
-    },
-  },
-  { $unwind: { path: "$item", preserveNullAndEmptyArrays: true } },
+const SUMMARY_ROW_STAGES = [
   {
     $project: {
       _id: 0,
       deadline: "$_id.deadline",
       itemId: { $toString: "$_id.item" },
-      title: { $ifNull: ["$item.title", "Ukjent bok"] },
       direct: 1,
       total: 1,
     },
   },
 ];
+
+/**
+ * Titles come from the Postgres catalogue. Books referencing a deleted item keep counting in the
+ * summary (bulk updates addressed by deadline include them either way), under a placeholder title.
+ */
+async function withTitles(rows: Omit<SummaryRow, "title">[]): Promise<SummaryRow[]> {
+  const titles = await Item.titlesByIds(rows.map((row) => row.itemId));
+  return rows.map((row) => ({ ...row, title: titles.get(row.itemId) ?? "Ukjent bok" }));
+}
 
 /**
  * Aggregation expression matching an open (ordered, not yet handed out) order item, usable both
@@ -242,7 +240,7 @@ export const BranchBooksService = {
 
   async getActiveBooksSummary(branchId: string): Promise<BranchBooksSummary> {
     const { branchObjectId, scopeObjectIds } = await resolveScope(branchId);
-    const rows = await StorageService.CustomerItems.aggregate<SummaryRow>([
+    const rows = await StorageService.CustomerItems.aggregate<Omit<SummaryRow, "title">>([
       {
         $match: {
           ...ACTIVE_CUSTOMER_ITEM_MATCH,
@@ -259,9 +257,9 @@ export const BranchBooksService = {
           total: { $sum: 1 },
         },
       },
-      ...ITEM_TITLE_STAGES,
+      ...SUMMARY_ROW_STAGES,
     ]);
-    return buildSummary(rows);
+    return buildSummary(await withTitles(rows));
   },
 
   async getActiveBookDetails({
@@ -347,7 +345,7 @@ export const BranchBooksService = {
 
   async getOrderedBooksSummary(branchId: string): Promise<BranchBooksSummary> {
     const { branchObjectId, scopeObjectIds } = await resolveScope(branchId);
-    const rows = await StorageService.Orders.aggregate<SummaryRow>([
+    const rows = await StorageService.Orders.aggregate<Omit<SummaryRow, "title">>([
       { $match: { placed: true, branch: { $in: scopeObjectIds } } },
       { $unwind: "$orderItems" },
       { $match: OPEN_ORDER_ITEM_MATCH },
@@ -366,9 +364,9 @@ export const BranchBooksService = {
           total: { $sum: 1 },
         },
       },
-      ...ITEM_TITLE_STAGES,
+      ...SUMMARY_ROW_STAGES,
     ]);
-    return buildSummary(rows);
+    return buildSummary(await withTitles(rows));
   },
 
   async getOrderedBookDetails({

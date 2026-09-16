@@ -1,4 +1,5 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
@@ -6,6 +7,7 @@ import { CartService } from "#services/cart_service";
 import { StorageService } from "#services/storage_service";
 import type { BranchItem } from "#shared/branch-item";
 import type { Item } from "#shared/item";
+import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const BRANCH_ID = "5d765db5fc8c47001c408d81";
@@ -17,9 +19,10 @@ test.group("CartService.getOptions", (group) => {
   let sandbox: sinon.SinonSandbox;
   let branchesGet: sinon.SinonStub;
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService.Items, "get").resolves(ITEM);
+    await createItem({ id: ITEM_ID, title: ITEM.title, price: ITEM.price });
     branchesGet = sandbox.stub(StorageService.Branches, "get");
   });
   group.each.teardown(() => sandbox.restore());

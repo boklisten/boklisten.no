@@ -7,7 +7,6 @@ import type { CustomerItem } from "#shared/customer-item/customer-item";
 export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
   item: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.Items,
     required: true,
   },
   type: {

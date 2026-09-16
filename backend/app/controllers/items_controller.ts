@@ -1,34 +1,40 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import Item from "#models/item";
 import { findItemByIsbn } from "#services/item_lookup";
 import { ItemManagementService } from "#services/item_management_service";
-import { StorageService } from "#services/storage_service";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
+import { PermissionService } from "#services/permission_service";
+import ItemTransformer from "#transformers/item_transformer";
 import {
   bulkUpsertItemsValidator,
   createItemValidator,
   updateItemValidator,
 } from "#validators/items";
 
+function byTitle(items: Item[]): Item[] {
+  return items.toSorted((a, b) => a.title.localeCompare(b.title, "nb"));
+}
+
 export default class ItemsController {
+  /** The public list of titles the stand buys back. */
   async buyback() {
-    const databaseQuery = new SEDbQuery();
-    databaseQuery.booleanFilters = [{ fieldName: "buyback", value: true }];
-    databaseQuery.sortFilters = [{ fieldName: "title", direction: 1 }];
-    return (await StorageService.Items.getByQuery(databaseQuery)).map((item) => ({
-      title: item.title,
-      isbn: item.info.isbn,
-    }));
-  }
-  async index() {
-    return (await StorageService.Items.getAll()).toSorted((a, b) => a.title.localeCompare(b.title));
+    const items = await Item.query().where("buyback", true);
+    return byTitle(items).map((item) => ({ title: item.title, isbn: item.isbn }));
   }
 
+  /** The catalogue as customers may see it. */
+  async index(ctx: HttpContext) {
+    const items = await Item.query().withScopes((scopes) => scopes.activeOnly());
+    return ctx.serialize(ItemTransformer.transform(byTitle(items)));
+  }
+
+  /** The whole catalogue for administrators; other employees see what customers see. */
   async all(ctx: HttpContext) {
-    const { permission } = ctx.authUser;
-    return (await StorageService.Items.getAll(permission)).toSorted((a, b) =>
-      a.title.localeCompare(b.title, "nb"),
-    );
+    const query = Item.query();
+    if (!PermissionService.isAdmin(ctx.authUser.permission)) {
+      void query.withScopes((scopes) => scopes.activeOnly());
+    }
+    return ctx.serialize(ItemTransformer.transform(byTitle(await query)));
   }
 
   async showByIsbn(ctx: HttpContext) {
@@ -38,12 +44,13 @@ export default class ItemsController {
 
   async store(ctx: HttpContext) {
     const input = await ctx.request.validateUsing(createItemValidator);
-    return ItemManagementService.create(input);
+    return ctx.serialize(ItemTransformer.transform(await ItemManagementService.create(input)));
   }
 
   async update(ctx: HttpContext) {
     const patch = await ctx.request.validateUsing(updateItemValidator);
-    return ItemManagementService.update(ctx.request.param("id"), patch);
+    const item = await ItemManagementService.update(ctx.request.param("id"), patch);
+    return ctx.serialize(ItemTransformer.transform(item));
   }
 
   async bulkUpsert(ctx: HttpContext) {

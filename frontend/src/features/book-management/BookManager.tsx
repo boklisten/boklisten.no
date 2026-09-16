@@ -26,9 +26,9 @@ function uniqueSorted(values: string[]) {
 
 function suggestionsFrom(items: Item[]): BookSuggestions {
   return {
-    subjects: uniqueSorted(items.map((item) => item.info.subject)),
-    distributors: uniqueSorted(items.map((item) => item.info.distributor)),
-    publishers: uniqueSorted(items.map((item) => item.info.publisher)),
+    subjects: uniqueSorted(items.map((item) => item.subject)),
+    distributors: uniqueSorted(items.map((item) => item.distributor)),
+    publishers: uniqueSorted(items.map((item) => item.publisher)),
   };
 }
 

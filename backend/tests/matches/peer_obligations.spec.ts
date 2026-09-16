@@ -6,7 +6,7 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import type MatchRound from "#models/match_round";
-import { createTestRound } from "#tests/matches/match-testing-utils";
+import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import { PeerObligations } from "#services/matches/peer_obligations";
 import { MatchRepository } from "#services/matches/match_repository";
 
@@ -21,6 +21,7 @@ test.group("PeerObligations", (group) => {
   let round: MatchRound;
 
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
   group.each.setup(async () => {
     // Explicitly active: a round is born a draft, and a draft's obligations are inert by design.
     round = await createTestRound({ name: "Round", standLocation: "Kantina", status: "active" });

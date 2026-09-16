@@ -34,7 +34,7 @@ function duplicates<T>(values: T[]): T[] {
  */
 function previewUpload(rows: BookRow[], items: Item[]) {
   const knownIds = new Set(items.map((item) => item.id));
-  const knownIsbns = new Set(items.map((item) => item.info.isbn));
+  const knownIsbns = new Set(items.map((item) => item.isbn));
   const unknownIds = rows.filter((row) => row.id !== undefined && !knownIds.has(row.id));
   const newBooks = rows.filter((row) => row.id === undefined && !knownIsbns.has(row.isbn));
   return {

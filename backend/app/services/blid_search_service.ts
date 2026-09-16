@@ -1,5 +1,6 @@
 import type { ObjectId } from "mongodb";
 
+import Item from "#models/item";
 import BookHandover from "#models/book_handover";
 import { ActiveItemMonitoring, FALLBACK_BRANCH_NAME } from "#services/active_item_monitoring";
 import { ActiveItemCorrections } from "#services/active_item_corrections";
@@ -722,7 +723,7 @@ export const BlidSearchService = {
     if (!isMonitored(employee)) {
       return;
     }
-    const item = await StorageService.Items.getOrNull(previous.item);
+    const item = await Item.find(previous.item);
     const reported = {
       employee,
       customerId: previous.customer,
@@ -760,7 +761,7 @@ export const BlidSearchService = {
     const rows = await StorageService.UniqueItems.aggregate<{
       blid: string;
       title: string;
-      isbn: string | null;
+      item: ObjectId | null;
       holder: ObjectId | null;
     }>([
       { $match: { blid: { $regex: query, $options: "i" } } },
@@ -795,28 +796,29 @@ export const BlidSearchService = {
       { $sort: { tier: 1, held: -1, blid: 1 } },
       // One past the limit tells whether the list was cut short.
       { $limit: SEARCH_HIT_LIMIT + 1 },
-      // After the limit, so only the shown rows pay for the join.
-      {
-        $lookup: {
-          from: BlSchemaName.Items,
-          localField: "item",
-          foreignField: "_id",
-          pipeline: [{ $project: { _id: 0, isbn: "$info.isbn" } }],
-          as: "items",
-        },
-      },
       {
         $project: {
           _id: 0,
           blid: 1,
           title: 1,
-          isbn: { $ifNull: [{ $toString: { $first: "$items.isbn" } }, null] },
+          item: { $ifNull: ["$item", null] },
           holder: { $ifNull: [{ $first: "$activeItems.customer" }, null] },
         },
       },
     ]);
     const hasMore = rows.length > SEARCH_HIT_LIMIT;
-    const winners = rows.slice(0, SEARCH_HIT_LIMIT);
+    // Only the shown rows pay for the catalogue lookup.
+    const shown = rows.slice(0, SEARCH_HIT_LIMIT);
+    const items = await Item.byIds(shown.map((row) => (row.item ? String(row.item) : null)));
+    const winners = shown.map((row) => {
+      const catalogueItem = row.item ? items.get(String(row.item)) : undefined;
+      return {
+        blid: row.blid,
+        title: row.title,
+        holder: row.holder,
+        isbn: catalogueItem === undefined ? null : String(catalogueItem.isbn),
+      };
+    });
     const holders = new Map(
       winners.flatMap((row) => (row.holder ? [[row.blid, String(row.holder)] as const] : [])),
     );
@@ -848,7 +850,7 @@ export const BlidSearchService = {
     const bringDeliveryOrderIds = await fetchBringDeliveryOrderIds(orders);
 
     const itemId = uniqueItem?.item ?? customerItems[0]?.item;
-    const item = itemId === undefined ? null : await StorageService.Items.getOrNull(itemId);
+    const item = itemId === undefined ? null : await Item.find(itemId);
 
     const handovers: HandoverRow[] = handoverModels.map((handover) => ({
       fromUserDetailId: handover.fromUserDetailId,
@@ -865,10 +867,7 @@ export const BlidSearchService = {
 
     return assembleBlidSearch({
       blid,
-      item:
-        item === null
-          ? null
-          : { id: item.id, title: item.title, isbn: String(item.info?.isbn ?? "") },
+      item: item === null ? null : { id: item.id, title: item.title, isbn: String(item.isbn) },
       registered: uniqueItem !== null,
       registration:
         uniqueItem?.creationTime && uniqueItem.lastUpdated

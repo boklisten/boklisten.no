@@ -1,3 +1,4 @@
+import Item from "#models/item";
 import type BookHandover from "#models/book_handover";
 import type MatchObligation from "#models/match_obligation";
 import MatchRound from "#models/match_round";
@@ -391,8 +392,7 @@ async function computeStandBookExpectations(counts: {
     return [];
   }
 
-  const items = await StorageService.Items.getMany(itemIds, USER_PERMISSION.ADMIN);
-  const titleById = new Map(items.map((item) => [item.id, item.title]));
+  const titleById = await Item.titlesByIds(itemIds);
 
   return itemIds
     .map((itemId) => ({

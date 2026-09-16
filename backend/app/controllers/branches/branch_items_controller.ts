@@ -1,5 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import Item from "#models/item";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import { branchItemsValidator } from "#validators/branch_items";
@@ -42,7 +43,7 @@ export default class BranchItemsController {
     return (
       await Promise.all(
         branchItems.map(async (branchItem) => {
-          const item = await StorageService.Items.get(branchItem.item);
+          const item = await Item.findOrFail(branchItem.item);
           return {
             item: {
               id: item.id,

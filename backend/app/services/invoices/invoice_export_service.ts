@@ -1,5 +1,6 @@
 import moment from "moment-timezone";
 
+import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import { toSemicolonCsv } from "#services/invoices/csv";
 import { tripletexRows, vismaRows } from "#services/invoices/invoice_export_rows";
@@ -54,7 +55,7 @@ async function tripletexLookups(invoices: Invoice[]): Promise<TripletexLookups> 
     ),
   ];
   const [items, branches] = await Promise.all([
-    StorageService.Items.getMany(itemIds, "admin"),
+    Item.findMany(itemIds),
     StorageService.Branches.getMany(branchIds, "admin"),
   ]);
   return { customerItems: byId(customerItems), items: byId(items), branches: byId(branches) };

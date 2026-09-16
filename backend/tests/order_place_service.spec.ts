@@ -9,7 +9,8 @@ import Signature, { SIGNATURE_NUM_MONTHS_VALID } from "#models/signature";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import { createTestRound } from "#tests/matches/match-testing-utils";
+import { createItem } from "#tests/item_fixtures";
+import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderPlaceService } from "#services/orders/order_place_service";
@@ -66,6 +67,10 @@ test.group("OrderPlaceService", (group) => {
     sandbox.restore();
   });
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
+  group.each.setup(async () => {
+    await createItem({ id: "item1", title: "signatur 3", price: 100 });
+  });
   // An underage customer with a valid guardian signature in Postgres.
   group.each.setup(async () => {
     await createValidSignature();

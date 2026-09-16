@@ -1,14 +1,18 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import CustomerItemsController from "#controllers/customer_items_controller";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
+import { fixtureId } from "#tests/fixtures";
+import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const DETAILS_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
+const ITEM_ID = fixtureId("a1");
 
 function contextFor(detailsId: string) {
   return mock<HttpContext>({
@@ -32,6 +36,7 @@ test.group("CustomerItemsController.forCustomer", (group) => {
   let aggregateStub: sinon.SinonStub;
   let controller: CustomerItemsController;
 
+  group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
     aggregateStub = sandbox.stub().resolves([]);
@@ -75,9 +80,10 @@ test.group("CustomerItemsController.forCustomer", (group) => {
   test("passes the aggregated books through, priced with the customer's own rules", async ({
     assert,
   }) => {
+    await createItem({ id: ITEM_ID, title: "Mønster 1T" });
     const book = {
       id: "ci1",
-      item: "item1",
+      item: ITEM_ID,
       title: "Mønster 1T",
       blid: "abc123",
       type: "rent",
@@ -89,7 +95,7 @@ test.group("CustomerItemsController.forCustomer", (group) => {
       getMany: sandbox.stub().resolves([
         mock<CustomerItem>({
           id: "ci1",
-          item: "item1",
+          item: ITEM_ID,
           deadline: book.deadline,
           orders: [],
           handoutInfo: { handoutBy: "branch", handoutById: "branch1", time: new Date() },

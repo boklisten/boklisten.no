@@ -1,3 +1,4 @@
+import ItemModel from "#models/item";
 import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
 import { OrderItemBuyValidator } from "#services/orders/validation/order_item_buy_validator";
 import { OrderItemExtendValidator } from "#services/orders/validation/order_item_extend_validator";
@@ -5,7 +6,6 @@ import { OrderItemPartlyPaymentValidator } from "#services/orders/validation/ord
 import { OrderItemRentValidator } from "#services/orders/validation/order_item_rent_validator";
 import { PriceService } from "#services/price_service";
 import { isNotNullish } from "#services/typescript_helpers";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
 import type { Item } from "#shared/item";
@@ -46,7 +46,10 @@ export class OrderItemValidator {
       this.validateAmount(order);
 
       for (const orderItem of order.orderItems) {
-        const item = await StorageService.Items.get(orderItem.item);
+        const item = await ItemModel.find(orderItem.item);
+        if (!item) {
+          throw new BlError(`item "${orderItem.item}" not found`).code(702);
+        }
         await this.validateOrderItemBasedOnType(branch, item, orderItem);
         this.validateOrderItemAmounts(orderItem);
       }

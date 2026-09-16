@@ -1,6 +1,7 @@
 import db from "@adonisjs/lucid/services/db";
 import { ObjectId } from "mongodb";
 
+import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BranchSubject from "#models/branch_subject";
 import { StorageService } from "#services/storage_service";
@@ -30,14 +31,7 @@ export function normalizeSubjectName(value: string) {
 }
 
 async function fetchItemTitles(itemIds: string[]): Promise<Map<string, string>> {
-  if (itemIds.length === 0) {
-    return new Map();
-  }
-  const items = await StorageService.Items.aggregate<{ id: string; title: string }>([
-    { $match: { _id: { $in: itemIds.map((id) => new ObjectId(id)) } } },
-    { $project: { title: 1 } },
-  ]);
-  return new Map(items.map((item) => [item.id, item.title]));
+  return Item.titlesByIds(itemIds);
 }
 
 export interface SubjectForUpload {

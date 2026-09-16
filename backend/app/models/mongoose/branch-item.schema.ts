@@ -13,7 +13,6 @@ export const BranchItemSchema: BlSchema<BranchItem> = new Schema({
   },
   item: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.Items,
     required: true,
     index: { name: "branch_item_unique", unique: true },
   },

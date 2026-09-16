@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 
+import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
@@ -49,7 +50,7 @@ export const UniqueItemEditService = {
     if (uniqueItem.item === itemId) {
       throw new BadRequestException("Boka er allerede koblet til denne tittelen");
     }
-    const item = await StorageService.Items.getOrNull(itemId);
+    const item = await Item.find(itemId);
     if (!item) {
       throw new BadRequestException("Fant ikke boka du valgte");
     }
@@ -64,7 +65,7 @@ export const UniqueItemEditService = {
       return;
     }
     const [previousItem, heldCustomerItem] = await Promise.all([
-      StorageService.Items.getOrNull(uniqueItem.item),
+      Item.find(uniqueItem.item),
       findHeldCustomerItem(blid),
     ]);
     await UniqueItemMonitoring.reportRelink({
@@ -92,7 +93,7 @@ export const UniqueItemEditService = {
     if (!isMonitored(employee)) {
       return;
     }
-    const item = await StorageService.Items.getOrNull(uniqueItem.item);
+    const item = await Item.find(uniqueItem.item);
     await UniqueItemMonitoring.reportDelete({
       employee,
       blid,

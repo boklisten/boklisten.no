@@ -48,16 +48,15 @@ test.group("OrderItemBuyValidator", (group) => {
       price: 600,
 
       buyback: false,
-      info: {
-        isbn: 0,
-        subject: "",
-        year: 0,
-        price: {},
-        weight: "",
-        distributor: "",
-        discount: 0,
-        publisher: "",
-      },
+      active: true,
+      isbn: 0,
+      subject: "",
+      year: 0,
+      weight: null,
+      distributor: "",
+      discount: 0,
+      publisher: "",
+      priceHistory: {},
     };
   });
 

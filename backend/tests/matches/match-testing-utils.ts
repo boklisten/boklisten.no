@@ -7,6 +7,7 @@ import type {
   MatchableUser,
 } from "#services/match_helpers/match-finder/match-types";
 import MatchRound from "#models/match_round";
+import { createItem } from "#tests/item_fixtures";
 
 /**
  * Dates are relative to today rather than fixed, because a round refuses to generate once its
@@ -35,6 +36,18 @@ export function testRoundPlan(overrides: Partial<MatchRound> = {}) {
     excludedCustomerIds: [],
     ...overrides,
   };
+}
+
+/**
+ * The catalogue rows the matches suites refer to by id. Obligations and handovers carry a real
+ * foreign key to `items`, so every suite seeds these after truncating; GYMNOS 2009/2012 are the
+ * equivalent editions from `shared/item-equivalence.ts`.
+ */
+export async function seedTestCatalogue(): Promise<void> {
+  await createItem({ id: "5d765db5fc8c47001c408e01", title: "Matematikk R1" });
+  await createItem({ id: "5d765db5fc8c47001c408e02", title: "Kjemien stemmer" });
+  await createItem({ id: "5b6441c4d2e733002fae89a6", title: "GYMNOS 2009", price: 400 });
+  await createItem({ id: "5b6441b2d2e733002fae87a6", title: "GYMNOS 2012", price: 400 });
 }
 
 /** A planned round: plan filled in, no matches yet. */
