@@ -8,10 +8,10 @@ import { OrderItemBuyValidator } from "#services/orders/validation/order_item_bu
 import { OrderItemExtendValidator } from "#services/orders/validation/order_item_extend_validator";
 import { OrderItemRentValidator } from "#services/orders/validation/order_item_rent_validator";
 import { OrderItemValidator } from "#services/orders/validation/order_item_validator";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
 import type { Order } from "#shared/order/order";
+import { branchDto } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 
 test.group("OrderItemValidator", (group) => {
@@ -64,37 +64,17 @@ test.group("OrderItemValidator", (group) => {
       payments: ["payment1"],
     };
 
-    testBranch = {
+    testBranch = branchDto({
       id: "branch1",
       type: "privatist",
       name: "Sonans",
-      branchItems: [],
-      paymentInfo: {
-        responsible: false,
-        rentPeriods: [
-          {
-            type: "semester",
-            date: new Date(),
-            maxNumberOfPeriods: 0,
-            percentage: 0.5,
-          },
-        ],
-        extendPeriods: [
-          {
-            type: "semester",
-            date: new Date(),
-            maxNumberOfPeriods: 1,
-            price: 100,
-          },
-        ],
-        buyout: {
-          percentage: 0.5,
-        },
-      },
-      location: {
-        region: "unknown",
-      },
-    };
+      rentPeriods: [{ type: "semester", date: new Date(), maxNumberOfPeriods: 0, percentage: 0.5 }],
+      extendPeriods: [
+        { type: "semester", date: new Date(), maxNumberOfPeriods: 1, price: 100, percentage: null },
+      ],
+      buyoutPercentage: 0.5,
+      region: "unknown",
+    });
 
     await createItem({ id: "item1" });
     await createItem({ id: "item2" });
@@ -104,13 +84,6 @@ test.group("OrderItemValidator", (group) => {
     sandbox.stub(orderItemBuyValidator, "validate").callsFake(() => Promise.resolve(true));
 
     sandbox.stub(orderItemExtendValidator, "validate").callsFake(() => Promise.resolve(true));
-
-    sandbox.stub(StorageService.Branches, "get").callsFake((id) => {
-      if (id !== "branch1") {
-        return Promise.reject(new BlError("not found").code(702));
-      }
-      return Promise.resolve(testBranch);
-    });
   });
   group.each.teardown(() => {
     sandbox.restore();

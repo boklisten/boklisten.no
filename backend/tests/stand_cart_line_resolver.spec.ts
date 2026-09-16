@@ -3,6 +3,7 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import BranchModel from "#models/branch";
 import type { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { MatchRepository } from "#services/matches/match_repository";
 import { PeerObligations } from "#services/matches/peer_obligations";
@@ -16,6 +17,7 @@ import type { Order } from "#shared/order/order";
 import type { StandCartLine } from "#shared/stand_cart";
 import type { UniqueItem } from "#shared/unique-item";
 import type { UserDetail } from "#shared/user-detail";
+import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { mock, unchecked } from "#tests/test-doubles";
 
@@ -48,28 +50,23 @@ const CATALOGUE = [
   { id: OTHER_ITEM_ID, title: "Kosmos SF", price: 600, buyback: true, isbn: OTHER_ISBN },
 ];
 
-const branches: Record<string, Branch> = {
-  [BRANCH_ID]: mock<Branch>({
+const branches: Partial<Branch>[] = [
+  {
     id: BRANCH_ID,
     name: "Ullern VGS",
-    paymentInfo: {
-      responsible: true,
-      rentPeriods: [{ type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 1 }],
-      extendPeriods: [],
-    },
-  }),
-  [OTHER_BRANCH_ID]: mock<Branch>({
+    paymentResponsible: true,
+    // Nothing is bought back unless a test says so.
+    sellPercentage: 0,
+    rentPeriods: [{ type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 1 }],
+  },
+  {
     id: OTHER_BRANCH_ID,
     name: "Persbråten VGS",
-    paymentInfo: {
-      responsible: false,
-      rentPeriods: [
-        { type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 0.5 },
-      ],
-      extendPeriods: [],
-    },
-  }),
-};
+    paymentResponsible: false,
+    sellPercentage: 0,
+    rentPeriods: [{ type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 0.5 }],
+  },
+];
 
 function orderWith(overrides: Partial<Order>): Order {
   return mock<Order>({
@@ -157,9 +154,6 @@ function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
     );
   });
   sandbox
-    .stub(StorageService.Branches, "getOrNull")
-    .callsFake((id) => Promise.resolve(id === undefined ? null : (branches[id] ?? null)));
-  sandbox
     .stub(StorageService.BranchItems, "getByQueryOrNull")
     .callsFake((query) =>
       Promise.resolve(
@@ -200,6 +194,9 @@ test.group("StandCartLineResolver.resolve", (group) => {
   group.each.setup(async () => {
     for (const item of CATALOGUE) {
       await createItem(item);
+    }
+    for (const branch of branches) {
+      await createBranch(branch);
     }
     sandbox = createSandbox();
     world = {
@@ -541,13 +538,12 @@ test.group("StandCartLineResolver.resolve", (group) => {
   test("a scanned ISBN nobody ordered becomes a sticker-less copy line, sold to the stand by default", async ({
     assert,
   }) => {
-    branches[BRANCH_ID]!.paymentInfo!.sell = { percentage: 0.333 };
+    await BranchModel.query().where("id", BRANCH_ID).update({ sell_percentage: 0.333 });
     const resolved = line(await resolve({ kind: "isbn", isbn: String(OTHER_ISBN) }));
     assert.deepEqual(resolved.source, { kind: "item", itemId: OTHER_ITEM_ID, blid: null });
     assert.equal(resolved.key, `item:${OTHER_ITEM_ID}`);
     assert.isNull(resolved.blid);
     assert.equal(resolved.options[resolved.defaultOptionIndex]?.type, "sell");
-    delete branches[BRANCH_ID]!.paymentInfo!.sell;
   });
 
   test("a scanned ISBN skips order lines already in the cart", async ({ assert }) => {

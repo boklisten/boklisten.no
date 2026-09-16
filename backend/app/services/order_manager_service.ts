@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import { OrderHistoryService } from "#services/order_history_service";
-import { withItemColumns } from "#services/report_item_columns";
+import { withItemColumns } from "#services/report_columns";
 import { StorageService } from "#services/storage_service";
 import type {
   BringParcelType,

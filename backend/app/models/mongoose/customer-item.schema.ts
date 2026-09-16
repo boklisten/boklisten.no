@@ -51,7 +51,6 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     },
     handoutById: {
       type: Schema.Types.ObjectId,
-      ref: BlSchemaName.Branches,
       required: true,
       index: true,
     },
@@ -72,7 +71,6 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     },
     returnedToId: {
       type: Schema.Types.ObjectId,
-      ref: BlSchemaName.Branches,
     },
     returnEmployee: {
       type: Schema.Types.ObjectId,

@@ -1,4 +1,5 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
@@ -31,6 +32,7 @@ import type {
   StandCartVippsRefund,
 } from "#shared/stand_cart";
 import type { UserDetail } from "#shared/user-detail";
+import { branchDto, createBranch } from "#tests/branch_fixtures";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
@@ -45,18 +47,22 @@ const EMPLOYEE = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee"
 const BLID = "12345678";
 
 const item = mock<Item>({ id: "item1", title: "Sinus 1T", price: 500 });
-const branch = mock<Branch>({
+const branch: Branch = branchDto({
   id: BRANCH_ID,
   name: "Ullern VGS",
-  paymentInfo: {
-    responsible: true,
-    rentPeriods: [
-      { type: "semester", date: new Date(SEMESTER_END), maxNumberOfPeriods: 1, percentage: 1 },
-    ],
-    extendPeriods: [
-      { type: "semester", date: new Date(SEMESTER_END), maxNumberOfPeriods: 1, price: 100 },
-    ],
-  },
+  paymentResponsible: true,
+  rentPeriods: [
+    { type: "semester", date: new Date(SEMESTER_END), maxNumberOfPeriods: 1, percentage: 1 },
+  ],
+  extendPeriods: [
+    {
+      type: "semester",
+      date: new Date(SEMESTER_END),
+      maxNumberOfPeriods: 1,
+      price: 100,
+      percentage: null,
+    },
+  ],
 });
 
 const orderedItem: OrderItem = {
@@ -193,7 +199,9 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     refund: sinon.SinonStub;
   };
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    await createBranch(branch);
     sandbox = createSandbox();
     plan = sandbox.stub(StandCartRefund, "plan").resolves(null);
     sendRefundRequest = sandbox.stub(RefundRequestService, "send").resolves();
@@ -205,7 +213,6 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       .resolves(
         mock<UserDetail>({ id: CUSTOMER_ID, name: "Ola", tasks: { signAgreement: false } }),
       );
-    sandbox.stub(StorageService.Branches, "getOrNull").resolves(branch);
     ordersAdd = sandbox
       .stub(StorageService.Orders, "add")
       .callsFake((order) => Promise.resolve(mock<Order>({ ...order, id: NEW_ORDER_ID })));

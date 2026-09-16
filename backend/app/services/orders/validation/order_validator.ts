@@ -1,8 +1,8 @@
+import Branch from "#models/branch";
 import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
 import { OrderItemValidator } from "#services/orders/validation/order_item_validator";
 import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
 import { OrderUserDetailValidator } from "#services/orders/validation/order_user_detail_validator";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Order } from "#shared/order/order";
 
@@ -34,7 +34,7 @@ export class OrderValidator {
       }
 
       await this.orderFieldValidator.validate(order);
-      const branch = await StorageService.Branches.get(order.branch);
+      const branch = await Branch.findOrFail(order.branch);
 
       await this.orderItemValidator.validate(branch, order, isAdmin);
       await this.orderPlacedValidator.validate(order);

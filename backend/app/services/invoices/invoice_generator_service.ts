@@ -1,3 +1,4 @@
+import BranchModel from "#models/branch";
 import ItemModel from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import { StorageService } from "#services/storage_service";
@@ -94,9 +95,8 @@ function partlyPaymentAmountLeft(
     (candidate) => candidate.customerItem === customerItem.id,
   );
   const buyoutPercentage =
-    branch?.paymentInfo?.partlyPaymentPeriods?.find(
-      (period) => period.type === orderItem?.info?.periodType,
-    )?.percentageBuyout ?? branch?.paymentInfo?.buyout?.percentage;
+    branch?.partlyPaymentPeriods.find((period) => period.type === orderItem?.info?.periodType)
+      ?.percentageBuyout ?? branch?.buyoutPercentage;
   if (buyoutPercentage === undefined) {
     throw new BadRequestException(
       `Filialen som delte ut "${item.title}" har ingen utkjøpsprosent, så beløpet kan ikke regnes ut.`,
@@ -226,16 +226,13 @@ export async function generateInvoices(
   const [customers, items, branches, lastOrders] = await Promise.all([
     StorageService.UserDetails.getMany([...groups.keys()], "admin"),
     ItemModel.findMany([...new Set(customerItems.map((customerItem) => customerItem.item))]),
-    StorageService.Branches.getMany(
-      [
-        ...new Set(
-          customerItems
-            .map((customerItem) => customerItem.handoutInfo?.handoutById)
-            .filter(isNotNullish),
-        ),
-      ],
-      "admin",
-    ),
+    BranchModel.findMany([
+      ...new Set(
+        customerItems
+          .map((customerItem) => customerItem.handoutInfo?.handoutById)
+          .filter(isNotNullish),
+      ),
+    ]),
     StorageService.Orders.getMany(
       [
         ...new Set(

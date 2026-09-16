@@ -1,58 +1,13 @@
-import { ObjectId } from "mongodb";
+import Branch from "#models/branch";
 
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
-import { StorageService } from "#services/storage_service";
-
+/** Kept as a thin facade over the model helpers so the many callers read the same. */
 export const BranchRelationshipService = {
-  async getLeafDescendants(branchId: string): Promise<{ id: string; name: string }[]> {
-    return StorageService.Branches.aggregate<{ id: string; name: string }>([
-      {
-        $match: {
-          _id: new ObjectId(branchId),
-        },
-      },
-      {
-        $graphLookup: {
-          from: BlSchemaName.Branches,
-          startWith: new ObjectId(branchId),
-          connectFromField: "childBranches",
-          connectToField: "_id",
-          as: "childBranches",
-        },
-      },
-      { $unwind: "$childBranches" },
-      {
-        $match: {
-          "childBranches.childBranches": { $eq: [] },
-        },
-      },
-      {
-        $project: {
-          _id: "$childBranches._id",
-          name: "$childBranches.name",
-        },
-      },
-    ]);
+  /** The classes (childless descendants) below a branch, e.g. every class of a school. */
+  getLeafDescendants(branchId: string): Promise<{ id: string; name: string }[]> {
+    return Branch.leafDescendants(branchId);
   },
-  async getNestedChildBranchIds(parentId: string) {
-    const result: string[] = [];
-    const visited = [parentId];
-    const stack = [parentId];
-
-    while (stack.length > 0) {
-      const id = stack.pop();
-      const branch = await StorageService.Branches.get(id);
-      const children = branch.childBranches ?? [];
-
-      for (const childId of children) {
-        if (visited.includes(childId)) {
-          continue;
-        }
-        visited.push(childId);
-        result.push(childId);
-        stack.push(childId);
-      }
-    }
-    return result;
+  /** Every branch below a branch in the tree, excluding the branch itself. */
+  getNestedChildBranchIds(branchId: string): Promise<string[]> {
+    return Branch.descendantIds(branchId);
   },
 };

@@ -5,6 +5,7 @@ import { ACTIVE_CUSTOMER_ITEM_MATCH, OPEN_ORDER_ITEM_MATCH } from "#services/bra
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import type { SubjectForUpload } from "#services/branch_subjects_service";
 import { fetchSubjectsForUpload, normalizeSubjectName } from "#services/branch_subjects_service";
+import Branch from "#models/branch";
 import { StorageService } from "#services/storage_service";
 import { buildBranchMappings } from "#services/user_provisioning_service";
 import { canonicalItemId, getEquivalentItemIds } from "#shared/item-equivalence";
@@ -326,15 +327,7 @@ export function planSubjectChoices({
 async function fetchScopeBranches(branchId: string) {
   const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
   const scopeIds = [branchId, ...descendantIds];
-  const branches = await StorageService.Branches.aggregate<{
-    id: string;
-    name: string;
-    parentBranch?: string;
-    childBranches?: string[];
-  }>([
-    { $match: { _id: { $in: scopeIds.map((id) => new ObjectId(id)) } } },
-    { $project: { name: 1, parentBranch: 1, childBranches: 1 } },
-  ]);
+  const branches = await Branch.findMany(scopeIds);
   return { scopeIds, branches };
 }
 
@@ -390,11 +383,13 @@ async function buildPlan(branchId: string, rows: SubjectChoiceRow[]): Promise<Su
 
   const parentByBranchId = new Map<string, string>();
   for (const branch of branches) {
-    if (branch.parentBranch) {
-      parentByBranchId.set(branch.id, String(branch.parentBranch));
+    if (branch.parentBranchId !== null) {
+      parentByBranchId.set(branch.id, branch.parentBranchId);
     }
   }
-  const leafBranches = branches.filter((branch) => (branch.childBranches ?? []).length === 0);
+  // The scope holds every descendant, so a branch nobody in it points at is a leaf.
+  const parentIds = new Set(parentByBranchId.values());
+  const leafBranches = branches.filter((branch) => !parentIds.has(branch.id));
   const groups = groupSubjectChoiceRows(rows);
   const mappings = buildBranchMappings(
     groups.map((group) => group.localName),

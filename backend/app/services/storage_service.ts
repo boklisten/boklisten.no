@@ -2,7 +2,6 @@ import type { ObjectId } from "mongodb";
 import type { Schema } from "mongoose";
 
 import { BranchItemSchema } from "#models/mongoose/branch-item.schema";
-import { BranchSchema } from "#models/mongoose/branch.schema";
 import { CustomerItemSchema } from "#models/mongoose/customer-item.schema";
 import { DeliverySchema } from "#models/mongoose/delivery.schema";
 import { InvoiceSchema } from "#models/mongoose/invoice.schema";
@@ -17,7 +16,6 @@ import { UserSchema } from "#models/mongoose/user.schema";
 export type BlSchema<T> = Schema<ToSchema<T>>;
 
 export const StorageService = {
-  Branches: new MongodbHandler(BranchSchema, BlSchemaName.Branches),
   BranchItems: new MongodbHandler(BranchItemSchema, BlSchemaName.BranchItems),
   CustomerItems: new MongodbHandler(CustomerItemSchema, BlSchemaName.CustomerItems),
   Deliveries: new MongodbHandler(DeliverySchema, BlSchemaName.Deliveries),

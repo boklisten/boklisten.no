@@ -14,6 +14,7 @@ import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import { findOption } from "#shared/stand_cart";
 import type { StandCartOption } from "#shared/stand_cart";
+import { branchDto } from "#tests/branch_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
@@ -23,19 +24,17 @@ const PAST = new Date("2026-06-20T00:00:00.000Z");
 
 const ITEM = mock<Item>({ id: "item1", title: "Sinus 1T", price: 500, buyback: false });
 
-function branchWith(overrides: Partial<NonNullable<Branch["paymentInfo"]>> = {}): Branch {
-  return mock<Branch>({
-    id: "branch1",
+function branchWith(overrides: Partial<Branch> = {}): Branch {
+  return branchDto({
     name: "Ullern VGS",
-    paymentInfo: {
-      responsible: true,
-      rentPeriods: [
-        { type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 1 },
-        { type: "year", date: YEAR_END, maxNumberOfPeriods: 1, percentage: 1 },
-      ],
-      extendPeriods: [],
-      ...overrides,
-    },
+    paymentResponsible: true,
+    // Nothing is bought back unless a test says so.
+    sellPercentage: 0,
+    rentPeriods: [
+      { type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 1 },
+      { type: "year", date: YEAR_END, maxNumberOfPeriods: 1, percentage: 1 },
+    ],
+    ...overrides,
   });
 }
 
@@ -170,7 +169,7 @@ test.group("priceOrderLine", () => {
   }) => {
     const line = orderLine({
       branch: branchWith({
-        responsible: false,
+        paymentResponsible: false,
         rentPeriods: [
           { type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 0.5 },
         ],
@@ -187,7 +186,7 @@ test.group("priceOrderLine", () => {
 
   test("subtracts what a prepaid order already paid, and refunds it on cancel", ({ assert }) => {
     const branch = branchWith({
-      responsible: false,
+      paymentResponsible: false,
       rentPeriods: [
         { type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 0.5 },
       ],
@@ -205,7 +204,7 @@ test.group("priceOrderLine", () => {
 
   test("charges the full price when the original order was never paid", ({ assert }) => {
     const branch = branchWith({
-      responsible: false,
+      paymentResponsible: false,
       rentPeriods: [
         { type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 0.5 },
       ],
@@ -219,7 +218,7 @@ test.group("priceOrderLine", () => {
     assert,
   }) => {
     const branch = branchWith({
-      responsible: false,
+      paymentResponsible: false,
       partlyPaymentPeriods: [
         {
           type: "semester",
@@ -255,7 +254,7 @@ test.group("priceOrderLine", () => {
     assert,
   }) => {
     const branch = branchWith({
-      responsible: false,
+      paymentResponsible: false,
       partlyPaymentPeriods: [
         {
           type: "semester",
@@ -319,9 +318,11 @@ function customerItemWith(overrides: Partial<CustomerItem> = {}): CustomerItem {
 
 function customerItemLine(overrides: Partial<Parameters<typeof priceCustomerItemLine>[0]> = {}) {
   const handoutBranch = branchWith({
-    responsible: false,
-    extendPeriods: [{ type: "semester", date: YEAR_END, maxNumberOfPeriods: 1, price: 100 }],
-    buyout: { percentage: 0.5 },
+    paymentResponsible: false,
+    extendPeriods: [
+      { type: "semester", date: YEAR_END, maxNumberOfPeriods: 1, price: 100, percentage: null },
+    ],
+    buyoutPercentage: 0.5,
   });
   return priceCustomerItemLine({
     branch: handoutBranch,
@@ -366,9 +367,9 @@ test.group("priceCustomerItemLine", () => {
 
     const noPeriods = customerItemLine({
       handoutBranch: branchWith({
-        responsible: false,
+        paymentResponsible: false,
         extendPeriods: [],
-        buyout: { percentage: 0.5 },
+        buyoutPercentage: 0.5,
       }),
     });
     assert.lengthOf(options(noPeriods, "extend"), 0);
@@ -380,14 +381,24 @@ test.group("priceCustomerItemLine", () => {
   }) => {
     const otherType = customerItemLine({
       branch: branchWith({
-        extendPeriods: [{ type: "year", date: YEAR_END, maxNumberOfPeriods: 1, price: 100 }],
+        extendPeriods: [
+          { type: "year", date: YEAR_END, maxNumberOfPeriods: 1, price: 100, percentage: null },
+        ],
       }),
     });
     assert.lengthOf(options(otherType, "extend"), 0);
 
     const sameType = customerItemLine({
       branch: branchWith({
-        extendPeriods: [{ type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, price: 0 }],
+        extendPeriods: [
+          {
+            type: "semester",
+            date: SEMESTER_END,
+            maxNumberOfPeriods: 1,
+            price: 0,
+            percentage: null,
+          },
+        ],
       }),
     });
     // Priced and dated from the handout branch; the cart branch only has to know the type
@@ -402,17 +413,18 @@ test.group("priceCustomerItemLine", () => {
   }) => {
     const december = new Date("2026-12-15T10:00:00.000Z");
     const handoutBranch = branchWith({
-      responsible: false,
+      paymentResponsible: false,
       extendPeriods: [
         {
           type: "semester",
           date: new Date("2026-12-10T00:00:00.000Z"),
           maxNumberOfPeriods: 1,
           price: 100,
+          percentage: null,
         },
-        { type: "year", date: YEAR_END, maxNumberOfPeriods: 1, price: 200 },
+        { type: "year", date: YEAR_END, maxNumberOfPeriods: 1, price: 200, percentage: null },
       ],
-      buyout: { percentage: 0.5 },
+      buyoutPercentage: 0.5,
     });
     const line = customerItemLine({
       branch: handoutBranch,
@@ -498,7 +510,11 @@ test.group("priceCustomerItemLine", () => {
 
   test("buyout is unavailable when no buyout price can be computed", ({ assert }) => {
     const line = customerItemLine({
-      handoutBranch: branchWith({ responsible: false, extendPeriods: [] }),
+      handoutBranch: branchWith({
+        paymentResponsible: false,
+        extendPeriods: [],
+        buyoutPercentage: 0,
+      }),
     });
     const buyout = options(line, "buyout")[0];
     assert.isFalse(buyout?.available);
@@ -556,7 +572,7 @@ test.group("priceItemLine", () => {
   test("follows the branch item's at-branch flags", ({ assert }) => {
     const line = itemLine({
       branch: branchWith({
-        responsible: false,
+        paymentResponsible: false,
         partlyPaymentPeriods: [
           {
             type: "semester",
@@ -587,14 +603,14 @@ test.group("priceItemLine", () => {
     assert,
   }) => {
     const line = itemLine({
-      branch: branchWith({ sell: { percentage: 0.333 } }),
+      branch: branchWith({ sellPercentage: 0.333 }),
       item: mock<Item>({ ...ITEM, buyback: true }),
     });
     assert.equal(options(line, "sell")[0]?.price, -160);
   });
 
   test("does not offer sell when the item is not bought back", ({ assert }) => {
-    const line = itemLine({ branch: branchWith({ sell: { percentage: 0.333 } }) });
+    const line = itemLine({ branch: branchWith({ sellPercentage: 0.333 }) });
     assert.lengthOf(options(line, "sell"), 0);
   });
 
@@ -603,7 +619,7 @@ test.group("priceItemLine", () => {
   }) => {
     const line = itemLine({
       scanned: false,
-      branch: branchWith({ sell: { percentage: 0.333 } }),
+      branch: branchWith({ sellPercentage: 0.333 }),
       item: mock<Item>({ ...ITEM, buyback: true }),
       branchItem: mock<BranchItem>({
         rentAtBranch: true,

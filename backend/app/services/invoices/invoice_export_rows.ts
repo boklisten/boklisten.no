@@ -436,7 +436,7 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
         "NOK",
         orderDate,
         handoutBranch.name,
-        handoutBranch.location.address,
+        handoutBranch.address ?? "",
         // Branches have no postal code or city; these were always empty.
         "",
         "",

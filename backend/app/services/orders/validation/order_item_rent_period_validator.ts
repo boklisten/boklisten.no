@@ -3,32 +3,25 @@ import { PriceService } from "#services/price_service";
 import { isNotNullish } from "#services/typescript_helpers";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import type { BranchPaymentInfo } from "#shared/branch-payment-info";
+import type { Branch, RentPeriod } from "#shared/branch";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Period } from "#shared/period";
-
-interface BranchPaymentPeriod {
-  type: Period;
-  date: Date;
-  maxNumberOfPeriods: number;
-  percentage: number;
-}
 
 export class OrderItemRentPeriodValidator {
   private readonly priceService = new PriceService(APP_CONFIG.payment.paymentServiceConfig);
 
   public async validate(
     orderItem: OrderItem,
-    branchPaymentInfo: BranchPaymentInfo,
+    branch: Pick<Branch, "paymentResponsible" | "rentPeriods">,
     itemPrice: number,
   ): Promise<boolean> {
     if (orderItem.type !== "rent") {
       throw new BlError('orderItem.type is not "rent" when validating rent period');
     }
 
-    if (branchPaymentInfo.responsible) {
+    if (branch.paymentResponsible) {
       if (orderItem.amount !== 0 || orderItem.unitPrice !== 0) {
         throw new BlError("amounts where set on orderItem when branch is responsible");
       }
@@ -40,18 +33,18 @@ export class OrderItemRentPeriodValidator {
     const period = orderItem.info.periodType;
 
     if (isNotNullish(orderItem.movedFromOrder)) {
-      const branchPaymentPeriod = this.getRentPeriodFromBranchPaymentInfo(
+      const branchPaymentPeriod = this.getRentPeriodFromBranch(
         // @ts-expect-error fixme: auto ignored
         period,
-        branchPaymentInfo,
+        branch,
       );
       return this.validateIfMovedFromOrder(orderItem, branchPaymentPeriod, itemPrice);
     }
 
-    const branchPaymentPeriod = this.getRentPeriodFromBranchPaymentInfo(
+    const branchPaymentPeriod = this.getRentPeriodFromBranch(
       // @ts-expect-error fixme: auto ignored
       period,
-      branchPaymentInfo,
+      branch,
     );
     this.validateOrderItemPrice(orderItem, branchPaymentPeriod, itemPrice);
 
@@ -60,7 +53,7 @@ export class OrderItemRentPeriodValidator {
 
   private validateOrderItemPrice(
     orderItem: OrderItem,
-    branchPaymentPeriod: BranchPaymentPeriod,
+    branchPaymentPeriod: RentPeriod,
     itemPrice: number,
   ) {
     const expectedAmount = this.priceService.sanitize(
@@ -74,11 +67,8 @@ export class OrderItemRentPeriodValidator {
     }
   }
 
-  private getRentPeriodFromBranchPaymentInfo(
-    period: Period,
-    branchPaymentInfo: BranchPaymentInfo,
-  ): BranchPaymentPeriod {
-    for (const rentPeriod of branchPaymentInfo.rentPeriods) {
+  private getRentPeriodFromBranch(period: Period, branch: Pick<Branch, "rentPeriods">): RentPeriod {
+    for (const rentPeriod of branch.rentPeriods) {
       if (period === rentPeriod.type) {
         return rentPeriod;
       }
@@ -89,7 +79,7 @@ export class OrderItemRentPeriodValidator {
 
   private async validateIfMovedFromOrder(
     orderItem: OrderItem,
-    branchRentPeriod: BranchPaymentPeriod,
+    branchRentPeriod: RentPeriod,
     itemPrice: number,
   ): Promise<boolean> {
     if (!orderItem.movedFromOrder) {

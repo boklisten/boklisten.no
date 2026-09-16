@@ -2,6 +2,7 @@ import { test } from "@japa/runner";
 
 import { findFutureRentPeriod, futureRentPeriods } from "#shared/rent-periods";
 import type { Branch } from "#shared/branch";
+import { branchDto } from "#tests/branch_fixtures";
 import { unchecked } from "#tests/test-doubles";
 
 const NOW = new Date("2026-08-20T12:00:00Z");
@@ -10,21 +11,14 @@ const SOON = new Date("2026-09-01T00:00:00Z");
 const LATER = new Date("2027-07-01T00:00:00Z");
 
 function branchWithRentPeriods(dates: Date[]): Branch {
-  return {
-    id: "branch1",
-    name: "Testskolen",
-    location: { region: "Oslo" },
-    paymentInfo: {
-      responsible: false,
-      rentPeriods: dates.map((date) => ({
-        type: "semester" as const,
-        date,
-        maxNumberOfPeriods: 1,
-        percentage: 1,
-      })),
-      extendPeriods: [],
-    },
-  };
+  return branchDto({
+    rentPeriods: dates.map((date) => ({
+      type: "semester" as const,
+      date,
+      maxNumberOfPeriods: 1,
+      percentage: 1,
+    })),
+  });
 }
 
 test.group("futureRentPeriods()", () => {
@@ -37,14 +31,12 @@ test.group("futureRentPeriods()", () => {
     );
   });
 
-  test("returns empty list when the branch has no payment info", ({ assert }) => {
-    const branch = branchWithRentPeriods([]);
-    delete branch.paymentInfo;
-    assert.deepEqual(futureRentPeriods(branch, NOW), []);
+  test("returns empty list when the branch has no rent periods", ({ assert }) => {
+    assert.deepEqual(futureRentPeriods(branchWithRentPeriods([]), NOW), []);
   });
 
   test("handles dates stored as strings", ({ assert }) => {
-    // Mongo does not guarantee Date instances, so the shared type lies about this at runtime
+    // Periods arrive as ISO strings over the API, so the shared type lies about this at runtime
     const branch = branchWithRentPeriods([unchecked(SOON.toISOString())]);
     assert.lengthOf(futureRentPeriods(branch, NOW), 1);
   });

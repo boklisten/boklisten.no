@@ -6,9 +6,8 @@ import {
   resolveBuyoutPrice,
 } from "#services/customer_item_actions_service";
 import { HeldBookRules } from "#services/stand_cart/stand_cart_rules";
-import type { Branch } from "#shared/branch";
+import type { Branch, PartlyPaymentPeriod } from "#shared/branch";
 import type { BranchItem } from "#shared/branch-item";
-import type { BranchPaymentInfo } from "#shared/branch-payment-info";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import type { Order } from "#shared/order/order";
@@ -32,8 +31,6 @@ export interface PricedLine {
 const MATCH_BLOCKS_CANCEL_REASON =
   "Boka er en del av en overlevering med en annen elev og kan ikke avbestilles";
 
-type PartlyPaymentPeriod = NonNullable<BranchPaymentInfo["partlyPaymentPeriods"]>[number];
-
 /** Stand prices are whole tens of kroner, rounded down, the way the web store shows them. */
 function roundDownToTen(amount: number): number {
   return Math.floor(amount / 10) * 10;
@@ -45,7 +42,7 @@ function refund(amount: number): number {
 }
 
 function customerPays(branch: Branch): boolean {
-  return !branch.paymentInfo?.responsible;
+  return !branch.paymentResponsible;
 }
 
 function rentPrice(branch: Branch, item: Item, percentage: number): number {
@@ -71,7 +68,7 @@ function buyPrice(branch: Branch, item: Item): number {
 }
 
 function futurePartlyPaymentPeriods(branch: Branch, now: Date): PartlyPaymentPeriod[] {
-  return (branch.paymentInfo?.partlyPaymentPeriods ?? [])
+  return branch.partlyPaymentPeriods
     .filter((period) => new Date(period.date).getTime() > now.getTime())
     .toSorted((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
@@ -245,9 +242,7 @@ function extendOptions(
   if (!handoutBranch || isDeadlineWithGracePeriodExpired(customerItem, now)) {
     return [];
   }
-  const recordable = new Set(
-    (branch.paymentInfo?.extendPeriods ?? []).map((period) => period.type),
-  );
+  const recordable = new Set(branch.extendPeriods.map((period) => period.type));
   return availableExtendPeriods(customerItem, handoutBranch, now.toJSDate())
     .filter((period) => recordable.has(period.type))
     .map((period) =>
@@ -333,9 +328,8 @@ export function priceItemLine({
     scanned,
     now,
   });
-  const sellPercentage = branch.paymentInfo?.sell?.percentage;
-  if (item.buyback && sellPercentage) {
-    options.push(option("sell", refund(roundDownToTen(item.price * sellPercentage))));
+  if (item.buyback && branch.sellPercentage > 0) {
+    options.push(option("sell", refund(roundDownToTen(item.price * branch.sellPercentage))));
   }
   return {
     options,

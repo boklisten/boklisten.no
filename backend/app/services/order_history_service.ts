@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
+import Branch from "#models/branch";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
@@ -376,13 +377,11 @@ async function loadSources(
     userDetailIds.add(order.customer);
   }
 
-  const [userDetails, branches] = await Promise.all([
+  const [userDetails, branchNames] = await Promise.all([
     userDetailIds.size > 0
       ? StorageService.UserDetails.getMany([...userDetailIds], USER_PERMISSION.ADMIN)
       : [],
-    branchIds.size > 0
-      ? StorageService.Branches.getMany([...branchIds], USER_PERMISSION.ADMIN)
-      : [],
+    Branch.namesByIds(branchIds),
   ]);
 
   return {
@@ -394,7 +393,7 @@ async function loadSources(
     handovers,
     counterpartOrders,
     userNames: new Map(userDetails.map((detail) => [detail.id, detail.name])),
-    branchNames: new Map(branches.map((branch) => [branch.id, branch.name])),
+    branchNames,
   };
 }
 
@@ -476,7 +475,7 @@ export const OrderHistoryService = {
     branchId: string,
     employee: MonitoredEmployee,
   ): Promise<void> {
-    const branch = await StorageService.Branches.getOrNull(branchId);
+    const branch = await Branch.find(branchId);
     if (!branch) {
       throw new BadRequestException("Filialen finnes ikke");
     }
@@ -485,7 +484,7 @@ export const OrderHistoryService = {
       throw new BadRequestException("Ordren finnes ikke");
     }
     await StorageService.Orders.update(orderId, { branch: new ObjectId(branchId) });
-    const previousBranch = await StorageService.Branches.getOrNull(order.branch);
+    const previousBranch = await Branch.find(order.branch);
     await EmployeeMonitoringService.report({
       action: "order-branch-changed",
       employee,
@@ -561,7 +560,7 @@ export const OrderHistoryService = {
     if (!order) {
       throw new BadRequestException("Ordren finnes ikke");
     }
-    const branch = await StorageService.Branches.getOrNull(order.branch);
+    const branch = await Branch.find(order.branch);
     await StorageService.Orders.remove(orderId);
     await EmployeeMonitoringService.report({
       action: "order-deleted",

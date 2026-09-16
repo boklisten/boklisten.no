@@ -102,7 +102,6 @@ test.group("CustomerItemsController.forCustomer", (group) => {
         }),
       ]),
     });
-    sandbox.stub(StorageService, "Branches").value({ getOrNull: sandbox.stub().resolves(null) });
     const result = await controller.forCustomer(contextFor(DETAILS_ID));
     assert.lengthOf(result, 1);
     assert.include(result[0], book);

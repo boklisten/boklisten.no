@@ -97,7 +97,6 @@ export const OrderSchema: BlSchema<Order> = new Schema({
   },
   branch: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.Branches,
     required: true,
     index: true,
   },

@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/node";
 import type { Infer } from "@vinejs/vine/types";
 import { DateTime } from "luxon";
 
+import Branch from "#models/branch";
 import Item from "#models/item";
 import BlidService from "#services/blid_service";
 import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
@@ -105,12 +106,12 @@ async function createMatchReceiveOrder(
   if (!originalReceiverOrderInfo) {
     throw new BlError("No receiver order for match transfer item").code(200);
   }
-  const branch = await StorageService.Branches.get(originalReceiverOrderInfo.order.branch);
+  const branch = await Branch.findOrFail(originalReceiverOrderInfo.order.branch);
 
   const movedFromOrder = originalReceiverOrderInfo.order.id;
 
   const originalOrderDeadline = originalReceiverOrderInfo.relevantOrderItem.info?.to;
-  const branchRentDeadline = branch.paymentInfo?.rentPeriods?.[0]?.date;
+  const branchRentDeadline = branch.rentPeriods[0]?.date;
 
   let deadline = originalOrderDeadline ?? branchRentDeadline;
 
@@ -161,7 +162,7 @@ async function createMatchDeliverOrder(
   if (isNullish(customerItem.handoutInfo)) {
     throw new BlError("No handout-info for customerItem").code(200);
   }
-  const branch = await StorageService.Branches.get(customerItem.handoutInfo.handoutById);
+  const branch = await Branch.findOrFail(customerItem.handoutInfo.handoutById);
 
   return {
     placed: true,

@@ -61,7 +61,7 @@ function branchWithPeriods(
     if (futureRentPeriods(current, now).length > 0) {
       return current.id;
     }
-    current = current.parentBranch === undefined ? undefined : byId.get(current.parentBranch);
+    current = current.parentBranchId === null ? undefined : byId.get(current.parentBranchId);
   }
   return null;
 }

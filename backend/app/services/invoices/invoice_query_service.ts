@@ -1,3 +1,4 @@
+import Branch from "#models/branch";
 import { StorageService } from "#services/storage_service";
 import { invoiceStatus } from "#shared/invoice";
 import type { Invoice, InvoiceListRow } from "#shared/invoice";
@@ -45,7 +46,7 @@ export async function getInvoice(invoiceId: string): Promise<Invoice> {
   if (!invoice.branch) {
     return invoice;
   }
-  const branch = await StorageService.Branches.getOrNull(invoice.branch);
+  const branch = await Branch.findOptional(invoice.branch);
   return branch
     ? { ...invoice, customerInfo: { ...invoice.customerInfo, branchName: branch.name } }
     : invoice;

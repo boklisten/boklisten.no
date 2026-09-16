@@ -54,8 +54,7 @@ export class OrderItemExtendValidator {
               }
             }
 
-            // @ts-expect-error fixme: auto ignored
-            for (const extendPeriod of branch.paymentInfo.extendPeriods) {
+            for (const extendPeriod of branch.extendPeriods) {
               if (
                 extendPeriod.type === orderItem.info?.periodType &&
                 totalOfSelectedPeriod > extendPeriod.maxNumberOfPeriods
@@ -75,13 +74,11 @@ export class OrderItemExtendValidator {
   }
 
   private checkPeriodType(orderItem: OrderItem, branch: Branch) {
-    // @ts-expect-error fixme: auto ignored
-    if (!branch.paymentInfo.extendPeriods) {
+    if (branch.extendPeriods.length === 0) {
       throw new BlError("the branch has no extendPeriods defined");
     }
 
-    // @ts-expect-error fixme: auto ignored
-    for (const extendPeriod of branch.paymentInfo.extendPeriods) {
+    for (const extendPeriod of branch.extendPeriods) {
       // @ts-expect-error fixme: auto ignored
       if (extendPeriod.type === orderItem.info.periodType) {
         return true;

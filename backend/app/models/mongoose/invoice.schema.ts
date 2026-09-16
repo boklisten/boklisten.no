@@ -14,7 +14,7 @@ export const InvoiceSchema: BlSchema<Invoice> = new Schema({
     default: false,
     required: true,
   },
-  branch: { type: Schema.Types.ObjectId, ref: BlSchemaName.Branches },
+  branch: { type: Schema.Types.ObjectId },
   toCreditNote: {
     type: Boolean,
     default: false,

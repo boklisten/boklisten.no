@@ -1,13 +1,11 @@
 import { Schema } from "mongoose";
 
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import type { BlSchema } from "#services/storage_service";
 import type { BranchItem } from "#shared/branch-item";
 
 export const BranchItemSchema: BlSchema<BranchItem> = new Schema({
   branch: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.Branches,
     required: true,
     index: { name: "branch_item_unique", unique: true },
   },

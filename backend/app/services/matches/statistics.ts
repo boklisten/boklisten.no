@@ -1,3 +1,4 @@
+import BranchModel from "#models/branch";
 import Item from "#models/item";
 import type BookHandover from "#models/book_handover";
 import type MatchObligation from "#models/match_obligation";
@@ -429,7 +430,7 @@ async function computeStandBranchHierarchy(
 
   const [userDetails, branches] = await Promise.all([
     StorageService.UserDetails.getMany(standCustomers, USER_PERMISSION.ADMIN),
-    StorageService.Branches.getAll(USER_PERMISSION.ADMIN),
+    BranchModel.all(),
   ]);
 
   const branchById = new Map(branches.map((branch) => [branch.id, branch]));
@@ -465,8 +466,8 @@ function ancestorChain(
   }
   const chain: { id: string; name: string }[] = [];
   const visited = new Set<string>();
-  let currentId: string | undefined = leafId;
-  while (currentId && !visited.has(currentId)) {
+  let currentId: string | null = leafId;
+  while (currentId !== null && !visited.has(currentId)) {
     visited.add(currentId);
     const branch = branchById.get(currentId);
     if (!branch) {
@@ -475,7 +476,7 @@ function ancestorChain(
     // Use localName at deeper levels; the root usually only has a full name.
     // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- legacy data can hold "" localName, which must fall through to name
     chain.push({ id: currentId, name: branch.localName || branch.name });
-    currentId = branch.parentBranch;
+    currentId = branch.parentBranchId;
   }
   return chain.toReversed();
 }

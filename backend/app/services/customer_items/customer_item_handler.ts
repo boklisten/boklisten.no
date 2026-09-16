@@ -1,6 +1,7 @@
+import BranchModel from "#models/branch";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import type { Branch } from "#shared/branch";
+import type { Branch, ExtendPeriod } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Period } from "#shared/period";
@@ -31,7 +32,7 @@ export class CustomerItemHandler {
       throw new BlError('orderItem info is not present when type is "extend"');
     }
 
-    const branch = await StorageService.Branches.get(branchId);
+    const branch = await BranchModel.findOrFail(branchId);
 
     this.getExtendPeriod(branch, orderItem.info.periodType);
 
@@ -172,20 +173,14 @@ export class CustomerItemHandler {
     });
   }
 
-  private getExtendPeriod(
-    branch: Branch,
-    period: Period,
-  ): { type: Period; date: Date; maxNumberOfPeriods: number; price: number } {
-    // @ts-expect-error fixme: auto ignored
-    if (!branch.paymentInfo.extendPeriods) {
+  private getExtendPeriod(branch: Branch, period: Period): ExtendPeriod {
+    if (branch.extendPeriods.length === 0) {
       throw new BlError("no extend periods present on branch");
     }
 
-    // @ts-expect-error fixme: auto ignored
-    for (const extendPeriod of branch.paymentInfo.extendPeriods) {
-      if (extendPeriod.type === period) {
-        return extendPeriod;
-      }
+    const extendPeriod = branch.extendPeriods.find((candidate) => candidate.type === period);
+    if (extendPeriod) {
+      return extendPeriod;
     }
 
     throw new BlError(`extend period "${period}" is not present on branch`);

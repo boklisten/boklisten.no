@@ -1,4 +1,5 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
@@ -7,10 +8,10 @@ import { OrderItemValidator } from "#services/orders/validation/order_item_valid
 import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
 import { OrderUserDetailValidator } from "#services/orders/validation/order_user_detail_validator";
 import { OrderValidator } from "#services/orders/validation/order_validator";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
 import type { Order } from "#shared/order/order";
+import { branchDto, createBranch } from "#tests/branch_fixtures";
 
 test.group("OrderValidator", (group) => {
   let testOrder: Order;
@@ -37,15 +38,9 @@ test.group("OrderValidator", (group) => {
   // @ts-expect-error fixme: auto ignored
   let orderUserDetailValidatorShouldResolve;
   let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService.Branches, "get").callsFake((id) => {
-      if (id !== testBranch.id) {
-        return Promise.reject(new BlError("not found").code(702));
-      }
-
-      return Promise.resolve(testBranch);
-    });
 
     sandbox.stub(orderItemValidator, "validate").callsFake(() => {
       // @ts-expect-error fixme: auto ignored
@@ -104,37 +99,18 @@ test.group("OrderValidator", (group) => {
       payments: ["payment1"],
     };
 
-    testBranch = {
+    testBranch = branchDto({
       id: "branch1",
       type: "privatist",
       name: "Sonans",
-      branchItems: [],
-      paymentInfo: {
-        responsible: false,
-        rentPeriods: [
-          {
-            type: "semester",
-            date: new Date(),
-            maxNumberOfPeriods: 2,
-            percentage: 0.5,
-          },
-        ],
-        extendPeriods: [
-          {
-            type: "semester",
-            price: 100,
-            date: new Date(),
-            maxNumberOfPeriods: 1,
-          },
-        ],
-        buyout: {
-          percentage: 0.5,
-        },
-      },
-      location: {
-        region: "unknown",
-      },
-    };
+      rentPeriods: [{ type: "semester", date: new Date(), maxNumberOfPeriods: 2, percentage: 0.5 }],
+      extendPeriods: [
+        { type: "semester", price: 100, date: new Date(), maxNumberOfPeriods: 1, percentage: null },
+      ],
+      buyoutPercentage: 0.5,
+      region: "unknown",
+    });
+    await createBranch(testBranch);
   });
   group.each.teardown(() => {
     sandbox.restore();
@@ -153,7 +129,11 @@ test.group("OrderValidator", (group) => {
   test("should reject if branch is not found", async ({ assert }) => {
     testOrder.branch = "notFoundBranch";
 
-    return assert.rejects(() => orderValidator.validate(testOrder, false), BlError, "not found");
+    return assert.rejects(
+      () => orderValidator.validate(testOrder, false),
+      BlError,
+      /order could not be validated/,
+    );
   });
 
   test("should reject if orderItems is empty or undefined", async ({ assert }) => {

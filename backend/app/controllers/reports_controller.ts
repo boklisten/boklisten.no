@@ -1,7 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import { ObjectId } from "mongodb";
-import { withItemColumns } from "#services/report_item_columns";
+import { withBranchName, withItemColumns } from "#services/report_columns";
 import { StorageService } from "#services/storage_service";
 import {
   customerItemsReportValidator,
@@ -43,7 +43,10 @@ export default class ReportsController {
       includeBuyout,
     } = await ctx.request.validateUsing(customerItemsReportValidator);
 
-    const rows = await StorageService.CustomerItems.aggregate<{ itemId: string | null }>([
+    const rows = await StorageService.CustomerItems.aggregate<{
+      handoutBranchId: string | null;
+      itemId: string | null;
+    }>([
       {
         $match: {
           ...branchFieldFilter("handoutInfo.handoutById", branchFilter),
@@ -51,14 +54,6 @@ export default class ReportsController {
           ...dateRangeFilter("deadline", deadlineAfter, deadlineBefore),
           ...(includeReturned ? {} : { returned: false }),
           ...(includeBuyout ? {} : { buyout: false }),
-        },
-      },
-      {
-        $lookup: {
-          from: "branches",
-          localField: "handoutInfo.handoutById",
-          foreignField: "_id",
-          as: "branchInfo",
         },
       },
       {
@@ -88,7 +83,7 @@ export default class ReportsController {
         $project: {
           _id: 0,
           id: { $toString: "$_id" },
-          handoutBranch: firstOrNull("$branchInfo.name"),
+          handoutBranchId: { $toString: "$handoutInfo.handoutById" },
           handoutTime: "$handoutInfo.time",
           lastUpdated: 1,
           deadline: 1,
@@ -108,17 +103,23 @@ export default class ReportsController {
         },
       },
     ]);
-    return withItemColumns(rows, (item) => ({
-      title: item?.title ?? null,
-      isbn: item === undefined ? null : String(item.isbn),
-    }));
+    return withItemColumns(
+      await withBranchName(rows, "handoutBranchId", "handoutBranch"),
+      (item) => ({
+        title: item?.title ?? null,
+        isbn: item === undefined ? null : String(item.isbn),
+      }),
+    );
   }
 
   async orders(ctx: HttpContext) {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(ordersReportValidator);
 
-    const rows = await StorageService.Orders.aggregate<{ itemId: string | null }>([
+    const rows = await StorageService.Orders.aggregate<{
+      filialNavnId: string | null;
+      itemId: string | null;
+    }>([
       {
         $match: {
           placed: true,
@@ -147,14 +148,6 @@ export default class ReportsController {
       },
       { $unwind: "$orderItems" },
       {
-        $lookup: {
-          from: "branches",
-          localField: "branch",
-          foreignField: "_id",
-          as: "branchInfo",
-        },
-      },
-      {
         $addFields: {
           customer: { $toObjectId: "$customer" },
         },
@@ -180,7 +173,7 @@ export default class ReportsController {
           _id: 0,
           ordreID: { $toString: "$_id" },
           filialID: { $toString: "$branch" },
-          filialNavn: firstOrNull("$branchInfo.name"),
+          filialNavnId: { $toString: "$branch" },
           employeeNavn: firstOrNull("$employeeInfo.name"),
           customerName: firstOrNull("$customerInfo.name"),
           title: "$orderItems.title",
@@ -211,7 +204,7 @@ export default class ReportsController {
         },
       },
     ]);
-    return withItemColumns(rows, (item) => ({
+    return withItemColumns(await withBranchName(rows, "filialNavnId", "filialNavn"), (item) => ({
       ISBN: item === undefined ? null : String(item.isbn),
     }));
   }
@@ -220,19 +213,11 @@ export default class ReportsController {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(paymentsReportValidator);
 
-    return StorageService.Payments.aggregate([
+    const rows = await StorageService.Payments.aggregate<{ branchId: string | null }>([
       {
         $match: {
           ...branchFieldFilter("branch", branchFilter),
           ...dateRangeFilter("creationTime", createdAfter, createdBefore),
-        },
-      },
-      {
-        $lookup: {
-          from: "branches",
-          localField: "branch",
-          foreignField: "_id",
-          as: "branchInfo",
         },
       },
       {
@@ -256,29 +241,22 @@ export default class ReportsController {
           amount: 1,
           confirmed: { $ifNull: ["$confirmed", false] },
           customerName: firstOrNull("$customerInfo.name"),
-          branchName: firstOrNull("$branchInfo.name"),
+          branchId: { $toString: "$branch" },
           creationTime: 1,
           pivot: "1",
         },
       },
     ]);
+    return withBranchName(rows, "branchId", "branchName");
   }
 
   async userDetails(ctx: HttpContext) {
     const { branchFilter } = await ctx.request.validateUsing(userDetailsReportValidator);
 
-    return StorageService.UserDetails.aggregate([
+    const rows = await StorageService.UserDetails.aggregate<{ branchMembershipId: string | null }>([
       {
         $match: {
           ...branchFieldFilter("branchMembership", branchFilter),
-        },
-      },
-      {
-        $lookup: {
-          from: "branches",
-          localField: "branchMembership",
-          foreignField: "_id",
-          as: "branchInfo",
         },
       },
       {
@@ -301,11 +279,12 @@ export default class ReportsController {
           postCode: 1,
           dob: 1,
           permission: firstOrNull("$userInfo.permission"),
-          branchMembership: firstOrNull("$branchInfo.name"),
+          branchMembershipId: { $toString: "$branchMembership" },
           creationTime: 1,
           pivot: "1",
         },
       },
     ]);
+    return withBranchName(rows, "branchMembershipId", "branchMembership");
   }
 }

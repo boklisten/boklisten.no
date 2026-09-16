@@ -29,15 +29,9 @@ export class OrderItemPartlyPaymentValidator {
   }
 
   private isPeriodSupported(period: any, branch: Branch) {
-    if (branch.paymentInfo && branch.paymentInfo.partlyPaymentPeriods) {
-      for (const partlyPaymentPeriod of branch.paymentInfo.partlyPaymentPeriods) {
-        if (partlyPaymentPeriod.type === period) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return branch.partlyPaymentPeriods.some(
+      (partlyPaymentPeriod) => partlyPaymentPeriod.type === period,
+    );
   }
 
   private validateFields(orderItem: OrderItem) {

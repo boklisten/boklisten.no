@@ -465,7 +465,7 @@ Notes (2026-09-16):
   model once compiled" when the schema file is deleted under HMR; touching `start/routes.ts`
   triggers a full restart of the child without killing `bun dev`.
 
-## Step 3 — branches → `branches` + `branch_periods` — status: not started
+## Step 3 — branches → `branches` + `branch_periods` — status: done 2026-09-16 (rehearsed on staging, pending merge)
 
 Target schema `branches`:
 
@@ -517,7 +517,89 @@ payment period checks), stand cart pricing, matches `round_scope.ts`, `user_prov
 Survey queries: `type` values outside the enum; `childBranches` vs `parentBranch` consistency;
 periods with missing `date`/`type`; percentages outside 0..1; `location.region` missing.
 
-Survey results / notes: (fill in)
+Decisions taken with Adrian after the survey (2026-09-16): the API shape is the flat row plus the
+three period lists (`paymentResponsible`, `responsibleForDelivery`, `buyoutPercentage`,
+`sellPercentage`, `deliveryAtBranch`, `deliveryByMail`, `branchItemsLiveOnline`,
+`branchItemsLiveAtBranch`, `region`, `address`, `parentBranchId`, `rentPeriods`, `extendPeriods`,
+`partlyPaymentPeriods`), the same shape in and out; the "Består av" multiselect on the Relasjoner
+tab stays as a command (`PATCH /branches/relationships` takes `childBranchIds`, re-parents the
+listed branches and makes the dropped ones roots; `GET` returns no child list, the form derives it
+from the other branches' `parentBranchId`); the one branch without a region ("Sonans Lillestrøm",
+inactive) gets `"Lillestrøm"` hard-coded in the migration rather than a nullable column.
+
+`active` is kept: 11 branches are inactive and the public listing must hide them (the old
+`indexPublic` meant to filter on `active` and `isBranchItemsLive.online` but overwrote the first
+filter with the second; the Postgres version filters on both, which changes nothing today because
+every inactive branch is also offline). `logo` is kept although no branch has one (the form offers
+it). Percentages are `double precision` like `items.discount`.
+
+Survey results (staging Mongo, 2026-09-16, 115 documents):
+
+- `type`: privatist 34, VGS 28, null 3, missing 50. `active: false` on 11. `name` always set,
+  no duplicates. `logo` never set; `openingHours` never set; `localName` missing on 8;
+  `childLabel` set on 25; `location.address` on 24; `location.region` missing on exactly one
+  document (see above), casing inconsistent ("oslo"/"Oslo") and kept as is.
+- `parentBranch` ObjectId on 99 (7 null, 9 missing); `childBranches` fully consistent with it:
+  zero children missing their parent reference, zero parents missing a child, no branch claimed
+  by two parents, no cycles; 16 roots, 94 leaves, depth ≤ 3.
+- `branchItems`: 4 027 entries on 57 branches, 3 506 of them pointing at deleted branch items,
+  and 845 of the 1 366 branch items not listed on any branch. Dropped; nothing reads it (the
+  `PUT /branches/:id/items` handler wrote it with a wrong payload).
+- Periods: 65 partly-payment entries (33 branches, semester 33 / year 32, buyout 0.33 or 0.333
+  or 1, up-front 0, 0.6, 0.65 or 1), 28 rent entries (28 branches, all `maxNumberOfPeriods` 1,
+  percentage 1 except one 0.001), 32 extend entries (all semester, price 50, `percentage` never
+  set, `maxNumberOfPeriods` 1). Nine period dates (three Sonans branches) are ISO strings, not
+  `Date`. No duplicate (type, date) within a branch.
+- `paymentInfo` present on all; `responsibleForDelivery` missing on 54; `buyout.percentage`
+  {1, 0.5, 0.33}; `sell.percentage` {1, 0.333, 0.33, 0.333333}. `deliveryMethods` on all
+  (branch/byMail: 54 both, 29/29 one of them, 1 neither); `isBranchItemsLive` missing on 46.
+- `user` on 59, `editableFor`/`viewableFor` always `[]`, `_id` subdocument artefacts on
+  `location` (33), `buyout`/`sell` (3) and most period entries. Timestamps are `Date` on all.
+- References into branches from other Mongo collections: `orders.branch` (68 distinct),
+  `customeritems.handoutInfo.handoutById` (59), `userdetails.branchMembership` (87 + null),
+  `payments.branch` (57), `invoices.branch` (56 + null), `branchitems.branch` (52): zero
+  orphans everywhere. Postgres: `branch_subjects.branch_id` (14 distinct, varchar(24)),
+  `opening_hours.branch_id` (11, varchar(255)), `waiting_list_customers.branch_id` (empty,
+  varchar(255)), `match_rounds.branches` text[] (50 ids): zero orphans; the two varchar(255)
+  columns are narrowed to 24 by the migration.
+
+Notes (2026-09-16):
+
+- Staging rehearsal from a laptop: `branches: migrated 115, skipped 0; branch_periods: migrated
+125`, `1 regions filled in by hand`, whole migration 4.5 s, the Mongo collection dropped. A
+  field-by-field comparison of every row and period against a JSON dump taken before the run
+  found zero differences; the five foreign keys (`branch_periods`, self reference,
+  `branch_subjects`, `opening_hours`, `waiting_list_customers`) are in place.
+- Migration `1789400000000_create_branches_table.ts`; models `app/models/branch.ts` (`allByName`,
+  `publicByName`, `findOptional`, `getOrFail`, `byIds`, `namesByIds`, recursive-CTE
+  `descendants`/`descendantIds`/`leafDescendants`, `toDto`) and `app/models/branch_period.ts`
+  (`rowsFor`, the three `to*Period` mappers); `app/services/branch_service.ts` (`createBranch`,
+  `updateBranch` with wholesale period-list replacement in a transaction,
+  `updateBranchRelationships` with cycle detection); `BranchRelationshipService` is now a thin
+  facade over the model helpers.
+- Periods are preloaded by `beforeFind`/`beforeFetch` hooks, so every read carries them; the
+  getters throw on a branch that was `create`d without a reload (`createBranch` re-reads the
+  row). The API returns `branch.toDto()` rather than a transformer because Adonis'
+  `InferData<Transformer>` types `Date` as `string`, while plain controller returns keep `Date`
+  like every other endpoint (`ActiveCustomerItem.deadline`); the frontend already treats these as
+  strings at runtime.
+- Aggregations that `$lookup`ed into branches (reports ×4, customer items for a customer, public
+  blid lookup, branch book details) now project the branch id and join the name in code
+  (`app/services/report_columns.ts` `withBranchName`, keeping CSV column order).
+- Frontend: `BranchGeneralSettings`, `BranchPaymentSettings`, `BranchRelationshipSettings` use
+  the flat fields; `shared/utils/branchTree.ts` builds the tree from `parentBranchId` (roots are
+  branches whose parent is not in the list). Verified with Playwright on
+  `/admin/database/filialer` (tree with 16 roots, all three tabs, address save/revert, payment save,
+  removing and re-adding a class via "Består av"), `/bestilling` (grouped by region) and
+  `/info/branch/:id` (address), at desktop and 375 px.
+- Pre-existing behaviour noticed, left alone: saving the payment form re-parses the period dates
+  from `YYYY-MM-DD` through `vine.date()` as Oslo midnight, so a UTC-midnight deadline
+  (`2027-09-01T00:00Z`) becomes `2027-08-31T22:00Z` (same Oslo day; the code compares Oslo
+  days). The percentage slider's "100 %" mark label overflows a 375 px viewport by 8 px on the
+  Betaling tab.
+- As after steps 1 and 2, the running `bun dev` backend dies with Mongoose's "Cannot overwrite
+  `branchitems` model once compiled" when the schema file is deleted under HMR; touching
+  `start/routes.ts` restarts the child.
 
 ## Step 4 — branchitems → `branch_items` — status: not started
 

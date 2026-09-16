@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
+import Branch from "#models/branch";
 import Item from "#models/item";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
@@ -170,16 +171,19 @@ const CUSTOMER_LOOKUP_STAGES = [
     },
   },
   { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
-  {
-    $lookup: {
-      from: BlSchemaName.Branches,
-      localField: "customer.branchMembership",
-      foreignField: "_id",
-      as: "membershipBranch",
-    },
-  },
-  { $unwind: { path: "$membershipBranch", preserveNullAndEmptyArrays: true } },
 ];
+
+/** The membership branch lives in Postgres: the rows carry its id and the name is joined here. */
+async function withMembershipBranchNames<Row extends { membershipBranchId: string | null }>(
+  rows: Row[],
+): Promise<(Omit<Row, "membershipBranchId"> & { membershipBranchName: string | null })[]> {
+  const names = await Branch.namesByIds(rows.map((row) => row.membershipBranchId));
+  return rows.map(({ membershipBranchId, ...row }) => ({
+    ...row,
+    membershipBranchName:
+      membershipBranchId === null ? null : (names.get(membershipBranchId) ?? null),
+  }));
+}
 
 const SUMMARY_ROW_STAGES = [
   {
@@ -275,7 +279,7 @@ export const BranchBooksService = {
       customerItemId: string;
       customerName: string | null;
       dob: Date | null;
-      membershipBranchName: string | null;
+      membershipBranchId: string | null;
       blid: string | null;
       handoutTime: Date | null;
     }>([
@@ -295,13 +299,13 @@ export const BranchBooksService = {
           customerItemId: { $toString: "$_id" },
           customerName: { $ifNull: ["$customer.name", null] },
           dob: { $ifNull: ["$customer.dob", null] },
-          membershipBranchName: { $ifNull: ["$membershipBranch.name", null] },
+          membershipBranchId: { $toString: "$customer.branchMembership" },
           blid: { $ifNull: ["$blid", null] },
           handoutTime: { $ifNull: ["$handoutInfo.time", null] },
         },
       },
     ]);
-    return rows.map(({ dob, ...row }) =>
+    return (await withMembershipBranchNames(rows)).map(({ dob, ...row }) =>
       Object.assign(row, {
         birthYear: toBirthYear(dob),
         handoutTime: row.handoutTime ? row.handoutTime.toISOString() : null,
@@ -383,7 +387,7 @@ export const BranchBooksService = {
       orderItemId: string;
       customerName: string | null;
       dob: Date | null;
-      membershipBranchName: string | null;
+      membershipBranchId: string | null;
       orderTime: Date | null;
     }>([
       { $match: { placed: true, branch: new ObjectId(branchId) } },
@@ -406,12 +410,12 @@ export const BranchBooksService = {
           orderItemId: { $toString: "$orderItems._id" },
           customerName: { $ifNull: ["$customer.name", null] },
           dob: { $ifNull: ["$customer.dob", null] },
-          membershipBranchName: { $ifNull: ["$membershipBranch.name", null] },
+          membershipBranchId: { $toString: "$customer.branchMembership" },
           orderTime: { $ifNull: ["$creationTime", null] },
         },
       },
     ]);
-    return rows.map(({ dob, ...row }) =>
+    return (await withMembershipBranchNames(rows)).map(({ dob, ...row }) =>
       Object.assign(row, {
         birthYear: toBirthYear(dob),
         orderTime: row.orderTime ? row.orderTime.toISOString() : null,

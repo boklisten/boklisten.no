@@ -41,21 +41,20 @@ export default function BranchGeneralSettings({
     defaultValues: {
       name: existingBranch?.name ?? "",
       logo: existingBranch?.logo ?? "",
-      location: {
-        region: existingBranch?.location.region ?? "",
-        address: existingBranch?.location.address ?? "",
-      },
+      region: existingBranch?.region ?? "",
+      address: existingBranch?.address ?? "",
       type: existingBranch?.type ?? null,
-      active: existingBranch?.active ?? false,
-      isBranchItemsLive: {
-        online: existingBranch?.isBranchItemsLive?.online ?? false,
-        atBranch: existingBranch?.isBranchItemsLive?.atBranch ?? false,
-      },
+      active: existingBranch?.active ?? true,
+      branchItemsLiveOnline: existingBranch?.branchItemsLiveOnline ?? false,
+      branchItemsLiveAtBranch: existingBranch?.branchItemsLiveAtBranch ?? false,
     },
-    onSubmit: ({ value }) =>
-      !existingBranch
-        ? addBranchMutation.mutate({ body: value })
-        : updateBranchMutation.mutate({ params: { branchId: existingBranch.id }, body: value }),
+    onSubmit: ({ value }) => {
+      // Empty optional text fields mean "not set".
+      const body = { ...value, logo: value.logo || null, address: value.address || null };
+      return !existingBranch
+        ? addBranchMutation.mutate({ body })
+        : updateBranchMutation.mutate({ params: { branchId: existingBranch.id }, body });
+    },
   });
 
   return (
@@ -73,10 +72,10 @@ export default function BranchGeneralSettings({
       >
         {(field) => <field.ImageField label="Logo" />}
       </form.AppField>
-      <form.AppField name="location.region">
+      <form.AppField name="region">
         {(field) => <field.TextField required label="Region" placeholder="Oslo, Trondheim, Ski" />}
       </form.AppField>
-      <form.AppField name="location.address">
+      <form.AppField name="address">
         {(field) => <field.TextField label="Adresse" placeholder="Postboks 8, 1316 Eiksmarka" />}
       </form.AppField>
       <form.AppField name="type">
@@ -93,10 +92,10 @@ export default function BranchGeneralSettings({
         <form.AppField name="active">
           {(field) => <field.SwitchField label="Aktiv" />}
         </form.AppField>
-        <form.AppField name="isBranchItemsLive.online">
+        <form.AppField name="branchItemsLiveOnline">
           {(field) => <field.SwitchField label="Synlig for kunder" />}
         </form.AppField>
-        <form.AppField name="isBranchItemsLive.atBranch">
+        <form.AppField name="branchItemsLiveAtBranch">
           {(field) => <field.SwitchField label="Synlig for ansatte" />}
         </form.AppField>
       </Activity>

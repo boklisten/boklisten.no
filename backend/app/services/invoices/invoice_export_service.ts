@@ -1,5 +1,6 @@
 import moment from "moment-timezone";
 
+import Branch from "#models/branch";
 import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import { toSemicolonCsv } from "#services/invoices/csv";
@@ -26,13 +27,12 @@ async function invoicesInOrder(invoiceIds: string[]): Promise<Invoice[]> {
 
 /** The branch name is printed on the invoice, but only the branch id is stored. */
 async function withBranchNames(invoices: Invoice[]): Promise<Invoice[]> {
-  const branchIds = [...new Set(invoices.map((invoice) => invoice.branch).filter(isNotNullish))];
-  const branches = byId(await StorageService.Branches.getMany(branchIds, "admin"));
+  const names = await Branch.namesByIds(invoices.map((invoice) => invoice.branch));
   return invoices.map((invoice) => {
-    const branch = invoice.branch ? branches.get(invoice.branch) : undefined;
-    return branch
-      ? { ...invoice, customerInfo: { ...invoice.customerInfo, branchName: branch.name } }
-      : invoice;
+    const branchName = invoice.branch ? names.get(invoice.branch) : undefined;
+    return branchName === undefined
+      ? invoice
+      : { ...invoice, customerInfo: { ...invoice.customerInfo, branchName } };
   });
 }
 
@@ -54,10 +54,7 @@ async function tripletexLookups(invoices: Invoice[]): Promise<TripletexLookups> 
         .filter(isNotNullish),
     ),
   ];
-  const [items, branches] = await Promise.all([
-    Item.findMany(itemIds),
-    StorageService.Branches.getMany(branchIds, "admin"),
-  ]);
+  const [items, branches] = await Promise.all([Item.findMany(itemIds), Branch.findMany(branchIds)]);
   return { customerItems: byId(customerItems), items: byId(items), branches: byId(branches) };
 }
 

@@ -1,5 +1,6 @@
 import type { Limiter } from "@adonisjs/limiter";
 
+import Branch from "#models/branch";
 import Item from "#models/item";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
@@ -23,7 +24,10 @@ function byBlid(blid: string): SEDbQuery {
 
 async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> {
   const [row] = await StorageService.CustomerItems.aggregate<
-    Omit<PublicBlidHandedOut, "status" | "title" | "isbn"> & { itemId: string | null }
+    Omit<PublicBlidHandedOut, "status" | "title" | "isbn" | "handoutBranch"> & {
+      itemId: string | null;
+      handoutBranchId: string | null;
+    }
   >([
     {
       $match: {
@@ -32,14 +36,6 @@ async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> 
         cancel: false,
         buyback: false,
         blid,
-      },
-    },
-    {
-      $lookup: {
-        from: BlSchemaName.Branches,
-        localField: "handoutInfo.handoutById",
-        foreignField: "_id",
-        as: "branchInfo",
       },
     },
     {
@@ -53,7 +49,7 @@ async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> 
     {
       $project: {
         _id: 0,
-        handoutBranch: { $first: "$branchInfo.name" },
+        handoutBranchId: { $toString: "$handoutInfo.handoutById" },
         handoutTime: "$handoutInfo.time",
         deadline: 1,
         itemId: { $toString: "$item" },
@@ -66,11 +62,15 @@ async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> 
   if (row === undefined) {
     return null;
   }
-  const { itemId, ...handedOut } = row;
-  const item = itemId === null ? null : await Item.find(itemId);
+  const { itemId, handoutBranchId, ...handedOut } = row;
+  const [item, branch] = await Promise.all([
+    itemId === null ? null : Item.find(itemId),
+    Branch.findOptional(handoutBranchId),
+  ]);
   return {
     status: "handedOut",
     ...handedOut,
+    handoutBranch: branch?.name ?? "",
     title: item?.title ?? "",
     isbn: item === null ? "" : String(item.isbn),
   };

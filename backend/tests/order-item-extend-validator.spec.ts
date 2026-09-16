@@ -8,6 +8,7 @@ import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";
+import { branchDto } from "#tests/branch_fixtures";
 
 test.group("OrderItemExtendValidator", (group) => {
   const orderItemExtendValidator = new OrderItemExtendValidator();
@@ -84,37 +85,17 @@ test.group("OrderItemExtendValidator", (group) => {
       placed: false,
     };
 
-    testBranch = {
+    testBranch = branchDto({
       id: "branch1",
       type: "privatist",
       name: "Sonans",
-      branchItems: [],
-      paymentInfo: {
-        responsible: false,
-        rentPeriods: [
-          {
-            type: "semester",
-            maxNumberOfPeriods: 2,
-            date: new Date(),
-            percentage: 0.5,
-          },
-        ],
-        extendPeriods: [
-          {
-            type: "semester",
-            maxNumberOfPeriods: 1,
-            date: new Date(),
-            price: 100,
-          },
-        ],
-        buyout: {
-          percentage: 0.5,
-        },
-      },
-      location: {
-        region: "unknown",
-      },
-    };
+      rentPeriods: [{ type: "semester", maxNumberOfPeriods: 2, date: new Date(), percentage: 0.5 }],
+      extendPeriods: [
+        { type: "semester", maxNumberOfPeriods: 1, date: new Date(), price: 100, percentage: null },
+      ],
+      buyoutPercentage: 0.5,
+      region: "unknown",
+    });
   });
   group.each.teardown(() => {
     sandbox.restore();
@@ -138,14 +119,8 @@ test.group("OrderItemExtendValidator", (group) => {
     // @ts-expect-error fixme: auto ignored
     testOrder.orderItems[0].info.periodType = "year";
 
-    // @ts-expect-error fixme: auto ignored
-    testBranch.paymentInfo.extendPeriods = [
-      {
-        type: "semester",
-        price: 100,
-        date: new Date(),
-        maxNumberOfPeriods: 1,
-      },
+    testBranch.extendPeriods = [
+      { type: "semester", price: 100, date: new Date(), maxNumberOfPeriods: 1, percentage: null },
     ];
 
     return assert.rejects(
@@ -186,14 +161,8 @@ test.group("OrderItemExtendValidator", (group) => {
   test("should reject when customerItem have been extended to many times", async ({ assert }) => {
     testCustomerItem.id = "maxExtendedCustomerItem";
 
-    // @ts-expect-error fixme: auto ignored
-    testBranch.paymentInfo.extendPeriods = [
-      {
-        type: "semester",
-        price: 100,
-        date: new Date(),
-        maxNumberOfPeriods: 1,
-      },
+    testBranch.extendPeriods = [
+      { type: "semester", price: 100, date: new Date(), maxNumberOfPeriods: 1, percentage: null },
     ];
 
     testCustomerItem.periodExtends = [

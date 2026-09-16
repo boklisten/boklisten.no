@@ -11,6 +11,7 @@ import type { InvoiceGenerationSettings } from "#shared/invoice";
 import type { Item } from "#shared/item";
 import type { Order } from "#shared/order/order";
 import type { UserDetail } from "#shared/user-detail";
+import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
 
@@ -46,26 +47,21 @@ const items: Item[] = [
   mock<Item>({ id: "6100000000000000000000b1", title: "Psykologi 2 2022", price: 1049 }),
   mock<Item>({ id: "6100000000000000000000b2", title: "Matematikk R1", price: 899 }),
 ];
-const branch = mock<Branch>({
+const branch: Partial<Branch> = {
   id: BRANCH_ID,
   name: "Ullern VG3 ST",
-  paymentInfo: {
-    responsible: false,
-    rentPeriods: [],
-    extendPeriods: [],
-    partlyPaymentPeriods: [
-      {
-        type: "year",
-        date: new Date(),
-        percentageBuyout: 0.5,
-        percentageBuyoutUsed: 0.5,
-        percentageUpFront: 0.5,
-        percentageUpFrontUsed: 0.5,
-      },
-    ],
-    buyout: { percentage: 0.6 },
-  },
-});
+  partlyPaymentPeriods: [
+    {
+      type: "year",
+      date: new Date(),
+      percentageBuyout: 0.5,
+      percentageBuyoutUsed: 0.5,
+      percentageUpFront: 0.5,
+      percentageUpFrontUsed: 0.5,
+    },
+  ],
+  buyoutPercentage: 0.6,
+};
 
 const rentSettings: InvoiceGenerationSettings = {
   type: "rent",
@@ -90,13 +86,13 @@ test.group("invoice generation", (group) => {
     for (const item of items) {
       await createItem({ id: item.id, title: item.title, price: item.price });
     }
+    await createBranch(branch);
     sandbox = createSandbox();
     aggregate = sandbox.stub().resolves([]);
     sandbox.stub(StorageService, "CustomerItems").value({ aggregate });
     sandbox.stub(StorageService, "UserDetails").value({
       getMany: sandbox.stub().resolves(customers),
     });
-    sandbox.stub(StorageService, "Branches").value({ getMany: sandbox.stub().resolves([branch]) });
     getOrders = sandbox.stub().resolves([]);
     sandbox.stub(StorageService, "Orders").value({ getMany: getOrders });
     addInvoice = sandbox

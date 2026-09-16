@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import { DateTime } from "luxon";
 
+import Branch from "#models/branch";
 import ItemModel from "#models/item";
 import BlidService from "#services/blid_service";
 import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
@@ -145,7 +146,7 @@ export default class BulkCollectionController {
     const branchId = customerItem.handoutInfo?.handoutById;
     const [item, branch, customerDetail, recipientCustomerId] = await Promise.all([
       ItemModel.findOrFail(customerItem.item),
-      branchId ? StorageService.Branches.get(branchId) : Promise.resolve(),
+      Branch.findOptional(branchId),
       StorageService.UserDetails.get(customerItem.customer),
       PeerObligations.findPeerRecipient(customerItem.customer, customerItem.item),
     ]);

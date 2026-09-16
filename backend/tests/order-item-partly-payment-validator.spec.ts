@@ -2,8 +2,8 @@ import { test } from "@japa/runner";
 
 import { OrderItemPartlyPaymentValidator } from "#services/orders/validation/order_item_partly_payment_validator";
 import { BlError } from "#shared/bl-error";
-import type { Branch } from "#shared/branch";
 import type { OrderItem } from "#shared/order/order-item/order-item";
+import { branchDto } from "#tests/branch_fixtures";
 import { mock } from "#tests/test-doubles";
 
 test.group("OrderItemPartlyPaymentValidator", async () => {
@@ -29,7 +29,7 @@ test.group("OrderItemPartlyPaymentValidator", async () => {
     };
 
     return assert.rejects(
-      () => orderItemPartlyPaymentValidator.validate(orderItem, item, mock<Branch>(branch)),
+      () => orderItemPartlyPaymentValidator.validate(orderItem, item, branchDto(branch)),
       BlError,
     );
   });
@@ -43,7 +43,7 @@ test.group("OrderItemPartlyPaymentValidator", async () => {
     });
 
     return assert.rejects(
-      () => orderItemPartlyPaymentValidator.validate(orderItem, {}, mock<Branch>({})),
+      () => orderItemPartlyPaymentValidator.validate(orderItem, {}, branchDto()),
       BlError,
       /orderItem.info.to not specified/,
     );
@@ -59,7 +59,7 @@ test.group("OrderItemPartlyPaymentValidator", async () => {
     });
 
     return assert.rejects(
-      () => orderItemPartlyPaymentValidator.validate(orderItem, {}, mock<Branch>({})),
+      () => orderItemPartlyPaymentValidator.validate(orderItem, {}, branchDto()),
       BlError,
       /orderItem.info.amountLeftToPay not specified/,
     );
@@ -71,7 +71,7 @@ test.group("OrderItemPartlyPaymentValidator", async () => {
     });
 
     return assert.rejects(
-      () => orderItemPartlyPaymentValidator.validate(orderItem, {}, mock<Branch>({})),
+      () => orderItemPartlyPaymentValidator.validate(orderItem, {}, branchDto()),
       BlError,
       /orderItem.info not specified/,
     );
@@ -90,7 +90,7 @@ test.group("OrderItemPartlyPaymentValidator", async () => {
     });
 
     return assert.rejects(
-      () => orderItemPartlyPaymentValidator.validate(orderItem, {}, mock<Branch>({})),
+      () => orderItemPartlyPaymentValidator.validate(orderItem, {}, branchDto()),
       BlError,
       /partly-payment period "year" not supported on branch/,
     );

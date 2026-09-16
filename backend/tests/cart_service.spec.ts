@@ -1,12 +1,10 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
 
 import { CartService } from "#services/cart_service";
-import { StorageService } from "#services/storage_service";
 import type { BranchItem } from "#shared/branch-item";
 import type { Item } from "#shared/item";
+import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
 
@@ -16,16 +14,10 @@ const ITEM_ID = "6100000000000000000000a1";
 const ITEM = mock<Item>({ id: ITEM_ID, title: "Kjemien stemmer", price: 829 });
 
 test.group("CartService.getOptions", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  let branchesGet: sinon.SinonStub;
-
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
-    sandbox = createSandbox();
     await createItem({ id: ITEM_ID, title: ITEM.title, price: ITEM.price });
-    branchesGet = sandbox.stub(StorageService.Branches, "get");
   });
-  group.each.teardown(() => sandbox.restore());
 
   function branchItem(overrides: Partial<BranchItem>) {
     return mock<BranchItem>({
@@ -39,31 +31,31 @@ test.group("CartService.getOptions", (group) => {
   }
 
   test("rounds the buy price down to the nearest 10 kr", async ({ assert }) => {
-    branchesGet.resolves({ id: BRANCH_ID, paymentInfo: { responsible: false } });
+    await createBranch({ id: BRANCH_ID, paymentResponsible: false });
     const options = await CartService.getOptions(branchItem({ buy: true }));
     assert.deepEqual(options, [{ type: "buy", price: 820 }]);
   });
 
   test("buy price is 0 when the branch is responsible for payment", async ({ assert }) => {
-    branchesGet.resolves({ id: BRANCH_ID, paymentInfo: { responsible: true } });
+    await createBranch({ id: BRANCH_ID, paymentResponsible: true });
     const options = await CartService.getOptions(branchItem({ buy: true }));
     assert.deepEqual(options, [{ type: "buy", price: 0 }]);
   });
 
   test("rounds the partly-payment prices down to the nearest 10 kr", async ({ assert }) => {
-    branchesGet.resolves({
+    await createBranch({
       id: BRANCH_ID,
-      paymentInfo: {
-        responsible: false,
-        partlyPaymentPeriods: [
-          {
-            type: "year",
-            date: new Date("2027-07-01"),
-            percentageUpFront: 0.5,
-            percentageBuyout: 0.5,
-          },
-        ],
-      },
+      paymentResponsible: false,
+      partlyPaymentPeriods: [
+        {
+          type: "year",
+          date: new Date("2027-07-01"),
+          percentageUpFront: 0.5,
+          percentageUpFrontUsed: 0.5,
+          percentageBuyout: 0.5,
+          percentageBuyoutUsed: 0.5,
+        },
+      ],
     });
     const options = await CartService.getOptions(branchItem({ partlyPayment: true }));
     assert.deepEqual(options, [

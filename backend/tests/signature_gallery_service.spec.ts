@@ -1,13 +1,16 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import Branch from "#models/branch";
 import Signature from "#models/signature";
 import type { GalleryContext, GalleryCustomer } from "#services/signature_gallery_service";
 import { SignatureGalleryService } from "#services/signature_gallery_service";
 import { StorageService } from "#services/storage_service";
+import { createBranch } from "#tests/branch_fixtures";
 import { unchecked } from "#tests/test-doubles";
 
 const adultDob = new Date(new Date().getFullYear() - 30, 0, 1);
@@ -141,14 +144,15 @@ test.group("SignatureGalleryService.getPage", (group) => {
   let pageStub: sinon.SinonStub;
   let customersStub: sinon.SinonStub;
   let usersAggregateStub: sinon.SinonStub;
-  let branchesAggregateStub: sinon.SinonStub;
+  let branchNamesSpy: sinon.SinonSpy;
 
+  group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
     pageStub = sandbox.stub(Signature, "newestPerCustomerPage");
     customersStub = sandbox.stub(StorageService.UserDetails, "getMany");
     usersAggregateStub = sandbox.stub(StorageService.Users, "aggregate").resolves([]);
-    branchesAggregateStub = sandbox.stub(StorageService.Branches, "aggregate").resolves([]);
+    branchNamesSpy = sandbox.spy(Branch, "namesByIds");
     return () => sandbox.restore();
   });
 
@@ -222,8 +226,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
     pageStub.resolves([signature]);
     customersStub.resolves(unchecked([customer]));
     usersAggregateStub.resolves([{ userDetail: new ObjectId(customer.id), permission: "manager" }]);
-    // The handler's transform renames _id to id and stringifies it before rows reach the caller.
-    branchesAggregateStub.resolves([{ id: branchId, name: "Ullern VGS" }]);
+    await createBranch({ id: branchId, name: "Ullern VGS" });
 
     const page = await SignatureGalleryService.getPage(null);
 
@@ -239,6 +242,6 @@ test.group("SignatureGalleryService.getPage", (group) => {
     const page = await SignatureGalleryService.getPage(null);
 
     assert.isNull(page.signatures[0]?.branchName);
-    assert.isFalse(branchesAggregateStub.called);
+    assert.isFalse(branchNamesSpy.called);
   });
 });

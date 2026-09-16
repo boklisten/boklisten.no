@@ -1,3 +1,4 @@
+import Branch from "#models/branch";
 import DispatchService from "#services/dispatch_service";
 import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
@@ -29,8 +30,8 @@ export const OrderEmailHandler = {
     };
 
     if (withAgreement) {
-      const branch = await StorageService.Branches.get(branchId);
-      await DispatchService.sendSignatureLink(customerDetail, branch?.name ?? "en filial");
+      const branch = await Branch.findOrFail(branchId);
+      await DispatchService.sendSignatureLink(customerDetail, branch.name);
     }
 
     await DispatchService.sendOrderReceipt(emailUser, emailOrder, this.paymentNeeded(order));

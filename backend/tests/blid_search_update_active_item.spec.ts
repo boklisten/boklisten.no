@@ -6,9 +6,9 @@ import { createSandbox } from "sinon";
 import { BlidSearchService } from "#services/blid_search_service";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import { StorageService } from "#services/storage_service";
-import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { fixtureId } from "#tests/fixtures";
+import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { mock, unchecked } from "#tests/test-doubles";
 
@@ -18,11 +18,6 @@ const NEW_BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f72";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 const EMPLOYEE = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
 const ADMIN = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "admin" as const };
-
-const branches: Record<string, Branch> = {
-  [OLD_BRANCH_ID]: mock<Branch>({ id: OLD_BRANCH_ID, name: "Ullern VGS" }),
-  [NEW_BRANCH_ID]: mock<Branch>({ id: NEW_BRANCH_ID, name: "Persbråten VGS" }),
-};
 
 const ITEM_ID = fixtureId("1");
 
@@ -34,6 +29,8 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     await createItem({ id: ITEM_ID, title: "Sinus 1T" });
+    await createBranch({ id: OLD_BRANCH_ID, name: "Ullern VGS" });
+    await createBranch({ id: NEW_BRANCH_ID, name: "Persbråten VGS" });
     sandbox = createSandbox();
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
     updateMany = sandbox
@@ -49,9 +46,6 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
         handoutInfo: { handoutBy: "branch", handoutById: OLD_BRANCH_ID },
       }),
     );
-    sandbox
-      .stub(StorageService.Branches, "getOrNull")
-      .callsFake((id) => Promise.resolve(id === undefined ? null : (branches[id] ?? null)));
   });
   group.each.teardown(() => sandbox.restore());
 

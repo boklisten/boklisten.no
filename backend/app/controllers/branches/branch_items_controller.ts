@@ -15,7 +15,7 @@ export default class BranchItemsController {
     const existingBranchItems =
       (await StorageService.BranchItems.getByQueryOrNull(databaseQuery)) ?? [];
     await Promise.all(existingBranchItems.map((ebi) => StorageService.BranchItems.remove(ebi.id)));
-    const newBranchItems = await Promise.all(
+    await Promise.all(
       branchItems.map((branchItem) =>
         StorageService.BranchItems.add({
           ...branchItem,
@@ -28,10 +28,6 @@ export default class BranchItemsController {
           liveAtBranch: false,
         }),
       ),
-    );
-    await StorageService.Branches.update(
-      branchId,
-      newBranchItems.map((nbi) => nbi.id),
     );
   }
   async index(ctx: HttpContext) {

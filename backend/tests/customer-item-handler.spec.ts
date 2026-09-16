@@ -1,13 +1,14 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import { CustomerItemHandler } from "#services/customer_items/customer_item_handler";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { OrderItem } from "#shared/order/order-item/order-item";
+import { createBranch } from "#tests/branch_fixtures";
 import { mock } from "#tests/test-doubles";
 
 test.group("CustomerItemHandler", (group) => {
@@ -15,23 +16,18 @@ test.group("CustomerItemHandler", (group) => {
 
   let sandbox: sinon.SinonSandbox;
   let getCustomerItemStub: sinon.SinonStub;
-  let getBranchStub: sinon.SinonStub;
 
+  group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
     const customerItemsStub = {
       get: sandbox.stub(),
       getByQuery: sandbox.stub(),
     };
-    const branchesStub = {
-      get: sandbox.stub(),
-    };
 
     sandbox.stub(StorageService, "CustomerItems").value(customerItemsStub);
-    sandbox.stub(StorageService, "Branches").value(branchesStub);
 
     getCustomerItemStub = customerItemsStub.get;
-    getBranchStub = branchesStub.get;
   });
   group.each.teardown(() => {
     sandbox.restore();
@@ -95,20 +91,12 @@ test.group("CustomerItemHandler", (group) => {
       },
     });
 
-    const branch = mock<Branch>({
-      paymentInfo: {
-        extendPeriods: [
-          {
-            type: "semester",
-            date: new Date(),
-            maxNumberOfPeriods: 1,
-            price: 100,
-          },
-        ],
-      },
+    await createBranch({
+      id: "branch1",
+      extendPeriods: [
+        { type: "semester", date: new Date(), maxNumberOfPeriods: 1, price: 100, percentage: null },
+      ],
     });
-
-    getBranchStub.withArgs("branch1").resolves(branch);
 
     return assert.rejects(
       () => customerItemHandler.extend("customerItem1", orderItem, "branch1", "order1"),

@@ -1,6 +1,7 @@
 import type { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
+import Branch from "#models/branch";
 import Signature from "#models/signature";
 import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
@@ -180,12 +181,7 @@ async function addMissingBranchNames(
   if (missing.length === 0) {
     return;
   }
-  // The handler's transform renames _id to id and stringifies ObjectIds in the result rows.
-  const branches = await StorageService.Branches.aggregate<{ id: string; name: string }>([
-    { $match: { _id: { $in: missing.map((id) => new ObjectId(id)) } } },
-    { $project: { name: 1 } },
-  ]);
-  for (const branch of branches) {
-    branchNames.set(String(branch.id), branch.name);
+  for (const [id, name] of await Branch.namesByIds(missing)) {
+    branchNames.set(id, name);
   }
 }

@@ -27,7 +27,6 @@ export const PaymentSchema: BlSchema<Payment> = new Schema({
   },
   branch: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.Branches,
     required: true,
   },
   info: Schema.Types.Mixed,

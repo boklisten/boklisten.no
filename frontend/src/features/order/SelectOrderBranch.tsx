@@ -31,7 +31,7 @@ export default function SelectOrderBranch() {
   }
 
   const groupedBranches = branches.reduce((m, b) => {
-    const k = capitalize(b.location.region);
+    const k = capitalize(b.region);
 
     if (m.has(k)) {
       m.get(k)!.push(b);

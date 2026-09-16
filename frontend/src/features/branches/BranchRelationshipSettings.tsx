@@ -34,15 +34,20 @@ export default function BranchRelationshipSettings({ branch }: { branch: Branch 
   const form = useAppForm({
     defaultValues: {
       localName: branch.localName ?? "",
-      parentBranch: branch.parentBranch ?? "",
-      childBranches: branch.childBranches ?? [],
+      parentBranchId: branch.parentBranchId ?? "",
+      // Children are derived from the other branches' parent references.
+      childBranchIds:
+        branches?.filter((b) => b.parentBranchId === branch.id).map((b) => b.id) ?? [],
       childLabel: branch.childLabel ?? "",
     },
     onSubmit: ({ value }) =>
       updateRelationshipsMutation.mutate({
         body: {
           id: branch.id,
-          ...value,
+          localName: value.localName || null,
+          childLabel: value.childLabel || null,
+          parentBranchId: value.parentBranchId || null,
+          childBranchIds: value.childBranchIds,
         },
       }),
   });
@@ -52,7 +57,7 @@ export default function BranchRelationshipSettings({ branch }: { branch: Branch 
       <form.AppField name="localName">
         {(field) => <field.TextField label="Lokalt navn" placeholder="Flåklypa" />}
       </form.AppField>
-      <form.AppField name="parentBranch">
+      <form.AppField name="parentBranchId">
         {(field) => (
           <field.SelectField
             label="Tilhører"
@@ -66,7 +71,7 @@ export default function BranchRelationshipSettings({ branch }: { branch: Branch 
       <form.AppField name="childLabel">
         {(field) => <field.TextField label="Delt inn i" placeholder="årskull, klasse, parallell" />}
       </form.AppField>
-      <form.AppField name="childBranches">
+      <form.AppField name="childBranchIds">
         {(field) => (
           <field.MultiSelectField
             label="Består av"

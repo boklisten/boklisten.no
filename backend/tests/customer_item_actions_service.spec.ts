@@ -5,9 +5,10 @@ import {
   calculateExtensionStatus,
   resolveBuyoutPrice,
 } from "#services/customer_item_actions_service";
-import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
+import type { Branch as BranchDto } from "#shared/branch";
+import { branchDto } from "#tests/branch_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const DEADLINE = new Date("2027-01-15T00:00:00.000Z");
@@ -29,19 +30,15 @@ function customerItemWith(extensions: number): CustomerItem {
 
 function branchWith(
   extendPeriods: { date: Date; maxNumberOfPeriods: number; price?: number }[],
-): Branch {
-  return mock<Branch>({
-    id: "branch1",
-    paymentInfo: {
-      responsible: false,
-      rentPeriods: [],
-      extendPeriods: extendPeriods.map((period) => ({
-        type: "semester",
-        date: period.date,
-        maxNumberOfPeriods: period.maxNumberOfPeriods,
-        price: period.price ?? 100,
-      })),
-    },
+): BranchDto {
+  return branchDto({
+    extendPeriods: extendPeriods.map((period) => ({
+      type: "semester",
+      date: period.date,
+      maxNumberOfPeriods: period.maxNumberOfPeriods,
+      price: period.price ?? 100,
+      percentage: null,
+    })),
   });
 }
 
@@ -143,14 +140,7 @@ test.group("resolveBuyoutPrice", () => {
     const price = resolveBuyoutPrice({
       customerItem: mock<CustomerItem>({}),
       item,
-      branch: mock<Branch>({
-        paymentInfo: {
-          responsible: false,
-          rentPeriods: [],
-          extendPeriods: [],
-          buyout: { percentage: 0.5 },
-        },
-      }),
+      branch: branchDto({ buyoutPercentage: 0.5 }),
       periodType: "year",
     });
     assert.equal(price, 410);
@@ -162,23 +152,18 @@ test.group("resolveBuyoutPrice", () => {
     const price = resolveBuyoutPrice({
       customerItem: mock<CustomerItem>({}),
       item,
-      branch: mock<Branch>({
-        paymentInfo: {
-          responsible: false,
-          rentPeriods: [],
-          extendPeriods: [],
-          buyout: { percentage: 0.5 },
-          partlyPaymentPeriods: [
-            {
-              type: "year",
-              date: LATER,
-              percentageBuyout: 0.3,
-              percentageBuyoutUsed: 0.3,
-              percentageUpFront: 0.7,
-              percentageUpFrontUsed: 0.7,
-            },
-          ],
-        },
+      branch: branchDto({
+        buyoutPercentage: 0.5,
+        partlyPaymentPeriods: [
+          {
+            type: "year",
+            date: LATER,
+            percentageBuyout: 0.3,
+            percentageBuyoutUsed: 0.3,
+            percentageUpFront: 0.7,
+            percentageUpFrontUsed: 0.7,
+          },
+        ],
       }),
       periodType: "year",
     });
@@ -186,14 +171,7 @@ test.group("resolveBuyoutPrice", () => {
   });
 
   test("charges what is left to pay on a partly-paid book, unless that is zero", ({ assert }) => {
-    const branch = mock<Branch>({
-      paymentInfo: {
-        responsible: false,
-        rentPeriods: [],
-        extendPeriods: [],
-        buyout: { percentage: 0.5 },
-      },
-    });
+    const branch = branchDto({ buyoutPercentage: 0.5 });
     assert.equal(
       resolveBuyoutPrice({
         customerItem: mock<CustomerItem>({ amountLeftToPay: 333 }),
@@ -218,9 +196,7 @@ test.group("resolveBuyoutPrice", () => {
     const price = resolveBuyoutPrice({
       customerItem: mock<CustomerItem>({}),
       item,
-      branch: mock<Branch>({
-        paymentInfo: { responsible: false, rentPeriods: [], extendPeriods: [] },
-      }),
+      branch: branchDto({ buyoutPercentage: 0 }),
       periodType: undefined,
     });
     assert.isNull(price);

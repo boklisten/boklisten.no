@@ -34,6 +34,35 @@ export class BookHandoverSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class BranchPeriodSchema extends BaseModel {
+  static $columns = ['branchId', 'date', 'id', 'kind', 'maxNumberOfPeriods', 'percentage', 'percentageBuyout', 'percentageBuyoutUsed', 'percentageUpFront', 'percentageUpFrontUsed', 'periodType', 'price'] as const
+  $columns = BranchPeriodSchema.$columns
+  @column()
+  declare branchId: string
+  @column.dateTime()
+  declare date: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare kind: string
+  @column()
+  declare maxNumberOfPeriods: number | null
+  @column()
+  declare percentage: number | null
+  @column()
+  declare percentageBuyout: number | null
+  @column()
+  declare percentageBuyoutUsed: number | null
+  @column()
+  declare percentageUpFront: number | null
+  @column()
+  declare percentageUpFrontUsed: number | null
+  @column()
+  declare periodType: string
+  @column()
+  declare price: number | null
+}
+
 export class BranchSubjectBookSchema extends BaseModel {
   static $columns = ['branchSubjectId', 'buy', 'buyAtBranch', 'createdAt', 'id', 'itemId', 'partlyPayment', 'partlyPaymentAtBranch', 'rent', 'rentAtBranch', 'updatedAt'] as const
   $columns = BranchSubjectBookSchema.$columns
@@ -74,6 +103,51 @@ export class BranchSubjectSchema extends BaseModel {
   declare id: number
   @column()
   declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class BranchSchema extends BaseModel {
+  static $columns = ['active', 'address', 'branchItemsLiveAtBranch', 'branchItemsLiveOnline', 'buyoutPercentage', 'childLabel', 'createdAt', 'deliveryAtBranch', 'deliveryByMail', 'id', 'localName', 'logo', 'name', 'parentBranchId', 'paymentResponsible', 'region', 'responsibleForDelivery', 'sellPercentage', 'type', 'updatedAt'] as const
+  $columns = BranchSchema.$columns
+  @column()
+  declare active: boolean
+  @column()
+  declare address: string | null
+  @column()
+  declare branchItemsLiveAtBranch: boolean
+  @column()
+  declare branchItemsLiveOnline: boolean
+  @column()
+  declare buyoutPercentage: number
+  @column()
+  declare childLabel: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare deliveryAtBranch: boolean
+  @column()
+  declare deliveryByMail: boolean
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare localName: string | null
+  @column()
+  declare logo: string | null
+  @column()
+  declare name: string
+  @column()
+  declare parentBranchId: string | null
+  @column()
+  declare paymentResponsible: boolean
+  @column()
+  declare region: string
+  @column()
+  declare responsibleForDelivery: boolean
+  @column()
+  declare sellPercentage: number
+  @column()
+  declare type: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

@@ -1,6 +1,7 @@
 import { Exception } from "@adonisjs/core/exceptions";
 import type { Infer } from "@vinejs/vine/types";
 
+import Branch from "#models/branch";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import DispatchService from "#services/dispatch_service";
 import { UserDetailHelper } from "#services/user_detail_helper";
@@ -201,7 +202,7 @@ export const UserProvisioningService = {
     const branchByLocalName = new Map(
       mappings.map((mapping) => [mapping.localName, mapping.branch]),
     );
-    const uploadBranch = await StorageService.Branches.get(branchId);
+    const uploadBranch = await Branch.findOrFail(branchId);
 
     const summary = {
       createdCount: 0,

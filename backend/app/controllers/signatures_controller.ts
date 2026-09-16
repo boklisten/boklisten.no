@@ -2,6 +2,7 @@ import type { HttpContext } from "@adonisjs/core/http";
 import { Transformer } from "@napi-rs/image";
 import type { DateTime } from "luxon";
 
+import Branch from "#models/branch";
 import Signature, { isUnderage } from "#models/signature";
 import DispatchService from "#services/dispatch_service";
 import { DateService } from "#services/date_service";
@@ -66,7 +67,7 @@ export default class SignaturesController {
     const targetDetailsId = ctx.request.param("detailsId");
 
     const userDetail = await StorageService.UserDetails.getOrNull(targetDetailsId);
-    const branch = await StorageService.Branches.getOrNull(userDetail?.branchMembership);
+    const branch = await Branch.findOptional(userDetail?.branchMembership);
     if (userDetail) {
       await DispatchService.sendSignatureLink(userDetail, branch?.name ?? "en filial");
     }
@@ -75,7 +76,7 @@ export default class SignaturesController {
     const { detailsId } = ctx.authUser;
 
     const userDetail = await StorageService.UserDetails.getOrNull(detailsId);
-    const branch = await StorageService.Branches.getOrNull(userDetail?.branchMembership);
+    const branch = await Branch.findOptional(userDetail?.branchMembership);
     if (userDetail) {
       await DispatchService.sendSignatureLink(userDetail, branch?.name ?? "en filial");
     }

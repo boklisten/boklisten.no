@@ -1,3 +1,4 @@
+import Branch from "#models/branch";
 import BadRequestException from "#exceptions/bad_request_exception";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { OrderHistoryService } from "#services/order_history_service";
@@ -339,7 +340,7 @@ export const StandCartCheckoutService = {
     }
     const [customer, branch] = await Promise.all([
       StorageService.UserDetails.getOrNull(request.customerId),
-      StorageService.Branches.getOrNull(request.branchId),
+      Branch.find(request.branchId),
     ]);
     if (!customer) {
       throw new BadRequestException("Fant ikke kunden");

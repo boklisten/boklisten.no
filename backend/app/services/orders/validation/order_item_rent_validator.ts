@@ -11,12 +11,7 @@ export class OrderItemRentValidator {
   public async validate(branch: Branch, orderItem: OrderItem, item: Item): Promise<boolean> {
     try {
       this.validateOrderItemInfoFields(orderItem);
-      await this.orderItemRentPeriodValidator.validate(
-        orderItem,
-        // @ts-expect-error fixme: auto ignored
-        branch.paymentInfo,
-        item.price,
-      );
+      await this.orderItemRentPeriodValidator.validate(orderItem, branch, item.price);
       return true;
     } catch (error) {
       if (error instanceof BlError) {

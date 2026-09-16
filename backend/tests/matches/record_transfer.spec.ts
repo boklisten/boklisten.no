@@ -9,6 +9,7 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import type MatchRound from "#models/match_round";
+import { createBranch } from "#tests/branch_fixtures";
 import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
@@ -71,6 +72,10 @@ test.group("recordTransfer", (group) => {
   group.each.setup(async () => {
     // Explicitly active: transfers only discharge obligations in rounds that are switched on.
     round = await createTestRound({ name: "Round", standLocation: "Kantina", status: "active" });
+    await createBranch({
+      id: BRANCH,
+      rentPeriods: [{ type: "semester", date: inOneMonth(), maxNumberOfPeriods: 1, percentage: 1 }],
+    });
   });
 
   /**
@@ -128,12 +133,6 @@ test.group("recordTransfer", (group) => {
       .callsFake(async (ids) =>
         unchecked(ids.map((id) => ({ id, name: id === B ? "Bendik Buer" : "Cecilie Carlsen" }))),
       );
-    sandbox.stub(StorageService.Branches, "get").resolves(
-      unchecked({
-        id: BRANCH,
-        paymentInfo: { rentPeriods: [{ date: inOneMonth() }] },
-      }),
-    );
 
     let placedOrders = 0;
     sandbox

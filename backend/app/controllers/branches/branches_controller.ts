@@ -1,32 +1,31 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
-import { StorageService } from "#services/storage_service";
+import Branch from "#models/branch";
+import { createBranch, updateBranch } from "#services/branch_service";
 import { branchCreateValidator, branchValidator } from "#validators/branch";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
 
 export default class BranchesController {
+  /** The branches customers may order from. */
   async indexPublic() {
-    const databaseQuery = new SEDbQuery();
-    databaseQuery.booleanFilters = [{ fieldName: "active", value: true }];
-    databaseQuery.booleanFilters = [{ fieldName: "isBranchItemsLive.online", value: true }];
-    databaseQuery.sortFilters = [{ fieldName: "name", direction: 1 }];
-    return StorageService.Branches.getByQuery(databaseQuery);
+    return (await Branch.publicByName()).map((branch) => branch.toDto());
   }
+
   async index() {
-    const databaseQuery = new SEDbQuery();
-    databaseQuery.sortFilters = [{ fieldName: "name", direction: 1 }];
-    return StorageService.Branches.getByQuery(databaseQuery);
+    return (await Branch.allByName()).map((branch) => branch.toDto());
   }
+
   async show(ctx: HttpContext) {
-    const branchId = ctx.request.param("branchId");
-    return StorageService.Branches.getOrNull(branchId);
+    const branch = await Branch.find(String(ctx.request.param("branchId")));
+    return branch === null ? null : branch.toDto();
   }
+
   async store(ctx: HttpContext) {
-    const branchData = await ctx.request.validateUsing(branchCreateValidator);
-    return StorageService.Branches.add(branchData);
+    const input = await ctx.request.validateUsing(branchCreateValidator);
+    return (await createBranch(input)).toDto();
   }
+
   async update(ctx: HttpContext) {
-    const branchData = await ctx.request.validateUsing(branchValidator);
-    return StorageService.Branches.update(ctx.request.param("branchId"), branchData);
+    const input = await ctx.request.validateUsing(branchValidator);
+    return (await updateBranch(String(ctx.request.param("branchId")), input)).toDto();
   }
 }

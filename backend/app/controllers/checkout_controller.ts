@@ -1,5 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import Branch from "#models/branch";
 import UnauthorizedException from "#exceptions/unauthorized_exception";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderService } from "#services/order_service";
@@ -18,10 +19,10 @@ export default class CheckoutController {
     const { cartItems } = await ctx.request.validateUsing(initializeCheckoutValidator);
     await assertSignedForCheckout(await StorageService.UserDetails.get(detailsId), cartItems);
     const order = await OrderService.createFromCart(detailsId, cartItems);
-    const branch = await StorageService.Branches.get(order.branch);
-    const isDeliveryFree = branch.paymentInfo?.responsibleForDelivery ?? false;
+    const branch = await Branch.findOrFail(order.branch);
+    const isDeliveryFree = branch.responsibleForDelivery;
 
-    if (order.amount === 0 && (!branch.deliveryMethods?.byMail || isDeliveryFree)) {
+    if (order.amount === 0 && (!branch.deliveryByMail || isDeliveryFree)) {
       return { nextStep: "confirm", orderId: order.id } as const;
     }
 

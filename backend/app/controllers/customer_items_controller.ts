@@ -1,8 +1,8 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import { ObjectId } from "mongodb";
 
+import Branch from "#models/branch";
 import Item from "#models/item";
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { buildCustomerItemActions, calculateStatus } from "#services/customer_item_actions_service";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
@@ -24,7 +24,7 @@ export default class CustomerItemsController {
     return Promise.all(
       customerItems.map(async (customerItem) => {
         const item = await Item.findOrFail(customerItem.item);
-        const branch = await StorageService.Branches.get(customerItem.handoutInfo?.handoutById);
+        const branch = await Branch.getOrFail(customerItem.handoutInfo?.handoutById);
         return {
           id: customerItem.id,
           item: {
@@ -58,7 +58,9 @@ export default class CustomerItemsController {
     }
 
     const rows = await StorageService.CustomerItems.aggregate<
-      Omit<ActiveCustomerItem, "actions" | "title">
+      Omit<ActiveCustomerItem, "actions" | "title" | "handoutBranch"> & {
+        handoutBranchId: string | null;
+      }
     >([
       {
         $match: {
@@ -71,15 +73,6 @@ export default class CustomerItemsController {
         },
       },
       {
-        $lookup: {
-          from: BlSchemaName.Branches,
-          localField: "handoutInfo.handoutById",
-          foreignField: "_id",
-          as: "handoutBranch",
-        },
-      },
-      { $unwind: { path: "$handoutBranch", preserveNullAndEmptyArrays: true } },
-      {
         $project: {
           _id: 0,
           id: { $toString: "$_id" },
@@ -87,23 +80,29 @@ export default class CustomerItemsController {
           blid: { $ifNull: ["$blid", null] },
           type: "$type",
           deadline: "$deadline",
-          handoutBranch: {
-            $cond: [
-              { $eq: [{ $ifNull: ["$handoutBranch", null] }, null] },
-              null,
-              { id: { $toString: "$handoutBranch._id" }, name: "$handoutBranch.name" },
-            ],
-          },
+          handoutBranchId: { $toString: "$handoutInfo.handoutById" },
         },
       },
     ]);
     if (rows.length === 0) {
       return [];
     }
-    // Titles come from the Postgres catalogue; a book whose title is gone still shows up.
-    const titles = await Item.titlesByIds(rows.map((row) => row.item));
+    // Titles and branch names come from Postgres; a book whose title or branch is gone still shows up.
+    const [titles, branchNames] = await Promise.all([
+      Item.titlesByIds(rows.map((row) => row.item)),
+      Branch.namesByIds(rows.map((row) => row.handoutBranchId)),
+    ]);
     const listed = rows
-      .map((row) => Object.assign(row, { title: titles.get(row.item) ?? "Ukjent bok" }))
+      .map(({ handoutBranchId, ...row }) => {
+        const branchName = handoutBranchId === null ? undefined : branchNames.get(handoutBranchId);
+        return Object.assign(row, {
+          title: titles.get(row.item) ?? "Ukjent bok",
+          handoutBranch:
+            handoutBranchId !== null && branchName !== undefined
+              ? { id: handoutBranchId, name: branchName }
+              : null,
+        });
+      })
       .toSorted(
         (a, b) =>
           new Date(a.deadline).getTime() - new Date(b.deadline).getTime() ||
@@ -114,7 +113,7 @@ export default class CustomerItemsController {
     const customerItems = await StorageService.CustomerItems.getMany(rows.map((row) => row.id));
     const actionsById = new Map<string, CustomerItemAction[]>();
     for (const customerItem of customerItems) {
-      const branch = await StorageService.Branches.getOrNull(customerItem.handoutInfo?.handoutById);
+      const branch = await Branch.findOptional(customerItem.handoutInfo?.handoutById);
       actionsById.set(customerItem.id, await buildCustomerItemActions(customerItem, branch));
     }
 

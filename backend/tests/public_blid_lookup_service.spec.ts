@@ -7,11 +7,13 @@ import { PublicBlidLookupService } from "#services/public_blid_lookup_service";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { UniqueItem } from "#shared/unique-item";
+import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const BLID = "12345678";
 const ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
+const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
 
 test.group("PublicBlidLookupService.lookup()", (group) => {
   let sandbox: sinon.SinonSandbox;
@@ -22,6 +24,7 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     await createItem({ id: ITEM_ID, title: "Sinus 1T", isbn: 9_788_202_418_304 });
+    await createBranch({ id: BRANCH_ID, name: "Ullern VGS" });
     sandbox = createSandbox();
     aggregate = sandbox.stub(StorageService.CustomerItems, "aggregate").resolves([]);
     uniqueItems = sandbox.stub(StorageService.UniqueItems, "getByQueryOrNull").resolves(null);
@@ -32,7 +35,7 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
   test("a book someone holds right now is reported with its holder", async ({ assert }) => {
     aggregate.resolves([
       {
-        handoutBranch: "Ullern VGS",
+        handoutBranchId: BRANCH_ID,
         handoutTime: "2026-08-20T10:00:00.000Z",
         deadline: "2026-12-20T23:00:00.000Z",
         itemId: ITEM_ID,

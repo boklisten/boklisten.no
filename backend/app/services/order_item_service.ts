@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 
+import Branch from "#models/branch";
 import { periodTypeOfLastOrder, resolveBuyoutPrice } from "#services/customer_item_actions_service";
-import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import type { OrderItem } from "#shared/order/order-item/order-item";
@@ -15,7 +15,7 @@ export function isSameDeadlineDay(a: Date, b: Date): boolean {
 
 export const OrderItemService = {
   async createBuyoutOrderItem(customerItem: CustomerItem, item: Item) {
-    const branch = await StorageService.Branches.getOrNull(customerItem.handoutInfo?.handoutById);
+    const branch = await Branch.findOptional(customerItem.handoutInfo?.handoutById);
     const price = resolveBuyoutPrice({
       customerItem,
       item,
@@ -40,10 +40,8 @@ export const OrderItemService = {
   },
 
   async createExtendOrderItem(customerItem: CustomerItem, item: Item, to: Date) {
-    const branch = await StorageService.Branches.get(customerItem.handoutInfo?.handoutById);
-    const extendPeriod = branch.paymentInfo?.extendPeriods.find((period) =>
-      isSameDeadlineDay(period.date, to),
-    );
+    const branch = await Branch.getOrFail(customerItem.handoutInfo?.handoutById);
+    const extendPeriod = branch.extendPeriods.find((period) => isSameDeadlineDay(period.date, to));
     if (!extendPeriod) {
       throw new Error(
         `Extend period not found in checkout customer: ${customerItem.customer}, branch: ${branch.id}, customer item: ${customerItem.id}`,
@@ -86,10 +84,8 @@ export const OrderItemService = {
     } as const satisfies OrderItem;
   },
   async createRentOrderItem(item: Item, branchId: string, to: Date) {
-    const branch = await StorageService.Branches.get(branchId);
-    const rentPeriod = branch.paymentInfo?.rentPeriods.find((period) =>
-      isSameDeadlineDay(period.date, to),
-    );
+    const branch = await Branch.findOrFail(branchId);
+    const rentPeriod = branch.rentPeriods.find((period) => isSameDeadlineDay(period.date, to));
     if (!rentPeriod) {
       throw new Error(
         `Rent period not found in checkout branch: ${branchId} to: ${to.toISOString()} item: ${item.id}`,
@@ -102,8 +98,8 @@ export const OrderItemService = {
       title: item.title,
       handout: false,
       delivered: false,
-      amount: branch.paymentInfo?.responsible ? 0 : item.price,
-      unitPrice: branch.paymentInfo?.responsible ? 0 : item.price,
+      amount: branch.paymentResponsible ? 0 : item.price,
+      unitPrice: branch.paymentResponsible ? 0 : item.price,
       info: {
         from: new Date(),
         to: rentPeriod.date,
@@ -114,8 +110,8 @@ export const OrderItemService = {
   },
 
   async createPartlyPaymentOrderItem(item: Item, branchId: string, to: Date) {
-    const branch = await StorageService.Branches.get(branchId);
-    const partlyPaymentPeriod = branch.paymentInfo?.partlyPaymentPeriods?.find((period) =>
+    const branch = await Branch.findOrFail(branchId);
+    const partlyPaymentPeriod = branch.partlyPaymentPeriods.find((period) =>
       isSameDeadlineDay(period.date, to),
     );
     if (!partlyPaymentPeriod) {
@@ -132,8 +128,8 @@ export const OrderItemService = {
       title: item.title,
       handout: false,
       delivered: false,
-      amount: branch.paymentInfo?.responsible ? 0 : priceUpFront,
-      unitPrice: branch.paymentInfo?.responsible ? 0 : priceUpFront,
+      amount: branch.paymentResponsible ? 0 : priceUpFront,
+      unitPrice: branch.paymentResponsible ? 0 : priceUpFront,
       info: {
         from: new Date(),
         to: partlyPaymentPeriod.date,

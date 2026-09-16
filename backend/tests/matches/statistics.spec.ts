@@ -33,7 +33,6 @@ test.group("computeMatchStatistics", (group) => {
   group.each.setup(() => {
     sandbox = createSandbox();
     sandbox.stub(StorageService.UserDetails, "getMany").resolves(unchecked([]));
-    sandbox.stub(StorageService.Branches, "getAll").resolves(unchecked([]));
   });
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());

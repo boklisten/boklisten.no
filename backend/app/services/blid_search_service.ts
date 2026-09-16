@@ -1,5 +1,6 @@
 import type { ObjectId } from "mongodb";
 
+import Branch from "#models/branch";
 import Item from "#models/item";
 import BookHandover from "#models/book_handover";
 import { ActiveItemMonitoring, FALLBACK_BRANCH_NAME } from "#services/active_item_monitoring";
@@ -740,8 +741,8 @@ export const BlidSearchService = {
     if (branchId) {
       const previousBranchId = previous.handoutInfo?.handoutById ?? null;
       const [previousBranch, branch] = await Promise.all([
-        previousBranchId ? StorageService.Branches.getOrNull(previousBranchId) : null,
-        StorageService.Branches.getOrNull(branchId),
+        Branch.findOptional(previousBranchId),
+        Branch.findOptional(branchId),
       ]);
       await ActiveItemMonitoring.reportBranchChange({
         ...reported,
@@ -860,9 +861,9 @@ export const BlidSearchService = {
     }));
 
     const { userDetailIds, branchIds } = collectReferencedIds(customerItems, orders, handovers);
-    const [userDetails, branches] = await Promise.all([
+    const [userDetails, branchNames] = await Promise.all([
       StorageService.UserDetails.getMany(userDetailIds, USER_PERMISSION.ADMIN),
-      StorageService.Branches.getMany(branchIds, USER_PERMISSION.ADMIN),
+      Branch.namesByIds(branchIds),
     ]);
 
     return assembleBlidSearch({
@@ -878,7 +879,7 @@ export const BlidSearchService = {
       handovers,
       bringDeliveryOrderIds,
       userDetails: new Map(userDetails.map((detail) => [detail.id, detail.name])),
-      branchNames: new Map(branches.map((branch) => [branch.id, branch.name])),
+      branchNames,
       now: new Date(),
     });
   },

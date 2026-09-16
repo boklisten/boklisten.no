@@ -36,7 +36,7 @@ export const Route = createFileRoute("/(offentlig)/info/branch/$branchId")({
         jsonLdScript(
           branchSchema({
             branchName,
-            address: loaderData?.branch?.location?.address,
+            address: loaderData?.branch?.address ?? undefined,
             pathname: `/info/branch/${params.branchId}`,
             openingHours,
           }),

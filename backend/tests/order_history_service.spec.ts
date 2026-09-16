@@ -1,4 +1,5 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
@@ -6,12 +7,11 @@ import { EmployeeMonitoringService } from "#services/employee_monitoring_service
 import type { OrderHistorySources } from "#services/order_history_service";
 import { OrderHistoryService, presentOrderHistory } from "#services/order_history_service";
 import { StorageService } from "#services/storage_service";
-import type { Branch } from "#shared/branch";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Payment } from "#shared/payment/payment";
-import { mock } from "#tests/test-doubles";
+import { createBranch } from "#tests/branch_fixtures";
 
 const IDA = "ida-id";
 const PETRA = "petra-id";
@@ -498,13 +498,12 @@ test.group("OrderHistoryService.deleteOrder()", (group) => {
   let report: sinon.SinonStub;
   const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
     sandbox = createSandbox();
     remove = sandbox.stub(StorageService.Orders, "remove").resolves(makeOrder());
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
-    sandbox
-      .stub(StorageService.Branches, "getOrNull")
-      .resolves(mock<Branch>({ id: BRANCH, name: "Ullern VGS" }));
+    await createBranch({ id: BRANCH, name: "Ullern VGS" });
   });
   group.each.teardown(() => sandbox.restore());
 
@@ -552,18 +551,14 @@ test.group("OrderHistoryService.updateBranch()", (group) => {
   const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
   // A real ObjectId: the service casts it before writing.
   const NEW_BRANCH = "5f7f7f7f7f7f7f7f7f7f7f72";
-  const branches: Record<string, Branch> = {
-    [BRANCH]: mock<Branch>({ id: BRANCH, name: "Ullern VGS" }),
-    [NEW_BRANCH]: mock<Branch>({ id: NEW_BRANCH, name: "Persbråten VGS" }),
-  };
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
     sandbox = createSandbox();
     update = sandbox.stub(StorageService.Orders, "update").resolves(makeOrder());
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
-    sandbox
-      .stub(StorageService.Branches, "getOrNull")
-      .callsFake((id) => Promise.resolve(id === undefined ? null : (branches[id] ?? null)));
+    await createBranch({ id: BRANCH, name: "Ullern VGS" });
+    await createBranch({ id: NEW_BRANCH, name: "Persbråten VGS" });
     sandbox
       .stub(StorageService.Orders, "getOrNull")
       .callsFake((id) => Promise.resolve(id === "order-1" ? makeOrder() : null));

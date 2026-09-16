@@ -7,6 +7,7 @@ import BranchSubject from "#models/branch_subject";
 import BranchSubjectBook from "#models/branch_subject_book";
 import { BranchSubjectsService, fetchSubjectsForUpload } from "#services/branch_subjects_service";
 import { StorageService } from "#services/storage_service";
+import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { unchecked } from "#tests/test-doubles";
 
@@ -29,6 +30,8 @@ test.group("BranchSubjectsService", (group) => {
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
+    await createBranch({ id: BRANCH });
+    await createBranch({ id: OTHER_BRANCH });
     await createItem({ id: ITEM_KJEMI, title: "Kjemien stemmer" });
     await createItem({ id: ITEM_FYSIKK, title: "Fysikkboka" });
   });

@@ -5,7 +5,7 @@ import { createSandbox } from "sinon";
 import { OrderItemRentPeriodValidator } from "#services/orders/validation/order_item_rent_period_validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import type { BranchPaymentInfo } from "#shared/branch-payment-info";
+import type { Branch } from "#shared/branch";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import { mock } from "#tests/test-doubles";
 
@@ -57,7 +57,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
 
   group.each.setup(() => {
     branchPaymentInfo = {
-      responsible: true,
+      paymentResponsible: true,
     };
     sandbox = createSandbox();
     orderStorageGetStub = sandbox.stub(StorageService.Orders, "get");
@@ -66,8 +66,8 @@ test.group("OrderItemRentPeriodValidator", (group) => {
     sandbox.restore();
   });
 
-  test("should reject if period is not found in branchPaymentInfo", async ({ assert }) => {
-    const paymentInfo = mock<BranchPaymentInfo>({
+  test("should reject if period is not found on the branch", async ({ assert }) => {
+    const paymentInfo = mock<Branch>({
       rentPeriods: [{ type: "year" }],
     });
 
@@ -93,12 +93,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
     });
 
     return assert.rejects(
-      () =>
-        orderItemRentPeriodValidator.validate(
-          orderItem,
-          mock<BranchPaymentInfo>(branchPaymentInfo),
-          100,
-        ),
+      () => orderItemRentPeriodValidator.validate(orderItem, mock<Branch>(branchPaymentInfo), 100),
       BlError,
       /amounts where set on orderItem when branch is responsible/,
     );
@@ -112,11 +107,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
     });
 
     return assert.doesNotReject(() =>
-      orderItemRentPeriodValidator.validate(
-        orderItem,
-        mock<BranchPaymentInfo>(branchPaymentInfo),
-        100,
-      ),
+      orderItemRentPeriodValidator.validate(orderItem, mock<Branch>(branchPaymentInfo), 100),
     );
   });
 
@@ -124,7 +115,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
   // orderItem must be priced against what was payed on the original order. The branch charges
   // itemPrice * percentage (0.5 here) for a rent period.
   const movedPaymentInfo = mock<any>({
-    responsible: false,
+    paymentResponsible: false,
     rentPeriods: [
       {
         type: "semester",
@@ -210,7 +201,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
     assert,
   }) => {
     const paymentInfo: any = {
-      responsible: false,
+      paymentResponsible: false,
       rentPeriods: [
         {
           type: "semester",
@@ -240,7 +231,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
 
   test("should resolve if given valid orderItem", async ({ assert }) => {
     const paymentInfo: any = {
-      responsible: false,
+      paymentResponsible: false,
       rentPeriods: [
         {
           type: "semester",

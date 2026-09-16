@@ -1,3 +1,4 @@
+import BranchModel from "#models/branch";
 import ItemModel from "#models/item";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { periodTypeOfLastOrder } from "#services/customer_item_actions_service";
@@ -220,7 +221,7 @@ async function resolveOrderLine(
       itemIdsInActiveUserMatches(customerId),
       peerMatchNote(customerId, item.id),
       alreadyHeldNotes(customerId, item.id),
-      StorageService.Branches.getOrNull(order.branch),
+      BranchModel.find(order.branch),
       isBringDelivery(order),
     ]);
   const priced = priceOrderLine({
@@ -281,7 +282,7 @@ async function resolveCustomerItemLine(
     return refused(`Kunden har ikke «${item.title}» lenger`);
   }
   const [handoutBranch, paidAmount, periodType] = await Promise.all([
-    StorageService.Branches.getOrNull(customerItem.handoutInfo?.handoutById),
+    BranchModel.findOptional(customerItem.handoutInfo?.handoutById),
     paidForCustomerItem(customerItem),
     periodTypeOfLastOrder(customerItem),
   ]);
@@ -444,7 +445,7 @@ export const StandCartLineResolver = {
     request: StandCartResolveRequest,
     now = new Date(),
   ): Promise<StandCartResolution> {
-    const branch = await StorageService.Branches.getOrNull(request.branchId);
+    const branch = await BranchModel.find(request.branchId);
     if (!branch) {
       return refused("Fant ikke filialen");
     }

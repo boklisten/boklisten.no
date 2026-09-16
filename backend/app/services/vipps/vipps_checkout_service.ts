@@ -2,6 +2,7 @@ import logger from "@adonisjs/core/services/logger";
 import * as Sentry from "@sentry/node";
 import moment from "moment-timezone";
 
+import Branch from "#models/branch";
 import { APP_CONFIG } from "#services/application_config";
 import { DeliveryService } from "#services/delivery_service";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
@@ -50,10 +51,10 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
 
   const deliveryPrice = Math.ceil((totalWeightInGrams / 1000) * 20) + (needPickupPoint ? 150 : 75);
 
-  const branch = await StorageService.Branches.get(order.branch);
+  const branch = await Branch.findOrFail(order.branch);
   return {
     fixedOptions: [
-      ...(order.amount > 0 && branch.deliveryMethods?.branch
+      ...(order.amount > 0 && branch.deliveryAtBranch
         ? [
             {
               id: "pickup",
@@ -69,7 +70,7 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
             } as const,
           ]
         : []),
-      ...(branch.deliveryMethods?.byMail
+      ...(branch.deliveryByMail
         ? [
             {
               id: needPickupPoint ? "mail_pickup_point" : "mailbox",

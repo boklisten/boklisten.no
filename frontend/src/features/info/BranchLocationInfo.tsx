@@ -20,7 +20,7 @@ export default function BranchLocationInfo({ branchId }: { branchId: string }) {
   return (
     <Group gap={5}>
       <IconMapPin />
-      {branch?.location?.address ?? "Ukjent"}
+      {branch?.address ?? "Ukjent"}
     </Group>
   );
 }

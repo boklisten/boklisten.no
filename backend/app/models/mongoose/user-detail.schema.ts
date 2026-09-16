@@ -71,7 +71,6 @@ export const UserDetailSchema: BlSchema<UserDetail> = new Schema({
   },
   branchMembership: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.Branches,
   },
   tasks: {
     confirmDetails: Boolean,

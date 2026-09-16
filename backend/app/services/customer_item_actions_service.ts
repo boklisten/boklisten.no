@@ -3,7 +3,7 @@ import { DateTime } from "luxon";
 import ItemModel from "#models/item";
 import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
-import type { Branch } from "#shared/branch";
+import type { Branch, ExtendPeriod } from "#shared/branch";
 import type {
   CustomerItemAction,
   CustomerItemStatus,
@@ -12,7 +12,7 @@ import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import type { Period } from "#shared/period";
 
-export type ExtendPeriod = NonNullable<Branch["paymentInfo"]>["extendPeriods"][number];
+export type { ExtendPeriod } from "#shared/branch";
 
 export function isHandedOutWithinTheLastTwoWeeks(
   customerItem: CustomerItem,
@@ -48,7 +48,7 @@ function periodsAfterDeadline(
   branch: Branch,
   now: Date,
 ): ExtendPeriod[] {
-  return (branch.paymentInfo?.extendPeriods ?? []).filter(
+  return branch.extendPeriods.filter(
     (period) =>
       customerItem.deadline.getTime() < period.date.getTime() &&
       now.getTime() < period.date.getTime(),
@@ -127,8 +127,8 @@ export function resolveBuyoutPrice({
   periodType: Period | undefined;
 }): number | null {
   const buyoutPercentage =
-    branch?.paymentInfo?.partlyPaymentPeriods?.find((period) => period.type === periodType)
-      ?.percentageBuyout ?? branch?.paymentInfo?.buyout?.percentage;
+    branch?.partlyPaymentPeriods.find((period) => period.type === periodType)?.percentageBuyout ??
+    branch?.buyoutPercentage;
   if (!buyoutPercentage) {
     return null;
   }
