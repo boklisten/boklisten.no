@@ -1,31 +1,22 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
-import { StorageService } from "#services/storage_service";
+import Company from "#models/company";
+import CompanyTransformer from "#transformers/company_transformer";
 import { companyValidator } from "#validators/companies_validators";
 
 export default class CompaniesController {
   async store(ctx: HttpContext) {
-    const { name, organizationNumber, customerNumber, contactInfo } =
-      await ctx.request.validateUsing(companyValidator);
-    return StorageService.Companies.add({
-      name,
-      organizationNumber,
-      customerNumber,
-      contactInfo: {
-        phone: contactInfo.phone,
-        email: contactInfo.email,
-        address: contactInfo.address,
-        postCode: contactInfo.postal.code,
-        postCity: contactInfo.postal.city,
-      },
-    });
+    const input = await ctx.request.validateUsing(companyValidator);
+    return ctx.serialize(CompanyTransformer.transform(await Company.create(input)));
   }
-  async index() {
-    return (await StorageService.Companies.getAll()).toSorted((a, b) =>
-      a.name.localeCompare(b.name),
-    );
+
+  async index(ctx: HttpContext) {
+    return ctx.serialize(CompanyTransformer.transform(await Company.allByName()));
   }
+
   async destroy(ctx: HttpContext) {
-    return StorageService.Companies.remove(ctx.request.param("companyId"));
+    const company = await Company.findOrFail(ctx.request.param("companyId"));
+    await company.delete();
+    return ctx.serialize(CompanyTransformer.transform(company));
   }
 }

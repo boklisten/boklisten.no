@@ -407,18 +407,63 @@ Notes (2026-09-16):
 - The user's running `bun dev` backend does not survive the step's file changes (Mongoose
   "Cannot overwrite `branches` model once compiled" under HMR); restart `bun dev` after pulling.
 
-## Step 2 — companies → `companies` — status: not started
+## Step 2 — companies → `companies` — status: done 2026-09-16 (rehearsed on staging, pending merge)
 
-Target schema `companies`: `id` string(24) PK, `name` not null, `phone`, `email`, `address`,
-`post_code`, `post_city`, `customer_number`, `organization_number`, timestamps. `contactInfo` is
-flattened. Referenced later by `invoices.company_id` (step 12).
+Target schema `companies` (decided 2026-09-16 after the survey below): `id` string(24) PK, `name`,
+`phone`, `email`, `address`, `post_code`, `post_city`, `customer_number`, `organization_number`,
+all `text not null`, plus timestamps. `contactInfo` is flattened. No unique index on
+`organization_number` (two companies share Oslo kommune's invoice centre). Referenced later by
+`invoices.company_id` (step 12), which will be nullable: no invoice has ever stored a
+`companyDetail`.
 
-Code to move (4 refs / 2 files): company invoice generation (`services/invoices/`), company admin
-endpoints.
+Dropped: `user`, `editableFor`, `viewableFor` (always `[]`), `active` (always `true`, never read).
 
-Survey: none beyond counts (24 documents).
+Code moved (4 refs / 2 files): `companies_controller.ts` (list, create, delete) and
+`services/invoices/company_invoice_service.ts` (the customer snapshot on a hand-written company
+invoice). Model `app/models/company.ts` (`allByName`, Norwegian collation in code);
+`app/transformers/company_transformer.ts` gives the API the flat `Company` shape.
 
-Survey results / notes: (fill in)
+API shape: `GET /companies` returns the flat row (`phone`, `email`, `address`, `postCode`,
+`postCity` at top level) and `POST /companies` accepts the same flat shape (decided 2026-09-16:
+one shape in and out; the create form maps its postal field on submit). The shared `Company`
+type is reshaped to match; `CompanyManager.tsx` is the only frontend consumer besides the
+company-invoice select, which reads `id`, `name` and `organizationNumber` and did not change.
+
+Tests: `tests/company_invoice_service.spec.ts` inserts a real company (`tests/company_fixtures.ts`
+`createCompany`) instead of stubbing `StorageService.Companies`; `tests/company_model.spec.ts`
+guards id assignment and the sort order.
+
+Survey results (staging Mongo, 2026-09-16, 24 documents):
+
+- Every field present and a non-empty string on all 24 documents (`name`, `customerNumber`,
+  `organizationNumber`, `contactInfo.{phone,email,address,postCode,postCity}`). Hence every column
+  `not null`.
+- Two documents carry a leading space in `organizationNumber`/`customerNumber` (they predate the
+  schema's `trim`); the transfer trims every string.
+- Five documents (four fylkeskommune invoice centres and Oslo kommune) hold the literal string
+  `"0"` as `email`, the legacy way of saying "no email". Transferred as is; the validator requires a
+  real address for new companies. Company invoices copy it into `customerInfo.email` exactly as
+  before.
+- `organizationNumber` `976820037` is shared by "Oslo kommune - Fakturasentralen" and "Ullern
+  videregående skole, Oslo kommune Fakturasentralen"; `customerNumber` equals the organization
+  number except for the two oldest companies (`111`, `112`).
+- `active: true` on all 24; `editableFor`/`viewableFor` always `[]`; `user` an admin `u#…`
+  reference on 22. `creationTime`/`lastUpdated` are `Date` on every document.
+- Invoices: `customerInfo.companyDetail` is `null` on all 7 735 invoices; 102 invoices carry an
+  `organizationNumber` in their snapshot (how the frontend tells company invoices apart today).
+
+Notes (2026-09-16):
+
+- Staging rehearsal from a laptop: `companies: migrated 24, skipped 0`, whole migration 2.9 s, the
+  Mongo collection dropped. Spot-check afterwards: 24 rows, no untrimmed numbers, no
+  upper-case emails, no null timestamps, sort order as expected.
+- Migration `1789300000000_create_companies_table.ts`.
+- Verified with Playwright on `/admin/database/selskap` (24 cards sorted, create → row appears with
+  the flat body, delete → row gone, no horizontal scroll at 375px) and on
+  `/admin/faktura?fakturaFane=selskapsfaktura` (the select offers all 24 companies).
+- As after step 1, the running `bun dev` backend dies with Mongoose's "Cannot overwrite `branches`
+  model once compiled" when the schema file is deleted under HMR; touching `start/routes.ts`
+  triggers a full restart of the child without killing `bun dev`.
 
 ## Step 3 — branches → `branches` + `branch_periods` — status: not started
 
@@ -900,3 +945,5 @@ Only after step 12 has run in production.
   `active` dropped per survey instead of unconditionally; step 5 email confirmed always present.
 - 2026-09-16: step 0 implemented (helpers, ObjectId generator, fixture ids, drop migration,
   staging-recovery decision, orders timing dry run).
+- 2026-09-16: step 2 implemented (companies flattened into Postgres, POST body flattened too, all
+  columns not null per survey, staging rehearsal 2.9 s).

@@ -1,4 +1,5 @@
 import BadRequestException from "#exceptions/bad_request_exception";
+import Company from "#models/company";
 import { StorageService } from "#services/storage_service";
 import { companyLinePayment } from "#shared/invoice";
 import type { CompanyInvoiceInput, CompanyInvoiceLine, Invoice } from "#shared/invoice";
@@ -25,7 +26,7 @@ export async function createCompanyInvoice(input: CompanyInvoiceInput): Promise<
 }
 
 async function buildCompanyInvoice(input: CompanyInvoiceInput): Promise<Omit<Invoice, "id">> {
-  const company = await StorageService.Companies.getOrNull(input.companyId);
+  const company = await Company.find(input.companyId);
   if (!company) {
     throw new BadRequestException("Selskapet finnes ikke.");
   }
@@ -47,14 +48,14 @@ async function buildCompanyInvoice(input: CompanyInvoiceInput): Promise<Omit<Inv
     })),
     customerInfo: {
       name: company.name,
-      email: company.contactInfo.email,
-      phone: company.contactInfo.phone,
+      email: company.email,
+      phone: company.phone,
       organizationNumber: company.organizationNumber,
       customerNumber: company.customerNumber,
       postal: {
-        address: company.contactInfo.address,
-        city: company.contactInfo.postCity,
-        code: company.contactInfo.postCode,
+        address: company.address,
+        city: company.postCity,
+        code: company.postCode,
         country: "norway",
       },
     },

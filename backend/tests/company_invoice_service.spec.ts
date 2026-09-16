@@ -1,4 +1,5 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
@@ -7,10 +8,10 @@ import {
   createCompanyInvoice,
 } from "#services/invoices/company_invoice_service";
 import { StorageService } from "#services/storage_service";
-import type { Company } from "#shared/company";
 import { companyLinePayment } from "#shared/invoice";
 import type { CompanyInvoiceLine } from "#shared/invoice";
-import { mock } from "#tests/test-doubles";
+import { createCompany } from "#tests/company_fixtures";
+import { fixtureId } from "#tests/fixtures";
 
 /** The lines of a company invoice in staging, so the numbers can be checked against it. */
 const KVITSUND_LINES: CompanyInvoiceLine[] = [
@@ -94,26 +95,23 @@ test.group("company invoice arithmetic", () => {
 test.group("company invoice creation", (group) => {
   let sandbox: sinon.SinonSandbox;
   let addInvoice: sinon.SinonStub;
+  let companyId: string;
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService, "Companies").value({
-      getOrNull: sandbox.stub().resolves(
-        mock<Company>({
-          id: "company1",
-          name: "Kvitsund Gymnas",
-          organizationNumber: "988982857",
-          customerNumber: "988982857",
-          contactInfo: {
-            email: "bibliotek@kvitsund.vgs.no",
-            phone: "99240588",
-            address: "Jacob Naadlands veg 2",
-            postCode: "3850",
-            postCity: "Kviteseid",
-          },
-        }),
-      ),
-    });
+    companyId = (
+      await createCompany({
+        name: "Kvitsund Gymnas",
+        organizationNumber: "988982857",
+        customerNumber: "988982857",
+        email: "bibliotek@kvitsund.vgs.no",
+        phone: "99240588",
+        address: "Jacob Naadlands veg 2",
+        postCode: "3850",
+        postCity: "Kviteseid",
+      })
+    ).id;
     addInvoice = sandbox
       .stub()
       .callsFake((invoice) => Promise.resolve({ ...invoice, id: "saved" }));
@@ -126,7 +124,7 @@ test.group("company invoice creation", (group) => {
   test("stores the company as customer, the lines and a comment", async ({ assert }) => {
     const duedate = new Date("2026-09-16T13:22:17.867Z");
     await createCompanyInvoice({
-      companyId: "company1",
+      companyId,
       invoiceNumber: "20268005",
       reference: "Tove Fj. Johansen",
       ourReference: "Jørgen Rosenlund",
@@ -166,12 +164,10 @@ test.group("company invoice creation", (group) => {
   });
 
   test("refuses an unknown company", async ({ assert }) => {
-    sandbox.stub(StorageService, "Companies").value({ getOrNull: sandbox.stub().resolves(null) });
-
     await assert.rejects(
       () =>
         createCompanyInvoice({
-          companyId: "nope",
+          companyId: fixtureId("dead"),
           invoiceNumber: "1",
           reference: "",
           ourReference: "",

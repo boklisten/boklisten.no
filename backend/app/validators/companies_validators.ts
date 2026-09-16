@@ -4,17 +4,13 @@ import { emailField, phoneField, postalCodeField } from "#validators/common/fiel
 
 export const companyValidator = vine.create(
   vine.object({
-    name: vine.string(),
-    organizationNumber: vine.string(),
-    customerNumber: vine.string(),
-    contactInfo: vine.object({
-      phone: phoneField.clone(),
-      email: emailField.clone(),
-      address: vine.string(),
-      postal: vine.object({
-        code: postalCodeField.clone(),
-        city: vine.string(),
-      }),
-    }),
+    name: vine.string().trim(),
+    organizationNumber: vine.string().trim(),
+    customerNumber: vine.string().trim(),
+    phone: phoneField.clone(),
+    email: emailField.clone(),
+    address: vine.string().trim(),
+    postCode: postalCodeField.clone(),
+    postCity: vine.string().trim(),
   }),
 );

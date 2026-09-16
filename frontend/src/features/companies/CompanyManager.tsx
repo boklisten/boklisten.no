@@ -57,7 +57,7 @@ function CompanyCard({ company }: { company: Company }) {
         </Group>
         <Group gap={5}>
           <IconMapPin />
-          <Text>{company.contactInfo.address}</Text>
+          <Text>{company.address}</Text>
         </Group>
       </Group>
     </Card>
@@ -82,17 +82,18 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
       name: "",
       organizationNumber: "",
       customerNumber: "",
-      contactInfo: {
-        phone: "",
-        email: "",
-        address: "",
-        postal: {
-          code: "",
-          city: "",
-        },
+      phone: "",
+      email: "",
+      address: "",
+      postal: {
+        code: "",
+        city: "",
       },
     },
-    onSubmit: (data) => addCompanyMutation.mutate({ body: data.value }),
+    onSubmit: ({ value: { postal, ...company } }) =>
+      addCompanyMutation.mutate({
+        body: { ...company, postCode: postal.code, postCity: postal.city },
+      }),
   });
   return (
     <Stack>
@@ -124,7 +125,7 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
         {(field) => <field.TextField label="Kundenummer" required placeholder="123" />}
       </form.AppField>
       <form.AppField
-        name="contactInfo.phone"
+        name="phone"
         validators={{
           onBlur: ({ value }) => phoneNumberFieldValidator(value, "administrate"),
         }}
@@ -132,7 +133,7 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
         {(field) => <field.PhoneNumberField />}
       </form.AppField>
       <form.AppField
-        name="contactInfo.email"
+        name="email"
         validators={{
           onBlur: ({ value }) => emailFieldValidator(value, "administrate"),
         }}
@@ -140,7 +141,7 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
         {(field) => <field.EmailField />}
       </form.AppField>
       <form.AppField
-        name="contactInfo.address"
+        name="address"
         validators={{
           onBlur: ({ value }) => addressFieldValidator(value),
         }}
@@ -148,7 +149,7 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
         {(field) => <field.AddressField />}
       </form.AppField>
       <form.AppField
-        name="contactInfo.postal"
+        name="postal"
         validators={{
           onBlurAsync: ({ value }) => postalCodeFieldValidator(value.code),
         }}

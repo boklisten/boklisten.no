@@ -78,6 +78,33 @@ export class BranchSubjectSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class CompanySchema extends BaseModel {
+  static $columns = ['address', 'createdAt', 'customerNumber', 'email', 'id', 'name', 'organizationNumber', 'phone', 'postCity', 'postCode', 'updatedAt'] as const
+  $columns = CompanySchema.$columns
+  @column()
+  declare address: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare customerNumber: string
+  @column()
+  declare email: string
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string
+  @column()
+  declare organizationNumber: string
+  @column()
+  declare phone: string
+  @column()
+  declare postCity: string
+  @column()
+  declare postCode: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class EditableTextSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'text', 'updatedAt'] as const
   $columns = EditableTextSchema.$columns
