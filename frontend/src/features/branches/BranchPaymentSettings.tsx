@@ -174,20 +174,8 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                           <form.AppField name={`partlyPaymentPeriods[${i}].percentageUpFront`}>
                             {(subField) => <subField.PercentageField label="Første betaling" />}
                           </form.AppField>
-                          <form.AppField name={`partlyPaymentPeriods[${i}].percentageUpFrontUsed`}>
-                            {(subField) => (
-                              <subField.PercentageField label="Første betaling (brukt)" />
-                            )}
-                          </form.AppField>
-                        </Group>
-                        <Group>
                           <form.AppField name={`partlyPaymentPeriods[${i}].percentageBuyout`}>
                             {(subField) => <subField.PercentageField label="Utkjøpsprosent" />}
-                          </form.AppField>
-                          <form.AppField name={`partlyPaymentPeriods[${i}].percentageBuyoutUsed`}>
-                            {(subField) => (
-                              <subField.PercentageField label="Utkjøpsprosent (brukt)" />
-                            )}
                           </form.AppField>
                         </Group>
                         <Group>
@@ -208,9 +196,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                         {
                           type: "semester",
                           percentageBuyout: 1,
-                          percentageBuyoutUsed: 1,
                           percentageUpFront: 1,
-                          percentageUpFrontUsed: 1,
                           date: dayjs().format("YYYY-MM-DD"),
                         },
                       ])

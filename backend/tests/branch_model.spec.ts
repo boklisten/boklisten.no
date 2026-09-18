@@ -42,9 +42,7 @@ test.group("Branch model", (group) => {
           type: "semester",
           date: SEMESTER_END,
           percentageBuyout: 0.33,
-          percentageBuyoutUsed: 0.33,
           percentageUpFront: 0.6,
-          percentageUpFrontUsed: 0.65,
         },
       ],
     });
@@ -73,9 +71,7 @@ test.group("Branch model", (group) => {
           type: "semester",
           date: SEMESTER_END,
           percentageBuyout: 0.33,
-          percentageBuyoutUsed: 0.33,
           percentageUpFront: 0.6,
-          percentageUpFrontUsed: 0.65,
         },
       ]);
     }

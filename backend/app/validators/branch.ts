@@ -28,9 +28,7 @@ const partlyPaymentPeriodSchema = vine.object({
   type: periodTypeField,
   date: vine.date(),
   percentageBuyout: percentageField,
-  percentageBuyoutUsed: percentageField,
   percentageUpFront: percentageField,
-  percentageUpFrontUsed: percentageField,
 });
 
 export const branchCreateValidator = vine.create(

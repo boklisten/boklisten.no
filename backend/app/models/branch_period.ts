@@ -22,13 +22,7 @@ export type BranchPeriodRow = Omit<
 
 type KindColumns = Pick<
   BranchPeriodRow,
-  | "maxNumberOfPeriods"
-  | "percentage"
-  | "price"
-  | "percentageBuyout"
-  | "percentageBuyoutUsed"
-  | "percentageUpFront"
-  | "percentageUpFrontUsed"
+  "maxNumberOfPeriods" | "percentage" | "price" | "percentageBuyout" | "percentageUpFront"
 >;
 
 /** One row; the columns the kind does not use stay null. `date` may arrive as an ISO string over the API. */
@@ -47,9 +41,7 @@ function periodRow(
     percentage: columns.percentage ?? null,
     price: columns.price ?? null,
     percentageBuyout: columns.percentageBuyout ?? null,
-    percentageBuyoutUsed: columns.percentageBuyoutUsed ?? null,
     percentageUpFront: columns.percentageUpFront ?? null,
-    percentageUpFrontUsed: columns.percentageUpFrontUsed ?? null,
   };
 }
 
@@ -67,9 +59,7 @@ export default class BranchPeriod extends BranchPeriodSchema {
       ...(periods.partlyPaymentPeriods ?? []).map((period) =>
         periodRow(branchId, "partly_payment", period, {
           percentageBuyout: period.percentageBuyout,
-          percentageBuyoutUsed: period.percentageBuyoutUsed,
           percentageUpFront: period.percentageUpFront,
-          percentageUpFrontUsed: period.percentageUpFrontUsed,
         }),
       ),
       ...(periods.rentPeriods ?? []).map((period) =>
@@ -112,9 +102,7 @@ export default class BranchPeriod extends BranchPeriodSchema {
       type: this.periodType,
       date: this.date.toJSDate(),
       percentageBuyout: this.required(this.percentageBuyout, "percentageBuyout"),
-      percentageBuyoutUsed: this.required(this.percentageBuyoutUsed, "percentageBuyoutUsed"),
       percentageUpFront: this.required(this.percentageUpFront, "percentageUpFront"),
-      percentageUpFrontUsed: this.required(this.percentageUpFrontUsed, "percentageUpFrontUsed"),
     };
   }
 

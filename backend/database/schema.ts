@@ -64,7 +64,7 @@ export class BranchItemSchema extends BaseModel {
 }
 
 export class BranchPeriodSchema extends BaseModel {
-  static $columns = ['branchId', 'date', 'id', 'kind', 'maxNumberOfPeriods', 'percentage', 'percentageBuyout', 'percentageBuyoutUsed', 'percentageUpFront', 'percentageUpFrontUsed', 'periodType', 'price'] as const
+  static $columns = ['branchId', 'date', 'id', 'kind', 'maxNumberOfPeriods', 'percentage', 'percentageBuyout', 'percentageUpFront', 'periodType', 'price'] as const
   $columns = BranchPeriodSchema.$columns
   @column()
   declare branchId: string
@@ -81,11 +81,7 @@ export class BranchPeriodSchema extends BaseModel {
   @column()
   declare percentageBuyout: number | null
   @column()
-  declare percentageBuyoutUsed: number | null
-  @column()
   declare percentageUpFront: number | null
-  @column()
-  declare percentageUpFrontUsed: number | null
   @column()
   declare periodType: string
   @column()

@@ -32,12 +32,8 @@ export interface PartlyPaymentPeriod {
   date: Date;
   /** Fraction of the item price the customer pays to buy the book out. */
   percentageBuyout: number;
-  /** Same as `percentageBuyout`, for a used book. */
-  percentageBuyoutUsed: number;
   /** Fraction of the item price the customer pays up front. */
   percentageUpFront: number;
-  /** Same as `percentageUpFront`, for a used book. */
-  percentageUpFrontUsed: number;
 }
 
 /** The three period lists of a branch, as the API and the payment form address them. */

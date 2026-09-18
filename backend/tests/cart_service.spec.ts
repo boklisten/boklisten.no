@@ -44,9 +44,7 @@ test.group("CartService.getOptions", () => {
           type: "year",
           date: new Date("2027-07-01"),
           percentageUpFront: 0.5,
-          percentageUpFrontUsed: 0.5,
           percentageBuyout: 0.5,
-          percentageBuyoutUsed: 0.5,
         },
       ],
     });
