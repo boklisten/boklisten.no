@@ -1,6 +1,7 @@
 import type { AccessToken } from "@boklisten/backend/shared/access-token";
 import { PERMISSION_LEVELS } from "@boklisten/backend/shared/user-permission";
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
+import { useQueryClient } from "@tanstack/react-query";
 import { decodeToken } from "react-jwt";
 
 import useLocalStorageSubscription from "@/shared/hooks/useLocalStorageSubscription";
@@ -15,12 +16,18 @@ export function login(tokens: { accessToken: string; refreshToken: string }) {
   return true;
 }
 
-export function logout() {
-  sessionStorage.clear();
-  localStorage.clear();
+/**
+ * Whether a token is stored right now. For a query's `enabled`, so the decision to fetch is made at
+ * fetch time rather than from a render that happened before the tokens were cleared.
+ */
+export function hasAccessToken() {
+  return (
+    typeof window !== "undefined" && localStorage.getItem(BL_CONFIG.token.accessToken) !== null
+  );
 }
 
 export default function useAuth() {
+  const queryClient = useQueryClient();
   const accessToken = useLocalStorageSubscription(BL_CONFIG.token.accessToken);
   const decodedAccessToken = decodeToken<AccessToken>(accessToken ?? "");
 
@@ -28,7 +35,14 @@ export default function useAuth() {
     ? PERMISSION_LEVELS[decodedAccessToken.permission]
     : -1;
 
+  function logout() {
+    sessionStorage.clear();
+    localStorage.clear();
+    queryClient.clear();
+  }
+
   return {
+    logout,
     detailsId: decodedAccessToken?.details ?? null,
     isLoading: accessToken === null,
     isLoggedIn: permissionLevel >= PERMISSION_LEVELS.customer,

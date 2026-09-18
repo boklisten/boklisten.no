@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 
 import useApiClient from "@/shared/hooks/useApiClient";
+import { hasAccessToken } from "@/shared/hooks/useAuth";
 
 export default function TasksLink() {
   const { api } = useApiClient();
@@ -11,7 +12,7 @@ export default function TasksLink() {
     data: userDetail,
     isLoading: isLoadingUserDetail,
     isError: isErrorUserDetail,
-  } = useQuery(api.userDetails.me.queryOptions());
+  } = useQuery({ ...api.userDetails.me.queryOptions(), enabled: hasAccessToken });
 
   const taskCount =
     isLoadingUserDetail || isErrorUserDetail || !userDetail?.tasks

@@ -2,6 +2,7 @@ import { Indicator } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import useApiClient from "@/shared/hooks/useApiClient";
+import { hasAccessToken } from "@/shared/hooks/useAuth";
 import type { ReactNode } from "react";
 
 export default function TasksIndicator({ children }: { children: ReactNode }) {
@@ -10,7 +11,7 @@ export default function TasksIndicator({ children }: { children: ReactNode }) {
     data: userDetail,
     isLoading: isLoadingUserDetail,
     isError: isErrorUserDetail,
-  } = useQuery(api.userDetails.me.queryOptions());
+  } = useQuery({ ...api.userDetails.me.queryOptions(), enabled: hasAccessToken });
 
   const taskCount =
     isLoadingUserDetail || isErrorUserDetail || !userDetail?.tasks

@@ -2,7 +2,7 @@ import { createTuyau } from "@tuyau/core/client";
 import { registry } from "@boklisten/backend/registry";
 import { superjson } from "@tuyau/superjson/plugin";
 
-import { login, logout } from "@/shared/hooks/useAuth";
+import useAuth, { login } from "@/shared/hooks/useAuth";
 import BL_CONFIG from "@/shared/utils/bl-config";
 import { publicApiClient } from "@/shared/utils/publicApiClient";
 import { useLocation, useNavigate } from "@tanstack/react-router";
@@ -10,6 +10,7 @@ import { createTuyauReactQueryClient } from "@tuyau/react-query";
 
 export default function useApiClient() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const pathname = useLocation({
     select: (location) => location.pathname,
   });
