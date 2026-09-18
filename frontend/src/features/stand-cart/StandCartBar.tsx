@@ -61,21 +61,20 @@ export default function StandCartBar({
       heading={countLabel(cart.cart.lines.length)}
       detail={
         <>
-          {customer !== undefined &&
-            customer.name !== null && (
-              // Reads like the detail line it is, and only shows as a link on hover
-              <EntityLink
-                to="/admin/kasse"
-                search={showCustomer(customer.detailsId)}
-                onClick={customer.onFollow}
-                size="sm"
-                fw={400}
-                c="dimmed"
-                lh={1.3}
-              >
-                {displayName(customer.name)}
-              </EntityLink>
-            )}
+          {customer !== undefined && customer.name !== null && (
+            // Reads like the detail line it is, and only shows as a link on hover
+            <EntityLink
+              to="/admin/kasse"
+              search={showCustomer(customer.detailsId)}
+              onClick={customer.onFollow}
+              size="sm"
+              fw={400}
+              c="dimmed"
+              lh={1.3}
+            >
+              {displayName(customer.name)}
+            </EntityLink>
+          )}
           {summary && (
             <Text size="sm" c={summary.color} lh={1.3}>
               {summary.text}
