@@ -190,8 +190,8 @@ export default function InvoiceGrid({
           onSelectionChange?.(event.api.getSelectedRows().map((row) => row.id))
         }
         pagination
-        paginationPageSize={100}
-        paginationPageSizeSelector={[50, 100, 500]}
+        paginationPageSize={500}
+        paginationPageSizeSelector={[500, 1000, 2000, 5000]}
       />
     </Box>
   );

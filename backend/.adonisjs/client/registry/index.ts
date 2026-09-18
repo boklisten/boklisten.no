@@ -588,6 +588,12 @@ const routes = {
     tokens: [{"old":"/invoices/:invoiceId","type":0,"val":"invoices","end":""},{"old":"/invoices/:invoiceId","type":1,"val":"invoiceId","end":""}],
     types: placeholder as Registry['invoices.show']['types'],
   },
+  'invoices.destroy': {
+    methods: ["DELETE"],
+    pattern: '/invoices/:invoiceId',
+    tokens: [{"old":"/invoices/:invoiceId","type":0,"val":"invoices","end":""},{"old":"/invoices/:invoiceId","type":1,"val":"invoiceId","end":""}],
+    types: placeholder as Registry['invoices.destroy']['types'],
+  },
   'invoices.set_status': {
     methods: ["PATCH"],
     pattern: '/invoices/:invoiceId/status',

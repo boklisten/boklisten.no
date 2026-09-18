@@ -56,7 +56,8 @@ export function showStatusChangeResult(count: number, status: InvoiceStatus, war
 
 /**
  * Changes the status of one or many listed invoices from the overview. The rows are patched in
- * every cached list so the grid and the tiles update without a refetch.
+ * every cached list so the grid and the tiles update at once; everything else is invalidated,
+ * because a payment also touches the customer's orders and books.
  */
 export default function useInvoiceStatusChange() {
   const { api, client } = useApiClient();
@@ -68,7 +69,7 @@ export default function useInvoiceStatusChange() {
       { queryKey: api.invoices.index.pathKey() },
       (rows) => rows?.map((row) => (changed.has(row.id) ? { ...row, status } : row)),
     );
-    void queryClient.invalidateQueries({ queryKey: api.invoices.show.pathKey() });
+    void queryClient.invalidateQueries();
   };
 
   const mutation = useMutation({

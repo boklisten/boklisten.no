@@ -3,6 +3,7 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import {
+  deleteInvoice,
   invoicePaidLineAmount,
   setInvoiceLineCancelled,
   setInvoiceStatus,
@@ -63,6 +64,7 @@ test.group("invoice status changes", (group) => {
   let sandbox: sinon.SinonSandbox;
   let getInvoice: sinon.SinonStub;
   let updateInvoice: sinon.SinonStub;
+  let removeInvoice: sinon.SinonStub;
   let customerItems: { getMany: sinon.SinonStub; update: sinon.SinonStub };
   let orders: { add: sinon.SinonStub; remove: sinon.SinonStub; getByQueryOrNull: sinon.SinonStub };
   let userDetails: { getOrNull: sinon.SinonStub; update: sinon.SinonStub };
@@ -74,7 +76,10 @@ test.group("invoice status changes", (group) => {
     updateInvoice = sandbox
       .stub()
       .callsFake((_id: string, patch: Partial<Invoice>) => Promise.resolve(invoice(patch)));
-    sandbox.stub(StorageService, "Invoices").value({ get: getInvoice, update: updateInvoice });
+    removeInvoice = sandbox.stub().resolves();
+    sandbox
+      .stub(StorageService, "Invoices")
+      .value({ get: getInvoice, update: updateInvoice, remove: removeInvoice });
     customerItems = {
       getMany: sandbox
         .stub()
@@ -281,5 +286,23 @@ test.group("invoice status changes", (group) => {
       () => setInvoiceLineCancelled("inv1", 5, true),
       /Fakturalinjen finnes ikke/,
     );
+  });
+
+  test("an unpaid invoice can be deleted", async ({ assert }) => {
+    await deleteInvoice("inv1");
+    assert.isTrue(removeInvoice.calledOnceWithExactly("inv1"));
+  });
+
+  test("deleting an invoice that is not unpaid is refused", async ({ assert }) => {
+    for (const flags of [
+      { customerHavePayed: true },
+      { toCreditNote: true },
+      { toDebtCollection: true },
+      { toLossNote: true },
+    ]) {
+      getInvoice.resolves(invoice(flags));
+      await assert.rejects(() => deleteInvoice("inv1"), /Bare ubetalte fakturaer kan slettes/);
+    }
+    assert.isFalse(removeInvoice.called);
   });
 });

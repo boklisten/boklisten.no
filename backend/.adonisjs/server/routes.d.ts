@@ -101,6 +101,7 @@ export type ScannedRoutes = {
     'invoices.export': { paramsTuple?: []; params?: {} }
     'invoices.set_statuses': { paramsTuple?: []; params?: {} }
     'invoices.show': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
+    'invoices.destroy': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'invoices.set_status': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'invoices.set_line_cancelled': { paramsTuple: [ParamValue,ParamValue]; params: {'invoiceId': ParamValue,'lineIndex': ParamValue} }
     'editable_texts.index': { paramsTuple?: []; params?: {} }
@@ -418,6 +419,7 @@ export type ScannedRoutes = {
     'users.destroy': { paramsTuple: [ParamValue]; params: {'detailsId': ParamValue} }
     'match_rounds.destroy_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invoices.destroy': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'editable_texts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'questions_and_answers.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'companies.destroy': { paramsTuple: [ParamValue]; params: {'companyId': ParamValue} }

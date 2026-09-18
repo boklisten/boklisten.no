@@ -15,9 +15,10 @@ import {
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { IconArrowBackUp, IconBan } from "@tabler/icons-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { hashKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { showCustomer } from "@/features/kasse/kasseParams";
+import InvoiceDeleteSection from "@/features/invoices/InvoiceDeleteSection";
 import InvoiceStatusControl from "@/features/invoices/InvoiceStatusControl";
 import { INVOICE_TYPE_LABELS, formatDate, formatKroner } from "@/features/invoices/invoiceLabels";
 import { confirmPaymentChange } from "@/features/invoices/useInvoiceStatusChange";
@@ -250,9 +251,6 @@ export default function InvoiceDetailDrawer({
   const detailQuery = api.invoices.show.queryOptions({ params: { invoiceId: invoiceId ?? "" } });
   const invoice = useQuery({ ...detailQuery, enabled: invoiceId !== undefined });
 
-  const refreshList = () =>
-    queryClient.invalidateQueries({ queryKey: api.invoices.index.pathKey() });
-
   const changeStatus = useMutation({
     mutationFn: (status: InvoiceStatus) =>
       client.api.invoices.setStatus({ params: { invoiceId: invoiceId ?? "" }, body: { status } }),
@@ -264,7 +262,8 @@ export default function InvoiceDetailDrawer({
       if (result.warnings.length === 0) {
         showSuccessNotification("Statusen ble endret");
       }
-      void refreshList();
+      // A payment also touches the customer's orders and books, so every cache is refreshed.
+      void queryClient.invalidateQueries();
     },
     onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke endre statusen")),
   });
@@ -280,6 +279,18 @@ export default function InvoiceDetailDrawer({
     },
     onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke endre linjen")),
   });
+
+  /**
+   * Every list that counted the invoice is refreshed. Its own query is left alone: the drawer is
+   * still mounted with the old id for a moment, and refetching it would only produce a 404.
+   */
+  function onDeleted() {
+    setWarnings([]);
+    onClose();
+    void queryClient.invalidateQueries({
+      predicate: (query) => query.queryHash !== hashKey(detailQuery.queryKey),
+    });
+  }
 
   async function onStatusChange(status: InvoiceStatus) {
     if (!invoice.data) {
@@ -314,14 +325,19 @@ export default function InvoiceDetailDrawer({
       {invoice.error ? (
         <ErrorAlert title="Klarte ikke laste inn fakturaen">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
       ) : invoice.data ? (
-        <InvoiceDocument
-          invoice={invoice.data}
-          onStatusChange={(status) => void onStatusChange(status)}
-          onLineCancel={(lineIndex, cancel) => cancelLine.mutate({ lineIndex, cancel })}
-          busy={changeStatus.isPending || cancelLine.isPending}
-          compact={narrow ?? false}
-          warnings={warnings}
-        />
+        <Stack gap="xl">
+          <InvoiceDocument
+            invoice={invoice.data}
+            onStatusChange={(status) => void onStatusChange(status)}
+            onLineCancel={(lineIndex, cancel) => cancelLine.mutate({ lineIndex, cancel })}
+            busy={changeStatus.isPending || cancelLine.isPending}
+            compact={narrow ?? false}
+            warnings={warnings}
+          />
+          {invoiceStatus(invoice.data) === "unpaid" && (
+            <InvoiceDeleteSection invoice={invoice.data} onDeleted={onDeleted} />
+          )}
+        </Stack>
       ) : (
         <Box>
           <Skeleton height={36} width="50%" mb="md" />

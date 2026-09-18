@@ -201,6 +201,7 @@ export interface ApiDefinition {
     export: typeof routes['invoices.export']
     setStatuses: typeof routes['invoices.set_statuses']
     show: typeof routes['invoices.show']
+    destroy: typeof routes['invoices.destroy']
     setStatus: typeof routes['invoices.set_status']
     setLineCancelled: typeof routes['invoices.set_line_cancelled']
   }

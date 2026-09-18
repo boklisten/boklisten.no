@@ -1171,6 +1171,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['show']>>>
     }
   }
+  'invoices.destroy': {
+    methods: ["DELETE"]
+    pattern: '/invoices/:invoiceId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { invoiceId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/invoices_controller').default['destroy']>>>
+    }
+  }
   'invoices.set_status': {
     methods: ["PATCH"]
     pattern: '/invoices/:invoiceId/status'

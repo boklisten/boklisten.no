@@ -188,3 +188,16 @@ export async function setInvoiceLineCancelled(
   customerItemPayments[lineIndex] = { ...line, cancel };
   return StorageService.Invoices.update(invoiceId, { customerItemPayments });
 }
+
+/**
+ * Removes an invoice for good. Only an invoice nobody has acted on yet may go: a paid one has an
+ * order and bought-out books behind it, and a credit note, debt collection or loss note is
+ * bookkeeping the accountants rely on.
+ */
+export async function deleteInvoice(invoiceId: string): Promise<void> {
+  const invoice = await StorageService.Invoices.get(invoiceId);
+  if (invoiceStatus(invoice) !== "unpaid") {
+    throw new BadRequestException("Bare ubetalte fakturaer kan slettes.");
+  }
+  await StorageService.Invoices.remove(invoiceId);
+}

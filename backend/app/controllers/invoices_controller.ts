@@ -7,6 +7,7 @@ import { exportInvoices } from "#services/invoices/invoice_export_service";
 import { generateInvoices } from "#services/invoices/invoice_generator_service";
 import { getInvoice, listInvoices } from "#services/invoices/invoice_query_service";
 import {
+  deleteInvoice,
   setInvoiceLineCancelled,
   setInvoiceStatus,
   setInvoiceStatuses,
@@ -40,6 +41,11 @@ export default class InvoicesController {
     const { detailsId } = ctx.authUser;
     const { invoiceIds, status } = await ctx.request.validateUsing(invoiceBulkStatusValidator);
     return setInvoiceStatuses(invoiceIds, status, detailsId);
+  }
+
+  async destroy(ctx: HttpContext) {
+    await deleteInvoice(ctx.request.param("invoiceId"));
+    return { deleted: true };
   }
 
   async setLineCancelled(ctx: HttpContext) {

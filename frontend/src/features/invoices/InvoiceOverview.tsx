@@ -22,11 +22,11 @@ import {
   TextInput,
   Transition,
 } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
+import { useHotkeys, useMediaQuery } from "@mantine/hooks";
 import { IconChevronDown, IconFileDownload, IconSearch } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import InvoiceDetailDrawer from "@/features/invoices/InvoiceDetailDrawer";
 import InvoiceGrid from "@/features/invoices/InvoiceGrid";
@@ -71,7 +71,26 @@ export default function InvoiceOverview() {
   const [statuses, setStatuses] = useState<InvoiceStatus[]>([...INVOICE_STATUSES]);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const searchInput = useRef<HTMLInputElement>(null);
   const statusChange = useInvoiceStatusChange();
+
+  // ⌘F / Ctrl+F searches the invoices instead of the page, also from inside the grid or the
+  // field itself. With the drawer open the browser search is left alone.
+  useHotkeys(
+    [
+      [
+        "mod+F",
+        () => {
+          if (faktura === undefined) {
+            searchInput.current?.focus();
+            searchInput.current?.select();
+          }
+        },
+        { preventDefault: faktura === undefined },
+      ],
+    ],
+    [],
+  );
 
   const invoices = useQuery(api.invoices.index.queryOptions());
   const allRows = invoices.data ?? [];
@@ -141,6 +160,7 @@ export default function InvoiceOverview() {
         aria-label="Søk i fakturaene"
         placeholder="Søk på nummer, kunde eller beløp"
         leftSection={<IconSearch size={18} />}
+        ref={searchInput}
         value={search}
         onChange={(event) => setSearch(event.currentTarget.value)}
         w={{ base: "100%", sm: 520 }}

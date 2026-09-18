@@ -235,6 +235,7 @@ router
     router.post("/invoices/export", [controllers.Invoices, "export"]);
     router.patch("/invoices/status", [controllers.Invoices, "setStatuses"]);
     router.get("/invoices/:invoiceId", [controllers.Invoices, "show"]);
+    router.delete("/invoices/:invoiceId", [controllers.Invoices, "destroy"]);
     router.patch("/invoices/:invoiceId/status", [controllers.Invoices, "setStatus"]);
     router.patch("/invoices/:invoiceId/lines/:lineIndex", [
       controllers.Invoices,
