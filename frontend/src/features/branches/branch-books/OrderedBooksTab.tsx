@@ -14,6 +14,7 @@ import type {
   BranchBooksEditTarget,
   OrderedBookDetail,
 } from "@/features/branches/branch-books/types";
+import CustomerLink from "@/features/kasse/CustomerLink";
 import BranchScopeMetrics from "@/shared/components/BranchScopeMetrics";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
@@ -27,7 +28,17 @@ const BRANCH_MOVE_NOTE =
   "Hele ordren flyttes til den nye filialen, også eventuelle andre bøker i samme ordre.";
 
 const COLUMNS: BranchBooksDetailColumn<OrderedBookDetail>[] = [
-  { header: "Navn", render: (row) => row.customerName ?? "Ukjent kunde" },
+  {
+    header: "Navn",
+    render: (row) =>
+      row.customerId ? (
+        <CustomerLink detailsId={row.customerId} fw={400}>
+          {row.customerName ?? "Ukjent kunde"}
+        </CustomerLink>
+      ) : (
+        (row.customerName ?? "Ukjent kunde")
+      ),
+  },
   { header: "Fødselsår", render: (row) => row.birthYear ?? "–" },
   { header: "Filialmedlemskap", render: (row) => row.membershipBranchName ?? "–" },
   {

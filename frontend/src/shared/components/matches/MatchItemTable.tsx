@@ -1,6 +1,7 @@
-import { Stack, Table, Text, Tooltip } from "@mantine/core";
+import { Group, Stack, Table, Text, Tooltip } from "@mantine/core";
 import { IconAlertSquareFilled, IconSquareCheckFilled } from "@tabler/icons-react";
 
+import BlidLink from "@/features/kasse/BlidLink";
 import { describeObligation, isObligationSettled } from "@/features/matches/forViewer";
 import type { ViewerObligation } from "@/features/matches/forViewer";
 
@@ -54,6 +55,18 @@ function rowStatus(obligation: ViewerObligation, wholeBook: boolean) {
   };
 }
 
+/**
+ * The copies that have actually moved for this book, for the admin pages. A pending obligation has
+ * no copy yet; a settled one usually has one, and two when the receiver got a different copy than
+ * the one the sender gave away.
+ */
+function handedOverBlids(obligation: ViewerObligation): string[] {
+  const blids = [obligation.senderHandover?.blid, obligation.receiverHandover?.blid].filter(
+    (blid): blid is string => typeof blid === "string",
+  );
+  return [...new Set(blids)];
+}
+
 export default function MatchItemTable({
   obligations,
   adminView = false,
@@ -76,7 +89,13 @@ export default function MatchItemTable({
             <Table.Tr key={obligation.id}>
               <Table.Td>
                 <Stack gap={2}>
-                  <Text>{obligation.title}</Text>
+                  <Group gap="xs" wrap="wrap" align="center">
+                    <Text>{obligation.title}</Text>
+                    {adminView &&
+                      handedOverBlids(obligation).map((blid) => (
+                        <BlidLink key={blid} blid={blid} />
+                      ))}
+                  </Group>
                   {note && (
                     <Text size="xs" c="dimmed">
                       {note}

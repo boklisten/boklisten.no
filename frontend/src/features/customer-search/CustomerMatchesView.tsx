@@ -66,7 +66,11 @@ function MatchPanel({ match, customerId }: { match: MatchDto; customerId: string
       {counterparty?.kind === "customer" && (
         // Only the other student — the selected customer's own number is already on the card above.
         <PanelSection label="Kontakt">
-          <AdminMatchContact name={counterparty.name} phone={counterparty.phone} />
+          <AdminMatchContact
+            customerId={counterparty.customerId}
+            name={counterparty.name}
+            phone={counterparty.phone}
+          />
         </PanelSection>
       )}
 

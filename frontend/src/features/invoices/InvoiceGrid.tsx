@@ -12,6 +12,7 @@ import type {
 import { AgGridReact } from "ag-grid-react";
 
 import InvoiceStatusControl from "@/features/invoices/InvoiceStatusControl";
+import CustomerLink from "@/features/kasse/CustomerLink";
 import {
   INVOICE_STATUS_COLORS,
   INVOICE_STATUS_LABELS,
@@ -102,7 +103,25 @@ export default function InvoiceGrid({
       hide: !showBatch,
       valueGetter: ({ data }) => (data ? invoiceBatchPrefix(data.invoiceId) : ""),
     },
-    { field: "customerName", headerName: "Kunde", flex: 2, minWidth: 160 },
+    {
+      field: "customerName",
+      headerName: "Kunde",
+      flex: 2,
+      minWidth: 160,
+      cellRenderer: ({ data, value }: ICellRendererParams<InvoiceListRow, string>) =>
+        data?.customerDetailsId ? (
+          // The link navigates away, so the row click that would open the drawer is stopped
+          <CustomerLink
+            detailsId={data.customerDetailsId}
+            fw={400}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {value}
+          </CustomerLink>
+        ) : (
+          value
+        ),
+    },
     {
       colId: "type",
       headerName: "Type",

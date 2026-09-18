@@ -1,12 +1,24 @@
-import { Anchor, Group, Text } from "@mantine/core";
+import { Anchor, Group } from "@mantine/core";
 import { IconPhone, IconUser } from "@tabler/icons-react";
 
-export default function AdminMatchContact({ name, phone }: { name: string; phone: string }) {
+import CustomerLink from "@/features/kasse/CustomerLink";
+
+export default function AdminMatchContact({
+  customerId,
+  name,
+  phone,
+}: {
+  customerId: string;
+  name: string;
+  phone: string;
+}) {
   return (
     <Group gap="lg">
       <Group gap={5}>
         <IconUser />
-        <Text>{name}</Text>
+        <CustomerLink detailsId={customerId} fw={400}>
+          {name}
+        </CustomerLink>
       </Group>
       {phone && (
         <Group gap={5}>

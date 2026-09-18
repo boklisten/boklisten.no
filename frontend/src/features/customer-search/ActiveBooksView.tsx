@@ -12,26 +12,28 @@ import {
 } from "@/features/customer-search/ActiveBookChips";
 import BookRowCard from "@/features/customer-search/BookRowCard";
 import { buildPeerBooks } from "@/features/customer-search/handoutBooks";
-import { showBlid } from "@/features/kasse/kasseParams";
+import type { PeerBook } from "@/features/customer-search/handoutBooks";
+import BlidLink from "@/features/kasse/BlidLink";
+import CustomerLink from "@/features/kasse/CustomerLink";
 import AddToCartButton from "@/features/stand-cart/AddToCartButton";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";
-import EntityLink from "@/shared/components/EntityLink";
 import useApiClient from "@/shared/hooks/useApiClient";
 
-/** The unique ID doubles as the way into the book's own history. */
-function BlidLink({ blid }: { blid: string }) {
+/** "Leveres til Ola": the student the book is due to go to, as a way into their Kasse view. */
+function DeliverToBadge({ peer }: { peer: PeerBook }) {
   return (
-    <EntityLink
-      to="/admin/kasse"
-      search={showBlid(blid)}
-      size="sm"
-      ff="monospace"
-      aria-label={`Se historikken til bok ${blid}`}
-    >
-      {blid}
-    </EntityLink>
+    <PeerBadge>
+      Leveres til{" "}
+      {peer.personId === null ? (
+        peer.personName
+      ) : (
+        <CustomerLink detailsId={peer.personId} inherit>
+          {peer.personName}
+        </CustomerLink>
+      )}
+    </PeerBadge>
   );
 }
 
@@ -40,13 +42,13 @@ function BlidLink({ blid }: { blid: string }) {
  * edition-tolerant, and each pending obligation is consumed by at most one book so two copies of
  * the same title go to their respective students.
  */
-function buildDeliverToNames(
+function buildDeliverToPeers(
   books: ActiveCustomerItem[],
   matches: MatchDto[],
   customerId: string,
-): Map<string, string> {
+): Map<string, PeerBook> {
   const pending = buildPeerBooks(matches, customerId).giveBooks.filter((book) => !book.fulfilled);
-  const names = new Map<string, string>();
+  const names = new Map<string, PeerBook>();
   for (const book of books) {
     const index = pending.findIndex((peerBook) => itemsAreEquivalent(peerBook.id, book.item));
     if (index === -1) {
@@ -54,7 +56,7 @@ function buildDeliverToNames(
     }
     const [peerBook] = pending.splice(index, 1);
     if (peerBook) {
-      names.set(book.id, peerBook.personName);
+      names.set(book.id, peerBook);
     }
   }
   return names;
@@ -73,16 +75,16 @@ function cartButton(customerId: string, book: ActiveCustomerItem, compact = fals
 function BookCards({
   customerId,
   books,
-  deliverToNames,
+  deliverToPeers,
 }: {
   customerId: string;
   books: ActiveCustomerItem[];
-  deliverToNames: Map<string, string>;
+  deliverToPeers: Map<string, PeerBook>;
 }) {
   return (
     <Stack gap="xs" hiddenFrom="md">
       {books.map((book) => {
-        const deliverToName = deliverToNames.get(book.id);
+        const deliverTo = deliverToPeers.get(book.id);
         return (
           <BookRowCard
             key={book.id}
@@ -95,9 +97,9 @@ function BookCards({
                     <BlidLink blid={book.blid} />
                   </Group>
                 )}
-                {deliverToName && (
+                {deliverTo && (
                   <Group>
-                    <PeerBadge>Leveres til {deliverToName}</PeerBadge>
+                    <DeliverToBadge peer={deliverTo} />
                   </Group>
                 )}
               </>
@@ -118,11 +120,11 @@ function BookCards({
 function BookTable({
   customerId,
   books,
-  deliverToNames,
+  deliverToPeers,
 }: {
   customerId: string;
   books: ActiveCustomerItem[];
-  deliverToNames: Map<string, string>;
+  deliverToPeers: Map<string, PeerBook>;
 }) {
   return (
     <Box visibleFrom="md">
@@ -138,13 +140,13 @@ function BookTable({
         </Table.Thead>
         <Table.Tbody>
           {books.map((book) => {
-            const deliverToName = deliverToNames.get(book.id);
+            const deliverTo = deliverToPeers.get(book.id);
             return (
               <Table.Tr key={book.id}>
                 <Table.Td>
                   <Stack gap={2} align="flex-start">
                     <Text fw={500}>{book.title}</Text>
-                    {deliverToName && <PeerBadge>Leveres til {deliverToName}</PeerBadge>}
+                    {deliverTo && <DeliverToBadge peer={deliverTo} />}
                   </Stack>
                 </Table.Td>
                 <Table.Td>{book.blid ? <BlidLink blid={book.blid} /> : "–"}</Table.Td>
@@ -199,7 +201,7 @@ export default function ActiveBooksView({ customer }: { customer: UserDetail }) 
   }
 
   const overdueCount = books.filter((book) => isOverdue(String(book.deadline))).length;
-  const deliverToNames = buildDeliverToNames(books, matches ?? [], customerId);
+  const deliverToPeers = buildDeliverToPeers(books, matches ?? [], customerId);
 
   return (
     <Stack gap="xs">
@@ -213,8 +215,8 @@ export default function ActiveBooksView({ customer }: { customer: UserDetail }) 
           </Badge>
         )}
       </Group>
-      <BookCards customerId={customerId} books={books} deliverToNames={deliverToNames} />
-      <BookTable customerId={customerId} books={books} deliverToNames={deliverToNames} />
+      <BookCards customerId={customerId} books={books} deliverToPeers={deliverToPeers} />
+      <BookTable customerId={customerId} books={books} deliverToPeers={deliverToPeers} />
     </Stack>
   );
 }

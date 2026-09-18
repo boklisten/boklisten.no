@@ -97,7 +97,7 @@ export interface StandCartOption {
 
 export type StandCartNote =
   /** The customer is due to get this book from another student. */
-  | { kind: "peer-match"; deliverFromName: string }
+  | { kind: "peer-match"; deliverFromId: string; deliverFromName: string }
   /** The order was placed on another branch than the cart's. */
   | { kind: "other-branch"; branchName: string }
   /** The original order is to be sent by mail. */

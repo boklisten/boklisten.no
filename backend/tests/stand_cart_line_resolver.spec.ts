@@ -376,7 +376,9 @@ test.group("StandCartLineResolver.resolve", (group) => {
   test("notes a book the customer is due to get from another student", async ({ assert }) => {
     world.peerSender = OTHER_CUSTOMER_ID;
     const resolved = line(await resolve({ kind: "order", orderId: ORDER_ID, itemId: ITEM_ID }));
-    assert.deepEqual(resolved.notes, [{ kind: "peer-match", deliverFromName: "Kari Nordmann" }]);
+    assert.deepEqual(resolved.notes, [
+      { kind: "peer-match", deliverFromId: OTHER_CUSTOMER_ID, deliverFromName: "Kari Nordmann" },
+    ]);
   });
 
   test("builds a line for a book the customer holds, on its handout branch", async ({ assert }) => {

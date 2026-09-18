@@ -5,6 +5,7 @@ import type { MantineBreakpoint } from "@mantine/core";
 
 import BookRowCard from "@/features/customer-search/BookRowCard";
 import OrderItemDeadlineChip from "@/features/customer-search/OrderItemDeadlineChip";
+import CustomerLink from "@/features/kasse/CustomerLink";
 import OrderBranchChip from "@/features/order-history/OrderBranchChip";
 import AddToCartButton from "@/features/stand-cart/AddToCartButton";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";
@@ -30,7 +31,7 @@ export interface HandoutRow {
   alsoMoving: string[];
   deadline: Date | string | undefined;
   /** The student the book is due from, when it comes from a peer rather than the stand. */
-  receiveFromName: string | undefined;
+  receiveFrom: { id: string | null; name: string } | undefined;
   /** How the book goes into the cart; null for a peer book, which never passes the stand. */
   cartSource: StandCartSource | null;
 }
@@ -77,8 +78,21 @@ function Period({ row, onChanged }: { row: HandoutRow; onChanged: () => void }) 
 
 /** Whom the book comes from, under its title, when it is due from a peer rather than the stand. */
 function TitleNotes({ row }: { row: HandoutRow }) {
-  return row.receiveFromName === undefined ? null : (
-    <PeerBadge>Mottas fra {row.receiveFromName}</PeerBadge>
+  if (row.receiveFrom === undefined) {
+    return null;
+  }
+  const { id, name } = row.receiveFrom;
+  return (
+    <PeerBadge>
+      Mottas fra{" "}
+      {id === null ? (
+        name
+      ) : (
+        <CustomerLink detailsId={id} inherit>
+          {name}
+        </CustomerLink>
+      )}
+    </PeerBadge>
   );
 }
 

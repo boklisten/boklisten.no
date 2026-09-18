@@ -7,7 +7,7 @@ import AdminMatchContact from "@/features/matches/adminOverview/AdminMatchContac
 import SendMatchToStandButton from "@/features/matches/adminOverview/SendMatchToStandButton";
 import {
   AdminMatchTitle,
-  displayName,
+  PartyName,
   isMatchFinished,
   matchProgress,
   orderedParties,
@@ -28,7 +28,7 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
     <Stack gap="xl">
       <Stack gap="xs">
         <Title>
-          <AdminMatchTitle match={match} />
+          <AdminMatchTitle match={match} linked />
         </Title>
         {finished && <SuccessAlert>Alle bøkene i denne overleveringen er overlevert.</SuccessAlert>}
         <ProgressBar percentComplete={progress.percent} subtitle={progress.label} />
@@ -50,8 +50,9 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
           .map((party) => (
             <AdminMatchContact
               key={partyKey(party)}
-              name={party.kind === "customer" ? party.name : "Stand"}
-              phone={party.kind === "customer" ? party.phone : ""}
+              customerId={party.customerId}
+              name={party.name}
+              phone={party.phone}
             />
           ))}
       </Stack>
@@ -65,7 +66,13 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
         return (
           <Stack gap={0} key={partyKey(party)}>
             <MatchHeader>
-              {displayName(party)} leverer disse{other ? ` til ${displayName(other)}` : ""}
+              <PartyName party={party} /> leverer disse
+              {other && (
+                <>
+                  {" "}
+                  til <PartyName party={other} />
+                </>
+              )}
             </MatchHeader>
             <MatchItemTable obligations={toDeliver} adminView />
           </Stack>

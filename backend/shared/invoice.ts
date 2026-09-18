@@ -145,6 +145,8 @@ export interface InvoiceListRow {
   id: string;
   invoiceId: string;
   customerName: string;
+  /** The customer's user detail id; null for company invoices and the oldest customer invoices. */
+  customerDetailsId: string | null;
   organizationNumber: string | null;
   type: InvoiceType | null;
   /** Missing on the oldest invoices. */

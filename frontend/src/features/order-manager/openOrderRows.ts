@@ -20,7 +20,7 @@ export function openOrderRows(order: OrderHistoryEntry): HandoutRow[] {
       branchName: order.branch.name,
       alsoMoving: open.filter((other) => other !== item).map((other) => other.title),
       deadline: item.period?.to,
-      receiveFromName: undefined,
+      receiveFrom: undefined,
       cartSource,
     };
   });

@@ -6,6 +6,7 @@ import { AgGridReact } from "ag-grid-react";
 import type { Route } from "@tuyau/core/types";
 
 import MoveBranchMemberModal from "@/features/branches/MoveBranchMemberModal";
+import CustomerLink from "@/features/kasse/CustomerLink";
 
 type BranchMember = Route.Response<"branch_members.index">["directMembers"][number];
 
@@ -23,7 +24,16 @@ export default function BranchMembersTable({
       <AgGridReact<BranchMember>
         rowData={members}
         columnDefs={[
-          { field: "name", headerName: "Navn" },
+          {
+            field: "name",
+            headerName: "Navn",
+            cellRenderer: ({ data }: ICellRendererParams<BranchMember>) =>
+              data && (
+                <CustomerLink detailsId={data.id} fw={400}>
+                  {data.name}
+                </CustomerLink>
+              ),
+          },
           { field: "yearOfBirth", headerName: "Fødselsår" },
           {
             headerName: "Handlinger",

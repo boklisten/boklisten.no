@@ -1,4 +1,4 @@
-import { Code, Stack } from "@mantine/core";
+import { Stack } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconSum } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,16 +12,28 @@ import type {
   BranchBooksEditKind,
   BranchBooksEditTarget,
 } from "@/features/branches/branch-books/types";
+import BlidLink from "@/features/kasse/BlidLink";
+import CustomerLink from "@/features/kasse/CustomerLink";
 import BranchScopeMetrics from "@/shared/components/BranchScopeMetrics";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 const COLUMNS: BranchBooksDetailColumn<ActiveBookDetail>[] = [
-  { header: "Navn", render: (row) => row.customerName ?? "Ukjent kunde" },
+  {
+    header: "Navn",
+    render: (row) =>
+      row.customerId ? (
+        <CustomerLink detailsId={row.customerId} fw={400}>
+          {row.customerName ?? "Ukjent kunde"}
+        </CustomerLink>
+      ) : (
+        (row.customerName ?? "Ukjent kunde")
+      ),
+  },
   { header: "Fødselsår", render: (row) => row.birthYear ?? "–" },
   { header: "Filialmedlemskap", render: (row) => row.membershipBranchName ?? "–" },
-  { header: "BL-ID", render: (row) => (row.blid ? <Code>{row.blid}</Code> : "–") },
+  { header: "Unik ID", render: (row) => (row.blid ? <BlidLink blid={row.blid} fw={400} /> : "–") },
   {
     header: "Utdelt",
     render: (row) =>

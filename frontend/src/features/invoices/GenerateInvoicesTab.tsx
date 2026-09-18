@@ -95,6 +95,7 @@ function previewRows(result: InvoiceGenerationResult): InvoiceListRow[] {
     id: invoice.invoiceId ?? "",
     invoiceId: invoice.invoiceId ?? "",
     customerName: invoice.customerInfo.name,
+    customerDetailsId: invoice.customerInfo.userDetail ?? null,
     organizationNumber: null,
     type: invoice.type ?? null,
     created: invoice.creationTime ?? null,

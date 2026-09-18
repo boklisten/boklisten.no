@@ -557,7 +557,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     resolve.resolves(
       resolution(ORDER_SOURCE, [rentOption()], {
         blid: BLID,
-        notes: [{ kind: "peer-match", deliverFromName: "Kari" }],
+        notes: [{ kind: "peer-match", deliverFromId: "peer-sender", deliverFromName: "Kari" }],
       }),
     );
     await assert.rejects(() => checkout(), BadRequestException, /Kari/);

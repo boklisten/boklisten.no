@@ -20,6 +20,7 @@ export async function listInvoices(): Promise<InvoiceListRow[]> {
         id: { $toString: "$_id" },
         invoiceId: 1,
         customerName: { $ifNull: ["$customerInfo.name", ""] },
+        customerDetailsId: { $toString: { $ifNull: ["$customerInfo.userDetail", null] } },
         organizationNumber: { $ifNull: ["$customerInfo.organizationNumber", null] },
         type: { $ifNull: ["$type", null] },
         created: { $ifNull: ["$creationTime", null] },

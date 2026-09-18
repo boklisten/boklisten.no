@@ -58,7 +58,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
         .filter(([otherItemId, other]) => other.orderId === info.orderId && otherItemId !== itemId)
         .map(([, other]) => other.title),
       deadline: info.deadline,
-      receiveFromName: peer?.personName,
+      receiveFrom: peer && { id: peer.personId, name: peer.personName },
       cartSource,
     };
   });
@@ -74,7 +74,7 @@ export default function HandoutView({ customer }: { customer: UserDetail }) {
       branchName: null,
       alsoMoving: [],
       deadline: undefined,
-      receiveFromName: book.personName,
+      receiveFrom: { id: book.personId, name: book.personName },
       cartSource: null,
     }));
   const rows = [...orderedRows, ...peerRows];

@@ -277,6 +277,7 @@ export const BranchBooksService = {
   }) {
     const rows = await StorageService.CustomerItems.aggregate<{
       customerItemId: string;
+      customerId: string | null;
       customerName: string | null;
       dob: Date | null;
       membershipBranchId: string | null;
@@ -297,6 +298,7 @@ export const BranchBooksService = {
         $project: {
           _id: 0,
           customerItemId: { $toString: "$_id" },
+          customerId: { $toString: { $ifNull: ["$customer._id", null] } },
           customerName: { $ifNull: ["$customer.name", null] },
           dob: { $ifNull: ["$customer.dob", null] },
           membershipBranchId: { $toString: "$customer.branchMembership" },
@@ -385,6 +387,7 @@ export const BranchBooksService = {
     const rows = await StorageService.Orders.aggregate<{
       orderId: string;
       orderItemId: string;
+      customerId: string | null;
       customerName: string | null;
       dob: Date | null;
       membershipBranchId: string | null;
@@ -408,6 +411,7 @@ export const BranchBooksService = {
           _id: 0,
           orderId: { $toString: "$_id" },
           orderItemId: { $toString: "$orderItems._id" },
+          customerId: { $toString: { $ifNull: ["$customer._id", null] } },
           customerName: { $ifNull: ["$customer.name", null] },
           dob: { $ifNull: ["$customer.dob", null] },
           membershipBranchId: { $toString: "$customer.branchMembership" },

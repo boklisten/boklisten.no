@@ -8,6 +8,7 @@ import { findOption, needsBlid } from "@boklisten/backend/shared/stand_cart";
 import { ActionIcon, Card, Group, Select, Stack, Table, Text, ThemeIcon } from "@mantine/core";
 import { IconAlertTriangle, IconX } from "@tabler/icons-react";
 
+import CustomerLink from "@/features/kasse/CustomerLink";
 import { showBlid } from "@/features/kasse/kasseParams";
 import { Amount } from "@/features/stand-cart/StandCartAmounts";
 import { actionLabel, formatAmount, formatDeadline } from "@/features/stand-cart/standCartLabels";
@@ -243,7 +244,14 @@ export function LineTitle({ line }: { line: CartLine }) {
       <Text fw={600} lh={1.3}>
         {line.title}
       </Text>
-      {peer !== null && <PeerBadge>Skal mottas fra {peer.deliverFromName}</PeerBadge>}
+      {peer !== null && (
+        <PeerBadge>
+          Skal mottas fra{" "}
+          <CustomerLink detailsId={peer.deliverFromId} inherit>
+            {peer.deliverFromName}
+          </CustomerLink>
+        </PeerBadge>
+      )}
     </Stack>
   );
 }

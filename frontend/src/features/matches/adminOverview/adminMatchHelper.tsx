@@ -2,6 +2,7 @@ import type { HandoverParty, MatchDto } from "@boklisten/backend/shared/match/ma
 import { Group, Text } from "@mantine/core";
 import { IconChevronsRight, IconSwitchHorizontal } from "@tabler/icons-react";
 
+import CustomerLink from "@/features/kasse/CustomerLink";
 import { isObligationSettled, isSameParty, partyName } from "@/features/matches/forViewer";
 
 /** "1 av 2 bøker overlevert" — progress in whole books; a peer scan settles both halves at once. */
@@ -36,7 +37,11 @@ export function orderedParties(match: MatchDto): HandoverParty[] {
   return firstDelivers ? [first, second] : [second, first];
 }
 
-export function AdminMatchTitle({ match }: { match: MatchDto }) {
+/**
+ * "A → B" or "A ⇄ B". Inside the list card, which is itself a link, the names stay plain; on the
+ * match's own page (`linked`) each student's name opens them in Kasse.
+ */
+export function AdminMatchTitle({ match, linked = false }: { match: MatchDto; linked?: boolean }) {
   const [left, right] = orderedParties(match);
   const isExchange =
     new Set(match.obligations.map((obligation) => partyName(obligation.sender))).size > 1;
@@ -44,11 +49,11 @@ export function AdminMatchTitle({ match }: { match: MatchDto }) {
   return (
     <Group gap={2}>
       <Text fw="bold" fz="inherit">
-        {left ? displayName(left) : "?"}
+        {left ? <PartyName party={left} linked={linked} /> : "?"}
       </Text>
       {isExchange ? <IconSwitchHorizontal size={20} /> : <IconChevronsRight />}
       <Text fw="bold" fz="inherit">
-        {right ? displayName(right) : "?"}
+        {right ? <PartyName party={right} linked={linked} /> : "?"}
       </Text>
     </Group>
   );
@@ -56,4 +61,16 @@ export function AdminMatchTitle({ match }: { match: MatchDto }) {
 
 export function displayName(party: HandoverParty): string {
   return party.kind === "stand" ? "Stand" : party.name;
+}
+
+/** A party's name in running text: the stand as a word, a student as a link into Kasse. */
+export function PartyName({ party, linked = true }: { party: HandoverParty; linked?: boolean }) {
+  if (party.kind === "stand" || !linked) {
+    return displayName(party);
+  }
+  return (
+    <CustomerLink detailsId={party.customerId} inherit>
+      {party.name}
+    </CustomerLink>
+  );
 }

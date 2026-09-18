@@ -111,7 +111,11 @@ async function peerMatchNote(customerId: string, itemId: string): Promise<StandC
     return null;
   }
   const sender = await StorageService.UserDetails.getOrNull(senderId);
-  return { kind: "peer-match", deliverFromName: sender?.name ?? "en annen elev" };
+  return {
+    kind: "peer-match",
+    deliverFromId: senderId,
+    deliverFromName: sender?.name ?? "en annen elev",
+  };
 }
 
 async function isBringDelivery(order: Order): Promise<boolean> {

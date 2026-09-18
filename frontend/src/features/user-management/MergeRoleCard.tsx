@@ -1,6 +1,7 @@
 import { Badge, Group, Paper, Stack, Text, ThemeIcon } from "@mantine/core";
 import { IconTrash, IconUserCheck } from "@tabler/icons-react";
 
+import CustomerLink from "@/features/kasse/CustomerLink";
 import type { DuplicateUserSummary } from "@/features/user-management/duplicateTypes";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
@@ -33,7 +34,7 @@ export default function MergeRoleCard({
             {isKeep ? "Beholdes" : "Slettes"}
           </Text>
           <Group gap="xs">
-            <Text fw={600}>{user.name || "Uten navn"}</Text>
+            <CustomerLink detailsId={user.detailsId}>{user.name || "Uten navn"}</CustomerLink>
             {branchName && (
               <Badge variant="light" size="sm">
                 {branchName}

@@ -14,6 +14,8 @@ export interface PeerBook {
   title: string;
   /** Whether the transfer has already happened. */
   fulfilled: boolean;
+  /** The other student in the match: null when the expected party is the stand. */
+  personId: string | null;
   /** Name of the other student in the match. */
   personName: string;
 }
@@ -60,6 +62,7 @@ const toPeerBooks = (obligations: ViewerObligation[]): PeerBook[] =>
     id: obligation.itemId,
     title: obligation.title,
     fulfilled: obligation.fulfilled,
+    personId: obligation.expected.kind === "customer" ? obligation.expected.customerId : null,
     personName: partyName(obligation.expected),
   }));
 
