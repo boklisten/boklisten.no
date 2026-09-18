@@ -1,7 +1,6 @@
 import { DateTime } from "luxon";
 
 import ItemModel from "#models/item";
-import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
 import type { Branch, ExtendPeriod } from "#shared/branch";
 import type {
@@ -26,18 +25,13 @@ export function isHandedOutWithinTheLastTwoWeeks(
 
 export function isDeadlineWithGracePeriodExpired(
   customerItem: CustomerItem,
-  at: DateTime = DateTime.now(),
+  now: DateTime = DateTime.now(),
 ) {
-  const now = at.setZone("Europe/Oslo");
-
   // December grace period: allow buyout/extension through the holidays until Jan 1 next year.
   const graceDeadline =
     now.month === 12
-      ? DateTime.fromObject(
-          { year: now.year + 1, month: 1, day: 1 },
-          { zone: "Europe/Oslo" },
-        ).startOf("day")
-      : DateTime.fromJSDate(customerItem.deadline).setZone("Europe/Oslo").endOf("day");
+      ? DateTime.fromObject({ year: now.year + 1, month: 1, day: 1 })
+      : DateTime.fromJSDate(customerItem.deadline).endOf("day");
 
   return now > graceDeadline;
 }
@@ -213,7 +207,7 @@ export async function buildCustomerItemActions(
     to: extension.date,
     available: true,
     tooltip: "",
-    label: `Forleng til ${DateService.format(extension.date, "Europe/Oslo", "DD/MM/YYYY")}`,
+    label: `Forleng til ${DateTime.fromJSDate(extension.date).toFormat("dd/MM/yyyy")}`,
   })) ?? [
     {
       type: "extend",

@@ -1,7 +1,7 @@
 import env from "#start/env";
 import { bringPostalCodeResponseValidator } from "#validators/bring_validators";
 import { DateTime } from "luxon";
-import { APP_CONFIG } from "#services/application_config";
+import { deliveryDays } from "#services/application_config";
 import createClient from "openapi-fetch";
 import type { paths as shippingGuidePaths } from "#services/bring/openapi/shippingguide";
 
@@ -36,7 +36,7 @@ export const BringService = {
     isPostal: boolean;
     weightInGrams: number;
   }) {
-    const expectedShippingDate = DateTime.now().plus({ days: APP_CONFIG.delivery.deliveryDays });
+    const expectedShippingDate = DateTime.now().plus({ days: deliveryDays() });
     const { data } = await shippingGuideClient.POST("/api/v2/products", {
       params: {
         header: bringHeaders,

@@ -41,7 +41,7 @@ export function customerItemIdOf(orderItem: OrderItem): string | undefined {
 }
 
 function formatDeadline(deadline: Date | string): string {
-  return DateTime.fromJSDate(new Date(deadline)).setZone("Europe/Oslo").toFormat("dd.MM.yyyy");
+  return DateTime.fromJSDate(new Date(deadline)).toFormat("dd.MM.yyyy");
 }
 
 function bookDetails(orderItem: OrderItem): MonitoringDetail[] {

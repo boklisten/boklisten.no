@@ -321,12 +321,8 @@ async function feed(input: {
   return messages.map(toEntryDto);
 }
 
-/** Metric days follow Norwegian local time, regardless of the server's clock (UTC on Railway). */
-const METRICS_TIME_ZONE = "Europe/Oslo";
-
 async function metrics(days: number): Promise<MessageLogMetricsDto> {
-  const nowZoned = DateTime.now().setZone(METRICS_TIME_ZONE);
-  const now = nowZoned.isValid ? nowZoned : DateTime.now();
+  const now = DateTime.now();
   const since = now.minus({ days }).startOf("day");
   const last24h = now.minus({ hours: 24 });
 
@@ -335,7 +331,7 @@ async function metrics(days: number): Promise<MessageLogMetricsDto> {
       .from("messages")
       .where("created_at", ">=", since.toSQL())
       .select(
-        db.raw("to_char(created_at at time zone ?, 'YYYY-MM-DD') as day", [METRICS_TIME_ZONE]),
+        db.raw("to_char(created_at at time zone ?, 'YYYY-MM-DD') as day", [now.zoneName]),
         "channel",
         db.raw("count(*) as total"),
         db.raw(

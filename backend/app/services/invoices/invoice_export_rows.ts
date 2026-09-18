@@ -1,4 +1,4 @@
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 
 import type { CsvCell } from "#services/invoices/csv";
 import type { Branch } from "#shared/branch";
@@ -13,9 +13,8 @@ import type { Item } from "#shared/item";
  * commented at the place it happens.
  *
  * Legacy bl-admin formatted dates in the browser's timezone; employees sit in Norway, so this formats
- * in Europe/Oslo regardless of where the server runs.
+ * in Europe/Oslo (the app's default zone) regardless of where the server runs.
  */
-const TIMEZONE = "Europe/Oslo";
 const FEE_TITLE = "Administrasjonsgebyr";
 const FEE_ARTICLE_NUMBER = "1000";
 const TEXT_LINES = {
@@ -34,7 +33,9 @@ const NEW_MINI_ID_FROM = "2023-01-25";
 function formatExportDate(date: Date | string | undefined, format: string): string {
   // Legacy bl-admin called moment(undefined), which is "now". A missing date of birth therefore printed
   // as today's date, and still does.
-  return moment.tz(date, TIMEZONE).format(format);
+  return (date === undefined ? DateTime.now() : DateTime.fromJSDate(new Date(date))).toFormat(
+    format,
+  );
 }
 
 function mongoIdEpoch(mongoId: string): number {
@@ -67,7 +68,9 @@ export function mongoIdCounter(mongoId: string): number {
  */
 export function invoiceMiniId(invoice: Invoice): number {
   const userDetail = String(invoice.customerInfo.userDetail);
-  return moment.tz(invoice.creationTime, TIMEZONE).isBefore(moment.tz(NEW_MINI_ID_FROM, TIMEZONE))
+  // Legacy bl-admin treated a missing creation time as "now", which is after the cut-over.
+  return invoice.creationTime !== undefined &&
+    DateTime.fromJSDate(invoice.creationTime) < DateTime.fromISO(NEW_MINI_ID_FROM)
     ? mongoIdMiniEpoch(userDetail)
     : newMongoMiniId(userDetail);
 }
@@ -136,7 +139,7 @@ function vismaRowsForInvoice(invoice: Invoice, options: VismaExportOptions): Csv
       vismaL1Text(
         lineNumber + 1,
         invoice.invoiceId,
-        TEXT_LINES.dob + formatExportDate(invoice.customerInfo.dob, "DD.MM.YYYY"),
+        TEXT_LINES.dob + formatExportDate(invoice.customerInfo.dob, "dd.MM.yyyy"),
       ),
       vismaL1Text(lineNumber + 2, invoice.invoiceId, TEXT_LINES.phone + invoice.customerInfo.phone),
       vismaL1Text(lineNumber + 3, invoice.invoiceId, TEXT_LINES.contact),
@@ -157,7 +160,7 @@ function vismaH3(lineNumber: number, invoice: Invoice): CsvCell[] {
 function vismaH1(lineNumber: number, invoice: Invoice, ehf: boolean): CsvCell[] {
   const { customerInfo, payment } = invoice;
   const dobOrOrganizationNumber =
-    nonEmpty(customerInfo.organizationNumber) ?? formatExportDate(customerInfo.dob, "DDMMYYYY");
+    nonEmpty(customerInfo.organizationNumber) ?? formatExportDate(customerInfo.dob, "ddMMyyyy");
   return [
     "H1", // 1 Record Type (M)
     lineNumber, // 2 Line number (M)
@@ -171,13 +174,13 @@ function vismaH1(lineNumber: number, invoice: Invoice, ehf: boolean): CsvCell[] 
     customerInfo.phone, // 10 Customer phone (M)
     "", // 11 Customer Fax
     customerInfo.email, // 12 Customer Email
-    formatExportDate(invoice.creationTime, "DDMMYYYY"), // 13 Invoice Date (M)
+    formatExportDate(invoice.creationTime, "ddMMyyyy"), // 13 Invoice Date (M)
     "", // 14 Credit Invoice
     invoice.invoiceId, // 15 Invoice number (M)
     "", // 16 KID/ODCR
     "", // 17 Currency
     "", // 18 Exchange Rate
-    formatExportDate(invoice.duedate, "DDMMYYYY"), // 19 Invoice due date (M)
+    formatExportDate(invoice.duedate, "ddMMyyyy"), // 19 Invoice due date (M)
     dobOrOrganizationNumber, // 20 Customer organisation no
     inOre(payment.total.gross), // 21 Invoice gross amount (M)
     inOre(payment.total.net), // 22 Invoice net amount (M)
@@ -385,8 +388,8 @@ function required<T>(map: Map<string, T>, id: string | null | undefined, what: s
 export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): CsvCell[][] {
   const rows: CsvCell[][] = [[...TRIPLETEX_HEADERS]];
   for (const invoice of invoices) {
-    const invoiceDate = formatExportDate(invoice.creationTime, "YYYY-MM-DD");
-    const dueDate = formatExportDate(invoice.duedate, "YYYY-MM-DD");
+    const invoiceDate = formatExportDate(invoice.creationTime, "yyyy-MM-dd");
+    const dueDate = formatExportDate(invoice.duedate, "yyyy-MM-dd");
     const customerFields = [
       invoiceMiniId(invoice).toString(),
       invoice.customerInfo.name,
@@ -419,7 +422,7 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
         customerItem.handoutInfo?.handoutById,
         "Filialen",
       );
-      const orderDate = formatExportDate(customerItem.creationTime, "YYYY-MM-DD");
+      const orderDate = formatExportDate(customerItem.creationTime, "yyyy-MM-dd");
       rows.push([
         invoice.invoiceId,
         invoiceDate,

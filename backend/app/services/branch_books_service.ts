@@ -156,7 +156,7 @@ export function buildSummary(rows: SummaryRow[]): BranchBooksSummary {
 }
 
 function toBirthYear(dob: Date | null | undefined): string | null {
-  return dob ? DateTime.fromJSDate(dob).toFormat("yyyy") : null;
+  return dob ? String(DateTime.fromJSDate(dob).year) : null;
 }
 
 // preserveNullAndEmptyArrays so books whose customer has been deleted still show up in the

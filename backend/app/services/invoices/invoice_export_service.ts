@@ -1,4 +1,4 @@
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import Item from "#models/item";
@@ -60,8 +60,8 @@ async function tripletexLookups(invoices: Invoice[]): Promise<TripletexLookups> 
 
 /** Legacy bl-admin named the files after the year and the hour of the export, e.g. 202614_visma_invoice.csv. */
 function filename(system: "visma" | "tripletex"): string {
-  const now = moment.tz("Europe/Oslo");
-  return `${now.year()}${now.hour()}_${system}_invoice.csv`;
+  const now = DateTime.now();
+  return `${now.year}${now.hour}_${system}_invoice.csv`;
 }
 
 export async function exportInvoices(

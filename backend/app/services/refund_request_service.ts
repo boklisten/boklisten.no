@@ -36,10 +36,7 @@ function accountLine(accountNumber: string | null): string {
  */
 export function buildRefundRequestMail(request: RefundRequest) {
   const { order, customer, employee, amount, accountNumber, comment } = request;
-  const occurredAt = request.occurredAt
-    .setZone("Europe/Oslo")
-    .setLocale("nb")
-    .toFormat("d. MMMM yyyy 'kl.' HH:mm");
+  const occurredAt = request.occurredAt.toFormat("d. MMMM yyyy 'kl.' HH:mm");
   const failed = accountNumber === null ? " (Vipps-refusjon feilet)" : "";
 
   const lines = [

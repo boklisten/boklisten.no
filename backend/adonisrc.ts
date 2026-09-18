@@ -21,6 +21,7 @@ export default defineConfig({
   ],
 
   preloads: [
+    () => import("#start/luxon"),
     () => import("#start/instrument"),
     () => import("#start/routes"),
     () => import("#start/kernel"),

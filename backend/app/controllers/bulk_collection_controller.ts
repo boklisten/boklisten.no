@@ -89,7 +89,7 @@ export default class BulkCollectionController {
     // The employee's user id is not used when placing pure return/buyback orders (no new customer
     // items are generated), so the detailsId is sufficient for the place operation.
     const user = { id: detailsId, details: detailsId, permission };
-    const collectedAt = DateTime.now().setZone("Europe/Oslo").toFormat("HH:mm:ss");
+    const collectedAt = DateTime.now().toFormat("HH:mm:ss");
     const orderPlaceService = new OrderPlaceService();
     const collectedByCustomer = new Map<string, CollectedBook[]>();
 

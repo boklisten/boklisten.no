@@ -1,12 +1,11 @@
 import logger from "@adonisjs/core/services/logger";
 import * as Sentry from "@sentry/node";
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
-import { APP_CONFIG } from "#services/application_config";
+import { deliveryDays } from "#services/application_config";
 import { DeliveryService } from "#services/delivery_service";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
-import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
@@ -80,7 +79,7 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
               },
               brand: "POSTEN",
               title: needPickupPoint ? "Pakke til hentested" : "Pakke i postkasse",
-              description: `Forventet levering om ${APP_CONFIG.delivery.deliveryDays + 2} dager`,
+              description: `Forventet levering om ${deliveryDays() + 2} dager`,
               type: needPickupPoint ? "PICKUP_POINT" : "MAILBOX",
               priority: 1,
               isDefault: order.amount === 0,
@@ -124,7 +123,7 @@ export const VippsCheckoutService = {
             const priceInMinors = orderItem.amount * 100;
             return {
               id: orderItem.item,
-              name: `${orderItem.title} - ${TranslationService.translateOrderItemTypeImperative(orderItem.type)} ${orderItem.info?.to ? DateService.format(orderItem.info?.to, "Europe/Oslo", "DD/MM/YYYY") : ""}`,
+              name: `${orderItem.title} - ${TranslationService.translateOrderItemTypeImperative(orderItem.type)} ${orderItem.info?.to ? DateTime.fromJSDate(orderItem.info.to).toFormat("dd/MM/yyyy") : ""}`,
               totalAmount: priceInMinors,
               taxRate: 0,
               totalTaxAmount: 0,
@@ -172,9 +171,9 @@ export const VippsCheckoutService = {
         method: "bring",
         info: {
           amount: deliveryPrice,
-          estimatedDelivery: moment()
-            .add(APP_CONFIG.delivery.deliveryDays + 2, "days")
-            .toDate(),
+          estimatedDelivery: DateTime.now()
+            .plus({ days: deliveryDays() + 2 })
+            .toJSDate(),
           facilityAddress: {
             address: "Martin Lingesvei 25",
             postalCode: "1364",

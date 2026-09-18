@@ -10,12 +10,12 @@ import type {
 
 /**
  * The ten-minute ticks of a window on the given day, half-open: 12:00–14:00 yields 12:00 … 13:50.
- * Times are wall-clock Europe/Oslo, never server-local — meeting times must not drift when the
- * backend runs in UTC.
+ * Times are wall-clock Norwegian time (the app's default zone), never server-local — meeting
+ * times must not drift when the backend runs in UTC.
  */
 export function buildSlots(date: string, window: { from: string; to: string }): DateTime[] {
-  const start = DateTime.fromISO(`${date}T${window.from}`, { zone: "Europe/Oslo" });
-  const end = DateTime.fromISO(`${date}T${window.to}`, { zone: "Europe/Oslo" });
+  const start = DateTime.fromISO(`${date}T${window.from}`);
+  const end = DateTime.fromISO(`${date}T${window.to}`);
   const slots: DateTime[] = [];
   for (let slot = start; slot < end; slot = slot.plus({ minutes: 10 })) {
     slots.push(slot);

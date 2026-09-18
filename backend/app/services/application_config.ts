@@ -1,4 +1,23 @@
-import moment from "moment";
+import { DateTime } from "luxon";
+
+/** The weeks around school start when Bring is quick, as [month, day] bounds, inclusive. */
+const DELIVERY_HIGH_SEASONS: { from: [number, number]; to: [number, number] }[] = [
+  { from: [8, 5], to: [9, 10] },
+  { from: [1, 7], to: [2, 8] },
+];
+
+/**
+ * Days Bring is expected to need for a shipment: shorter in season. Evaluated per call because
+ * the process stays up across season boundaries.
+ */
+export function deliveryDays(now: DateTime = DateTime.now()): number {
+  const inSeason = DELIVERY_HIGH_SEASONS.some(
+    ({ from, to }) =>
+      now >= now.set({ month: from[0], day: from[1] }).startOf("day") &&
+      now <= now.set({ month: to[0], day: to[1] }).endOf("day"),
+  );
+  return inSeason ? 3 : 7;
+}
 
 export const APP_CONFIG = {
   path: {
@@ -82,18 +101,6 @@ export const APP_CONFIG = {
     },
   },
   delivery: {
-    // If in season, lower the delivery estimate
-    deliveryDays:
-      moment().isBetween(
-        moment().clone().set({ month: 7, date: 5 }),
-        moment().clone().set({ month: 8, date: 10 }),
-      ) ||
-      moment().isBetween(
-        moment().clone().set({ month: 0, date: 7 }),
-        moment().clone().set({ month: 1, date: 8 }),
-      )
-        ? 3
-        : 7,
     maxWeightLetter: 3000,
   },
 } as const;

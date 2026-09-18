@@ -6,7 +6,7 @@ import { EmployeeMonitoringService } from "#services/employee_monitoring_service
 export const FALLBACK_BRANCH_NAME = "Ukjent filial";
 
 function formatDeadline(deadline: Date): string {
-  return DateTime.fromJSDate(deadline).setZone("Europe/Oslo").toFormat("dd.MM.yyyy");
+  return DateTime.fromJSDate(deadline).toFormat("dd.MM.yyyy");
 }
 
 /**

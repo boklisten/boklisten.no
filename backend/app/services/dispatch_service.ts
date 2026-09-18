@@ -1,7 +1,7 @@
 import logger from "@adonisjs/core/services/logger";
 import sgClient from "@sendgrid/client";
 import sgMail from "@sendgrid/mail";
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
 import twilio from "twilio";
 
 import type Message from "#models/message";
@@ -406,13 +406,11 @@ const DispatchService = {
               title: orderItem.title,
               type: OrderEmailHandler.translateOrderItemType(orderItem.type),
               deadline: orderItem.info?.to
-                ? moment(orderItem.info.to)
-                    .add(1, "day") // fixme: we need to add one day to get the correct date due to a time zone issue
-                    .format("DD/MM/YYYY")
+                ? DateTime.fromJSDate(orderItem.info.to).toFormat("dd/MM/yyyy")
                 : "",
             })),
             expectedDeliveryDate: bringDeliveryInfo.estimatedDelivery
-              ? moment(bringDeliveryInfo.estimatedDelivery).format("DD/MM/YYYY")
+              ? DateTime.fromJSDate(bringDeliveryInfo.estimatedDelivery).toFormat("dd/MM/yyyy")
               : "Ukjent",
             trackingNumber: bringDeliveryInfo.trackingNumber,
           },

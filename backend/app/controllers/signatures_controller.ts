@@ -5,7 +5,6 @@ import type { DateTime } from "luxon";
 import Branch from "#models/branch";
 import Signature, { isUnderage } from "#models/signature";
 import DispatchService from "#services/dispatch_service";
-import { DateService } from "#services/date_service";
 import { reconcileSignatureTask, userHasValidSignature } from "#services/signature_helper";
 import { SignatureGalleryService } from "#services/signature_gallery_service";
 import { StorageService } from "#services/storage_service";
@@ -15,7 +14,7 @@ function formatSignedDate(dateTime: DateTime | null): string | undefined {
   if (!dateTime) {
     return undefined;
   }
-  return DateService.format(dateTime.toJSDate(), "Europe/Oslo", "DD/MM/YYYY");
+  return dateTime.toFormat("dd/MM/yyyy");
 }
 
 async function getSignatureStatus(detailsId: string) {

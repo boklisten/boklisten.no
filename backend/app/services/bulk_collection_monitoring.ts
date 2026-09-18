@@ -36,9 +36,7 @@ export const BulkCollectionMonitoring = {
           { label: "Unik ID", value: customerItem.blid ?? "" },
           {
             label: "Frist",
-            value: DateTime.fromJSDate(new Date(customerItem.deadline))
-              .setZone("Europe/Oslo")
-              .toFormat("dd.MM.yyyy"),
+            value: DateTime.fromJSDate(customerItem.deadline).toFormat("dd.MM.yyyy"),
           },
         ],
       });

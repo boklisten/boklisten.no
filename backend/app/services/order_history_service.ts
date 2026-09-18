@@ -406,7 +406,7 @@ async function fetchPlacedOrders(customerId: string): Promise<Order[]> {
 }
 
 function formatDeadline(deadline: Date | string): string {
-  return DateTime.fromJSDate(new Date(deadline)).setZone("Europe/Oslo").toFormat("dd.MM.yyyy");
+  return DateTime.fromJSDate(new Date(deadline)).toFormat("dd.MM.yyyy");
 }
 
 /** Ordered, not handed out, and not carried on into a later order. */

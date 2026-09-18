@@ -103,15 +103,12 @@ async function aggregateCustomersToRemind(
 }
 
 /**
- * The deadline as it should read in an email.
- *
- * fixme: the added day compensates for a time zone issue — deadlines are picked as calendar dates
- * but stored as instants, so one written in a zone ahead of the server sits late on the previous
- * day (the same drift `deadlineWindow` pads around). Formatting the stored instant in the zone it
- * was written in would fix this properly, but that zone is not recorded.
+ * The deadline as it should read in an email. Deadlines are picked as calendar dates and stored
+ * as midnight, Norwegian or UTC depending on who wrote them; both read as the intended day once
+ * formatted in Norwegian local time (the app's default zone).
  */
 function formatDeadline(deadline: string) {
-  return DateTime.fromJSDate(new Date(deadline)).plus({ days: 1 }).toFormat("dd/MM/yyyy");
+  return DateTime.fromJSDate(new Date(deadline)).toFormat("dd/MM/yyyy");
 }
 
 async function sendReminderEmail(

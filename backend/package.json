@@ -63,8 +63,6 @@
     "jsbarcode": "^3.12.3",
     "jsonwebtoken": "^9.0.3",
     "luxon": "^3.7.2",
-    "moment": "^2.31.0",
-    "moment-timezone": "^0.6.4",
     "mongodb": "^7.6.0",
     "mongoose": "^9.10.1",
     "openapi-fetch": "^0.17.0",

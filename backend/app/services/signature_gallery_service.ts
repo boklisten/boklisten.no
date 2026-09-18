@@ -3,7 +3,6 @@ import { ObjectId } from "mongodb";
 
 import Branch from "#models/branch";
 import Signature from "#models/signature";
-import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
 import type { UserPermission } from "#shared/user-permission";
 
@@ -135,7 +134,7 @@ function formatSignedDate(dateTime: DateTime | null): string {
   if (!dateTime) {
     return "";
   }
-  return DateService.format(dateTime.toJSDate(), "Europe/Oslo", "DD/MM/YYYY");
+  return dateTime.toFormat("dd/MM/yyyy");
 }
 
 /**

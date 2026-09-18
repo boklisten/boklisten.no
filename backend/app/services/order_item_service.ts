@@ -8,9 +8,7 @@ import type { OrderItem } from "#shared/order/order-item/order-item";
 
 /** Deadlines are compared as Oslo calendar days, so a date picked in a form matches the branch period. */
 export function isSameDeadlineDay(a: Date, b: Date): boolean {
-  return DateTime.fromJSDate(a)
-    .setZone("Europe/Oslo")
-    .hasSame(DateTime.fromJSDate(b).setZone("Europe/Oslo"), "day");
+  return DateTime.fromJSDate(a).hasSame(DateTime.fromJSDate(b), "day");
 }
 
 export const OrderItemService = {

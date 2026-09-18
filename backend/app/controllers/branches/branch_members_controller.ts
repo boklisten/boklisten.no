@@ -1,5 +1,5 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import moment from "moment";
+import { DateTime } from "luxon";
 
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
@@ -25,7 +25,7 @@ export default class BranchMembersController {
         .map((member) => ({
           id: member.id,
           name: member.name,
-          yearOfBirth: moment(member.dob).format("YYYY"),
+          yearOfBirth: member.dob ? String(DateTime.fromJSDate(member.dob).year) : null,
         }))
         .toSorted((a, b) => a.name.localeCompare(b.name)),
       indirectMembers: {

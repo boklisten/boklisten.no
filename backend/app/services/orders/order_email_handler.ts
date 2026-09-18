@@ -1,6 +1,7 @@
+import { DateTime } from "luxon";
+
 import Branch from "#models/branch";
 import DispatchService from "#services/dispatch_service";
-import { DateService } from "#services/date_service";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { BlError } from "#shared/bl-error";
@@ -23,7 +24,7 @@ export const OrderEmailHandler = {
 
     const emailUser: EmailUser = {
       id: customerDetail.id,
-      dob: customerDetail.dob ? DateService.toPrintFormat(customerDetail.dob, "Europe/Oslo") : "",
+      dob: customerDetail.dob ? DateTime.fromJSDate(customerDetail.dob).toFormat("dd.MM.yy") : "",
       name: customerDetail.name,
       email: customerDetail.email,
       address: customerDetail.address,
@@ -150,7 +151,7 @@ export const OrderEmailHandler = {
       paymentId: "",
       status: "bekreftet",
       creationTime: payment.creationTime
-        ? DateService.format(payment.creationTime, "Europe/Oslo", "DD.MM.YYYY HH.mm.ss")
+        ? DateTime.fromJSDate(new Date(payment.creationTime)).toFormat("dd.MM.yyyy HH.mm.ss")
         : null,
     };
 
@@ -186,11 +187,8 @@ export const OrderEmailHandler = {
 
       // @ts-expect-error fixme: auto ignored
       estimatedDeliveryDate: delivery.info["estimatedDelivery"]
-        ? DateService.toPrintFormat(
-            // @ts-expect-error fixme: auto ignored
-            delivery.info["estimatedDelivery"],
-            "Europe/Oslo",
-          )
+        ? // @ts-expect-error fixme: auto ignored
+          DateTime.fromJSDate(new Date(delivery.info["estimatedDelivery"])).toFormat("dd.MM.yy")
         : "",
     };
   },
@@ -205,8 +203,8 @@ export const OrderEmailHandler = {
       title: orderItem.title,
       status: this.translateOrderItemType(orderItem.type, orderItem.handout),
       deadline:
-        orderItem.type === "rent" || orderItem.type === "extend"
-          ? DateService.toPrintFormat(orderItem.info?.to ?? "", "Europe/Oslo")
+        (orderItem.type === "rent" || orderItem.type === "extend") && orderItem.info?.to
+          ? DateTime.fromJSDate(orderItem.info.to).toFormat("dd.MM.yy")
           : null,
       price: orderItem.type !== "return" && orderItem.amount ? orderItem.amount.toString() : null,
     }));

@@ -58,10 +58,7 @@ export function isMonitored(employee: MonitoredEmployee): boolean {
 
 export function buildMonitoringMail(report: MonitoringReport) {
   const headline = MONITORED_ACTIONS[report.action];
-  const occurredAt = report.occurredAt
-    .setZone("Europe/Oslo")
-    .setLocale("nb")
-    .toFormat("d. MMMM yyyy 'kl.' HH:mm");
+  const occurredAt = report.occurredAt.toFormat("d. MMMM yyyy 'kl.' HH:mm");
 
   const lines = [
     "Ansattvarsel fra Boklisten.no",
