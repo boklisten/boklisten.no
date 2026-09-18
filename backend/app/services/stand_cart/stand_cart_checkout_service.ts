@@ -209,7 +209,6 @@ async function attachDelivery(
       trackingNumber,
       estimatedDelivery: null,
       amount: 0,
-      taxAmount: 0,
     },
   });
   return StorageService.Orders.update(order.id, { delivery: delivery.id });

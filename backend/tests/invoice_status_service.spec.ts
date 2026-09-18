@@ -55,7 +55,7 @@ function customerItem(overrides: Partial<CustomerItem>): CustomerItem {
     customer: CUSTOMER_ID,
     returned: false,
     buyout: false,
-    handoutInfo: { handoutBy: "branch", handoutById: "branch1", time: new Date() },
+    handoutInfo: { handoutById: "branch1", time: new Date() },
     ...overrides,
   });
 }

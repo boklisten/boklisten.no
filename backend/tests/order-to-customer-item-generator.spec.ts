@@ -91,7 +91,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         deadline: orderItem.info.to,
         handout: true,
         handoutInfo: {
-          handoutBy: "branch",
           handoutById: order.branch,
           handoutEmployee: order.employee,
           time: today,
@@ -102,7 +101,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         buyback: false,
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem.info.amountLeftToPay,
-        totalAmount: orderItem.amount,
         blid: orderItem.blid,
         orders: [order.id],
         customerInfo: {
@@ -190,7 +188,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         deadline: orderItem.info.to,
         handout: true,
         handoutInfo: {
-          handoutBy: "branch",
           handoutById: order.branch,
           handoutEmployee: order.employee,
           time: today,
@@ -202,7 +199,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         blid: orderItem.blid,
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem.info.amountLeftToPay,
-        totalAmount: orderItem.amount,
         orders: [order.id],
         customerInfo: {
           name: userDetail.name,
@@ -225,7 +221,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         deadline: orderItem2.info.to,
         handout: true,
         handoutInfo: {
-          handoutBy: "branch",
           handoutById: order.branch,
           handoutEmployee: order.employee,
           time: today,
@@ -236,7 +231,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         buyback: false,
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem2.info.amountLeftToPay,
-        totalAmount: orderItem2.amount,
         orders: [order.id],
         customerInfo: {
           name: userDetail.name,
@@ -361,7 +355,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         handout: true,
         blid: orderItem.blid,
         handoutInfo: {
-          handoutBy: "branch",
           handoutById: order.branch,
           handoutEmployee: order.employee,
           time: today,
@@ -370,7 +363,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         buyout: false,
         cancel: false,
         buyback: false,
-        totalAmount: orderItem.amount,
         orders: [order.id],
         customerInfo: {
           name: userDetail.name,
@@ -452,7 +444,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         blid: orderItem.blid,
         handout: true,
         handoutInfo: {
-          handoutBy: "branch",
           handoutById: order.branch,
           handoutEmployee: order.employee,
           time: today,
@@ -461,7 +452,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         buyout: false,
         cancel: false,
         buyback: false,
-        totalAmount: orderItem.amount,
         orders: [order.id],
         customerInfo: {
           name: userDetail.name,
@@ -484,7 +474,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         blid: orderItem2.blid,
         handout: true,
         handoutInfo: {
-          handoutBy: "branch",
           handoutById: order.branch,
           handoutEmployee: order.employee,
           time: today,
@@ -493,7 +482,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         buyout: false,
         cancel: false,
         buyback: false,
-        totalAmount: orderItem2.amount,
         orders: [order.id],
         customerInfo: {
           name: userDetail.name,
@@ -594,7 +582,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         blid: orderItem2.blid,
         handout: true,
         handoutInfo: {
-          handoutBy: "branch",
           handoutById: order.branch,
           handoutEmployee: order.employee,
           time: today,
@@ -603,7 +590,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         buyout: false,
         cancel: false,
         buyback: false,
-        totalAmount: orderItem2.amount,
         orders: [order.id],
         customerInfo: {
           name: userDetail.name,
@@ -626,7 +612,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         blid: orderItem3.blid,
         handout: true,
         handoutInfo: {
-          handoutBy: "branch",
           handoutById: order.branch,
           handoutEmployee: order.employee,
           time: today,
@@ -637,7 +622,6 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         buyback: false,
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem3.info.amountLeftToPay,
-        totalAmount: orderItem3.amount,
         orders: [order.id],
         customerInfo: {
           name: userDetail.name,

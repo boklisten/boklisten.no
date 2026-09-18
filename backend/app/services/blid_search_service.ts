@@ -14,6 +14,7 @@ import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import type {
   BlidActiveItem,
+  BlidHistoryAction,
   BlidHistoryEvent,
   BlidParty,
   BlidSearchHit,
@@ -507,28 +508,60 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
         deadline,
       });
     }
-    // Legacy buyout order items rarely carry the blid, so the order loop misses them; the
-    // customer item still knows the book was bought out.
-    if (customerItem.buyout) {
-      const buyoutOrderId = customerItem.buyoutInfo?.order;
-      const buyoutOrder = buyoutOrderId === undefined ? undefined : ordersById.get(buyoutOrderId);
-      const time = customerItem.buyoutInfo?.time ?? buyoutOrder?.creationTime;
+    // Legacy buyout, buyback and cancel order items rarely carry the blid, so the order loop
+    // misses them; the customer item still knows how the loan ended and which order ended it.
+    const endings: {
+      action: "buyout" | "buyback" | "cancel";
+      done: boolean;
+      info: { order?: string; time?: Date } | undefined;
+      /** Events that already tell this ending; a paid invoice is a buyout by other means. */
+      toldBy: BlidHistoryAction[];
+    }[] = [
+      {
+        action: "buyout",
+        done: customerItem.buyout,
+        info: customerItem.buyoutInfo,
+        toldBy: ["buyout", "invoice-paid"],
+      },
+      {
+        action: "buyback",
+        done: customerItem.buyback,
+        info: customerItem.buybackInfo,
+        toldBy: ["buyback"],
+      },
+      {
+        action: "cancel",
+        done: customerItem.cancel,
+        info: customerItem.cancelInfo,
+        toldBy: ["cancel"],
+      },
+    ];
+    for (const ending of endings) {
+      if (!ending.done) {
+        continue;
+      }
+      const orderId = ending.info?.order;
+      const order = orderId === undefined ? undefined : ordersById.get(orderId);
+      const time = ending.info?.time ?? order?.creationTime;
       const alreadyTold = events.some(
         (event) =>
-          (event.action === "buyout" || event.action === "invoice-paid") &&
-          (buyoutOrderId === undefined || event.orderId === buyoutOrderId),
+          ending.toldBy.includes(event.action) &&
+          (orderId === undefined || event.orderId === orderId),
       );
-      if (!alreadyTold && time !== undefined) {
-        events.push({
-          time: new Date(time).toISOString(),
-          action: "buyout",
-          to: customerParty(customerItem.customer),
-          employee: employeeOf(buyoutOrder?.employee),
-          byCustomer: buyoutOrder?.byCustomer ?? false,
-          branchName: branchName(buyoutOrder?.branch),
-          orderId: buyoutOrderId,
-        });
+      if (alreadyTold || time === undefined) {
+        continue;
       }
+      const customer = customerParty(customerItem.customer);
+      events.push({
+        time: new Date(time).toISOString(),
+        action: ending.action,
+        // A buyout leaves the book with the customer; a buyback or cancellation takes it back.
+        ...(ending.action === "buyout" ? { to: customer } : { from: customer }),
+        employee: employeeOf(order?.employee),
+        byCustomer: order?.byCustomer ?? false,
+        branchName: branchName(order?.branch),
+        orderId,
+      });
     }
   }
 

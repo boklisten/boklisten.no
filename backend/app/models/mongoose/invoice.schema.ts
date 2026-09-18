@@ -62,7 +62,6 @@ export const InvoiceSchema: BlSchema<Invoice> = new Schema({
   customerInfo: {
     type: {
       userDetail: String,
-      companyDetail: String,
       customerNumber: String,
       name: String,
       email: String,

@@ -75,8 +75,6 @@ export interface Branch extends BranchPeriods {
   deliveryByMail: boolean;
   /** Customers can order this branch's books online. */
   branchItemsLiveOnline: boolean;
-  /** Employees can order this branch's books at the branch. */
-  branchItemsLiveAtBranch: boolean;
   /** Free text, e.g. "Oslo"; groups branches in the order flow's branch picker. */
   region: string;
   address: string | null;

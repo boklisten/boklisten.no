@@ -16,7 +16,6 @@ export interface CustomerItem extends BlDocument {
   deadline: Date; //the deadline to return (or buyout if type is "partly-payment") this item
   handout: boolean; // if this customerItem is handed out to customer or not
   handoutInfo?: {
-    handoutBy: "branch";
     handoutById: string; // the id of the branch that handed out the item
     handoutEmployee?: string; // the id of the employee that handed out the item
     time: Date; // the time this item was handed out
@@ -24,7 +23,6 @@ export interface CustomerItem extends BlDocument {
 
   returned: boolean; // if this item is returned or not
   returnInfo?: {
-    returnedTo: "branch";
     returnedToId: string; // the id of the branch the item was returned to
     returnEmployee?: string; // the id of the employee that received the item
     time: Date; //the time of return
@@ -45,6 +43,7 @@ export interface CustomerItem extends BlDocument {
   buyback: boolean;
   buybackInfo?: {
     order: string;
+    time?: Date;
   };
 
   orders: string[]; // what orders are this customerItem a part of, must be at least one, the order placement
@@ -53,7 +52,6 @@ export interface CustomerItem extends BlDocument {
   // when the deadline is approaching the customer can buyout the item
   // the amount to pay on buyout is the amount in "amountLeftToPay"
   amountLeftToPay?: number; // the amount left to pay on this customerItem (only if type is partly-payment),
-  totalAmount?: number; // the total amount that should be payed (only if type is partly-payent)
   // ---------
 
   periodExtends?: {

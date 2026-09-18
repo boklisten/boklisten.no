@@ -134,7 +134,7 @@ test.group("roundPlanMetrics", (group) => {
       {
         $match: {
           customer: { $in: { toString: () => string }[] };
-          "handoutInfo.handoutBy"?: string;
+          "handoutInfo.handoutById"?: unknown;
         };
       },
     ] = unchecked(stubs.customerItems.secondCall.args[0]);
@@ -144,7 +144,7 @@ test.group("roundPlanMetrics", (group) => {
       "the wider sweep only follows students already holding books from the round's branches",
     );
     assert.isUndefined(
-      match.$match["handoutInfo.handoutBy"],
+      match.$match["handoutInfo.handoutById"],
       "the second sweep does not care where the books were handed out",
     );
     assert.deepEqual(metrics.activeBooks, { books: 2, students: 1 });

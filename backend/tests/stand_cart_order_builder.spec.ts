@@ -34,7 +34,7 @@ const customerItem = mock<CustomerItem>({
   item: ITEM.id,
   blid: "12345678",
   type: "rent",
-  handoutInfo: { handoutBy: "branch", handoutById: "branch-handout" },
+  handoutInfo: { handoutById: "branch-handout" },
 });
 
 function checkoutLine(

@@ -98,7 +98,7 @@ test.group("CustomerItemsController.forCustomer", (group) => {
           item: ITEM_ID,
           deadline: book.deadline,
           orders: [],
-          handoutInfo: { handoutBy: "branch", handoutById: "branch1", time: new Date() },
+          handoutInfo: { handoutById: "branch1", time: new Date() },
         }),
       ]),
     });

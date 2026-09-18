@@ -104,7 +104,7 @@ const activeCustomerItem = mock<CustomerItem>({
   buyout: false,
   cancel: false,
   buyback: false,
-  handoutInfo: { handoutBy: "branch", handoutById: BRANCH_ID, time: NOW },
+  handoutInfo: { handoutById: BRANCH_ID, time: NOW },
   creationTime: new Date("2026-08-01T10:00:00.000Z"),
   orders: [HANDOUT_ORDER_ID],
 });

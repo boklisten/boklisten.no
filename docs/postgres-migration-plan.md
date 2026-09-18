@@ -928,21 +928,21 @@ Code that read `order.delivery` uses `hasOne` on the order model.
 
 Target schema `deliveries`:
 
-| Column                                                                      | From                            | Notes                                     |
-| --------------------------------------------------------------------------- | ------------------------------- | ----------------------------------------- |
-| id string(24) PK                                                            | `_id`                           |                                           |
-| order_id FK orders CASCADE unique                                           | `order`                         | survey for orders with several deliveries |
-| method enu(branch, bring) not null                                          | `method`                        |                                           |
-| amount integer not null                                                     | `amount`                        |                                           |
-| branch_id FK branches SET NULL                                              | `info.branch`                   | survey: is it always a branch id?         |
-| bring_amount, bring_tax_amount int null                                     | `info.amount`, `info.taxAmount` |                                           |
-| estimated_delivery timestamptz null                                         | `info.estimatedDelivery`        |                                           |
-| facility_address, facility_postal_code, facility_postal_city                | `info.facilityAddress.*`        |                                           |
-| shipment_name, shipment_address, shipment_postal_code, shipment_postal_city | `info.shipmentAddress.*`        |                                           |
-| from_postal_code, to_postal_code                                            | `info.from`, `info.to`          |                                           |
-| product text null                                                           | `info.product`                  | Bring product code                        |
-| tracking_number text null                                                   | `info.trackingNumber`           |                                           |
-| timestamps                                                                  |                                 |                                           |
+| Column                                                                      | From                     | Notes                                     |
+| --------------------------------------------------------------------------- | ------------------------ | ----------------------------------------- |
+| id string(24) PK                                                            | `_id`                    |                                           |
+| order_id FK orders CASCADE unique                                           | `order`                  | survey for orders with several deliveries |
+| method enu(branch, bring) not null                                          | `method`                 |                                           |
+| amount integer not null                                                     | `amount`                 |                                           |
+| branch_id FK branches SET NULL                                              | `info.branch`            | survey: is it always a branch id?         |
+| bring_amount int null                                                       | `info.amount`            |                                           |
+| estimated_delivery timestamptz null                                         | `info.estimatedDelivery` |                                           |
+| facility_address, facility_postal_code, facility_postal_city                | `info.facilityAddress.*` |                                           |
+| shipment_name, shipment_address, shipment_postal_code, shipment_postal_city | `info.shipmentAddress.*` |                                           |
+| from_postal_code, to_postal_code                                            | `info.from`, `info.to`   |                                           |
+| product text null                                                           | `info.product`           | Bring product code                        |
+| tracking_number text null                                                   | `info.trackingNumber`    |                                           |
+| timestamps                                                                  |                          |                                           |
 
 Everything in `info` is app-defined shape, so it becomes columns; no jsonb here.
 

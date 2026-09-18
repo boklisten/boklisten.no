@@ -40,7 +40,6 @@ test.group("OrderItemExtendValidator", (group) => {
       handout: true,
       customer: "customer1",
       handoutInfo: {
-        handoutBy: "branch",
         handoutById: "branch1",
         handoutEmployee: "employee1",
         time: new Date(),

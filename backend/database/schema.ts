@@ -133,14 +133,12 @@ export class BranchSubjectSchema extends BaseModel {
 }
 
 export class BranchSchema extends BaseModel {
-  static $columns = ['active', 'address', 'branchItemsLiveAtBranch', 'branchItemsLiveOnline', 'buyoutPercentage', 'childLabel', 'createdAt', 'deliveryAtBranch', 'deliveryByMail', 'id', 'localName', 'logo', 'name', 'parentBranchId', 'paymentResponsible', 'region', 'responsibleForDelivery', 'sellPercentage', 'type', 'updatedAt'] as const
+  static $columns = ['active', 'address', 'branchItemsLiveOnline', 'buyoutPercentage', 'childLabel', 'createdAt', 'deliveryAtBranch', 'deliveryByMail', 'id', 'localName', 'logo', 'name', 'parentBranchId', 'paymentResponsible', 'region', 'responsibleForDelivery', 'sellPercentage', 'type', 'updatedAt'] as const
   $columns = BranchSchema.$columns
   @column()
   declare active: boolean
   @column()
   declare address: string | null
-  @column()
-  declare branchItemsLiveAtBranch: boolean
   @column()
   declare branchItemsLiveOnline: boolean
   @column()

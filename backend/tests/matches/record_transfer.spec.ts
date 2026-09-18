@@ -48,7 +48,6 @@ function activeCopy(overrides: Partial<CustomerItem> & { customer: string }): Cu
     item: ITEM_X,
     deadline: inOneMonth(),
     handoutInfo: {
-      handoutBy: "branch",
       handoutById: BRANCH,
       handoutEmployee: "",
       time: new Date(),

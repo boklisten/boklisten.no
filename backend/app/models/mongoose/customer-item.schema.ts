@@ -44,11 +44,6 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     required: true,
   },
   handoutInfo: {
-    handoutBy: {
-      type: String,
-      enum: ["branch"],
-      required: true,
-    },
     handoutById: {
       type: Schema.Types.ObjectId,
       required: true,
@@ -65,10 +60,6 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     required: true,
   },
   returnInfo: {
-    returnedTo: {
-      type: String,
-      enum: ["branch"],
-    },
     returnedToId: {
       type: Schema.Types.ObjectId,
     },
@@ -103,6 +94,7 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
   },
   buybackInfo: {
     order: { type: Schema.Types.ObjectId, ref: BlSchemaName.Orders },
+    time: Date,
   },
 
   orders: {
@@ -133,7 +125,6 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     ],
     default: [],
   },
-  totalAmount: Number,
   amountLeftToPay: Number,
   customerInfo: {
     name: String,

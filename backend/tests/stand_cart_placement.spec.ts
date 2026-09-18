@@ -161,7 +161,7 @@ test.group("StandCartPlacement.place", (group) => {
       blid: "12345678",
       customer: CUSTOMER_ID,
       deadline: SEMESTER_END,
-      handoutInfo: { handoutBy: "branch", handoutById: BRANCH_ID },
+      handoutInfo: { handoutById: BRANCH_ID },
     });
     asStub(StorageService.CustomerItems.getMany).resolves([heldBook]);
     await StandCartPlacement.place(orderWith([{ type: "return", customerItem: "ci1" }]), EMPLOYEE);

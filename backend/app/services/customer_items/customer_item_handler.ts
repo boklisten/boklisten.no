@@ -111,7 +111,6 @@ export class CustomerItemHandler {
       returned: true,
       orders: customerItemOrders,
       returnInfo: {
-        returnedTo: "branch",
         returnedToId: branchId,
         returnEmployee: employeeId,
         time: new Date(),
@@ -169,6 +168,7 @@ export class CustomerItemHandler {
       buyback: true,
       buybackInfo: {
         order: orderId,
+        time: new Date(),
       },
     });
   }

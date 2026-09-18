@@ -46,7 +46,6 @@ export default function BranchGeneralSettings({
       type: existingBranch?.type ?? null,
       active: existingBranch?.active ?? true,
       branchItemsLiveOnline: existingBranch?.branchItemsLiveOnline ?? false,
-      branchItemsLiveAtBranch: existingBranch?.branchItemsLiveAtBranch ?? false,
     },
     onSubmit: ({ value }) => {
       // Empty optional text fields mean "not set".
@@ -94,9 +93,6 @@ export default function BranchGeneralSettings({
         </form.AppField>
         <form.AppField name="branchItemsLiveOnline">
           {(field) => <field.SwitchField label="Synlig for kunder" />}
-        </form.AppField>
-        <form.AppField name="branchItemsLiveAtBranch">
-          {(field) => <field.SwitchField label="Synlig for ansatte" />}
         </form.AppField>
       </Activity>
       <form.AppForm>

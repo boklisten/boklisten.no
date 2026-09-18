@@ -75,7 +75,6 @@ export class OrderToCustomerItemGenerator {
       buyback: false,
       // @ts-expect-error fixme: auto ignored
       amountLeftToPay: orderItem.info.amountLeftToPay,
-      totalAmount: orderItem.amount,
       orders: [order.id],
       customerInfo: this.createCustomerInfo(customerDetail),
     };
@@ -103,7 +102,6 @@ export class OrderToCustomerItemGenerator {
       buyout: false,
       cancel: false,
       buyback: false,
-      totalAmount: orderItem.amount,
       orders: [order.id],
       customerInfo: this.createCustomerInfo(customerDetail),
     };
@@ -111,7 +109,6 @@ export class OrderToCustomerItemGenerator {
 
   private createHandoutInfo(order: Order) {
     return {
-      handoutBy: "branch",
       handoutById: order.branch,
       handoutEmployee: order.employee,
       time: order.creationTime,

@@ -51,7 +51,6 @@ export const branchValidator = vine.create(
     type: vine.enum(BRANCH_TYPES).nullable().optional(),
     active: vine.boolean().optional(),
     branchItemsLiveOnline: vine.boolean().optional(),
-    branchItemsLiveAtBranch: vine.boolean().optional(),
     paymentResponsible: vine.boolean().optional(),
     responsibleForDelivery: vine.boolean().optional(),
     buyoutPercentage: percentageField.optional(),

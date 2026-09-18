@@ -12,7 +12,6 @@ export interface OrderItem {
   info?: OrderItemInfo; //if the type is rent or extend, this object contains info about the rental period
   delivered: boolean; // if the orderItem is delivered out or not
   customerItem?: string; // if this orderItem is for a customerItem, this is the id of the customerItem
-  match?: string; // if the orderItem is part of a match
   movedToOrder?: string; // if the orderItem is added again in a new order, this points to it
   movedFromOrder?: string; //if the orderItem is from another order, this points to it
 }

@@ -302,7 +302,6 @@ function customerItemWith(overrides: Partial<CustomerItem> = {}): CustomerItem {
     deadline: SEMESTER_END,
     handout: true,
     handoutInfo: {
-      handoutBy: "branch",
       handoutById: "branch1",
       time: new Date("2026-08-20T10:00:00.000Z"),
     },
@@ -467,7 +466,6 @@ test.group("priceCustomerItemLine", () => {
       customerItem: customerItemWith({
         creationTime: new Date("2026-08-01T10:00:00.000Z"),
         handoutInfo: {
-          handoutBy: "branch",
           handoutById: "branch1",
           time: new Date("2026-08-01T10:00:00.000Z"),
         },

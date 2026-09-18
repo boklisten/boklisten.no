@@ -21,7 +21,7 @@ function customerItemWith(overrides: Partial<CustomerItem> = {}): CustomerItem {
     deadline: SEMESTER_END,
     handout: true,
     creationTime: new Date("2026-08-01T10:00:00.000Z"),
-    handoutInfo: { handoutBy: "branch", handoutById: "branch1", time: NOW },
+    handoutInfo: { handoutById: "branch1", time: NOW },
     periodExtends: [],
     ...overrides,
   });

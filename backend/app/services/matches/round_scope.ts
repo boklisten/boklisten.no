@@ -23,7 +23,6 @@ function activeBooksAtDeadline(deadline: DateTime) {
 function activeBooksHandedOutAt(branchIds: string[], deadline: DateTime) {
   return {
     ...activeBooksAtDeadline(deadline),
-    "handoutInfo.handoutBy": "branch",
     "handoutInfo.handoutById": { $in: toObjectIds(branchIds) },
   };
 }

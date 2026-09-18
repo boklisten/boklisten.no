@@ -38,7 +38,6 @@ export interface Invoice extends BlDocument {
   customerItemPayments: InvoiceCustomerItemPayment[];
   customerInfo: {
     userDetail?: string;
-    companyDetail?: string;
     customerNumber?: string;
     name: string;
     branchName?: string;

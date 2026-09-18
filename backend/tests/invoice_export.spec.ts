@@ -253,7 +253,7 @@ test.group("invoice export: Tripletex", () => {
           orders: ["order1", "order2"],
           creationTime: new Date("2025-08-20T10:00:00.000Z"),
           amountLeftToPay: 310,
-          handoutInfo: { handoutBy: "branch", handoutById: BRANCH_ID, time: new Date() },
+          handoutInfo: { handoutById: BRANCH_ID, time: new Date() },
         }),
       ],
     ]),

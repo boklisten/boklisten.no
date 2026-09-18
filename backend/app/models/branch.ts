@@ -86,7 +86,6 @@ export default class Branch extends BranchSchema {
       deliveryAtBranch: this.deliveryAtBranch,
       deliveryByMail: this.deliveryByMail,
       branchItemsLiveOnline: this.branchItemsLiveOnline,
-      branchItemsLiveAtBranch: this.branchItemsLiveAtBranch,
       region: this.region,
       address: this.address,
       rentPeriods: this.rentPeriods,

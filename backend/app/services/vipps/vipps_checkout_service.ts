@@ -175,7 +175,6 @@ export const VippsCheckoutService = {
           estimatedDelivery: moment()
             .add(APP_CONFIG.delivery.deliveryDays + 2, "days")
             .toDate(),
-          taxAmount: deliveryPrice * 0.25,
           facilityAddress: {
             address: "Martin Lingesvei 25",
             postalCode: "1364",

@@ -43,7 +43,7 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
         blid: "12345678",
         customer: CUSTOMER_ID,
         deadline: new Date("2026-06-30T22:00:00.000Z"),
-        handoutInfo: { handoutBy: "branch", handoutById: OLD_BRANCH_ID },
+        handoutInfo: { handoutById: OLD_BRANCH_ID },
       }),
     );
   });

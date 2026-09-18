@@ -25,7 +25,7 @@ function customerItem(overrides: Partial<CustomerItem>): CustomerItem {
     buyout: false,
     orders: ["order1"],
     deadline: new Date("2026-06-30T22:00:00.000Z"),
-    handoutInfo: { handoutBy: "branch", handoutById: BRANCH_ID, time: new Date() },
+    handoutInfo: { handoutById: BRANCH_ID, time: new Date() },
     ...overrides,
   });
 }

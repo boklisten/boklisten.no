@@ -89,7 +89,7 @@ const customerItem = mock<CustomerItem>({
   customer: CUSTOMER_ID,
   type: "rent",
   deadline: new Date(SEMESTER_END),
-  handoutInfo: { handoutBy: "branch", handoutById: BRANCH_ID },
+  handoutInfo: { handoutById: BRANCH_ID },
 });
 
 const ORDER_SOURCE: StandCartSource = { kind: "order", orderId: ORDER_ID, itemId: item.id };
@@ -696,7 +696,6 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       trackingNumber: "TR123",
       estimatedDelivery: null,
       amount: 0,
-      taxAmount: 0,
     });
     assert.deepEqual(ordersUpdate.firstCall.args, [NEW_ORDER_ID, { delivery: "new-delivery" }]);
     assert.equal(place.firstCall.args[0].delivery, "new-delivery");

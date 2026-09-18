@@ -26,9 +26,6 @@ export const ActiveItemCorrections = {
       set["deadline"] = deadline;
     }
     if (branchId) {
-      // handoutInfo may be missing entirely on legacy items; set both keys so the pair
-      // stays coherent.
-      set["handoutInfo.handoutBy"] = "branch";
       set["handoutInfo.handoutById"] = new ObjectId(branchId);
     }
     const result = await StorageService.CustomerItems.updateMany(
