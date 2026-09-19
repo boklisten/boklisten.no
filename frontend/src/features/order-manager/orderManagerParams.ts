@@ -4,7 +4,7 @@ import type { SearchSchemaInput } from "@tanstack/react-router";
 const OBJECT_ID_PATTERN = /^[\da-f]{24}$/i;
 
 /** What a link may pass; every part is optional. */
-export interface OrderManagerSearchInput {
+interface OrderManagerSearchInput {
   /** The selected order. */
   ordre?: string;
   /** Order branches to show, as the tree picker gives them (parents and all their descendants). */

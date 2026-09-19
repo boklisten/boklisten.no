@@ -11,8 +11,7 @@ import type { UserDetail } from "#shared/user-detail";
 
 const signatureRequiringOrderItemTypes = new Set<string>(SIGNATURE_REQUIRING_CART_ITEM_TYPES);
 
-export const SIGNATURE_REQUIRED_TO_ORDER_MESSAGE =
-  "Du må signere låneavtalen før du kan bestille bøker.";
+const SIGNATURE_REQUIRED_TO_ORDER_MESSAGE = "Du må signere låneavtalen før du kan bestille bøker.";
 
 export async function userHasValidSignature(userDetail: UserDetail): Promise<boolean> {
   return (await Signature.validForCustomer(userDetail)) != null;
@@ -103,7 +102,7 @@ async function possessesSignatureRequiringItem(customerId: string): Promise<bool
   );
 }
 
-export const SIGNATURE_EXCEPTION_REASONS = {
+const SIGNATURE_EXCEPTION_REASONS = {
   neverSigned: "Aldri signert",
   expired: "Signaturen er utløpt",
   outgrownGuardian: "Signert av foresatt, kunden har fylt 18",

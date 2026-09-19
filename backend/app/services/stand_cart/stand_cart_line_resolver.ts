@@ -29,7 +29,7 @@ import type {
   StandCartSource,
 } from "#shared/stand_cart";
 
-export interface StandCartResolveRequest {
+interface StandCartResolveRequest {
   customerId: string;
   /** The cart branch: handouts are priced from it and recorded on it. */
   branchId: string;

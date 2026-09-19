@@ -33,7 +33,7 @@ import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import useApiClient from "@/shared/hooks/useApiClient";
 
-export const BRANCH_MANAGER_TABS = [
+const BRANCH_MANAGER_TABS = [
   "general",
   "relationships",
   "payment",

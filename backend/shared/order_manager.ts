@@ -20,7 +20,7 @@ export interface OrderManagerFilter {
   bringOnly?: boolean;
 }
 
-export interface OrderManagerOpenItem {
+interface OrderManagerOpenItem {
   itemId: string;
   title: string;
   type: OrderItemType;

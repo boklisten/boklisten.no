@@ -9,12 +9,12 @@ import {
 } from "@/features/invoices/invoiceLabels";
 import classes from "@/features/invoices/InvoiceStatusSummary.module.css";
 
-export interface StatusTotals {
+interface StatusTotals {
   count: number;
   amount: number;
 }
 
-export function totalsByStatus(rows: InvoiceListRow[]): Map<InvoiceStatus, StatusTotals> {
+function totalsByStatus(rows: InvoiceListRow[]): Map<InvoiceStatus, StatusTotals> {
   const totals = new Map<InvoiceStatus, StatusTotals>();
   for (const row of rows) {
     const current = totals.get(row.status) ?? { count: 0, amount: 0 };

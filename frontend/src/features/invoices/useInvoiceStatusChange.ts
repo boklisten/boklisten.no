@@ -36,7 +36,7 @@ export async function confirmPaymentChange({
   });
 }
 
-export function showStatusChangeResult(count: number, status: InvoiceStatus, warnings: string[]) {
+function showStatusChangeResult(count: number, status: InvoiceStatus, warnings: string[]) {
   const subject = count === 1 ? "Fakturaen" : `${count} fakturaer`;
   const headline = `${subject} ble satt til ${INVOICE_STATUS_LABELS[status].toLowerCase()}`;
   if (warnings.length === 0) {

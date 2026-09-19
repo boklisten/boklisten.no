@@ -8,7 +8,7 @@ import type { ScanCodeType } from "@/shared/utils/scanCodes";
 import { describeRejectedScan, determineScanCodeType } from "@/shared/utils/scanCodes";
 
 /** How a code reached the page. */
-export type CodeSource = "camera" | "wedge" | "search";
+type CodeSource = "camera" | "wedge" | "search";
 
 /** Handles a code. May return a notice when it led nowhere. */
 export type CodeHandler = (

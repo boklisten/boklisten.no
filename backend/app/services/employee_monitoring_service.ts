@@ -15,7 +15,7 @@ export const EMPLOYEE_MONITORING_RECIPIENT = "info@boklisten.no";
  * the mail carries. Add an action here and call `report()` from wherever it happens; the
  * frontend shows the matching warning with `MonitoringNotice`.
  */
-export const MONITORED_ACTIONS = {
+const MONITORED_ACTIONS = {
   "handout-without-signature": "Bok delt ut uten gyldig signatur",
   "order-deleted": "Ordre slettet",
   "order-branch-changed": "Filial endret på ordre",
@@ -43,7 +43,7 @@ export interface MonitoredEmployee {
   permission: UserPermission;
 }
 
-export interface MonitoringReport {
+interface MonitoringReport {
   action: MonitoredAction;
   employee: UserDetail;
   customer: UserDetail | null;

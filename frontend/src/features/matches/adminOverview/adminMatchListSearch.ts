@@ -1,4 +1,4 @@
-export interface AdminMatchListSearch {
+interface AdminMatchListSearch {
   runde?: string;
   fane?: "liste";
   sok?: string;

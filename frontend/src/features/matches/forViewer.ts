@@ -16,7 +16,7 @@ export function isSameParty(a: HandoverParty, b: HandoverParty): boolean {
   return partyKey(a) === partyKey(b);
 }
 
-export type ObligationSide = "deliver" | "receive";
+type ObligationSide = "deliver" | "receive";
 
 export interface ViewerObligation extends MatchObligationDto {
   side: ObligationSide;
@@ -94,7 +94,7 @@ export function forViewer(match: MatchDto, viewerCustomerId: string): ViewerMatc
 }
 
 /** Every book the viewer is a party to, both directions. */
-export function allObligations(viewerMatch: ViewerMatch): ViewerObligation[] {
+function allObligations(viewerMatch: ViewerMatch): ViewerObligation[] {
   return [...viewerMatch.toDeliver, ...viewerMatch.toReceive];
 }
 

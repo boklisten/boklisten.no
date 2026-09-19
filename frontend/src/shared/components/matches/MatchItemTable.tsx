@@ -5,7 +5,7 @@ import BlidLink from "@/features/kasse/BlidLink";
 import { describeObligation, isObligationSettled } from "@/features/matches/forViewer";
 import type { ViewerObligation } from "@/features/matches/forViewer";
 
-export function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: string }) {
+function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: string }) {
   return (
     <Tooltip label={label}>
       <Table.Td>

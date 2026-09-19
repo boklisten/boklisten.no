@@ -15,10 +15,7 @@ export const PERIOD_LIST_BY_KIND = {
 } as const satisfies Record<PeriodKind, keyof BranchPeriods>;
 
 /** The columns of a period row apart from its generated id. */
-export type BranchPeriodRow = Omit<
-  Pick<BranchPeriod, (typeof BranchPeriodSchema.$columns)[number]>,
-  "id"
->;
+type BranchPeriodRow = Omit<Pick<BranchPeriod, (typeof BranchPeriodSchema.$columns)[number]>, "id">;
 
 type KindColumns = Pick<
   BranchPeriodRow,

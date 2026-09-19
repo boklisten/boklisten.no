@@ -58,13 +58,10 @@ export interface StandCartCheckoutRequest {
   confirmed: StandCartConfirmation[];
 }
 
-export const CART_CHANGED_MESSAGE = "Handlekurven har endret seg. Se over den og prøv igjen.";
+const CART_CHANGED_MESSAGE = "Handlekurven har endret seg. Se over den og prøv igjen.";
 
 /** The lines of a checkout, and the customer and branch they belong to. */
-export type StandCartLinesRequest = Pick<
-  StandCartCheckoutRequest,
-  "customerId" | "branchId" | "lines"
->;
+type StandCartLinesRequest = Pick<StandCartCheckoutRequest, "customerId" | "branchId" | "lines">;
 
 /** Every line priced again by the server, so no price or option the browser sent is trusted. */
 async function resolveLines(request: StandCartLinesRequest, now: Date): Promise<CheckoutLine[]> {
@@ -227,7 +224,7 @@ type MoneyPlan =
   | { kind: "vipps-refund"; refunds: StandCartVippsRefund[] }
   | { kind: "bank-transfer"; accountNumber: string; comment: string | null };
 
-export const REFUND_NEEDS_MANUAL_MESSAGE =
+const REFUND_NEEDS_MANUAL_MESSAGE =
   "Refusjonen kan ikke gjøres via Vipps og må registreres manuelt";
 
 async function planRefund(

@@ -1,7 +1,7 @@
 export const MESSAGE_CHANNELS = ["sms", "email"] as const;
 export type MessageChannel = (typeof MESSAGE_CHANNELS)[number];
 
-export const MESSAGE_TYPES = [
+const MESSAGE_TYPES = [
   "reminder",
   "custom",
   "match-notify",
@@ -17,7 +17,7 @@ export const MESSAGE_TYPES = [
 ] as const;
 export type MessageType = (typeof MESSAGE_TYPES)[number];
 
-export const SENDOUT_KINDS = ["reminder", "custom", "match-notify"] as const;
+const SENDOUT_KINDS = ["reminder", "custom", "match-notify"] as const;
 export type SendoutKind = (typeof SENDOUT_KINDS)[number];
 
 /**
@@ -50,7 +50,7 @@ export function isFailureStatus(status: MessageStatus): boolean {
   return (FAILURE_MESSAGE_STATUSES as readonly MessageStatus[]).includes(status);
 }
 
-export const MESSAGE_EVENT_SOURCES = ["internal", "twilio", "sendgrid"] as const;
+const MESSAGE_EVENT_SOURCES = ["internal", "twilio", "sendgrid"] as const;
 export type MessageEventSource = (typeof MESSAGE_EVENT_SOURCES)[number];
 
 export interface MessageEventDto {

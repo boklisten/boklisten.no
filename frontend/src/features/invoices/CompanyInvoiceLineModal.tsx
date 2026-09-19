@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { formatKroner } from "@/features/invoices/invoiceLabels";
 
-export const EMPTY_LINE: CompanyInvoiceLine = {
+const EMPTY_LINE: CompanyInvoiceLine = {
   title: "",
   productNumber: 1,
   price: 0,

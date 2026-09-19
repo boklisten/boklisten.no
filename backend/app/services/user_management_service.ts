@@ -13,7 +13,7 @@ import { UserService } from "#services/user_service";
 import type { UserPermission } from "#shared/user-permission";
 import { USER_PERMISSION } from "#shared/user-permission";
 
-export interface EmployeeRow {
+interface EmployeeRow {
   detailsId: string;
   name: string;
   email: string;

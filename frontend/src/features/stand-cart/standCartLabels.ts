@@ -6,7 +6,7 @@ import type {
 } from "@boklisten/backend/shared/stand_cart";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
-export const ACTION_LABELS: Record<StandCartActionType, string> = {
+const ACTION_LABELS: Record<StandCartActionType, string> = {
   rent: "Lån",
   "partly-payment": "Delbetaling",
   buy: "Kjøp",

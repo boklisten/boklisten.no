@@ -11,7 +11,7 @@ import { UniqueItemMonitoring } from "#services/unique_item_monitoring";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { UniqueItem } from "#shared/unique-item";
 
-export const HELD_BOOK_MESSAGE = "Boka er utdelt og kan ikke slettes";
+const HELD_BOOK_MESSAGE = "Boka er utdelt og kan ikke slettes";
 
 async function uniqueItemOrFail(blid: string): Promise<UniqueItem> {
   const uniqueItem = await findUniqueItemByBlid(blid);

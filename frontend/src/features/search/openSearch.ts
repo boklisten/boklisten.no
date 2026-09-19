@@ -3,7 +3,7 @@ import { createSpotlight } from "@mantine/spotlight";
 type SpotlightHandle = ReturnType<typeof createSpotlight>[1];
 
 /** Which keyboard a phone shows for the search: numeric where a phone number is the usual query. */
-export type SearchKeyboard = "text" | "numeric";
+type SearchKeyboard = "text" | "numeric";
 
 let requestedKeyboard: SearchKeyboard = "text";
 

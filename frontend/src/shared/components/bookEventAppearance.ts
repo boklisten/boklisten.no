@@ -15,7 +15,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 
-export interface BookEventAppearance {
+interface BookEventAppearance {
   icon: Icon;
   color: string;
 }

@@ -29,10 +29,7 @@ const SCAN_ENTRIES: Record<KnownScanCodeType, ScanInstructionEntry> = {
  * What the camera shows for the selected type; the scanner still accepts every type given. The
  * other types ride along as alternatives, so the picker under it never moves on a switch.
  */
-export function scanInstructionFor(
-  type: KnownScanCodeType,
-  types: KnownScanCodeType[],
-): ScanInstruction {
+function scanInstructionFor(type: KnownScanCodeType, types: KnownScanCodeType[]): ScanInstruction {
   return {
     ...SCAN_ENTRIES[type],
     alternatives: types.filter((other) => other !== type).map((other) => SCAN_ENTRIES[other]),

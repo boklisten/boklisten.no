@@ -90,7 +90,7 @@ function inOre(amount: number): number {
   return amount * 100;
 }
 
-export interface VismaExportOptions {
+interface VismaExportOptions {
   ehf: boolean;
   /** Export as credit notes (H3 header) of already sent invoices. */
   creditOfInvoice: boolean;
@@ -309,7 +309,7 @@ function vismaL1Text(lineNumber: number, invoiceId: string | undefined, text: st
   ];
 }
 
-export const TRIPLETEX_HEADERS = [
+const TRIPLETEX_HEADERS = [
   "INVOICE NO",
   "INVOICE DATE",
   "DUE DATE",

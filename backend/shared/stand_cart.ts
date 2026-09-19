@@ -168,7 +168,7 @@ export const CONTACT_ADMIN_FOR_EXTRA_COPY =
   "Kontakt en administrator for å dele ut et ekstra eksemplar.";
 
 /** A handout that would leave the customer with two copies of one title. */
-export interface StandCartExtraCopy {
+interface StandCartExtraCopy {
   /** The line that is one too many. */
   key: string;
   /** Why, without a full stop: «Kunden har allerede «Gymnos»». */

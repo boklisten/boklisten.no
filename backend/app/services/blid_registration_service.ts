@@ -15,7 +15,7 @@ export interface BlidRegistrationSources {
   existing: StoredLink[];
 }
 
-export type BlidRegistrationPlan =
+type BlidRegistrationPlan =
   | { kind: "conflict"; conflicts: { blid: string; linkedTo: LinkedBook }[] }
   | { kind: "ok"; toAdd: string[]; skipped: string[] };
 

@@ -59,7 +59,7 @@ export function AdminMatchTitle({ match, linked = false }: { match: MatchDto; li
   );
 }
 
-export function displayName(party: HandoverParty): string {
+function displayName(party: HandoverParty): string {
   return party.kind === "stand" ? "Stand" : party.name;
 }
 

@@ -4,7 +4,7 @@ import { formatAmount } from "@/features/stand-cart/standCartLabels";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
 
 /** Digits of equal width, so amounts stacked in a column line up like a handwritten sum. */
-export const TABULAR_NUMBERS = { fontVariantNumeric: "tabular-nums" } as const;
+const TABULAR_NUMBERS = { fontVariantNumeric: "tabular-nums" } as const;
 
 /** One amount the way every amount in the cart is written: bold, red with a minus for refunds. */
 export function Amount({ amount }: { amount: number }) {

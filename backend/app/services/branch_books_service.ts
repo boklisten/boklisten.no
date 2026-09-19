@@ -9,7 +9,7 @@ import { DEADLINE_PADDING_DAYS } from "#services/deadline_window";
 import { OrderCancellationService } from "#services/order_cancellation_service";
 import { StorageService } from "#services/storage_service";
 
-export interface BranchBooksTitle {
+interface BranchBooksTitle {
   itemId: string;
   title: string;
   direct: number;
@@ -17,7 +17,7 @@ export interface BranchBooksTitle {
   total: number;
 }
 
-export interface BranchBooksGroup {
+interface BranchBooksGroup {
   /** Canonical deadline for display, ISO string */
   deadline: string;
   /** Exact deadline values covered by this group, used to address it in details/updates */
@@ -28,14 +28,14 @@ export interface BranchBooksGroup {
   titles: BranchBooksTitle[];
 }
 
-export interface BranchBooksSummary {
+interface BranchBooksSummary {
   direct: number;
   indirect: number;
   total: number;
   groups: BranchBooksGroup[];
 }
 
-export interface BranchBooksFilter {
+interface BranchBooksFilter {
   deadlines?: string[];
   itemId?: string;
   includeDescendants: boolean;

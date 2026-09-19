@@ -21,7 +21,7 @@ import { PeerBadge } from "@/shared/components/matches/matches-helper";
 const ACTION_SELECT_WIDTH = 240;
 
 /** What the drawer knows about one line, handed to both the card and the table row. */
-export interface StandCartLineProps {
+interface StandCartLineProps {
   line: CartLine;
   choice: StandCartChoice;
   /** Why the line cannot be submitted as it stands. */
@@ -76,7 +76,7 @@ function peerNote(notes: StandCartNote[]) {
 }
 
 /** The copy in hand as a link to its history, or the warning that a handout needs one. */
-export function LineCopy({ line, choice }: { line: CartLine; choice: StandCartChoice }) {
+function LineCopy({ line, choice }: { line: CartLine; choice: StandCartChoice }) {
   if (line.blid !== null) {
     return (
       <EntityLink
@@ -109,7 +109,7 @@ export function LineCopy({ line, choice }: { line: CartLine; choice: StandCartCh
  * entry carries its own in the list, and an action the customer cannot take says why under
  * its name.
  */
-export function ActionControl({
+function ActionControl({
   line,
   choice,
   onChoose,
@@ -206,7 +206,7 @@ function LineProblem({
   );
 }
 
-export function LinePrice({ line, choice }: { line: CartLine; choice: StandCartChoice }) {
+function LinePrice({ line, choice }: { line: CartLine; choice: StandCartChoice }) {
   const option = findOption(line, choice);
   if (option === null) {
     return null;
@@ -223,7 +223,7 @@ export function LinePrice({ line, choice }: { line: CartLine; choice: StandCartC
   );
 }
 
-export function RemoveLineButton({ line, onRemove }: { line: CartLine; onRemove: () => void }) {
+function RemoveLineButton({ line, onRemove }: { line: CartLine; onRemove: () => void }) {
   return (
     <ActionIcon
       variant="subtle"
@@ -237,7 +237,7 @@ export function RemoveLineButton({ line, onRemove }: { line: CartLine; onRemove:
 }
 
 /** The name of the book, with the one note the checkout will stop and ask about. */
-export function LineTitle({ line }: { line: CartLine }) {
+function LineTitle({ line }: { line: CartLine }) {
   const peer = peerNote(line.notes);
   return (
     <Stack gap={4} align="flex-start" miw={0}>

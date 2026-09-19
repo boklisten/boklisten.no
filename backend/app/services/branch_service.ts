@@ -6,14 +6,14 @@ import BranchPeriod, { PERIOD_KINDS, PERIOD_LIST_BY_KIND } from "#models/branch_
 import type { Branch as BranchDto, BranchPeriods } from "#shared/branch";
 
 /** The columns an admin edits on a branch; the id and the tree position have their own flows. */
-export type BranchColumns = Omit<BranchDto, "id" | "parentBranchId" | keyof BranchPeriods>;
+type BranchColumns = Omit<BranchDto, "id" | "parentBranchId" | keyof BranchPeriods>;
 
-export type BranchCreateInput = Pick<BranchColumns, "name" | "type" | "region"> &
+type BranchCreateInput = Pick<BranchColumns, "name" | "type" | "region"> &
   Partial<Pick<BranchColumns, "logo" | "address">>;
 
-export type BranchUpdateInput = Partial<BranchColumns> & Partial<BranchPeriods>;
+type BranchUpdateInput = Partial<BranchColumns> & Partial<BranchPeriods>;
 
-export interface BranchRelationshipInput {
+interface BranchRelationshipInput {
   id: string;
   localName?: string | null;
   childLabel?: string | null;

@@ -10,7 +10,7 @@ import useApiClient from "@/shared/hooks/useApiClient";
 const POLL_INTERVAL_MS = 5000;
 
 /** The guardian's contact info, normalized like log recipients, for the "Foresatt" badge. */
-export function guardianRecipientsOf(customer: UserDetail): ReadonlySet<string> {
+function guardianRecipientsOf(customer: UserDetail): ReadonlySet<string> {
   const recipients = new Set<string>();
   if (customer.guardian?.email) {
     recipients.add(normalizeRecipient("email", customer.guardian.email));

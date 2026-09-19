@@ -25,7 +25,7 @@ export type Row = Record<string, unknown>;
  */
 export type Db = NonNullable<Connection["db"]>;
 
-export interface MappedDocument {
+interface MappedDocument {
   row: Row;
   /** Child rows keyed by table, inserted right after the batch their parents belong to. */
   children?: Record<string, Row[]>;
@@ -33,7 +33,7 @@ export interface MappedDocument {
 
 export type MapResult = MappedDocument | { skip: string };
 
-export interface TransferResult {
+interface TransferResult {
   migrated: number;
   skipped: number;
   /** Skip count per reason, in the order the reasons were first seen. */

@@ -4,7 +4,7 @@ import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_move
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { StorageService } from "#services/storage_service";
 
-export interface CancellableOrderItem {
+interface CancellableOrderItem {
   item: string;
   title: string;
 }

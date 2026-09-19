@@ -6,7 +6,7 @@
 export const SLOT_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]0$/;
 
 /** The dates, times, places and book selection a round is generated from. */
-export interface MatchRoundPlan {
+interface MatchRoundPlan {
   standLocation: string;
   /** Mongo branch ids the round draws books from. */
   branches: string[];

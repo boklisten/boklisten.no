@@ -11,7 +11,7 @@ import env from "#start/env";
 
 export const REFUND_REQUEST_RECIPIENT = "info@boklisten.no";
 
-export interface RefundRequest {
+interface RefundRequest {
   order: Order;
   customer: UserDetail;
   employee: UserDetail;

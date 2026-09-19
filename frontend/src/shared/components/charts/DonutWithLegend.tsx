@@ -1,7 +1,7 @@
 import { Group, Stack, Text } from "@mantine/core";
 import { DonutChart } from "@mantine/charts";
 
-export interface DonutSegment {
+interface DonutSegment {
   name: string;
   value: number;
   color: string;

@@ -19,7 +19,7 @@ export interface PublicBlidNotHandedOut {
 }
 
 /** A unique ID Boklisten has never registered. */
-export interface PublicBlidUnregistered {
+interface PublicBlidUnregistered {
   status: "unregistered";
 }
 
@@ -29,7 +29,7 @@ export type PublicBlidLookupResult =
   | PublicBlidUnregistered;
 
 /** The caller registered less than 24 hours ago and may not look up books yet. */
-export interface PublicBlidLookupNotOpenYet {
+interface PublicBlidLookupNotOpenYet {
   status: "notOpenYet";
   /** ISO timestamp for when the user may start looking up books. */
   opensAt: string;

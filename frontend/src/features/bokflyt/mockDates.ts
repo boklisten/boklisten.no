@@ -8,7 +8,7 @@ const HANDOVER_DAY = 16;
 /** Matches the backend's `SIGNATURE_NUM_MONTHS_VALID` of 48 months. */
 const SIGNATURE_YEARS_VALID = 4;
 
-export function handoverYear(now = new Date()): number {
+function handoverYear(now = new Date()): number {
   const year = now.getFullYear();
   const passed =
     now.getMonth() > HANDOVER_MONTH_INDEX ||

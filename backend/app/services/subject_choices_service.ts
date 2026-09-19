@@ -11,7 +11,7 @@ import { buildBranchMappings } from "#services/user_provisioning_service";
 import { canonicalItemId, getEquivalentItemIds } from "#shared/item-equivalence";
 import type { Period } from "#shared/period";
 
-export interface SubjectChoiceRow {
+interface SubjectChoiceRow {
   name: string;
   localName: string;
   subject: string;
@@ -19,7 +19,7 @@ export interface SubjectChoiceRow {
   deadline: string;
 }
 
-export interface MemberSummary {
+interface MemberSummary {
   id: string;
   name: string;
   branchMembership: string | null;
@@ -31,7 +31,7 @@ interface SubjectChoiceGroup {
   choices: { subject: string; deadline: string }[];
 }
 
-export interface PlannedOrder {
+interface PlannedOrder {
   customerId: string;
   customerName: string;
   /** The branch whose subjects resolved the order's books */
@@ -44,7 +44,7 @@ export interface PlannedOrder {
   }[];
 }
 
-export interface SubjectChoicesPlan {
+interface SubjectChoicesPlan {
   orders: PlannedOrder[];
   metrics: {
     studentsWithOrders: number;

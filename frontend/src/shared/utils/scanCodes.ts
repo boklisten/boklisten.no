@@ -19,7 +19,7 @@ export function determineScanCodeType(code: string): ScanCodeType {
   return "unknown";
 }
 
-export function nameScanCodeType(type: ScanCodeType): string {
+function nameScanCodeType(type: ScanCodeType): string {
   switch (type) {
     case "blid": {
       return "bokas unike ID";

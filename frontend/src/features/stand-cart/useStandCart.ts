@@ -104,7 +104,7 @@ function scanTypesOf(cart: StoredCart, via: StandCartLinkSource): StandCartScanT
   return cart.linking?.via === via ? ["isbn"] : STAND_CART_SCAN_TYPES;
 }
 
-export function lineProblem({ line, choice, problem }: StoredLine): string | null {
+function lineProblem({ line, choice, problem }: StoredLine): string | null {
   if (problem !== null) {
     return problem;
   }
@@ -128,7 +128,7 @@ export function lineProblem({ line, choice, problem }: StoredLine): string | nul
 const REFUSED_ADD_MESSAGE = "Boka ble ikke lagt i handlekurven.";
 
 /** Restricts scans to one order, for the order manager, where each shipment is packed alone. */
-export interface StandCartScope {
+interface StandCartScope {
   orderId: string;
 }
 

@@ -11,7 +11,7 @@ import type {
 import { AgGridReact } from "ag-grid-react";
 import type { ReactNode, RefObject } from "react";
 
-export type BookPatch = Partial<Pick<Item, "price" | "active" | "buyback">>;
+type BookPatch = Partial<Pick<Item, "price" | "active" | "buyback">>;
 export interface BookPatchRequest {
   id: string;
   patch: BookPatch;

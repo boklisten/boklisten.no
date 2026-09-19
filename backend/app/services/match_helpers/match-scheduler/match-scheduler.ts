@@ -230,7 +230,7 @@ export function scheduleUserMeetings(input: ScheduleInput): UserMatchAssignment[
  * they bend to the last slot rather than fail. The final slot's target equals everyone left, so
  * every stand match always gets a time.
  */
-export function scheduleStandVisits(
+function scheduleStandVisits(
   input: ScheduleInput,
   userAssignments: UserMatchAssignment[],
 ): DateTime[] {

@@ -27,7 +27,7 @@ function formatBarValue(value: unknown) {
   return typeof value === "number" && value > 0 ? value.toLocaleString("nb-NO") : "";
 }
 
-export interface RoundOverviewProps {
+interface RoundOverviewProps {
   userMatchCount: number;
   standMatchCount: number;
   studentReach: StudentReachSummary;

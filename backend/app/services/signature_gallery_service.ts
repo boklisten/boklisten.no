@@ -11,7 +11,7 @@ const BATCH_SIZE = 50;
 // Bounds the DB work per request when many consecutive signatures are invalid for their customer.
 const MAX_BATCHES = 5;
 
-export interface GallerySignature {
+interface GallerySignature {
   id: number;
   customerDetailsId: string;
   customerName: string;
@@ -23,7 +23,7 @@ export interface GallerySignature {
   permission: UserPermission;
 }
 
-export interface GalleryPage {
+interface GalleryPage {
   signatures: GallerySignature[];
   nextCursor: string | null;
 }
@@ -40,7 +40,7 @@ export interface GalleryContext {
   permissions: ReadonlyMap<string, UserPermission>;
 }
 
-export interface GalleryCursor {
+interface GalleryCursor {
   createdAt: Date;
   id: number;
 }

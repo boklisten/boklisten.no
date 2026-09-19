@@ -21,7 +21,7 @@ import type { StandCartActionType, StandCartOption } from "#shared/stand_cart";
  * The priced part of a cart line: what the employee may pick and what it costs. Pure, so every
  * price rule of the stand is covered by specs without a database.
  */
-export interface PricedLine {
+interface PricedLine {
   options: StandCartOption[];
   defaultOptionIndex: number;
   /** Why there are no options; only an item line can come up empty. */

@@ -326,7 +326,7 @@ export function requireHandoverBlid(blid: string | null | undefined): string {
   return blid;
 }
 
-export interface RecordHandoverInput {
+interface RecordHandoverInput {
   /** null only for legacy copies that never got a blid. */
   blid: string | null;
   itemId: string;

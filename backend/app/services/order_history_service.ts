@@ -26,10 +26,10 @@ import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Payment } from "#shared/payment/payment";
 import { USER_PERMISSION } from "#shared/user-permission";
 
-export type OrderHistoryAudience = "customer" | "employee";
+type OrderHistoryAudience = "customer" | "employee";
 
 /** One row of the book_handovers table, reduced to what pairing needs. */
-export interface OrderHistoryHandover {
+interface OrderHistoryHandover {
   blid: string | null;
   fromUserDetailId: string | null;
   toUserDetailId: string | null;

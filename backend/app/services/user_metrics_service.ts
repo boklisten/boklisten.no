@@ -3,9 +3,9 @@ import { StorageService } from "#services/storage_service";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export type LoginMethod = "vipps" | "local" | "both" | "none";
+type LoginMethod = "vipps" | "local" | "both" | "none";
 
-export const ACTIVITY_BUCKETS = [
+const ACTIVITY_BUCKETS = [
   "last24Hours",
   "lastWeek",
   "lastMonth",
@@ -15,7 +15,7 @@ export const ACTIVITY_BUCKETS = [
   "never",
 ] as const;
 
-export type ActivityBucket = (typeof ACTIVITY_BUCKETS)[number];
+type ActivityBucket = (typeof ACTIVITY_BUCKETS)[number];
 
 const BUCKET_MAX_AGE_DAYS: { bucket: ActivityBucket; maxAgeDays: number }[] = [
   { bucket: "last24Hours", maxAgeDays: 1 },
@@ -25,7 +25,7 @@ const BUCKET_MAX_AGE_DAYS: { bucket: ActivityBucket; maxAgeDays: number }[] = [
   { bucket: "lastYear", maxAgeDays: 365 },
 ];
 
-export interface UserMetrics {
+interface UserMetrics {
   totalUsers: number;
   newLast30Days: number;
   newLastYear: number;

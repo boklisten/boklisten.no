@@ -2,7 +2,7 @@
 export const EMAIL_VALIDATION_SOURCES = ["signup", "guardian", "administrate"] as const;
 export type EmailValidationSource = (typeof EMAIL_VALIDATION_SOURCES)[number];
 
-export type EmailValidationVerdict = "Valid" | "Risky" | "Invalid";
+type EmailValidationVerdict = "Valid" | "Risky" | "Invalid";
 
 /** The reasons SendGrid can flag an address with; each maps to one line of feedback in the UI. */
 export interface EmailValidationChecks {

@@ -180,7 +180,7 @@ export default class Branch extends BranchSchema {
 }
 
 /** A branch reduced to what pickers and tree walks need. */
-export interface BranchRef {
+interface BranchRef {
   id: string;
   name: string;
 }

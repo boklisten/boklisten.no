@@ -18,11 +18,10 @@ import { USER_PERMISSION } from "#shared/user-permission";
 /** Vipps refunds a captured payment for this long after it was made. */
 const REFUND_WINDOW_DAYS = 365;
 
-export const REFUND_SHORTFALL_REASON =
-  "Beløpet er større enn det Vipps kan refundere på betalingene";
+const REFUND_SHORTFALL_REASON = "Beløpet er større enn det Vipps kan refundere på betalingene";
 
 /** A Vipps transaction behind a refund line, with what Vipps still allows refunding on it. */
-export interface RefundableTransaction {
+interface RefundableTransaction {
   orderId: string;
   method: RefundableVippsMethod;
   refundable: number;

@@ -4,7 +4,7 @@ export const PAYMENT_OPTIONS = [
   { value: "buy", label: "Salg" },
 ] as const;
 
-export interface SubjectBookFlags {
+interface SubjectBookFlags {
   rent: boolean;
   partlyPayment: boolean;
   buy: boolean;
@@ -13,7 +13,7 @@ export interface SubjectBookFlags {
   buyAtBranch: boolean;
 }
 
-export interface BranchSubjectBook extends SubjectBookFlags {
+interface BranchSubjectBook extends SubjectBookFlags {
   item: { id: string; title: string };
 }
 

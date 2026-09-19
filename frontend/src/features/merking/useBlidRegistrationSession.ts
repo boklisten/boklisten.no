@@ -14,7 +14,7 @@ import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification } from "@/shared/utils/notifications";
 import { describeRejectedScan, determineScanCodeType } from "@/shared/utils/scanCodes";
 
-export interface BlidRegistrationSession {
+interface BlidRegistrationSession {
   book: SelectedBook | null;
   rows: ScannedBlidRow[];
   receipt: BatchReceipt | null;

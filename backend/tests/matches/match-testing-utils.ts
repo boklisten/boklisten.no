@@ -20,7 +20,7 @@ export const TEST_DEADLINE = DateTime.now().plus({ months: 1 }).startOf("day");
  * A complete, valid plan. Every plan column is required, so tests that only care about one field
  * still have to supply the rest; this keeps that noise out of them.
  */
-export function testRoundPlan(overrides: Partial<MatchRound> = {}) {
+function testRoundPlan(overrides: Partial<MatchRound> = {}) {
   return {
     name: "Vår 2026",
     standLocation: "Kantina",

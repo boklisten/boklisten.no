@@ -18,12 +18,12 @@ export interface ItemInput {
   buyback: boolean;
 }
 
-export type ItemPatch = Partial<ItemInput>;
+type ItemPatch = Partial<ItemInput>;
 
 /** A spreadsheet row: the book, plus the id the row was downloaded with when it has one. */
-export type BulkUpsertRow = ItemInput & { id?: string };
+type BulkUpsertRow = ItemInput & { id?: string };
 
-export interface BulkUpsertSummary {
+interface BulkUpsertSummary {
   createdCount: number;
   updatedCount: number;
   errors: { isbn: number; title: string; message: string }[];

@@ -1,9 +1,9 @@
 import { stringParam } from "@/shared/utils/searchParams";
 
-export const INVOICE_TABS = ["oversikt", "elevfakturaer", "selskapsfaktura"] as const;
-export type InvoiceTab = (typeof INVOICE_TABS)[number];
+const INVOICE_TABS = ["oversikt", "elevfakturaer", "selskapsfaktura"] as const;
+type InvoiceTab = (typeof INVOICE_TABS)[number];
 
-export interface InvoiceSearchParams {
+interface InvoiceSearchParams {
   fakturaFane?: InvoiceTab;
   /** The five-digit batch prefixes the overview is narrowed to, comma-separated. Missing means all. */
   fakturarunde?: string;

@@ -5,7 +5,7 @@ import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BranchSubject from "#models/branch_subject";
 
-export interface BranchSubjectBookInput {
+interface BranchSubjectBookInput {
   itemId: string;
   rent: boolean;
   partlyPayment: boolean;
@@ -15,7 +15,7 @@ export interface BranchSubjectBookInput {
   buyAtBranch: boolean;
 }
 
-export interface BranchSubjectInput {
+interface BranchSubjectInput {
   name: string;
   externalName: string;
   books: BranchSubjectBookInput[];

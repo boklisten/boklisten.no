@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 
 export const DATE_RANGE_PRESETS = ["dag", "uke", "semester", "ar", "all-time", "custom"] as const;
 
-export type DateRangePreset = (typeof DATE_RANGE_PRESETS)[number];
+type DateRangePreset = (typeof DATE_RANGE_PRESETS)[number];
 
 export const DATE_RANGE_PRESET_LABELS: Record<DateRangePreset, string> = {
   dag: "Dag",
@@ -23,7 +23,7 @@ export const DEFAULT_DATE_RANGE: DateRangeValue = {
   customRange: [null, null],
 };
 
-export interface ResolvedRange {
+interface ResolvedRange {
   from?: Date;
   to?: Date;
 }

@@ -3,7 +3,7 @@ interface MeetingOrdered {
   meetingTime: string | null;
 }
 
-export function compareByMeeting(a: MeetingOrdered, b: MeetingOrdered): number {
+function compareByMeeting(a: MeetingOrdered, b: MeetingOrdered): number {
   if (a.meetingTime !== b.meetingTime) {
     if (a.meetingTime === null) {
       return 1;

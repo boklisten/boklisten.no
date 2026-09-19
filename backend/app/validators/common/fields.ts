@@ -4,7 +4,7 @@ import vine from "@vinejs/vine";
  * Kept here rather than in `common/rules`: that module pulls in services which pull in validators
  * that import this file, and a cycle through it leaves the fields uninitialised on first load.
  */
-export const parsableDate = vine.createRule((value, options, field) => {
+const parsableDate = vine.createRule((value, options, field) => {
   if (typeof value !== "string") {
     return;
   }

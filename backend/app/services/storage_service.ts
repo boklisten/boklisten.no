@@ -25,22 +25,6 @@ export const StorageService = {
   UserDetails: new MongodbHandler(UserDetailSchema, BlSchemaName.UserDetails),
 } as const;
 
-export type BlStorageHandler = (typeof StorageService)[keyof typeof StorageService];
-
-type BlModelTypes = {
-  [K in keyof typeof StorageService]: (typeof StorageService)[K] extends MongodbHandler<infer T>
-    ? T
-    : never;
-}[keyof typeof StorageService];
-
-export type BlStorageData =
-  | {
-      [K in keyof typeof StorageService]: (typeof StorageService)[K] extends MongodbHandler<infer T>
-        ? T[]
-        : never;
-    }[keyof typeof StorageService]
-  | BlModelTypes[];
-
 // Re-format BlDocument type to one fitting for mongoose schemas
 // Recursively union string-fields with ObjectId (e.g. {b: string} => {b: string | ObjectId}), except if the field is
 // named "type" (because that's reserved and errors)

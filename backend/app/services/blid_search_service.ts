@@ -28,7 +28,7 @@ import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import { USER_PERMISSION } from "#shared/user-permission";
 
-export interface HandoverRow {
+interface HandoverRow {
   fromUserDetailId: string | null;
   toUserDetailId: string | null;
   occurredAt: Date;

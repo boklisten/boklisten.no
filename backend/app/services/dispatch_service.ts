@@ -28,7 +28,7 @@ const twilioClient = twilio(env.get("TWILIO_SMS_SID"), env.get("TWILIO_SMS_AUTH_
   maxRetries: 5,
 });
 
-export interface PlainEmail {
+interface PlainEmail {
   to: string;
   subject: string;
   text: string;

@@ -25,13 +25,13 @@ export interface DuplicateCandidateSource {
   branchMembership?: string;
 }
 
-export interface DuplicatePair {
+interface DuplicatePair {
   score: number;
   reasons: string[];
   users: [DuplicateUserSummary, DuplicateUserSummary];
 }
 
-export interface DuplicateUserSummary {
+interface DuplicateUserSummary {
   detailsId: string;
   name: string;
   email: string;
@@ -44,7 +44,7 @@ export interface DuplicateUserSummary {
   activeMatches: number;
 }
 
-export interface DuplicateCustomersResult {
+interface DuplicateCustomersResult {
   totalPairCount: number;
   pairs: DuplicatePair[];
 }

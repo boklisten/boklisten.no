@@ -45,7 +45,7 @@ export function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-export function emailDeliverabilityQueryOptions(email: string, source: EmailValidationSource) {
+function emailDeliverabilityQueryOptions(email: string, source: EmailValidationSource) {
   return {
     queryKey: ["email-deliverability", source, email] as const,
     queryFn: (): Promise<EmailValidationResult> =>

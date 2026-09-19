@@ -12,7 +12,7 @@ export interface BookTransferProgress {
 }
 
 /** The broad group a handover combination belongs to. */
-export type MatchConfigCategory = "userOnly" | "both" | "standOnly";
+type MatchConfigCategory = "userOnly" | "both" | "standOnly";
 
 /**
  * How many students ended up with a given combination of handovers,

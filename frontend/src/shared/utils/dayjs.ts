@@ -5,7 +5,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
-export const NORWEGIAN_TIMEZONE = "Europe/Oslo";
+const NORWEGIAN_TIMEZONE = "Europe/Oslo";
 
 dayjs.extend(customParseFormat);
 dayjs.extend(relativeTime);

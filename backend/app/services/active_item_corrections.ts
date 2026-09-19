@@ -5,7 +5,7 @@ import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 
-export interface ActiveItemCorrection {
+interface ActiveItemCorrection {
   customerItemId: string;
   deadline?: Date | undefined;
   branchId?: string | undefined;

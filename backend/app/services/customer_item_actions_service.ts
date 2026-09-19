@@ -11,8 +11,6 @@ import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import type { Period } from "#shared/period";
 
-export type { ExtendPeriod } from "#shared/branch";
-
 export function isHandedOutWithinTheLastTwoWeeks(
   customerItem: CustomerItem,
   now: DateTime = DateTime.now(),
@@ -139,7 +137,7 @@ export async function periodTypeOfLastOrder(
     ?.periodType;
 }
 
-export async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch | null) {
+async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch | null) {
   if (isDeadlineWithGracePeriodExpired(customerItem)) {
     return {
       canBuyout: false,

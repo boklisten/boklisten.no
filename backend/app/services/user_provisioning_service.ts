@@ -17,14 +17,14 @@ interface BranchSummary {
   name: string;
 }
 
-export interface BranchMapping {
+interface BranchMapping {
   localName: string;
   status: "matched" | "unmatched" | "ambiguous";
   branch: BranchSummary | null;
   candidates: BranchSummary[];
 }
 
-export interface BranchResolution {
+interface BranchResolution {
   localName: string;
   branchId: string;
 }

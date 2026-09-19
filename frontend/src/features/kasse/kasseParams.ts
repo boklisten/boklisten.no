@@ -9,7 +9,7 @@ import type { KasseView } from "@/features/kasse/kasseViews";
  * The URL says which view is open and nothing else. The three view params are meant to be
  * mutually exclusive: the helpers below each write exactly one of them.
  */
-export interface KasseSearchParams {
+interface KasseSearchParams {
   /** Details id of the open customer. */
   kunde?: string;
   /** The open customer's tab; only meaningful with `kunde`. */

@@ -3,12 +3,12 @@ import type { Types } from "mongoose";
 
 import { BlError } from "#shared/bl-error";
 
-export interface BooleanFilter {
+interface BooleanFilter {
   fieldName: string;
   value: boolean;
 }
 
-export interface DateFilter {
+interface DateFilter {
   fieldName: string;
   op: {
     $lt?: Date;
@@ -17,7 +17,7 @@ export interface DateFilter {
   };
 }
 
-export interface NumberFilter {
+interface NumberFilter {
   fieldName: string;
   op: {
     $lt?: number;
@@ -26,17 +26,17 @@ export interface NumberFilter {
   };
 }
 
-export interface StringFilter {
+interface StringFilter {
   fieldName: string;
   value: string;
 }
 
-export interface ObjectIdFilter {
+interface ObjectIdFilter {
   fieldName: string;
   value: Types.ObjectId | string | (Types.ObjectId | string)[];
 }
 
-export interface RegexFilter {
+interface RegexFilter {
   fieldName: string;
   op: {
     $regex: string;
@@ -44,7 +44,7 @@ export interface RegexFilter {
   };
 }
 
-export interface SortFilter {
+interface SortFilter {
   fieldName: string;
   direction: 1 | -1;
 }

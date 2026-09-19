@@ -77,7 +77,7 @@ export interface Invoice extends BlDocument {
   comments?: InvoiceComment[];
 }
 
-export interface InvoiceComment {
+interface InvoiceComment {
   msg: string;
   creationTime: Date;
 }
@@ -133,7 +133,7 @@ export type InvoiceExportFormat = (typeof INVOICE_EXPORT_FORMATS)[number];
  * Invoices are numbered YYYY + a batch digit + a running number, so the first five digits
  * identify the batch (a generation run, or the year's company invoices).
  */
-export const INVOICE_BATCH_PREFIX_LENGTH = 5;
+const INVOICE_BATCH_PREFIX_LENGTH = 5;
 
 export function invoiceBatchPrefix(invoiceId: string): string {
   return invoiceId.slice(0, INVOICE_BATCH_PREFIX_LENGTH);

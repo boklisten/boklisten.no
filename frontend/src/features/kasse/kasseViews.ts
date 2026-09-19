@@ -8,7 +8,7 @@ export type KasseView = "empty" | "kunde" | "blid" | "innsamling";
 export const KASSE_HERO_TEXT =
   "Skann kunde-ID for å åpne kunden, eller en bok for å se historikken.";
 
-export interface KasseViewConfig {
+interface KasseViewConfig {
   /** The scan button, named after the view's usual scan. */
   scanLabel: string;
   /** Every code the view's scanners let through, in the picker's order. */

@@ -5,7 +5,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import CustomersTab from "@/features/user-management/CustomersTab";
 import EmployeesTab from "@/features/user-management/EmployeesTab";
 
-export const USER_MANAGER_TABS = ["kunder", "ansatte"] as const;
+const USER_MANAGER_TABS = ["kunder", "ansatte"] as const;
 export type UserManagerTab = (typeof USER_MANAGER_TABS)[number];
 
 export function parseUserManagerTab(value: unknown): UserManagerTab | undefined {

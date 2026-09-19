@@ -59,7 +59,7 @@ async function fetchBookCoverUrl(isbn: string, signal: AbortSignal): Promise<str
   }
 }
 
-export function bookCoverQueryOptions(isbn: Isbn) {
+function bookCoverQueryOptions(isbn: Isbn) {
   const key = isbn === null || isbn === undefined || isbn === "" ? null : String(isbn);
   return queryOptions({
     queryKey: ["book-cover", key],

@@ -6,7 +6,7 @@ export interface SelectedBook {
   isbn: string;
 }
 
-export type BlidCheck =
+type BlidCheck =
   | { status: "checking" }
   | { status: "checked"; linkedTo: LinkedBook | null }
   | { status: "failed" };

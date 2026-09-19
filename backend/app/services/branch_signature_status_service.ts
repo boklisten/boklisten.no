@@ -14,7 +14,7 @@ interface MemberRow {
   dob?: Date | null;
 }
 
-export interface BranchSignatureStatus {
+interface BranchSignatureStatus {
   totalMembers: number;
   validSignature: number;
   needsSignature: number;

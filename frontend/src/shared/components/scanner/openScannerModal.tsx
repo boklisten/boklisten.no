@@ -5,7 +5,7 @@ import type { ScannerPanelProps } from "@/shared/components/scanner/ScannerPanel
 
 const SCANNER_MODAL_ID = "scanner";
 
-export function closeScannerModal() {
+function closeScannerModal() {
   modals.close(SCANNER_MODAL_ID);
 }
 

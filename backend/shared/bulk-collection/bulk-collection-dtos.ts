@@ -38,7 +38,7 @@ export interface CollectedBook {
 }
 
 /** A book the customer still has out after this collection. */
-export interface RemainingBook {
+interface RemainingBook {
   title: string;
   /** ISO date string. */
   deadline: string;

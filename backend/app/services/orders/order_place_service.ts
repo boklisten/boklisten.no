@@ -17,7 +17,7 @@ import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import type { UserPermission } from "#shared/user-permission";
 
 /** The user placing the order: the employee at the stand, or the customer for their own order. */
-export interface PlacingUser {
+interface PlacingUser {
   id: string;
   details: string;
   permission: UserPermission;

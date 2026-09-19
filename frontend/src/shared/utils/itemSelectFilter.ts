@@ -1,7 +1,7 @@
 import type { ComboboxItem, ComboboxParsedItem } from "@mantine/core";
 
 /** The little a select needs to know about a book to be searched by title or ISBN. */
-export interface SelectableItem {
+interface SelectableItem {
   id: string;
   title: string;
   isbn: number;

@@ -11,7 +11,7 @@ const MAX_ENLARGEMENT = 2;
 
 const ICON_SIZE = { sm: 18, md: 24, lg: 32, xl: 40 } as const;
 
-export type BookCoverSize = keyof typeof ICON_SIZE;
+type BookCoverSize = keyof typeof ICON_SIZE;
 
 /**
  * The front cover of a book in a fixed portrait frame. The frame shows a book icon from the first

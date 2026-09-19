@@ -1,6 +1,6 @@
 import DispatchService from "#services/dispatch_service";
 
-export interface BokflytContactRequest {
+interface BokflytContactRequest {
   name: string;
   school: string;
   email: string;

@@ -30,7 +30,7 @@ function calculateUnfulfilledOrderItems(orders: Order[]): OrderItem[] {
     .flatMap((order) => order.orderItems.filter(isOpenOrderItem));
 }
 
-export interface OpenOrderInfo {
+interface OpenOrderInfo {
   orderId: string;
   title: string;
   type: OrderItem["type"];

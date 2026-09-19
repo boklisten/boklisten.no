@@ -47,7 +47,7 @@ interface AdminNavSection {
   }[];
 }
 
-export const ADMIN_NAV_SECTIONS = [
+const ADMIN_NAV_SECTIONS = [
   {
     label: "Verktøy",
     links: [

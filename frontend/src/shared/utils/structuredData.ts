@@ -7,7 +7,7 @@ const ORGANIZATION_ID = `${SITE_URL}/#organization`;
  * Rich text from the CMS is HTML. Structured data has to be plain text, and
  * leaving markup in makes AI assistants quote tags back at people.
  */
-export function stripHtml(html: string): string {
+function stripHtml(html: string): string {
   return html
     .replaceAll(/<[^>]*>/g, " ")
     .replaceAll("&nbsp;", " ")

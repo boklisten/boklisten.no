@@ -4,7 +4,7 @@ import { itemsAreEquivalent } from "#shared/item-equivalence";
  * A party to a handover. The stand is a real party, not a missing customer —
  * `null` customer ids from the database are normalised into `{ kind: "stand" }`.
  */
-export type PartyRef = { kind: "stand" } | { kind: "customer"; customerId: string };
+type PartyRef = { kind: "stand" } | { kind: "customer"; customerId: string };
 
 export interface HandoverFacts {
   id: number;
@@ -15,7 +15,7 @@ export interface HandoverFacts {
 }
 
 /** The discharge stamps a recorded handover carries — the only fields half-indexing needs. */
-export interface DischargeStamps {
+interface DischargeStamps {
   dischargesSenderObligationId: number | null;
   dischargesReceiverObligationId: number | null;
 }
@@ -48,7 +48,7 @@ export function indexHandoversByHalf<T extends DischargeStamps>(
  * of them — the common case when a student receives next year's copy before parting with their own.
  * What separates the cases is *whose* book moved, which the handover records directly.
  */
-export interface ObligationFacts {
+interface ObligationFacts {
   /** null means the stand. */
   senderCustomerId: string | null;
   /** null means the stand. */
@@ -97,7 +97,7 @@ export function satisfiesReceiverHalf(
   );
 }
 
-export interface ObligationProgress {
+interface ObligationProgress {
   /**
    * A book belonging to the sender has been delivered to someone, so they are no longer on the hook
    * for it. False while they still hold every copy they owe.

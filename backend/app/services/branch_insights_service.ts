@@ -11,7 +11,7 @@ const OSLO = "Europe/Oslo";
  * other: the sender's match-deliver and the receiver's match-receive. Same window as the book
  * history uses to pair them.
  */
-export const TRANSFER_PAIRING_WINDOW_MS = 120_000;
+const TRANSFER_PAIRING_WINDOW_MS = 120_000;
 
 /** One aggregation row: order items of one kind in one year. */
 export interface MovementRow {
@@ -24,7 +24,7 @@ export interface MovementRow {
 }
 
 /** Books put on invoices made at the branch in one year, credited or not. */
-export interface InvoiceRow {
+interface InvoiceRow {
   year: number;
   count: number;
 }
