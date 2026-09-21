@@ -70,7 +70,7 @@ export default defineRailway((ctx) => {
     replicas: { [REGION]: 1 },
     domains: [host("boklisten.no")],
     env: {
-      API_PRIVATE_DOMAIN: backend.env.RAILWAY_PRIVATE_DOMAIN,
+      API_PRIVATE_URL: "http://apiboklisten.railway.internal:8080",
       SENTRY_AUTH_TOKEN: ctx.shared.SENTRY_AUTH_TOKEN,
     },
   });
