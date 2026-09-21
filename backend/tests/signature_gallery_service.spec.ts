@@ -240,7 +240,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
   }) => {
     const branchId = "b".repeat(24);
     const signature = makeSignature({ id: 1 });
-    const customer = customerFor(signature, adultDob, branchId, "manager");
+    const customer = customerFor(signature, adultDob, branchId, "admin");
     pageStub.resolves([signature]);
     customersStub.resolves(customersById([customer]));
     await createBranch({ id: branchId, name: "Ullern VGS" });
@@ -248,7 +248,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
     const page = await SignatureGalleryService.getPage(null);
 
     assert.equal(page.signatures[0]?.branchName, "Ullern VGS");
-    assert.equal(page.signatures[0]?.permission, "manager");
+    assert.equal(page.signatures[0]?.permission, "admin");
   });
 
   test("skips the branch lookup when no customer has a membership", async ({ assert }) => {

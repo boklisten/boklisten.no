@@ -11,7 +11,7 @@ import {
   Text,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { IconShieldStar, IconUserCog, IconUserPlus, IconUserShield } from "@tabler/icons-react";
+import { IconShieldStar, IconUserCog, IconUserPlus } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -28,9 +28,10 @@ import { lastActiveLabel } from "@/features/user-management/lastActive";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-const PERMISSION_OPTIONS = (["customer", "employee", "manager", "admin"] as const).map(
-  (permission) => ({ value: permission, label: PERMISSION_LABELS[permission] }),
-);
+const PERMISSION_OPTIONS = (["customer", "employee", "admin"] as const).map((permission) => ({
+  value: permission,
+  label: PERMISSION_LABELS[permission],
+}));
 
 export default function EmployeesTab() {
   const { detailsId: myDetailsId } = useAuth();
@@ -85,8 +86,8 @@ export default function EmployeesTab() {
   if (isPending) {
     return (
       <Stack>
-        <SimpleGrid cols={{ base: 1, sm: 3 }}>
-          {Array.from({ length: 3 }, (_, index) => (
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
+          {Array.from({ length: 2 }, (_, index) => (
             <Skeleton key={index} height={100} radius="md" />
           ))}
         </SimpleGrid>
@@ -100,18 +101,12 @@ export default function EmployeesTab() {
 
   return (
     <Stack gap="lg">
-      <SimpleGrid cols={{ base: 1, sm: 3 }}>
+      <SimpleGrid cols={{ base: 1, sm: 2 }}>
         <StatTile
           label="Ansatte"
           value={countByPermission("employee")}
           icon={<IconUserCog />}
           color="blue"
-        />
-        <StatTile
-          label="Managere"
-          value={countByPermission("manager")}
-          icon={<IconUserShield />}
-          color="grape"
         />
         <StatTile
           label="Administratorer"

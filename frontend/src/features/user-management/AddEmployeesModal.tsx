@@ -23,7 +23,7 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 const MIN_SEARCH_LENGTH = 3;
 const MAX_RESULTS = 8;
 
-const GRANTABLE_PERMISSIONS = (["employee", "manager", "admin"] as const).map((permission) => ({
+const GRANTABLE_PERMISSIONS = (["employee", "admin"] as const).map((permission) => ({
   value: permission,
   label: PERMISSION_LABELS[permission],
 }));

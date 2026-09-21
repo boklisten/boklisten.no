@@ -32,7 +32,7 @@ async function runMiddleware(ctx: HttpContext, permission: UserPermission): Prom
 test.group("CanMiddleware", () => {
   test("lets the exact level and every higher level through", async ({ assert }) => {
     assert.isTrue(await runMiddleware(contextFor("employee"), "employee"));
-    assert.isTrue(await runMiddleware(contextFor("manager"), "employee"));
+    assert.isTrue(await runMiddleware(contextFor("admin"), "employee"));
     assert.isTrue(await runMiddleware(contextFor("admin"), "customer"));
   });
 
@@ -56,10 +56,10 @@ test.group("CanMiddleware", () => {
 });
 
 test.group("hasPermissionLevel()", () => {
-  test("orders customer < employee < manager < admin", ({ assert }) => {
-    assert.isTrue(hasPermissionLevel("admin", "manager"));
-    assert.isTrue(hasPermissionLevel("manager", "manager"));
-    assert.isFalse(hasPermissionLevel("manager", "admin"));
+  test("orders customer < employee < admin", ({ assert }) => {
+    assert.isTrue(hasPermissionLevel("admin", "employee"));
+    assert.isTrue(hasPermissionLevel("employee", "employee"));
+    assert.isFalse(hasPermissionLevel("employee", "admin"));
     assert.isFalse(hasPermissionLevel("customer", "employee"));
   });
 });
