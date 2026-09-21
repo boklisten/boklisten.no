@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import { toBranchTreeNodeData } from "@/shared/utils/branchTree";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 /**
  * An employee's correction of which branch a book or order belongs to. The change is monitored,
@@ -29,7 +29,7 @@ export default function ChangeBranchModal({
   onClose: () => void;
   onSubmit: (branchId: string) => void;
 }) {
-  const { data: branches } = useQuery(publicApi.branches.index.queryOptions());
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
   const [branchId, setBranchId] = useState(currentBranchId);
   return (
     <Modal opened onClose={onClose} title="Endre filial">

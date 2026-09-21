@@ -7,6 +7,7 @@ import {
   standCartRefundPlanValidator,
   standCartResolveValidator,
 } from "#validators/stand_cart";
+import { monitoredEmployee } from "#services/employee_monitoring_service";
 
 export default class StandCartController {
   async resolveLine(ctx: HttpContext) {
@@ -20,7 +21,7 @@ export default class StandCartController {
   }
 
   async checkout(ctx: HttpContext) {
-    const employee = ctx.authUser;
+    const employee = monitoredEmployee(ctx.auth.getUserOrFail());
     const request = await ctx.request.validateUsing(standCartCheckoutValidator);
     return StandCartCheckoutService.checkout(request, employee);
   }

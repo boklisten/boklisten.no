@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Activity } from "react";
 
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 import { useNavigate } from "@tanstack/react-router";
@@ -23,7 +23,6 @@ export default function OpenOrdersList({
 }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { api } = useApiClient();
 
   const cancelOrderItemMutation = useMutation(
     api.orders.cancelItemMe.mutationOptions({

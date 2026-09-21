@@ -6,7 +6,6 @@ import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_
 import { MatchRepository } from "#services/matches/match_repository";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderValidator } from "#services/orders/validation/order_validator";
-import { PermissionService } from "#services/permission_service";
 import { StorageService } from "#services/storage_service";
 import { isNotNullish } from "#services/typescript_helpers";
 import { BlError } from "#shared/bl-error";
@@ -15,11 +14,11 @@ import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import type { UserPermission } from "#shared/user-permission";
+import { hasPermissionLevel } from "#shared/user-permission";
 
 /** The user placing the order: the employee at the stand, or the customer for their own order. */
 interface PlacingUser {
   id: string;
-  details: string;
   permission: UserPermission;
 }
 
@@ -263,11 +262,9 @@ export class OrderPlaceService {
       });
     }
 
-    await this.orderPlacedHandler.placeOrder(order, user?.details ?? "");
+    await this.orderPlacedHandler.placeOrder(order, user?.id ?? "");
 
-    const isAdmin =
-      user?.permission !== undefined &&
-      PermissionService.isPermissionEqualOrOver(user.permission, "admin");
+    const isAdmin = user?.permission !== undefined && hasPermissionLevel(user.permission, "admin");
 
     await this.orderValidator.validate(order, isAdmin);
 

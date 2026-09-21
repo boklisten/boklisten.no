@@ -13,6 +13,7 @@ import {
   blidSearchQueryValidator,
 } from "#validators/blid_search";
 import { uniqueItemsValidator } from "#validators/unique_item";
+import { monitoredEmployee } from "#services/employee_monitoring_service";
 
 function validBlidParameter(ctx: HttpContext): string {
   const blid = ctx.request.param("blid");
@@ -41,20 +42,29 @@ export default class BlidsController {
     if (!deadline && !branchId) {
       return ctx.response.badRequest();
     }
-    await BlidSearchService.updateActiveItem({ customerItemId, deadline, branchId }, ctx.authUser);
+    await BlidSearchService.updateActiveItem(
+      { customerItemId, deadline, branchId },
+      monitoredEmployee(ctx.auth.getUserOrFail()),
+    );
     return ctx.response.noContent();
   }
 
   /** Points the blid, and the customer items carrying it, at another book. */
   async relink(ctx: HttpContext) {
     const { itemId } = await ctx.request.validateUsing(blidRelinkValidator);
-    await UniqueItemEditService.relink({ blid: ctx.request.param("blid"), itemId }, ctx.authUser);
+    await UniqueItemEditService.relink(
+      { blid: ctx.request.param("blid"), itemId },
+      monitoredEmployee(ctx.auth.getUserOrFail()),
+    );
     return ctx.response.noContent();
   }
 
   /** Deletes the blid; refused while a customer holds the book. */
   async destroy(ctx: HttpContext) {
-    await UniqueItemEditService.remove({ blid: ctx.request.param("blid") }, ctx.authUser);
+    await UniqueItemEditService.remove(
+      { blid: ctx.request.param("blid") },
+      monitoredEmployee(ctx.auth.getUserOrFail()),
+    );
     return ctx.response.noContent();
   }
 

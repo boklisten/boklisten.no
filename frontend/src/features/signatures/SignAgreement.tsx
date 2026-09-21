@@ -14,27 +14,28 @@ import EditableTextReadOnly from "@/shared/components/EditableTextReadOnly";
 import { useAppForm } from "@/shared/hooks/form";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification } from "@/shared/utils/notifications";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { authQueryKey } from "@/features/auth/authQuery";
+import { api } from "@/shared/utils/apiClient";
 
 export default function SignAgreement({ userDetailId }: { userDetailId: string }) {
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery(
-    publicApi.signatures.valid.queryOptions({ params: { detailsId: userDetailId } }),
+    api.signatures.valid.queryOptions({ params: { detailsId: userDetailId } }),
   );
   const signMutation = useMutation(
-    publicApi.signatures.sign.mutationOptions({
+    api.signatures.sign.mutationOptions({
       onError: () => showErrorNotification("Noe gikk galt under signering"),
       onSettled: () => {
         void queryClient.invalidateQueries({
-          queryKey: publicApi.signatures.valid.queryKey({
+          queryKey: api.signatures.valid.queryKey({
             params: { detailsId: userDetailId },
           }),
         });
         void queryClient.invalidateQueries({
-          queryKey: publicApi.signatures.me.pathKey(),
+          queryKey: api.signatures.me.pathKey(),
         });
         void queryClient.invalidateQueries({
-          queryKey: publicApi.users.me.pathKey(),
+          queryKey: authQueryKey(),
         });
       },
     }),

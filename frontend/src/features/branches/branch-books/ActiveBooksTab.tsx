@@ -15,7 +15,7 @@ import type {
 import BlidLink from "@/features/kasse/BlidLink";
 import CustomerLink from "@/features/kasse/CustomerLink";
 import BranchScopeMetrics from "@/shared/components/BranchScopeMetrics";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -54,7 +54,6 @@ function ActiveBookDetails({
   enabled: boolean;
   onEditRow: (kind: BranchBooksEditKind, row: ActiveBookDetail) => void;
 }) {
-  const { api } = useApiClient();
   const detailsQuery = useQuery({
     ...api.branchBooks.getActiveBookDetails.queryOptions({
       params: { branchId },
@@ -77,7 +76,6 @@ function ActiveBookDetails({
 }
 
 export default function ActiveBooksTab({ branchId }: { branchId: string }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const summaryQuery = useQuery(
     api.branchBooks.getActiveBooks.queryOptions({ params: { branchId } }),

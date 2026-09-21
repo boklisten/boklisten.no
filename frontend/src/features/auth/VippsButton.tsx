@@ -3,7 +3,8 @@ import { useEffect } from "react";
 
 import BL_CONFIG from "@/shared/utils/bl-config";
 import loadScriptOnce from "@/shared/utils/loadScriptOnce";
-import { publicApiClient } from "@/shared/utils/publicApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
+import { API_URL } from "@/shared/utils/env";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
 export default function VippsButton({ verb }: { verb: "login" | "register" }) {
@@ -21,7 +22,7 @@ export default function VippsButton({ verb }: { verb: "login" | "register" }) {
           localStorage.setItem(BL_CONFIG.login.localStorageKeys.redirect, search.redirect);
         }
         void navigate({
-          href: import.meta.env["VITE_API_URL"] + publicApiClient.urlFor("vipps.redirect"),
+          href: API_URL + apiClient.urlFor("vipps.redirect"),
         });
       }}
     >

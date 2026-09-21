@@ -9,7 +9,7 @@ import type { Route } from "@tuyau/core/types";
 
 import EditableTextEditor from "@/features/editable-texts/EditableTextEditor";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -26,7 +26,6 @@ function openEditorModal(editableText?: EditableText) {
 }
 
 export default function EditableTextTable() {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
 
   const { mutate: destroyEditableText, isPending: isDestroying } = useMutation(

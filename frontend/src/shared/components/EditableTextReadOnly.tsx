@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import RichTextEditorReadOnly from "@/shared/components/RichTextEditorReadOnly";
 import { Skeleton, Stack } from "@mantine/core";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 /**
  * Shared by the component and by route loaders, so both always hit the same
@@ -11,7 +11,7 @@ import { publicApi } from "@/shared/utils/publicApiClient";
  * already rendered, which shows up as a hydration error.
  */
 export const editableTextQueryOptions = (dataKey: string) =>
-  publicApi.editableTexts.show.queryOptions({ params: { id: dataKey } });
+  api.editableTexts.show.queryOptions({ params: { id: dataKey } });
 
 export default function EditableTextReadOnly({ dataKey }: { dataKey: string }) {
   const { data, isLoading } = useQuery(editableTextQueryOptions(dataKey));

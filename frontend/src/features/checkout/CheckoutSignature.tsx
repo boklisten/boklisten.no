@@ -9,10 +9,11 @@ import GuardianSignatureRequest from "@/features/signatures/GuardianSignatureReq
 import SignAgreement from "@/features/signatures/SignAgreement";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import TanStackButton from "@/shared/components/TanStackButton";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import useCart from "@/shared/hooks/useCart";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { isUnder18 } from "@/shared/utils/dates";
+import { authQueryOptions } from "@/features/auth/authQuery";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -35,10 +36,9 @@ export function CheckoutSignaturePending() {
 export default function CheckoutSignature() {
   use(browser());
   const cart = useCart({ immediately: true });
-  const { api } = useApiClient();
   const navigate = useNavigate();
 
-  const { data: userDetail, isError: userDetailFailed } = useQuery(api.users.me.queryOptions());
+  const { data: userDetail, isError: userDetailFailed } = useQuery(authQueryOptions());
   const { data: signature, isError: signatureFailed } = useQuery({
     ...api.signatures.me.queryOptions(),
     refetchInterval: POLL_INTERVAL_MS,

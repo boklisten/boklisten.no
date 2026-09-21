@@ -6,7 +6,7 @@ import createClient from "openapi-fetch";
 import type { paths as shippingGuidePaths } from "#services/bring/openapi/shippingguide";
 
 const bringHeaders = {
-  "X-MyBring-API-Key": env.get("BRING_API_KEY"),
+  "X-MyBring-API-Key": env.get("BRING_API_KEY").release(),
   "X-MyBring-API-Uid": env.get("BRING_API_ID"),
   "Content-Type": "application/json",
   Accept: "application/json",

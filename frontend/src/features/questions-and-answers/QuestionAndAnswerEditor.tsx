@@ -3,7 +3,7 @@ import { Button, Group, Stack } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 export default function QuestionAndAnswerEditor({
@@ -31,7 +31,6 @@ export default function QuestionAndAnswerEditor({
   });
 
   const queryClient = useQueryClient();
-  const { api } = useApiClient();
 
   const addQuestionAndAnswerMutation = useMutation(
     api.questionsAndAnswers.store.mutationOptions({

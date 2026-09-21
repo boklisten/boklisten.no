@@ -7,11 +7,10 @@ import { useState } from "react";
 import ChipButton from "@/shared/components/ChipButton";
 import ChangeBranchModal from "@/shared/components/corrections/ChangeBranchModal";
 import ChangeDeadlineModal from "@/shared/components/corrections/ChangeDeadlineModal";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 function useActiveItemUpdate(successMessage: string, onSaved: () => void) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   return useMutation(
     api.blids.updateActiveItem.mutationOptions({

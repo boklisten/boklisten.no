@@ -21,7 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CHANNEL_LABELS, TYPE_LABELS } from "@/features/message-log/meta";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import ChartCard from "@/shared/components/charts/ChartCard";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
 const REFRESH_INTERVAL_MS = 30_000;
@@ -135,7 +135,6 @@ export default function MessageLogStatistics({
 }: {
   onShowSendoutInLog: (sendout: SendoutStatsDto) => void;
 }) {
-  const { api } = useApiClient();
   const metricsQuery = useQuery(
     api.messageLogs.metrics.queryOptions(
       { query: { days: METRICS_DAYS } },

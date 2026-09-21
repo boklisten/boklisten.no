@@ -13,7 +13,7 @@ import VippsStyledButton, { VIPPS_ORANGE } from "@/shared/components/VippsStyled
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { bankAccountFieldValidator } from "@/shared/components/form/fields/complex/BankAccountField";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 
 const PLAN_FAILED_REASON = "Fikk ikke sjekket betalingene i Vipps";
 
@@ -155,7 +155,6 @@ export default function RefundStep({
   /** Resolves with whether the order went through. */
   onPay: (payment: Payment) => Promise<boolean>;
 }) {
-  const { client } = useApiClient();
   const [route, setRoute] = useState<"planned" | "manual">("planned");
   const [failed, setFailed] = useState(false);
   const branchId = cart.cart.branchId ?? "";
@@ -168,7 +167,7 @@ export default function RefundStep({
     refetch,
   } = useQuery({
     queryKey: ["standCart", "refundPlan", body],
-    queryFn: () => client.api.standCart.refundPlan({ body }),
+    queryFn: () => apiClient.api.standCart.refundPlan({ body }),
     enabled: branchId !== "",
     retry: false,
     staleTime: 30_000,

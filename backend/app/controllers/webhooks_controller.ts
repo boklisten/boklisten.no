@@ -5,6 +5,7 @@ import twilio from "twilio";
 
 import { MessageLogService } from "#services/message_log_service";
 import { verifySendgridSignature } from "#services/webhook_verification_service";
+import { apiOrigin } from "#config/app";
 import env from "#start/env";
 import { sendgridEventValidator, twilioSmsEventValidator } from "#validators/webhooks";
 
@@ -76,10 +77,15 @@ export default class WebhooksController {
     const parameters = Object.fromEntries(
       Object.entries(body).map(([key, value]) => [key, value ?? ""]),
     );
-    const url = `${env.get("BL_API_URI")}/webhooks/twilio/${messageId}`;
+    const url = `${apiOrigin}/webhooks/twilio/${messageId}`;
     if (
       !signature ||
-      !twilio.validateRequest(env.get("TWILIO_SMS_AUTH_TOKEN"), signature, url, parameters)
+      !twilio.validateRequest(
+        env.get("TWILIO_SMS_AUTH_TOKEN").release(),
+        signature,
+        url,
+        parameters,
+      )
     ) {
       return ctx.response.forbidden({ error: "invalid signature" });
     }

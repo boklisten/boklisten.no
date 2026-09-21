@@ -9,7 +9,7 @@ import { describeOptions } from "@/features/branches/subjects/subjectOptions";
 import type { BranchSubject } from "@/features/branches/subjects/subjectOptions";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -21,7 +21,6 @@ function bookCountLabel(count: number) {
 }
 
 export default function BranchSubjectSettings({ branchId }: { branchId: string }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const {
     data: subjects,

@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Activity, useState } from "react";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 import { useAppForm } from "@/shared/hooks/form";
 import { showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -23,14 +23,13 @@ export default function NotifyRoundButton({
   roundId: string | null;
   disabled?: boolean;
 }) {
-  const { client } = useApiClient();
   const [opened, { open, close }] = useDisclosure(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const notifyMutation = useMutation({
     mutationFn: async (values: NotifyFields) => {
       setApiError(null);
-      return client.api.matches.notify({
+      return apiClient.api.matches.notify({
         body: {
           target: values.target,
           message: values.message.trim(),

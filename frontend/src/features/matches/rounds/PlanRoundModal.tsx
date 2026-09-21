@@ -11,7 +11,7 @@ import { useRefreshRounds } from "@/features/matches/rounds/useRounds";
 import type { Round } from "@/features/matches/rounds/useRounds";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 import { showSuccessNotification } from "@/shared/utils/notifications";
 
 const asDate = (value: string) => dayjs(value).format("YYYY-MM-DD");
@@ -98,7 +98,6 @@ export default function PlanRoundModal({
   onClose: () => void;
   onSaved: (roundId: string) => void;
 }) {
-  const { client } = useApiClient();
   const refreshRounds = useRefreshRounds();
   const [apiError, setApiError] = useState<string | null>(null);
   const editing = round !== undefined;
@@ -135,8 +134,8 @@ export default function PlanRoundModal({
       };
 
       return round
-        ? client.api.matchRounds.update({ params: { id: round.id }, body })
-        : client.api.matchRounds.store({ body });
+        ? apiClient.api.matchRounds.update({ params: { id: round.id }, body })
+        : apiClient.api.matchRounds.store({ body });
     },
     onSuccess: (result) => {
       showSuccessNotification(

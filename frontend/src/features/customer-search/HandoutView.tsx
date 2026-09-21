@@ -9,8 +9,7 @@ import { buildOpenOrderInfo, buildPeerBooks } from "@/features/customer-search/h
 import HandoutBooksTable from "@/features/customer-search/HandoutBooksTable";
 import type { HandoutRow } from "@/features/customer-search/HandoutBooksTable";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -19,7 +18,6 @@ const POLL_INTERVAL_MS = 5000;
  * or by a scan from the page, and books due from another student, which never pass the stand.
  */
 export default function HandoutView({ customer }: { customer: User }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const { data: orders } = useQuery(
     api.orders.placedForCustomer.queryOptions(
@@ -33,7 +31,7 @@ export default function HandoutView({ customer }: { customer: User }) {
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
-  const { data: branches } = useQuery(publicApi.branches.index.queryOptions());
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   const openOrderInfo = buildOpenOrderInfo(orders ?? []);
   const { receiveBooks } = buildPeerBooks(matchData ?? [], customer.id);

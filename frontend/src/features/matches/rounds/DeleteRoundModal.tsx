@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { useRefreshRounds } from "@/features/matches/rounds/useRounds";
 import type { Round } from "@/features/matches/rounds/useRounds";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 export default function DeleteRoundModal({
@@ -19,7 +19,6 @@ export default function DeleteRoundModal({
   onClose: () => void;
   onDeleted: () => void;
 }) {
-  const { api } = useApiClient();
   const refreshRounds = useRefreshRounds();
   const [confirmation, setConfirmation] = useState("");
 

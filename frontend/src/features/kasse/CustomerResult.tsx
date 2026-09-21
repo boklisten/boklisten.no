@@ -9,7 +9,7 @@ import StandCartDrawer from "@/features/stand-cart/StandCartDrawer";
 import StandCartLinkModal from "@/features/stand-cart/StandCartLinkModal";
 import type { StandCart } from "@/features/stand-cart/useStandCart";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 /** The customer half of a Kasse lookup: who they are, what needs attention, their books, and the cart. */
 export default function CustomerResult({
@@ -33,7 +33,6 @@ export default function CustomerResult({
   cartOpened: boolean;
   onCartClose: () => void;
 }) {
-  const { api } = useApiClient();
   const {
     data: customer,
     isPending,

@@ -12,11 +12,11 @@ import { nameFieldValidator } from "@/shared/components/form/fields/complex/Name
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import { useAppForm } from "@/shared/hooks/form";
 import { showErrorNotification } from "@/shared/utils/notifications";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 function ContactForm({ onSent }: { onSent: () => void }) {
   const sendMutation = useMutation(
-    publicApi.bokflyt.contact.mutationOptions({
+    api.bokflyt.contact.mutationOptions({
       onSuccess: onSent,
       onError: () => showErrorNotification("Klarte ikke å sende henvendelsen"),
     }),

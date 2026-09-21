@@ -5,7 +5,7 @@ import { IconChevronDown, IconFileDownload } from "@tabler/icons-react";
 import dayjs from "dayjs";
 
 import useReportDownload from "@/features/reports/useReportDownload";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 
 /**
  * The three files the stand needs from the list it is looking at: the overview of every open
@@ -13,20 +13,19 @@ import useApiClient from "@/shared/hooks/useApiClient";
  * to block a second one.
  */
 export default function OrderDownloadsMenu({ filter }: { filter: OrderManagerFilter }) {
-  const { client } = useApiClient();
   const stamp = dayjs().format("YYYY-MM-DD");
   const overview = useReportDownload({
-    fetchRows: () => client.api.orders.export({ query: filter }),
+    fetchRows: () => apiClient.api.orders.export({ query: filter }),
     filename: `bestillinger-${stamp}.xlsx`,
   });
   const mailbox = useReportDownload({
     fetchRows: () =>
-      client.api.orders.exportBring({ query: { ...filter, parcelType: "postkasse" } }),
+      apiClient.api.orders.exportBring({ query: { ...filter, parcelType: "postkasse" } }),
     filename: `bring-postkasse-${stamp}.xlsx`,
   });
   const pickup = useReportDownload({
     fetchRows: () =>
-      client.api.orders.exportBring({ query: { ...filter, parcelType: "hentested" } }),
+      apiClient.api.orders.exportBring({ query: { ...filter, parcelType: "hentested" } }),
     filename: `bring-hentested-${stamp}.xlsx`,
   });
   const busy = overview.isLoading || mailbox.isLoading || pickup.isLoading;

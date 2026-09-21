@@ -17,7 +17,7 @@ import { visibleAdminPages } from "@/features/layout/adminNavigation";
 import type { AdminPage } from "@/features/layout/adminNavigation";
 import { createKeyboardDecoy, requestedSearchKeyboard } from "@/features/search/openSearch";
 import { searchPages } from "@/features/search/searchPages";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 
 const MIN_SEARCH_LENGTH = 3;
@@ -150,7 +150,6 @@ export default function SearchSpotlight({
   onSelectCustomer?: (detailsId: string) => void;
   onSelectBook?: (blid: string) => void;
 }) {
-  const { api, client } = useApiClient();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const [searchValue, setSearchValue] = useState("");
@@ -167,7 +166,8 @@ export default function SearchSpotlight({
 
   const { data: customers, isFetching: fetchingCustomers } = useQuery({
     queryKey: customerQueryKey(debouncedSearch),
-    queryFn: async () => (await client.api.users.search({ query: { q: debouncedSearch } })) ?? [],
+    queryFn: async () =>
+      (await apiClient.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: customerSearchActive,
     placeholderData: (previousData, previousQuery) => {
       const previousSearch = previousQuery?.queryKey.at(-1);
@@ -178,7 +178,7 @@ export default function SearchSpotlight({
   });
   const { data: bookSearch, isFetching: fetchingBooks } = useQuery({
     queryKey: blidQueryKey(debouncedSearch),
-    queryFn: () => client.api.blids.index({ query: { q: debouncedSearch } }),
+    queryFn: () => apiClient.api.blids.index({ query: { q: debouncedSearch } }),
     enabled: blidSearchActive,
     placeholderData: (previousData, previousQuery) => {
       const previousSearch = previousQuery?.queryKey.at(-1);

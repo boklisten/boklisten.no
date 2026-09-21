@@ -1,7 +1,7 @@
 import { MultiSelect } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 interface BranchMultiSelectProps {
   value: string[];
@@ -14,7 +14,6 @@ export default function BranchMultiSelect({
   onChange,
   label = "Filial",
 }: BranchMultiSelectProps) {
-  const { api } = useApiClient();
   const { data: branches, isPending } = useQuery(api.branches.index.queryOptions());
 
   return (

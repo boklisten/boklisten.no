@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
 import MergeCustomerSection from "@/features/user/MergeCustomerSection";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -24,13 +24,12 @@ export default function UserDangerZone({
   onDeleted?: (() => void) | undefined;
   onMerged?: ((toDetailsId: string) => void) | undefined;
 }) {
-  const { client } = useApiClient();
   const [expandedAction, setExpandedAction] = useState<"merge" | "delete" | null>(null);
   const [confirmText, setConfirmText] = useState("");
   const confirmPhrase = userDetail.name || userDetail.email;
 
   const deleteMutation = useMutation({
-    mutationFn: () => client.api.users.destroy({ params: { detailsId: userDetail.id } }),
+    mutationFn: () => apiClient.api.users.destroy({ params: { detailsId: userDetail.id } }),
     onSuccess: () => {
       showSuccessNotification("Kunden ble slettet");
       onDeleted?.();

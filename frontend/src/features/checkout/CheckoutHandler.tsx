@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { use, useEffect, useRef } from "react";
 import { browser } from "react-dom";
 
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import useCart from "@/shared/hooks/useCart";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification } from "@/shared/utils/notifications";
@@ -28,7 +28,6 @@ export function CheckoutPending() {
 export default function CheckoutHandler() {
   use(browser());
   const cart = useCart({ immediately: true });
-  const { api, client } = useApiClient();
   const navigate = useNavigate();
   const started = useRef(false);
   // Always fresh: the customer may have signed seconds ago on the signing step
@@ -39,7 +38,7 @@ export default function CheckoutHandler() {
 
   const { mutate: initializeCheckout } = useMutation({
     mutationFn: async (cartItems: CartItem[]) =>
-      client.api.checkout.initialize({
+      apiClient.api.checkout.initialize({
         body: {
           cartItems: cartItems.map((cartItem) => {
             const selectedOption = cart.getSelectedOption(cartItem);

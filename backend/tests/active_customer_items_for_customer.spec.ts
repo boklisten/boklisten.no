@@ -10,6 +10,7 @@ import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { fixtureId } from "#tests/fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
+import { userDouble } from "#tests/user_fixtures";
 
 const DETAILS_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 const ITEM_ID = fixtureId("a1");
@@ -17,7 +18,7 @@ const ITEM_ID = fixtureId("a1");
 function contextFor(detailsId: string) {
   return mock<HttpContext>({
     request: { param: () => detailsId },
-    authUser: { permission: "employee", detailsId: "someone-else" },
+    auth: { getUserOrFail: () => userDouble({ id: "someone-else", permission: "employee" }) },
   });
 }
 

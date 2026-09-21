@@ -13,7 +13,7 @@ import {
 import { IconCircleCheck, IconPencilExclamation } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 const STATUS_SEGMENTS = [
   {
@@ -40,7 +40,6 @@ function formatPercent(count: number, total: number): string {
 }
 
 export default function BranchSignatureStatus({ branchId }: { branchId: string }) {
-  const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery(
     api.branchSignatureStatus.show.queryOptions({ params: { branchId } }),
   );

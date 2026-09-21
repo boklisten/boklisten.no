@@ -3,7 +3,7 @@ import { IconTrash, IconUserCheck } from "@tabler/icons-react";
 
 import CustomerLink from "@/features/kasse/CustomerLink";
 import type { DuplicateUserSummary } from "@/features/user-management/duplicateTypes";
-import { norwegianTime } from "@/shared/utils/dayjs";
+import { lastActiveLabel } from "@/features/user-management/lastActive";
 
 /** Summarizes one side of a customer merge: who is kept and who is deleted. */
 export default function MergeRoleCard({
@@ -50,7 +50,7 @@ export default function MergeRoleCard({
             {user.activeMatches} aktive overleveringer
           </Text>
           <Text size="sm" c="dimmed">
-            Sist aktiv: {user.lastActive ? norwegianTime(user.lastActive).fromNow() : "aldri"}
+            Sist aktiv: {lastActiveLabel(user.lastActive)}
           </Text>
         </Stack>
       </Group>

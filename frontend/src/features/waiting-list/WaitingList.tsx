@@ -2,12 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import WaitingListTable from "@/features/waiting-list/WaitingListTable";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 export default function WaitingList() {
-  const { api } = useApiClient();
-
   const {
     data: items,
     isLoading: isLoadingItems,

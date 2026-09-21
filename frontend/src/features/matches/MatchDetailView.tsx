@@ -20,7 +20,7 @@ import ScanCodeIcon from "@/shared/components/scanner/ScanCodeIcon";
 import ScannerPanel from "@/shared/components/scanner/ScannerPanel";
 import ScannerTutorial from "@/shared/components/scanner/ScannerTutorial";
 import ShowCustomerIdButton from "@/shared/components/ShowCustomerIdButton";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
 function useIsTooEarly(meetingTime: string | null) {
@@ -47,7 +47,6 @@ export default function MatchDetailView({
   viewerCustomerId: string;
 }) {
   const queryClient = useQueryClient();
-  const { client, api } = useApiClient();
   const [opened, { open, close }] = useDisclosure(false);
   const [redirectCountdownStarted, setRedirectCountdownStarted] = useState(false);
   const tooEarly = useIsTooEarly(viewerMatch.meetingTime);
@@ -145,7 +144,7 @@ export default function MatchDetailView({
               accepts={["blid"]}
               successMessage="Boken har blitt registrert!"
               onScan={async (blid) => {
-                const response = await client.api.matches.transferItem({ body: { blid } });
+                const response = await apiClient.api.matches.transferItem({ body: { blid } });
                 await queryClient.invalidateQueries({
                   queryKey: api.matches.me.queryKey(),
                 });

@@ -23,7 +23,7 @@ import {
   normalizeNorwegianDate,
   normalizeNorwegianPhone,
 } from "@/shared/utils/csvNormalizers";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 interface UserCandidate {
@@ -165,7 +165,6 @@ function ProvisioningDuplicatesDialog({
 }
 
 export default function UploadBranchUsers({ branchId }: { branchId: string }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const [importerOpen, setImporterOpen] = useState(false);
   const [candidates, setCandidates] = useState<UserCandidate[] | null>(null);
@@ -173,7 +172,7 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
 
   const evaluateMutation = useMutation({
     mutationFn: async (userCandidates: UserCandidate[]) =>
-      client.api.userProvisioning.evaluate({
+      apiClient.api.userProvisioning.evaluate({
         params: { branchId },
         body: { userCandidates },
       }),
@@ -191,7 +190,7 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
       userCandidates: UserCandidate[];
       branchResolutions: { localName: string; branchId: string }[];
     }) =>
-      client.api.userProvisioning.provision({
+      apiClient.api.userProvisioning.provision({
         params: { branchId },
         body: { userCandidates, branchResolutions },
       }),

@@ -25,7 +25,7 @@ import { confirmPaymentChange } from "@/features/invoices/useInvoiceStatusChange
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import EntityLink from "@/shared/components/EntityLink";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -243,7 +243,6 @@ export default function InvoiceDetailDrawer({
   invoiceId: string | undefined;
   onClose: () => void;
 }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const narrow = useMediaQuery("(max-width: 48em)");
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -253,7 +252,10 @@ export default function InvoiceDetailDrawer({
 
   const changeStatus = useMutation({
     mutationFn: (status: InvoiceStatus) =>
-      client.api.invoices.setStatus({ params: { invoiceId: invoiceId ?? "" }, body: { status } }),
+      apiClient.api.invoices.setStatus({
+        params: { invoiceId: invoiceId ?? "" },
+        body: { status },
+      }),
     onSuccess: (result) => {
       queryClient.setQueryData(detailQuery.queryKey, (current) =>
         withBranchName(result.invoice, current),
@@ -270,7 +272,7 @@ export default function InvoiceDetailDrawer({
 
   const cancelLine = useMutation({
     mutationFn: ({ lineIndex, cancel }: { lineIndex: number; cancel: boolean }) =>
-      client.api.invoices.setLineCancelled({
+      apiClient.api.invoices.setLineCancelled({
         params: { invoiceId: invoiceId ?? "", lineIndex: String(lineIndex) },
         body: { cancel },
       }),

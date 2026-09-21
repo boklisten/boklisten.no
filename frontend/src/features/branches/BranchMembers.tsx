@@ -5,11 +5,10 @@ import { Activity } from "react";
 
 import BranchMembersTable from "@/features/branches/BranchMembersTable";
 import BranchScopeMetrics from "@/shared/components/BranchScopeMetrics";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 export default function BranchMembers({ branchId }: { branchId: string }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery(
     api.branchMembers.index.queryOptions({ params: { branchId } }),
@@ -24,10 +23,10 @@ export default function BranchMembers({ branchId }: { branchId: string }) {
       scope: "direct" | "indirect";
     }) =>
       scope === "direct"
-        ? client.api.branchMembers.destroyDirect({
+        ? apiClient.api.branchMembers.destroyDirect({
             params: { branchId: targetBranchId },
           })
-        : client.api.branchMembers.destroyIndirect({
+        : apiClient.api.branchMembers.destroyIndirect({
             params: { branchId: targetBranchId },
           }),
     onSuccess: () => showSuccessNotification("Medlemsliste ble oppdatert"),

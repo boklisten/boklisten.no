@@ -123,7 +123,7 @@ test.group("OrderPlaceService", (group) => {
     aggregateCustomerItemsStub.resolves([]);
 
     await assert.rejects(() =>
-      orderPlaceService.place(validOrder.id, { id: "user1", permission: "admin", details: "" }),
+      orderPlaceService.place(validOrder.id, { id: "user1", permission: "admin" }),
     );
   });
 
@@ -135,7 +135,7 @@ test.group("OrderPlaceService", (group) => {
     aggregateCustomerItemsStub.resolves([]);
 
     return assert.rejects(() =>
-      orderPlaceService.place(validOrder.id, { id: "user1", permission: "admin", details: "" }),
+      orderPlaceService.place(validOrder.id, { id: "user1", permission: "admin" }),
     );
   });
 
@@ -161,7 +161,6 @@ test.group("OrderPlaceService", (group) => {
     const result = await orderPlaceService.place(validOrder.id, {
       id: "user1",
       permission: "admin",
-      details: "",
     });
 
     assert.deepEqual(result, order);

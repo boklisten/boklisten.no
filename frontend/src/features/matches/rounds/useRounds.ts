@@ -1,7 +1,7 @@
 import type { MatchRoundDto } from "@boklisten/backend/shared/match/match-round-dto";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export type Round = MatchRoundDto;
 
@@ -10,12 +10,10 @@ export function isPlanned(round: Round): boolean {
 }
 
 export function useRounds() {
-  const { api } = useApiClient();
   return useQuery(api.matchRounds.index.queryOptions({}, { staleTime: 60_000 }));
 }
 
 export function useRefreshRounds() {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
 
   return () => {

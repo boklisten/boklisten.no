@@ -1,21 +1,12 @@
 import { Badge, NavLink } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 
-import useApiClient from "@/shared/hooks/useApiClient";
-import { hasAccessToken } from "@/shared/hooks/useAuth";
+import useAuth from "@/shared/hooks/useAuth";
 import { countPendingTasks } from "@/shared/utils/tasks";
 
 export default function TasksLink() {
-  const { api } = useApiClient();
-
-  const {
-    data: userDetail,
-    isLoading: isLoadingUserDetail,
-    isError: isErrorUserDetail,
-  } = useQuery({ ...api.users.me.queryOptions(), enabled: hasAccessToken });
-
-  const taskCount = isLoadingUserDetail || isErrorUserDetail ? 0 : countPendingTasks(userDetail);
+  const { user } = useAuth();
+  const taskCount = countPendingTasks(user);
 
   if (taskCount === 0) {
     return null;

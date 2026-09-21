@@ -17,7 +17,7 @@ import { useState } from "react";
 
 import MessageEntryList from "@/features/message-log/MessageEntryList";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 const POLL_INTERVAL_MS = 5000;
 const FEED_LIMIT = 50;
@@ -29,7 +29,6 @@ export default function LiveFeed({
   sendoutFilter: { id: number; name: string } | null;
   onClearSendoutFilter: () => void;
 }) {
-  const { api } = useApiClient();
   const [channel, setChannel] = useState<"alle" | MessageChannel>("alle");
   const [onlyFailures, setOnlyFailures] = useState(false);
   const [search, setSearch] = useState("");

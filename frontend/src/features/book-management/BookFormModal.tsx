@@ -3,7 +3,7 @@ import { Button, Group, NumberInput, SimpleGrid, Stack, Table, Text } from "@man
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -75,13 +75,12 @@ export default function BookFormModal({
   suggestions: BookSuggestions;
   onClose: () => void;
 }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const saveBook = useMutation({
     mutationFn: (body: BookPayload) =>
       item === undefined
-        ? client.api.items.store({ body })
-        : client.api.items.update({ params: { id: item.id }, body }),
+        ? apiClient.api.items.store({ body })
+        : apiClient.api.items.update({ params: { id: item.id }, body }),
     onSuccess: () => {
       showSuccessNotification(item === undefined ? "Boka ble lagt til" : "Boka ble lagret");
       onClose();

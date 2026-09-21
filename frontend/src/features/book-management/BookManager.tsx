@@ -13,7 +13,7 @@ import type { BookPatchRequest } from "@/features/book-management/BookGrid";
 import BookSelectionBar from "@/features/book-management/BookSelectionBar";
 import BookUpload from "@/features/book-management/BookUpload";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification } from "@/shared/utils/notifications";
@@ -33,7 +33,6 @@ function suggestionsFrom(items: Item[]): BookSuggestions {
 }
 
 export default function BookManager() {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<Item[]>([]);
   const gridRef = useRef<AgGridReact<Item>>(null);
@@ -43,7 +42,7 @@ export default function BookManager() {
 
   const { mutate: patchBook } = useMutation({
     mutationFn: ({ id, patch }: BookPatchRequest) =>
-      client.api.items.update({ params: { id }, body: patch }),
+      apiClient.api.items.update({ params: { id }, body: patch }),
     onMutate: async ({ id, patch }) => {
       await queryClient.cancelQueries({ queryKey: itemsQuery.queryKey });
       const previous = queryClient.getQueryData(itemsQuery.queryKey);

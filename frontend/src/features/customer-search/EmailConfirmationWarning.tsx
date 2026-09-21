@@ -4,12 +4,11 @@ import { IconPencil } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 export default function EmailConfirmationWarning({ customer }: { customer: User }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
 
   const confirmEmailMutation = useMutation(

@@ -3,13 +3,13 @@ import { IconSchool } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 
-import { publicApi } from "@/shared/utils/publicApiClient";
 import type { Branch } from "@boklisten/backend/shared/branch";
+import { api } from "@/shared/utils/apiClient";
 
 const capitalize = (s: string) => (s.length > 0 ? s[0]?.toUpperCase() + s.slice(1) : "");
 
 export default function SelectOrderBranch() {
-  const { data: branches } = useQuery(publicApi.branches.indexPublic.queryOptions());
+  const { data: branches } = useQuery(api.branches.indexPublic.queryOptions());
 
   if (!branches) {
     return (

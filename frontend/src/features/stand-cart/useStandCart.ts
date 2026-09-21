@@ -37,10 +37,9 @@ import {
   useStandCartState,
 } from "@/features/stand-cart/standCartStore";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showSuccessNotification } from "@/shared/utils/notifications";
-import { publicApi } from "@/shared/utils/publicApiClient";
 import { describeRejectedScan, determineScanCodeType } from "@/shared/utils/scanCodes";
 import type { ScanCodeType } from "@/shared/utils/scanCodes";
 
@@ -138,7 +137,6 @@ interface StandCartScope {
  * a row and a scan from any scanner behave the same.
  */
 export default function useStandCart(customerId: string | null, scope?: StandCartScope) {
-  const { api, client } = useApiClient();
   const cart = useStandCartState(customerId);
   // A page may put a question in front of every add (the Kasse: a waiting Innsamling batch)
   const beforeAdd = useStandCartGuard();
@@ -148,7 +146,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     cartRef.current = cart;
   }, [cart]);
 
-  const { data: branches } = useQuery(publicApi.branches.index.queryOptions());
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
   const { data: customer } = useQuery(
     api.users.show.queryOptions(
       { params: { detailsId: customerId ?? "" } },
@@ -207,7 +205,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
       return { kind: "refused", message: "Velg en kunde først" };
     }
     try {
-      return await client.api.standCart.resolveLine({
+      return await apiClient.api.standCart.resolveLine({
         body: { customerId, branchId, source, ...extra },
       });
     } catch (error) {
@@ -397,7 +395,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     if (cartRef.current.linking === null) {
       return { message: "Ingen unik ID venter på kobling" };
     }
-    const item = await client.api.items.showByIsbn({ params: { isbn } });
+    const item = await apiClient.api.items.showByIsbn({ params: { isbn } });
     if (!item) {
       return {
         title: "Ukjent ISBN",
@@ -418,7 +416,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     if (linking === null || linking.candidate === null) {
       return { message: "Ingen kobling å bekrefte" };
     }
-    const connection = await client.api.blids.registerOne({
+    const connection = await apiClient.api.blids.registerOne({
       body: { blid: linking.blid, isbn: linking.candidate.isbn },
     });
     if (connection.feedback) {

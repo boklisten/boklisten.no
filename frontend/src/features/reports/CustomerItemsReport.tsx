@@ -8,7 +8,7 @@ import ReportCard from "@/features/reports/ReportCard";
 import useReportDownload from "@/features/reports/useReportDownload";
 import { DEFAULT_DATE_RANGE, resolveDateRange } from "@/features/reports/dateRangePresets";
 import type { DateRangeValue } from "@/features/reports/dateRangePresets";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 
 interface CustomerItemsReportQuery {
   branchFilter?: string[];
@@ -21,8 +21,6 @@ interface CustomerItemsReportQuery {
 }
 
 export default function CustomerItemsReport() {
-  const { client } = useApiClient();
-
   const [branchFilter, setBranchFilter] = useState<string[]>([]);
   const [creationRange, setCreationRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
   const [deadlineRange, setDeadlineRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
@@ -42,7 +40,7 @@ export default function CustomerItemsReport() {
         ...(includeReturned && { includeReturned }),
         ...(includeBuyout && { includeBuyout }),
       };
-      const rows = await client.api.reports.customerItems({ query });
+      const rows = await apiClient.api.reports.customerItems({ query });
       return rows ?? [];
     },
     filename: `customer_items-${dayjs().format("YYYY-MM-DD")}.xlsx`,

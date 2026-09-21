@@ -65,7 +65,7 @@ export default class BranchBooksController {
   }
 
   async cancelOrderedBooks(ctx: HttpContext) {
-    const { detailsId } = ctx.authUser;
+    const { id: detailsId } = ctx.auth.getUserOrFail();
     const { filter, notifyCustomers } = await ctx.request.validateUsing(
       orderedBooksCancelValidator,
     );

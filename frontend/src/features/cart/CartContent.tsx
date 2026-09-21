@@ -19,7 +19,7 @@ import { Activity } from "react";
 
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import useCart from "@/shared/hooks/useCart";
 import useAuth from "@/shared/hooks/useAuth";
 import SegmentedControlWithLabel from "@/shared/components/SegmentedControlWithLabel";
@@ -49,7 +49,6 @@ function CheckoutButton({ to, label, blocked }: { to: string; label: string; blo
 export default function CartContent() {
   const cart = useCart();
   const { isLoggedIn } = useAuth();
-  const { api } = useApiClient();
   // The conflict flags must reflect orders placed seconds ago, so bypass the global staleTime
   const { data: openOrderItems } = useQuery({
     ...api.orders.openItemsMe.queryOptions(),

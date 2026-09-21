@@ -1,33 +1,19 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import type { NextFn } from "@adonisjs/core/types/http";
 
-import { PermissionService } from "#services/permission_service";
-import type { UserPermission } from "#shared/user-permission";
-
-/** The caller as identified by their access token. */
-export interface AuthUser {
-  detailsId: string;
-  permission: UserPermission;
-}
+import { LoginService } from "#services/login_service";
 
 /**
- * Verifies the bearer token and, when a level is given, that the caller holds at least that
- * permission. Applied to route groups in `start/routes.ts`; controllers read the caller from
- * `ctx.authUser`.
+ * Requires a logged-in user (a valid session or remember-me cookie) and records their activity.
+ * Applied to route groups in `start/routes.ts`; controllers read the caller with
+ * `ctx.auth.getUserOrFail()`. Permission levels are checked by the `can` middleware.
  *
- * @throws UnauthorizedException (401) when the token is missing or invalid
- * @throws NotAllowedException (403) when the caller's permission is below the required level
+ * @throws E_UNAUTHORIZED_ACCESS (401) when nobody is logged in
  */
 export default class AuthMiddleware {
-  async handle(ctx: HttpContext, next: NextFn, options: { permission?: UserPermission } = {}) {
-    ctx.authUser = PermissionService.authenticate(ctx, options.permission);
+  async handle(ctx: HttpContext, next: NextFn) {
+    await ctx.auth.authenticateUsing();
+    await LoginService.trackActivity(ctx);
     return next();
-  }
-}
-
-declare module "@adonisjs/core/http" {
-  export interface HttpContext {
-    /** Set by AuthMiddleware; only present on routes behind `middleware.auth()`. */
-    authUser: AuthUser;
   }
 }

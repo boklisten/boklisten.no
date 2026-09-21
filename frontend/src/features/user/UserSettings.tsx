@@ -2,14 +2,13 @@ import { Skeleton, Stack } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import UserSettingsForm from "@/features/user/UserSettingsForm";
-import useApiClient from "@/shared/hooks/useApiClient";
 import { useNavigate } from "@tanstack/react-router";
+import { authQueryOptions } from "@/features/auth/authQuery";
 
 function UserSettings() {
-  const { api } = useApiClient();
   const navigate = useNavigate();
 
-  const { data, isLoading, isError } = useQuery(api.users.me.queryOptions());
+  const { data, isLoading, isError } = useQuery(authQueryOptions());
 
   if (isLoading) {
     return (

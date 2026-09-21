@@ -15,7 +15,7 @@ const REQUEST_TIMEOUT_MS = 5000;
  */
 export const EmailValidationService = {
   async check(email: string, source: EmailValidationSource): Promise<EmailValidationResult> {
-    const apiKey = env.get("SENDGRID_EMAIL_VALIDATION_API_KEY");
+    const apiKey = env.get("SENDGRID_EMAIL_VALIDATION_API_KEY")?.release();
     if (!apiKey) {
       return { available: false };
     }

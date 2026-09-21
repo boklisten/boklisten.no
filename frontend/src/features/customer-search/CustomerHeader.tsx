@@ -11,7 +11,7 @@ import useDisplayName from "@/features/customer-search/useDisplayName";
 import AdministrateUserForm from "@/features/user/AdministrateUserForm";
 import EntityLink from "@/shared/components/EntityLink";
 import { openCustomerIdModal } from "@/shared/components/ShowCustomerIdButton";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 const ADMINISTRATE_USER_MODAL_ID = "administrate-user";
 
@@ -35,7 +35,6 @@ export default function CustomerHeader({
   withCustomerId?: boolean;
   onMerged: (toDetailsId: string) => void;
 }) {
-  const { api } = useApiClient();
   const { data: branch } = useQuery(
     api.branches.show.queryOptions(
       { params: { branchId: customer.branchMembershipId ?? "" } },

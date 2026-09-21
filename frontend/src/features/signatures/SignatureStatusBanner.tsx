@@ -9,7 +9,7 @@ import AdministrateUserSignatures from "@/features/signatures/AdministrateUserSi
 import SignatureStatusCard from "@/features/signatures/SignatureStatusCard";
 import type { SignatureStatusTone } from "@/features/signatures/SignatureStatusCard";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 const POLL_INTERVAL_MS = 5000;
@@ -27,7 +27,6 @@ export default function SignatureStatusBanner({
   userDetail: User;
   inForm?: boolean;
 }) {
-  const { api } = useApiClient();
   const [expanded, setExpanded] = useState(false);
   const { data, isPending, isError } = useQuery(
     api.signatures.show.queryOptions(

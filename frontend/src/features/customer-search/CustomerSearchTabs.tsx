@@ -26,7 +26,7 @@ import CustomerOrderHistoryView from "@/features/customer-search/CustomerOrderHi
 import { countStandBooksToHandOut } from "@/features/customer-search/handoutBooks";
 import { isOverdue } from "@/features/bulk-collection/deadline";
 import HandoutView from "@/features/customer-search/HandoutView";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -156,7 +156,6 @@ export default function CustomerSearchTabs({
   activeTab: CustomerSearchTab;
   onTabChange: (tab: CustomerSearchTab) => void;
 }) {
-  const { api } = useApiClient();
   // The panels below fetch these same queries, so reading them here shares the React Query cache.
   // Polling lives here rather than only in the panels so the counts stay live on every tab.
   const { data: orders } = useQuery(

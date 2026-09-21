@@ -9,7 +9,7 @@ import type {
 } from "@/features/user-management/duplicateTypes";
 import MergeRoleCard from "@/features/user-management/MergeRoleCard";
 import useBranchNames from "@/features/user-management/useBranchNames";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -26,7 +26,6 @@ export default function MergeCustomersModal({
   opened: boolean;
   onClose: () => void;
 }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const branchNames = useBranchNames();
   const [first, second] = pair.users;
@@ -39,7 +38,7 @@ export default function MergeCustomersModal({
 
   const mergeMutation = useMutation({
     mutationFn: (input: { fromDetailsId: string; toDetailsId: string }) =>
-      client.api.users.merge({ body: input }),
+      apiClient.api.users.merge({ body: input }),
     onSuccess: async () => {
       showSuccessNotification("Kundene ble slått sammen");
       onClose();

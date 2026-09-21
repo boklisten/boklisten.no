@@ -4,11 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import OrderHistoryList from "@/features/order-history/OrderHistoryList";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 export default function OrderHistory() {
-  const { api } = useApiClient();
   const { data, isPending, isError } = useQuery(api.orders.indexMe.queryOptions());
 
   if (isPending) {

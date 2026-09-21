@@ -20,87 +20,10 @@ export function deliveryDays(now: DateTime = DateTime.now()): number {
 }
 
 export const APP_CONFIG = {
-  path: {
-    client: {
-      checkout: "cart/confirm",
-      agreement: {
-        rent: "info/policies/conditions",
-      },
-      auth: {
-        failure: "auth/authentication/failure",
-      },
-    },
-    host: "boklisten",
-    local: {
-      host: "localhost",
-    },
-  },
-  server: {
-    basePath: "http://localhost:3333",
-  },
-  url: {
-    bring: {
-      shipmentInfo: "https://api.bring.com/shippingguide/v2/products",
-    },
-  },
-  dev: {
-    server: {
-      host: "https://localhost",
-      port: 3333,
-      path: "api",
-      version: "v1",
-    },
-    client: {
-      base: "https://localhost:3000/",
-    },
-    mongoDb: {
-      basePath: "mongodb://",
-      host: "localhost",
-      port: 27_017,
-    },
-  },
-  prod: {
-    server: {
-      host: "",
-      port: 0,
-      path: "",
-      version: "",
-    },
-    mongoDb: {
-      basePath: "",
-      host: "",
-      port: 0,
-      dbName: "",
-    },
-  },
-  test: true,
-  login: {
-    local: {
-      name: "local",
-    },
-  },
-  token: {
-    refresh: {
-      iss: "boklisten.no",
-      aud: "boklisten.no",
-      expiresIn: "1 Year",
-    },
-    access: {
-      iss: "boklisten.no",
-      aud: "boklisten.no",
-      expiresIn: "10 Minutes",
-    },
-  },
-  date: {
-    cancelDays: 14,
-  },
   payment: {
     paymentServiceConfig: {
       roundDown: true,
       roundUp: false,
     },
-  },
-  delivery: {
-    maxWeightLetter: 3000,
   },
 } as const;

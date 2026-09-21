@@ -9,7 +9,7 @@ import { validateAdminMatchListSearch } from "@/features/matches/adminOverview/a
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import EntityLink from "@/shared/components/EntityLink";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export const Route = createFileRoute("/(administrasjon)/admin/overleveringer/$matchId")({
   validateSearch: validateAdminMatchListSearch,
@@ -22,7 +22,6 @@ export const Route = createFileRoute("/(administrasjon)/admin/overleveringer/$ma
 
 function AdminMatchDetailPage() {
   const { matchId } = Route.useParams();
-  const { api } = useApiClient();
   const {
     data: match,
     error,

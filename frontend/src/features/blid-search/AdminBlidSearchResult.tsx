@@ -9,7 +9,7 @@ import EditBlidModal from "@/features/blid-search/EditBlidModal";
 import IsbnBarcodeModal from "@/features/blid-search/IsbnBarcodeModal";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export default function AdminBlidSearchResult({
   blid,
@@ -18,7 +18,6 @@ export default function AdminBlidSearchResult({
   blid: string;
   onClear: () => void;
 }) {
-  const { api } = useApiClient();
   const { data, isPending, isError } = useQuery(api.blids.show.queryOptions({ params: { blid } }));
   const [editing, setEditing] = useState(false);
   const [showingLabel, setShowingLabel] = useState(false);

@@ -33,12 +33,12 @@ import { Route as administrasjonAdminOrdreoversiktRouteImport } from './routes/(
 import { Route as administrasjonAdminOverleveringerRouteRouteImport } from './routes/(administrasjon)/admin/overleveringer/route'
 import { Route as administrasjonAdminUserSettingsRouteImport } from './routes/(administrasjon)/admin/user-settings'
 import { Route as administrasjonAdminVentelisteRouteImport } from './routes/(administrasjon)/admin/venteliste'
+import { Route as offentligAuthCallbackRouteImport } from './routes/(offentlig)/auth/callback'
 import { Route as offentligAuthFailureRouteImport } from './routes/(offentlig)/auth/failure'
 import { Route as offentligAuthForgotRouteImport } from './routes/(offentlig)/auth/forgot'
 import { Route as offentligAuthLoginRouteImport } from './routes/(offentlig)/auth/login'
 import { Route as offentligAuthLogoutRouteImport } from './routes/(offentlig)/auth/logout'
 import { Route as offentligAuthRegisterRouteImport } from './routes/(offentlig)/auth/register'
-import { Route as offentligAuthTokenRouteImport } from './routes/(offentlig)/auth/token'
 import { Route as offentligBestillingIndexRouteImport } from './routes/(offentlig)/bestilling/index'
 import { Route as offentligBestillingBranchIdRouteImport } from './routes/(offentlig)/bestilling/$branchId'
 import { Route as offentligInfoAboutRouteImport } from './routes/(offentlig)/info/about'
@@ -208,6 +208,11 @@ const administrasjonAdminVentelisteRoute =
     path: '/venteliste',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
+const offentligAuthCallbackRoute = offentligAuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
 const offentligAuthFailureRoute = offentligAuthFailureRouteImport.update({
   id: '/auth/failure',
   path: '/auth/failure',
@@ -231,11 +236,6 @@ const offentligAuthLogoutRoute = offentligAuthLogoutRouteImport.update({
 const offentligAuthRegisterRoute = offentligAuthRegisterRouteImport.update({
   id: '/auth/register',
   path: '/auth/register',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligAuthTokenRoute = offentligAuthTokenRouteImport.update({
-  id: '/auth/token',
-  path: '/auth/token',
   getParentRoute: () => offentligRouteRoute,
 } as any)
 const offentligBestillingIndexRoute =
@@ -487,12 +487,12 @@ export interface FileRoutesByFullPath {
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/admin/venteliste': typeof administrasjonAdminVentelisteRoute
+  '/auth/callback': typeof offentligAuthCallbackRoute
   '/auth/failure': typeof offentligAuthFailureRoute
   '/auth/forgot': typeof offentligAuthForgotRoute
   '/auth/login': typeof offentligAuthLoginRoute
   '/auth/logout': typeof offentligAuthLogoutRoute
   '/auth/register': typeof offentligAuthRegisterRoute
-  '/auth/token': typeof offentligAuthTokenRoute
   '/bestilling/$branchId': typeof offentligBestillingBranchIdRoute
   '/info/about': typeof offentligInfoAboutRoute
   '/info/buyback': typeof offentligInfoBuybackRoute
@@ -554,12 +554,12 @@ export interface FileRoutesByTo {
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/admin/venteliste': typeof administrasjonAdminVentelisteRoute
+  '/auth/callback': typeof offentligAuthCallbackRoute
   '/auth/failure': typeof offentligAuthFailureRoute
   '/auth/forgot': typeof offentligAuthForgotRoute
   '/auth/login': typeof offentligAuthLoginRoute
   '/auth/logout': typeof offentligAuthLogoutRoute
   '/auth/register': typeof offentligAuthRegisterRoute
-  '/auth/token': typeof offentligAuthTokenRoute
   '/bestilling/$branchId': typeof offentligBestillingBranchIdRoute
   '/info/about': typeof offentligInfoAboutRoute
   '/info/buyback': typeof offentligInfoBuybackRoute
@@ -626,12 +626,12 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/(administrasjon)/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/(administrasjon)/admin/venteliste': typeof administrasjonAdminVentelisteRoute
+  '/(offentlig)/auth/callback': typeof offentligAuthCallbackRoute
   '/(offentlig)/auth/failure': typeof offentligAuthFailureRoute
   '/(offentlig)/auth/forgot': typeof offentligAuthForgotRoute
   '/(offentlig)/auth/login': typeof offentligAuthLoginRoute
   '/(offentlig)/auth/logout': typeof offentligAuthLogoutRoute
   '/(offentlig)/auth/register': typeof offentligAuthRegisterRoute
-  '/(offentlig)/auth/token': typeof offentligAuthTokenRoute
   '/(offentlig)/bestilling/$branchId': typeof offentligBestillingBranchIdRoute
   '/(offentlig)/info/about': typeof offentligInfoAboutRoute
   '/(offentlig)/info/buyback': typeof offentligInfoBuybackRoute
@@ -698,12 +698,12 @@ export interface FileRouteTypes {
     | '/admin/ordreoversikt'
     | '/admin/user-settings'
     | '/admin/venteliste'
+    | '/auth/callback'
     | '/auth/failure'
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/logout'
     | '/auth/register'
-    | '/auth/token'
     | '/bestilling/$branchId'
     | '/info/about'
     | '/info/buyback'
@@ -765,12 +765,12 @@ export interface FileRouteTypes {
     | '/admin/ordreoversikt'
     | '/admin/user-settings'
     | '/admin/venteliste'
+    | '/auth/callback'
     | '/auth/failure'
     | '/auth/forgot'
     | '/auth/login'
     | '/auth/logout'
     | '/auth/register'
-    | '/auth/token'
     | '/bestilling/$branchId'
     | '/info/about'
     | '/info/buyback'
@@ -836,12 +836,12 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/ordreoversikt'
     | '/(administrasjon)/admin/user-settings'
     | '/(administrasjon)/admin/venteliste'
+    | '/(offentlig)/auth/callback'
     | '/(offentlig)/auth/failure'
     | '/(offentlig)/auth/forgot'
     | '/(offentlig)/auth/login'
     | '/(offentlig)/auth/logout'
     | '/(offentlig)/auth/register'
-    | '/(offentlig)/auth/token'
     | '/(offentlig)/bestilling/$branchId'
     | '/(offentlig)/info/about'
     | '/(offentlig)/info/buyback'
@@ -1063,6 +1063,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminVentelisteRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
+    '/(offentlig)/auth/callback': {
+      id: '/(offentlig)/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof offentligAuthCallbackRouteImport
+      parentRoute: typeof offentligRouteRoute
+    }
     '/(offentlig)/auth/failure': {
       id: '/(offentlig)/auth/failure'
       path: '/auth/failure'
@@ -1096,13 +1103,6 @@ declare module '@tanstack/react-router' {
       path: '/auth/register'
       fullPath: '/auth/register'
       preLoaderRoute: typeof offentligAuthRegisterRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/auth/token': {
-      id: '/(offentlig)/auth/token'
-      path: '/auth/token'
-      fullPath: '/auth/token'
-      preLoaderRoute: typeof offentligAuthTokenRouteImport
       parentRoute: typeof offentligRouteRoute
     }
     '/(offentlig)/bestilling/': {
@@ -1465,12 +1465,12 @@ interface offentligRouteRouteChildren {
   offentligOrderHistoryRoute: typeof offentligOrderHistoryRoute
   offentligSjekkRoute: typeof offentligSjekkRoute
   offentligUserSettingsRoute: typeof offentligUserSettingsRoute
+  offentligAuthCallbackRoute: typeof offentligAuthCallbackRoute
   offentligAuthFailureRoute: typeof offentligAuthFailureRoute
   offentligAuthForgotRoute: typeof offentligAuthForgotRoute
   offentligAuthLoginRoute: typeof offentligAuthLoginRoute
   offentligAuthLogoutRoute: typeof offentligAuthLogoutRoute
   offentligAuthRegisterRoute: typeof offentligAuthRegisterRoute
-  offentligAuthTokenRoute: typeof offentligAuthTokenRoute
   offentligBestillingBranchIdRoute: typeof offentligBestillingBranchIdRoute
   offentligKasseBekreftRoute: typeof offentligKasseBekreftRoute
   offentligKasseSigneringRoute: typeof offentligKasseSigneringRoute
@@ -1494,12 +1494,12 @@ const offentligRouteRouteChildren: offentligRouteRouteChildren = {
   offentligOrderHistoryRoute: offentligOrderHistoryRoute,
   offentligSjekkRoute: offentligSjekkRoute,
   offentligUserSettingsRoute: offentligUserSettingsRoute,
+  offentligAuthCallbackRoute: offentligAuthCallbackRoute,
   offentligAuthFailureRoute: offentligAuthFailureRoute,
   offentligAuthForgotRoute: offentligAuthForgotRoute,
   offentligAuthLoginRoute: offentligAuthLoginRoute,
   offentligAuthLogoutRoute: offentligAuthLogoutRoute,
   offentligAuthRegisterRoute: offentligAuthRegisterRoute,
-  offentligAuthTokenRoute: offentligAuthTokenRoute,
   offentligBestillingBranchIdRoute: offentligBestillingBranchIdRoute,
   offentligKasseBekreftRoute: offentligKasseBekreftRoute,
   offentligKasseSigneringRoute: offentligKasseSigneringRoute,

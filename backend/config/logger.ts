@@ -11,7 +11,7 @@ const loggerConfig = defineConfig({
     app: {
       enabled: true,
       name: "backend",
-      level: env.get("LOG_LEVEL"),
+      level: env.get("LOG_LEVEL", "info"),
       transport: {
         targets: targets()
           .pushIf(!app.inProduction, targets.pretty())

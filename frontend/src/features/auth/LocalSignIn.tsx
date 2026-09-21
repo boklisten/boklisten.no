@@ -1,5 +1,5 @@
 import { Button, Group } from "@mantine/core";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Activity, useEffect, useEffectEvent, useState } from "react";
 import validator from "validator";
 
@@ -7,23 +7,25 @@ import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { passwordFieldValidator } from "@/shared/components/form/fields/complex/PasswordField";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { useAppForm } from "@/shared/hooks/form";
-import useAuth, { login } from "@/shared/hooks/useAuth";
+import { authQueryOptions } from "@/features/auth/authQuery";
+import useAuth from "@/shared/hooks/useAuth";
 import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export default function LocalSignIn() {
   const [apiError, setApiError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const { isLoggedIn } = useAuth();
   const { redirectAfterLogin } = useLoginRedirect();
 
   const signInMutation = useMutation(
-    publicApi.local.login.mutationOptions({
+    api.local.login.mutationOptions({
       onMutate: () => setApiError(null),
-      onSuccess: ({ message, tokens }) => {
+      onSuccess: ({ message, user }) => {
         setApiError(message ?? null);
-        if (tokens) {
-          login(tokens);
+        if (user) {
+          queryClient.setQueryData(authQueryOptions().queryKey, user);
           void redirectAfterLogin();
         }
       },

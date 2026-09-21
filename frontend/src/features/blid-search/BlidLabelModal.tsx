@@ -2,7 +2,7 @@ import { Modal, Skeleton, Stack } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 /** 696 x 271 printer dots, the printable area of the label the stickers are printed on. */
 const LABEL_ASPECT_RATIO = "696 / 271";
@@ -20,7 +20,6 @@ export default function BlidLabelModal({
   opened: boolean;
   onClose: () => void;
 }) {
-  const { api } = useApiClient();
   const { data, isPending, isError } = useQuery({
     ...api.uniqueIds.label.queryOptions({ params: { blid } }),
     enabled: opened,

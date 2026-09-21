@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import OrderDownloadsMenu from "@/features/order-manager/OrderDownloadsMenu";
 import { toOrderManagerFilter } from "@/features/order-manager/orderManagerParams";
 import type { OrderManagerSearchParams } from "@/features/order-manager/orderManagerParams";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { toBranchTreeNodeData } from "@/shared/utils/branchTree";
 
 /** What narrows the queue, and the downloads of exactly what it shows. */
@@ -15,7 +15,6 @@ export default function OrderFilters({
   params: OrderManagerSearchParams;
   onChange: (next: Pick<OrderManagerSearchParams, "filialer" | "bring">) => void;
 }) {
-  const { api } = useApiClient();
   const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   return (

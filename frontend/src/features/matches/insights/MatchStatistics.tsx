@@ -11,7 +11,7 @@ import StatTile from "@/shared/components/StatTile";
 import SunburstChart from "@/features/matches/insights/SunburstChart";
 import useReportDownload from "@/features/reports/useReportDownload";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
@@ -49,7 +49,6 @@ function compareSlots(a: string | null, b: string | null) {
 }
 
 export default function MatchStatistics({ roundId }: { roundId: string }) {
-  const { api } = useApiClient();
   const { data, isLoading, isError, isFetching, dataUpdatedAt, refetch } = useQuery(
     api.matchRounds.statistics.queryOptions(
       { params: { id: roundId } },

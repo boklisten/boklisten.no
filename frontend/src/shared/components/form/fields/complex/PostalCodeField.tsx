@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 
 import { useFieldContext } from "@/shared/hooks/form";
 import { showErrorNotification } from "@/shared/utils/notifications";
-import { publicApiClient } from "@/shared/utils/publicApiClient";
 import validator from "validator";
+import { apiClient } from "@/shared/utils/apiClient";
 
 export async function postalCodeFieldValidator(value: string) {
   const illegalPostalCodeMessage = "Du må oppgi et gyldig norsk postnummer";
@@ -13,7 +13,7 @@ export async function postalCodeFieldValidator(value: string) {
     return illegalPostalCodeMessage;
   }
 
-  const postalCity = await publicApiClient.api.postalCodes.show({
+  const postalCity = await apiClient.api.postalCodes.show({
     params: {
       postalCode: value,
     },
@@ -31,7 +31,7 @@ export default function PostalCodeField() {
       if (!validator.isPostalCode(code, "NO")) {
         return null;
       }
-      return publicApiClient.api.postalCodes.show({
+      return apiClient.api.postalCodes.show({
         params: {
           postalCode: code,
         },

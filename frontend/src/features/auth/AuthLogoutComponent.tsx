@@ -1,12 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useEffectEvent } from "react";
 
 import useAuth from "@/shared/hooks/useAuth";
 
 export default function AuthLogoutComponent() {
   const { logout } = useAuth();
+  const onMount = useEffectEvent(() => void logout());
   useEffect(() => {
-    logout();
-  }, [logout]);
+    onMount();
+  }, []);
 
   return null;
 }

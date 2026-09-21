@@ -12,11 +12,6 @@ import {
 const REGION = "europe-west4-drams3a";
 const MONOREPO = "boklisten/boklisten.no";
 
-/** Railway template reference to a variable Railway provides on the service itself. */
-function railwayVariable(name: string) {
-  return `\${{${name}}}`;
-}
-
 export default defineRailway((ctx) => {
   const isProduction = ctx.isEnvironment("production");
   const branch = isProduction ? "production" : "main";
@@ -44,8 +39,6 @@ export default defineRailway((ctx) => {
     domains: [host("boklisten.no")],
     env: {
       SENTRY_AUTH_TOKEN: ctx.shared.SENTRY_AUTH_TOKEN,
-      VITE_APP_ENV: railwayVariable("RAILWAY_ENVIRONMENT_NAME"),
-      VITE_API_URL: preserve(),
     },
   });
 
@@ -59,25 +52,16 @@ export default defineRailway((ctx) => {
     replicas: { [REGION]: 1 },
     domains: [host("api.boklisten.no")],
     env: {
-      API_ENV: railwayVariable("RAILWAY_ENVIRONMENT_NAME"),
       MONGODB_URI: mongoDb.env.MONGO_URL,
       POSTGRES_URL: postgresDb.env.DATABASE_URL,
-      SENTRY_AUTH_TOKEN: ctx.shared.SENTRY_AUTH_TOKEN,
-      ACCESS_TOKEN_SECRET: preserve(),
       APP_KEY: preserve(),
-      BL_API_URI: preserve(),
       BRING_API_ID: preserve(),
       BRING_API_KEY: preserve(),
-      CLIENT_URI: preserve(),
-      LOG_LEVEL: preserve(),
-      REFRESH_TOKEN_SECRET: preserve(),
       SENDGRID_API_KEY: preserve(),
       SENDGRID_EMAIL_VALIDATION_API_KEY: preserve(),
       SENDGRID_WEBHOOK_PUBLIC_KEY: preserve(),
-      SESSION_SECRET: preserve(),
       TWILIO_SMS_AUTH_TOKEN: preserve(),
       TWILIO_SMS_SID: preserve(),
-      URI_WHITELIST: preserve(),
       VIPPS_CLIENT_ID: preserve(),
       VIPPS_MSN: preserve(),
       VIPPS_MT_CLIENT_ID: preserve(),

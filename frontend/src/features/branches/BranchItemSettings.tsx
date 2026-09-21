@@ -8,12 +8,11 @@ import { BranchItemCreationModal } from "@/features/branches/BranchItemCreationM
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 export default function BranchItemSettings({ branchId }: { branchId: string }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const {
     data: branchItems,

@@ -20,7 +20,7 @@ import { useState } from "react";
 import MergeRoleCard from "@/features/user-management/MergeRoleCard";
 import { PERMISSION_LABELS } from "@/features/user-management/permissionLabels";
 import useBranchNames from "@/features/user-management/useBranchNames";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -44,7 +44,6 @@ export default function MergeCustomerSection({
   onCollapse: () => void;
   onMerged?: ((toDetailsId: string) => void) | undefined;
 }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const branchNames = useBranchNames();
   const [searchValue, setSearchValue] = useState("");
@@ -60,7 +59,8 @@ export default function MergeCustomerSection({
 
   const { data: searchResults, isFetching } = useQuery({
     queryKey: ["userDetail", "search", debouncedSearch] as const,
-    queryFn: async () => (await client.api.users.search({ query: { q: debouncedSearch } })) ?? [],
+    queryFn: async () =>
+      (await apiClient.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: searchActive,
   });
   const candidates = searchActive
@@ -83,7 +83,7 @@ export default function MergeCustomerSection({
 
   const mergeMutation = useMutation({
     mutationFn: (input: { fromDetailsId: string; toDetailsId: string }) =>
-      client.api.users.merge({ body: input }),
+      apiClient.api.users.merge({ body: input }),
     onSuccess: async (_, { toDetailsId }) => {
       showSuccessNotification("Kundene ble slått sammen");
       reset();

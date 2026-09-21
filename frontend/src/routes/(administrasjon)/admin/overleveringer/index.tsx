@@ -15,7 +15,7 @@ import RoundToolbar from "@/features/matches/rounds/RoundToolbar";
 import { isPlanned, useRefreshRounds, useRounds } from "@/features/matches/rounds/useRounds";
 import type { Round } from "@/features/matches/rounds/useRounds";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -41,7 +41,6 @@ function PageSkeleton() {
 function AdminMatchesPage() {
   const { runde, fane } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { client } = useApiClient();
   const { isAdmin } = useAuth();
   const refreshRounds = useRefreshRounds();
   const { data, isLoading, error } = useRounds();
@@ -56,7 +55,7 @@ function AdminMatchesPage() {
 
   const generateMutation = useMutation({
     mutationFn: async (roundId: string) =>
-      client.api.matchRounds.generate({ params: { id: roundId }, timeout: 300_000 }),
+      apiClient.api.matchRounds.generate({ params: { id: roundId }, timeout: 300_000 }),
     onSuccess: (result) => {
       showSuccessNotification(
         `Laget ${result.userMatchCount} elevoverleveringer og ${result.standMatchCount} standoverleveringer. Runden er et utkast – skru den på når den ser riktig ut.`,

@@ -14,7 +14,7 @@ import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import ChartCard from "@/shared/components/charts/ChartCard";
 import DonutWithLegend from "@/shared/components/charts/DonutWithLegend";
 import StatTile from "@/shared/components/StatTile";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
@@ -31,7 +31,6 @@ function monthLabel(month: string) {
 }
 
 export default function CustomersTab() {
-  const { api } = useApiClient();
   const { data: metrics, isPending, isError } = useQuery(api.users.metrics.queryOptions());
 
   if (isError) {

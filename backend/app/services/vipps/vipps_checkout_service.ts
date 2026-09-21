@@ -11,6 +11,7 @@ import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { Order } from "#shared/order/order";
+import { clientOrigin } from "#config/app";
 import env from "#start/env";
 import type { VippsCheckoutSession } from "#validators/checkout_validators";
 
@@ -109,9 +110,9 @@ export const VippsCheckoutService = {
       },
       merchantInfo: {
         callbackUrl: `https://${env.get("API_ENV") === "production" ? "" : "staging."}api.boklisten.no/checkout/vipps/callback`,
-        returnUrl: `${env.get("CLIENT_URI")}/kasse/betaling/status?orderId=${order.id}`,
+        returnUrl: `${clientOrigin}/kasse/betaling/status?orderId=${order.id}`,
         callbackAuthorizationToken: VippsPaymentService.token.issue(),
-        termsAndConditionsUrl: `${env.get("CLIENT_URI")}/info/policies/conditions`,
+        termsAndConditionsUrl: `${clientOrigin}/info/policies/conditions`,
       },
       transaction: {
         reference: order.id,

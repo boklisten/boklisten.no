@@ -4,14 +4,13 @@ import { useState } from "react";
 import BranchMultiSelect from "@/features/reports/BranchMultiSelect";
 import ReportCard from "@/features/reports/ReportCard";
 import useReportDownload from "@/features/reports/useReportDownload";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 
 interface UserDetailsReportQuery {
   branchFilter?: string[];
 }
 
 export default function UserDetailsReport() {
-  const { client } = useApiClient();
   const [branchFilter, setBranchFilter] = useState<string[]>([]);
 
   const { download, isLoading } = useReportDownload({
@@ -19,7 +18,7 @@ export default function UserDetailsReport() {
       const query: UserDetailsReportQuery = {
         ...(branchFilter.length > 0 && { branchFilter }),
       };
-      const rows = await client.api.reports.users({ query });
+      const rows = await apiClient.api.reports.users({ query });
       return rows ?? [];
     },
     filename: `kunder-${dayjs().format("YYYY-MM-DD")}.xlsx`,

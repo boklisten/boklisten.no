@@ -16,7 +16,7 @@ import {
 
 export default class CheckoutController {
   async initialize(ctx: HttpContext) {
-    const { detailsId } = ctx.authUser;
+    const { id: detailsId } = ctx.auth.getUserOrFail();
     const { cartItems } = await ctx.request.validateUsing(initializeCheckoutValidator);
     await assertSignedForCheckout(await User.findOrFail(detailsId), cartItems);
     const order = await OrderService.createFromCart(detailsId, cartItems);
@@ -31,7 +31,7 @@ export default class CheckoutController {
     return { nextStep: "payment", token, checkoutFrontendUrl } as const;
   }
   async confirm(ctx: HttpContext) {
-    const { detailsId } = ctx.authUser;
+    const { id: detailsId } = ctx.auth.getUserOrFail();
     const orderId = ctx.request.param("orderId");
     const order = await StorageService.Orders.get(orderId);
     if (detailsId !== order.customer || order.checkoutState || order.amount > 0) {
@@ -50,7 +50,7 @@ export default class CheckoutController {
   }
 
   async status(ctx: HttpContext) {
-    const { detailsId } = ctx.authUser;
+    const { id: detailsId } = ctx.auth.getUserOrFail();
     const orderId = ctx.request.param("orderId");
     const order = await StorageService.Orders.get(orderId);
     if (detailsId !== order.customer) {

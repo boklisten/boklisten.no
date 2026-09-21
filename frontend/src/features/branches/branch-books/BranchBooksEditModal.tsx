@@ -10,7 +10,7 @@ import type {
 } from "@/features/branches/branch-books/types";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 import { norwegianTime } from "@/shared/utils/dayjs";
 
@@ -37,7 +37,6 @@ export default function BranchBooksEditModal({
   ) => Promise<unknown>;
   onClose: () => void;
 }) {
-  const { api } = useApiClient();
   const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   const form = useAppForm({

@@ -11,11 +11,10 @@ import { Activity } from "react";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import RichTextEditorReadOnly from "@/shared/components/RichTextEditorReadOnly";
-import { publicApi } from "@/shared/utils/publicApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
+import { api } from "@/shared/utils/apiClient";
 
-export const questionsAndAnswersQueryOptions = () =>
-  publicApi.questionsAndAnswers.index.queryOptions();
+export const questionsAndAnswersQueryOptions = () => api.questionsAndAnswers.index.queryOptions();
 
 export default function QuestionsAndAnswersReadOnly() {
   const { data, isLoading } = useQuery(questionsAndAnswersQueryOptions());

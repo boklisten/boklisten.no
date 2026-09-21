@@ -698,10 +698,10 @@ Target schema `users`:
 | task_sign_agreement bool                                    | `tasks.signAgreement`                  | default false                                                                              |
 | permission enu(customer, employee, manager, admin) not null | `users.permission`                     | default customer                                                                           |
 | local_hashed_password                                       | `users.login.local.hashedPassword`     | null for Vipps-only users                                                                  |
-| local_last_login timestamptz                                | `users.login.local.lastLogin`          |                                                                                            |
 | vipps_user_id unique null                                   | `users.login.vipps.userId`             |                                                                                            |
-| vipps_last_login timestamptz                                | `users.login.vipps.lastLogin`          |                                                                                            |
-| last_token_issued_at timestamptz                            | `users.login.lastTokenIssuedAt`        |                                                                                            |
+| local_last_login timestamptz                                | `users.login.local.lastLogin`          | folded into `last_active_at` by the session-tables migration                               |
+| vipps_last_login timestamptz                                | `users.login.vipps.lastLogin`          | folded into `last_active_at` by the session-tables migration                               |
+| last_token_issued_at timestamptz                            | `users.login.lastTokenIssuedAt`        | folded into `last_active_at` by the session-tables migration                               |
 | timestamps                                                  | `userdetails.creationTime/lastUpdated` |                                                                                            |
 
 Dropped: `orders` and `customerItems` arrays. Until steps 8 and 9 land, the readers (4 backend

@@ -13,7 +13,7 @@ const dbConfig = defineConfig({
   connections: {
     postgres: {
       client: "pg",
-      connection: env.get("POSTGRES_URL"),
+      connection: env.get("POSTGRES_URL").release(),
       migrations: {
         naturalSort: true,
         paths: ["database/migrations"],

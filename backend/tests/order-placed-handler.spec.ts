@@ -9,7 +9,6 @@ import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { PaymentHandler } from "#services/orders/payment_handler";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { StorageService } from "#services/storage_service";
-import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
 import type { Order } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
@@ -19,7 +18,6 @@ test.group("OrderPlacedHandler", (group) => {
   let testOrder: Order;
   let testPayment: Payment;
   let paymentsConfirmed: boolean;
-  let testAccessToken: AccessToken;
   let orderUpdate: boolean;
   let testUserDetail: User;
 
@@ -133,17 +131,6 @@ test.group("OrderPlacedHandler", (group) => {
       },
     };
 
-    testAccessToken = {
-      iss: "boklisten.co",
-      aud: "boklisten.co",
-      iat: 1,
-      exp: 1,
-      sub: "userDetail1",
-      permission: "customer",
-      details: "userDetail1",
-      username: "user@name.com",
-    };
-
     testUserDetail = userDouble({ id: "customer1" });
   });
   group.each.teardown(() => {
@@ -153,7 +140,7 @@ test.group("OrderPlacedHandler", (group) => {
   test("should reject if order could not be updated with confirm true", async ({ assert }) => {
     orderUpdate = false;
 
-    const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
+    const err = await orderPlacedHandler.placeOrder(testOrder, "userDetail1").then(
       () => null,
       (error: BlError) => error,
     );
@@ -164,7 +151,7 @@ test.group("OrderPlacedHandler", (group) => {
   test("should reject if paymentHandler.confirmPayments rejects", async ({ assert }) => {
     paymentsConfirmed = false;
 
-    const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
+    const err = await orderPlacedHandler.placeOrder(testOrder, "userDetail1").then(
       () => null,
       (error: BlError) => error,
     );
@@ -175,7 +162,7 @@ test.group("OrderPlacedHandler", (group) => {
   test("should reject if order.customer is not found", async ({ assert }) => {
     testOrder.customer = "notFoundUserDetails";
 
-    const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
+    const err = await orderPlacedHandler.placeOrder(testOrder, "userDetail1").then(
       () => null,
       (error: BlError) => error,
     );
@@ -184,5 +171,5 @@ test.group("OrderPlacedHandler", (group) => {
   });
 
   test("should resolve when order was placed", async ({ assert }) =>
-    assert.doesNotReject(() => orderPlacedHandler.placeOrder(testOrder, testAccessToken.details)));
+    assert.doesNotReject(() => orderPlacedHandler.placeOrder(testOrder, "userDetail1")));
 });

@@ -1,14 +1,14 @@
 import { Button, Table } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import useCart from "@/shared/hooks/useCart";
 import { showErrorNotification } from "@/shared/utils/notifications";
 import { useNavigate } from "@tanstack/react-router";
+import { authQueryKey } from "@/features/auth/authQuery";
 
 export default function ConfirmOrder({ orderId }: { orderId: string }) {
   const cart = useCart();
-  const { api } = useApiClient();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -21,7 +21,7 @@ export default function ConfirmOrder({ orderId }: { orderId: string }) {
         // demand on placement), so refresh them before navigating rather than let AuthGuard read
         // a pre-order cache
         await queryClient.invalidateQueries({
-          queryKey: api.users.me.pathKey(),
+          queryKey: authQueryKey(),
         });
         void queryClient.invalidateQueries({
           queryKey: api.orders.openItemsMe.pathKey(),

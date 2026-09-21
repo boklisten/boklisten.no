@@ -13,7 +13,7 @@ import { emailFieldValidator } from "@/shared/components/form/fields/complex/Ema
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -55,7 +55,6 @@ export default function AdministrateUserForm({
 }) {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
-  const { api } = useApiClient();
   const defaultValues: AdministrateUserFormValues = {
     email: userDetail.email,
     emailConfirmed: userDetail.emailConfirmed,

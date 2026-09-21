@@ -1,3 +1,4 @@
+import { DbRememberMeTokensProvider } from "@adonisjs/auth/session";
 import { Exception } from "@adonisjs/core/exceptions";
 import { beforeCreate, belongsTo, column } from "@adonisjs/lucid/orm";
 import type { BelongsTo } from "@adonisjs/lucid/types/relations";
@@ -14,13 +15,16 @@ import { USER_PERMISSION } from "#shared/user-permission";
 /**
  * A customer or employee: contact details, tasks, branch membership, permission and login
  * credentials in one row (see `shared/user.ts` for the field semantics). The id is the former
- * user-details id, which access tokens carry as `details`.
+ * user-details id; sessions are tagged with it and remember-me tokens reference it.
  *
  * The password hash never leaves the backend: it is excluded from serialisation and from
  * `toDto()`, which is what controllers return.
  */
 export default class User extends UserSchema {
   static override selfAssignPrimaryKey = true;
+
+  /** Long-lived login tokens for the session guard (`config/auth.ts`). */
+  static rememberMeTokens = DbRememberMeTokensProvider.forModel(User);
 
   declare permission: UserPermission;
 
@@ -147,7 +151,6 @@ export default class User extends UserSchema {
       guardianName: this.guardianName,
       guardianEmail: this.guardianEmail,
       guardianPhone: this.guardianPhone,
-      blid: this.blid,
       branchMembershipId: this.branchMembershipId,
       taskConfirmDetails: this.taskConfirmDetails,
       taskSignAgreement: this.taskSignAgreement,

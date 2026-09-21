@@ -6,12 +6,11 @@ import { forViewer } from "@/features/matches/forViewer";
 import MatchDetailView from "@/features/matches/MatchDetailView";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 function MatchDetail({ matchId }: { matchId: string }) {
-  const { api } = useApiClient();
   const { detailsId } = useAuth();
 
   const { data, isLoading, isError } = useQuery(

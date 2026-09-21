@@ -13,3 +13,8 @@ export const PERMISSION_LEVELS = {
   manager: 2,
   admin: 3,
 } as const satisfies Record<UserPermission, number>;
+
+/** Whether `permission` is `required` or a higher level: a manager may do everything an employee may. */
+export function hasPermissionLevel(permission: UserPermission, required: UserPermission): boolean {
+  return PERMISSION_LEVELS[permission] >= PERMISSION_LEVELS[required];
+}

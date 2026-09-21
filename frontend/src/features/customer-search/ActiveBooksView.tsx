@@ -19,7 +19,7 @@ import AddToCartButton from "@/features/stand-cart/AddToCartButton";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 /** "Leveres til Ola": the student the book is due to go to, as a way into their Kasse view. */
 function DeliverToBadge({ peer }: { peer: PeerBook }) {
@@ -168,7 +168,6 @@ function BookTable({
 
 export default function ActiveBooksView({ customer }: { customer: User }) {
   const customerId = customer.id;
-  const { api } = useApiClient();
   const {
     data: books,
     isPending,

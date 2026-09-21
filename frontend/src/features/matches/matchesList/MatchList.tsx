@@ -6,11 +6,10 @@ import MatchOverview from "@/features/matches/matchesList/MatchOverview";
 import { sortByMeeting } from "@/features/matches/sortByMeeting";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 
 export default function MatchList() {
-  const { api } = useApiClient();
   const { detailsId } = useAuth();
   const { data, error, isLoading } = useQuery(api.matches.me.queryOptions({}, { staleTime: 5000 }));
 

@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import BookLinkFigure from "@/features/book-cover/BookLinkFigure";
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { itemSelectFilter, toItemSelectData } from "@/shared/utils/itemSelectFilter";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -27,7 +27,6 @@ export default function EditBlidModal({
   onClose: () => void;
   onDeleted: () => void;
 }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const { data: items } = useQuery(api.items.index.queryOptions());
   const currentItemId = result.book?.id ?? null;

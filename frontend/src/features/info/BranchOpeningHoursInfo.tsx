@@ -6,8 +6,8 @@ import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import ContactInfo from "@/shared/components/ContactInfo";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { formatOpeningHour } from "@/shared/utils/dates";
-import { publicApi } from "@/shared/utils/publicApiClient";
 import type { Route } from "@tuyau/core/types";
+import { api } from "@/shared/utils/apiClient";
 
 function OpeningHourRow({
   openingHour,
@@ -27,7 +27,7 @@ function OpeningHourRow({
 }
 
 export const branchOpeningHoursQueryOptions = (branchId: string) =>
-  publicApi.openingHours.index.queryOptions({ params: { branchId } });
+  api.openingHours.index.queryOptions({ params: { branchId } });
 
 export default function BranchOpeningHours({ branchId }: { branchId: string }) {
   const {

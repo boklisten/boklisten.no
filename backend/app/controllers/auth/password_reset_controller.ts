@@ -8,6 +8,7 @@ import User from "#models/user";
 import CryptoService from "#services/crypto_service";
 import DispatchService from "#services/dispatch_service";
 import { PasswordService } from "#services/password_service";
+import { SessionRevocationService } from "#services/session_revocation_service";
 import { forgotPasswordValidator, passwordResetValidator } from "#validators/auth_validators";
 
 async function getPasswordReset({ id, token }: { id: string; token: string }) {
@@ -86,6 +87,8 @@ export default class PasswordResetController {
     }
 
     await PasswordService.setPassword(result.user, newPassword);
+    // Whoever held the old password is logged out everywhere.
+    await SessionRevocationService.revokeAll(result.user.id);
 
     await result.passwordReset.delete();
     return {};

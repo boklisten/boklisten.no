@@ -1,55 +1,36 @@
-import type { AccessToken } from "@boklisten/backend/shared/access-token";
-import { PERMISSION_LEVELS } from "@boklisten/backend/shared/user-permission";
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
-import { useQueryClient } from "@tanstack/react-query";
-import { decodeToken } from "react-jwt";
+import { hasPermissionLevel } from "@boklisten/backend/shared/user-permission";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import useLocalStorageSubscription from "@/shared/hooks/useLocalStorageSubscription";
-import BL_CONFIG from "@/shared/utils/bl-config";
-
-export function login(tokens: { accessToken: string; refreshToken: string }) {
-  if (!decodeToken(tokens.accessToken) || !decodeToken(tokens.refreshToken)) {
-    return false;
-  }
-  localStorage.setItem(BL_CONFIG.token.accessToken, tokens.accessToken);
-  localStorage.setItem(BL_CONFIG.token.refreshToken, tokens.refreshToken);
-  return true;
-}
-
-/**
- * Whether a token is stored right now. For a query's `enabled`, so the decision to fetch is made at
- * fetch time rather than from a render that happened before the tokens were cleared.
- */
-export function hasAccessToken() {
-  return (
-    typeof window !== "undefined" && localStorage.getItem(BL_CONFIG.token.accessToken) !== null
-  );
-}
+import { authQueryOptions } from "@/features/auth/authQuery";
+import { apiClient } from "@/shared/utils/apiClient";
 
 export default function useAuth() {
   const queryClient = useQueryClient();
-  const accessToken = useLocalStorageSubscription(BL_CONFIG.token.accessToken);
-  const decodedAccessToken = decodeToken<AccessToken>(accessToken ?? "");
+  const { data } = useQuery(authQueryOptions());
+  const user = data ?? null;
 
-  const permissionLevel = decodedAccessToken
-    ? PERMISSION_LEVELS[decodedAccessToken.permission]
-    : -1;
-
-  function logout() {
+  async function logout() {
+    try {
+      await apiClient.api.auth.logout({});
+    } catch {
+      // The session cookie may already be gone; the local state is cleared either way.
+    }
     sessionStorage.clear();
     localStorage.clear();
     queryClient.clear();
+    queryClient.setQueryData(authQueryOptions().queryKey, null);
   }
 
   return {
+    user,
     logout,
-    detailsId: decodedAccessToken?.details ?? null,
-    isLoading: accessToken === null,
-    isLoggedIn: permissionLevel >= PERMISSION_LEVELS.customer,
-    isEmployee: permissionLevel >= PERMISSION_LEVELS.employee,
-    isManager: permissionLevel >= PERMISSION_LEVELS.manager,
-    isAdmin: permissionLevel >= PERMISSION_LEVELS.admin,
+    detailsId: user?.id ?? null,
+    isLoggedIn: user !== null,
+    isEmployee: user !== null && hasPermissionLevel(user.permission, "employee"),
+    isManager: user !== null && hasPermissionLevel(user.permission, "manager"),
+    isAdmin: user !== null && hasPermissionLevel(user.permission, "admin"),
     canAccess: (requiredPermission: UserPermission) =>
-      permissionLevel >= PERMISSION_LEVELS[requiredPermission],
+      user !== null && hasPermissionLevel(user.permission, requiredPermission),
   };
 }

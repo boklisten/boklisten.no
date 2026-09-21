@@ -75,8 +75,6 @@ jobs:
       - name: Install dependencies
         run: bun ci
       - name: Build Frontend
-        env:
-          VITE_API_URL: https://staging.api.boklisten.no
         run: bun build:frontend
 
   test_backend:

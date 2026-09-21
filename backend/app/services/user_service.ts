@@ -3,10 +3,9 @@ import { DateTime } from "luxon";
 
 import EmailVerification from "#models/email_verification";
 import User from "#models/user";
-import BlidService from "#services/blid_service";
-import CryptoService from "#services/crypto_service";
 import DispatchService from "#services/dispatch_service";
 import { PasswordService } from "#services/password_service";
+import { reconcileSignatureTask } from "#services/signature_helper";
 import { invalidUserFields } from "#services/user_detail_helper";
 import type { User as UserDto } from "#shared/user";
 import type { VippsUser } from "#types/user";
@@ -42,6 +41,16 @@ export function userDetailsFrom({
 }
 
 export const UserService = {
+  /** The user with both task flags brought up to date, as the API returns them. */
+  async withTasksReconciled(user: User): Promise<UserDto> {
+    if (!user.taskConfirmDetails && invalidUserFields(user).length > 0) {
+      user.taskConfirmDetails = true;
+      await user.save();
+    }
+    await reconcileSignatureTask(user);
+    return user.toDto();
+  },
+
   async search(text: string): Promise<UserDto[]> {
     const users = await User.search(text);
     return users.map((user) => user.toDto());
@@ -79,7 +88,6 @@ export const UserService = {
 
   async createVippsUser(vippsUser: VippsUser): Promise<User> {
     return User.create({
-      blid: BlidService.createUserBlid("vipps", vippsUser.id),
       email: vippsUser.email.trim().toLowerCase(),
       emailConfirmed: vippsUser.emailVerified,
       phone: vippsUser.phoneNumber,
@@ -89,7 +97,6 @@ export const UserService = {
       postCity: vippsUser.postalCity,
       permission: "customer",
       vippsUserId: vippsUser.id,
-      vippsLastLogin: DateTime.now(),
     });
   },
 
@@ -100,7 +107,6 @@ export const UserService = {
   }: Infer<typeof registerSchema>): Promise<User> {
     const user = await User.create({
       ...userDetailsFrom(details),
-      blid: BlidService.createUserBlid("local", CryptoService.random()),
       email,
       emailConfirmed: false,
       permission: "customer",
@@ -125,7 +131,6 @@ export const UserService = {
     branchMembershipId: string | undefined,
   ): Promise<User> {
     return User.create({
-      blid: BlidService.createUserBlid("local", CryptoService.random()),
       name,
       phone,
       email,

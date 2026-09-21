@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import ChipButton from "@/shared/components/ChipButton";
 import ChangeBranchModal from "@/shared/components/corrections/ChangeBranchModal";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -50,7 +50,6 @@ export default function OrderBranchChip({
   /** For callers that list the order somewhere other than the order history. */
   onChanged?: () => void;
 }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const updateMutation = useMutation(

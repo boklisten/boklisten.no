@@ -5,10 +5,10 @@ import { Activity } from "react";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 function BuybackList() {
-  const { data: items, error } = useQuery(publicApi.items.buyback.queryOptions());
+  const { data: items, error } = useQuery(api.items.buyback.queryOptions());
 
   return (
     <>

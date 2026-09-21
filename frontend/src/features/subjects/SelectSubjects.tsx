@@ -10,15 +10,15 @@ import { Activity } from "react";
 
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import useCart from "@/shared/hooks/useCart";
-import { publicApi } from "@/shared/utils/publicApiClient";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import { api } from "@/shared/utils/apiClient";
 
 export default function SelectSubjects({ branchId }: { branchId: string }) {
   const navigate = useNavigate();
   const cart = useCart();
   const selectedSubjects = useSet<string>();
   const { data: subjects } = useQuery(
-    publicApi.branchCatalog.show.queryOptions({ params: { branchId } }),
+    api.branchCatalog.show.queryOptions({ params: { branchId } }),
   );
 
   if (!subjects) {

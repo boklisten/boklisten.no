@@ -17,6 +17,9 @@ export default defineConfig({
     () => import("@adonisjs/static/static_provider"),
     () => import("@adonisjs/lucid/database_provider"),
     () => import("@adonisjs/limiter/limiter_provider"),
+    () => import("@adonisjs/session/session_provider"),
+    () => import("@adonisjs/auth/auth_provider"),
+    () => import("@adonisjs/bouncer/bouncer_provider"),
     () => import("#providers/api_provider"),
   ],
 

@@ -60,7 +60,7 @@ export default class SignaturesController {
     return getSignatureStatus(ctx.request.param("detailsId"));
   }
   async me(ctx: HttpContext) {
-    return getSignatureStatus(ctx.authUser.detailsId);
+    return getSignatureStatus(ctx.auth.getUserOrFail().id);
   }
   async sendLink(ctx: HttpContext) {
     const targetDetailsId = ctx.request.param("detailsId");
@@ -72,7 +72,7 @@ export default class SignaturesController {
     }
   }
   async sendLinkMe(ctx: HttpContext) {
-    const { detailsId } = ctx.authUser;
+    const { id: detailsId } = ctx.auth.getUserOrFail();
 
     const userDetail = await User.find(detailsId);
     const branch = await Branch.findOptional(userDetail?.branchMembershipId);

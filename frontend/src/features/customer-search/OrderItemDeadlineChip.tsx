@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import ChipButton from "@/shared/components/ChipButton";
 import ChangeDeadlineModal from "@/shared/components/corrections/ChangeDeadlineModal";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -33,7 +33,6 @@ export default function OrderItemDeadlineChip({
   deadline: string | Date;
   onChanged: () => void;
 }) {
-  const { api } = useApiClient();
   const [editing, setEditing] = useState(false);
   const updateMutation = useMutation(
     api.orders.updateItemDeadline.mutationOptions({

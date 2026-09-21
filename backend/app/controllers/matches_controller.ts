@@ -12,13 +12,13 @@ import { matchNotifyValidator, matchTransferValidator } from "#validators/matche
 
 export default class MatchesController {
   async notify(ctx: HttpContext) {
-    const { detailsId } = ctx.authUser;
+    const { id: detailsId } = ctx.auth.getUserOrFail();
     const matchNotifyConfiguration = await ctx.request.validateUsing(matchNotifyValidator);
     return notify(matchNotifyConfiguration, detailsId);
   }
 
   async me(ctx: HttpContext) {
-    return ctx.serialize(await readMatchesForCustomer(ctx.authUser.detailsId));
+    return ctx.serialize(await readMatchesForCustomer(ctx.auth.getUserOrFail().id));
   }
 
   /** Employee-facing: the matches of a given customer, used by the customer search stand view. */
@@ -44,7 +44,7 @@ export default class MatchesController {
   }
 
   async transferItem(ctx: HttpContext) {
-    const { detailsId } = ctx.authUser;
+    const { id: detailsId } = ctx.auth.getUserOrFail();
     const transferData = await ctx.request.validateUsing(matchTransferValidator);
     return recordTransfer(detailsId, transferData);
   }

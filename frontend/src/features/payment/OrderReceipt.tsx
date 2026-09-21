@@ -3,11 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import OrderHistoryCard from "@/features/order-history/OrderHistoryCard";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 export default function OrderReceipt({ orderId }: { orderId: string }) {
-  const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery(
     api.orders.showMe.queryOptions({ params: { orderId } }),
   );

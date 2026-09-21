@@ -16,7 +16,7 @@ import type {
 } from "@/features/branches/branch-books/types";
 import CustomerLink from "@/features/kasse/CustomerLink";
 import BranchScopeMetrics from "@/shared/components/BranchScopeMetrics";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import {
   showErrorNotification,
@@ -61,7 +61,6 @@ function OrderedBookDetails({
   enabled: boolean;
   onEditRow: (kind: BranchBooksEditKind, row: OrderedBookDetail) => void;
 }) {
-  const { api } = useApiClient();
   const detailsQuery = useQuery({
     ...api.branchBooks.getOrderedBookDetails.queryOptions({
       params: { branchId },
@@ -94,7 +93,6 @@ function bulkFilter(target: BranchBooksEditTarget, includeDescendants: boolean) 
 }
 
 export default function OrderedBooksTab({ branchId }: { branchId: string }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const summaryQuery = useQuery(
     api.branchBooks.getOrderedBooks.queryOptions({ params: { branchId } }),

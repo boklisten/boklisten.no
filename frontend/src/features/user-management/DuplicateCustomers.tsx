@@ -5,13 +5,12 @@ import { useQuery } from "@tanstack/react-query";
 import DuplicatePairCard from "@/features/user-management/DuplicatePairCard";
 import { duplicatePairKey } from "@/features/user-management/duplicateTypes";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 const IGNORED_PAIRS_STORAGE_KEY = "bl-ignored-duplicate-pairs";
 
 export default function DuplicateCustomers() {
-  const { api } = useApiClient();
   const { data, isPending, isError } = useQuery(api.users.duplicates.queryOptions());
   const [ignoredKeys, setIgnoredKeys] = useLocalStorage<string[]>({
     key: IGNORED_PAIRS_STORAGE_KEY,

@@ -16,7 +16,7 @@ import { BLID_SEARCH_QUERY_KEY } from "@/features/search/SearchSpotlight";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import asyncConfirmModal, { CONFIRM_OVER_SCANNER_Z_INDEX } from "@/shared/utils/asyncConfirmModal";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification } from "@/shared/utils/notifications";
@@ -75,19 +75,18 @@ function confirmPeerBook(book: ScannedBook): Promise<boolean> {
  * or a book and survives a reload; this hook adds the lookups, the delivery and the questions.
  */
 export default function useCollectionSession(): CollectionSession {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const { scannedBooks, receipt } = useCollectionState();
 
   const overdueBooks = scannedBooks.filter((book) => isOverdue(book.deadline));
 
   const lookupMutation = useMutation({
-    mutationFn: (blid: string) => client.api.bulkCollection.show({ params: { blid } }),
+    mutationFn: (blid: string) => apiClient.api.bulkCollection.show({ params: { blid } }),
   });
 
   const collectMutation = useMutation({
     mutationFn: (customerItemIds: string[]) =>
-      client.api.bulkCollection.collect({ body: { customerItemIds } }),
+      apiClient.api.bulkCollection.collect({ body: { customerItemIds } }),
     onSuccess: (result) => {
       if (!result.success) {
         modals.open({

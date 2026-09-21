@@ -8,7 +8,7 @@ import { Activity } from "react";
 
 import { calculateSmsSegmentFeedback } from "@/features/reminders/sms";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import {
   showErrorNotification,
   showInfoNotification,
@@ -41,8 +41,6 @@ const defaultValues: RemindersFormData = {
 };
 
 export default function Reminders() {
-  const { api } = useApiClient();
-
   const countRecipientsMutation = useMutation(
     api.reminders.countRecipients.mutationOptions({
       onError: () => showErrorNotification("Klarte ikke beregne antall mottakere"),

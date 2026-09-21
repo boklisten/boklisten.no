@@ -1,11 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 export default function useUpdateBranchMutation() {
   const queryClient = useQueryClient();
-  const { api } = useApiClient();
 
   return useMutation(
     api.branches.update.mutationOptions({

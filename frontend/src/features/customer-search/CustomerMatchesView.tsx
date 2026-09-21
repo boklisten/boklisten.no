@@ -13,7 +13,7 @@ import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import MatchItemTable from "@/shared/components/matches/MatchItemTable";
 import ProgressBar from "@/shared/components/ProgressBar";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -90,7 +90,6 @@ function MatchPanel({ match, customerId }: { match: MatchDto; customerId: string
 }
 
 export default function CustomerMatchesView({ customerId }: { customerId: string }) {
-  const { api } = useApiClient();
   const {
     data: matches,
     isPending,

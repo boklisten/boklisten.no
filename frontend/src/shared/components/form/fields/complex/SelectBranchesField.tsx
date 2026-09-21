@@ -3,14 +3,13 @@ import type { TreeSelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import { useFieldContext } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { toBranchTreeNodeData } from "@/shared/utils/branchTree";
 
 export default function SelectBranchesField(
   props: Omit<TreeSelectProps<"checkbox">, "data" | "mode" | "value" | "onChange">,
 ) {
   const field = useFieldContext<string[]>();
-  const { api } = useApiClient();
   const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   return (

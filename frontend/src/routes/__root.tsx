@@ -13,6 +13,7 @@ import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 
+import { authQueryOptions } from "@/features/auth/authQuery";
 import theme, { cssVariablesResolver } from "@/shared/utils/theme";
 import { jsonLdScript, urlDependentHead } from "@/shared/utils/seo";
 import { organizationSchema, websiteSchema } from "@/shared/utils/structuredData";
@@ -21,6 +22,17 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  /**
+   * Who is logged in is settled before anything renders, on the server as well as in the
+   * browser, so the first paint already shows the right buttons (see `authQueryOptions`).
+   * When the API cannot answer, the page still renders, as for a guest; pages that need the
+   * user retry from `AuthGuard` instead of every page failing.
+   */
+  beforeLoad: async ({ context }) => {
+    await context.queryClient
+      .query({ ...authQueryOptions(), staleTime: "static" })
+      .catch(() => null);
+  },
   head: (ctx) => {
     const { meta, links } = urlDependentHead(ctx);
     return {

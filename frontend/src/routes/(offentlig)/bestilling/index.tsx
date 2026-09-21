@@ -3,7 +3,7 @@ import SelectOrderBranch from "@/features/order/SelectOrderBranch";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 import { queryOptions } from "@tanstack/react-query";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export const Route = createFileRoute("/(offentlig)/bestilling/")({
   head: () =>
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/(offentlig)/bestilling/")({
     }),
   loader: async ({ context }) => {
     await context.queryClient.query({
-      ...queryOptions(publicApi.branches.indexPublic.queryOptions()),
+      ...queryOptions(api.branches.indexPublic.queryOptions()),
       staleTime: "static",
     });
   },

@@ -11,7 +11,7 @@ import {
   EMPLOYEE_MONITORING_RECIPIENT,
   EmployeeMonitoringService,
 } from "#services/employee_monitoring_service";
-import env from "#start/env";
+import { clientOrigin } from "#config/app";
 import { userDouble } from "#tests/user_fixtures";
 
 const EMPLOYEE_ID = "5f7f7f7f7f7f7f7f7f7f7f7e";
@@ -85,7 +85,7 @@ test.group("EmployeeMonitoringService", (group) => {
     assert.include(mail.text, "Kunde: Kari Kunde");
     assert.include(mail.text, "Telefon: 91234567");
     assert.include(mail.text, "E-post: kari@example.com");
-    assert.include(mail.text, `${env.get("CLIENT_URI")}/admin/kasse?kunde=${CUSTOMER_ID}`);
+    assert.include(mail.text, `${clientOrigin}/admin/kasse?kunde=${CUSTOMER_ID}`);
     assert.include(mail.text, "Bok: «Matematikk R1»");
     assert.include(mail.text, "Grunn: Aldri signert");
   });

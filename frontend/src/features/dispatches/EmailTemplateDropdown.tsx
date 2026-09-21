@@ -1,10 +1,9 @@
 import { Accordion, Button, Stack, Table } from "@mantine/core";
 import { IconExternalLink } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export default function EmailTemplateDropdown() {
-  const { api } = useApiClient();
   const { data: emailTemplates } = useQuery(api.dispatch.emailTemplates.queryOptions());
 
   return (

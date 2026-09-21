@@ -2,12 +2,11 @@ import { Button } from "@mantine/core";
 import { IconFileDownload } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
-import useApiClient from "@/shared/hooks/useApiClient";
 import { showErrorNotification } from "@/shared/utils/notifications";
-import { publicApiClient } from "@/shared/utils/publicApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
+import { API_URL } from "@/shared/utils/env";
 
 export default function UniqueIdGeneratorButton() {
-  const { api } = useApiClient();
   const { data, isPending, isError } = useQuery(api.uniqueIds.token.queryOptions());
   if (isError) {
     showErrorNotification("Klarte ikke hente autentiseringstoken for unik ID-generering");
@@ -17,8 +16,8 @@ export default function UniqueIdGeneratorButton() {
       loading={isPending}
       component="a"
       href={
-        import.meta.env["VITE_API_URL"] +
-        publicApiClient.urlFor("unique_ids.pdf", {
+        API_URL +
+        apiClient.urlFor("unique_ids.pdf", {
           token: data ?? "",
         })
       }

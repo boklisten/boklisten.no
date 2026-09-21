@@ -1,6 +1,6 @@
-import { publicApiClient } from "@/shared/utils/publicApiClient";
 import { SITE_URL, isIndexable, normalizePathname } from "@/shared/utils/seo";
 import { createFileRoute } from "@tanstack/react-router";
+import { apiClient } from "@/shared/utils/apiClient";
 
 /**
  * Indexable, but not content pages worth submitting: both redirect to a
@@ -28,7 +28,7 @@ async function staticPaths(): Promise<string[]> {
 /** One page per school, listing when we are on stand there. */
 async function branchPaths(): Promise<string[]> {
   try {
-    const branches = await publicApiClient.api.branches.indexPublic({});
+    const branches = await apiClient.api.branches.indexPublic({});
     return branches.map((branch) => `/info/branch/${branch.id}`);
   } catch {
     // A sitemap missing the school pages is far better than no sitemap at all

@@ -1,9 +1,10 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import { hasPermission } from "#abilities/main";
+
 import Item from "#models/item";
 import { findItemByIsbn } from "#services/item_lookup";
 import { ItemManagementService } from "#services/item_management_service";
-import { PermissionService } from "#services/permission_service";
 import ItemTransformer from "#transformers/item_transformer";
 import {
   bulkUpsertItemsValidator,
@@ -31,7 +32,7 @@ export default class ItemsController {
   /** The whole catalogue for administrators; other employees see what customers see. */
   async all(ctx: HttpContext) {
     const query = Item.query();
-    if (!PermissionService.isAdmin(ctx.authUser.permission)) {
+    if (await ctx.bouncer.denies(hasPermission, "admin")) {
       void query.withScopes((scopes) => scopes.activeOnly());
     }
     return ctx.serialize(ItemTransformer.transform(byTitle(await query)));

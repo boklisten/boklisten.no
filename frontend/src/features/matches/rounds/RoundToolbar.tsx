@@ -11,7 +11,7 @@ import NotifyRoundButton from "@/features/matches/rounds/NotifyRoundButton";
 import RoundSelector from "@/features/matches/rounds/RoundSelector";
 import { isPlanned, useRefreshRounds } from "@/features/matches/rounds/useRounds";
 import type { Round } from "@/features/matches/rounds/useRounds";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -51,7 +51,6 @@ export default function RoundToolbar({
   onNewRound: () => void;
   onEditPlan: () => void;
 }) {
-  const { client } = useApiClient();
   const { isAdmin } = useAuth();
   const refreshRounds = useRefreshRounds();
   const [deleteOpened, deleteModal] = useDisclosure(false);
@@ -63,7 +62,7 @@ export default function RoundToolbar({
 
   const patchMutation = useMutation({
     mutationFn: async (patch: { id: string; name?: string; status?: "draft" | "active" }) =>
-      client.api.matchRounds.update({
+      apiClient.api.matchRounds.update({
         params: { id: patch.id },
         body: {
           ...(patch.name !== undefined && { name: patch.name }),

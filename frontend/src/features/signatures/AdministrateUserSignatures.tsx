@@ -7,12 +7,11 @@ import { Image } from "@unpic/react";
 import SignedSignatureDetails from "@/features/signatures/SignedSignatureDetails";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 export default function AdministrateUserSignatures({ userDetail }: { userDetail: User }) {
-  const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery(
     api.signatures.show.queryOptions({ params: { detailsId: userDetail.id } }),
   );

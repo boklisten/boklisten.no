@@ -4,7 +4,7 @@ import { IconTrash } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -14,7 +14,6 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
  * to the administrator, and told so before they confirm.
  */
 export default function DeleteOrderButton({ order }: { order: OrderHistoryEntry }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const deleteMutation = useMutation(
     api.orders.destroy.mutationOptions({

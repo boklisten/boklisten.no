@@ -8,7 +8,7 @@ import { useState } from "react";
 
 import EmailTemplateDropdown from "@/features/dispatches/EmailTemplateDropdown";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { cellToString, normalizeNorwegianPhone } from "@/shared/utils/csvNormalizers";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -109,7 +109,6 @@ function RecipientsSummary({ recipients }: { recipients: Recipient[] }) {
 export default function DispatchManager() {
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const [importerOpen, setImporterOpen] = useState(false);
-  const { api } = useApiClient();
 
   const sendMutation = useMutation(
     api.dispatch.store.mutationOptions({

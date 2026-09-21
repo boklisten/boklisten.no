@@ -45,7 +45,7 @@ import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification } from "@/shared/utils/notifications";
 
@@ -362,7 +362,6 @@ function WaitingStep({
   amount: number;
   onSettled: (state: StandCartCheckoutState) => void;
 }) {
-  const { api } = useApiClient();
   const { data, isError } = useQuery(
     api.standCart.status.queryOptions(
       { params: { orderId } },

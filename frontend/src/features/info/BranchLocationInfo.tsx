@@ -3,10 +3,10 @@ import { IconMapPin } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export const branchQueryOptions = (branchId: string) =>
-  publicApi.branches.show.queryOptions({ params: { branchId } });
+  api.branches.show.queryOptions({ params: { branchId } });
 
 export default function BranchLocationInfo({ branchId }: { branchId: string }) {
   const { data: branch, isLoading, isError } = useQuery(branchQueryOptions(branchId));

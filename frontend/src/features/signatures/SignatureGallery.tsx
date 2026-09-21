@@ -30,7 +30,7 @@ import type { UserPermission } from "@boklisten/backend/shared/user-permission";
 
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 const GRID_COLS = { base: 1, xs: 2, md: 3, lg: 4, xl: 5 };
@@ -143,7 +143,6 @@ function GallerySkeleton() {
 }
 
 export default function SignatureGallery() {
-  const { api } = useApiClient();
   const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetching, isFetchingNextPage } =
     useInfiniteQuery(
       api.signatures.gallery.infiniteQueryOptions(

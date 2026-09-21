@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { parseNorwegianTime } from "@/shared/utils/dayjs";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -12,7 +12,6 @@ function combineDateAndTime(date: string, time: string) {
 }
 
 export default function CreateOpeningHours({ branchId }: { branchId: string }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const createOpeningHourMutation = useMutation(
     api.openingHours.store.mutationOptions({

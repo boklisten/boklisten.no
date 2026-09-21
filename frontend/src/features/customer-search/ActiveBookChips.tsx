@@ -8,7 +8,7 @@ import { isOverdue } from "@/features/bulk-collection/deadline";
 import ChipButton from "@/shared/components/ChipButton";
 import ChangeBranchModal from "@/shared/components/corrections/ChangeBranchModal";
 import ChangeDeadlineModal from "@/shared/components/corrections/ChangeDeadlineModal";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -23,7 +23,6 @@ const TYPE_LABELS: Record<CustomerItemType, string> = {
  * branch on the branch pages, so all of those go stale.
  */
 function useActiveBookUpdate(successMessage: string, onSaved: () => void) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   return useMutation(
     api.blids.updateActiveItem.mutationOptions({

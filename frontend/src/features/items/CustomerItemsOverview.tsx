@@ -7,7 +7,7 @@ import CustomerItemCard from "@/features/items/CustomerItemCard";
 import OpenOrdersList from "@/features/items/OpenOrdersList";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 function CustomerItemsOverviewWrapper({
@@ -52,8 +52,6 @@ function CustomerItemsOverviewWrapper({
 }
 
 export default function CustomerItemsOverview() {
-  const { api } = useApiClient();
-
   const { data, isLoading, isError } = useQuery(api.customerItems.me.queryOptions());
 
   const {

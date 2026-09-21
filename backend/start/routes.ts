@@ -1,8 +1,14 @@
 import router from "@adonisjs/core/services/router";
 
 import { controllers } from "#generated/controllers";
+import env from "#start/env";
 import { middleware } from "#start/kernel";
-import { emailValidationThrottle, publicBlidLookupThrottle, throttle } from "#start/limiter";
+import {
+  emailValidationThrottle,
+  loginThrottle,
+  publicBlidLookupThrottle,
+  throttle,
+} from "#start/limiter";
 
 /*
 |--------------------------------------------------------------------------
@@ -28,16 +34,18 @@ router.get("/", () => ({}));
 router.get("/health", () => ({ status: "ok" }));
 
 /**
- * Authentication
+ * Authentication. Logins are cookie sessions (`config/auth.ts`); `/auth/me` answers "who is
+ * logged in" for guests too.
  */
 router
   .group(() => {
-    router.post("/token", [controllers.auth.Tokens, "refresh"]);
+    router.get("/me", [controllers.auth.Auth, "me"]);
+    router.post("/logout", [controllers.auth.Auth, "logout"]);
 
     router.get("/vipps/redirect", [controllers.auth.Vipps, "redirect"]);
     router.get("/vipps/callback", [controllers.auth.Vipps, "callback"]);
 
-    router.post("/local/login", [controllers.auth.Local, "login"]).use(throttle);
+    router.post("/local/login", [controllers.auth.Local, "login"]).use([throttle, loginThrottle]);
     router.post("/local/register", [controllers.auth.Local, "register"]).use(throttle);
 
     router.post("/password_reset", [controllers.auth.PasswordReset, "request"]).use(throttle);
@@ -45,6 +53,11 @@ router
     router.post("/password_reset/:id", [controllers.auth.PasswordReset, "reset"]);
   })
   .prefix("/auth");
+
+/** Local testing: `mint:login-url` prints a link here that logs the browser in as any user. */
+if (env.get("API_ENV") !== "production") {
+  router.get("/auth/dev_login/:token", [controllers.auth.Auth, "devLogin"]);
+}
 
 /**
  * Public
@@ -88,7 +101,6 @@ router
       .get("/public_blid_lookup/:blid", [controllers.PublicBlidLookup, "show"])
       .use(publicBlidLookupThrottle);
 
-    router.get("/users/me", [controllers.Users, "me"]);
     router.patch("/users/me", [controllers.Users, "updateMe"]);
     router.get("/customer_items/me", [controllers.CustomerItems, "me"]);
 
@@ -268,7 +280,7 @@ router
     router.get("/reports/users", [controllers.Reports, "users"]);
     router.get("/unique_ids/token", [controllers.UniqueIds, "token"]);
   })
-  .use(middleware.auth({ permission: "admin" }));
+  .use([middleware.auth(), middleware.can({ permission: "admin" })]);
 
 /**
  * Employees
@@ -335,4 +347,4 @@ router
     router.get("/message_logs/metrics", [controllers.MessageLogs, "metrics"]);
     router.get("/message_logs/sendouts", [controllers.MessageLogs, "sendouts"]);
   })
-  .use(middleware.auth({ permission: "employee" }));
+  .use([middleware.auth(), middleware.can({ permission: "employee" })]);

@@ -4,12 +4,13 @@ import type { TextInputProps } from "@mantine/core";
 import { useFieldContext } from "@/shared/hooks/form";
 import { Activity } from "react";
 import validator from "validator";
+import { API_URL, APP_ENV } from "@/shared/utils/env";
 
 export function imageFieldValidator(value: string) {
   if (
     value &&
     !validator.isURL(value, {
-      require_tld: import.meta.env["VITE_APP_ENV"] !== "dev",
+      require_tld: APP_ENV !== "dev",
       require_protocol: true,
     })
   ) {
@@ -37,7 +38,7 @@ export default function ImageField(props: TextInputProps) {
       </Activity>
       <TextInput
         label="Bildelenke"
-        placeholder={`${import.meta.env["VITE_API_URL"]}/mitt_bilde.png`}
+        placeholder={`${API_URL}/mitt_bilde.png`}
         autoComplete="photo"
         {...props}
         value={field.state.value}

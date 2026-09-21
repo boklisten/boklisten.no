@@ -13,11 +13,11 @@ import { Types } from "mongoose";
 
 import { MongooseModelCreator } from "#models/mongoose/storage/mongoose-schema-creator";
 import type { SEDbQuery } from "#models/mongoose/storage/db-query";
-import { PermissionService } from "#services/permission_service";
 import type { BlSchema } from "#services/storage_service";
 import type { BlDocument } from "#shared/bl-document";
 import { BlError } from "#shared/bl-error";
 import type { UserPermission } from "#shared/user-permission";
+import { USER_PERMISSION } from "#shared/user-permission";
 
 export class MongodbHandler<T extends BlDocument> {
   private readonly mongooseModel: Model<T>;
@@ -92,7 +92,7 @@ export class MongodbHandler<T extends BlDocument> {
       const idArray = ids.map((id) => new Types.ObjectId(id));
       // if user have admin privileges, he can also get documents that are inactive
       const filter =
-        userPermission && PermissionService.isAdmin(userPermission)
+        userPermission === USER_PERMISSION.ADMIN
           ? { _id: { $in: idArray } }
           : { _id: { $in: idArray }, active: true };
 
@@ -125,8 +125,7 @@ export class MongodbHandler<T extends BlDocument> {
   }
 
   public async getAll(userPermission?: UserPermission) {
-    const filter =
-      userPermission && PermissionService.isAdmin(userPermission) ? {} : { active: true };
+    const filter = userPermission === USER_PERMISSION.ADMIN ? {} : { active: true };
     const document_ = (await this.mongooseModel
       .find(filter)
       .lean({ transform: MongooseModelCreator.transformObject })

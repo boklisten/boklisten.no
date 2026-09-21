@@ -20,8 +20,6 @@ export interface User {
   guardianName: string | null;
   guardianEmail: string | null;
   guardianPhone: string | null;
-  /** The random identifier carried as `sub` in the access and refresh tokens. */
-  blid: string;
   /** The branch (class, year group or school) the customer belongs to. */
   branchMembershipId: string | null;
   /** The customer must confirm or complete their contact details before using the site. */

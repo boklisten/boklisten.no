@@ -1,16 +1,15 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import logger from "@adonisjs/core/services/logger";
-import { DateTime } from "luxon";
 
 import User from "#models/user";
-import TokenService from "#services/token_service";
+import { LoginService } from "#services/login_service";
 import { UserService } from "#services/user_service";
 import type { AuthVippsError } from "#shared/auth_vipps_error";
 import { AUTH_VIPPS_ERROR } from "#shared/auth_vipps_error";
-import env from "#start/env";
+import { clientOrigin } from "#config/app";
 
 function redirectToAuthFailedPage(ctx: HttpContext, reason: string) {
-  ctx.response.redirect(`${env.get("CLIENT_URI")}/auth/failure?reason=${reason}`);
+  ctx.response.redirect(`${clientOrigin}/auth/failure?reason=${reason}`);
 }
 
 export const AuthVippsService = {
@@ -46,23 +45,15 @@ export const AuthVippsService = {
         await User.query()
           .where("vippsUserId", vippsUser.id)
           .whereNot("id", user.id)
-          .update({ vippsUserId: null, vippsLastLogin: null });
+          .update({ vippsUserId: null });
       }
       user.vippsUserId = vippsUser.id;
-      user.vippsLastLogin = DateTime.now();
+      await user.save();
 
-      const tokens = await TokenService.createTokens(user);
+      await LoginService.login(ctx, user);
 
-      if (!tokens) {
-        redirectToAuthFailedPage(ctx, ERROR);
-        return;
-      }
-
-      ctx.response.redirect(
-        `${env.get(
-          "CLIENT_URI",
-        )}/auth/token?access_token=${tokens.accessToken}&refresh_token=${tokens.refreshToken}`,
-      );
+      // The session cookie travels with the redirect; the callback page picks up where the customer left off.
+      ctx.response.redirect(`${clientOrigin}/auth/callback`);
     } catch (creationError) {
       logger.error(creationError);
       redirectToAuthFailedPage(ctx, ERROR);

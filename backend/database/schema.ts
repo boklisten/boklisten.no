@@ -475,6 +475,23 @@ export class RateLimitSchema extends BaseModel {
   declare points: number
 }
 
+export class RememberMeTokenSchema extends BaseModel {
+  static $columns = ['createdAt', 'expiresAt', 'hash', 'id', 'tokenableId', 'updatedAt'] as const
+  $columns = RememberMeTokenSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column()
+  declare hash: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare tokenableId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class SendoutSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'initiatedByDetailsId', 'kind', 'name', 'updatedAt'] as const
   $columns = SendoutSchema.$columns
@@ -490,6 +507,19 @@ export class SendoutSchema extends BaseModel {
   declare name: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+}
+
+export class SessionSchema extends BaseModel {
+  static $columns = ['data', 'expiresAt', 'id', 'userId'] as const
+  $columns = SessionSchema.$columns
+  @column()
+  declare data: string
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare userId: string | null
 }
 
 export class SignatureSchema extends BaseModel {
@@ -512,12 +542,10 @@ export class SignatureSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['address', 'blid', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastTokenIssuedAt', 'localHashedPassword', 'localLastLogin', 'name', 'permission', 'phone', 'postCity', 'postCode', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsLastLogin', 'vippsUserId'] as const
+  static $columns = ['address', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastActiveAt', 'localHashedPassword', 'name', 'permission', 'phone', 'postCity', 'postCode', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsUserId'] as const
   $columns = UserSchema.$columns
   @column()
   declare address: string
-  @column()
-  declare blid: string
   @column()
   declare branchMembershipId: string | null
   @column.dateTime({ autoCreate: true })
@@ -537,11 +565,9 @@ export class UserSchema extends BaseModel {
   @column({ isPrimary: true })
   declare id: string
   @column.dateTime()
-  declare lastTokenIssuedAt: DateTime | null
+  declare lastActiveAt: DateTime | null
   @column()
   declare localHashedPassword: string | null
-  @column.dateTime()
-  declare localLastLogin: DateTime | null
   @column()
   declare name: string
   @column()
@@ -558,8 +584,6 @@ export class UserSchema extends BaseModel {
   declare taskSignAgreement: boolean
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
-  @column.dateTime()
-  declare vippsLastLogin: DateTime | null
   @column()
   declare vippsUserId: string | null
 }

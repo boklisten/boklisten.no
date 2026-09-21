@@ -11,12 +11,11 @@ import { emailFieldValidator } from "@/shared/components/form/fields/complex/Ema
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import { postalCodeFieldValidator } from "@/shared/components/form/fields/complex/PostalCodeField";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 function CompanyCard({ company }: { company: Company }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const deleteCompanyMutation = useMutation(
     api.companies.destroy.mutationOptions({
@@ -65,7 +64,6 @@ function CompanyCard({ company }: { company: Company }) {
 }
 
 function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const addCompanyMutation = useMutation(
     api.companies.store.mutationOptions({
@@ -167,7 +165,6 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export default function CompanyManager() {
-  const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery(api.companies.index.queryOptions());
 
   const createModalId = "create-company";

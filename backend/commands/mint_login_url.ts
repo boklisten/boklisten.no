@@ -4,7 +4,7 @@ import type { CommandOptions } from "@adonisjs/core/types/ace";
 export default class MintLoginUrl extends BaseCommand {
   static override commandName = "mint:login-url";
   static override description =
-    "Mint access/refresh tokens for a user and print a ready-to-use /auth/token login URL (local testing)";
+    "Print a one-time URL that logs the browser in as the given user (local testing)";
 
   static override options: CommandOptions = {
     startApp: true,
@@ -21,7 +21,9 @@ export default class MintLoginUrl extends BaseCommand {
       return;
     }
     const User = (await import("#models/user")).default;
-    const TokenService = (await import("#services/token_service")).default;
+    const { DEV_LOGIN_TOKEN_PURPOSE } = await import("#controllers/auth/auth_controller");
+    const encryption = (await import("@adonisjs/core/services/encryption")).default;
+    const { apiOrigin } = await import("#config/app");
 
     const user = await User.byUsername(this.username);
     if (!user) {
@@ -30,12 +32,12 @@ export default class MintLoginUrl extends BaseCommand {
       return;
     }
 
-    const tokens = await TokenService.createTokens(user);
-    const url = new URL("/auth/token", env.get("CLIENT_URI"));
-    url.searchParams.set("access_token", tokens.accessToken);
-    url.searchParams.set("refresh_token", tokens.refreshToken);
+    // The API route behind this link exists only outside production; it starts a session and
+    // sends the browser on to the frontend.
+    const token = encryption.encrypt({ userId: user.id }, "5 minutes", DEV_LOGIN_TOKEN_PURPOSE);
+    const url = `${apiOrigin}/auth/dev_login/${encodeURIComponent(token)}`;
 
     this.logger.info(`user: ${user.email} (permission: ${user.permission})`);
-    this.logger.log(url.toString());
+    this.logger.log(url);
   }
 }

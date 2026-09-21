@@ -218,7 +218,7 @@ async function buildSummarizer(involvedIds: string[]) {
       phone: source.phone ?? "",
       permission: account?.permission ?? "customer",
       branchMembership: source.branchMembership ?? null,
-      lastActive: account?.lastTokenIssuedAt?.toISO() ?? null,
+      lastActive: account?.lastActiveAt?.toISO() ?? null,
       activeBooks: activeBooks.get(source.id) ?? 0,
       orderedItems: orderedItems.get(source.id) ?? 0,
       activeMatches: activeMatches.get(source.id) ?? 0,

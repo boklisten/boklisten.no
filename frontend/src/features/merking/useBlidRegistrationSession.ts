@@ -9,7 +9,7 @@ import type {
 } from "@/features/merking/registrationRows";
 import { BLID_SEARCH_QUERY_KEY } from "@/features/search/SearchSpotlight";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { GENERIC_ERROR_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification } from "@/shared/utils/notifications";
 import { describeRejectedScan, determineScanCodeType } from "@/shared/utils/scanCodes";
@@ -33,7 +33,6 @@ interface BlidRegistrationSession {
  * `submitCode`, so a code behaves the same however it arrived.
  */
 export default function useBlidRegistrationSession(): BlidRegistrationSession {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const [book, setBook] = useState<SelectedBook | null>(null);
   const [rows, setRows] = useState<ScannedBlidRow[]>([]);
@@ -51,7 +50,7 @@ export default function useBlidRegistrationSession(): BlidRegistrationSession {
   const selectBook = async (isbn: string): Promise<ScanNotice | undefined> => {
     let item;
     try {
-      item = await client.api.items.showByIsbn({ params: { isbn } });
+      item = await apiClient.api.items.showByIsbn({ params: { isbn } });
     } catch {
       return { message: GENERIC_ERROR_TEXT };
     }
@@ -73,7 +72,7 @@ export default function useBlidRegistrationSession(): BlidRegistrationSession {
     setReceipt(null);
     commitRows([{ blid, check: { status: "checking" } }, ...rowsRef.current]);
     try {
-      const linkedTo = await client.api.blids.showLink({ params: { blid } });
+      const linkedTo = await apiClient.api.blids.showLink({ params: { blid } });
       updateRow(blid, { status: "checked", linkedTo });
     } catch {
       updateRow(blid, { status: "failed" });
@@ -93,7 +92,7 @@ export default function useBlidRegistrationSession(): BlidRegistrationSession {
   };
 
   const registerMutation = useMutation({
-    mutationFn: (body: { isbn: string; blids: string[] }) => client.api.blids.register({ body }),
+    mutationFn: (body: { isbn: string; blids: string[] }) => apiClient.api.blids.register({ body }),
     onSuccess: (result) => {
       if (!result.success) {
         showErrorNotification(result.feedback);

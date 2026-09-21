@@ -18,7 +18,7 @@ import type { TooltipContentProps } from "recharts";
 
 import ChartCard from "@/shared/components/charts/ChartCard";
 import { BOOK_EVENT_APPEARANCE } from "@/shared/components/bookEventAppearance";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 interface MovementSeries {
   key: keyof Omit<BranchBookMovementsYear, "year">;
@@ -146,7 +146,6 @@ function MovementTooltip({
 }
 
 export default function BranchBookMovements({ branchId }: { branchId: string }) {
-  const { api } = useApiClient();
   const [view, setView] = useState<View>("count");
   const coloredSeries = chartSeries(useComputedColorScheme("light"));
   const { data, isLoading, isError } = useQuery(

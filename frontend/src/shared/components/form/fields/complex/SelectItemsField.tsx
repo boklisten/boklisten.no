@@ -3,12 +3,11 @@ import type { MultiSelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import { useFieldContext } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { itemSelectFilter, toItemSelectData } from "@/shared/utils/itemSelectFilter";
 
 export default function SelectItemsField(props: MultiSelectProps) {
   const field = useFieldContext<{ id: string; title: string }[]>();
-  const { api } = useApiClient();
   const { data: items } = useQuery(api.items.index.queryOptions());
 
   return (

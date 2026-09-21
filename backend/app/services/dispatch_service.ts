@@ -11,16 +11,17 @@ import { isUnderage } from "#models/signature";
 import { userHasValidSignature } from "#services/signature_helper";
 import type { MessageLogContext } from "#services/message_log_service";
 import { MessageLogService } from "#services/message_log_service";
-import { PermissionService } from "#services/permission_service";
 import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
 import type { Order } from "#shared/order/order";
+import { apiOrigin, isDeployed, clientOrigin } from "#config/app";
 import env from "#start/env";
 import type { EmailOrder, EmailUser } from "#types/email";
 import type { EmailRecipient, EmailTemplate } from "#types/email_templates";
 import { EMAIL_SENDER, EMAIL_TEMPLATES } from "#types/email_templates";
 import { sendgridEmailTemplatesResponseValidator } from "#validators/dispatch";
+import { hasPermissionLevel } from "#shared/user-permission";
 
-const twilioClient = twilio(env.get("TWILIO_SMS_SID"), env.get("TWILIO_SMS_AUTH_TOKEN"), {
+const twilioClient = twilio(env.get("TWILIO_SMS_SID"), env.get("TWILIO_SMS_AUTH_TOKEN").release(), {
   autoRetry: true,
   maxRetries: 5,
 });
@@ -38,7 +39,7 @@ const SKIPPED_OUTSIDE_PRODUCTION_REASON = "Utenfor produksjon sendes e-post bare
 /** Outside production only employees receive real mail; everyone else gets a skipped log row. */
 async function mayReceiveOutsideProduction(email: string): Promise<boolean> {
   const user = await User.byEmail(email);
-  return user !== null && PermissionService.isPermissionEqualOrOver(user.permission, "employee");
+  return user !== null && hasPermissionLevel(user.permission, "employee");
 }
 
 /**
@@ -84,10 +85,10 @@ function twilioStatusCallback(messageId: string | undefined): string | undefined
   if (!messageId) {
     return undefined;
   }
-  if (env.get("API_ENV") !== "production" && env.get("API_ENV") !== "staging") {
+  if (!isDeployed) {
     return undefined;
   }
-  return `${env.get("BL_API_URI")}/webhooks/twilio/${messageId}`;
+  return `${apiOrigin}/webhooks/twilio/${messageId}`;
 }
 
 const SmsService = {
@@ -108,7 +109,7 @@ const SmsService = {
         "Since API_ENV !== production, SMS will only be sent to users with permission 'employee' or above",
       );
       const user = await User.byPhone(message.to);
-      if (!user || !PermissionService.isPermissionEqualOrOver(user.permission, "employee")) {
+      if (!user || !hasPermissionLevel(user.permission, "employee")) {
         await MessageLogService.recordSendResult(logEntry, {
           status: "skipped",
           reason: "Utenfor produksjon sendes SMS bare til ansatte",
@@ -343,7 +344,7 @@ const DispatchService = {
         recipients: {
           to: customerDetail.guardianEmail,
           dynamicTemplateData: {
-            guardianSignatureUri: `${env.get("CLIENT_URI")}/signering/${customerDetail.id}`,
+            guardianSignatureUri: `${clientOrigin}/signering/${customerDetail.id}`,
             customerName: customerDetail.name,
             guardianName: customerDetail.guardianName ?? "",
             branchName,
@@ -367,7 +368,7 @@ const DispatchService = {
         recipients: {
           to: customerDetail.email,
           dynamicTemplateData: {
-            signatureUri: `${env.get("CLIENT_URI")}/signering/${customerDetail.id}`,
+            signatureUri: `${clientOrigin}/signering/${customerDetail.id}`,
             name: customerDetail.name,
             branchName,
           },
@@ -425,7 +426,7 @@ const DispatchService = {
         {
           to: email,
           dynamicTemplateData: {
-            passwordResetUri: `${env.get("CLIENT_URI")}/auth/reset/${id}?token=${token}`,
+            passwordResetUri: `${clientOrigin}/auth/reset/${id}?token=${token}`,
           },
         },
       ],
@@ -440,7 +441,7 @@ const DispatchService = {
         {
           to: email,
           dynamicTemplateData: {
-            emailVerificationUri: `${env.get("CLIENT_URI")}/auth/email/verify/${verificationId}`,
+            emailVerificationUri: `${clientOrigin}/auth/email/verify/${verificationId}`,
           },
         },
       ],
@@ -524,7 +525,7 @@ const DispatchService = {
         dynamicTemplateData: {
           firstName,
           branchName,
-          loginUri: `${env.get("CLIENT_URI")}/auth/login`,
+          loginUri: `${clientOrigin}/auth/login`,
         },
       },
     });

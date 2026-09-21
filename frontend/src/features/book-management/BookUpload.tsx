@@ -8,7 +8,7 @@ import { useState } from "react";
 
 import { BOOK_IMPORT_COLUMNS, toBookRows } from "@/features/book-management/bookSpreadsheet";
 import type { BookRow } from "@/features/book-management/bookSpreadsheet";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -66,13 +66,12 @@ function UploadErrorsDialog({
 }
 
 export default function BookUpload({ items }: { items: Item[] }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const [importerOpen, setImporterOpen] = useState(false);
   const [rows, setRows] = useState<BookRow[] | null>(null);
 
   const uploadMutation = useMutation({
-    mutationFn: (books: BookRow[]) => client.api.items.bulkUpsert({ body: { items: books } }),
+    mutationFn: (books: BookRow[]) => apiClient.api.items.bulkUpsert({ body: { items: books } }),
     onSuccess: (summary) => {
       setRows(null);
       showSuccessNotification(

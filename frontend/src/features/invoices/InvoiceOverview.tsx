@@ -42,7 +42,7 @@ import {
 import { joinBatchPrefixes, parseBatchPrefixes } from "@/features/invoices/invoiceParams";
 import useInvoiceStatusChange from "@/features/invoices/useInvoiceStatusChange";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { downloadTextFile } from "@/shared/utils/downloadTextFile";
 import { errorMessage } from "@/shared/utils/errorMessage";
@@ -64,7 +64,6 @@ function commonStatus(rows: InvoiceListRow[]): InvoiceStatus | null {
  * the list client-side.
  */
 export default function InvoiceOverview() {
-  const { api, client } = useApiClient();
   const { fakturarunde, faktura } = route.useSearch();
   const navigate = route.useNavigate();
   const narrow = useMediaQuery("(max-width: 48em)") ?? false;
@@ -100,7 +99,7 @@ export default function InvoiceOverview() {
 
   const exportInvoices = useMutation({
     mutationFn: (format: InvoiceExportFormat) =>
-      client.api.invoices.export({ body: { invoiceIds: selectedIds, format } }),
+      apiClient.api.invoices.export({ body: { invoiceIds: selectedIds, format } }),
     onSuccess: (file) => downloadTextFile(file.filename, file.csv),
     onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke lage eksportfilen")),
   });

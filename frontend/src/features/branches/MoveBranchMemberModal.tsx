@@ -2,7 +2,7 @@ import { Button, Group, Stack } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 export default function MoveBranchMemberModal({
@@ -14,7 +14,6 @@ export default function MoveBranchMemberModal({
   memberId: string;
   onClose: () => void;
 }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
 
   const updateBranchMembershipMutation = useMutation(

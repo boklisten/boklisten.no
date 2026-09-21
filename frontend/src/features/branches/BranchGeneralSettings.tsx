@@ -5,7 +5,7 @@ import { Activity } from "react";
 
 import useUpdateBranchMutation from "@/features/branches/useUpdateBranchMutation";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 import { imageFieldValidator } from "@/shared/components/form/fields/complex/ImageField";
 
@@ -17,7 +17,6 @@ export default function BranchGeneralSettings({
   onSuccess?: (newBranch?: Branch) => void;
 }) {
   const queryClient = useQueryClient();
-  const { api } = useApiClient();
 
   const addBranchMutation = useMutation(
     api.branches.store.mutationOptions({

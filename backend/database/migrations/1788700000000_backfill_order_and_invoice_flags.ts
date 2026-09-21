@@ -26,7 +26,7 @@ export default class extends BaseSchema {
       }
 
       const connection = await mongoose
-        .createConnection(env.get("MONGODB_URI"), {
+        .createConnection(env.get("MONGODB_URI").release(), {
           dbName: env.get("API_ENV") === "production" ? "production" : "staging",
         })
         .asPromise();

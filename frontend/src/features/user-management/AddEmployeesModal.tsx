@@ -16,7 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { PERMISSION_LABELS } from "@/features/user-management/permissionLabels";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -41,7 +41,6 @@ export default function AddEmployeesModal({
   opened: boolean;
   onClose: () => void;
 }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearch] = useDebouncedValue(searchValue.trim(), 250);
@@ -51,13 +50,14 @@ export default function AddEmployeesModal({
   const searchActive = debouncedSearch.length >= MIN_SEARCH_LENGTH;
   const { data: searchResults, isFetching } = useQuery({
     queryKey: ["userDetail", "search", debouncedSearch],
-    queryFn: async () => (await client.api.users.search({ query: { q: debouncedSearch } })) ?? [],
+    queryFn: async () =>
+      (await apiClient.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: searchActive,
   });
 
   const addMutation = useMutation({
     mutationFn: (input: { detailsIds: string[]; permission: UserPermission }) =>
-      client.api.users.setPermission({ body: input }),
+      apiClient.api.users.setPermission({ body: input }),
     onSuccess: async () => {
       showSuccessNotification(
         selectedUsers.length === 1

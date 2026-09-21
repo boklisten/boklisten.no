@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import MessageEntryList from "@/features/message-log/MessageEntryList";
 import { normalizeRecipient } from "@/features/message-log/meta";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -25,7 +25,6 @@ function guardianRecipientsOf(customer: User): ReadonlySet<string> {
 }
 
 export default function CustomerMessagesView({ customer }: { customer: User }) {
-  const { api } = useApiClient();
   const { data, isPending, error, errorUpdateCount } = useQuery(
     api.messageLogs.forCustomer.queryOptions(
       { params: { detailsId: customer.id } },

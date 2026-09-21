@@ -13,8 +13,8 @@ type UserColumns = Omit<UserDto, "dob" | "createdAt"> & {
 };
 
 /**
- * Inserts a user into the test Postgres with every required column filled and a unique email,
- * phone and blid. Pass only what the test cares about.
+ * Inserts a user into the test Postgres with every required column filled and a unique email and
+ * phone. Pass only what the test cares about.
  */
 export async function createUser(overrides: Partial<UserColumns> = {}): Promise<User> {
   sequence++;
@@ -31,7 +31,6 @@ export async function createUser(overrides: Partial<UserColumns> = {}): Promise<
     guardianName: null,
     guardianEmail: null,
     guardianPhone: null,
-    blid: `u#${sequence.toString(16).padStart(32, "0")}`,
     branchMembershipId: null,
     taskConfirmDetails: false,
     taskSignAgreement: false,
@@ -62,7 +61,6 @@ export function userDouble(overrides: Partial<UserColumns> & { id?: string } = {
     guardianName: null,
     guardianEmail: null,
     guardianPhone: null,
-    blid: "u#00000000000000000000000000000000",
     branchMembershipId: null,
     taskConfirmDetails: false,
     taskSignAgreement: false,
@@ -89,7 +87,6 @@ export function userDto(overrides: Partial<UserDto> = {}): UserDto {
     guardianName: null,
     guardianEmail: null,
     guardianPhone: null,
-    blid: "u#00000000000000000000000000000000",
     branchMembershipId: null,
     taskConfirmDetails: false,
     taskSignAgreement: false,

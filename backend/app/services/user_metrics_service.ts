@@ -41,10 +41,10 @@ interface ActivityRow {
   count: number;
 }
 
-/** Users counted per login method and per how recently they last got a token. */
+/** Users counted per login method and per how recently they were last active. */
 async function aggregateActivity(now: number): Promise<ActivityRow[]> {
   const bucketCases = BUCKET_MAX_AGE_DAYS.map(
-    ({ bucket }) => `WHEN last_token_issued_at >= ? THEN '${bucket}'`,
+    ({ bucket }) => `WHEN last_active_at >= ? THEN '${bucket}'`,
   ).join(" ");
   const bucketBindings = BUCKET_MAX_AGE_DAYS.map(
     ({ maxAgeDays }) => new Date(now - maxAgeDays * DAY_MS),
@@ -60,7 +60,7 @@ async function aggregateActivity(now: number): Promise<ActivityRow[]> {
          ELSE 'none'
        END AS method,
        CASE
-         WHEN last_token_issued_at IS NULL THEN 'never'
+         WHEN last_active_at IS NULL THEN 'never'
          ${bucketCases}
          ELSE 'overAYear'
        END AS bucket,

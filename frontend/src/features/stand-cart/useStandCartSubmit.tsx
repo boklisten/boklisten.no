@@ -9,7 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { StandCart } from "@/features/stand-cart/useStandCart";
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification } from "@/shared/utils/notifications";
@@ -65,7 +65,6 @@ export default function useStandCartSubmit({
   /** The backend refused the cart and re-pricing it changed what the employee sees. */
   onCartChanged: () => void;
 }): StandCartSubmitter {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const { data: signatureStatus } = useQuery(
     api.signatures.show.queryOptions({ params: { detailsId: customer.id } }),

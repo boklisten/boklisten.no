@@ -24,7 +24,7 @@ import { useState } from "react";
 
 import CompanyInvoiceLineModal from "@/features/invoices/CompanyInvoiceLineModal";
 import { formatKroner } from "@/features/invoices/invoiceLabels";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -54,7 +54,6 @@ function emptyDraft(): Draft {
 }
 
 export default function CompanyInvoiceTab() {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const navigate = route.useNavigate();
   const [draft, setDraft] = useState<Draft>(emptyDraft);
@@ -65,7 +64,7 @@ export default function CompanyInvoiceTab() {
 
   const create = useMutation({
     mutationFn: () =>
-      client.api.invoices.createCompanyInvoice({
+      apiClient.api.invoices.createCompanyInvoice({
         body: {
           companyId: draft.companyId ?? "",
           invoiceNumber: draft.invoiceNumber,

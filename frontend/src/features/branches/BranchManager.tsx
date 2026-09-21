@@ -31,7 +31,7 @@ import BranchSubjectSettings from "@/features/branches/subjects/BranchSubjectSet
 import UploadBranchUsers from "@/features/branches/UploadBranchUsers";
 import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 const BRANCH_MANAGER_TABS = [
   "general",
@@ -55,7 +55,6 @@ export function parseBranchManagerTab(value: unknown): BranchManagerTab | undefi
 const route = getRouteApi("/(administrasjon)/admin/database/filialer");
 
 export default function BranchManager() {
-  const { api } = useApiClient();
   const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   const { filial: selectedBranchId, filialFane } = route.useSearch();

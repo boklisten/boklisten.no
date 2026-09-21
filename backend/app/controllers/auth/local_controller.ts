@@ -1,15 +1,15 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import hash from "@adonisjs/core/services/hash";
-import { DateTime } from "luxon";
 
 import User from "#models/user";
-import TokenService from "#services/token_service";
+import { LoginService } from "#services/login_service";
 import { UserService } from "#services/user_service";
 import { localAuthValidator, registerValidator } from "#validators/auth_validators";
 
 export default class LocalController {
-  async login({ request }: HttpContext) {
-    const { username, password } = await request.validateUsing(localAuthValidator);
+  /** Logs in with email or phone and password; the reply either starts a session or says why not. */
+  async login(ctx: HttpContext) {
+    const { username, password } = await ctx.request.validateUsing(localAuthValidator);
 
     const user = await User.byUsername(username);
 
@@ -34,23 +34,15 @@ export default class LocalController {
           "Passordet du har oppgitt stemmer ikke. Du kan prøve et annet passord, eller et lage et nytt ved å trykke på 'glemt passord'",
       };
     }
-    user.localLastLogin = DateTime.now();
-    const tokens = await TokenService.createTokens(user);
-    if (!tokens) {
-      return {
-        message:
-          "Klarte ikke logge deg inn. Vennligst prøv igjen eller ta kontakt dersom problemet vedvarer",
-      };
-    }
+    await LoginService.login(ctx, user);
 
-    return {
-      tokens,
-    };
+    return { user: await UserService.withTasksReconciled(user) };
   }
 
-  async register({ request }: HttpContext) {
-    const registerData = await request.validateUsing(registerValidator);
+  async register(ctx: HttpContext) {
+    const registerData = await ctx.request.validateUsing(registerValidator);
     const user = await UserService.createLocalUser(registerData);
-    return TokenService.createTokens(user);
+    await LoginService.login(ctx, user);
+    return UserService.withTasksReconciled(user);
   }
 }

@@ -8,6 +8,7 @@ import { CustomerHaveActiveCustomerItems } from "#services/customer_items/custom
 import { CustomerInvoiceActive } from "#services/invoices/customer_invoice_active";
 import { countActiveMatches } from "#services/matches/active_matches";
 import { OrderActive } from "#services/orders/order_active";
+import { SessionRevocationService } from "#services/session_revocation_service";
 import { StorageService } from "#services/storage_service";
 import type { UserPermission } from "#shared/user-permission";
 import { USER_PERMISSION } from "#shared/user-permission";
@@ -29,7 +30,7 @@ async function getEmployees(): Promise<EmployeeRow[]> {
     email: employee.email,
     phone: employee.phone ?? "",
     permission: employee.permission,
-    lastActive: employee.lastTokenIssuedAt?.toISO() ?? null,
+    lastActive: employee.lastActiveAt?.toISO() ?? null,
   }));
 }
 
@@ -40,6 +41,8 @@ async function setPermission(detailsIds: string[], permission: UserPermission) {
     throw new BadRequestException(`Fant ingen bruker for kunde ${missing}`);
   }
   await User.query().whereIn("id", detailsIds).update({ permission });
+  // The new level applies from their next login, not from whenever their cookie would have expired.
+  await Promise.all(detailsIds.map((detailsId) => SessionRevocationService.revokeAll(detailsId)));
   return { updated: detailsIds.length };
 }
 

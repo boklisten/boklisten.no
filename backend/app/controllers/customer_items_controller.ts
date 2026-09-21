@@ -12,7 +12,7 @@ import type { CustomerItemAction } from "#shared/customer-item/actionable_custom
 export default class CustomerItemsController {
   /** The caller's own books, with the actions they can take on them. */
   async me(ctx: HttpContext) {
-    const { detailsId } = ctx.authUser;
+    const { id: detailsId } = ctx.auth.getUserOrFail();
     const databaseQuery = new SEDbQuery();
     databaseQuery.stringFilters = [{ fieldName: "customer", value: detailsId }];
     databaseQuery.sortFilters = [{ fieldName: "lastUpdated", direction: -1 }];

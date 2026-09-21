@@ -9,7 +9,7 @@ import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { useAppForm } from "@/shared/hooks/form";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
-import { publicApiClient } from "@/shared/utils/publicApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 
 interface ForgotFields {
   email: string;
@@ -21,7 +21,7 @@ export default function ForgotPasswordForm() {
   const requestPasswordResetMutation = useMutation({
     mutationFn: async ({ email }: ForgotFields) => {
       setApiError(null);
-      const { message } = await publicApiClient.api.passwordReset.request({
+      const { message } = await apiClient.api.passwordReset.request({
         body: {
           email,
         },

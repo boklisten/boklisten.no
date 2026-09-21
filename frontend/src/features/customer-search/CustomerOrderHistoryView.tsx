@@ -4,12 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import OrderHistoryList from "@/features/order-history/OrderHistoryList";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 const POLL_INTERVAL_MS = 5000;
 
 export default function CustomerOrderHistoryView({ customerId }: { customerId: string }) {
-  const { api } = useApiClient();
   const { data, isPending, isError } = useQuery(
     api.orders.forCustomer.queryOptions(
       { params: { detailsId: customerId } },

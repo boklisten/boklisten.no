@@ -14,13 +14,13 @@ import { emailFieldValidator } from "@/shared/components/form/fields/complex/Ema
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
+import { authQueryKey } from "@/features/auth/authQuery";
 
 export default function UserSettingsForm({ userDetail }: { userDetail: User }) {
   const queryClient = useQueryClient();
-  const { api } = useApiClient();
   const defaultValues: UserInfoFieldValues = {
     name: userDetail.name,
     phoneNumber: userDetail.phone ?? "",
@@ -49,7 +49,7 @@ export default function UserSettingsForm({ userDetail }: { userDetail: User }) {
         }
         showErrorNotification("Noe gikk galt under registreringen!");
       },
-      onSettled: () => queryClient.invalidateQueries({ queryKey: api.users.me.pathKey() }),
+      onSettled: () => queryClient.invalidateQueries({ queryKey: authQueryKey() }),
     }),
   );
   const form = useAppForm({

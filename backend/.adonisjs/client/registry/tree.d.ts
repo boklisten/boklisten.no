@@ -2,8 +2,10 @@
 import type { routes } from './index.ts'
 
 export interface ApiDefinition {
-  tokens: {
-    refresh: typeof routes['tokens.refresh']
+  auth: {
+    me: typeof routes['auth.me']
+    logout: typeof routes['auth.logout']
+    devLogin: typeof routes['auth.dev_login']
   }
   vipps: {
     redirect: typeof routes['vipps.redirect']
@@ -96,7 +98,6 @@ export interface ApiDefinition {
     show: typeof routes['public_blid_lookup.show']
   }
   users: {
-    me: typeof routes['users.me']
     updateMe: typeof routes['users.update_me']
     metrics: typeof routes['users.metrics']
     duplicates: typeof routes['users.duplicates']

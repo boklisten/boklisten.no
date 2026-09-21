@@ -3,11 +3,10 @@ import type { SelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
 import { useFieldContext } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export default function SelectEmailTemplateField(props: SelectProps) {
   const field = useFieldContext<string | null>();
-  const { api } = useApiClient();
   const { data: emailTemplates } = useQuery(api.dispatch.emailTemplates.queryOptions());
 
   return (

@@ -3,12 +3,11 @@ import { Button, Stack } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 export default function BranchRelationshipSettings({ branch }: { branch: Branch }) {
   const queryClient = useQueryClient();
-  const { api } = useApiClient();
 
   const { data: branches } = useQuery(api.branches.index.queryOptions());
 

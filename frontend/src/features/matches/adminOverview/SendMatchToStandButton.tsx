@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { isMatchFinished } from "@/features/matches/adminOverview/adminMatchHelper";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -17,7 +17,6 @@ export default function SendMatchToStandButton({
   onSent?: () => void;
 }) {
   const { isAdmin } = useAuth();
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const [opened, setOpened] = useState(false);
 

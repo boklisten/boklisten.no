@@ -4,7 +4,7 @@ import { IconTrash } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -20,13 +20,12 @@ export default function InvoiceDeleteSection({
   invoice: Invoice;
   onDeleted: () => void;
 }) {
-  const { client } = useApiClient();
   const [expanded, setExpanded] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const confirmPhrase = String(invoice.invoiceId);
 
   const deleteMutation = useMutation({
-    mutationFn: () => client.api.invoices.destroy({ params: { invoiceId: invoice.id } }),
+    mutationFn: () => apiClient.api.invoices.destroy({ params: { invoiceId: invoice.id } }),
     onSuccess: () => {
       showSuccessNotification(`Faktura ${confirmPhrase} ble slettet`);
       onDeleted();

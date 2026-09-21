@@ -12,7 +12,7 @@ import type {
   SubjectBookFormValue,
 } from "@/features/branches/subjects/subjectOptions";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -25,7 +25,6 @@ export function BranchSubjectModal({
   modalId: string;
   existingSubject?: BranchSubject;
 }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const { data: items } = useQuery(api.items.index.queryOptions());
 

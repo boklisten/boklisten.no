@@ -1,3 +1,4 @@
+import { Secret } from "@adonisjs/core/helpers";
 import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
@@ -45,7 +46,11 @@ test.group("EmailValidationService.check", (group) => {
       .stub(env, "get")
       .callsFake(
         unchecked((key: string) =>
-          key === "SENDGRID_EMAIL_VALIDATION_API_KEY" ? apiKey : originalGet(unchecked(key)),
+          key === "SENDGRID_EMAIL_VALIDATION_API_KEY"
+            ? apiKey === undefined
+              ? undefined
+              : new Secret(apiKey)
+            : originalGet(unchecked(key)),
         ),
       );
   }

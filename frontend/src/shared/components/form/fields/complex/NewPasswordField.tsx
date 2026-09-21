@@ -4,8 +4,15 @@ import PasswordStrengthBarImport from "react-password-strength-bar";
 
 import { useFieldContext } from "@/shared/hooks/form";
 
-// fixme: bad types — the package ships its component on `.default` of the ESM default export
-const PasswordStrengthBar = Reflect.get(PasswordStrengthBarImport, "default");
+/**
+ * The package is CommonJS with `exports.default`: Vite's browser interop hands us the module
+ * object with the component on `.default`, while Bun's interop during server rendering hands us
+ * the component itself. Accept either, so the page also renders on the server.
+ */
+const PasswordStrengthBar: typeof PasswordStrengthBarImport =
+  typeof PasswordStrengthBarImport === "function"
+    ? PasswordStrengthBarImport
+    : Reflect.get(PasswordStrengthBarImport, "default");
 
 export function newPasswordFieldValidator(value: string) {
   if (!value) {

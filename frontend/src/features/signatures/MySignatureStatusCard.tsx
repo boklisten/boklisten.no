@@ -5,7 +5,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { OUTGROWN_SIGNATURE_TITLE } from "@/features/signatures/outgrownSignatureCopy";
 import SignatureStatusCard from "@/features/signatures/SignatureStatusCard";
 import SignedSignatureDetails from "@/features/signatures/SignedSignatureDetails";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
+import { authQueryOptions } from "@/features/auth/authQuery";
 
 /**
  * The customer's own signature status as a compact card at the top of the pages they land on
@@ -14,9 +15,8 @@ import useApiClient from "@/shared/hooks/useApiClient";
  * needed. Always fetched fresh: the order placed a moment ago may have created the demand.
  */
 export default function MySignatureStatusCard() {
-  const { api } = useApiClient();
   const navigate = useNavigate();
-  const { data: userDetail } = useQuery(api.users.me.queryOptions());
+  const { data: userDetail } = useQuery(authQueryOptions());
   const { data, isError } = useQuery({
     ...api.signatures.me.queryOptions(),
     staleTime: 0,

@@ -4,7 +4,7 @@ import { IconSend } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 /**
@@ -12,7 +12,6 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
  * link. Shared by the tasks page and the checkout's signing step so the two never drift apart.
  */
 export default function GuardianSignatureRequest({ userDetail }: { userDetail: User }) {
-  const { api } = useApiClient();
   const requestSignatureMutation = useMutation(
     api.signatures.sendLinkMe.mutationOptions({
       onSuccess: () => showSuccessNotification("Signaturforespørsel har blitt sendt!"),

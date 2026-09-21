@@ -4,14 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useFieldContext } from "@/shared/hooks/form";
 import { getBranchNodeShortLabel, toBranchTreeNodeData } from "@/shared/utils/branchTree";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export default function SelectBranchField({
   perspective,
   ...props
 }: Omit<TreeSelectProps, "data"> & { perspective: string }) {
   const field = useFieldContext<string | null>();
-  const { data: branches } = useQuery(publicApi.branches.index.queryOptions());
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   const subject = perspective === "personal" ? "din" : "kundens";
 

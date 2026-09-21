@@ -1,10 +1,7 @@
 const BL_CONFIG = {
-  token: {
-    accessToken: "bl-access-token",
-    refreshToken: "bl-refresh-token",
-  },
   login: {
     localStorageKeys: {
+      /** Where to go after a login that detours through Vipps or the pending-tasks page. */
       redirect: "bl-redirect",
     },
   },

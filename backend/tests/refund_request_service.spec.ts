@@ -12,7 +12,7 @@ import {
   RefundRequestService,
 } from "#services/refund_request_service";
 import type { Order } from "#shared/order/order";
-import env from "#start/env";
+import { clientOrigin } from "#config/app";
 import { mock } from "#tests/test-doubles";
 import { userDouble } from "#tests/user_fixtures";
 
@@ -82,7 +82,7 @@ test.group("buildRefundRequestMail", () => {
     assert.include(mail.text, "E-post: kari@example.com");
     assert.include(
       mail.text,
-      `Kasse: ${env.get("CLIENT_URI")}/admin/kasse?kunde=${CUSTOMER_ID}&visning=ordrehistorikk`,
+      `Kasse: ${clientOrigin}/admin/kasse?kunde=${CUSTOMER_ID}&visning=ordrehistorikk`,
     );
     assert.include(mail.text, "«Sinus 1T»: kansellert, -250 kr");
     assert.include(mail.text, "«Kosmos SF»: solgt, -200 kr");

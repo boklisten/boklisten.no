@@ -7,8 +7,7 @@ import { Alert, Button, Group, List, Stack, Text } from "@mantine/core";
 import { IconMailExclamation, IconMailQuestion } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import validator from "validator";
-
-import { publicApiClient } from "@/shared/utils/publicApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 
 export type EmailDeliverabilityPerspective = "personal" | "administrate";
 
@@ -49,7 +48,7 @@ function emailDeliverabilityQueryOptions(email: string, source: EmailValidationS
   return {
     queryKey: ["email-deliverability", source, email] as const,
     queryFn: (): Promise<EmailValidationResult> =>
-      publicApiClient.api.emailValidation.validate({ body: { email, source } }),
+      apiClient.api.emailValidation.validate({ body: { email, source } }),
     enabled: validator.isEmail(email),
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,

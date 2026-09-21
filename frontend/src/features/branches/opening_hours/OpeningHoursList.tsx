@@ -3,11 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { formatOpeningHour } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import { publicApi } from "@/shared/utils/publicApiClient";
 import type { Route } from "@tuyau/core/types";
 
 function OpeningHourRow({
@@ -15,7 +14,6 @@ function OpeningHourRow({
 }: {
   openingHour: Route.Response<"opening_hours.index">[number];
 }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const deleteOpeningHourMutation = useMutation(
     api.openingHours.destroy.mutationOptions({
@@ -60,7 +58,7 @@ export default function OpeningHoursList({ branchId }: { branchId: string }) {
     data: openingHours,
     isLoading: isLoadingOpeningHours,
     isError: isErrorOpeningHours,
-  } = useQuery(publicApi.openingHours.index.queryOptions({ params: { branchId } }));
+  } = useQuery(api.openingHours.index.queryOptions({ params: { branchId } }));
 
   if (isLoadingOpeningHours) {
     return (

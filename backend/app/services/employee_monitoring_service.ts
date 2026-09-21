@@ -5,7 +5,7 @@ import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import type { UserPermission } from "#shared/user-permission";
 import { USER_PERMISSION } from "#shared/user-permission";
-import env from "#start/env";
+import { clientOrigin } from "#config/app";
 
 export const EMPLOYEE_MONITORING_RECIPIENT = "info@boklisten.no";
 
@@ -36,10 +36,15 @@ export interface MonitoringDetail {
   value: string;
 }
 
-/** The acting employee, as the auth middleware exposes them on `ctx.authUser`. */
+/** The acting employee, as recorded on a monitoring report. */
 export interface MonitoredEmployee {
   detailsId: string;
   permission: UserPermission;
+}
+
+/** The logged-in user (`ctx.auth.getUserOrFail()`) as the acting employee. */
+export function monitoredEmployee(user: User): MonitoredEmployee {
+  return { detailsId: user.id, permission: user.permission };
 }
 
 interface MonitoringReport {
@@ -73,7 +78,7 @@ export function buildMonitoringMail(report: MonitoringReport) {
       `Kunde: ${report.customer.name}`,
       `Telefon: ${report.customer.phone ?? ""}`,
       `E-post: ${report.customer.email}`,
-      `Kasse: ${env.get("CLIENT_URI")}/admin/kasse?kunde=${report.customer.id}`,
+      `Kasse: ${clientOrigin}/admin/kasse?kunde=${report.customer.id}`,
     );
   }
 

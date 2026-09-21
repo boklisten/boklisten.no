@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 
 import PlanMetrics from "@/features/matches/rounds/PlanMetrics";
 import type { Round } from "@/features/matches/rounds/useRounds";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 // The month and weekday names below read Norwegian only because the shared dayjs setup registered
 // the locale. Imported here so the card carries that dependency itself rather than relying on
@@ -114,7 +114,6 @@ export default function PlannedRoundCard({
   onGenerate: () => void;
   generating: boolean;
 }) {
-  const { api } = useApiClient();
   const { isAdmin } = useAuth();
   const { data: branches } = useQuery(api.branches.index.queryOptions());
 

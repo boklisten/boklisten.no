@@ -8,8 +8,8 @@ import { newPasswordFieldValidator } from "@/shared/components/form/fields/compl
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { useAppForm } from "@/shared/hooks/form";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
-import { publicApi, publicApiClient } from "@/shared/utils/publicApiClient";
 import { useLocation } from "@tanstack/react-router";
+import { api, apiClient } from "@/shared/utils/apiClient";
 
 interface PasswordResetFields {
   newPassword: string;
@@ -20,7 +20,7 @@ export default function PasswordReset({ id }: { id: string }) {
   const [apiError, setApiError] = useState<string | null>(null);
 
   const { data, isError } = useQuery(
-    publicApi.passwordReset.validate.queryOptions({
+    api.passwordReset.validate.queryOptions({
       params: { id, token: token ?? "" },
     }),
   );
@@ -28,7 +28,7 @@ export default function PasswordReset({ id }: { id: string }) {
   const resetPasswordMutation = useMutation({
     mutationFn: async ({ newPassword }: PasswordResetFields) => {
       setApiError(null);
-      const { message } = await publicApiClient.api.passwordReset.reset({
+      const { message } = await apiClient.api.passwordReset.reset({
         params: {
           id,
         },

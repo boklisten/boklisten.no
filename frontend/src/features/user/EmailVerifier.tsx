@@ -6,11 +6,11 @@ import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 import CountdownToRedirect from "@/shared/components/CountdownToRedirect";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export default function EmailVerifier({ verificationId }: { verificationId: string }) {
   const { isPending, isError } = useQuery(
-    publicApi.emailVerification.verify.queryOptions({ params: { id: verificationId } }),
+    api.emailVerification.verify.queryOptions({ params: { id: verificationId } }),
   );
 
   if (isPending) {

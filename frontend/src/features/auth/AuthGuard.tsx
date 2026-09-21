@@ -3,8 +3,8 @@ import { Button, Stack } from "@mantine/core";
 import { Activity, useEffect, useEffectEvent } from "react";
 import type { ReactNode } from "react";
 
+import { authQueryOptions } from "@/features/auth/authQuery";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { useQuery } from "@tanstack/react-query";
@@ -15,8 +15,8 @@ import { hasPendingTasks } from "@/shared/utils/tasks";
 const PATHS_ALLOWED_WITH_PENDING_TASKS = ["oppgaver", "user-settings", "logout"];
 
 /**
- *
- * Ensures that a user is logged in and optionally has the correct permission level
+ * Ensures that a user is logged in and optionally has the correct permission level, and sends
+ * customers with pending tasks to complete them first.
  */
 export default function AuthGuard({
   children,
@@ -27,25 +27,16 @@ export default function AuthGuard({
 }) {
   const pathname = useLocation({ select: (location) => location.pathname });
   const navigate = useNavigate();
-  const { isLoading, isLoggedIn, canAccess } = useAuth();
-  const { api } = useApiClient();
+  const { user, isLoggedIn, canAccess } = useAuth();
+  const { data, errorUpdateCount, isFetching, refetch } = useQuery(authQueryOptions());
 
   const isPermitted = isLoggedIn && (!requiredPermission || canAccess(requiredPermission));
-
-  const {
-    data: userDetail,
-    errorUpdateCount,
-    isFetching,
-    refetch,
-  } = useQuery({
-    ...api.users.me.queryOptions(),
-    enabled: !isLoading && isPermitted,
-  });
-
-  const pendingTasks = hasPendingTasks(userDetail);
+  const pendingTasks = hasPendingTasks(user);
   const isOnAllowedPath = PATHS_ALLOWED_WITH_PENDING_TASKS.some((allowed) =>
     pathname.includes(allowed),
   );
+  // Never answered (a guest answers with null); errorUpdateCount alone stays up after a retry succeeds.
+  const isUnresolved = data === undefined && errorUpdateCount > 0;
 
   const onAuthChange = useEffectEvent(() => {
     if (!isLoggedIn) {
@@ -64,14 +55,15 @@ export default function AuthGuard({
   });
 
   useEffect(() => {
-    if (isLoading) {
+    // A failed lookup is not a guest: offer a retry instead of bouncing to the login page.
+    if (isUnresolved) {
       return;
     }
     onAuthChange();
     // oxlint-disable-next-line react/exhaustive-effect-dependencies -- the extra deps deliberately re-run the auth check whenever the auth state changes
-  }, [isLoading, isLoggedIn, requiredPermission, pendingTasks, isOnAllowedPath]);
+  }, [isUnresolved, isLoggedIn, requiredPermission, pendingTasks, isOnAllowedPath]);
 
-  if (errorUpdateCount > 0 && userDetail === undefined) {
+  if (isUnresolved) {
     return (
       <Stack align="center">
         <ErrorAlert title="Klarte ikke laste inn brukeren din">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
@@ -82,8 +74,7 @@ export default function AuthGuard({
     );
   }
 
-  const isAuthenticated =
-    isPermitted && userDetail !== undefined && !(pendingTasks && !isOnAllowedPath);
+  const isAuthenticated = isPermitted && !(pendingTasks && !isOnAllowedPath);
 
   return <Activity mode={isAuthenticated ? "visible" : "hidden"}>{children}</Activity>;
 }

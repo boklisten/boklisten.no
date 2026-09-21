@@ -1,64 +1,60 @@
 import { Button, Container, Loader, Stack, Title } from "@mantine/core";
-
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { seo } from "@/shared/utils/seo";
+import { useEffect, useEffectEvent, useState } from "react";
+
+import { authQueryOptions } from "@/features/auth/authQuery";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
 import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
+import { seo } from "@/shared/utils/seo";
 import { hasPendingTasks } from "@/shared/utils/tasks";
-import { useEffect, useEffectEvent, useState } from "react";
-import { login } from "@/shared/hooks/useAuth";
-import { stringParam } from "@/shared/utils/searchParams";
 
-export const Route = createFileRoute("/(offentlig)/auth/token")({
+/**
+ * Where the API sends the browser after a login it completed itself (Vipps, the local test
+ * login link). The session cookie is already set; this page reads who it belongs to and
+ * continues to wherever the login was heading.
+ */
+export const Route = createFileRoute("/(offentlig)/auth/callback")({
   head: () =>
     seo({
       title: "Logger inn... | Boklisten.no",
       description: "Du blir nå logget inn. Vennligst vent.",
     }),
-  validateSearch: (search) => ({
-    refreshToken: stringParam(search["refresh_token"]),
-    accessToken: stringParam(search["access_token"]),
-  }),
-  component: TokenPage,
+  component: CallbackPage,
 });
 
-function TokenPage() {
-  const { client } = useApiClient();
+function CallbackPage() {
+  const queryClient = useQueryClient();
   const { redirectToTarget } = useLoginRedirect();
-  const { refreshToken, accessToken } = Route.useSearch();
   const navigate = useNavigate();
   const [attempt, setAttempt] = useState(0);
   const [hasFailed, setHasFailed] = useState(false);
 
-  const onLogin = useEffectEvent(async (tokens: { accessToken: string; refreshToken: string }) => {
-    const success = login(tokens);
-    if (!success) {
-      void navigate({ to: "/auth/failure" });
-      return;
-    }
-    let userDetail;
-    try {
-      userDetail = await client.api.users.me({});
-    } catch {
+  const onArrive = useEffectEvent(async () => {
+    const user = await queryClient
+      .query({ ...authQueryOptions(), staleTime: 0 })
+      .catch(() => undefined);
+    if (user === undefined) {
       // Typically a dropped connection; leave the user a way out instead of spinning forever
       setHasFailed(true);
       return;
     }
-    if (hasPendingTasks(userDetail)) {
+    if (user === null) {
+      void navigate({ to: "/auth/failure" });
+      return;
+    }
+    if (hasPendingTasks(user)) {
       void navigate({ to: "/oppgaver" });
     } else {
       redirectToTarget();
     }
   });
   useEffect(() => {
-    if (accessToken && refreshToken) {
-      // oxlint-disable-next-line react/set-state-in-effect -- setHasFailed only runs after an awaited network call, never synchronously during the effect
-      void onLogin({ accessToken, refreshToken });
-    }
-    // oxlint-disable-next-line react/exhaustive-effect-dependencies -- `attempt` deliberately re-runs the login when the user retries
-  }, [accessToken, refreshToken, attempt]);
+    // oxlint-disable-next-line react/set-state-in-effect -- setHasFailed only runs after an awaited network call, never synchronously during the effect
+    void onArrive();
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies -- `attempt` deliberately re-runs the lookup when the user retries
+  }, [attempt]);
 
   if (hasFailed) {
     return (

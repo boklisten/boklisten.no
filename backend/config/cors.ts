@@ -1,10 +1,10 @@
 import { defineConfig } from "@adonisjs/cors";
 
-import env from "#start/env";
+import { clientOrigin } from "#config/app";
 
 const corsConfig = defineConfig({
   enabled: true,
-  origin: env.get("URI_WHITELIST").split(" "),
+  origin: [clientOrigin],
   methods: ["HEAD", "GET", "PUT", "PATCH", "POST", "DELETE"],
   headers: true,
   exposeHeaders: ["retry-after", "x-ratelimit-reset"],

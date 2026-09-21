@@ -60,7 +60,7 @@ export function skip(reason: string): { skip: string } {
  */
 export async function withMongo<T>(fn: (mongo: Db) => Promise<T>): Promise<T> {
   const connection = await mongoose
-    .createConnection(env.get("MONGODB_URI"), {
+    .createConnection(env.get("MONGODB_URI").release(), {
       dbName: env.get("API_ENV") === "production" ? "production" : "staging",
     })
     .asPromise();

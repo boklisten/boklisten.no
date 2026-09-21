@@ -14,12 +14,11 @@ import { IconSearch, IconTrash } from "@tabler/icons-react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 
 const MIN_SEARCH_LENGTH = 3;
 
 function ExcludedCustomerRow({ id, onRemove }: { id: string; onRemove: () => void }) {
-  const { api } = useApiClient();
   const { data: detail, isPending } = useQuery(
     api.users.show.queryOptions({ params: { detailsId: id } }),
   );
@@ -63,7 +62,6 @@ export default function ExcludedCustomersField({
   value: string[];
   onChange: (ids: string[]) => void;
 }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearch] = useDebouncedValue(searchValue.trim(), 250);
@@ -73,7 +71,8 @@ export default function ExcludedCustomersField({
 
   const { data: searchResults, isFetching } = useQuery({
     queryKey: ["userDetail", "search", debouncedSearch] as const,
-    queryFn: async () => (await client.api.users.search({ query: { q: debouncedSearch } })) ?? [],
+    queryFn: async () =>
+      (await apiClient.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: searchActive,
   });
 

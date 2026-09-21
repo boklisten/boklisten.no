@@ -7,7 +7,7 @@ import { publicBlidMissLimiter } from "#start/limiter";
 
 export default class PublicBlidLookupController {
   async show(ctx: HttpContext): Promise<PublicBlidLookupResponse> {
-    const { detailsId } = ctx.authUser;
+    const { id: detailsId } = ctx.auth.getUserOrFail();
     const user = await User.findOrFail(detailsId);
     const opensAt = PublicBlidLookupService.opensAt(user.createdAt?.toJSDate());
     if (opensAt !== null) {

@@ -2,7 +2,7 @@ import type { InvoiceListRow, InvoiceStatus } from "@boklisten/backend/shared/in
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { INVOICE_STATUS_LABELS } from "@/features/invoices/invoiceLabels";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -60,7 +60,6 @@ function showStatusChangeResult(count: number, status: InvoiceStatus, warnings: 
  * because a payment also touches the customer's orders and books.
  */
 export default function useInvoiceStatusChange() {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
 
   const patchRows = (invoiceIds: string[], status: InvoiceStatus) => {
@@ -75,13 +74,13 @@ export default function useInvoiceStatusChange() {
   const mutation = useMutation({
     mutationFn: async ({ invoiceIds, status }: { invoiceIds: string[]; status: InvoiceStatus }) => {
       if (invoiceIds.length === 1) {
-        const result = await client.api.invoices.setStatus({
+        const result = await apiClient.api.invoices.setStatus({
           params: { invoiceId: invoiceIds[0] ?? "" },
           body: { status },
         });
         return result.warnings;
       }
-      const result = await client.api.invoices.setStatuses({ body: { invoiceIds, status } });
+      const result = await apiClient.api.invoices.setStatuses({ body: { invoiceIds, status } });
       return result.warnings;
     },
     onSuccess: (warnings, { invoiceIds, status }) => {

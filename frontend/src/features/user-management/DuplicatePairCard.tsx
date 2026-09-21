@@ -1,14 +1,4 @@
-import {
-  Badge,
-  Button,
-  Divider,
-  Group,
-  Paper,
-  SimpleGrid,
-  Stack,
-  Text,
-  Tooltip,
-} from "@mantine/core";
+import { Badge, Button, Divider, Group, Paper, SimpleGrid, Stack, Text } from "@mantine/core";
 import { IconArrowsJoin, IconExternalLink, IconEyeOff } from "@tabler/icons-react";
 import { useState } from "react";
 
@@ -20,7 +10,7 @@ import MergeCustomersModal from "@/features/user-management/MergeCustomersModal"
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import TanStackButton from "@/shared/components/TanStackButton";
 import useBranchNames from "@/features/user-management/useBranchNames";
-import { norwegianTime } from "@/shared/utils/dayjs";
+import { lastActiveLabel } from "@/features/user-management/lastActive";
 
 function CountsLine({ user }: { user: DuplicateUserSummary }) {
   const counts = [
@@ -51,17 +41,9 @@ function UserSummary({ user, branchName }: { user: DuplicateUserSummary; branchN
         {user.email}
       </Text>
       {user.phone && <Text size="sm">{user.phone}</Text>}
-      <Tooltip
-        label={
-          user.lastActive
-            ? norwegianTime(user.lastActive).format("DD.MM.YYYY HH:mm")
-            : "Har aldri logget inn"
-        }
-      >
-        <Text size="sm" c="dimmed" w="fit-content">
-          Sist aktiv: {user.lastActive ? norwegianTime(user.lastActive).fromNow() : "aldri"}
-        </Text>
-      </Tooltip>
+      <Text size="sm" c="dimmed">
+        Sist aktiv: {lastActiveLabel(user.lastActive)}
+      </Text>
       <CountsLine user={user} />
       <TanStackButton
         to="/admin/kasse"

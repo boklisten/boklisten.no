@@ -22,7 +22,7 @@ import type { StandCart } from "@/features/stand-cart/useStandCart";
 import StickyToolbar from "@/shared/components/StickyToolbar";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import {
   showErrorNotification,
   showInfoNotification,
@@ -86,7 +86,6 @@ export default function OrderDetail({
   /** Reloads the order; resolves to whether it still has a book to hand out. */
   onRefresh: () => Promise<boolean>;
 }) {
-  const { api } = useApiClient();
   const { order, customerId } = detail;
   const {
     data: customer,

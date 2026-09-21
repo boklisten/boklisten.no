@@ -6,11 +6,17 @@ import type { ApiDefinition } from './tree.d.ts'
 const placeholder: any = {}
 
 const routes = {
-  'tokens.refresh': {
+  'auth.me': {
+    methods: ["GET","HEAD"],
+    pattern: '/auth/me',
+    tokens: [{"old":"/auth/me","type":0,"val":"auth","end":""},{"old":"/auth/me","type":0,"val":"me","end":""}],
+    types: placeholder as Registry['auth.me']['types'],
+  },
+  'auth.logout': {
     methods: ["POST"],
-    pattern: '/auth/token',
-    tokens: [{"old":"/auth/token","type":0,"val":"auth","end":""},{"old":"/auth/token","type":0,"val":"token","end":""}],
-    types: placeholder as Registry['tokens.refresh']['types'],
+    pattern: '/auth/logout',
+    tokens: [{"old":"/auth/logout","type":0,"val":"auth","end":""},{"old":"/auth/logout","type":0,"val":"logout","end":""}],
+    types: placeholder as Registry['auth.logout']['types'],
   },
   'vipps.redirect': {
     methods: ["GET","HEAD"],
@@ -53,6 +59,12 @@ const routes = {
     pattern: '/auth/password_reset/:id',
     tokens: [{"old":"/auth/password_reset/:id","type":0,"val":"auth","end":""},{"old":"/auth/password_reset/:id","type":0,"val":"password_reset","end":""},{"old":"/auth/password_reset/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['password_reset.reset']['types'],
+  },
+  'auth.dev_login': {
+    methods: ["GET","HEAD"],
+    pattern: '/auth/dev_login/:token',
+    tokens: [{"old":"/auth/dev_login/:token","type":0,"val":"auth","end":""},{"old":"/auth/dev_login/:token","type":0,"val":"dev_login","end":""},{"old":"/auth/dev_login/:token","type":1,"val":"token","end":""}],
+    types: placeholder as Registry['auth.dev_login']['types'],
   },
   'email_verification.verify': {
     methods: ["GET","HEAD"],
@@ -173,12 +185,6 @@ const routes = {
     pattern: '/public_blid_lookup/:blid',
     tokens: [{"old":"/public_blid_lookup/:blid","type":0,"val":"public_blid_lookup","end":""},{"old":"/public_blid_lookup/:blid","type":1,"val":"blid","end":""}],
     types: placeholder as Registry['public_blid_lookup.show']['types'],
-  },
-  'users.me': {
-    methods: ["GET","HEAD"],
-    pattern: '/users/me',
-    tokens: [{"old":"/users/me","type":0,"val":"users","end":""},{"old":"/users/me","type":0,"val":"me","end":""}],
-    types: placeholder as Registry['users.me']['types'],
   },
   'users.update_me': {
     methods: ["PATCH"],

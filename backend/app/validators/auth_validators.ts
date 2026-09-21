@@ -32,9 +32,3 @@ export const localAuthValidator = vine.create(
     password: vine.string(),
   }),
 );
-
-export const tokenValidator = vine.create(
-  vine.object({
-    refreshToken: vine.string().jwt(),
-  }),
-);

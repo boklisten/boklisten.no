@@ -62,10 +62,7 @@ bun build:frontend && bun start:frontend
 
 ## Environment Setup
 
-Copy `.env.example` → `.env.local` in both `backend/` and `frontend/`. Minimum required:
-
-- `backend/.env.local`: `MONGODB_URI`, `POSTGRES_URL`, `APP_KEY`, `ACCESS_TOKEN_SECRET`, `REFRESH_TOKEN_SECRET`
-- `frontend/.env.local`: `VITE_API_URL` (point to backend, e.g. `http://localhost:3333`)
+Copy `backend/.env.example` → `backend/.env.local` and fill in `MONGODB_URI`, `POSTGRES_URL`, `APP_KEY` and the third-party keys. The frontend needs no `.env.local`. Which environment the code runs in, and the API's and frontend's origins, are never configured: locally they are `dev`, `http://localhost:3333` and `http://localhost:3000`; deployed they come from Railway's own `RAILWAY_ENVIRONMENT_NAME`, `RAILWAY_PUBLIC_DOMAIN` and `RAILWAY_SERVICE_*_URL` (`backend/config/app.ts`, `frontend/vite.config.ts`).
 
 `backend/start/env.ts` is the source of truth for required vars (validated at boot — boot fails if any are missing).
 
@@ -113,7 +110,7 @@ Write Japa specs (`backend/tests/*.spec.ts`, Chai + Sinon) for new backend busin
 
 ### Playwright playbook (token efficiency — follow these on every browser session)
 
-**Login programmatically, never through the form.** `cd backend && fnm exec --using=24 node ace mint:login-url <email-or-phone>` prints a ready `http://localhost:3000/auth/token?...` URL — navigate to it once and you are logged in (works for any staging user/role; refuses production). The UI login endpoint is throttled at 10 req/min on a **global** key, so form logins in a loop hit 429 for everyone. Auth is localStorage-only (`bl-access-token`, `bl-refresh-token`); logout is `localStorage.clear()`. Known staging admin: `adrian@boklisten.no`.
+**Login programmatically, never through the form.** `cd backend && fnm exec --using=24 node ace mint:login-url <email-or-phone>` prints a one-time `http://localhost:3333/auth/dev_login/<token>` URL (valid 5 min) — navigate to it once and the browser holds a session cookie (works for any staging user/role; the route only exists outside production). The UI login endpoint is throttled per IP (10/min) and per username (5/min, then a 15 min block). Auth is a cookie session (`bl_session` + `remember_web`, HttpOnly); log out with `POST /auth/logout` or by visiting `/auth/logout`; `GET /auth/me` tells you who the cookie belongs to. State-changing requests need an `Origin` header equal to the frontend origin, so `curl -X POST` without `-H 'Origin: http://localhost:3000'` gets 403. Known staging admin: `adrian@boklisten.no`.
 
 **Minimize snapshot tokens.** Full-page accessibility snapshots are the dominant cost:
 

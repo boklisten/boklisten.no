@@ -1,6 +1,6 @@
 import { Button, Group, Space, Stack, Text } from "@mantine/core";
 import { createFieldMap } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Activity, useState } from "react";
 
 import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
@@ -15,11 +15,11 @@ import { newPasswordFieldValidator } from "@/shared/components/form/fields/compl
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { useAppForm } from "@/shared/hooks/form";
-import { login } from "@/shared/hooks/useAuth";
+import { authQueryOptions } from "@/features/auth/authQuery";
 import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
 import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification } from "@/shared/utils/notifications";
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 function isSchoolEmail(email: string) {
   return [
@@ -46,13 +46,14 @@ const defaultValues: SignupFormValues = {
 };
 
 export default function SignupForm() {
+  const queryClient = useQueryClient();
   const { redirectAfterLogin } = useLoginRedirect();
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const registerMutation = useMutation(
-    publicApi.local.register.mutationOptions({
-      onSuccess: (tokens) => {
+    api.local.register.mutationOptions({
+      onSuccess: (user) => {
         setServerErrors([]);
-        login(tokens);
+        queryClient.setQueryData(authQueryOptions().queryKey, user);
         void redirectAfterLogin();
       },
       onError: (error) => {

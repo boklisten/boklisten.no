@@ -26,7 +26,7 @@ import InvoiceGrid from "@/features/invoices/InvoiceGrid";
 import { INVOICE_TYPE_LABELS, formatKroner } from "@/features/invoices/invoiceLabels";
 import SegmentedControlWithLabel from "@/shared/components/SegmentedControlWithLabel";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -106,7 +106,6 @@ function previewRows(result: InvoiceGenerationResult): InvoiceListRow[] {
 }
 
 export default function GenerateInvoicesTab() {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const navigate = route.useNavigate();
   const [type, setType] = useState<GeneratableInvoiceType>("partly-payment");
@@ -145,7 +144,7 @@ export default function GenerateInvoicesTab() {
       if (!body) {
         throw new Error("Velg periode først");
       }
-      return client.api.invoices.generate({ body });
+      return apiClient.api.invoices.generate({ body });
     },
     onSuccess: (result, dryRun) => {
       if (dryRun) {

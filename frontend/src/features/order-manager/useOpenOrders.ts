@@ -2,14 +2,13 @@ import type { OrderManagerFilter } from "@boklisten/backend/shared/order_manager
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 /** New orders arrive while the stand works; the list looks again this often. */
 export const ORDER_MANAGER_POLL_MS = 10_000;
 
 /** Every open order matching the filter, newest first, a page at a time, kept fresh by polling. */
 export default function useOpenOrders(filter: OrderManagerFilter) {
-  const { api } = useApiClient();
   const query = useInfiniteQuery({
     ...api.orders.index.infiniteQueryOptions(
       { query: filter },

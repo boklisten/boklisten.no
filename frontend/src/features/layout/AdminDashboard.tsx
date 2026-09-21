@@ -18,9 +18,9 @@ import { visibleAdminNavSections } from "@/features/layout/adminNavigation";
 import type { AdminNavLink } from "@/features/layout/adminNavigation";
 import SearchShortcutHint from "@/features/search/SearchShortcutHint";
 import ColorSchemeSelector from "@/features/user/ColorSchemeSelector";
-import useApiClient from "@/shared/hooks/useApiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import { authQueryOptions } from "@/features/auth/authQuery";
 
 const BOOK_SERIF =
   '"Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif';
@@ -85,8 +85,7 @@ function AdminNavGrid({ links }: { links: AdminNavLink[] }) {
 
 export default function AdminDashboard() {
   const { isAdmin } = useAuth();
-  const { api } = useApiClient();
-  const { data: userDetail } = useQuery(api.users.me.queryOptions());
+  const { data: userDetail } = useQuery(authQueryOptions());
   const firstName = userDetail?.name.trim().split(" ")[0];
 
   return (

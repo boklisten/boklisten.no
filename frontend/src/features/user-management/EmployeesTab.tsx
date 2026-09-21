@@ -9,7 +9,6 @@ import {
   Stack,
   Table,
   Text,
-  Tooltip,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconShieldStar, IconUserCog, IconUserPlus, IconUserShield } from "@tabler/icons-react";
@@ -22,10 +21,10 @@ import { PERMISSION_LABELS } from "@/features/user-management/permissionLabels";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import EntityLink from "@/shared/components/EntityLink";
 import StatTile from "@/shared/components/StatTile";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
-import { norwegianTime } from "@/shared/utils/dayjs";
+import { lastActiveLabel } from "@/features/user-management/lastActive";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -33,12 +32,7 @@ const PERMISSION_OPTIONS = (["customer", "employee", "manager", "admin"] as cons
   (permission) => ({ value: permission, label: PERMISSION_LABELS[permission] }),
 );
 
-function lastActiveLabel(lastActive: string | null) {
-  return lastActive ? norwegianTime(lastActive).fromNow() : "Aldri";
-}
-
 export default function EmployeesTab() {
-  const { api, client } = useApiClient();
   const { detailsId: myDetailsId } = useAuth();
   const queryClient = useQueryClient();
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -46,7 +40,7 @@ export default function EmployeesTab() {
 
   const permissionMutation = useMutation({
     mutationFn: (input: { detailsIds: string[]; permission: UserPermission }) =>
-      client.api.users.setPermission({ body: input }),
+      apiClient.api.users.setPermission({ body: input }),
     onSuccess: async () => {
       showSuccessNotification("Tilgangsnivået ble endret");
       await queryClient.invalidateQueries({
@@ -177,15 +171,7 @@ export default function EmployeesTab() {
                   />
                 </Table.Td>
                 <Table.Td>
-                  <Tooltip
-                    label={
-                      employee.lastActive
-                        ? norwegianTime(employee.lastActive).format("DD.MM.YYYY HH:mm")
-                        : "Har aldri logget inn"
-                    }
-                  >
-                    <Text size="sm">{lastActiveLabel(employee.lastActive)}</Text>
-                  </Tooltip>
+                  <Text size="sm">{lastActiveLabel(employee.lastActive)}</Text>
                 </Table.Td>
               </Table.Tr>
             ))}

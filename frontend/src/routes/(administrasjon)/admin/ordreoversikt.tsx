@@ -23,7 +23,7 @@ import useOrderWedgeScanner from "@/features/order-manager/useOrderWedgeScanner"
 import useStandCart from "@/features/stand-cart/useStandCart";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(administrasjon)/admin/ordreoversikt")({
@@ -43,7 +43,6 @@ export const Route = createFileRoute("/(administrasjon)/admin/ordreoversikt")({
 function OrderManagerPage() {
   const params = readOrderManagerSearch(Route.useSearch());
   const navigate = Route.useNavigate();
-  const { api } = useApiClient();
   const selectedId = params.ordre;
 
   const detailQuery = useQuery(

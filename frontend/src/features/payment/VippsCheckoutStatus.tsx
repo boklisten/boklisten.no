@@ -7,10 +7,11 @@ import OrderReceipt from "@/features/payment/OrderReceipt";
 import MySignatureStatusCard from "@/features/signatures/MySignatureStatusCard";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import useCart from "@/shared/hooks/useCart";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import { authQueryKey } from "@/features/auth/authQuery";
 
 function BackToCartButton() {
   return (
@@ -31,7 +32,6 @@ function BackToCartButton() {
 const calculateTotalWait = (attempts: number) => ((n) => (n * (n + 1) * (2 * n + 1)) / 6)(attempts);
 
 export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
   const cart = useCart();
 
@@ -70,7 +70,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  }, [attempt, api, data, orderId, queryClient]);
+  }, [attempt, data, orderId, queryClient]);
 
   const onPaymentSuccessful = useEffectEvent(() => {
     cart.clear();
@@ -78,7 +78,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
     // demand on placement), so refresh them while the user is still on the receipt rather than
     // let AuthGuard read a pre-order cache when they move on
     void queryClient.invalidateQueries({
-      queryKey: api.users.me.pathKey(),
+      queryKey: authQueryKey(),
     });
     void queryClient.invalidateQueries({
       queryKey: api.orders.openItemsMe.pathKey(),

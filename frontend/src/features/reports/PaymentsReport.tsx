@@ -7,7 +7,7 @@ import ReportCard from "@/features/reports/ReportCard";
 import useReportDownload from "@/features/reports/useReportDownload";
 import { DEFAULT_DATE_RANGE, resolveDateRange } from "@/features/reports/dateRangePresets";
 import type { DateRangeValue } from "@/features/reports/dateRangePresets";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { apiClient } from "@/shared/utils/apiClient";
 
 interface PaymentsReportQuery {
   branchFilter?: string[];
@@ -16,7 +16,6 @@ interface PaymentsReportQuery {
 }
 
 export default function PaymentsReport() {
-  const { client } = useApiClient();
   const [branchFilter, setBranchFilter] = useState<string[]>([]);
   const [creationRange, setCreationRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
 
@@ -28,7 +27,7 @@ export default function PaymentsReport() {
         ...(created.from && { createdAfter: created.from.toISOString() }),
         ...(created.to && { createdBefore: created.to.toISOString() }),
       };
-      const rows = await client.api.reports.payments({ query });
+      const rows = await apiClient.api.reports.payments({ query });
       return rows ?? [];
     },
     filename: `payments-${dayjs().format("YYYY-MM-DD")}.xlsx`,

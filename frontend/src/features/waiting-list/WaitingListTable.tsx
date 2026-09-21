@@ -10,7 +10,7 @@ import { AgGridReact } from "ag-grid-react";
 import type { Route } from "@tuyau/core/types";
 
 import CreateWaitingListEntry from "@/features/waiting-list/CreateWaitingListEntry";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 type WaitingListEntry = Route.Response<"waiting_list_customers.index">[number];
@@ -26,7 +26,6 @@ export default function WaitingListTable({
   branches: Branch[];
   waitingList: Route.Response<"waiting_list_customers.index">;
 }) {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
 
   const { mutate: destroyWaitingListEntry, isPending: isDestroying } = useMutation(

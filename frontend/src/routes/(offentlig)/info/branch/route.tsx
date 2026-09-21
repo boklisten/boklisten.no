@@ -4,8 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet, useParams } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 import { useEffect } from "react";
-
-import { publicApi } from "@/shared/utils/publicApiClient";
+import { api } from "@/shared/utils/apiClient";
 
 export const Route = createFileRoute("/(offentlig)/info/branch")({
   head: () =>
@@ -17,7 +16,7 @@ export const Route = createFileRoute("/(offentlig)/info/branch")({
 });
 
 function BranchInfoPageLayout() {
-  const { data: branches } = useQuery(publicApi.branches.indexPublic.queryOptions());
+  const { data: branches } = useQuery(api.branches.indexPublic.queryOptions());
   const [selectedBranchId, setSelectedBranchId] = useLocalStorage({ key: "selectedBranchId" });
   const navigate = Route.useNavigate();
 

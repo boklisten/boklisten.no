@@ -6,7 +6,7 @@ import DispatchService from "#services/dispatch_service";
 import { TranslationService } from "#services/translation_service";
 import { formatBankAccount } from "#shared/bank_account";
 import type { Order } from "#shared/order/order";
-import env from "#start/env";
+import { clientOrigin } from "#config/app";
 
 export const REFUND_REQUEST_RECIPIENT = "info@boklisten.no";
 
@@ -49,7 +49,7 @@ export function buildRefundRequestMail(request: RefundRequest) {
     `Kunde: ${customer.name}`,
     `Telefon: ${customer.phone ?? ""}`,
     `E-post: ${customer.email}`,
-    `Kasse: ${env.get("CLIENT_URI")}/admin/kasse?kunde=${customer.id}&visning=ordrehistorikk`,
+    `Kasse: ${clientOrigin}/admin/kasse?kunde=${customer.id}&visning=ordrehistorikk`,
     "",
     `Ordre: ${order.id}`,
     ...order.orderItems.map(

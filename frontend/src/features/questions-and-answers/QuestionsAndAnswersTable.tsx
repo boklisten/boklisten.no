@@ -9,7 +9,7 @@ import { AgGridReact } from "ag-grid-react";
 
 import QuestionAndAnswerEditor from "@/features/questions-and-answers/QuestionAndAnswerEditor";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -27,7 +27,6 @@ function openEditorModal(questionAndAnswer?: QuestionAndAnswer) {
 }
 
 export default function QuestionsAndAnswersTable() {
-  const { api } = useApiClient();
   const queryClient = useQueryClient();
 
   const { mutate: destroyQuestionAndAnswer, isPending: isDestroying } = useMutation(

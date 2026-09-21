@@ -24,8 +24,9 @@ import BookCover from "@/features/book-cover/BookCover";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api } from "@/shared/utils/apiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
+import { authQueryOptions } from "@/features/auth/authQuery";
 
 /** Mirrors the backend's waiting period for new accounts, so the page can say so before a search. */
 const LOOKUP_WAITING_PERIOD_HOURS = 24;
@@ -37,8 +38,7 @@ function formatMoment(date: Date | string): string {
 /** The customer-facing Boksøk: scan or type a blid and see who the book belongs to. */
 export default function PublicBlidSearch() {
   const [blid, setBlid] = useState<string | null>(null);
-  const { api } = useApiClient();
-  const { data: userDetail } = useQuery(api.users.me.queryOptions());
+  const { data: userDetail } = useQuery(authQueryOptions());
 
   const opensAt = userDetail
     ? norwegianTime(userDetail.createdAt).add(LOOKUP_WAITING_PERIOD_HOURS, "hour")
@@ -81,7 +81,6 @@ function LookupOpensLater({ opensAt }: { opensAt: Date }) {
 }
 
 function PublicBlidResult({ blid, onClear }: { blid: string; onClear: () => void }) {
-  const { api } = useApiClient();
   const { data, isPending, isError, error } = useQuery({
     ...api.publicBlidLookup.show.queryOptions({ params: { blid } }),
     // Every attempt counts against the daily budget, so a failed one is not retried behind the

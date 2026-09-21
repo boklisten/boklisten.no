@@ -8,15 +8,14 @@ import UserSettingsForm from "@/features/user/UserSettingsForm";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 import CountdownToRedirect from "@/shared/components/CountdownToRedirect";
-import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { isUnder18 } from "@/shared/utils/dates";
 import { hasPendingTasks } from "@/shared/utils/tasks";
+import { authQueryOptions } from "@/features/auth/authQuery";
 
 export default function Tasks() {
-  const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery({
-    ...api.users.me.queryOptions(),
+    ...authQueryOptions(),
     refetchInterval: 5000,
   });
 

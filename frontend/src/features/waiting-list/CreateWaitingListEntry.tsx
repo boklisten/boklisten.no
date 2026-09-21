@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import { useAppForm } from "@/shared/hooks/form";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 interface WaitingListEntryForm {
@@ -28,7 +28,6 @@ export default function CreateWaitingListEntry({
   items: Item[];
   onClose: () => void;
 }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
 
   const { data: branches } = useQuery(api.branches.indexPublic.queryOptions());
@@ -36,7 +35,7 @@ export default function CreateWaitingListEntry({
   const addWaitingListCustomer = useMutation({
     mutationFn: async (data: WaitingListEntryForm) => {
       for (const itemId of data.itemIds) {
-        await client.api.waitingListCustomers.store({
+        await apiClient.api.waitingListCustomers.store({
           body: {
             name: data.name,
             phoneNumber: data.phoneNumber,

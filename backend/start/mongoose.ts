@@ -16,7 +16,7 @@ if (env.get("API_ENV") !== "test") {
     logger.error("mongoose connection has error");
   });
 
-  await mongoose.connect(env.get("MONGODB_URI"), {
+  await mongoose.connect(env.get("MONGODB_URI").release(), {
     dbName: env.get("API_ENV") === "production" ? "production" : "staging",
     maxPoolSize: 10,
     connectTimeoutMS: 10_000,

@@ -18,7 +18,7 @@ export default class DispatchController {
       .toSorted((a, b) => a.name.localeCompare(b.name));
   }
   async store(ctx: HttpContext) {
-    const { detailsId } = ctx.authUser;
+    const { id: detailsId } = ctx.auth.getUserOrFail();
     const { name, recipients } = await ctx.request.validateUsing(createDispatchValidator);
     const sendout = await MessageLogService.createSendout({
       kind: "custom",

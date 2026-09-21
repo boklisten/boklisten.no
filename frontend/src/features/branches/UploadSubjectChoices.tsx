@@ -25,7 +25,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 
 import { cellToString, normalizeNorwegianDate } from "@/shared/utils/csvNormalizers";
-import useApiClient from "@/shared/hooks/useApiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification } from "@/shared/utils/notifications";
 
 interface SubjectChoiceRow {
@@ -221,14 +221,13 @@ export default function UploadSubjectChoices({
   branchId: string;
   branchName: string;
 }) {
-  const { api, client } = useApiClient();
   const queryClient = useQueryClient();
   const [importerOpen, setImporterOpen] = useState(false);
   const [rows, setRows] = useState<SubjectChoiceRow[] | null>(null);
 
   const evaluateMutation = useMutation({
     mutationFn: async (subjectChoiceRows: SubjectChoiceRow[]) =>
-      client.api.branchSubjectChoices.evaluate({
+      apiClient.api.branchSubjectChoices.evaluate({
         params: { branchId },
         body: { rows: subjectChoiceRows },
       }),
@@ -240,7 +239,7 @@ export default function UploadSubjectChoices({
 
   const uploadMutation = useMutation({
     mutationFn: async (subjectChoiceRows: SubjectChoiceRow[]) =>
-      client.api.branchSubjectChoices.upload({
+      apiClient.api.branchSubjectChoices.upload({
         params: { branchId },
         body: { rows: subjectChoiceRows },
       }),

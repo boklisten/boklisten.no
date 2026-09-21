@@ -7,16 +7,28 @@ import type { InferInput, SimpleError } from '@vinejs/vine/types'
 export type ParamValue = string | number | bigint | boolean
 
 export interface Registry {
-  'tokens.refresh': {
-    methods: ["POST"]
-    pattern: '/auth/token'
+  'auth.me': {
+    methods: ["GET","HEAD"]
+    pattern: '/auth/me'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/auth_validators').tokenValidator)>>
+      body: {}
       paramsTuple: []
       params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/auth_validators').tokenValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/tokens_controller').default['refresh']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/tokens_controller').default['refresh']>>> | { status: 422; response: { errors: SimpleError[] } }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/auth_controller').default['me']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/auth_controller').default['me']>>>
+    }
+  }
+  'auth.logout': {
+    methods: ["POST"]
+    pattern: '/auth/logout'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/auth_controller').default['logout']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/auth_controller').default['logout']>>>
     }
   }
   'vipps.redirect': {
@@ -101,6 +113,18 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/auth_validators').passwordResetValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/password_reset_controller').default['reset']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/password_reset_controller').default['reset']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'auth.dev_login': {
+    methods: ["GET","HEAD"]
+    pattern: '/auth/dev_login/:token'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { token: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/auth_controller').default['devLogin']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/auth_controller').default['devLogin']>>>
     }
   }
   'email_verification.verify': {
@@ -341,18 +365,6 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/public_blid_lookup_controller').default['show']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/public_blid_lookup_controller').default['show']>>>
-    }
-  }
-  'users.me': {
-    methods: ["GET","HEAD"]
-    pattern: '/users/me'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['me']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['me']>>>
     }
   }
   'users.update_me': {
