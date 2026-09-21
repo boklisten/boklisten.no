@@ -20,22 +20,23 @@ status, record survey results and anything surprising).
 
 ## Decisions (2026-09-16)
 
-| Topic                     | Decision                                                                                                                                                                                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Primary keys              | Migrated tables keep the Mongo 24-char hex id as a `string(24)` primary key. New rows get an app-generated ObjectId hex. URLs, tokens, avatars and existing Postgres id columns keep working.                                                     |
-| Cutover                   | One shot per collection, inside the Lucid migration's `defer` block on Railway predeploy (the signatures pattern). No dual-write period, no reconciliation pass.                                                                                  |
-| Drop of Mongo collection  | In the same migration, right after the transfer. No separate safety net; a broken transfer is fixed forward in Postgres.                                                                                                                          |
-| Timing                    | No seasonal constraint. Between the drop and Railway switching traffic, the old backend errors on that collection and its writes are lost. Accepted: traffic is low and the window is a few minutes.                                              |
-| Embedded arrays           | Every embedded array whose elements have identity becomes a child table (order items, period extends, invoice item payments, invoice comments, branch periods).                                                                                   |
-| jsonb                     | Only for payloads whose shape belongs to an external vendor (payment gateway info). Everything the app itself defines becomes columns. One exception, decided in step 1: `items.price_history` (a year → price map with keys that vary per item). |
-| Snapshot copies           | Invoice snapshots (customer info, item titles on invoice lines) are kept because invoices are accounting documents. `customerItem.customerInfo`, `uniqueItem.title` and `orderItem.title` are dropped.                                            |
-| Meta fields               | `creationTime`/`lastUpdated` → `created_at`/`updated_at`. `user` and `editableFor` are dropped. `active` is dropped unless the step's survey finds `active: false` documents that code reads.                                                     |
-| API contract              | The frontend may change in the same step when a shape changes (inverted arrays, dropped fields). No presenter code that fakes the old document shape.                                                                                             |
-| Access layer              | One Lucid model per table with static query helpers (see `app/models/signature.ts`). Call sites of `StorageService.X` are rewritten to model calls. No Postgres imitation of `MongodbHandler`/`SEDbQuery`.                                        |
-| Orphans                   | Every step starts with a staging survey. The migration then drops, nullifies or keeps orphans explicitly, with a logged count. Foreign keys are always real.                                                                                      |
-| Order/customer-item cycle | Orders first. `order_items.customer_item_id` lands as a plain column; the customer-items step adds the foreign key and drops `customerItem.orders`.                                                                                               |
-| users + userdetails       | Merged into one table named `users`, keyed by the user-details id (the id everything else references).                                                                                                                                            |
-| Document location         | This file, `docs/postgres-migration-plan.md`.                                                                                                                                                                                                     |
+| Topic                      | Decision                                                                                                                                                                                                                                                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary keys               | Migrated tables keep the Mongo 24-char hex id as a `string(24)` primary key. New rows get an app-generated ObjectId hex. URLs, tokens, avatars and existing Postgres id columns keep working.                                                                                                              |
+| Cutover                    | One shot per collection, inside the Lucid migration's `defer` block on Railway predeploy (the signatures pattern). No dual-write period, no reconciliation pass.                                                                                                                                           |
+| Drop of Mongo collection   | In the same migration, right after the transfer. No separate safety net; a broken transfer is fixed forward in Postgres.                                                                                                                                                                                   |
+| Timing                     | No seasonal constraint. Between the drop and Railway switching traffic, the old backend errors on that collection and its writes are lost. Accepted: traffic is low and the window is a few minutes.                                                                                                       |
+| Embedded arrays            | Every embedded array whose elements have identity becomes a child table (order items, period extends, invoice item payments, invoice comments, branch periods).                                                                                                                                            |
+| jsonb                      | Only for payloads whose shape belongs to an external vendor (payment gateway info). Everything the app itself defines becomes columns. One exception, decided in step 1: `items.price_history` (a year → price map with keys that vary per item).                                                          |
+| Snapshot copies            | Invoice snapshots (customer info, item titles on invoice lines) are kept because invoices are accounting documents. `customerItem.customerInfo`, `uniqueItem.title` and `orderItem.title` are dropped.                                                                                                     |
+| Meta fields                | `creationTime`/`lastUpdated` → `created_at`/`updated_at`. `user` and `editableFor` are dropped. `active` is dropped unless the step's survey finds `active: false` documents that code reads.                                                                                                              |
+| API contract               | The frontend may change in the same step when a shape changes (inverted arrays, dropped fields). No presenter code that fakes the old document shape.                                                                                                                                                      |
+| Access layer               | One Lucid model per table with static query helpers (see `app/models/signature.ts`). Call sites of `StorageService.X` are rewritten to model calls. No Postgres imitation of `MongodbHandler`/`SEDbQuery`.                                                                                                 |
+| Orphans                    | Every step starts with a staging survey. The migration then drops, nullifies or keeps orphans explicitly, with a logged count. Foreign keys are always real.                                                                                                                                               |
+| Order/customer-item cycle  | Orders first. `order_items.customer_item_id` lands as a plain column; the customer-items step adds the foreign key and drops `customerItem.orders`.                                                                                                                                                        |
+| users + userdetails        | Merged into one table named `users`, keyed by the user-details id (the id everything else references).                                                                                                                                                                                                     |
+| Deleted users (2026-09-21) | Orders, customer items, payments and invoices are history and outlive the customer (book history, accounting), so their `customer_id` columns are nullable with `SET NULL`, not `RESTRICT` as the schema conventions say for other references. Match participations are deleted with the user (`CASCADE`). |
+| Document location          | This file, `docs/postgres-migration-plan.md`.                                                                                                                                                                                                                                                              |
 
 ## Current state (surveyed 2026-09-16 on staging, which is a nightly copy of production)
 
@@ -670,7 +671,7 @@ Notes (2026-09-16):
   sort first on the Bøker tab, both with the old plain `localeCompare` and the new
   `localeCompare(…, "nb")`.
 
-## Step 5 — userdetails + users → `users` — status: not started
+## Step 5 — userdetails + users → `users` — status: done 2026-09-21 (rehearsed on staging, pending merge)
 
 The two collections are 1:1 (16 706 vs 16 705 documents) and merge into a single table keyed by the
 user-details id, since that is the id every token (`details` claim), route, avatar seed and Postgres
@@ -729,10 +730,10 @@ userdetails. Frontend: `UserDetail` shared type is imported in 20 files; rename 
 the step).
 
 Also in this step: delete `cron_jobs/database_cleanup/remove_old_order_references.sh` and
-`remove_old_customer_item_references.sh` (they repaired the dropped arrays). Disable
-`remove_inactive_users.sh` (it joins users, userdetails, customeritems and orders inside Mongo, which
-is no longer possible); it is rewritten as SQL in step 9 when orders and customer items are in
-Postgres.
+`remove_old_customer_item_references.sh` (they repaired the dropped arrays) and
+`remove_inactive_users.sh` (it joined users, userdetails, customeritems and orders inside Mongo,
+which is no longer possible). Adrian reimplements user cleanup later, once orders and customer items
+are in Postgres.
 
 Tests: `auth_middleware.spec.ts`, `checkout_signature_guard.spec.ts`, `branch_signature_status.spec.ts`,
 customer-related order validator specs (`order-user-detail-validator.spec.ts`), plus new specs for
@@ -744,7 +745,78 @@ outside the enum; users with neither local nor Vipps login; `userdetails.active:
 whether any code reads it (the `active` column is only kept if both are non-zero); orphan ids in
 each Postgres column listed above; ids in `match_rounds.excluded_customer_ids` not in userdetails.
 
-Survey results / notes: (fill in)
+Survey results (2026-09-21, staging):
+
+- 16 716 userdetails, 16 715 users; every user points at an existing userdetail, none shared. One
+  userdetail (a 2022 customer with 3 orders) has no user document; it migrated with permission
+  `customer` and no login.
+- Permission: customer 16 647, employee 61, manager 4, admin 3. Login shape: 9 055 have no login
+  at all (never logged in since the auth rewrite), 3 624 local only, 4 974 Vipps only, 954 both.
+  One Vipps user id was attached to two accounts (a guardian who had logged in on their child's
+  account before creating their own); the older account keeps it, the newer one lost its Vipps
+  login and re-links by phone or email on its next Vipps login, which is how the callback resolves
+  the account anyway.
+- Email always present, 0 case duplicates, 2 not lowercased (lowercased on transfer). Phone: 21
+  missing (NULL), 0 duplicates, 3 not eight digits (`+47…`, trailing space). Guardian object on
+  14 413 but only 5 193 with any field filled, 27 partially filled; 80 guardian phones with `+47`
+  or padding and 3 stored as integers. Phones are normalised to eight digits on transfer; 1 phone
+  and 7 guardian phones that still did not come out as eight digits were kept as they were.
+- dob: 233 missing; 9 836 stored as Oslo midnight (22:00/23:00Z), 6 600 as UTC midnight, ~30 equal
+  to `creationTime` (2018–2021 imports). Three impossible dates (years 200207, 200303 and 1194)
+  were cleared to NULL. Everything else became the calendar day it names in Oslo time.
+- `active: false`: 0 on both collections (column dropped). Dead keys dropped: `user`,
+  `editableFor`, `viewableFor`, `signatures` (the pre-Postgres array, 16 559), `lastActive`
+  (7 356), `temporaryGroupMembership` (264), `__v`.
+- `orders`/`customerItems` arrays: 81 207 / 93 680 entries; 55 748 orders and 53 341 customer items
+  on staging belong to deleted users, so the arrays were already the weaker side. Both dropped;
+  `orders.customer_1` and `customeritems.customer_1` Mongo indexes created.
+- `branchMembership`: 87 distinct, 0 orphans against Postgres branches.
+- Postgres orphans: signatures 3 rows (deleted), match_participants 1 (a stand match in a draft
+  round with 6 obligations; the match was deleted), messages 28 rows / 6 ids (set to null),
+  password_resets 2 rows / 1 id (deleted), book_handovers 0, sendouts 0, email_verifications 0,
+  `match_rounds.excluded_customer_ids` 0.
+
+Notes (2026-09-21):
+
+- Decisions taken in the interview: the shared type is renamed to `User` (`shared/user.ts`, flat
+  fields: `guardianName`/`guardianEmail`/`guardianPhone`, `taskConfirmDetails`/`taskSignAgreement`,
+  `branchMembershipId`, `permission`, `dob` as a `yyyy-MM-dd` string, `createdAt`); `vipps_user_id`
+  is unique; phones are normalised on transfer and the `phoneField` validator now strips
+  `+47`/`0047` and inner spaces and rejects anything that is not eight digits starting with 4 or 9;
+  `match_participants.user_detail_id` is `CASCADE` (not `RESTRICT` as first planned) because Adrian
+  wants deleting a user to keep working; `email_verifications.user_detail_id` and
+  `password_resets.user_detail_id` (not in the plan's list) also became foreign keys (CASCADE,
+  narrowed to 24 chars).
+- Staging rehearsal from a laptop: `users: migrated 16716, skipped 0`, orphan clean-up as listed
+  above, both Mongo collections dropped, the whole migration in seconds. A field-by-field
+  comparison of every row against a JSON dump taken before the run found zero differences; the
+  eight foreign keys and the unique indexes (`lower(email)`, partial `phone`, partial
+  `vipps_user_id`, `blid`) are in place. The first attempt failed on the year-200207 date of birth
+  (`time zone displacement out of range`), which is why impossible dates are cleared.
+- Files: migration `1789900000000_create_users_table.ts`; model `app/models/user.ts`
+  (`findOptional`, `getOrFail`, `byIds`, `namesByIds`, `byEmail` (case-insensitive), `byPhone`,
+  `byUsername`, `byVippsUserId`, `membersOf`, `countMembersOf`, `employees`, `search` (ILIKE over
+  nine columns, own-info matches first, newest first), `toDto`); `app/services/user_service.ts`
+  replaces `user_detail_service.ts` + the old `user_service.ts` (`search`, `updateAsEmployee`,
+  `createVippsUser`, `createLocalUser`, `createProvisionedUser`, `dobFrom`);
+  `user_detail_helper.ts` is now the function `invalidUserFields`. `config/database.ts` registers a
+  pg type parser so `date` columns come back as text (Lucid's `@column.date()` reads it in the app
+  zone), which also affects `match_rounds.deadline`/`meeting_date` harmlessly.
+- `Signature.isValidFor`/`isUnderage` and friends take `{ dob: DateTime | null }` now; the
+  reminders, reports, order manager, branch books, public blid lookup and duplicates code project
+  the user id in Mongo and join names from Postgres in code (`report_columns.ts` `withUserColumns`).
+  The users report (`/reports/user_details`) is a plain Postgres query.
+- API: `PATCH /user_details/*` and `POST /local/register` take `branchMembershipId`,
+  `guardianName`, `guardianEmail`, `guardianPhone` (nullable) instead of `branchMembership` and a
+  `guardian` object. Routes keep their `/user_details/...` paths.
+- Specs insert users with `tests/user_fixtures.ts` (`createUser`, `userDouble` for stub-only specs)
+  and seed people before participants/handovers/signatures/messages with
+  `tests/matches/match-testing-utils.ts` `ensureUsers`, since all of those columns are foreign keys
+  now. New specs: `tests/user_model.spec.ts`, `tests/phone_field.spec.ts`.
+- Cron: `remove_old_order_references.sh`, `remove_old_customer_item_references.sh` and
+  `remove_inactive_users.sh` deleted (the last one on review, 2026-09-21); the Database Cleanup job
+  now only runs `remove_unplaced_orders.sh`. User cleanup is reimplemented later, by Adrian.
+- Legacy access tokens keep working: `details` (the user id) and `sub` (blid) are unchanged.
 
 ## Step 6 — (merged into step 5)
 
@@ -775,19 +847,19 @@ customer items and deliveries is already in Postgres at this point.
 
 Target schema `orders`:
 
-| Column                         | From                 | Notes                                                        |
-| ------------------------------ | -------------------- | ------------------------------------------------------------ |
-| id string(24) PK               | `_id`                |                                                              |
-| amount integer not null        | `amount`             |                                                              |
-| branch_id FK branches RESTRICT | `branch`             |                                                              |
-| customer_id FK users RESTRICT  | `customer`           | user deletion must delete orders first (step 9 cron)         |
-| by_customer bool               | `byCustomer`         |                                                              |
-| employee_id FK users SET NULL  | `employee`           |                                                              |
-| placed bool                    | `placed`             |                                                              |
-| delivery_id string(24) null    | `delivery`           | plain column until step 10 removes it                        |
-| notify_by_email bool null      | `notification.email` |                                                              |
-| checkout_state text null       | `checkoutState`      | legacy Vipps Checkout; survey whether any live code reads it |
-| timestamps                     |                      |                                                              |
+| Column                         | From                 | Notes                                                                                          |
+| ------------------------------ | -------------------- | ---------------------------------------------------------------------------------------------- |
+| id string(24) PK               | `_id`                |                                                                                                |
+| amount integer not null        | `amount`             |                                                                                                |
+| branch_id FK branches RESTRICT | `branch`             |                                                                                                |
+| customer_id FK users SET NULL  | `customer`           | nullable: orders outlive a deleted customer (decided 2026-09-21); 381 orders already have none |
+| by_customer bool               | `byCustomer`         |                                                                                                |
+| employee_id FK users SET NULL  | `employee`           |                                                                                                |
+| placed bool                    | `placed`             |                                                                                                |
+| delivery_id string(24) null    | `delivery`           | plain column until step 10 removes it                                                          |
+| notify_by_email bool null      | `notification.email` |                                                                                                |
+| checkout_state text null       | `checkoutState`      | legacy Vipps Checkout; survey whether any live code reads it                                   |
+| timestamps                     |                      |                                                                                                |
 
 Dropped: `payments` array (derivable from `payments.order`; this migration creates the Mongo index
 `payments.order` so the interim lookup is cheap).
@@ -857,27 +929,27 @@ Survey results / notes: (fill in; include the measured transfer duration)
 
 Target schema `customer_items`:
 
-| Column                                                         | From                           | Notes                                   |
-| -------------------------------------------------------------- | ------------------------------ | --------------------------------------- |
-| id string(24) PK                                               | `_id`                          |                                         |
-| item_id FK items RESTRICT                                      | `item`                         |                                         |
-| type enu(rent, partly-payment) not null                        | `type`                         |                                         |
-| blid text null                                                 | `blid`                         |                                         |
-| customer_id FK users RESTRICT                                  | `customer`                     |                                         |
-| deadline timestamptz not null                                  | `deadline`                     |                                         |
-| handout bool                                                   | `handout`                      |                                         |
-| handout_branch_id FK branches SET NULL                         | `handoutInfo.handoutById`      | `handoutBy` is always "branch"; dropped |
-| handout_employee_id FK users SET NULL                          | `handoutInfo.handoutEmployee`  |                                         |
-| handed_out_at timestamptz null                                 | `handoutInfo.time`             |                                         |
-| returned bool                                                  | `returned`                     |                                         |
-| return_branch_id FK branches SET NULL                          | `returnInfo.returnedToId`      |                                         |
-| return_employee_id FK users SET NULL                           | `returnInfo.returnEmployee`    |                                         |
-| returned_at timestamptz null                                   | `returnInfo.time`              |                                         |
-| cancel bool, cancel_order_id FK orders SET NULL, cancelled_at  | `cancel`, `cancelInfo.*`       |                                         |
-| buyout bool, buyout_order_id FK orders SET NULL, bought_out_at | `buyout`, `buyoutInfo.*`       |                                         |
-| buyback bool, buyback_order_id FK orders SET NULL              | `buyback`, `buybackInfo.order` |                                         |
-| total_amount int null, amount_left_to_pay int null             | partly payment                 |                                         |
-| timestamps                                                     |                                |                                         |
+| Column                                                         | From                           | Notes                                                           |
+| -------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------- |
+| id string(24) PK                                               | `_id`                          |                                                                 |
+| item_id FK items RESTRICT                                      | `item`                         |                                                                 |
+| type enu(rent, partly-payment) not null                        | `type`                         |                                                                 |
+| blid text null                                                 | `blid`                         |                                                                 |
+| customer_id FK users SET NULL                                  | `customer`                     | nullable: books outlive a deleted customer (decided 2026-09-21) |
+| deadline timestamptz not null                                  | `deadline`                     |                                                                 |
+| handout bool                                                   | `handout`                      |                                                                 |
+| handout_branch_id FK branches SET NULL                         | `handoutInfo.handoutById`      | `handoutBy` is always "branch"; dropped                         |
+| handout_employee_id FK users SET NULL                          | `handoutInfo.handoutEmployee`  |                                                                 |
+| handed_out_at timestamptz null                                 | `handoutInfo.time`             |                                                                 |
+| returned bool                                                  | `returned`                     |                                                                 |
+| return_branch_id FK branches SET NULL                          | `returnInfo.returnedToId`      |                                                                 |
+| return_employee_id FK users SET NULL                           | `returnInfo.returnEmployee`    |                                                                 |
+| returned_at timestamptz null                                   | `returnInfo.time`              |                                                                 |
+| cancel bool, cancel_order_id FK orders SET NULL, cancelled_at  | `cancel`, `cancelInfo.*`       |                                                                 |
+| buyout bool, buyout_order_id FK orders SET NULL, bought_out_at | `buyout`, `buyoutInfo.*`       |                                                                 |
+| buyback bool, buyback_order_id FK orders SET NULL              | `buyback`, `buybackInfo.order` |                                                                 |
+| total_amount int null, amount_left_to_pay int null             | partly payment                 |                                                                 |
+| timestamps                                                     |                                |                                                                 |
 
 Partial unique index reproducing `unique_active_blid`:
 `CREATE UNIQUE INDEX customer_items_unique_active_blid ON customer_items (blid) WHERE blid IS NOT NULL AND NOT returned AND NOT buyout`.
@@ -903,10 +975,10 @@ aggregates, `blid_search_service.ts` history reconciliation, matches `round_scop
 `generate_round.ts`, `branch_insights_service.ts`, invoices generation, deadline extension, the
 Kasse customer view and Overleveringer.
 
-Also in this step: reinstate `remove_inactive_users` as SQL (customers whose `updated_at`, all
-orders and all customer items are older than three years and whose items are all returned,
-cancelled, bought out or bought back), deleting in dependency order: signatures, messages links,
-customer items, order items, orders, then the user.
+Also in this step, or later: user cleanup is reimplemented by Adrian (the old Mongo script deleted
+customers whose `updated_at`, all orders and all customer items were older than three years and
+whose items were all returned, cancelled, bought out or bought back). Deleting in dependency order
+is no longer needed for the Postgres side: the user's foreign keys cascade or set null.
 
 Tests: `customer-item-*.spec.ts`, `active_customer_items_for_customer.spec.ts`,
 `customer_item_actions_service.spec.ts`, `active_item_monitoring.spec.ts`,
@@ -959,7 +1031,7 @@ Survey results / notes: (fill in)
 ## Step 11 — payments → `payments` — status: not started
 
 Target schema `payments`: `id string(24) PK`, `order_id FK orders CASCADE`, `customer_id FK users
-RESTRICT`, `branch_id FK branches RESTRICT`, `method enu(card, cash, vipps, vipps-checkout,
+SET NULL` (payments outlive a deleted customer, decided 2026-09-21), `branch_id FK branches RESTRICT`, `method enu(card, cash, vipps, vipps-checkout,
 vipps-epayment, bank-transfer, dibs)`, `amount integer`, `confirmed bool default false`,
 `info jsonb null` (vendor payload: Vipps/DIBS/bank-transfer details; the only jsonb column of the
 migration), timestamps. Indexes: `(order_id)`, `(customer_id)`, `(branch_id, created_at)` for the
@@ -1085,3 +1157,8 @@ Only after step 12 has run in production.
   columns not null per survey, staging rehearsal 2.9 s).
 - 2026-09-16: step 4 implemented (branch items into Postgres with six flags and `categories text[]`,
   four dead flags dropped, PUT became an in-place diff, staging rehearsal 4.87 s, zero orphans).
+- 2026-09-21: step 5 implemented (userdetails + users merged into `users`, shared type renamed to
+  `User`, eight foreign keys added, `match_participants` CASCADE instead of RESTRICT, phone
+  normalisation, staging rehearsal with zero field diffs). Decided that orders, customer items,
+  payments and invoices keep their rows when a customer is deleted, so steps 8, 9 and 11 use
+  `customer_id … SET NULL`.

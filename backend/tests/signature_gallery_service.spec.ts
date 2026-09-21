@@ -1,22 +1,21 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import { ObjectId } from "mongodb";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import Branch from "#models/branch";
 import Signature from "#models/signature";
+import User from "#models/user";
 import type { GalleryContext, GalleryCustomer } from "#services/signature_gallery_service";
 import { SignatureGalleryService } from "#services/signature_gallery_service";
-import { StorageService } from "#services/storage_service";
+import type { UserPermission } from "#shared/user-permission";
 import { createBranch } from "#tests/branch_fixtures";
-import { unchecked } from "#tests/test-doubles";
 
-const adultDob = new Date(new Date().getFullYear() - 30, 0, 1);
-const childDob = new Date(new Date().getFullYear() - 10, 0, 1);
+const adultDob = DateTime.now().minus({ years: 30 }).startOf("year");
+const childDob = DateTime.now().minus({ years: 10 }).startOf("year");
 
-const emptyContext: GalleryContext = { branchNames: new Map(), permissions: new Map() };
+const emptyContext: GalleryContext = { branchNames: new Map() };
 
 // getPage feeds the ids into Mongo aggregations, so they must be valid ObjectId hex strings.
 function customerDetailsIdFor(id: number): string {
@@ -41,10 +40,28 @@ function makeSignature(overrides: {
 
 function customerFor(
   signature: Signature,
-  dob: Date = adultDob,
-  branchMembership?: string,
+  dob: DateTime = adultDob,
+  branchMembershipId: string | null = null,
+  permission: UserPermission = "customer",
 ): GalleryCustomer {
-  return { id: signature.customerDetailsId, name: `Kunde ${signature.id}`, dob, branchMembership };
+  return {
+    id: signature.customerDetailsId,
+    name: `Kunde ${signature.id}`,
+    dob,
+    branchMembershipId,
+    permission,
+  };
+}
+
+/** `User.byIds` stub payload: the customers keyed by id, as the users table would return them. */
+function customersById(customers: GalleryCustomer[]): Map<string, User> {
+  return new Map(
+    customers.map((customer) => {
+      const user = new User();
+      user.fill(customer);
+      return [customer.id, user];
+    }),
+  );
 }
 
 test.group("SignatureGalleryService cursor", () => {
@@ -87,12 +104,13 @@ test.group("SignatureGalleryService.toGalleryItem", () => {
     assert.match(item?.signedAtText ?? "", /^\d{2}\/\d{2}\/\d{4}$/);
   });
 
-  test("resolves branch name and elevated permission from the context", ({ assert }) => {
+  test("resolves the branch name from the context and the permission from the customer", ({
+    assert,
+  }) => {
     const signature = makeSignature({ id: 1 });
-    const customer = customerFor(signature, adultDob, "branch-1");
+    const customer = customerFor(signature, adultDob, "branch-1", "employee");
     const item = SignatureGalleryService.toGalleryItem(signature, customer, {
       branchNames: new Map([["branch-1", "Ullern VGS"]]),
-      permissions: new Map([[customer.id, "employee"]]),
     });
     assert.equal(item?.branchName, "Ullern VGS");
     assert.equal(item?.permission, "employee");
@@ -143,15 +161,13 @@ test.group("SignatureGalleryService.getPage", (group) => {
   let sandbox: sinon.SinonSandbox;
   let pageStub: sinon.SinonStub;
   let customersStub: sinon.SinonStub;
-  let usersAggregateStub: sinon.SinonStub;
   let branchNamesSpy: sinon.SinonSpy;
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
     pageStub = sandbox.stub(Signature, "newestPerCustomerPage");
-    customersStub = sandbox.stub(StorageService.UserDetails, "getMany");
-    usersAggregateStub = sandbox.stub(StorageService.Users, "aggregate").resolves([]);
+    customersStub = sandbox.stub(User, "byIds");
     branchNamesSpy = sandbox.spy(Branch, "namesByIds");
     return () => sandbox.restore();
   });
@@ -167,7 +183,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
     const expired = makeSignature({ id: 2, createdAt: DateTime.now().minus({ years: 5 }) });
     const orphaned = makeSignature({ id: 3 });
     pageStub.resolves([valid, expired, orphaned]);
-    customersStub.resolves(unchecked([customerFor(valid), customerFor(expired)]));
+    customersStub.resolves(customersById([customerFor(valid), customerFor(expired)]));
 
     const page = await SignatureGalleryService.getPage(null);
 
@@ -181,7 +197,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
   test("stops at the page size and resumes from the last judged row", async ({ assert }) => {
     const rows = Array.from({ length: 50 }, (_, index) => makeSignature({ id: index + 1 }));
     pageStub.resolves(rows);
-    customersStub.resolves(unchecked(rows.map((row) => customerFor(row))));
+    customersStub.resolves(customersById(rows.map((row) => customerFor(row))));
 
     const page = await SignatureGalleryService.getPage(null);
 
@@ -203,8 +219,10 @@ test.group("SignatureGalleryService.getPage", (group) => {
     const secondBatch = [makeSignature({ id: 100 })];
     pageStub.onFirstCall().resolves(firstBatch);
     pageStub.onSecondCall().resolves(secondBatch);
-    customersStub.onFirstCall().resolves(unchecked(firstBatch.map((row) => customerFor(row))));
-    customersStub.onSecondCall().resolves(unchecked(secondBatch.map((row) => customerFor(row))));
+    customersStub.onFirstCall().resolves(customersById(firstBatch.map((row) => customerFor(row))));
+    customersStub
+      .onSecondCall()
+      .resolves(customersById(secondBatch.map((row) => customerFor(row))));
 
     const page = await SignatureGalleryService.getPage(null);
 
@@ -222,10 +240,9 @@ test.group("SignatureGalleryService.getPage", (group) => {
   }) => {
     const branchId = "b".repeat(24);
     const signature = makeSignature({ id: 1 });
-    const customer = customerFor(signature, adultDob, branchId);
+    const customer = customerFor(signature, adultDob, branchId, "manager");
     pageStub.resolves([signature]);
-    customersStub.resolves(unchecked([customer]));
-    usersAggregateStub.resolves([{ userDetail: new ObjectId(customer.id), permission: "manager" }]);
+    customersStub.resolves(customersById([customer]));
     await createBranch({ id: branchId, name: "Ullern VGS" });
 
     const page = await SignatureGalleryService.getPage(null);
@@ -237,7 +254,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
   test("skips the branch lookup when no customer has a membership", async ({ assert }) => {
     const signature = makeSignature({ id: 1 });
     pageStub.resolves([signature]);
-    customersStub.resolves(unchecked([customerFor(signature)]));
+    customersStub.resolves(customersById([customerFor(signature)]));
 
     const page = await SignatureGalleryService.getPage(null);
 

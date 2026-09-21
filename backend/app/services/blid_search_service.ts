@@ -3,6 +3,7 @@ import type { ObjectId } from "mongodb";
 import Branch from "#models/branch";
 import Item from "#models/item";
 import BookHandover from "#models/book_handover";
+import User from "#models/user";
 import { ActiveItemMonitoring, FALLBACK_BRANCH_NAME } from "#services/active_item_monitoring";
 import { ActiveItemCorrections } from "#services/active_item_corrections";
 import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
@@ -856,19 +857,13 @@ export const BlidSearchService = {
     const holders = new Map(
       winners.flatMap((row) => (row.holder ? [[row.blid, String(row.holder)] as const] : [])),
     );
-    const userDetails =
-      holders.size === 0
-        ? []
-        : await StorageService.UserDetails.getMany(
-            [...new Set(holders.values())],
-            USER_PERMISSION.ADMIN,
-          );
+    const userNames = await User.namesByIds(holders.values());
 
     return {
       hits: assembleBlidSearchHits({
         uniqueItems: winners,
         holders,
-        userDetails: new Map(userDetails.map((detail) => [detail.id, detail.name])),
+        userDetails: userNames,
       }),
       hasMore,
     };
@@ -894,8 +889,8 @@ export const BlidSearchService = {
     }));
 
     const { userDetailIds, branchIds } = collectReferencedIds(customerItems, orders, handovers);
-    const [userDetails, branchNames] = await Promise.all([
-      StorageService.UserDetails.getMany(userDetailIds, USER_PERMISSION.ADMIN),
+    const [userNames, branchNames] = await Promise.all([
+      User.namesByIds(userDetailIds),
       Branch.namesByIds(branchIds),
     ]);
 
@@ -911,7 +906,7 @@ export const BlidSearchService = {
       orders,
       handovers,
       bringDeliveryOrderIds,
-      userDetails: new Map(userDetails.map((detail) => [detail.id, detail.name])),
+      userDetails: userNames,
       branchNames,
       now: new Date(),
     });

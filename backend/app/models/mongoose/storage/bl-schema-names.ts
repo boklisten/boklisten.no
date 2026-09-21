@@ -5,6 +5,4 @@ export const BlSchemaName = {
   Orders: "orders",
   Payments: "payments",
   UniqueItems: "uniqueitems",
-  Users: "users",
-  UserDetails: "userdetails",
 } as const satisfies Record<string, string>;

@@ -5,11 +5,16 @@ import { createSandbox } from "sinon";
 
 import Match from "#models/match";
 import MatchParticipant from "#models/match_participant";
-import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
+import {
+  createTestRound,
+  ensureUsers,
+  seedTestCatalogue,
+} from "#tests/matches/match-testing-utils";
+import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { notify } from "#services/matches/notify_round";
-import { StorageService } from "#services/storage_service";
-import { mock, unchecked } from "#tests/test-doubles";
+import { mock } from "#tests/test-doubles";
+import { userDouble } from "#tests/user_fixtures";
 
 const A = "5d765db5fc8c47001c408d81";
 const B = "5d765db5fc8c47001c408d82";
@@ -31,6 +36,7 @@ test.group("notify", (group) => {
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([A, B, C, D]));
   group.each.setup(() => {
     sandbox = createSandbox();
     sandbox.stub(DispatchService, "sendMatchInformation").resolves({
@@ -38,8 +44,8 @@ test.group("notify", (group) => {
       smsStatus: { successCount: 0, failed: [] },
     });
     getManyStub = sandbox
-      .stub(StorageService.UserDetails, "getMany")
-      .callsFake(async (ids) => unchecked(ids.map((id) => ({ id }))));
+      .stub(User, "findMany")
+      .callsFake(async (ids) => ids.map((id) => userDouble({ id: String(id) })));
   });
   group.each.teardown(() => sandbox.restore());
 

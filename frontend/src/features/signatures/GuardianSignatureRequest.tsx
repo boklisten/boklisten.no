@@ -1,4 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Button, Group, Stack, Text, Title } from "@mantine/core";
 import { IconSend } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
@@ -11,7 +11,7 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
  * How an underage customer gets the agreement signed: the registered guardian is sent a signing
  * link. Shared by the tasks page and the checkout's signing step so the two never drift apart.
  */
-export default function GuardianSignatureRequest({ userDetail }: { userDetail: UserDetail }) {
+export default function GuardianSignatureRequest({ userDetail }: { userDetail: User }) {
   const { api } = useApiClient();
   const requestSignatureMutation = useMutation(
     api.signatures.sendLinkMe.mutationOptions({
@@ -19,7 +19,7 @@ export default function GuardianSignatureRequest({ userDetail }: { userDetail: U
       onError: () => showErrorNotification("Klarte ikke sende signaturforespørsel"),
     }),
   );
-  const guardianName = userDetail.guardian?.name;
+  const guardianName = userDetail.guardianName;
   return (
     <Stack>
       <InfoAlert title="Send signaturforespørsel til foresatt">
@@ -34,11 +34,11 @@ export default function GuardianSignatureRequest({ userDetail }: { userDetail: U
           </Group>
           <Group gap={5}>
             <Text>Telefonnummer:</Text>
-            <Text fw="bold">{userDetail.guardian?.phone}</Text>
+            <Text fw="bold">{userDetail.guardianPhone}</Text>
           </Group>
           <Group gap={5}>
             <Text>E-post:</Text>
-            <Text fw="bold">{userDetail.guardian?.email}</Text>
+            <Text fw="bold">{userDetail.guardianEmail}</Text>
           </Group>
           <Text fs="italic" size="sm" mt="xs">
             Du kan endre foresatt-opplysninger i brukerinnstillinger

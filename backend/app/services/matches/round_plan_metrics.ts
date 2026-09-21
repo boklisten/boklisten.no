@@ -1,6 +1,6 @@
 import type MatchRound from "#models/match_round";
-import { getHeldItems, getWantedItems, membersOfBranches } from "#services/matches/round_scope";
-import { StorageService } from "#services/storage_service";
+import User from "#models/user";
+import { getHeldItems, getWantedItems } from "#services/matches/round_scope";
 import type { BookTally, MatchRoundPlanMetrics } from "#shared/match/match-round-dto";
 
 function tally(booksByStudent: Map<string, Set<string>>): BookTally {
@@ -15,16 +15,13 @@ export async function roundPlanMetrics(round: MatchRound): Promise<MatchRoundPla
   const { branches, deadline, includeCustomerItemsFromOtherBranches } = round;
 
   const [members, heldBooks, orderedBooks] = await Promise.all([
-    StorageService.UserDetails.aggregate<{ students: number }>([
-      { $match: membersOfBranches(branches) },
-      { $count: "students" },
-    ]),
+    User.countMembersOf(branches),
     getHeldItems(branches, deadline, includeCustomerItemsFromOtherBranches),
     getWantedItems(branches),
   ]);
 
   return {
-    branchMembers: members[0]?.students ?? 0,
+    branchMembers: members,
     activeBooks: tally(heldBooks),
     orderedBooks: tally(orderedBooks),
   };

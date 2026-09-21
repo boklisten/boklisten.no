@@ -3,7 +3,7 @@ import type {
   StandCartCheckoutState,
   StandCartConfirmation,
 } from "@boklisten/backend/shared/stand_cart";
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Stack, Text } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -60,7 +60,7 @@ export default function useStandCartSubmit({
   onCartChanged,
 }: {
   cart: StandCart;
-  customer: UserDetail;
+  customer: User;
   notifyByEmail: boolean;
   /** The backend refused the cart and re-pricing it changed what the employee sees. */
   onCartChanged: () => void;

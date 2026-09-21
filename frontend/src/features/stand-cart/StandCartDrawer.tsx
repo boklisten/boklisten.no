@@ -1,6 +1,6 @@
 import { findOption, CONTACT_ADMIN_FOR_EXTRA_COPY } from "@boklisten/backend/shared/stand_cart";
 import type { StandCartCheckoutState } from "@boklisten/backend/shared/stand_cart";
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import {
   ActionIcon,
   Badge,
@@ -285,7 +285,7 @@ export default function StandCartDrawer({
   onClose,
 }: {
   cart: StandCart;
-  customer: UserDetail;
+  customer: User;
   opened: boolean;
   onClose: () => void;
 }) {

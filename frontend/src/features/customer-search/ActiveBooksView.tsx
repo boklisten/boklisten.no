@@ -1,7 +1,7 @@
 import type { ActiveCustomerItem } from "@boklisten/backend/shared/customer-item/active-customer-item";
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Badge, Box, Group, Skeleton, Stack, Table, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
@@ -166,7 +166,7 @@ function BookTable({
   );
 }
 
-export default function ActiveBooksView({ customer }: { customer: UserDetail }) {
+export default function ActiveBooksView({ customer }: { customer: User }) {
   const customerId = customer.id;
   const { api } = useApiClient();
   const {

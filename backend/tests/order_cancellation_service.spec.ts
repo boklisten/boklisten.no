@@ -4,15 +4,16 @@ import { createSandbox } from "sinon";
 
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { OrderCancellationService } from "#services/order_cancellation_service";
+import User from "#models/user";
 import { StorageService } from "#services/storage_service";
+import { userDouble } from "#tests/user_fixtures";
 
 test.group("OrderCancellationService", (group) => {
   let sandbox: sinon.SinonSandbox;
   let addOrderStub: sinon.SinonStub;
   let getOrderStub: sinon.SinonStub;
   let updateOrderStub: sinon.SinonStub;
-  let getUserDetailStub: sinon.SinonStub;
-  let updateUserDetailStub: sinon.SinonStub;
+  let findUserStub: sinon.SinonStub;
   let sendOrderReceiptStub: sinon.SinonStub;
 
   const originalOrder = { id: "order1", branch: "branch1", customer: "customer1" };
@@ -21,24 +22,20 @@ test.group("OrderCancellationService", (group) => {
   group.each.setup(() => {
     sandbox = createSandbox();
     const ordersStub = { add: sandbox.stub(), get: sandbox.stub(), update: sandbox.stub() };
-    const userDetailsStub = { get: sandbox.stub(), update: sandbox.stub() };
     sandbox.stub(StorageService, "Orders").value(ordersStub);
-    sandbox.stub(StorageService, "UserDetails").value(userDetailsStub);
+    findUserStub = sandbox.stub(User, "find");
     sendOrderReceiptStub = sandbox.stub(OrderEmailHandler, "sendOrderReceipt").resolves();
 
     addOrderStub = ordersStub.add;
     getOrderStub = ordersStub.get;
     updateOrderStub = ordersStub.update;
-    getUserDetailStub = userDetailsStub.get;
-    updateUserDetailStub = userDetailsStub.update;
 
     addOrderStub.callsFake(async (order) => ({ ...order, id: "cancelOrder1" }));
     getOrderStub
       .withArgs("order1")
       .resolves({ id: "order1", orderItems: [{ item: "item1", title: "Bok 1" }] });
     updateOrderStub.resolves({});
-    getUserDetailStub.withArgs("customer1").resolves({ id: "customer1", orders: ["order1"] });
-    updateUserDetailStub.resolves({});
+    findUserStub.withArgs("customer1").resolves(userDouble({ id: "customer1" }));
   });
   group.each.teardown(() => {
     sandbox.restore();
@@ -88,18 +85,6 @@ test.group("OrderCancellationService", (group) => {
     ]);
   });
 
-  test("appends the cancellation order to the customer's userdetail", async ({ assert }) => {
-    await OrderCancellationService.cancelOrderItems({
-      originalOrder,
-      orderItems,
-      notifyCustomer: true,
-    });
-
-    assert.deepEqual(updateUserDetailStub.args, [
-      ["customer1", { orders: ["order1", "cancelOrder1"] }],
-    ]);
-  });
-
   test("marks admin cancellations with the employee and honours notifyCustomer off", async ({
     assert,
   }) => {
@@ -115,11 +100,10 @@ test.group("OrderCancellationService", (group) => {
     assert.equal(added.employee, "employee1");
     assert.deepEqual(added.notification, { email: false });
     assert.equal(sendOrderReceiptStub.callCount, 0);
-    assert.equal(updateUserDetailStub.callCount, 1);
   });
 
   test("still cancels when the customer no longer exists", async ({ assert }) => {
-    getUserDetailStub.withArgs("customer1").rejects(new Error("not found"));
+    findUserStub.withArgs("customer1").resolves(null);
 
     const cancelOrder = await OrderCancellationService.cancelOrderItems({
       originalOrder,
@@ -130,6 +114,5 @@ test.group("OrderCancellationService", (group) => {
     assert.equal(cancelOrder.id, "cancelOrder1");
     assert.equal(updateOrderStub.callCount, 1);
     assert.equal(sendOrderReceiptStub.callCount, 0);
-    assert.equal(updateUserDetailStub.callCount, 0);
   });
 });

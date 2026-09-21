@@ -5,10 +5,11 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import Message from "#models/message";
+import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
-import { UserDetailService } from "#services/user_detail_service";
 import env from "#start/env";
 import { unchecked } from "#tests/test-doubles";
+import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 
@@ -34,10 +35,13 @@ test.group("DispatchService.sendPlainEmail", (group) => {
   let send: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    await createUser({ id: CUSTOMER_ID });
+  });
   group.each.setup(() => {
     sandbox = createSandbox();
     send = sandbox.stub(sgMail, "send").resolves(unchecked([{ statusCode: 202 }, {}]));
-    sandbox.stub(UserDetailService, "getByEmail").resolves(null);
+    sandbox.stub(User, "byEmail").resolves(null);
   });
   group.each.teardown(() => sandbox.restore());
 

@@ -1,4 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Collapse, Stack } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { useQuery } from "@tanstack/react-query";
@@ -24,7 +24,7 @@ export default function SignatureStatusBanner({
   userDetail,
   inForm = false,
 }: {
-  userDetail: UserDetail;
+  userDetail: User;
   inForm?: boolean;
 }) {
   const { api } = useApiClient();

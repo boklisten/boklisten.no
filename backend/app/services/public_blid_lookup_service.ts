@@ -2,7 +2,7 @@ import type { Limiter } from "@adonisjs/limiter";
 
 import Branch from "#models/branch";
 import Item from "#models/item";
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
+import User from "#models/user";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
@@ -24,9 +24,13 @@ function byBlid(blid: string): SEDbQuery {
 
 async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> {
   const [row] = await StorageService.CustomerItems.aggregate<
-    Omit<PublicBlidHandedOut, "status" | "title" | "isbn" | "handoutBranch"> & {
+    Omit<
+      PublicBlidHandedOut,
+      "status" | "title" | "isbn" | "handoutBranch" | "name" | "email" | "phone"
+    > & {
       itemId: string | null;
       handoutBranchId: string | null;
+      customerId: string | null;
     }
   >([
     {
@@ -39,37 +43,31 @@ async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> 
       },
     },
     {
-      $lookup: {
-        from: BlSchemaName.UserDetails,
-        localField: "customer",
-        foreignField: "_id",
-        as: "customerInfo",
-      },
-    },
-    {
       $project: {
         _id: 0,
         handoutBranchId: { $toString: "$handoutInfo.handoutById" },
         handoutTime: "$handoutInfo.time",
         deadline: 1,
         itemId: { $toString: "$item" },
-        name: { $first: "$customerInfo.name" },
-        email: { $first: "$customerInfo.email" },
-        phone: { $first: "$customerInfo.phone" },
+        customerId: { $toString: "$customer" },
       },
     },
   ]);
   if (row === undefined) {
     return null;
   }
-  const { itemId, handoutBranchId, ...handedOut } = row;
-  const [item, branch] = await Promise.all([
+  const { itemId, handoutBranchId, customerId, ...handedOut } = row;
+  const [item, branch, customer] = await Promise.all([
     itemId === null ? null : Item.find(itemId),
     Branch.findOptional(handoutBranchId),
+    User.findOptional(customerId),
   ]);
   return {
     status: "handedOut",
     ...handedOut,
+    name: customer?.name ?? "",
+    email: customer?.email ?? "",
+    phone: customer?.phone ?? "",
     handoutBranch: branch?.name ?? "",
     title: item?.title ?? "",
     isbn: item === null ? "" : String(item.isbn),

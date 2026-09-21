@@ -78,7 +78,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
     // demand on placement), so refresh them while the user is still on the receipt rather than
     // let AuthGuard read a pre-order cache when they move on
     void queryClient.invalidateQueries({
-      queryKey: api.userDetails.me.pathKey(),
+      queryKey: api.users.me.pathKey(),
     });
     void queryClient.invalidateQueries({
       queryKey: api.orders.openItemsMe.pathKey(),

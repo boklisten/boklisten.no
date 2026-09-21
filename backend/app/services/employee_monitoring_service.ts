@@ -1,9 +1,8 @@
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
+import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
-import { StorageService } from "#services/storage_service";
-import type { UserDetail } from "#shared/user-detail";
 import type { UserPermission } from "#shared/user-permission";
 import { USER_PERMISSION } from "#shared/user-permission";
 import env from "#start/env";
@@ -45,8 +44,8 @@ export interface MonitoredEmployee {
 
 interface MonitoringReport {
   action: MonitoredAction;
-  employee: UserDetail;
-  customer: UserDetail | null;
+  employee: User;
+  customer: User | null;
   details: MonitoringDetail[];
   occurredAt: DateTime;
 }
@@ -72,7 +71,7 @@ export function buildMonitoringMail(report: MonitoringReport) {
     lines.push(
       "",
       `Kunde: ${report.customer.name}`,
-      `Telefon: ${report.customer.phone}`,
+      `Telefon: ${report.customer.phone ?? ""}`,
       `E-post: ${report.customer.email}`,
       `Kasse: ${env.get("CLIENT_URI")}/admin/kasse?kunde=${report.customer.id}`,
     );
@@ -100,8 +99,8 @@ async function sendReport({
   customerId?: string | null;
   details: MonitoringDetail[];
 }): Promise<void> {
-  const employeeDetail = await StorageService.UserDetails.get(employee.detailsId);
-  const customer = customerId ? await StorageService.UserDetails.get(customerId) : null;
+  const employeeDetail = await User.findOrFail(employee.detailsId);
+  const customer = customerId ? await User.findOrFail(customerId) : null;
   const mail = buildMonitoringMail({
     action,
     employee: employeeDetail,

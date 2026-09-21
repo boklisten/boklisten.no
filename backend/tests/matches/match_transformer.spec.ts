@@ -1,11 +1,17 @@
 import { test } from "@japa/runner";
+import { createSandbox } from "sinon";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
+import User from "#models/user";
+import {
+  createTestRound,
+  ensureUsers,
+  seedTestCatalogue,
+} from "#tests/matches/match-testing-utils";
 import { MatchRepository } from "#services/matches/match_repository";
 import { toMatchDtos } from "#transformers/match_transformer";
 import type { MatchLookups } from "#transformers/match_transformer";
@@ -40,6 +46,7 @@ async function render() {
 test.group("toMatchDtos", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([A, B, C]));
 
   async function seedUserMatch() {
     const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
@@ -167,11 +174,13 @@ test.group("toMatchDtos", (group) => {
   });
 
   test("renders an unknown customer as blank rather than throwing", async ({ assert }) => {
-    // getAllMatches must keep working for deleted or inactive user details.
+    // getAllMatches must keep working when the people lookup comes back without a participant.
+    const UNKNOWN = "5d765db5fc8c47001c408dff";
+    await ensureUsers([UNKNOWN]);
     const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const [a, b] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: "5d765db5fc8c47001c408dff" },
+      { matchId: match.id, userDetailId: UNKNOWN },
       { matchId: match.id, userDetailId: B },
     ]);
     await MatchObligation.create({
@@ -180,10 +189,22 @@ test.group("toMatchDtos", (group) => {
       receiverParticipantId: b!.id,
       itemId: ITEM_X,
     });
+    const byIds = User.byIds.bind(User);
+    const sandbox = createSandbox();
+    sandbox.stub(User, "byIds").callsFake(async (ids) => {
+      const users = await byIds(ids);
+      users.delete(UNKNOWN);
+      return users;
+    });
 
-    const [dto] = await render();
+    let dto: Awaited<ReturnType<typeof render>>[number] | undefined;
+    try {
+      [dto] = await render();
+    } finally {
+      sandbox.restore();
+    }
 
-    assert.deepEqual(dto!.obligations[0]?.sender, {
+    assert.deepEqual(dto?.obligations[0]?.sender, {
       kind: "customer",
       customerId: "5d765db5fc8c47001c408dff",
       name: "",
@@ -191,6 +212,6 @@ test.group("toMatchDtos", (group) => {
       email: "",
     });
     // The item cannot be unknown any more: obligations carry a foreign key to the catalogue.
-    assert.equal(dto!.obligations[0]?.title, "Matematikk R1");
+    assert.equal(dto?.obligations[0]?.title, "Matematikk R1");
   });
 });

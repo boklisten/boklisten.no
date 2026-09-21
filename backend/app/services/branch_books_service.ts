@@ -1,9 +1,8 @@
-import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
 import Branch from "#models/branch";
+import User from "#models/user";
 import Item from "#models/item";
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import { DEADLINE_PADDING_DAYS } from "#services/deadline_window";
 import { OrderCancellationService } from "#services/order_cancellation_service";
@@ -155,23 +154,30 @@ export function buildSummary(rows: SummaryRow[]): BranchBooksSummary {
   };
 }
 
-function toBirthYear(dob: Date | null | undefined): string | null {
-  return dob ? String(DateTime.fromJSDate(dob).year) : null;
+/**
+ * The customer columns of a details row. Books whose customer has been deleted still show up in
+ * the details list (the counts and bulk updates include them either way), without a name.
+ */
+async function withCustomerColumns<Row extends { customerId: string | null }>(
+  rows: Row[],
+): Promise<
+  (Row & {
+    customerName: string | null;
+    birthYear: string | null;
+    membershipBranchId: string | null;
+  })[]
+> {
+  const users = await User.byIds(rows.map((row) => row.customerId));
+  return rows.map((row) => {
+    const user = row.customerId === null ? undefined : users.get(row.customerId);
+    return {
+      ...row,
+      customerName: user?.name ?? null,
+      birthYear: user?.dob ? String(user.dob.year) : null,
+      membershipBranchId: user?.branchMembershipId ?? null,
+    };
+  });
 }
-
-// preserveNullAndEmptyArrays so books whose customer has been deleted still show up in the
-// details list — the counts and bulk updates include them either way
-const CUSTOMER_LOOKUP_STAGES = [
-  {
-    $lookup: {
-      from: BlSchemaName.UserDetails,
-      localField: "customer",
-      foreignField: "_id",
-      as: "customer",
-    },
-  },
-  { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
-];
 
 /** The membership branch lives in Postgres: the rows carry its id and the name is joined here. */
 async function withMembershipBranchNames<Row extends { membershipBranchId: string | null }>(
@@ -278,9 +284,6 @@ export const BranchBooksService = {
     const rows = await StorageService.CustomerItems.aggregate<{
       customerItemId: string;
       customerId: string | null;
-      customerName: string | null;
-      dob: Date | null;
-      membershipBranchId: string | null;
       blid: string | null;
       handoutTime: Date | null;
     }>([
@@ -293,25 +296,19 @@ export const BranchBooksService = {
         },
       },
       { $sort: { "handoutInfo.time": 1 } },
-      ...CUSTOMER_LOOKUP_STAGES,
       {
         $project: {
           _id: 0,
           customerItemId: { $toString: "$_id" },
-          customerId: { $toString: { $ifNull: ["$customer._id", null] } },
-          customerName: { $ifNull: ["$customer.name", null] },
-          dob: { $ifNull: ["$customer.dob", null] },
-          membershipBranchId: { $toString: "$customer.branchMembership" },
+          customerId: { $toString: "$customer" },
           blid: { $ifNull: ["$blid", null] },
           handoutTime: { $ifNull: ["$handoutInfo.time", null] },
         },
       },
     ]);
-    return (await withMembershipBranchNames(rows)).map(({ dob, ...row }) =>
-      Object.assign(row, {
-        birthYear: toBirthYear(dob),
-        handoutTime: row.handoutTime ? row.handoutTime.toISOString() : null,
-      }),
+    return (await withMembershipBranchNames(await withCustomerColumns(rows))).map(
+      ({ handoutTime, ...row }) =>
+        Object.assign(row, { handoutTime: handoutTime ? handoutTime.toISOString() : null }),
     );
   },
 
@@ -388,9 +385,6 @@ export const BranchBooksService = {
       orderId: string;
       orderItemId: string;
       customerId: string | null;
-      customerName: string | null;
-      dob: Date | null;
-      membershipBranchId: string | null;
       orderTime: Date | null;
     }>([
       { $match: { placed: true, branch: new ObjectId(branchId) } },
@@ -405,25 +399,19 @@ export const BranchBooksService = {
       },
       { $match: { deadlineDate: { $in: deadlines.map((deadline) => new Date(deadline)) } } },
       { $sort: { creationTime: 1 } },
-      ...CUSTOMER_LOOKUP_STAGES,
       {
         $project: {
           _id: 0,
           orderId: { $toString: "$_id" },
           orderItemId: { $toString: "$orderItems._id" },
-          customerId: { $toString: { $ifNull: ["$customer._id", null] } },
-          customerName: { $ifNull: ["$customer.name", null] },
-          dob: { $ifNull: ["$customer.dob", null] },
-          membershipBranchId: { $toString: "$customer.branchMembership" },
+          customerId: { $toString: "$customer" },
           orderTime: { $ifNull: ["$creationTime", null] },
         },
       },
     ]);
-    return (await withMembershipBranchNames(rows)).map(({ dob, ...row }) =>
-      Object.assign(row, {
-        birthYear: toBirthYear(dob),
-        orderTime: row.orderTime ? row.orderTime.toISOString() : null,
-      }),
+    return (await withMembershipBranchNames(await withCustomerColumns(rows))).map(
+      ({ orderTime, ...row }) =>
+        Object.assign(row, { orderTime: orderTime ? orderTime.toISOString() : null }),
     );
   },
 

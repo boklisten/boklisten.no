@@ -1,20 +1,19 @@
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
+import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
-import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { formatBankAccount } from "#shared/bank_account";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
 import env from "#start/env";
 
 export const REFUND_REQUEST_RECIPIENT = "info@boklisten.no";
 
 interface RefundRequest {
   order: Order;
-  customer: UserDetail;
-  employee: UserDetail;
+  customer: User;
+  employee: User;
   /** Positive: what the administrator transfers. */
   amount: number;
   /** Eleven digits; null when a Vipps refund failed and the customer was never asked for one. */
@@ -48,7 +47,7 @@ export function buildRefundRequestMail(request: RefundRequest) {
     `Ansatt: ${employee.name} (${employee.email})`,
     "",
     `Kunde: ${customer.name}`,
-    `Telefon: ${customer.phone}`,
+    `Telefon: ${customer.phone ?? ""}`,
     `E-post: ${customer.email}`,
     `Kasse: ${env.get("CLIENT_URI")}/admin/kasse?kunde=${customer.id}&visning=ordrehistorikk`,
     "",
@@ -84,8 +83,8 @@ export const RefundRequestService = {
   }): Promise<void> {
     try {
       const [customer, employee] = await Promise.all([
-        StorageService.UserDetails.get(input.order.customer),
-        StorageService.UserDetails.get(input.employeeDetailsId),
+        User.findOrFail(input.order.customer),
+        User.findOrFail(input.employeeDetailsId),
       ]);
       const mail = buildRefundRequestMail({
         ...input,

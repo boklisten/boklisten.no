@@ -1,16 +1,14 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import type { UserPermission } from "@boklisten/backend/shared/user-permission";
+import type { User } from "@boklisten/backend/shared/user";
 import { Button, Group, Modal, Space, Stack, Text, Tooltip } from "@mantine/core";
 import { IconCheck, IconInfoCircleFilled } from "@tabler/icons-react";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import { useState } from "react";
 
 import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
 import UserDangerZone from "@/features/user/UserDangerZone";
 import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
-import UserInfoFields from "@/features/user/UserInfoFields";
+import UserInfoFields, { userDetailsBody } from "@/features/user/UserInfoFields";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
@@ -28,7 +26,7 @@ const CONFIRM_Z_INDEX = 250;
 
 type AdministrateUserFormValues = {
   email: string;
-  emailVerified: boolean;
+  emailConfirmed: boolean;
 } & UserInfoFieldValues;
 
 /**
@@ -50,31 +48,70 @@ export default function AdministrateUserForm({
   onDeleted,
   onMerged,
 }: {
-  userDetail: UserDetail & { permission: UserPermission };
+  userDetail: User;
   onSaved?: (() => void) | undefined;
   onDeleted?: (() => void) | undefined;
   onMerged?: ((toDetailsId: string) => void) | undefined;
 }) {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
-  const { api, client } = useApiClient();
+  const { api } = useApiClient();
   const defaultValues: AdministrateUserFormValues = {
     email: userDetail.email,
-    emailVerified: userDetail.emailConfirmed ?? false,
+    emailConfirmed: userDetail.emailConfirmed,
     name: userDetail.name,
-    phoneNumber: userDetail.phone,
+    phoneNumber: userDetail.phone ?? "",
     address: userDetail.address,
     postal: {
       code: userDetail.postCode,
       city: userDetail.postCity,
     },
-    birthday: userDetail.dob ? dayjs(userDetail.dob).format("YYYY-MM-DD") : "",
-    guardianName: userDetail.guardian?.name ?? "",
-    guardianEmail: userDetail.guardian?.email ?? "",
-    guardianPhoneNumber: userDetail.guardian?.phone ?? "",
-    branchMembership: userDetail.branchMembership ?? "",
+    birthday: userDetail.dob ?? "",
+    guardianName: userDetail.guardianName ?? "",
+    guardianEmail: userDetail.guardianEmail ?? "",
+    guardianPhoneNumber: userDetail.guardianPhone ?? "",
+    branchMembership: userDetail.branchMembershipId ?? "",
   };
   const [confirmingWithoutGuardian, setConfirmingWithoutGuardian] = useState(false);
+  const [serverErrors, setServerErrors] = useState<string[]>([]);
+  const updateUserMutation = useMutation(
+    api.users.update.mutationOptions({
+      onSuccess: () => {
+        setServerErrors([]);
+        showSuccessNotification("Brukerdetaljene ble oppdatert!");
+        onSaved?.();
+      },
+      onError: (error) => {
+        if (error.isValidationError()) {
+          setServerErrors(error.response.errors.map((issue) => issue.message));
+          return;
+        }
+        showErrorNotification("Noe gikk galt under registreringen!");
+      },
+      // The signature status depends on the date of birth (a guardian's signature stops counting
+      // at 18), so it is refetched along with the details.
+      onSettled: () => {
+        setConfirmingWithoutGuardian(false);
+        return Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: api.users.show.queryKey({ params: { detailsId: userDetail.id } }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: api.signatures.show.queryKey({ params: { detailsId: userDetail.id } }),
+          }),
+        ]);
+      },
+    }),
+  );
+  const save = (values: AdministrateUserFormValues) =>
+    updateUserMutation.mutate({
+      params: { detailsId: userDetail.id },
+      body: {
+        ...userDetailsBody(values),
+        email: values.email,
+        emailConfirmed: values.emailConfirmed,
+      },
+    });
   const form = useAppForm({
     defaultValues,
     onSubmit: ({ value }) => {
@@ -82,7 +119,7 @@ export default function AdministrateUserForm({
         setConfirmingWithoutGuardian(true);
         return;
       }
-      updateUserDetailsMutation.mutate();
+      save(value);
     },
     validators: {
       onSubmit: ({ value }) => {
@@ -103,64 +140,11 @@ export default function AdministrateUserForm({
       },
     },
   });
-  const [serverErrors, setServerErrors] = useState<string[]>([]);
-
-  const updateUserDetailsMutation = useMutation({
-    mutationFn: async () => {
-      const formValues = form.state.values;
-      const [, error] = await client.api.userDetails
-        .update({
-          params: { detailsId: userDetail.id },
-          body: {
-            email: formValues.email,
-            emailVerified: formValues.emailVerified,
-            name: formValues.name,
-            phoneNumber: formValues.phoneNumber,
-            address: formValues.address,
-            postalCode: formValues.postal.code,
-            postalCity: formValues.postal.city,
-            dob: formValues.birthday,
-            branchMembership: formValues.branchMembership,
-            guardian: {
-              name: formValues.guardianName,
-              email: formValues.guardianEmail,
-              phone: formValues.guardianPhoneNumber,
-            },
-          },
-        })
-        .safe();
-
-      // The signature status depends on the date of birth (a guardian's signature stops counting
-      // at 18), so it is refetched along with the details.
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: api.userDetails.show.queryKey({ params: { detailsId: userDetail.id } }),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: api.signatures.show.queryKey({
-            params: { detailsId: userDetail.id },
-          }),
-        }),
-      ]);
-
-      if (error) {
-        if (error.isValidationError()) {
-          setServerErrors(error.response.errors.map((err) => err.message));
-          return;
-        }
-        showErrorNotification("Noe gikk galt under registreringen!");
-      } else {
-        showSuccessNotification("Brukerdetaljene ble oppdatert!");
-        setServerErrors([]);
-        onSaved?.();
-      }
-    },
-  });
 
   return (
     <Stack gap="xs">
-      <form.Subscribe selector={(state) => state.values.emailVerified}>
-        {(emailVerified) => (
+      <form.Subscribe selector={(state) => state.values.emailConfirmed}>
+        {(emailConfirmed) => (
           <form.AppField
             name="email"
             validators={{
@@ -171,8 +155,8 @@ export default function AdministrateUserForm({
               <field.EmailField
                 deliverabilityFeedback={{ source: "administrate", perspective: "administrate" }}
                 rightSection={
-                  <Tooltip label={emailVerified ? "Bekreftet" : "Ikke bekreftet"}>
-                    {emailVerified ? (
+                  <Tooltip label={emailConfirmed ? "Bekreftet" : "Ikke bekreftet"}>
+                    {emailConfirmed ? (
                       <IconCheck color="green" />
                     ) : (
                       <IconInfoCircleFilled color="orange" />
@@ -184,7 +168,7 @@ export default function AdministrateUserForm({
           </form.AppField>
         )}
       </form.Subscribe>
-      <form.AppField name="emailVerified">
+      <form.AppField name="emailConfirmed">
         {(field) => <field.SwitchField label="E-post bekreftet" />}
       </form.AppField>
       <Space />
@@ -200,7 +184,7 @@ export default function AdministrateUserForm({
       </form.AppForm>
       <Space />
       <Button
-        loading={form.state.isValidating || updateUserDetailsMutation.isPending}
+        loading={form.state.isValidating || updateUserMutation.isPending}
         onClick={async () => {
           // handleSubmit only runs field-level validators before giving up on an invalid form, so
           // guardian errors a previous attempt left on untouched fields would keep blocking even
@@ -228,13 +212,7 @@ export default function AdministrateUserForm({
             <Button variant="default" onClick={() => setConfirmingWithoutGuardian(false)}>
               Avbryt
             </Button>
-            <Button
-              loading={updateUserDetailsMutation.isPending}
-              onClick={async () => {
-                await updateUserDetailsMutation.mutateAsync();
-                setConfirmingWithoutGuardian(false);
-              }}
-            >
+            <Button loading={updateUserMutation.isPending} onClick={() => save(form.state.values)}>
               Lagre uten foresatt
             </Button>
           </Group>

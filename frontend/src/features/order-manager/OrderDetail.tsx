@@ -92,7 +92,7 @@ export default function OrderDetail({
     data: customer,
     isPending,
     isError,
-  } = useQuery(api.userDetails.show.queryOptions({ params: { detailsId: customerId } }));
+  } = useQuery(api.users.show.queryOptions({ params: { detailsId: customerId } }));
   const [cartOpen, setCartOpen] = useState(false);
   const rows = openOrderRows(order);
 

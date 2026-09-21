@@ -1,4 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Button, Collapse, Divider, Group, Paper, Stack, Text, TextInput } from "@mantine/core";
 import { IconTrash } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
@@ -20,7 +20,7 @@ export default function UserDangerZone({
   onDeleted,
   onMerged,
 }: {
-  userDetail: UserDetail;
+  userDetail: User;
   onDeleted?: (() => void) | undefined;
   onMerged?: ((toDetailsId: string) => void) | undefined;
 }) {

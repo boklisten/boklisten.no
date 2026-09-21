@@ -95,13 +95,20 @@ export interface ApiDefinition {
   publicBlidLookup: {
     show: typeof routes['public_blid_lookup.show']
   }
-  userDetails: {
-    me: typeof routes['user_details.me']
-    updateMe: typeof routes['user_details.update_me']
-    search: typeof routes['user_details.search']
-    show: typeof routes['user_details.show']
-    update: typeof routes['user_details.update']
-    confirmEmail: typeof routes['user_details.confirm_email']
+  users: {
+    me: typeof routes['users.me']
+    updateMe: typeof routes['users.update_me']
+    metrics: typeof routes['users.metrics']
+    duplicates: typeof routes['users.duplicates']
+    employees: typeof routes['users.employees']
+    mergePreview: typeof routes['users.merge_preview']
+    merge: typeof routes['users.merge']
+    setPermission: typeof routes['users.set_permission']
+    destroy: typeof routes['users.destroy']
+    search: typeof routes['users.search']
+    show: typeof routes['users.show']
+    update: typeof routes['users.update']
+    confirmEmail: typeof routes['users.confirm_email']
   }
   customerItems: {
     me: typeof routes['customer_items.me']
@@ -173,15 +180,6 @@ export interface ApiDefinition {
     evaluate: typeof routes['user_provisioning.evaluate']
     provision: typeof routes['user_provisioning.provision']
   }
-  users: {
-    metrics: typeof routes['users.metrics']
-    duplicates: typeof routes['users.duplicates']
-    employees: typeof routes['users.employees']
-    mergePreview: typeof routes['users.merge_preview']
-    merge: typeof routes['users.merge']
-    setPermission: typeof routes['users.set_permission']
-    destroy: typeof routes['users.destroy']
-  }
   matchRounds: {
     store: typeof routes['match_rounds.store']
     update: typeof routes['match_rounds.update']
@@ -222,7 +220,7 @@ export interface ApiDefinition {
     customerItems: typeof routes['reports.customer_items']
     orders: typeof routes['reports.orders']
     payments: typeof routes['reports.payments']
-    userDetails: typeof routes['reports.user_details']
+    users: typeof routes['reports.users']
   }
   messageLogs: {
     forCustomer: typeof routes['message_logs.for_customer']

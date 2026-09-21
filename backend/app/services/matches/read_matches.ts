@@ -2,26 +2,18 @@ import Item from "#models/item";
 import type BookHandover from "#models/book_handover";
 import type Match from "#models/match";
 import MatchRound from "#models/match_round";
+import User from "#models/user";
 import { MatchRepository } from "#services/matches/match_repository";
-import { StorageService } from "#services/storage_service";
 import type { MatchDto } from "#shared/match/match-dto";
-import { USER_PERMISSION } from "#shared/user-permission";
 import { toMatchDtos } from "#transformers/match_transformer";
 import type { MatchLookups, MatchPerson } from "#transformers/match_transformer";
 
-/**
- * Fetched with admin permission, which skips the active-only filter. A student who has been
- * deactivated mid-round is still a party to their matches, and the admin overview must show them.
- */
 async function getPeople(customerIds: string[]): Promise<Map<string, MatchPerson>> {
-  if (customerIds.length === 0) {
-    return new Map();
-  }
-  const userDetails = await StorageService.UserDetails.getMany(customerIds, USER_PERMISSION.ADMIN);
+  const users = await User.byIds(customerIds);
   return new Map(
-    userDetails.map((detail) => [
-      detail.id,
-      { name: detail.name ?? "", phone: detail.phone ?? "", email: detail.email ?? "" },
+    [...users.values()].map((user) => [
+      user.id,
+      { name: user.name, phone: user.phone ?? "", email: user.email },
     ]),
   );
 }

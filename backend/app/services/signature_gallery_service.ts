@@ -1,9 +1,8 @@
 import type { DateTime } from "luxon";
-import { ObjectId } from "mongodb";
 
 import Branch from "#models/branch";
 import Signature from "#models/signature";
-import { StorageService } from "#services/storage_service";
+import User from "#models/user";
 import type { UserPermission } from "#shared/user-permission";
 
 const PAGE_SIZE = 30;
@@ -31,13 +30,13 @@ interface GalleryPage {
 export interface GalleryCustomer {
   id: string;
   name: string;
-  dob?: Date | null;
-  branchMembership?: string | null;
+  dob: DateTime | null;
+  branchMembershipId: string | null;
+  permission: UserPermission;
 }
 
 export interface GalleryContext {
   branchNames: ReadonlyMap<string, string>;
-  permissions: ReadonlyMap<string, UserPermission>;
 }
 
 interface GalleryCursor {
@@ -78,10 +77,10 @@ export const SignatureGalleryService = {
       signedByGuardian: signature.signedByGuardian,
       signedAtText: formatSignedDate(signature.createdAt),
       image: signature.image.toString("base64"),
-      branchName: customer.branchMembership
-        ? (context.branchNames.get(customer.branchMembership) ?? null)
+      branchName: customer.branchMembershipId
+        ? (context.branchNames.get(customer.branchMembershipId) ?? null)
         : null,
-      permission: context.permissions.get(customer.id) ?? "customer",
+      permission: customer.permission,
     };
   },
 
@@ -99,17 +98,13 @@ export const SignatureGalleryService = {
       if (rows.length === 0) {
         return { signatures, nextCursor: null };
       }
-      const customers = await StorageService.UserDetails.getMany(
-        rows.map((row) => row.customerDetailsId),
-      );
-      const customersById = new Map(customers.map((customer) => [customer.id, customer]));
-      const permissions = await fetchPermissions(customers.map((customer) => customer.id));
-      await addMissingBranchNames(branchNames, customers);
+      const customersById = await User.byIds(rows.map((row) => row.customerDetailsId));
+      await addMissingBranchNames(branchNames, [...customersById.values()]);
       for (const row of rows) {
         const item = SignatureGalleryService.toGalleryItem(
           row,
           customersById.get(row.customerDetailsId),
-          { branchNames, permissions },
+          { branchNames },
         );
         if (item) {
           signatures.push(item);
@@ -138,31 +133,6 @@ function formatSignedDate(dateTime: DateTime | null): string {
 }
 
 /**
- * Elevated permissions for the given customer details ids; customers with the plain "customer"
- * permission are omitted, so the map's default is "customer".
- */
-async function fetchPermissions(
-  customerDetailsIds: string[],
-): Promise<Map<string, UserPermission>> {
-  if (customerDetailsIds.length === 0) {
-    return new Map();
-  }
-  const users = await StorageService.Users.aggregate<{
-    userDetail: ObjectId;
-    permission: UserPermission;
-  }>([
-    {
-      $match: {
-        userDetail: { $in: customerDetailsIds.map((id) => new ObjectId(id)) },
-        permission: { $ne: "customer" },
-      },
-    },
-    { $project: { userDetail: 1, permission: 1 } },
-  ]);
-  return new Map(users.map((user) => [String(user.userDetail), user.permission]));
-}
-
-/**
  * Resolves the branch names for the customers' memberships, skipping ids already in the map so
  * each branch is fetched at most once per page.
  */
@@ -173,7 +143,7 @@ async function addMissingBranchNames(
   const missing = [
     ...new Set(
       customers
-        .map((customer) => customer.branchMembership)
+        .map((customer) => customer.branchMembershipId)
         .filter((id): id is string => typeof id === "string" && !branchNames.has(id)),
     ),
   ];

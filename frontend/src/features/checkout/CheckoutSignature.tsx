@@ -38,9 +38,7 @@ export default function CheckoutSignature() {
   const { api } = useApiClient();
   const navigate = useNavigate();
 
-  const { data: userDetail, isError: userDetailFailed } = useQuery(
-    api.userDetails.me.queryOptions(),
-  );
+  const { data: userDetail, isError: userDetailFailed } = useQuery(api.users.me.queryOptions());
   const { data: signature, isError: signatureFailed } = useQuery({
     ...api.signatures.me.queryOptions(),
     refetchInterval: POLL_INTERVAL_MS,

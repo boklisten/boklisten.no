@@ -24,6 +24,6 @@ export const paymentsReportValidator = vine.create({
   createdBefore: dateStringField.clone().optional(),
 });
 
-export const userDetailsReportValidator = vine.create({
+export const usersReportValidator = vine.create({
   branchFilter: vine.array(objectIdField.clone()).optional(),
 });

@@ -47,7 +47,6 @@ export const controllers = {
   Signatures: () => import('#controllers/signatures_controller'),
   StandCart: () => import('#controllers/stand_cart_controller'),
   UniqueIds: () => import('#controllers/unique_ids_controller'),
-  UserDetails: () => import('#controllers/user_details_controller'),
   UserProvisioning: () => import('#controllers/user_provisioning_controller'),
   Users: () => import('#controllers/users_controller'),
   WaitingListCustomers: () => import('#controllers/waiting_list_customers_controller'),

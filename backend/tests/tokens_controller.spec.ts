@@ -1,45 +1,28 @@
 import { HttpContextFactory } from "@adonisjs/core/factories/http";
+import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import jwt from "jsonwebtoken";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
 
 import TokensController from "#controllers/auth/tokens_controller";
-import { StorageService } from "#services/storage_service";
-import { UserDetailService } from "#services/user_detail_service";
-import { UserService } from "#services/user_service";
-import type { UserDetail } from "#shared/user-detail";
+import User from "#models/user";
 import env from "#start/env";
-import { mock } from "#tests/test-doubles";
-import type { User } from "#types/user";
+import { createUser } from "#tests/user_fixtures";
+
+const EMAIL = "employee@boklisten.no";
 
 function createRefreshToken() {
   return jwt.sign(
-    { iss: "boklisten.no", aud: "boklisten.no", username: "employee@boklisten.no" },
+    { iss: "boklisten.no", aud: "boklisten.no", username: EMAIL },
     env.get("REFRESH_TOKEN_SECRET"),
     { expiresIn: "1h" },
   );
 }
 
 test.group("TokensController.refresh()", (group) => {
-  let sandbox: sinon.SinonSandbox;
-
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    sandbox
-      .stub(UserDetailService, "getByEmail")
-      .resolves(mock<UserDetail>({ id: "detail1", blid: "u#abc", email: "employee@boklisten.no" }));
-    sandbox
-      .stub(StorageService.UserDetails, "getOrNull")
-      .resolves(mock<UserDetail>({ id: "detail1", blid: "u#abc", email: "employee@boklisten.no" }));
-    sandbox.stub(StorageService.Users, "update").resolves(mock<User>({}));
-    return () => sandbox.restore();
-  });
+  group.each.setup(() => testUtils.db().truncate());
 
   test("mints an access token with the user's current permission", async ({ assert }) => {
-    sandbox
-      .stub(UserService, "getByUserDetailsId")
-      .resolves(mock<User>({ id: "user1", userDetail: "detail1", permission: "employee" }));
+    const user = await createUser({ email: EMAIL, permission: "employee" });
 
     const ctx = new HttpContextFactory().create();
     ctx.request.updateBody({ refreshToken: createRefreshToken() });
@@ -56,12 +39,12 @@ test.group("TokensController.refresh()", (group) => {
       throw new TypeError("expected a decoded token payload");
     }
     assert.equal(accessTokenBody["permission"], "employee");
-    assert.equal(accessTokenBody["details"], "detail1");
+    assert.equal(accessTokenBody["details"], user.id);
+    assert.equal(accessTokenBody.sub, user.blid);
+    assert.isNotNull((await User.findOrFail(user.id)).lastTokenIssuedAt);
   });
 
   test("responds unauthorized when the user no longer exists", async ({ assert }) => {
-    sandbox.stub(UserService, "getByUserDetailsId").resolves(null);
-
     const ctx = new HttpContextFactory().create();
     ctx.request.updateBody({ refreshToken: createRefreshToken() });
 
@@ -74,11 +57,10 @@ test.group("TokensController.refresh()", (group) => {
   test("responds unauthorized for a refresh token with an invalid signature", async ({
     assert,
   }) => {
-    sandbox.stub(UserService, "getByUserDetailsId").resolves(null);
-
+    await createUser({ email: EMAIL });
     const ctx = new HttpContextFactory().create();
     ctx.request.updateBody({
-      refreshToken: jwt.sign({ username: "employee@boklisten.no" }, "wrong-secret", {
+      refreshToken: jwt.sign({ username: EMAIL }, "wrong-secret", {
         expiresIn: "1h",
       }),
     });

@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import Branch from "#models/branch";
+import User from "#models/user";
 import UnauthorizedException from "#exceptions/unauthorized_exception";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderService } from "#services/order_service";
@@ -17,7 +18,7 @@ export default class CheckoutController {
   async initialize(ctx: HttpContext) {
     const { detailsId } = ctx.authUser;
     const { cartItems } = await ctx.request.validateUsing(initializeCheckoutValidator);
-    await assertSignedForCheckout(await StorageService.UserDetails.get(detailsId), cartItems);
+    await assertSignedForCheckout(await User.findOrFail(detailsId), cartItems);
     const order = await OrderService.createFromCart(detailsId, cartItems);
     const branch = await Branch.findOrFail(order.branch);
     const isDeliveryFree = branch.responsibleForDelivery;

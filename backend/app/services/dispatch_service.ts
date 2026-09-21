@@ -5,18 +5,15 @@ import { DateTime } from "luxon";
 import twilio from "twilio";
 
 import type Message from "#models/message";
+import User from "#models/user";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { isUnderage } from "#models/signature";
 import { userHasValidSignature } from "#services/signature_helper";
 import type { MessageLogContext } from "#services/message_log_service";
 import { MessageLogService } from "#services/message_log_service";
 import { PermissionService } from "#services/permission_service";
-import { StorageService } from "#services/storage_service";
-import { UserDetailService } from "#services/user_detail_service";
-import { UserService } from "#services/user_service";
 import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
 import env from "#start/env";
 import type { EmailOrder, EmailUser } from "#types/email";
 import type { EmailRecipient, EmailTemplate } from "#types/email_templates";
@@ -40,8 +37,7 @@ const SKIPPED_OUTSIDE_PRODUCTION_REASON = "Utenfor produksjon sendes e-post bare
 
 /** Outside production only employees receive real mail; everyone else gets a skipped log row. */
 async function mayReceiveOutsideProduction(email: string): Promise<boolean> {
-  const userDetail = await UserDetailService.getByEmail(email);
-  const user = userDetail ? await UserService.getByUserDetailsId(userDetail.id) : null;
+  const user = await User.byEmail(email);
   return user !== null && PermissionService.isPermissionEqualOrOver(user.permission, "employee");
 }
 
@@ -111,8 +107,7 @@ const SmsService = {
       logger.info(
         "Since API_ENV !== production, SMS will only be sent to users with permission 'employee' or above",
       );
-      const userDetail = await UserDetailService.getByPhoneNumber(message.to);
-      const user = userDetail ? await UserService.getByUserDetailsId(userDetail.id) : null;
+      const user = await User.byPhone(message.to);
       if (!user || !PermissionService.isPermissionEqualOrOver(user.permission, "employee")) {
         await MessageLogService.recordSendResult(logEntry, {
           status: "skipped",
@@ -329,41 +324,42 @@ const DispatchService = {
       ],
     });
   },
-  async sendSignatureLink(customerDetail: UserDetail, branchName: string) {
+  async sendSignatureLink(customerDetail: User, branchName: string) {
     if (await userHasValidSignature(customerDetail)) {
       return;
     }
-    await StorageService.UserDetails.update(customerDetail.id, {
-      "tasks.signAgreement": true,
-    });
+    customerDetail.taskSignAgreement = true;
+    await customerDetail.save();
 
     const context: MessageLogContext = {
       messageType: "signature",
       regardingCustomerDetailsId: customerDetail.id,
     };
 
-    if (isUnderage(customerDetail) && customerDetail.guardian) {
+    if (isUnderage(customerDetail) && customerDetail.guardianEmail) {
       await EmailService.sendEmail({
         template: EMAIL_TEMPLATES.guardianSignature,
         context,
         recipients: {
-          to: customerDetail.guardian.email,
+          to: customerDetail.guardianEmail,
           dynamicTemplateData: {
             guardianSignatureUri: `${env.get("CLIENT_URI")}/signering/${customerDetail.id}`,
             customerName: customerDetail.name,
-            guardianName: customerDetail.guardian.name,
+            guardianName: customerDetail.guardianName ?? "",
             branchName,
           },
         },
       });
 
-      await SmsService.sendOne(
-        {
-          to: customerDetail.guardian.phone,
-          body: `Hei. ${customerDetail.name} skal snart motta bøker fra ${branchName} via Boklisten.no. Siden ${customerDetail.name} er under 18 år, krever vi at du som foresatt signerer låneavtalen. Vi har derfor sendt en e-post til ${customerDetail.guardian.email} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
-        },
-        context,
-      );
+      if (customerDetail.guardianPhone) {
+        await SmsService.sendOne(
+          {
+            to: customerDetail.guardianPhone,
+            body: `Hei. ${customerDetail.name} skal snart motta bøker fra ${branchName} via Boklisten.no. Siden ${customerDetail.name} er under 18 år, krever vi at du som foresatt signerer låneavtalen. Vi har derfor sendt en e-post til ${customerDetail.guardianEmail} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
+          },
+          context,
+        );
+      }
     } else {
       await EmailService.sendEmail({
         template: EMAIL_TEMPLATES.signature,
@@ -378,18 +374,20 @@ const DispatchService = {
         },
       });
 
-      await SmsService.sendOne(
-        {
-          to: customerDetail.phone,
-          body: `Hei. Du skal snart motta bøker fra ${branchName} via Boklisten.no. Før du kan motta bøkene må du signere vår låneavtale. Vi har derfor sendt en e-post til ${customerDetail.email} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
-        },
-        context,
-      );
+      if (customerDetail.phone) {
+        await SmsService.sendOne(
+          {
+            to: customerDetail.phone,
+            body: `Hei. Du skal snart motta bøker fra ${branchName} via Boklisten.no. Før du kan motta bøkene må du signere vår låneavtale. Vi har derfor sendt en e-post til ${customerDetail.email} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
+          },
+          context,
+        );
+      }
     }
   },
 
   async sendDeliveryInformation(
-    customerDetail: UserDetail,
+    customerDetail: User,
     order: Order,
     bringDeliveryInfo: DeliveryInfoBring,
   ) {
@@ -453,7 +451,7 @@ const DispatchService = {
     smsBody,
     sendoutId,
   }: {
-    customers: UserDetail[];
+    customers: User[];
     smsBody: string;
     sendoutId?: number | null;
   }) {
@@ -472,11 +470,17 @@ const DispatchService = {
         })),
       }),
       SmsService.sendMany(
-        customers.map((customer) => ({
-          to: customer.phone,
-          regardingCustomerDetailsId: customer.id,
-          body: `Hei, ${customer.name.split(" ")[0]}. ${smsBody} Mvh Boklisten`,
-        })),
+        customers.flatMap((customer) =>
+          customer.phone === null
+            ? []
+            : [
+                {
+                  to: customer.phone,
+                  regardingCustomerDetailsId: customer.id,
+                  body: `Hei, ${customer.name.split(" ")[0]}. ${smsBody} Mvh Boklisten`,
+                },
+              ],
+        ),
         context,
       ),
     ]);
@@ -504,7 +508,7 @@ const DispatchService = {
     userDetail,
     branchName,
   }: {
-    userDetail: UserDetail;
+    userDetail: User;
     branchName: string;
   }) {
     const context: MessageLogContext = {
@@ -524,6 +528,9 @@ const DispatchService = {
         },
       },
     });
+    if (userDetail.phone === null) {
+      return { emailStatus, smsStatus: null };
+    }
     const smsStatus = await SmsService.sendOne(
       {
         to: userDetail.phone,

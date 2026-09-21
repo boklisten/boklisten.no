@@ -1,13 +1,15 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import { ObjectId } from "mongodb";
-import { withBranchName, withItemColumns } from "#services/report_columns";
+
+import User from "#models/user";
+import { withBranchName, withItemColumns, withUserColumns } from "#services/report_columns";
 import { StorageService } from "#services/storage_service";
 import {
   customerItemsReportValidator,
   ordersReportValidator,
   paymentsReportValidator,
-  userDetailsReportValidator,
+  usersReportValidator,
 } from "#validators/report";
 
 function dateRangeFilter(field: string, after: string | undefined, before: string | undefined) {
@@ -27,10 +29,6 @@ function branchFieldFilter(field: string, branchFilter: string[] | undefined) {
     : {};
 }
 
-function firstOrNull(path: string) {
-  return { $ifNull: [{ $first: path }, null] };
-}
-
 export default class ReportsController {
   async customerItems(ctx: HttpContext) {
     const {
@@ -46,6 +44,8 @@ export default class ReportsController {
     const rows = await StorageService.CustomerItems.aggregate<{
       handoutBranchId: string | null;
       itemId: string | null;
+      customerId: string | null;
+      handoutEmployeeId: string | null;
     }>([
       {
         $match: {
@@ -57,29 +57,8 @@ export default class ReportsController {
         },
       },
       {
-        $addFields: {
-          customer: {
-            $toObjectId: "$customer",
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: "userdetails",
-          localField: "customer",
-          foreignField: "_id",
-          as: "customerInfo",
-        },
-      },
-      {
-        $lookup: {
-          from: "userdetails",
-          localField: "handoutInfo.handoutEmployee",
-          foreignField: "_id",
-          as: "employeeInfo",
-        },
-      },
-      {
+        // The branch, item, customer and employee ids are replaced by their Postgres columns in
+        // code, in place, so the CSV keeps this column order.
         $project: {
           _id: 0,
           id: { $toString: "$_id" },
@@ -91,20 +70,26 @@ export default class ReportsController {
           buyout: 1,
           blid: 1,
           itemId: { $toString: "$item" },
-          name: firstOrNull("$customerInfo.name"),
-          email: firstOrNull("$customerInfo.email"),
-          phone: firstOrNull("$customerInfo.phone"),
-          dob: firstOrNull("$customerInfo.dob"),
-          guardianEmail: firstOrNull("$customerInfo.guardian.email"),
-          guardianPhone: firstOrNull("$customerInfo.guardian.phone"),
-          guardianName: firstOrNull("$customerInfo.guardian.name"),
-          handoutEmployee: firstOrNull("$employeeInfo.name"),
+          customerId: { $toString: "$customer" },
+          handoutEmployeeId: { $toString: "$handoutInfo.handoutEmployee" },
           pivot: "1",
         },
       },
     ]);
+    const withCustomer = await withUserColumns(rows, "customerId", (user) => ({
+      name: user?.name ?? null,
+      email: user?.email ?? null,
+      phone: user?.phone ?? null,
+      dob: user?.dob?.toISODate() ?? null,
+      guardianEmail: user?.guardianEmail ?? null,
+      guardianPhone: user?.guardianPhone ?? null,
+      guardianName: user?.guardianName ?? null,
+    }));
+    const withEmployee = await withUserColumns(withCustomer, "handoutEmployeeId", (user) => ({
+      handoutEmployee: user?.name ?? null,
+    }));
     return withItemColumns(
-      await withBranchName(rows, "handoutBranchId", "handoutBranch"),
+      await withBranchName(withEmployee, "handoutBranchId", "handoutBranch"),
       (item) => ({
         title: item?.title ?? null,
         isbn: item === undefined ? null : String(item.isbn),
@@ -119,6 +104,8 @@ export default class ReportsController {
     const rows = await StorageService.Orders.aggregate<{
       filialNavnId: string | null;
       itemId: string | null;
+      employeeId: string | null;
+      customerId: string | null;
     }>([
       {
         $match: {
@@ -148,34 +135,13 @@ export default class ReportsController {
       },
       { $unwind: "$orderItems" },
       {
-        $addFields: {
-          customer: { $toObjectId: "$customer" },
-        },
-      },
-      {
-        $lookup: {
-          from: "userdetails",
-          localField: "customer",
-          foreignField: "_id",
-          as: "customerInfo",
-        },
-      },
-      {
-        $lookup: {
-          from: "userdetails",
-          localField: "employee",
-          foreignField: "_id",
-          as: "employeeInfo",
-        },
-      },
-      {
         $project: {
           _id: 0,
           ordreID: { $toString: "$_id" },
           filialID: { $toString: "$branch" },
           filialNavnId: { $toString: "$branch" },
-          employeeNavn: firstOrNull("$employeeInfo.name"),
-          customerName: firstOrNull("$customerInfo.name"),
+          employeeId: { $toString: "$employee" },
+          customerId: { $toString: "$customer" },
           title: "$orderItems.title",
           itemId: { $toString: "$orderItems.item" },
           amount: "$orderItems.amount",
@@ -204,33 +170,32 @@ export default class ReportsController {
         },
       },
     ]);
-    return withItemColumns(await withBranchName(rows, "filialNavnId", "filialNavn"), (item) => ({
-      ISBN: item === undefined ? null : String(item.isbn),
+    const withEmployee = await withUserColumns(rows, "employeeId", (user) => ({
+      employeeNavn: user?.name ?? null,
     }));
+    const withCustomer = await withUserColumns(withEmployee, "customerId", (user) => ({
+      customerName: user?.name ?? null,
+    }));
+    return withItemColumns(
+      await withBranchName(withCustomer, "filialNavnId", "filialNavn"),
+      (item) => ({
+        ISBN: item === undefined ? null : String(item.isbn),
+      }),
+    );
   }
 
   async payments(ctx: HttpContext) {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(paymentsReportValidator);
 
-    const rows = await StorageService.Payments.aggregate<{ branchId: string | null }>([
+    const rows = await StorageService.Payments.aggregate<{
+      branchId: string | null;
+      customerId: string | null;
+    }>([
       {
         $match: {
           ...branchFieldFilter("branch", branchFilter),
           ...dateRangeFilter("creationTime", createdAfter, createdBefore),
-        },
-      },
-      {
-        $addFields: {
-          customer: { $toObjectId: "$customer" },
-        },
-      },
-      {
-        $lookup: {
-          from: "userdetails",
-          localField: "customer",
-          foreignField: "_id",
-          as: "customerInfo",
         },
       },
       {
@@ -240,51 +205,40 @@ export default class ReportsController {
           method: 1,
           amount: 1,
           confirmed: { $ifNull: ["$confirmed", false] },
-          customerName: firstOrNull("$customerInfo.name"),
+          customerId: { $toString: "$customer" },
           branchId: { $toString: "$branch" },
           creationTime: 1,
           pivot: "1",
         },
       },
     ]);
-    return withBranchName(rows, "branchId", "branchName");
+    const withCustomer = await withUserColumns(rows, "customerId", (user) => ({
+      customerName: user?.name ?? null,
+    }));
+    return withBranchName(withCustomer, "branchId", "branchName");
   }
 
-  async userDetails(ctx: HttpContext) {
-    const { branchFilter } = await ctx.request.validateUsing(userDetailsReportValidator);
+  async users(ctx: HttpContext) {
+    const { branchFilter } = await ctx.request.validateUsing(usersReportValidator);
 
-    const rows = await StorageService.UserDetails.aggregate<{ branchMembershipId: string | null }>([
-      {
-        $match: {
-          ...branchFieldFilter("branchMembership", branchFilter),
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "_id",
-          foreignField: "userDetail",
-          as: "userInfo",
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          id: { $toString: "$_id" },
-          email: 1,
-          name: 1,
-          phone: 1,
-          address: 1,
-          postCity: 1,
-          postCode: 1,
-          dob: 1,
-          permission: firstOrNull("$userInfo.permission"),
-          branchMembershipId: { $toString: "$branchMembership" },
-          creationTime: 1,
-          pivot: "1",
-        },
-      },
-    ]);
+    const query = User.query().orderBy("createdAt");
+    if (branchFilter && branchFilter.length > 0) {
+      void query.whereIn("branchMembershipId", branchFilter);
+    }
+    const rows = (await query).map((user) => ({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      address: user.address,
+      postCity: user.postCity,
+      postCode: user.postCode,
+      dob: user.dob?.toISODate() ?? null,
+      permission: user.permission,
+      branchMembershipId: user.branchMembershipId,
+      creationTime: user.createdAt?.toJSDate() ?? null,
+      pivot: "1",
+    }));
     return withBranchName(rows, "branchMembershipId", "branchMembership");
   }
 }

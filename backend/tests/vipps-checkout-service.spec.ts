@@ -3,13 +3,14 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
+import User from "#models/user";
 import { StorageService } from "#services/storage_service";
 import { VippsCheckoutService } from "#services/vipps/vipps_checkout_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
 import type { VippsCheckoutSession } from "#validators/checkout_validators";
-import { mock } from "#tests/test-doubles";
+
+import { userDouble } from "#tests/user_fixtures";
 
 test.group("VippsCheckoutService.update", (group) => {
   let testOrder: Order;
@@ -39,12 +40,10 @@ test.group("VippsCheckoutService.update", (group) => {
     sandbox
       .stub(StorageService.Orders, "update")
       .callsFake((_id, data) => Promise.resolve({ ...testOrder, ...data }));
-    sandbox.stub(StorageService.UserDetails, "get").resolves(
-      mock<UserDetail>({
-        id: "customer1",
-        name: "Ola Nordmann",
-      }),
-    );
+    sandbox
+      .stub(User, "findOrFail")
+      .resolves(userDouble({ id: "customer1", name: "Ola Nordmann" }));
+    sandbox.stub(User.prototype, "save").resolvesThis();
     sandbox
       .stub(StorageService.Payments, "add")
       .callsFake((payment) => Promise.resolve({ ...payment, id: "payment1" }));

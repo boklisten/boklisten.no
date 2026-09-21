@@ -110,7 +110,6 @@ export const InvoiceSchema: BlSchema<Invoice> = new Schema({
         },
         user: {
           type: Schema.Types.ObjectId,
-          ref: BlSchemaName.UserDetails,
         },
       },
     ],

@@ -1,26 +1,26 @@
 import type { JwtPayload } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
+import { DateTime } from "luxon";
 
+import type User from "#models/user";
 import { APP_CONFIG } from "#services/application_config";
-import { StorageService } from "#services/storage_service";
 import env from "#start/env";
-import type { User } from "#types/user";
 
 const TokenService = {
+  /**
+   * Issues both tokens and saves the user with `lastTokenIssuedAt` set, so callers that record a
+   * login (`localLastLogin`, the Vipps identity) set those fields first and let this save them.
+   */
   async createTokens(user: User) {
-    const userDetail = await StorageService.UserDetails.getOrNull(user.userDetail);
-    await StorageService.Users.update(user.id, {
-      $set: {
-        "login.lastTokenIssuedAt": new Date(),
-      },
-    });
+    user.lastTokenIssuedAt = DateTime.now();
+    await user.save();
 
     const PAYLOAD = {
       iss: APP_CONFIG.token.access.iss,
       aud: APP_CONFIG.token.access.aud,
       iat: Math.floor(Date.now() / 1000),
-      sub: userDetail?.blid,
-      username: userDetail?.email,
+      sub: user.blid,
+      username: user.email,
     } as const satisfies JwtPayload;
     const EXPIRY = {
       expiresIn: APP_CONFIG.token.refresh.expiresIn,
@@ -31,7 +31,7 @@ const TokenService = {
         {
           ...PAYLOAD,
           permission: user.permission,
-          details: user.userDetail,
+          details: user.id,
         },
         env.get("ACCESS_TOKEN_SECRET"),
         EXPIRY,

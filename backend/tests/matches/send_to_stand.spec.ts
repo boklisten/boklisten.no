@@ -7,7 +7,11 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import type MatchRound from "#models/match_round";
-import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
+import {
+  createTestRound,
+  ensureUsers,
+  seedTestCatalogue,
+} from "#tests/matches/match-testing-utils";
 import { sendMatchToStand } from "#services/matches/send_to_stand";
 
 const PETTER = "5d765db5fc8c47001c408d81";
@@ -30,6 +34,7 @@ test.group("sendMatchToStand", (group) => {
   // `truncate()` returns the cleanup hook, so this empties the tables after each test.
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([PETTER, MAYA]));
   group.each.setup(async () => {
     round = await createTestRound({ name: "Round", standLocation: "Kantina", status: "active" });
   });

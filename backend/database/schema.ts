@@ -511,6 +511,59 @@ export class SignatureSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class UserSchema extends BaseModel {
+  static $columns = ['address', 'blid', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastTokenIssuedAt', 'localHashedPassword', 'localLastLogin', 'name', 'permission', 'phone', 'postCity', 'postCode', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsLastLogin', 'vippsUserId'] as const
+  $columns = UserSchema.$columns
+  @column()
+  declare address: string
+  @column()
+  declare blid: string
+  @column()
+  declare branchMembershipId: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column.date()
+  declare dob: DateTime | null
+  @column()
+  declare email: string
+  @column()
+  declare emailConfirmed: boolean
+  @column()
+  declare guardianEmail: string | null
+  @column()
+  declare guardianName: string | null
+  @column()
+  declare guardianPhone: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column.dateTime()
+  declare lastTokenIssuedAt: DateTime | null
+  @column()
+  declare localHashedPassword: string | null
+  @column.dateTime()
+  declare localLastLogin: DateTime | null
+  @column()
+  declare name: string
+  @column()
+  declare permission: string
+  @column()
+  declare phone: string | null
+  @column()
+  declare postCity: string
+  @column()
+  declare postCode: string
+  @column()
+  declare taskConfirmDetails: boolean
+  @column()
+  declare taskSignAgreement: boolean
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column.dateTime()
+  declare vippsLastLogin: DateTime | null
+  @column()
+  declare vippsUserId: string | null
+}
+
 export class WaitingListCustomerSchema extends BaseModel {
   static $columns = ['branchId', 'createdAt', 'id', 'itemId', 'name', 'phoneNumber', 'updatedAt'] as const
   $columns = WaitingListCustomerSchema.$columns

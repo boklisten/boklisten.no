@@ -4,28 +4,29 @@ import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import {
   buildRefundRequestMail,
   REFUND_REQUEST_RECIPIENT,
   RefundRequestService,
 } from "#services/refund_request_service";
-import { StorageService } from "#services/storage_service";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
 import env from "#start/env";
 import { mock } from "#tests/test-doubles";
+import { userDouble } from "#tests/user_fixtures";
 
 const EMPLOYEE_ID = "5f7f7f7f7f7f7f7f7f7f7f7e";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 const ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f31";
 
-const employee = mock<UserDetail>({
+const employee = userDouble({
   id: EMPLOYEE_ID,
   name: "Ansatt Ansattsen",
   email: "ansatt@boklisten.no",
+  permission: "employee",
 });
-const customer = mock<UserDetail>({
+const customer = userDouble({
   id: CUSTOMER_ID,
   name: "Kari Kunde",
   email: "kari@example.com",
@@ -113,7 +114,7 @@ test.group("RefundRequestService.send", (group) => {
   group.each.setup(() => {
     sandbox = createSandbox();
     sandbox
-      .stub(StorageService.UserDetails, "get")
+      .stub(User, "findOrFail")
       .callsFake((id) => Promise.resolve(id === EMPLOYEE_ID ? employee : customer));
   });
   group.each.teardown(() => sandbox.restore());

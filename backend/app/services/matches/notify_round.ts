@@ -1,10 +1,10 @@
 import type { Infer } from "@vinejs/vine/types";
 
 import MatchRound from "#models/match_round";
+import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { MessageLogService } from "#services/message_log_service";
 import { MatchRepository } from "#services/matches/match_repository";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { matchNotifySchema } from "#validators/matches";
 
@@ -60,7 +60,7 @@ export async function notify(
     }
   }
 
-  const targetCustomers = await StorageService.UserDetails.getMany([...targetCustomerIds]);
+  const targetCustomers = await User.findMany([...targetCustomerIds]);
   const sendout = await MessageLogService.createSendout({
     kind: "match-notify",
     name: round.name,

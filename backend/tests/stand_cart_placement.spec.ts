@@ -4,6 +4,7 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import Signature from "#models/signature";
+import User from "#models/user";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import { MatchRepository } from "#services/matches/match_repository";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
@@ -13,8 +14,8 @@ import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Payment } from "#shared/payment/payment";
-import type { UserDetail } from "#shared/user-detail";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
+import { userDouble } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
@@ -76,7 +77,6 @@ test.group("StandCartPlacement.place", (group) => {
   let placeOrder: sinon.SinonStub;
   let recordHandover: sinon.SinonStub;
   let report: sinon.SinonStub;
-  let userDetailsUpdate: sinon.SinonStub;
 
   group.each.setup(() => {
     sandbox = createSandbox();
@@ -89,10 +89,7 @@ test.group("StandCartPlacement.place", (group) => {
     ordersUpdate = sandbox
       .stub(StorageService.Orders, "update")
       .callsFake((id, data) => Promise.resolve({ ...handoutOrder, ...data, id }));
-    sandbox
-      .stub(StorageService.UserDetails, "get")
-      .resolves(mock<UserDetail>({ id: CUSTOMER_ID, name: "Ola", customerItems: ["old-ci"] }));
-    userDetailsUpdate = sandbox.stub(StorageService.UserDetails, "update").resolves();
+    sandbox.stub(User, "findOrFail").resolves(userDouble({ id: CUSTOMER_ID, name: "Ola" }));
     placeOrder = sandbox
       .stub(OrderPlacedHandler.prototype, "placeOrder")
       .callsFake((order) => Promise.resolve({ ...order, placed: true }));
@@ -126,11 +123,6 @@ test.group("StandCartPlacement.place", (group) => {
     // The employee, not the customer: the handler names them on returned books
     assert.equal(placeOrder.firstCall.args[1], EMPLOYEE.detailsId);
     assert.isTrue(placed.placed);
-    // The new copy is listed on the customer next to the ones they already had
-    assert.deepEqual(userDetailsUpdate.firstCall.args, [
-      CUSTOMER_ID,
-      { customerItems: ["old-ci", "new-ci"] },
-    ]);
   });
 
   test("an order item that hands nothing out creates no customer item", async ({ assert }) => {
@@ -139,7 +131,6 @@ test.group("StandCartPlacement.place", (group) => {
       EMPLOYEE,
     );
     assert.isFalse(customerItemsAdd.called);
-    assert.isFalse(userDetailsUpdate.called);
   });
 
   test("records a handover from the stand for each copy handed out", async ({ assert }) => {
@@ -178,8 +169,8 @@ test.group("StandCartPlacement.place", (group) => {
   }) => {
     asStub(Signature.validForCustomer).resolves(null);
     // The signing task is already on the customer, so no reconciliation queries are needed
-    asStub(StorageService.UserDetails.get).resolves(
-      mock<UserDetail>({ id: CUSTOMER_ID, customerItems: [], tasks: { signAgreement: true } }),
+    asStub(User.findOrFail).resolves(
+      userDouble({ id: CUSTOMER_ID, name: "Ola", taskSignAgreement: true }),
     );
     await StandCartPlacement.place(handoutOrder, EMPLOYEE);
     assert.isTrue(report.calledOnce);

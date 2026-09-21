@@ -1,9 +1,9 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import logger from "@adonisjs/core/services/logger";
+import { DateTime } from "luxon";
 
-import { StorageService } from "#services/storage_service";
+import User from "#models/user";
 import TokenService from "#services/token_service";
-import { UserDetailService } from "#services/user_detail_service";
 import { UserService } from "#services/user_service";
 import type { AuthVippsError } from "#shared/auth_vipps_error";
 import { AUTH_VIPPS_ERROR } from "#shared/auth_vipps_error";
@@ -35,21 +35,21 @@ export const AuthVippsService = {
 
     const vippsUser = await vipps.user();
 
-    let userDetail =
-      (await UserDetailService.getByPhoneNumber(vippsUser.phoneNumber)) ??
-      (await UserDetailService.getByEmail(vippsUser.email));
-    let user = await UserService.getByUserDetailsId(userDetail?.id);
-
     try {
-      userDetail ??= await UserDetailService.createVippsUserDetail(vippsUser);
-      user ??= await UserService.createVippsUser(userDetail.id, vippsUser.id);
-
-      await StorageService.Users.update(user.id, {
-        $set: {
-          "login.vipps.userId": vippsUser.id,
-          "login.vipps.lastLogin": new Date(),
-        },
-      });
+      // The account is found by phone or email, so a Vipps identity moves along with the phone
+      // number; the unique index on the Vipps id means the previous holder loses it first.
+      const user =
+        (await User.byPhone(vippsUser.phoneNumber)) ??
+        (await User.byEmail(vippsUser.email)) ??
+        (await UserService.createVippsUser(vippsUser));
+      if (user.vippsUserId !== vippsUser.id) {
+        await User.query()
+          .where("vippsUserId", vippsUser.id)
+          .whereNot("id", user.id)
+          .update({ vippsUserId: null, vippsLastLogin: null });
+      }
+      user.vippsUserId = vippsUser.id;
+      user.vippsLastLogin = DateTime.now();
 
       const tokens = await TokenService.createTokens(user);
 

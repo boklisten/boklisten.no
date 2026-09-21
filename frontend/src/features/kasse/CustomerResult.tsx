@@ -38,7 +38,7 @@ export default function CustomerResult({
     data: customer,
     isPending,
     isError,
-  } = useQuery(api.userDetails.show.queryOptions({ params: { detailsId } }));
+  } = useQuery(api.users.show.queryOptions({ params: { detailsId } }));
 
   if (isPending) {
     return (

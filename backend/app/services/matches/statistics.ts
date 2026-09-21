@@ -3,13 +3,13 @@ import Item from "#models/item";
 import type BookHandover from "#models/book_handover";
 import type MatchObligation from "#models/match_obligation";
 import MatchRound from "#models/match_round";
+import User from "#models/user";
 import { MatchRepository } from "#services/matches/match_repository";
 import {
   deriveObligationProgress,
   indexHandoversByHalf,
 } from "#services/matches/obligation_status";
 import type { HandoverFacts } from "#services/matches/obligation_status";
-import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
 import type {
   BookTransferProgress,
@@ -24,7 +24,6 @@ import type {
   UserAttendanceSlot,
 } from "#shared/match/match-statistics";
 import { describeMatchConfig } from "#shared/match/match-statistics";
-import { USER_PERMISSION } from "#shared/user-permission";
 
 /** Sort meeting slots chronologically, keeping the "no time" bucket (null) last. */
 function compareSlots(a: string | null, b: string | null): number {
@@ -428,14 +427,11 @@ async function computeStandBranchHierarchy(
     return [];
   }
 
-  const [userDetails, branches] = await Promise.all([
-    StorageService.UserDetails.getMany(standCustomers, USER_PERMISSION.ADMIN),
-    BranchModel.all(),
-  ]);
+  const [users, branches] = await Promise.all([User.byIds(standCustomers), BranchModel.all()]);
 
   const branchById = new Map(branches.map((branch) => [branch.id, branch]));
   const customerBranchId = new Map(
-    userDetails.map((userDetail) => [userDetail.id, userDetail.branchMembership]),
+    [...users.values()].map((user) => [user.id, user.branchMembershipId ?? undefined]),
   );
 
   const roots = new Map<string, MutableBranchNode>();

@@ -1,5 +1,6 @@
 import logger from "@adonisjs/core/services/logger";
 
+import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { CustomerItemHandler } from "#services/customer_items/customer_item_handler";
 import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
@@ -9,7 +10,6 @@ import { reconcileSignatureTask } from "#services/signature_helper";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
 
 export class OrderPlacedHandler {
   private readonly paymentHandler: PaymentHandler;
@@ -58,11 +58,11 @@ export class OrderPlacedHandler {
       if (!order?.customer) {
         return;
       }
-      const userDetail = await StorageService.UserDetails.getOrNull(order.customer);
-      if (!userDetail) {
+      const user = await User.find(order.customer);
+      if (!user) {
         return;
       }
-      await reconcileSignatureTask(userDetail);
+      await reconcileSignatureTask(user);
     } catch (error) {
       logger.error(`could not update signature task for order ${order.id}: ${String(error)}`);
     }
@@ -132,30 +132,16 @@ export class OrderPlacedHandler {
     return order;
   }
 
-  private updateUserDetailWithPlacedOrder(order: Order): Promise<boolean> {
+  private async updateUserDetailWithPlacedOrder(order: Order): Promise<boolean> {
     if (!order?.customer) {
-      return Promise.resolve(true);
+      return true;
     }
-    return new Promise((resolve, reject) => {
-      StorageService.UserDetails.get(order.customer)
-        .then((userDetail: UserDetail) => {
-          const orders = userDetail.orders;
-
-          if (orders.includes(order.id)) {
-            return resolve(true);
-          }
-          orders.push(order.id);
-
-          return StorageService.UserDetails.update(order.customer, { orders })
-            .then(() => resolve(true))
-            .catch(() => {
-              reject(new BlError("could not update userDetail with placed order"));
-            });
-        })
-        .catch((getUserDetailError: BlError) => {
-          reject(new BlError(`customer "${order.customer}" not found`).add(getUserDetailError));
-        });
-    });
+    // The customer's orders are found through `orders.customer`; only the customer must exist.
+    const customer = await User.find(order.customer);
+    if (!customer) {
+      throw new BlError(`customer "${order.customer}" not found`);
+    }
+    return true;
   }
 
   private async sendOrderConfirmationMail(order: Order): Promise<void> {
@@ -163,7 +149,7 @@ export class OrderPlacedHandler {
     if (order.notification && !order.notification.email) {
       return;
     }
-    const customerDetail = await StorageService.UserDetails.get(order.customer);
+    const customerDetail = await User.findOrFail(order.customer);
     const delivery =
       typeof order.delivery === "string"
         ? await StorageService.Deliveries.get(order.delivery)

@@ -1,4 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Group, Paper, Stack, Text } from "@mantine/core";
 
 import CustomerContactRow from "@/features/customer-search/CustomerContactRow";
@@ -15,7 +15,7 @@ export default function StandCartCustomerCard({
   customer,
   onNavigate,
 }: {
-  customer: UserDetail;
+  customer: User;
   /** The name was followed: the cart closes, since the customer is where the employee is going. */
   onNavigate: () => void;
 }) {

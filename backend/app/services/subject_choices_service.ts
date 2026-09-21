@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
+import User from "#models/user";
 import { ACTIVE_CUSTOMER_ITEM_MATCH, OPEN_ORDER_ITEM_MATCH } from "#services/branch_books_service";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import type { SubjectForUpload } from "#services/branch_subjects_service";
@@ -332,18 +333,11 @@ async function fetchScopeBranches(branchId: string) {
 }
 
 async function fetchMembers(scopeIds: string[]): Promise<MemberSummary[]> {
-  const members = await StorageService.UserDetails.aggregate<{
-    id: string;
-    name?: string;
-    branchMembership?: string;
-  }>([
-    { $match: { branchMembership: { $in: scopeIds.map((id) => new ObjectId(id)) } } },
-    { $project: { name: 1, branchMembership: 1 } },
-  ]);
+  const members = await User.membersOf(scopeIds).select("id", "name", "branchMembershipId");
   return members.map((member) => ({
     id: member.id,
-    name: member.name ?? "",
-    branchMembership: member.branchMembership ? String(member.branchMembership) : null,
+    name: member.name,
+    branchMembership: member.branchMembershipId,
   }));
 }
 

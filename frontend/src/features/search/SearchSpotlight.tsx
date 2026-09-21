@@ -167,8 +167,7 @@ export default function SearchSpotlight({
 
   const { data: customers, isFetching: fetchingCustomers } = useQuery({
     queryKey: customerQueryKey(debouncedSearch),
-    queryFn: async () =>
-      (await client.api.userDetails.search({ body: { searchStr: debouncedSearch } })) ?? [],
+    queryFn: async () => (await client.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: customerSearchActive,
     placeholderData: (previousData, previousQuery) => {
       const previousSearch = previousQuery?.queryKey.at(-1);
@@ -279,9 +278,9 @@ export default function SearchSpotlight({
             <Text fw={600}>{displayName(userDetail.name)}</Text>
             <Group gap={6}>
               <PermissionBadge permission={userDetail.permission} size="sm" />
-              {userDetail.branchMembership && branchNames.has(userDetail.branchMembership) && (
+              {userDetail.branchMembershipId && branchNames.has(userDetail.branchMembershipId) && (
                 <Badge variant="light" size="sm">
-                  {branchNames.get(userDetail.branchMembership)}
+                  {branchNames.get(userDetail.branchMembershipId)}
                 </Badge>
               )}
             </Group>

@@ -1,8 +1,7 @@
-import { StorageService } from "#services/storage_service";
+import User from "#models/user";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
-import type { UserDetail } from "#shared/user-detail";
 
 export class OrderToCustomerItemGenerator {
   public async generate(order: Order): Promise<CustomerItem[]> {
@@ -12,7 +11,7 @@ export class OrderToCustomerItemGenerator {
       return [];
     }
 
-    const customerDetail = await StorageService.UserDetails.get(order.customer);
+    const customerDetail = await User.findOrFail(order.customer);
 
     for (const orderItem of order.orderItems) {
       if (this.shouldCreateCustomerItem(orderItem)) {
@@ -33,7 +32,7 @@ export class OrderToCustomerItemGenerator {
   }
 
   private convertOrderItemToCustomerItem(
-    customerDetail: UserDetail,
+    customerDetail: User,
     order: Order,
     orderItem: OrderItem,
   ): CustomerItem {
@@ -52,7 +51,7 @@ export class OrderToCustomerItemGenerator {
   }
 
   private createPartlyPaymentCustomerItem(
-    customerDetail: UserDetail,
+    customerDetail: User,
     order: Order,
     orderItem: OrderItem,
   ): CustomerItem {
@@ -81,7 +80,7 @@ export class OrderToCustomerItemGenerator {
   }
 
   private createRentCustomerItem(
-    customerDetail: UserDetail,
+    customerDetail: User,
     order: Order,
     orderItem: OrderItem,
   ): CustomerItem {
@@ -115,15 +114,19 @@ export class OrderToCustomerItemGenerator {
     };
   }
 
-  private createCustomerInfo(customerDetail: UserDetail) {
+  private createCustomerInfo(customerDetail: User) {
     return {
       name: customerDetail.name,
-      phone: customerDetail.phone,
+      phone: customerDetail.phone ?? "",
       address: customerDetail.address,
       postCode: customerDetail.postCode,
       postCity: customerDetail.postCity,
-      dob: customerDetail.dob,
-      guardian: customerDetail.guardian,
+      dob: customerDetail.dob?.toJSDate(),
+      guardian: {
+        name: customerDetail.guardianName ?? "",
+        email: customerDetail.guardianEmail ?? "",
+        phone: customerDetail.guardianPhone ?? "",
+      },
     };
   }
 }

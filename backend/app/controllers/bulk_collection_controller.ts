@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import ItemModel from "#models/item";
+import User from "#models/user";
 import BlidService from "#services/blid_service";
 import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
 import { CustomerItemActive } from "#services/customer_items/customer_item_active";
@@ -147,12 +148,10 @@ export default class BulkCollectionController {
     const [item, branch, customerDetail, recipientCustomerId] = await Promise.all([
       ItemModel.findOrFail(customerItem.item),
       Branch.findOptional(branchId),
-      StorageService.UserDetails.get(customerItem.customer),
+      User.findOrFail(customerItem.customer),
       PeerObligations.findPeerRecipient(customerItem.customer, customerItem.item),
     ]);
-    const deliverTo = recipientCustomerId
-      ? await StorageService.UserDetails.getOrNull(recipientCustomerId)
-      : null;
+    const deliverTo = recipientCustomerId ? await User.find(recipientCustomerId) : null;
 
     return {
       customerItemId: customerItem.id,
@@ -173,7 +172,7 @@ export default class BulkCollectionController {
     const receipt: CustomerCollectionReceipt[] = [];
     for (const [customerId, collectedBooks] of collectedByCustomer) {
       const [customerDetail, remainingBooks] = await Promise.all([
-        StorageService.UserDetails.get(customerId),
+        User.findOrFail(customerId),
         this.getRemainingBooks(customerId),
       ]);
       receipt.push({

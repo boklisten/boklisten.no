@@ -2,6 +2,7 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import User from "#models/user";
 import { CustomerItemHandler } from "#services/customer_items/customer_item_handler";
 import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
@@ -12,7 +13,7 @@ import type { AccessToken } from "#shared/access-token";
 import { BlError } from "#shared/bl-error";
 import type { Order } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
-import type { UserDetail } from "#shared/user-detail";
+import { userDouble } from "#tests/user_fixtures";
 
 test.group("OrderPlacedHandler", (group) => {
   let testOrder: Order;
@@ -20,8 +21,7 @@ test.group("OrderPlacedHandler", (group) => {
   let paymentsConfirmed: boolean;
   let testAccessToken: AccessToken;
   let orderUpdate: boolean;
-  let testUserDetail: UserDetail;
-  let userDeatilUpdate: boolean;
+  let testUserDetail: User;
 
   const paymentHandler = new PaymentHandler();
   const orderItemMovedFromOrderHandler = new OrderItemMovedFromOrderHandler();
@@ -52,22 +52,15 @@ test.group("OrderPlacedHandler", (group) => {
     };
     sandbox.stub(StorageService, "CustomerItems").value(customerItemsStub);
 
-    const userDetailsStub = {
-      get: sandbox.stub().callsFake((id: string) => {
-        if (id !== testUserDetail.id) {
-          return Promise.reject(new BlError("user detail not found"));
-        }
-        return Promise.resolve(testUserDetail);
-      }),
-      update: sandbox.stub().callsFake((id, data) => {
-        if (userDeatilUpdate && data["orders"]) {
-          testUserDetail.orders = data["orders"];
-          return Promise.resolve(testUserDetail);
-        }
-        return Promise.reject(new BlError("could not update user detail"));
-      }),
-    };
-    sandbox.stub(StorageService, "UserDetails").value(userDetailsStub);
+    sandbox
+      .stub(User, "find")
+      .callsFake((id: string) => Promise.resolve(id === testUserDetail.id ? testUserDetail : null));
+    sandbox.stub(User, "findOrFail").callsFake((id: string) => {
+      if (id !== testUserDetail.id) {
+        return Promise.reject(new Error("user not found"));
+      }
+      return Promise.resolve(testUserDetail);
+    });
 
     sandbox.stub(paymentHandler, "confirmPayments").callsFake(() => {
       if (!paymentsConfirmed) {
@@ -97,7 +90,6 @@ test.group("OrderPlacedHandler", (group) => {
 
     paymentsConfirmed = true;
     orderUpdate = true;
-    userDeatilUpdate = true;
 
     testOrder = {
       id: "branch1",
@@ -152,20 +144,7 @@ test.group("OrderPlacedHandler", (group) => {
       username: "user@name.com",
     };
 
-    testUserDetail = {
-      orders: [],
-      customerItems: [],
-      id: "customer1",
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      postCode: "",
-      postCity: "",
-      dob: new Date(),
-      emailConfirmed: true,
-      blid: "",
-    };
+    testUserDetail = userDouble({ id: "customer1" });
   });
   group.each.teardown(() => {
     sandbox.restore();
@@ -202,17 +181,6 @@ test.group("OrderPlacedHandler", (group) => {
     );
     assert.instanceOf(err, BlError);
     assert.equal(err?.errorStack[0]?.getMsg(), 'customer "notFoundUserDetails" not found');
-  });
-
-  test("should reject if userDetailStorage.updates rejects", async ({ assert }) => {
-    userDeatilUpdate = false;
-
-    const err = await orderPlacedHandler.placeOrder(testOrder, testAccessToken.details).then(
-      () => null,
-      (error: BlError) => error,
-    );
-    assert.instanceOf(err, BlError);
-    assert.equal(err?.errorStack[0]?.getMsg(), "could not update userDetail with placed order");
   });
 
   test("should resolve when order was placed", async ({ assert }) =>

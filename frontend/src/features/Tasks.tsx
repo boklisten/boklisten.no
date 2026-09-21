@@ -11,11 +11,12 @@ import CountdownToRedirect from "@/shared/components/CountdownToRedirect";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { isUnder18 } from "@/shared/utils/dates";
+import { hasPendingTasks } from "@/shared/utils/tasks";
 
 export default function Tasks() {
   const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery({
-    ...api.userDetails.me.queryOptions(),
+    ...api.users.me.queryOptions(),
     refetchInterval: 5000,
   });
 
@@ -35,9 +36,7 @@ export default function Tasks() {
       </ErrorAlert>
     );
   }
-  const hasTasks = (data.tasks?.confirmDetails ?? false) || (data.tasks?.signAgreement ?? false);
-
-  if (!hasTasks) {
+  if (!hasPendingTasks(data)) {
     return (
       <Stack>
         <SuccessAlert>Du har fullført alle utestående oppgaver</SuccessAlert>
@@ -45,20 +44,18 @@ export default function Tasks() {
       </Stack>
     );
   }
-  const confirmDetailsTask = data?.tasks?.confirmDetails;
-  const signAgreementTask = data?.tasks?.signAgreement;
   return (
     <>
       <Text fs="italic">
         Vi mangler noen opplysninger fra deg – fullfør oppgavene nedenfor for å fortsette.
       </Text>
       <Stepper active={0}>
-        {confirmDetailsTask && (
+        {data.taskConfirmDetails && (
           <Stepper.Step label="Bekreft din informasjon">
             <UserSettingsForm userDetail={data} />
           </Stepper.Step>
         )}
-        {signAgreementTask && (
+        {data.taskSignAgreement && (
           <Stepper.Step label="Signer låneavtale">
             <Activity mode={isUnder18(data.dob) ? "visible" : "hidden"}>
               <GuardianSignatureRequest userDetail={data} />

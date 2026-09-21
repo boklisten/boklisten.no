@@ -8,6 +8,7 @@ import type { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { MatchRepository } from "#services/matches/match_repository";
 import { PeerObligations } from "#services/matches/peer_obligations";
 import { StandCartLineResolver } from "#services/stand_cart/stand_cart_line_resolver";
+import User from "#models/user";
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
@@ -15,10 +16,10 @@ import type { Delivery } from "#shared/delivery/delivery";
 import type { Order } from "#shared/order/order";
 import type { StandCartLine } from "#shared/stand_cart";
 import type { UniqueItem } from "#shared/unique-item";
-import type { UserDetail } from "#shared/user-detail";
 import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { mock, unchecked } from "#tests/test-doubles";
+import { userDouble } from "#tests/user_fixtures";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
 const SEMESTER_END = new Date("2026-12-20T00:00:00.000Z");
@@ -159,9 +160,7 @@ function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
       ),
     );
   sandbox.stub(StorageService.Deliveries, "getOrNull").callsFake(byId(world.deliveries));
-  sandbox
-    .stub(StorageService.UserDetails, "getOrNull")
-    .resolves(mock<UserDetail>({ id: OTHER_CUSTOMER_ID, name: "Kari Nordmann" }));
+  sandbox.stub(User, "find").resolves(userDouble({ id: OTHER_CUSTOMER_ID, name: "Kari Nordmann" }));
   sandbox.stub(MatchRepository, "findForCustomer").resolves([]);
   sandbox.stub(PeerObligations, "findPeerSender").resolves(world.peerSender);
 }

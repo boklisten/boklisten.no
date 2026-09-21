@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
 import Item from "#models/item";
+import User from "#models/user";
 import { deadlineWindow } from "#services/deadline_window";
 import DispatchService from "#services/dispatch_service";
 import type { MessageLogContext } from "#services/message_log_service";
@@ -13,21 +14,21 @@ import { reminderValidator } from "#validators/reminder";
 interface ReminderCustomer {
   customerDetailsId: string;
   name: string;
-  dob: Date;
   customerItems: {
     title: string;
     deadline: string;
     blid: string;
   }[];
-  phone: string;
+  phone: string | null;
   email: string;
-  guardian: { phone: string | undefined; email: string | undefined };
+  guardian: { phone: string | null; email: string | null };
 }
 
-/** The aggregation's output: books still carry the item id, titles are joined from Postgres. */
-type RemindedCustomerRow = Omit<ReminderCustomer, "customerItems"> & {
+/** The aggregation's output: the customer is a bare id and books still carry the item id; both are joined from Postgres. */
+interface RemindedCustomerRow {
+  customerDetailsId: string;
   customerItems: { blid: string; item: ObjectId; deadline: string }[];
-};
+}
 
 async function aggregateCustomersToRemind(
   customerItemType: "rent" | "partly-payment",
@@ -61,44 +62,43 @@ async function aggregateCustomersToRemind(
       },
     },
     {
-      $lookup: {
-        from: "userdetails",
-        localField: "_id",
-        foreignField: "_id",
-        as: "customer",
-      },
-    },
-    {
-      $unwind: {
-        path: "$customer",
-      },
-    },
-    {
       $project: {
+        _id: 0,
         customerDetailsId: { $toString: "$_id" },
-        name: "$customer.name",
-        phone: "$customer.phone",
-        dob: "$customer.dob",
-        email: "$customer.email",
-        guardian: {
-          phone: "$customer.guardian.phone",
-          email: "$customer.guardian.email",
-        },
         customerItems: 1,
       },
     },
   ]);
-  const titles = await Item.titlesByIds(
-    rows.flatMap((row) => row.customerItems.map((customerItem) => String(customerItem.item))),
-  );
-  // A book whose title is gone from the catalogue is left out, and so is a customer left with no
-  // books, as the inner join did before the catalogue moved to Postgres.
+  const [titles, customers] = await Promise.all([
+    Item.titlesByIds(
+      rows.flatMap((row) => row.customerItems.map((customerItem) => String(customerItem.item))),
+    ),
+    User.byIds(rows.map((row) => row.customerDetailsId)),
+  ]);
+  // A book whose title is gone from the catalogue is left out, and so is a customer who has been
+  // deleted or is left with no books, as the inner joins did before the data moved to Postgres.
   return rows.flatMap((row) => {
+    const customer = customers.get(row.customerDetailsId);
+    if (!customer) {
+      return [];
+    }
     const customerItems = row.customerItems.flatMap(({ item, ...customerItem }) => {
       const title = titles.get(String(item));
       return title === undefined ? [] : [{ ...customerItem, title }];
     });
-    return customerItems.length === 0 ? [] : [{ ...row, customerItems }];
+    if (customerItems.length === 0) {
+      return [];
+    }
+    return [
+      {
+        customerDetailsId: row.customerDetailsId,
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        guardian: { phone: customer.guardianPhone, email: customer.guardianEmail },
+        customerItems,
+      },
+    ];
   });
 }
 
@@ -191,10 +191,11 @@ export default class RemindersController {
 
     if (smsText) {
       await DispatchService.sendReminderSms(
-        customers.map((customer) => ({
-          to: customer.phone,
-          regardingCustomerDetailsId: customer.customerDetailsId,
-        })),
+        customers.flatMap((customer) =>
+          customer.phone === null
+            ? []
+            : [{ to: customer.phone, regardingCustomerDetailsId: customer.customerDetailsId }],
+        ),
         smsText,
         context,
       );

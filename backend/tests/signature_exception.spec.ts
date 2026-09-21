@@ -5,19 +5,20 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import Signature from "#models/signature";
+import type User from "#models/user";
 import { findSignatureException } from "#services/signature_helper";
 import { StorageService } from "#services/storage_service";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import { mock } from "#tests/test-doubles";
+import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
-const adultDob = new Date(new Date().getFullYear() - 30, 0, 1);
-const childDob = new Date(new Date().getFullYear() - 10, 0, 1);
+const adultDob = DateTime.now().minus({ years: 30 }).startOf("year");
+const childDob = DateTime.now().minus({ years: 10 }).startOf("year");
 
-function userDetailWith(overrides: Partial<UserDetail>): UserDetail {
-  return mock<UserDetail>({
+function userWith(overrides: { dob?: DateTime; taskSignAgreement?: boolean } = {}): Promise<User> {
+  return createUser({
     id: CUSTOMER_ID,
     name: "Test Kunde",
     dob: adultDob,
@@ -52,16 +53,6 @@ test.group("findSignatureException", (group) => {
 
   group.each.setup(() => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService.UserDetails, "update").callsFake((id, data) =>
-      Promise.resolve(
-        mock<UserDetail>({
-          ...userDetailWith({}),
-          tasks: {
-            signAgreement: (data as Record<string, unknown>)["tasks.signAgreement"] === true,
-          },
-        }),
-      ),
-    );
     orders = [];
     sandbox.stub(StorageService.Orders, "getByQuery").callsFake(() => Promise.resolve(orders));
     sandbox.stub(StorageService.CustomerItems, "getByQuery").callsFake(() => Promise.resolve([]));
@@ -73,13 +64,13 @@ test.group("findSignatureException", (group) => {
   test("an unsigned customer with an open rent order has never signed", async ({ assert }) => {
     orders = [openOrderWith("rent")];
 
-    const reason = await findSignatureException(userDetailWith({}));
+    const reason = await findSignatureException(await userWith());
 
     assert.equal(reason, "Aldri signert");
   });
 
   test("a requested signature task counts as never signed", async ({ assert }) => {
-    const reason = await findSignatureException(userDetailWith({ tasks: { signAgreement: true } }));
+    const reason = await findSignatureException(await userWith({ taskSignAgreement: true }));
 
     assert.equal(reason, "Aldri signert");
   });
@@ -89,7 +80,7 @@ test.group("findSignatureException", (group) => {
   }) => {
     orders = [openOrderWith("partly-payment")];
 
-    const reason = await findSignatureException(userDetailWith({}));
+    const reason = await findSignatureException(await userWith());
 
     assert.equal(reason, "Aldri signert");
   });
@@ -97,7 +88,7 @@ test.group("findSignatureException", (group) => {
   test("an unsigned customer with only a buy order needs no signature", async ({ assert }) => {
     orders = [openOrderWith("buy")];
 
-    const reason = await findSignatureException(userDetailWith({}));
+    const reason = await findSignatureException(await userWith());
 
     assert.isNull(reason);
   });
@@ -106,9 +97,10 @@ test.group("findSignatureException", (group) => {
     assert,
   }) => {
     orders = [openOrderWith("rent")];
+    const user = await userWith();
     await createSignature({ createdAt: DateTime.local(2000, 1, 1) });
 
-    const reason = await findSignatureException(userDetailWith({}));
+    const reason = await findSignatureException(user);
 
     assert.equal(reason, "Signaturen er utløpt");
   });
@@ -117,27 +109,30 @@ test.group("findSignatureException", (group) => {
     assert,
   }) => {
     orders = [openOrderWith("rent")];
+    const user = await userWith({ dob: childDob });
     await createSignature();
 
-    const reason = await findSignatureException(userDetailWith({ dob: childDob }));
+    const reason = await findSignatureException(user);
 
     assert.equal(reason, "Signert uten foresatt, kunden er under 18");
   });
 
   test("an adult with a guardian signature is reported as outgrown", async ({ assert }) => {
     orders = [openOrderWith("rent")];
+    const user = await userWith();
     await createSignature({ signedByGuardian: true });
 
-    const reason = await findSignatureException(userDetailWith({}));
+    const reason = await findSignatureException(user);
 
     assert.equal(reason, "Signert av foresatt, kunden har fylt 18");
   });
 
   test("a customer with a valid signature has no exception", async ({ assert }) => {
     orders = [openOrderWith("rent")];
+    const user = await userWith();
     await createSignature();
 
-    const reason = await findSignatureException(userDetailWith({}));
+    const reason = await findSignatureException(user);
 
     assert.isNull(reason);
   });

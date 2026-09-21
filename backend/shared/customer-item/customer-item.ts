@@ -68,7 +68,7 @@ export interface CustomerItem extends BlDocument {
     address: string;
     postCode: string;
     postCity: string;
-    dob: Date;
+    dob?: Date;
     guardian?: {
       name: string;
       phone: string;

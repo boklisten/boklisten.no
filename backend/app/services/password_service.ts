@@ -1,16 +1,13 @@
 import hash from "@adonisjs/core/services/hash";
 
-import { StorageService } from "#services/storage_service";
+import type User from "#models/user";
 
 export const PasswordService = {
   async hash(text: string) {
     return hash.make(text);
   },
-  async setPassword(userId: string, password: string) {
-    await StorageService.Users.update(userId, {
-      $set: {
-        "login.local.hashedPassword": await this.hash(password),
-      },
-    });
+  async setPassword(user: User, password: string) {
+    user.localHashedPassword = await this.hash(password);
+    await user.save();
   },
 };

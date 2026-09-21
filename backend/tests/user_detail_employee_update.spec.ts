@@ -1,103 +1,74 @@
+import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { DateTime } from "luxon";
 
-import { StorageService } from "#services/storage_service";
-import { UserDetailService } from "#services/user_detail_service";
-import type { UserDetail } from "#shared/user-detail";
+import User from "#models/user";
+import { UserService } from "#services/user_service";
+import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 
-function makeUserDetail(overrides: Partial<UserDetail> = {}): UserDetail {
-  return {
-    id: CUSTOMER_ID,
-    name: "Test Testersen",
-    email: "test@example.com",
-    phone: "12345678",
-    address: "Testveien 1",
-    postCode: "0123",
-    postCity: "OSLO",
-    dob: new Date(1990, 0, 1),
-    emailConfirmed: false,
-    blid: "u#test",
-    orders: [],
-    customerItems: [],
-    // The storage layer adds this flag to every document; validity depends on it.
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- not part of the shared type
-    ...({ active: true } as Partial<UserDetail>),
-    ...overrides,
-  };
+function underageDob(): DateTime {
+  return DateTime.now().startOf("day").minus({ years: 16 });
 }
 
-function underageDob(): Date {
-  const dob = new Date();
-  dob.setFullYear(dob.getFullYear() - 16);
-  return dob;
-}
-
-test.group("UserDetailService.updateAsEmployee", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  let stored: UserDetail;
-  let updateStub: sinon.SinonStub;
-
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    stored = makeUserDetail();
-    updateStub = sandbox.stub().callsFake((id: string, data: Record<string, unknown>) => {
-      const { "tasks.confirmDetails": confirmDetails, ...rest } = data;
-      stored = { ...stored, ...rest };
-      if (confirmDetails !== undefined) {
-        stored = { ...stored, tasks: { ...stored.tasks, confirmDetails: Boolean(confirmDetails) } };
-      }
-      return Promise.resolve(stored);
-    });
-    sandbox.stub(StorageService, "UserDetails").value({ update: updateStub });
-  });
-
-  group.each.teardown(() => {
-    sandbox.restore();
-  });
+test.group("UserService.updateAsEmployee", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
 
   test("clears the confirm-details task when the saved details are complete", async ({
     assert,
   }) => {
-    stored = makeUserDetail({ tasks: { confirmDetails: true } });
+    const user = await createUser({ id: CUSTOMER_ID, taskConfirmDetails: true });
 
-    const result = await UserDetailService.updateAsEmployee(CUSTOMER_ID, { name: "Ny Navnesen" });
+    const result = await UserService.updateAsEmployee(user, { name: "Ny Navnesen" });
 
     assert.equal(result.name, "Ny Navnesen");
-    assert.isFalse(result.tasks?.confirmDetails);
+    assert.isFalse(result.taskConfirmDetails);
+    const stored = await User.findOrFail(CUSTOMER_ID);
+    assert.equal(stored.name, "Ny Navnesen");
+    assert.isFalse(stored.taskConfirmDetails);
   });
 
   test("sets the confirm-details task when the customer becomes underage without guardian info", async ({
     assert,
   }) => {
-    const result = await UserDetailService.updateAsEmployee(CUSTOMER_ID, {
+    const user = await createUser({ id: CUSTOMER_ID });
+
+    const result = await UserService.updateAsEmployee(user, {
       dob: underageDob(),
-      guardian: { name: "", email: "", phone: "" },
+      guardianName: null,
+      guardianEmail: null,
+      guardianPhone: null,
     });
 
-    assert.isTrue(result.tasks?.confirmDetails);
+    assert.isTrue(result.taskConfirmDetails);
+    assert.isTrue((await User.findOrFail(CUSTOMER_ID)).taskConfirmDetails);
   });
 
   test("clears the task for an underage customer once guardian info is complete", async ({
     assert,
   }) => {
-    stored = makeUserDetail({ dob: underageDob(), tasks: { confirmDetails: true } });
-
-    const result = await UserDetailService.updateAsEmployee(CUSTOMER_ID, {
-      guardian: { name: "Foresatt Foresattsen", email: "foresatt@example.com", phone: "87654321" },
+    const user = await createUser({
+      id: CUSTOMER_ID,
+      dob: underageDob(),
+      taskConfirmDetails: true,
     });
 
-    assert.isFalse(result.tasks?.confirmDetails);
+    const result = await UserService.updateAsEmployee(user, {
+      guardianName: "Foresatt Foresattsen",
+      guardianEmail: "foresatt@example.com",
+      guardianPhone: "87654321",
+    });
+
+    assert.isFalse(result.taskConfirmDetails);
+    assert.isFalse((await User.findOrFail(CUSTOMER_ID)).taskConfirmDetails);
   });
 
-  test("writes the task flag against the id that was updated", async ({ assert }) => {
-    await UserDetailService.updateAsEmployee(CUSTOMER_ID, { dob: underageDob() });
+  test("sets the task when a required field is emptied", async ({ assert }) => {
+    const user = await createUser({ id: CUSTOMER_ID });
 
-    assert.isTrue(updateStub.alwaysCalledWith(CUSTOMER_ID));
-    assert.isTrue(
-      updateStub.lastCall.calledWithExactly(CUSTOMER_ID, { "tasks.confirmDetails": true }),
-    );
+    const result = await UserService.updateAsEmployee(user, { address: "" });
+
+    assert.isTrue(result.taskConfirmDetails);
   });
 });

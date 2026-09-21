@@ -10,9 +10,8 @@ function makeSignature(signedByGuardian: boolean): Signature {
   return signature;
 }
 
-function dobForAge(years: number): Date {
-  const now = new Date();
-  return new Date(now.getFullYear() - years, now.getMonth(), now.getDate());
+function dobForAge(years: number): DateTime {
+  return DateTime.now().startOf("day").minus({ years });
 }
 
 test.group("Signature.expiresAtFor", () => {
@@ -29,7 +28,7 @@ test.group("Signature.expiresAtFor", () => {
     const signature = makeSignature(true);
     const dob = dobForAge(16);
     const expiresAt = signature.expiresAtFor({ dob });
-    const eighteenthBirthday = DateTime.fromJSDate(dob).plus({ years: 18 });
+    const eighteenthBirthday = dob.plus({ years: 18 });
     assert.equal(expiresAt?.toISODate(), eighteenthBirthday.toISODate());
   });
 

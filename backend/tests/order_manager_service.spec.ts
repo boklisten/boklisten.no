@@ -7,6 +7,7 @@ import type sinon from "sinon";
 import BadRequestException from "#exceptions/bad_request_exception";
 import Branch from "#models/branch";
 import Item from "#models/item";
+import User from "#models/user";
 import {
   bringReportPipeline,
   openOrdersPipeline,
@@ -17,7 +18,9 @@ import {
 import type { OpenOrderAggregate } from "#services/order_manager_service";
 import { StorageService } from "#services/storage_service";
 import { mock, unchecked } from "#tests/test-doubles";
+import { userDouble } from "#tests/user_fixtures";
 
+const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
 const ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f31";
 
@@ -38,6 +41,7 @@ function row(index: number, branchId = BRANCH_ID): OpenOrderAggregate {
     id: new ObjectId().toHexString(),
     creationTime: new Date(Date.UTC(2026, 8, 1, 12, 0, index)).toISOString(),
     branchId,
+    customerId: CUSTOMER_ID,
     openItems: [],
   });
 }
@@ -199,11 +203,10 @@ test.group("OrderManagerService: reports", () => {
   }) => {
     const pipeline = ordersReportPipeline({});
     assert.notInclude(lookupSources(pipeline), "branches");
+    assert.notInclude(lookupSources(pipeline), "userdetails");
     const project = projection(pipeline);
     assert.deepEqual(project["schoolId"], { $toString: "$branch" });
-    assert.deepEqual(project["branchMembershipId"], {
-      $toString: { $first: "$customerInfo.branchMembership" },
-    });
+    assert.deepEqual(project["customerId"], { $toString: "$customer" });
 
     const sandbox = createSandbox();
     try {
@@ -215,14 +218,19 @@ test.group("OrderManagerService: reports", () => {
         ]),
       );
       sandbox.stub(Item, "byIds").resolves(new Map());
+      sandbox
+        .stub(User, "byIds")
+        .resolves(
+          new Map([
+            [
+              CUSTOMER_ID,
+              userDouble({ id: CUSTOMER_ID, name: "Kari", branchMembershipId: membershipId }),
+            ],
+          ]),
+        );
       sandbox.stub(StorageService.Orders, "aggregate").resolves([
         {
-          name: "Kari",
-          email: null,
-          phone: null,
-          address: null,
-          dob: null,
-          branchMembershipId: membershipId,
+          customerId: CUSTOMER_ID,
           schoolId: BRANCH_ID,
           title: "Sinus",
           itemId: null,
@@ -248,6 +256,7 @@ test.group("OrderManagerService: reports", () => {
         "paid",
         "pivot",
       ]);
+      assert.equal(report?.name, "Kari");
       assert.equal(report?.branchMembership, "Ullern VG1");
       assert.equal(report?.school, "Ullern VGS");
     } finally {

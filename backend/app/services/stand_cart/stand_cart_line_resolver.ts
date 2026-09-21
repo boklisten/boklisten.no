@@ -2,6 +2,7 @@ import BranchModel from "#models/branch";
 import BranchItem from "#models/branch_item";
 import ItemModel from "#models/item";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
+import User from "#models/user";
 import { periodTypeOfLastOrder } from "#services/customer_item_actions_service";
 import { findItemByIsbn, findUniqueItemByBlid } from "#services/item_lookup";
 import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
@@ -110,7 +111,7 @@ async function peerMatchNote(customerId: string, itemId: string): Promise<StandC
   if (senderId === null) {
     return null;
   }
-  const sender = await StorageService.UserDetails.getOrNull(senderId);
+  const sender = await User.find(senderId);
   return {
     kind: "peer-match",
     deliverFromId: senderId,

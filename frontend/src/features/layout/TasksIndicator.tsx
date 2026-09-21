@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import useApiClient from "@/shared/hooks/useApiClient";
 import { hasAccessToken } from "@/shared/hooks/useAuth";
+import { countPendingTasks } from "@/shared/utils/tasks";
 import type { ReactNode } from "react";
 
 export default function TasksIndicator({ children }: { children: ReactNode }) {
@@ -11,12 +12,9 @@ export default function TasksIndicator({ children }: { children: ReactNode }) {
     data: userDetail,
     isLoading: isLoadingUserDetail,
     isError: isErrorUserDetail,
-  } = useQuery({ ...api.userDetails.me.queryOptions(), enabled: hasAccessToken });
+  } = useQuery({ ...api.users.me.queryOptions(), enabled: hasAccessToken });
 
-  const taskCount =
-    isLoadingUserDetail || isErrorUserDetail || !userDetail?.tasks
-      ? 0
-      : (userDetail.tasks.confirmDetails ? 1 : 0) + (userDetail.tasks.signAgreement ? 1 : 0);
+  const taskCount = isLoadingUserDetail || isErrorUserDetail ? 0 : countPendingTasks(userDetail);
 
   if (taskCount === 0) {
     return children;

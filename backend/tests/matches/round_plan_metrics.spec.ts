@@ -3,6 +3,7 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import User from "#models/user";
 import { roundPlanMetrics } from "#services/matches/round_plan_metrics";
 import { StorageService } from "#services/storage_service";
 import {
@@ -36,9 +37,7 @@ test.group("roundPlanMetrics", (group) => {
     orderedBooks?: { id: string; wantedItems: string[] }[];
   }) {
     return {
-      userDetails: sandbox
-        .stub(StorageService.UserDetails, "aggregate")
-        .resolves(members ? [members] : []),
+      userDetails: sandbox.stub(User, "countMembersOf").resolves(members?.students ?? 0),
       customerItems: sandbox
         .stub(StorageService.CustomerItems, "aggregate")
         .resolves(activeBooks ?? []),
@@ -155,9 +154,7 @@ test.group("roundPlanMetrics", (group) => {
 
     await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
-    const [match]: [{ $match: { branchMembership: { $in: { toString: () => string }[] } } }] =
-      unchecked(stubs.userDetails.firstCall.args[0]);
-    assert.deepEqual(match.$match.branchMembership.$in.map(String), [BRANCH]);
+    assert.deepEqual(stubs.userDetails.firstCall.args[0], [BRANCH]);
   });
 
   test("counts ordered books per book, not per order", async ({ assert }) => {

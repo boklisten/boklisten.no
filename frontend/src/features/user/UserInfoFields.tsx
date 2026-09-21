@@ -39,6 +39,22 @@ export const userInfoFieldDefaultValues: UserInfoFieldValues = {
   guardianPhoneNumber: "",
 };
 
+/** The field values as the `users` endpoints take them; blank optional fields are sent as null. */
+export function userDetailsBody(values: UserInfoFieldValues) {
+  return {
+    name: values.name,
+    phone: values.phoneNumber,
+    address: values.address,
+    postCode: values.postal.code,
+    postCity: values.postal.city,
+    dob: values.birthday,
+    branchMembershipId: values.branchMembership || null,
+    guardianName: values.guardianName || null,
+    guardianEmail: values.guardianEmail || null,
+    guardianPhone: values.guardianPhoneNumber || null,
+  };
+}
+
 const UserInfoFields = withFieldGroup({
   defaultValues: userInfoFieldDefaultValues,
   props: {

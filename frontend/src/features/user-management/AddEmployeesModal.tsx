@@ -51,8 +51,7 @@ export default function AddEmployeesModal({
   const searchActive = debouncedSearch.length >= MIN_SEARCH_LENGTH;
   const { data: searchResults, isFetching } = useQuery({
     queryKey: ["userDetail", "search", debouncedSearch],
-    queryFn: async () =>
-      (await client.api.userDetails.search({ body: { searchStr: debouncedSearch } })) ?? [],
+    queryFn: async () => (await client.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: searchActive,
   });
 

@@ -1,8 +1,8 @@
 import vine from "@vinejs/vine";
 
-import { emailField, passwordField, phoneField, postalCodeField } from "#validators/common/fields";
-import { uniqueEmail, uniquePhoneNumber } from "#validators/common/rules";
-import { cleanUserInput } from "#validators/common/transformers";
+import { emailField, passwordField } from "#validators/common/fields";
+import { uniqueEmail } from "#validators/common/rules";
+import { userDetailsSchema } from "#validators/users";
 
 export const forgotPasswordValidator = vine.create(
   vine.object({
@@ -20,25 +20,8 @@ export const passwordResetValidator = vine.create({
 
 export const registerSchema = vine.object({
   email: emailField.clone().use(uniqueEmail()),
-  phoneNumber: phoneField.clone().use(uniquePhoneNumber()),
   password: passwordField.clone(),
-
-  name: vine.string().transform((value) => cleanUserInput(value)),
-  address: vine.string().transform((value) => cleanUserInput(value)),
-  postalCode: postalCodeField.clone(),
-  postalCity: vine.string(),
-  dob: vine.date().before("today"),
-  branchMembership: vine.string().optional(),
-  guardian: vine
-    .object({
-      name: vine
-        .string()
-        .optional()
-        .transform((value) => cleanUserInput(value)),
-      email: emailField.clone().optional(),
-      phone: phoneField.clone().optional(),
-    })
-    .optional(),
+  ...userDetailsSchema.getProperties(),
 });
 
 export const registerValidator = vine.create(registerSchema);

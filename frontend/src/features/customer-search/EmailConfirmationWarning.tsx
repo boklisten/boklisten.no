@@ -1,4 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Button, Stack, Text } from "@mantine/core";
 import { IconPencil } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,18 +8,18 @@ import useApiClient from "@/shared/hooks/useApiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-export default function EmailConfirmationWarning({ customer }: { customer: UserDetail }) {
+export default function EmailConfirmationWarning({ customer }: { customer: User }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
 
   const confirmEmailMutation = useMutation(
-    api.userDetails.confirmEmail.mutationOptions({
+    api.users.confirmEmail.mutationOptions({
       onSuccess: () => showSuccessNotification("E-postadressen ble bekreftet"),
       onError: (error) =>
         showErrorNotification(errorMessage(error, "Klarte ikke bekrefte e-postadressen")),
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.userDetails.show.queryKey({ params: { detailsId: customer.id } }),
+          queryKey: api.users.show.queryKey({ params: { detailsId: customer.id } }),
         }),
     }),
   );

@@ -1,23 +1,14 @@
-import { StorageService } from "#services/storage_service";
+import User from "#models/user";
 import { BlError } from "#shared/bl-error";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
 
 export class OrderUserDetailValidator {
-  public validate(order: Order): Promise<boolean> {
-    return StorageService.UserDetails.get(order.customer)
-      .then(
-        (_userDetail: UserDetail) =>
-          /*
-        if (!userDetail.emailConfirmed) {
-          throw new BlError('userDetail.emailConfirmed is not true');
-        }
-        */
-
-          true,
-      )
-      .catch((userDetailValidateError: BlError) => {
-        throw new BlError("userDetail could not be validated").add(userDetailValidateError);
-      });
+  /** The order's customer must exist; nothing else about them is checked here. */
+  public async validate(order: Order): Promise<boolean> {
+    const customer = await User.find(order.customer);
+    if (!customer) {
+      throw new BlError("userDetail not found").code(701);
+    }
+    return true;
   }
 }

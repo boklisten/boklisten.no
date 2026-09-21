@@ -1,4 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Group, Text } from "@mantine/core";
 import { IconMail, IconPhone } from "@tabler/icons-react";
 
@@ -11,7 +11,7 @@ export default function CustomerContactRow({
   customer,
   inheritColor = false,
 }: {
-  customer: Pick<UserDetail, "phone" | "email">;
+  customer: Pick<User, "phone" | "email">;
   /**
    * Fade by opacity instead of the dimmed colour, for rows whose background changes when selected
    * (a spotlight action turns brand-filled with white text, where dimmed gray is unreadable).

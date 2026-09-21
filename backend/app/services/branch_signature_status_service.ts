@@ -1,17 +1,12 @@
-import { ObjectId } from "mongodb";
+import type { DateTime } from "luxon";
 
 import Signature from "#models/signature";
+import User from "#models/user";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
-import { StorageService } from "#services/storage_service";
 
 export interface MemberSignatureRow {
-  dob?: Date | null;
+  dob: DateTime | null;
   signature?: Signature | null;
-}
-
-interface MemberRow {
-  id: { toString: () => string };
-  dob?: Date | null;
 }
 
 interface BranchSignatureStatus {
@@ -40,19 +35,14 @@ export const BranchSignatureStatusService = {
   async getStatus(branchId: string): Promise<BranchSignatureStatus> {
     const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
     const scopeIds = [branchId, ...descendantIds];
-    const members = await StorageService.UserDetails.aggregate<MemberRow>([
-      { $match: { branchMembership: { $in: scopeIds.map((id) => new ObjectId(id)) } } },
-      { $project: { dob: 1 } },
-    ]);
-    const newestSignatures = await Signature.newestPerCustomer(
-      members.map((member) => member.id.toString()),
-    );
+    const members = await User.membersOf(scopeIds).select("id", "dob");
+    const newestSignatures = await Signature.newestPerCustomer(members.map((member) => member.id));
     const signatureByCustomer = new Map(
       newestSignatures.map((signature) => [signature.customerDetailsId, signature]),
     );
     const rows = members.map((member) => ({
       dob: member.dob,
-      signature: signatureByCustomer.get(member.id.toString()),
+      signature: signatureByCustomer.get(member.id),
     }));
     return BranchSignatureStatusService.summarize(rows);
   },

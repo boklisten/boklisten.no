@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import Message from "#models/message";
 import MessageEvent from "#models/message_event";
 import Sendout from "#models/sendout";
-import { StorageService } from "#services/storage_service";
+import User from "#models/user";
 import type {
   MessageChannel,
   MessageEventDto,
@@ -265,11 +265,11 @@ async function customerLog(detailsId: string): Promise<{
   entries: MessageLogEntryDto[];
   recipients: { email: string[]; phone: string[] };
 }> {
-  const customer = await StorageService.UserDetails.get(detailsId);
-  const emails = [customer.email, customer.guardian?.email]
+  const customer = await User.findOrFail(detailsId);
+  const emails = [customer.email, customer.guardianEmail]
     .filter((email): email is string => (email?.length ?? 0) > 0)
     .map((email) => normalizeRecipient("email", email));
-  const phones = [customer.phone, customer.guardian?.phone]
+  const phones = [customer.phone, customer.guardianPhone]
     .filter((phone): phone is string => (phone?.length ?? 0) > 0)
     .map((phone) => normalizeRecipient("sms", phone));
   const recipients = [...new Set([...emails, ...phones])];

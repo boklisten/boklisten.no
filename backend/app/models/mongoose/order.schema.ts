@@ -102,7 +102,6 @@ export const OrderSchema: BlSchema<Order> = new Schema({
   },
   customer: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.UserDetails,
     required: true,
   },
   byCustomer: {
@@ -111,7 +110,6 @@ export const OrderSchema: BlSchema<Order> = new Schema({
   },
   employee: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.UserDetails,
   },
   placed: {
     type: Boolean,

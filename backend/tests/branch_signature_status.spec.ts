@@ -7,8 +7,8 @@ import Signature from "#models/signature";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import type { MemberSignatureRow } from "#services/branch_signature_status_service";
 import { BranchSignatureStatusService } from "#services/branch_signature_status_service";
-import { StorageService } from "#services/storage_service";
-import { unchecked } from "#tests/test-doubles";
+import { createBranch } from "#tests/branch_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 function makeSignature(createdAt: DateTime, signedByGuardian: boolean): Signature {
   const signature = new Signature();
@@ -23,9 +23,8 @@ function monthsAgo(months: number): DateTime {
   return DateTime.fromJSDate(new Date(now.getFullYear(), now.getMonth() - months, now.getDate()));
 }
 
-function yearsAgo(years: number): Date {
-  const now = new Date();
-  return new Date(now.getFullYear() - years, now.getMonth(), now.getDate());
+function yearsAgo(years: number): DateTime {
+  return DateTime.now().startOf("day").minus({ years });
 }
 
 function adultWithSignature(overrides: Partial<MemberSignatureRow> = {}): MemberSignatureRow {
@@ -94,6 +93,7 @@ test.group("BranchSignatureStatusService.summarize", () => {
 
   test("treats a member without dob as an adult", ({ assert }) => {
     const row: MemberSignatureRow = {
+      dob: null,
       signature: makeSignature(monthsAgo(1), false),
     };
     const result = BranchSignatureStatusService.summarize([row]);
@@ -132,10 +132,12 @@ test.group("BranchSignatureStatusService.getStatus", (group) => {
       .stub(BranchRelationshipService, "getNestedChildBranchIds")
       .withArgs(branchId)
       .resolves([childId]);
-    const aggregateStub = sandbox.stub(StorageService.UserDetails, "aggregate").resolves([
-      { id: signedMemberId, dob: yearsAgo(30) },
-      { id: unsignedMemberId, dob: yearsAgo(30) },
-    ]);
+    await createBranch({ id: branchId });
+    await createBranch({ id: childId });
+    await createUser({ id: signedMemberId, dob: yearsAgo(30), branchMembershipId: branchId });
+    await createUser({ id: unsignedMemberId, dob: yearsAgo(30), branchMembershipId: childId });
+    // A member of an unrelated branch is not counted.
+    await createUser({ dob: yearsAgo(30), branchMembershipId: null });
     // An old guardian-signed signature that the newer valid one must shadow.
     await Signature.create({
       customerDetailsId: signedMemberId,
@@ -158,10 +160,5 @@ test.group("BranchSignatureStatusService.getStatus", (group) => {
       validSignature: 1,
       needsSignature: 1,
     });
-    const pipeline: {
-      $match?: { branchMembership?: { $in?: { toString: () => string }[] } };
-    }[] = unchecked(aggregateStub.firstCall.args[0]);
-    const matchedIds = pipeline[0]?.$match?.branchMembership?.$in?.map((id) => id.toString());
-    assert.deepEqual(matchedIds, [branchId, childId]);
   });
 });

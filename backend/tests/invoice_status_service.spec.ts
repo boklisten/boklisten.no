@@ -14,7 +14,6 @@ import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Invoice } from "#shared/invoice";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
 import { mock } from "#tests/test-doubles";
 
 const CUSTOMER_ID = "6100000000000000000000c1";
@@ -67,7 +66,6 @@ test.group("invoice status changes", (group) => {
   let removeInvoice: sinon.SinonStub;
   let customerItems: { getMany: sinon.SinonStub; update: sinon.SinonStub };
   let orders: { add: sinon.SinonStub; remove: sinon.SinonStub; getByQueryOrNull: sinon.SinonStub };
-  let userDetails: { getOrNull: sinon.SinonStub; update: sinon.SinonStub };
   let placeOrder: sinon.SinonStub;
 
   group.each.setup(() => {
@@ -96,13 +94,6 @@ test.group("invoice status changes", (group) => {
       getByQueryOrNull: sandbox.stub().resolves([]),
     };
     sandbox.stub(StorageService, "Orders").value(orders);
-    userDetails = {
-      getOrNull: sandbox
-        .stub()
-        .resolves(mock<UserDetail>({ id: CUSTOMER_ID, orders: ["order1", "other"] })),
-      update: sandbox.stub().resolves({}),
-    };
-    sandbox.stub(StorageService, "UserDetails").value(userDetails);
     placeOrder = sandbox.stub(OrderPlacedHandler.prototype, "placeOrder").resolves(mock<Order>());
   });
   group.each.teardown(() => {
@@ -201,7 +192,6 @@ test.group("invoice status changes", (group) => {
       toLossNote: false,
     });
     assert.deepEqual(orders.remove.firstCall.args, ["order1"]);
-    assert.deepEqual(userDetails.update.firstCall.args, [CUSTOMER_ID, { orders: ["other"] }]);
     assert.deepEqual(
       customerItems.update.args.map(([id, patch]) => [id, patch]),
       [

@@ -1,4 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Loader, Stack } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
@@ -10,13 +10,13 @@ import useApiClient from "@/shared/hooks/useApiClient";
 const POLL_INTERVAL_MS = 5000;
 
 /** The guardian's contact info, normalized like log recipients, for the "Foresatt" badge. */
-function guardianRecipientsOf(customer: UserDetail): ReadonlySet<string> {
+function guardianRecipientsOf(customer: User): ReadonlySet<string> {
   const recipients = new Set<string>();
-  if (customer.guardian?.email) {
-    recipients.add(normalizeRecipient("email", customer.guardian.email));
+  if (customer.guardianEmail) {
+    recipients.add(normalizeRecipient("email", customer.guardianEmail));
   }
-  if (customer.guardian?.phone) {
-    recipients.add(normalizeRecipient("sms", customer.guardian.phone));
+  if (customer.guardianPhone) {
+    recipients.add(normalizeRecipient("sms", customer.guardianPhone));
   }
   // Contact info shared between the customer and the guardian belongs to the customer.
   recipients.delete(normalizeRecipient("email", customer.email ?? ""));
@@ -24,7 +24,7 @@ function guardianRecipientsOf(customer: UserDetail): ReadonlySet<string> {
   return recipients;
 }
 
-export default function CustomerMessagesView({ customer }: { customer: UserDetail }) {
+export default function CustomerMessagesView({ customer }: { customer: User }) {
   const { api } = useApiClient();
   const { data, isPending, error, errorUpdateCount } = useQuery(
     api.messageLogs.forCustomer.queryOptions(

@@ -12,8 +12,9 @@ import { emailValidationThrottle, publicBlidLookupThrottle, throttle } from "#st
 | Routes are grouped by the permission they require, and the groups are declared from the least
 | to the most privileged, except that admin routes come before employee routes. That order keeps
 | static paths ahead of the dynamic ones that would otherwise shadow them: `/orders/me` (customer)
-| is declared before `/orders/:orderId` (employee), and `/signatures/gallery` (admin) before
-| `/signatures/:detailsId` (employee). Within a group, keep static paths above dynamic ones too.
+| is declared before `/orders/:orderId` (employee), and `/signatures/gallery` and `/users/metrics`
+| (admin) before `/signatures/:detailsId` and `/users/:detailsId` (employee). Within a group, keep
+| static paths above dynamic ones too.
 |
 | Route names are derived from `<controller>.<method>`; the frontend addresses endpoints by that
 | name through Tuyau, never by path.
@@ -87,8 +88,8 @@ router
       .get("/public_blid_lookup/:blid", [controllers.PublicBlidLookup, "show"])
       .use(publicBlidLookupThrottle);
 
-    router.get("/user_details/me", [controllers.UserDetails, "me"]);
-    router.patch("/user_details/me", [controllers.UserDetails, "updateMe"]);
+    router.get("/users/me", [controllers.Users, "me"]);
+    router.patch("/users/me", [controllers.Users, "updateMe"]);
     router.get("/customer_items/me", [controllers.CustomerItems, "me"]);
 
     router.get("/signatures/me", [controllers.Signatures, "me"]);
@@ -264,7 +265,7 @@ router
     router.get("/reports/customer_items", [controllers.Reports, "customerItems"]);
     router.get("/reports/orders", [controllers.Reports, "orders"]);
     router.get("/reports/payments", [controllers.Reports, "payments"]);
-    router.get("/reports/user_details", [controllers.Reports, "userDetails"]);
+    router.get("/reports/users", [controllers.Reports, "users"]);
     router.get("/unique_ids/token", [controllers.UniqueIds, "token"]);
   })
   .use(middleware.auth({ permission: "admin" }));
@@ -275,21 +276,15 @@ router
 router
   .group(() => {
     // customers
-    router.post("/user_details/search", [controllers.UserDetails, "search"]);
-    router.get("/user_details/:detailsId", [controllers.UserDetails, "show"]);
-    router.patch("/user_details/:detailsId", [controllers.UserDetails, "update"]);
-    router.post("/user_details/:detailsId/confirm_email", [
-      controllers.UserDetails,
-      "confirmEmail",
-    ]);
-    router.get("/user_details/:detailsId/customer_items", [
-      controllers.CustomerItems,
-      "forCustomer",
-    ]);
-    router.get("/user_details/:detailsId/orders", [controllers.Orders, "forCustomer"]);
-    router.get("/user_details/:detailsId/placed_orders", [controllers.Orders, "placedForCustomer"]);
-    router.get("/user_details/:detailsId/matches", [controllers.Matches, "forCustomer"]);
-    router.get("/user_details/:detailsId/message_logs", [controllers.MessageLogs, "forCustomer"]);
+    router.get("/users/search", [controllers.Users, "search"]);
+    router.get("/users/:detailsId", [controllers.Users, "show"]);
+    router.patch("/users/:detailsId", [controllers.Users, "update"]);
+    router.post("/users/:detailsId/confirm_email", [controllers.Users, "confirmEmail"]);
+    router.get("/users/:detailsId/customer_items", [controllers.CustomerItems, "forCustomer"]);
+    router.get("/users/:detailsId/orders", [controllers.Orders, "forCustomer"]);
+    router.get("/users/:detailsId/placed_orders", [controllers.Orders, "placedForCustomer"]);
+    router.get("/users/:detailsId/matches", [controllers.Matches, "forCustomer"]);
+    router.get("/users/:detailsId/message_logs", [controllers.MessageLogs, "forCustomer"]);
 
     router.get("/signatures/:detailsId", [controllers.Signatures, "show"]);
     router.post("/signatures/:detailsId/send", [controllers.Signatures, "sendLink"]);

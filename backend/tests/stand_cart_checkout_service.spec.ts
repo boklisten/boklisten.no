@@ -5,6 +5,7 @@ import { createSandbox } from "sinon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import Signature from "#models/signature";
+import User from "#models/user";
 import { OrderHistoryService } from "#services/order_history_service";
 import { RefundRequestService } from "#services/refund_request_service";
 import { StandCartCheckoutService } from "#services/stand_cart/stand_cart_checkout_service";
@@ -17,7 +18,6 @@ import type {
 import { StandCartPlacement } from "#services/stand_cart/stand_cart_placement";
 import { StandCartRefund } from "#services/stand_cart/stand_cart_refund";
 import { StorageService } from "#services/storage_service";
-import { UserService } from "#services/user_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
@@ -31,9 +31,9 @@ import type {
   StandCartSource,
   StandCartVippsRefund,
 } from "#shared/stand_cart";
-import type { UserDetail } from "#shared/user-detail";
 import { branchDto, createBranch } from "#tests/branch_fixtures";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
+import { userDouble } from "#tests/user_fixtures";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
 const SEMESTER_END = "2026-12-20T00:00:00.000Z";
@@ -209,10 +209,8 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       .stub(StandCartLineResolver, "resolveWithContext")
       .resolves(resolution(ORDER_SOURCE, [rentOption()], { blid: BLID }));
     sandbox
-      .stub(StorageService.UserDetails, "getOrNull")
-      .resolves(
-        mock<UserDetail>({ id: CUSTOMER_ID, name: "Ola", tasks: { signAgreement: false } }),
-      );
+      .stub(User, "find")
+      .resolves(userDouble({ id: CUSTOMER_ID, name: "Ola", taskSignAgreement: false }));
     ordersAdd = sandbox
       .stub(StorageService.Orders, "add")
       .callsFake((order) => Promise.resolve(mock<Order>({ ...order, id: NEW_ORDER_ID })));
@@ -639,8 +637,8 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     assert,
   }) => {
     asStub(Signature.validForCustomer).resolves(null);
-    asStub(StorageService.UserDetails.getOrNull).resolves(
-      mock<UserDetail>({ id: CUSTOMER_ID, name: "Ola", tasks: { signAgreement: true } }),
+    asStub(User.find).resolves(
+      userDouble({ id: CUSTOMER_ID, name: "Ola", taskSignAgreement: true }),
     );
     await assert.rejects(() => checkout(), BadRequestException, /signatur/);
     const state = await checkout({ confirmed: ["missing-signature"] });
@@ -862,8 +860,8 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
       .stub(StandCartPlacement, "place")
       .callsFake((order) => Promise.resolve({ ...order, placed: true }));
     sandbox
-      .stub(UserService, "getByUserDetailsId")
-      .resolves(unchecked({ userDetail: EMPLOYEE.detailsId, permission: "employee" }));
+      .stub(User, "find")
+      .resolves(userDouble({ id: EMPLOYEE.detailsId, permission: "employee" }));
     sandbox.stub(OrderHistoryService, "getOne").resolves(unchecked({ id: NEW_ORDER_ID }));
     vipps = {
       create: sandbox.stub().resolves({}),

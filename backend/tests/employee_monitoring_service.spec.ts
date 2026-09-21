@@ -4,16 +4,15 @@ import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import {
   buildMonitoringMail,
   EMPLOYEE_MONITORING_RECIPIENT,
   EmployeeMonitoringService,
 } from "#services/employee_monitoring_service";
-import { StorageService } from "#services/storage_service";
-import type { UserDetail } from "#shared/user-detail";
 import env from "#start/env";
-import { mock } from "#tests/test-doubles";
+import { userDouble } from "#tests/user_fixtures";
 
 const EMPLOYEE_ID = "5f7f7f7f7f7f7f7f7f7f7f7e";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
@@ -21,13 +20,14 @@ const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 const EMPLOYEE = { detailsId: EMPLOYEE_ID, permission: "employee" as const };
 const ADMIN = { detailsId: EMPLOYEE_ID, permission: "admin" as const };
 
-const employee = mock<UserDetail>({
+const employee = userDouble({
   id: EMPLOYEE_ID,
   name: "Ansatt Ansattsen",
   email: "ansatt@boklisten.no",
   phone: "90000000",
+  permission: "employee",
 });
-const customer = mock<UserDetail>({
+const customer = userDouble({
   id: CUSTOMER_ID,
   name: "Kari Kunde",
   email: "kari@example.com",
@@ -101,7 +101,7 @@ test.group("EmployeeMonitoringService", (group) => {
     assert,
   }) => {
     sandbox
-      .stub(StorageService.UserDetails, "get")
+      .stub(User, "findOrFail")
       .callsFake((id) => Promise.resolve(id === EMPLOYEE_ID ? employee : customer));
     const sendPlainEmail = sandbox
       .stub(DispatchService, "sendPlainEmail")
@@ -126,7 +126,7 @@ test.group("EmployeeMonitoringService", (group) => {
   });
 
   test("report() does nothing when the employee is an admin", async ({ assert }) => {
-    const get = sandbox.stub(StorageService.UserDetails, "get");
+    const get = sandbox.stub(User, "findOrFail");
     const sendPlainEmail = sandbox.stub(DispatchService, "sendPlainEmail");
 
     await EmployeeMonitoringService.report({
@@ -143,7 +143,7 @@ test.group("EmployeeMonitoringService", (group) => {
   test("report() sends a failed report to Sentry instead of failing the caller", async ({
     assert,
   }) => {
-    sandbox.stub(StorageService.UserDetails, "get").rejects(new Error("mongo down"));
+    sandbox.stub(User, "findOrFail").rejects(new Error("postgres down"));
     const sendPlainEmail = sandbox.stub(DispatchService, "sendPlainEmail");
     const captured = recordEventsSentToSentry();
 
@@ -157,6 +157,6 @@ test.group("EmployeeMonitoringService", (group) => {
     await Sentry.close();
 
     assert.isFalse(sendPlainEmail.called);
-    assert.deepEqual(captured, ["mongo down"]);
+    assert.deepEqual(captured, ["postgres down"]);
   });
 });

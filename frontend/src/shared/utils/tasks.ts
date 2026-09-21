@@ -1,7 +1,11 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 
-export function hasPendingTasks(userDetail: Pick<UserDetail, "tasks"> | null | undefined) {
-  return (
-    (userDetail?.tasks?.confirmDetails ?? false) || (userDetail?.tasks?.signAgreement ?? false)
-  );
+type UserTasks = Pick<User, "taskConfirmDetails" | "taskSignAgreement">;
+
+export function hasPendingTasks(user: UserTasks | null | undefined): boolean {
+  return countPendingTasks(user) > 0;
+}
+
+export function countPendingTasks(user: UserTasks | null | undefined): number {
+  return (user?.taskConfirmDetails ? 1 : 0) + (user?.taskSignAgreement ? 1 : 0);
 }

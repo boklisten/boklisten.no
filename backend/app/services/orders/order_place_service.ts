@@ -282,13 +282,6 @@ export class OrderPlaceService {
       }
     }
 
-    if (customerItems && customerItems.length > 0) {
-      try {
-        // should add customerItems to customer if present
-        await this.addCustomerItemsToCustomer(customerItems, order.customer);
-        // fixme: probably not a good idea to ignore this error...
-      } catch {}
-    }
     return order;
   }
 
@@ -303,21 +296,6 @@ export class OrderPlaceService {
     }
 
     return addedCustomerItems;
-  }
-
-  private async addCustomerItemsToCustomer(
-    customerItems: CustomerItem[],
-    customerId: string,
-  ): Promise<boolean> {
-    const customerItemIds: string[] = customerItems.map((ci) => ci.id.toString());
-
-    const userDetail = await StorageService.UserDetails.get(customerId);
-
-    await StorageService.UserDetails.update(customerId, {
-      customerItems: [...userDetail.customerItems, ...customerItemIds],
-    });
-
-    return true;
   }
 
   private addCustomerItemIdToOrderItems(order: Order, customerItems: CustomerItem[]) {

@@ -1,35 +1,25 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import { DateTime } from "luxon";
 
+import User from "#models/user";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
-import { StorageService } from "#services/storage_service";
 import { updateBranchMembershipValidator } from "#validators/branch_membership";
-
-async function getMembers(branchId: string) {
-  const databaseQuery = new SEDbQuery();
-  databaseQuery.objectIdFilters = [{ fieldName: "branchMembership", value: branchId }];
-  return (await StorageService.UserDetails.getByQueryOrNull(databaseQuery)) ?? [];
-}
 
 export default class BranchMembersController {
   async index(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
-    const directMembers = await getMembers(branchId);
     const childBranchIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
-    const indirectMembers = (
-      await Promise.all(childBranchIds.map((childId) => getMembers(childId)))
-    ).flat();
+    const [directMembers, indirectMemberCount] = await Promise.all([
+      User.membersOf([branchId]).orderBy("name"),
+      User.countMembersOf(childBranchIds),
+    ]);
     return {
-      directMembers: directMembers
-        .map((member) => ({
-          id: member.id,
-          name: member.name,
-          yearOfBirth: member.dob ? String(DateTime.fromJSDate(member.dob).year) : null,
-        }))
-        .toSorted((a, b) => a.name.localeCompare(b.name)),
+      directMembers: directMembers.map((member) => ({
+        id: member.id,
+        name: member.name,
+        yearOfBirth: member.dob ? String(member.dob.year) : null,
+      })),
       indirectMembers: {
-        count: indirectMembers.length,
+        count: indirectMemberCount,
       },
     };
   }
@@ -37,33 +27,19 @@ export default class BranchMembersController {
     const { branchMembership, detailsId } = await ctx.request.validateUsing(
       updateBranchMembershipValidator,
     );
-    await StorageService.UserDetails.update(detailsId, {
-      branchMembership,
-    });
+    const user = await User.findOrFail(detailsId);
+    user.branchMembershipId = branchMembership;
+    await user.save();
   }
   async destroyDirect(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
-    const directMembers = await getMembers(branchId);
-    await Promise.all(
-      directMembers.map((member) =>
-        StorageService.UserDetails.update(member.id, {
-          branchMembership: null,
-        }),
-      ),
-    );
+    await User.membersOf([branchId]).update({ branchMembershipId: null });
   }
   async destroyIndirect(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
     const childBranchIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
-    const allMembers = (
-      await Promise.all(childBranchIds.map((childId) => getMembers(childId)))
-    ).flat();
-    await Promise.all(
-      allMembers.map((member) =>
-        StorageService.UserDetails.update(member.id, {
-          branchMembership: null,
-        }),
-      ),
-    );
+    if (childBranchIds.length > 0) {
+      await User.membersOf(childBranchIds).update({ branchMembershipId: null });
+    }
   }
 }

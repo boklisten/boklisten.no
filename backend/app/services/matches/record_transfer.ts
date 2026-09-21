@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import Item from "#models/item";
+import User from "#models/user";
 import BlidService from "#services/blid_service";
 import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
@@ -23,7 +24,6 @@ import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
-import { USER_PERMISSION } from "#shared/user-permission";
 import type { matchTransferSchema } from "#validators/matches";
 
 const invalidBlidFeedback = "Feil strekkode. Bruk bokas unike ID. Se instruksjoner for hjelp";
@@ -32,11 +32,8 @@ const genericExpiredDeadlineFeedback =
   "Boka du har skannet har en utgått frist og kan ikke overleveres. Eieren må beholde boka og vil få faktura. Kom på stand for å få boka du skal ha.";
 
 async function expiredDeadlineFeedback(ownerDetailsId: string): Promise<string> {
-  const ownerName = await StorageService.UserDetails.getMany(
-    [ownerDetailsId],
-    USER_PERMISSION.ADMIN,
-  )
-    .then(([detail]) => detail?.name)
+  const ownerName = await User.namesByIds([ownerDetailsId])
+    .then((names) => names.get(ownerDetailsId))
     .catch(() => {});
   if (!ownerName) {
     return genericExpiredDeadlineFeedback;
@@ -56,12 +53,9 @@ async function unexpectedSenderFeedback(
   actualSenderId: string,
   expectedSenderId: string,
 ): Promise<string> {
-  const names = await StorageService.UserDetails.getMany(
-    [actualSenderId, expectedSenderId],
-    USER_PERMISSION.ADMIN,
-  )
-    .then((details) => new Map(details.map((detail) => [detail.id, detail.name])))
-    .catch(() => new Map<string, string>());
+  const names = await User.namesByIds([actualSenderId, expectedSenderId]).catch(
+    () => new Map<string, string>(),
+  );
 
   const actualName = names.get(actualSenderId);
   const expectedName = names.get(expectedSenderId);

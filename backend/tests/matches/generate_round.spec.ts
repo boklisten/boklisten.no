@@ -8,14 +8,17 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchRound from "#models/match_round";
 import { generateRound } from "#services/matches/generate_round";
+import User from "#models/user";
 import { StorageService } from "#services/storage_service";
 import {
+  createTestRound,
+  ensureUsers,
+  seedTestCatalogue,
   TEST_DEADLINE,
   TEST_MEETING_DATE,
-  createTestRound,
-  seedTestCatalogue,
 } from "#tests/matches/match-testing-utils";
 import { unchecked } from "#tests/test-doubles";
+import { userDouble } from "#tests/user_fixtures";
 
 const A = "5d765db5fc8c47001c408d81";
 const B = "5d765db5fc8c47001c408d82";
@@ -44,6 +47,7 @@ test.group("generateRound", (group) => {
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([A, B]));
 
   /** @param wanted aggregated order rows: who wants which items */
   function stubMongo(
@@ -53,7 +57,16 @@ test.group("generateRound", (group) => {
   ) {
     sandbox.stub(StorageService.CustomerItems, "aggregate").resolves(held);
     sandbox.stub(StorageService.Orders, "aggregate").resolves(wanted);
-    sandbox.stub(StorageService.UserDetails, "aggregate").resolves(userDetails);
+    sandbox
+      .stub(User, "byIds")
+      .resolves(
+        new Map(
+          userDetails.map((detail) => [
+            detail.id,
+            userDouble({ id: detail.id, branchMembershipId: detail.branchMembership ?? null }),
+          ]),
+        ),
+      );
   }
 
   test("creates an obligation per matched title, with both parties named", async ({ assert }) => {
@@ -257,7 +270,7 @@ test.group("generateRound", (group) => {
       .stub(StorageService.CustomerItems, "aggregate")
       .resolves(unchecked([heldBy(A, [ITEM_X])]));
     sandbox.stub(StorageService.Orders, "aggregate").resolves(unchecked([]));
-    sandbox.stub(StorageService.UserDetails, "aggregate").resolves(unchecked([]));
+    sandbox.stub(User, "byIds").resolves(new Map());
 
     await generateRound(await plannedRound());
 

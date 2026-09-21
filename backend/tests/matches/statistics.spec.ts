@@ -8,11 +8,14 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import type MatchRound from "#models/match_round";
-import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
+import {
+  createTestRound,
+  ensureUsers,
+  seedTestCatalogue,
+} from "#tests/matches/match-testing-utils";
+import User from "#models/user";
 import { MatchRepository } from "#services/matches/match_repository";
 import { computeMatchStatistics } from "#services/matches/statistics";
-import { StorageService } from "#services/storage_service";
-import { unchecked } from "#tests/test-doubles";
 
 /** The matched pair. */
 const A = "5d765db5fc8c47001c408d81";
@@ -32,11 +35,12 @@ test.group("computeMatchStatistics", (group) => {
 
   group.each.setup(() => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService.UserDetails, "getMany").resolves(unchecked([]));
+    sandbox.stub(User, "byIds").resolves(new Map());
   });
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([A, B, C]));
   group.each.setup(async () => {
     round = await createTestRound({
       name: "Round",
@@ -162,6 +166,7 @@ test.group("computeMatchStatistics", (group) => {
     // Another school's stand runs in the same weeks: its handovers are unattached too, but they
     // touch none of this round's participants and must not pollute its statistics.
     const D = "5d765db5fc8c47001c408d84";
+    await ensureUsers([D]);
     await seedObligation(A, B);
     await handover({ from: C, to: D });
     await handover({ from: C, to: A });

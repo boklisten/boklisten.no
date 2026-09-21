@@ -4,7 +4,11 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
+import {
+  createTestRound,
+  ensureUsers,
+  seedTestCatalogue,
+} from "#tests/matches/match-testing-utils";
 import {
   assertNotBlockedByUserMatch,
   itemIdsInActiveUserMatches,
@@ -12,6 +16,7 @@ import {
 
 const CUSTOMER = "5d765db5fc8c47001c408d81";
 const PEER = "5d765db5fc8c47001c408d82";
+const OTHER = "5d765db5fc8c47001c408d83";
 const ITEM_X = "5d765db5fc8c47001c408e01";
 const ITEM_Y = "5d765db5fc8c47001c408e02";
 
@@ -74,6 +79,7 @@ async function createStandMatch({
 test.group("cancellation block: itemIdsInActiveUserMatches", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([CUSTOMER, PEER, OTHER]));
 
   test("includes items from the customer's user matches, both directions", async ({ assert }) => {
     const round = await createTestRound({ name: "Round", status: "active" });
@@ -118,8 +124,7 @@ test.group("cancellation block: itemIdsInActiveUserMatches", (group) => {
 
   test("ignores other customers' matches", async ({ assert }) => {
     const round = await createTestRound({ name: "Round", status: "active" });
-    const other = "5d765db5fc8c47001c408d83";
-    await createUserMatch({ roundId: round.id, sender: PEER, receiver: other, itemIds: [ITEM_X] });
+    await createUserMatch({ roundId: round.id, sender: PEER, receiver: OTHER, itemIds: [ITEM_X] });
 
     const blocked = await itemIdsInActiveUserMatches(CUSTOMER);
     assert.isEmpty([...blocked]);
@@ -143,6 +148,7 @@ test.group("cancellation block: itemIdsInActiveUserMatches", (group) => {
 test.group("cancellation block: assertNotBlockedByUserMatch", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([CUSTOMER, PEER, OTHER]));
 
   test("throws for an item in one of the customer's user matches", async ({ assert }) => {
     const round = await createTestRound({ name: "Round", status: "active" });

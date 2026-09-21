@@ -1,14 +1,14 @@
 import { Exception } from "@adonisjs/core/exceptions";
+import * as Sentry from "@sentry/node";
 import type { Infer } from "@vinejs/vine/types";
 
 import Branch from "#models/branch";
+import User from "#models/user";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import DispatchService from "#services/dispatch_service";
-import { UserDetailHelper } from "#services/user_detail_helper";
 import { userHasValidSignature } from "#services/signature_helper";
-import { StorageService } from "#services/storage_service";
-import type { UserDetail } from "#shared/user-detail";
-import { UserDetailService } from "#services/user_detail_service";
+import { invalidUserFields } from "#services/user_detail_helper";
+import { dobFrom, UserService } from "#services/user_service";
 import type { userProvisioningValidator } from "#validators/user_provisioning";
 
 type UserCandidate = Infer<typeof userProvisioningValidator>["userCandidates"][number];
@@ -31,10 +31,6 @@ interface BranchResolution {
 
 function normalizeBranchName(name: string) {
   return name.replaceAll(/\s/g, "").toLowerCase();
-}
-
-export function normalizePhone(phone: string) {
-  return phone.replaceAll(/\D/g, "").slice(-8);
 }
 
 export function buildBranchMappings(
@@ -83,60 +79,91 @@ export function applyBranchResolutions(
   });
 }
 
-export function mergeCandidateIntoUserDetail(
+/** The columns a class list may overwrite on an existing customer; blanks keep what is there. */
+export function mergeCandidateIntoUser(
   candidate: UserCandidate,
-  existingUser: UserDetail,
+  existingUser: Pick<User, "address" | "postCode" | "postCity" | "dob">,
   branchId: string | undefined,
 ) {
   return {
     name: candidate.name,
-    phone: normalizePhone(candidate.phone),
+    phone: candidate.phone,
     email: candidate.email,
     address: candidate.address ?? existingUser.address,
     postCode: candidate.postalCode ?? existingUser.postCode,
     postCity: candidate.postalCity ?? existingUser.postCity,
-    dob: candidate.dob ?? existingUser.dob,
-    ...(branchId ? { branchMembership: branchId } : {}),
+    dob: candidate.dob ? dobFrom(candidate.dob) : existingUser.dob,
+    ...(branchId ? { branchMembershipId: branchId } : {}),
   };
 }
 
-export function computeTasks(userDetail: UserDetail, hasValidSignature: boolean) {
+export function computeTasks(
+  user: Parameters<typeof invalidUserFields>[0],
+  hasValidSignature: boolean,
+) {
   return {
-    confirmDetails: new UserDetailHelper().getInvalidUserDetailFields(userDetail).length > 0,
-    signAgreement: !hasValidSignature,
+    taskConfirmDetails: invalidUserFields(user).length > 0,
+    taskSignAgreement: !hasValidSignature,
   };
 }
 
-async function findExistingUsers(userCandidates: UserCandidate[]): Promise<(UserDetail | null)[]> {
-  const phones = userCandidates.map((candidate) => normalizePhone(candidate.phone));
+/**
+ * For each row, the index of the earlier row that already names the same person, or null when the
+ * row is the first to name them. Two rows are the same person when they share a phone or an email,
+ * or when both resolve to the same existing customer — a class list that repeats a pupil, or lists
+ * siblings on one guardian's number. Only the first row is provisioned: the later ones would
+ * collide on the unique phone and email indexes, or silently overwrite each other.
+ *
+ * A duplicate's own phone and email are deliberately not registered, since the row it duplicates
+ * already holds them and the row itself is never saved.
+ */
+export function findDuplicateRows(
+  userCandidates: UserCandidate[],
+  existingUsers: ({ id: string } | null)[],
+): (number | null)[] {
+  const firstRowByKey = new Map<string, number>();
+  return userCandidates.map((candidate, index) => {
+    const existingUser = existingUsers[index];
+    const keys = [
+      `phone:${candidate.phone}`,
+      `email:${candidate.email.toLowerCase()}`,
+      ...(existingUser ? [`user:${existingUser.id}`] : []),
+    ];
+    const firstRow = keys.map((key) => firstRowByKey.get(key)).find((row) => row !== undefined);
+    if (firstRow !== undefined) {
+      return firstRow;
+    }
+    for (const key of keys) {
+      firstRowByKey.set(key, index);
+    }
+    return null;
+  });
+}
+
+async function findExistingUsers(userCandidates: UserCandidate[]): Promise<(User | null)[]> {
+  const phones = userCandidates.map((candidate) => candidate.phone);
   const emails = userCandidates.map((candidate) => candidate.email);
-  const matches = await StorageService.UserDetails.aggregate<UserDetail>([
-    { $match: { $or: [{ phone: { $in: phones } }, { email: { $in: emails } }] } },
-  ]);
+  const matches = await User.query()
+    .whereIn("phone", phones)
+    .orWhereRaw("lower(email) = ANY(?)", [emails.map((email) => email.toLowerCase())]);
   const usersByPhone = new Map(
-    matches.filter((user) => user.phone).map((user) => [user.phone, user]),
+    matches.flatMap((user) => (user.phone === null ? [] : [[user.phone, user] as const])),
   );
-  const usersByEmail = new Map(matches.map((user) => [user.email, user]));
+  const usersByEmail = new Map(matches.map((user) => [user.email.toLowerCase(), user]));
   return userCandidates.map(
     (candidate) =>
-      usersByPhone.get(normalizePhone(candidate.phone)) ??
-      usersByEmail.get(candidate.email) ??
-      null,
+      usersByPhone.get(candidate.phone) ?? usersByEmail.get(candidate.email.toLowerCase()) ?? null,
   );
 }
 
 async function updateExistingUser(
   candidate: UserCandidate,
-  existingUser: UserDetail,
+  existingUser: User,
   branchId: string | undefined,
 ) {
-  const update = mergeCandidateIntoUserDetail(candidate, existingUser, branchId);
-  const mergedUser = {
-    ...existingUser,
-    ...update,
-  };
-  const tasks = computeTasks(mergedUser, await userHasValidSignature(mergedUser));
-  await StorageService.UserDetails.update(existingUser.id, { ...update, tasks });
+  existingUser.merge(mergeCandidateIntoUser(candidate, existingUser, branchId));
+  existingUser.merge(computeTasks(existingUser, await userHasValidSignature(existingUser)));
+  await existingUser.save();
 }
 
 async function createNewUser(
@@ -144,17 +171,9 @@ async function createNewUser(
   branchMembershipId: string | undefined,
   branchName: string,
 ) {
-  const userDetail = await UserDetailService.createProvisionedUserDetail(
-    { ...candidate, phone: normalizePhone(candidate.phone) },
-    branchMembershipId,
-  );
-  await StorageService.Users.add({
-    userDetail: userDetail.id,
-    permission: "customer",
-    login: {},
-  });
+  const user = await UserService.createProvisionedUser(candidate, branchMembershipId);
   await DispatchService.sendOnboardingMessage({
-    userDetail,
+    userDetail: user,
     branchName,
   });
 }
@@ -166,17 +185,64 @@ async function evaluateCandidates(branchId: string, userCandidates: UserCandidat
     branches,
   );
   const existingUsers = await findExistingUsers(userCandidates);
-  return { mappings, existingUsers };
+  return {
+    mappings,
+    existingUsers,
+    duplicateRows: findDuplicateRows(userCandidates, existingUsers),
+  };
+}
+
+/** The unique index a failed write collided on, or null when it failed for another reason. */
+function violatedUniqueIndex(error: unknown): string | null {
+  if (typeof error !== "object" || error === null) {
+    return null;
+  }
+  const { code, constraint } = error as { code?: unknown; constraint?: unknown };
+  return code === "23505" && typeof constraint === "string" ? constraint : null;
+}
+
+/**
+ * What to tell the administrator about a row that could not be saved. A row can still collide on
+ * a unique index after the in-batch duplicates are filtered out, when its phone belongs to one
+ * customer and its email to another. Anything else is unexpected: the row gets a plain message
+ * and the real error goes to Sentry rather than into a dialog, where the raw SQL of a database
+ * error would otherwise end up.
+ */
+export function provisioningErrorMessage(error: unknown, candidate: UserCandidate): string {
+  switch (violatedUniqueIndex(error)) {
+    case "users_phone_unique": {
+      return `Mobilnummeret ${candidate.phone} tilhører allerede en annen kunde`;
+    }
+    case "users_email_unique": {
+      return `E-postadressen ${candidate.email} tilhører allerede en annen kunde`;
+    }
+    default: {
+      Sentry.captureException(error, { extra: { candidateEmail: candidate.email } });
+      return "Ukjent feil. Ta kontakt på teknisk@boklisten.no dersom det gjentar seg.";
+    }
+  }
 }
 
 export const UserProvisioningService = {
   async evaluate(branchId: string, userCandidates: UserCandidate[]) {
-    const { mappings, existingUsers } = await evaluateCandidates(branchId, userCandidates);
-    const updateCount = existingUsers.filter(Boolean).length;
+    const { mappings, existingUsers, duplicateRows } = await evaluateCandidates(
+      branchId,
+      userCandidates,
+    );
+    const duplicateCount = duplicateRows.filter((row) => row !== null).length;
+    const updateCount = existingUsers.filter(
+      (user, index) => user !== null && duplicateRows[index] === null,
+    ).length;
     return {
       mappings,
       updateCount,
-      createCount: userCandidates.length - updateCount,
+      createCount: userCandidates.length - updateCount - duplicateCount,
+      duplicateCount,
+      // Counted here rather than in the browser so that it agrees with the other two: a skipped
+      // duplicate is never uploaded, with or without a class.
+      withoutClassCount: userCandidates.filter(
+        (candidate, index) => !candidate.localName && duplicateRows[index] === null,
+      ).length,
     };
   },
 
@@ -185,10 +251,11 @@ export const UserProvisioningService = {
     userCandidates: UserCandidate[],
     branchResolutions: BranchResolution[] = [],
   ) {
-    const { mappings: unresolvedMappings, existingUsers } = await evaluateCandidates(
-      branchId,
-      userCandidates,
-    );
+    const {
+      mappings: unresolvedMappings,
+      existingUsers,
+      duplicateRows,
+    } = await evaluateCandidates(branchId, userCandidates);
     const mappings = applyBranchResolutions(unresolvedMappings, branchResolutions);
     const unmatchedLocalNames = mappings
       .filter((mapping) => mapping.status !== "matched")
@@ -207,11 +274,22 @@ export const UserProvisioningService = {
     const summary = {
       createdCount: 0,
       updatedCount: 0,
+      duplicates: [] as { name: string; email: string; duplicateOf: string }[],
       errors: [] as { name: string; email: string; message: string }[],
     };
     async function processCandidate(candidate: UserCandidate, index: number) {
       const branch = candidate.localName ? branchByLocalName.get(candidate.localName) : null;
       if (candidate.localName && !branch) {
+        return;
+      }
+      // The row names someone an earlier row already named; that row carries their details.
+      const duplicateRow = duplicateRows[index];
+      if (duplicateRow !== null && duplicateRow !== undefined) {
+        summary.duplicates.push({
+          name: candidate.name,
+          email: candidate.email,
+          duplicateOf: userCandidates[duplicateRow]?.name ?? "",
+        });
         return;
       }
       try {
@@ -227,7 +305,7 @@ export const UserProvisioningService = {
         summary.errors.push({
           name: candidate.name,
           email: candidate.email,
-          message: error instanceof Error ? error.message : String(error),
+          message: provisioningErrorMessage(error, candidate),
         });
       }
     }

@@ -2,7 +2,10 @@ import dayjs from "dayjs";
 
 import { norwegianTime } from "@/shared/utils/dayjs";
 
-export function isUnder18(birthday: Date) {
+export function isUnder18(birthday: Date | string | null | undefined) {
+  if (birthday === null || birthday === undefined || birthday === "") {
+    return false;
+  }
   return dayjs(birthday).isAfter(dayjs().subtract(18, "year"));
 }
 

@@ -116,14 +116,6 @@ async function revertPayment(invoice: Invoice): Promise<string[]> {
   );
   if (invoiceOrder) {
     await StorageService.Orders.remove(invoiceOrder.id);
-    if (customerDetailsId) {
-      const userDetail = await StorageService.UserDetails.getOrNull(customerDetailsId);
-      if (userDetail?.orders.includes(invoiceOrder.id)) {
-        await StorageService.UserDetails.update(customerDetailsId, {
-          orders: userDetail.orders.filter((orderId) => orderId !== invoiceOrder.id),
-        });
-      }
-    }
   } else {
     warnings.push("Fant ingen ordre for betalingen å fjerne fra kunden.");
   }

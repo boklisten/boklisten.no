@@ -1,5 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import type { UserPermission } from "@boklisten/backend/shared/user-permission";
+import type { User } from "@boklisten/backend/shared/user";
 import { ActionIcon, Anchor, Badge, Group, Stack, Title, Tooltip } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconPencil, IconX } from "@tabler/icons-react";
@@ -25,7 +24,7 @@ export default function CustomerHeader({
   withCustomerId = false,
   onMerged,
 }: {
-  customer: UserDetail & { permission: UserPermission };
+  customer: User;
   /** Called when the customer leaves the screen: the X here, or the customer being deleted. */
   onDeselect: () => void;
   /** The X that drops the customer; off where the page has its own way back. */
@@ -39,8 +38,8 @@ export default function CustomerHeader({
   const { api } = useApiClient();
   const { data: branch } = useQuery(
     api.branches.show.queryOptions(
-      { params: { branchId: customer.branchMembership ?? "" } },
-      { enabled: Boolean(customer.branchMembership) },
+      { params: { branchId: customer.branchMembershipId ?? "" } },
+      { enabled: Boolean(customer.branchMembershipId) },
     ),
   );
   const displayName = useDisplayName();

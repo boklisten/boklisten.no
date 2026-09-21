@@ -1,16 +1,4 @@
-import type { BlDocument } from "#shared/bl-document";
-import type { UserPermission } from "#shared/user-permission";
-
-interface VippsLogin {
-  userId: string;
-  lastLogin: Date;
-}
-
-interface LocalLogin {
-  hashedPassword: string;
-  lastLogin?: Date;
-}
-
+/** What the Vipps login driver hands back about the person who logged in. */
 export interface VippsUser {
   id: string;
   name: string;
@@ -21,16 +9,4 @@ export interface VippsUser {
   address: string;
   postalCode: string;
   postalCity: string;
-}
-
-export interface Login {
-  vipps?: VippsLogin;
-  local?: LocalLogin;
-  lastTokenIssuedAt?: Date;
-}
-
-export interface User extends BlDocument {
-  userDetail: string;
-  permission: UserPermission;
-  login: Login;
 }

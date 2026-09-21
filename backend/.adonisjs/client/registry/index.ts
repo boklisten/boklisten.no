@@ -174,17 +174,17 @@ const routes = {
     tokens: [{"old":"/public_blid_lookup/:blid","type":0,"val":"public_blid_lookup","end":""},{"old":"/public_blid_lookup/:blid","type":1,"val":"blid","end":""}],
     types: placeholder as Registry['public_blid_lookup.show']['types'],
   },
-  'user_details.me': {
+  'users.me': {
     methods: ["GET","HEAD"],
-    pattern: '/user_details/me',
-    tokens: [{"old":"/user_details/me","type":0,"val":"user_details","end":""},{"old":"/user_details/me","type":0,"val":"me","end":""}],
-    types: placeholder as Registry['user_details.me']['types'],
+    pattern: '/users/me',
+    tokens: [{"old":"/users/me","type":0,"val":"users","end":""},{"old":"/users/me","type":0,"val":"me","end":""}],
+    types: placeholder as Registry['users.me']['types'],
   },
-  'user_details.update_me': {
+  'users.update_me': {
     methods: ["PATCH"],
-    pattern: '/user_details/me',
-    tokens: [{"old":"/user_details/me","type":0,"val":"user_details","end":""},{"old":"/user_details/me","type":0,"val":"me","end":""}],
-    types: placeholder as Registry['user_details.update_me']['types'],
+    pattern: '/users/me',
+    tokens: [{"old":"/users/me","type":0,"val":"users","end":""},{"old":"/users/me","type":0,"val":"me","end":""}],
+    types: placeholder as Registry['users.update_me']['types'],
   },
   'customer_items.me': {
     methods: ["GET","HEAD"],
@@ -708,11 +708,11 @@ const routes = {
     tokens: [{"old":"/reports/payments","type":0,"val":"reports","end":""},{"old":"/reports/payments","type":0,"val":"payments","end":""}],
     types: placeholder as Registry['reports.payments']['types'],
   },
-  'reports.user_details': {
+  'reports.users': {
     methods: ["GET","HEAD"],
-    pattern: '/reports/user_details',
-    tokens: [{"old":"/reports/user_details","type":0,"val":"reports","end":""},{"old":"/reports/user_details","type":0,"val":"user_details","end":""}],
-    types: placeholder as Registry['reports.user_details']['types'],
+    pattern: '/reports/users',
+    tokens: [{"old":"/reports/users","type":0,"val":"reports","end":""},{"old":"/reports/users","type":0,"val":"users","end":""}],
+    types: placeholder as Registry['reports.users']['types'],
   },
   'unique_ids.token': {
     methods: ["GET","HEAD"],
@@ -720,58 +720,58 @@ const routes = {
     tokens: [{"old":"/unique_ids/token","type":0,"val":"unique_ids","end":""},{"old":"/unique_ids/token","type":0,"val":"token","end":""}],
     types: placeholder as Registry['unique_ids.token']['types'],
   },
-  'user_details.search': {
-    methods: ["POST"],
-    pattern: '/user_details/search',
-    tokens: [{"old":"/user_details/search","type":0,"val":"user_details","end":""},{"old":"/user_details/search","type":0,"val":"search","end":""}],
-    types: placeholder as Registry['user_details.search']['types'],
-  },
-  'user_details.show': {
+  'users.search': {
     methods: ["GET","HEAD"],
-    pattern: '/user_details/:detailsId',
-    tokens: [{"old":"/user_details/:detailsId","type":0,"val":"user_details","end":""},{"old":"/user_details/:detailsId","type":1,"val":"detailsId","end":""}],
-    types: placeholder as Registry['user_details.show']['types'],
+    pattern: '/users/search',
+    tokens: [{"old":"/users/search","type":0,"val":"users","end":""},{"old":"/users/search","type":0,"val":"search","end":""}],
+    types: placeholder as Registry['users.search']['types'],
   },
-  'user_details.update': {
+  'users.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/users/:detailsId',
+    tokens: [{"old":"/users/:detailsId","type":0,"val":"users","end":""},{"old":"/users/:detailsId","type":1,"val":"detailsId","end":""}],
+    types: placeholder as Registry['users.show']['types'],
+  },
+  'users.update': {
     methods: ["PATCH"],
-    pattern: '/user_details/:detailsId',
-    tokens: [{"old":"/user_details/:detailsId","type":0,"val":"user_details","end":""},{"old":"/user_details/:detailsId","type":1,"val":"detailsId","end":""}],
-    types: placeholder as Registry['user_details.update']['types'],
+    pattern: '/users/:detailsId',
+    tokens: [{"old":"/users/:detailsId","type":0,"val":"users","end":""},{"old":"/users/:detailsId","type":1,"val":"detailsId","end":""}],
+    types: placeholder as Registry['users.update']['types'],
   },
-  'user_details.confirm_email': {
+  'users.confirm_email': {
     methods: ["POST"],
-    pattern: '/user_details/:detailsId/confirm_email',
-    tokens: [{"old":"/user_details/:detailsId/confirm_email","type":0,"val":"user_details","end":""},{"old":"/user_details/:detailsId/confirm_email","type":1,"val":"detailsId","end":""},{"old":"/user_details/:detailsId/confirm_email","type":0,"val":"confirm_email","end":""}],
-    types: placeholder as Registry['user_details.confirm_email']['types'],
+    pattern: '/users/:detailsId/confirm_email',
+    tokens: [{"old":"/users/:detailsId/confirm_email","type":0,"val":"users","end":""},{"old":"/users/:detailsId/confirm_email","type":1,"val":"detailsId","end":""},{"old":"/users/:detailsId/confirm_email","type":0,"val":"confirm_email","end":""}],
+    types: placeholder as Registry['users.confirm_email']['types'],
   },
   'customer_items.for_customer': {
     methods: ["GET","HEAD"],
-    pattern: '/user_details/:detailsId/customer_items',
-    tokens: [{"old":"/user_details/:detailsId/customer_items","type":0,"val":"user_details","end":""},{"old":"/user_details/:detailsId/customer_items","type":1,"val":"detailsId","end":""},{"old":"/user_details/:detailsId/customer_items","type":0,"val":"customer_items","end":""}],
+    pattern: '/users/:detailsId/customer_items',
+    tokens: [{"old":"/users/:detailsId/customer_items","type":0,"val":"users","end":""},{"old":"/users/:detailsId/customer_items","type":1,"val":"detailsId","end":""},{"old":"/users/:detailsId/customer_items","type":0,"val":"customer_items","end":""}],
     types: placeholder as Registry['customer_items.for_customer']['types'],
   },
   'orders.for_customer': {
     methods: ["GET","HEAD"],
-    pattern: '/user_details/:detailsId/orders',
-    tokens: [{"old":"/user_details/:detailsId/orders","type":0,"val":"user_details","end":""},{"old":"/user_details/:detailsId/orders","type":1,"val":"detailsId","end":""},{"old":"/user_details/:detailsId/orders","type":0,"val":"orders","end":""}],
+    pattern: '/users/:detailsId/orders',
+    tokens: [{"old":"/users/:detailsId/orders","type":0,"val":"users","end":""},{"old":"/users/:detailsId/orders","type":1,"val":"detailsId","end":""},{"old":"/users/:detailsId/orders","type":0,"val":"orders","end":""}],
     types: placeholder as Registry['orders.for_customer']['types'],
   },
   'orders.placed_for_customer': {
     methods: ["GET","HEAD"],
-    pattern: '/user_details/:detailsId/placed_orders',
-    tokens: [{"old":"/user_details/:detailsId/placed_orders","type":0,"val":"user_details","end":""},{"old":"/user_details/:detailsId/placed_orders","type":1,"val":"detailsId","end":""},{"old":"/user_details/:detailsId/placed_orders","type":0,"val":"placed_orders","end":""}],
+    pattern: '/users/:detailsId/placed_orders',
+    tokens: [{"old":"/users/:detailsId/placed_orders","type":0,"val":"users","end":""},{"old":"/users/:detailsId/placed_orders","type":1,"val":"detailsId","end":""},{"old":"/users/:detailsId/placed_orders","type":0,"val":"placed_orders","end":""}],
     types: placeholder as Registry['orders.placed_for_customer']['types'],
   },
   'matches.for_customer': {
     methods: ["GET","HEAD"],
-    pattern: '/user_details/:detailsId/matches',
-    tokens: [{"old":"/user_details/:detailsId/matches","type":0,"val":"user_details","end":""},{"old":"/user_details/:detailsId/matches","type":1,"val":"detailsId","end":""},{"old":"/user_details/:detailsId/matches","type":0,"val":"matches","end":""}],
+    pattern: '/users/:detailsId/matches',
+    tokens: [{"old":"/users/:detailsId/matches","type":0,"val":"users","end":""},{"old":"/users/:detailsId/matches","type":1,"val":"detailsId","end":""},{"old":"/users/:detailsId/matches","type":0,"val":"matches","end":""}],
     types: placeholder as Registry['matches.for_customer']['types'],
   },
   'message_logs.for_customer': {
     methods: ["GET","HEAD"],
-    pattern: '/user_details/:detailsId/message_logs',
-    tokens: [{"old":"/user_details/:detailsId/message_logs","type":0,"val":"user_details","end":""},{"old":"/user_details/:detailsId/message_logs","type":1,"val":"detailsId","end":""},{"old":"/user_details/:detailsId/message_logs","type":0,"val":"message_logs","end":""}],
+    pattern: '/users/:detailsId/message_logs',
+    tokens: [{"old":"/users/:detailsId/message_logs","type":0,"val":"users","end":""},{"old":"/users/:detailsId/message_logs","type":1,"val":"detailsId","end":""},{"old":"/users/:detailsId/message_logs","type":0,"val":"message_logs","end":""}],
     types: placeholder as Registry['message_logs.for_customer']['types'],
   },
   'signatures.show': {

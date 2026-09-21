@@ -4,10 +4,10 @@ import type { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import Signature, { isUnderage } from "#models/signature";
+import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { reconcileSignatureTask, userHasValidSignature } from "#services/signature_helper";
 import { SignatureGalleryService } from "#services/signature_gallery_service";
-import { StorageService } from "#services/storage_service";
 import { signValidator } from "#validators/signature";
 
 function formatSignedDate(dateTime: DateTime | null): string | undefined {
@@ -18,12 +18,12 @@ function formatSignedDate(dateTime: DateTime | null): string | undefined {
 }
 
 async function getSignatureStatus(detailsId: string) {
-  let userDetail = await StorageService.UserDetails.getOrNull(detailsId);
+  const userDetail = await User.find(detailsId);
   if (!userDetail) {
     return null;
   }
 
-  userDetail = await reconcileSignatureTask(userDetail);
+  await reconcileSignatureTask(userDetail);
   const newestSignature = await Signature.newestForCustomer(userDetail.id);
   if (newestSignature?.isValidFor(userDetail)) {
     return {
@@ -39,7 +39,7 @@ async function getSignatureStatus(detailsId: string) {
 
   return {
     isSignatureValid: false,
-    signatureRequired: userDetail.tasks?.signAgreement === true,
+    signatureRequired: userDetail.taskSignAgreement,
     // A guardian signature the customer has outgrown is shown until they sign for themselves.
     outgrownGuardianSignature: newestSignature?.isOutgrownGuardianFor(userDetail)
       ? {
@@ -65,8 +65,8 @@ export default class SignaturesController {
   async sendLink(ctx: HttpContext) {
     const targetDetailsId = ctx.request.param("detailsId");
 
-    const userDetail = await StorageService.UserDetails.getOrNull(targetDetailsId);
-    const branch = await Branch.findOptional(userDetail?.branchMembership);
+    const userDetail = await User.find(targetDetailsId);
+    const branch = await Branch.findOptional(userDetail?.branchMembershipId);
     if (userDetail) {
       await DispatchService.sendSignatureLink(userDetail, branch?.name ?? "en filial");
     }
@@ -74,15 +74,15 @@ export default class SignaturesController {
   async sendLinkMe(ctx: HttpContext) {
     const { detailsId } = ctx.authUser;
 
-    const userDetail = await StorageService.UserDetails.getOrNull(detailsId);
-    const branch = await Branch.findOptional(userDetail?.branchMembership);
+    const userDetail = await User.find(detailsId);
+    const branch = await Branch.findOptional(userDetail?.branchMembershipId);
     if (userDetail) {
       await DispatchService.sendSignatureLink(userDetail, branch?.name ?? "en filial");
     }
   }
   async valid(ctx: HttpContext) {
     const detailsId = ctx.request.param("detailsId");
-    const userDetail = await StorageService.UserDetails.getOrNull(detailsId);
+    const userDetail = await User.find(detailsId);
     if (!userDetail) {
       return {
         isSignatureValid: false,
@@ -120,7 +120,7 @@ export default class SignaturesController {
   async sign(ctx: HttpContext) {
     const { base64EncodedImage, signingName } = await ctx.request.validateUsing(signValidator);
     const detailsId = ctx.request.param("detailsId");
-    const userDetail = await StorageService.UserDetails.getOrNull(detailsId);
+    const userDetail = await User.find(detailsId);
     if (
       !userDetail ||
       (isUnderage(userDetail) && signingName === userDetail.name) ||
@@ -136,8 +136,7 @@ export default class SignaturesController {
       signedByGuardian: isUnderage(userDetail),
       image,
     });
-    await StorageService.UserDetails.update(userDetail.id, {
-      "tasks.signAgreement": false,
-    });
+    userDetail.taskSignAgreement = false;
+    await userDetail.save();
   }
 }

@@ -1,4 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Box, Button, CopyButton, Group, Skeleton, Stack, Text } from "@mantine/core";
 import { IconCopy, IconSend } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -11,7 +11,7 @@ import useApiClient from "@/shared/hooks/useApiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-export default function AdministrateUserSignatures({ userDetail }: { userDetail: UserDetail }) {
+export default function AdministrateUserSignatures({ userDetail }: { userDetail: User }) {
   const { api } = useApiClient();
   const { data, isLoading, isError } = useQuery(
     api.signatures.show.queryOptions({ params: { detailsId: userDetail.id } }),

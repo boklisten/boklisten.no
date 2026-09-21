@@ -50,12 +50,12 @@ import type { ScanCodeType } from "@/shared/utils/scanCodes";
  */
 function branchWithPeriods(
   branches: Branch[],
-  startBranchId: string | undefined,
+  startBranchId: string | null | undefined,
   now: Date,
 ): string | null {
   const byId = new Map(branches.map((branch) => [branch.id, branch]));
   const visited = new Set<string>();
-  let current = startBranchId === undefined ? undefined : byId.get(startBranchId);
+  let current = startBranchId ? byId.get(startBranchId) : undefined;
   while (current && !visited.has(current.id)) {
     visited.add(current.id);
     if (futureRentPeriods(current, now).length > 0) {
@@ -150,7 +150,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
 
   const { data: branches } = useQuery(publicApi.branches.index.queryOptions());
   const { data: customer } = useQuery(
-    api.userDetails.show.queryOptions(
+    api.users.show.queryOptions(
       { params: { detailsId: customerId ?? "" } },
       { enabled: customerId !== null },
     ),
@@ -192,7 +192,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
   function provisionalBranchId(): string | null {
     return (
       cartRef.current.branchId ??
-      branchWithPeriods(branches ?? [], customer?.branchMembership, new Date()) ??
+      branchWithPeriods(branches ?? [], customer?.branchMembershipId, new Date()) ??
       branches?.[0]?.id ??
       null
     );

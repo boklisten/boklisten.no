@@ -1,7 +1,7 @@
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import { lineKey } from "@boklisten/backend/shared/stand_cart";
 import type { StandCartSource } from "@boklisten/backend/shared/stand_cart";
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Stack } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -18,7 +18,7 @@ const POLL_INTERVAL_MS = 5000;
  * Everything the customer is due to get: ordered books, which go into the cart by a click here
  * or by a scan from the page, and books due from another student, which never pass the stand.
  */
-export default function HandoutView({ customer }: { customer: UserDetail }) {
+export default function HandoutView({ customer }: { customer: User }) {
   const { api } = useApiClient();
   const queryClient = useQueryClient();
   const { data: orders } = useQuery(

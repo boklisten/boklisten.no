@@ -1,5 +1,5 @@
 import type { StandCartCheckoutState } from "@boklisten/backend/shared/stand_cart";
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import {
   Anchor,
   Button,
@@ -470,7 +470,7 @@ function PayFlow({
   onWaitingChange,
 }: {
   cart: StandCart;
-  customer: UserDetail;
+  customer: User;
   delivery: Delivery;
   submitter: StandCartSubmitter;
   onPlaced: (state: StandCartCheckoutState) => void;
@@ -620,7 +620,7 @@ export default function StandCartCheckout({
   onWaitingChange,
 }: {
   cart: StandCart;
-  customer: UserDetail;
+  customer: User;
   step: CheckoutStep;
   delivery: Delivery;
   placed: StandCartCheckoutState | null;

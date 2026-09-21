@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
+import User from "#models/user";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { MatchRepository } from "#services/matches/match_repository";
@@ -46,7 +47,7 @@ async function collectReports(
   now: Date,
 ): Promise<PlacementReport[]> {
   const signatureException = order.orderItems.some(isLoanHandout)
-    ? await findSignatureException(await StorageService.UserDetails.get(order.customer))
+    ? await findSignatureException(await User.findOrFail(order.customer))
     : null;
   return derivePlacementReports({
     order,
@@ -84,16 +85,6 @@ async function createCustomerItems(
     return { order, created };
   }
   return { order: await StorageService.Orders.update(order.id, { orderItems }), created };
-}
-
-async function attachToCustomer(customerId: string, created: CustomerItem[]): Promise<void> {
-  if (created.length === 0) {
-    return;
-  }
-  const customer = await StorageService.UserDetails.get(customerId);
-  await StorageService.UserDetails.update(customerId, {
-    customerItems: [...customer.customerItems, ...created.map((customerItem) => customerItem.id)],
-  });
 }
 
 /**
@@ -164,11 +155,10 @@ export const StandCartPlacement = {
   async place(order: Order, employee: MonitoredEmployee, now = new Date()): Promise<Order> {
     const heldBooks = await loadHeldBooks(order);
     const reports = await collectReports(order, heldBooks, now);
-    const { order: withCustomerItems, created } = await createCustomerItems(order);
+    const { order: withCustomerItems } = await createCustomerItems(order);
     // The handler records who took returned books back, so it is told the employee, not the customer
     const placed = await new OrderPlacedHandler().placeOrder(withCustomerItems, employee.detailsId);
 
-    await afterPlacement(() => attachToCustomer(order.customer, created));
     await afterPlacement(() => recordHandovers(placed, heldBooks, DateTime.fromJSDate(now)));
     await afterPlacement(() => StandCartMonitoring.send(reports, employee, order.customer));
     return placed;

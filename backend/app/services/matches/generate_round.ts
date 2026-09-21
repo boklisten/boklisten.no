@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
-import { ObjectId } from "mongodb";
 
 import type MatchRound from "#models/match_round";
+import User from "#models/user";
 import { MatchFinder } from "#services/match_helpers/match-finder/match-finder";
 import type { MatchableUser } from "#services/match_helpers/match-finder/match-types";
 import {
@@ -11,21 +11,17 @@ import {
 import { MatchRepository } from "#services/matches/match_repository";
 import type { MatchDraft, ObligationDraft } from "#services/matches/match_repository";
 import { getHeldItems, getWantedItems } from "#services/matches/round_scope";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { canonicalItemId } from "#shared/item-equivalence";
-import type { UserDetail } from "#shared/user-detail";
 
 async function getGroupMemberships(customerIds: string[]): Promise<Map<string, string>> {
   if (customerIds.length === 0) {
     return new Map();
   }
-  const userDetails = await StorageService.UserDetails.aggregate<UserDetail>([
-    { $match: { _id: { $in: customerIds.map((id) => new ObjectId(id)) } } },
-  ]);
+  const users = await User.byIds(customerIds);
   return new Map(
-    userDetails.flatMap((detail) =>
-      detail.branchMembership ? [[detail.id, detail.branchMembership] as const] : [],
+    [...users.values()].flatMap((user) =>
+      user.branchMembershipId ? [[user.id, user.branchMembershipId] as const] : [],
     ),
   );
 }

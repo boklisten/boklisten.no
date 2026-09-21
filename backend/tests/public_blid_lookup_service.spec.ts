@@ -10,7 +10,10 @@ import type { UniqueItem } from "#shared/unique-item";
 import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
+import User from "#models/user";
+import { userDouble } from "#tests/user_fixtures";
 
+const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 const BLID = "12345678";
 const ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
@@ -39,17 +42,28 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
         handoutTime: "2026-08-20T10:00:00.000Z",
         deadline: "2026-12-20T23:00:00.000Z",
         itemId: ITEM_ID,
-        name: "Ola Nordmann",
-        email: "ola@example.com",
-        phone: "12345678",
+        customerId: CUSTOMER_ID,
       },
     ]);
+    sandbox
+      .stub(User, "findOptional")
+      .withArgs(CUSTOMER_ID)
+      .resolves(
+        userDouble({
+          id: CUSTOMER_ID,
+          name: "Ola Nordmann",
+          email: "ola@example.com",
+          phone: "12345678",
+        }),
+      );
 
     const result = await PublicBlidLookupService.lookup(BLID);
 
     assert.equal(result.status, "handedOut");
     assert.include(result, {
       name: "Ola Nordmann",
+      email: "ola@example.com",
+      phone: "12345678",
       title: "Sinus 1T",
       isbn: "9788202418304",
       handoutBranch: "Ullern VGS",

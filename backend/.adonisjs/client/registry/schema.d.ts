@@ -343,28 +343,28 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/public_blid_lookup_controller').default['show']>>>
     }
   }
-  'user_details.me': {
+  'users.me': {
     methods: ["GET","HEAD"]
-    pattern: '/user_details/me'
+    pattern: '/users/me'
     types: {
       body: {}
       paramsTuple: []
       params: {}
       query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['me']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['me']>>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['me']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['me']>>>
     }
   }
-  'user_details.update_me': {
+  'users.update_me': {
     methods: ["PATCH"]
-    pattern: '/user_details/me'
+    pattern: '/users/me'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/user_detail').customerUpdateUserDetailsValidator)>>
+      body: ExtractBody<InferInput<(typeof import('#validators/users').updateMeValidator)>>
       paramsTuple: []
       params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/user_detail').customerUpdateUserDetailsValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['updateMe']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['updateMe']>>> | { status: 422; response: { errors: SimpleError[] } }
+      query: ExtractQuery<InferInput<(typeof import('#validators/users').updateMeValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['updateMe']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['updateMe']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'customer_items.me': {
@@ -1411,16 +1411,16 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['payments']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'reports.user_details': {
+  'reports.users': {
     methods: ["GET","HEAD"]
-    pattern: '/reports/user_details'
+    pattern: '/reports/users'
     types: {
       body: {}
       paramsTuple: []
       params: {}
-      query: ExtractQueryForGet<InferInput<(typeof import('#validators/report').userDetailsReportValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['userDetails']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['userDetails']>>> | { status: 422; response: { errors: SimpleError[] } }
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/report').usersReportValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['users']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['users']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'unique_ids.token': {
@@ -1435,57 +1435,57 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['token']>>>
     }
   }
-  'user_details.search': {
-    methods: ["POST"]
-    pattern: '/user_details/search'
+  'users.search': {
+    methods: ["GET","HEAD"]
+    pattern: '/users/search'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/user_detail').userDetailSearchValidator)>>
+      body: {}
       paramsTuple: []
       params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/user_detail').userDetailSearchValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['search']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['search']>>> | { status: 422; response: { errors: SimpleError[] } }
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/users').userSearchValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['search']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['search']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'user_details.show': {
+  'users.show': {
     methods: ["GET","HEAD"]
-    pattern: '/user_details/:detailsId'
+    pattern: '/users/:detailsId'
     types: {
       body: {}
       paramsTuple: [ParamValue]
       params: { detailsId: ParamValue }
       query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['show']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['show']>>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['show']>>>
     }
   }
-  'user_details.update': {
+  'users.update': {
     methods: ["PATCH"]
-    pattern: '/user_details/:detailsId'
+    pattern: '/users/:detailsId'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/user_detail').employeeUpdateUserDetailsValidator)>>
+      body: ExtractBody<InferInput<(typeof import('#validators/users').updateUserValidator)>>
       paramsTuple: [ParamValue]
       params: { detailsId: ParamValue }
-      query: ExtractQuery<InferInput<(typeof import('#validators/user_detail').employeeUpdateUserDetailsValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['update']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+      query: ExtractQuery<InferInput<(typeof import('#validators/users').updateUserValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'user_details.confirm_email': {
+  'users.confirm_email': {
     methods: ["POST"]
-    pattern: '/user_details/:detailsId/confirm_email'
+    pattern: '/users/:detailsId/confirm_email'
     types: {
       body: {}
       paramsTuple: [ParamValue]
       params: { detailsId: ParamValue }
       query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['confirmEmail']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_details_controller').default['confirmEmail']>>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['confirmEmail']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['confirmEmail']>>>
     }
   }
   'customer_items.for_customer': {
     methods: ["GET","HEAD"]
-    pattern: '/user_details/:detailsId/customer_items'
+    pattern: '/users/:detailsId/customer_items'
     types: {
       body: {}
       paramsTuple: [ParamValue]
@@ -1497,7 +1497,7 @@ export interface Registry {
   }
   'orders.for_customer': {
     methods: ["GET","HEAD"]
-    pattern: '/user_details/:detailsId/orders'
+    pattern: '/users/:detailsId/orders'
     types: {
       body: {}
       paramsTuple: [ParamValue]
@@ -1509,7 +1509,7 @@ export interface Registry {
   }
   'orders.placed_for_customer': {
     methods: ["GET","HEAD"]
-    pattern: '/user_details/:detailsId/placed_orders'
+    pattern: '/users/:detailsId/placed_orders'
     types: {
       body: {}
       paramsTuple: [ParamValue]
@@ -1521,7 +1521,7 @@ export interface Registry {
   }
   'matches.for_customer': {
     methods: ["GET","HEAD"]
-    pattern: '/user_details/:detailsId/matches'
+    pattern: '/users/:detailsId/matches'
     types: {
       body: {}
       paramsTuple: [ParamValue]
@@ -1533,7 +1533,7 @@ export interface Registry {
   }
   'message_logs.for_customer': {
     methods: ["GET","HEAD"]
-    pattern: '/user_details/:detailsId/message_logs'
+    pattern: '/users/:detailsId/message_logs'
     types: {
       body: {}
       paramsTuple: [ParamValue]

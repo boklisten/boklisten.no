@@ -1,4 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import { Button, Group, List, Loader, Stack, Text, Title } from "@mantine/core";
 import { IconBuildingBank, IconSend } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
@@ -150,7 +150,7 @@ export default function RefundStep({
   onPay,
 }: {
   cart: StandCart;
-  customer: UserDetail;
+  customer: User;
   busy: boolean;
   /** Resolves with whether the order went through. */
   onPay: (payment: Payment) => Promise<boolean>;

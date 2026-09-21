@@ -28,7 +28,7 @@ function findOpenOrderItem(order: Order, itemId: string) {
 }
 
 /**
- * Orders as seen by employees (`/orders`, `/user_details/:detailsId/orders`) and by the
+ * Orders as seen by employees (`/orders`, `/users/:detailsId/orders`) and by the
  * customer themselves (`/orders/me`).
  */
 export default class OrdersController {

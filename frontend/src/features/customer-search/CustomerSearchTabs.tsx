@@ -1,5 +1,5 @@
 import { isFailureStatus } from "@boklisten/backend/shared/message-log";
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import {
   Badge,
   Box,
@@ -152,7 +152,7 @@ export default function CustomerSearchTabs({
   activeTab,
   onTabChange,
 }: {
-  customer: UserDetail;
+  customer: User;
   activeTab: CustomerSearchTab;
   onTabChange: (tab: CustomerSearchTab) => void;
 }) {

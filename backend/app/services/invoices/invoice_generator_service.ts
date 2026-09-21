@@ -1,6 +1,7 @@
 import BranchModel from "#models/branch";
 import ItemModel from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
+import User from "#models/user";
 import { StorageService } from "#services/storage_service";
 import { isNotNullish } from "#services/typescript_helpers";
 import type { Branch } from "#shared/branch";
@@ -13,7 +14,6 @@ import type {
 } from "#shared/invoice";
 import type { Item } from "#shared/item";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
 
 /**
  * Generates invoices for books that were neither returned nor bought out by their deadline, one
@@ -31,7 +31,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 type LinePayment = InvoiceCustomerItemPayment["payment"];
 
 interface CustomerBooks {
-  customer: UserDetail;
+  customer: User;
   customerItems: CustomerItem[];
 }
 
@@ -200,8 +200,8 @@ function buildInvoice(
       userDetail: customer.id,
       name: customer.name,
       email: customer.email,
-      phone: customer.phone,
-      dob: customer.dob,
+      phone: customer.phone ?? "",
+      dob: customer.dob?.toJSDate(),
       postal: {
         address: customer.address,
         city: customer.postCity,
@@ -224,7 +224,7 @@ export async function generateInvoices(
   const groups = groupByCustomer(customerItems);
 
   const [customers, items, branches, lastOrders] = await Promise.all([
-    StorageService.UserDetails.getMany([...groups.keys()], "admin"),
+    User.findMany([...groups.keys()]),
     ItemModel.findMany([...new Set(customerItems.map((customerItem) => customerItem.item))]),
     BranchModel.findMany([
       ...new Set(

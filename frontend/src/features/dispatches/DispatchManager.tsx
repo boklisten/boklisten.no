@@ -11,7 +11,6 @@ import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { cellToString, normalizeNorwegianPhone } from "@/shared/utils/csvNormalizers";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import type { Route } from "@tuyau/core/types";
 
 interface Recipient {
   phone?: string;
@@ -110,29 +109,27 @@ function RecipientsSummary({ recipients }: { recipients: Recipient[] }) {
 export default function DispatchManager() {
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const [importerOpen, setImporterOpen] = useState(false);
-  const { client } = useApiClient();
+  const { api } = useApiClient();
 
-  const sendMutation = useMutation({
-    mutationFn: async (formData: Route.Request<"dispatch.store">) => {
-      setServerErrors([]);
-      const [, error] = await client.api.dispatch.store(formData).safe();
-
-      if (error) {
+  const sendMutation = useMutation(
+    api.dispatch.store.mutationOptions({
+      onSuccess: () => {
+        setServerErrors([]);
+        showSuccessNotification({
+          icon: <IconMailFast />,
+          title: "Utsendelsen var vellykket!",
+          message: `Følg med på leveringsstatus i meldingsloggen under Kommunikasjon`,
+        });
+      },
+      onError: (error) => {
         if (error.isValidationError()) {
-          setServerErrors(error.response.errors.map((err) => err.message));
+          setServerErrors(error.response.errors.map((issue) => issue.message));
           return;
         }
         showErrorNotification("Noe gikk galt under utsendingen!");
-        return;
-      }
-
-      showSuccessNotification({
-        icon: <IconMailFast />,
-        title: "Utsendelsen var vellykket!",
-        message: `Følg med på leveringsstatus i meldingsloggen under Kommunikasjon`,
-      });
-    },
-  });
+      },
+    }),
+  );
 
   const form = useAppForm({
     defaultValues,

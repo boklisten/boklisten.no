@@ -1,16 +1,10 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import jwt from "jsonwebtoken";
 
+import User from "#models/user";
 import TokenService from "#services/token_service";
-import { UserDetailService } from "#services/user_detail_service";
-import { UserService } from "#services/user_service";
 import env from "#start/env";
 import { tokenValidator } from "#validators/auth_validators";
-
-async function getUserFromVerifiedRefreshToken(verifiedRefreshToken: jwt.JwtPayload) {
-  const userDetail = await UserDetailService.getByEmail(verifiedRefreshToken["username"]);
-  return UserService.getByUserDetailsId(userDetail?.id);
-}
 
 export default class TokensController {
   async refresh(ctx: HttpContext) {
@@ -22,7 +16,8 @@ export default class TokensController {
         return ctx.response.unauthorized();
       }
 
-      const user = await getUserFromVerifiedRefreshToken(verifiedRefreshToken);
+      const username: unknown = verifiedRefreshToken["username"];
+      const user = typeof username === "string" ? await User.byEmail(username) : null;
       if (!user) {
         return ctx.response.unauthorized();
       }

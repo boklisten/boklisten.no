@@ -1,37 +1,50 @@
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
-import { StorageService } from "#services/storage_service";
+import User from "#models/user";
 import { BlError } from "#shared/bl-error";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
-import type { UserDetail } from "#shared/user-detail";
-import { mock } from "#tests/test-doubles";
+
+import { userDouble } from "#tests/user_fixtures";
 
 test.group("OrderToCustomerItemGenerator", (group) => {
-  const userDetail = mock<UserDetail>({
+  const userDetail = userDouble({
     id: "customer1",
     name: "Hans Hansen",
     email: "hanshansen@hansen.com",
-    phone: "123456789",
+    phone: "12345678",
     address: "hanseveien 10",
     postCode: "1234",
     postCity: "oslo",
-    dob: new Date(),
+    dob: DateTime.fromISO("2008-03-04"),
     blid: "userBlid1",
-    guardian: {
-      name: "Lathans Hansen",
-      email: "lathanshansen@hansen.com",
-      phone: "123456789",
-    },
+    guardianName: "Lathans Hansen",
+    guardianEmail: "lathanshansen@hansen.com",
+    guardianPhone: "12345678",
   });
+  /** The snapshot of the customer that a customer item carries. */
+  const customerInfo = {
+    name: userDetail.name,
+    phone: userDetail.phone ?? "",
+    address: userDetail.address,
+    postCode: userDetail.postCode,
+    postCity: userDetail.postCity,
+    dob: userDetail.dob?.toJSDate(),
+    guardian: {
+      name: userDetail.guardianName ?? "",
+      email: userDetail.guardianEmail ?? "",
+      phone: userDetail.guardianPhone ?? "",
+    },
+  };
   let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {
     sandbox = createSandbox();
-    sandbox.stub(StorageService.UserDetails, "get").callsFake((id) => {
+    sandbox.stub(User, "findOrFail").callsFake((id) => {
       if (id === userDetail.id) {
         return Promise.resolve(userDetail);
       }
@@ -103,15 +116,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         amountLeftToPay: orderItem.info.amountLeftToPay,
         blid: orderItem.blid,
         orders: [order.id],
-        customerInfo: {
-          name: userDetail.name,
-          phone: userDetail.phone,
-          address: userDetail.address,
-          postCode: userDetail.postCode,
-          postCity: userDetail.postCity,
-          dob: userDetail.dob,
-          guardian: userDetail.guardian,
-        },
+        customerInfo,
       },
     ];
 
@@ -200,15 +205,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem.info.amountLeftToPay,
         orders: [order.id],
-        customerInfo: {
-          name: userDetail.name,
-          phone: userDetail.phone,
-          address: userDetail.address,
-          postCode: userDetail.postCode,
-          postCity: userDetail.postCity,
-          dob: userDetail.dob,
-          guardian: userDetail.guardian,
-        },
+        customerInfo,
       },
       {
         id: null,
@@ -232,15 +229,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem2.info.amountLeftToPay,
         orders: [order.id],
-        customerInfo: {
-          name: userDetail.name,
-          phone: userDetail.phone,
-          address: userDetail.address,
-          postCode: userDetail.postCode,
-          postCity: userDetail.postCity,
-          dob: userDetail.dob,
-          guardian: userDetail.guardian,
-        },
+        customerInfo,
       },
     ];
 
@@ -364,15 +353,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         cancel: false,
         buyback: false,
         orders: [order.id],
-        customerInfo: {
-          name: userDetail.name,
-          phone: userDetail.phone,
-          address: userDetail.address,
-          postCode: userDetail.postCode,
-          postCity: userDetail.postCity,
-          dob: userDetail.dob,
-          guardian: userDetail.guardian,
-        },
+        customerInfo,
       },
     ];
 
@@ -453,15 +434,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         cancel: false,
         buyback: false,
         orders: [order.id],
-        customerInfo: {
-          name: userDetail.name,
-          phone: userDetail.phone,
-          address: userDetail.address,
-          postCode: userDetail.postCode,
-          postCity: userDetail.postCity,
-          dob: userDetail.dob,
-          guardian: userDetail.guardian,
-        },
+        customerInfo,
       },
       {
         id: null,
@@ -483,15 +456,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         cancel: false,
         buyback: false,
         orders: [order.id],
-        customerInfo: {
-          name: userDetail.name,
-          phone: userDetail.phone,
-          address: userDetail.address,
-          postCode: userDetail.postCode,
-          postCity: userDetail.postCity,
-          dob: userDetail.dob,
-          guardian: userDetail.guardian,
-        },
+        customerInfo,
       },
     ];
 
@@ -591,15 +556,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         cancel: false,
         buyback: false,
         orders: [order.id],
-        customerInfo: {
-          name: userDetail.name,
-          phone: userDetail.phone,
-          address: userDetail.address,
-          postCode: userDetail.postCode,
-          postCity: userDetail.postCity,
-          dob: userDetail.dob,
-          guardian: userDetail.guardian,
-        },
+        customerInfo,
       },
       {
         id: null,
@@ -623,15 +580,7 @@ test.group("OrderToCustomerItemGenerator", (group) => {
         // @ts-expect-error fixme: auto ignored
         amountLeftToPay: orderItem3.info.amountLeftToPay,
         orders: [order.id],
-        customerInfo: {
-          name: userDetail.name,
-          phone: userDetail.phone,
-          address: userDetail.address,
-          postCode: userDetail.postCode,
-          postCity: userDetail.postCity,
-          dob: userDetail.dob,
-          guardian: userDetail.guardian,
-        },
+        customerInfo,
       },
     ];
 

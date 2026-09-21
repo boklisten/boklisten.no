@@ -10,7 +10,11 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import { createItem } from "#tests/item_fixtures";
-import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
+import {
+  createTestRound,
+  ensureUsers,
+  seedTestCatalogue,
+} from "#tests/matches/match-testing-utils";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderPlaceService } from "#services/orders/order_place_service";
@@ -19,8 +23,8 @@ import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
-import type { UserDetail } from "#shared/user-detail";
 import { mock } from "#tests/test-doubles";
+import { createUser } from "#tests/user_fixtures";
 
 function createValidSignature() {
   return Signature.create({
@@ -49,7 +53,6 @@ test.group("OrderPlaceService", (group) => {
   let getManyCustomerItemsStub: sinon.SinonStub;
   let generateCustomerItemStub: sinon.SinonStub;
   let validateOrderStub: sinon.SinonStub;
-  let getUserDetailStub: sinon.SinonStub;
   let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {
@@ -61,18 +64,19 @@ test.group("OrderPlaceService", (group) => {
     getManyCustomerItemsStub = sandbox.stub(StorageService.CustomerItems, "getMany");
     generateCustomerItemStub = sandbox.stub(orderToCustomerItemGenerator, "generate");
     validateOrderStub = sandbox.stub(orderValidator, "validate");
-    getUserDetailStub = sandbox.stub(StorageService.UserDetails, "get");
   });
   group.each.teardown(() => {
     sandbox.restore();
   });
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([CUSTOMER]));
   group.each.setup(async () => {
     await createItem({ id: "item1", title: "signatur 3", price: 100 });
   });
   // An underage customer with a valid guardian signature in Postgres.
   group.each.setup(async () => {
+    await createUser({ id: "customer1" });
     await createValidSignature();
   });
 
@@ -103,21 +107,6 @@ test.group("OrderPlaceService", (group) => {
     delivery: "delivery1",
   };
 
-  const userDetailWithSignatures: UserDetail = {
-    orders: [],
-    customerItems: [],
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    postCode: "",
-    postCity: "",
-    dob: new Date(),
-    emailConfirmed: false,
-    id: "customer1",
-    blid: "",
-  };
-
   test("should reject if order is not found", async ({ assert }) => {
     getOrderStub.rejects(new BlError('order "randomOrder" not found'));
 
@@ -132,7 +121,6 @@ test.group("OrderPlaceService", (group) => {
     placeOrderStub.rejects(new BlError("order could not be placed"));
     getManyCustomerItemsStub.resolves([]);
     aggregateCustomerItemsStub.resolves([]);
-    getUserDetailStub.resolves(userDetailWithSignatures);
 
     await assert.rejects(() =>
       orderPlaceService.place(validOrder.id, { id: "user1", permission: "admin", details: "" }),
@@ -145,7 +133,6 @@ test.group("OrderPlaceService", (group) => {
     validateOrderStub.rejects(new BlError("order not valid!"));
     getManyCustomerItemsStub.resolves([]);
     aggregateCustomerItemsStub.resolves([]);
-    getUserDetailStub.resolves(userDetailWithSignatures);
 
     return assert.rejects(() =>
       orderPlaceService.place(validOrder.id, { id: "user1", permission: "admin", details: "" }),
@@ -170,7 +157,6 @@ test.group("OrderPlaceService", (group) => {
     generateCustomerItemStub.resolves([]);
     placeOrderStub.resolves(order);
     validateOrderStub.resolves(true);
-    getUserDetailStub.resolves(userDetailWithSignatures);
 
     const result = await orderPlaceService.place(validOrder.id, {
       id: "user1",
@@ -228,7 +214,6 @@ test.group("OrderPlaceService", (group) => {
     generateCustomerItemStub.resolves([]);
     placeOrderStub.resolves(order);
     validateOrderStub.resolves(true);
-    getUserDetailStub.resolves(userDetailWithSignatures);
     return order;
   }
 

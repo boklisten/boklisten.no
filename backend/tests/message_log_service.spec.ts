@@ -9,9 +9,10 @@ import { createSandbox } from "sinon";
 import Message from "#models/message";
 import MessageEvent from "#models/message_event";
 import { MessageLogService } from "#services/message_log_service";
-import { StorageService } from "#services/storage_service";
+
 import { verifySendgridSignature } from "#services/webhook_verification_service";
-import { unchecked } from "#tests/test-doubles";
+
+import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER = "5d765db5fc8c47001c408d91";
 
@@ -151,14 +152,13 @@ test.group("MessageLogService", (group) => {
   test("customerLog collects messages to the customer's and guardian's current contact info", async ({
     assert,
   }) => {
-    sandbox.stub(StorageService.UserDetails, "get").resolves(
-      unchecked({
-        id: CUSTOMER,
-        email: "Elev@Example.com",
-        phone: "91234567",
-        guardian: { email: "foresatt@example.com", phone: "+4798765432" },
-      }),
-    );
+    await createUser({
+      id: CUSTOMER,
+      email: "Elev@Example.com",
+      phone: "91234567",
+      guardianEmail: "foresatt@example.com",
+      guardianPhone: "+4798765432",
+    });
 
     await logSms("91234567");
     await logSms("98765432");
@@ -178,9 +178,8 @@ test.group("MessageLogService", (group) => {
   test("customerLog includes mail about the customer that went to someone else", async ({
     assert,
   }) => {
-    sandbox
-      .stub(StorageService.UserDetails, "get")
-      .resolves(unchecked({ id: CUSTOMER, email: "elev@example.com", phone: "91234567" }));
+    await createUser({ id: CUSTOMER, email: "elev@example.com", phone: "91234567" });
+    const other = await createUser();
 
     await MessageLogService.logOutgoingMessage({
       channel: "email",
@@ -190,7 +189,7 @@ test.group("MessageLogService", (group) => {
     await MessageLogService.logOutgoingMessage({
       channel: "email",
       recipient: "info@boklisten.no",
-      context: { messageType: "employee-monitoring", regardingCustomerDetailsId: "other" },
+      context: { messageType: "employee-monitoring", regardingCustomerDetailsId: other.id },
     });
 
     const { entries } = await MessageLogService.customerLog(CUSTOMER);

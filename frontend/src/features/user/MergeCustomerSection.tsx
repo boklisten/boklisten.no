@@ -1,4 +1,4 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
+import type { User } from "@boklisten/backend/shared/user";
 import {
   Alert,
   Button,
@@ -38,7 +38,7 @@ export default function MergeCustomerSection({
   onCollapse,
   onMerged,
 }: {
-  userDetail: UserDetail;
+  userDetail: User;
   expanded: boolean;
   onExpand: () => void;
   onCollapse: () => void;
@@ -60,8 +60,7 @@ export default function MergeCustomerSection({
 
   const { data: searchResults, isFetching } = useQuery({
     queryKey: ["userDetail", "search", debouncedSearch] as const,
-    queryFn: async () =>
-      (await client.api.userDetails.search({ body: { searchStr: debouncedSearch } })) ?? [],
+    queryFn: async () => (await client.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: searchActive,
   });
   const candidates = searchActive

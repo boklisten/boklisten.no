@@ -3,8 +3,9 @@ import { ObjectId } from "mongodb";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import Branch from "#models/branch";
+import User from "#models/user";
 import { OrderHistoryService } from "#services/order_history_service";
-import { withBranchName, withItemColumns } from "#services/report_columns";
+import { withBranchName, withItemColumns, withUserColumns } from "#services/report_columns";
 import { StorageService } from "#services/storage_service";
 import type {
   BringParcelType,
@@ -49,10 +50,6 @@ const PAID_EXPRESSION = {
 
 const firstOrNull = (path: string) => ({ $ifNull: [{ $first: path }, null] });
 
-const asObjectId = (path: string) => ({
-  $convert: { input: path, to: "objectId", onError: null, onNull: null },
-});
-
 function lookupOne(from: string, localField: string, as: string, fields: string[]) {
   return {
     $lookup: {
@@ -68,26 +65,24 @@ function lookupOne(from: string, localField: string, as: string, fields: string[
 const DELIVERY_LOOKUP = lookupOne("deliveries", "delivery", "deliveryInfo", ["method", "info"]);
 const BRING_ONLY_MATCH = { $match: { "deliveryInfo.method": "bring" } };
 
-/** Legacy orders may hold the customer id as a string, so it is cast before the join. */
-function customerLookup(fields: string[]): PipelineStage[] {
-  return [
-    { $addFields: { customerId: asObjectId("$customer") } },
-    lookupOne("userdetails", "customerId", "customerInfo", fields),
-  ];
-}
-const CONTACT_FIELDS = ["name", "email", "phone", "address"];
-
 /**
- * What the open-orders aggregation yields: the row with the branch as a bare id, since branches
- * live in Postgres and the name is joined in afterwards.
+ * What the open-orders aggregation yields: the row with the branch and the customer as bare ids,
+ * since both live in Postgres and their names are joined in afterwards.
  */
-export type OpenOrderAggregate = Omit<OrderManagerRow, "branch"> & { branchId: string };
+export type OpenOrderAggregate = Omit<OrderManagerRow, "branch" | "customer"> & {
+  branchId: string;
+  customerId: string;
+};
 
-async function withBranch(rows: OpenOrderAggregate[]): Promise<OrderManagerRow[]> {
-  const names = await Branch.namesByIds(rows.map((row) => row.branchId));
-  return rows.map(({ branchId, ...row }) => ({
+async function withBranchAndCustomer(rows: OpenOrderAggregate[]): Promise<OrderManagerRow[]> {
+  const [branchNames, customerNames] = await Promise.all([
+    Branch.namesByIds(rows.map((row) => row.branchId)),
+    User.namesByIds(rows.map((row) => row.customerId)),
+  ]);
+  return rows.map(({ branchId, customerId, ...row }) => ({
     ...row,
-    branch: { id: branchId, name: names.get(branchId) ?? null },
+    customer: { id: customerId, name: customerNames.get(customerId) ?? "Ukjent kunde" },
+    branch: { id: branchId, name: branchNames.get(branchId) ?? null },
   }));
 }
 
@@ -152,16 +147,12 @@ export function openOrdersPipeline(
     ...(filter.bringOnly
       ? [DELIVERY_LOOKUP, BRING_ONLY_MATCH, cutPage]
       : [cutPage, DELIVERY_LOOKUP]),
-    ...customerLookup(["name"]),
     {
       $project: {
         _id: 0,
         id: { $toString: "$_id" },
         creationTime: { $dateToString: { date: "$creationTime" } },
-        customer: {
-          id: { $toString: "$customer" },
-          name: { $ifNull: [{ $first: "$customerInfo.name" }, "Ukjent kunde"] },
-        },
+        customerId: { $toString: "$customer" },
         branchId: { $toString: "$branch" },
         openItems: {
           $map: {
@@ -194,24 +185,12 @@ export function ordersReportPipeline(filter: OrderManagerFilter): PipelineStage[
         ]),
       ),
     },
-    ...customerLookup([...CONTACT_FIELDS, "dob", "branchMembership"]),
     {
       $project: {
         _id: 0,
-        name: firstOrNull("$customerInfo.name"),
-        email: firstOrNull("$customerInfo.email"),
-        phone: firstOrNull("$customerInfo.phone"),
-        address: firstOrNull("$customerInfo.address"),
-        dob: {
-          $dateToString: {
-            date: { $first: "$customerInfo.dob" },
-            format: "%d.%m.%Y",
-            timezone: "Europe/Oslo",
-            onNull: null,
-          },
-        },
-        // The two branch ids and the item id are replaced by their Postgres columns in code, in place.
-        branchMembershipId: { $toString: { $first: "$customerInfo.branchMembership" } },
+        // The customer, the branch and the item ids are replaced by their Postgres columns in
+        // code, in place.
+        customerId: { $toString: "$customer" },
         schoolId: { $toString: "$branch" },
         title: "$orderItems.title",
         itemId: { $toString: "$orderItems.item" },
@@ -220,8 +199,20 @@ export function ordersReportPipeline(filter: OrderManagerFilter): PipelineStage[
         pivot: { $literal: 1 },
       },
     },
-    { $sort: { name: 1, orderTime: -1 } },
+    { $sort: { orderTime: -1 } },
   ];
+}
+
+/** The customer columns of the orders report, in the order the CSV lists them. */
+export function customerReportColumns(user: User | undefined) {
+  return {
+    name: user?.name ?? null,
+    email: user?.email ?? null,
+    phone: user?.phone ?? null,
+    address: user?.address ?? null,
+    dob: user?.dob?.toFormat("dd.MM.yyyy") ?? null,
+    branchMembershipId: user?.branchMembershipId ?? null,
+  };
 }
 
 /** What the Bring rows are built from; the Mybring headers differ per parcel type. */
@@ -248,15 +239,13 @@ export function bringReportPipeline(
       },
     },
     { $sort: { creationTime: -1, _id: -1 } },
-    ...customerLookup(CONTACT_FIELDS),
     {
       $project: {
         _id: 0,
         name: firstOrNull("$deliveryInfo.info.shipmentAddress.name"),
         address: firstOrNull("$deliveryInfo.info.shipmentAddress.address"),
         postalCode: firstOrNull("$deliveryInfo.info.shipmentAddress.postalCode"),
-        phone: firstOrNull("$customerInfo.phone"),
-        email: firstOrNull("$customerInfo.email"),
+        customerId: { $toString: "$customer" },
       },
     },
   ];
@@ -313,7 +302,7 @@ export const OrderManagerService = {
       // An infinite query sends an empty cursor for the first page
       openOrdersPipeline(filter, limit, cursor ? decodeCursor(cursor) : undefined),
     );
-    const page = await withBranch(rows.slice(0, limit));
+    const page = await withBranchAndCustomer(rows.slice(0, limit));
     const last = page.at(-1);
     return {
       rows: page,
@@ -335,13 +324,23 @@ export const OrderManagerService = {
 
   async ordersReport(filter: OrderManagerFilter): Promise<OrderManagerReportRow[]> {
     const rows = await StorageService.Orders.aggregate<
-      Omit<OrderManagerReportRow, "isbn" | "branchMembership" | "school"> & {
+      Omit<
+        OrderManagerReportRow,
+        "isbn" | "branchMembership" | "school" | "name" | "email" | "phone" | "address" | "dob"
+      > & {
+        customerId: string | null;
         itemId: string | null;
-        branchMembershipId: string | null;
         schoolId: string | null;
       }
     >(ordersReportPipeline(filter));
-    const withMembership = await withBranchName(rows, "branchMembershipId", "branchMembership");
+    const withCustomer = (
+      await withUserColumns(rows, "customerId", customerReportColumns)
+    ).toSorted((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "nb"));
+    const withMembership = await withBranchName(
+      withCustomer,
+      "branchMembershipId",
+      "branchMembership",
+    );
     const withSchool = await withBranchName(withMembership, "schoolId", "school");
     return withItemColumns(withSchool, (item) => ({
       isbn: item === undefined ? null : String(item.isbn),
@@ -352,9 +351,13 @@ export const OrderManagerService = {
     filter: OrderManagerFilter,
     parcelType: BringParcelType,
   ): Promise<BringReportRow[]> {
-    const shipments = await StorageService.Orders.aggregate<BringShipment>(
-      bringReportPipeline(filter, parcelType),
-    );
+    const rows = await StorageService.Orders.aggregate<
+      Omit<BringShipment, "phone" | "email"> & { customerId: string | null }
+    >(bringReportPipeline(filter, parcelType));
+    const shipments = await withUserColumns(rows, "customerId", (user) => ({
+      phone: user?.phone ?? null,
+      email: user?.email ?? null,
+    }));
     return shipments.map((shipment) => toBringReportRow(shipment, parcelType));
   },
 };

@@ -143,6 +143,27 @@ function ProvisioningErrorsDialog({
   );
 }
 
+function ProvisioningDuplicatesDialog({
+  duplicates,
+}: {
+  duplicates: { name: string; email: string; duplicateOf: string }[];
+}) {
+  return (
+    <Stack>
+      <Text>
+        {`${duplicates.length} ${duplicates.length === 1 ? "rad" : "rader"} ble hoppet over fordi samme person står oppført tidligere i filen:`}
+      </Text>
+      <List>
+        {duplicates.map((duplicate) => (
+          <List.Item key={`${duplicate.email}-${duplicate.name}`}>
+            {`${duplicate.name} (${duplicate.email}) – samme person som ${duplicate.duplicateOf}`}
+          </List.Item>
+        ))}
+      </List>
+    </Stack>
+  );
+}
+
 export default function UploadBranchUsers({ branchId }: { branchId: string }) {
   const { api, client } = useApiClient();
   const queryClient = useQueryClient();
@@ -179,10 +200,20 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
       showSuccessNotification(
         `${summary.createdCount} ${summary.createdCount === 1 ? "elev" : "elever"} opprettet og ${summary.updatedCount} oppdatert`,
       );
-      if (summary.errors.length > 0) {
+      if (summary.errors.length > 0 || summary.duplicates.length > 0) {
         modals.open({
-          title: "Noen elever kunne ikke lagres",
-          children: <ProvisioningErrorsDialog errors={summary.errors} />,
+          title:
+            summary.errors.length > 0
+              ? "Noen elever kunne ikke lagres"
+              : "Noen rader ble hoppet over",
+          children: (
+            <Stack>
+              {summary.errors.length > 0 && <ProvisioningErrorsDialog errors={summary.errors} />}
+              {summary.duplicates.length > 0 && (
+                <ProvisioningDuplicatesDialog duplicates={summary.duplicates} />
+              )}
+            </Stack>
+          ),
         });
       }
     },
@@ -206,8 +237,6 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
     (mapping) => mapping.status === "unmatched",
   );
   const confirmBlocked = (unmatchedMappings?.length ?? 0) > 0;
-  const candidatesWithoutClass =
-    candidates?.filter((candidate) => !candidate.localName).length ?? 0;
 
   function selectedBranchId(mapping: (typeof ambiguousMappings)[number]) {
     return branchSelections[mapping.localName] ?? mapping.candidates[0]?.id ?? null;
@@ -270,9 +299,14 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
             <Text>
               {`${evaluation.createCount} ${evaluation.createCount === 1 ? "ny elev" : "nye elever"} opprettes og ${evaluation.updateCount} ${evaluation.updateCount === 1 ? "eksisterende elev" : "eksisterende elever"} oppdateres.`}
             </Text>
-            {candidatesWithoutClass > 0 && (
+            {evaluation.withoutClassCount > 0 && (
               <Text size="sm" c="dimmed">
-                {`${candidatesWithoutClass} ${candidatesWithoutClass === 1 ? "elev" : "elever"} mangler klasse i filen og lastes opp uten klasse. Eksisterende elever beholder klassen sin.`}
+                {`${evaluation.withoutClassCount} ${evaluation.withoutClassCount === 1 ? "elev" : "elever"} mangler klasse i filen og lastes opp uten klasse. Eksisterende elever beholder klassen sin.`}
+              </Text>
+            )}
+            {evaluation.duplicateCount > 0 && (
+              <Text size="sm" c="dimmed">
+                {`${evaluation.duplicateCount} ${evaluation.duplicateCount === 1 ? "rad står" : "rader står"} oppført tidligere i filen, med samme mobilnummer eller e-post, og hoppes over.`}
               </Text>
             )}
             {evaluation.mappings.length > 0 && (

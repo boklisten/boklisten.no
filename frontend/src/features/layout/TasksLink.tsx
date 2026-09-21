@@ -4,6 +4,7 @@ import TanStackAnchor from "@/shared/components/TanStackAnchor";
 
 import useApiClient from "@/shared/hooks/useApiClient";
 import { hasAccessToken } from "@/shared/hooks/useAuth";
+import { countPendingTasks } from "@/shared/utils/tasks";
 
 export default function TasksLink() {
   const { api } = useApiClient();
@@ -12,12 +13,9 @@ export default function TasksLink() {
     data: userDetail,
     isLoading: isLoadingUserDetail,
     isError: isErrorUserDetail,
-  } = useQuery({ ...api.userDetails.me.queryOptions(), enabled: hasAccessToken });
+  } = useQuery({ ...api.users.me.queryOptions(), enabled: hasAccessToken });
 
-  const taskCount =
-    isLoadingUserDetail || isErrorUserDetail || !userDetail?.tasks
-      ? 0
-      : (userDetail.tasks.confirmDetails ? 1 : 0) + (userDetail.tasks.signAgreement ? 1 : 0);
+  const taskCount = isLoadingUserDetail || isErrorUserDetail ? 0 : countPendingTasks(userDetail);
 
   if (taskCount === 0) {
     return null;

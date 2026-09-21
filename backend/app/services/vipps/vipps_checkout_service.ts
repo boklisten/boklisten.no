@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import User from "#models/user";
 import { deliveryDays } from "#services/application_config";
 import { DeliveryService } from "#services/delivery_service";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
@@ -19,20 +20,21 @@ async function updateUserDetailWithBillingDetails(
 ) {
   try {
     if (session.billingDetails) {
-      const existingDetails = await StorageService.UserDetails.get(customerId);
-      await StorageService.UserDetails.update(customerId, {
+      const user = await User.findOrFail(customerId);
+      user.merge({
         name: `${session.billingDetails.firstName} ${session.billingDetails.lastName}`,
         phone: session.billingDetails.phoneNumber.slice(-8),
-        email: session.billingDetails.email,
-        address: session.billingDetails.streetAddress ?? existingDetails.address,
-        postCode: session.billingDetails.postalCode ?? existingDetails.postCode,
-        postCity: session.billingDetails.city ?? existingDetails.postCity,
+        email: session.billingDetails.email.trim().toLowerCase(),
+        address: session.billingDetails.streetAddress ?? user.address,
+        postCode: session.billingDetails.postalCode ?? user.postCode,
+        postCity: session.billingDetails.city ?? user.postCity,
       });
+      await user.save();
     }
   } catch (error) {
     logger.error(error);
   }
-  return StorageService.UserDetails.get(customerId);
+  return User.findOrFail(customerId);
 }
 
 async function createLogistics(order: Order, isDeliveryFree: boolean) {
@@ -92,14 +94,14 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
 
 export const VippsCheckoutService = {
   async create(order: Order, isDeliveryFree: boolean) {
-    const userDetail = await StorageService.UserDetails.get(order.customer);
+    const userDetail = await User.findOrFail(order.customer);
     const { token, checkoutFrontendUrl } = await VippsPaymentService.checkout.create({
       type: "PAYMENT",
       prefillCustomer: {
         firstName: userDetail.name.split(" ")[0] ?? null,
         lastName: userDetail.name.split(" ").slice(1).join(" ") ?? null,
         email: userDetail.email,
-        phoneNumber: `47${userDetail.phone}`,
+        phoneNumber: userDetail.phone === null ? null : `47${userDetail.phone}`,
         streetAddress: userDetail.address ?? null,
         city: userDetail.postCity ?? null,
         postalCode: userDetail.postCode ?? null,
@@ -195,8 +197,8 @@ export const VippsCheckoutService = {
         order: session.reference,
         amount: deliveryPrice,
         user: {
-          id: userDetail.user?.id ?? "",
-          permission: userDetail.user?.permission ?? "customer",
+          id: userDetail.id,
+          permission: userDetail.permission,
         },
       });
       await StorageService.Orders.update(order.id, {

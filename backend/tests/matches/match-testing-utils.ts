@@ -8,6 +8,8 @@ import type {
 } from "#services/match_helpers/match-finder/match-types";
 import MatchRound from "#models/match_round";
 import { createItem } from "#tests/item_fixtures";
+import User from "#models/user";
+import { createUser } from "#tests/user_fixtures";
 
 /**
  * Dates are relative to today rather than fixed, because a round refuses to generate once its
@@ -43,6 +45,19 @@ function testRoundPlan(overrides: Partial<MatchRound> = {}) {
  * foreign key to `items`, so every suite seeds these after truncating; GYMNOS 2009/2012 are the
  * equivalent editions from `shared/item-equivalence.ts`.
  */
+/**
+ * Inserts a user row for every id that has none yet. Participants, handovers, signatures and
+ * message rows reference `users` through foreign keys, so a spec seeds its people before them.
+ */
+export async function ensureUsers(ids: readonly string[]): Promise<void> {
+  const existing = await User.byIds(ids);
+  for (const id of new Set(ids)) {
+    if (!existing.has(id)) {
+      await createUser({ id });
+    }
+  }
+}
+
 export async function seedTestCatalogue(): Promise<void> {
   await createItem({ id: "5d765db5fc8c47001c408e01", title: "Matematikk R1" });
   await createItem({ id: "5d765db5fc8c47001c408e02", title: "Kjemien stemmer" });

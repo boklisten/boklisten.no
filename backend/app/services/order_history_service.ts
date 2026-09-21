@@ -5,6 +5,7 @@ import Branch from "#models/branch";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
+import User from "#models/user";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import { StorageService } from "#services/storage_service";
@@ -377,10 +378,8 @@ async function loadSources(
     userDetailIds.add(order.customer);
   }
 
-  const [userDetails, branchNames] = await Promise.all([
-    userDetailIds.size > 0
-      ? StorageService.UserDetails.getMany([...userDetailIds], USER_PERMISSION.ADMIN)
-      : [],
+  const [userNames, branchNames] = await Promise.all([
+    User.namesByIds(userDetailIds),
     Branch.namesByIds(branchIds),
   ]);
 
@@ -392,7 +391,7 @@ async function loadSources(
     deliveries: new Map(deliveries.map((delivery) => [delivery.id, delivery])),
     handovers,
     counterpartOrders,
-    userNames: new Map(userDetails.map((detail) => [detail.id, detail.name])),
+    userNames,
     branchNames,
   };
 }

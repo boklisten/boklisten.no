@@ -9,14 +9,16 @@ import MatchParticipant from "#models/match_participant";
 import MatchRound from "#models/match_round";
 import { MatchRepository } from "#services/matches/match_repository";
 import {
-  TEST_DEADLINE,
   createTestRound,
+  ensureUsers,
   seedTestCatalogue,
+  TEST_DEADLINE,
 } from "#tests/matches/match-testing-utils";
 
 test.group("match round management", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers(["5d765db5fc8c47001c408d81", "5d765db5fc8c47001c408d82"]));
 
   test("lists rounds newest first", async ({ assert }) => {
     await createTestRound({ name: "Høst 2025", standLocation: "Kantina" });

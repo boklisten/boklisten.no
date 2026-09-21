@@ -21,7 +21,7 @@ export default function ConfirmOrder({ orderId }: { orderId: string }) {
         // demand on placement), so refresh them before navigating rather than let AuthGuard read
         // a pre-order cache
         await queryClient.invalidateQueries({
-          queryKey: api.userDetails.me.pathKey(),
+          queryKey: api.users.me.pathKey(),
         });
         void queryClient.invalidateQueries({
           queryKey: api.orders.openItemsMe.pathKey(),

@@ -1,9 +1,8 @@
 import { ObjectId } from "mongodb";
 
-import BookHandover from "#models/book_handover";
-import MatchObligation from "#models/match_obligation";
-import MatchParticipant from "#models/match_participant";
+import User from "#models/user";
 import { ACTIVE_CUSTOMER_ITEM_MATCH, OPEN_ORDER_ITEM_MATCH } from "#services/branch_books_service";
+import { countActiveMatches } from "#services/matches/active_matches";
 import { StorageService } from "#services/storage_service";
 import type { UserPermission } from "#shared/user-permission";
 
@@ -16,13 +15,14 @@ export interface DuplicateCandidateSource {
   id: string;
   name?: string;
   email?: string;
-  phone?: string;
+  phone?: string | null;
   address?: string;
   postCode?: string;
-  dob?: Date | string;
-  guardianEmail?: string;
-  guardianPhone?: string;
-  branchMembership?: string;
+  /** Calendar date `yyyy-MM-dd`, or a legacy Date. */
+  dob?: Date | string | null;
+  guardianEmail?: string | null;
+  guardianPhone?: string | null;
+  branchMembership?: string | null;
 }
 
 interface DuplicatePair {
@@ -50,14 +50,14 @@ interface DuplicateCustomersResult {
 }
 
 // Legacy documents sometimes hold numbers where the schema says string
-function normalizeText(value: string | undefined) {
+function normalizeText(value: string | null | undefined) {
   return String(value ?? "")
     .trim()
     .toLowerCase()
     .replaceAll(/\s+/g, " ");
 }
 
-function normalizePhone(value: string | undefined) {
+function normalizePhone(value: string | null | undefined) {
   const digits = String(value ?? "").replaceAll(/\D/g, "");
   return digits.startsWith("0047")
     ? digits.slice(4)
@@ -66,7 +66,7 @@ function normalizePhone(value: string | undefined) {
       : digits;
 }
 
-function normalizeDob(value: Date | string | undefined) {
+function normalizeDob(value: Date | string | null | undefined) {
   if (!value) {
     return "";
   }
@@ -178,24 +178,6 @@ export function findDuplicateCandidatePairs(sources: DuplicateCandidateSource[])
   return pairs.toSorted((first, second) => second.score - first.score);
 }
 
-async function findUserAccounts(detailsIds: string[]) {
-  const rows = await StorageService.Users.aggregate<{
-    userDetail: string;
-    permission: UserPermission;
-    lastActive?: Date;
-  }>([
-    { $match: { userDetail: { $in: detailsIds.map((id) => new ObjectId(id)) } } },
-    {
-      $project: {
-        userDetail: 1,
-        permission: 1,
-        lastActive: "$login.lastTokenIssuedAt",
-      },
-    },
-  ]);
-  return new Map(rows.map((row) => [String(row.userDetail), row]));
-}
-
 async function countActiveBooks(detailsIds: string[]) {
   const rows = await StorageService.CustomerItems.aggregate<{ id: string; count: number }>([
     {
@@ -219,68 +201,9 @@ async function countOrderedItems(detailsIds: string[]) {
   return new Map(rows.map((row) => [String(row.id), row.count]));
 }
 
-/** Matches where the user still has an obligation no book handover has discharged. */
-async function countActiveMatches(detailsIds: string[]) {
-  const counts = new Map<string, number>();
-  if (detailsIds.length === 0) {
-    return counts;
-  }
-  const participants = await MatchParticipant.query().whereIn("userDetailId", detailsIds);
-  if (participants.length === 0) {
-    return counts;
-  }
-  const participantIds = participants.map((participant) => participant.id);
-  const obligations = await MatchObligation.query()
-    .whereIn("senderParticipantId", participantIds)
-    .orWhereIn("receiverParticipantId", participantIds);
-  if (obligations.length === 0) {
-    return counts;
-  }
-  const handovers = await BookHandover.query()
-    .whereIn(
-      "dischargesSenderObligationId",
-      obligations.map((obligation) => obligation.id),
-    )
-    .orWhereIn(
-      "dischargesReceiverObligationId",
-      obligations.map((obligation) => obligation.id),
-    );
-  const dischargedAsSender = new Set(
-    handovers.map((handover) => handover.dischargesSenderObligationId).filter(Boolean),
-  );
-  const dischargedAsReceiver = new Set(
-    handovers.map((handover) => handover.dischargesReceiverObligationId).filter(Boolean),
-  );
-
-  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
-  const activeMatchesByUser = new Map<string, Set<number>>();
-  for (const obligation of obligations) {
-    const openSides = [
-      !dischargedAsSender.has(obligation.id)
-        ? participantById.get(obligation.senderParticipantId)
-        : undefined,
-      !dischargedAsReceiver.has(obligation.id)
-        ? participantById.get(obligation.receiverParticipantId)
-        : undefined,
-    ];
-    for (const participant of openSides) {
-      if (!participant?.userDetailId) {
-        continue;
-      }
-      const matches = activeMatchesByUser.get(participant.userDetailId) ?? new Set();
-      matches.add(obligation.matchId);
-      activeMatchesByUser.set(participant.userDetailId, matches);
-    }
-  }
-  for (const [detailsId, matches] of activeMatchesByUser) {
-    counts.set(detailsId, matches.size);
-  }
-  return counts;
-}
-
 async function buildSummarizer(involvedIds: string[]) {
   const [accounts, activeBooks, orderedItems, activeMatches] = await Promise.all([
-    findUserAccounts(involvedIds),
+    User.byIds(involvedIds),
     countActiveBooks(involvedIds),
     countOrderedItems(involvedIds),
     countActiveMatches(involvedIds),
@@ -295,7 +218,7 @@ async function buildSummarizer(involvedIds: string[]) {
       phone: source.phone ?? "",
       permission: account?.permission ?? "customer",
       branchMembership: source.branchMembership ?? null,
-      lastActive: account?.lastActive ? new Date(account.lastActive).toISOString() : null,
+      lastActive: account?.lastTokenIssuedAt?.toISO() ?? null,
       activeBooks: activeBooks.get(source.id) ?? 0,
       orderedItems: orderedItems.get(source.id) ?? 0,
       activeMatches: activeMatches.get(source.id) ?? 0,
@@ -309,30 +232,26 @@ async function summarizeUserDetails(detailsIds: string[]): Promise<DuplicateUser
   if (validIds.length === 0) {
     return [];
   }
-  const sources = await StorageService.UserDetails.aggregate<DuplicateCandidateSource>([
-    { $match: { _id: { $in: validIds.map((id) => new ObjectId(id)) } } },
-    { $project: { name: 1, email: 1, phone: 1, branchMembership: 1 } },
-  ]);
+  const sources = [...(await User.byIds(validIds)).values()].map(toCandidateSource);
   const summarize = await buildSummarizer(sources.map((source) => source.id));
   return sources.map((source) => summarize(source));
 }
 
 async function findDuplicateCustomers(): Promise<DuplicateCustomersResult> {
-  const sources = await StorageService.UserDetails.aggregate<DuplicateCandidateSource>([
-    {
-      $project: {
-        name: 1,
-        email: 1,
-        phone: 1,
-        address: 1,
-        postCode: 1,
-        dob: 1,
-        branchMembership: 1,
-        guardianEmail: { $ifNull: ["$guardian.email", ""] },
-        guardianPhone: { $ifNull: ["$guardian.phone", ""] },
-      },
-    },
-  ]);
+  const sources = (
+    await User.query().select(
+      "id",
+      "name",
+      "email",
+      "phone",
+      "address",
+      "postCode",
+      "dob",
+      "branchMembershipId",
+      "guardianEmail",
+      "guardianPhone",
+    )
+  ).map(toCandidateSource);
 
   const allPairs = findDuplicateCandidatePairs(sources);
   const pairs = allPairs.slice(0, MAX_PAIRS);
@@ -346,6 +265,21 @@ async function findDuplicateCustomers(): Promise<DuplicateCustomersResult> {
       reasons: pair.reasons,
       users: [summarize(pair.a), summarize(pair.b)],
     })),
+  };
+}
+
+function toCandidateSource(user: User): DuplicateCandidateSource {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    address: user.address,
+    postCode: user.postCode,
+    dob: user.dob?.toISODate() ?? null,
+    guardianEmail: user.guardianEmail,
+    guardianPhone: user.guardianPhone,
+    branchMembership: user.branchMembershipId,
   };
 }
 

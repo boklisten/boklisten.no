@@ -1,15 +1,13 @@
-import type { UserDetail } from "@boklisten/backend/shared/user-detail";
-import type { UserPermission } from "@boklisten/backend/shared/user-permission";
+import type { User } from "@boklisten/backend/shared/user";
 import { Button, Group, Space, Stack, Text, TextInput, Tooltip } from "@mantine/core";
 import { IconCheck, IconInfoCircleFilled, IconMailFast } from "@tabler/icons-react";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import { Activity, useState } from "react";
 
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
-import UserInfoFields from "@/features/user/UserInfoFields";
+import UserInfoFields, { userDetailsBody } from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
@@ -19,46 +17,44 @@ import { useAppForm } from "@/shared/hooks/form";
 import useApiClient from "@/shared/hooks/useApiClient";
 import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import type { Route } from "@tuyau/core/types";
 
-export default function UserSettingsForm({
-  userDetail,
-}: {
-  userDetail: UserDetail & { permission: UserPermission };
-}) {
+export default function UserSettingsForm({ userDetail }: { userDetail: User }) {
   const queryClient = useQueryClient();
-  const { api, client } = useApiClient();
+  const { api } = useApiClient();
   const defaultValues: UserInfoFieldValues = {
     name: userDetail.name,
-    phoneNumber: userDetail.phone,
+    phoneNumber: userDetail.phone ?? "",
     address: userDetail.address,
     postal: {
       code: userDetail.postCode,
       city: userDetail.postCity,
     },
-    birthday: userDetail.dob ? dayjs(userDetail.dob).format("YYYY-MM-DD") : "",
-    guardianName: userDetail.guardian?.name ?? "",
-    guardianEmail: userDetail.guardian?.email ?? "",
-    guardianPhoneNumber: userDetail.guardian?.phone ?? "",
-    branchMembership: userDetail.branchMembership ?? "",
+    birthday: userDetail.dob ?? "",
+    guardianName: userDetail.guardianName ?? "",
+    guardianEmail: userDetail.guardianEmail ?? "",
+    guardianPhoneNumber: userDetail.guardianPhone ?? "",
+    branchMembership: userDetail.branchMembershipId ?? "",
   };
+  const [serverErrors, setServerErrors] = useState<string[]>([]);
+  const updateUserMutation = useMutation(
+    api.users.updateMe.mutationOptions({
+      onSuccess: () => {
+        setServerErrors([]);
+        showSuccessNotification("Brukerdetaljene ble oppdatert!");
+      },
+      onError: (error) => {
+        if (error.isValidationError()) {
+          setServerErrors(error.response.errors.map((issue) => issue.message));
+          return;
+        }
+        showErrorNotification("Noe gikk galt under registreringen!");
+      },
+      onSettled: () => queryClient.invalidateQueries({ queryKey: api.users.me.pathKey() }),
+    }),
+  );
   const form = useAppForm({
     defaultValues,
-    onSubmit: ({ value }) =>
-      updateUserDetailsMutation.mutate({
-        name: value.name,
-        phoneNumber: value.phoneNumber,
-        address: value.address,
-        postalCode: value.postal.code,
-        postalCity: value.postal.city,
-        dob: value.birthday,
-        branchMembership: value.branchMembership,
-        guardian: {
-          name: value.guardianName,
-          email: value.guardianEmail,
-          phone: value.guardianPhoneNumber,
-        },
-      }),
+    onSubmit: ({ value }) => updateUserMutation.mutate({ body: userDetailsBody(value) }),
     validators: {
       onSubmit: ({ value }) => {
         if (isUnder18(new Date(value.birthday))) {
@@ -76,28 +72,6 @@ export default function UserSettingsForm({
         }
         return null;
       },
-    },
-  });
-  const [serverErrors, setServerErrors] = useState<string[]>([]);
-
-  const updateUserDetailsMutation = useMutation({
-    mutationFn: async (payload: Route.Request<"user_details.update_me">["body"]) => {
-      const [, error] = await client.api.userDetails.updateMe({ body: payload }).safe();
-
-      await queryClient.invalidateQueries({
-        queryKey: api.userDetails.me.pathKey(),
-      });
-
-      if (error) {
-        if (error.isValidationError()) {
-          setServerErrors(error.response.errors.map((err) => err.message));
-          return;
-        }
-        showErrorNotification("Noe gikk galt under registreringen!");
-      } else {
-        showSuccessNotification("Brukerdetaljene ble oppdatert!");
-        setServerErrors([]);
-      }
     },
   });
   const sendEmailVerification = useMutation(
@@ -157,7 +131,7 @@ export default function UserSettingsForm({
       </form.AppForm>
       <Space />
       <Button
-        loading={form.state.isValidating || updateUserDetailsMutation.isPending}
+        loading={form.state.isValidating || updateUserMutation.isPending}
         onClick={form.handleSubmit}
       >
         Lagre

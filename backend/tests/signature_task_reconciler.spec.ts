@@ -5,31 +5,30 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import Signature from "#models/signature";
+import User from "#models/user";
 import { reconcileSignatureTask } from "#services/signature_helper";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
+import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
+let saveSpy: sinon.SinonSpy;
 
-function makeUserDetail(overrides: Partial<UserDetail> = {}): UserDetail {
-  return {
+/** An adult, so a non-guardian signature is the valid kind. Inserting the row is not a "write". */
+async function makeUser(overrides: { taskSignAgreement?: boolean } = {}): Promise<User> {
+  const user = await createUser({
     id: CUSTOMER_ID,
-    name: "Test Testersen",
-    email: "test@example.com",
-    phone: "12345678",
-    address: "Testveien 1",
-    postCode: "0123",
-    postCity: "OSLO",
-    // An adult, so a non-guardian signature is the valid kind.
-    dob: new Date(1990, 0, 1),
-    emailConfirmed: false,
-    blid: "u#test",
-    orders: [],
-    customerItems: [],
+    dob: DateTime.fromISO("1990-01-01"),
+    taskSignAgreement: false,
     ...overrides,
-  };
+  });
+  saveSpy.resetHistory();
+  return user;
+}
+
+async function storedTask(): Promise<boolean> {
+  return (await User.findOrFail(CUSTOMER_ID)).taskSignAgreement;
 }
 
 function createValidSignature() {
@@ -86,7 +85,6 @@ test.group("reconcileSignatureTask", (group) => {
   let sandbox: sinon.SinonSandbox;
   let orders: Order[];
   let customerItems: CustomerItem[];
-  let updateStub: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
 
@@ -101,13 +99,7 @@ test.group("reconcileSignatureTask", (group) => {
     sandbox.stub(StorageService, "CustomerItems").value({
       getByQuery: sandbox.stub().callsFake(() => Promise.resolve(customerItems)),
     });
-    updateStub = sandbox.stub().callsFake((id: string, data: Record<string, unknown>) =>
-      Promise.resolve({
-        ...makeUserDetail(),
-        tasks: { signAgreement: data["tasks.signAgreement"] },
-      }),
-    );
-    sandbox.stub(StorageService, "UserDetails").value({ update: updateStub });
+    saveSpy = sandbox.spy(User.prototype, "save");
   });
 
   group.each.teardown(() => {
@@ -115,26 +107,27 @@ test.group("reconcileSignatureTask", (group) => {
   });
 
   test("clears the task when the user has a valid signature", async ({ assert }) => {
+    const userDetail = await makeUser({ taskSignAgreement: true });
     await createValidSignature();
-    const userDetail = makeUserDetail({ tasks: { signAgreement: true } });
 
     const result = await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": false }), true);
-    assert.equal(result.tasks?.signAgreement, false);
+    assert.equal(result.taskSignAgreement, false);
+    assert.equal(await storedTask(), false);
   });
 
   test("does not write when the user has a valid signature and no task set", async ({ assert }) => {
+    const userDetail = await makeUser();
     await createValidSignature();
-    const userDetail = makeUserDetail();
 
     const result = await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.called, false);
-    assert.equal(result.tasks?.signAgreement ?? false, false);
+    assert.equal(saveSpy.called, false);
+    assert.equal(result.taskSignAgreement, false);
   });
 
   test("judges only the newest signature, even when an older one is valid", async ({ assert }) => {
+    const userDetail = await makeUser();
     await createValidSignature();
     // A newer guardian-signed signature is invalid for an adult.
     await Signature.create({
@@ -145,24 +138,23 @@ test.group("reconcileSignatureTask", (group) => {
       createdAt: DateTime.now().plus({ hours: 1 }),
     });
     orders = [makeRentOrder()];
-    const userDetail = makeUserDetail();
 
     const result = await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
-    assert.equal(result.tasks?.signAgreement, true);
+    assert.equal(result.taskSignAgreement, true);
+    assert.equal(await storedTask(), true);
   });
 
   test("sets the task when an open rent order exists and no valid signature", async ({
     assert,
   }) => {
     orders = [makeRentOrder()];
-    const userDetail = makeUserDetail();
+    const userDetail = await makeUser();
 
     const result = await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
-    assert.equal(result.tasks?.signAgreement, true);
+    assert.equal(result.taskSignAgreement, true);
+    assert.equal(await storedTask(), true);
   });
 
   test("sets the task when an open partly-payment order exists", async ({ assert }) => {
@@ -181,12 +173,12 @@ test.group("reconcileSignatureTask", (group) => {
         ],
       }),
     ];
-    const userDetail = makeUserDetail();
+    const userDetail = await makeUser();
 
     const result = await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
-    assert.equal(result.tasks?.signAgreement, true);
+    assert.equal(result.taskSignAgreement, true);
+    assert.equal(await storedTask(), true);
   });
 
   test("does not set the task for orders with only buy items", async ({ assert }) => {
@@ -205,11 +197,11 @@ test.group("reconcileSignatureTask", (group) => {
         ],
       }),
     ];
-    const userDetail = makeUserDetail();
+    const userDetail = await makeUser();
 
     await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.called, false);
+    assert.equal(saveSpy.called, false);
   });
 
   test("does not set the task when the rent order items are all handed out", async ({ assert }) => {
@@ -228,39 +220,39 @@ test.group("reconcileSignatureTask", (group) => {
         ],
       }),
     ];
-    const userDetail = makeUserDetail();
+    const userDetail = await makeUser();
 
     await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.called, false);
+    assert.equal(saveSpy.called, false);
   });
 
   test("sets the task when the customer possesses an active rent item", async ({ assert }) => {
     customerItems = [makeCustomerItem()];
-    const userDetail = makeUserDetail();
+    const userDetail = await makeUser();
 
     const result = await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
-    assert.equal(result.tasks?.signAgreement, true);
+    assert.equal(result.taskSignAgreement, true);
+    assert.equal(await storedTask(), true);
   });
 
   test("sets the task for active customer items regardless of type", async ({ assert }) => {
     customerItems = [makeCustomerItem({ type: "partly-payment" })];
-    const userDetail = makeUserDetail();
+    const userDetail = await makeUser();
 
     await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
+    assert.equal(await storedTask(), true);
   });
 
   test("sets the task for customer items without a type", async ({ assert }) => {
     customerItems = [makeCustomerItem({ type: undefined })];
-    const userDetail = makeUserDetail();
+    const userDetail = await makeUser();
 
     await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.calledOnceWith(CUSTOMER_ID, { "tasks.signAgreement": true }), true);
+    assert.equal(await storedTask(), true);
   });
 
   test("ignores returned, bought out and not handed out customer items", async ({ assert }) => {
@@ -269,30 +261,30 @@ test.group("reconcileSignatureTask", (group) => {
       makeCustomerItem({ id: "customerItem2", buyout: true }),
       makeCustomerItem({ id: "customerItem3", handout: false }),
     ];
-    const userDetail = makeUserDetail();
+    const userDetail = await makeUser();
 
     await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.called, false);
+    assert.equal(saveSpy.called, false);
   });
 
   test("keeps a requested task when there is no signature and no other trigger", async ({
     assert,
   }) => {
-    const userDetail = makeUserDetail({ tasks: { signAgreement: true } });
+    const userDetail = await makeUser({ taskSignAgreement: true });
 
     const result = await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.called, false);
-    assert.equal(result.tasks?.signAgreement, true);
+    assert.equal(saveSpy.called, false);
+    assert.equal(result.taskSignAgreement, true);
   });
 
   test("leaves an unset task untouched when there are no triggers", async ({ assert }) => {
-    const userDetail = makeUserDetail();
+    const userDetail = await makeUser();
 
     const result = await reconcileSignatureTask(userDetail);
 
-    assert.equal(updateStub.called, false);
-    assert.equal(result.tasks?.signAgreement ?? false, false);
+    assert.equal(saveSpy.called, false);
+    assert.equal(result.taskSignAgreement, false);
   });
 });

@@ -31,7 +31,6 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
   },
   customer: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.UserDetails,
     required: true,
   },
   deadline: {
@@ -51,7 +50,6 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     },
     handoutEmployee: {
       type: Schema.Types.ObjectId,
-      ref: BlSchemaName.UserDetails,
     },
     time: Date,
   },
@@ -65,7 +63,6 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     },
     returnEmployee: {
       type: Schema.Types.ObjectId,
-      ref: BlSchemaName.UserDetails,
     },
     time: Date,
   },

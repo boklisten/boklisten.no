@@ -1,14 +1,14 @@
 import type { HttpContext } from "@adonisjs/core/http";
 import hash from "@adonisjs/core/services/hash";
 
+import { DateTime } from "luxon";
+
+import PasswordReset from "#models/password_reset";
+import User from "#models/user";
 import CryptoService from "#services/crypto_service";
 import DispatchService from "#services/dispatch_service";
 import { PasswordService } from "#services/password_service";
-import { UserDetailService } from "#services/user_detail_service";
-import { UserService } from "#services/user_service";
 import { forgotPasswordValidator, passwordResetValidator } from "#validators/auth_validators";
-import PasswordReset from "#models/password_reset";
-import { DateTime } from "luxon";
 
 async function getPasswordReset({ id, token }: { id: string; token: string }) {
   const passwordReset = await PasswordReset.query()
@@ -30,8 +30,12 @@ async function getPasswordReset({ id, token }: { id: string; token: string }) {
     };
   }
 
-  let user = await UserService.getByUserDetailsId(passwordReset.userDetailId);
-  user ??= await UserService.createLocalUser(passwordReset.userDetailId, CryptoService.random());
+  const user = await User.find(passwordReset.userDetailId);
+  if (!user) {
+    return {
+      message: `Lenken er ugyldig. Du kan be om å få tilsendt en ny lenke på 'glemt passord'-siden`,
+    };
+  }
 
   return { user, passwordReset };
 }
@@ -42,8 +46,8 @@ export default class PasswordResetController {
     const token = CryptoService.random();
     const tokenHash = await hash.make(token);
 
-    const userDetail = await UserDetailService.getByEmail(email);
-    if (!userDetail) {
+    const user = await User.byEmail(email);
+    if (!user) {
       return {
         message:
           "E-posten du har oppgitt er ikke tilknyttet noen bruker. Du kan forsøke et annet brukernavn, eller lage en ny bruker ved å trykke på 'registrer deg'",
@@ -51,7 +55,7 @@ export default class PasswordResetController {
     }
 
     const passwordReset = await PasswordReset.create({
-      userDetailId: userDetail.id,
+      userDetailId: user.id,
       tokenHash,
     });
 
@@ -81,7 +85,7 @@ export default class PasswordResetController {
       return { message: `Klarte ikke sette nytt passord. ${result.message}` };
     }
 
-    await PasswordService.setPassword(result.user.id, newPassword);
+    await PasswordService.setPassword(result.user, newPassword);
 
     await result.passwordReset.delete();
     return {};

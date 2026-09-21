@@ -10,7 +10,12 @@ import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import type MatchRound from "#models/match_round";
 import { createBranch } from "#tests/branch_fixtures";
-import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
+import {
+  createTestRound,
+  ensureUsers,
+  seedTestCatalogue,
+} from "#tests/matches/match-testing-utils";
+import User from "#models/user";
 import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import { OrderActive } from "#services/orders/order_active";
@@ -68,6 +73,7 @@ test.group("recordTransfer", (group) => {
   // `truncate()` returns the cleanup hook, so this empties the tables after each test.
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([A, B, C]));
   group.each.setup(async () => {
     // Explicitly active: transfers only discharge obligations in rounds that are switched on.
     round = await createTestRound({ name: "Round", standLocation: "Kantina", status: "active" });
@@ -128,9 +134,14 @@ test.group("recordTransfer", (group) => {
     // Names for the unexpected-sender feedback. Without this stub the lookup hangs on a Mongo
     // connection that does not exist in this suite.
     sandbox
-      .stub(StorageService.UserDetails, "getMany")
-      .callsFake(async (ids) =>
-        unchecked(ids.map((id) => ({ id, name: id === B ? "Bendik Buer" : "Cecilie Carlsen" }))),
+      .stub(User, "namesByIds")
+      .callsFake(
+        async (ids) =>
+          new Map(
+            [...ids].flatMap((id) =>
+              id ? [[id, id === B ? "Bendik Buer" : "Cecilie Carlsen"]] : [],
+            ),
+          ),
       );
 
     let placedOrders = 0;

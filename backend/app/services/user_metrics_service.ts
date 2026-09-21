@@ -1,5 +1,4 @@
-import { BlError } from "#shared/bl-error";
-import { StorageService } from "#services/storage_service";
+import db from "@adonisjs/lucid/services/db";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -37,91 +36,66 @@ interface UserMetrics {
 }
 
 interface ActivityRow {
-  id: { method: LoginMethod; bucket: ActivityBucket };
+  method: LoginMethod;
+  bucket: ActivityBucket;
   count: number;
 }
 
-interface RegistrationFacets {
-  total: { count: number }[];
-  last30Days: { count: number }[];
-  lastYear: { count: number }[];
-  byMonth: { id: string; count: number }[];
+/** Users counted per login method and per how recently they last got a token. */
+async function aggregateActivity(now: number): Promise<ActivityRow[]> {
+  const bucketCases = BUCKET_MAX_AGE_DAYS.map(
+    ({ bucket }) => `WHEN last_token_issued_at >= ? THEN '${bucket}'`,
+  ).join(" ");
+  const bucketBindings = BUCKET_MAX_AGE_DAYS.map(
+    ({ maxAgeDays }) => new Date(now - maxAgeDays * DAY_MS),
+  );
+  const result = await db.rawQuery<{
+    rows: { method: LoginMethod; bucket: ActivityBucket; count: string }[];
+  }>(
+    `SELECT
+       CASE
+         WHEN vipps_user_id IS NOT NULL AND local_hashed_password IS NOT NULL THEN 'both'
+         WHEN vipps_user_id IS NOT NULL THEN 'vipps'
+         WHEN local_hashed_password IS NOT NULL THEN 'local'
+         ELSE 'none'
+       END AS method,
+       CASE
+         WHEN last_token_issued_at IS NULL THEN 'never'
+         ${bucketCases}
+         ELSE 'overAYear'
+       END AS bucket,
+       count(*) AS count
+     FROM users
+     GROUP BY 1, 2`,
+    bucketBindings,
+  );
+  return result.rows.map(({ count, ...row }) => Object.assign(row, { count: Number(count) }));
 }
 
-async function aggregateActivity(): Promise<ActivityRow[]> {
-  const now = Date.now();
-  // oxlint-disable no-thenable -- MongoDB $switch branches require `then` keys
-  return StorageService.Users.aggregate<ActivityRow>([
-    {
-      $project: {
-        hasVipps: { $gt: ["$login.vipps.userId", null] },
-        hasLocal: { $gt: ["$login.local.hashedPassword", null] },
-        lastActive: "$login.lastTokenIssuedAt",
-      },
-    },
-    {
-      $project: {
-        method: {
-          $switch: {
-            branches: [
-              { case: { $and: ["$hasVipps", "$hasLocal"] }, then: "both" },
-              { case: "$hasVipps", then: "vipps" },
-              { case: "$hasLocal", then: "local" },
-            ],
-            default: "none",
-          },
-        },
-        bucket: {
-          $switch: {
-            branches: [
-              { case: { $eq: [{ $ifNull: ["$lastActive", null] }, null] }, then: "never" },
-              ...BUCKET_MAX_AGE_DAYS.map(({ bucket, maxAgeDays }) => ({
-                case: { $gte: ["$lastActive", new Date(now - maxAgeDays * DAY_MS)] },
-                then: bucket,
-              })),
-            ],
-            default: "overAYear",
-          },
-        },
-      },
-    },
-    { $group: { _id: { method: "$method", bucket: "$bucket" }, count: { $sum: 1 } } },
+async function aggregateRegistrations(now: number) {
+  const [totals, byMonth] = await Promise.all([
+    db.rawQuery<{ rows: { total: string; last30days: string; lastyear: string }[] }>(
+      `SELECT
+         count(*) AS total,
+         count(*) FILTER (WHERE created_at >= ?) AS last30days,
+         count(*) FILTER (WHERE created_at >= ?) AS lastyear
+       FROM users`,
+      [new Date(now - 30 * DAY_MS), new Date(now - 365 * DAY_MS)],
+    ),
+    db.rawQuery<{ rows: { month: string; count: string }[] }>(
+      `SELECT to_char(created_at AT TIME ZONE 'Europe/Oslo', 'YYYY-MM') AS month, count(*) AS count
+       FROM users
+       GROUP BY 1
+       ORDER BY 1`,
+    ),
   ]);
-  // oxlint-enable no-thenable
-}
-
-async function aggregateRegistrations(): Promise<RegistrationFacets> {
-  const now = Date.now();
-  const [facets] = await StorageService.UserDetails.aggregate<RegistrationFacets>([
-    {
-      $facet: {
-        total: [{ $count: "count" }],
-        last30Days: [
-          { $match: { creationTime: { $gte: new Date(now - 30 * DAY_MS) } } },
-          { $count: "count" },
-        ],
-        lastYear: [
-          { $match: { creationTime: { $gte: new Date(now - 365 * DAY_MS) } } },
-          { $count: "count" },
-        ],
-        byMonth: [
-          {
-            $group: {
-              _id: {
-                $dateToString: { format: "%Y-%m", date: "$creationTime", onNull: "unknown" },
-              },
-              count: { $sum: 1 },
-            },
-          },
-          { $sort: { _id: 1 } },
-        ],
-      },
-    },
-  ]);
-  if (!facets) {
-    throw new BlError("registration aggregation returned nothing");
-  }
-  return facets;
+  const [facets] = totals.rows;
+  return {
+    total: Number(facets?.total ?? 0),
+    last30Days: Number(facets?.last30days ?? 0),
+    lastYear: Number(facets?.lastyear ?? 0),
+    byMonth: byMonth.rows.map((row) => ({ month: row.month, count: Number(row.count) })),
+  };
 }
 
 function sumCounts(rows: ActivityRow[], matches: (row: ActivityRow) => boolean) {
@@ -129,34 +103,32 @@ function sumCounts(rows: ActivityRow[], matches: (row: ActivityRow) => boolean) 
 }
 
 async function getMetrics(): Promise<UserMetrics> {
+  const now = Date.now();
   const [activityRows, registrations] = await Promise.all([
-    aggregateActivity(),
-    aggregateRegistrations(),
+    aggregateActivity(now),
+    aggregateRegistrations(now),
   ]);
 
   const loginMethods = {
-    vipps: sumCounts(activityRows, (r) => r.id.method === "vipps"),
-    local: sumCounts(activityRows, (r) => r.id.method === "local"),
-    both: sumCounts(activityRows, (r) => r.id.method === "both"),
-    none: sumCounts(activityRows, (r) => r.id.method === "none"),
+    vipps: sumCounts(activityRows, (r) => r.method === "vipps"),
+    local: sumCounts(activityRows, (r) => r.method === "local"),
+    both: sumCounts(activityRows, (r) => r.method === "both"),
+    none: sumCounts(activityRows, (r) => r.method === "none"),
   };
 
   const activeWithin = (buckets: ActivityBucket[]) =>
-    sumCounts(activityRows, (r) => buckets.includes(r.id.bucket));
+    sumCounts(activityRows, (r) => buckets.includes(r.bucket));
 
-  // Months with unknown creationTime are folded into the starting total instead of the timeline
-  const knownMonths = registrations.byMonth.filter((row) => row.id !== "unknown");
-  const unknownCount = registrations.byMonth.find((row) => row.id === "unknown")?.count ?? 0;
-  let runningTotal = unknownCount;
-  const registrationsByMonth = knownMonths.map((row) => {
+  let runningTotal = 0;
+  const registrationsByMonth = registrations.byMonth.map((row) => {
     runningTotal += row.count;
-    return { month: row.id, newUsers: row.count, totalUsers: runningTotal };
+    return { month: row.month, newUsers: row.count, totalUsers: runningTotal };
   });
 
   return {
-    totalUsers: registrations.total[0]?.count ?? 0,
-    newLast30Days: registrations.last30Days[0]?.count ?? 0,
-    newLastYear: registrations.lastYear[0]?.count ?? 0,
+    totalUsers: registrations.total,
+    newLast30Days: registrations.last30Days,
+    newLastYear: registrations.lastYear,
     activeLast24Hours: activeWithin(["last24Hours"]),
     activeLast30Days: activeWithin(["last24Hours", "lastWeek", "lastMonth"]),
     activeLastYear: activeWithin([

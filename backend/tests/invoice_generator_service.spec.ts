@@ -1,19 +1,21 @@
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import { generateInvoices } from "#services/invoices/invoice_generator_service";
+import User from "#models/user";
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { InvoiceGenerationSettings } from "#shared/invoice";
 import type { Item } from "#shared/item";
 import type { Order } from "#shared/order/order";
-import type { UserDetail } from "#shared/user-detail";
 import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
+import { userDouble } from "#tests/user_fixtures";
 
 const BRANCH_ID = "5b6442ecd2e733002fae8a44";
 
@@ -30,18 +32,19 @@ function customerItem(overrides: Partial<CustomerItem>): CustomerItem {
   });
 }
 
-const customers: UserDetail[] = [
-  mock<UserDetail>({
+const KARI_DOB = DateTime.fromISO("2008-02-02");
+const customers: User[] = [
+  userDouble({
     id: "c1",
     name: "Kari Nordmann",
     email: "kari@example.com",
     phone: "40000001",
-    dob: new Date("2008-02-02T00:00:00.000Z"),
+    dob: KARI_DOB,
     address: "Veien 1",
     postCode: "0001",
     postCity: "Oslo",
   }),
-  mock<UserDetail>({ id: "c2", name: "Ola Nordmann", email: "ola@example.com", phone: "40000002" }),
+  userDouble({ id: "c2", name: "Ola Nordmann", email: "ola@example.com", phone: "40000002" }),
 ];
 const items: Item[] = [
   mock<Item>({ id: "6100000000000000000000b1", title: "Psykologi 2 2022", price: 1049 }),
@@ -88,9 +91,7 @@ test.group("invoice generation", (group) => {
     sandbox = createSandbox();
     aggregate = sandbox.stub().resolves([]);
     sandbox.stub(StorageService, "CustomerItems").value({ aggregate });
-    sandbox.stub(StorageService, "UserDetails").value({
-      getMany: sandbox.stub().resolves(customers),
-    });
+    sandbox.stub(User, "findMany").resolves(customers);
     getOrders = sandbox.stub().resolves([]);
     sandbox.stub(StorageService, "Orders").value({ getMany: getOrders });
     addInvoice = sandbox
@@ -146,7 +147,7 @@ test.group("invoice generation", (group) => {
       name: "Kari Nordmann",
       email: "kari@example.com",
       phone: "40000001",
-      dob: new Date("2008-02-02T00:00:00.000Z"),
+      dob: KARI_DOB.toJSDate(),
       postal: { address: "Veien 1", city: "Oslo", code: "0001" },
     });
     assert.deepEqual(

@@ -38,13 +38,11 @@ function formatMoment(date: Date | string): string {
 export default function PublicBlidSearch() {
   const [blid, setBlid] = useState<string | null>(null);
   const { api } = useApiClient();
-  const { data: userDetail } = useQuery(api.userDetails.me.queryOptions());
+  const { data: userDetail } = useQuery(api.users.me.queryOptions());
 
-  const registeredAt = userDetail?.creationTime;
-  const opensAt =
-    registeredAt === undefined || registeredAt === null
-      ? null
-      : norwegianTime(registeredAt).add(LOOKUP_WAITING_PERIOD_HOURS, "hour");
+  const opensAt = userDetail
+    ? norwegianTime(userDetail.createdAt).add(LOOKUP_WAITING_PERIOD_HOURS, "hour")
+    : null;
   if (opensAt !== null && opensAt.isAfter(norwegianTime())) {
     return <LookupOpensLater opensAt={opensAt.toDate()} />;
   }

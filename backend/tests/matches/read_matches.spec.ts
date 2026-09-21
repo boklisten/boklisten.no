@@ -7,12 +7,12 @@ import { createSandbox } from "sinon";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
-import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
+import User from "#models/user";
 import { MatchRepository } from "#services/matches/match_repository";
 import { getMatchesForCustomer, getMatchesForRound } from "#services/matches/read_matches";
-import { StorageService } from "#services/storage_service";
-import { USER_PERMISSION } from "#shared/user-permission";
-import { asStub, unchecked } from "#tests/test-doubles";
+import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
+import { asStub } from "#tests/test-doubles";
+import { createUser } from "#tests/user_fixtures";
 
 const A = "5d765db5fc8c47001c408d81";
 const B = "5d765db5fc8c47001c408d82";
@@ -29,17 +29,15 @@ test.group("read matches", (group) => {
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(async () => {
+    await createUser({ id: A, name: "Kari Hansen", phone: "90000001", email: "kari@x.no" });
+    await createUser({ id: B, name: "Ola Nordmann", phone: "90000002", email: "ola@x.no" });
+    await createUser({ id: OUTSIDER, name: "Per Berg", phone: "90000003", email: "per@x.no" });
+  });
 
+  /** The people lookup is spied so the suite can assert how often Postgres is read. */
   function stubMongo() {
-    sandbox.stub(StorageService.UserDetails, "getMany").callsFake(async (ids) =>
-      unchecked(
-        [
-          { id: A, name: "Kari Hansen", phone: "1", email: "kari@x.no" },
-          { id: B, name: "Ola Nordmann", phone: "2", email: "ola@x.no" },
-          { id: OUTSIDER, name: "Per Berg", phone: "3", email: "per@x.no" },
-        ].filter((person) => ids.includes(person.id)),
-      ),
-    );
+    sandbox.spy(User, "byIds");
   }
 
   async function seed() {
@@ -75,7 +73,7 @@ test.group("read matches", (group) => {
       kind: "customer",
       customerId: A,
       name: "Kari Hansen",
-      phone: "1",
+      phone: "90000001",
       email: "kari@x.no",
     });
   });
@@ -102,7 +100,7 @@ test.group("read matches", (group) => {
       kind: "customer",
       customerId: OUTSIDER,
       name: "Per Berg",
-      phone: "3",
+      phone: "90000003",
       email: "per@x.no",
     });
     // A is still on the hook: their own book has not moved.
@@ -152,23 +150,7 @@ test.group("read matches", (group) => {
     assert.lengthOf(await getMatchesForRound(999_999), 0);
   });
 
-  test("reads people and items with admin permission so inactive ones keep rendering", async ({
-    assert,
-  }) => {
-    // getMany without a permission filters on `active: true`; a student deactivated mid-round
-    // would silently vanish from their own matches.
-    stubMongo();
-    await seed();
-
-    await getMatchesForCustomer(A);
-
-    assert.equal(
-      asStub(StorageService.UserDetails.getMany).firstCall.args[1],
-      USER_PERMISSION.ADMIN,
-    );
-  });
-
-  test("reads Mongo once per collection however many matches there are", async ({ assert }) => {
+  test("reads the people once however many matches there are", async ({ assert }) => {
     stubMongo();
     const { round } = await seed();
     const second = await Match.create({ roundId: round.id, meetingLocation: "Andre" });
@@ -185,6 +167,6 @@ test.group("read matches", (group) => {
 
     await getMatchesForRound(round.id);
 
-    assert.equal(asStub(StorageService.UserDetails.getMany).callCount, 1);
+    assert.equal(asStub(User.byIds).callCount, 1);
   });
 });

@@ -1,5 +1,6 @@
 import logger from "@adonisjs/core/services/logger";
 
+import User from "#models/user";
 import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { StorageService } from "#services/storage_service";
@@ -46,21 +47,17 @@ export const OrderCancellationService = {
     await new OrderItemMovedFromOrderHandler().updateOrderItems(cancelOrder);
 
     // The customer may no longer exist (GDPR cleanup); the cancellation itself must still go through
-    try {
-      const customerDetail = await StorageService.UserDetails.get(originalOrder.customer);
-      const orders = customerDetail.orders;
-      if (!orders.includes(cancelOrder.id)) {
-        await StorageService.UserDetails.update(originalOrder.customer, {
-          orders: [...orders, cancelOrder.id],
-        });
+    if (notifyCustomer) {
+      try {
+        const customer = await User.find(originalOrder.customer);
+        if (customer) {
+          await OrderEmailHandler.sendOrderReceipt(customer, cancelOrder);
+        }
+      } catch (error) {
+        logger.error(
+          `failed to notify customer "${originalOrder.customer}" after cancelling order "${originalOrder.id}": ${String(error)}`,
+        );
       }
-      if (notifyCustomer) {
-        await OrderEmailHandler.sendOrderReceipt(customerDetail, cancelOrder);
-      }
-    } catch (error) {
-      logger.error(
-        `failed to update or notify customer "${originalOrder.customer}" after cancelling order "${originalOrder.id}": ${String(error)}`,
-      );
     }
 
     return cancelOrder;

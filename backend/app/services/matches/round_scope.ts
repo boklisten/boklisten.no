@@ -58,10 +58,6 @@ function orderedBooksAt(branchIds: string[]): PipelineStage[] {
   ];
 }
 
-export function membersOfBranches(branchIds: string[]) {
-  return { branchMembership: { $in: toObjectIds(branchIds) } };
-}
-
 const groupByCustomer = {
   $group: {
     _id: "$customer",

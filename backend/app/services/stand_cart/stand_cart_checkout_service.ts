@@ -1,5 +1,6 @@
 import Branch from "#models/branch";
 import BadRequestException from "#exceptions/bad_request_exception";
+import User from "#models/user";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { OrderHistoryService } from "#services/order_history_service";
 import { RefundRequestService } from "#services/refund_request_service";
@@ -15,7 +16,6 @@ import {
 import { StandCartPlacement } from "#services/stand_cart/stand_cart_placement";
 import { StandCartRefund } from "#services/stand_cart/stand_cart_refund";
 import { StorageService } from "#services/storage_service";
-import { UserService } from "#services/user_service";
 import { normalizeBankAccount } from "#shared/bank_account";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
@@ -38,7 +38,6 @@ import {
   needsBlid,
   unlinkedBlidMessage,
 } from "#shared/stand_cart";
-import type { UserDetail } from "#shared/user-detail";
 import { USER_PERMISSION } from "#shared/user-permission";
 
 export interface StandCartCheckoutRequest {
@@ -143,7 +142,7 @@ function assertExtraCopies(
 
 async function assertConfirmed(
   lines: CheckoutLine[],
-  customer: UserDetail,
+  customer: User,
   confirmed: StandCartConfirmation[],
 ): Promise<void> {
   const handouts = lines.filter(({ option }) => HANDOUT_ACTION_TYPES.includes(option.type));
@@ -212,7 +211,7 @@ async function attachDelivery(
 }
 
 /** Same wording as Vipps Checkout, so the customer recognises the payment request. */
-function describeForVipps(customer: UserDetail): string {
+function describeForVipps(customer: User): string {
   return `${customer.name} sin ordre fra Boklisten.no`;
 }
 
@@ -300,7 +299,7 @@ async function employeeOf(order: Order): Promise<MonitoredEmployee> {
   if (!order.employee) {
     throw new Error(`stand order ${order.id} has no employee`);
   }
-  const user = await UserService.getByUserDetailsId(order.employee);
+  const user = await User.find(order.employee);
   return { detailsId: order.employee, permission: user?.permission ?? USER_PERMISSION.EMPLOYEE };
 }
 
@@ -335,7 +334,7 @@ export const StandCartCheckoutService = {
       throw new BadRequestException("Handlekurven er tom");
     }
     const [customer, branch] = await Promise.all([
-      StorageService.UserDetails.getOrNull(request.customerId),
+      User.find(request.customerId),
       Branch.find(request.branchId),
     ]);
     if (!customer) {

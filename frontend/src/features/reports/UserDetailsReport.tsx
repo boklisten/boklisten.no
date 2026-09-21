@@ -19,10 +19,10 @@ export default function UserDetailsReport() {
       const query: UserDetailsReportQuery = {
         ...(branchFilter.length > 0 && { branchFilter }),
       };
-      const rows = await client.api.reports.userDetails({ query });
+      const rows = await client.api.reports.users({ query });
       return rows ?? [];
     },
-    filename: `user_details-${dayjs().format("YYYY-MM-DD")}.xlsx`,
+    filename: `kunder-${dayjs().format("YYYY-MM-DD")}.xlsx`,
   });
 
   return (

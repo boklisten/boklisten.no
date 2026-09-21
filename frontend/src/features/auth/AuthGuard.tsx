@@ -10,6 +10,8 @@ import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
+import { hasPendingTasks } from "@/shared/utils/tasks";
+
 const PATHS_ALLOWED_WITH_PENDING_TASKS = ["oppgaver", "user-settings", "logout"];
 
 /**
@@ -36,12 +38,11 @@ export default function AuthGuard({
     isFetching,
     refetch,
   } = useQuery({
-    ...api.userDetails.me.queryOptions(),
+    ...api.users.me.queryOptions(),
     enabled: !isLoading && isPermitted,
   });
 
-  const hasPendingTasks =
-    (userDetail?.tasks?.confirmDetails ?? false) || (userDetail?.tasks?.signAgreement ?? false);
+  const pendingTasks = hasPendingTasks(userDetail);
   const isOnAllowedPath = PATHS_ALLOWED_WITH_PENDING_TASKS.some((allowed) =>
     pathname.includes(allowed),
   );
@@ -57,7 +58,7 @@ export default function AuthGuard({
       return;
     }
 
-    if (hasPendingTasks && !isOnAllowedPath) {
+    if (pendingTasks && !isOnAllowedPath) {
       void navigate({ to: "/oppgaver", search: { redirect: pathname.slice(1) } });
     }
   });
@@ -68,7 +69,7 @@ export default function AuthGuard({
     }
     onAuthChange();
     // oxlint-disable-next-line react/exhaustive-effect-dependencies -- the extra deps deliberately re-run the auth check whenever the auth state changes
-  }, [isLoading, isLoggedIn, requiredPermission, hasPendingTasks, isOnAllowedPath]);
+  }, [isLoading, isLoggedIn, requiredPermission, pendingTasks, isOnAllowedPath]);
 
   if (errorUpdateCount > 0 && userDetail === undefined) {
     return (
@@ -82,7 +83,7 @@ export default function AuthGuard({
   }
 
   const isAuthenticated =
-    isPermitted && userDetail !== undefined && !(hasPendingTasks && !isOnAllowedPath);
+    isPermitted && userDetail !== undefined && !(pendingTasks && !isOnAllowedPath);
 
   return <Activity mode={isAuthenticated ? "visible" : "hidden"}>{children}</Activity>;
 }

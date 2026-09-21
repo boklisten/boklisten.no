@@ -1,68 +1,39 @@
+import type { DateTime } from "luxon";
+
 import { isUnderage } from "#models/signature";
-import { isNullish } from "#services/typescript_helpers";
-import type { UserDetail } from "#shared/user-detail";
 
-export class UserDetailHelper {
-  public isValid(userDetail: UserDetail): boolean {
-    const invalidUserDetailFields = this.getInvalidUserDetailFields(userDetail);
+/** The columns the completeness check reads; the `User` model satisfies it. */
+export interface UserFields {
+  name: string;
+  address: string;
+  postCode: string;
+  postCity: string;
+  phone: string | null;
+  dob: DateTime | null;
+  guardianName: string | null;
+  guardianEmail: string | null;
+  guardianPhone: string | null;
+}
 
-    // @ts-expect-error fixme: auto ignored
-    return invalidUserDetailFields.length <= 0 && userDetail.active;
+/**
+ * Which of the details the site needs are still missing. An underage customer must also name a
+ * guardian, who signs the loan agreement and receives the reminders.
+ */
+export function invalidUserFields(user: UserFields): string[] {
+  const invalidFields: string[] = [];
+  for (const field of ["name", "address", "postCode", "postCity", "phone"] as const) {
+    if (!user[field]) {
+      invalidFields.push(field);
+    }
   }
-
-  public getInvalidUserDetailFields(userDetail: UserDetail) {
-    const invalidFields = [];
-
-    if (isNullish(userDetail.name) || userDetail.name.length <= 0) {
-      invalidFields.push("name");
-    }
-
-    if (isNullish(userDetail.address) || userDetail.address.length <= 0) {
-      invalidFields.push("address");
-    }
-
-    if (isNullish(userDetail.postCode) || userDetail.postCode.length <= 0) {
-      invalidFields.push("postCode");
-    }
-
-    if (isNullish(userDetail.postCity) || userDetail.postCity.length <= 0) {
-      invalidFields.push("postCity");
-    }
-
-    if (isNullish(userDetail.phone) || userDetail.phone.length <= 0) {
-      invalidFields.push("phone");
-    }
-    /* fixme: enable at some point
-    if (
-      isNullish(userDetail.branchMembership) ||
-      userDetail.branchMembership.length <= 0
-    ) {
-      invalidFields.push("branchMembership");
-    }
-    if (
-      isNullish(userDetail.emailConfirmed) ||
-      !userDetail.emailConfirmed
-    ) {
-      invalidFields.push('emailConfirmed');
-    }
-    */
-
-    if (isNullish(userDetail.dob)) {
-      invalidFields.push("dob");
-    } else if (isUnderage(userDetail)) {
-      if (isNullish(userDetail.guardian?.name) || userDetail.guardian.name.length <= 0) {
-        invalidFields.push("guardian.name");
-      }
-
-      if (isNullish(userDetail.guardian?.email) || userDetail.guardian.email.length <= 0) {
-        invalidFields.push("guardian.email");
-      }
-
-      if (isNullish(userDetail.guardian?.phone) || userDetail.guardian.phone.length <= 0) {
-        invalidFields.push("guardian.phone");
+  if (user.dob === null) {
+    invalidFields.push("dob");
+  } else if (isUnderage(user)) {
+    for (const field of ["guardianName", "guardianEmail", "guardianPhone"] as const) {
+      if (!user[field]) {
+        invalidFields.push(field);
       }
     }
-
-    return invalidFields;
   }
+  return invalidFields;
 }

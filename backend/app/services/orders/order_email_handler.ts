@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import type User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
@@ -10,11 +11,10 @@ import type { Order } from "#shared/order/order";
 import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import type { Payment } from "#shared/payment/payment";
-import type { UserDetail } from "#shared/user-detail";
 import type { EmailOrder, EmailUser } from "#types/email";
 
 export const OrderEmailHandler = {
-  async sendOrderReceipt(customerDetail: UserDetail, order: Order) {
+  async sendOrderReceipt(customerDetail: User, order: Order) {
     const branchId = order.branch;
 
     const withAgreement: boolean = await this.shouldSendAgreement(order);
@@ -24,7 +24,7 @@ export const OrderEmailHandler = {
 
     const emailUser: EmailUser = {
       id: customerDetail.id,
-      dob: customerDetail.dob ? DateTime.fromJSDate(customerDetail.dob).toFormat("dd.MM.yy") : "",
+      dob: customerDetail.dob?.toFormat("dd.MM.yy") ?? "",
       name: customerDetail.name,
       email: customerDetail.email,
       address: customerDetail.address,

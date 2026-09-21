@@ -1,14 +1,14 @@
 import vine from "@vinejs/vine";
 
+import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
-import { UserDetailService } from "#services/user_detail_service";
 import { EMAIL_TEMPLATES } from "#types/email_templates";
 
 export const uniqueEmail = vine.createRule(async (value, options, field) => {
   if (typeof value !== "string") {
     return;
   }
-  const foundUserDetail = await UserDetailService.getByEmail(value);
+  const foundUserDetail = await User.byEmail(value);
   const detailsId: string | null = field.meta["detailsId"] ?? null;
   if (foundUserDetail?.id === detailsId) {
     return;
@@ -27,7 +27,7 @@ export const uniquePhoneNumber = vine.createRule(async (value, options, field) =
   if (typeof value !== "string") {
     return;
   }
-  const foundUserDetail = await UserDetailService.getByPhoneNumber(value);
+  const foundUserDetail = await User.byPhone(value);
   const detailsId: string | null = field.meta["detailsId"] ?? null;
   if (foundUserDetail?.id === detailsId) {
     return;
