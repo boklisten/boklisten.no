@@ -29,19 +29,6 @@ export default defineRailway((ctx) => {
   const postgresVolume = volume("postgres-volume", { region: REGION, sizeMB: 50_000 });
   const mongodbVolume = volume("mongodb-volume", { region: REGION, sizeMB: 20_000 });
 
-  const frontend = service("boklisten.no", {
-    source: github(MONOREPO, { branch, checkSuites: true }),
-    build: "bun build:frontend",
-    start: "bun start:frontend",
-    healthcheck: "/health",
-    deploy: { sleepApplication: !isProduction },
-    replicas: { [REGION]: 1 },
-    domains: [host("boklisten.no")],
-    env: {
-      SENTRY_AUTH_TOKEN: ctx.shared.SENTRY_AUTH_TOKEN,
-    },
-  });
-
   const backend = service("api.boklisten.no", {
     source: github(MONOREPO, { branch, checkSuites: true }),
     build: "bun build:backend",
@@ -52,6 +39,7 @@ export default defineRailway((ctx) => {
     replicas: { [REGION]: 1 },
     domains: [host("api.boklisten.no")],
     env: {
+      HOST: "::",
       MONGODB_URI: mongoDb.env.MONGO_URL,
       POSTGRES_URL: postgresDb.env.DATABASE_URL,
       APP_KEY: preserve(),
@@ -70,6 +58,20 @@ export default defineRailway((ctx) => {
       VIPPS_MT_SUBSCRIPTION_KEY: preserve(),
       VIPPS_SECRET: preserve(),
       VIPPS_SUBSCRIPTION_KEY: preserve(),
+    },
+  });
+
+  const frontend = service("boklisten.no", {
+    source: github(MONOREPO, { branch, checkSuites: true }),
+    build: "bun build:frontend",
+    start: "bun start:frontend",
+    healthcheck: "/health",
+    deploy: { sleepApplication: !isProduction },
+    replicas: { [REGION]: 1 },
+    domains: [host("boklisten.no")],
+    env: {
+      API_PRIVATE_DOMAIN: backend.env.RAILWAY_PRIVATE_DOMAIN,
+      SENTRY_AUTH_TOKEN: ctx.shared.SENTRY_AUTH_TOKEN,
     },
   });
 
