@@ -48,6 +48,7 @@
     "@adonisjs/limiter": "^3.0.1",
     "@adonisjs/lucid": "^22.4.2",
     "@adonisjs/session": "^8.1.0",
+    "@adonisjs/shield": "^9.0.0",
     "@adonisjs/static": "^2.0.1",
     "@napi-rs/image": "^1.14.0",
     "@sendgrid/client": "^8.1.6",

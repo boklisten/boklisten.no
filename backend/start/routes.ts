@@ -1,7 +1,7 @@
 import router from "@adonisjs/core/services/router";
 
+import { isDeployed } from "#config/app";
 import { controllers } from "#generated/controllers";
-import env from "#start/env";
 import { middleware } from "#start/kernel";
 import {
   emailValidationThrottle,
@@ -54,8 +54,12 @@ router
   })
   .prefix("/auth");
 
-/** Local testing: `mint:login-url` prints a link here that logs the browser in as any user. */
-if (env.get("API_ENV") !== "production") {
+/**
+ * Local testing: `mint:login-url` prints a link here that logs the browser in as any user. Only
+ * ever registered in the non-deployed `dev` and `test` environments, never on the public staging
+ * or production hosts, so the login-as-anyone route is not reachable from the internet.
+ */
+if (!isDeployed) {
   router.get("/auth/dev_login/:token", [controllers.auth.Auth, "devLogin"]);
 }
 
