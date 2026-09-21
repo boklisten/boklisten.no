@@ -3,7 +3,6 @@ import { useDisclosure } from "@mantine/hooks";
 import {
   IconBook,
   IconClock,
-  IconExternalLink,
   IconHeartHandshake,
   IconInfoCircle,
   IconLogin,
@@ -17,6 +16,7 @@ import {
 } from "@tabler/icons-react";
 import { Activity } from "react";
 
+import BlAdminNavLink from "@/features/layout/BlAdminNavLink";
 import TasksIndicator from "@/features/layout/TasksIndicator";
 import TasksLink from "@/features/layout/TasksLink";
 import useAuth from "@/shared/hooks/useAuth";
@@ -158,17 +158,7 @@ export default function PublicNavigationDrawer() {
               onClick={close}
             />
             <Activity mode={isEmployee ? "visible" : "hidden"}>
-              <NavLink
-                label="Gå til bl-admin"
-                description="Her kan du søke opp kunder, samle inn og dele ut bøker."
-                to="/admin"
-                leftSection={<IconExternalLink />}
-                component={TanStackAnchor}
-                active
-                color="orange"
-                underline="never"
-                onClick={close}
-              />
+              <BlAdminNavLink onClick={close} />
             </Activity>
             <NavLink
               label="Logg ut"

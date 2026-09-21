@@ -1,6 +1,7 @@
 import { Box, Container, Divider, Stack, Title } from "@mantine/core";
 
 import Dots from "@/features/frontpage/Dots";
+import EmployeeAdminEntry from "@/features/frontpage/EmployeeAdminEntry";
 import EndButtons from "@/features/frontpage/EndButtons";
 import { HeroImageBackground } from "@/features/frontpage/HeroImageBackground";
 import HowToCard from "@/features/frontpage/HowToCard";
@@ -28,6 +29,7 @@ function Frontpage() {
         <Container>
           <Stack align="center">
             <QuickButtons />
+            <EmployeeAdminEntry />
             <Divider w="100%" />
             <Stack gap={0} align="center">
               <Box p="xl" bd="10px solid brand" bdrs={50} w="100%">
