@@ -2,6 +2,7 @@ import type { Limiter } from "@adonisjs/limiter";
 
 import Branch from "#models/branch";
 import Item from "#models/item";
+import UniqueItem from "#models/unique_item";
 import User from "#models/user";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
@@ -84,9 +85,9 @@ function activityTime(customerItem: CustomerItem): number {
  * for legacy blids that were handed out before the registry existed.
  */
 async function findRegisteredItemId(blid: string): Promise<string | null> {
-  const [uniqueItem] = (await StorageService.UniqueItems.getByQueryOrNull(byBlid(blid))) ?? [];
-  if (uniqueItem !== undefined) {
-    return uniqueItem.item;
+  const uniqueItem = await UniqueItem.findByBlid(blid);
+  if (uniqueItem !== null) {
+    return uniqueItem.itemId;
   }
   const customerItems = (await StorageService.CustomerItems.getByQueryOrNull(byBlid(blid))) ?? [];
   const latest = customerItems.toSorted((a, b) => activityTime(b) - activityTime(a))[0];

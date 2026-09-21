@@ -1,10 +1,12 @@
+import UniqueItem from "#models/unique_item";
 import { findItemByIsbn, findUniqueItemByBlid } from "#services/item_lookup";
-import { StorageService } from "#services/storage_service";
 import type { BlidRegistrationResponse, LinkedBook } from "#shared/blid_registration";
 import type { Item } from "#shared/item";
-import type { UniqueItem } from "#shared/unique-item";
 
-type StoredLink = Pick<UniqueItem, "blid" | "item" | "title">;
+/** A sticker already in the registry: its blid and the book it sits on. */
+interface StoredLink extends LinkedBook {
+  blid: string;
+}
 
 export interface BlidRegistrationSources {
   /** The book with the scanned ISBN. */
@@ -38,10 +40,10 @@ export function planBlidRegistration({
     const link = existingByBlid.get(blid);
     if (link === undefined) {
       toAdd.push(blid);
-    } else if (link.item === item.id) {
+    } else if (link.itemId === item.id) {
       skipped.push(blid);
     } else {
-      conflicts.push({ blid, linkedTo: { itemId: link.item, title: link.title } });
+      conflicts.push({ blid, linkedTo: { itemId: link.itemId, title: link.title } });
     }
   }
 
@@ -52,7 +54,11 @@ export const BlidRegistrationService = {
   /** The book the blid is linked to, or null when the sticker is still free. */
   async lookupLink(blid: string): Promise<LinkedBook | null> {
     const uniqueItem = await findUniqueItemByBlid(blid);
-    return uniqueItem === null ? null : { itemId: uniqueItem.item, title: uniqueItem.title };
+    if (uniqueItem === null) {
+      return null;
+    }
+    await uniqueItem.load("item");
+    return { itemId: uniqueItem.itemId, title: uniqueItem.item.title };
   },
 
   async register(isbn: string, blids: string[]): Promise<BlidRegistrationResponse> {
@@ -60,10 +66,11 @@ export const BlidRegistrationService = {
     if (item === null) {
       return { success: false, feedback: `Fant ingen bok med ISBN ${isbn}.`, conflicts: [] };
     }
-    const existing = await StorageService.UniqueItems.aggregate<StoredLink>([
-      { $match: { blid: { $in: blids } } },
-      { $project: { _id: 0, blid: 1, title: 1, item: { $toString: "$item" } } },
-    ]);
+    const existing: StoredLink[] = (await UniqueItem.byBlidsWithItem(blids)).map((unique) => ({
+      blid: unique.blid,
+      itemId: unique.itemId,
+      title: unique.item.title,
+    }));
 
     const plan = planBlidRegistration({ item, blids, existing });
     if (plan.kind === "conflict") {
@@ -75,9 +82,7 @@ export const BlidRegistrationService = {
       };
     }
 
-    for (const blid of plan.toAdd) {
-      await StorageService.UniqueItems.add({ blid, item: item.id, title: item.title });
-    }
+    await UniqueItem.createMany(plan.toAdd.map((blid) => ({ blid, itemId: item.id })));
     return {
       success: true,
       title: item.title,

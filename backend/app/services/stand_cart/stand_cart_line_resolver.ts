@@ -172,7 +172,7 @@ async function loadFreeCopy(blid: string, customerId: string): Promise<Item | Re
   if (holder !== null && holder.customer !== customerId) {
     return refused(HELD_BY_OTHER_CUSTOMER_MESSAGE);
   }
-  const item = await ItemModel.find(uniqueItem.item);
+  const item = await ItemModel.find(uniqueItem.itemId);
   return item ?? refused(`Fant ikke boka som unik ID ${blid} er koblet til`);
 }
 

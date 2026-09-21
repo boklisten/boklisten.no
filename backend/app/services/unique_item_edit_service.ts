@@ -3,13 +3,13 @@ import { ObjectId } from "mongodb";
 import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
+import type UniqueItem from "#models/unique_item";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { isMonitored } from "#services/employee_monitoring_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
 import { StorageService } from "#services/storage_service";
 import { UniqueItemMonitoring } from "#services/unique_item_monitoring";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { UniqueItem } from "#shared/unique-item";
 
 const HELD_BOOK_MESSAGE = "Boka er utdelt og kan ikke slettes";
 
@@ -47,15 +47,16 @@ export const UniqueItemEditService = {
     employee: MonitoredEmployee,
   ): Promise<void> {
     const uniqueItem = await uniqueItemOrFail(blid);
-    if (uniqueItem.item === itemId) {
+    if (uniqueItem.itemId === itemId) {
       throw new BadRequestException("Boka er allerede koblet til denne tittelen");
     }
     const item = await Item.find(itemId);
     if (!item) {
       throw new BadRequestException("Fant ikke boka du valgte");
     }
+    const previousItemId = uniqueItem.itemId;
 
-    await StorageService.UniqueItems.update(uniqueItem.id, { item: item.id, title: item.title });
+    await uniqueItem.merge({ itemId: item.id }).save();
     const result = await StorageService.CustomerItems.updateMany(
       { blid },
       { $set: { item: new ObjectId(item.id), lastUpdated: new Date() } },
@@ -65,14 +66,14 @@ export const UniqueItemEditService = {
       return;
     }
     const [previousItem, heldCustomerItem] = await Promise.all([
-      Item.find(uniqueItem.item),
+      Item.find(previousItemId),
       findHeldCustomerItem(blid),
     ]);
     await UniqueItemMonitoring.reportRelink({
       employee,
       customerId: heldCustomerItem?.customer ?? null,
       blid,
-      previousTitle: previousItem?.title ?? uniqueItem.title,
+      previousTitle: previousItem?.title ?? "",
       title: item.title,
       customerItemCount: result.modifiedCount,
     });
@@ -88,16 +89,17 @@ export const UniqueItemEditService = {
       throw new BadRequestException(HELD_BOOK_MESSAGE);
     }
 
-    await StorageService.UniqueItems.remove(uniqueItem.id);
+    await uniqueItem.delete();
 
     if (!isMonitored(employee)) {
       return;
     }
-    const item = await Item.find(uniqueItem.item);
+    // The deleted row keeps its attributes, so the book it sat on is still known.
+    const item = await Item.find(uniqueItem.itemId);
     await UniqueItemMonitoring.reportDelete({
       employee,
       blid,
-      title: item?.title ?? uniqueItem.title,
+      title: item?.title ?? "",
     });
   },
 };

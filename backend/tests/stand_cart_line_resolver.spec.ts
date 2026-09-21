@@ -15,9 +15,9 @@ import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { Order } from "#shared/order/order";
 import type { StandCartLine } from "#shared/stand_cart";
-import type { UniqueItem } from "#shared/unique-item";
 import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
+import { createUniqueItem } from "#tests/unique_item_fixtures";
 import { mock, unchecked } from "#tests/test-doubles";
 import { userDouble } from "#tests/user_fixtures";
 
@@ -113,7 +113,6 @@ const activeCustomerItem = mock<CustomerItem>({
 interface World {
   orders: Order[];
   customerItems: CustomerItem[];
-  uniqueItems: UniqueItem[];
   deliveries: Delivery[];
   peerSender: string | null;
 }
@@ -152,13 +151,6 @@ function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
       ),
     );
   });
-  sandbox
-    .stub(StorageService.UniqueItems, "getByQueryOrNull")
-    .callsFake((query) =>
-      Promise.resolve(
-        world.uniqueItems.filter((uniqueItem) => uniqueItem.blid === stringFilter(query, "blid")),
-      ),
-    );
   sandbox.stub(StorageService.Deliveries, "getOrNull").callsFake(byId(world.deliveries));
   sandbox.stub(User, "find").resolves(userDouble({ id: OTHER_CUSTOMER_ID, name: "Kari Nordmann" }));
   sandbox.stub(MatchRepository, "findForCustomer").resolves([]);
@@ -184,14 +176,12 @@ test.group("StandCartLineResolver.resolve", (group) => {
     for (const branch of branches) {
       await createBranch(branch);
     }
+    await createUniqueItem({ itemId: ITEM_ID, blid: BLID });
+    await createUniqueItem({ itemId: OTHER_ITEM_ID, blid: OTHER_BLID });
     sandbox = createSandbox();
     world = {
       orders: [orderWith({})],
       customerItems: [],
-      uniqueItems: [
-        mock<UniqueItem>({ id: "u1", blid: BLID, item: ITEM_ID, title: "Sinus 1T" }),
-        mock<UniqueItem>({ id: "u2", blid: OTHER_BLID, item: OTHER_ITEM_ID, title: "Kosmos SF" }),
-      ],
       deliveries: [],
       peerSender: null,
     };

@@ -1,7 +1,6 @@
-import type { ObjectId } from "mongodb";
-
 import Branch from "#models/branch";
 import Item from "#models/item";
+import UniqueItem from "#models/unique_item";
 import BookHandover from "#models/book_handover";
 import User from "#models/user";
 import { ActiveItemMonitoring, FALLBACK_BRANCH_NAME } from "#services/active_item_monitoring";
@@ -10,7 +9,6 @@ import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { isMonitored } from "#services/employee_monitoring_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import type {
@@ -81,37 +79,59 @@ const MATCH_TIERS = [
   { anchor: "contains", caseSensitive: true },
 ] as const;
 
-const ANCHORED_PATTERN: Record<(typeof MATCH_TIERS)[number]["anchor"], (query: string) => string> =
-  {
-    exact: (query) => `^${query}$`,
-    prefix: (query) => `^${query}`,
-    suffix: (query) => `${query}$`,
-    contains: (query) => query,
-  };
+const ANCHORED_PATTERN: Record<(typeof MATCH_TIERS)[number]["anchor"], (text: string) => string> = {
+  exact: (text) => `^${text}$`,
+  prefix: (text) => `^${text}`,
+  suffix: (text) => `${text}$`,
+  contains: (text) => text,
+};
 
 /**
- * The aggregation expression that ranks a blid against the typed text: the index of the first
- * tier it satisfies, lower being better.
+ * The tiers as regexes for one typed text, compiled once and reused across the whole match set.
  *
- * @param query Alphanumeric text (the validator guarantees no regex metacharacters).
+ * @param text Alphanumeric text (the validator guarantees no regex metacharacters).
  */
-export function blidMatchTierExpression(query: string) {
-  return {
-    $switch: {
-      branches: MATCH_TIERS.map((tier, index) => ({
-        case: {
-          $regexMatch: {
-            input: "$blid",
-            regex: ANCHORED_PATTERN[tier.anchor](query),
-            ...(tier.caseSensitive ? {} : { options: "i" }),
-          },
-        },
-        // oxlint-disable-next-line unicorn/no-thenable -- the key $switch requires
-        then: index,
-      })),
-      default: MATCH_TIERS.length,
-    },
-  };
+export function compileMatchTiers(text: string): RegExp[] {
+  return MATCH_TIERS.map(
+    ({ anchor, caseSensitive }) =>
+      new RegExp(ANCHORED_PATTERN[anchor](text), caseSensitive ? "" : "i"),
+  );
+}
+
+/**
+ * How well a blid matches the typed text: the index of the first tier it satisfies, lower being
+ * better; `tiers.length` for a blid that only contains the text ignoring case.
+ */
+export function blidMatchTier(blid: string, tiers: readonly RegExp[]): number {
+  const tier = tiers.findIndex((pattern) => pattern.test(blid));
+  return tier === -1 ? tiers.length : tier;
+}
+
+export interface BlidMatch {
+  blid: string;
+  itemId: string;
+}
+
+/**
+ * The search order: by tier, then books a customer currently holds before books at the stand,
+ * then by blid (byte order, as the Mongo sort had it). `held` maps a blid to the holding customer;
+ * unregistered legacy blids in it are ignored, the search only lists stickers in the registry.
+ */
+export function rankBlidMatches<T extends BlidMatch>(
+  matches: T[],
+  held: ReadonlyMap<string, string>,
+  text: string,
+): T[] {
+  const tiers = compileMatchTiers(text);
+  return matches
+    .map((match) => ({ match, tier: blidMatchTier(match.blid, tiers), held: held.has(match.blid) }))
+    .toSorted(
+      (a, b) =>
+        a.tier - b.tier ||
+        Number(b.held) - Number(a.held) ||
+        (a.match.blid < b.match.blid ? -1 : 1),
+    )
+    .map(({ match }) => match);
 }
 
 export interface BlidSearchHitSources {
@@ -698,6 +718,25 @@ function customerItemTime(customerItem: CustomerItem): number {
   return time === undefined ? 0 : new Date(time).getTime();
 }
 
+/**
+ * blid → holding customer for every actively held book whose blid contains the text, ignoring
+ * case. Runs over the partial customer-items blid index (string blid, not returned, not bought
+ * out), which the filter spells out so the planner uses it.
+ */
+async function fetchHoldersByBlidText(text: string): Promise<Map<string, string>> {
+  const rows = await StorageService.CustomerItems.aggregate<{ blid: string; customer: string }>([
+    {
+      $match: {
+        blid: { $type: "string", $regex: text, $options: "i" },
+        ...ACTIVE_CUSTOMER_ITEM_MATCH,
+        buyback: { $ne: true },
+      },
+    },
+    { $project: { _id: 0, blid: 1, customer: { $toString: "$customer" } } },
+  ]);
+  return new Map(rows.map((row) => [row.blid, row.customer]));
+}
+
 async function fetchCustomerItems(blid: string): Promise<CustomerItem[]> {
   const databaseQuery = new SEDbQuery();
   databaseQuery.stringFilters = [{ fieldName: "blid", value: blid }];
@@ -787,75 +826,35 @@ export const BlidSearchService = {
   },
 
   /**
-   * Ranked in the database: by tier, then books a customer currently holds before books at the
-   * stand, then by blid. Only the holder names need a second query.
+   * Ranked by tier, then books a customer currently holds before books at the stand, then by
+   * blid. The registry is in Postgres and the holders in Mongo, so both are fetched for the whole
+   * match set and ranked in code; only the shown rows pay for the catalogue and name lookups.
    *
-   * @param query Alphanumeric text (the validator guarantees no regex metacharacters).
+   * @param query Alphanumeric text (the validator guarantees no regex or LIKE metacharacters).
    */
   async search(query: string): Promise<BlidSearchResponse> {
-    const rows = await StorageService.UniqueItems.aggregate<{
-      blid: string;
-      title: string;
-      item: ObjectId | null;
-      holder: ObjectId | null;
-    }>([
-      { $match: { blid: { $regex: query, $options: "i" } } },
-      {
-        $lookup: {
-          from: BlSchemaName.CustomerItems,
-          let: { blid: "$blid" },
-          pipeline: [
-            {
-              $match: {
-                // The customer items blid index is partial (string blid, not returned, not bought
-                // out); the planner only uses it when the filter spells those predicates out, and
-                // a localField/foreignField join cannot, so the join is written as an $expr.
-                blid: { $type: "string" },
-                ...ACTIVE_CUSTOMER_ITEM_MATCH,
-                buyback: { $ne: true },
-                $expr: { $eq: ["$blid", "$$blid"] },
-              },
-            },
-            { $limit: 1 },
-            { $project: { _id: 0, customer: 1 } },
-          ],
-          as: "activeItems",
-        },
-      },
-      {
-        $addFields: {
-          tier: blidMatchTierExpression(query),
-          held: { $gt: [{ $size: "$activeItems" }, 0] },
-        },
-      },
-      { $sort: { tier: 1, held: -1, blid: 1 } },
-      // One past the limit tells whether the list was cut short.
-      { $limit: SEARCH_HIT_LIMIT + 1 },
-      {
-        $project: {
-          _id: 0,
-          blid: 1,
-          title: 1,
-          item: { $ifNull: ["$item", null] },
-          holder: { $ifNull: [{ $first: "$activeItems.customer" }, null] },
-        },
-      },
+    const [matches, held] = await Promise.all([
+      UniqueItem.matching(query),
+      fetchHoldersByBlidText(query),
     ]);
-    const hasMore = rows.length > SEARCH_HIT_LIMIT;
-    // Only the shown rows pay for the catalogue lookup.
-    const shown = rows.slice(0, SEARCH_HIT_LIMIT);
-    const items = await Item.byIds(shown.map((row) => (row.item ? String(row.item) : null)));
+    const ranked = rankBlidMatches(matches, held, query);
+    // One past the limit tells whether the list was cut short.
+    const hasMore = ranked.length > SEARCH_HIT_LIMIT;
+    const shown = ranked.slice(0, SEARCH_HIT_LIMIT);
+    const items = await Item.byIds(shown.map((row) => row.itemId));
     const winners = shown.map((row) => {
-      const catalogueItem = row.item ? items.get(String(row.item)) : undefined;
+      const catalogueItem = items.get(row.itemId);
       return {
         blid: row.blid,
-        title: row.title,
-        holder: row.holder,
+        title: catalogueItem?.title ?? "",
         isbn: catalogueItem === undefined ? null : String(catalogueItem.isbn),
       };
     });
     const holders = new Map(
-      winners.flatMap((row) => (row.holder ? [[row.blid, String(row.holder)] as const] : [])),
+      winners.flatMap((row) => {
+        const holder = held.get(row.blid);
+        return holder === undefined ? [] : [[row.blid, holder] as const];
+      }),
     );
     const userNames = await User.namesByIds(holders.values());
 
@@ -878,7 +877,7 @@ export const BlidSearchService = {
     const orders = await fetchOrders(blid, customerItems);
     const bringDeliveryOrderIds = await fetchBringDeliveryOrderIds(orders);
 
-    const itemId = uniqueItem?.item ?? customerItems[0]?.item;
+    const itemId = uniqueItem?.itemId ?? customerItems[0]?.item;
     const item = itemId === undefined ? null : await Item.find(itemId);
 
     const handovers: HandoverRow[] = handoverModels.map((handover) => ({
@@ -899,8 +898,11 @@ export const BlidSearchService = {
       item: item === null ? null : { id: item.id, title: item.title, isbn: String(item.isbn) },
       registered: uniqueItem !== null,
       registration:
-        uniqueItem?.creationTime && uniqueItem.lastUpdated
-          ? { createdAt: uniqueItem.creationTime, updatedAt: uniqueItem.lastUpdated }
+        uniqueItem?.createdAt && uniqueItem.updatedAt
+          ? {
+              createdAt: uniqueItem.createdAt.toJSDate(),
+              updatedAt: uniqueItem.updatedAt.toJSDate(),
+            }
           : null,
       customerItems,
       orders,

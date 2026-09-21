@@ -6,9 +6,9 @@ import { createSandbox } from "sinon";
 import { PublicBlidLookupService } from "#services/public_blid_lookup_service";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { UniqueItem } from "#shared/unique-item";
 import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
+import { createUniqueItem } from "#tests/unique_item_fixtures";
 import { mock } from "#tests/test-doubles";
 import User from "#models/user";
 import { userDouble } from "#tests/user_fixtures";
@@ -21,7 +21,6 @@ const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
 test.group("PublicBlidLookupService.lookup()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let aggregate: sinon.SinonStub;
-  let uniqueItems: sinon.SinonStub;
   let customerItems: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
@@ -30,7 +29,6 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
     await createBranch({ id: BRANCH_ID, name: "Ullern VGS" });
     sandbox = createSandbox();
     aggregate = sandbox.stub(StorageService.CustomerItems, "aggregate").resolves([]);
-    uniqueItems = sandbox.stub(StorageService.UniqueItems, "getByQueryOrNull").resolves(null);
     customerItems = sandbox.stub(StorageService.CustomerItems, "getByQueryOrNull").resolves(null);
   });
   group.each.teardown(() => sandbox.restore());
@@ -74,7 +72,7 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
   test("a registered book nobody holds is reported as not handed out with its title and ISBN", async ({
     assert,
   }) => {
-    uniqueItems.resolves([mock<UniqueItem>({ blid: BLID, item: ITEM_ID, title: "Sinus 1T" })]);
+    await createUniqueItem({ itemId: ITEM_ID, blid: BLID });
 
     const result = await PublicBlidLookupService.lookup(BLID);
 

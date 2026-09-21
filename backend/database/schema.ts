@@ -541,6 +541,21 @@ export class SignatureSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class UniqueItemSchema extends BaseModel {
+  static $columns = ['blid', 'createdAt', 'id', 'itemId', 'updatedAt'] as const
+  $columns = UniqueItemSchema.$columns
+  @column()
+  declare blid: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare itemId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class UserSchema extends BaseModel {
   static $columns = ['address', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastActiveAt', 'localHashedPassword', 'name', 'permission', 'phone', 'postCity', 'postCode', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsUserId'] as const
   $columns = UserSchema.$columns

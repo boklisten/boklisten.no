@@ -1,24 +1,18 @@
 import { inflateSync } from "node:zlib";
 
 import { test } from "@japa/runner";
-import type { PipelineStage } from "mongoose";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import { StorageService } from "#services/storage_service";
+import UniqueItem from "#models/unique_item";
 import UniqueIdGeneratorService from "#services/unique_id_generator_service";
 import { asStub } from "#tests/test-doubles";
 
 const BLID_PATTERN = /^[a-zA-Z0-9]{12}$/;
 
 /** The blids the service asked the database about in one round. */
-function candidatesOf(pipeline: PipelineStage[]): string[] {
-  const [stage] = pipeline;
-  if (stage === undefined || !("$match" in stage)) {
-    throw new Error("expected the lookup to start with a $match stage");
-  }
-  const blids: unknown = stage.$match["blid"]?.["$in"];
-  return Array.isArray(blids) ? blids.filter((blid) => typeof blid === "string") : [];
+function candidatesOf(candidates: Iterable<string>): string[] {
+  return [...candidates];
 }
 
 /** Horizontal extent of every filled rectangle (QR modules and bars) across all pages. */
@@ -59,7 +53,7 @@ test.group("UniqueIdGeneratorService", (group) => {
   });
 
   test("generates distinct, well-formed ids", async ({ assert }) => {
-    sandbox.stub(StorageService.UniqueItems, "aggregate").resolves([]);
+    sandbox.stub(UniqueItem, "takenBlids").resolves(new Set());
 
     const ids = await UniqueIdGeneratorService.generateUnusedUniqueIds(400);
 
@@ -72,13 +66,13 @@ test.group("UniqueIdGeneratorService", (group) => {
 
   test("replaces ids that already belong to a unique item", async ({ assert }) => {
     let taken = "";
-    const aggregate = sandbox.stub(StorageService.UniqueItems, "aggregate");
-    aggregate.callsFake((pipeline) => {
+    const takenBlids = sandbox.stub(UniqueItem, "takenBlids");
+    takenBlids.callsFake((candidates) => {
       if (taken === "") {
-        taken = candidatesOf(pipeline)[0] ?? "";
-        return Promise.resolve([{ blid: taken }]);
+        taken = candidatesOf(candidates)[0] ?? "";
+        return Promise.resolve(new Set([taken]));
       }
-      return Promise.resolve([]);
+      return Promise.resolve(new Set());
     });
 
     const ids = await UniqueIdGeneratorService.generateUnusedUniqueIds(400);
@@ -86,15 +80,15 @@ test.group("UniqueIdGeneratorService", (group) => {
     assert.lengthOf(ids, 400);
     assert.match(taken, BLID_PATTERN);
     assert.notInclude(ids, taken);
-    assert.equal(aggregate.callCount, 2);
-    assert.lengthOf(candidatesOf(aggregate.getCall(0).args[0]), 400);
-    assert.lengthOf(candidatesOf(aggregate.getCall(1).args[0]), 1);
+    assert.equal(takenBlids.callCount, 2);
+    assert.lengthOf(candidatesOf(takenBlids.getCall(0).args[0]), 400);
+    assert.lengthOf(candidatesOf(takenBlids.getCall(1).args[0]), 1);
   });
 
   test("gives up when every round collides", async ({ assert }) => {
     sandbox
-      .stub(StorageService.UniqueItems, "aggregate")
-      .callsFake((pipeline) => Promise.resolve(candidatesOf(pipeline).map((blid) => ({ blid }))));
+      .stub(UniqueItem, "takenBlids")
+      .callsFake((candidates) => Promise.resolve(new Set(candidatesOf(candidates))));
 
     await assert.rejects(
       () => UniqueIdGeneratorService.generateUnusedUniqueIds(3),
@@ -105,7 +99,7 @@ test.group("UniqueIdGeneratorService", (group) => {
   test("renders two vector pages per id with the embedded caption font, fast", async ({
     assert,
   }) => {
-    sandbox.stub(StorageService.UniqueItems, "aggregate").resolves([]);
+    sandbox.stub(UniqueItem, "takenBlids").resolves(new Set());
 
     const started = performance.now();
     const pdf = await UniqueIdGeneratorService.generateUniqueIdPdf();
@@ -120,11 +114,11 @@ test.group("UniqueIdGeneratorService", (group) => {
     assert.isBelow(pdf.length, 3_000_000);
     // The raster version took ~10 s and ~900 MB; keep a wide margin for slow CI runners.
     assert.isBelow(elapsed, 5000);
-    assert.equal(asStub(StorageService.UniqueItems.aggregate).callCount, 1);
+    assert.equal(asStub(UniqueItem.takenBlids).callCount, 1);
   }).timeout(15_000);
 
   test("places the codes exactly where the raster labels had them", async ({ assert }) => {
-    sandbox.stub(StorageService.UniqueItems, "aggregate").resolves([]);
+    sandbox.stub(UniqueItem, "takenBlids").resolves(new Set());
 
     const pdf = await UniqueIdGeneratorService.generateUniqueIdPdf();
     const { left, right } = rectangleExtent(pdf);

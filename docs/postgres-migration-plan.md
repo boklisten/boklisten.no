@@ -51,7 +51,7 @@ status, record survey results and anything surprising).
 | items         |     685 |    0.3 MB | 37 / 22                                 | `info.price` is a Map                                              |
 | orders        | 185 289 |  189.8 MB | 73 / 30                                 | `orderItems` array, `payments` array, `delivery` ref               |
 | payments      |  59 941 |   31.1 MB | 11 / 10                                 | `info` is Mixed (vendor payload)                                   |
-| uniqueitems   |  51 667 |   13.4 MB | 8 / 6                                   | `title` snapshot                                                   |
+| uniqueitems   |  51 667 |   13.4 MB | 8 / 6                                   | `title` snapshot — moved in step 7                                 |
 | userdetails   |  16 706 |   12.7 MB | 87 / 41                                 | `orders`, `customerItems` arrays                                   |
 | users         |  16 705 |    4.0 MB | 16 / 11                                 | 1:1 with userdetails; login hashes                                 |
 
@@ -822,7 +822,7 @@ Notes (2026-09-21):
 
 Kept as a placeholder so step numbers in older discussions still line up. Nothing to do.
 
-## Step 7 — uniqueitems → `unique_items` — status: not started
+## Step 7 — uniqueitems → `unique_items` — status: done 2026-09-21 (rehearsed on staging, pending merge)
 
 Target schema `unique_items`: `id string(24) PK`, `blid text unique not null`, `item_id FK items
 RESTRICT`, timestamps. `title` is dropped (join `items`).
@@ -838,7 +838,62 @@ endpoints, public `/sjekk` lookup.
 Survey queries: `item` ids not in `items`; blids not matching the 8-digit or 12-alphanumeric
 formats; blid duplicates (the unique index would refuse them).
 
-Survey results / notes: (fill in)
+Survey results (2026-09-21, staging):
+
+- 51 683 documents; every `item` an ObjectId, every `blid` a string, both timestamps present as
+  dates on all of them. Keys beyond the schema: `user`, `editableFor`, `viewableFor`, `active`
+  (never false), `__v`; all dropped.
+- Items: 448 distinct, 1 not in Postgres `items` (`5b6441add2e733002fae8723`, «Nynorsk ordliste
+  11 utg 2012», deleted from the catalogue years ago; 122 orders and 4 customer items still name
+  it). Its 7 unique items were skipped (Adrian's decision), one of which has a returned,
+  bought-back customer item that keeps the blid string.
+- Blid formats: 47 149 twelve-character alphanumerics, 4 533 eight-digit, 51 eight-character
+  alphanumerics (one label batch from Aug–Sep 2022, 41 of them with customer items) and 18
+  mis-scans (symbols, spaces, æ/ø/å, one 13-digit ISBN scanned as a blid on 2026-09-01; 9 with a
+  settled customer item). Adrian chose to transfer the 2022 batch and skip the 18 mis-scans, so the
+  table carries a check constraint `^[0-9A-Za-z]{8}$|^[0-9A-Za-z]{12}$` (wider than the
+  registration validator, which still only accepts 12 alphanumerics or 8 digits).
+- 0 exact blid duplicates, 199 pairs differing only in case: blids are case-sensitive and the
+  unique index stays plain (no `lower(blid)`).
+- `title` snapshot: 547 differed from the catalogue title, almost all by a trailing space. Dropped;
+  titles are read from `items`.
+- Every actively held customer-item blid (19 460) is in the registry; a 3-character search text
+  matches up to ~10 000 registry rows and ~3 800 held books (text `1`; the validator requires 3
+  characters, so this is the worst case).
+- Postgres collates `en_US.utf8`. The search is a case-insensitive contains match, so no b-tree
+  helps either way; measured after the transfer, `ILIKE '%…%' ORDER BY blid` over 51 658 rows
+  takes 16–27 ms from a laptop (the fixed round trip dominates), so no `pg_trgm` index was added.
+
+Notes (2026-09-21):
+
+- Decisions taken in the interview: skip the 7 orphaned unique items and the 18 mis-scans (both
+  logged in the summary line); rank the blid search in code rather than in SQL: Postgres returns
+  every blid containing the text (`UniqueItem.matching`), Mongo returns the holders of every
+  actively held book whose blid contains the text (`fetchHoldersByBlidText`, over the partial
+  `unique_active_blid` index), and `rankBlidMatches` sorts by tier, held-first, blid before the
+  limit is applied. `blidMatchTierExpression` became the pure `blidMatchTier`. Step 9 can move
+  the holder lookup into a join.
+- Staging rehearsal from a laptop: `unique_items: migrated 51658, skipped 25 (18 malformed blid,
+7 item no longer in the catalogue)`, 8.11 s, collection dropped. Every migrated row compared
+  field by field against a JSON dump taken before the run: zero differences, no unexpected
+  omissions.
+- Files: migration `1790100000000_create_unique_items_table.ts`; model `app/models/unique_item.ts`
+  (`findByBlid`, `byBlidsWithItem`, `takenBlids`, `matching`; `belongsTo` item); the shared type
+  `shared/unique-item.ts` is gone (the frontend never imported it) and the services use the model:
+  `item_lookup.ts`, `blid_registration_service.ts` (`StoredLink` now carries `itemId`),
+  `unique_item_edit_service.ts` (`merge().save()` / `delete()`), `unique_id_generator_service.ts`,
+  `public_blid_lookup_service.ts`, `blid_search_service.ts`, `stand_cart_line_resolver.ts`.
+  `StorageService.UniqueItems` and `BlSchemaName.UniqueItems` are removed.
+- API shapes are unchanged (`LinkedBook`, `BlidSearchResponse`, `BlidSearchResult`), so the Tuyau
+  client did not change.
+- Specs insert stickers with `tests/unique_item_fixtures.ts` `createUniqueItem` (needs an item row
+  first, `item_id` is a foreign key). New: `tests/unique_item_model.spec.ts`;
+  `blid_search_rank.spec.ts` tests `blidMatchTier`/`rankBlidMatches`; the generator spec stubs
+  `UniqueItem.takenBlids`.
+- Verified on staging through the local stack: `/blids?q=` ranking with holder names, `/blids/:blid`
+  history with the «registrert» event, `/blids/:blid/link`, batch registration with a conflict and
+  a success, relink, delete (refused for a held book), the sticker PDF, `/public_blid_lookup`,
+  and the Kasse blid view at 1280 and 375 px.
 
 ## Step 8 — orders → `orders` + `order_items` — status: not started
 
@@ -1162,3 +1217,6 @@ Only after step 12 has run in production.
   normalisation, staging rehearsal with zero field diffs). Decided that orders, customer items,
   payments and invoices keep their rows when a customer is deleted, so steps 8, 9 and 11 use
   `customer_id … SET NULL`.
+- 2026-09-21: step 7 implemented (unique items into Postgres without the `title` snapshot, blid
+  check constraint, 7 orphaned and 18 malformed documents skipped, blid search ranked in code,
+  staging rehearsal 8.1 s with zero field diffs).

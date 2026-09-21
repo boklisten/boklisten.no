@@ -1,25 +1,12 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
 
 import { findItemByIsbn, findUniqueItemByBlid } from "#services/item_lookup";
-import { StorageService } from "#services/storage_service";
 import { createItem } from "#tests/item_fixtures";
+import { createUniqueItem } from "#tests/unique_item_fixtures";
 
 test.group("item_lookup", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  let uniqueItemsStub: { getByQueryOrNull: sinon.SinonStub };
-
   group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    uniqueItemsStub = { getByQueryOrNull: sandbox.stub() };
-    sandbox.stub(StorageService, "UniqueItems").value(uniqueItemsStub);
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
-  });
 
   test("findItemByIsbn returns the item carrying the isbn", async ({ assert }) => {
     const item = await createItem({ title: "Matematikk 1T", isbn: 9_788_203_208_119 });
@@ -50,27 +37,18 @@ test.group("item_lookup", (group) => {
     assert.isNull(await findItemByIsbn("978-82-03-20811-9"));
   });
 
-  test("findUniqueItemByBlid returns the unique item a blid is connected to", async ({
-    assert,
-  }) => {
-    const uniqueItem = { id: "unique1", blid: "12345678", item: "item1", title: "Matematikk 1T" };
-    uniqueItemsStub.getByQueryOrNull.resolves([uniqueItem]);
+  test("findUniqueItemByBlid returns the sticker registered under the blid", async ({ assert }) => {
+    const item = await createItem({ title: "Matematikk 1T" });
+    const uniqueItem = await createUniqueItem({ itemId: item.id, blid: "12345678" });
+    await createUniqueItem({ itemId: item.id, blid: "87654321" });
 
-    assert.equal(await findUniqueItemByBlid("12345678"), uniqueItem);
+    const found = await findUniqueItemByBlid("12345678");
+
+    assert.equal(found?.id, uniqueItem.id);
+    assert.equal(found?.itemId, item.id);
   });
 
-  test("findUniqueItemByBlid filters on blid", async ({ assert }) => {
-    uniqueItemsStub.getByQueryOrNull.resolves([{ id: "unique1" }]);
-
-    await findUniqueItemByBlid("12345678");
-
-    const [query] = uniqueItemsStub.getByQueryOrNull.firstCall.args;
-    assert.deepEqual(query.stringFilters, [{ fieldName: "blid", value: "12345678" }]);
-  });
-
-  test("findUniqueItemByBlid returns null for an unconnected blid", async ({ assert }) => {
-    uniqueItemsStub.getByQueryOrNull.resolves(null);
-
-    assert.equal(await findUniqueItemByBlid("12345678"), null);
+  test("findUniqueItemByBlid returns null for an unregistered blid", async ({ assert }) => {
+    assert.isNull(await findUniqueItemByBlid("12345678"));
   });
 });

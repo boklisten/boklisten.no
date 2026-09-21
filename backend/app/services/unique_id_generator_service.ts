@@ -7,7 +7,7 @@ import JsBarcode from "jsbarcode";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
 
-import { StorageService } from "#services/storage_service";
+import UniqueItem from "#models/unique_item";
 
 const UNIQUE_ID_LENGTH = 12;
 const VALID_BL_ID_CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -39,14 +39,6 @@ function randomUniqueId() {
   ).join("");
 }
 
-async function findTakenBlids(candidates: string[]): Promise<Set<string>> {
-  const rows = await StorageService.UniqueItems.aggregate<{ blid: string }>([
-    { $match: { blid: { $in: candidates } } },
-    { $project: { _id: 0, blid: 1 } },
-  ]);
-  return new Set(rows.map((row) => row.blid));
-}
-
 /**
  * Fresh ids that are distinct from each other and from every blid already registered on a unique
  * item. The id space (62^12) makes a clash astronomically unlikely, but a sticker that collides
@@ -62,7 +54,7 @@ async function generateUnusedUniqueIds(count: number): Promise<string[]> {
         candidates.add(candidate);
       }
     }
-    const taken = await findTakenBlids([...candidates]);
+    const taken = await UniqueItem.takenBlids(candidates);
     for (const candidate of candidates) {
       if (!taken.has(candidate)) {
         ids.add(candidate);

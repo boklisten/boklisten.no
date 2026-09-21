@@ -7,8 +7,9 @@ import { EmployeeMonitoringService } from "#services/employee_monitoring_service
 import { StorageService } from "#services/storage_service";
 import { UniqueItemEditService } from "#services/unique_item_edit_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { UniqueItem } from "#shared/unique-item";
 import { createItem } from "#tests/item_fixtures";
+import { createUniqueItem } from "#tests/unique_item_fixtures";
+import UniqueItem from "#models/unique_item";
 import { mock, unchecked } from "#tests/test-doubles";
 
 const BLID = "12345678";
@@ -45,10 +46,7 @@ const returnedCustomerItem = mock<CustomerItem>({
 test.group("UniqueItemEditService", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
-  let uniqueItems: sinon.SinonStub;
   let customerItems: sinon.SinonStub;
-  let updateUniqueItem: sinon.SinonStub;
-  let removeUniqueItem: sinon.SinonStub;
   let updateManyCustomerItems: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
@@ -57,16 +55,10 @@ test.group("UniqueItemEditService", (group) => {
     await createItem({ id: NEW_ITEM_ID, title: "Sinus 1P" });
     sandbox = createSandbox();
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
-    uniqueItems = sandbox
-      .stub(StorageService.UniqueItems, "getByQueryOrNull")
-      .resolves([
-        mock<UniqueItem>({ id: UNIQUE_ITEM_ID, blid: BLID, item: OLD_ITEM_ID, title: "Sinus 1T" }),
-      ]);
+    await createUniqueItem({ id: UNIQUE_ITEM_ID, blid: BLID, itemId: OLD_ITEM_ID });
     customerItems = sandbox
       .stub(StorageService.CustomerItems, "getByQueryOrNull")
       .resolves([returnedCustomerItem]);
-    updateUniqueItem = sandbox.stub(StorageService.UniqueItems, "update").resolves(unchecked({}));
-    removeUniqueItem = sandbox.stub(StorageService.UniqueItems, "remove").resolves(unchecked({}));
     updateManyCustomerItems = sandbox
       .stub(StorageService.CustomerItems, "updateMany")
       .resolves(unchecked({ matchedCount: 1, modifiedCount: 1 }));
@@ -78,9 +70,7 @@ test.group("UniqueItemEditService", (group) => {
   }) => {
     await UniqueItemEditService.relink({ blid: BLID, itemId: NEW_ITEM_ID }, ADMIN);
 
-    assert.isTrue(
-      updateUniqueItem.calledOnceWith(UNIQUE_ITEM_ID, { item: NEW_ITEM_ID, title: "Sinus 1P" }),
-    );
+    assert.equal((await UniqueItem.findOrFail(UNIQUE_ITEM_ID)).itemId, NEW_ITEM_ID);
     assert.isTrue(updateManyCustomerItems.calledOnce);
     assert.deepEqual(updateManyCustomerItems.firstCall.args[0], { blid: BLID });
     assert.equal(String(updateManyCustomerItems.firstCall.args[1].$set.item), NEW_ITEM_ID);
@@ -121,19 +111,18 @@ test.group("UniqueItemEditService", (group) => {
     await assert.rejects(() =>
       UniqueItemEditService.relink({ blid: BLID, itemId: "5f7f7f7f7f7f7f7f7f7f7f99" }, ADMIN),
     );
-    uniqueItems.resolves(null);
     await assert.rejects(() =>
-      UniqueItemEditService.relink({ blid: BLID, itemId: NEW_ITEM_ID }, ADMIN),
+      UniqueItemEditService.relink({ blid: "00000000", itemId: NEW_ITEM_ID }, ADMIN),
     );
 
-    assert.isFalse(updateUniqueItem.called);
+    assert.equal((await UniqueItem.findOrFail(UNIQUE_ITEM_ID)).itemId, OLD_ITEM_ID);
     assert.isFalse(updateManyCustomerItems.called);
   });
 
   test("delete removes the unique item and leaves the customer items alone", async ({ assert }) => {
     await UniqueItemEditService.remove({ blid: BLID }, ADMIN);
 
-    assert.isTrue(removeUniqueItem.calledOnceWith(UNIQUE_ITEM_ID));
+    assert.isNull(await UniqueItem.find(UNIQUE_ITEM_ID));
     assert.isFalse(updateManyCustomerItems.called);
     assert.isFalse(report.called);
   });
@@ -160,15 +149,13 @@ test.group("UniqueItemEditService", (group) => {
 
     await assert.rejects(() => UniqueItemEditService.remove({ blid: BLID }, EMPLOYEE));
 
-    assert.isFalse(removeUniqueItem.called);
+    assert.isNotNull(await UniqueItem.find(UNIQUE_ITEM_ID));
     assert.isFalse(report.called);
   });
 
   test("delete refuses an unknown blid", async ({ assert }) => {
-    uniqueItems.resolves(null);
+    await assert.rejects(() => UniqueItemEditService.remove({ blid: "00000000" }, ADMIN));
 
-    await assert.rejects(() => UniqueItemEditService.remove({ blid: BLID }, ADMIN));
-
-    assert.isFalse(removeUniqueItem.called);
+    assert.isNotNull(await UniqueItem.find(UNIQUE_ITEM_ID));
   });
 });

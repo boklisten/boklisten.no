@@ -8,7 +8,6 @@ import { OrderSchema } from "#models/mongoose/order.schema";
 import { PaymentSchema } from "#models/mongoose/payment.schema";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { MongodbHandler } from "#models/mongoose/storage/mongodb-handler";
-import { UniqueItemSchema } from "#models/mongoose/unique-item.schema";
 
 export type BlSchema<T> = Schema<ToSchema<T>>;
 
@@ -18,7 +17,6 @@ export const StorageService = {
   Invoices: new MongodbHandler(InvoiceSchema, BlSchemaName.Invoices),
   Orders: new MongodbHandler(OrderSchema, BlSchemaName.Orders),
   Payments: new MongodbHandler(PaymentSchema, BlSchemaName.Payments),
-  UniqueItems: new MongodbHandler(UniqueItemSchema, BlSchemaName.UniqueItems),
 } as const;
 
 // Re-format BlDocument type to one fitting for mongoose schemas

@@ -28,7 +28,7 @@ test.group("planBlidRegistration", () => {
     assert,
   }) => {
     const plan = planBlidRegistration(
-      sources({ existing: [{ blid: "12345678", item: SINUS.id, title: SINUS.title }] }),
+      sources({ existing: [{ blid: "12345678", itemId: SINUS.id, title: SINUS.title }] }),
     );
     assert.deepEqual(plan, {
       kind: "ok",
@@ -41,8 +41,8 @@ test.group("planBlidRegistration", () => {
     const plan = planBlidRegistration(
       sources({
         existing: [
-          { blid: "12345678", item: SINUS.id, title: SINUS.title },
-          { blid: "87654321", item: "item-kosmos", title: "Kosmos SF" },
+          { blid: "12345678", itemId: SINUS.id, title: SINUS.title },
+          { blid: "87654321", itemId: "item-kosmos", title: "Kosmos SF" },
         ],
       }),
     );
