@@ -110,7 +110,8 @@ test.group("User.toDto", (group) => {
   }) => {
     const user = await createUser({
       dob: DateTime.fromISO("2008-02-29"),
-      localHashedPassword: "$scrypt$secret",
+      localHashedPassword:
+        "$argon2id$v=19$m=65536,t=3,p=4$c2FsdHNhbHRzYWx0c2FsdA$aGFzaGhhc2hoYXNoaGFzaGhhc2hoYXNoaGFzaGhhc2g",
       vippsUserId: "vipps-1",
     });
 

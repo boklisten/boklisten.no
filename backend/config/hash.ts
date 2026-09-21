@@ -5,13 +5,6 @@ const hashConfig = defineConfig({
   default: "argon",
 
   list: {
-    scrypt: drivers.scrypt({
-      cost: 16_384,
-      blockSize: 8,
-      parallelization: 1,
-      maxMemory: 33_554_432,
-    }),
-
     argon: drivers.argon2({
       version: 0x13, // hex code for 19
       variant: "id",
