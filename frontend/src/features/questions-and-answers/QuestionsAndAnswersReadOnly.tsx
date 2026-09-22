@@ -14,10 +14,8 @@ import RichTextEditorReadOnly from "@/shared/components/RichTextEditorReadOnly";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { api } from "@/shared/utils/apiClient";
 
-export const questionsAndAnswersQueryOptions = () => api.questionsAndAnswers.index.queryOptions();
-
 export default function QuestionsAndAnswersReadOnly() {
-  const { data, isLoading } = useQuery(questionsAndAnswersQueryOptions());
+  const { data, isLoading } = useQuery(api.questionsAndAnswers.index.queryOptions());
 
   if (isLoading && data === undefined) {
     return (

@@ -1,14 +1,16 @@
 import { Title, Stack } from "@mantine/core";
-import QuestionsAndAnswersReadOnly, {
-  questionsAndAnswersQueryOptions,
-} from "@/features/questions-and-answers/QuestionsAndAnswersReadOnly";
+import QuestionsAndAnswersReadOnly from "@/features/questions-and-answers/QuestionsAndAnswersReadOnly";
+import { api } from "@/shared/utils/apiClient";
 import { createFileRoute } from "@tanstack/react-router";
 import { jsonLdScript, seo } from "@/shared/utils/seo";
 import { faqPageSchema } from "@/shared/utils/structuredData";
 
 export const Route = createFileRoute("/(offentlig)/info/faq")({
   loader: async ({ context }) =>
-    context.queryClient.query({ ...questionsAndAnswersQueryOptions(), staleTime: "static" }),
+    context.queryClient.query({
+      ...api.questionsAndAnswers.index.queryOptions(),
+      staleTime: "static",
+    }),
   head: (ctx) => ({
     ...seo({
       title: "Spørsmål og svar om kjøp og lån av pensumbøker | Boklisten.no",

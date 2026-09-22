@@ -1,5 +1,6 @@
-import BranchManager, { parseBranchManagerTab } from "@/features/branches/BranchManager";
-import type { BranchManagerTab } from "@/features/branches/BranchManager";
+import BranchManager from "@/features/branches/BranchManager";
+import { parseBranchManagerTab } from "@/features/branches/branchManagerTabs";
+import type { BranchManagerTab } from "@/features/branches/branchManagerTabs";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 

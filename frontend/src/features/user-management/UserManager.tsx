@@ -4,13 +4,7 @@ import { getRouteApi } from "@tanstack/react-router";
 
 import CustomersTab from "@/features/user-management/CustomersTab";
 import EmployeesTab from "@/features/user-management/EmployeesTab";
-
-const USER_MANAGER_TABS = ["kunder", "ansatte"] as const;
-export type UserManagerTab = (typeof USER_MANAGER_TABS)[number];
-
-export function parseUserManagerTab(value: unknown): UserManagerTab | undefined {
-  return USER_MANAGER_TABS.find((tab) => tab === value);
-}
+import { parseUserManagerTab } from "@/features/user-management/userManagerTabs";
 
 const route = getRouteApi("/(administrasjon)/admin/database/brukere");
 

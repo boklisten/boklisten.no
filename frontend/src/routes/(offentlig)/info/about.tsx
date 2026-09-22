@@ -1,12 +1,14 @@
-import EditableTextReadOnly, {
-  editableTextQueryOptions,
-} from "@/shared/components/EditableTextReadOnly";
+import EditableTextReadOnly from "@/shared/components/EditableTextReadOnly";
+import { api } from "@/shared/utils/apiClient";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/info/about")({
   loader: async ({ context }) => {
-    await context.queryClient.query({ ...editableTextQueryOptions("om_oss"), staleTime: "static" });
+    await context.queryClient.query({
+      ...api.editableTexts.show.queryOptions({ params: { id: "om_oss" } }),
+      staleTime: "static",
+    });
   },
   head: () =>
     seo({

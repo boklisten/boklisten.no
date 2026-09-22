@@ -1,13 +1,12 @@
-import EditableTextReadOnly, {
-  editableTextQueryOptions,
-} from "@/shared/components/EditableTextReadOnly";
+import EditableTextReadOnly from "@/shared/components/EditableTextReadOnly";
+import { api } from "@/shared/utils/apiClient";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/info/pupils")({
   loader: async ({ context }) => {
     await context.queryClient.query({
-      ...editableTextQueryOptions("vgs_elever"),
+      ...api.editableTexts.show.queryOptions({ params: { id: "vgs_elever" } }),
       staleTime: "static",
     });
   },

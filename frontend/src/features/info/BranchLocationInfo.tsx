@@ -5,11 +5,12 @@ import { useQuery } from "@tanstack/react-query";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { api } from "@/shared/utils/apiClient";
 
-export const branchQueryOptions = (branchId: string) =>
-  api.branches.show.queryOptions({ params: { branchId } });
-
 export default function BranchLocationInfo({ branchId }: { branchId: string }) {
-  const { data: branch, isLoading, isError } = useQuery(branchQueryOptions(branchId));
+  const {
+    data: branch,
+    isLoading,
+    isError,
+  } = useQuery(api.branches.show.queryOptions({ params: { branchId } }));
   if (isLoading) {
     return <Skeleton width={250} height={25} />;
   }

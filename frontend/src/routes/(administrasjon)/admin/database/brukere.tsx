@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import AuthGuard from "@/features/auth/AuthGuard";
-import UserManager, { parseUserManagerTab } from "@/features/user-management/UserManager";
-import type { UserManagerTab } from "@/features/user-management/UserManager";
+import UserManager from "@/features/user-management/UserManager";
+import { parseUserManagerTab } from "@/features/user-management/userManagerTabs";
+import type { UserManagerTab } from "@/features/user-management/userManagerTabs";
 import { seo } from "@/shared/utils/seo";
 
 interface UserManagerSearch {

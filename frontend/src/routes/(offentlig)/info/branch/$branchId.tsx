@@ -1,7 +1,6 @@
-import BranchLocationInfo, { branchQueryOptions } from "@/features/info/BranchLocationInfo";
-import BranchOpeningHours, {
-  branchOpeningHoursQueryOptions,
-} from "@/features/info/BranchOpeningHoursInfo";
+import BranchLocationInfo from "@/features/info/BranchLocationInfo";
+import BranchOpeningHours from "@/features/info/BranchOpeningHoursInfo";
+import { api } from "@/shared/utils/apiClient";
 import { jsonLdScript, seo } from "@/shared/utils/seo";
 import { branchSchema } from "@/shared/utils/structuredData";
 import { createFileRoute } from "@tanstack/react-router";
@@ -9,9 +8,12 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/(offentlig)/info/branch/$branchId")({
   loader: async ({ context, params }) => {
     const [branch, openingHours] = await Promise.all([
-      context.queryClient.query({ ...branchQueryOptions(params.branchId), staleTime: "static" }),
       context.queryClient.query({
-        ...branchOpeningHoursQueryOptions(params.branchId),
+        ...api.branches.show.queryOptions({ params: { branchId: params.branchId } }),
+        staleTime: "static",
+      }),
+      context.queryClient.query({
+        ...api.openingHours.index.queryOptions({ params: { branchId: params.branchId } }),
         staleTime: "static",
       }),
     ]);

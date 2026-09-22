@@ -30,27 +30,9 @@ import OpeningHoursSettings from "@/features/branches/opening_hours/OpeningHours
 import BranchSubjectSettings from "@/features/branches/subjects/BranchSubjectSettings";
 import UploadBranchUsers from "@/features/branches/UploadBranchUsers";
 import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
+import { parseBranchManagerTab } from "@/features/branches/branchManagerTabs";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import { api } from "@/shared/utils/apiClient";
-
-const BRANCH_MANAGER_TABS = [
-  "general",
-  "relationships",
-  "payment",
-  "books",
-  "subjects",
-  "hours",
-  "members",
-  "signatures",
-  "active-books",
-  "ordered-books",
-  "insights",
-] as const;
-export type BranchManagerTab = (typeof BRANCH_MANAGER_TABS)[number];
-
-export function parseBranchManagerTab(value: unknown): BranchManagerTab | undefined {
-  return BRANCH_MANAGER_TABS.find((tab) => tab === value);
-}
 
 const route = getRouteApi("/(administrasjon)/admin/database/filialer");
 
