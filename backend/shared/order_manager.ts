@@ -31,7 +31,8 @@ export interface OrderManagerRow {
   id: string;
   /** ISO timestamp. */
   creationTime: string;
-  customer: { id: string; name: string };
+  /** Null when the customer's account has been deleted. */
+  customer: { id: string; name: string } | null;
   branch: { id: string; name: string | null };
   openItems: OrderManagerOpenItem[];
   /** To be sent by mail. */
@@ -48,7 +49,8 @@ export interface OrderManagerPage {
 
 /** The selected order as the order history presents it, plus whose it is. */
 export interface OrderManagerDetail {
-  customerId: string;
+  /** Null when the customer's account has been deleted. */
+  customerId: string | null;
   order: OrderHistoryEntry;
 }
 

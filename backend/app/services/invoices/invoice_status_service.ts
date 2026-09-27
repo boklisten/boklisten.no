@@ -1,7 +1,8 @@
 import * as Sentry from "@sentry/node";
 
 import BadRequestException from "#exceptions/bad_request_exception";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
+import Order from "#models/order";
+import type { NewOrderItem } from "#models/order";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { StorageService } from "#services/storage_service";
 import { isNotNullish } from "#services/typescript_helpers";
@@ -13,7 +14,6 @@ import type {
   InvoiceStatus,
   InvoiceStatusChangeResult,
 } from "#shared/invoice";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 
 /**
  * The amount legacy bl-admin put on an "invoice-paid" order line: the invoiced net amount, rounded to
@@ -41,7 +41,7 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
   const warnings: string[] = [];
   const customerItems = await customerItemsOf(invoice);
   const unreturned = customerItems.filter((customerItem) => !customerItem.returned);
-  const orderItems: OrderItem[] = invoice.customerItemPayments.flatMap((payment) => {
+  const orderItems: NewOrderItem[] = invoice.customerItemPayments.flatMap((payment) => {
     const customerItem = unreturned.find((candidate) => candidate.id === payment.customerItem);
     if (!customerItem) {
       return [];
@@ -50,15 +50,13 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
     return [
       {
         type: "invoice-paid",
-        item: customerItem.item,
-        title: payment.title,
-        blid: customerItem.blid,
+        itemId: customerItem.item,
+        blid: customerItem.blid ?? null,
         amount,
         unitPrice: amount,
         handout: true,
-        info: { customerItem: customerItem.id },
         delivered: true,
-        customerItem: customerItem.id,
+        customerItemId: customerItem.id,
       },
     ];
   });
@@ -71,16 +69,15 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
     );
   } else {
     try {
-      const order = await StorageService.Orders.add({
+      const order = await Order.createWithItems({
         amount: orderItems.reduce((sum, orderItem) => sum + orderItem.amount, 0),
         orderItems,
-        branch,
-        customer,
+        branchId: branch,
+        customerId: customer,
         byCustomer: false,
-        employee: employeeDetailsId,
+        employeeId: employeeDetailsId,
         placed: false,
-        payments: [],
-        notification: { email: false },
+        notifyByEmail: false,
       });
       await new OrderPlacedHandler().placeOrder(order, employeeDetailsId);
     } catch (error) {
@@ -103,19 +100,14 @@ async function revertPayment(invoice: Invoice): Promise<string[]> {
   const customerDetailsId = invoice.customerInfo.userDetail;
   const invoiceItemIds = new Set(invoice.customerItemPayments.map((payment) => payment.item));
 
-  const query = new SEDbQuery();
-  query.objectIdFilters = [{ fieldName: "customer", value: customerDetailsId ?? "" }];
-  query.booleanFilters = [{ fieldName: "placed", value: true }];
-  const orders = customerDetailsId
-    ? ((await StorageService.Orders.getByQueryOrNull(query)) ?? [])
-    : [];
+  const orders = customerDetailsId ? await Order.placedFor(customerDetailsId) : [];
   const invoiceOrder = orders.find(
     (order) =>
       order.orderItems.some((orderItem) => orderItem.type === "invoice-paid") &&
-      order.orderItems.every((orderItem) => invoiceItemIds.has(orderItem.item)),
+      order.orderItems.every((orderItem) => invoiceItemIds.has(orderItem.itemId)),
   );
   if (invoiceOrder) {
-    await StorageService.Orders.remove(invoiceOrder.id);
+    await invoiceOrder.delete();
   } else {
     warnings.push("Fant ingen ordre for betalingen å fjerne fra kunden.");
   }

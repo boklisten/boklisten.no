@@ -1,13 +1,12 @@
 import logger from "@adonisjs/core/services/logger";
 
+import Order from "#models/order";
 import User from "#models/user";
 import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
-import { StorageService } from "#services/storage_service";
 
 interface CancellableOrderItem {
-  item: string;
-  title: string;
+  itemId: string;
 }
 
 export const OrderCancellationService = {
@@ -17,27 +16,25 @@ export const OrderCancellationService = {
     employeeDetailsId,
     notifyCustomer,
   }: {
-    originalOrder: { id: string; branch: string; customer: string };
+    originalOrder: Pick<Order, "id" | "branchId" | "customerId">;
     orderItems: CancellableOrderItem[];
     /** Set when an employee cancels on the customer's behalf; omit for customer-initiated cancels */
     employeeDetailsId?: string;
     notifyCustomer: boolean;
   }) {
-    const cancelOrder = await StorageService.Orders.add({
+    const cancelOrder = await Order.createWithItems({
       placed: true,
-      payments: [],
       amount: 0,
-      branch: originalOrder.branch,
-      customer: originalOrder.customer,
+      branchId: originalOrder.branchId,
+      customerId: originalOrder.customerId,
       byCustomer: !employeeDetailsId,
-      ...(employeeDetailsId && { employee: employeeDetailsId }),
-      notification: { email: notifyCustomer },
+      employeeId: employeeDetailsId ?? null,
+      notifyByEmail: notifyCustomer,
       orderItems: orderItems.map((orderItem) => ({
-        movedFromOrder: originalOrder.id,
+        movedFromOrderId: originalOrder.id,
         handout: false,
         delivered: true,
-        item: orderItem.item,
-        title: orderItem.title,
+        itemId: orderItem.itemId,
         type: "cancel" as const,
         amount: 0,
         unitPrice: 0,
@@ -47,15 +44,15 @@ export const OrderCancellationService = {
     await new OrderItemMovedFromOrderHandler().updateOrderItems(cancelOrder);
 
     // The customer may no longer exist (GDPR cleanup); the cancellation itself must still go through
-    if (notifyCustomer) {
+    if (notifyCustomer && originalOrder.customerId !== null) {
       try {
-        const customer = await User.find(originalOrder.customer);
+        const customer = await User.find(originalOrder.customerId);
         if (customer) {
           await OrderEmailHandler.sendOrderReceipt(customer, cancelOrder);
         }
       } catch (error) {
         logger.error(
-          `failed to notify customer "${originalOrder.customer}" after cancelling order "${originalOrder.id}": ${String(error)}`,
+          `failed to notify customer "${originalOrder.customerId}" after cancelling order "${originalOrder.id}": ${String(error)}`,
         );
       }
     }

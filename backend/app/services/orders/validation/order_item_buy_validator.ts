@@ -1,9 +1,9 @@
+import Order from "#models/order";
+import type OrderItem from "#models/order_item";
+import { OrderPayments } from "#services/payments/order_payments";
 import { PriceService } from "#services/price_service";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Item } from "#shared/item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderItemBuyValidator {
   private readonly priceService: PriceService;
@@ -30,52 +30,51 @@ export class OrderItemBuyValidator {
     return true;
   }
 
+  /**
+   * A mismatch here does not fail the order: the legacy check swallowed its errors, and that
+   * behaviour is kept.
+   */
   private async validateIfMovedFromOrder(
     orderItem: OrderItem,
     itemPrice: number,
   ): Promise<boolean> {
-    if (!orderItem.movedFromOrder) {
+    if (orderItem.movedFromOrderId === null) {
       return true;
     }
 
-    await StorageService.Orders.get(orderItem.movedFromOrder)
-      .then((order: Order) => {
-        if (order.payments.length <= 0 && orderItem.amount === 0) {
-          throw new BlError('the original order has not been payed, but orderItem.amount is "0"');
-        }
+    try {
+      const order = await Order.getOrFail(orderItem.movedFromOrderId);
+      if (!(await OrderPayments.exist(order.id)) && orderItem.amount === 0) {
+        throw new BlError('the original order has not been payed, but orderItem.amount is "0"');
+      }
 
-        const movedFromOrderItem = this.getOrderItemFromOrder(orderItem.item, order);
+      const movedFromOrderItem = this.getOrderItemFromOrder(orderItem.itemId, order);
 
-        const expectedOrderItemAmount =
-          this.priceService.round(this.priceService.sanitize(itemPrice)) -
-          movedFromOrderItem.amount;
+      const expectedOrderItemAmount =
+        this.priceService.round(this.priceService.sanitize(itemPrice)) - movedFromOrderItem.amount;
 
-        if (orderItem.amount !== expectedOrderItemAmount) {
-          throw new BlError(
-            `orderItem amount is "${orderItem.amount}" but should be "${expectedOrderItemAmount}"`,
-          );
-        }
+      if (orderItem.amount !== expectedOrderItemAmount) {
+        throw new BlError(
+          `orderItem amount is "${orderItem.amount}" but should be "${expectedOrderItemAmount}"`,
+        );
+      }
 
-        return true;
-      })
-      .catch(() => false);
-
-    // @ts-expect-error fixme: auto ignored
-    return undefined;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private getOrderItemFromOrder(itemId: string, order: Order): OrderItem {
-    for (const orderItem of order.orderItems) {
-      if (orderItem.item.toString() === itemId.toString()) {
-        return orderItem;
-      }
+    const found = order.orderItems.find((orderItem) => orderItem.itemId === itemId);
+    if (!found) {
+      throw new BlError("not found in original orderItem");
     }
-
-    throw new BlError("not found in original orderItem");
+    return found;
   }
 
   private async validateOrderItemPriceTypeBuy(orderItem: OrderItem, item: Item): Promise<boolean> {
-    if (orderItem.movedFromOrder !== undefined && orderItem.movedFromOrder !== null) {
+    if (orderItem.movedFromOrderId !== null) {
       return this.validateIfMovedFromOrder(orderItem, item.price);
     }
 

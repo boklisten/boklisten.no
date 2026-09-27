@@ -91,10 +91,6 @@ export default defineRailway((ctx) => {
 
   const cronJobs = isProduction
     ? [
-        cronJob("Database Cleanup", "database_cleanup", {
-          schedule: "0 2 * * 1",
-          env: { MONGO_URI: mongoDb.env.MONGO_URL },
-        }),
         cronJob("Copy Postgres to Staging", "copy_prod_postgres_to_staging", {
           schedule: "0 4 * * *",
           env: {

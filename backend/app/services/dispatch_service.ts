@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import twilio from "twilio";
 
 import type Message from "#models/message";
+import type Order from "#models/order";
 import User from "#models/user";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { isUnderage } from "#models/signature";
@@ -12,7 +13,6 @@ import { userHasValidSignature } from "#services/signature_helper";
 import type { MessageLogContext } from "#services/message_log_service";
 import { MessageLogService } from "#services/message_log_service";
 import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
-import type { Order } from "#shared/order/order";
 import { apiOrigin, isDeployed, clientOrigin } from "#config/app";
 import env from "#start/env";
 import type { EmailOrder, EmailUser } from "#types/email";
@@ -404,9 +404,7 @@ const DispatchService = {
             orderItems: order.orderItems.map((orderItem) => ({
               title: orderItem.title,
               type: OrderEmailHandler.translateOrderItemType(orderItem.type),
-              deadline: orderItem.info?.to
-                ? DateTime.fromJSDate(orderItem.info.to).toFormat("dd/MM/yyyy")
-                : "",
+              deadline: orderItem.periodTo?.toFormat("dd/MM/yyyy") ?? "",
             })),
             expectedDeliveryDate: bringDeliveryInfo.estimatedDelivery
               ? DateTime.fromJSDate(bringDeliveryInfo.estimatedDelivery).toFormat("dd/MM/yyyy")

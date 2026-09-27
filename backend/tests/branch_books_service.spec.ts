@@ -1,7 +1,16 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
+import { DateTime } from "luxon";
+import { createSandbox } from "sinon";
 
+import Order from "#models/order";
 import type { SummaryRow } from "#services/branch_books_service";
-import { buildSummary, clusterDeadlines } from "#services/branch_books_service";
+import { BranchBooksService, buildSummary, clusterDeadlines } from "#services/branch_books_service";
+import { OrderCancellationService } from "#services/order_cancellation_service";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 const JULY_1 = new Date("2026-07-01T00:00:00.000Z");
 const JUNE_30 = new Date("2026-06-30T22:00:00.000Z");
@@ -95,5 +104,199 @@ test.group("BranchBooksService.buildSummary()", () => {
 
   test("returns an empty summary for no rows", ({ assert }) => {
     assert.deepEqual(buildSummary([]), { direct: 0, indirect: 0, total: 0, groups: [] });
+  });
+});
+
+/** A branch with a child branch, a customer, two books and a deadline. */
+async function seedOrderedBooks() {
+  const parent = await createBranch({ name: "Ullern VGS" });
+  const child = await createBranch({ name: "Ullern VG1", parentBranchId: parent.id });
+  const [customer, sinus, matte] = await Promise.all([
+    createUser({ name: "Kari" }),
+    createItem({ title: "Sinus 1T" }),
+    createItem({ title: "Matte 1P" }),
+  ]);
+  const deadline = DateTime.fromJSDate(JULY_1);
+  return { parent, child, customer, sinus, matte, deadline };
+}
+
+test.group("BranchBooksService: ordered books", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("the summary counts open rent lines with a deadline, direct and via children", async ({
+    assert,
+  }) => {
+    const { parent, child, customer, sinus, matte, deadline } = await seedOrderedBooks();
+    await createOrder({
+      branchId: parent.id,
+      customerId: customer.id,
+      orderItems: [
+        { itemId: sinus.id, periodTo: deadline },
+        { itemId: matte.id, type: "partly-payment", periodTo: deadline },
+        // Not ordered books: handed out, a buy, no deadline.
+        { itemId: sinus.id, periodTo: deadline, handout: true },
+        { itemId: sinus.id, type: "buy", periodTo: deadline },
+        { itemId: sinus.id },
+      ],
+    });
+    await createOrder({
+      branchId: child.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id, periodTo: deadline }],
+    });
+    await createOrder({
+      branchId: parent.id,
+      customerId: customer.id,
+      placed: false,
+      orderItems: [{ itemId: sinus.id, periodTo: deadline }],
+    });
+
+    const summary = await BranchBooksService.getOrderedBooksSummary(parent.id);
+
+    assert.equal(summary.total, 3);
+    assert.equal(summary.direct, 2);
+    assert.deepEqual(summary.groups[0]?.deadlines, [JULY_1.toISOString()]);
+    assert.deepEqual(
+      summary.groups[0]?.titles.map((title) => [title.title, title.direct, title.indirect]),
+      [
+        ["Matte 1P", 1, 0],
+        ["Sinus 1T", 1, 1],
+      ],
+    );
+  });
+
+  test("details list the direct lines of one book and deadline, oldest order first", async ({
+    assert,
+  }) => {
+    const { parent, child, customer, sinus, deadline } = await seedOrderedBooks();
+    const later = await createOrder({
+      branchId: parent.id,
+      customerId: null,
+      createdAt: DateTime.fromISO("2026-05-02T10:00:00Z"),
+      orderItems: [{ itemId: sinus.id, periodTo: deadline }],
+    });
+    const earlier = await createOrder({
+      branchId: parent.id,
+      customerId: customer.id,
+      createdAt: DateTime.fromISO("2026-05-01T10:00:00Z"),
+      orderItems: [{ itemId: sinus.id, periodTo: deadline }],
+    });
+    await createOrder({
+      branchId: child.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id, periodTo: deadline }],
+    });
+
+    const details = await BranchBooksService.getOrderedBookDetails({
+      branchId: parent.id,
+      deadlines: [JULY_1.toISOString()],
+      itemId: sinus.id,
+    });
+
+    assert.deepEqual(
+      details.map((row) => [row.orderId, row.orderItemId, row.customerName]),
+      [
+        [earlier.id, earlier.orderItems[0]?.id, "Kari"],
+        [later.id, later.orderItems[0]?.id, null],
+      ],
+    );
+    assert.equal(details[0]?.orderTime, "2026-05-01T10:00:00.000Z");
+  });
+
+  test("a bulk deadline change moves only the matching open lines", async ({ assert }) => {
+    const { parent, child, customer, sinus, matte, deadline } = await seedOrderedBooks();
+    const order = await createOrder({
+      branchId: parent.id,
+      customerId: customer.id,
+      orderItems: [
+        { itemId: sinus.id, periodTo: deadline },
+        { itemId: matte.id, periodTo: deadline },
+      ],
+    });
+    const childOrder = await createOrder({
+      branchId: child.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id, periodTo: deadline }],
+    });
+    const newDeadline = "2026-12-20T00:00:00.000Z";
+
+    const result = await BranchBooksService.bulkUpdateOrderedBooks({
+      branchId: parent.id,
+      filter: { deadlines: [JULY_1.toISOString()], itemId: sinus.id, includeDescendants: false },
+      update: { deadline: newDeadline },
+    });
+
+    assert.deepEqual(result, { matchedCount: 1, modifiedCount: 1 });
+    const [sinusLine, matteLine] = (await Order.getOrFail(order.id)).orderItems;
+    assert.equal(sinusLine?.periodTo?.toJSDate().toISOString(), newDeadline);
+    assert.equal(matteLine?.periodTo?.toJSDate().toISOString(), JULY_1.toISOString());
+    const [childLine] = (await Order.getOrFail(childOrder.id)).orderItems;
+    assert.equal(childLine?.periodTo?.toJSDate().toISOString(), JULY_1.toISOString());
+  });
+
+  test("a bulk branch change moves the orders of the addressed lines", async ({ assert }) => {
+    const { parent, child, customer, sinus, deadline } = await seedOrderedBooks();
+    const other = await createBranch({ name: "Nydalen VGS" });
+    const order = await createOrder({
+      branchId: parent.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id, periodTo: deadline }],
+    });
+    const childOrder = await createOrder({
+      branchId: child.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id, periodTo: deadline }],
+    });
+
+    const result = await BranchBooksService.bulkUpdateOrderedBooks({
+      branchId: parent.id,
+      filter: {
+        orderItemIds: [order.orderItems[0]?.id ?? 0, childOrder.orderItems[0]?.id ?? 0],
+        includeDescendants: true,
+      },
+      update: { branchId: other.id },
+    });
+
+    assert.deepEqual(result, { matchedCount: 2, modifiedCount: 2 });
+    assert.equal((await Order.getOrFail(order.id)).branchId, other.id);
+    assert.equal((await Order.getOrFail(childOrder.id)).branchId, other.id);
+  });
+
+  test("a bulk cancel cancels free orders and skips orders with money on them", async ({
+    assert,
+  }) => {
+    const { parent, customer, sinus, matte, deadline } = await seedOrderedBooks();
+    const free = await createOrder({
+      branchId: parent.id,
+      customerId: customer.id,
+      orderItems: [
+        { itemId: sinus.id, periodTo: deadline },
+        { itemId: matte.id, periodTo: deadline },
+      ],
+    });
+    await createOrder({
+      branchId: parent.id,
+      customerId: customer.id,
+      amount: 100,
+      orderItems: [{ itemId: sinus.id, periodTo: deadline }],
+    });
+    const sandbox = createSandbox();
+    const cancel = sandbox.stub(OrderCancellationService, "cancelOrderItems").resolves();
+    try {
+      const result = await BranchBooksService.bulkCancelOrderedBooks({
+        branchId: parent.id,
+        filter: { deadlines: [JULY_1.toISOString()], includeDescendants: false },
+        notifyCustomers: false,
+        employeeDetailsId: customer.id,
+      });
+
+      assert.deepEqual(result, { cancelledOrders: 1, cancelledBooks: 2, skippedBooks: 1 });
+      assert.isTrue(cancel.calledOnce);
+      const [call] = cancel.firstCall.args;
+      assert.equal(call.originalOrder.id, free.id);
+      assert.deepEqual(call.orderItems, [{ itemId: sinus.id }, { itemId: matte.id }]);
+    } finally {
+      sandbox.restore();
+    }
   });
 });

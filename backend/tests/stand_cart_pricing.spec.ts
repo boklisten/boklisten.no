@@ -1,5 +1,7 @@
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 
+import type OrderItem from "#models/order_item";
 import {
   alreadyPaidFor,
   priceCustomerItemLine,
@@ -10,8 +12,6 @@ import type { Branch } from "#shared/branch";
 import type { BranchItem } from "#shared/branch-item";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import { findOption } from "#shared/stand_cart";
 import type { StandCartOption } from "#shared/stand_cart";
 import { branchDto } from "#tests/branch_fixtures";
@@ -38,26 +38,17 @@ function branchWith(overrides: Partial<Branch> = {}): Branch {
   });
 }
 
-function orderWith(orderItem: Partial<OrderItem>, payments: string[] = []): Order {
-  return mock<Order>({
-    id: "order1",
-    branch: "branch1",
-    customer: "customer1",
-    payments,
-    amount: orderItem.amount ?? 0,
-    orderItems: [
-      {
-        type: "rent",
-        item: ITEM.id,
-        title: ITEM.title,
-        amount: 0,
-        unitPrice: 0,
-        handout: false,
-        delivered: false,
-        info: { to: SEMESTER_END, periodType: "semester" },
-        ...orderItem,
-      },
-    ],
+function orderItemWith(overrides: Partial<OrderItem> = {}): OrderItem {
+  return mock<OrderItem>({
+    type: "rent",
+    itemId: ITEM.id,
+    amount: 0,
+    unitPrice: 0,
+    handout: false,
+    delivered: false,
+    periodTo: DateTime.fromJSDate(SEMESTER_END),
+    periodType: "semester",
+    ...overrides,
   });
 }
 
@@ -66,13 +57,12 @@ function options(line: { options: StandCartOption[] }, type: StandCartOption["ty
 }
 
 function orderLine(overrides: Partial<Parameters<typeof priceOrderLine>[0]> = {}) {
-  const originalOrder = overrides.originalOrder ?? orderWith({});
   return priceOrderLine({
     branch: branchWith(),
     item: ITEM,
     branchItem: null,
-    originalOrder,
-    originalOrderItem: originalOrder.orderItems[0]!,
+    originalOrderPaid: false,
+    originalOrderItem: orderItemWith(),
     blockedByMatch: false,
     scanned: true,
     now: NOW,
@@ -93,7 +83,12 @@ test.group("priceOrderLine", () => {
   test("without a scanned copy a bought book still goes out as bought", ({ assert }) => {
     const line = orderLine({
       scanned: false,
-      originalOrder: orderWith({ type: "buy", amount: 500, info: undefined }),
+      originalOrderItem: orderItemWith({
+        type: "buy",
+        amount: 500,
+        periodTo: null,
+        periodType: null,
+      }),
     });
     assert.deepEqual(
       line.options.map((option) => option.type),
@@ -131,7 +126,10 @@ test.group("priceOrderLine", () => {
 
   test("defaults to the ordered action and period", ({ assert }) => {
     const line = orderLine({
-      originalOrder: orderWith({ info: { to: YEAR_END, periodType: "year" } }),
+      originalOrderItem: orderItemWith({
+        periodTo: DateTime.fromJSDate(YEAR_END),
+        periodType: "year",
+      }),
     });
     const chosen = line.options[line.defaultOptionIndex];
     assert.equal(chosen?.type, "rent");
@@ -142,7 +140,7 @@ test.group("priceOrderLine", () => {
     assert,
   }) => {
     const line = orderLine({
-      originalOrder: orderWith({ info: { to: PAST, periodType: "semester" } }),
+      originalOrderItem: orderItemWith({ periodTo: DateTime.fromJSDate(PAST) }),
     });
     const chosen = line.options[line.defaultOptionIndex];
     assert.equal(chosen?.type, "rent");
@@ -191,10 +189,10 @@ test.group("priceOrderLine", () => {
         { type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 0.5 },
       ],
     });
-    const prepaid = orderWith({ amount: 250, unitPrice: 250 }, ["payment1"]);
     const line = orderLine({
       branch,
-      originalOrder: prepaid,
+      originalOrderPaid: true,
+      originalOrderItem: orderItemWith({ amount: 250, unitPrice: 250 }),
       branchItem: mock<BranchItem>({ buyAtBranch: true }),
     });
     assert.equal(options(line, "rent")[0]?.price, 0);
@@ -209,7 +207,10 @@ test.group("priceOrderLine", () => {
         { type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 0.5 },
       ],
     });
-    const line = orderLine({ branch, originalOrder: orderWith({ amount: 250, unitPrice: 250 }) });
+    const line = orderLine({
+      branch,
+      originalOrderItem: orderItemWith({ amount: 250, unitPrice: 250 }),
+    });
     assert.equal(options(line, "rent")[0]?.price, 250);
     assert.equal(options(line, "cancel")[0]?.price, 0);
   });
@@ -264,7 +265,7 @@ test.group("priceOrderLine", () => {
     });
     const line = orderLine({
       branch,
-      originalOrder: orderWith({ type: "partly-payment", amount: 150, unitPrice: 150 }),
+      originalOrderItem: orderItemWith({ type: "partly-payment", amount: 150, unitPrice: 150 }),
     });
     assert.lengthOf(options(line, "partly-payment"), 1);
     assert.equal(line.options[line.defaultOptionIndex]?.type, "partly-payment");
@@ -283,13 +284,11 @@ test.group("priceOrderLine", () => {
 
 test.group("alreadyPaidFor", () => {
   test("is the order item's amount when the order has payments", ({ assert }) => {
-    const order = orderWith({ amount: 200 }, ["payment1"]);
-    assert.equal(alreadyPaidFor(order, order.orderItems[0]!), 200);
+    assert.equal(alreadyPaidFor(true, orderItemWith({ amount: 200 })), 200);
   });
 
   test("is zero when the order has no payments", ({ assert }) => {
-    const order = orderWith({ amount: 200 });
-    assert.equal(alreadyPaidFor(order, order.orderItems[0]!), 0);
+    assert.equal(alreadyPaidFor(false, orderItemWith({ amount: 200 })), 0);
   });
 });
 

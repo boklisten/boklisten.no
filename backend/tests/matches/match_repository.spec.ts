@@ -13,11 +13,20 @@ import {
   seedTestCatalogue,
 } from "#tests/matches/match-testing-utils";
 import { isDischargeConflict, MatchRepository } from "#services/matches/match_repository";
+import { createBranch } from "#tests/branch_fixtures";
+import { createOrder } from "#tests/order_fixtures";
 
 const A = "5d765db5fc8c47001c408d81";
 const B = "5d765db5fc8c47001c408d82";
 const C = "5d765db5fc8c47001c408d83";
 const ITEM_X = "5d765db5fc8c47001c408e01";
+const ORDER_ID = "5d765db5fc8c47001c408a01";
+
+/** The order a handover names; the reference is a foreign key, so the order must exist. */
+async function createHandoverOrder(): Promise<string> {
+  const branch = await createBranch();
+  return (await createOrder({ id: ORDER_ID, branchId: branch.id, customerId: A })).id;
+}
 
 test.group("match rounds", (group) => {
   group.each.setup(() => testUtils.db().truncate());
@@ -234,7 +243,7 @@ test.group("book handovers", (group) => {
       fromUserDetailId: null,
       toUserDetailId: A,
       occurredAt: DateTime.fromISO("2026-06-01T10:00:00Z"),
-      orderId: "5d765db5fc8c47001c408a01",
+      orderId: await createHandoverOrder(),
     });
 
     const loaded = await BookHandover.firstOrFail();
@@ -416,7 +425,7 @@ test.group("MatchRepository", (group) => {
       fromUserDetailId: A,
       toUserDetailId: B,
       occurredAt: DateTime.fromISO("2026-06-01T10:00:00Z"),
-      orderId: "5d765db5fc8c47001c408a01",
+      orderId: await createHandoverOrder(),
       dischargesSenderObligationId: obligation.id,
       dischargesReceiverObligationId: obligation.id,
     });

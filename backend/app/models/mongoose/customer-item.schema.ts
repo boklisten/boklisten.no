@@ -1,6 +1,5 @@
 import { Schema } from "mongoose";
 
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import type { BlSchema } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 
@@ -72,7 +71,7 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     required: true,
   },
   cancelInfo: {
-    order: { type: Schema.Types.ObjectId, ref: BlSchemaName.Orders },
+    order: { type: Schema.Types.ObjectId },
     time: Date,
   },
   buyout: {
@@ -81,7 +80,7 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     required: true,
   },
   buyoutInfo: {
-    order: { type: Schema.Types.ObjectId, ref: BlSchemaName.Orders },
+    order: { type: Schema.Types.ObjectId },
     time: Date,
   },
   buyback: {
@@ -90,12 +89,12 @@ export const CustomerItemSchema: BlSchema<CustomerItem> = new Schema({
     required: true,
   },
   buybackInfo: {
-    order: { type: Schema.Types.ObjectId, ref: BlSchemaName.Orders },
+    order: { type: Schema.Types.ObjectId },
     time: Date,
   },
 
   orders: {
-    type: [{ type: Schema.Types.ObjectId, ref: BlSchemaName.Orders }],
+    type: [{ type: Schema.Types.ObjectId }],
     default: [],
   },
   periodExtends: {

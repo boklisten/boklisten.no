@@ -4,11 +4,12 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import User from "#models/user";
 import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
-
+import type { OrderItemType } from "#shared/order/order-item/order-item-type";
+import { mock } from "#tests/test-doubles";
 import { userDouble } from "#tests/user_fixtures";
 
 test.group("OrderToCustomerItemGenerator", (group) => {
@@ -39,6 +40,8 @@ test.group("OrderToCustomerItemGenerator", (group) => {
       phone: userDetail.guardianPhone ?? "",
     },
   };
+  const deadline = DateTime.fromObject({ year: 2100, month: 2, day: 1 });
+  const today = DateTime.now();
   let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {
@@ -55,535 +58,134 @@ test.group("OrderToCustomerItemGenerator", (group) => {
   });
   const generator = new OrderToCustomerItemGenerator();
 
-  test('should return customer-item type "partly-payment', async ({ assert }) => {
-    const deadline = new Date(2100, 1, 1);
-    const today = new Date();
-
-    const orderItem: OrderItem = {
+  function orderItem(
+    type: OrderItemType,
+    blid: string | null,
+    extra: Partial<Pick<OrderItem, "amountLeftToPay" | "periodType">> = {},
+  ): OrderItem {
+    return mock<OrderItem>({
       handout: false,
       delivered: false,
-      type: "partly-payment",
-      item: "item1",
-      title: "signatur",
-      blid: "blid1",
+      type,
+      itemId: "item1",
+      blid,
       amount: 100,
       unitPrice: 100,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "semester",
-        numberOfPeriods: 1,
-        amountLeftToPay: 200,
-        customerItem: "",
-      },
-    };
+      periodFrom: today,
+      periodTo: deadline,
+      periodType: "semester",
+      numberOfPeriods: 1,
+      amountLeftToPay: null,
+      ...extra,
+    });
+  }
 
-    const order: Order = {
+  function orderWith(orderItems: OrderItem[]): Order {
+    return mock<Order>({
       id: "order1",
       amount: 100,
-      orderItems: [orderItem],
-      branch: "branch1",
-      customer: "customer1",
+      orderItems,
+      branchId: "branch1",
+      customerId: "customer1",
       byCustomer: false,
       placed: false,
-      employee: "employee1",
-      payments: [],
-      delivery: "delivery1",
-      creationTime: today,
-    };
+      employeeId: "employee1",
+      deliveryId: "delivery1",
+      createdAt: today,
+    });
+  }
 
-    const expectedResult = [
-      {
-        id: null,
-        item: orderItem.item,
-        type: "partly-payment",
-        customer: order.customer,
-
-        // @ts-expect-error fixme: auto ignored
-        deadline: orderItem.info.to,
-        handout: true,
-        handoutInfo: {
-          handoutById: order.branch,
-          handoutEmployee: order.employee,
-          time: today,
-        },
-        returned: false,
-        buyout: false,
-        cancel: false,
-        buyback: false,
-        // @ts-expect-error fixme: auto ignored
-        amountLeftToPay: orderItem.info.amountLeftToPay,
-        blid: orderItem.blid,
-        orders: [order.id],
-        customerInfo,
+  /** The customer item the generator makes for a handed-out line of `orderWith`. */
+  function expectedCustomerItem(line: OrderItem) {
+    return {
+      id: null,
+      item: line.itemId,
+      type: line.type,
+      customer: "customer1",
+      deadline: deadline.toJSDate(),
+      handout: true,
+      handoutInfo: {
+        handoutById: "branch1",
+        handoutEmployee: "employee1",
+        time: today.toJSDate(),
       },
-    ];
+      returned: false,
+      buyout: false,
+      cancel: false,
+      buyback: false,
+      ...(line.type === "partly-payment"
+        ? { amountLeftToPay: line.amountLeftToPay ?? undefined }
+        : {}),
+      blid: line.blid ?? undefined,
+      orders: ["order1"],
+      customerInfo,
+    };
+  }
 
-    const result = generator.generate(order);
-    assert.deepEqual(await result, expectedResult);
+  test('should return customer-item type "partly-payment', async ({ assert }) => {
+    const line = orderItem("partly-payment", "blid1", { amountLeftToPay: 200 });
+
+    assert.deepEqual(await generator.generate(orderWith([line])), [expectedCustomerItem(line)]);
   });
 
   test('should return multiple customer-items when more than one order-item has type "partly-payment', async ({
     assert,
   }) => {
-    const deadline = new Date(2100, 1, 1);
-    const today = new Date();
+    const line = orderItem("partly-payment", "blid1", { amountLeftToPay: 200 });
+    const line2 = orderItem("partly-payment", "blid2", {
+      amountLeftToPay: 210,
+      periodType: "year",
+    });
 
-    const orderItem: OrderItem = {
-      handout: false,
-      delivered: false,
-      type: "partly-payment",
-      item: "item1",
-      title: "signatur",
-      blid: "blid1",
-      amount: 100,
-      unitPrice: 100,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "semester",
-        numberOfPeriods: 1,
-        amountLeftToPay: 200,
-        customerItem: "",
-      },
-    };
-
-    const orderItem2: OrderItem = {
-      handout: false,
-      delivered: false,
-      type: "partly-payment",
-      item: "item1",
-      title: "signatur",
-      blid: "blid2",
-      amount: 110,
-      unitPrice: 110,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "year",
-        numberOfPeriods: 1,
-        amountLeftToPay: 210,
-        customerItem: "",
-      },
-    };
-
-    const order: Order = {
-      id: "order1",
-      amount: 100,
-      orderItems: [orderItem, orderItem2],
-      branch: "branch1",
-      customer: "customer1",
-      byCustomer: false,
-      placed: false,
-      employee: "employee1",
-      payments: [],
-      delivery: "delivery1",
-      creationTime: today,
-    };
-
-    const expectedResult = [
-      {
-        id: null,
-        item: orderItem.item,
-        type: "partly-payment",
-        customer: order.customer,
-
-        // @ts-expect-error fixme: auto ignored
-        deadline: orderItem.info.to,
-        handout: true,
-        handoutInfo: {
-          handoutById: order.branch,
-          handoutEmployee: order.employee,
-          time: today,
-        },
-        returned: false,
-        buyout: false,
-        cancel: false,
-        buyback: false,
-        blid: orderItem.blid,
-        // @ts-expect-error fixme: auto ignored
-        amountLeftToPay: orderItem.info.amountLeftToPay,
-        orders: [order.id],
-        customerInfo,
-      },
-      {
-        id: null,
-        item: orderItem2.item,
-        type: "partly-payment",
-        blid: orderItem2.blid,
-        customer: order.customer,
-
-        // @ts-expect-error fixme: auto ignored
-        deadline: orderItem2.info.to,
-        handout: true,
-        handoutInfo: {
-          handoutById: order.branch,
-          handoutEmployee: order.employee,
-          time: today,
-        },
-        returned: false,
-        buyout: false,
-        cancel: false,
-        buyback: false,
-        // @ts-expect-error fixme: auto ignored
-        amountLeftToPay: orderItem2.info.amountLeftToPay,
-        orders: [order.id],
-        customerInfo,
-      },
-    ];
-
-    const result = generator.generate(order);
-    assert.deepEqual(await result, expectedResult);
+    assert.deepEqual(await generator.generate(orderWith([line, line2])), [
+      expectedCustomerItem(line),
+      expectedCustomerItem(line2),
+    ]);
   });
 
   test("should return empty array if no order-item shall be converted to customer-items when more than one order-item", async ({
     assert,
   }) => {
-    const deadline = new Date(2100, 1, 1);
-    const today = new Date();
+    const order = orderWith([orderItem("extend", null), orderItem("buy", null)]);
 
-    const orderItem: OrderItem = {
-      handout: false,
-      delivered: false,
-      type: "extend",
-      item: "item1",
-      title: "signatur",
-      amount: 100,
-      unitPrice: 100,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "semester",
-        numberOfPeriods: 1,
-        amountLeftToPay: 200,
-        customerItem: "",
-      },
-    };
-
-    const orderItem2: OrderItem = {
-      handout: false,
-      delivered: false,
-      type: "buy",
-      item: "item1",
-      title: "signatur",
-      amount: 110,
-      unitPrice: 110,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "year",
-        numberOfPeriods: 1,
-        amountLeftToPay: 210,
-        customerItem: "",
-      },
-    };
-
-    const order: Order = {
-      id: "order1",
-      amount: 100,
-      orderItems: [orderItem, orderItem2],
-      branch: "branch1",
-      customer: "customer1",
-      byCustomer: false,
-      placed: false,
-      employee: "employee1",
-      payments: [],
-      delivery: "delivery1",
-      creationTime: today,
-    };
-
-    const result = generator.generate(order);
-    assert.deepEqual(await result, []);
+    assert.deepEqual(await generator.generate(order), []);
   });
 
   test('should return customer-item type "rent"', async ({ assert }) => {
-    const deadline = new Date(2100, 1, 1);
-    const today = new Date();
+    const line = orderItem("rent", "blid1");
 
-    const orderItem: OrderItem = {
-      handout: false,
-      delivered: false,
-      type: "rent",
-      item: "item1",
-      title: "signatur",
-      blid: "blid1",
-      amount: 0,
-      unitPrice: 0,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "semester",
-        numberOfPeriods: 1,
-      },
-    };
-
-    const order: Order = {
-      id: "order1",
-      amount: 0,
-      orderItems: [orderItem],
-      branch: "branch1",
-      customer: "customer1",
-      byCustomer: false,
-      placed: false,
-      employee: "employee1",
-      payments: [],
-      delivery: "delivery1",
-      creationTime: today,
-    };
-
-    const expectedResult = [
-      {
-        id: null,
-        item: orderItem.item,
-        type: "rent",
-        customer: order.customer,
-
-        // @ts-expect-error fixme: auto ignored
-        deadline: orderItem.info.to,
-        handout: true,
-        blid: orderItem.blid,
-        handoutInfo: {
-          handoutById: order.branch,
-          handoutEmployee: order.employee,
-          time: today,
-        },
-        returned: false,
-        buyout: false,
-        cancel: false,
-        buyback: false,
-        orders: [order.id],
-        customerInfo,
-      },
-    ];
-
-    const result = generator.generate(order);
-    assert.deepEqual(await result, expectedResult);
+    assert.deepEqual(await generator.generate(orderWith([line])), [expectedCustomerItem(line)]);
   });
 
   test('should return multiple customer-items with type "rent"', async ({ assert }) => {
-    const deadline = new Date(2100, 1, 1);
-    const today = new Date();
+    const line = orderItem("rent", "blid1");
+    const line2 = orderItem("rent", "blid2");
 
-    const orderItem: OrderItem = {
-      handout: false,
-      delivered: false,
-      type: "rent",
-      item: "item1",
-      title: "signatur",
-      blid: "blid1",
-      amount: 0,
-      unitPrice: 0,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "semester",
-        numberOfPeriods: 1,
-      },
-    };
-
-    const orderItem2: OrderItem = {
-      handout: false,
-      delivered: false,
-      type: "rent",
-      item: "item1",
-      title: "signatur 2",
-      blid: "blid2",
-      amount: 0,
-      unitPrice: 0,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "semester",
-        numberOfPeriods: 1,
-      },
-    };
-
-    const order: Order = {
-      id: "order1",
-      amount: 0,
-      orderItems: [orderItem, orderItem2],
-      branch: "branch1",
-      customer: "customer1",
-      byCustomer: false,
-      placed: false,
-      employee: "employee1",
-      payments: [],
-      delivery: "delivery1",
-      creationTime: today,
-    };
-
-    const expectedResult = [
-      {
-        id: null,
-        item: orderItem.item,
-        type: "rent",
-        customer: order.customer,
-
-        // @ts-expect-error fixme: auto ignored
-        deadline: orderItem.info.to,
-        blid: orderItem.blid,
-        handout: true,
-        handoutInfo: {
-          handoutById: order.branch,
-          handoutEmployee: order.employee,
-          time: today,
-        },
-        returned: false,
-        buyout: false,
-        cancel: false,
-        buyback: false,
-        orders: [order.id],
-        customerInfo,
-      },
-      {
-        id: null,
-        item: orderItem2.item,
-        type: "rent",
-        customer: order.customer,
-
-        // @ts-expect-error fixme: auto ignored
-        deadline: orderItem2.info.to,
-        blid: orderItem2.blid,
-        handout: true,
-        handoutInfo: {
-          handoutById: order.branch,
-          handoutEmployee: order.employee,
-          time: today,
-        },
-        returned: false,
-        buyout: false,
-        cancel: false,
-        buyback: false,
-        orders: [order.id],
-        customerInfo,
-      },
-    ];
-
-    const result = generator.generate(order);
-    assert.deepEqual(await result, expectedResult);
+    assert.deepEqual(await generator.generate(orderWith([line, line2])), [
+      expectedCustomerItem(line),
+      expectedCustomerItem(line2),
+    ]);
   });
 
   test('should return multiple customer-items with enums "rent" and "partly-payment"', async ({
     assert,
   }) => {
-    const deadline = new Date(2100, 1, 1);
-    const today = new Date();
+    const line2 = orderItem("rent", "blid2");
+    const line3 = orderItem("partly-payment", "blid3");
+    const line4 = orderItem("buy", "blid4");
 
-    const orderItem2: OrderItem = {
-      handout: false,
-      delivered: false,
-      type: "rent",
-      item: "item1",
-      title: "signatur 2",
-      blid: "blid2",
-      amount: 0,
-      unitPrice: 0,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "semester",
-        numberOfPeriods: 1,
-      },
-    };
+    assert.deepEqual(await generator.generate(orderWith([line2, line3, line4])), [
+      expectedCustomerItem(line2),
+      expectedCustomerItem(line3),
+    ]);
+  });
 
-    const orderItem3: OrderItem = {
-      handout: false,
-      delivered: false,
-      type: "partly-payment",
-      item: "item1",
-      title: "signatur 3",
-      blid: "blid3",
-      amount: 0,
-      unitPrice: 0,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "semester",
-        numberOfPeriods: 1,
-      },
-    };
+  test("considers only the given order items when they are passed", async ({ assert }) => {
+    const line = orderItem("rent", "blid1");
+    const line2 = orderItem("rent", "blid2");
 
-    const orderItem4: OrderItem = {
-      handout: false,
-      delivered: false,
-      type: "buy",
-      item: "item1",
-      title: "signatur 4",
-      blid: "blid4",
-      amount: 0,
-      unitPrice: 0,
-      info: {
-        from: today,
-        to: deadline,
-        periodType: "semester",
-        numberOfPeriods: 1,
-      },
-    };
-
-    const order: Order = {
-      id: "order1",
-      amount: 0,
-      orderItems: [orderItem2, orderItem3, orderItem4],
-      branch: "branch1",
-      customer: "customer1",
-      byCustomer: false,
-      placed: false,
-      employee: "employee1",
-      payments: [],
-      delivery: "delivery1",
-      creationTime: today,
-    };
-
-    const expectedResult = [
-      {
-        id: null,
-        item: orderItem2.item,
-        type: "rent",
-        customer: order.customer,
-
-        // @ts-expect-error fixme: auto ignored
-        deadline: orderItem2.info.to,
-        blid: orderItem2.blid,
-        handout: true,
-        handoutInfo: {
-          handoutById: order.branch,
-          handoutEmployee: order.employee,
-          time: today,
-        },
-        returned: false,
-        buyout: false,
-        cancel: false,
-        buyback: false,
-        orders: [order.id],
-        customerInfo,
-      },
-      {
-        id: null,
-        item: orderItem3.item,
-        type: "partly-payment",
-        customer: order.customer,
-
-        // @ts-expect-error fixme: auto ignored
-        deadline: orderItem3.info.to,
-        blid: orderItem3.blid,
-        handout: true,
-        handoutInfo: {
-          handoutById: order.branch,
-          handoutEmployee: order.employee,
-          time: today,
-        },
-        returned: false,
-        buyout: false,
-        cancel: false,
-        buyback: false,
-        // @ts-expect-error fixme: auto ignored
-        amountLeftToPay: orderItem3.info.amountLeftToPay,
-        orders: [order.id],
-        customerInfo,
-      },
-    ];
-
-    const result = generator.generate(order);
-    assert.deepEqual(await result, expectedResult);
+    assert.deepEqual(await generator.generate(orderWith([line, line2]), [line2]), [
+      expectedCustomerItem(line2),
+    ]);
   });
 });

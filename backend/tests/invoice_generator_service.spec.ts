@@ -11,9 +11,9 @@ import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { InvoiceGenerationSettings } from "#shared/invoice";
 import type { Item } from "#shared/item";
-import type { Order } from "#shared/order/order";
 import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
 import { mock } from "#tests/test-doubles";
 import { userDouble } from "#tests/user_fixtures";
 
@@ -80,7 +80,6 @@ test.group("invoice generation", (group) => {
   let sandbox: sinon.SinonSandbox;
   let aggregate: sinon.SinonStub;
   let addInvoice: sinon.SinonStub;
-  let getOrders: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
@@ -92,8 +91,6 @@ test.group("invoice generation", (group) => {
     aggregate = sandbox.stub().resolves([]);
     sandbox.stub(StorageService, "CustomerItems").value({ aggregate });
     sandbox.stub(User, "findMany").resolves(customers);
-    getOrders = sandbox.stub().resolves([]);
-    sandbox.stub(StorageService, "Orders").value({ getMany: getOrders });
     addInvoice = sandbox
       .stub()
       .callsFake((invoice) => Promise.resolve({ ...invoice, id: "saved" }));
@@ -224,14 +221,19 @@ test.group("invoice generation", (group) => {
         amountLeftToPay: 0,
       }),
     ]);
-    getOrders.resolves([
-      mock<Order>({
-        id: "order1",
-        orderItems: [
-          { customerItem: "ci1", item: "6100000000000000000000b1", info: { periodType: "year" } },
-        ],
-      }),
-    ]);
+    await createOrder({
+      id: "order1",
+      branchId: BRANCH_ID,
+      customerId: null,
+      orderItems: [
+        {
+          type: "partly-payment",
+          itemId: "6100000000000000000000b1",
+          customerItemId: "ci1",
+          periodType: "year",
+        },
+      ],
+    });
 
     const { invoices } = await generateInvoices({ ...rentSettings, type: "partly-payment" }, true);
 

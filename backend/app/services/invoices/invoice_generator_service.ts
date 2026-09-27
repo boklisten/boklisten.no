@@ -1,6 +1,7 @@
 import BranchModel from "#models/branch";
 import ItemModel from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
+import Order from "#models/order";
 import User from "#models/user";
 import { StorageService } from "#services/storage_service";
 import { isNotNullish } from "#services/typescript_helpers";
@@ -13,7 +14,6 @@ import type {
   InvoiceGenerationSettings,
 } from "#shared/invoice";
 import type { Item } from "#shared/item";
-import type { Order } from "#shared/order/order";
 
 /**
  * Generates invoices for books that were neither returned nor bought out by their deadline, one
@@ -92,10 +92,10 @@ function partlyPaymentAmountLeft(
   const lastOrderId = customerItem.orders.at(-1);
   const lastOrder = lastOrderId ? lastOrders.get(lastOrderId) : undefined;
   const orderItem = lastOrder?.orderItems.find(
-    (candidate) => candidate.customerItem === customerItem.id,
+    (candidate) => candidate.customerItemId === customerItem.id,
   );
   const buyoutPercentage =
-    branch?.partlyPaymentPeriods.find((period) => period.type === orderItem?.info?.periodType)
+    branch?.partlyPaymentPeriods.find((period) => period.type === orderItem?.periodType)
       ?.percentageBuyout ?? branch?.buyoutPercentage;
   if (buyoutPercentage === undefined) {
     throw new BadRequestException(
@@ -233,23 +233,17 @@ export async function generateInvoices(
           .filter(isNotNullish),
       ),
     ]),
-    StorageService.Orders.getMany(
-      [
-        ...new Set(
-          customerItems
-            .filter((customerItem) => needsLastOrder(customerItem))
-            .map((customerItem) => customerItem.orders.at(-1))
-            .filter(isNotNullish),
-        ),
-      ],
-      "admin",
+    Order.byIds(
+      customerItems
+        .filter((customerItem) => needsLastOrder(customerItem))
+        .map((customerItem) => customerItem.orders.at(-1)),
     ),
   ]);
   const customersById = new Map(customers.map((customer) => [customer.id, customer]));
   const lookups: Lookups = {
     items: new Map(items.map((item) => [item.id, item])),
     branches: new Map(branches.map((branch) => [branch.id, branch])),
-    lastOrders: new Map(lastOrders.map((order) => [order.id, order])),
+    lastOrders,
   };
 
   const skipped: InvoiceGenerationResult["skipped"] = [];

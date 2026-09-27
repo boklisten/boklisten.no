@@ -1,7 +1,17 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
+import { DateTime } from "luxon";
 
 import type { MatchItemRow, MovementRow } from "#services/branch_insights_service";
-import { buildBookMovements, countTransfersPerYear } from "#services/branch_insights_service";
+import {
+  buildBookMovements,
+  countMovementRows,
+  countTransfersPerYear,
+  findMatchItemRows,
+} from "#services/branch_insights_service";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
 
 const T0 = new Date("2025-08-20T10:00:00.000Z");
 const seconds = (n: number) => new Date(T0.getTime() + n * 1000);
@@ -135,5 +145,92 @@ test.group("BranchInsightsService.buildBookMovements()", () => {
 
   test("returns no years when nothing happened", ({ assert }) => {
     assert.deepEqual(buildBookMovements([], [], new Map()), { years: [] });
+  });
+});
+
+test.group("BranchInsightsService: SQL rows", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("counts movement lines per Oslo year, kind, handout and customer-item link", async ({
+    assert,
+  }) => {
+    const [branch, otherBranch, item] = await Promise.all([
+      createBranch(),
+      createBranch(),
+      createItem(),
+    ]);
+    // New Year's Eve 23:30 UTC is already the next year in Oslo.
+    await createOrder({
+      branchId: branch.id,
+      customerId: null,
+      createdAt: DateTime.fromISO("2024-12-31T23:30:00Z"),
+      orderItems: [
+        { itemId: item.id, handout: true },
+        { itemId: item.id, handout: true },
+        { itemId: item.id, type: "cancel", customerItemId: "5f7f7f7f7f7f7f7f7f7f7f01" },
+        { itemId: item.id, type: "extend" },
+      ],
+    });
+    await createOrder({
+      branchId: branch.id,
+      customerId: null,
+      placed: false,
+      orderItems: [{ itemId: item.id, handout: true }],
+    });
+    await createOrder({
+      branchId: otherBranch.id,
+      customerId: null,
+      orderItems: [{ itemId: item.id, handout: true }],
+    });
+
+    const rows = await countMovementRows([branch.id]);
+
+    assert.sameDeepMembers(rows, [
+      { year: 2025, type: "rent", handout: true, linked: false, count: 2 },
+      { year: 2025, type: "cancel", handout: false, linked: true, count: 1 },
+    ]);
+  });
+
+  test("finds match lines inside or outside the branches, by type and blid", async ({ assert }) => {
+    const [branch, otherBranch, item] = await Promise.all([
+      createBranch(),
+      createBranch(),
+      createItem(),
+    ]);
+    const time = DateTime.fromISO("2025-08-20T10:00:00Z");
+    await createOrder({
+      branchId: branch.id,
+      customerId: null,
+      createdAt: time,
+      orderItems: [
+        { itemId: item.id, type: "match-deliver", blid: "11111111" },
+        { itemId: item.id, type: "rent", blid: "11111111" },
+      ],
+    });
+    await createOrder({
+      branchId: otherBranch.id,
+      customerId: null,
+      createdAt: time,
+      orderItems: [
+        { itemId: item.id, type: "match-receive", blid: "11111111" },
+        { itemId: item.id, type: "match-receive", blid: "22222222" },
+      ],
+    });
+
+    const scoped = await findMatchItemRows({ branchIds: [branch.id] });
+    assert.deepEqual(scoped, [
+      { type: "match-deliver", blid: "11111111", time: time.toJSDate(), year: 2025 },
+    ]);
+
+    const external = await findMatchItemRows({
+      branchIds: [branch.id],
+      outside: true,
+      types: ["match-receive"],
+      blids: ["11111111"],
+    });
+    assert.deepEqual(
+      external.map((line) => line.blid),
+      ["11111111"],
+    );
   });
 });

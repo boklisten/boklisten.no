@@ -1,5 +1,5 @@
 import type { OrderManagerRow } from "@boklisten/backend/shared/order_manager";
-import { Badge, Group, Stack, Text, UnstyledButton } from "@mantine/core";
+import { Avatar, Badge, Group, Stack, Text, UnstyledButton } from "@mantine/core";
 import { IconTruck } from "@tabler/icons-react";
 
 import CustomerAvatar from "@/features/customer-search/CustomerAvatar";
@@ -37,10 +37,14 @@ export default function OpenOrderRow({
       }}
     >
       <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
-        <CustomerAvatar detailsId={row.customer.id} />
+        {row.customer ? (
+          <CustomerAvatar detailsId={row.customer.id} />
+        ) : (
+          <Avatar alt="" radius="xl" />
+        )}
         <Stack gap={4} miw={0} flex={1}>
           <Text fw={600} truncate>
-            {row.customer.name}
+            {row.customer?.name ?? "Slettet kunde"}
           </Text>
           <Text size="sm" c="dimmed" truncate>
             {row.branch.name ?? "Ukjent filial"}

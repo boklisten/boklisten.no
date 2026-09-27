@@ -1,118 +1,131 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import type Item from "#models/item";
+import Order from "#models/order";
+import User from "#models/user";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { OrderCancellationService } from "#services/order_cancellation_service";
-import User from "#models/user";
-import { StorageService } from "#services/storage_service";
-import { userDouble } from "#tests/user_fixtures";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 test.group("OrderCancellationService", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let addOrderStub: sinon.SinonStub;
-  let getOrderStub: sinon.SinonStub;
-  let updateOrderStub: sinon.SinonStub;
-  let findUserStub: sinon.SinonStub;
   let sendOrderReceiptStub: sinon.SinonStub;
+  let originalOrder: Order;
+  let item: Item;
+  let employee: User;
 
-  const originalOrder = { id: "order1", branch: "branch1", customer: "customer1" };
-  const orderItems = [{ item: "item1", title: "Bok 1" }];
-
-  group.each.setup(() => {
+  group.each.setup(async () => {
+    const truncate = await testUtils.db().truncate();
     sandbox = createSandbox();
-    const ordersStub = { add: sandbox.stub(), get: sandbox.stub(), update: sandbox.stub() };
-    sandbox.stub(StorageService, "Orders").value(ordersStub);
-    findUserStub = sandbox.stub(User, "find");
     sendOrderReceiptStub = sandbox.stub(OrderEmailHandler, "sendOrderReceipt").resolves();
 
-    addOrderStub = ordersStub.add;
-    getOrderStub = ordersStub.get;
-    updateOrderStub = ordersStub.update;
-
-    addOrderStub.callsFake(async (order) => ({ ...order, id: "cancelOrder1" }));
-    getOrderStub
-      .withArgs("order1")
-      .resolves({ id: "order1", orderItems: [{ item: "item1", title: "Bok 1" }] });
-    updateOrderStub.resolves({});
-    findUserStub.withArgs("customer1").resolves(userDouble({ id: "customer1" }));
+    const [branch, customer] = await Promise.all([createBranch(), createUser()]);
+    [item, employee] = await Promise.all([
+      createItem({ title: "Bok 1" }),
+      createUser({ permission: "employee" }),
+    ]);
+    originalOrder = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: item.id }],
+    });
+    return truncate;
   });
   group.each.teardown(() => {
     sandbox.restore();
   });
 
-  test("creates a customer cancellation order and sends the order email", async ({ assert }) => {
-    const cancelOrder = await OrderCancellationService.cancelOrderItems({
+  function cancel(options: { employeeDetailsId?: string; notifyCustomer: boolean }) {
+    return OrderCancellationService.cancelOrderItems({
       originalOrder,
-      orderItems,
-      notifyCustomer: true,
+      orderItems: [{ itemId: item.id }],
+      ...options,
     });
+  }
 
-    assert.equal(cancelOrder.id, "cancelOrder1");
-    assert.equal(addOrderStub.callCount, 1);
-    const added = addOrderStub.firstCall.args[0];
-    assert.equal(added.byCustomer, true);
-    assert.equal(added.employee, undefined);
-    assert.equal(added.amount, 0);
-    assert.equal(added.placed, true);
-    assert.equal(added.branch, "branch1");
-    assert.equal(added.customer, "customer1");
-    assert.deepEqual(added.notification, { email: true });
-    assert.deepEqual(added.orderItems, [
-      {
-        movedFromOrder: "order1",
-        handout: false,
-        delivered: true,
-        item: "item1",
-        title: "Bok 1",
-        type: "cancel",
-        amount: 0,
-        unitPrice: 0,
-      },
-    ]);
+  test("creates a customer cancellation order and sends the order email", async ({ assert }) => {
+    const cancelOrder = await cancel({ notifyCustomer: true });
+
+    const stored = await Order.getOrFail(cancelOrder.id);
+    assert.isTrue(stored.byCustomer);
+    assert.isNull(stored.employeeId);
+    assert.equal(stored.amount, 0);
+    assert.isTrue(stored.placed);
+    assert.equal(stored.branchId, originalOrder.branchId);
+    assert.equal(stored.customerId, originalOrder.customerId);
+    assert.isTrue(stored.notifyByEmail);
+    assert.deepEqual(
+      stored.orderItems.map((orderItem) => ({
+        movedFromOrderId: orderItem.movedFromOrderId,
+        handout: orderItem.handout,
+        delivered: orderItem.delivered,
+        itemId: orderItem.itemId,
+        title: orderItem.title,
+        type: orderItem.type,
+        amount: orderItem.amount,
+        unitPrice: orderItem.unitPrice,
+      })),
+      [
+        {
+          movedFromOrderId: originalOrder.id,
+          handout: false,
+          delivered: true,
+          itemId: item.id,
+          title: "Bok 1",
+          type: "cancel",
+          amount: 0,
+          unitPrice: 0,
+        },
+      ],
+    );
     assert.equal(sendOrderReceiptStub.callCount, 1);
   });
 
   test("stamps movedToOrder on the original order items", async ({ assert }) => {
-    await OrderCancellationService.cancelOrderItems({
-      originalOrder,
-      orderItems,
-      notifyCustomer: true,
-    });
+    const cancelOrder = await cancel({ notifyCustomer: true });
 
-    assert.deepEqual(updateOrderStub.args, [
-      ["order1", { orderItems: [{ item: "item1", title: "Bok 1", movedToOrder: "cancelOrder1" }] }],
-    ]);
+    const original = await Order.getOrFail(originalOrder.id);
+    assert.deepEqual(
+      original.orderItems.map((orderItem) => orderItem.movedToOrderId),
+      [cancelOrder.id],
+    );
   });
 
   test("marks admin cancellations with the employee and honours notifyCustomer off", async ({
     assert,
   }) => {
-    await OrderCancellationService.cancelOrderItems({
-      originalOrder,
-      orderItems,
-      employeeDetailsId: "employee1",
-      notifyCustomer: false,
-    });
+    const cancelOrder = await cancel({ employeeDetailsId: employee.id, notifyCustomer: false });
 
-    const added = addOrderStub.firstCall.args[0];
-    assert.equal(added.byCustomer, false);
-    assert.equal(added.employee, "employee1");
-    assert.deepEqual(added.notification, { email: false });
+    const stored = await Order.getOrFail(cancelOrder.id);
+    assert.isFalse(stored.byCustomer);
+    assert.equal(stored.employeeId, employee.id);
+    assert.isFalse(stored.notifyByEmail);
     assert.equal(sendOrderReceiptStub.callCount, 0);
   });
 
   test("still cancels when the customer no longer exists", async ({ assert }) => {
-    findUserStub.withArgs("customer1").resolves(null);
+    sandbox.stub(User, "find").resolves(null);
 
-    const cancelOrder = await OrderCancellationService.cancelOrderItems({
-      originalOrder,
-      orderItems,
-      notifyCustomer: true,
-    });
+    const cancelOrder = await cancel({ notifyCustomer: true });
 
-    assert.equal(cancelOrder.id, "cancelOrder1");
-    assert.equal(updateOrderStub.callCount, 1);
+    const original = await Order.getOrFail(originalOrder.id);
+    assert.equal(original.orderItems[0]?.movedToOrderId, cancelOrder.id);
+    assert.equal(sendOrderReceiptStub.callCount, 0);
+  });
+
+  test("cancels an order whose customer account was deleted", async ({ assert }) => {
+    originalOrder.customerId = null;
+    await originalOrder.save();
+
+    const cancelOrder = await cancel({ notifyCustomer: true });
+
+    assert.isNull((await Order.getOrFail(cancelOrder.id)).customerId);
     assert.equal(sendOrderReceiptStub.callCount, 0);
   });
 });

@@ -1,9 +1,12 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
+import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
+import Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import Signature from "#models/signature";
 import User from "#models/user";
 import { OrderHistoryService } from "#services/order_history_service";
@@ -23,8 +26,6 @@ import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { Item } from "#shared/item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type {
   StandCartLine,
   StandCartOption,
@@ -32,8 +33,10 @@ import type {
   StandCartVippsRefund,
 } from "#shared/stand_cart";
 import { branchDto, createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
-import { userDouble } from "#tests/user_fixtures";
+import { createUser, userDouble } from "#tests/user_fixtures";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
 const SEMESTER_END = "2026-12-20T00:00:00.000Z";
@@ -65,23 +68,47 @@ const branch: Branch = branchDto({
   ],
 });
 
-const orderedItem: OrderItem = {
+const orderedItem = mock<OrderItem>({
   type: "rent",
-  item: item.id,
-  title: item.title,
+  itemId: item.id,
   amount: 0,
   unitPrice: 0,
   handout: false,
   delivered: false,
-  info: { to: new Date(SEMESTER_END), periodType: "semester" },
-};
-const originalOrder = mock<Order>({
-  id: ORDER_ID,
-  customer: CUSTOMER_ID,
-  branch: BRANCH_ID,
-  payments: [],
-  orderItems: [orderedItem],
+  periodTo: DateTime.fromISO(SEMESTER_END),
+  periodType: "semester",
 });
+function originalOrderWith(deliveryId: string | null): Order {
+  return mock<Order>({
+    id: ORDER_ID,
+    customerId: CUSTOMER_ID,
+    branchId: BRANCH_ID,
+    deliveryId,
+    orderItems: [orderedItem],
+  });
+}
+const originalOrder = originalOrderWith(null);
+
+/** The rows every test's orders refer to: the cart branch, the people, the book. */
+async function createWorld(): Promise<void> {
+  await createBranch(branch);
+  await createUser({ id: CUSTOMER_ID });
+  await createUser({ id: EMPLOYEE.detailsId });
+  await createItem({ id: item.id, title: item.title, price: item.price });
+}
+
+/** The orders the checkout created, beside the original order it moves books from. */
+async function createdOrders(): Promise<Order[]> {
+  return Order.query().whereNot("id", ORDER_ID);
+}
+
+async function createdOrder(): Promise<Order> {
+  const [order, ...rest] = await createdOrders();
+  if (!order || rest.length > 0) {
+    throw new Error("expected exactly one new order");
+  }
+  return order;
+}
 const customerItem = mock<CustomerItem>({
   id: CUSTOMER_ITEM_ID,
   item: item.id,
@@ -182,9 +209,6 @@ function vippsRefund(orderId: string, amount: number): StandCartVippsRefund {
 test.group("StandCartCheckoutService.checkout", (group) => {
   let sandbox: sinon.SinonSandbox;
   let resolve: sinon.SinonStub;
-  let ordersAdd: sinon.SinonStub;
-  let ordersUpdate: sinon.SinonStub;
-  let ordersRemove: sinon.SinonStub;
   let deliveriesRemove: sinon.SinonStub;
   let paymentsAdd: sinon.SinonStub;
   let deliveriesAdd: sinon.SinonStub;
@@ -201,7 +225,13 @@ test.group("StandCartCheckoutService.checkout", (group) => {
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
-    await createBranch(branch);
+    await createWorld();
+    await createOrder({
+      id: ORDER_ID,
+      customerId: CUSTOMER_ID,
+      branchId: BRANCH_ID,
+      orderItems: [{ itemId: item.id }],
+    });
     sandbox = createSandbox();
     plan = sandbox.stub(StandCartRefund, "plan").resolves(null);
     sendRefundRequest = sandbox.stub(RefundRequestService, "send").resolves();
@@ -211,15 +241,6 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     sandbox
       .stub(User, "find")
       .resolves(userDouble({ id: CUSTOMER_ID, name: "Ola", taskSignAgreement: false }));
-    ordersAdd = sandbox
-      .stub(StorageService.Orders, "add")
-      .callsFake((order) => Promise.resolve(mock<Order>({ ...order, id: NEW_ORDER_ID })));
-    ordersUpdate = sandbox
-      .stub(StorageService.Orders, "update")
-      .callsFake((id, data) =>
-        Promise.resolve(mock<Order>({ ...ordersAdd.firstCall?.returnValue, ...data, id })),
-      );
-    ordersRemove = sandbox.stub(StorageService.Orders, "remove").resolves();
     deliveriesRemove = sandbox.stub(StorageService.Deliveries, "remove").resolves();
     paymentsAdd = sandbox
       .stub(StorageService.Payments, "add")
@@ -230,9 +251,10 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       .callsFake((delivery) =>
         Promise.resolve(mock<Delivery>({ ...delivery, id: "new-delivery" })),
       );
-    place = sandbox
-      .stub(StandCartPlacement, "place")
-      .callsFake((order) => Promise.resolve({ ...order, placed: true }));
+    place = sandbox.stub(StandCartPlacement, "place").callsFake((order: Order) => {
+      order.placed = true;
+      return Promise.resolve(order);
+    });
     sandbox.stub(OrderHistoryService, "getOne").resolves(unchecked({ id: NEW_ORDER_ID }));
     sandbox.stub(Signature, "validForCustomer").resolves(unchecked({}));
     sandbox.stub(Signature, "newestForCustomer").resolves(null);
@@ -264,21 +286,24 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     assert,
   }) => {
     const state = await checkout();
-    assert.include(ordersAdd.firstCall.args[0], {
+    const order = await createdOrder();
+    assert.include(order.toDto(), {
       amount: 0,
-      branch: BRANCH_ID,
-      customer: CUSTOMER_ID,
+      branchId: BRANCH_ID,
+      customerId: CUSTOMER_ID,
       byCustomer: false,
-      employee: EMPLOYEE.detailsId,
+      employeeId: EMPLOYEE.detailsId,
+      // The stub stands in for placement, so the stored order is as checkout left it
       placed: false,
+      notifyByEmail: true,
     });
-    assert.deepEqual(ordersAdd.firstCall.args[0].notification, { email: true });
-    assert.equal(ordersAdd.firstCall.args[0].orderItems[0].blid, BLID);
+    assert.equal(order.orderItems[0]?.blid, BLID);
+    assert.equal(order.orderItems[0]?.movedFromOrderId, ORDER_ID);
     assert.isFalse(paymentsAdd.called);
-    assert.equal(place.firstCall.args[0].id, NEW_ORDER_ID);
+    assert.equal(place.firstCall.args[0].id, order.id);
     assert.deepEqual(place.firstCall.args[1], EMPLOYEE);
     assert.equal(state.status, "placed");
-    assert.equal(state.orderId, NEW_ORDER_ID);
+    assert.equal(state.orderId, order.id);
     assert.isNotNull(state.order);
   });
 
@@ -290,12 +315,12 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     assert.include(paymentsAdd.firstCall.args[0], {
       method: "cash",
       amount: 250,
-      order: NEW_ORDER_ID,
+      order: (await createdOrder()).id,
       customer: CUSTOMER_ID,
       branch: BRANCH_ID,
       confirmed: false,
     });
-    assert.deepEqual(place.firstCall.args[0].payments, ["payment1"]);
+    assert.isTrue(paymentsAdd.calledBefore(place));
     assert.equal(state.status, "paid");
   });
 
@@ -305,14 +330,15 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     resolve.resolves(resolution(ORDER_SOURCE, [cancelOption()]));
     plan.resolves({ kind: "vipps", refunds: [vippsRefund(ORDER_ID, 250)] });
     const state = await checkout({ lines: [CANCEL_LINE], payment: { method: "vipps-refund" } });
-    assert.equal(ordersAdd.firstCall.args[0].amount, -250);
+    const order = await createdOrder();
+    assert.equal(order.amount, -250);
     assert.isTrue(vipps.refund.calledOnceWith(ORDER_ID, 25_000));
     assert.include(paymentsAdd.firstCall.args[0], {
       method: "vipps-epayment",
       amount: -250,
-      order: NEW_ORDER_ID,
+      order: order.id,
     });
-    assert.deepEqual(place.firstCall.args[0].payments, ["payment1"]);
+    assert.isTrue(paymentsAdd.calledBefore(place));
     assert.isFalse(sendRefundRequest.called);
     assert.equal(state.status, "paid");
   });
@@ -327,7 +353,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
       /manuelt/,
     );
-    assert.isFalse(ordersAdd.called);
+    assert.lengthOf(await createdOrders(), 0);
     assert.isFalse(vipps.refund.called);
   });
 
@@ -342,7 +368,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
       /manuelt/,
     );
-    assert.deepEqual(ordersRemove.firstCall.args, [NEW_ORDER_ID]);
+    assert.lengthOf(await createdOrders(), 0);
     assert.isFalse(paymentsAdd.called);
     assert.isFalse(place.called);
   });
@@ -385,10 +411,11 @@ test.group("StandCartCheckoutService.checkout", (group) => {
         comment: "Kunden har byttet skole",
       },
     });
+    const order = await createdOrder();
     assert.include(paymentsAdd.firstCall.args[0], {
       method: "bank-transfer",
       amount: -250,
-      order: NEW_ORDER_ID,
+      order: order.id,
     });
     assert.isTrue(place.calledOnce);
     assert.isFalse(vipps.refund.called);
@@ -398,7 +425,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       accountNumber: "12345678903",
       comment: "Kunden har byttet skole",
     });
-    assert.equal(sendRefundRequest.firstCall.args[0].order.id, NEW_ORDER_ID);
+    assert.equal(sendRefundRequest.firstCall.args[0].order.id, order.id);
     assert.equal(state.status, "paid");
   });
 
@@ -415,7 +442,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
       /kontonummer/i,
     );
-    assert.isFalse(ordersAdd.called);
+    assert.lengthOf(await createdOrders(), 0);
   });
 
   test("refuses a refund by any method that is not a refund", async ({ assert }) => {
@@ -430,7 +457,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
       /refusjon/i,
     );
-    assert.isFalse(ordersAdd.called);
+    assert.lengthOf(await createdOrders(), 0);
   });
 
   test("refuses a refund method when there is something to pay", async ({ assert }) => {
@@ -440,7 +467,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
       /Velg betalingsmåte/,
     );
-    assert.isFalse(ordersAdd.called);
+    assert.lengthOf(await createdOrders(), 0);
   });
 
   test("refuses when something is to be paid and no method was chosen", async ({ assert }) => {
@@ -450,7 +477,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
       /Velg betalingsmåte/,
     );
-    assert.isFalse(ordersAdd.called);
+    assert.lengthOf(await createdOrders(), 0);
   });
 
   test("refuses a choice the line no longer offers, naming the book", async ({ assert }) => {
@@ -543,7 +570,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
       /«Sinus 1T» har fått ny pris/,
     );
-    assert.isFalse(ordersAdd.called);
+    assert.lengthOf(await createdOrders(), 0);
   });
 
   test("refuses a blid that is not linked to any book", async ({ assert }) => {
@@ -577,7 +604,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
       /^Kunden har allerede «Sinus 1T»\. Kontakt en administrator for å dele ut et ekstra eksemplar\.$/,
     );
-    assert.isFalse(ordersAdd.called);
+    assert.lengthOf(await createdOrders(), 0);
   });
 
   test("an administrator hands out the extra copy, but only knowingly", async ({ assert }) => {
@@ -664,7 +691,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
         },
       }),
     );
-    const withDelivery = { ...originalOrder, delivery: DELIVERY_ID };
+    const withDelivery = originalOrderWith(DELIVERY_ID);
     resolve.resolves({
       ...resolution(ORDER_SOURCE, [rentOption(price)], {
         blid: BLID,
@@ -681,9 +708,10 @@ test.group("StandCartCheckoutService.checkout", (group) => {
 
     await checkout({ delivery: { trackingNumber: "TR123" } });
 
+    const order = await createdOrder();
     assert.include(deliveriesAdd.firstCall.args[0], {
       method: "bring",
-      order: NEW_ORDER_ID,
+      order: order.id,
       amount: 0,
     });
     assert.deepEqual(deliveriesAdd.firstCall.args[0].info, {
@@ -695,8 +723,8 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       estimatedDelivery: null,
       amount: 0,
     });
-    assert.deepEqual(ordersUpdate.firstCall.args, [NEW_ORDER_ID, { delivery: "new-delivery" }]);
-    assert.equal(place.firstCall.args[0].delivery, "new-delivery");
+    assert.equal(order.deliveryId, "new-delivery");
+    assert.equal(place.firstCall.args[0].deliveryId, "new-delivery");
   });
 
   test("refuses a tracking number when nothing in the cart goes by mail", async ({ assert }) => {
@@ -713,8 +741,9 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       lines: [paidLine()],
       payment: { method: "vipps", phoneNumber: "+47 912 34 567" },
     });
+    const order = await createdOrder();
     assert.include(vipps.create.firstCall.args[0], {
-      reference: NEW_ORDER_ID,
+      reference: order.id,
       userFlow: "PUSH_MESSAGE",
       customerInteraction: "CUSTOMER_PRESENT",
       paymentDescription: "Ola sin ordre fra Boklisten.no",
@@ -722,12 +751,9 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     assert.deepEqual(vipps.create.firstCall.args[0].amount, { currency: "NOK", value: 25_000 });
     assert.deepEqual(vipps.create.firstCall.args[0].customer, { phoneNumber: "4791234567" });
     assert.isFalse(place.called);
-    assert.deepEqual(ordersUpdate.firstCall.args, [
-      NEW_ORDER_ID,
-      { checkoutState: "SessionCreated" },
-    ]);
+    assert.equal(order.checkoutState, "SessionCreated");
     assert.equal(state.status, "pending");
-    assert.equal(state.orderId, NEW_ORDER_ID);
+    assert.equal(state.orderId, order.id);
     assert.isNull(state.order);
   });
 
@@ -742,7 +768,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
       /ikke registrert i Vipps/,
     );
-    assert.deepEqual(ordersRemove.firstCall.args, [NEW_ORDER_ID]);
+    assert.lengthOf(await createdOrders(), 0);
     assert.isFalse(deliveriesRemove.called);
   });
 
@@ -759,7 +785,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       BadRequestException,
     );
     assert.deepEqual(deliveriesRemove.firstCall.args, ["new-delivery"]);
-    assert.deepEqual(ordersRemove.firstCall.args, [NEW_ORDER_ID]);
+    assert.lengthOf(await createdOrders(), 0);
   });
 
   test("rejects a bad phone number before any order exists", async ({ assert }) => {
@@ -768,7 +794,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       () => checkout({ lines: [paidLine()], payment: { method: "vipps", phoneNumber: "123" } }),
       BadRequestException,
     );
-    assert.isFalse(ordersAdd.called);
+    assert.lengthOf(await createdOrders(), 0);
   });
 });
 
@@ -824,8 +850,6 @@ test.group("StandCartCheckoutService.refundPlan", (group) => {
 
 test.group("StandCartCheckoutService.status and cancel", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let ordersGet: sinon.SinonStub;
-  let ordersUpdate: sinon.SinonStub;
   let paymentsAdd: sinon.SinonStub;
   let place: sinon.SinonStub;
   let vipps: {
@@ -835,30 +859,33 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
     capture: sinon.SinonStub;
   };
 
-  const pendingOrder = mock<Order>({
-    id: NEW_ORDER_ID,
-    amount: 250,
-    customer: CUSTOMER_ID,
-    branch: BRANCH_ID,
-    employee: EMPLOYEE.detailsId,
-    placed: false,
-    payments: [],
-    checkoutState: "SessionCreated",
-    orderItems: [orderedItem],
-  });
+  /** Changes the stored pending order the way an earlier request would have. */
+  const updatePendingOrder = (columns: Partial<Pick<Order, "placed" | "checkoutState">>) =>
+    Order.query().where("id", NEW_ORDER_ID).update(columns);
 
-  group.each.setup(() => {
+  const checkoutStateOf = async () => (await Order.findOrFail(NEW_ORDER_ID)).checkoutState;
+
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    await createWorld();
+    await createOrder({
+      id: NEW_ORDER_ID,
+      amount: 250,
+      customerId: CUSTOMER_ID,
+      branchId: BRANCH_ID,
+      employeeId: EMPLOYEE.detailsId,
+      placed: false,
+      checkoutState: "SessionCreated",
+      orderItems: [{ itemId: item.id, amount: 250, unitPrice: 250 }],
+    });
     sandbox = createSandbox();
-    ordersGet = sandbox.stub(StorageService.Orders, "get").resolves(pendingOrder);
-    ordersUpdate = sandbox
-      .stub(StorageService.Orders, "update")
-      .callsFake((id, data) => Promise.resolve(mock<Order>({ ...pendingOrder, ...data, id })));
     paymentsAdd = sandbox
       .stub(StorageService.Payments, "add")
       .resolves(unchecked({ id: "payment1" }));
-    place = sandbox
-      .stub(StandCartPlacement, "place")
-      .callsFake((order) => Promise.resolve({ ...order, placed: true }));
+    place = sandbox.stub(StandCartPlacement, "place").callsFake((order: Order) => {
+      order.placed = true;
+      return Promise.resolve(order);
+    });
     sandbox
       .stub(User, "find")
       .resolves(userDouble({ id: EMPLOYEE.detailsId, permission: "employee" }));
@@ -874,7 +901,7 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
   group.each.teardown(() => sandbox.restore());
 
   test("status reports a placed order as paid without asking Vipps again", async ({ assert }) => {
-    ordersGet.resolves({ ...pendingOrder, placed: true });
+    await updatePendingOrder({ placed: true });
     const state = await StandCartCheckoutService.status(NEW_ORDER_ID);
     assert.equal(state.status, "paid");
     assert.isFalse(vipps.info.called);
@@ -888,7 +915,7 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
     assert.include(paymentsAdd.firstCall.args[0], { method: "vipps-epayment", amount: 250 });
     assert.deepEqual(place.firstCall.args[1], EMPLOYEE);
     assert.isTrue(vipps.capture.calledWith(NEW_ORDER_ID, 25_000));
-    assert.isTrue(ordersUpdate.calledWith(NEW_ORDER_ID, { checkoutState: "PaymentSuccessful" }));
+    assert.equal(await checkoutStateOf(), "PaymentSuccessful");
     assert.equal(state.status, "paid");
     assert.isNotNull(state.order);
   });
@@ -905,9 +932,8 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
     vipps.info.resolves({ state: "ABORTED" });
     const state = await StandCartCheckoutService.status(NEW_ORDER_ID);
     assert.equal(state.status, "aborted");
-    assert.isTrue(ordersUpdate.calledWith(NEW_ORDER_ID, { checkoutState: "PaymentTerminated" }));
+    assert.equal(await checkoutStateOf(), "PaymentTerminated");
 
-    ordersGet.resolves({ ...pendingOrder, checkoutState: "PaymentTerminated" });
     vipps.info.resetHistory();
     const again = await StandCartCheckoutService.status(NEW_ORDER_ID);
     assert.equal(again.status, "aborted");
@@ -915,7 +941,7 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
   });
 
   test("status refuses an order that never waited for Vipps", async ({ assert }) => {
-    ordersGet.resolves({ ...pendingOrder, checkoutState: undefined });
+    await updatePendingOrder({ checkoutState: null });
     await assert.rejects(() => StandCartCheckoutService.status(NEW_ORDER_ID), BadRequestException);
   });
 

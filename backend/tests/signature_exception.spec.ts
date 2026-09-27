@@ -4,11 +4,12 @@ import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import type Order from "#models/order";
 import Signature from "#models/signature";
 import type User from "#models/user";
+import { OrderActive } from "#services/orders/order_active";
 import { findSignatureException } from "#services/signature_helper";
 import { StorageService } from "#services/storage_service";
-import type { Order } from "#shared/order/order";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import { mock } from "#tests/test-doubles";
 import { createUser } from "#tests/user_fixtures";
@@ -40,8 +41,19 @@ function openOrderWith(type: OrderItemType): Order {
   return mock<Order>({
     id: "order1",
     placed: true,
-    customer: CUSTOMER_ID,
-    orderItems: [{ type, item: "item1", title: "Bok", amount: 100, unitPrice: 100 }],
+    customerId: CUSTOMER_ID,
+    orderItems: [
+      {
+        type,
+        itemId: "item1",
+        title: "Bok",
+        amount: 100,
+        unitPrice: 100,
+        handout: false,
+        delivered: false,
+        movedToOrderId: null,
+      },
+    ],
   });
 }
 
@@ -54,7 +66,8 @@ test.group("findSignatureException", (group) => {
   group.each.setup(() => {
     sandbox = createSandbox();
     orders = [];
-    sandbox.stub(StorageService.Orders, "getByQuery").callsFake(() => Promise.resolve(orders));
+    // Every order here is placed and open, so the active-order query is stubbed with them as is
+    sandbox.stub(OrderActive.prototype, "getActiveOrders").callsFake(() => Promise.resolve(orders));
     sandbox.stub(StorageService.CustomerItems, "getByQuery").callsFake(() => Promise.resolve([]));
   });
   group.each.teardown(() => {

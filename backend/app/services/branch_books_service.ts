@@ -1,12 +1,17 @@
+import db from "@adonisjs/lucid/services/db";
+import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
 import Branch from "#models/branch";
 import User from "#models/user";
 import Item from "#models/item";
+import Order from "#models/order";
+import OrderItem from "#models/order_item";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import { DEADLINE_PADDING_DAYS } from "#services/deadline_window";
 import { OrderCancellationService } from "#services/order_cancellation_service";
 import { StorageService } from "#services/storage_service";
+import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 
 interface BranchBooksTitle {
   itemId: string;
@@ -62,18 +67,13 @@ export const ACTIVE_CUSTOMER_ITEM_MATCH = {
   handout: true,
 };
 
-export const OPEN_ORDER_ITEM_MATCH = {
-  "orderItems.type": { $in: ["rent", "partly-payment"] },
-  "orderItems.handout": { $ne: true },
-  "orderItems.delivered": { $ne: true },
-  "orderItems.movedToOrder": null,
-};
-
 async function resolveScope(branchId: string) {
   const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
+  const scopeIds = [branchId, ...descendantIds];
   return {
     branchObjectId: new ObjectId(branchId),
-    scopeObjectIds: [branchId, ...descendantIds].map((id) => new ObjectId(id)),
+    scopeIds,
+    scopeObjectIds: scopeIds.map((id) => new ObjectId(id)),
   };
 }
 
@@ -213,36 +213,33 @@ async function withTitles(rows: Omit<SummaryRow, "title">[]): Promise<SummaryRow
 }
 
 /**
- * Aggregation expression matching an open (ordered, not yet handed out) order item, usable both
- * in $filter/$map conditions and update pipelines. orderItems.info is a Mixed field where `to`
- * is stored as either a Date or a "yyyy-MM-dd" string, hence the $convert.
+ * The ordered books (open lines with a deadline) on placed orders of the given branches, as a
+ * query over `order_items` joined with `orders`, narrowed by the bulk filter.
  */
-function openOrderItemCondition(options: {
-  deadlines?: Date[];
-  itemObjectId?: ObjectId;
-  orderItemObjectIds?: ObjectId[];
-}) {
-  const conditions: unknown[] = [
-    { $in: ["$$orderItem.type", ["rent", "partly-payment"]] },
-    { $ne: ["$$orderItem.handout", true] },
-    { $ne: ["$$orderItem.delivered", true] },
-    { $eq: [{ $ifNull: ["$$orderItem.movedToOrder", null] }, null] },
-  ];
-  if (options.deadlines) {
-    conditions.push({
-      $in: [
-        { $convert: { input: "$$orderItem.info.to", to: "date", onError: null, onNull: null } },
-        options.deadlines,
-      ],
-    });
+function orderedBooksQuery(
+  branchIds: string[],
+  filter: { deadlines?: string[]; itemId?: string; orderItemIds?: number[] } = {},
+) {
+  const query = OrderItem.whereOpen(
+    db.from("order_items").join("orders", "orders.id", "order_items.order_id"),
+    LOAN_ORDER_ITEM_TYPES,
+  )
+    .where("orders.placed", true)
+    .whereIn("orders.branch_id", branchIds)
+    .whereNotNull("order_items.period_to");
+  if (filter.deadlines) {
+    void query.whereIn(
+      "order_items.period_to",
+      filter.deadlines.map((deadline) => new Date(deadline)),
+    );
   }
-  if (options.itemObjectId) {
-    conditions.push({ $eq: ["$$orderItem.item", options.itemObjectId] });
+  if (filter.itemId) {
+    void query.where("order_items.item_id", filter.itemId);
   }
-  if (options.orderItemObjectIds) {
-    conditions.push({ $in: ["$$orderItem._id", options.orderItemObjectIds] });
+  if (filter.orderItemIds) {
+    void query.whereIn("order_items.id", filter.orderItemIds);
   }
-  return { $and: conditions };
+  return query;
 }
 
 export const BranchBooksService = {
@@ -347,29 +344,23 @@ export const BranchBooksService = {
   },
 
   async getOrderedBooksSummary(branchId: string): Promise<BranchBooksSummary> {
-    const { branchObjectId, scopeObjectIds } = await resolveScope(branchId);
-    const rows = await StorageService.Orders.aggregate<Omit<SummaryRow, "title">>([
-      { $match: { placed: true, branch: { $in: scopeObjectIds } } },
-      { $unwind: "$orderItems" },
-      { $match: OPEN_ORDER_ITEM_MATCH },
-      {
-        $addFields: {
-          deadlineDate: {
-            $convert: { input: "$orderItems.info.to", to: "date", onError: null, onNull: null },
-          },
-        },
-      },
-      { $match: { deadlineDate: { $ne: null } } },
-      {
-        $group: {
-          _id: { deadline: "$deadlineDate", item: "$orderItems.item" },
-          direct: { $sum: { $cond: [{ $eq: ["$branch", branchObjectId] }, 1, 0] } },
-          total: { $sum: 1 },
-        },
-      },
-      ...SUMMARY_ROW_STAGES,
-    ]);
-    return buildSummary(await withTitles(rows));
+    const { scopeIds } = await resolveScope(branchId);
+    const rows: { deadline: Date; itemId: string; direct: string; total: string }[] =
+      await orderedBooksQuery(scopeIds)
+        .groupBy("order_items.period_to", "order_items.item_id")
+        .select("order_items.period_to as deadline", "order_items.item_id as itemId")
+        .select(db.raw("count(*) filter (where orders.branch_id = ?) as direct", [branchId]))
+        .count("* as total");
+    return buildSummary(
+      await withTitles(
+        rows.map((row) => ({
+          deadline: row.deadline,
+          itemId: row.itemId,
+          direct: Number(row.direct),
+          total: Number(row.total),
+        })),
+      ),
+    );
   },
 
   async getOrderedBookDetails({
@@ -381,37 +372,22 @@ export const BranchBooksService = {
     deadlines: string[];
     itemId: string;
   }) {
-    const rows = await StorageService.Orders.aggregate<{
+    const rows: {
       orderId: string;
-      orderItemId: string;
+      orderItemId: number;
       customerId: string | null;
-      orderTime: Date | null;
-    }>([
-      { $match: { placed: true, branch: new ObjectId(branchId) } },
-      { $unwind: "$orderItems" },
-      { $match: { ...OPEN_ORDER_ITEM_MATCH, "orderItems.item": new ObjectId(itemId) } },
-      {
-        $addFields: {
-          deadlineDate: {
-            $convert: { input: "$orderItems.info.to", to: "date", onError: null, onNull: null },
-          },
-        },
-      },
-      { $match: { deadlineDate: { $in: deadlines.map((deadline) => new Date(deadline)) } } },
-      { $sort: { creationTime: 1 } },
-      {
-        $project: {
-          _id: 0,
-          orderId: { $toString: "$_id" },
-          orderItemId: { $toString: "$orderItems._id" },
-          customerId: { $toString: "$customer" },
-          orderTime: { $ifNull: ["$creationTime", null] },
-        },
-      },
-    ]);
+      orderTime: Date;
+    }[] = await orderedBooksQuery([branchId], { deadlines, itemId })
+      .select(
+        "orders.id as orderId",
+        "order_items.id as orderItemId",
+        "orders.customer_id as customerId",
+        "orders.created_at as orderTime",
+      )
+      .orderBy("orders.created_at")
+      .orderBy("order_items.id");
     return (await withMembershipBranchNames(await withCustomerColumns(rows))).map(
-      ({ orderTime, ...row }) =>
-        Object.assign(row, { orderTime: orderTime ? orderTime.toISOString() : null }),
+      ({ orderTime, ...row }) => Object.assign(row, { orderTime: orderTime.toISOString() }),
     );
   },
 
@@ -421,68 +397,39 @@ export const BranchBooksService = {
     update,
   }: {
     branchId: string;
-    filter: BranchBooksFilter & { orderItemIds?: string[] };
+    filter: BranchBooksFilter & { orderItemIds?: number[] };
     update: BranchBooksUpdate;
   }) {
-    const { branchObjectId, scopeObjectIds } = await resolveScope(branchId);
-    const condition = openOrderItemCondition({
-      deadlines: filter.deadlines?.map((deadline) => new Date(deadline)),
-      itemObjectId: filter.itemId ? new ObjectId(filter.itemId) : undefined,
-      orderItemObjectIds: filter.orderItemIds?.map((id) => new ObjectId(id)),
-    });
-    const mongoFilter = {
-      placed: true,
-      branch: { $in: filter.includeDescendants ? scopeObjectIds : [branchObjectId] },
-      $expr: {
-        $gt: [
-          { $size: { $filter: { input: "$orderItems", as: "orderItem", cond: condition } } },
-          0,
-        ],
-      },
-    };
-    if (update.branchId) {
-      const result = await StorageService.Orders.updateMany(mongoFilter, {
-        $set: { branch: new ObjectId(update.branchId), lastUpdated: new Date() },
-      });
-      return { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount };
+    const { scopeIds } = await resolveScope(branchId);
+    const lines: { id: number; orderId: string }[] = await orderedBooksQuery(
+      filter.includeDescendants ? scopeIds : [branchId],
+      filter,
+    ).select("order_items.id", "orders.id as orderId");
+    if (lines.length === 0) {
+      return { matchedCount: 0, modifiedCount: 0 };
     }
-    const result = await StorageService.Orders.updateMany(
-      mongoFilter,
-      [
-        {
-          $set: {
-            orderItems: {
-              $map: {
-                input: "$orderItems",
-                as: "orderItem",
-                in: {
-                  $cond: [
-                    condition,
-                    {
-                      $mergeObjects: [
-                        "$$orderItem",
-                        {
-                          info: {
-                            $mergeObjects: [
-                              { $ifNull: ["$$orderItem.info", {}] },
-                              { to: new Date(update.deadline ?? "") },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    "$$orderItem",
-                  ],
-                },
-              },
-            },
-            lastUpdated: new Date(),
-          },
-        },
-      ],
-      { updatePipeline: true },
-    );
-    return { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount };
+    const orderIds = [...new Set(lines.map((line) => line.orderId))];
+    // The counts are orders, as they were when the lines were embedded in them.
+    if (update.branchId) {
+      const moved = await Order.query()
+        .whereIn("id", orderIds)
+        .whereNot("branchId", update.branchId)
+        .update({ branchId: update.branchId, updatedAt: DateTime.now() });
+      return { matchedCount: orderIds.length, modifiedCount: Number(moved[0] ?? 0) };
+    }
+    const deadline = DateTime.fromJSDate(new Date(update.deadline ?? ""));
+    await db.transaction(async (trx) => {
+      await OrderItem.query({ client: trx })
+        .whereIn(
+          "id",
+          lines.map((line) => line.id),
+        )
+        .update({ periodTo: deadline });
+      await Order.query({ client: trx })
+        .whereIn("id", orderIds)
+        .update({ updatedAt: DateTime.now() });
+    });
+    return { matchedCount: orderIds.length, modifiedCount: orderIds.length };
   },
 
   async bulkCancelOrderedBooks({
@@ -492,68 +439,43 @@ export const BranchBooksService = {
     employeeDetailsId,
   }: {
     branchId: string;
-    filter: BranchBooksFilter & { orderItemIds?: string[] };
+    filter: BranchBooksFilter & { orderItemIds?: number[] };
     notifyCustomers: boolean;
     employeeDetailsId: string;
   }) {
-    const { branchObjectId, scopeObjectIds } = await resolveScope(branchId);
-    const condition = openOrderItemCondition({
-      deadlines: filter.deadlines?.map((deadline) => new Date(deadline)),
-      itemObjectId: filter.itemId ? new ObjectId(filter.itemId) : undefined,
-      orderItemObjectIds: filter.orderItemIds?.map((id) => new ObjectId(id)),
-    });
-    const candidates = await StorageService.Orders.aggregate<{
-      orderId: string;
-      branch: string;
-      customer: string;
-      amount: number;
-      cancelItems: { item: string; title: string }[];
-    }>([
-      {
-        $match: {
-          placed: true,
-          branch: { $in: filter.includeDescendants ? scopeObjectIds : [branchObjectId] },
-        },
-      },
-      {
-        $addFields: {
-          cancelItems: { $filter: { input: "$orderItems", as: "orderItem", cond: condition } },
-        },
-      },
-      { $match: { $expr: { $gt: [{ $size: "$cancelItems" }, 0] } } },
-      {
-        $project: {
-          _id: 0,
-          orderId: { $toString: "$_id" },
-          branch: { $toString: "$branch" },
-          customer: { $toString: "$customer" },
-          amount: 1,
-          cancelItems: {
-            $map: {
-              input: "$cancelItems",
-              as: "orderItem",
-              in: { item: { $toString: "$$orderItem.item" }, title: "$$orderItem.title" },
-            },
-          },
-        },
-      },
-    ]);
+    const { scopeIds } = await resolveScope(branchId);
+    const lines: { orderId: string; itemId: string }[] = await orderedBooksQuery(
+      filter.includeDescendants ? scopeIds : [branchId],
+      filter,
+    )
+      .select("orders.id as orderId", "order_items.item_id as itemId")
+      .orderBy("orders.id")
+      .orderBy("order_items.position");
+    const itemIdsByOrder = new Map<string, string[]>();
+    for (const line of lines) {
+      itemIdsByOrder.set(line.orderId, [...(itemIdsByOrder.get(line.orderId) ?? []), line.itemId]);
+    }
+    const orders = await Order.byIds(itemIdsByOrder.keys());
+    const candidates = [...orders.values()].map((order) => ({
+      order,
+      cancelItems: (itemIdsByOrder.get(order.id) ?? []).map((itemId) => ({ itemId })),
+    }));
 
     // Orders with money on them are skipped: cancelling those means refunds, which are handled manually
-    const cancellable = candidates.filter((order) => order.amount === 0);
-    const skipped = candidates.filter((order) => order.amount !== 0);
-    for (const order of cancellable) {
+    const cancellable = candidates.filter(({ order }) => order.amount === 0);
+    const skipped = candidates.filter(({ order }) => order.amount !== 0);
+    for (const { order, cancelItems } of cancellable) {
       await OrderCancellationService.cancelOrderItems({
-        originalOrder: { id: order.orderId, branch: order.branch, customer: order.customer },
-        orderItems: order.cancelItems,
+        originalOrder: order,
+        orderItems: cancelItems,
         employeeDetailsId,
         notifyCustomer: notifyCustomers,
       });
     }
     return {
       cancelledOrders: cancellable.length,
-      cancelledBooks: cancellable.reduce((sum, order) => sum + order.cancelItems.length, 0),
-      skippedBooks: skipped.reduce((sum, order) => sum + order.cancelItems.length, 0),
+      cancelledBooks: cancellable.reduce((sum, { cancelItems }) => sum + cancelItems.length, 0),
+      skippedBooks: skipped.reduce((sum, { cancelItems }) => sum + cancelItems.length, 0),
     };
   },
 };

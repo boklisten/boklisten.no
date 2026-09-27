@@ -1,278 +1,379 @@
 import { test } from "@japa/runner";
-import { ObjectId } from "mongodb";
-import type { PipelineStage } from "mongoose";
+import testUtils from "@adonisjs/core/services/test_utils";
+import { DateTime } from "luxon";
 import { createSandbox } from "sinon";
 import type sinon from "sinon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
-import Branch from "#models/branch";
-import Item from "#models/item";
-import User from "#models/user";
-import {
-  bringReportPipeline,
-  openOrdersPipeline,
-  OrderManagerService,
-  ordersReportPipeline,
-  toBringReportRow,
-} from "#services/order_manager_service";
-import type { OpenOrderAggregate } from "#services/order_manager_service";
+import type Branch from "#models/branch";
+import type Item from "#models/item";
+import type User from "#models/user";
+import { OrderManagerService, toBringReportRow } from "#services/order_manager_service";
+import { OrderPayments } from "#services/payments/order_payments";
 import { StorageService } from "#services/storage_service";
-import { mock, unchecked } from "#tests/test-doubles";
-import { userDouble } from "#tests/user_fixtures";
+import type { Delivery } from "#shared/delivery/delivery";
+import type { Payment } from "#shared/payment/payment";
+import { createBranch } from "#tests/branch_fixtures";
+import { fixtureId } from "#tests/fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
+import { createUser } from "#tests/user_fixtures";
+import { mock } from "#tests/test-doubles";
 
-const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
-const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
-const ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f31";
+const T0 = DateTime.fromISO("2026-09-01T12:00:00.000Z");
+const at = (seconds: number) => T0.plus({ seconds });
 
-function stageNames(pipeline: PipelineStage[]): string[] {
-  return pipeline.map((stage) => Object.keys(stage)[0] ?? "");
-}
-
-function firstMatch(pipeline: PipelineStage[]): Record<string, unknown> {
-  const stage = pipeline[0];
-  if (!stage || !("$match" in stage)) {
-    throw new Error("pipeline does not start with $match");
-  }
-  return unchecked(stage.$match);
-}
-
-function row(index: number, branchId = BRANCH_ID): OpenOrderAggregate {
-  return mock<OpenOrderAggregate>({
-    id: new ObjectId().toHexString(),
-    creationTime: new Date(Date.UTC(2026, 8, 1, 12, 0, index)).toISOString(),
-    branchId,
-    customerId: CUSTOMER_ID,
-    openItems: [],
-  });
-}
-
-/** Every `$lookup` stage's source collection. */
-function lookupSources(pipeline: PipelineStage[]): string[] {
-  return pipeline.flatMap((stage) => {
-    if (!("$lookup" in stage)) {
-      return [];
-    }
-    const lookup: { from: string } = unchecked(stage.$lookup);
-    return [lookup.from];
-  });
-}
-
-function projection(pipeline: PipelineStage[]): Record<string, unknown> {
-  const stage = pipeline.find((candidate) => "$project" in candidate);
-  if (!stage || !("$project" in stage)) {
-    throw new Error("pipeline has no $project stage");
-  }
-  return unchecked(stage.$project);
-}
-
-test.group("OrderManagerService: open orders pipeline", () => {
-  test("only placed orders with a book still owed, newest first", ({ assert }) => {
-    const pipeline = openOrdersPipeline({}, 50);
-    const match = firstMatch(pipeline);
-    assert.equal(match["placed"], true);
-    assert.deepEqual(match["orderItems"], {
-      $elemMatch: {
-        type: { $in: ["rent", "partly-payment", "buy"] },
-        handout: { $ne: true },
-        delivered: { $ne: true },
-        movedToOrder: null,
+function bringDelivery(id: string, product?: "3584" | "SERVICEPAKKE"): Delivery {
+  return mock<Delivery>({
+    id,
+    method: "bring",
+    info: {
+      from: "0139",
+      facilityAddress: { address: "Lager 1", postalCode: "0139", postalCity: "Oslo" },
+      shipmentAddress: {
+        name: `Mottaker ${id}`,
+        address: "Storgata 1",
+        postalCode: "0150",
+        postalCity: "Oslo",
       },
-    });
-    assert.notProperty(match, "branch");
-    assert.notProperty(match, "$or");
-    assert.deepEqual(pipeline[1], { $sort: { creationTime: -1, _id: -1 } });
+      product,
+    },
   });
+}
 
-  test("branch filter matches the given ids as ObjectIds", ({ assert }) => {
-    const match = firstMatch(openOrdersPipeline({ branchIds: [BRANCH_ID] }, 50));
-    const branch: { $in: ObjectId[] } = unchecked(match["branch"]);
-    assert.instanceOf(branch.$in[0], ObjectId);
-    assert.equal(branch.$in[0]?.toHexString(), BRANCH_ID);
-  });
+function branchDelivery(id: string): Delivery {
+  return mock<Delivery>({ id, method: "branch", info: { branch: fixtureId("b0") } });
+}
 
-  test("the page is cut one row past the limit, after the Bring narrowing", ({ assert }) => {
-    const plain = openOrdersPipeline({}, 50);
-    assert.deepEqual(plain[2], { $limit: 51 });
+interface World {
+  branch: Branch;
+  otherBranch: Branch;
+  customer: User;
+  sinus: Item;
+  matte: Item;
+}
 
-    const bringOnly = openOrdersPipeline({ bringOnly: true }, 50);
-    const names = stageNames(bringOnly);
-    assert.deepEqual(names.slice(0, 5), ["$match", "$sort", "$lookup", "$match", "$limit"]);
-    assert.deepEqual(bringOnly[3], { $match: { "deliveryInfo.method": "bring" } });
-  });
+async function seedWorld(): Promise<World> {
+  const [branch, otherBranch, customer, sinus, matte] = await Promise.all([
+    createBranch({ name: "Ullern VGS" }),
+    createBranch({ name: "Nydalen VGS" }),
+    createUser({ name: "Kari", email: "kari@example.com", phone: "91234567" }),
+    createItem({ title: "Sinus 1T" }),
+    createItem({ title: "Matte 1P" }),
+  ]);
+  return { branch, otherBranch, customer, sinus, matte };
+}
 
-  test("the branch is projected as an id, not joined from the emptied Mongo collection", ({
-    assert,
-  }) => {
-    const pipeline = openOrdersPipeline({}, 50);
-    assert.notInclude(lookupSources(pipeline), "branches");
-    assert.deepEqual(projection(pipeline)["branchId"], { $toString: "$branch" });
-  });
-
-  test("a cursor continues strictly after the row it was made from", ({ assert }) => {
-    const cursor = {
-      creationTime: new Date("2026-09-01T12:00:00.000Z"),
-      id: new ObjectId(ORDER_ID),
-    };
-    const match = firstMatch(openOrdersPipeline({}, 50, cursor));
-    assert.deepEqual(match["$or"], [
-      { creationTime: { $lt: cursor.creationTime } },
-      { creationTime: cursor.creationTime, _id: { $lt: cursor.id } },
-    ]);
-  });
-});
+/** Deliveries and payments stay in Mongo, which the test environment has none of. */
+function stubMongo(
+  sandbox: sinon.SinonSandbox,
+  {
+    deliveries = [],
+    payments = new Map(),
+  }: { deliveries?: Delivery[]; payments?: Map<string, Payment[]> } = {},
+) {
+  sandbox
+    .stub(StorageService.Deliveries, "getMany")
+    .callsFake((ids: string[]) =>
+      Promise.resolve(deliveries.filter((delivery) => ids.includes(delivery.id))),
+    );
+  sandbox.stub(OrderPayments, "byOrder").resolves(payments);
+}
 
 test.group("OrderManagerService: listing", (group) => {
   let sandbox: sinon.SinonSandbox;
+  group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
-    sandbox.stub(Branch, "namesByIds").resolves(new Map([[BRANCH_ID, "Ullern VGS"]]));
     return () => sandbox.restore();
   });
 
-  test("branch names are joined from Postgres, a dangling branch reads as unknown", async ({
-    assert,
-  }) => {
-    const dangling = "5f7f7f7f7f7f7f7f7f7f7f99";
-    sandbox.stub(StorageService.Orders, "aggregate").resolves([row(1), row(0, dangling)]);
+  test("only placed orders with a book still owed, newest first", async ({ assert }) => {
+    stubMongo(sandbox);
+    const { branch, customer, sinus, matte } = await seedWorld();
+    const older = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      createdAt: at(0),
+      orderItems: [
+        { itemId: sinus.id, type: "buy" },
+        { itemId: matte.id, handout: true },
+      ],
+    });
+    const newer = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      createdAt: at(10),
+      orderItems: [{ itemId: sinus.id, type: "partly-payment" }],
+    });
+    // Not open: unplaced, handed out, delivered, carried on, or a type that owes no book.
+    await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      placed: false,
+      orderItems: [{ itemId: sinus.id }],
+    });
+    await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [
+        { itemId: sinus.id, handout: true },
+        { itemId: sinus.id, delivered: true },
+        { itemId: sinus.id, movedToOrderId: newer.id },
+        { itemId: sinus.id, type: "extend" },
+      ],
+    });
 
     const page = await OrderManagerService.listOpenOrders({}, undefined, 50);
 
-    assert.deepEqual(page.rows[0]?.branch, { id: BRANCH_ID, name: "Ullern VGS" });
-    assert.deepEqual(page.rows[1]?.branch, { id: dangling, name: null });
-    assert.notProperty(page.rows[0], "branchId");
-  });
-
-  test("a full page carries a cursor made from its last row", async ({ assert }) => {
-    const rows = Array.from({ length: 51 }, (_, index) => row(50 - index));
-    sandbox.stub(StorageService.Orders, "aggregate").resolves(rows);
-
-    const page = await OrderManagerService.listOpenOrders({}, undefined, 50);
-
-    assert.lengthOf(page.rows, 50);
-    const last = rows[49];
-    assert.equal(page.nextCursor, `${last?.creationTime}_${last?.id}`);
-  });
-
-  test("the last page has no cursor", async ({ assert }) => {
-    sandbox.stub(StorageService.Orders, "aggregate").resolves([row(1), row(0)]);
-
-    const page = await OrderManagerService.listOpenOrders({}, undefined, 50);
-
-    assert.lengthOf(page.rows, 2);
+    assert.deepEqual(
+      page.rows.map((row) => row.id),
+      [newer.id, older.id],
+    );
+    assert.deepEqual(page.rows[1]?.openItems, [
+      { itemId: sinus.id, title: "Sinus 1T", type: "buy" },
+    ]);
+    assert.deepEqual(page.rows[1]?.customer, { id: customer.id, name: "Kari" });
+    assert.deepEqual(page.rows[1]?.branch, { id: branch.id, name: "Ullern VGS" });
+    assert.equal(page.rows[1]?.creationTime, at(0).toJSDate().toISOString());
     assert.isNull(page.nextCursor);
   });
 
-  test("the cursor round-trips into the next page's match", async ({ assert }) => {
-    const aggregate = sandbox.stub(StorageService.Orders, "aggregate").resolves([]);
-    const creationTime = "2026-09-01T12:00:05.000Z";
+  test("the branch filter narrows to the given branches", async ({ assert }) => {
+    stubMongo(sandbox);
+    const { branch, otherBranch, customer, sinus } = await seedWorld();
+    await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id }],
+    });
+    const other = await createOrder({
+      branchId: otherBranch.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id }],
+    });
 
-    await OrderManagerService.listOpenOrders({}, `${creationTime}_${ORDER_ID}`, 50);
+    const page = await OrderManagerService.listOpenOrders(
+      { branchIds: [otherBranch.id] },
+      undefined,
+      50,
+    );
 
-    const match = firstMatch(unchecked(aggregate.firstCall.args[0]));
-    const or: { creationTime: Date | { $lt: Date } }[] = unchecked(match["$or"]);
-    assert.deepEqual(or[0]?.creationTime, { $lt: new Date(creationTime) });
+    assert.deepEqual(
+      page.rows.map((row) => row.id),
+      [other.id],
+    );
+  });
+
+  test("an order whose customer is gone is listed without one", async ({ assert }) => {
+    stubMongo(sandbox);
+    const { branch, sinus } = await seedWorld();
+    await createOrder({
+      branchId: branch.id,
+      customerId: null,
+      orderItems: [{ itemId: sinus.id }],
+    });
+
+    const page = await OrderManagerService.listOpenOrders({}, undefined, 50);
+
+    assert.isNull(page.rows[0]?.customer);
+  });
+
+  test("the cursor walks every order once, also across equal timestamps", async ({ assert }) => {
+    stubMongo(sandbox);
+    const { branch, customer, sinus } = await seedWorld();
+    const created = [];
+    for (const seconds of [0, 5, 5, 5, 9]) {
+      created.push(
+        await createOrder({
+          branchId: branch.id,
+          customerId: customer.id,
+          createdAt: at(seconds),
+          orderItems: [{ itemId: sinus.id }],
+        }),
+      );
+    }
+
+    const seen: string[] = [];
+    let cursor: string | undefined;
+    let pages = 0;
+    do {
+      const page = await OrderManagerService.listOpenOrders({}, cursor, 2);
+      seen.push(...page.rows.map((row) => row.id));
+      cursor = page.nextCursor ?? undefined;
+      pages++;
+    } while (cursor !== undefined && pages < 10);
+
+    const expected = created
+      .toSorted(
+        (a, b) => b.createdAt.toMillis() - a.createdAt.toMillis() || b.id.localeCompare(a.id),
+      )
+      .map((order) => order.id);
+    assert.deepEqual(seen, expected);
+    assert.equal(pages, 3);
   });
 
   test("a mangled cursor is refused", async ({ assert }) => {
-    sandbox.stub(StorageService.Orders, "aggregate").resolves([]);
-
+    stubMongo(sandbox);
     await assert.rejects(
       () => OrderManagerService.listOpenOrders({}, "not-a-cursor", 50),
       BadRequestException,
     );
   });
+
+  test("unpaid means something to pay and no payment recorded", async ({ assert }) => {
+    const { branch, customer, sinus } = await seedWorld();
+    const free = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      createdAt: at(0),
+      orderItems: [{ itemId: sinus.id }],
+    });
+    const owing = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      amount: 100,
+      createdAt: at(1),
+      orderItems: [{ itemId: sinus.id }],
+    });
+    const paid = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      amount: 100,
+      createdAt: at(2),
+      orderItems: [{ itemId: sinus.id }],
+    });
+    stubMongo(sandbox, { payments: new Map([[paid.id, [mock<Payment>({ id: "p" })]]]) });
+
+    const page = await OrderManagerService.listOpenOrders({}, undefined, 50);
+
+    const unpaid = new Map(page.rows.map((row) => [row.id, row.unpaid]));
+    assert.isFalse(unpaid.get(free.id));
+    assert.isTrue(unpaid.get(owing.id));
+    assert.isFalse(unpaid.get(paid.id));
+  });
+
+  test("Bring orders are flagged, and Bring-only narrows before the page is cut", async ({
+    assert,
+  }) => {
+    const { branch, customer, sinus } = await seedWorld();
+    const mailed = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      deliveryId: fixtureId("de1"),
+      createdAt: at(0),
+      orderItems: [{ itemId: sinus.id }],
+    });
+    for (const [index, deliveryId] of [fixtureId("de2"), null, null].entries()) {
+      await createOrder({
+        branchId: branch.id,
+        customerId: customer.id,
+        deliveryId,
+        createdAt: at(10 + index),
+        orderItems: [{ itemId: sinus.id }],
+      });
+    }
+    stubMongo(sandbox, {
+      deliveries: [bringDelivery(fixtureId("de1")), branchDelivery(fixtureId("de2"))],
+    });
+
+    const all = await OrderManagerService.listOpenOrders({}, undefined, 50);
+    assert.deepEqual(
+      all.rows.filter((row) => row.bring).map((row) => row.id),
+      [mailed.id],
+    );
+
+    const bringOnly = await OrderManagerService.listOpenOrders({ bringOnly: true }, undefined, 1);
+    assert.deepEqual(
+      bringOnly.rows.map((row) => row.id),
+      [mailed.id],
+    );
+    assert.isNull(bringOnly.nextCursor);
+  });
 });
 
-test.group("OrderManagerService: reports", () => {
-  test("the orders report keeps only the open item after unwinding", ({ assert }) => {
-    const pipeline = ordersReportPipeline({});
-    const unwindIndex = stageNames(pipeline).indexOf("$unwind");
-    assert.deepEqual(pipeline[unwindIndex], { $unwind: "$orderItems" });
-    assert.deepEqual(pipeline[unwindIndex + 1], {
-      $match: {
-        "orderItems.type": { $in: ["rent", "partly-payment", "buy"] },
-        "orderItems.handout": { $ne: true },
-        "orderItems.delivered": { $ne: true },
-        "orderItems.movedToOrder": null,
-      },
-    });
+test.group("OrderManagerService: reports", (group) => {
+  let sandbox: sinon.SinonSandbox;
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => {
+    sandbox = createSandbox();
+    return () => sandbox.restore();
   });
 
-  test("the orders report joins both branch names in code, keeping the column order", async ({
+  test("the orders report has one row per open book, in the CSV column order", async ({
     assert,
   }) => {
-    const pipeline = ordersReportPipeline({});
-    assert.notInclude(lookupSources(pipeline), "branches");
-    assert.notInclude(lookupSources(pipeline), "userdetails");
-    const project = projection(pipeline);
-    assert.deepEqual(project["schoolId"], { $toString: "$branch" });
-    assert.deepEqual(project["customerId"], { $toString: "$customer" });
+    const { branch, customer, sinus, matte } = await seedWorld();
+    const membership = await createBranch({ name: "Ullern VG1" });
+    await customer.merge({ branchMembershipId: membership.id }).save();
+    const order = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      amount: 100,
+      createdAt: at(0),
+      orderItems: [{ itemId: sinus.id }, { itemId: matte.id, handout: true }],
+    });
+    stubMongo(sandbox, { payments: new Map([[order.id, [mock<Payment>({ id: "p" })]]]) });
 
-    const sandbox = createSandbox();
-    try {
-      const membershipId = "5f7f7f7f7f7f7f7f7f7f7f22";
-      sandbox.stub(Branch, "namesByIds").resolves(
-        new Map([
-          [BRANCH_ID, "Ullern VGS"],
-          [membershipId, "Ullern VG1"],
-        ]),
-      );
-      sandbox.stub(Item, "byIds").resolves(new Map());
-      sandbox
-        .stub(User, "byIds")
-        .resolves(
-          new Map([
-            [
-              CUSTOMER_ID,
-              userDouble({ id: CUSTOMER_ID, name: "Kari", branchMembershipId: membershipId }),
-            ],
-          ]),
-        );
-      sandbox.stub(StorageService.Orders, "aggregate").resolves([
-        {
-          customerId: CUSTOMER_ID,
-          schoolId: BRANCH_ID,
-          title: "Sinus",
-          itemId: null,
-          orderTime: "2026-09-01T12:00:00.000Z",
-          paid: true,
-          pivot: 1,
-        },
-      ]);
+    const report = await OrderManagerService.ordersReport({});
 
-      const [report] = await OrderManagerService.ordersReport({});
+    assert.lengthOf(report, 1);
+    assert.deepEqual(Object.keys(report[0] ?? {}), [
+      "name",
+      "email",
+      "phone",
+      "address",
+      "dob",
+      "branchMembership",
+      "school",
+      "title",
+      "isbn",
+      "orderTime",
+      "paid",
+      "pivot",
+    ]);
+    assert.equal(report[0]?.name, "Kari");
+    assert.equal(report[0]?.branchMembership, "Ullern VG1");
+    assert.equal(report[0]?.school, "Ullern VGS");
+    assert.equal(report[0]?.title, "Sinus 1T");
+    assert.equal(report[0]?.isbn, String(sinus.isbn));
+    assert.equal(report[0]?.orderTime, at(0).toJSDate().toISOString());
+    assert.isTrue(report[0]?.paid);
+  });
 
-      assert.deepEqual(Object.keys(report ?? {}), [
-        "name",
-        "email",
-        "phone",
-        "address",
-        "dob",
-        "branchMembership",
-        "school",
-        "title",
-        "isbn",
-        "orderTime",
-        "paid",
-        "pivot",
-      ]);
-      assert.equal(report?.name, "Kari");
-      assert.equal(report?.branchMembership, "Ullern VG1");
-      assert.equal(report?.school, "Ullern VGS");
-    } finally {
-      sandbox.restore();
+  test("the Bring report splits on the mailbox product, unknown products go to the pickup file", async ({
+    assert,
+  }) => {
+    const { branch, customer, sinus } = await seedWorld();
+    for (const deliveryId of [fixtureId("de1"), fixtureId("de2"), fixtureId("de3")]) {
+      await createOrder({
+        branchId: branch.id,
+        customerId: customer.id,
+        deliveryId,
+        orderItems: [{ itemId: sinus.id }],
+      });
     }
-  });
+    stubMongo(sandbox, {
+      deliveries: [
+        bringDelivery(fixtureId("de1"), "3584"),
+        bringDelivery(fixtureId("de2"), "SERVICEPAKKE"),
+        bringDelivery(fixtureId("de3")),
+      ],
+    });
 
-  test("the Bring report splits on the mailbox product, unknown products go to the pickup file", ({
-    assert,
-  }) => {
-    assert.deepEqual(bringReportPipeline({}, "postkasse")[3], {
-      $match: { "deliveryInfo.info.product": "3584" },
-    });
-    assert.deepEqual(bringReportPipeline({}, "hentested")[3], {
-      $match: { "deliveryInfo.info.product": { $ne: "3584" } },
-    });
+    const mailbox = await OrderManagerService.bringReport({}, "postkasse");
+    const pickup = await OrderManagerService.bringReport({}, "hentested");
+
+    assert.deepEqual(
+      mailbox.map((row) => row["Name *"]),
+      [`Mottaker ${fixtureId("de1")}`],
+    );
+    assert.sameMembers(
+      pickup.map((row) => row["Name *"]),
+      [`Mottaker ${fixtureId("de2")}`, `Mottaker ${fixtureId("de3")}`],
+    );
+    assert.equal(mailbox[0]?.["Mobile number *"], "+4791234567");
+    assert.equal(mailbox[0]?.["E-mail *"], "kari@example.com");
   });
 
   test("Bring rows carry the Mybring headers for their parcel type", ({ assert }) => {

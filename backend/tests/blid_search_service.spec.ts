@@ -3,8 +3,7 @@ import { test } from "@japa/runner";
 import type { BlidSearchSources } from "#services/blid_search_service";
 import { assembleBlidSearch, collectReferencedIds } from "#services/blid_search_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { Order, OrderItem } from "#shared/order/order";
 
 const BLID = "12345678";
 const IDA = "ida-id";
@@ -43,8 +42,7 @@ function baseSources(overrides: Partial<BlidSearchSources> = {}): BlidSearchSour
   };
 }
 
-type TestOrderItem = Omit<OrderItem, "handout" | "delivered"> &
-  Partial<Pick<OrderItem, "handout" | "delivered">>;
+type TestOrderItem = Partial<OrderItem> & Pick<OrderItem, "type">;
 
 function makeOrder(
   overrides: Omit<Partial<Order>, "orderItems"> & { orderItems: TestOrderItem[] },
@@ -52,17 +50,35 @@ function makeOrder(
   return {
     id: "order-1",
     amount: 0,
-    branch: BRANCH,
-    customer: IDA,
+    branchId: BRANCH,
+    customerId: IDA,
     byCustomer: false,
-    employee: EMPLOYEE,
+    employeeId: EMPLOYEE,
     placed: true,
-    payments: [],
-    creationTime: T1,
+    deliveryId: null,
+    notifyByEmail: true,
+    checkoutState: null,
+    createdAt: T1,
+    updatedAt: T1,
     ...overrides,
-    orderItems: overrides.orderItems.map((orderItem) => ({
+    orderItems: overrides.orderItems.map((orderItem, index) => ({
+      id: index + 1,
+      itemId: "item-1",
+      title: "Sinus 1T",
+      blid: null,
+      amount: 0,
+      unitPrice: 0,
       handout: false,
       delivered: false,
+      customerItemId: null,
+      periodFrom: null,
+      periodTo: null,
+      numberOfPeriods: null,
+      periodType: null,
+      amountLeftToPay: null,
+      buybackAmount: null,
+      movedFromOrderId: null,
+      movedToOrderId: null,
       ...orderItem,
     })),
   };
@@ -107,19 +123,19 @@ test.group("BlidSearchService.assembleBlidSearch() – book", () => {
 test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
   const rentItem = {
     type: "rent",
-    item: "item-1",
+    itemId: "item-1",
     blid: BLID,
     title: "Sinus 1T",
     amount: 0,
     unitPrice: 0,
     handout: true,
-    info: { to: DEADLINE_1 },
+    periodTo: DEADLINE_1,
   } as const;
 
   test("marks an order-item handout whose order has a Bring delivery as sent by mail", ({
     assert,
   }) => {
-    const order = makeOrder({ delivery: "delivery-1", orderItems: [rentItem] });
+    const order = makeOrder({ deliveryId: "delivery-1", orderItems: [rentItem] });
     const result = assembleBlidSearch(
       baseSources({ orders: [order], bringDeliveryOrderIds: new Set(["order-1"]) }),
     );
@@ -133,7 +149,7 @@ test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
   test("marks a handover-row handout whose order has a Bring delivery as sent by mail", ({
     assert,
   }) => {
-    const order = makeOrder({ delivery: "delivery-1", orderItems: [rentItem] });
+    const order = makeOrder({ deliveryId: "delivery-1", orderItems: [rentItem] });
     const result = assembleBlidSearch(
       baseSources({
         orders: [order],
@@ -151,9 +167,9 @@ test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
     assert,
   }) => {
     const order = makeOrder({
-      delivery: "delivery-1",
+      deliveryId: "delivery-1",
       orderItems: [
-        { ...rentItem, blid: undefined, info: { to: DEADLINE_1, customerItem: "customer-item-1" } },
+        { ...rentItem, blid: null, periodTo: DEADLINE_1, customerItemId: "customer-item-1" },
       ],
     });
     const result = assembleBlidSearch(
@@ -177,7 +193,7 @@ test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
   test("does not mark a handout by mail when the order's delivery is a branch pickup", ({
     assert,
   }) => {
-    const order = makeOrder({ delivery: "delivery-1", orderItems: [rentItem] });
+    const order = makeOrder({ deliveryId: "delivery-1", orderItems: [rentItem] });
     const result = assembleBlidSearch(baseSources({ orders: [order] }));
     assert.isUndefined(result.history[0]?.byMail);
   });
@@ -189,13 +205,13 @@ test.group("BlidSearchService.assembleBlidSearch() – handover events", () => {
       orderItems: [
         {
           type: "rent",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
           unitPrice: 0,
           handout: true,
-          info: { to: DEADLINE_1 },
+          periodTo: DEADLINE_1,
         },
       ],
     });
@@ -252,11 +268,11 @@ test.group("BlidSearchService.assembleBlidSearch() – handover events", () => {
   test("drops the order's own movement events when a handover covers the order", ({ assert }) => {
     const order = makeOrder({
       byCustomer: true,
-      employee: undefined,
+      employeeId: null,
       orderItems: [
         {
           type: "match-receive",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
@@ -278,31 +294,46 @@ test.group("BlidSearchService.assembleBlidSearch() – handover events", () => {
 });
 
 test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no handovers)", () => {
+  test("names an order's deleted customer without a link", ({ assert }) => {
+    const order = makeOrder({
+      customerId: null,
+      orderItems: [{ type: "rent", blid: BLID, handout: true, periodTo: DEADLINE_1 }],
+    });
+
+    const result = assembleBlidSearch(baseSources({ orders: [order] }));
+
+    assert.deepEqual(result.history[0]?.to, {
+      type: "customer",
+      detailsId: null,
+      name: "Slettet kunde",
+    });
+  });
+
   test("builds handout, return and buyout events from order items", ({ assert }) => {
     const orders = [
       makeOrder({
         id: "order-1",
-        creationTime: T1,
+        createdAt: T1,
         orderItems: [
           {
             type: "rent",
-            item: "item-1",
+            itemId: "item-1",
             blid: BLID,
             title: "Sinus 1T",
             amount: 0,
             unitPrice: 0,
             handout: true,
-            info: { to: DEADLINE_1 },
+            periodTo: DEADLINE_1,
           },
         ],
       }),
       makeOrder({
         id: "order-2",
-        creationTime: T2,
+        createdAt: T2,
         orderItems: [
           {
             type: "return",
-            item: "item-1",
+            itemId: "item-1",
             blid: BLID,
             title: "Sinus 1T",
             amount: 0,
@@ -312,11 +343,11 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
       }),
       makeOrder({
         id: "order-3",
-        creationTime: T3,
+        createdAt: T3,
         orderItems: [
           {
             type: "buyout",
-            item: "item-1",
+            itemId: "item-1",
             blid: BLID,
             title: "Sinus 1T",
             amount: 0,
@@ -346,13 +377,13 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
       orderItems: [
         {
           type: "partly-payment",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
           unitPrice: 0,
           handout: true,
-          info: { to: DEADLINE_1 },
+          periodTo: DEADLINE_1,
         },
       ],
     });
@@ -371,31 +402,33 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
     const orders = [
       makeOrder({
         id: "order-1",
-        creationTime: T1,
+        createdAt: T1,
         orderItems: [
           {
             type: "partly-payment",
-            item: "item-1",
+            itemId: "item-1",
             blid: BLID,
             title: "Sinus 1T",
             amount: 0,
             unitPrice: 0,
             handout: true,
-            info: { to: DEADLINE_1 },
+            periodTo: DEADLINE_1,
           },
         ],
       }),
       makeOrder({
         id: "order-2",
-        creationTime: T2,
+        createdAt: T2,
         orderItems: [
           {
             type: "extend",
-            item: "item-1",
+            itemId: "item-1",
             title: "Sinus 1T",
             amount: 50,
             unitPrice: 50,
-            info: { from: T2, to: DEADLINE_2, customerItem: "customer-item-1" },
+            periodFrom: T2,
+            periodTo: DEADLINE_2,
+            customerItemId: "customer-item-1",
           },
         ],
       }),
@@ -420,7 +453,7 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
       orderItems: [
         {
           type: "buyback",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
@@ -437,12 +470,13 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
       orderItems: [
         {
           type: "extend",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
           unitPrice: 0,
-          info: { from: DEADLINE_1, to: DEADLINE_2 },
+          periodFrom: DEADLINE_1,
+          periodTo: DEADLINE_2,
         },
       ],
     });
@@ -456,11 +490,11 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
   test("shows a legacy match-receive without a counterparty", ({ assert }) => {
     const order = makeOrder({
       byCustomer: true,
-      employee: undefined,
+      employeeId: null,
       orderItems: [
         {
           type: "match-receive",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
@@ -480,12 +514,12 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
       orderItems: [
         {
           type: "rent",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
           unitPrice: 0,
-          info: { to: DEADLINE_1 },
+          periodTo: DEADLINE_1,
         },
       ],
     });
@@ -499,7 +533,7 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
       orderItems: [
         {
           type: "return",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
@@ -517,7 +551,7 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
       orderItems: [
         {
           type: "return",
-          item: "item-1",
+          itemId: "item-1",
           blid: "99999999",
           title: "Annen bok",
           amount: 0,
@@ -557,13 +591,13 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
       orderItems: [
         {
           type: "rent",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
           unitPrice: 0,
           handout: true,
-          info: { to: DEADLINE_1 },
+          periodTo: DEADLINE_1,
         },
       ],
     });
@@ -600,16 +634,17 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     assert,
   }) => {
     const order = makeOrder({
-      creationTime: T2,
+      createdAt: T2,
       orderItems: [
         {
           type: "extend",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
           unitPrice: 0,
-          info: { from: DEADLINE_1, to: DEADLINE_2 },
+          periodFrom: DEADLINE_1,
+          periodTo: DEADLINE_2,
         },
       ],
     });
@@ -668,18 +703,18 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
   test("does not repeat a buyback the blid-tagged order already tells", ({ assert }) => {
     const order = makeOrder({
       id: "buyback-order",
-      creationTime: T2,
+      createdAt: T2,
       orderItems: [
         {
           type: "buyback",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 200,
           unitPrice: 200,
           handout: false,
           delivered: false,
-          customerItem: "customer-item-1",
+          customerItemId: "customer-item-1",
         },
       ],
     });
@@ -701,17 +736,17 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     // customer item but no buyoutInfo and no buyout order — only an invoice-paid order item.
     const order = makeOrder({
       id: "invoice-order",
-      creationTime: T3,
+      createdAt: T3,
       orderItems: [
         {
           type: "invoice-paid",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 720,
           unitPrice: 720,
           handout: true,
-          customerItem: "customer-item-1",
+          customerItemId: "customer-item-1",
         },
       ],
     });
@@ -735,16 +770,16 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
   }) => {
     const order = makeOrder({
       id: "invoice-order",
-      creationTime: T3,
+      createdAt: T3,
       orderItems: [
         {
           type: "invoice-paid",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 720,
           unitPrice: 720,
-          customerItem: "customer-item-1",
+          customerItemId: "customer-item-1",
         },
       ],
     });
@@ -768,11 +803,11 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
   test("does not duplicate a buyout already covered by its order", ({ assert }) => {
     const order = makeOrder({
       id: "buyout-order",
-      creationTime: T2,
+      createdAt: T2,
       orderItems: [
         {
           type: "buyout",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
@@ -913,13 +948,13 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item authority",
       orderItems: [
         {
           type: "rent",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 100,
           unitPrice: 100,
           handout: true,
-          info: { to: DEADLINE_1 },
+          periodTo: DEADLINE_1,
         },
       ],
     });
@@ -941,9 +976,16 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item authority",
 
   test("a return displays the branch the customer item was returned to", ({ assert }) => {
     const order = makeOrder({
-      branch: BRANCH,
+      branchId: BRANCH,
       orderItems: [
-        { type: "return", item: "item-1", blid: BLID, title: "Sinus 1T", amount: 0, unitPrice: 0 },
+        {
+          type: "return",
+          itemId: "item-1",
+          blid: BLID,
+          title: "Sinus 1T",
+          amount: 0,
+          unitPrice: 0,
+        },
       ],
     });
     const result = assembleBlidSearch(
@@ -969,28 +1011,29 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item authority",
       orderItems: [
         {
           type: "rent",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 100,
           unitPrice: 100,
           handout: true,
-          info: { to: DEADLINE_1 },
+          periodTo: DEADLINE_1,
         },
       ],
     });
     const extendOrder = makeOrder({
       id: "order-2",
-      creationTime: T2,
+      createdAt: T2,
       orderItems: [
         {
           type: "extend",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 50,
           unitPrice: 50,
-          info: { from: DEADLINE_1, to: DEADLINE_2 },
+          periodFrom: DEADLINE_1,
+          periodTo: DEADLINE_2,
         },
       ],
     });
@@ -1057,14 +1100,14 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     // references the receiver's order).
     const senderOrder = makeOrder({
       id: "order-deliver",
-      customer: PETRA,
+      customerId: PETRA,
       byCustomer: true,
-      employee: undefined,
-      creationTime: T2,
+      employeeId: null,
+      createdAt: T2,
       orderItems: [
         {
           type: "match-deliver",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
@@ -1074,14 +1117,14 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     });
     const receiverOrder = makeOrder({
       id: "order-receive",
-      customer: IDA,
+      customerId: IDA,
       byCustomer: true,
-      employee: undefined,
-      creationTime: new Date(T2.getTime() + 200),
+      employeeId: null,
+      createdAt: new Date(T2.getTime() + 200),
       orderItems: [
         {
           type: "match-receive",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
@@ -1114,14 +1157,14 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
   }) => {
     const senderOrder = makeOrder({
       id: "order-deliver",
-      customer: PETRA,
+      customerId: PETRA,
       byCustomer: true,
-      employee: undefined,
-      creationTime: T2,
+      employeeId: null,
+      createdAt: T2,
       orderItems: [
         {
           type: "match-deliver",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
@@ -1131,14 +1174,14 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     });
     const receiverOrder = makeOrder({
       id: "order-receive",
-      customer: IDA,
+      customerId: IDA,
       byCustomer: true,
-      employee: undefined,
-      creationTime: new Date(T2.getTime() + 100),
+      employeeId: null,
+      createdAt: new Date(T2.getTime() + 100),
       orderItems: [
         {
           type: "match-receive",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
@@ -1165,12 +1208,12 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     ) =>
       makeOrder({
         id,
-        customer,
+        customerId: customer,
         byCustomer: true,
-        employee: undefined,
-        creationTime: new Date(T2.getTime() + offsetMs),
+        employeeId: null,
+        createdAt: new Date(T2.getTime() + offsetMs),
         orderItems: [
-          { type, item: "item-1", blid: BLID, title: "Sinus 1T", amount: 0, unitPrice: 0 },
+          { type, itemId: "item-1", blid: BLID, title: "Sinus 1T", amount: 0, unitPrice: 0 },
         ],
       });
     const result = assembleBlidSearch(
@@ -1194,12 +1237,12 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     const matchOrder = (id: string, type: "match-receive" | "match-deliver", offsetMs: number) =>
       makeOrder({
         id,
-        customer: IDA,
+        customerId: IDA,
         byCustomer: true,
-        employee: undefined,
-        creationTime: new Date(T2.getTime() + offsetMs),
+        employeeId: null,
+        createdAt: new Date(T2.getTime() + offsetMs),
         orderItems: [
-          { type, item: "item-1", blid: BLID, title: "Sinus 1T", amount: 0, unitPrice: 0 },
+          { type, itemId: "item-1", blid: BLID, title: "Sinus 1T", amount: 0, unitPrice: 0 },
         ],
       });
     const result = assembleBlidSearch(
@@ -1239,11 +1282,11 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
 
   test("omits the employee when their user detail cannot be resolved", ({ assert }) => {
     const order = makeOrder({
-      employee: "deleted-employee",
+      employeeId: "deleted-employee",
       orderItems: [
         {
           type: "rent",
-          item: "item-1",
+          itemId: "item-1",
           blid: BLID,
           title: "Sinus 1T",
           amount: 0,
@@ -1341,7 +1384,14 @@ test.group("BlidSearchService.collectReferencedIds()", () => {
   test("collects customer, employee and branch ids from every source", ({ assert }) => {
     const order = makeOrder({
       orderItems: [
-        { type: "return", item: "item-1", blid: BLID, title: "Sinus 1T", amount: 0, unitPrice: 0 },
+        {
+          type: "return",
+          itemId: "item-1",
+          blid: BLID,
+          title: "Sinus 1T",
+          amount: 0,
+          unitPrice: 0,
+        },
       ],
     });
     const { userDetailIds, branchIds } = collectReferencedIds(

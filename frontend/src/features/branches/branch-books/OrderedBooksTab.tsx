@@ -77,7 +77,7 @@ function OrderedBookDetails({
       leafLabel="Bestilt på denne filialen"
       emptyLabel="Ingen av disse bøkene er bestilt direkte fra denne filialen."
       allowCancel
-      rowKey={(row) => row.orderItemId}
+      rowKey={(row) => String(row.orderItemId)}
       onEditRow={onEditRow}
     />
   );
@@ -87,7 +87,7 @@ function bulkFilter(target: BranchBooksEditTarget, includeDescendants: boolean) 
   return {
     ...(target.filter.deadlines && { deadlines: target.filter.deadlines }),
     ...(target.filter.itemId && { itemId: target.filter.itemId }),
-    ...(target.filter.ids && { orderItemIds: target.filter.ids }),
+    ...(target.filter.orderItemIds && { orderItemIds: target.filter.orderItemIds }),
     includeDescendants,
   };
 }
@@ -203,7 +203,7 @@ export default function OrderedBooksTab({ branchId }: { branchId: string }) {
             onEditRow={(kind, row) =>
               openEdit(kind, {
                 description: `${row.customerName ?? "ukjent kunde"} sin bestilling`,
-                filter: { ids: [row.orderItemId] },
+                filter: { orderItemIds: [row.orderItemId] },
                 direct: 1,
                 total: 1,
                 allowDescendants: false,

@@ -10,8 +10,7 @@ import type { SignatureExceptionReason } from "#services/signature_helper";
 import { HeldBookRules } from "#services/stand_cart/stand_cart_rules";
 import { TranslationService } from "#services/translation_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { OrderItem as OrderItemDto } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
 
 export interface PlacementReport {
@@ -19,9 +18,15 @@ export interface PlacementReport {
   details: MonitoringDetail[];
 }
 
+/** What the reports read of an order line; a stored line and its DTO both have it. */
+type OrderItem = Pick<
+  OrderItemDto,
+  "type" | "handout" | "title" | "blid" | "amount" | "customerItemId"
+>;
+
 /** Everything the reports need, read before the order changes any of it. */
 export interface PlacementReportInput {
-  order: Order;
+  order: { orderItems: OrderItem[] };
   /** The held books the order acts on, as they were before placement, by customer item id. */
   customerItemsBefore: Map<string, CustomerItem>;
   /** The payments recorded on the order, in whatever way the money moved. */
@@ -31,13 +36,8 @@ export interface PlacementReportInput {
 }
 
 /** A rent or partly-payment handout: the order items that become customer items. */
-export function isLoanHandout(orderItem: OrderItem): boolean {
+export function isLoanHandout(orderItem: Pick<OrderItem, "type" | "handout">): boolean {
   return orderItem.handout && (orderItem.type === "rent" || orderItem.type === "partly-payment");
-}
-
-/** The held book an order item acts on; an extension keeps the id in its period info. */
-export function customerItemIdOf(orderItem: OrderItem): string | undefined {
-  return orderItem.customerItem ?? orderItem.info?.customerItem;
 }
 
 function formatDeadline(deadline: Date | string): string {
@@ -105,7 +105,7 @@ function heldBookReport(
 
 function heldBookReports(input: PlacementReportInput): PlacementReport[] {
   return input.order.orderItems.flatMap((orderItem) => {
-    const customerItem = input.customerItemsBefore.get(customerItemIdOf(orderItem) ?? "");
+    const customerItem = input.customerItemsBefore.get(orderItem.customerItemId ?? "");
     const report = customerItem ? heldBookReport(orderItem, customerItem, input.now) : null;
     return report ? [report] : [];
   });

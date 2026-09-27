@@ -432,6 +432,78 @@ export class OpeningHourSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class OrderItemSchema extends BaseModel {
+  static $columns = ['amount', 'amountLeftToPay', 'blid', 'buybackAmount', 'customerItemId', 'delivered', 'handout', 'id', 'itemId', 'movedFromOrderId', 'movedToOrderId', 'numberOfPeriods', 'orderId', 'periodFrom', 'periodTo', 'periodType', 'position', 'type', 'unitPrice'] as const
+  $columns = OrderItemSchema.$columns
+  @column()
+  declare amount: number
+  @column()
+  declare amountLeftToPay: number | null
+  @column()
+  declare blid: string | null
+  @column()
+  declare buybackAmount: number | null
+  @column()
+  declare customerItemId: string | null
+  @column()
+  declare delivered: boolean
+  @column()
+  declare handout: boolean
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare itemId: string
+  @column()
+  declare movedFromOrderId: string | null
+  @column()
+  declare movedToOrderId: string | null
+  @column()
+  declare numberOfPeriods: number | null
+  @column()
+  declare orderId: string
+  @column.dateTime()
+  declare periodFrom: DateTime | null
+  @column.dateTime()
+  declare periodTo: DateTime | null
+  @column()
+  declare periodType: string | null
+  @column()
+  declare position: number
+  @column()
+  declare type: string
+  @column()
+  declare unitPrice: number
+}
+
+export class OrderSchema extends BaseModel {
+  static $columns = ['amount', 'branchId', 'byCustomer', 'checkoutState', 'createdAt', 'customerId', 'deliveryId', 'employeeId', 'id', 'notifyByEmail', 'placed', 'updatedAt'] as const
+  $columns = OrderSchema.$columns
+  @column()
+  declare amount: number
+  @column()
+  declare branchId: string
+  @column()
+  declare byCustomer: boolean
+  @column()
+  declare checkoutState: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare customerId: string | null
+  @column()
+  declare deliveryId: string | null
+  @column()
+  declare employeeId: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare notifyByEmail: boolean
+  @column()
+  declare placed: boolean
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class PasswordResetSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'tokenHash', 'updatedAt', 'userDetailId'] as const
   $columns = PasswordResetSchema.$columns

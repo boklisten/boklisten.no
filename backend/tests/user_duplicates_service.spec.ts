@@ -1,7 +1,17 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
+import { createSandbox } from "sinon";
 
+import { StorageService } from "#services/storage_service";
 import type { DuplicateCandidateSource } from "#services/user_duplicates_service";
-import { findDuplicateCandidatePairs } from "#services/user_duplicates_service";
+import {
+  findDuplicateCandidatePairs,
+  UserDuplicatesService,
+} from "#services/user_duplicates_service";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 function user(overrides: Partial<DuplicateCandidateSource> & { id: string }) {
   return {
@@ -115,5 +125,51 @@ test.group("findDuplicateCandidatePairs", () => {
       user({ id: "b", name: "Ola Nordmann", dob: "2008-05-17" }),
     ]);
     assert.lengthOf(pairs, 1);
+  });
+});
+
+test.group("UserDuplicatesService.summarizeUserDetails", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => {
+    // Customer items stay in Mongo, which the test environment has none of.
+    const sandbox = createSandbox();
+    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves([]);
+    return () => sandbox.restore();
+  });
+
+  test("counts the open rent and partly-payment lines of placed orders", async ({ assert }) => {
+    const [branch, customer, other, item] = await Promise.all([
+      createBranch(),
+      createUser(),
+      createUser(),
+      createItem(),
+    ]);
+    await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [
+        { itemId: item.id },
+        { itemId: item.id, type: "partly-payment" },
+        { itemId: item.id, type: "buy" },
+        { itemId: item.id, handout: true },
+      ],
+    });
+    await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      placed: false,
+      orderItems: [{ itemId: item.id }],
+    });
+    await createOrder({
+      branchId: branch.id,
+      customerId: other.id,
+      orderItems: [{ itemId: item.id }],
+    });
+
+    const summaries = await UserDuplicatesService.summarizeUserDetails([customer.id, other.id]);
+
+    const ordered = new Map(summaries.map((summary) => [summary.detailsId, summary.orderedItems]));
+    assert.equal(ordered.get(customer.id), 2);
+    assert.equal(ordered.get(other.id), 1);
   });
 });

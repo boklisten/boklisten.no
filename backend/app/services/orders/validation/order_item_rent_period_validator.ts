@@ -1,12 +1,11 @@
+import Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import { APP_CONFIG } from "#services/application_config";
+import { OrderPayments } from "#services/payments/order_payments";
 import { PriceService } from "#services/price_service";
-import { isNotNullish } from "#services/typescript_helpers";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch, RentPeriod } from "#shared/branch";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Period } from "#shared/period";
 
 export class OrderItemRentPeriodValidator {
@@ -29,23 +28,12 @@ export class OrderItemRentPeriodValidator {
       return true;
     }
 
-    // @ts-expect-error fixme: auto ignored
-    const period = orderItem.info.periodType;
+    const branchPaymentPeriod = this.getRentPeriodFromBranch(orderItem.periodType, branch);
 
-    if (isNotNullish(orderItem.movedFromOrder)) {
-      const branchPaymentPeriod = this.getRentPeriodFromBranch(
-        // @ts-expect-error fixme: auto ignored
-        period,
-        branch,
-      );
+    if (orderItem.movedFromOrderId !== null) {
       return this.validateIfMovedFromOrder(orderItem, branchPaymentPeriod, itemPrice);
     }
 
-    const branchPaymentPeriod = this.getRentPeriodFromBranch(
-      // @ts-expect-error fixme: auto ignored
-      period,
-      branch,
-    );
     this.validateOrderItemPrice(orderItem, branchPaymentPeriod, itemPrice);
 
     return true;
@@ -67,7 +55,10 @@ export class OrderItemRentPeriodValidator {
     }
   }
 
-  private getRentPeriodFromBranch(period: Period, branch: Pick<Branch, "rentPeriods">): RentPeriod {
+  private getRentPeriodFromBranch(
+    period: Period | null,
+    branch: Pick<Branch, "rentPeriods">,
+  ): RentPeriod {
     for (const rentPeriod of branch.rentPeriods) {
       if (period === rentPeriod.type) {
         return rentPeriod;
@@ -82,66 +73,54 @@ export class OrderItemRentPeriodValidator {
     branchRentPeriod: RentPeriod,
     itemPrice: number,
   ): Promise<boolean> {
-    if (!orderItem.movedFromOrder) {
+    if (orderItem.movedFromOrderId === null) {
       return true;
     }
 
-    return StorageService.Orders.get(orderItem.movedFromOrder)
-      .then((order: Order) => {
-        if (order.payments.length <= 0 && orderItem.amount === 0) {
+    const order = await Order.getOrFail(orderItem.movedFromOrderId);
+    const isPaid = await OrderPayments.exist(order.id);
+    if (!isPaid && orderItem.amount === 0) {
+      throw new BlError(
+        'the original order has not been payed, but current orderItem.amount is "0"',
+      );
+    }
+
+    if (isPaid) {
+      const movedFromOrderItem = this.getOrderItemFromOrder(orderItem.itemId, order);
+
+      if (movedFromOrderItem.periodType === orderItem.periodType) {
+        if (movedFromOrderItem.amount > 0 && orderItem.amount !== 0) {
           throw new BlError(
-            'the original order has not been payed, but current orderItem.amount is "0"',
+            `the original order has been payed, but current orderItem.amount is "${orderItem.amount}"`,
           );
         }
+      } else {
+        // the periodType is changed after the original placed order
+        const expectedOrderItemAmount =
+          this.priceService.round(
+            this.priceService.sanitize(itemPrice * branchRentPeriod.percentage),
+          ) - movedFromOrderItem.amount;
 
-        if (order.payments.length > 0) {
-          // the order is payed
-          const movedFromOrderItem = this.getOrderItemFromOrder(orderItem.item, order);
-
-          if (
-            // @ts-expect-error fixme: auto ignored
-            movedFromOrderItem.info.periodType === orderItem.info.periodType
-          ) {
-            if (movedFromOrderItem.amount > 0 && orderItem.amount !== 0) {
-              throw new BlError(
-                `the original order has been payed, but current orderItem.amount is "${orderItem.amount}"`,
-              );
-            }
-          } else {
-            // the periodType is changed after the original placed order
-            const expectedOrderItemAmount =
-              this.priceService.round(
-                this.priceService.sanitize(itemPrice * branchRentPeriod.percentage),
-              ) - movedFromOrderItem.amount;
-
-            if (orderItem.amount !== expectedOrderItemAmount) {
-              throw new BlError(
-                `orderItem amount is "${orderItem.amount}" but should be "${expectedOrderItemAmount}" since the old orderItem.amount was "${movedFromOrderItem.amount}"`,
-              );
-            }
-          }
+        if (orderItem.amount !== expectedOrderItemAmount) {
+          throw new BlError(
+            `orderItem amount is "${orderItem.amount}" but should be "${expectedOrderItemAmount}" since the old orderItem.amount was "${movedFromOrderItem.amount}"`,
+          );
         }
-        return true;
-      })
-      .catch((error) => {
-        throw error;
-      });
+      }
+    }
+    return true;
   }
 
   private getOrderItemFromOrder(itemId: string, order: Order): OrderItem {
-    for (const orderItem of order.orderItems) {
-      if (orderItem.item.toString() === itemId.toString()) {
-        return orderItem;
-      }
-    }
-
+    const exact = order.orderItems.find((orderItem) => orderItem.itemId === itemId);
     // A moved order item may carry an equivalent edition of the originally ordered item.
-    for (const orderItem of order.orderItems) {
-      if (itemsAreEquivalent(orderItem.item.toString(), itemId.toString())) {
-        return orderItem;
-      }
+    const equivalent = order.orderItems.find((orderItem) =>
+      itemsAreEquivalent(orderItem.itemId, itemId),
+    );
+    const found = exact ?? equivalent;
+    if (!found) {
+      throw new BlError("not found in original orderItem");
     }
-
-    throw new BlError("not found in original orderItem");
+    return found;
   }
 }

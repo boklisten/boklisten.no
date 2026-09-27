@@ -2,7 +2,10 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
+import { DateTime } from "luxon";
 
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
 import { OrderItemBuyValidator } from "#services/orders/validation/order_item_buy_validator";
 import { OrderItemExtendValidator } from "#services/orders/validation/order_item_extend_validator";
@@ -10,9 +13,9 @@ import { OrderItemRentValidator } from "#services/orders/validation/order_item_r
 import { OrderItemValidator } from "#services/orders/validation/order_item_validator";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
-import type { Order } from "#shared/order/order";
 import { branchDto } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderItemValidator", (group) => {
   const orderItemFieldValidator = new OrderFieldValidator();
@@ -36,33 +39,30 @@ test.group("OrderItemValidator", (group) => {
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
-    testOrder = {
+    testOrder = mock<Order>({
       id: "order1",
       amount: 300,
-      customer: "",
+      customerId: null,
       orderItems: [
         {
           handout: false,
           delivered: false,
-          item: "item2",
+          itemId: "item2",
           title: "Spinn",
           amount: 300,
           unitPrice: 600,
           type: "rent",
-          info: {
-            from: new Date(),
-            to: legalDeadline,
-            numberOfPeriods: 1,
-            periodType: "semester",
-          },
+          periodFrom: DateTime.now(),
+          periodTo: DateTime.fromJSDate(legalDeadline),
+          numberOfPeriods: 1,
+          periodType: "semester",
         },
       ],
-      delivery: "delivery1",
-      branch: "branch1",
+      deliveryId: "delivery1",
+      branchId: "branch1",
       byCustomer: true,
       placed: false,
-      payments: ["payment1"],
-    };
+    });
 
     testBranch = branchDto({
       id: "branch1",
@@ -94,8 +94,7 @@ test.group("OrderItemValidator", (group) => {
   }) => {
     testOrder.amount = 500;
 
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].amount = 250;
+    testOrder.orderItems[0]!.amount = 250;
 
     return assert.rejects(
       () => orderItemValidator.validate(testBranch, testOrder, false),
@@ -109,8 +108,7 @@ test.group("OrderItemValidator", (group) => {
   }) => {
     testOrder.amount = 100;
 
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].amount = 780;
+    testOrder.orderItems[0]!.amount = 780;
 
     return assert.rejects(
       () => orderItemValidator.validate(testBranch, testOrder, false),
@@ -120,20 +118,20 @@ test.group("OrderItemValidator", (group) => {
   });
 
   test("should resolve if price amount is valid", async ({ assert }) => {
-    testOrder.orderItems = [
-      {
+    testOrder.orderItems.splice(
+      0,
+      1,
+      mock<OrderItem>({
         handout: false,
         delivered: false,
         type: "rent",
-        item: "item1",
+        itemId: "item1",
         title: "signatur 3",
         amount: 100,
         unitPrice: 100,
-        info: {
-          to: legalDeadline,
-        },
-      },
-    ];
+        periodTo: DateTime.fromJSDate(legalDeadline),
+      }),
+    );
 
     testOrder.amount = 100;
 
@@ -141,20 +139,20 @@ test.group("OrderItemValidator", (group) => {
   });
 
   test("should reject if deadline is in the past and user is not admin", async ({ assert }) => {
-    testOrder.orderItems = [
-      {
+    testOrder.orderItems.splice(
+      0,
+      1,
+      mock<OrderItem>({
         handout: false,
         delivered: false,
         type: "rent",
-        item: "item1",
+        itemId: "item1",
         title: "signatur 3",
         amount: 100,
         unitPrice: 100,
-        info: {
-          to: new Date(1_234_567_891_011), // Friday, February 13th 2009
-        },
-      },
-    ];
+        periodTo: DateTime.fromJSDate(new Date(1_234_567_891_011)), // Friday, February 13th 2009
+      }),
+    );
     testOrder.amount = 100;
     return assert.rejects(
       () => orderItemValidator.validate(testBranch, testOrder, false),
@@ -169,20 +167,20 @@ test.group("OrderItemValidator", (group) => {
     const deadline = new Date();
     deadline.setFullYear(deadline.getFullYear() + 4);
     deadline.setDate(deadline.getDate() + 1);
-    testOrder.orderItems = [
-      {
+    testOrder.orderItems.splice(
+      0,
+      1,
+      mock<OrderItem>({
         handout: false,
         delivered: false,
         type: "rent",
-        item: "item1",
+        itemId: "item1",
         title: "signatur 3",
         amount: 100,
         unitPrice: 100,
-        info: {
-          to: deadline,
-        },
-      },
-    ];
+        periodTo: DateTime.fromJSDate(deadline),
+      }),
+    );
     testOrder.amount = 100;
     return assert.rejects(
       () => orderItemValidator.validate(testBranch, testOrder, false),
@@ -192,20 +190,20 @@ test.group("OrderItemValidator", (group) => {
   });
 
   test("should fulfill if deadline is in the past and user is admin", async ({ assert }) => {
-    testOrder.orderItems = [
-      {
+    testOrder.orderItems.splice(
+      0,
+      1,
+      mock<OrderItem>({
         handout: false,
         delivered: false,
         type: "rent",
-        item: "item1",
+        itemId: "item1",
         title: "signatur 3",
         amount: 100,
         unitPrice: 100,
-        info: {
-          to: new Date(1_234_567_891_011), // Friday, February 13th 2009
-        },
-      },
-    ];
+        periodTo: DateTime.fromJSDate(new Date(1_234_567_891_011)), // Friday, February 13th 2009
+      }),
+    );
     testOrder.amount = 100;
     return assert.doesNotReject(() => orderItemValidator.validate(testBranch, testOrder, true));
   });
@@ -216,20 +214,20 @@ test.group("OrderItemValidator", (group) => {
     const deadline = new Date();
     deadline.setFullYear(deadline.getFullYear() + 4);
     deadline.setDate(deadline.getDate() + 1);
-    testOrder.orderItems = [
-      {
+    testOrder.orderItems.splice(
+      0,
+      1,
+      mock<OrderItem>({
         handout: false,
         delivered: false,
         type: "rent",
-        item: "item1",
+        itemId: "item1",
         title: "signatur 3",
         amount: 100,
         unitPrice: 100,
-        info: {
-          to: deadline,
-        },
-      },
-    ];
+        periodTo: DateTime.fromJSDate(deadline),
+      }),
+    );
     testOrder.amount = 100;
     return assert.doesNotReject(() => orderItemValidator.validate(testBranch, testOrder, true));
   });

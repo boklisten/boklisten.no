@@ -1,136 +1,65 @@
 import { test } from "@japa/runner";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import testUtils from "@adonisjs/core/services/test_utils";
 
+import type Branch from "#models/branch";
+import type Item from "#models/item";
+import type User from "#models/user";
 import { OrderActive } from "#services/orders/order_active";
-import { StorageService } from "#services/storage_service";
-import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 test.group("OrderActive", (group) => {
   const orderActive = new OrderActive();
-  const testUserId = "5d765db5fc8c47001c408d8d";
-  let getOrderByQueryStub: sinon.SinonStub;
-  let sandbox: sinon.SinonSandbox;
+  let branch: Branch;
+  let customer: User;
+  let item: Item;
 
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    getOrderByQueryStub = sandbox.stub(StorageService.Orders, "getByQuery");
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
+  group.each.setup(async () => {
+    const truncate = await testUtils.db().truncate();
+    [branch, customer, item] = await Promise.all([createBranch(), createUser(), createItem()]);
+    return truncate;
   });
 
   test("should resolve with false if no orders was found", async ({ assert }) => {
-    getOrderByQueryStub.rejects(new BlError("not found").code(702));
-
-    assert.isFalse(await orderActive.haveActiveOrders(testUserId));
+    assert.isFalse(await orderActive.haveActiveOrders(customer.id));
   });
 
   test("should resolve with false if orders was found but none was active", async ({ assert }) => {
-    const nonActiveOrder: Order = {
-      payments: [],
-      id: "order1",
-      amount: 100,
-      orderItems: [],
-      branch: "branch1",
-      customer: testUserId,
-      byCustomer: true,
-      placed: false,
-    };
+    await createOrder({ branchId: branch.id, customerId: customer.id, placed: false });
 
-    getOrderByQueryStub.resolves([nonActiveOrder]);
-
-    assert.isFalse(await orderActive.haveActiveOrders(testUserId));
+    assert.isFalse(await orderActive.haveActiveOrders(customer.id));
   });
 
   test("should resolve with true if orders was found and at least one was active", async ({
     assert,
   }) => {
-    const nonActiveOrder: Order = {
-      payments: [],
-      id: "order1",
+    await createOrder({ branchId: branch.id, customerId: customer.id, placed: false });
+    await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
       amount: 100,
-      orderItems: [],
-      branch: "branch1",
-      customer: testUserId,
-      byCustomer: true,
-      placed: false,
-    };
+      orderItems: [{ type: "partly-payment", itemId: item.id, amount: 100, unitPrice: 100 }],
+    });
 
-    const activeOrder: Order = {
-      payments: [],
-      id: "order2",
-      amount: 200,
-      orderItems: [
-        {
-          type: "partly-payment",
-          item: "item1",
-          title: "title 1",
-          amount: 100,
-          unitPrice: 100,
-          handout: false,
-          delivered: false,
-        },
-      ],
-      branch: "branch1",
-      customer: testUserId,
-      byCustomer: true,
-      placed: true,
-    };
-
-    getOrderByQueryStub.resolves([nonActiveOrder, activeOrder]);
-
-    assert.isTrue(await orderActive.haveActiveOrders(testUserId));
+    assert.isTrue(await orderActive.haveActiveOrders(customer.id));
   });
 
   test("should resolve with false if orders was found and all order-items was handed out", async ({
     assert,
   }) => {
-    const nonActiveOrder: Order = {
-      payments: [],
-      id: "order1",
-      amount: 100,
-      orderItems: [
-        {
-          type: "partly-payment",
-          item: "item1",
-          title: "title 1",
-          amount: 100,
-          unitPrice: 100,
-          handout: true,
-          delivered: false,
-        },
-      ],
-      branch: "branch1",
-      customer: testUserId,
-      byCustomer: true,
-      placed: true,
-    };
+    for (let index = 0; index < 2; index++) {
+      await createOrder({
+        branchId: branch.id,
+        customerId: customer.id,
+        amount: 100,
+        orderItems: [
+          { type: "partly-payment", itemId: item.id, amount: 100, unitPrice: 100, handout: true },
+        ],
+      });
+    }
 
-    const nonActiveOrder2: Order = {
-      payments: [],
-      id: "order2",
-      amount: 200,
-      orderItems: [
-        {
-          type: "partly-payment",
-          item: "item1",
-          title: "title 1",
-          amount: 100,
-          unitPrice: 100,
-          handout: true,
-          delivered: false,
-        },
-      ],
-      branch: "branch1",
-      customer: testUserId,
-      byCustomer: true,
-      placed: true,
-    };
-
-    getOrderByQueryStub.resolves([nonActiveOrder, nonActiveOrder2]);
-
-    assert.isFalse(await orderActive.haveActiveOrders(testUserId));
+    assert.isFalse(await orderActive.haveActiveOrders(customer.id));
   });
 });

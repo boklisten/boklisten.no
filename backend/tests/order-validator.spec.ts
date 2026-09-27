@@ -2,7 +2,9 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
+import { DateTime } from "luxon";
 
+import type Order from "#models/order";
 import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
 import { OrderItemValidator } from "#services/orders/validation/order_item_validator";
 import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
@@ -10,8 +12,8 @@ import { OrderUserDetailValidator } from "#services/orders/validation/order_user
 import { OrderValidator } from "#services/orders/validation/order_validator";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
-import type { Order } from "#shared/order/order";
 import { branchDto, createBranch } from "#tests/branch_fixtures";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderValidator", (group) => {
   let testOrder: Order;
@@ -71,33 +73,30 @@ test.group("OrderValidator", (group) => {
     orderPlacedShouldResolve = true;
     orderUserDetailValidatorShouldResolve = true;
 
-    testOrder = {
+    testOrder = mock<Order>({
       id: "order1",
       amount: 300,
-      customer: "",
+      customerId: null,
       orderItems: [
         {
           handout: false,
           delivered: false,
-          item: "item2",
+          itemId: "item2",
           title: "Spinn",
           amount: 300,
           unitPrice: 600,
           type: "rent",
-          info: {
-            from: new Date(),
-            to: new Date(),
-            numberOfPeriods: 1,
-            periodType: "semester",
-          },
+          periodFrom: DateTime.now(),
+          periodTo: DateTime.now(),
+          numberOfPeriods: 1,
+          periodType: "semester",
         },
       ],
-      delivery: "delivery1",
-      branch: "branch1",
+      deliveryId: "delivery1",
+      branchId: "branch1",
       byCustomer: true,
       placed: false,
-      payments: ["payment1"],
-    };
+    });
 
     testBranch = branchDto({
       id: "branch1",
@@ -127,7 +126,7 @@ test.group("OrderValidator", (group) => {
   });
 
   test("should reject if branch is not found", async ({ assert }) => {
-    testOrder.branch = "notFoundBranch";
+    testOrder.branchId = "notFoundBranch";
 
     return assert.rejects(
       () => orderValidator.validate(testOrder, false),
@@ -137,7 +136,7 @@ test.group("OrderValidator", (group) => {
   });
 
   test("should reject if orderItems is empty or undefined", async ({ assert }) => {
-    testOrder.orderItems = [];
+    testOrder.orderItems.splice(0);
     return assert.rejects(
       () => orderValidator.validate(testOrder, false),
       BlError,

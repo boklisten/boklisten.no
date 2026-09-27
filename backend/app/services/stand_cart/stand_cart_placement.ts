@@ -1,14 +1,17 @@
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import User from "#models/user";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { MatchRepository } from "#services/matches/match_repository";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
+import { OrderPayments } from "#services/payments/order_payments";
 import { findSignatureException } from "#services/signature_helper";
+import { standCustomerId } from "#services/stand_cart/stand_cart_payment";
 import {
-  customerItemIdOf,
   derivePlacementReports,
   isLoanHandout,
   StandCartMonitoring,
@@ -16,9 +19,6 @@ import {
 import type { PlacementReport } from "#services/stand_cart/stand_cart_monitoring";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
-import type { Payment } from "#shared/payment/payment";
 import { USER_PERMISSION } from "#shared/user-permission";
 
 function isTakenBack(orderItem: OrderItem): boolean {
@@ -27,32 +27,27 @@ function isTakenBack(orderItem: OrderItem): boolean {
 
 /** The held books the order acts on, as they are before the placement changes them. */
 async function loadHeldBooks(order: Order): Promise<Map<string, CustomerItem>> {
-  const ids = [...new Set(order.orderItems.map(customerItemIdOf))].filter(
-    (id): id is string => id !== undefined,
+  const ids = [...new Set(order.orderItems.map((orderItem) => orderItem.customerItemId))].filter(
+    (id): id is string => id !== null,
   );
   const customerItems =
     ids.length === 0 ? [] : await StorageService.CustomerItems.getMany(ids, USER_PERMISSION.ADMIN);
   return new Map(customerItems.map((customerItem) => [customerItem.id, customerItem]));
 }
 
-async function loadPayments(order: Order): Promise<Payment[]> {
-  return order.payments.length === 0
-    ? []
-    : StorageService.Payments.getMany(order.payments, USER_PERMISSION.ADMIN);
-}
-
 async function collectReports(
   order: Order,
+  customerId: string,
   heldBooks: Map<string, CustomerItem>,
   now: Date,
 ): Promise<PlacementReport[]> {
   const signatureException = order.orderItems.some(isLoanHandout)
-    ? await findSignatureException(await User.findOrFail(order.customer))
+    ? await findSignatureException(await User.findOrFail(customerId))
     : null;
   return derivePlacementReports({
     order,
     customerItemsBefore: heldBooks,
-    payments: await loadPayments(order),
+    payments: await OrderPayments.of(order.id),
     signatureException,
     now,
   });
@@ -62,29 +57,19 @@ async function collectReports(
  * Every loan handed out becomes a customer item, and the order item learns its id, the same way
  * the legacy place operation did it. Buys and changes create nothing.
  */
-async function createCustomerItems(
-  order: Order,
-): Promise<{ order: Order; created: CustomerItem[] }> {
+async function createCustomerItems(order: Order): Promise<void> {
   const generator = new OrderToCustomerItemGenerator();
-  const created: CustomerItem[] = [];
-  const orderItems: OrderItem[] = [];
-  for (const orderItem of order.orderItems) {
-    if (!isLoanHandout(orderItem)) {
-      orderItems.push(orderItem);
-      continue;
-    }
-    const [generated] = await generator.generate({ ...order, orderItems: [orderItem] });
+  const loans = order.orderItems.filter(isLoanHandout);
+  for (const orderItem of loans) {
+    const [generated] = await generator.generate(order, [orderItem]);
     if (!generated) {
       throw new Error(`no customer item generated for ${orderItem.title}`);
     }
-    const customerItem = await StorageService.CustomerItems.add(generated);
-    created.push(customerItem);
-    orderItems.push({ ...orderItem, customerItem: customerItem.id });
+    orderItem.customerItemId = (await StorageService.CustomerItems.add(generated)).id;
   }
-  if (created.length === 0) {
-    return { order, created };
+  if (loans.length > 0) {
+    await order.saveWithItems();
   }
-  return { order: await StorageService.Orders.update(order.id, { orderItems }), created };
 }
 
 /**
@@ -93,20 +78,18 @@ async function createCustomerItems(
  */
 async function recordHandovers(
   order: Order,
+  customerId: string,
   heldBooks: Map<string, CustomerItem>,
   occurredAt: DateTime,
 ): Promise<void> {
   for (const orderItem of order.orderItems) {
     if (orderItem.handout && orderItem.blid) {
-      const obligation = await MatchRepository.findReceiverObligation(
-        order.customer,
-        orderItem.item,
-      );
+      const obligation = await MatchRepository.findReceiverObligation(customerId, orderItem.itemId);
       await MatchRepository.recordHandover({
         blid: orderItem.blid,
-        itemId: orderItem.item,
+        itemId: orderItem.itemId,
         fromUserDetailId: null,
-        toUserDetailId: order.customer,
+        toUserDetailId: customerId,
         occurredAt,
         orderId: order.id,
         dischargesSenderObligationId: null,
@@ -115,7 +98,7 @@ async function recordHandovers(
     }
   }
   for (const orderItem of order.orderItems.filter(isTakenBack)) {
-    const customerItem = heldBooks.get(customerItemIdOf(orderItem) ?? "");
+    const customerItem = heldBooks.get(orderItem.customerItemId ?? "");
     if (!customerItem) {
       continue;
     }
@@ -153,14 +136,17 @@ export const StandCartPlacement = {
    * order can be settled long after the checkout request that created it.
    */
   async place(order: Order, employee: MonitoredEmployee, now = new Date()): Promise<Order> {
+    const customerId = standCustomerId(order);
     const heldBooks = await loadHeldBooks(order);
-    const reports = await collectReports(order, heldBooks, now);
-    const { order: withCustomerItems } = await createCustomerItems(order);
+    const reports = await collectReports(order, customerId, heldBooks, now);
+    await createCustomerItems(order);
     // The handler records who took returned books back, so it is told the employee, not the customer
-    const placed = await new OrderPlacedHandler().placeOrder(withCustomerItems, employee.detailsId);
+    const placed = await new OrderPlacedHandler().placeOrder(order, employee.detailsId);
 
-    await afterPlacement(() => recordHandovers(placed, heldBooks, DateTime.fromJSDate(now)));
-    await afterPlacement(() => StandCartMonitoring.send(reports, employee, order.customer));
+    await afterPlacement(() =>
+      recordHandovers(placed, customerId, heldBooks, DateTime.fromJSDate(now)),
+    );
+    await afterPlacement(() => StandCartMonitoring.send(reports, employee, customerId));
     return placed;
   },
 };

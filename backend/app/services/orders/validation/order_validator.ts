@@ -1,10 +1,10 @@
 import Branch from "#models/branch";
+import type Order from "#models/order";
 import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
 import { OrderItemValidator } from "#services/orders/validation/order_item_validator";
 import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
 import { OrderUserDetailValidator } from "#services/orders/validation/order_user_detail_validator";
 import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
 
 export class OrderValidator {
   private readonly orderPlacedValidator: OrderPlacedValidator;
@@ -34,7 +34,7 @@ export class OrderValidator {
       }
 
       await this.orderFieldValidator.validate(order);
-      const branch = await Branch.findOrFail(order.branch);
+      const branch = await Branch.findOrFail(order.branchId);
 
       await this.orderItemValidator.validate(branch, order, isAdmin);
       await this.orderPlacedValidator.validate(order);

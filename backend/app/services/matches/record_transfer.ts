@@ -4,6 +4,9 @@ import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import Item from "#models/item";
+import Order from "#models/order";
+import type { NewOrder } from "#models/order";
+import type OrderItem from "#models/order_item";
 import User from "#models/user";
 import BlidService from "#services/blid_service";
 import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
@@ -22,8 +25,6 @@ import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { matchTransferSchema } from "#validators/matches";
 
 const invalidBlidFeedback = "Feil strekkode. Bruk bokas unike ID. Se instruksjoner for hjelp";
@@ -81,7 +82,7 @@ async function findReceiverRentOrder(
       const relevantOrderItem = order.orderItems.find(
         (orderItem) =>
           orderActive.isOrderItemActive(orderItem) &&
-          itemsAreEquivalent(orderItem.item, itemId) &&
+          itemsAreEquivalent(orderItem.itemId, itemId) &&
           orderItem.type === "rent",
       );
       return relevantOrderItem ? [{ order, relevantOrderItem }] : [];
@@ -92,7 +93,7 @@ async function findReceiverRentOrder(
 async function createMatchReceiveOrder(
   customerItem: CustomerItem,
   userDetailId: string,
-): Promise<Omit<Order, "id">> {
+): Promise<NewOrder> {
   const item = await Item.findOrFail(customerItem.item);
 
   const originalReceiverOrderInfo = await findReceiverRentOrder(userDetailId, customerItem.item);
@@ -100,48 +101,43 @@ async function createMatchReceiveOrder(
   if (!originalReceiverOrderInfo) {
     throw new BlError("No receiver order for match transfer item").code(200);
   }
-  const branch = await Branch.findOrFail(originalReceiverOrderInfo.order.branch);
+  const branch = await Branch.findOrFail(originalReceiverOrderInfo.order.branchId);
 
-  const movedFromOrder = originalReceiverOrderInfo.order.id;
+  const movedFromOrderId = originalReceiverOrderInfo.order.id;
 
-  const originalOrderDeadline = originalReceiverOrderInfo.relevantOrderItem.info?.to;
+  const originalOrderDeadline = originalReceiverOrderInfo.relevantOrderItem.periodTo;
   const branchRentDeadline = branch.rentPeriods[0]?.date;
 
-  let deadline = originalOrderDeadline ?? branchRentDeadline;
+  const deadline =
+    originalOrderDeadline ??
+    (branchRentDeadline === undefined ? null : DateTime.fromJSDate(branchRentDeadline));
 
   if (!deadline) {
     throw new BlError(
       "Cannot set deadline: no rent period for branch and no original order deadline",
     ).code(200);
   }
-  // This is necessary because it's not actually a date in the database, and thus the type is wrong.
-  // It might be solved in the future by Zod or some other strict parser/validation.
-  deadline = new Date(deadline);
 
   return {
     placed: true,
-    payments: [],
     amount: 0,
-    branch: branch.id,
-    customer: userDetailId,
+    branchId: branch.id,
+    customerId: userDetailId,
     byCustomer: true,
     orderItems: [
       {
-        movedFromOrder,
-        item: item.id,
-        title: item.title,
+        movedFromOrderId,
+        itemId: item.id,
         blid: requireHandoverBlid(customerItem.blid),
         type: "match-receive",
         handout: false,
         delivered: false,
         amount: 0,
         unitPrice: 0,
-        info: {
-          from: new Date(),
-          to: deadline,
-          numberOfPeriods: 1,
-          periodType: "semester",
-        },
+        periodFrom: DateTime.now(),
+        periodTo: deadline,
+        numberOfPeriods: 1,
+        periodType: "semester",
       },
     ],
   };
@@ -150,7 +146,7 @@ async function createMatchReceiveOrder(
 async function createMatchDeliverOrder(
   customerItem: CustomerItem,
   userDetailId: string,
-): Promise<Omit<Order, "id">> {
+): Promise<NewOrder> {
   const item = await Item.findOrFail(customerItem.item);
 
   if (isNullish(customerItem.handoutInfo)) {
@@ -160,17 +156,15 @@ async function createMatchDeliverOrder(
 
   return {
     placed: true,
-    payments: [],
     amount: 0,
-    branch: branch.id,
-    customer: userDetailId,
+    branchId: branch.id,
+    customerId: userDetailId,
     byCustomer: true,
     orderItems: [
       {
-        item: item.id,
-        title: item.title,
+        itemId: item.id,
         blid: requireHandoverBlid(customerItem.blid),
-        customerItem: customerItem.id,
+        customerItemId: customerItem.id,
         type: "match-deliver",
         handout: false,
         delivered: false,
@@ -187,7 +181,7 @@ async function placeReceiverOrder(
 ): Promise<Order> {
   const receiverOrder = await createMatchReceiveOrder(customerItem, receiverUserDetailId);
 
-  const placedReceiverOrder = await StorageService.Orders.add(receiverOrder);
+  const placedReceiverOrder = await Order.createWithItems(receiverOrder);
 
   await new OrderValidator().validate(placedReceiverOrder, false);
 
@@ -207,18 +201,16 @@ async function recordReceiverCustomerItem(placedReceiverOrder: Order): Promise<v
 
   const addedCustomerItem = await StorageService.CustomerItems.add(generatedReceiverCustomerItem);
 
-  await StorageService.Orders.update(placedReceiverOrder.id, {
-    orderItems: placedReceiverOrder.orderItems.map((orderItem) => ({
-      ...orderItem,
-      customerItem: addedCustomerItem.id,
-    })),
-  });
+  for (const orderItem of placedReceiverOrder.orderItems) {
+    orderItem.customerItemId = addedCustomerItem.id;
+  }
+  await placedReceiverOrder.saveWithItems();
 }
 
 async function returnSenderCustomerItem(customerItem: CustomerItem): Promise<void> {
   const senderOrder = await createMatchDeliverOrder(customerItem, customerItem.customer);
 
-  const placedSenderOrder = await StorageService.Orders.add(senderOrder);
+  const placedSenderOrder = await Order.createWithItems(senderOrder);
   await new OrderValidator().validate(placedSenderOrder, false);
 
   await StorageService.CustomerItems.update(customerItem.id, {

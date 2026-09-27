@@ -1,10 +1,10 @@
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import type { NewOrderItem } from "#models/order";
 import { periodTypeOfLastOrder, resolveBuyoutPrice } from "#services/customer_item_actions_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 
 /** Deadlines are compared as Oslo calendar days, so a date picked in a form matches the branch period. */
 function isSameDeadlineDay(a: Date, b: Date): boolean {
@@ -27,14 +27,13 @@ export const OrderItemService = {
 
     return {
       type: "buyout",
-      item: item.id,
-      title: item.title,
+      itemId: item.id,
       handout: false,
       delivered: false,
       amount: price,
       unitPrice: price,
-      customerItem: customerItem.id,
-    } as const satisfies OrderItem;
+      customerItemId: customerItem.id,
+    } as const satisfies NewOrderItem;
   },
 
   async createExtendOrderItem(customerItem: CustomerItem, item: Item, to: Date) {
@@ -54,32 +53,28 @@ export const OrderItemService = {
 
     return {
       type: "extend",
-      item: item.id,
-      title: item.title,
+      itemId: item.id,
       handout: false,
       delivered: false,
       amount: extendPeriod.price,
       unitPrice: extendPeriod.price,
-      info: {
-        from: new Date(),
-        to: extendPeriod.date,
-        numberOfPeriods: 1,
-        periodType: extendPeriod.type,
-        customerItem: customerItem.id,
-      },
-    } as const satisfies OrderItem;
+      periodFrom: DateTime.now(),
+      periodTo: DateTime.fromJSDate(extendPeriod.date),
+      numberOfPeriods: 1,
+      periodType: extendPeriod.type,
+      customerItemId: customerItem.id,
+    } as const satisfies NewOrderItem;
   },
   createBuyOrderItem(item: Item) {
     const price = Math.floor(item.price / 10) * 10;
     return {
       type: "buy",
-      item: item.id,
-      title: item.title,
+      itemId: item.id,
       handout: false,
       delivered: false,
       amount: price,
       unitPrice: price,
-    } as const satisfies OrderItem;
+    } as const satisfies NewOrderItem;
   },
   async createRentOrderItem(item: Item, branchId: string, to: Date) {
     const branch = await Branch.findOrFail(branchId);
@@ -92,19 +87,16 @@ export const OrderItemService = {
 
     return {
       type: "rent",
-      item: item.id,
-      title: item.title,
+      itemId: item.id,
       handout: false,
       delivered: false,
       amount: branch.paymentResponsible ? 0 : item.price,
       unitPrice: branch.paymentResponsible ? 0 : item.price,
-      info: {
-        from: new Date(),
-        to: rentPeriod.date,
-        numberOfPeriods: 1,
-        periodType: rentPeriod.type,
-      },
-    } as const satisfies OrderItem;
+      periodFrom: DateTime.now(),
+      periodTo: DateTime.fromJSDate(rentPeriod.date),
+      numberOfPeriods: 1,
+      periodType: rentPeriod.type,
+    } as const satisfies NewOrderItem;
   },
 
   async createPartlyPaymentOrderItem(item: Item, branchId: string, to: Date) {
@@ -122,18 +114,15 @@ export const OrderItemService = {
 
     return {
       type: "partly-payment",
-      item: item.id,
-      title: item.title,
+      itemId: item.id,
       handout: false,
       delivered: false,
       amount: branch.paymentResponsible ? 0 : priceUpFront,
       unitPrice: branch.paymentResponsible ? 0 : priceUpFront,
-      info: {
-        from: new Date(),
-        to: partlyPaymentPeriod.date,
-        numberOfPeriods: 1,
-        periodType: partlyPaymentPeriod.type,
-      },
-    } as const satisfies OrderItem;
+      periodFrom: DateTime.now(),
+      periodTo: DateTime.fromJSDate(partlyPaymentPeriod.date),
+      numberOfPeriods: 1,
+      periodType: partlyPaymentPeriod.type,
+    } as const satisfies NewOrderItem;
   },
 };

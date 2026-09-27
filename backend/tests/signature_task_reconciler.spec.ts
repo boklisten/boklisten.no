@@ -4,12 +4,15 @@ import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import Signature from "#models/signature";
 import User from "#models/user";
+import { OrderActive } from "#services/orders/order_active";
 import { reconcileSignatureTask } from "#services/signature_helper";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Order } from "#shared/order/order";
+import { mock } from "#tests/test-doubles";
 import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
@@ -40,28 +43,30 @@ function createValidSignature() {
   });
 }
 
-function makeRentOrder(overrides: Partial<Order> = {}): Order {
-  return {
+function makeOrderItem(overrides: Partial<OrderItem> = {}): OrderItem {
+  return mock<OrderItem>({
+    type: "rent",
+    itemId: "item1",
+    title: "Some Book",
+    amount: 100,
+    unitPrice: 100,
+    handout: false,
+    delivered: false,
+    movedToOrderId: null,
+    ...overrides,
+  });
+}
+
+function makeRentOrder(orderItems: OrderItem[] = [makeOrderItem()]): Order {
+  return mock<Order>({
     id: "order1",
     placed: true,
-    customer: CUSTOMER_ID,
+    customerId: CUSTOMER_ID,
     amount: 100,
     byCustomer: true,
-    branch: "branch1",
-    payments: [],
-    orderItems: [
-      {
-        type: "rent",
-        item: "item1",
-        title: "Some Book",
-        amount: 100,
-        unitPrice: 100,
-        handout: false,
-        delivered: false,
-      },
-    ],
-    ...overrides,
-  };
+    branchId: "branch1",
+    orderItems,
+  });
 }
 
 function makeCustomerItem(overrides: Partial<CustomerItem> = {}): CustomerItem {
@@ -93,9 +98,8 @@ test.group("reconcileSignatureTask", (group) => {
     orders = [];
     customerItems = [];
 
-    sandbox.stub(StorageService, "Orders").value({
-      getByQuery: sandbox.stub().callsFake(() => Promise.resolve(orders)),
-    });
+    // Every order here is placed, so the active-order query is stubbed with them as is
+    sandbox.stub(OrderActive.prototype, "getActiveOrders").callsFake(() => Promise.resolve(orders));
     sandbox.stub(StorageService, "CustomerItems").value({
       getByQuery: sandbox.stub().callsFake(() => Promise.resolve(customerItems)),
     });
@@ -159,19 +163,16 @@ test.group("reconcileSignatureTask", (group) => {
 
   test("sets the task when an open partly-payment order exists", async ({ assert }) => {
     orders = [
-      makeRentOrder({
-        orderItems: [
-          {
-            type: "partly-payment",
-            item: "item1",
-            title: "A",
-            amount: 100,
-            unitPrice: 100,
-            handout: false,
-            delivered: false,
-          },
-        ],
-      }),
+      makeRentOrder([
+        makeOrderItem({
+          type: "partly-payment",
+          itemId: "item1",
+          title: "A",
+          amount: 100,
+          unitPrice: 100,
+          handout: false,
+        }),
+      ]),
     ];
     const userDetail = await makeUser();
 
@@ -183,19 +184,16 @@ test.group("reconcileSignatureTask", (group) => {
 
   test("does not set the task for orders with only buy items", async ({ assert }) => {
     orders = [
-      makeRentOrder({
-        orderItems: [
-          {
-            type: "buy",
-            item: "item2",
-            title: "B",
-            amount: 100,
-            unitPrice: 100,
-            handout: false,
-            delivered: false,
-          },
-        ],
-      }),
+      makeRentOrder([
+        makeOrderItem({
+          type: "buy",
+          itemId: "item2",
+          title: "B",
+          amount: 100,
+          unitPrice: 100,
+          handout: false,
+        }),
+      ]),
     ];
     const userDetail = await makeUser();
 
@@ -206,19 +204,16 @@ test.group("reconcileSignatureTask", (group) => {
 
   test("does not set the task when the rent order items are all handed out", async ({ assert }) => {
     orders = [
-      makeRentOrder({
-        orderItems: [
-          {
-            type: "rent",
-            item: "item1",
-            title: "A",
-            amount: 0,
-            unitPrice: 0,
-            handout: true,
-            delivered: false,
-          },
-        ],
-      }),
+      makeRentOrder([
+        makeOrderItem({
+          type: "rent",
+          itemId: "item1",
+          title: "A",
+          amount: 0,
+          unitPrice: 0,
+          handout: true,
+        }),
+      ]),
     ];
     const userDetail = await makeUser();
 

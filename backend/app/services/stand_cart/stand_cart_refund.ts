@@ -1,19 +1,18 @@
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
+import type Order from "#models/order";
+import { OrderPayments } from "#services/payments/order_payments";
 import { findPaidOrderForCustomerItem } from "#services/stand_cart/stand_cart_line_resolver";
 import type { CheckoutLine } from "#services/stand_cart/stand_cart_order_builder";
-import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
-import type { Order } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
 import type {
   RefundableVippsMethod,
   StandCartRefundPlan,
   StandCartVippsRefund,
 } from "#shared/stand_cart";
-import { USER_PERMISSION } from "#shared/user-permission";
 
 /** Vipps refunds a captured payment for this long after it was made. */
 const REFUND_WINDOW_DAYS = 365;
@@ -52,12 +51,6 @@ async function paidOrderOf(line: CheckoutLine): Promise<Order | null> {
   }
 }
 
-async function paymentsOf(order: Order): Promise<Payment[]> {
-  return order.payments.length === 0
-    ? []
-    : StorageService.Payments.getMany(order.payments, USER_PERMISSION.ADMIN);
-}
-
 function paidWithReason(title: string, method: Payment["method"]): string {
   switch (method) {
     case "cash": {
@@ -82,7 +75,7 @@ async function trace(line: CheckoutLine, now: Date): Promise<TracedLine> {
   }
   const order = await paidOrderOf(line);
   const payment = order
-    ? (await paymentsOf(order)).find((candidate) => candidate.amount > 0)
+    ? (await OrderPayments.of(order.id)).find((candidate) => candidate.amount > 0)
     : null;
   if (!order || !payment) {
     return { kind: "manual", reason: `«${title}» har ingen betaling å refundere` };

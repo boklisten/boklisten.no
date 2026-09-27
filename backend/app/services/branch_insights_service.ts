@@ -1,3 +1,4 @@
+import db from "@adonisjs/lucid/services/db";
 import { ObjectId } from "mongodb";
 
 import { BranchRelationshipService } from "#services/branch_relationship_service";
@@ -147,7 +148,7 @@ export function buildBookMovements(
   };
 }
 
-const MOVEMENT_ITEM_TYPES = [
+const MOVEMENT_ITEM_TYPES: MovementRow["type"][] = [
   "rent",
   "partly-payment",
   "buy",
@@ -157,46 +158,77 @@ const MOVEMENT_ITEM_TYPES = [
   "buyout",
 ];
 
-const MATCH_ITEM_PROJECTION = {
-  _id: 0,
-  type: "$orderItems.type",
-  blid: { $ifNull: ["$orderItems.blid", null] },
-  time: "$creationTime",
-  year: { $year: { date: "$creationTime", timezone: OSLO } },
-};
+const MATCH_ITEM_TYPES: MatchItemRow["type"][] = ["match-receive", "match-deliver"];
+
+/** The calendar year in Oslo of the order a line belongs to. */
+function orderYear() {
+  return db.raw("extract(year from orders.created_at at time zone ?)::int as year", [OSLO]);
+}
+
+function placedOrderLines() {
+  return db
+    .from("order_items")
+    .join("orders", "orders.id", "order_items.order_id")
+    .where("orders.placed", true);
+}
+
+/** Lines of the movement kinds on placed orders of the branches, counted per year and kind. */
+export async function countMovementRows(branchIds: string[]): Promise<MovementRow[]> {
+  const rows: (Omit<MovementRow, "count"> & { count: string })[] = await placedOrderLines()
+    .whereIn("orders.branch_id", branchIds)
+    .whereIn("order_items.type", MOVEMENT_ITEM_TYPES)
+    .select(
+      orderYear(),
+      "order_items.type",
+      "order_items.handout",
+      db.raw("order_items.customer_item_id is not null as linked"),
+    )
+    .count("* as count")
+    .groupByRaw("1, 2, 3, 4");
+  return rows.map((row) => ({
+    year: row.year,
+    type: row.type,
+    handout: row.handout,
+    linked: row.linked,
+    count: Number(row.count),
+  }));
+}
+
+/**
+ * Match lines on placed orders: of the given branches, or (with `outside`) of every other branch,
+ * narrowed to the given types and blids.
+ */
+export async function findMatchItemRows({
+  branchIds,
+  outside = false,
+  types = MATCH_ITEM_TYPES,
+  blids,
+}: {
+  branchIds: string[];
+  outside?: boolean;
+  types?: MatchItemRow["type"][];
+  blids?: string[];
+}): Promise<MatchItemRow[]> {
+  const query = placedOrderLines()
+    .whereIn("order_items.type", types)
+    .select("order_items.type", "order_items.blid", "orders.created_at as time", orderYear());
+  void (outside
+    ? query.whereNotIn("orders.branch_id", branchIds)
+    : query.whereIn("orders.branch_id", branchIds));
+  if (blids) {
+    void query.whereIn("order_items.blid", blids);
+  }
+  return query;
+}
 
 export const BranchInsightsService = {
   async getBookMovements(branchId: string): Promise<BranchBookMovements> {
     const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
-    const scope = [branchId, ...descendantIds].map((id) => new ObjectId(id));
+    const scopeIds = [branchId, ...descendantIds];
+    const scope = scopeIds.map((id) => new ObjectId(id));
 
     const [rows, invoiceRows, scopedMatchItems] = await Promise.all([
-      StorageService.Orders.aggregate<MovementRow>([
-        { $match: { placed: true, branch: { $in: scope } } },
-        { $unwind: "$orderItems" },
-        { $match: { "orderItems.type": { $in: MOVEMENT_ITEM_TYPES } } },
-        {
-          $group: {
-            _id: {
-              year: { $year: { date: "$creationTime", timezone: OSLO } },
-              type: "$orderItems.type",
-              handout: { $eq: ["$orderItems.handout", true] },
-              linked: { $gt: ["$orderItems.customerItem", null] },
-            },
-            count: { $sum: 1 },
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            year: "$_id.year",
-            type: "$_id.type",
-            handout: "$_id.handout",
-            linked: "$_id.linked",
-            count: 1,
-          },
-        },
-      ]),
+      countMovementRows(scopeIds),
       // One line per book; company invoice lines carry no customer item and are not books we lent.
       StorageService.Invoices.aggregate<InvoiceRow>([
         { $match: { branch: { $in: scope } } },
@@ -210,18 +242,7 @@ export const BranchInsightsService = {
         },
         { $project: { _id: 0, year: "$_id", count: 1 } },
       ]),
-      StorageService.Orders.aggregate<MatchItemRow>([
-        {
-          $match: {
-            placed: true,
-            branch: { $in: scope },
-            "orderItems.type": { $in: ["match-receive", "match-deliver"] },
-          },
-        },
-        { $unwind: "$orderItems" },
-        { $match: { "orderItems.type": { $in: ["match-receive", "match-deliver"] } } },
-        { $project: MATCH_ITEM_PROJECTION },
-      ]),
+      findMatchItemRows({ branchIds: scopeIds }),
     ]);
 
     // A sender in scope may have handed the book to a student at another branch; that receive
@@ -236,24 +257,12 @@ export const BranchInsightsService = {
     const externalReceives =
       deliverBlids.length === 0
         ? []
-        : await StorageService.Orders.aggregate<MatchItemRow>([
-            {
-              $match: {
-                placed: true,
-                branch: { $nin: scope },
-                "orderItems.type": "match-receive",
-                "orderItems.blid": { $in: deliverBlids },
-              },
-            },
-            { $unwind: "$orderItems" },
-            {
-              $match: {
-                "orderItems.type": "match-receive",
-                "orderItems.blid": { $in: deliverBlids },
-              },
-            },
-            { $project: MATCH_ITEM_PROJECTION },
-          ]);
+        : await findMatchItemRows({
+            branchIds: scopeIds,
+            outside: true,
+            types: ["match-receive"],
+            blids: deliverBlids,
+          });
 
     return buildBookMovements(
       rows,

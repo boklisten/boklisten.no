@@ -1,17 +1,23 @@
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { TranslationService } from "#services/translation_service";
 import { formatBankAccount } from "#shared/bank_account";
-import type { Order } from "#shared/order/order";
 import { clientOrigin } from "#config/app";
 
 export const REFUND_REQUEST_RECIPIENT = "info@boklisten.no";
 
+/** What the mail shows of the order; an `Order` read through the model fits. */
+type RefundOrder = Pick<Order, "id" | "customerId"> & {
+  orderItems: Pick<OrderItem, "title" | "type" | "amount">[];
+};
+
 interface RefundRequest {
-  order: Order;
+  order: RefundOrder;
   customer: User;
   employee: User;
   /** Positive: what the administrator transfers. */
@@ -75,7 +81,7 @@ export const RefundRequestService = {
    * this is called, so a mail that cannot be sent goes to Sentry instead of failing the request.
    */
   async send(input: {
-    order: Order;
+    order: RefundOrder;
     employeeDetailsId: string;
     amount: number;
     accountNumber: string | null;
@@ -83,7 +89,7 @@ export const RefundRequestService = {
   }): Promise<void> {
     try {
       const [customer, employee] = await Promise.all([
-        User.findOrFail(input.order.customer),
+        User.findOrFail(input.order.customerId),
         User.findOrFail(input.employeeDetailsId),
       ]);
       const mail = buildRefundRequestMail({

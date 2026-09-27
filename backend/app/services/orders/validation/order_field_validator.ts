@@ -1,7 +1,7 @@
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import { isNullish, isNumber } from "#services/typescript_helpers";
 import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderFieldValidator {
   validate(order: Order): Promise<boolean> {
@@ -35,7 +35,7 @@ export class OrderFieldValidator {
   }
 
   private validateOrderItemFields(orderItem: OrderItem): boolean {
-    if (!orderItem.item) {
+    if (!orderItem.itemId) {
       throw new BlError("orderItem.item is not defined");
     }
 

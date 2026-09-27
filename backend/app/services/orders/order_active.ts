@@ -1,25 +1,9 @@
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
-import { StorageService } from "#services/storage_service";
-import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
+import Order from "#models/order";
+import type OrderItem from "#models/order_item";
 
 export class OrderActive {
   public async getActiveOrders(userId: string): Promise<Order[]> {
-    const databaseQuery = new SEDbQuery();
-    databaseQuery.objectIdFilters = [{ fieldName: "customer", value: userId }];
-
-    let orders: Order[];
-
-    try {
-      orders = await StorageService.Orders.getByQuery(databaseQuery);
-    } catch (error) {
-      if (error instanceof BlError && error.getCode() === 702) {
-        return [];
-      }
-      throw error;
-    }
-
+    const orders = await Order.query().where("customer_id", userId);
     return orders.filter((order) => this.isOrderActive(order));
   }
 
@@ -32,7 +16,9 @@ export class OrderActive {
     return order.placed && order.orderItems.some((orderItem) => this.isOrderItemActive(orderItem));
   }
 
-  public isOrderItemActive(orderItem: OrderItem): boolean {
-    return !(orderItem.handout || orderItem.delivered || Boolean(orderItem.movedToOrder));
+  public isOrderItemActive(
+    orderItem: Pick<OrderItem, "handout" | "delivered" | "movedToOrderId">,
+  ): boolean {
+    return !(orderItem.handout || orderItem.delivered || orderItem.movedToOrderId !== null);
   }
 }

@@ -2,10 +2,10 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import type Order from "#models/order";
 import User from "#models/user";
 import { OrderUserDetailValidator } from "#services/orders/validation/order_user_detail_validator";
 import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
 import { mock } from "#tests/test-doubles";
 import { userDouble } from "#tests/user_fixtures";
 
@@ -18,7 +18,7 @@ test.group("OrderUserDetailValidator", (group) => {
   group.each.setup(() => {
     testOrder = mock<Order>({
       id: "order1",
-      customer: "userDetail1",
+      customerId: "userDetail1",
     });
     sandbox = createSandbox();
     sandbox
@@ -30,7 +30,7 @@ test.group("OrderUserDetailValidator", (group) => {
   });
 
   test("should reject if userDetail is not found", async ({ assert }) => {
-    testOrder.customer = "notFound";
+    testOrder.customerId = "notFound";
 
     const err = await orderUserDetailValidator.validate(testOrder).then(
       () => null,

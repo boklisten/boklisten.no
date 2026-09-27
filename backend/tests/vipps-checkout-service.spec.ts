@@ -1,16 +1,18 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import Order from "#models/order";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import User from "#models/user";
 import { StorageService } from "#services/storage_service";
 import { VippsCheckoutService } from "#services/vipps/vipps_checkout_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
-import type { Order } from "#shared/order/order";
 import type { VippsCheckoutSession } from "#validators/checkout_validators";
-
-import { userDouble } from "#tests/user_fixtures";
+import { createBranch } from "#tests/branch_fixtures";
+import { createOrder } from "#tests/order_fixtures";
+import { createUser, userDouble } from "#tests/user_fixtures";
 
 test.group("VippsCheckoutService.update", (group) => {
   let testOrder: Order;
@@ -18,31 +20,24 @@ test.group("VippsCheckoutService.update", (group) => {
   let placeOrderStub: sinon.SinonStub;
   let sandbox: sinon.SinonSandbox;
 
-  const successfulSession: VippsCheckoutSession = {
-    reference: "order1",
-    sessionState: "PaymentSuccessful",
-  };
+  let successfulSession: VippsCheckoutSession;
 
-  group.each.setup(() => {
-    testOrder = {
-      payments: [],
-      id: "order1",
+  group.each.setup(async () => {
+    const truncate = await testUtils.db().truncate();
+    const [branch, customer] = await Promise.all([createBranch(), createUser()]);
+    testOrder = await createOrder({
       amount: 400,
-      orderItems: [],
-      branch: "branch1",
-      customer: "customer1",
+      branchId: branch.id,
+      customerId: customer.id,
       byCustomer: true,
       placed: false,
-    };
+    });
+    successfulSession = { reference: testOrder.id, sessionState: "PaymentSuccessful" };
 
     sandbox = createSandbox();
-    sandbox.stub(StorageService.Orders, "get").callsFake(() => Promise.resolve(testOrder));
-    sandbox
-      .stub(StorageService.Orders, "update")
-      .callsFake((_id, data) => Promise.resolve({ ...testOrder, ...data }));
     sandbox
       .stub(User, "findOrFail")
-      .resolves(userDouble({ id: "customer1", name: "Ola Nordmann" }));
+      .resolves(userDouble({ id: customer.id, name: "Ola Nordmann" }));
     sandbox.stub(User.prototype, "save").resolvesThis();
     sandbox
       .stub(StorageService.Payments, "add")
@@ -54,6 +49,7 @@ test.group("VippsCheckoutService.update", (group) => {
       .stub(OrderPlacedHandler.prototype, "placeOrder")
       .callsFake(() => Promise.resolve(testOrder));
     captureStub = sandbox.stub(VippsPaymentService.payment, "capture").resolves();
+    return truncate;
   });
 
   group.each.teardown(() => {
@@ -63,7 +59,8 @@ test.group("VippsCheckoutService.update", (group) => {
   test("should capture the order amount when the payment succeeds", async ({ assert }) => {
     await VippsCheckoutService.update(successfulSession);
 
-    assert.deepEqual(captureStub.args, [["order1", 40_000]]);
+    assert.deepEqual(captureStub.args, [[testOrder.id, 40_000]]);
+    assert.equal((await Order.getOrFail(testOrder.id)).checkoutState, "PaymentSuccessful");
   });
 
   test("should include the delivery price in the captured amount", async ({ assert }) => {
@@ -75,7 +72,8 @@ test.group("VippsCheckoutService.update", (group) => {
       },
     });
 
-    assert.deepEqual(captureStub.args, [["order1", 47_500]]);
+    assert.deepEqual(captureStub.args, [[testOrder.id, 47_500]]);
+    assert.equal((await Order.getOrFail(testOrder.id)).deliveryId, "delivery1");
   });
 
   test("should place the order and resolve even if the capture fails", async ({ assert }) => {
@@ -97,6 +95,7 @@ test.group("VippsCheckoutService.update", (group) => {
 
   test("should not capture when the order is already paid for", async ({ assert }) => {
     testOrder.checkoutState = "PaymentSuccessful";
+    await testOrder.save();
 
     await VippsCheckoutService.update(successfulSession);
 

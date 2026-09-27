@@ -2,23 +2,26 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import type Order from "#models/order";
 import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
+import { OrderPayments } from "#services/payments/order_payments";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Delivery } from "#shared/delivery/delivery";
-import type { Order } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderPlacedValidator", (group) => {
   let testOrder: Order;
 
   const orderPlacedValidator = new OrderPlacedValidator();
   let testPayment: Payment;
+  let testPayments: Payment[];
   let testDelivery: Delivery;
   let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {
-    testOrder = {
+    testOrder = mock<Order>({
       id: "order1",
       amount: 450,
       orderItems: [
@@ -27,7 +30,7 @@ test.group("OrderPlacedValidator", (group) => {
           delivered: false,
           type: "buy",
           amount: 300,
-          item: "i1",
+          itemId: "i1",
           title: "Signatur 3",
           unitPrice: 300,
         },
@@ -36,18 +39,17 @@ test.group("OrderPlacedValidator", (group) => {
           delivered: false,
           type: "rent",
           amount: 150,
-          item: "i2",
+          itemId: "i2",
           title: "Signatur 4",
           unitPrice: 300,
         },
       ],
-      customer: "customer1",
-      delivery: "delivery1",
-      branch: "b1",
+      customerId: "customer1",
+      deliveryId: "delivery1",
+      branchId: "b1",
       byCustomer: true,
       placed: true,
-      payments: ["payment1"],
-    };
+    });
 
     testPayment = {
       id: "payment1",
@@ -70,17 +72,12 @@ test.group("OrderPlacedValidator", (group) => {
       amount: 0,
     };
 
+    testPayments = [testPayment];
+
     sandbox = createSandbox();
-    sandbox.stub(StorageService.Payments, "getMany").callsFake(
-      (ids: string[]) =>
-        new Promise((resolve, reject) => {
-          if (ids[0] !== "payment1") {
-            reject(new BlError("not found").code(702));
-            return;
-          }
-          resolve([testPayment]);
-        }),
-    );
+    sandbox
+      .stub(OrderPayments, "of")
+      .callsFake((orderId) => Promise.resolve(orderId === testOrder.id ? testPayments : []));
 
     sandbox.stub(StorageService.Deliveries, "get").callsFake(
       (id) =>
@@ -105,26 +102,17 @@ test.group("OrderPlacedValidator", (group) => {
   });
 
   test("should resolve with true if there are no payments attached", async ({ assert }) => {
-    testOrder.payments = [];
+    testPayments = [];
 
     return assert.doesNotReject(() => orderPlacedValidator.validate(testOrder));
   });
 
   test("should reject with error if delivery is not found", async ({ assert }) => {
-    testOrder.delivery = "notFoundDelivery";
+    testOrder.deliveryId = "notFoundDelivery";
     await assert.rejects(
       () => orderPlacedValidator.validate(testOrder),
       BlError,
       /delivery "notFoundDelivery" not found/,
-    );
-  });
-
-  test("should reject with error if payments is not found", async ({ assert }) => {
-    testOrder.payments = ["notFound"];
-    await assert.rejects(
-      () => orderPlacedValidator.validate(testOrder),
-      BlError,
-      /order.payments is not found/,
     );
   });
 
@@ -153,10 +141,8 @@ test.group("OrderPlacedValidator", (group) => {
   test("should reject with error if total amount in order.orderItems is not equal to order.amount", async ({
     assert,
   }) => {
-    testOrder.payments = [];
-
-    // @ts-expect-error fixme: auto ignored
-    testOrder.delivery = null;
+    testPayments = [];
+    testOrder.deliveryId = null;
     testOrder.amount = 999;
     await assert.rejects(
       () => orderPlacedValidator.validate(testOrder),

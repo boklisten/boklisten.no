@@ -1,7 +1,10 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
+import { DateTime } from "luxon";
 
+import type Order from "#models/order";
 import User from "#models/user";
 import { CustomerItemHandler } from "#services/customer_items/customer_item_handler";
 import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
@@ -10,15 +13,16 @@ import { PaymentHandler } from "#services/orders/payment_handler";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
-import { userDouble } from "#tests/user_fixtures";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
+import { createUser, userDouble } from "#tests/user_fixtures";
 
 test.group("OrderPlacedHandler", (group) => {
   let testOrder: Order;
   let testPayment: Payment;
   let paymentsConfirmed: boolean;
-  let orderUpdate: boolean;
   let testUserDetail: User;
 
   const paymentHandler = new PaymentHandler();
@@ -31,7 +35,8 @@ test.group("OrderPlacedHandler", (group) => {
   );
 
   let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => {
+  group.each.setup(async () => {
+    const truncate = await testUtils.db().truncate();
     sandbox = createSandbox();
 
     sandbox.stub(orderItemMovedFromOrderHandler, "updateOrderItems").resolves(true);
@@ -68,55 +73,37 @@ test.group("OrderPlacedHandler", (group) => {
       return Promise.resolve([testPayment]);
     });
 
-    // 5) Stub BlStorage.Orders as a single object
-    const ordersStub = {
-      update: sandbox.stub().callsFake(() => {
-        if (!orderUpdate) {
-          return Promise.reject(new BlError("could not update order"));
-        }
-        return Promise.resolve(testOrder);
-      }),
-      get: sandbox.stub().callsFake(
-        () =>
-          // If you need custom logic, do it here. Otherwise:
-          Promise.resolve(testOrder), // or whatever you need
-      ),
-    };
-    sandbox.stub(StorageService, "Orders").value(ordersStub);
-
     sandbox.stub(OrderEmailHandler, "sendOrderReceipt").resolves();
 
     paymentsConfirmed = true;
-    orderUpdate = true;
 
-    testOrder = {
-      id: "branch1",
+    const [branch, customer, item] = await Promise.all([
+      createBranch(),
+      createUser(),
+      createItem({ title: "Signatur 3: Tekstsammling" }),
+    ]);
+    testUserDetail = customer;
+    testOrder = await createOrder({
       amount: 100,
       orderItems: [
         {
-          handout: false,
-          delivered: false,
           type: "rent",
-          item: "item2",
-          title: "Signatur 3: Tekstsammling",
+          itemId: item.id,
           amount: 50,
           unitPrice: 100,
-          info: {
-            from: new Date(),
-            to: new Date(),
-            numberOfPeriods: 1,
-            periodType: "semester",
-          },
+          periodFrom: DateTime.now(),
+          periodTo: DateTime.now(),
+          numberOfPeriods: 1,
+          periodType: "semester",
         },
       ],
-      branch: "branch1",
-      customer: "customer1",
+      branchId: branch.id,
+      customerId: customer.id,
       byCustomer: true,
-      placed: true,
-      payments: [],
-      delivery: "delivery1",
-      notification: { email: false },
-    };
+      placed: false,
+      deliveryId: "delivery1",
+      notifyByEmail: false,
+    });
 
     testPayment = {
       id: "payment1",
@@ -131,14 +118,14 @@ test.group("OrderPlacedHandler", (group) => {
       },
     };
 
-    testUserDetail = userDouble({ id: "customer1" });
+    return truncate;
   });
   group.each.teardown(() => {
     sandbox.restore();
   });
 
   test("should reject if order could not be updated with confirm true", async ({ assert }) => {
-    orderUpdate = false;
+    sandbox.stub(testOrder, "save").rejects(new BlError("could not update order"));
 
     const err = await orderPlacedHandler.placeOrder(testOrder, "userDetail1").then(
       () => null,
@@ -160,16 +147,20 @@ test.group("OrderPlacedHandler", (group) => {
   });
 
   test("should reject if order.customer is not found", async ({ assert }) => {
-    testOrder.customer = "notFoundUserDetails";
+    testUserDetail = userDouble({ id: "notTheCustomer" });
 
     const err = await orderPlacedHandler.placeOrder(testOrder, "userDetail1").then(
       () => null,
       (error: BlError) => error,
     );
     assert.instanceOf(err, BlError);
-    assert.equal(err?.errorStack[0]?.getMsg(), 'customer "notFoundUserDetails" not found');
+    assert.equal(err?.errorStack[0]?.getMsg(), `customer "${testOrder.customerId}" not found`);
   });
 
-  test("should resolve when order was placed", async ({ assert }) =>
-    assert.doesNotReject(() => orderPlacedHandler.placeOrder(testOrder, "userDetail1")));
+  test("should resolve when order was placed", async ({ assert }) => {
+    await orderPlacedHandler.placeOrder(testOrder, "userDetail1");
+
+    await testOrder.refresh();
+    assert.isTrue(testOrder.placed);
+  });
 });

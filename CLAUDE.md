@@ -22,7 +22,7 @@ These rules override default agent behavior — follow them on every task:
 
 - **`backend/`** — AdonisJS v7 REST API. Dual-DB: legacy data on MongoDB/Mongoose v9, new tables on Postgres via Lucid (active migration in progress).
 - **`frontend/`** — TanStack Start (React 19) SPA with Mantine v9 UI.
-- **`cron_jobs/`** — Standalone scheduled tasks (DB cleanup, prod→staging sync).
+- **`cron_jobs/`** — Standalone scheduled tasks (prod→staging sync).
 
 The frontend imports from `@boklisten/backend`: shared types (`./shared/*`), the Tuyau RPC registry (`./registry`), and Tuyau data types (`./data`). `backend/.adonisjs/client/` is **generated and committed** because the frontend needs it at build time — don't gitignore it.
 

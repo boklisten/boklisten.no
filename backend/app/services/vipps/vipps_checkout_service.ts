@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import Order from "#models/order";
 import User from "#models/user";
 import { deliveryDays } from "#services/application_config";
 import { DeliveryService } from "#services/delivery_service";
@@ -10,7 +11,6 @@ import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
-import type { Order } from "#shared/order/order";
 import { clientOrigin } from "#config/app";
 import env from "#start/env";
 import type { VippsCheckoutSession } from "#validators/checkout_validators";
@@ -47,13 +47,13 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
     return null;
   }
 
-  const totalWeightInGrams = await DeliveryService.calculateOrderWeightInGrams(order);
+  const totalWeightInGrams = DeliveryService.calculateOrderWeightInGrams(order);
 
   const needPickupPoint = !DeliveryService.isPostal(totalWeightInGrams, order.orderItems.length);
 
   const deliveryPrice = Math.ceil((totalWeightInGrams / 1000) * 20) + (needPickupPoint ? 150 : 75);
 
-  const branch = await Branch.findOrFail(order.branch);
+  const branch = await Branch.findOrFail(order.branchId);
   return {
     fixedOptions: [
       ...(order.amount > 0 && branch.deliveryAtBranch
@@ -95,7 +95,7 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
 
 export const VippsCheckoutService = {
   async create(order: Order, isDeliveryFree: boolean) {
-    const userDetail = await User.findOrFail(order.customer);
+    const userDetail = await User.findOrFail(order.customerId);
     const { token, checkoutFrontendUrl } = await VippsPaymentService.checkout.create({
       type: "PAYMENT",
       prefillCustomer: {
@@ -125,8 +125,8 @@ export const VippsCheckoutService = {
           orderLines: order.orderItems.map((orderItem) => {
             const priceInMinors = orderItem.amount * 100;
             return {
-              id: orderItem.item,
-              name: `${orderItem.title} - ${TranslationService.translateOrderItemTypeImperative(orderItem.type)} ${orderItem.info?.to ? DateTime.fromJSDate(orderItem.info.to).toFormat("dd/MM/yyyy") : ""}`,
+              id: orderItem.itemId,
+              name: `${orderItem.title} - ${TranslationService.translateOrderItemTypeImperative(orderItem.type)} ${orderItem.periodTo?.toFormat("dd/MM/yyyy") ?? ""}`,
               totalAmount: priceInMinors,
               taxRate: 0,
               totalTaxAmount: 0,
@@ -143,13 +143,12 @@ export const VippsCheckoutService = {
         showOrderSummary: true,
       },
     });
-    await StorageService.Orders.update(order.id, {
-      checkoutState: "SessionCreated",
-    });
+    order.checkoutState = "SessionCreated";
+    await order.save();
     return { token, checkoutFrontendUrl };
   },
   async update(session: VippsCheckoutSession) {
-    let order = await StorageService.Orders.get(session.reference);
+    const order = await Order.getOrFail(session.reference);
     if (
       order.checkoutState === session.sessionState ||
       order.checkoutState === "PaymentSuccessful"
@@ -157,15 +156,17 @@ export const VippsCheckoutService = {
       return;
     }
 
-    await StorageService.Orders.update(order.id, {
-      checkoutState: session.sessionState,
-    });
+    order.checkoutState = session.sessionState;
+    await order.save();
 
     if (session.sessionState !== "PaymentSuccessful") {
       return;
     }
 
-    const userDetail = await updateUserDetailWithBillingDetails(session, order.customer);
+    if (order.customerId === null) {
+      throw new Error(`order "${order.id}" has no customer`);
+    }
+    const userDetail = await updateUserDetailWithBillingDetails(session, order.customerId);
 
     let deliveryPrice = 0;
     if (session.shippingDetails?.shippingMethodId?.includes("mail")) {
@@ -202,25 +203,20 @@ export const VippsCheckoutService = {
           permission: userDetail.permission,
         },
       });
-      await StorageService.Orders.update(order.id, {
-        delivery: delivery.id,
-      });
+      order.deliveryId = delivery.id;
+      await order.save();
     }
 
-    const payment = await StorageService.Payments.add({
+    await StorageService.Payments.add({
       method: "vipps-checkout",
       order: order.id,
       amount: order.amount + deliveryPrice,
-      customer: order.customer,
-      branch: order.branch,
+      customer: order.customerId,
+      branch: order.branchId,
       confirmed: false,
     });
 
-    order = await StorageService.Orders.update(order.id, {
-      payments: [...order.payments, payment.id],
-    });
-
-    await new OrderPlacedHandler().placeOrder(order, order.customer);
+    await new OrderPlacedHandler().placeOrder(order, order.customerId);
 
     try {
       await VippsPaymentService.payment.capture(order.id, (order.amount + deliveryPrice) * 100);

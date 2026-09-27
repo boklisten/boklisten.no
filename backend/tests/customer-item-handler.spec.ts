@@ -2,12 +2,13 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
+import { DateTime } from "luxon";
 
+import type OrderItem from "#models/order_item";
 import { CustomerItemHandler } from "#services/customer_items/customer_item_handler";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import { createBranch } from "#tests/branch_fixtures";
 import { mock } from "#tests/test-doubles";
 
@@ -82,13 +83,11 @@ test.group("CustomerItemHandler", (group) => {
 
     const orderItem = mock<OrderItem>({
       type: "extend",
-      info: {
-        from: new Date(),
-        to: new Date(),
-        numberOfPeriods: 1,
-        periodType: "year",
-        customerItem: "customerItem1",
-      },
+      periodFrom: DateTime.now(),
+      periodTo: DateTime.now(),
+      numberOfPeriods: 1,
+      periodType: "year",
+      customerItemId: "customerItem1",
     });
 
     await createBranch({

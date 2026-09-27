@@ -1,18 +1,22 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
+import { OrderPayments } from "#services/payments/order_payments";
 import type { StandCartLineContext } from "#services/stand_cart/stand_cart_line_resolver";
 import type { CheckoutLine } from "#services/stand_cart/stand_cart_order_builder";
 import { allocateRefund, StandCartRefund } from "#services/stand_cart/stand_cart_refund";
-import { StorageService } from "#services/storage_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Payment } from "#shared/payment/payment";
 import type { StandCartOption, StandCartRefundPlan } from "#shared/stand_cart";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const NOW = new Date("2026-09-09T10:00:00.000Z");
@@ -26,15 +30,11 @@ const item = mock<Item>({ id: "item1", title: "Sinus 1T", price: 500 });
 const otherItem = mock<Item>({ id: "item2", title: "Kosmos SF", price: 400 });
 
 function orderItemFor(book: Item, amount: number): OrderItem {
-  return mock<OrderItem>({ type: "rent", item: book.id, title: book.title, amount });
+  return mock<OrderItem>({ type: "rent", itemId: book.id, amount });
 }
 
-function paidOrder(
-  id: string,
-  payments: string[],
-  orderItems: OrderItem[] = [orderItemFor(item, 250)],
-): Order {
-  return mock<Order>({ id, payments, orderItems });
+function paidOrder(id: string, orderItems: OrderItem[] = [orderItemFor(item, 250)]): Order {
+  return mock<Order>({ id, orderItems });
 }
 
 function payment(id: string, method: Payment["method"], amount: number, creationTime = PAID_AT) {
@@ -66,7 +66,7 @@ function checkoutLine(context: StandCartLineContext, chosen: StandCartOption): C
 }
 
 function orderLine(order: Order, book = item, price = -250): CheckoutLine {
-  const orderItem = order.orderItems.find((candidate) => candidate.item === book.id);
+  const orderItem = order.orderItems.find((candidate) => candidate.itemId === book.id);
   if (!orderItem) {
     throw new Error("no such order item");
   }
@@ -146,14 +146,13 @@ test.group("allocateRefund", () => {
 
 test.group("StandCartRefund.plan", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let ordersGet: sinon.SinonStub;
-  let paymentsGetMany: sinon.SinonStub;
+  let paymentsOf: sinon.SinonStub;
   let info: sinon.SinonStub;
 
+  group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
-    ordersGet = sandbox.stub(StorageService.Orders, "getOrNull").resolves(null);
-    paymentsGetMany = sandbox.stub(StorageService.Payments, "getMany").resolves([]);
+    paymentsOf = sandbox.stub(OrderPayments, "of").resolves([]);
     info = sandbox.stub().resolves(vippsInfo(250));
     sandbox.stub(VippsPaymentService, "payment").value({ info });
   });
@@ -162,8 +161,8 @@ test.group("StandCartRefund.plan", (group) => {
   test("a cancelled order paid by a Vipps request is refunded on that request", async ({
     assert,
   }) => {
-    paymentsGetMany.resolves([payment("p1", "vipps-epayment", 250)]);
-    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID, ["p1"]))], NOW);
+    paymentsOf.resolves([payment("p1", "vipps-epayment", 250)]);
+    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID))], NOW);
     assert.deepEqual(plan, {
       kind: "vipps",
       refunds: [{ orderId: PAID_ORDER_ID, method: "vipps-epayment", amount: 250 }],
@@ -172,8 +171,8 @@ test.group("StandCartRefund.plan", (group) => {
   });
 
   test("an online Vipps Checkout payment qualifies as well", async ({ assert }) => {
-    paymentsGetMany.resolves([payment("p1", "vipps-checkout", 250)]);
-    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID, ["p1"]))], NOW);
+    paymentsOf.resolves([payment("p1", "vipps-checkout", 250)]);
+    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID))], NOW);
     assert.deepEqual(vippsRefunds(plan), [{ orderId: PAID_ORDER_ID, amount: 250 }]);
   });
 
@@ -185,16 +184,21 @@ test.group("StandCartRefund.plan", (group) => {
       item: item.id,
       orders: [HANDOUT_ORDER_ID],
     });
-    const handoutOrder = mock<Order>({
-      id: HANDOUT_ORDER_ID,
-      payments: [],
-      orderItems: [
-        { ...orderItemFor(item, 0), customerItem: "ci1", movedFromOrder: PAID_ORDER_ID },
-      ],
+    const branch = await createBranch();
+    await createItem({ id: item.id, title: item.title, price: item.price });
+    await createOrder({
+      id: PAID_ORDER_ID,
+      branchId: branch.id,
+      customerId: null,
+      orderItems: [{ itemId: item.id, amount: 250, unitPrice: 250 }],
     });
-    ordersGet.withArgs(HANDOUT_ORDER_ID).resolves(handoutOrder);
-    ordersGet.withArgs(PAID_ORDER_ID).resolves(paidOrder(PAID_ORDER_ID, ["p1"]));
-    paymentsGetMany.resolves([payment("p1", "vipps-checkout", 250)]);
+    await createOrder({
+      id: HANDOUT_ORDER_ID,
+      branchId: branch.id,
+      customerId: null,
+      orderItems: [{ itemId: item.id, customerItemId: "ci1", movedFromOrderId: PAID_ORDER_ID }],
+    });
+    paymentsOf.withArgs(PAID_ORDER_ID).resolves([payment("p1", "vipps-checkout", 250)]);
 
     const plan = await StandCartRefund.plan([customerItemLine(customerItem)], NOW);
 
@@ -210,14 +214,15 @@ test.group("StandCartRefund.plan", (group) => {
       item: item.id,
       orders: [HANDOUT_ORDER_ID],
     });
-    ordersGet.withArgs(HANDOUT_ORDER_ID).resolves(
-      mock<Order>({
-        id: HANDOUT_ORDER_ID,
-        payments: ["p1"],
-        orderItems: [{ ...orderItemFor(item, 250), customerItem: "ci1" }],
-      }),
-    );
-    paymentsGetMany.resolves([payment("p1", "vipps-epayment", 250)]);
+    const branch = await createBranch();
+    await createItem({ id: item.id, title: item.title, price: item.price });
+    await createOrder({
+      id: HANDOUT_ORDER_ID,
+      branchId: branch.id,
+      customerId: null,
+      orderItems: [{ itemId: item.id, amount: 250, unitPrice: 250, customerItemId: "ci1" }],
+    });
+    paymentsOf.withArgs(HANDOUT_ORDER_ID).resolves([payment("p1", "vipps-epayment", 250)]);
 
     const plan = await StandCartRefund.plan([customerItemLine(customerItem)], NOW);
 
@@ -226,30 +231,23 @@ test.group("StandCartRefund.plan", (group) => {
   });
 
   test("the net total is refunded when a purchase is in the same cart", async ({ assert }) => {
-    paymentsGetMany.resolves([payment("p1", "vipps-epayment", 250)]);
+    paymentsOf.resolves([payment("p1", "vipps-epayment", 250)]);
     const purchase = checkoutLine({ kind: "item", item: otherItem }, option("buy", 100));
-    const plan = await StandCartRefund.plan(
-      [orderLine(paidOrder(PAID_ORDER_ID, ["p1"])), purchase],
-      NOW,
-    );
+    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID)), purchase], NOW);
     assert.deepEqual(vippsRefunds(plan), [{ orderId: PAID_ORDER_ID, amount: 150 }]);
   });
 
   test("two cancelled orders are refunded on each their own request", async ({ assert }) => {
-    paymentsGetMany
-      .withArgs(["p1"])
+    paymentsOf
+      .withArgs(PAID_ORDER_ID)
       .resolves([payment("p1", "vipps-epayment", 250)])
-      .withArgs(["p2"])
+      .withArgs(OTHER_ORDER_ID)
       .resolves([payment("p2", "vipps-checkout", 400)]);
     info.withArgs(OTHER_ORDER_ID).resolves(vippsInfo(400));
     const plan = await StandCartRefund.plan(
       [
-        orderLine(paidOrder(PAID_ORDER_ID, ["p1"])),
-        orderLine(
-          paidOrder(OTHER_ORDER_ID, ["p2"], [orderItemFor(otherItem, 400)]),
-          otherItem,
-          -400,
-        ),
+        orderLine(paidOrder(PAID_ORDER_ID)),
+        orderLine(paidOrder(OTHER_ORDER_ID, [orderItemFor(otherItem, 400)]), otherItem, -400),
       ],
       NOW,
     );
@@ -262,19 +260,15 @@ test.group("StandCartRefund.plan", (group) => {
   test("a cash-paid order sends the whole refund to the manual route, naming the book", async ({
     assert,
   }) => {
-    paymentsGetMany
-      .withArgs(["p1"])
+    paymentsOf
+      .withArgs(PAID_ORDER_ID)
       .resolves([payment("p1", "vipps-epayment", 250)])
-      .withArgs(["p2"])
+      .withArgs(OTHER_ORDER_ID)
       .resolves([payment("p2", "cash", 400)]);
     const plan = await StandCartRefund.plan(
       [
-        orderLine(paidOrder(PAID_ORDER_ID, ["p1"])),
-        orderLine(
-          paidOrder(OTHER_ORDER_ID, ["p2"], [orderItemFor(otherItem, 400)]),
-          otherItem,
-          -400,
-        ),
+        orderLine(paidOrder(PAID_ORDER_ID)),
+        orderLine(paidOrder(OTHER_ORDER_ID, [orderItemFor(otherItem, 400)]), otherItem, -400),
       ],
       NOW,
     );
@@ -284,19 +278,15 @@ test.group("StandCartRefund.plan", (group) => {
   test("card and manual Vipps payments have no transaction to refund against", async ({
     assert,
   }) => {
-    paymentsGetMany
-      .withArgs(["p1"])
+    paymentsOf
+      .withArgs(PAID_ORDER_ID)
       .resolves([payment("p1", "card", 250)])
-      .withArgs(["p2"])
+      .withArgs(OTHER_ORDER_ID)
       .resolves([payment("p2", "vipps", 400)]);
     const plan = await StandCartRefund.plan(
       [
-        orderLine(paidOrder(PAID_ORDER_ID, ["p1"])),
-        orderLine(
-          paidOrder(OTHER_ORDER_ID, ["p2"], [orderItemFor(otherItem, 400)]),
-          otherItem,
-          -400,
-        ),
+        orderLine(paidOrder(PAID_ORDER_ID)),
+        orderLine(paidOrder(OTHER_ORDER_ID, [orderItemFor(otherItem, 400)]), otherItem, -400),
       ],
       NOW,
     );
@@ -316,8 +306,8 @@ test.group("StandCartRefund.plan", (group) => {
   });
 
   test("a payment older than a year is outside Vipps's refund window", async ({ assert }) => {
-    paymentsGetMany.resolves([payment("p1", "vipps-epayment", 250, LONG_AGO)]);
-    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID, ["p1"]))], NOW);
+    paymentsOf.resolves([payment("p1", "vipps-epayment", 250, LONG_AGO)]);
+    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID))], NOW);
     assert.deepEqual(plan, {
       kind: "manual",
       reasons: ["«Sinus 1T» ble betalt for over ett år siden"],
@@ -328,9 +318,9 @@ test.group("StandCartRefund.plan", (group) => {
   test("a transaction Vipps has already refunded in full cannot cover the amount", async ({
     assert,
   }) => {
-    paymentsGetMany.resolves([payment("p1", "vipps-epayment", 250)]);
+    paymentsOf.resolves([payment("p1", "vipps-epayment", 250)]);
     info.resolves(vippsInfo(250, 250));
-    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID, ["p1"]))], NOW);
+    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID))], NOW);
     assert.deepEqual(plan, {
       kind: "manual",
       reasons: ["Beløpet er større enn det Vipps kan refundere på betalingene"],
@@ -338,9 +328,9 @@ test.group("StandCartRefund.plan", (group) => {
   });
 
   test("goes manual when Vipps does not answer", async ({ assert }) => {
-    paymentsGetMany.resolves([payment("p1", "vipps-epayment", 250)]);
+    paymentsOf.resolves([payment("p1", "vipps-epayment", 250)]);
     info.rejects(new Error("boom"));
-    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID, ["p1"]))], NOW);
+    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID))], NOW);
     assert.deepEqual(plan, {
       kind: "manual",
       reasons: ["Vipps svarte ikke på spørsmål om betalingen for «Sinus 1T»"],
@@ -348,13 +338,13 @@ test.group("StandCartRefund.plan", (group) => {
   });
 
   test("a payment Vipps has no record of cannot be refunded there", async ({ assert }) => {
-    paymentsGetMany.resolves([payment("p1", "vipps-checkout", 250)]);
+    paymentsOf.resolves([payment("p1", "vipps-checkout", 250)]);
     info.rejects(
       new Error(
         '{"extraDetails":[{"name":"ErrorCode","reason":"5090"}],"title":"Reference not found","status":404}',
       ),
     );
-    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID, ["p1"]))], NOW);
+    const plan = await StandCartRefund.plan([orderLine(paidOrder(PAID_ORDER_ID))], NOW);
     assert.deepEqual(plan, {
       kind: "manual",
       reasons: ["Fant ingen Vipps-betaling for «Sinus 1T»"],

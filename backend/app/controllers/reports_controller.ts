@@ -1,8 +1,10 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import db from "@adonisjs/lucid/services/db";
 import { ObjectId } from "mongodb";
 
 import User from "#models/user";
+import { OrderPayments } from "#services/payments/order_payments";
 import { withBranchName, withItemColumns, withUserColumns } from "#services/report_columns";
 import { StorageService } from "#services/storage_service";
 import {
@@ -27,6 +29,25 @@ function branchFieldFilter(field: string, branchFilter: string[] | undefined) {
   return branchFilter && branchFilter.length > 0
     ? { [field]: { $in: branchFilter.map((id) => new ObjectId(id)) } }
     : {};
+}
+
+/** Keeps each Mongo `$in` list moderate when a report spans years of orders. */
+const PAYMENT_LOOKUP_CHUNK_SIZE = 5000;
+
+/** The orders among the given ones with at least one confirmed payment. */
+async function confirmedPaymentOrderIds(orderIds: string[]): Promise<Set<string>> {
+  const confirmed = new Set<string>();
+  for (let start = 0; start < orderIds.length; start += PAYMENT_LOOKUP_CHUNK_SIZE) {
+    const payments = await OrderPayments.byOrder(
+      orderIds.slice(start, start + PAYMENT_LOOKUP_CHUNK_SIZE),
+    );
+    for (const [orderId, orderPayments] of payments) {
+      if (orderPayments.some((payment) => payment.confirmed)) {
+        confirmed.add(orderId);
+      }
+    }
+  }
+  return confirmed;
 }
 
 export default class ReportsController {
@@ -101,87 +122,79 @@ export default class ReportsController {
     const { branchFilter, createdAfter, createdBefore } =
       await ctx.request.validateUsing(ordersReportValidator);
 
-    const rows = await StorageService.Orders.aggregate<{
-      filialNavnId: string | null;
-      itemId: string | null;
+    const query = db
+      .from("order_items")
+      .join("orders", "orders.id", "order_items.order_id")
+      .join("items", "items.id", "order_items.item_id")
+      .where("orders.placed", true);
+    if (branchFilter && branchFilter.length > 0) {
+      void query.whereIn("orders.branch_id", branchFilter);
+    }
+    if (createdAfter) {
+      void query.where("orders.created_at", ">=", new Date(createdAfter));
+    }
+    if (createdBefore) {
+      void query.where("orders.created_at", "<=", new Date(createdBefore));
+    }
+    const lines: {
+      orderId: string;
+      orderAmount: number;
+      branchId: string;
       employeeId: string | null;
       customerId: string | null;
-    }>([
-      {
-        $match: {
-          placed: true,
-          ...branchFieldFilter("branch", branchFilter),
-          ...dateRangeFilter("creationTime", createdAfter, createdBefore),
-        },
-      },
-      {
-        $lookup: {
-          from: "payments",
-          let: {
-            paymentIds: {
-              $map: {
-                input: { $ifNull: ["$payments", []] },
-                as: "paymentId",
-                in: { $convert: { input: "$$paymentId", to: "objectId", onError: null } },
-              },
-            },
-          },
-          pipeline: [
-            { $match: { $expr: { $in: ["$_id", "$$paymentIds"] } } },
-            { $project: { confirmed: 1 } },
-          ],
-          as: "paymentInfo",
-        },
-      },
-      { $unwind: "$orderItems" },
-      {
-        $project: {
-          _id: 0,
-          ordreID: { $toString: "$_id" },
-          filialID: { $toString: "$branch" },
-          filialNavnId: { $toString: "$branch" },
-          employeeId: { $toString: "$employee" },
-          customerId: { $toString: "$customer" },
-          title: "$orderItems.title",
-          itemId: { $toString: "$orderItems.item" },
-          amount: "$orderItems.amount",
-          type: "$orderItems.type",
-          payed: {
-            $or: [
-              { $eq: ["$amount", 0] },
-              {
-                $gt: [
-                  {
-                    $size: {
-                      $filter: {
-                        input: "$paymentInfo",
-                        as: "payment",
-                        cond: { $eq: ["$$payment.confirmed", true] },
-                      },
-                    },
-                  },
-                  0,
-                ],
-              },
-            ],
-          },
-          creationTime: 1,
-          pivot: "1",
-        },
-      },
-    ]);
+      title: string;
+      isbn: string | number;
+      amount: number;
+      type: string;
+      creationTime: Date;
+    }[] = await query
+      .select(
+        "orders.id as orderId",
+        "orders.amount as orderAmount",
+        "orders.branch_id as branchId",
+        "orders.employee_id as employeeId",
+        "orders.customer_id as customerId",
+        "items.title",
+        "items.isbn",
+        "order_items.amount",
+        "order_items.type",
+        "orders.created_at as creationTime",
+      )
+      .orderBy("orders.created_at")
+      .orderBy("order_items.position");
+
+    // Payments stay in Mongo: an order is paid when it costs nothing or a confirmed payment is
+    // recorded for it.
+    const owingOrderIds = [
+      ...new Set(lines.filter((line) => line.orderAmount !== 0).map((line) => line.orderId)),
+    ];
+    const confirmed = await confirmedPaymentOrderIds(owingOrderIds);
+    const payed = (line: (typeof lines)[number]) =>
+      line.orderAmount === 0 || confirmed.has(line.orderId);
+
+    // The employee, customer and branch ids are replaced by their Postgres columns in code, in
+    // place, so the CSV keeps this column order.
+    const rows = lines.map((line) => ({
+      ordreID: line.orderId,
+      filialID: line.branchId,
+      filialNavnId: line.branchId,
+      employeeId: line.employeeId,
+      customerId: line.customerId,
+      title: line.title,
+      ISBN: String(line.isbn),
+      amount: line.amount,
+      type: line.type,
+      payed: payed(line),
+      creationTime: line.creationTime,
+      pivot: "1",
+    }));
     const withEmployee = await withUserColumns(rows, "employeeId", (user) => ({
       employeeNavn: user?.name ?? null,
     }));
     const withCustomer = await withUserColumns(withEmployee, "customerId", (user) => ({
       customerName: user?.name ?? null,
     }));
-    return withItemColumns(
-      await withBranchName(withCustomer, "filialNavnId", "filialNavn"),
-      (item) => ({
-        ISBN: item === undefined ? null : String(item.isbn),
-      }),
-    );
+    return withBranchName(withCustomer, "filialNavnId", "filialNavn");
   }
 
   async payments(ctx: HttpContext) {

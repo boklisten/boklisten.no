@@ -895,7 +895,7 @@ Notes (2026-09-21):
   a success, relink, delete (refused for a held book), the sticker PDF, `/public_blid_lookup`,
   and the Kasse blid view at 1280 and 375 px.
 
-## Step 8 — orders → `orders` + `order_items` — status: not started
+## Step 8 — orders → `orders` + `order_items` — status: done 2026-09-27 (rehearsed on staging, pending merge)
 
 The largest step by code (73 refs / 30 files) and by rows. Everything referenced by an order except
 customer items and deliveries is already in Postgres at this point.
@@ -978,7 +978,74 @@ items whose `item` is not in `items`; `movedFromOrder`/`movedToOrder` pointing a
 set; decimals in `amount`/`unitPrice`; `checkoutState` non-null count and whether any code reads it;
 unplaced orders older than a year (cleanup volume); maximum `orderItems.length`.
 
-Survey results / notes: (fill in; include the measured transfer duration)
+Survey results (2026-09-27, staging):
+
+- 185 431 orders, 489 728 lines, at most 32 lines per order, no order without lines; 180 065
+  placed. Every `branch` exists in Postgres. No decimals in `amount`/`unitPrice`/`amountLeftToPay`,
+  no `type` or `periodType` outside the enums, `info.from`/`info.to` always dates.
+- Customers: 381 orders have none and 55 767 name one of 12 912 users that no longer exist, nearly
+  all from 2018–2022 (the old three-year user cleanup; 70 from 2025–26). Employees: 23 052 orders
+  name one of 45 deleted users, none after 2024. Both become NULL (orders outlive their customer,
+  decided 2026-09-21), counted in the summary line.
+- Lines: 122 in 122 orders (2018–2022) name `5b6441add2e733002fae8723`, the book deleted from the
+  catalogue (see step 7); 114 of those orders have other lines, 8 have only that one. Adrian chose to
+  skip the lines and the 8 orders left empty. 155 `movedFromOrder` and 215 `movedToOrder` point at
+  deleted orders (out of 292 034 references) and become NULL.
+- `info.customerItem`: 240 360 set, never different from `customerItem` where both are set; 35 974
+  lines have only `info.customerItem`, which fills `customer_item_id`. `info` has no keys beyond the
+  schema.
+- Top-level keys beyond the schema: `user`, `editableFor`, `viewableFor`, `active`, `__v`,
+  `pendingSignature` (75 170, dead), `kustomCheckoutId` (5); all dropped. `checkoutState` is on
+  3 730 orders and is live (the Kasse Vipps flow reuses the Vipps Checkout vocabulary, including
+  `SessionExpired`), so it stays as free text. `notification.email` is absent on 105 074 orders,
+  false on 7 734; it becomes `notify_by_email not null default true`.
+- `payments` array vs `payments.order`: 38 139 of 38 266 orders with payments agree exactly; 127
+  differ and 14 have payments but an empty array, almost all old unconfirmed DIBS attempts (4 are
+  Vipps Checkout). Every current writer records the payment with its order id and attaches it right
+  after, so `payments.order` (index created by this migration) replaces the array.
+- 2 792 unplaced orders are older than a year (they stay; the cleanup cron was dropped).
+- `book_handovers.order_id`: 12 705 set, 1 names a missing order and becomes NULL.
+
+Notes (2026-09-27):
+
+- Model: `app/models/order.ts` preloads `orderItems` (by `position`) and each line's `item` on every
+  read, so `orderItem.title` is the current catalogue title; `Order.createWithItems` inserts an order
+  with its lines in one transaction, `order.saveWithItems()` saves lines changed in place (replaces
+  the old "rewrite the whole `orderItems` array" updates). API/DTO shape `shared/order/order.ts`
+  uses the model names (`branchId`, `customerId`, `itemId`, `periodFrom`/`periodTo`,
+  `customerItemId`, `notifyByEmail`, …), decided in the interview.
+- `app/services/payments/order_payments.ts` (`OrderPayments.of/byOrder/exist`) is the interim
+  payments lookup until step 11.
+- Staging rehearsal from a laptop: `orders: migrated 185423, skipped 8 (8 only lines whose item is
+no longer in the catalogue); order_items: migrated 489606`, then `55760 deleted customers and
+23049 deleted employees set to null, 155 moved-from and 215 moved-to references to missing orders
+set to null, 122 lines whose item is no longer in the catalogue dropped`,
+  `book_handovers: 1 references to missing orders set to null`, collection dropped; 2 min 40 s in
+  total (the step 0 dry run's 570 s was the old helper without batched children). Every migrated
+  order and line compared field by field against an NDJSON dump taken before the run: zero
+  differences.
+- Aggregations moved to SQL: order manager (keyset paging over `(created_at, id)`; the Bring-only
+  filter resolves Bring delivery ids in Mongo before paging, so pages stay exact), orders report,
+  branch books, branch insights, user duplicates, matches `getWantedItems`, subject choices.
+  `OrderItem.whereOpen(query)` is the `isOpenOrderItem` rule as SQL.
+- Behaviour notes: the placed-order validator now sees the placed order (it used to be handed the
+  stale unplaced document and returned early); its only caller besides match transfers is bulk
+  collection, whose zero-amount orders pass trivially. Invoice-paid lines show the catalogue title
+  instead of the invoice line's title. Orders whose customer was deleted render as «Slettet
+  kunde»; their order-manager detail shows an error instead of the lines. `OrderManagerRow.customer`,
+  `OrderManagerDetail.customerId` and `BlidParty.detailsId` are nullable; branch-books order line
+  ids are integers.
+- Verified on staging through the local stack (Playwright): order history and Bestillinger in the
+  Kasse customer view, order manager list/paging/Bring filter at 1280 and 375 px, a customer-less
+  order, blid history, branch «Bestilte bøker», orders report, and two stand-cart checkouts (a
+  cancellation and a scanned handout; both wrote the moved-from/moved-to pair, the handout created
+  the customer item with its `orders` pointing back).
+- Specs: 1055 passing, run against real Postgres rows (`tests/order_fixtures.ts` `createOrder`); new
+  `order_model.spec.ts`, `reports_controller.spec.ts`. Specs that run in parallel need separate test
+  databases (`POSTGRES_URL=…/boklisten_test_x` overrides `.env.test`), since each file truncates.
+- The "Database Cleanup" cron (`cron_jobs/database_cleanup`, which only deleted unplaced orders
+  older than a year) is dropped instead of rewritten, Adrian's decision 2026-09-27; its service is
+  removed from `.railway/railway.ts`. Unplaced orders now stay in `orders`.
 
 ## Step 9 — customeritems → `customer_items` + `customer_item_period_extends` — status: not started
 
@@ -1169,8 +1236,8 @@ Only after step 12 has run in production.
   has no Mongo to copy from, so this loses nothing.
 - Environment: drop `MONGODB_URI` from `start/env.ts`, `.env.example`, `.env.test`, `.env.local`
   and the Railway variables; update `app/models/mongoose`-related `imports` in `package.json`.
-- Cron jobs: delete `cron_jobs/copy_prod_mongodb_to_staging/` and any remaining mongosh script;
-  the "Database Cleanup" job runs only SQL by now.
+- Cron jobs: delete `cron_jobs/copy_prod_mongodb_to_staging/` and any remaining mongosh script
+  (the "Database Cleanup" job was dropped in step 8).
 - Railway IaC (`.railway/railway.ts`): remove the `Mongo` service, `mongodb-volume`, the
   "Copy Mongo to Staging" cron and `MONGODB_URI` on the backend. Deleting a database and volume is
   destructive, so `railway config apply` refuses it in CI; apply by hand in staging first, then
@@ -1220,3 +1287,7 @@ Only after step 12 has run in production.
 - 2026-09-21: step 7 implemented (unique items into Postgres without the `title` snapshot, blid
   check constraint, 7 orphaned and 18 malformed documents skipped, blid search ranked in code,
   staging rehearsal 8.1 s with zero field diffs).
+- 2026-09-27: step 8 implemented (orders + order lines into Postgres with model-named API fields,
+  title snapshot and payments array dropped, 8 orders / 122 lines naming the deleted book skipped,
+  deleted customers/employees nulled, Database Cleanup cron dropped, staging rehearsal 2 min 40 s with
+  zero field diffs).

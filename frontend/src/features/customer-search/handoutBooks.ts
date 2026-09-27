@@ -1,8 +1,7 @@
 import { itemsAreEquivalent } from "@boklisten/backend/shared/item-equivalence";
 import type { MatchDto } from "@boklisten/backend/shared/match/match-dto";
 import { isOpenOrderItem } from "@boklisten/backend/shared/order/open-order-item";
-import type { Order } from "@boklisten/backend/shared/order/order";
-import type { OrderItem } from "@boklisten/backend/shared/order/order-item/order-item";
+import type { Order, OrderItem } from "@boklisten/backend/shared/order/order";
 
 import { forViewer, partyName } from "@/features/matches/forViewer";
 import type { ViewerObligation } from "@/features/matches/forViewer";
@@ -45,12 +44,12 @@ export function buildOpenOrderInfo(orders: Order[]): Map<string, OpenOrderInfo> 
   const openOrderInfo = new Map<string, OpenOrderInfo>();
   for (const order of orders.filter((placedOrder) => placedOrder.placed)) {
     for (const orderItem of order.orderItems.filter(isOpenOrderItem)) {
-      openOrderInfo.set(orderItem.item, {
+      openOrderInfo.set(orderItem.itemId, {
         orderId: order.id,
         title: orderItem.title,
         type: orderItem.type,
-        branchId: order.branch,
-        deadline: orderItem.info?.to,
+        branchId: order.branchId,
+        deadline: orderItem.periodTo ?? undefined,
       });
     }
   }
@@ -94,6 +93,6 @@ export function countStandBooksToHandOut(
   }
   const { receiveBooks } = buildPeerBooks(matches ?? [], customerId);
   return calculateUnfulfilledOrderItems(orders).filter(
-    (orderItem) => !receiveBooks.some((book) => itemsAreEquivalent(book.id, orderItem.item)),
+    (orderItem) => !receiveBooks.some((book) => itemsAreEquivalent(book.id, orderItem.itemId)),
   ).length;
 }

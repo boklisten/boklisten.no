@@ -1,5 +1,6 @@
 import Branch from "#models/branch";
 import BadRequestException from "#exceptions/bad_request_exception";
+import Order from "#models/order";
 import User from "#models/user";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { OrderHistoryService } from "#services/order_history_service";
@@ -10,6 +11,7 @@ import { planCheckout } from "#services/stand_cart/stand_cart_order_builder";
 import type { CheckoutLine } from "#services/stand_cart/stand_cart_order_builder";
 import {
   StandCartPayment,
+  standCustomerId,
   toMsisdn,
   VIPPS_REQUEST_STATE,
 } from "#services/stand_cart/stand_cart_payment";
@@ -19,7 +21,6 @@ import { StorageService } from "#services/storage_service";
 import { normalizeBankAccount } from "#shared/bank_account";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
-import type { Order } from "#shared/order/order";
 import type {
   StandCartCheckoutPayment,
   StandCartCheckoutState,
@@ -168,10 +169,10 @@ async function assertConfirmed(
 /** The Bring delivery of the first source order that has one, for the copy onto the new order. */
 async function findBringDelivery(lines: CheckoutLine[]): Promise<Delivery | null> {
   for (const { context } of lines) {
-    if (context.kind !== "order" || !context.order.delivery) {
+    if (context.kind !== "order" || !context.order.deliveryId) {
       continue;
     }
-    const delivery = await StorageService.Deliveries.getOrNull(context.order.delivery);
+    const delivery = await StorageService.Deliveries.getOrNull(context.order.deliveryId);
     if (delivery?.method === "bring") {
       return delivery;
     }
@@ -207,7 +208,8 @@ async function attachDelivery(
       amount: 0,
     },
   });
-  return StorageService.Orders.update(order.id, { delivery: delivery.id });
+  order.deliveryId = delivery.id;
+  return order.save();
 }
 
 /** Same wording as Vipps Checkout, so the customer recognises the payment request. */
@@ -290,23 +292,26 @@ async function present(
   return {
     status,
     orderId: order.id,
-    order: placed ? await OrderHistoryService.getOne(order.id, order.customer, "employee") : null,
+    order: placed
+      ? await OrderHistoryService.getOne(order.id, standCustomerId(order), "employee")
+      : null,
   };
 }
 
 /** The employee who started the checkout, as recorded on the order, with their permission. */
 async function employeeOf(order: Order): Promise<MonitoredEmployee> {
-  if (!order.employee) {
+  if (!order.employeeId) {
     throw new Error(`stand order ${order.id} has no employee`);
   }
-  const user = await User.find(order.employee);
-  return { detailsId: order.employee, permission: user?.permission ?? USER_PERMISSION.EMPLOYEE };
+  const user = await User.find(order.employeeId);
+  return { detailsId: order.employeeId, permission: user?.permission ?? USER_PERMISSION.EMPLOYEE };
 }
 
 async function settleAuthorizedVipps(order: Order): Promise<StandCartCheckoutState> {
-  const withPayment = await StandCartPayment.record(order, "vipps-epayment");
-  const placed = await StandCartPlacement.place(withPayment, await employeeOf(order));
-  await StorageService.Orders.update(order.id, { checkoutState: VIPPS_REQUEST_STATE.paid });
+  await StandCartPayment.record(order, "vipps-epayment");
+  const placed = await StandCartPlacement.place(order, await employeeOf(order));
+  placed.checkoutState = VIPPS_REQUEST_STATE.paid;
+  await placed.save();
   await StandCartPayment.captureVipps(order);
   return present(placed, "paid");
 }
@@ -315,7 +320,8 @@ async function markVippsOutcome(
   order: Order,
   status: Exclude<StandCartCheckoutStatus, "pending" | "paid" | "placed">,
 ): Promise<StandCartCheckoutState> {
-  await StorageService.Orders.update(order.id, { checkoutState: VIPPS_REQUEST_STATE[status] });
+  order.checkoutState = VIPPS_REQUEST_STATE[status];
+  await order.save();
   return present(order, status);
 }
 
@@ -357,16 +363,15 @@ export const StandCartCheckoutService = {
     const total = orderItems.reduce((sum, orderItem) => sum + orderItem.amount, 0);
     const money = await planMoney(request, lines, total, now);
 
-    let order = await StorageService.Orders.add({
+    let order = await Order.createWithItems({
       amount: total,
       orderItems,
-      branch: branch.id,
-      customer: customer.id,
+      branchId: branch.id,
+      customerId: customer.id,
       placed: false,
       byCustomer: false,
-      employee: employee.detailsId,
-      payments: [],
-      notification: { email: request.notifyByEmail },
+      employeeId: employee.detailsId,
+      notifyByEmail: request.notifyByEmail,
     });
     if (bringDelivery && request.delivery) {
       order = await attachDelivery(order, bringDelivery, request.delivery.trackingNumber);
@@ -378,13 +383,13 @@ export const StandCartCheckoutService = {
         return present(order, "pending");
       }
       case "vipps-refund": {
-        const refunded = await StandCartPayment.refundVipps(order, money.refunds);
-        const placed = await StandCartPlacement.place(refunded.order, employee, now);
-        if (refunded.shortfall > 0) {
+        const shortfall = await StandCartPayment.refundVipps(order, money.refunds);
+        const placed = await StandCartPlacement.place(order, employee, now);
+        if (shortfall > 0) {
           await RefundRequestService.send({
             order: placed,
             employeeDetailsId: employee.detailsId,
-            amount: refunded.shortfall,
+            amount: shortfall,
             accountNumber: null,
             comment: null,
           });
@@ -392,7 +397,7 @@ export const StandCartCheckoutService = {
         return present(placed, "paid");
       }
       case "bank-transfer": {
-        order = await StandCartPayment.record(order, "bank-transfer");
+        await StandCartPayment.record(order, "bank-transfer");
         const placed = await StandCartPlacement.place(order, employee, now);
         await RefundRequestService.send({
           order: placed,
@@ -404,7 +409,7 @@ export const StandCartCheckoutService = {
         return present(placed, "paid");
       }
       case "record": {
-        order = await StandCartPayment.record(order, money.method);
+        await StandCartPayment.record(order, money.method);
         return present(await StandCartPlacement.place(order, employee, now), "paid");
       }
       default: {
@@ -431,7 +436,7 @@ export const StandCartCheckoutService = {
    * Safe to call repeatedly: a placed order is reported as paid without touching Vipps again.
    */
   async status(orderId: string): Promise<StandCartCheckoutState> {
-    const order = await StorageService.Orders.get(orderId);
+    const order = await Order.getOrFail(orderId);
     if (order.placed) {
       return present(order, "paid");
     }
@@ -469,7 +474,7 @@ export const StandCartCheckoutService = {
 
   /** The employee gives up waiting. If the customer approved in the meantime, the order is settled instead. */
   async cancel(orderId: string): Promise<StandCartCheckoutState> {
-    const order = await StorageService.Orders.get(orderId);
+    const order = await Order.getOrFail(orderId);
     if (order.placed) {
       return present(order, "paid");
     }

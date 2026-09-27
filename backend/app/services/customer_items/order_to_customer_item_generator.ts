@@ -1,19 +1,26 @@
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import User from "#models/user";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderToCustomerItemGenerator {
-  public async generate(order: Order): Promise<CustomerItem[]> {
+  /**
+   * The customer items the order's loans hand out. `orderItems` narrows the lines considered
+   * (default: all of the order's lines).
+   */
+  public async generate(
+    order: Order,
+    orderItems: OrderItem[] = order.orderItems,
+  ): Promise<CustomerItem[]> {
     const customerItems = [];
 
-    if (!order.customer) {
+    if (!order.customerId) {
       return [];
     }
 
-    const customerDetail = await User.findOrFail(order.customer);
+    const customerDetail = await User.findOrFail(order.customerId);
 
-    for (const orderItem of order.orderItems) {
+    for (const orderItem of orderItems) {
       if (this.shouldCreateCustomerItem(orderItem)) {
         const customerItem = this.convertOrderItemToCustomerItem(customerDetail, order, orderItem);
         customerItems.push(customerItem);
@@ -59,21 +66,18 @@ export class OrderToCustomerItemGenerator {
       // @ts-expect-error fixme: auto ignored
       id: null,
       type: "partly-payment",
-      item: orderItem.item,
-      blid: orderItem.blid,
-      customer: order.customer,
+      item: orderItem.itemId,
+      blid: orderItem.blid ?? undefined,
+      customer: customerDetail.id,
       // @ts-expect-error fixme: auto ignored
-      deadline: orderItem.info.to,
+      deadline: orderItem.periodTo?.toJSDate(),
       handout: true,
-
-      // @ts-expect-error fixme: auto ignored
       handoutInfo: this.createHandoutInfo(order),
       returned: false,
       buyout: false,
       cancel: false,
       buyback: false,
-      // @ts-expect-error fixme: auto ignored
-      amountLeftToPay: orderItem.info.amountLeftToPay,
+      amountLeftToPay: orderItem.amountLeftToPay ?? undefined,
       orders: [order.id],
       customerInfo: this.createCustomerInfo(customerDetail),
     };
@@ -88,14 +92,12 @@ export class OrderToCustomerItemGenerator {
       // @ts-expect-error fixme: auto ignored
       id: null,
       type: "rent",
-      item: orderItem.item,
-      blid: orderItem.blid,
-      customer: order.customer,
+      item: orderItem.itemId,
+      blid: orderItem.blid ?? undefined,
+      customer: customerDetail.id,
       // @ts-expect-error fixme: auto ignored
-      deadline: orderItem.info.to,
+      deadline: orderItem.periodTo?.toJSDate(),
       handout: true,
-
-      // @ts-expect-error fixme: auto ignored
       handoutInfo: this.createHandoutInfo(order),
       returned: false,
       buyout: false,
@@ -108,9 +110,9 @@ export class OrderToCustomerItemGenerator {
 
   private createHandoutInfo(order: Order) {
     return {
-      handoutById: order.branch,
-      handoutEmployee: order.employee,
-      time: order.creationTime,
+      handoutById: order.branchId,
+      handoutEmployee: order.employeeId ?? undefined,
+      time: order.createdAt.toJSDate(),
     };
   }
 

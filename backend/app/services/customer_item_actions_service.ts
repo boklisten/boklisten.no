@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 
 import ItemModel from "#models/item";
-import { StorageService } from "#services/storage_service";
+import OrderItem from "#models/order_item";
 import type { Branch, ExtendPeriod } from "#shared/branch";
 import type {
   CustomerItemAction,
@@ -132,9 +132,16 @@ export function resolveBuyoutPrice({
 export async function periodTypeOfLastOrder(
   customerItem: CustomerItem,
 ): Promise<Period | undefined> {
-  const order = await StorageService.Orders.getOrNull(customerItem.orders.at(-1));
-  return order?.orderItems.find((orderItem) => orderItem.customerItem === customerItem.id)?.info
-    ?.periodType;
+  const lastOrderId = customerItem.orders.at(-1);
+  if (lastOrderId === undefined) {
+    return undefined;
+  }
+  const orderItem = await OrderItem.query()
+    .where("order_id", String(lastOrderId))
+    .where("customer_item_id", customerItem.id)
+    .orderBy("position")
+    .first();
+  return orderItem?.periodType ?? undefined;
 }
 
 async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch | null) {

@@ -2,24 +2,27 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
+import { DateTime } from "luxon";
 
 import BranchModel from "#models/branch";
 import type { SEDbQuery } from "#models/mongoose/storage/db-query";
+import OrderItem from "#models/order_item";
 import { MatchRepository } from "#services/matches/match_repository";
 import { PeerObligations } from "#services/matches/peer_obligations";
+import { OrderPayments } from "#services/payments/order_payments";
 import { StandCartLineResolver } from "#services/stand_cart/stand_cart_line_resolver";
 import User from "#models/user";
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Delivery } from "#shared/delivery/delivery";
-import type { Order } from "#shared/order/order";
 import type { StandCartLine } from "#shared/stand_cart";
 import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
 import { createUniqueItem } from "#tests/unique_item_fixtures";
 import { mock, unchecked } from "#tests/test-doubles";
-import { userDouble } from "#tests/user_fixtures";
+import { createUser, userDouble } from "#tests/user_fixtures";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
 const SEMESTER_END = new Date("2026-12-20T00:00:00.000Z");
@@ -68,29 +71,27 @@ const branches: Partial<Branch>[] = [
   },
 ];
 
-function orderWith(overrides: Partial<Order>): Order {
-  return mock<Order>({
+/** An order row to insert, and whether it has payments recorded. */
+type OrderSpec = Parameters<typeof createOrder>[0] & { id: string; paid?: boolean };
+
+function orderWith(overrides: Partial<OrderSpec>): OrderSpec {
+  return {
     id: ORDER_ID,
-    customer: CUSTOMER_ID,
-    branch: BRANCH_ID,
+    customerId: CUSTOMER_ID,
+    branchId: BRANCH_ID,
     placed: true,
     byCustomer: true,
-    payments: [],
     amount: 0,
     orderItems: [
       {
         type: "rent",
-        item: ITEM_ID,
-        title: "Sinus 1T",
-        amount: 0,
-        unitPrice: 0,
-        handout: false,
-        delivered: false,
-        info: { to: SEMESTER_END, periodType: "semester" },
+        itemId: ITEM_ID,
+        periodTo: DateTime.fromJSDate(SEMESTER_END),
+        periodType: "semester",
       },
     ],
     ...overrides,
-  });
+  };
 }
 
 const activeCustomerItem = mock<CustomerItem>({
@@ -111,7 +112,7 @@ const activeCustomerItem = mock<CustomerItem>({
 });
 
 interface World {
-  orders: Order[];
+  orders: OrderSpec[];
   customerItems: CustomerItem[];
   deliveries: Delivery[];
   peerSender: string | null;
@@ -131,15 +132,36 @@ const byId =
   (id: string | undefined) =>
     Promise.resolve(rows.find((row) => row.id === id) ?? null);
 
-function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
-  sandbox.stub(StorageService.Orders, "getOrNull").callsFake(byId(world.orders));
-  sandbox
-    .stub(StorageService.Orders, "getByQueryOrNull")
-    .callsFake((query) =>
-      Promise.resolve(
-        world.orders.filter((order) => order.customer === objectIdFilter(query, "customer")),
+/**
+ * Inserts the orders. Moved links may point either way between them, so the lines get them once
+ * every order exists.
+ */
+async function insertOrders(orders: OrderSpec[]): Promise<void> {
+  for (const { paid: _paid, orderItems = [], ...order } of orders) {
+    await createOrder({
+      ...order,
+      orderItems: orderItems.map(
+        ({ movedFromOrderId: _from, movedToOrderId: _to, ...orderItem }) => orderItem,
       ),
-    );
+    });
+  }
+  for (const order of orders) {
+    for (const [position, orderItem] of (order.orderItems ?? []).entries()) {
+      await OrderItem.query()
+        .where("order_id", order.id)
+        .where("position", position)
+        .update({
+          moved_from_order_id: orderItem.movedFromOrderId ?? null,
+          moved_to_order_id: orderItem.movedToOrderId ?? null,
+        });
+    }
+  }
+}
+
+async function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
+  await insertOrders(world.orders);
+  const paid = new Set(world.orders.filter((order) => order.paid).map((order) => order.id));
+  sandbox.stub(OrderPayments, "exist").callsFake((orderId) => Promise.resolve(paid.has(orderId)));
   sandbox.stub(StorageService.CustomerItems, "getOrNull").callsFake(byId(world.customerItems));
   sandbox.stub(StorageService.CustomerItems, "getByQueryOrNull").callsFake((query) => {
     const customer = objectIdFilter(query, "customer");
@@ -178,6 +200,8 @@ test.group("StandCartLineResolver.resolve", (group) => {
     }
     await createUniqueItem({ itemId: ITEM_ID, blid: BLID });
     await createUniqueItem({ itemId: OTHER_ITEM_ID, blid: OTHER_BLID });
+    await createUser({ id: CUSTOMER_ID });
+    await createUser({ id: OTHER_CUSTOMER_ID });
     sandbox = createSandbox();
     world = {
       orders: [orderWith({})],
@@ -188,11 +212,11 @@ test.group("StandCartLineResolver.resolve", (group) => {
   });
   group.each.teardown(() => sandbox.restore());
 
-  const resolve = (
+  const resolve = async (
     source: Parameters<typeof StandCartLineResolver.resolve>[0]["source"],
     extra: Partial<Parameters<typeof StandCartLineResolver.resolve>[0]> = {},
   ) => {
-    stubWorld(sandbox, world);
+    await stubWorld(sandbox, world);
     return StandCartLineResolver.resolve(
       { customerId: CUSTOMER_ID, branchId: BRANCH_ID, source, ...extra },
       NOW,
@@ -214,7 +238,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
   });
 
   test("notes when the order sits on another branch than the cart", async ({ assert }) => {
-    world.orders = [orderWith({ branch: OTHER_BRANCH_ID })];
+    world.orders = [orderWith({ branchId: OTHER_BRANCH_ID })];
     const resolved = line(await resolve({ kind: "order", orderId: ORDER_ID, itemId: ITEM_ID }));
     assert.deepEqual(resolved.notes, [{ kind: "other-branch", branchName: "Persbråten VGS" }]);
     // Priced from the cart branch, which pays for its students
@@ -228,18 +252,18 @@ test.group("StandCartLineResolver.resolve", (group) => {
       orderWith({
         id: PAID_ORDER_ID,
         amount: 250,
-        payments: ["payment1"],
-        delivery: DELIVERY_ID,
+        paid: true,
+        deliveryId: DELIVERY_ID,
         orderItems: [
           {
             type: "rent",
-            item: ITEM_ID,
-            title: "Sinus 1T",
+            itemId: ITEM_ID,
             amount: 250,
             unitPrice: 250,
             handout: false,
             delivered: false,
-            info: { to: SEMESTER_END, periodType: "semester" },
+            periodTo: DateTime.fromJSDate(SEMESTER_END),
+            periodType: "semester",
           },
         ],
       }),
@@ -260,23 +284,23 @@ test.group("StandCartLineResolver.resolve", (group) => {
         orderItems: [
           {
             type: "rent",
-            item: ITEM_ID,
-            title: "Sinus 1T",
+            itemId: ITEM_ID,
             amount: 0,
             unitPrice: 0,
             handout: false,
             delivered: false,
-            movedToOrder: HANDOUT_ORDER_ID,
+            movedToOrderId: HANDOUT_ORDER_ID,
           },
         ],
       }),
+      orderWith({ id: HANDOUT_ORDER_ID, orderItems: [] }),
     ];
     const result = await resolve({ kind: "order", orderId: ORDER_ID, itemId: ITEM_ID });
     assert.deepEqual(result, { kind: "refused", message: "«Sinus 1T» er ikke lenger bestilt" });
   });
 
   test("refuses another customer's order", async ({ assert }) => {
-    world.orders = [orderWith({ customer: OTHER_CUSTOMER_ID })];
+    world.orders = [orderWith({ customerId: OTHER_CUSTOMER_ID })];
     const result = await resolve({ kind: "order", orderId: ORDER_ID, itemId: ITEM_ID });
     assert.equal(result.kind, "refused");
   });
@@ -325,13 +349,13 @@ test.group("StandCartLineResolver.resolve", (group) => {
         orderItems: [
           {
             type: "rent",
-            item: GYMNOS_2012,
-            title: "GYMNOS 2012",
+            itemId: GYMNOS_2012,
             amount: 0,
             unitPrice: 0,
             handout: false,
             delivered: false,
-            info: { to: SEMESTER_END, periodType: "semester" },
+            periodTo: DateTime.fromJSDate(SEMESTER_END),
+            periodType: "semester",
           },
         ],
       }),
@@ -379,33 +403,33 @@ test.group("StandCartLineResolver.resolve", (group) => {
         orderItems: [
           {
             type: "rent",
-            item: ITEM_ID,
-            title: "Sinus 1T",
+            itemId: ITEM_ID,
             amount: 0,
             unitPrice: 0,
             handout: true,
             delivered: false,
-            customerItem: CUSTOMER_ITEM_ID,
-            movedFromOrder: PAID_ORDER_ID,
-            info: { to: SEMESTER_END, periodType: "semester" },
+            customerItemId: CUSTOMER_ITEM_ID,
+            movedFromOrderId: PAID_ORDER_ID,
+            periodTo: DateTime.fromJSDate(SEMESTER_END),
+            periodType: "semester",
           },
         ],
       }),
       orderWith({
         id: PAID_ORDER_ID,
         amount: 250,
-        payments: ["payment1"],
+        paid: true,
         orderItems: [
           {
             type: "rent",
-            item: ITEM_ID,
-            title: "Sinus 1T",
+            itemId: ITEM_ID,
             amount: 250,
             unitPrice: 250,
             handout: false,
             delivered: false,
-            movedToOrder: HANDOUT_ORDER_ID,
-            info: { to: SEMESTER_END, periodType: "semester" },
+            movedToOrderId: HANDOUT_ORDER_ID,
+            periodTo: DateTime.fromJSDate(SEMESTER_END),
+            periodType: "semester",
           },
         ],
       }),
@@ -497,8 +521,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
         orderItems: [
           {
             type: "buy",
-            item: ITEM_ID,
-            title: "Sinus 1T",
+            itemId: ITEM_ID,
             amount: 500,
             unitPrice: 500,
             handout: false,

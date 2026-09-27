@@ -2,6 +2,7 @@ import Branch from "#models/branch";
 import Item from "#models/item";
 import UniqueItem from "#models/unique_item";
 import BookHandover from "#models/book_handover";
+import Order from "#models/order";
 import User from "#models/user";
 import { ActiveItemMonitoring, FALLBACK_BRANCH_NAME } from "#services/active_item_monitoring";
 import { ActiveItemCorrections } from "#services/active_item_corrections";
@@ -23,8 +24,7 @@ import type {
 } from "#shared/blid_search";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
 import { USER_PERMISSION } from "#shared/user-permission";
 
 interface HandoverRow {
@@ -42,7 +42,7 @@ export interface BlidSearchSources {
   /** When the unique item was created and last changed; null when it is gone or undated. */
   registration: { createdAt: Date; updatedAt: Date } | null;
   customerItems: CustomerItem[];
-  orders: Order[];
+  orders: OrderDto[];
   handovers: HandoverRow[];
   /** Orders whose delivery document is a Bring shipment: their handouts went by mail. */
   bringDeliveryOrderIds: Set<string>;
@@ -54,6 +54,8 @@ export interface BlidSearchSources {
 }
 
 const FALLBACK_NAME = "Ukjent";
+/** The name an order's customer goes by once their account has been deleted. */
+const DELETED_CUSTOMER_NAME = "Slettet kunde";
 
 /**
  * Mongoose stamps creation and update in separate calls on insert, so the two drift by a
@@ -159,11 +161,11 @@ export function assembleBlidSearchHits(sources: BlidSearchHitSources): BlidSearc
   });
 }
 
-function isoOrUndefined(date: Date | undefined): string | undefined {
-  return date === undefined ? undefined : new Date(date).toISOString();
+function isoOrUndefined(date: Date | null | undefined): string | undefined {
+  return date === undefined || date === null ? undefined : new Date(date).toISOString();
 }
 
-function handoutTypeOf(orderItem: OrderItem | undefined): CustomerItemType | undefined {
+function handoutTypeOf(orderItem: OrderItemDto | undefined): CustomerItemType | undefined {
   return orderItem?.type === "rent" || orderItem?.type === "partly-payment"
     ? orderItem.type
     : undefined;
@@ -171,7 +173,7 @@ function handoutTypeOf(orderItem: OrderItem | undefined): CustomerItemType | und
 
 export function collectReferencedIds(
   customerItems: CustomerItem[],
-  orders: Order[],
+  orders: OrderDto[],
   handovers: HandoverRow[],
 ): { userDetailIds: string[]; branchIds: string[] } {
   const userDetailIds = new Set<string>();
@@ -194,11 +196,13 @@ export function collectReferencedIds(
     }
   }
   for (const order of orders) {
-    userDetailIds.add(order.customer);
-    if (order.employee) {
-      userDetailIds.add(order.employee);
+    if (order.customerId) {
+      userDetailIds.add(order.customerId);
     }
-    branchIds.add(order.branch);
+    if (order.employeeId) {
+      userDetailIds.add(order.employeeId);
+    }
+    branchIds.add(order.branchId);
   }
   for (const handover of handovers) {
     if (handover.fromUserDetailId) {
@@ -217,7 +221,12 @@ export function collectReferencedIds(
 const TRANSFER_PAIRING_WINDOW_MS = 120_000;
 
 function sameCustomer(a: BlidParty | undefined, b: BlidParty | undefined): boolean {
-  return a?.type === "customer" && b?.type === "customer" && a.detailsId === b.detailsId;
+  return (
+    a?.type === "customer" &&
+    b?.type === "customer" &&
+    a.detailsId !== null &&
+    a.detailsId === b.detailsId
+  );
 }
 
 function withinPairingWindow(a: BlidHistoryEvent, b: BlidHistoryEvent): boolean {
@@ -280,18 +289,19 @@ function reconcileOneSidedMatches(
 }
 
 export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult {
-  const customerParty = (detailsId: string): BlidParty => ({
-    type: "customer",
-    detailsId,
-    name: sources.userDetails.get(detailsId) ?? FALLBACK_NAME,
-  });
-  const employeeOf = (id: string | undefined) => {
-    const name = id === undefined ? undefined : sources.userDetails.get(id);
-    return id === undefined || name === undefined ? undefined : { detailsId: id, name };
+  const customerParty = (detailsId: string | null): BlidParty =>
+    detailsId === null
+      ? { type: "customer", detailsId: null, name: DELETED_CUSTOMER_NAME }
+      : { type: "customer", detailsId, name: sources.userDetails.get(detailsId) ?? FALLBACK_NAME };
+  const employeeOf = (id: string | null | undefined) => {
+    const name = id === undefined || id === null ? undefined : sources.userDetails.get(id);
+    return id === undefined || id === null || name === undefined
+      ? undefined
+      : { detailsId: id, name };
   };
   const branchName = (id: string | undefined) =>
     id === undefined ? undefined : (sources.branchNames.get(id) ?? FALLBACK_NAME);
-  const byMailOf = (order: Order | undefined) =>
+  const byMailOf = (order: OrderDto | undefined) =>
     order !== undefined && sources.bringDeliveryOrderIds.has(order.id) ? true : undefined;
 
   const ordersById = new Map(sources.orders.map((order) => [order.id, order]));
@@ -299,15 +309,14 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   // Legacy order items (extends especially) often lack the blid but point at the customer
   // item instead, which pins them to this copy just as well.
   const customerItemIds = new Set(sources.customerItems.map((customerItem) => customerItem.id));
-  const belongsToBlid = (orderItem: OrderItem) => {
+  const belongsToBlid = (orderItem: OrderItemDto) => {
     if (orderItem.blid === sources.blid) {
       return true;
     }
-    const linkedCustomerItem = orderItem.info?.customerItem ?? orderItem.customerItem;
     return (
-      orderItem.blid == null &&
-      linkedCustomerItem != null &&
-      customerItemIds.has(linkedCustomerItem)
+      orderItem.blid === null &&
+      orderItem.customerItemId !== null &&
+      customerItemIds.has(orderItem.customerItemId)
     );
   };
 
@@ -345,10 +354,10 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
         handover.toUserDetailId === null
           ? { type: "stand" }
           : customerParty(handover.toUserDetailId),
-      employee: employeeOf(order?.employee),
+      employee: employeeOf(order?.employeeId),
       byCustomer: order?.byCustomer ?? action === "match-transfer",
-      branchName: branchName(order?.branch),
-      deadline: isoOrUndefined(relevantOrderItem?.info?.to),
+      branchName: branchName(order?.branchId),
+      deadline: isoOrUndefined(relevantOrderItem?.periodTo),
       handoutType: action === "handout" ? handoutTypeOf(relevantOrderItem) : undefined,
       byMail: action === "handout" ? byMailOf(order) : undefined,
       orderId: handover.orderId ?? undefined,
@@ -384,52 +393,56 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
           event = {
             action: "handout",
             from: { type: "stand" },
-            to: customerParty(order.customer),
-            deadline: isoOrUndefined(orderItem.info?.to),
+            to: customerParty(order.customerId),
+            deadline: isoOrUndefined(orderItem.periodTo),
             handoutType: orderItem.type,
             byMail: byMailOf(order),
           };
           break;
         }
         case "return": {
-          event = { action: "return", from: customerParty(order.customer), to: { type: "stand" } };
+          event = {
+            action: "return",
+            from: customerParty(order.customerId),
+            to: { type: "stand" },
+          };
           break;
         }
         case "match-receive": {
           event = {
             action: "match-transfer",
-            to: customerParty(order.customer),
-            deadline: isoOrUndefined(orderItem.info?.to),
+            to: customerParty(order.customerId),
+            deadline: isoOrUndefined(orderItem.periodTo),
           };
           break;
         }
         case "match-deliver": {
-          event = { action: "match-transfer", from: customerParty(order.customer) };
+          event = { action: "match-transfer", from: customerParty(order.customerId) };
           break;
         }
         case "extend": {
           event = {
             action: "extend",
-            to: customerParty(order.customer),
-            previousDeadline: isoOrUndefined(orderItem.info?.from),
-            deadline: isoOrUndefined(orderItem.info?.to),
+            to: customerParty(order.customerId),
+            previousDeadline: isoOrUndefined(orderItem.periodFrom),
+            deadline: isoOrUndefined(orderItem.periodTo),
           };
           break;
         }
         case "buyout": {
-          event = { action: "buyout", to: customerParty(order.customer) };
+          event = { action: "buyout", to: customerParty(order.customerId) };
           break;
         }
         case "invoice-paid": {
-          event = { action: "invoice-paid", to: customerParty(order.customer) };
+          event = { action: "invoice-paid", to: customerParty(order.customerId) };
           break;
         }
         case "buyback": {
-          event = { action: "buyback", from: customerParty(order.customer) };
+          event = { action: "buyback", from: customerParty(order.customerId) };
           break;
         }
         case "cancel": {
-          event = { action: "cancel", from: customerParty(order.customer) };
+          event = { action: "cancel", from: customerParty(order.customerId) };
           break;
         }
         default: {
@@ -447,10 +460,10 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
 
       const fullEvent: BlidHistoryEvent = {
         ...event,
-        time: new Date(order.creationTime ?? 0).toISOString(),
-        employee: employeeOf(order.employee),
+        time: order.createdAt.toISOString(),
+        employee: employeeOf(order.employeeId),
         byCustomer: order.byCustomer,
-        branchName: branchName(order.branch),
+        branchName: branchName(order.branchId),
         orderId: order.id,
       };
       if (event.action === "match-transfer") {
@@ -563,7 +576,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       }
       const orderId = ending.info?.order;
       const order = orderId === undefined ? undefined : ordersById.get(orderId);
-      const time = ending.info?.time ?? order?.creationTime;
+      const time = ending.info?.time ?? order?.createdAt;
       const alreadyTold = events.some(
         (event) =>
           ending.toldBy.includes(event.action) &&
@@ -578,9 +591,9 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
         action: ending.action,
         // A buyout leaves the book with the customer; a buyback or cancellation takes it back.
         ...(ending.action === "buyout" ? { to: customer } : { from: customer }),
-        employee: employeeOf(order?.employee),
+        employee: employeeOf(order?.employeeId),
         byCustomer: order?.byCustomer ?? false,
-        branchName: branchName(order?.branch),
+        branchName: branchName(order?.branchId),
         orderId,
       });
     }
@@ -743,32 +756,35 @@ async function fetchCustomerItems(blid: string): Promise<CustomerItem[]> {
   return (await StorageService.CustomerItems.getByQueryOrNull(databaseQuery)) ?? [];
 }
 
-async function fetchOrders(blid: string, customerItems: CustomerItem[]): Promise<Order[]> {
-  const databaseQuery = new SEDbQuery();
-  databaseQuery.stringFilters = [{ fieldName: "orderItems.blid", value: blid }];
-  const byBlid = (await StorageService.Orders.getByQueryOrNull(databaseQuery)) ?? [];
-
+async function fetchOrders(blid: string, customerItems: CustomerItem[]): Promise<OrderDto[]> {
   // Legacy order items often lack the blid, but the customer item lists its orders.
-  const missingIds = customerItems
-    .flatMap((customerItem) => customerItem.orders ?? [])
-    .filter((orderId) => !byBlid.some((order) => order.id === orderId));
-  const byCustomerItem =
-    missingIds.length > 0
-      ? await StorageService.Orders.getMany([...new Set(missingIds)], USER_PERMISSION.ADMIN)
-      : [];
-
-  return [...byBlid, ...byCustomerItem];
+  const customerItemOrderIds = [
+    ...new Set(customerItems.flatMap((customerItem) => customerItem.orders ?? []).map(String)),
+  ];
+  const orders = await Order.query()
+    .whereHas("orderItems", (orderItems) => {
+      void orderItems.where("blid", blid);
+    })
+    .orWhereIn("id", customerItemOrderIds);
+  return orders.map((order) => order.toDto());
 }
 
 /** The ids of the orders whose delivery document is a Bring shipment. */
-async function fetchBringDeliveryOrderIds(orders: Order[]): Promise<Set<string>> {
-  const deliveryIds = orders.flatMap((order) => (order.delivery ? [order.delivery] : []));
+async function fetchBringDeliveryOrderIds(orders: OrderDto[]): Promise<Set<string>> {
+  const deliveryIds = [
+    ...new Set(orders.flatMap((order) => (order.deliveryId ? [order.deliveryId] : []))),
+  ];
   if (deliveryIds.length === 0) {
     return new Set();
   }
   const deliveries = await StorageService.Deliveries.getMany(deliveryIds, USER_PERMISSION.ADMIN);
+  const bringIds = new Set(
+    deliveries.filter((delivery) => delivery.method === "bring").map((delivery) => delivery.id),
+  );
   return new Set(
-    deliveries.filter((delivery) => delivery.method === "bring").map((delivery) => delivery.order),
+    orders
+      .filter((order) => order.deliveryId !== null && bringIds.has(order.deliveryId))
+      .map((order) => order.id),
   );
 }
 

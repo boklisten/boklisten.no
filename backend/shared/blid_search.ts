@@ -1,7 +1,9 @@
 import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
 
 /** A party that can hold or hand over a book: a customer, or the stand itself. */
-export type BlidParty = { type: "customer"; detailsId: string; name: string } | { type: "stand" };
+export type BlidParty =
+  /** detailsId is null for an order's customer whose account has been deleted. */
+  { type: "customer"; detailsId: string | null; name: string } | { type: "stand" };
 
 export type BlidHistoryAction =
   | "handout"

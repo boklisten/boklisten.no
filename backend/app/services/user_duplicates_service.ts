@@ -1,9 +1,12 @@
+import db from "@adonisjs/lucid/services/db";
 import { ObjectId } from "mongodb";
 
+import OrderItem from "#models/order_item";
 import User from "#models/user";
-import { ACTIVE_CUSTOMER_ITEM_MATCH, OPEN_ORDER_ITEM_MATCH } from "#services/branch_books_service";
+import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import { countActiveMatches } from "#services/matches/active_matches";
 import { StorageService } from "#services/storage_service";
+import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 import type { UserPermission } from "#shared/user-permission";
 
 // Caps enrichment and rendering cost; truncation is reported via totalPairCount
@@ -192,13 +195,16 @@ async function countActiveBooks(detailsIds: string[]) {
 }
 
 async function countOrderedItems(detailsIds: string[]) {
-  const rows = await StorageService.Orders.aggregate<{ id: string; count: number }>([
-    { $match: { placed: true, customer: { $in: detailsIds.map((id) => new ObjectId(id)) } } },
-    { $unwind: "$orderItems" },
-    { $match: OPEN_ORDER_ITEM_MATCH },
-    { $group: { _id: "$customer", count: { $sum: 1 } } },
-  ]);
-  return new Map(rows.map((row) => [String(row.id), row.count]));
+  const rows: { id: string; count: string }[] = await OrderItem.whereOpen(
+    db.from("order_items").join("orders", "orders.id", "order_items.order_id"),
+    LOAN_ORDER_ITEM_TYPES,
+  )
+    .where("orders.placed", true)
+    .whereIn("orders.customer_id", detailsIds)
+    .groupBy("orders.customer_id")
+    .select("orders.customer_id as id")
+    .count("* as count");
+  return new Map(rows.map((row) => [row.id, Number(row.count)]));
 }
 
 async function buildSummarizer(involvedIds: string[]) {

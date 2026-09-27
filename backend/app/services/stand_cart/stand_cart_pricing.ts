@@ -5,13 +5,12 @@ import {
   isDeadlineWithGracePeriodExpired,
   resolveBuyoutPrice,
 } from "#services/customer_item_actions_service";
+import type OrderItem from "#models/order_item";
 import { HeldBookRules } from "#services/stand_cart/stand_cart_rules";
 import type { Branch, PartlyPaymentPeriod } from "#shared/branch";
 import type { BranchItem } from "#shared/branch-item";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Period } from "#shared/period";
 import { futureRentPeriods } from "#shared/rent-periods";
 import { allowedWithoutBlid, findOption } from "#shared/stand_cart";
@@ -90,7 +89,7 @@ function monitoredWhen(reason: string | null): Partial<StandCartOption> {
 }
 
 /** The type an open order item can have; anything else is never offered as a line. */
-function orderedActionType(orderItem: OrderItem): StandCartActionType | null {
+function orderedActionType(orderItem: Pick<OrderItem, "type">): StandCartActionType | null {
   return orderItem.type === "rent" ||
     orderItem.type === "partly-payment" ||
     orderItem.type === "buy"
@@ -98,9 +97,12 @@ function orderedActionType(orderItem: OrderItem): StandCartActionType | null {
     : null;
 }
 
-/** What the customer paid for this book on the original order; nothing when it was never paid. */
-export function alreadyPaidFor(order: Order, orderItem: OrderItem): number {
-  return order.payments.length > 0 ? orderItem.amount : 0;
+/**
+ * What the customer paid for this book on the original order; nothing when the order has no
+ * payments recorded.
+ */
+export function alreadyPaidFor(orderPaid: boolean, orderItem: Pick<OrderItem, "amount">): number {
+  return orderPaid ? orderItem.amount : 0;
 }
 
 /**
@@ -168,12 +170,15 @@ function indexOfType(options: StandCartOption[], type: StandCartActionType): num
 }
 
 /** The option the customer ordered: same type and period end, else the first of the type; -1 when not offered. */
-function indexOfOrderedOption(options: StandCartOption[], orderItem: OrderItem): number {
+function indexOfOrderedOption(
+  options: StandCartOption[],
+  orderItem: Pick<OrderItem, "type" | "periodTo">,
+): number {
   const type = orderedActionType(orderItem);
-  const orderedTo = orderItem.info?.to;
+  const orderedTo = orderItem.periodTo;
   const ordered =
-    type !== null && orderedTo !== undefined
-      ? findOption({ options }, { type, to: iso(orderedTo) })
+    type !== null && orderedTo !== null
+      ? findOption({ options }, { type, to: iso(orderedTo.toJSDate()) })
       : null;
   return ordered
     ? options.indexOf(ordered)
@@ -184,7 +189,7 @@ export function priceOrderLine({
   branch,
   item,
   branchItem,
-  originalOrder,
+  originalOrderPaid,
   originalOrderItem,
   blockedByMatch,
   scanned,
@@ -193,15 +198,16 @@ export function priceOrderLine({
   branch: Branch;
   item: Item;
   branchItem: BranchItem | null;
-  originalOrder: Order;
-  originalOrderItem: OrderItem;
+  /** The original order has payments recorded. */
+  originalOrderPaid: boolean;
+  originalOrderItem: Pick<OrderItem, "type" | "amount" | "periodTo">;
   /** A user match in an active round depends on this book, so it may not be cancelled. */
   blockedByMatch: boolean;
   /** A copy with a sticker is in hand. Without one the order cannot go out as a loan. */
   scanned: boolean;
   now: Date;
 }): PricedLine {
-  const alreadyPaid = alreadyPaidFor(originalOrder, originalOrderItem);
+  const alreadyPaid = alreadyPaidFor(originalOrderPaid, originalOrderItem);
   const options = [
     ...handoutOptions({
       branch,

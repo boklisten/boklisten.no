@@ -1,15 +1,14 @@
+import type OrderItem from "#models/order_item";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderItemExtendValidator {
   public async validate(branch: Branch, orderItem: OrderItem): Promise<boolean> {
     try {
-      this.validateFields(orderItem);
+      const customerItemId = this.validateFields(orderItem);
       this.checkPeriodType(orderItem, branch);
-      await this.validateCustomerItem(branch, orderItem);
+      await this.validateCustomerItem(branch, orderItem, customerItemId);
     } catch (error) {
       if (error instanceof BlError) {
         throw error;
@@ -23,54 +22,46 @@ export class OrderItemExtendValidator {
     return true;
   }
 
-  private validateFields(orderItem: OrderItem): boolean {
+  /** @returns the id of the customer item the line extends */
+  private validateFields(orderItem: OrderItem): string {
     if (orderItem.type !== "extend") {
       throw new BlError(`orderItem.type "${orderItem.type}" is not "extend"`);
     }
 
-    if (!orderItem.info) {
-      throw new BlError("orderItem.info is not defined");
+    if (!orderItem.customerItemId) {
+      throw new BlError("orderItem.customerItemId is not defined");
     }
 
-    if (!orderItem.info.customerItem) {
-      throw new BlError("orderItem.info.customerItem is not defined");
+    return orderItem.customerItemId;
+  }
+
+  private async validateCustomerItem(
+    branch: Branch,
+    orderItem: OrderItem,
+    customerItemId: string,
+  ): Promise<boolean> {
+    const customerItem = await StorageService.CustomerItems.get(customerItemId);
+    if (!customerItem.periodExtends) {
+      return true;
+    }
+
+    let totalOfSelectedPeriod = 0;
+    for (const periodExtend of customerItem.periodExtends) {
+      if (periodExtend.periodType === orderItem.periodType) {
+        totalOfSelectedPeriod += 1;
+      }
+    }
+
+    for (const extendPeriod of branch.extendPeriods) {
+      if (
+        extendPeriod.type === orderItem.periodType &&
+        totalOfSelectedPeriod > extendPeriod.maxNumberOfPeriods
+      ) {
+        throw new BlError("orderItem can not be extended any more times");
+      }
     }
 
     return true;
-  }
-
-  private validateCustomerItem(branch: Branch, orderItem: OrderItem): Promise<boolean> {
-    return (
-      StorageService.CustomerItems
-        // @ts-expect-error fixme: auto ignored
-        .get(orderItem.info.customerItem)
-        .then((customerItem: CustomerItem) => {
-          let totalOfSelectedPeriod = 0;
-          if (customerItem.periodExtends) {
-            for (const periodExtend of customerItem.periodExtends) {
-              // @ts-expect-error fixme: auto ignored
-              if (periodExtend.periodType === orderItem.info.periodType) {
-                totalOfSelectedPeriod += 1;
-              }
-            }
-
-            for (const extendPeriod of branch.extendPeriods) {
-              if (
-                extendPeriod.type === orderItem.info?.periodType &&
-                totalOfSelectedPeriod > extendPeriod.maxNumberOfPeriods
-              ) {
-                throw new BlError("orderItem can not be extended any more times");
-              }
-            }
-
-            return true;
-          }
-          return true;
-        })
-        .catch((blError: BlError) => {
-          throw blError;
-        })
-    );
   }
 
   private checkPeriodType(orderItem: OrderItem, branch: Branch) {
@@ -79,15 +70,13 @@ export class OrderItemExtendValidator {
     }
 
     for (const extendPeriod of branch.extendPeriods) {
-      // @ts-expect-error fixme: auto ignored
-      if (extendPeriod.type === orderItem.info.periodType) {
+      if (extendPeriod.type === orderItem.periodType) {
         return true;
       }
     }
 
     throw new BlError(
-      // @ts-expect-error fixme: auto ignored
-      `orderItem.info.periodType is "${orderItem.info.periodType}" but it is not allowed by branch`,
+      `orderItem.periodType is "${orderItem.periodType}" but it is not allowed by branch`,
     );
   }
 }

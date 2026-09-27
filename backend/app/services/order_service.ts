@@ -1,65 +1,38 @@
-import { ObjectId } from "mongodb";
-
 import Item from "#models/item";
+import Order from "#models/order";
+import type { NewOrderItem } from "#models/order";
 import BadRequestException from "#exceptions/bad_request_exception";
 import { CustomerItemService } from "#services/customer_item_service";
 import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
 import { OrderItemService } from "#services/order_item_service";
-import { StorageService } from "#services/storage_service";
 import type { CartItemType, CheckoutCartItem } from "#shared/cart_item";
 import { ACQUISITION_CART_ITEM_TYPES } from "#shared/cart_item";
-import type { OrderItem } from "#shared/order/order-item/order-item";
+import { isOpenOrderItem } from "#shared/order/open-order-item";
 
 export const OrderService = {
   async getOpenOrderItems(customerId: string, types: CartItemType[] = ["rent", "partly-payment"]) {
-    const rows = await StorageService.Orders.aggregate<{
-      orderId: string;
-      itemId: ObjectId;
-      deadline: string;
-      cancelable: boolean;
-    }>([
-      {
-        $match: {
-          customer: new ObjectId(customerId),
-          placed: true,
-        },
-      },
-      {
-        $unwind: {
-          path: "$orderItems",
-        },
-      },
-      // Not handed out and not carried on into a later order. The stand's own orders count too:
-      // a book moved to another branch or period without a handout is still an open order.
-      {
-        $match: {
-          "orderItems.type": { $in: types },
-          "orderItems.handout": { $ne: true },
-          "orderItems.delivered": { $ne: true },
-          "orderItems.movedToOrder": null,
-        },
-      },
-      {
-        $project: {
-          orderId: "$_id",
-          itemId: "$orderItems.item",
-          deadline: "$orderItems.info.to",
-          cancelable: { $eq: ["$amount", 0] },
-        },
-      },
-    ]);
-    // Titles come from the Postgres catalogue. A line whose item is gone from the catalogue is
-    // left out, as the inner join did before the catalogue moved.
-    const titles = await Item.titlesByIds(rows.map((row) => String(row.itemId)));
-    const openOrderItems = rows.flatMap((row) => {
-      const title = titles.get(String(row.itemId));
-      return title === undefined ? [] : [{ ...row, itemId: String(row.itemId), title }];
-    });
+    const orders = await Order.placedFor(customerId);
+    // Not handed out and not carried on into a later order. The stand's own orders count too:
+    // a book moved to another branch or period without a handout is still an open order.
+    const openOrderItems = orders.flatMap((order) =>
+      order.orderItems
+        .filter(
+          (orderItem) =>
+            types.some((type) => type === orderItem.type) && isOpenOrderItem(orderItem),
+        )
+        .map((orderItem) => ({
+          orderId: order.id,
+          itemId: orderItem.itemId,
+          deadline: orderItem.periodTo?.toJSDate().toISOString() ?? "",
+          cancelable: order.amount === 0,
+          title: orderItem.title,
+        })),
+    );
 
     // An item a user match depends on is never cancelable, regardless of match lock
     const blockedItemIds = await itemIdsInActiveUserMatches(customerId);
     return openOrderItems.map((openOrderItem) => {
-      if (blockedItemIds.has(String(openOrderItem.itemId))) {
+      if (blockedItemIds.has(openOrderItem.itemId)) {
         openOrderItem.cancelable = false;
       }
       return openOrderItem;
@@ -84,13 +57,13 @@ export const OrderService = {
     )
       ? new Set(
           (await OrderService.getOpenOrderItems(customerId, ACQUISITION_CART_ITEM_TYPES)).map(
-            (row) => String(row.itemId),
+            (row) => row.itemId,
           ),
         )
       : new Set<string>();
 
     let total = 0;
-    const orderItems: OrderItem[] = [];
+    const orderItems: NewOrderItem[] = [];
 
     for (const cartItem of cartItems) {
       const [item, customerItem] = await Promise.all([
@@ -108,7 +81,7 @@ export const OrderService = {
           throw new BadRequestException(`Du har allerede bestilt «${item.title}»`);
         }
       }
-      let orderItem: OrderItem;
+      let orderItem: NewOrderItem;
       switch (cartItem.type) {
         case "buyout": {
           if (!customerItem) {
@@ -165,15 +138,14 @@ export const OrderService = {
       throw new Error("No branchId for checkout order");
     }
 
-    return StorageService.Orders.add({
+    return Order.createWithItems({
       amount: total,
       orderItems,
-      branch: branchId,
-      customer: customerId,
+      branchId,
+      customerId,
       placed: false,
       byCustomer: placedBy?.byCustomer ?? true,
-      ...(placedBy?.byCustomer === false ? { employee: placedBy.employee } : {}),
-      payments: [],
+      employeeId: placedBy?.byCustomer === false ? placedBy.employee : null,
     });
   },
 };

@@ -9,6 +9,7 @@ import EmailVerification from "#models/email_verification";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
+import Order from "#models/order";
 import PasswordReset from "#models/password_reset";
 import Signature from "#models/signature";
 import User from "#models/user";
@@ -17,7 +18,10 @@ import { CustomerInvoiceActive } from "#services/invoices/customer_invoice_activ
 import { OrderActive } from "#services/orders/order_active";
 import { StorageService } from "#services/storage_service";
 import { UserManagementService } from "#services/user_management_service";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
 import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
+import { createOrder } from "#tests/order_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 const FROM = "5d765db5fc8c47001c408d81";
@@ -37,7 +41,6 @@ async function seedMatch(customerIds: string[]) {
 test.group("UserManagementService.mergeUsers", (group) => {
   let sandbox: sinon.SinonSandbox;
   let customerItemsUpdateManyStub: sinon.SinonStub;
-  let ordersUpdateManyStub: sinon.SinonStub;
   let invoicesUpdateManyStub: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
@@ -52,7 +55,6 @@ test.group("UserManagementService.mergeUsers", (group) => {
     customerItemsUpdateManyStub = sandbox
       .stub(StorageService.CustomerItems, "updateMany")
       .resolves();
-    ordersUpdateManyStub = sandbox.stub(StorageService.Orders, "updateMany").resolves();
     invoicesUpdateManyStub = sandbox.stub(StorageService.Invoices, "updateMany").resolves();
     sandbox.stub(StorageService.Payments, "updateMany").resolves();
   });
@@ -134,13 +136,20 @@ test.group("UserManagementService.mergeUsers", (group) => {
     assert.lengthOf(await MatchObligation.query().where("matchId", match.id), 0);
   });
 
-  test("moves mongo references and deletes the source user", async ({ assert }) => {
+  test("moves orders and mongo references and deletes the source user", async ({ assert }) => {
+    const [branch, item] = await Promise.all([createBranch(), createItem()]);
+    const order = await createOrder({
+      branchId: branch.id,
+      customerId: FROM,
+      orderItems: [{ itemId: item.id }],
+    });
+
     await UserManagementService.mergeUsers(FROM, TO);
 
+    assert.equal((await Order.getOrFail(order.id)).customerId, TO);
     assert.isTrue(
       customerItemsUpdateManyStub.calledWithMatch({ customer: FROM }, { customer: TO }),
     );
-    assert.isTrue(ordersUpdateManyStub.calledWithMatch({ customer: FROM }, { customer: TO }));
     assert.isTrue(
       invoicesUpdateManyStub.calledWithMatch(
         { "customerInfo.userDetail": FROM },

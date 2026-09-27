@@ -36,8 +36,14 @@ function PersonLink({ detailsId, name }: { detailsId: string; name: string }) {
 }
 
 function Party({ party }: { party: BlidParty }) {
-  return party.type === "stand" ? (
-    <>stand</>
+  if (party.type === "stand") {
+    return <>stand</>;
+  }
+  // An order's customer whose account is deleted has no page to link to.
+  return party.detailsId === null ? (
+    <Text span fw={700} inherit>
+      {party.name}
+    </Text>
   ) : (
     <PersonLink detailsId={party.detailsId} name={party.name} />
   );

@@ -14,8 +14,10 @@ export interface BranchBooksEditTarget {
   filter: {
     deadlines?: string[];
     itemId?: string;
-    /** customerItemIds for active books, orderItemIds for ordered books */
+    /** Active books only: the customer items to address */
     ids?: string[];
+    /** Ordered books only: the order lines to address */
+    orderItemIds?: number[];
   };
   direct: number;
   total: number;

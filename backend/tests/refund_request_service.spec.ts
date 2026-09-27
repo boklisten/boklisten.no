@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import type Order from "#models/order";
 import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import {
@@ -11,7 +12,6 @@ import {
   REFUND_REQUEST_RECIPIENT,
   RefundRequestService,
 } from "#services/refund_request_service";
-import type { Order } from "#shared/order/order";
 import { clientOrigin } from "#config/app";
 import { mock } from "#tests/test-doubles";
 import { userDouble } from "#tests/user_fixtures";
@@ -34,7 +34,7 @@ const customer = userDouble({
 });
 const order = mock<Order>({
   id: ORDER_ID,
-  customer: CUSTOMER_ID,
+  customerId: CUSTOMER_ID,
   amount: -450,
   orderItems: [
     { type: "cancel", title: "Sinus 1T", amount: -250 },

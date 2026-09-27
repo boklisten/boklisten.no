@@ -1,9 +1,9 @@
 import BranchModel from "#models/branch";
+import type OrderItem from "#models/order_item";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch, ExtendPeriod } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Period } from "#shared/period";
 
 export class CustomerItemHandler {
@@ -28,31 +28,30 @@ export class CustomerItemHandler {
       throw new BlError('orderItem.type is not "extend"');
     }
 
-    if (!orderItem.info || !orderItem.info.periodType) {
+    if (!orderItem.periodType || !orderItem.periodTo) {
       throw new BlError('orderItem info is not present when type is "extend"');
     }
 
     const branch = await BranchModel.findOrFail(branchId);
 
-    this.getExtendPeriod(branch, orderItem.info.periodType);
+    this.getExtendPeriod(branch, orderItem.periodType);
 
     const periodExtends = customerItem.periodExtends ?? [];
 
     const customerItemOrders = customerItem.orders ?? [];
 
+    const deadline = orderItem.periodTo.toJSDate();
     periodExtends.push({
       // @ts-expect-error fixme: auto ignored
-      from: orderItem.info.from,
-
-      // @ts-expect-error fixme: auto ignored
-      to: orderItem.info.to,
-      periodType: orderItem.info.periodType,
+      from: orderItem.periodFrom?.toJSDate(),
+      to: deadline,
+      periodType: orderItem.periodType,
       time: new Date(),
     });
 
     customerItemOrders.push(orderId);
     return StorageService.CustomerItems.update(customerItemId, {
-      deadline: orderItem.info.to,
+      deadline,
       periodExtends,
       orders: customerItemOrders,
     });

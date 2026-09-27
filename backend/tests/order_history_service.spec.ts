@@ -1,17 +1,22 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
+import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import Order from "#models/order";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import type { OrderHistorySources } from "#services/order_history_service";
 import { OrderHistoryService, presentOrderHistory } from "#services/order_history_service";
-import { StorageService } from "#services/storage_service";
+import { OrderPayments } from "#services/payments/order_payments";
 import type { Delivery } from "#shared/delivery/delivery";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
 import { createBranch } from "#tests/branch_fixtures";
+import { fixtureId } from "#tests/fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 const IDA = "ida-id";
 const PETRA = "petra-id";
@@ -23,44 +28,56 @@ const BLID = "12345678";
 const T1 = new Date("2026-08-01T10:00:00.000Z");
 const DEADLINE = new Date("2027-07-01T00:00:00.000Z");
 
-type TestOrderItem = Omit<OrderItem, "handout" | "delivered"> &
-  Partial<Pick<OrderItem, "handout" | "delivered">>;
-
-function completeOrderItem(orderItem: TestOrderItem): OrderItem {
-  return { handout: false, delivered: false, ...orderItem };
-}
+type TestOrderItem = Partial<OrderItemDto>;
 
 function makeOrder(
-  overrides: Omit<Partial<Order>, "orderItems"> & { orderItems?: TestOrderItem[] } = {},
-): Order {
+  overrides: Omit<Partial<OrderDto>, "orderItems"> & { orderItems?: TestOrderItem[] } = {},
+): OrderDto {
   const { orderItems = [rentItem()], ...rest } = overrides;
   return {
     id: "order-1",
     amount: 0,
-    branch: BRANCH,
-    customer: IDA,
+    branchId: BRANCH,
+    customerId: IDA,
     byCustomer: false,
-    employee: EMPLOYEE,
+    employeeId: EMPLOYEE,
     placed: true,
-    payments: [],
-    creationTime: T1,
+    deliveryId: null,
+    notifyByEmail: true,
+    checkoutState: null,
+    createdAt: T1,
+    updatedAt: T1,
     ...rest,
-    orderItems: orderItems.map(completeOrderItem),
+    orderItems: orderItems.map((orderItem, index) => rentItem({ id: index + 1, ...orderItem })),
   };
 }
 
-function rentItem(overrides: Partial<TestOrderItem> = {}): TestOrderItem {
+function rentItem(overrides: TestOrderItem = {}): OrderItemDto {
   return {
+    id: 1,
     type: "rent",
-    item: "item-1",
+    itemId: "item-1",
     blid: BLID,
     title: "Sinus 1T",
     amount: 0,
     unitPrice: 0,
-    info: { from: T1, to: DEADLINE, periodType: "year", numberOfPeriods: 1 },
+    handout: false,
+    delivered: false,
+    customerItemId: null,
+    periodFrom: T1,
+    periodTo: DEADLINE,
+    numberOfPeriods: 1,
+    periodType: "year",
+    amountLeftToPay: null,
+    buybackAmount: null,
+    movedFromOrderId: null,
+    movedToOrderId: null,
     ...overrides,
   };
 }
+
+/** A line without a period, as cancel, buyback and match-deliver lines are stored. */
+const NO_PERIOD = { periodFrom: null, periodTo: null, numberOfPeriods: null, periodType: null };
 
 function makePayment(overrides: Partial<Payment> = {}): Payment {
   return {
@@ -115,7 +132,7 @@ test.group("OrderHistoryService.presentOrderHistory() – header", () => {
     const [entry] = presentOrderHistory(
       baseSources({
         audience: "customer",
-        orders: [makeOrder({ notification: { email: false }, checkoutState: "PaymentSuccessful" })],
+        orders: [makeOrder({ notifyByEmail: false, checkoutState: "PaymentSuccessful" })],
       }),
     );
 
@@ -127,7 +144,7 @@ test.group("OrderHistoryService.presentOrderHistory() – header", () => {
   test("flags suppressed e-mail and carries the checkout state", ({ assert }) => {
     const [entry] = presentOrderHistory(
       baseSources({
-        orders: [makeOrder({ notification: { email: false }, checkoutState: "PaymentSuccessful" })],
+        orders: [makeOrder({ notifyByEmail: false, checkoutState: "PaymentSuccessful" })],
       }),
     );
 
@@ -136,8 +153,8 @@ test.group("OrderHistoryService.presentOrderHistory() – header", () => {
   });
 
   test("sorts orders newest first", ({ assert }) => {
-    const older = makeOrder({ id: "older", creationTime: new Date("2026-07-01T10:00:00.000Z") });
-    const newer = makeOrder({ id: "newer", creationTime: new Date("2026-08-05T10:00:00.000Z") });
+    const older = makeOrder({ id: "older", createdAt: new Date("2026-07-01T10:00:00.000Z") });
+    const newer = makeOrder({ id: "newer", createdAt: new Date("2026-08-05T10:00:00.000Z") });
 
     const entries = presentOrderHistory(baseSources({ orders: [older, newer] }));
 
@@ -156,11 +173,11 @@ test.group("OrderHistoryService.presentOrderHistory() – payment status", () =>
   });
 
   test("is paid when payments cover the amount, counting unconfirmed legacy dibs", ({ assert }) => {
-    const order = makeOrder({ amount: 100, payments: ["payment-1"] });
+    const order = makeOrder({ amount: 100 });
     const payment = makePayment({ method: "dibs", confirmed: false, amount: 100 });
 
     const [entry] = presentOrderHistory(
-      baseSources({ orders: [order], payments: new Map([[payment.id, payment]]) }),
+      baseSources({ orders: [order], payments: new Map([[order.id, [payment]]]) }),
     );
 
     assert.equal(entry?.paymentStatus, "paid");
@@ -188,7 +205,7 @@ test.group("OrderHistoryService.presentOrderHistory() – payment status", () =>
   test("is refunded when the amount is negative", ({ assert }) => {
     const order = makeOrder({
       amount: -270,
-      orderItems: [rentItem({ type: "cancel", amount: -270, unitPrice: -270, info: undefined })],
+      orderItems: [rentItem({ type: "cancel", amount: -270, unitPrice: -270, ...NO_PERIOD })],
     });
 
     const [entry] = presentOrderHistory(baseSources({ orders: [order] }));
@@ -199,9 +216,7 @@ test.group("OrderHistoryService.presentOrderHistory() – payment status", () =>
   test("is invoice when the order settles an invoice", ({ assert }) => {
     const order = makeOrder({
       amount: 1080,
-      orderItems: [
-        rentItem({ type: "invoice-paid", amount: 1080, unitPrice: 1080, info: undefined }),
-      ],
+      orderItems: [rentItem({ type: "invoice-paid", amount: 1080, unitPrice: 1080, ...NO_PERIOD })],
     });
 
     const [entry] = presentOrderHistory(baseSources({ orders: [order] }));
@@ -209,12 +224,17 @@ test.group("OrderHistoryService.presentOrderHistory() – payment status", () =>
     assert.equal(entry?.paymentStatus, "invoice");
   });
 
-  test("skips payment ids whose document is gone", ({ assert }) => {
-    const order = makeOrder({ amount: 100, payments: ["missing-payment"] });
+  test("is unpaid when the recorded payments fall short", ({ assert }) => {
+    const order = makeOrder({ amount: 100 });
 
-    const [entry] = presentOrderHistory(baseSources({ orders: [order] }));
+    const [entry] = presentOrderHistory(
+      baseSources({
+        orders: [order],
+        payments: new Map([[order.id, [makePayment({ amount: 40 })]]]),
+      }),
+    );
 
-    assert.deepEqual(entry?.payments, []);
+    assert.lengthOf(entry?.payments ?? [], 1);
     assert.equal(entry?.paymentStatus, "unpaid");
   });
 });
@@ -250,13 +270,15 @@ test.group("OrderHistoryService.presentOrderHistory() – items", () => {
       orderItems: [
         rentItem({
           type: "partly-payment",
-          blid: undefined,
-          customerItem: "customer-item-1",
-          movedToOrder: "order-2",
-          movedFromOrder: "order-0",
+          blid: null,
+          customerItemId: "customer-item-1",
+          movedToOrderId: "order-2",
+          movedFromOrderId: "order-0",
           handout: true,
           delivered: true,
-          info: { from: T1, to: DEADLINE, periodType: "semester", amountLeftToPay: 350 },
+          periodType: "semester",
+          numberOfPeriods: null,
+          amountLeftToPay: 350,
         }),
       ],
     });
@@ -280,7 +302,9 @@ test.group("OrderHistoryService.presentOrderHistory() – items", () => {
       orderItems: [
         rentItem({
           type: "buyback",
-          info: { buybackAmount: 120, customerItem: "customer-item-1" },
+          ...NO_PERIOD,
+          buybackAmount: 120,
+          customerItemId: "customer-item-1",
         }),
       ],
     });
@@ -290,7 +314,6 @@ test.group("OrderHistoryService.presentOrderHistory() – items", () => {
 
     assert.equal(item?.buybackAmount, 120);
     assert.isNull(item?.period);
-    // The info block names the customer item even when the item-level field is missing.
     assert.equal(item?.customerItemId, "customer-item-1");
   });
 });
@@ -300,15 +323,15 @@ test.group("OrderHistoryService.presentOrderHistory() – match transfers", () =
     makeOrder({
       id: "receive-order",
       byCustomer: true,
-      employee: undefined,
-      orderItems: [rentItem({ type: "match-receive", movedFromOrder: "order-0" })],
+      employeeId: null,
+      orderItems: [rentItem({ type: "match-receive", movedFromOrderId: "order-0" })],
     });
   const deliverOrder = () =>
     makeOrder({
       id: "deliver-order",
       byCustomer: true,
-      employee: undefined,
-      orderItems: [rentItem({ type: "match-deliver", info: undefined })],
+      employeeId: null,
+      orderItems: [rentItem({ type: "match-deliver", ...NO_PERIOD })],
     });
 
   test("names the sender of a received book from the handover row on the order", ({ assert }) => {
@@ -369,9 +392,9 @@ test.group("OrderHistoryService.presentOrderHistory() – match transfers", () =
   }) => {
     const counterpart = makeOrder({
       id: "petras-deliver-order",
-      customer: PETRA,
-      creationTime: new Date("2026-08-01T09:59:59.500Z"),
-      orderItems: [rentItem({ type: "match-deliver", info: undefined })],
+      customerId: PETRA,
+      createdAt: new Date("2026-08-01T09:59:59.500Z"),
+      orderItems: [rentItem({ type: "match-deliver", ...NO_PERIOD })],
     });
 
     const [entry] = presentOrderHistory(
@@ -390,9 +413,9 @@ test.group("OrderHistoryService.presentOrderHistory() – match transfers", () =
   }) => {
     const counterpart = makeOrder({
       id: "petras-deliver-order",
-      customer: PETRA,
-      creationTime: new Date("2026-08-01T12:00:00.000Z"),
-      orderItems: [rentItem({ type: "match-deliver", info: undefined })],
+      customerId: PETRA,
+      createdAt: new Date("2026-08-01T12:00:00.000Z"),
+      orderItems: [rentItem({ type: "match-deliver", ...NO_PERIOD })],
     });
 
     const [entry] = presentOrderHistory(
@@ -444,7 +467,7 @@ test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
         product: "3584",
       },
     };
-    const order = makeOrder({ delivery: "delivery-1" });
+    const order = makeOrder({ deliveryId: "delivery-1" });
 
     const [entry] = presentOrderHistory(
       baseSources({ orders: [order], deliveries: new Map([["delivery-1", delivery]]) }),
@@ -468,7 +491,7 @@ test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
       amount: 0,
       info: { branch: OTHER_BRANCH },
     };
-    const order = makeOrder({ delivery: "delivery-1" });
+    const order = makeOrder({ deliveryId: "delivery-1" });
 
     const [entry] = presentOrderHistory(
       baseSources({ orders: [order], deliveries: new Map([["delivery-1", delivery]]) }),
@@ -478,7 +501,7 @@ test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
   });
 
   test("marks an order whose delivery document is gone", ({ assert }) => {
-    const order = makeOrder({ delivery: "gone" });
+    const order = makeOrder({ deliveryId: "gone" });
 
     const [entry] = presentOrderHistory(baseSources({ orders: [order] }));
 
@@ -492,41 +515,48 @@ test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
   });
 });
 
+/** An employee, a customer, a branch and two books in the test Postgres, for the write paths. */
+async function seedOrderWorld() {
+  const [branch, customer, sinus, matte] = await Promise.all([
+    createBranch({ name: "Ullern VGS" }),
+    createUser({ name: "Ida" }),
+    createItem({ title: "Sinus 1T" }),
+    createItem({ title: "Sinus 1P" }),
+  ]);
+  return { branch, customer, sinus, matte };
+}
+
 test.group("OrderHistoryService.deleteOrder()", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let remove: sinon.SinonStub;
   let report: sinon.SinonStub;
   const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
 
   group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(async () => {
+  group.each.setup(() => {
     sandbox = createSandbox();
-    remove = sandbox.stub(StorageService.Orders, "remove").resolves(makeOrder());
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
-    await createBranch({ id: BRANCH, name: "Ullern VGS" });
   });
   group.each.teardown(() => sandbox.restore());
 
-  test("removes the order document and reports the deletion with what the order held", async ({
-    assert,
-  }) => {
-    sandbox.stub(StorageService.Orders, "getOrNull").resolves(
-      makeOrder({
-        amount: 250,
-        orderItems: [rentItem(), rentItem({ item: "item-2", title: "Sinus 1P", blid: "87654321" })],
-      }),
-    );
+  test("deletes the order with its lines and reports what the order held", async ({ assert }) => {
+    const { branch, customer, sinus, matte } = await seedOrderWorld();
+    const order = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      amount: 250,
+      orderItems: [{ itemId: sinus.id }, { itemId: matte.id, blid: "87654321" }],
+    });
 
-    await OrderHistoryService.deleteOrder("order-1", employee);
+    await OrderHistoryService.deleteOrder(order.id, employee);
 
-    assert.isTrue(remove.calledOnceWithExactly("order-1"));
+    assert.isNull(await Order.find(order.id));
     assert.isTrue(report.calledOnce);
     assert.deepEqual(report.firstCall.args[0], {
       action: "order-deleted",
       employee,
-      customerId: IDA,
+      customerId: customer.id,
       details: [
-        { label: "Ordre-ID", value: "order-1" },
+        { label: "Ordre-ID", value: order.id },
         { label: "Filial", value: "Ullern VGS" },
         { label: "Beløp", value: "250 kr" },
         { label: "Bøker", value: "«Sinus 1T», «Sinus 1P»" },
@@ -535,48 +565,43 @@ test.group("OrderHistoryService.deleteOrder()", (group) => {
   });
 
   test("refuses when the order does not exist, and reports nothing", async ({ assert }) => {
-    sandbox.stub(StorageService.Orders, "getOrNull").resolves(null);
+    await assert.rejects(() => OrderHistoryService.deleteOrder(fixtureId("dead"), employee));
 
-    await assert.rejects(() => OrderHistoryService.deleteOrder("missing", employee));
-
-    assert.isFalse(remove.called);
     assert.isFalse(report.called);
   });
 });
 
 test.group("OrderHistoryService.updateBranch()", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let update: sinon.SinonStub;
   let report: sinon.SinonStub;
   const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
-  // A real ObjectId: the service casts it before writing.
-  const NEW_BRANCH = "5f7f7f7f7f7f7f7f7f7f7f72";
 
   group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(async () => {
+  group.each.setup(() => {
     sandbox = createSandbox();
-    update = sandbox.stub(StorageService.Orders, "update").resolves(makeOrder());
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
-    await createBranch({ id: BRANCH, name: "Ullern VGS" });
-    await createBranch({ id: NEW_BRANCH, name: "Persbråten VGS" });
-    sandbox
-      .stub(StorageService.Orders, "getOrNull")
-      .callsFake((id) => Promise.resolve(id === "order-1" ? makeOrder() : null));
   });
   group.each.teardown(() => sandbox.restore());
 
   test("moves the order and reports the change with both branch names", async ({ assert }) => {
-    await OrderHistoryService.updateBranch("order-1", NEW_BRANCH, employee);
+    const { branch, customer, sinus } = await seedOrderWorld();
+    const newBranch = await createBranch({ name: "Persbråten VGS" });
+    const order = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id }],
+    });
 
-    assert.isTrue(update.calledOnce);
-    assert.equal(update.firstCall.args[0], "order-1");
+    await OrderHistoryService.updateBranch(order.id, newBranch.id, employee);
+
+    assert.equal((await Order.getOrFail(order.id)).branchId, newBranch.id);
     assert.isTrue(report.calledOnce);
     assert.deepEqual(report.firstCall.args[0], {
       action: "order-branch-changed",
       employee,
-      customerId: IDA,
+      customerId: customer.id,
       details: [
-        { label: "Ordre-ID", value: "order-1" },
+        { label: "Ordre-ID", value: order.id },
         { label: "Gammel filial", value: "Ullern VGS" },
         { label: "Ny filial", value: "Persbråten VGS" },
       ],
@@ -584,111 +609,190 @@ test.group("OrderHistoryService.updateBranch()", (group) => {
   });
 
   test("refuses an unknown branch or order, and reports nothing", async ({ assert }) => {
-    await assert.rejects(() => OrderHistoryService.updateBranch("order-1", "missing", employee));
-    await assert.rejects(() => OrderHistoryService.updateBranch("missing", NEW_BRANCH, employee));
+    const { branch, customer, sinus } = await seedOrderWorld();
+    const order = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id }],
+    });
 
-    assert.isFalse(update.called);
+    await assert.rejects(() =>
+      OrderHistoryService.updateBranch(order.id, fixtureId("dead"), employee),
+    );
+    await assert.rejects(() =>
+      OrderHistoryService.updateBranch(fixtureId("dead"), branch.id, employee),
+    );
+
+    assert.equal((await Order.getOrFail(order.id)).branchId, branch.id);
     assert.isFalse(report.called);
   });
 });
 
 test.group("OrderHistoryService.updateItemDeadline()", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let updateMany: sinon.SinonStub;
   let report: sinon.SinonStub;
   const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
-  // Real ObjectIds: the service casts both before writing.
-  const ORDER = "5f7f7f7f7f7f7f7f7f7f7f70";
-  const ITEM = "5f7f7f7f7f7f7f7f7f7f7f71";
   const NEW_DEADLINE = new Date("2027-12-01T00:00:00.000Z");
-  let order: Order | null;
 
+  group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
-    order = makeOrder({ id: ORDER, orderItems: [rentItem({ item: ITEM })] });
-    updateMany = sandbox.stub(StorageService.Orders, "updateMany").resolves({
-      matchedCount: 1,
-      modifiedCount: 1,
-      acknowledged: true,
-      upsertedCount: 0,
-      upsertedId: null,
-    });
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
-    sandbox.stub(StorageService.Orders, "getOrNull").callsFake(() => Promise.resolve(order));
   });
   group.each.teardown(() => sandbox.restore());
 
+  async function orderWith(line: Partial<OrderItemDto> = {}) {
+    const { branch, customer, sinus } = await seedOrderWorld();
+    const order = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [
+        {
+          itemId: sinus.id,
+          periodTo: DateTime.fromJSDate(DEADLINE),
+          handout: line.handout ?? false,
+          movedToOrderId: line.movedToOrderId ?? null,
+        },
+      ],
+    });
+    return { order, customer, itemId: sinus.id };
+  }
+
   test("moves the period end of the open item and reports both deadlines", async ({ assert }) => {
+    const { order, customer, itemId } = await orderWith();
+
     await OrderHistoryService.updateItemDeadline(
-      { orderId: ORDER, itemId: ITEM, deadline: NEW_DEADLINE },
+      { orderId: order.id, itemId, deadline: NEW_DEADLINE },
       employee,
     );
 
-    assert.isTrue(updateMany.calledOnce);
-    const [filter, update] = updateMany.firstCall.args;
-    assert.equal(String(filter._id), ORDER);
-    assert.equal(String(filter.orderItems.$elemMatch.item), ITEM);
-    assert.equal(update.$set["orderItems.$.info.to"], NEW_DEADLINE);
+    const [line] = (await Order.getOrFail(order.id)).orderItems;
+    assert.equal(line?.periodTo?.toJSDate().toISOString(), NEW_DEADLINE.toISOString());
     assert.isTrue(report.calledOnce);
     assert.deepEqual(report.firstCall.args[0], {
       action: "order-item-deadline-changed",
       employee,
-      customerId: IDA,
+      customerId: customer.id,
       details: [
         { label: "Bok", value: "«Sinus 1T»" },
-        { label: "Ordre-ID", value: ORDER },
+        { label: "Ordre-ID", value: order.id },
         { label: "Gammel frist", value: "01.07.2027" },
         { label: "Ny frist", value: "01.12.2027" },
       ],
     });
   });
 
-  test("refuses a handed-out item, a moved item and a missing order", async ({ assert }) => {
-    order = makeOrder({ id: ORDER, orderItems: [rentItem({ item: ITEM, handout: true })] });
+  test("refuses a handed-out item and a missing order", async ({ assert }) => {
+    const { order, itemId } = await orderWith({ handout: true });
     await assert.rejects(() =>
       OrderHistoryService.updateItemDeadline(
-        { orderId: ORDER, itemId: ITEM, deadline: NEW_DEADLINE },
+        { orderId: order.id, itemId, deadline: NEW_DEADLINE },
         employee,
       ),
     );
-    order = makeOrder({
-      id: ORDER,
-      orderItems: [rentItem({ item: ITEM, movedToOrder: "order-2" })],
-    });
     await assert.rejects(() =>
       OrderHistoryService.updateItemDeadline(
-        { orderId: ORDER, itemId: ITEM, deadline: NEW_DEADLINE },
-        employee,
-      ),
-    );
-    order = null;
-    await assert.rejects(() =>
-      OrderHistoryService.updateItemDeadline(
-        { orderId: ORDER, itemId: ITEM, deadline: NEW_DEADLINE },
+        { orderId: fixtureId("dead"), itemId, deadline: NEW_DEADLINE },
         employee,
       ),
     );
 
-    assert.isFalse(updateMany.called);
+    const [line] = (await Order.getOrFail(order.id)).orderItems;
+    assert.equal(line?.periodTo?.toJSDate().toISOString(), DEADLINE.toISOString());
     assert.isFalse(report.called);
   });
 
-  test("refuses when the item was handed out between the read and the write", async ({
-    assert,
-  }) => {
-    updateMany.resolves({
-      matchedCount: 0,
-      modifiedCount: 0,
-      acknowledged: true,
-      upsertedCount: 0,
-      upsertedId: null,
+  test("refuses an item carried on into a later order", async ({ assert }) => {
+    const { order: later } = await orderWith();
+    const { branchId, customerId } = later;
+    const moved = await createOrder({
+      branchId,
+      customerId,
+      orderItems: [
+        {
+          itemId: later.orderItems[0]?.itemId ?? "",
+          periodTo: DateTime.fromJSDate(DEADLINE),
+          movedToOrderId: later.id,
+        },
+      ],
     });
+
     await assert.rejects(() =>
       OrderHistoryService.updateItemDeadline(
-        { orderId: ORDER, itemId: ITEM, deadline: NEW_DEADLINE },
+        { orderId: moved.id, itemId: later.orderItems[0]?.itemId ?? "", deadline: NEW_DEADLINE },
         employee,
       ),
     );
     assert.isFalse(report.called);
+  });
+});
+
+test.group("OrderHistoryService.getForCustomer()", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => {
+    // Payments stay in Mongo, which the test environment has none of.
+    const sandbox = createSandbox();
+    sandbox.stub(OrderPayments, "byOrder").resolves(new Map());
+    return () => sandbox.restore();
+  });
+
+  test("presents the customer's placed orders newest first, with the catalogue title", async ({
+    assert,
+  }) => {
+    const { branch, customer, sinus } = await seedOrderWorld();
+    const older = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      createdAt: DateTime.fromISO("2026-07-01T10:00:00Z"),
+      orderItems: [{ itemId: sinus.id }],
+    });
+    const newer = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      createdAt: DateTime.fromISO("2026-08-01T10:00:00Z"),
+      orderItems: [{ itemId: sinus.id }],
+    });
+    await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      placed: false,
+      orderItems: [{ itemId: sinus.id }],
+    });
+
+    const entries = await OrderHistoryService.getForCustomer(customer.id, "customer");
+
+    assert.deepEqual(
+      entries.map((entry) => entry.id),
+      [newer.id, older.id],
+    );
+    assert.equal(entries[0]?.items[0]?.title, "Sinus 1T");
+    assert.deepEqual(entries[0]?.branch, { id: branch.id, name: "Ullern VGS" });
+  });
+
+  test("pairs a legacy received book with another customer's deliver order", async ({ assert }) => {
+    const { branch, customer, sinus } = await seedOrderWorld();
+    const petra = await createUser({ name: "Petra" });
+    const time = DateTime.fromISO("2026-08-01T10:00:00Z");
+    await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      byCustomer: true,
+      createdAt: time,
+      orderItems: [{ itemId: sinus.id, type: "match-receive", blid: BLID }],
+    });
+    await createOrder({
+      branchId: branch.id,
+      customerId: petra.id,
+      byCustomer: true,
+      createdAt: time.minus({ seconds: 1 }),
+      orderItems: [{ itemId: sinus.id, type: "match-deliver", blid: BLID }],
+    });
+
+    const [entry] = await OrderHistoryService.getForCustomer(customer.id, "customer");
+
+    assert.deepEqual(entry?.items[0]?.transfer?.counterparty, {
+      detailsId: petra.id,
+      name: "Petra",
+    });
   });
 });

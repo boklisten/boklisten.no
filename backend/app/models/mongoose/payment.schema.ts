@@ -1,6 +1,5 @@
 import { Schema } from "mongoose";
 
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import type { BlSchema } from "#services/storage_service";
 import type { Payment } from "#shared/payment/payment";
 
@@ -13,8 +12,9 @@ export const PaymentSchema: BlSchema<Payment> = new Schema({
   },
   order: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.Orders,
     required: true,
+    // The order's payments are found through this field (orders live in Postgres).
+    index: true,
   },
   amount: {
     type: Number,

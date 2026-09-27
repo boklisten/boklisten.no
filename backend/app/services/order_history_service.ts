@@ -1,19 +1,21 @@
 import { DateTime } from "luxon";
-import { ObjectId } from "mongodb";
 
 import Branch from "#models/branch";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
+import Order from "#models/order";
+import OrderItem from "#models/order_item";
 import User from "#models/user";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
+import { OrderPayments } from "#services/payments/order_payments";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { DeliveryInfoBranch } from "#shared/delivery/delivery-info/delivery-info-branch";
 import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
-import type { Order } from "#shared/order/order";
+import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
+import { isOpenOrderItem, LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 import type {
   OrderHistoryDelivery,
   OrderHistoryEntry,
@@ -23,7 +25,6 @@ import type {
   OrderHistoryTransfer,
   OrderPaymentStatus,
 } from "#shared/order/order-history";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Payment } from "#shared/payment/payment";
 import { USER_PERMISSION } from "#shared/user-permission";
 
@@ -41,8 +42,9 @@ interface OrderHistoryHandover {
 export interface OrderHistorySources {
   customerId: string;
   audience: OrderHistoryAudience;
-  orders: Order[];
-  payments: Map<string, Payment>;
+  orders: OrderDto[];
+  /** The payments of each order, keyed by order id. */
+  payments: Map<string, Payment[]>;
   deliveries: Map<string, Delivery>;
   /** Every handover the customer took part in, plus those pointing at one of their orders. */
   handovers: OrderHistoryHandover[];
@@ -50,7 +52,7 @@ export interface OrderHistorySources {
    * Other customers' match orders for the same copies, for pairing legacy transfers that predate
    * the handover table.
    */
-  counterpartOrders: Order[];
+  counterpartOrders: OrderDto[];
   userNames: Map<string, string>;
   branchNames: Map<string, string>;
 }
@@ -62,7 +64,7 @@ const TRANSFER_PAIRING_WINDOW_MS = 120_000;
 const FALLBACK_NAME = "Ukjent";
 const FALLBACK_BRANCH_NAME = "Ukjent filial";
 
-const PERIOD_ITEM_TYPES = new Set<OrderItem["type"]>([
+const PERIOD_ITEM_TYPES = new Set<OrderItemDto["type"]>([
   "rent",
   "partly-payment",
   "extend",
@@ -85,11 +87,13 @@ function iso(date: Date | string | null | undefined): string | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
+const MATCH_ITEM_TYPES = new Set<OrderItemDto["type"]>(["match-receive", "match-deliver"]);
+
 function withinPairingWindow(a: Date, b: Date): boolean {
   return Math.abs(a.getTime() - b.getTime()) <= TRANSFER_PAIRING_WINDOW_MS;
 }
 
-function derivePaymentStatus(order: Order, payments: OrderHistoryPayment[]): OrderPaymentStatus {
+function derivePaymentStatus(order: OrderDto, payments: OrderHistoryPayment[]): OrderPaymentStatus {
   if (order.orderItems.some((orderItem) => orderItem.type === "invoice-paid")) {
     return "invoice";
   }
@@ -103,26 +107,26 @@ function derivePaymentStatus(order: Order, payments: OrderHistoryPayment[]): Ord
   return covered >= order.amount ? "paid" : "unpaid";
 }
 
-function presentPayments(order: Order, sources: OrderHistorySources): OrderHistoryPayment[] {
-  return order.payments
-    .map((paymentId) => sources.payments.get(paymentId))
-    .filter((payment): payment is Payment => payment !== undefined)
-    .map((payment) => ({
-      id: payment.id,
-      method: payment.method,
-      methodLabel: TranslationService.translatePaymentMethod(payment.method),
-      amount: payment.amount,
-      confirmed: payment.confirmed,
-      branchName: sources.branchNames.get(payment.branch) ?? null,
-      time: iso(payment.creationTime),
-    }));
+function presentPayments(order: OrderDto, sources: OrderHistorySources): OrderHistoryPayment[] {
+  return (sources.payments.get(order.id) ?? []).map((payment) => ({
+    id: payment.id,
+    method: payment.method,
+    methodLabel: TranslationService.translatePaymentMethod(payment.method),
+    amount: payment.amount,
+    confirmed: payment.confirmed,
+    branchName: sources.branchNames.get(payment.branch) ?? null,
+    time: iso(payment.creationTime),
+  }));
 }
 
-function presentDelivery(order: Order, sources: OrderHistorySources): OrderHistoryDelivery | null {
-  if (!order.delivery) {
+function presentDelivery(
+  order: OrderDto,
+  sources: OrderHistorySources,
+): OrderHistoryDelivery | null {
+  if (!order.deliveryId) {
     return null;
   }
-  const delivery = sources.deliveries.get(order.delivery);
+  const delivery = sources.deliveries.get(order.deliveryId);
   if (delivery === undefined) {
     return { method: "missing" };
   }
@@ -170,15 +174,15 @@ function customerParty(detailsId: string, sources: OrderHistorySources): OrderHi
  * counterpart's opposite-typed order for the same copy within the pairing window.
  */
 function presentTransfer(
-  order: Order,
-  orderItem: OrderItem,
+  order: OrderDto,
+  orderItem: OrderItemDto,
   sources: OrderHistorySources,
 ): OrderHistoryTransfer | null {
   if (orderItem.type !== "match-receive" && orderItem.type !== "match-deliver") {
     return null;
   }
   const direction = orderItem.type === "match-receive" ? "received" : "delivered";
-  const orderTime = order.creationTime ? new Date(order.creationTime) : null;
+  const orderTime = order.createdAt;
 
   const handover = sources.handovers.find((candidate) =>
     direction === "received"
@@ -186,7 +190,6 @@ function presentTransfer(
       : candidate.fromUserDetailId === sources.customerId &&
         candidate.blid !== null &&
         candidate.blid === orderItem.blid &&
-        orderTime !== null &&
         withinPairingWindow(candidate.occurredAt, orderTime),
   );
   if (handover) {
@@ -202,70 +205,68 @@ function presentTransfer(
   const counterpartType = direction === "received" ? "match-deliver" : "match-receive";
   const counterpart = sources.counterpartOrders.find(
     (candidate) =>
-      candidate.customer !== sources.customerId &&
-      candidate.creationTime !== undefined &&
-      orderTime !== null &&
-      withinPairingWindow(new Date(candidate.creationTime), orderTime) &&
+      candidate.customerId !== sources.customerId &&
+      withinPairingWindow(candidate.createdAt, orderTime) &&
       candidate.orderItems.some(
         (candidateItem) =>
           candidateItem.type === counterpartType &&
-          candidateItem.blid !== undefined &&
+          candidateItem.blid !== null &&
           candidateItem.blid === orderItem.blid,
       ),
   );
+  // A counterpart whose account is gone is known to exist but can no longer be named.
   return {
     direction,
-    counterparty: counterpart ? customerParty(counterpart.customer, sources) : null,
-    time: orderTime?.toISOString() ?? "",
+    counterparty: counterpart?.customerId ? customerParty(counterpart.customerId, sources) : null,
+    time: orderTime.toISOString(),
   };
 }
 
 function presentItem(
-  order: Order,
-  orderItem: OrderItem,
+  order: OrderDto,
+  orderItem: OrderItemDto,
   sources: OrderHistorySources,
 ): OrderHistoryItem {
-  const info = orderItem.info;
-  const to = iso(info?.to);
+  const to = iso(orderItem.periodTo);
   return {
     type: orderItem.type,
     typeLabel: TranslationService.translateOrderItemTypePastTense(orderItem.type),
-    itemId: orderItem.item,
+    itemId: orderItem.itemId,
     title: orderItem.title,
-    blid: orderItem.blid ?? null,
+    blid: orderItem.blid,
     amount: orderItem.amount,
     unitPrice: orderItem.unitPrice,
     period:
       PERIOD_ITEM_TYPES.has(orderItem.type) && to !== null
-        ? { from: iso(info?.from), to, periodType: info?.periodType ?? null }
+        ? { from: iso(orderItem.periodFrom), to, periodType: orderItem.periodType }
         : null,
-    amountLeftToPay: info?.amountLeftToPay ?? null,
-    buybackAmount: info?.buybackAmount ?? null,
-    customerItemId: orderItem.customerItem ?? info?.customerItem ?? null,
+    amountLeftToPay: orderItem.amountLeftToPay,
+    buybackAmount: orderItem.buybackAmount,
+    customerItemId: orderItem.customerItemId,
     handout: orderItem.handout,
     delivered: orderItem.delivered,
-    movedToOrderId: orderItem.movedToOrder ?? null,
-    movedFromOrderId: orderItem.movedFromOrder ?? null,
+    movedToOrderId: orderItem.movedToOrderId,
+    movedFromOrderId: orderItem.movedFromOrderId,
     transfer: presentTransfer(order, orderItem, sources),
   };
 }
 
-function presentOrder(order: Order, sources: OrderHistorySources): OrderHistoryEntry {
+function presentOrder(order: OrderDto, sources: OrderHistorySources): OrderHistoryEntry {
   const payments = presentPayments(order, sources);
   // Who registered the order and how the checkout went are staff bookkeeping, not receipt facts.
   const forStaff = sources.audience === "employee";
   return {
     id: order.id,
-    creationTime: iso(order.creationTime) ?? "",
+    creationTime: order.createdAt.toISOString(),
     branch: {
-      id: order.branch,
-      name: sources.branchNames.get(order.branch) ?? FALLBACK_BRANCH_NAME,
+      id: order.branchId,
+      name: sources.branchNames.get(order.branchId) ?? FALLBACK_BRANCH_NAME,
     },
     amount: order.amount,
     byCustomer: order.byCustomer,
-    employee: forStaff && order.employee ? customerParty(order.employee, sources) : null,
-    emailSuppressed: forStaff && order.notification?.email === false,
-    checkoutState: forStaff ? (order.checkoutState ?? null) : null,
+    employee: forStaff && order.employeeId ? customerParty(order.employeeId, sources) : null,
+    emailSuppressed: forStaff && !order.notifyByEmail,
+    checkoutState: forStaff ? order.checkoutState : null,
     paymentStatus: derivePaymentStatus(order, payments),
     payments,
     delivery: presentDelivery(order, sources),
@@ -273,43 +274,44 @@ function presentOrder(order: Order, sources: OrderHistorySources): OrderHistoryE
   };
 }
 
-/** Pure: turns fetched documents into the presented history, newest order first. */
+/** Pure: turns fetched orders and documents into the presented history, newest order first. */
 export function presentOrderHistory(sources: OrderHistorySources): OrderHistoryEntry[] {
   return sources.orders
     .map((order) => presentOrder(order, sources))
     .toSorted((a, b) => b.creationTime.localeCompare(a.creationTime));
 }
 
-function isMatchItem(orderItem: OrderItem): boolean {
-  return orderItem.type === "match-receive" || orderItem.type === "match-deliver";
-}
-
-async function fetchCounterpartOrders(customerId: string, orders: Order[]): Promise<Order[]> {
-  const blids = new Set(
-    orders.flatMap((order) =>
-      order.orderItems.flatMap((orderItem) =>
-        isMatchItem(orderItem) && orderItem.blid !== undefined ? [orderItem.blid] : [],
+/**
+ * Other customers' placed match orders for the copies the customer's match orders moved, for
+ * pairing legacy transfers.
+ */
+async function fetchCounterpartOrders(customerId: string, orders: OrderDto[]): Promise<OrderDto[]> {
+  const blids = [
+    ...new Set(
+      orders.flatMap((order) =>
+        order.orderItems.flatMap((orderItem) =>
+          MATCH_ITEM_TYPES.has(orderItem.type) && orderItem.blid !== null ? [orderItem.blid] : [],
+        ),
       ),
     ),
-  );
-  const perBlid = await Promise.all(
-    [...blids].map(async (blid) => {
-      const databaseQuery = new SEDbQuery();
-      databaseQuery.stringFilters = [{ fieldName: "orderItems.blid", value: blid }];
-      return (await StorageService.Orders.getByQueryOrNull(databaseQuery)) ?? [];
-    }),
-  );
-  return perBlid
-    .flat()
-    .filter(
-      (order) =>
-        order.customer !== customerId && order.placed && order.orderItems.some(isMatchItem),
-    );
+  ];
+  if (blids.length === 0) {
+    return [];
+  }
+  const counterparts = await Order.query()
+    .where("placed", true)
+    .where((query) => {
+      void query.whereNull("customerId").orWhereNot("customerId", customerId);
+    })
+    .whereHas("orderItems", (orderItems) => {
+      void orderItems.whereIn("blid", blids).whereIn("type", [...MATCH_ITEM_TYPES]);
+    });
+  return counterparts.map((order) => order.toDto());
 }
 
 async function fetchHandovers(
   customerId: string,
-  orders: Order[],
+  orders: OrderDto[],
 ): Promise<OrderHistoryHandover[]> {
   const rows = await BookHandover.query()
     .where("fromUserDetailId", customerId)
@@ -330,19 +332,18 @@ async function fetchHandovers(
 async function loadSources(
   customerId: string,
   audience: OrderHistoryAudience,
-  orders: Order[],
+  orders: OrderDto[],
 ): Promise<OrderHistorySources> {
-  const paymentIds = [...new Set(orders.flatMap((order) => order.payments))];
   const deliveryIds = [
     ...new Set(
       orders
-        .map((order) => order.delivery)
+        .map((order) => order.deliveryId)
         .filter((id): id is string => typeof id === "string" && id !== ""),
     ),
   ];
 
   const [payments, deliveries, handovers, counterpartOrders] = await Promise.all([
-    paymentIds.length > 0 ? StorageService.Payments.getMany(paymentIds, USER_PERMISSION.ADMIN) : [],
+    OrderPayments.byOrder(orders.map((order) => order.id)),
     deliveryIds.length > 0
       ? StorageService.Deliveries.getMany(deliveryIds, USER_PERMISSION.ADMIN)
       : [],
@@ -353,12 +354,12 @@ async function loadSources(
   const userDetailIds = new Set<string>();
   const branchIds = new Set<string>();
   for (const order of orders) {
-    branchIds.add(order.branch);
-    if (order.employee) {
-      userDetailIds.add(order.employee);
+    branchIds.add(order.branchId);
+    if (order.employeeId) {
+      userDetailIds.add(order.employeeId);
     }
   }
-  for (const payment of payments) {
+  for (const payment of [...payments.values()].flat()) {
     branchIds.add(payment.branch);
   }
   for (const delivery of deliveries) {
@@ -375,7 +376,9 @@ async function loadSources(
     }
   }
   for (const order of counterpartOrders) {
-    userDetailIds.add(order.customer);
+    if (order.customerId) {
+      userDetailIds.add(order.customerId);
+    }
   }
 
   const [userNames, branchNames] = await Promise.all([
@@ -387,7 +390,7 @@ async function loadSources(
     customerId,
     audience,
     orders,
-    payments: new Map(payments.map((payment) => [payment.id, payment])),
+    payments,
     deliveries: new Map(deliveries.map((delivery) => [delivery.id, delivery])),
     handovers,
     counterpartOrders,
@@ -396,37 +399,8 @@ async function loadSources(
   };
 }
 
-async function fetchPlacedOrders(customerId: string): Promise<Order[]> {
-  const databaseQuery = new SEDbQuery();
-  databaseQuery.objectIdFilters = [{ fieldName: "customer", value: customerId }];
-  databaseQuery.booleanFilters = [{ fieldName: "placed", value: true }];
-  databaseQuery.sortFilters = [{ fieldName: "creationTime", direction: -1 }];
-  return (await StorageService.Orders.getByQueryOrNull(databaseQuery)) ?? [];
-}
-
-function formatDeadline(deadline: Date | string): string {
-  return DateTime.fromJSDate(new Date(deadline)).toFormat("dd.MM.yyyy");
-}
-
-/** Ordered, not handed out, and not carried on into a later order. */
-function isOpenOrderItem(orderItem: OrderItem): boolean {
-  return (
-    (orderItem.type === "rent" || orderItem.type === "partly-payment") &&
-    !orderItem.handout &&
-    !orderItem.delivered &&
-    !orderItem.movedToOrder
-  );
-}
-
-/** The same rule as `isOpenOrderItem`, as an `$elemMatch` body so the write cannot race a handout. */
-function openOrderItemFilter(itemId: string) {
-  return {
-    item: new ObjectId(itemId),
-    type: { $in: ["rent", "partly-payment"] },
-    handout: { $ne: true },
-    delivered: { $ne: true },
-    movedToOrder: null,
-  };
+function formatDeadline(deadline: DateTime): string {
+  return deadline.toFormat("dd.MM.yyyy");
 }
 
 export const OrderHistoryService = {
@@ -435,7 +409,7 @@ export const OrderHistoryService = {
     customerId: string,
     audience: OrderHistoryAudience,
   ): Promise<OrderHistoryEntry[]> {
-    const orders = await fetchPlacedOrders(customerId);
+    const orders = (await Order.placedFor(customerId)).map((order) => order.toDto());
     if (orders.length === 0) {
       return [];
     }
@@ -448,16 +422,21 @@ export const OrderHistoryService = {
     customerId: string,
     audience: OrderHistoryAudience,
   ): Promise<OrderHistoryEntry | null> {
-    const order = await StorageService.Orders.getOrNull(orderId);
-    if (!order || order.customer !== customerId) {
+    const order = await Order.findOptional(orderId);
+    if (!order || order.customerId !== customerId) {
       return null;
     }
     return OrderHistoryService.presentOrder(order, audience);
   },
 
-  /** An order already in hand, presented the same way. */
+  /**
+   * An order already in hand, presented the same way. An order whose customer is gone is
+   * presented from the point of view of nobody in particular.
+   */
   async presentOrder(order: Order, audience: OrderHistoryAudience): Promise<OrderHistoryEntry> {
-    const [entry] = presentOrderHistory(await loadSources(order.customer, audience, [order]));
+    const [entry] = presentOrderHistory(
+      await loadSources(order.customerId ?? "", audience, [order.toDto()]),
+    );
     if (entry === undefined) {
       throw new Error(`order ${order.id} could not be presented`);
     }
@@ -478,16 +457,17 @@ export const OrderHistoryService = {
     if (!branch) {
       throw new BadRequestException("Filialen finnes ikke");
     }
-    const order = await StorageService.Orders.getOrNull(orderId);
+    const order = await Order.findOptional(orderId);
     if (!order) {
       throw new BadRequestException("Ordren finnes ikke");
     }
-    await StorageService.Orders.update(orderId, { branch: new ObjectId(branchId) });
-    const previousBranch = await Branch.find(order.branch);
+    const previousBranchId = order.branchId;
+    await order.merge({ branchId }).save();
+    const previousBranch = await Branch.find(previousBranchId);
     await EmployeeMonitoringService.report({
       action: "order-branch-changed",
       employee,
-      customerId: order.customer,
+      customerId: order.customerId,
       details: [
         { label: "Ordre-ID", value: order.id },
         { label: "Gammel filial", value: previousBranch?.name ?? FALLBACK_BRANCH_NAME },
@@ -513,58 +493,59 @@ export const OrderHistoryService = {
     },
     employee: MonitoredEmployee,
   ): Promise<void> {
-    const order = await StorageService.Orders.getOrNull(orderId);
+    const order = await Order.findOptional(orderId);
     if (!order) {
       throw new BadRequestException("Ordren finnes ikke");
     }
     const orderItem = order.orderItems.find(
-      (candidate) => candidate.item === itemId && isOpenOrderItem(candidate),
+      (candidate) =>
+        candidate.itemId === itemId &&
+        LOAN_ORDER_ITEM_TYPES.includes(candidate.type) &&
+        isOpenOrderItem(candidate),
     );
     if (!orderItem) {
       throw new BadRequestException("Boka er ikke lenger bestilt");
     }
-    const result = await StorageService.Orders.updateMany(
-      {
-        _id: new ObjectId(orderId),
-        orderItems: { $elemMatch: openOrderItemFilter(itemId) },
-      },
-      { $set: { "orderItems.$.info.to": deadline, lastUpdated: new Date() } },
+    // The same rule again in the write, so it cannot race a handout.
+    const [updated] = await OrderItem.whereOpen(OrderItem.query().where("id", orderItem.id)).update(
+      { periodTo: DateTime.fromJSDate(deadline) },
     );
-    if (result.matchedCount === 0) {
+    if (!updated) {
       throw new BadRequestException("Boka er ikke lenger bestilt");
     }
+    await order.merge({ updatedAt: DateTime.now() }).save();
     await EmployeeMonitoringService.report({
       action: "order-item-deadline-changed",
       employee,
-      customerId: order.customer,
+      customerId: order.customerId,
       details: [
         { label: "Bok", value: `«${orderItem.title}»` },
         { label: "Ordre-ID", value: order.id },
         {
           label: "Gammel frist",
-          value: orderItem.info?.to ? formatDeadline(orderItem.info.to) : "Ingen",
+          value: orderItem.periodTo ? formatDeadline(orderItem.periodTo) : "Ingen",
         },
-        { label: "Ny frist", value: formatDeadline(deadline) },
+        { label: "Ny frist", value: formatDeadline(DateTime.fromJSDate(deadline)) },
       ],
     });
   },
 
   /**
-   * Delete an order outright. Only the order document goes; the customer items, payments,
+   * Delete an order outright. Only the order and its lines go; the customer items, payments,
    * deliveries and handovers it produced stay as they are, exactly as the legacy admin delete
    * left them. Any employee may do it, and everyone below admin is reported to the administrator.
    */
   async deleteOrder(orderId: string, employee: MonitoredEmployee): Promise<void> {
-    const order = await StorageService.Orders.getOrNull(orderId);
+    const order = await Order.findOptional(orderId);
     if (!order) {
       throw new BadRequestException("Ordren finnes ikke");
     }
-    const branch = await Branch.find(order.branch);
-    await StorageService.Orders.remove(orderId);
+    const branch = await Branch.find(order.branchId);
+    await order.delete();
     await EmployeeMonitoringService.report({
       action: "order-deleted",
       employee,
-      customerId: order.customer,
+      customerId: order.customerId,
       details: [
         { label: "Ordre-ID", value: order.id },
         { label: "Filial", value: branch?.name ?? FALLBACK_BRANCH_NAME },

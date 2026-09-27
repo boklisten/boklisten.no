@@ -1,21 +1,22 @@
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import type User from "#models/user";
 import DispatchService from "#services/dispatch_service";
+import { OrderPayments } from "#services/payments/order_payments";
 import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { BlError } from "#shared/bl-error";
 import type { Delivery } from "#shared/delivery/delivery";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import type { Payment } from "#shared/payment/payment";
 import type { EmailOrder, EmailUser } from "#types/email";
 
 export const OrderEmailHandler = {
   async sendOrderReceipt(customerDetail: User, order: Order) {
-    const branchId = order.branch;
+    const branchId = order.branchId;
 
     const withAgreement: boolean = await this.shouldSendAgreement(order);
 
@@ -35,10 +36,10 @@ export const OrderEmailHandler = {
       await DispatchService.sendSignatureLink(customerDetail, branch.name);
     }
 
-    await DispatchService.sendOrderReceipt(emailUser, emailOrder, this.paymentNeeded(order));
+    await DispatchService.sendOrderReceipt(emailUser, emailOrder, await this.paymentNeeded(order));
   },
-  paymentNeeded(order: Order) {
-    return order.amount > 0 && order.payments.length === 0;
+  async paymentNeeded(order: Order) {
+    return order.amount > 0 && !(await OrderPayments.exist(order.id));
   },
   async orderToEmailOrder(order: Order) {
     const emailOrder: EmailOrder = {
@@ -90,16 +91,11 @@ export const OrderEmailHandler = {
   extractEmailOrderPaymentFromOrder(
     order: Order,
   ): Promise<{ payment: unknown; showPayment: boolean }> {
-    if (order.payments.length === 0) {
-      return Promise.resolve({ payment: null, showPayment: false });
-    }
-
-    const paymentPromises: Promise<Payment>[] = order.payments.map((payment) =>
-      StorageService.Payments.get(payment),
-    );
-
-    return Promise.all(paymentPromises)
+    return OrderPayments.of(order.id)
       .then((payments: Payment[]) => {
+        if (payments.length === 0) {
+          return { payment: null, showPayment: false };
+        }
         const emailPayment = {
           total: payments.reduce((subTotal, payment) => subTotal + payment.amount, 0),
           currency: "NOK",
@@ -126,7 +122,7 @@ export const OrderEmailHandler = {
   },
 
   async extractEmailOrderDeliveryFromOrder(order: Order) {
-    const deliveryId = order.delivery;
+    const deliveryId = order.deliveryId;
     if (!deliveryId?.length) {
       return { delivery: null, showDelivery: false };
     }
@@ -203,8 +199,8 @@ export const OrderEmailHandler = {
       title: orderItem.title,
       status: this.translateOrderItemType(orderItem.type, orderItem.handout),
       deadline:
-        (orderItem.type === "rent" || orderItem.type === "extend") && orderItem.info?.to
-          ? DateTime.fromJSDate(orderItem.info.to).toFormat("dd.MM.yy")
+        (orderItem.type === "rent" || orderItem.type === "extend") && orderItem.periodTo
+          ? orderItem.periodTo.toFormat("dd.MM.yy")
           : null,
       price: orderItem.type !== "return" && orderItem.amount ? orderItem.amount.toString() : null,
     }));

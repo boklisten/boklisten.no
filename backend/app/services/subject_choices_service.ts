@@ -1,8 +1,10 @@
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 
+import Order from "#models/order";
+import OrderItem from "#models/order_item";
 import User from "#models/user";
-import { ACTIVE_CUSTOMER_ITEM_MATCH, OPEN_ORDER_ITEM_MATCH } from "#services/branch_books_service";
+import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import type { SubjectForUpload } from "#services/branch_subjects_service";
 import { fetchSubjectsForUpload, normalizeSubjectName } from "#services/branch_subjects_service";
@@ -10,6 +12,7 @@ import Branch from "#models/branch";
 import { StorageService } from "#services/storage_service";
 import { buildBranchMappings } from "#services/user_provisioning_service";
 import { canonicalItemId, getEquivalentItemIds } from "#shared/item-equivalence";
+import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 import type { Period } from "#shared/period";
 
 interface SubjectChoiceRow {
@@ -351,17 +354,14 @@ async function fetchOwnedItemKeys(customerIds: string[]): Promise<Set<string>> {
       { $match: { ...ACTIVE_CUSTOMER_ITEM_MATCH, customer: { $in: customerObjectIds } } },
       { $project: { customer: { $toString: "$customer" }, item: { $toString: "$item" } } },
     ]),
-    StorageService.Orders.aggregate<{ customer: string; item: string }>([
-      { $match: { placed: true, customer: { $in: customerObjectIds } } },
-      { $unwind: "$orderItems" },
-      { $match: OPEN_ORDER_ITEM_MATCH },
-      {
-        $project: {
-          customer: { $toString: "$customer" },
-          item: { $toString: "$orderItems.item" },
-        },
-      },
-    ]),
+    OrderItem.whereOpen(
+      OrderItem.query().join("orders", "orders.id", "order_items.order_id"),
+      LOAN_ORDER_ITEM_TYPES,
+    )
+      .where("orders.placed", true)
+      .whereIn("orders.customer_id", customerIds)
+      .select("orders.customer_id as customer", "order_items.item_id as item")
+      .pojo<{ customer: string; item: string }>(),
   ]);
   return new Set(
     [...activeCustomerItems, ...openOrderItems].map(({ customer, item }) => `${customer}:${item}`),
@@ -440,28 +440,24 @@ export const SubjectChoicesService = {
 
     async function createOrder(order: PlannedOrder) {
       try {
-        await StorageService.Orders.add({
+        await Order.createWithItems({
           amount: 0,
           orderItems: order.orderItems.map((orderItem) => ({
             type: "rent",
-            item: orderItem.itemId,
-            title: orderItem.title,
+            itemId: orderItem.itemId,
             amount: 0,
             unitPrice: 0,
             handout: false,
             delivered: false,
-            info: {
-              from: new Date(),
-              to: new Date(orderItem.deadline),
-              numberOfPeriods: 1,
-              periodType: orderItem.periodType,
-            },
+            periodFrom: DateTime.now(),
+            periodTo: DateTime.fromJSDate(new Date(orderItem.deadline)),
+            numberOfPeriods: 1,
+            periodType: orderItem.periodType,
           })),
-          branch: order.branchId,
-          customer: order.customerId,
+          branchId: order.branchId,
+          customerId: order.customerId,
           byCustomer: true,
           placed: true,
-          payments: [],
         });
         summary.ordersCreated++;
         summary.booksOrdered += order.orderItems.length;

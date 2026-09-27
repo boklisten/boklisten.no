@@ -1,7 +1,8 @@
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
+import Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import { MatchRepository } from "#services/matches/match_repository";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
@@ -10,8 +11,6 @@ import { StorageService } from "#services/storage_service";
 import { isNotNullish } from "#services/typescript_helpers";
 import { BlError } from "#shared/bl-error";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import type { UserPermission } from "#shared/user-permission";
 import { hasPermissionLevel } from "#shared/user-permission";
@@ -58,7 +57,7 @@ export class OrderPlaceService {
             continue;
           }
 
-          if (orderItem.movedToOrder) {
+          if (orderItem.movedToOrderId !== null) {
             continue;
           }
 
@@ -76,30 +75,25 @@ export class OrderPlaceService {
   }
 
   private async hasOpenOrderWithOrderItems(order: Order) {
-    const databaseQuery = new SEDbQuery();
-    databaseQuery.objectIdFilters = [{ fieldName: "customer", value: order.customer }];
-    databaseQuery.booleanFilters = [{ fieldName: "placed", value: true }];
+    if (order.customerId === null) {
+      return false;
+    }
+    const existingOrders = await Order.placedFor(order.customerId);
+    const alreadyOrderedItems = this.filterOrdersByAlreadyOrdered(existingOrders);
 
-    try {
-      const existingOrders = await StorageService.Orders.getByQuery(databaseQuery);
-      const alreadyOrderedItems = this.filterOrdersByAlreadyOrdered(existingOrders);
-
-      for (const orderItem of order.orderItems) {
-        for (const alreadyOrderedItem of alreadyOrderedItems) {
-          const deadline = orderItem.info?.to;
-          const alreadyOrderedDeadline = alreadyOrderedItem.info?.to;
-          if (
-            orderItem.item === alreadyOrderedItem.item &&
-            deadline != null &&
-            alreadyOrderedDeadline != null &&
-            new Date(deadline).getTime() === new Date(alreadyOrderedDeadline).getTime()
-          ) {
-            return true;
-          }
+    for (const orderItem of order.orderItems) {
+      for (const alreadyOrderedItem of alreadyOrderedItems) {
+        const deadline = orderItem.periodTo;
+        const alreadyOrderedDeadline = alreadyOrderedItem.periodTo;
+        if (
+          orderItem.itemId === alreadyOrderedItem.itemId &&
+          deadline !== null &&
+          alreadyOrderedDeadline !== null &&
+          deadline.toMillis() === alreadyOrderedDeadline.toMillis()
+        ) {
+          return true;
         }
       }
-    } catch {
-      console.log("could not get user orders");
     }
 
     return false;
@@ -172,10 +166,10 @@ export class OrderPlaceService {
 
     const [returnCustomerItems, handoutCustomerItems] = await Promise.all([
       StorageService.CustomerItems.getMany(
-        returnOrderItems.map((orderItem) => orderItem.customerItem).filter(isNotNullish),
+        returnOrderItems.map((orderItem) => orderItem.customerItemId).filter(isNotNullish),
       ),
       StorageService.CustomerItems.getMany(
-        handoutOrderItems.map((orderItem) => orderItem.customerItem).filter(isNotNullish),
+        handoutOrderItems.map((orderItem) => orderItem.customerItemId).filter(isNotNullish),
       ),
     ]);
 
@@ -221,11 +215,8 @@ export class OrderPlaceService {
    * @throws BlError if the order cannot be placed
    */
   public async place(orderId: string, user?: PlacingUser): Promise<Order> {
-    let order: Order;
-
-    try {
-      order = await StorageService.Orders.get(orderId);
-    } catch {
+    const order = await Order.find(orderId);
+    if (order === null) {
       throw new ReferenceError(`order "${orderId}" not found`);
     }
 
@@ -255,11 +246,9 @@ export class OrderPlaceService {
 
     if (customerItems && customerItems.length > 0) {
       customerItems = await this.addCustomerItems(customerItems, user);
-      order = this.addCustomerItemIdToOrderItems(order, customerItems);
+      this.addCustomerItemIdToOrderItems(order, customerItems);
 
-      await StorageService.Orders.update(order.id, {
-        orderItems: order.orderItems,
-      });
+      await order.saveWithItems();
     }
 
     await this.orderPlacedHandler.placeOrder(order, user?.id ?? "");
@@ -298,11 +287,10 @@ export class OrderPlaceService {
   private addCustomerItemIdToOrderItems(order: Order, customerItems: CustomerItem[]) {
     for (const customerItem of customerItems) {
       for (const orderItem of order.orderItems) {
-        if (customerItem.item === orderItem.item) {
-          orderItem.customerItem = customerItem.id;
+        if (String(customerItem.item) === orderItem.itemId) {
+          orderItem.customerItemId = customerItem.id;
         }
       }
     }
-    return order;
   }
 }

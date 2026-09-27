@@ -6,15 +6,22 @@ import { createSandbox } from "sinon";
 import User from "#models/user";
 import { roundPlanMetrics } from "#services/matches/round_plan_metrics";
 import { StorageService } from "#services/storage_service";
+import { createBranch } from "#tests/branch_fixtures";
 import {
   TEST_DEADLINE,
   createTestRound,
+  ensureUsers,
   seedTestCatalogue,
 } from "#tests/matches/match-testing-utils";
+import { createOrder } from "#tests/order_fixtures";
 import { unchecked } from "#tests/test-doubles";
 
 const BRANCH = "5d765db5fc8c47001c408b01";
+const OTHER_BRANCH = "5d765db5fc8c47001c408b09";
 const SENDER = "5d765db5fc8c47001c408b02";
+const RECEIVER = "5d765db5fc8c47001c408d81";
+const ITEM_X = "5d765db5fc8c47001c408e01";
+const ITEM_Y = "5d765db5fc8c47001c408e02";
 
 test.group("roundPlanMetrics", (group) => {
   let sandbox: sinon.SinonSandbox;
@@ -25,23 +32,35 @@ test.group("roundPlanMetrics", (group) => {
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([RECEIVER]));
+  group.each.setup(async () => {
+    await createBranch({ id: BRANCH });
+    await createBranch({ id: OTHER_BRANCH });
+  });
 
-  /** Each collection aggregates to the per-student rows its pipeline groups into. */
+  /** The student ordered the books themselves at the branch. */
+  const order = (itemIds: string[], overrides: Partial<Parameters<typeof createOrder>[0]> = {}) =>
+    createOrder({
+      branchId: BRANCH,
+      customerId: RECEIVER,
+      byCustomer: true,
+      orderItems: itemIds.map((itemId) => ({ itemId })),
+      ...overrides,
+    });
+
+  /** Members and held books aggregate in Mongo to the per-student rows the pipeline groups into. */
   function stubMongo({
     members,
     activeBooks,
-    orderedBooks,
   }: {
     members?: { students: number };
     activeBooks?: { id: string; items: string[] }[];
-    orderedBooks?: { id: string; wantedItems: string[] }[];
   }) {
     return {
       userDetails: sandbox.stub(User, "countMembersOf").resolves(members?.students ?? 0),
       customerItems: sandbox
         .stub(StorageService.CustomerItems, "aggregate")
         .resolves(activeBooks ?? []),
-      orders: sandbox.stub(StorageService.Orders, "aggregate").resolves(orderedBooks ?? []),
     };
   }
 
@@ -52,8 +71,8 @@ test.group("roundPlanMetrics", (group) => {
         { id: "sender-1", items: ["item-1", "item-2"] },
         { id: "sender-2", items: ["item-1"] },
       ],
-      orderedBooks: [{ id: "receiver-1", wantedItems: ["item-1", "item-3"] }],
     });
+    await order([ITEM_X, ITEM_Y]);
 
     const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
@@ -158,14 +177,29 @@ test.group("roundPlanMetrics", (group) => {
   });
 
   test("counts ordered books per book, not per order", async ({ assert }) => {
-    const stubs = stubMongo({});
+    stubMongo({});
+    await order([ITEM_X, ITEM_Y]);
+    await order([ITEM_Y]);
 
-    await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
+    const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
-    const pipeline = stubs.orders.firstCall.args[0];
-    const unwindIndex = pipeline.findIndex((stage) => "$unwind" in stage);
-    const groupIndex = pipeline.findIndex((stage) => "$group" in stage);
-    assert.isAbove(unwindIndex, -1, "the order items have to be split apart to be counted");
-    assert.isAbove(groupIndex, unwindIndex, "counting happens once each order item stands alone");
+    assert.deepEqual(metrics.orderedBooks, { books: 2, students: 1 });
+  });
+
+  test("counts only open loans the students ordered themselves at the round's branches", async ({
+    assert,
+  }) => {
+    stubMongo({});
+    await order([ITEM_X], { branchId: OTHER_BRANCH });
+    await order([ITEM_X], { byCustomer: false });
+    await order([ITEM_X], { placed: false });
+    await order([], { orderItems: [{ itemId: ITEM_X, type: "buy" }] });
+    await order([], { orderItems: [{ itemId: ITEM_X, handout: true }] });
+    const later = await order([]);
+    await order([], { orderItems: [{ itemId: ITEM_X, movedToOrderId: later.id }] });
+
+    const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
+
+    assert.deepEqual(metrics.orderedBooks, { books: 0, students: 0 });
   });
 });

@@ -91,7 +91,10 @@ export default function OrderDetail({
     data: customer,
     isPending,
     isError,
-  } = useQuery(api.users.show.queryOptions({ params: { detailsId: customerId } }));
+  } = useQuery({
+    ...api.users.show.queryOptions({ params: { detailsId: customerId ?? "" } }),
+    enabled: customerId !== null,
+  });
   const [cartOpen, setCartOpen] = useState(false);
   const rows = openOrderRows(order);
 
@@ -117,6 +120,14 @@ export default function OrderDetail({
     </Button>
   );
 
+  if (customerId === null) {
+    return (
+      <Stack>
+        {backButton}
+        <ErrorAlert>Kunden bestillingen tilhørte er slettet.</ErrorAlert>
+      </Stack>
+    );
+  }
   if (isPending) {
     return (
       <Stack>

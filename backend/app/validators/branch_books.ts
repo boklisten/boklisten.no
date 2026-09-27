@@ -38,7 +38,7 @@ export const orderedBooksBulkUpdateValidator = vine.create(
     filter: vine.object({
       deadlines: vine.array(deadlineString()).minLength(1).optional(),
       itemId: objectIdString().optional(),
-      orderItemIds: vine.array(objectIdString()).minLength(1).optional(),
+      orderItemIds: vine.array(vine.number().withoutDecimals().min(1)).minLength(1).optional(),
       includeDescendants: vine.boolean(),
     }),
     update: vine.object({
@@ -52,7 +52,7 @@ export const orderedBooksCancelValidator = vine.create({
   filter: vine.object({
     deadlines: vine.array(deadlineString()).minLength(1).optional(),
     itemId: objectIdString().optional(),
-    orderItemIds: vine.array(objectIdString()).minLength(1).optional(),
+    orderItemIds: vine.array(vine.number().withoutDecimals().min(1)).minLength(1).optional(),
     includeDescendants: vine.boolean(),
   }),
   notifyCustomers: vine.boolean(),

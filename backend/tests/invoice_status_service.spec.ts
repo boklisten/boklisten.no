@@ -1,7 +1,9 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import Order from "#models/order";
 import {
   deleteInvoice,
   invoicePaidLineAmount,
@@ -13,8 +15,11 @@ import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Invoice } from "#shared/invoice";
-import type { Order } from "#shared/order/order";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
 import { mock } from "#tests/test-doubles";
+import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "6100000000000000000000c1";
 const EMPLOYEE_ID = "6100000000000000000000e1";
@@ -65,10 +70,15 @@ test.group("invoice status changes", (group) => {
   let updateInvoice: sinon.SinonStub;
   let removeInvoice: sinon.SinonStub;
   let customerItems: { getMany: sinon.SinonStub; update: sinon.SinonStub };
-  let orders: { add: sinon.SinonStub; remove: sinon.SinonStub; getByQueryOrNull: sinon.SinonStub };
   let placeOrder: sinon.SinonStub;
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    await createBranch({ id: "branch1" });
+    await createUser({ id: CUSTOMER_ID });
+    await createUser({ id: EMPLOYEE_ID });
+    await createItem({ id: "i1", title: "Psykologi 2 2022" });
+    await createItem({ id: "i2", title: "Matematikk R1" });
     sandbox = createSandbox();
     getInvoice = sandbox.stub().resolves(invoice());
     updateInvoice = sandbox
@@ -88,13 +98,9 @@ test.group("invoice status changes", (group) => {
       update: sandbox.stub().resolves({}),
     };
     sandbox.stub(StorageService, "CustomerItems").value(customerItems);
-    orders = {
-      add: sandbox.stub().callsFake((order: Order) => Promise.resolve({ ...order, id: "order1" })),
-      remove: sandbox.stub().resolves({}),
-      getByQueryOrNull: sandbox.stub().resolves([]),
-    };
-    sandbox.stub(StorageService, "Orders").value(orders);
-    placeOrder = sandbox.stub(OrderPlacedHandler.prototype, "placeOrder").resolves(mock<Order>());
+    placeOrder = sandbox
+      .stub(OrderPlacedHandler.prototype, "placeOrder")
+      .callsFake((order: Order) => Promise.resolve(order));
   });
   group.each.teardown(() => {
     sandbox.restore();
@@ -120,32 +126,39 @@ test.group("invoice status changes", (group) => {
       toDebtCollection: false,
       toLossNote: false,
     });
-    const [order] = orders.add.firstCall.args;
-    assert.deepEqual(order, {
+    const [order, ...others] = await Order.all();
+    assert.lengthOf(others, 0);
+    assert.include(order?.toDto(), {
       amount: 1150,
-      orderItems: [
+      branchId: "branch1",
+      customerId: CUSTOMER_ID,
+      byCustomer: false,
+      employeeId: EMPLOYEE_ID,
+      // The stub stands in for the placed-order handler
+      placed: false,
+      notifyByEmail: false,
+    });
+    assert.deepEqual(
+      order?.orderItems.map((orderItem) => {
+        const { type, itemId, title, blid, amount, unitPrice, handout, delivered, customerItemId } =
+          orderItem.toDto();
+        return { type, itemId, title, blid, amount, unitPrice, handout, delivered, customerItemId };
+      }),
+      [
         {
           type: "invoice-paid",
-          item: "i1",
+          itemId: "i1",
           title: "Psykologi 2 2022",
           blid: "blid1",
           amount: 1150,
           unitPrice: 1150,
           handout: true,
-          info: { customerItem: "ci1" },
           delivered: true,
-          customerItem: "ci1",
+          customerItemId: "ci1",
         },
       ],
-      branch: "branch1",
-      customer: CUSTOMER_ID,
-      byCustomer: false,
-      employee: EMPLOYEE_ID,
-      placed: false,
-      payments: [],
-      notification: { email: false },
-    });
-    assert.equal(placeOrder.firstCall.args[0].id, "order1");
+    );
+    assert.equal(placeOrder.firstCall.args[0].id, order?.id);
     assert.deepEqual(
       customerItems.update.args.map(([id, patch]) => [id, patch]),
       [
@@ -163,7 +176,7 @@ test.group("invoice status changes", (group) => {
 
     const { warnings } = await setInvoiceStatus("inv1", "paid", EMPLOYEE_ID);
 
-    assert.isTrue(orders.add.notCalled);
+    assert.lengthOf(await Order.all(), 0);
     assert.lengthOf(warnings, 1);
     assert.equal(updateInvoice.callCount, 1);
   });
@@ -172,16 +185,21 @@ test.group("invoice status changes", (group) => {
     assert,
   }) => {
     getInvoice.resolves(invoice({ customerHavePayed: true }));
-    orders.getByQueryOrNull.resolves([
-      mock<Order>({ id: "unrelated", orderItems: [{ type: "rent", item: "i1" }] }),
-      mock<Order>({
-        id: "order1",
-        orderItems: [
-          { type: "invoice-paid", item: "i1" },
-          { type: "invoice-paid", item: "i2" },
-        ],
-      }),
-    ]);
+    await createOrder({
+      id: "unrelated",
+      branchId: "branch1",
+      customerId: CUSTOMER_ID,
+      orderItems: [{ type: "rent", itemId: "i1" }],
+    });
+    await createOrder({
+      id: "order1",
+      branchId: "branch1",
+      customerId: CUSTOMER_ID,
+      orderItems: [
+        { type: "invoice-paid", itemId: "i1" },
+        { type: "invoice-paid", itemId: "i2" },
+      ],
+    });
 
     const { warnings } = await setInvoiceStatus("inv1", "creditNote", EMPLOYEE_ID);
 
@@ -191,7 +209,10 @@ test.group("invoice status changes", (group) => {
       toDebtCollection: false,
       toLossNote: false,
     });
-    assert.deepEqual(orders.remove.firstCall.args, ["order1"]);
+    assert.deepEqual(
+      (await Order.all()).map((order) => order.id),
+      ["unrelated"],
+    );
     assert.deepEqual(
       customerItems.update.args.map(([id, patch]) => [id, patch]),
       [
@@ -205,17 +226,23 @@ test.group("invoice status changes", (group) => {
   test("leaving paid without a matching order warns instead of failing", async ({ assert }) => {
     getInvoice.resolves(invoice({ customerHavePayed: true }));
 
+    await createOrder({
+      id: "unrelated",
+      branchId: "branch1",
+      customerId: CUSTOMER_ID,
+      orderItems: [{ type: "rent", itemId: "i1" }],
+    });
+
     const { warnings } = await setInvoiceStatus("inv1", "unpaid", EMPLOYEE_ID);
 
-    assert.isTrue(orders.remove.notCalled);
+    assert.lengthOf(await Order.all(), 1);
     assert.lengthOf(warnings, 1);
   });
 
   test("changing between the other statuses touches nothing but the flags", async ({ assert }) => {
     await setInvoiceStatus("inv1", "debtCollection", EMPLOYEE_ID);
 
-    assert.isTrue(orders.add.notCalled);
-    assert.isTrue(orders.remove.notCalled);
+    assert.lengthOf(await Order.all(), 0);
     assert.isTrue(customerItems.update.notCalled);
   });
 

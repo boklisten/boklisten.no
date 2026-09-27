@@ -1,4 +1,6 @@
 import ItemModel from "#models/item";
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
 import { OrderItemBuyValidator } from "#services/orders/validation/order_item_buy_validator";
 import { OrderItemExtendValidator } from "#services/orders/validation/order_item_extend_validator";
@@ -9,8 +11,6 @@ import { isNotNullish } from "#services/typescript_helpers";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
 import type { Item } from "#shared/item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 
 export class OrderItemValidator {
   private readonly orderItemFieldValidator: OrderFieldValidator;
@@ -46,9 +46,9 @@ export class OrderItemValidator {
       this.validateAmount(order);
 
       for (const orderItem of order.orderItems) {
-        const item = await ItemModel.find(orderItem.item);
+        const item = await ItemModel.find(orderItem.itemId);
         if (!item) {
-          throw new BlError(`item "${orderItem.item}" not found`).code(702);
+          throw new BlError(`item "${orderItem.itemId}" not found`).code(702);
         }
         await this.validateOrderItemBasedOnType(branch, item, orderItem);
         this.validateOrderItemAmounts(orderItem);
@@ -131,19 +131,17 @@ export class OrderItemValidator {
     const nowWithGracePeriod = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 10);
     const fourYearsFromNow = new Date(now.getFullYear() + 4, now.getMonth(), now.getDate());
     const hasExpiredDeadlines = orderItems.some((item) => {
-      if (!item.info?.to) {
+      if (!item.periodTo) {
         return false;
       }
-      const deadline = new Date(item.info.to);
-      return nowWithGracePeriod > deadline;
+      return nowWithGracePeriod > item.periodTo.toJSDate();
     });
 
     const hasDeadlinesTooFarInTheFuture = orderItems.some((item) => {
-      if (!item.info?.to) {
+      if (!item.periodTo) {
         return false;
       }
-      const deadline = new Date(item.info.to);
-      return deadline > fourYearsFromNow;
+      return item.periodTo.toJSDate() > fourYearsFromNow;
     });
 
     if (hasExpiredDeadlines) {

@@ -1,19 +1,21 @@
 import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
+import { DateTime } from "luxon";
 
+import type OrderItem from "#models/order_item";
 import { OrderItemExtendValidator } from "#services/orders/validation/order_item_extend_validator";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Order } from "#shared/order/order";
 import { branchDto } from "#tests/branch_fixtures";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderItemExtendValidator", (group) => {
   const orderItemExtendValidator = new OrderItemExtendValidator();
 
-  let testOrder: Order;
+  let testOrderItem: OrderItem;
 
   let testBranch: Branch;
   let testCustomerItem: CustomerItem;
@@ -55,34 +57,19 @@ test.group("OrderItemExtendValidator", (group) => {
       ],
     };
 
-    testOrder = {
-      payments: [],
-      id: "order1",
+    testOrderItem = mock<OrderItem>({
+      handout: false,
+      delivered: false,
+      itemId: "item1",
       amount: 100,
-      customer: "",
-      orderItems: [
-        {
-          handout: false,
-          delivered: false,
-          item: "item1",
-          title: "Spinn",
-          amount: 100,
-          unitPrice: 100,
-          type: "extend",
-          info: {
-            from: new Date(),
-            to: new Date(),
-            numberOfPeriods: 1,
-            periodType: "semester",
-            customerItem: "customerItem1",
-          },
-        },
-      ],
-      delivery: "delivery1",
-      branch: "branch1",
-      byCustomer: true,
-      placed: false,
-    };
+      unitPrice: 100,
+      type: "extend",
+      periodFrom: DateTime.now(),
+      periodTo: DateTime.now(),
+      numberOfPeriods: 1,
+      periodType: "semester",
+      customerItemId: "customerItem1",
+    });
 
     testBranch = branchDto({
       id: "branch1",
@@ -101,59 +88,35 @@ test.group("OrderItemExtendValidator", (group) => {
   });
 
   test('should reject if orderItem.type is not "extend"', async ({ assert }) => {
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].type = "rent";
+    testOrderItem.type = "rent";
     return assert.rejects(
-      () =>
-        // @ts-expect-error fixme: auto ignored
-        orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
+      () => orderItemExtendValidator.validate(testBranch, testOrderItem),
       BlError,
       /orderItem.type "rent" is not "extend"/,
     );
   });
 
-  test("should reject if orderItem.info.periodType is not allowed at branch", async ({
-    assert,
-  }) => {
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].info.periodType = "year";
+  test("should reject if orderItem.periodType is not allowed at branch", async ({ assert }) => {
+    testOrderItem.periodType = "year";
 
     testBranch.extendPeriods = [
       { type: "semester", price: 100, date: new Date(), maxNumberOfPeriods: 1, percentage: null },
     ];
 
     return assert.rejects(
-      () =>
-        // @ts-expect-error fixme: auto ignored
-        orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
+      () => orderItemExtendValidator.validate(testBranch, testOrderItem),
       BlError,
-      /orderItem.info.periodType is "year" but it is not allowed by branch/,
-    );
-  });
-
-  test("should reject if orderItem.info is not defined", async ({ assert }) => {
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].info = null;
-
-    return assert.rejects(
-      () =>
-        // @ts-expect-error fixme: auto ignored
-        orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
-      BlError,
-      /orderItem.info is not defined/,
+      /orderItem.periodType is "year" but it is not allowed by branch/,
     );
   });
 
   test("should reject if orderItem.customerItem is not defined", async ({ assert }) => {
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].info.customerItem = null;
+    testOrderItem.customerItemId = null;
 
     return assert.rejects(
-      () =>
-        // @ts-expect-error fixme: auto ignored
-        orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
+      () => orderItemExtendValidator.validate(testBranch, testOrderItem),
       BlError,
-      /orderItem.info.customerItem is not defined/,
+      /orderItem.customerItemId is not defined/,
     );
   });
 
@@ -178,13 +141,10 @@ test.group("OrderItemExtendValidator", (group) => {
         time: new Date(),
       },
     ];
-    // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].info.customerItem = "maxExtendedCustomerItem";
+    testOrderItem.customerItemId = "maxExtendedCustomerItem";
 
     return assert.rejects(
-      () =>
-        // @ts-expect-error fixme: auto ignored
-        orderItemExtendValidator.validate(testBranch, testOrder.orderItems[0]),
+      () => orderItemExtendValidator.validate(testBranch, testOrderItem),
       BlError,
       /orderItem can not be extended any more times/,
     );

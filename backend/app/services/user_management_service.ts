@@ -2,6 +2,7 @@ import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
+import Order from "#models/order";
 import Signature from "#models/signature";
 import User from "#models/user";
 import { CustomerHaveActiveCustomerItems } from "#services/customer_items/customer_have_active_customer_items";
@@ -108,7 +109,7 @@ async function mergeUsers(fromDetailsId: string, toDetailsId: string) {
   await Promise.all([
     Signature.reassignCustomer(fromDetailsId, toDetailsId),
     StorageService.CustomerItems.updateMany({ customer: fromDetailsId }, { customer: toDetailsId }),
-    StorageService.Orders.updateMany({ customer: fromDetailsId }, { customer: toDetailsId }),
+    Order.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
     StorageService.Payments.updateMany({ customer: fromDetailsId }, { customer: toDetailsId }),
     StorageService.Invoices.updateMany(
       { "customerInfo.userDetail": fromDetailsId },

@@ -1,5 +1,4 @@
-import Item from "#models/item";
-import type { Order } from "#shared/order/order";
+import type Order from "#models/order";
 
 const MAX_POSTAL_WEIGHT_GRAMS = 3000;
 const MAX_POSTAL_ITEM_COUNT = 3;
@@ -7,10 +6,10 @@ const MAX_POSTAL_ITEM_COUNT = 3;
 const FALLBACK_WEIGHT_GRAMS = 1000;
 
 export const DeliveryService = {
-  async calculateOrderWeightInGrams(order: Order) {
-    const items = await Item.byIds(order.orderItems.map((orderItem) => orderItem.item));
+  /** The lines' catalogue items must be loaded, as they are on an order read through `Order`. */
+  calculateOrderWeightInGrams(order: Order) {
     return order.orderItems.reduce((sum, orderItem) => {
-      const kilograms = items.get(orderItem.item)?.weight ?? null;
+      const kilograms = orderItem.item.weight;
       const grams = kilograms === null ? 0 : Math.round(kilograms * 1000);
       return sum + (grams || FALLBACK_WEIGHT_GRAMS);
     }, 0);

@@ -1,89 +1,61 @@
 import { test } from "@japa/runner";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import testUtils from "@adonisjs/core/services/test_utils";
 
+import type Branch from "#models/branch";
+import Order from "#models/order";
+import type User from "#models/user";
 import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
-import { mock } from "#tests/test-doubles";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
+import { createUser } from "#tests/user_fixtures";
+
+/** The two GYMNOS editions customers order interchangeably. */
+const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
+const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
+const OTHER_ITEM = "5b6441b2d2e733002fae0000";
+
+/** The original order's lines as stored after the handler ran. */
+async function storedMovedToOrderIds(orderId: string) {
+  const order = await Order.getOrFail(orderId);
+  return order.orderItems.map((orderItem) => orderItem.movedToOrderId);
+}
 
 test.group("OrderItemMovedFromOrderHandler", (group) => {
   const oiMovedFromOrderHandler = new OrderItemMovedFromOrderHandler();
-  let getOrderStub: sinon.SinonStub;
-  let updateOrderStub: sinon.SinonStub;
+  let branch: Branch;
+  let customer: User;
 
-  let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    const orderStub = {
-      get: sandbox.stub(),
-      update: sandbox.stub(),
-    };
-
-    sandbox.stub(StorageService, "Orders").value(orderStub);
-    getOrderStub = orderStub.get;
-    updateOrderStub = orderStub.update;
-    getOrderStub.withArgs(testMovedFromOrderId).resolves(testMovedFromOrder);
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
+  group.each.setup(async () => {
+    const truncate = await testUtils.db().truncate();
+    [branch, customer] = await Promise.all([
+      createBranch(),
+      createUser(),
+      createItem({ id: GYMNOS_2009 }),
+      createItem({ id: GYMNOS_2012 }),
+      createItem({ id: OTHER_ITEM }),
+    ]);
+    return truncate;
   });
 
-  const testMovedFromOrderId = "testMovedFromOrderId";
-
-  const testMovedFromOrder = mock<Order>({
-    amount: 100,
-    orderItems: [
-      {
-        type: "rent",
-        item: "item2",
-        title: "Signatur 3: Tekstsammling",
-        amount: 100,
-        unitPrice: 100,
-        info: {
-          from: new Date(),
-          to: new Date(),
-          numberOfPeriods: 1,
-          periodType: "semester",
-        },
-      },
-    ],
-  });
-
-  const order: Order = {
-    payments: [],
-    id: "testOrder1",
-    amount: 0,
-    orderItems: [
-      {
-        handout: false,
-        delivered: false,
-        type: "rent",
-        item: "item2",
-        title: "Signatur 3: Tekstsammling",
-        amount: 0,
-        unitPrice: 0,
-        movedFromOrder: testMovedFromOrderId,
-        info: {
-          from: new Date(),
-          to: new Date(),
-          numberOfPeriods: 1,
-          periodType: "semester",
-        },
-      },
-    ],
-    branch: "branch1",
-    customer: "customer1",
-    byCustomer: false,
-    placed: false,
-  };
+  /** A placed order with one free rent line per item. */
+  function orderWithItems(itemIds: string[], movedFromOrderId: string | null = null) {
+    return createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: itemIds.map((itemId) => ({ itemId, movedFromOrderId })),
+    });
+  }
 
   test('should reject if original order item already have "movedToOrder"', async ({ assert }) => {
-    // @ts-expect-error fixme: auto ignored
-    testMovedFromOrder.orderItems[0].movedToOrder = "anotherOrder";
-    getOrderStub.withArgs(testMovedFromOrderId).resolves(testMovedFromOrder);
-    updateOrderStub.resolves(testMovedFromOrder);
+    const anotherOrder = await orderWithItems([GYMNOS_2009]);
+    const originalOrder = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: GYMNOS_2009, movedToOrderId: anotherOrder.id }],
+    });
+    const order = await orderWithItems([GYMNOS_2009], originalOrder.id);
 
     return assert.rejects(
       () => oiMovedFromOrderHandler.updateOrderItems(order),
@@ -92,93 +64,31 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
     );
   });
 
-  /** The two GYMNOS editions customers order interchangeably. */
-  const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
-  const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
-
-  /** An original order for one item and a new order that moves `movedItemId` out of it. */
-  function ordersWithItems(originalItemId: string, movedItemId: string) {
-    const originalOrder = mock<Order>({
-      id: "originalOrder1",
-      amount: 0,
-      orderItems: [{ type: "rent", item: originalItemId, amount: 0, unitPrice: 0 }],
-    });
-    const newOrder = mock<Order>({
-      id: "newOrder1",
-      amount: 0,
-      orderItems: [
-        {
-          type: "rent",
-          item: movedItemId,
-          amount: 0,
-          unitPrice: 0,
-          movedFromOrder: originalOrder.id,
-        },
-      ],
-    });
-    getOrderStub.withArgs(originalOrder.id).resolves(originalOrder);
-    updateOrderStub.resolves(originalOrder);
-    return { originalOrder, newOrder };
-  }
-
-  /** The orderItems the handler wrote back to the original order. */
-  function updatedOrderItems(): { item: string; movedToOrder?: string }[] {
-    if (updateOrderStub.callCount !== 1) {
-      throw new Error(`expected exactly one order update, got ${updateOrderStub.callCount}`);
-    }
-    return updateOrderStub.firstCall.args[1].orderItems;
-  }
-
   test('marks an equivalent edition\'s order item with "movedToOrder"', async ({ assert }) => {
     // The customer ordered GYMNOS 2009 but received a GYMNOS 2012 copy.
-    const { originalOrder, newOrder } = ordersWithItems(GYMNOS_2009, GYMNOS_2012);
+    const originalOrder = await orderWithItems([GYMNOS_2009]);
+    const newOrder = await orderWithItems([GYMNOS_2012], originalOrder.id);
 
     await oiMovedFromOrderHandler.updateOrderItems(newOrder);
 
-    assert.equal(updateOrderStub.firstCall.args[0], originalOrder.id);
-    assert.deepEqual(updatedOrderItems(), [
-      { type: "rent", item: GYMNOS_2009, amount: 0, unitPrice: 0, movedToOrder: newOrder.id },
-    ]);
+    assert.deepEqual(await storedMovedToOrderIds(originalOrder.id), [newOrder.id]);
   });
 
   test("prefers the exact item over an equivalent edition", async ({ assert }) => {
-    const originalOrder = mock<Order>({
-      id: "originalOrder1",
-      amount: 0,
-      orderItems: [
-        { type: "rent", item: GYMNOS_2009, amount: 0, unitPrice: 0 },
-        { type: "rent", item: GYMNOS_2012, amount: 0, unitPrice: 0 },
-      ],
-    });
-    const newOrder = mock<Order>({
-      id: "newOrder1",
-      amount: 0,
-      orderItems: [
-        {
-          type: "rent",
-          item: GYMNOS_2012,
-          amount: 0,
-          unitPrice: 0,
-          movedFromOrder: originalOrder.id,
-        },
-      ],
-    });
-    getOrderStub.withArgs(originalOrder.id).resolves(originalOrder);
-    updateOrderStub.resolves(originalOrder);
+    const originalOrder = await orderWithItems([GYMNOS_2009, GYMNOS_2012]);
+    const newOrder = await orderWithItems([GYMNOS_2012], originalOrder.id);
 
     await oiMovedFromOrderHandler.updateOrderItems(newOrder);
 
-    const [gymnos2009Item, gymnos2012Item] = updatedOrderItems();
-    assert.equal(gymnos2009Item?.movedToOrder, undefined);
-    assert.equal(gymnos2012Item?.movedToOrder, newOrder.id);
+    assert.deepEqual(await storedMovedToOrderIds(originalOrder.id), [null, newOrder.id]);
   });
 
   test("leaves an unrelated item untouched", async ({ assert }) => {
-    const { newOrder } = ordersWithItems("someOtherItem", GYMNOS_2012);
+    const originalOrder = await orderWithItems([OTHER_ITEM]);
+    const newOrder = await orderWithItems([GYMNOS_2012], originalOrder.id);
 
     await oiMovedFromOrderHandler.updateOrderItems(newOrder);
 
-    const [unrelatedItem] = updatedOrderItems();
-    assert.equal(unrelatedItem?.movedToOrder, undefined);
+    assert.deepEqual(await storedMovedToOrderIds(originalOrder.id), [null]);
   });
 });

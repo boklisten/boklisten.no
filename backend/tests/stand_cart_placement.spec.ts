@@ -1,21 +1,26 @@
 import * as Sentry from "@sentry/node";
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
+import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import Order from "#models/order";
 import Signature from "#models/signature";
 import User from "#models/user";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import { MatchRepository } from "#services/matches/match_repository";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
+import { OrderPayments } from "#services/payments/order_payments";
 import { StandCartPlacement } from "#services/stand_cart/stand_cart_placement";
 import { StorageService } from "#services/storage_service";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { Payment } from "#shared/payment/payment";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
-import { userDouble } from "#tests/user_fixtures";
+import { createUser, userDouble } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
@@ -41,58 +46,67 @@ function recordEventsSentToSentry(): string[] {
   return captured;
 }
 
-function orderWith(orderItems: Partial<OrderItem>[]): Order {
-  return mock<Order>({
+type OrderLine = NonNullable<Parameters<typeof createOrder>[0]["orderItems"]>[number];
+
+/** A stand order as checkout stores it, not yet placed. */
+async function orderWith(orderItems: Partial<OrderLine>[], amount = 0): Promise<Order> {
+  return createOrder({
     id: ORDER_ID,
-    customer: CUSTOMER_ID,
-    branch: BRANCH_ID,
-    employee: EMPLOYEE.detailsId,
+    customerId: CUSTOMER_ID,
+    branchId: BRANCH_ID,
+    employeeId: EMPLOYEE.detailsId,
     placed: false,
     byCustomer: false,
-    payments: [],
-    amount: 0,
+    amount,
     orderItems: orderItems.map((orderItem) => ({
       type: "rent",
-      item: "item1",
-      title: "Sinus 1T",
+      itemId: "item1",
       blid: "12345678",
-      amount: 0,
-      unitPrice: 0,
-      handout: false,
-      delivered: false,
       ...orderItem,
     })),
   });
 }
 
-const handoutOrder = orderWith([
-  { handout: true, info: { to: SEMESTER_END, periodType: "semester" } },
-  { type: "buy", handout: true, blid: "87654321", item: "item2", title: "Kosmos SF" },
-]);
+async function handoutOrder(): Promise<Order> {
+  return orderWith([
+    {
+      handout: true,
+      periodTo: DateTime.fromJSDate(SEMESTER_END),
+      periodType: "semester",
+    },
+    { type: "buy", handout: true, blid: "87654321", itemId: "item2" },
+  ]);
+}
 
 test.group("StandCartPlacement.place", (group) => {
   let sandbox: sinon.SinonSandbox;
   let customerItemsAdd: sinon.SinonStub;
-  let ordersUpdate: sinon.SinonStub;
+  let paymentsOf: sinon.SinonStub;
   let placeOrder: sinon.SinonStub;
   let recordHandover: sinon.SinonStub;
   let report: sinon.SinonStub;
 
-  group.each.setup(() => {
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    await createBranch({ id: BRANCH_ID });
+    await createUser({ id: CUSTOMER_ID });
+    await createUser({ id: EMPLOYEE.detailsId });
+    await createItem({ id: "item1", title: "Sinus 1T" });
+    await createItem({ id: "item2", title: "Kosmos SF" });
     sandbox = createSandbox();
     customerItemsAdd = sandbox
       .stub(StorageService.CustomerItems, "add")
       .callsFake((customerItem) => Promise.resolve({ ...customerItem, id: "new-ci" }));
     sandbox.stub(StorageService.CustomerItems, "getMany").resolves([]);
     sandbox.stub(StorageService.CustomerItems, "getOrNull").resolves(null);
-    sandbox.stub(StorageService.Payments, "getMany").resolves([]);
-    ordersUpdate = sandbox
-      .stub(StorageService.Orders, "update")
-      .callsFake((id, data) => Promise.resolve({ ...handoutOrder, ...data, id }));
+    paymentsOf = sandbox.stub(OrderPayments, "of").resolves([]);
     sandbox.stub(User, "findOrFail").resolves(userDouble({ id: CUSTOMER_ID, name: "Ola" }));
     placeOrder = sandbox
       .stub(OrderPlacedHandler.prototype, "placeOrder")
-      .callsFake((order) => Promise.resolve({ ...order, placed: true }));
+      .callsFake(async (order: Order) => {
+        order.placed = true;
+        return order.save();
+      });
     sandbox.stub(MatchRepository, "findReceiverObligation").resolves(null);
     sandbox.stub(MatchRepository, "findSenderObligation").resolves(null);
     recordHandover = sandbox.stub(MatchRepository, "recordHandover").resolves(unchecked({}));
@@ -105,7 +119,7 @@ test.group("StandCartPlacement.place", (group) => {
   test("creates a customer item for each loan handed out and writes its id onto the order before placing", async ({
     assert,
   }) => {
-    const placed = await StandCartPlacement.place(handoutOrder, EMPLOYEE);
+    const placed = await StandCartPlacement.place(await handoutOrder(), EMPLOYEE);
 
     assert.isTrue(customerItemsAdd.calledOnce);
     assert.include(customerItemsAdd.firstCall.args[0], {
@@ -115,11 +129,10 @@ test.group("StandCartPlacement.place", (group) => {
       type: "rent",
       handout: true,
     });
-    const [updatedId, update] = ordersUpdate.firstCall.args;
-    assert.equal(updatedId, ORDER_ID);
-    assert.equal(update.orderItems[0].customerItem, "new-ci");
-    assert.isUndefined(update.orderItems[1].customerItem);
-    assert.equal(placeOrder.firstCall.args[0].orderItems[0].customerItem, "new-ci");
+    const stored = await Order.findOrFail(ORDER_ID);
+    assert.equal(stored.orderItems[0]?.customerItemId, "new-ci");
+    assert.isNull(stored.orderItems[1]?.customerItemId);
+    assert.equal(placeOrder.firstCall.args[0].orderItems[0].customerItemId, "new-ci");
     // The employee, not the customer: the handler names them on returned books
     assert.equal(placeOrder.firstCall.args[1], EMPLOYEE.detailsId);
     assert.isTrue(placed.placed);
@@ -127,14 +140,14 @@ test.group("StandCartPlacement.place", (group) => {
 
   test("an order item that hands nothing out creates no customer item", async ({ assert }) => {
     await StandCartPlacement.place(
-      orderWith([{ type: "cancel", handout: false, delivered: true }]),
+      await orderWith([{ type: "cancel", handout: false, delivered: true }]),
       EMPLOYEE,
     );
     assert.isFalse(customerItemsAdd.called);
   });
 
   test("records a handover from the stand for each copy handed out", async ({ assert }) => {
-    await StandCartPlacement.place(handoutOrder, EMPLOYEE);
+    await StandCartPlacement.place(await handoutOrder(), EMPLOYEE);
     assert.equal(recordHandover.callCount, 2);
     assert.include(recordHandover.firstCall.args[0], {
       blid: "12345678",
@@ -155,7 +168,10 @@ test.group("StandCartPlacement.place", (group) => {
       handoutInfo: { handoutById: BRANCH_ID },
     });
     asStub(StorageService.CustomerItems.getMany).resolves([heldBook]);
-    await StandCartPlacement.place(orderWith([{ type: "return", customerItem: "ci1" }]), EMPLOYEE);
+    await StandCartPlacement.place(
+      await orderWith([{ type: "return", customerItemId: "ci1" }]),
+      EMPLOYEE,
+    );
     assert.equal(recordHandover.callCount, 1);
     assert.include(recordHandover.firstCall.args[0], {
       blid: "12345678",
@@ -172,7 +188,7 @@ test.group("StandCartPlacement.place", (group) => {
     asStub(User.findOrFail).resolves(
       userDouble({ id: CUSTOMER_ID, name: "Ola", taskSignAgreement: true }),
     );
-    await StandCartPlacement.place(handoutOrder, EMPLOYEE);
+    await StandCartPlacement.place(await handoutOrder(), EMPLOYEE);
     assert.isTrue(report.calledOnce);
     assert.include(report.firstCall.args[0], {
       action: "handout-without-signature",
@@ -182,14 +198,13 @@ test.group("StandCartPlacement.place", (group) => {
   });
 
   test("tells the administrator about cash taken at the stand", async ({ assert }) => {
-    const paidInCash = orderWith([{ type: "buy", handout: true, amount: 250, unitPrice: 250 }]);
-    paidInCash.payments = ["payment1"];
-    paidInCash.amount = 250;
-    asStub(StorageService.Payments.getMany).resolves([
-      mock<Payment>({ id: "payment1", method: "cash", amount: 250 }),
-    ]);
+    const paidInCash = await orderWith(
+      [{ type: "buy", handout: true, amount: 250, unitPrice: 250 }],
+      250,
+    );
+    paymentsOf.resolves([mock<Payment>({ id: "payment1", method: "cash", amount: 250 })]);
     await StandCartPlacement.place(paidInCash, EMPLOYEE);
-    assert.isTrue(asStub(StorageService.Payments.getMany).calledOnceWith(["payment1"]));
+    assert.isTrue(paymentsOf.calledOnceWith(ORDER_ID));
     assert.isTrue(report.calledOnce);
     assert.include(report.firstCall.args[0], {
       action: "cash-payment-received",
@@ -201,7 +216,7 @@ test.group("StandCartPlacement.place", (group) => {
   test("a handover that cannot be recorded never undoes the placement", async ({ assert }) => {
     recordHandover.rejects(new Error("postgres down"));
     const captured = recordEventsSentToSentry();
-    const placed = await StandCartPlacement.place(handoutOrder, EMPLOYEE);
+    const placed = await StandCartPlacement.place(await handoutOrder(), EMPLOYEE);
     await Sentry.flush(2000);
     await Sentry.close();
     assert.isTrue(placed.placed);

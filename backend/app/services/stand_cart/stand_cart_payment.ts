@@ -2,9 +2,9 @@ import * as Sentry from "@sentry/node";
 import logger from "@adonisjs/core/services/logger";
 
 import BadRequestException from "#exceptions/bad_request_exception";
+import type Order from "#models/order";
 import { StorageService } from "#services/storage_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
-import type { Order } from "#shared/order/order";
 import type { PaymentMethod } from "#shared/payment/payment-method/payment-method";
 import type { StandCartVippsRefund } from "#shared/stand_cart";
 
@@ -56,26 +56,33 @@ function toVippsRefundError(error: unknown): BadRequestException {
   );
 }
 
+/** The customer a stand order is for; the checkout always records one. */
+export function standCustomerId(order: Order): string {
+  if (order.customerId === null) {
+    throw new Error(`stand order ${order.id} has no customer`);
+  }
+  return order.customerId;
+}
+
 /** Removes a half-made order that never reached the customer, and the delivery copied onto it. */
 async function discard(order: Order): Promise<void> {
-  if (order.delivery) {
-    await StorageService.Deliveries.remove(order.delivery);
+  if (order.deliveryId) {
+    await StorageService.Deliveries.remove(order.deliveryId);
   }
-  await StorageService.Orders.remove(order.id);
+  await order.delete();
 }
 
 export const StandCartPayment = {
-  /** Records an unconfirmed payment, for the whole order unless told otherwise, and returns the order pointing at it. */
-  async record(order: Order, method: PaymentMethod, amount = order.amount): Promise<Order> {
-    const payment = await StorageService.Payments.add({
+  /** Records an unconfirmed payment on the order, for the whole order unless told otherwise. */
+  async record(order: Order, method: PaymentMethod, amount = order.amount): Promise<void> {
+    await StorageService.Payments.add({
       method,
       order: order.id,
       amount,
-      customer: order.customer,
-      branch: order.branch,
+      customer: standCustomerId(order),
+      branch: order.branchId,
       confirmed: false,
     });
-    return StorageService.Orders.update(order.id, { payments: [...order.payments, payment.id] });
   },
 
   /**
@@ -97,7 +104,8 @@ export const StandCartPayment = {
       await discard(order);
       throw toVippsCreateError(error);
     }
-    await StorageService.Orders.update(order.id, { checkoutState: VIPPS_REQUEST_STATE.created });
+    order.checkoutState = VIPPS_REQUEST_STATE.created;
+    await order.save();
   },
 
   /**
@@ -107,11 +115,7 @@ export const StandCartPayment = {
    * refuses a later one, the money already sent cannot be recalled, so the rest is recorded as a
    * bank transfer for the administrator to make and returned as the shortfall.
    */
-  async refundVipps(
-    order: Order,
-    refunds: StandCartVippsRefund[],
-  ): Promise<{ order: Order; shortfall: number }> {
-    let current = order;
+  async refundVipps(order: Order, refunds: StandCartVippsRefund[]): Promise<number> {
     let shortfall = 0;
     for (const [index, refund] of refunds.entries()) {
       try {
@@ -125,12 +129,12 @@ export const StandCartPayment = {
         shortfall = refunds.slice(index).reduce((sum, rest) => sum + rest.amount, 0);
         break;
       }
-      current = await StandCartPayment.record(current, refund.method, -refund.amount);
+      await StandCartPayment.record(order, refund.method, -refund.amount);
     }
     if (shortfall > 0) {
-      current = await StandCartPayment.record(current, "bank-transfer", -shortfall);
+      await StandCartPayment.record(order, "bank-transfer", -shortfall);
     }
-    return { order: current, shortfall };
+    return shortfall;
   },
 
   /** Asks Vipps how the request went. */

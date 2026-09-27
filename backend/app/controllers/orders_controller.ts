@@ -5,9 +5,6 @@ import { OrderCancellationService } from "#services/order_cancellation_service";
 import { OrderHistoryService } from "#services/order_history_service";
 import { OrderManagerService } from "#services/order_manager_service";
 import { OrderService } from "#services/order_service";
-import { StorageService } from "#services/storage_service";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import { cancelOrderItemValidator } from "#validators/cancel_order_item_validator";
 import {
   orderBranchUpdateValidator,
@@ -18,13 +15,15 @@ import {
   orderManagerListValidator,
   orderManagerReportValidator,
 } from "#validators/order_manager";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
+import Order from "#models/order";
 import { monitoredEmployee } from "#services/employee_monitoring_service";
 
 function findOpenOrderItem(order: Order, itemId: string) {
   return order.orderItems.find(
-    (orderItem: OrderItem) =>
-      orderItem.item === itemId && !orderItem.movedToOrder && !orderItem.movedFromOrder,
+    (orderItem) =>
+      orderItem.itemId === itemId &&
+      orderItem.movedToOrderId === null &&
+      orderItem.movedFromOrderId === null,
   );
 }
 
@@ -92,12 +91,8 @@ export default class OrdersController {
 
   /** Every placed order of a given customer, as stored. */
   async placedForCustomer(ctx: HttpContext) {
-    const databaseQuery = new SEDbQuery();
-    databaseQuery.booleanFilters = [{ fieldName: "placed", value: true }];
-    databaseQuery.stringFilters = [
-      { fieldName: "customer", value: ctx.request.param("detailsId") },
-    ];
-    return (await StorageService.Orders.getByQueryOrNull(databaseQuery)) ?? [];
+    const orders = await Order.placedFor(ctx.request.param("detailsId"));
+    return orders.map((order) => order.toDto());
   }
 
   async indexMe(ctx: HttpContext) {
@@ -120,8 +115,8 @@ export default class OrdersController {
   async cancelItemMe(ctx: HttpContext) {
     const { id: detailsId } = ctx.auth.getUserOrFail();
     const { orderId, itemId } = await ctx.request.validateUsing(cancelOrderItemValidator);
-    const order = await StorageService.Orders.get(orderId);
-    if (!order || order.customer !== detailsId) {
+    const order = await Order.findOptional(orderId);
+    if (!order || order.customerId !== detailsId) {
       return ctx.response.notFound();
     }
     const orderItem = findOpenOrderItem(order, itemId);
@@ -129,12 +124,13 @@ export default class OrdersController {
       return ctx.response.notFound();
     }
 
-    await assertNotBlockedByUserMatch(order.customer, itemId);
+    await assertNotBlockedByUserMatch(detailsId, itemId);
 
-    return OrderCancellationService.cancelOrderItems({
+    const cancelOrder = await OrderCancellationService.cancelOrderItems({
       originalOrder: order,
-      orderItems: [{ item: itemId, title: orderItem.title }],
+      orderItems: [{ itemId }],
       notifyCustomer: true,
     });
+    return cancelOrder.toDto();
   }
 }

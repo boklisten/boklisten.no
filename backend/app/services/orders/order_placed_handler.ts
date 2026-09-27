@@ -1,5 +1,6 @@
 import logger from "@adonisjs/core/services/logger";
 
+import type Order from "#models/order";
 import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { CustomerItemHandler } from "#services/customer_items/customer_item_handler";
@@ -9,7 +10,6 @@ import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { reconcileSignatureTask } from "#services/signature_helper";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
 
 export class OrderPlacedHandler {
   private readonly paymentHandler: PaymentHandler;
@@ -31,22 +31,18 @@ export class OrderPlacedHandler {
 
   public async placeOrder(order: Order, detailsId: string): Promise<Order> {
     try {
-      const payments = await this.paymentHandler.confirmPayments(order);
+      await this.paymentHandler.confirmPayments(order);
 
-      const paymentIds = payments.map((payment) => payment.id);
+      order.placed = true;
+      await order.save();
 
-      const placedOrder = await StorageService.Orders.update(order.id, {
-        placed: true,
-        payments: paymentIds,
-      });
+      await this.updateCustomerItemsIfPresent(order, detailsId);
+      await this.orderItemMovedFromOrderHandler.updateOrderItems(order);
+      await this.updateUserDetailWithPlacedOrder(order);
+      await this.updateSignatureTask(order);
+      await this.sendOrderConfirmationMail(order);
 
-      await this.updateCustomerItemsIfPresent(placedOrder, detailsId);
-      await this.orderItemMovedFromOrderHandler.updateOrderItems(placedOrder);
-      await this.updateUserDetailWithPlacedOrder(placedOrder);
-      await this.updateSignatureTask(placedOrder);
-      await this.sendOrderConfirmationMail(placedOrder);
-
-      return placedOrder;
+      return order;
     } catch (error) {
       // @ts-expect-error fixme: auto ignored
       throw new BlError(`could not update order: ${String(error)}`).add(error);
@@ -55,10 +51,10 @@ export class OrderPlacedHandler {
 
   private async updateSignatureTask(order: Order): Promise<void> {
     try {
-      if (!order?.customer) {
+      if (!order.customerId) {
         return;
       }
-      const user = await User.find(order.customer);
+      const user = await User.find(order.customerId);
       if (!user) {
         return;
       }
@@ -77,13 +73,7 @@ export class OrderPlacedHandler {
         orderItem.type === "buyback" ||
         orderItem.type === "cancel"
       ) {
-        let customerItemId = null;
-
-        if (orderItem.info && orderItem.info.customerItem) {
-          customerItemId = orderItem.info.customerItem;
-        } else if (orderItem.customerItem) {
-          customerItemId = orderItem.customerItem;
-        }
+        const customerItemId = orderItem.customerItemId;
 
         if (customerItemId !== null) {
           switch (orderItem.type) {
@@ -91,7 +81,7 @@ export class OrderPlacedHandler {
               await this.customerItemHandler.extend(
                 customerItemId,
                 orderItem,
-                order.branch,
+                order.branchId,
                 order.id,
               );
 
@@ -117,7 +107,7 @@ export class OrderPlacedHandler {
                 customerItemId,
                 order.id,
                 orderItem,
-                order.branch,
+                order.branchId,
                 detailsId,
               );
 
@@ -133,27 +123,26 @@ export class OrderPlacedHandler {
   }
 
   private async updateUserDetailWithPlacedOrder(order: Order): Promise<boolean> {
-    if (!order?.customer) {
+    if (!order.customerId) {
       return true;
     }
-    // The customer's orders are found through `orders.customer`; only the customer must exist.
-    const customer = await User.find(order.customer);
+    // The customer's orders are found through `orders.customer_id`; only the customer must exist.
+    const customer = await User.find(order.customerId);
     if (!customer) {
-      throw new BlError(`customer "${order.customer}" not found`);
+      throw new BlError(`customer "${order.customerId}" not found`);
     }
     return true;
   }
 
   private async sendOrderConfirmationMail(order: Order): Promise<void> {
     // makes it possible for admins to disable order alerts to customers in bl-admin
-    if (order.notification && !order.notification.email) {
+    if (!order.notifyByEmail || order.customerId === null) {
       return;
     }
-    const customerDetail = await User.findOrFail(order.customer);
-    const delivery =
-      typeof order.delivery === "string"
-        ? await StorageService.Deliveries.get(order.delivery)
-        : null;
+    const customerDetail = await User.findOrFail(order.customerId);
+    const delivery = order.deliveryId
+      ? await StorageService.Deliveries.get(order.deliveryId)
+      : null;
     await (delivery?.info && "trackingNumber" in delivery.info
       ? DispatchService.sendDeliveryInformation(customerDetail, order, delivery.info)
       : OrderEmailHandler.sendOrderReceipt(customerDetail, order));

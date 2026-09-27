@@ -1,6 +1,5 @@
 import { Schema } from "mongoose";
 
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import type { BlSchema } from "#services/storage_service";
 import type { Delivery } from "#shared/delivery/delivery";
 
@@ -43,7 +42,6 @@ export const DeliverySchema: BlSchema<Delivery> = new Schema({
   },
   order: {
     type: Schema.Types.ObjectId,
-    ref: BlSchemaName.Orders,
     required: true,
   },
   amount: {

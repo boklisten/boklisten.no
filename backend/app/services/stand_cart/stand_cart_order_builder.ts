@@ -1,6 +1,7 @@
+import { DateTime } from "luxon";
+
+import type { NewOrderItem } from "#models/order";
 import type { StandCartLineContext } from "#services/stand_cart/stand_cart_line_resolver";
-import type { OrderItem } from "#shared/order/order-item/order-item";
-import type { OrderItemInfo } from "#shared/order/order-item/order-item-info";
 import type { StandCartLine, StandCartOption } from "#shared/stand_cart";
 
 /** A line the employee submitted, with what it resolved to and the option behind the choice. */
@@ -10,41 +11,41 @@ export interface CheckoutLine {
   option: StandCartOption;
 }
 
-function periodInfo(option: StandCartOption, now: Date): OrderItemInfo {
+type PeriodColumns = Pick<
+  NewOrderItem,
+  "periodFrom" | "periodTo" | "numberOfPeriods" | "periodType"
+>;
+
+function period(option: StandCartOption, now: Date): PeriodColumns {
   return {
-    from: now,
-    to: new Date(option.to ?? now),
+    periodFrom: DateTime.fromJSDate(now),
+    periodTo: option.to === undefined ? DateTime.fromJSDate(now) : DateTime.fromISO(option.to),
     numberOfPeriods: 1,
-    ...(option.periodType ? { periodType: option.periodType } : {}),
+    periodType: option.periodType ?? null,
   };
 }
 
-function withBlid(blid: string | null): Pick<OrderItem, "blid"> {
-  return blid === null ? {} : { blid };
-}
-
 /** The order item that hands a copy to the customer, or records a sale either way. */
-function handoutItem({ line, context, option }: CheckoutLine, now: Date): OrderItem {
+function handoutItem({ line, context, option }: CheckoutLine, now: Date): NewOrderItem {
   const base = {
-    type: option.type,
-    item: line.itemId,
-    title: line.title,
-    ...withBlid(line.blid),
+    itemId: line.itemId,
+    blid: line.blid,
     amount: option.price,
     unitPrice: option.price,
     delivered: false,
-    ...(context.kind === "order" ? { movedFromOrder: context.order.id } : {}),
+    movedFromOrderId: context.kind === "order" ? context.order.id : null,
   } as const;
   switch (option.type) {
     case "rent": {
-      return { ...base, type: "rent", handout: true, info: periodInfo(option, now) };
+      return { ...base, type: "rent", handout: true, ...period(option, now) };
     }
     case "partly-payment": {
       return {
         ...base,
         type: "partly-payment",
         handout: true,
-        info: { ...periodInfo(option, now), amountLeftToPay: option.payLater ?? 0 },
+        ...period(option, now),
+        amountLeftToPay: option.payLater ?? 0,
       };
     }
     case "buy": {
@@ -63,17 +64,16 @@ function cancelledOrderItem({
   line,
   context,
   option,
-}: CheckoutLine & { context: { kind: "order" } }): OrderItem {
+}: CheckoutLine & { context: { kind: "order" } }): NewOrderItem {
   return {
     type: "cancel",
-    item: line.itemId,
-    title: line.title,
+    itemId: line.itemId,
     amount: option.price,
     unitPrice: option.price,
     handout: false,
     // The same shape the customer's own cancellation writes
     delivered: true,
-    movedFromOrder: context.order.id,
+    movedFromOrderId: context.order.id,
   };
 }
 
@@ -81,17 +81,15 @@ function cancelledOrderItem({
 function customerItemOrderItem(
   { line, context, option }: CheckoutLine & { context: { kind: "customerItem" } },
   now: Date,
-): OrderItem {
-  const customerItemId = context.customerItem.id;
+): NewOrderItem {
   const base = {
-    item: line.itemId,
-    title: line.title,
-    ...withBlid(line.blid),
+    itemId: line.itemId,
+    blid: line.blid,
     amount: option.price,
     unitPrice: option.price,
     handout: false,
     delivered: false,
-    customerItem: customerItemId,
+    customerItemId: context.customerItem.id,
   } as const;
   switch (option.type) {
     case "return":
@@ -101,11 +99,7 @@ function customerItemOrderItem(
       return { ...base, type: option.type };
     }
     case "extend": {
-      return {
-        ...base,
-        type: "extend",
-        info: { ...periodInfo(option, now), customerItem: customerItemId },
-      };
+      return { ...base, type: "extend", ...period(option, now) };
     }
     default: {
       throw new Error(`"${option.type}" cannot be done to a held book`);
@@ -117,7 +111,7 @@ function customerItemOrderItem(
  * Turns the submitted lines into the order items of one order. Pure: prices come from the
  * options, which the resolver already settled.
  */
-export function planCheckout(lines: CheckoutLine[], now: Date): OrderItem[] {
+export function planCheckout(lines: CheckoutLine[], now: Date): NewOrderItem[] {
   return lines.map((checkoutLine) => {
     const { context, option } = checkoutLine;
     switch (context.kind) {

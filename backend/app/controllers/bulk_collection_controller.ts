@@ -3,6 +3,8 @@ import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import ItemModel from "#models/item";
+import Order from "#models/order";
+import type { NewOrderItem } from "#models/order";
 import User from "#models/user";
 import BlidService from "#services/blid_service";
 import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
@@ -21,7 +23,6 @@ import type {
 } from "#shared/bulk-collection/bulk-collection-dtos";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import { bulkCollectionCollectValidator } from "#validators/bulk_collection_validator";
 
 export default class BulkCollectionController {
@@ -96,28 +97,26 @@ export default class BulkCollectionController {
 
     for (const items of this.groupByCustomerAndBranch(customerItems).values()) {
       const { customer, handoutInfo } = items[0]!;
-      const orderItems: OrderItem[] = items.map((customerItem) => ({
+      const orderItems: NewOrderItem[] = items.map((customerItem) => ({
         type: customerItem.type === "partly-payment" ? "buyback" : "return",
-        item: customerItem.item,
-        blid: customerItem.blid,
-        title: itemsMap.get(customerItem.item)?.title ?? "",
+        itemId: customerItem.item,
+        blid: customerItem.blid ?? null,
         amount: 0,
         unitPrice: 0,
-        customerItem: customerItem.id,
+        customerItemId: customerItem.id,
         handout: false,
         delivered: false,
       }));
 
-      const order = await StorageService.Orders.add({
+      const order = await Order.createWithItems({
         amount: 0,
         orderItems,
-        branch: handoutInfo!.handoutById,
-        customer,
+        branchId: handoutInfo!.handoutById,
+        customerId: customer,
         byCustomer: false,
         // The book's history and the customer's order history name the employee from the order.
-        employee: detailsId,
+        employeeId: detailsId,
         placed: false,
-        payments: [],
       });
 
       await orderPlaceService.place(order.id, user);

@@ -1,20 +1,14 @@
+import type Order from "#models/order";
+import { OrderPayments } from "#services/payments/order_payments";
 import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
 
 export class PaymentHandler {
   public async confirmPayments(order: Order): Promise<Payment[]> {
-    if (order.payments.length <= 0) {
+    const payments = await OrderPayments.of(order.id);
+    if (payments.length <= 0) {
       return [];
-    }
-
-    let payments: Payment[];
-
-    try {
-      payments = await StorageService.Payments.getMany(order.payments);
-    } catch {
-      throw new BlError("one or more payments was not found");
     }
 
     return this.confirmAllPayments(order, payments);
@@ -53,8 +47,8 @@ export class PaymentHandler {
     const total = payments.reduce((subTotal, payment) => subTotal + payment.amount, 0);
     let orderTotal = order.amount;
 
-    if (order.delivery) {
-      const delivery = await StorageService.Deliveries.get(order.delivery);
+    if (order.deliveryId) {
+      const delivery = await StorageService.Deliveries.get(order.deliveryId);
       orderTotal += delivery.amount;
     }
 

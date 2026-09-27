@@ -3,8 +3,7 @@ import { test } from "@japa/runner";
 import { derivePlacementReports } from "#services/stand_cart/stand_cart_monitoring";
 import type { PlacementReportInput } from "#services/stand_cart/stand_cart_monitoring";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
+import type { Order, OrderItem } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
 import { mock } from "#tests/test-doubles";
 
@@ -30,11 +29,11 @@ function customerItemWith(overrides: Partial<CustomerItem> = {}): CustomerItem {
 function orderWith(orderItems: Partial<OrderItem>[]): Order {
   return mock<Order>({
     id: "new-order",
-    customer: "customer1",
-    branch: "branch1",
+    customerId: "customer1",
+    branchId: "branch1",
     orderItems: orderItems.map((orderItem) => ({
       type: "rent",
-      item: "item1",
+      itemId: "item1",
       title: "Sinus 1T",
       blid: "12345678",
       amount: 0,
@@ -60,7 +59,7 @@ test.group("derivePlacementReports", () => {
   test("nothing to report for an ordinary handout on a branch period", ({ assert }) => {
     const reports = derivePlacementReports(
       input({
-        order: orderWith([{ handout: true, info: { to: SEMESTER_END, periodType: "semester" } }]),
+        order: orderWith([{ handout: true, periodTo: SEMESTER_END, periodType: "semester" }]),
       }),
     );
     assert.deepEqual(reports, []);
@@ -72,7 +71,7 @@ test.group("derivePlacementReports", () => {
     const reports = derivePlacementReports(
       input({
         order: orderWith([
-          { handout: true, info: { to: SEMESTER_END, periodType: "semester" } },
+          { handout: true, periodTo: SEMESTER_END, periodType: "semester" },
           { type: "buy", handout: true, blid: "87654321" },
         ]),
         signatureException: "Aldri signert",
@@ -93,7 +92,7 @@ test.group("derivePlacementReports", () => {
   test("a returned book past its deadline is reported with the deadline", ({ assert }) => {
     const reports = derivePlacementReports(
       input({
-        order: orderWith([{ type: "return", customerItem: "ci1" }]),
+        order: orderWith([{ type: "return", customerItemId: "ci1" }]),
         customerItemsBefore: new Map([["ci1", customerItemWith({ deadline: PAST })]]),
       }),
     );
@@ -113,8 +112,8 @@ test.group("derivePlacementReports", () => {
     const reports = derivePlacementReports(
       input({
         order: orderWith([
-          { type: "buyout", amount: 250, unitPrice: 250, customerItem: "ci1" },
-          { type: "cancel", customerItem: "ci2", blid: "87654321" },
+          { type: "buyout", amount: 250, unitPrice: 250, customerItemId: "ci1" },
+          { type: "cancel", customerItemId: "ci2", blid: "87654321" },
         ]),
         customerItemsBefore: new Map([
           ["ci1", customerItemWith({ creationTime: new Date("2026-09-05T10:00:00.000Z") })],

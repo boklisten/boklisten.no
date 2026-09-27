@@ -1,45 +1,44 @@
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 
+import type Order from "#models/order";
 import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
 import { BlError } from "#shared/bl-error";
-import type { Order } from "#shared/order/order";
+import { mock } from "#tests/test-doubles";
 
 test.group("OrderFieldValidator", (group) => {
   let testOrder: Order;
   const orderItemFieldValidator = new OrderFieldValidator();
 
   group.each.setup(() => {
-    testOrder = {
+    testOrder = mock<Order>({
       id: "order1",
       amount: 300,
-      customer: "",
+      customerId: null,
       orderItems: [
         {
           handout: false,
           delivered: false,
-          item: "item2",
+          itemId: "item2",
           title: "Spinn",
           amount: 300,
           unitPrice: 600,
           type: "rent",
-          info: {
-            from: new Date(),
-            to: new Date(),
-            numberOfPeriods: 1,
-            periodType: "semester",
-          },
+          periodFrom: DateTime.now(),
+          periodTo: DateTime.now(),
+          numberOfPeriods: 1,
+          periodType: "semester",
         },
       ],
-      delivery: "delivery1",
-      branch: "branch1",
+      deliveryId: "delivery1",
+      branchId: "branch1",
       byCustomer: true,
       placed: false,
-      payments: ["payment1"],
-    };
+    });
   });
 
   test("should reject if order.orderItems is not defined", async ({ assert }) => {
-    testOrder.orderItems = [];
+    testOrder.orderItems.splice(0);
 
     return assert.rejects(
       () => orderItemFieldValidator.validate(testOrder),
@@ -50,7 +49,7 @@ test.group("OrderFieldValidator", (group) => {
 
   test("should reject if orderItem.item is not defined", async ({ assert }) => {
     // @ts-expect-error fixme: auto ignored
-    testOrder.orderItems[0].item = null;
+    testOrder.orderItems[0].itemId = null;
 
     return assert.rejects(
       () => orderItemFieldValidator.validate(testOrder),

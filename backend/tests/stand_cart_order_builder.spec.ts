@@ -1,13 +1,14 @@
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 
+import type Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import type { StandCartLineContext } from "#services/stand_cart/stand_cart_line_resolver";
 import { planCheckout } from "#services/stand_cart/stand_cart_order_builder";
 import type { CheckoutLine } from "#services/stand_cart/stand_cart_order_builder";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import type { StandCartLine, StandCartOption } from "#shared/stand_cart";
 import { mock } from "#tests/test-doubles";
 
@@ -17,17 +18,17 @@ const YEAR_END = "2027-07-01T00:00:00.000Z";
 
 const ITEM = mock<Item>({ id: "item1", title: "Sinus 1T", price: 500 });
 
-const orderedItem: OrderItem = {
+const orderedItem = mock<OrderItem>({
   type: "rent",
-  item: ITEM.id,
-  title: ITEM.title,
+  itemId: ITEM.id,
   amount: 0,
   unitPrice: 0,
   handout: false,
   delivered: false,
-  info: { to: new Date(SEMESTER_END), periodType: "semester" },
-};
-const order = mock<Order>({ id: "order1", branch: "branch-order", orderItems: [orderedItem] });
+  periodTo: DateTime.fromISO(SEMESTER_END),
+  periodType: "semester",
+});
+const order = mock<Order>({ id: "order1", branchId: "branch-order", orderItems: [orderedItem] });
 
 const customerItem = mock<CustomerItem>({
   id: "ci1",
@@ -44,7 +45,7 @@ function checkoutLine(
 ): CheckoutLine {
   const source =
     context.kind === "order"
-      ? ({ kind: "order", orderId: context.order.id, itemId: context.orderItem.item } as const)
+      ? ({ kind: "order", orderId: context.order.id, itemId: context.orderItem.itemId } as const)
       : context.kind === "customerItem"
         ? ({ kind: "customerItem", customerItemId: context.customerItem.id } as const)
         : ({ kind: "item", itemId: context.item.id, blid: "12345678" } as const);
@@ -100,15 +101,17 @@ test.group("planCheckout", () => {
     assert.deepEqual(plan, [
       {
         type: "rent",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
         blid: "12345678",
         amount: 0,
         unitPrice: 0,
         handout: true,
         delivered: false,
-        movedFromOrder: "order1",
-        info: { from: NOW, to: new Date(YEAR_END), numberOfPeriods: 1, periodType: "year" },
+        movedFromOrderId: "order1",
+        periodFrom: DateTime.fromJSDate(NOW),
+        periodTo: DateTime.fromISO(YEAR_END),
+        numberOfPeriods: 1,
+        periodType: "year",
       },
     ]);
   });
@@ -132,8 +135,8 @@ test.group("planCheckout", () => {
     );
     const [orderItem] = plan;
     assert.equal(orderItem?.amount, 150);
-    assert.equal(orderItem?.info?.amountLeftToPay, 250);
-    assert.isUndefined(orderItem?.movedFromOrder);
+    assert.equal(orderItem?.amountLeftToPay, 250);
+    assert.isNull(orderItem?.movedFromOrderId);
   });
 
   test("cancelling an ordered book refunds the price it was given", ({ assert }) => {
@@ -144,13 +147,12 @@ test.group("planCheckout", () => {
     assert.deepEqual(plan, [
       {
         type: "cancel",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
         amount: -250,
         unitPrice: -250,
         handout: false,
         delivered: true,
-        movedFromOrder: "order1",
+        movedFromOrderId: "order1",
       },
     ]);
   });
@@ -163,14 +165,13 @@ test.group("planCheckout", () => {
     assert.deepEqual(plan, [
       {
         type: "buy",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
         blid: "12345678",
         amount: 500,
         unitPrice: 500,
         handout: true,
         delivered: false,
-        movedFromOrder: "order1",
+        movedFromOrderId: "order1",
       },
     ]);
   });
@@ -194,65 +195,57 @@ test.group("planCheckout", () => {
     assert.deepEqual(plan, [
       {
         type: "return",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
         blid: "12345678",
         amount: 0,
         unitPrice: 0,
         handout: false,
         delivered: false,
-        customerItem: "ci1",
+        customerItemId: "ci1",
       },
       {
         type: "buyback",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
         blid: "12345678",
         amount: 0,
         unitPrice: 0,
         handout: false,
         delivered: false,
-        customerItem: "ci1",
+        customerItemId: "ci1",
       },
       {
         type: "cancel",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
         blid: "12345678",
         amount: -200,
         unitPrice: -200,
         handout: false,
         delivered: false,
-        customerItem: "ci1",
+        customerItemId: "ci1",
       },
       {
         type: "extend",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
         blid: "12345678",
         amount: 100,
         unitPrice: 100,
         handout: false,
         delivered: false,
-        customerItem: "ci1",
-        info: {
-          from: NOW,
-          to: new Date(YEAR_END),
-          numberOfPeriods: 1,
-          periodType: "semester",
-          customerItem: "ci1",
-        },
+        customerItemId: "ci1",
+        periodFrom: DateTime.fromJSDate(NOW),
+        periodTo: DateTime.fromISO(YEAR_END),
+        numberOfPeriods: 1,
+        periodType: "semester",
       },
       {
         type: "buyout",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
         blid: "12345678",
         amount: 250,
         unitPrice: 250,
         handout: false,
         delivered: false,
-        customerItem: "ci1",
+        customerItemId: "ci1",
       },
     ]);
   });
@@ -265,13 +258,13 @@ test.group("planCheckout", () => {
     assert.deepEqual(plan, [
       {
         type: "buy",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
+        blid: null,
         amount: 500,
         unitPrice: 500,
         handout: true,
         delivered: false,
-        movedFromOrder: "order1",
+        movedFromOrderId: "order1",
       },
     ]);
   });
@@ -284,12 +277,13 @@ test.group("planCheckout", () => {
     assert.deepEqual(plan, [
       {
         type: "sell",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
+        blid: null,
         amount: -160,
         unitPrice: -160,
         handout: false,
         delivered: false,
+        movedFromOrderId: null,
       },
     ]);
   });
@@ -302,13 +296,13 @@ test.group("planCheckout", () => {
     assert.deepEqual(plan, [
       {
         type: "sell",
-        item: ITEM.id,
-        title: ITEM.title,
+        itemId: ITEM.id,
         blid: "12345678",
         amount: -160,
         unitPrice: -160,
         handout: false,
         delivered: false,
+        movedFromOrderId: null,
       },
     ]);
   });

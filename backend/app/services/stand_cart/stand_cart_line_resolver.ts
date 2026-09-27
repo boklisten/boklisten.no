@@ -2,11 +2,14 @@ import BranchModel from "#models/branch";
 import BranchItem from "#models/branch_item";
 import ItemModel from "#models/item";
 import { SEDbQuery } from "#models/mongoose/storage/db-query";
+import Order from "#models/order";
+import type OrderItem from "#models/order_item";
 import User from "#models/user";
 import { periodTypeOfLastOrder } from "#services/customer_item_actions_service";
 import { findItemByIsbn, findUniqueItemByBlid } from "#services/item_lookup";
 import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
 import { PeerObligations } from "#services/matches/peer_obligations";
+import { OrderPayments } from "#services/payments/order_payments";
 import {
   alreadyPaidFor,
   priceCustomerItemLine,
@@ -19,8 +22,6 @@ import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
 import { isOpenOrderItem } from "#shared/order/open-order-item";
-import type { Order } from "#shared/order/order";
-import type { OrderItem } from "#shared/order/order-item/order-item";
 import { lineKey, unlinkedBlidMessage } from "#shared/stand_cart";
 import type {
   StandCartLine,
@@ -99,13 +100,6 @@ async function alreadyHeldNotes(customerId: string, itemId: string): Promise<Sta
   );
 }
 
-async function placedOrdersOf(customerId: string): Promise<Order[]> {
-  const query = new SEDbQuery();
-  query.objectIdFilters = [{ fieldName: "customer", value: customerId }];
-  query.booleanFilters = [{ fieldName: "placed", value: true }];
-  return (await StorageService.Orders.getByQueryOrNull(query)) ?? [];
-}
-
 async function peerMatchNote(customerId: string, itemId: string): Promise<StandCartNote | null> {
   const senderId = await PeerObligations.findPeerSender(customerId, itemId);
   if (senderId === null) {
@@ -120,10 +114,10 @@ async function peerMatchNote(customerId: string, itemId: string): Promise<StandC
 }
 
 async function isBringDelivery(order: Order): Promise<boolean> {
-  if (!order.delivery) {
+  if (!order.deliveryId) {
     return false;
   }
-  const delivery = await StorageService.Deliveries.getOrNull(order.delivery);
+  const delivery = await StorageService.Deliveries.getOrNull(order.deliveryId);
   return delivery?.method === "bring";
 }
 
@@ -135,21 +129,21 @@ async function isBringDelivery(order: Order): Promise<boolean> {
 export async function findPaidOrderForCustomerItem(
   customerItem: CustomerItem,
 ): Promise<{ order: Order; orderItem: OrderItem } | null> {
-  const handoutOrder = await StorageService.Orders.getOrNull(customerItem.orders[0]);
+  const handoutOrder = await Order.findOptional(customerItem.orders[0]);
   const handoutItem = handoutOrder?.orderItems.find(
     (orderItem) =>
-      orderItem.customerItem === customerItem.id ||
-      (orderItem.customerItem === undefined && orderItem.item === customerItem.item),
+      orderItem.customerItemId === customerItem.id ||
+      (orderItem.customerItemId === null && orderItem.itemId === customerItem.item),
   );
   if (!handoutOrder || !handoutItem) {
     return null;
   }
-  if (!handoutItem.movedFromOrder) {
+  if (!handoutItem.movedFromOrderId) {
     return { order: handoutOrder, orderItem: handoutItem };
   }
-  const original = await StorageService.Orders.getOrNull(handoutItem.movedFromOrder);
+  const original = await Order.findOptional(handoutItem.movedFromOrderId);
   const originalItem = original?.orderItems.find((orderItem) =>
-    itemsAreEquivalent(orderItem.item, customerItem.item),
+    itemsAreEquivalent(orderItem.itemId, customerItem.item),
   );
   return original && originalItem ? { order: original, orderItem: originalItem } : null;
 }
@@ -157,7 +151,7 @@ export async function findPaidOrderForCustomerItem(
 /** What the customer paid to get the book. */
 async function paidForCustomerItem(customerItem: CustomerItem): Promise<number> {
   const paid = await findPaidOrderForCustomerItem(customerItem);
-  return paid ? alreadyPaidFor(paid.order, paid.orderItem) : 0;
+  return paid ? alreadyPaidFor(await OrderPayments.exist(paid.order.id), paid.orderItem) : 0;
 }
 
 type Unlinked = Extract<StandCartResolveResult, { kind: "unlinked" }>;
@@ -182,8 +176,8 @@ async function resolveOrderLine(
   branch: Branch,
   now: Date,
 ): Promise<StandCartResolution> {
-  const order = await StorageService.Orders.getOrNull(source.orderId);
-  if (!order || order.customer !== customerId) {
+  const order = await Order.findOptional(source.orderId);
+  if (!order || order.customerId !== customerId) {
     return refused("Fant ikke bestillingen");
   }
   const orderedItem = await ItemModel.find(source.itemId);
@@ -191,7 +185,7 @@ async function resolveOrderLine(
     return refused("Fant ikke boka");
   }
   const orderItem = order.orderItems.find(
-    (candidate) => candidate.item === source.itemId && isOpenOrderItem(candidate),
+    (candidate) => candidate.itemId === source.itemId && isOpenOrderItem(candidate),
   );
   if (!orderItem) {
     return refused(`«${orderedItem.title}» er ikke lenger bestilt`);
@@ -210,31 +204,32 @@ async function resolveOrderLine(
     item = copy;
   }
 
-  const [branchItem, blockedItemIds, peerNote, heldNotes, orderBranch, bringDelivery] =
+  const [branchItem, blockedItemIds, peerNote, heldNotes, orderBranch, bringDelivery, orderPaid] =
     await Promise.all([
       BranchItem.findPair(branchId, item.id),
       itemIdsInActiveUserMatches(customerId),
       peerMatchNote(customerId, item.id),
       alreadyHeldNotes(customerId, item.id),
-      BranchModel.find(order.branch),
+      BranchModel.find(order.branchId),
       isBringDelivery(order),
+      OrderPayments.exist(order.id),
     ]);
   const priced = priceOrderLine({
     branch,
     item,
     branchItem,
-    originalOrder: order,
+    originalOrderPaid: orderPaid,
     originalOrderItem: orderItem,
     blockedByMatch: blockedItemIds.has(source.itemId),
     scanned: blid !== undefined,
     now,
   });
-  const alreadyPaid = alreadyPaidFor(order, orderItem);
+  const alreadyPaid = alreadyPaidFor(orderPaid, orderItem);
   const notes: StandCartNote[] = [...heldNotes];
   if (peerNote) {
     notes.push(peerNote);
   }
-  if (order.branch !== branchId && orderBranch) {
+  if (order.branchId !== branchId && orderBranch) {
     notes.push({ kind: "other-branch", branchName: orderBranch.name });
   }
   if (alreadyPaid > 0) {
@@ -369,12 +364,12 @@ async function placeCopy(
   now: Date,
 ): Promise<StandCartResolution> {
   const taken = new Set(request.takenKeys);
-  for (const order of await placedOrdersOf(request.customerId)) {
+  for (const order of await Order.placedFor(request.customerId)) {
     for (const orderItem of order.orderItems) {
-      if (!isOpenOrderItem(orderItem) || !itemsAreEquivalent(orderItem.item, copy.id)) {
+      if (!isOpenOrderItem(orderItem) || !itemsAreEquivalent(orderItem.itemId, copy.id)) {
         continue;
       }
-      const source = { kind: "order", orderId: order.id, itemId: orderItem.item } as const;
+      const source = { kind: "order", orderId: order.id, itemId: orderItem.itemId } as const;
       if (!taken.has(lineKey(source))) {
         return resolveOrderLine(
           { ...request, ...(blid === null ? {} : { blid }) },
