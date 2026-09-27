@@ -24,7 +24,7 @@ async function getTitles(itemIds: string[]): Promise<Map<string, string>> {
 }
 
 /**
- * Collects every customer and item the rendered matches refer to, in two Mongo reads.
+ * Collects every customer and item the rendered matches refer to, in two reads.
  *
  * Handover counterparties are included deliberately: when a student receives a book from someone
  * outside their own match, naming that person is the whole point of recording the handover, and

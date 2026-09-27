@@ -1,31 +1,17 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import type { QueryClientContract } from "@adonisjs/lucid/types/database";
-import type { Document } from "mongodb";
-
-import {
-  assertRowCount,
-  dropCollection,
-  requiredHexId,
-  skip,
-  timestampsOf,
-  transferCollection,
-  withMongo,
-} from "#database/helpers/mongo_transfer";
-import type { MapResult } from "#database/helpers/mongo_transfer";
-import env from "#start/env";
 
 /**
- * Step 10 of `docs/postgres-migration-plan.md`: deliveries move from MongoDB to Postgres, keeping
+ * Step 10 of the MongoDB → Postgres migration: deliveries move from MongoDB to Postgres, keeping
  * their Mongo ids. The relationship is inverted: the delivery owns a unique `order_id`, and
  * `orders.delivery_id` is dropped once every delivery is in place.
  *
- * Schema fixes made on the way, backed by the staging survey recorded in the plan:
+ * Schema fixes made on the way, backed by a staging survey:
  * - `info` becomes columns: the branch of a pickup, and for Bring the price Bring charges
  *   (`bring_amount`, next to `amount`, which is what the customer paid), the estimated delivery,
  *   the facility and shipment addresses, the postal codes, the product and the tracking number.
  * - The meta fields `user`, `editableFor`, `viewableFor` and `active` are dropped.
  *
- * Only the delivery each order names is transferred (decided in the plan's step 10 section). The
+ * Only the delivery each order names is transferred (decided after the staging survey). The
  * others are dead: most name an unplaced checkout order that the old cleanup deleted, the rest were
  * replaced by a later delivery when the customer picked the delivery method again. Orders naming a
  * delivery that no longer exists (almost all from 2018, before the collection's first document)
@@ -87,28 +73,7 @@ export default class extends BaseSchema {
         AND from_postal_code IS NOT NULL AND to_postal_code IS NOT NULL))`,
     );
 
-    this.defer(async (database) => {
-      if (env.get("API_ENV") === "test") {
-        return;
-      }
-      const orders = await deliveryIdsByOrder(database);
-      const transferred = new Set<string>();
-      await withMongo(async (mongo) => {
-        const { migrated } = await transferCollection({
-          mongo,
-          database,
-          collection: "deliveries",
-          table: "deliveries",
-          map: (document) => mapDelivery(document, orders, transferred),
-        });
-        await assertRowCount(database, "deliveries", migrated);
-        const dangling = [...orders.values()].filter(
-          (deliveryId) => deliveryId !== null && !transferred.has(deliveryId),
-        ).length;
-        console.log(`orders: ${dangling} references to missing deliveries dropped`);
-        await dropCollection(mongo, "deliveries");
-      });
-    });
+    // The MongoDB transfer that ran here (2026-09-27) was removed on 2026-09-28.
 
     this.schema.alterTable("orders", (table) => {
       table.dropColumn("delivery_id");
@@ -127,81 +92,4 @@ export default class extends BaseSchema {
     });
     this.schema.dropTable("deliveries");
   }
-}
-
-/** Every order's `delivery_id`, keyed by order id. */
-async function deliveryIdsByOrder(
-  database: QueryClientContract,
-): Promise<Map<string, string | null>> {
-  const rows: { id: string; delivery_id: string | null }[] = await database
-    .from("orders")
-    .select("id", "delivery_id");
-  return new Map(rows.map((row) => [row.id, row.delivery_id]));
-}
-
-function mapDelivery(
-  document: Document,
-  orders: Map<string, string | null>,
-  transferred: Set<string>,
-): MapResult {
-  const id = requiredHexId(document["_id"], "deliveries._id");
-  const orderId = requiredHexId(document["order"], `deliveries.${id}.order`);
-  if (!orders.has(orderId)) {
-    return skip("order no longer exists");
-  }
-  if (orders.get(orderId) !== id) {
-    return skip("not the delivery its order names");
-  }
-  transferred.add(id);
-
-  const info = recordOf(document["info"]);
-  const method = document["method"];
-  if (method === "branch") {
-    return {
-      row: {
-        id,
-        order_id: orderId,
-        method,
-        amount: document["amount"],
-        branch_id: requiredHexId(info["branch"], `deliveries.${id}.info.branch`),
-        ...timestampsOf(document),
-      },
-    };
-  }
-  const facility = recordOf(info["facilityAddress"]);
-  const shipment = recordOf(info["shipmentAddress"]);
-  return {
-    row: {
-      id,
-      order_id: orderId,
-      method,
-      amount: document["amount"],
-      bring_amount: typeof info["amount"] === "number" ? info["amount"] : null,
-      estimated_delivery:
-        info["estimatedDelivery"] instanceof Date ? info["estimatedDelivery"] : null,
-      facility_address: textOrNull(facility["address"]),
-      facility_postal_code: textOrNull(facility["postalCode"]),
-      facility_postal_city: textOrNull(facility["postalCity"]),
-      shipment_name: textOrNull(shipment["name"]),
-      shipment_address: textOrNull(shipment["address"]),
-      shipment_postal_code: textOrNull(shipment["postalCode"]),
-      shipment_postal_city: textOrNull(shipment["postalCity"]),
-      from_postal_code: textOrNull(info["from"]),
-      to_postal_code: textOrNull(info["to"]),
-      product: textOrNull(info["product"]),
-      tracking_number: textOrNull(info["trackingNumber"]),
-      ...timestampsOf(document),
-    },
-  };
-}
-
-function recordOf(value: unknown): Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-    ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- narrowed to a non-array object
-      (value as Record<string, unknown>)
-    : {};
-}
-
-function textOrNull(value: unknown): string | null {
-  return typeof value === "string" ? value : null;
 }

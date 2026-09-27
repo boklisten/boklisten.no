@@ -1,3 +1,5 @@
+import { DateTime } from "luxon";
+
 import Delivery from "#models/delivery";
 import type Order from "#models/order";
 import Payment from "#models/payment";
@@ -20,9 +22,12 @@ export class PaymentHandler {
     for (const payment of unconfirmed) {
       this.validateMethod(order, payment);
     }
-    for (const payment of unconfirmed) {
-      await payment.merge({ confirmed: true }).save();
-    }
+    await Payment.query()
+      .whereIn(
+        "id",
+        unconfirmed.map(({ id }) => id),
+      )
+      .update({ confirmed: true, updatedAt: DateTime.now() });
   }
 
   private validateMethod(order: Order, payment: Payment): void {

@@ -59,8 +59,9 @@ const FALLBACK_NAME = "Ukjent";
 const DELETED_CUSTOMER_NAME = "Slettet kunde";
 
 /**
- * Mongoose stamps creation and update in separate calls on insert, so the two drift by a
- * millisecond on untouched records; anything closer than this counts as never edited.
+ * Records created while the registry lived in MongoDB had creation and update stamped in separate
+ * calls, so the two drift by a millisecond on untouched records; anything closer than this counts
+ * as never edited.
  */
 const EDIT_TOLERANCE_MS = 1000;
 
@@ -117,7 +118,7 @@ export interface BlidMatch {
 
 /**
  * The search order: by tier, then books a customer currently holds before books at the stand,
- * then by blid (byte order, as the Mongo sort had it). `held` maps a blid to the holding customer;
+ * then by blid (byte order). `held` maps a blid to the holding customer;
  * unregistered legacy blids in it are ignored, the search only lists stickers in the registry.
  */
 export function rankBlidMatches<T extends BlidMatch>(

@@ -1,7 +1,4 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import mongoose from "mongoose";
-
-import env from "#start/env";
 
 /**
  * Message logging, replacing the long-dead Mongo `messages` collection (its webhook operations
@@ -83,36 +80,7 @@ export default class extends BaseSchema {
       table.index(["message_id", "occurred_at"]);
     });
 
-    this.defer(async () => {
-      if (env.get("API_ENV") === "test") {
-        return;
-      }
-
-      const connection = await mongoose
-        .createConnection(env.get("MONGODB_URI").release(), {
-          dbName: env.get("API_ENV") === "production" ? "production" : "staging",
-        })
-        .asPromise();
-      try {
-        const mongo = connection.db;
-        if (!mongo) {
-          throw new Error("mongoose connection has no db handle");
-        }
-        await mongo.dropCollection("messages").catch((error: unknown) => {
-          // NamespaceNotFound: already gone, nothing to drop.
-          const alreadyGone =
-            typeof error === "object" &&
-            error !== null &&
-            "codeName" in error &&
-            error.codeName === "NamespaceNotFound";
-          if (!alreadyGone) {
-            throw error;
-          }
-        });
-      } finally {
-        await connection.close();
-      }
-    });
+    // The MongoDB transfer that ran here (2026-08-31) was removed on 2026-09-28.
   }
 
   override async down() {

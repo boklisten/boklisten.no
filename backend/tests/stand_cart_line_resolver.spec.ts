@@ -7,7 +7,6 @@ import { DateTime } from "luxon";
 import BranchModel from "#models/branch";
 import OrderItem from "#models/order_item";
 import Payment from "#models/payment";
-import { MatchRepository } from "#services/matches/match_repository";
 import { PeerObligations } from "#services/matches/peer_obligations";
 import { StandCartLineResolver } from "#services/stand_cart/stand_cart_line_resolver";
 import User from "#models/user";
@@ -154,7 +153,6 @@ async function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
     await createDelivery({ orderId });
   }
   sandbox.stub(User, "find").resolves(userDouble({ id: OTHER_CUSTOMER_ID, name: "Kari Nordmann" }));
-  sandbox.stub(MatchRepository, "findForCustomer").resolves([]);
   sandbox.stub(PeerObligations, "findPeerSender").resolves(world.peerSender);
 }
 

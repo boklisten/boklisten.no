@@ -1,11 +1,11 @@
+import db from "@adonisjs/lucid/services/db";
 import { DbRememberMeTokensProvider } from "@adonisjs/auth/session";
-import { Exception } from "@adonisjs/core/exceptions";
 import { beforeCreate, belongsTo, column } from "@adonisjs/lucid/orm";
 import type { BelongsTo } from "@adonisjs/lucid/types/relations";
 import type { DateTime } from "luxon";
 
 import Branch from "#models/branch";
-import { assignObjectId } from "#models/helpers/object_id";
+import { assignObjectId, distinctIds } from "#models/helpers/object_id";
 import { UserSchema } from "#database/schema";
 import { phoneDigits } from "#shared/phone_number";
 import type { User as UserDto } from "#shared/user";
@@ -43,21 +43,12 @@ export default class User extends UserSchema {
     return id ? this.find(id) : null;
   }
 
-  /** `findOrFail` for references the legacy documents type as optional but the flow requires. */
-  static async getOrFail(id: string | null | undefined): Promise<User> {
-    const user = await this.findOptional(id);
-    if (user === null) {
-      throw new Exception(`Fant ikke bruker ${id ?? ""}`, { status: 404, code: "E_ROW_NOT_FOUND" });
-    }
-    return user;
-  }
-
   /**
    * The users with the given ids, keyed by id. Ids that do not exist are simply absent, which is
-   * how callers joining user data onto Mongo query results detect a deleted customer.
+   * how callers joining user data onto other query results detect a deleted customer.
    */
   static async byIds(ids: Iterable<string | null | undefined>): Promise<Map<string, User>> {
-    const unique = [...new Set([...ids].filter((id): id is string => typeof id === "string"))];
+    const unique = distinctIds(ids);
     if (unique.length === 0) {
       return new Map();
     }
@@ -66,8 +57,11 @@ export default class User extends UserSchema {
   }
 
   static async namesByIds(ids: Iterable<string | null | undefined>): Promise<Map<string, string>> {
-    const users = await this.byIds(ids);
-    return new Map([...users].map(([id, user]) => [id, user.name]));
+    const rows: { id: string; name: string }[] = await db
+      .from("users")
+      .whereIn("id", distinctIds(ids))
+      .select("id", "name");
+    return new Map(rows.map(({ id, name }) => [id, name]));
   }
 
   static async byEmail(email: string): Promise<User | null> {

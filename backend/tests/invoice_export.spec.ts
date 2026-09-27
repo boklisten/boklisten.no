@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 
 import { toSemicolonCsv } from "#services/invoices/csv";
-import { mongoIdCounter, tripletexRows, vismaRows } from "#services/invoices/invoice_export_rows";
+import { objectIdCounter, tripletexRows, vismaRows } from "#services/invoices/invoice_export_rows";
 import { pupilCustomerNumber } from "#services/invoices/invoice_generator_service";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
@@ -154,7 +154,7 @@ test.group("invoice export: Visma", () => {
     assert.equal(header?.[61], "");
   });
 
-  test("a book line uses the item's Mongo counter as article number and FRI as VAT type", ({
+  test("a book line uses the item's ObjectId counter as article number and FRI as VAT type", ({
     assert,
   }) => {
     const [, line] = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: false });
@@ -166,7 +166,7 @@ test.group("invoice export: Visma", () => {
       "20263071",
       "V",
       "FRI",
-      String(mongoIdCounter(ITEM_ID)),
+      String(objectIdCounter(ITEM_ID)),
       "Psykologi 2 2022",
       1,
       0,
@@ -256,7 +256,7 @@ test.group("invoice export: customer numbers", () => {
   });
 
   test("the article number is the counter part of the item id", ({ assert }) => {
-    assert.equal(mongoIdCounter(ITEM_ID), 0xf9_b3_e6);
+    assert.equal(objectIdCounter(ITEM_ID), 0xf9_b3_e6);
   });
 });
 

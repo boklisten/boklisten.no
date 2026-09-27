@@ -1,5 +1,3 @@
-import { itemsAreEquivalent } from "#shared/item-equivalence";
-
 /**
  * A party to a handover. The stand is a real party, not a missing customer —
  * `null` customer ids from the database are normalised into `{ kind: "stand" }`.
@@ -55,46 +53,6 @@ interface ObligationFacts {
   receiverCustomerId: string | null;
   /** The title owed. Equivalent editions count as the same title. */
   itemId: string;
-}
-
-/**
- * Whether a handover discharges the sender half of this obligation.
- *
- * Ownership follows possession — `CustomerItem.activeByBlid` resolves a blid to its currently active
- * `CustomerItem`, and both peer transfers and stand returns move that record to the new holder. So
- * the party handing a book over is always the party responsible for it, and the only questions left
- * are whether they are this obligation's sender and whether the title matches.
- *
- * Deliberately not keyed on a particular copy: a student holding two copies must get credit for
- * handing over either, and binding one at generation time would make delivering the other credit
- * nobody.
- */
-export function dischargesSenderHalf(
-  obligation: ObligationFacts,
-  fromCustomerId: string | null,
-  itemId: string,
-): boolean {
-  return (
-    obligation.senderCustomerId !== null &&
-    obligation.senderCustomerId === fromCustomerId &&
-    itemsAreEquivalent(obligation.itemId, itemId)
-  );
-}
-
-/**
- * Whether a handover satisfies the receiver half of this obligation. Any copy of the title will do,
- * whoever it came from.
- */
-export function satisfiesReceiverHalf(
-  obligation: ObligationFacts,
-  toCustomerId: string | null,
-  itemId: string,
-): boolean {
-  return (
-    obligation.receiverCustomerId !== null &&
-    obligation.receiverCustomerId === toCustomerId &&
-    itemsAreEquivalent(obligation.itemId, itemId)
-  );
 }
 
 interface ObligationProgress {

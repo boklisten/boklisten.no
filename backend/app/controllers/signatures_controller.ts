@@ -24,7 +24,7 @@ async function getSignatureStatus(detailsId: string) {
   }
 
   await reconcileSignatureTask(userDetail);
-  const newestSignature = await Signature.newestForCustomer(userDetail.id);
+  const newestSignature = await Signature.newestForCustomer(userDetail.id, { withImage: true });
   if (newestSignature?.isValidFor(userDetail)) {
     return {
       image: newestSignature.image.toString("base64"),
@@ -72,13 +72,9 @@ export default class SignaturesController {
     }
   }
   async sendLinkMe(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
-
-    const userDetail = await User.find(detailsId);
-    const branch = await Branch.findOptional(userDetail?.branchMembershipId);
-    if (userDetail) {
-      await DispatchService.sendSignatureLink(userDetail, branch?.name ?? "en filial");
-    }
+    const userDetail = ctx.auth.getUserOrFail();
+    const branch = await Branch.findOptional(userDetail.branchMembershipId);
+    await DispatchService.sendSignatureLink(userDetail, branch?.name ?? "en filial");
   }
   async valid(ctx: HttpContext) {
     const detailsId = ctx.request.param("detailsId");

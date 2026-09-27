@@ -6,7 +6,7 @@ import type { BelongsTo, HasMany } from "@adonisjs/lucid/types/relations";
 
 import Branch from "#models/branch";
 import CustomerItemPeriodExtend from "#models/customer_item_period_extend";
-import { assignObjectId } from "#models/helpers/object_id";
+import { assignObjectId, distinctIds } from "#models/helpers/object_id";
 import Item from "#models/item";
 import { CustomerItemSchema } from "#database/schema";
 import type { CustomerItem as CustomerItemDto } from "#shared/customer-item/customer-item";
@@ -87,7 +87,7 @@ export default class CustomerItem extends CustomerItemSchema {
 
   /** The customer items with the given ids, in no particular order; missing ids are left out. */
   static async findByIds(ids: Iterable<string | null | undefined>): Promise<CustomerItem[]> {
-    const unique = [...new Set([...ids].filter((id): id is string => typeof id === "string"))];
+    const unique = distinctIds(ids);
     if (unique.length === 0) {
       return [];
     }

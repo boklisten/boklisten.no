@@ -225,8 +225,6 @@ function orderedBooksQuery(
 }
 
 export const BranchBooksService = {
-  clusterDeadlines,
-
   async getActiveBooksSummary(branchId: string): Promise<BranchBooksSummary> {
     const { scopeIds } = await resolveScope(branchId);
     const rows: { deadline: Date; itemId: string; direct: string; total: string }[] =

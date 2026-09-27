@@ -90,7 +90,7 @@ export const BranchItemsService = {
   },
 };
 
-/** Trimmed, non-empty, unique; the same rule the transfer from Mongo applied. */
+/** Trimmed, non-empty, unique. */
 function subjectNames(subjects: string[]): string[] {
   return [...new Set(subjects.map((subject) => subject.trim()).filter((s) => s.length > 0))];
 }

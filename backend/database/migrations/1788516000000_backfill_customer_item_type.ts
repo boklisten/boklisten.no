@@ -1,7 +1,4 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import mongoose from "mongoose";
-
-import env from "#start/env";
 
 /**
  * CustomerItems created before `type` existed (Aug 2018 - Jan 2019, 3 503 on staging) lack the
@@ -12,33 +9,7 @@ import env from "#start/env";
  */
 export default class extends BaseSchema {
   override async up() {
-    this.defer(async () => {
-      if (env.get("API_ENV") === "test") {
-        return;
-      }
-
-      const connection = await mongoose
-        .createConnection(env.get("MONGODB_URI").release(), {
-          dbName: env.get("API_ENV") === "production" ? "production" : "staging",
-        })
-        .asPromise();
-      try {
-        const mongo = connection.db;
-        if (!mongo) {
-          throw new Error("mongoose connection has no db handle");
-        }
-
-        // { type: null } matches documents missing the field and explicit nulls alike
-        const result = await mongo
-          .collection("customeritems")
-          .updateMany({ type: null }, { $set: { type: "rent" } });
-        console.log(
-          `customerItem normalization: type backfilled to "rent" on ${result.modifiedCount} customerItems`,
-        );
-      } finally {
-        await connection.close();
-      }
-    });
+    // Changed MongoDB only; emptied when MongoDB was decommissioned (2026-09-28).
   }
 
   override async down() {

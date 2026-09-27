@@ -1,13 +1,5 @@
-import {
-  defineRailway,
-  github,
-  mongo,
-  postgres,
-  preserve,
-  project,
-  service,
-  volume,
-} from "railway/iac";
+import { defineRailway, github, postgres, preserve, project, service, volume } from "railway/iac";
+import type { ProjectResourceInput } from "railway/iac";
 
 const REGION = "europe-west4-drams3a";
 const MONOREPO = "boklisten/boklisten.no";
@@ -18,16 +10,12 @@ export default defineRailway((ctx) => {
   const host = (domain: string) => (isProduction ? domain : `staging.${domain}`);
 
   const postgresDb = postgres("Postgres", { region: REGION });
-  const mongoDb = mongo("Mongo", { region: REGION });
   if (!isProduction) {
     postgresDb.networking = { tcpProxies: { "5432": {} } };
-    mongoDb.networking = { tcpProxies: { "27017": {} } };
-    mongoDb.deploy = { sleepApplication: true };
     // Do not sleep Postgres in staging to allow for migrations
   }
 
   const postgresVolume = volume("postgres-volume", { region: REGION, sizeMB: 50_000 });
-  const mongodbVolume = volume("mongodb-volume", { region: REGION, sizeMB: 20_000 });
 
   const backend = service("api.boklisten.no", {
     source: github(MONOREPO, { branch }),
@@ -40,7 +28,6 @@ export default defineRailway((ctx) => {
     domains: [host("api.boklisten.no")],
     env: {
       HOST: "::",
-      MONGODB_URI: mongoDb.env.MONGO_URL,
       POSTGRES_URL: postgresDb.env.DATABASE_URL,
       APP_KEY: preserve(),
       BRING_API_ID: preserve(),
@@ -75,40 +62,24 @@ export default defineRailway((ctx) => {
     },
   });
 
-  type ServiceConfig = NonNullable<Parameters<typeof service>[1]>;
-  const cronJob = (
-    name: string,
-    directory: string,
-    { schedule, env }: { schedule: string; env: ServiceConfig["env"] },
-  ) =>
-    service(name, {
-      source: github(MONOREPO, { branch, rootDirectory: `/cron_jobs/${directory}` }),
-      build: { watchPatterns: [`/cron_jobs/${directory}/**`] },
-      deploy: { cronSchedule: schedule, restartPolicyType: "NEVER" },
-      replicas: { [REGION]: 1 },
-      env,
-    });
-
-  const cronJobs = isProduction
-    ? [
-        cronJob("Copy Postgres to Staging", "copy_prod_postgres_to_staging", {
-          schedule: "0 4 * * *",
-          env: {
-            SOURCE_DATABASE_URL: postgresDb.env.DATABASE_URL,
-            TARGET_DATABASE_URL: preserve(),
-          },
+  const resources: ProjectResourceInput[] = [frontend, backend, postgresDb, postgresVolume];
+  if (isProduction) {
+    resources.push(
+      service("Copy Postgres to Staging", {
+        source: github(MONOREPO, {
+          branch,
+          rootDirectory: "/cron_jobs/copy_prod_postgres_to_staging",
         }),
-        cronJob("Copy Mongo to Staging", "copy_prod_mongodb_to_staging", {
-          schedule: "0 4 * * *",
-          env: {
-            FROM_MONGODB_URI: mongoDb.env.MONGO_URL,
-            TO_MONGODB_URI: preserve(),
-          },
-        }),
-      ]
-    : [];
+        build: { watchPatterns: ["/cron_jobs/copy_prod_postgres_to_staging/**"] },
+        deploy: { cronSchedule: "0 4 * * *", restartPolicyType: "NEVER" },
+        replicas: { [REGION]: 1 },
+        env: {
+          SOURCE_DATABASE_URL: postgresDb.env.DATABASE_URL,
+          TARGET_DATABASE_URL: preserve(),
+        },
+      }),
+    );
+  }
 
-  return project("boklisten.no", {
-    resources: [frontend, backend, postgresDb, mongoDb, postgresVolume, mongodbVolume, ...cronJobs],
-  });
+  return project("boklisten.no", { resources });
 });

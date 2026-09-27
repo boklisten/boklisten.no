@@ -67,7 +67,7 @@ test.group("MessageLogService", (group) => {
 
   test("records send results with an internal event", async ({ assert }) => {
     const message = await logSms("91234567");
-    await MessageLogService.recordSendResult(message, { status: "sent" });
+    await MessageLogService.recordSendResult([message], { status: "sent" });
 
     const stored = await Message.findOrFail(message?.id);
     assert.equal(stored.status, "sent");
@@ -79,28 +79,32 @@ test.group("MessageLogService", (group) => {
 
   test("provider events advance status by rank and never regress it", async ({ assert }) => {
     const message = await logSms("91234567");
-    await MessageLogService.recordSendResult(message, { status: "sent" });
+    await MessageLogService.recordSendResult([message], { status: "sent" });
 
-    await MessageLogService.recordProviderEvent({
-      messageId: message!.id,
-      source: "twilio",
-      event: "delivered",
-      occurredAt: DateTime.now(),
-      providerEventId: "SM1:delivered",
-      providerMessageId: "SM1",
-    });
+    await MessageLogService.recordProviderEvents([
+      {
+        messageId: message!.id,
+        source: "twilio",
+        event: "delivered",
+        occurredAt: DateTime.now(),
+        providerEventId: "SM1:delivered",
+        providerMessageId: "SM1",
+      },
+    ]);
     let stored = await Message.findOrFail(message?.id);
     assert.equal(stored.status, "delivered");
     assert.equal(stored.providerMessageId, "SM1");
 
     // A late "queued" (ranked below delivered) only logs the event, the status stays.
-    await MessageLogService.recordProviderEvent({
-      messageId: message!.id,
-      source: "twilio",
-      event: "queued",
-      occurredAt: DateTime.now(),
-      providerEventId: "SM1:queued",
-    });
+    await MessageLogService.recordProviderEvents([
+      {
+        messageId: message!.id,
+        source: "twilio",
+        event: "queued",
+        occurredAt: DateTime.now(),
+        providerEventId: "SM1:queued",
+      },
+    ]);
     stored = await Message.findOrFail(message?.id);
     assert.equal(stored.status, "delivered");
 
@@ -110,14 +114,16 @@ test.group("MessageLogService", (group) => {
 
   test("failure events outrank delivery and stick", async ({ assert }) => {
     const message = await logSms("91234567");
-    await MessageLogService.recordProviderEvent({
-      messageId: message!.id,
-      source: "twilio",
-      event: "undelivered",
-      errorCode: "30003",
-      occurredAt: DateTime.now(),
-      providerEventId: "SM2:undelivered",
-    });
+    await MessageLogService.recordProviderEvents([
+      {
+        messageId: message!.id,
+        source: "twilio",
+        event: "undelivered",
+        errorCode: "30003",
+        occurredAt: DateTime.now(),
+        providerEventId: "SM2:undelivered",
+      },
+    ]);
     const stored = await Message.findOrFail(message?.id);
     assert.equal(stored.status, "failed");
     assert.equal(stored.statusDetail, "30003");
@@ -126,27 +132,50 @@ test.group("MessageLogService", (group) => {
   test("duplicate provider events are dropped on provider_event_id", async ({ assert }) => {
     const message = await logSms("91234567");
     for (let attempt = 0; attempt < 2; attempt++) {
-      await MessageLogService.recordProviderEvent({
-        messageId: message!.id,
-        source: "sendgrid",
-        event: "delivered",
-        occurredAt: DateTime.now(),
-        providerEventId: "sg-evt-1",
-      });
+      await MessageLogService.recordProviderEvents([
+        {
+          messageId: message!.id,
+          source: "sendgrid",
+          event: "delivered",
+          occurredAt: DateTime.now(),
+          providerEventId: "sg-evt-1",
+        },
+      ]);
     }
     const events = await MessageEvent.query().where("messageId", message!.id);
     assert.lengthOf(events, 1);
   });
 
-  test("provider events for unknown messages are reported, not thrown", async ({ assert }) => {
-    const handled = await MessageLogService.recordProviderEvent({
-      messageId: randomUUID(),
-      source: "sendgrid",
-      event: "delivered",
+  test("provider events for unknown messages are ignored, not thrown", async ({ assert }) => {
+    const recorded = await MessageLogService.recordProviderEvents([
+      {
+        messageId: randomUUID(),
+        source: "sendgrid",
+        event: "delivered",
+        occurredAt: DateTime.now(),
+        providerEventId: "sg-evt-2",
+      },
+    ]);
+    assert.equal(recorded, 0);
+  });
+
+  test("a batch keeps the highest-ranked status per message", async ({ assert }) => {
+    const message = await logSms("91234567");
+    const event = (name: string) => ({
+      messageId: message!.id,
+      source: "sendgrid" as const,
+      event: name,
       occurredAt: DateTime.now(),
-      providerEventId: "sg-evt-2",
+      providerEventId: `batch-${name}`,
     });
-    assert.isFalse(handled);
+    await MessageLogService.recordProviderEvents([
+      event("open"),
+      event("delivered"),
+      event("processed"),
+    ]);
+    const stored = await Message.findOrFail(message?.id);
+    assert.equal(stored.status, "opened");
+    assert.lengthOf(await MessageEvent.query().where("messageId", stored.id), 3);
   });
 
   test("customerLog collects messages to the customer's and guardian's current contact info", async ({
@@ -199,7 +228,7 @@ test.group("MessageLogService", (group) => {
 
   test("metrics fills every day in the period and counts failures", async ({ assert }) => {
     const sms = await logSms("91234567");
-    await MessageLogService.recordSendResult(sms, { status: "send-failed", reason: "boom" });
+    await MessageLogService.recordSendResult([sms], { status: "send-failed", reason: "boom" });
     await MessageLogService.logOutgoingMessage({
       channel: "email",
       recipient: "elev@example.com",
@@ -222,7 +251,7 @@ test.group("MessageLogService", (group) => {
     const sendout = await MessageLogService.createSendout({ kind: "reminder", name: "Test" });
     const first = await logSms("91234567", { sendoutId: sendout?.id });
     await logSms("98765432", { sendoutId: sendout?.id });
-    await MessageLogService.recordSendResult(first, { status: "sent" });
+    await MessageLogService.recordSendResult([first], { status: "sent" });
 
     const stats = await MessageLogService.sendoutStats(10);
     assert.lengthOf(stats, 1);

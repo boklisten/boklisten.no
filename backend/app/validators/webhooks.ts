@@ -9,7 +9,7 @@ export const sendgridEventValidator = vine.create(
   vine
     .object({
       bl_api_env: vine.string(),
-      bl_message_id: vine.string().minLength(1),
+      bl_message_id: vine.string().uuid(),
       event: vine.string(),
       sg_event_id: vine.string(),
       sg_message_id: vine.string().optional(),

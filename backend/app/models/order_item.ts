@@ -1,4 +1,5 @@
 import { belongsTo } from "@adonisjs/lucid/orm";
+import db from "@adonisjs/lucid/services/db";
 import type { ChainableContract } from "@adonisjs/lucid/types/querybuilder";
 import type { BelongsTo } from "@adonisjs/lucid/types/relations";
 
@@ -33,6 +34,21 @@ export default class OrderItem extends OrderItemSchema {
       .where("order_items.handout", false)
       .where("order_items.delivered", false)
       .whereNull("order_items.moved_to_order_id");
+  }
+
+  /**
+   * The customer's open lines on placed orders, as a query on `order_items` joined with `orders`,
+   * oldest order first and in receipt order.
+   */
+  static openLinesOf(customerId: string, types: readonly OrderItemType[] = OPEN_ORDER_ITEM_TYPES) {
+    return OrderItem.whereOpen(
+      db.from("order_items").join("orders", "orders.id", "order_items.order_id"),
+      types,
+    )
+      .where("orders.customer_id", customerId)
+      .where("orders.placed", true)
+      .orderBy("orders.created_at")
+      .orderBy("order_items.position");
   }
 
   /** The book's current catalogue title; the line must have been read through `Order`. */

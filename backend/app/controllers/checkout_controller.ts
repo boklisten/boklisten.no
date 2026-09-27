@@ -2,7 +2,6 @@ import type { HttpContext } from "@adonisjs/core/http";
 
 import Branch from "#models/branch";
 import Order from "#models/order";
-import User from "#models/user";
 import UnauthorizedException from "#exceptions/unauthorized_exception";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderService } from "#services/order_service";
@@ -16,10 +15,10 @@ import {
 
 export default class CheckoutController {
   async initialize(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const user = ctx.auth.getUserOrFail();
     const { cartItems } = await ctx.request.validateUsing(initializeCheckoutValidator);
-    await assertSignedForCheckout(await User.findOrFail(detailsId), cartItems);
-    const order = await OrderService.createFromCart(detailsId, cartItems);
+    await assertSignedForCheckout(user, cartItems);
+    const order = await OrderService.createFromCart(user.id, cartItems);
     const branch = await Branch.findOrFail(order.branchId);
     const isDeliveryFree = branch.responsibleForDelivery;
 
@@ -32,13 +31,16 @@ export default class CheckoutController {
   }
   async confirm(ctx: HttpContext) {
     const { id: detailsId } = ctx.auth.getUserOrFail();
-    const orderId = ctx.request.param("orderId");
-    const order = await Order.getOrFail(orderId);
-    if (detailsId !== order.customerId || order.checkoutState || order.amount > 0) {
-      throw new Error("You do not have permission to confirm this order");
-    }
-
-    await new OrderPlacedHandler().placeOrder(order, detailsId);
+    const orderId = String(ctx.request.param("orderId"));
+    await Order.whileLocked(orderId, async () => {
+      const order = await Order.getOrFail(orderId);
+      if (detailsId !== order.customerId || order.checkoutState || order.amount > 0) {
+        throw new Error("You do not have permission to confirm this order");
+      }
+      if (!order.placed) {
+        await new OrderPlacedHandler().placeOrder(order, detailsId);
+      }
+    });
   }
 
   async vippsCallback(ctx: HttpContext) {

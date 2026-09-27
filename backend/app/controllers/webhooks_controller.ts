@@ -1,5 +1,4 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import logger from "@adonisjs/core/services/logger";
 import { DateTime } from "luxon";
 import twilio from "twilio";
 
@@ -37,29 +36,25 @@ export default class WebhooksController {
       return ctx.response.badRequest({ error: "expected an array of events" });
     }
 
+    const recorded = [];
     for (const event of events) {
-      try {
-        const [, data] = await sendgridEventValidator.tryValidate(event);
-        if (!data || data.bl_api_env !== env.get("API_ENV")) {
-          continue;
-        }
-
-        await MessageLogService.recordProviderEvent({
-          messageId: data.bl_message_id,
-          source: "sendgrid",
-          event: data.event,
-          errorCode: data.status ?? null,
-          reason: data.reason ?? null,
-          payload: data,
-          occurredAt: data.timestamp ? DateTime.fromSeconds(data.timestamp) : DateTime.now(),
-          providerEventId: data.sg_event_id,
-          providerMessageId: data.sg_message_id ?? null,
-        });
-      } catch (error) {
-        // One broken event must not block the rest of the batch; SendGrid re-posts on non-2xx.
-        logger.error(`failed to record SendGrid event: ${String(error)}`);
+      const [, data] = await sendgridEventValidator.tryValidate(event);
+      if (!data || data.bl_api_env !== env.get("API_ENV")) {
+        continue;
       }
+      recorded.push({
+        messageId: data.bl_message_id,
+        source: "sendgrid" as const,
+        event: data.event,
+        errorCode: data.status ?? null,
+        reason: data.reason ?? null,
+        payload: data,
+        occurredAt: data.timestamp ? DateTime.fromSeconds(data.timestamp) : DateTime.now(),
+        providerEventId: data.sg_event_id,
+        providerMessageId: data.sg_message_id ?? null,
+      });
     }
+    await MessageLogService.recordProviderEvents(recorded);
 
     return { received: true };
   }
@@ -95,17 +90,19 @@ export default class WebhooksController {
       return ctx.response.badRequest({ error: "missing MessageSid or MessageStatus" });
     }
 
-    await MessageLogService.recordProviderEvent({
-      messageId,
-      source: "twilio",
-      event: data.MessageStatus,
-      errorCode: data.ErrorCode ?? null,
-      payload: data,
-      occurredAt: DateTime.now(),
-      // Twilio sends no event id; one status per message is enough to drop re-posts.
-      providerEventId: `${data.MessageSid}:${data.MessageStatus}`,
-      providerMessageId: data.MessageSid,
-    });
+    await MessageLogService.recordProviderEvents([
+      {
+        messageId,
+        source: "twilio",
+        event: data.MessageStatus,
+        errorCode: data.ErrorCode ?? null,
+        payload: data,
+        occurredAt: DateTime.now(),
+        // Twilio sends no event id; one status per message is enough to drop re-posts.
+        providerEventId: `${data.MessageSid}:${data.MessageStatus}`,
+        providerMessageId: data.MessageSid,
+      },
+    ]);
 
     return { received: true };
   }

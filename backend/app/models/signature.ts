@@ -5,6 +5,9 @@ import { SignatureSchema } from "#database/schema";
 
 export const SIGNATURE_NUM_MONTHS_VALID = 4 * 12;
 
+/** Every column but the image, which only the pages showing the signature need. */
+const WITHOUT_IMAGE = ["id", "customerDetailsId", "signingName", "signedByGuardian", "createdAt"];
+
 export default class Signature extends SignatureSchema {
   static newestFirst = scope((query) => {
     void query.orderBy("createdAt", "desc").orderBy("id", "desc");
@@ -23,11 +26,17 @@ export default class Signature extends SignatureSchema {
     return newestSignature?.isValidFor(userDetail) ? newestSignature : null;
   }
 
-  static async newestForCustomer(customerDetailsId: string): Promise<Signature | null> {
-    return this.query()
+  static async newestForCustomer(
+    customerDetailsId: string,
+    { withImage = false } = {},
+  ): Promise<Signature | null> {
+    const query = this.query()
       .where("customerDetailsId", customerDetailsId)
-      .withScopes((scopes) => scopes.newestFirst())
-      .first();
+      .withScopes((scopes) => scopes.newestFirst());
+    if (!withImage) {
+      void query.select(WITHOUT_IMAGE);
+    }
+    return query.first();
   }
 
   /**
@@ -35,7 +44,7 @@ export default class Signature extends SignatureSchema {
    */
   static async newestPerCustomer(customerDetailsIds: string[]): Promise<Signature[]> {
     return this.query()
-      .select("id", "customerDetailsId", "signedByGuardian", "createdAt")
+      .select(WITHOUT_IMAGE)
       .whereIn("customerDetailsId", customerDetailsIds)
       .distinctOn("customerDetailsId")
       .orderBy("customerDetailsId")
@@ -65,12 +74,6 @@ export default class Signature extends SignatureSchema {
       void query.whereRaw('("created_at", "id") < (?, ?)', [cursor.createdAt, cursor.id]);
     }
     return query;
-  }
-
-  static async reassignCustomer(fromDetailsId: string, toDetailsId: string): Promise<void> {
-    await this.query()
-      .where("customerDetailsId", fromDetailsId)
-      .update({ customerDetailsId: toDetailsId });
   }
 
   /**

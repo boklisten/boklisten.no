@@ -149,64 +149,66 @@ export const VippsCheckoutService = {
     return { token, checkoutFrontendUrl };
   },
   async update(session: VippsCheckoutSession) {
-    const order = await Order.getOrFail(session.reference);
-    if (
-      order.checkoutState === session.sessionState ||
-      order.checkoutState === "PaymentSuccessful"
-    ) {
-      return;
-    }
+    await Order.whileLocked(session.reference, async () => {
+      const order = await Order.getOrFail(session.reference);
+      if (
+        order.checkoutState === session.sessionState ||
+        order.checkoutState === "PaymentSuccessful"
+      ) {
+        return;
+      }
 
-    order.checkoutState = session.sessionState;
-    await order.save();
+      order.checkoutState = session.sessionState;
+      await order.save();
 
-    if (session.sessionState !== "PaymentSuccessful") {
-      return;
-    }
+      if (session.sessionState !== "PaymentSuccessful") {
+        return;
+      }
 
-    if (order.customerId === null) {
-      throw new Error(`order "${order.id}" has no customer`);
-    }
-    const userDetail = await updateUserDetailWithBillingDetails(session, order.customerId);
+      if (order.customerId === null) {
+        throw new Error(`order "${order.id}" has no customer`);
+      }
+      const userDetail = await updateUserDetailWithBillingDetails(session, order.customerId);
 
-    let deliveryPrice = 0;
-    if (session.shippingDetails?.shippingMethodId?.includes("mail")) {
-      deliveryPrice = Math.ceil((session.shippingDetails.amount?.value ?? 0) / 100);
-      await Delivery.create({
+      let deliveryPrice = 0;
+      if (session.shippingDetails?.shippingMethodId?.includes("mail")) {
+        deliveryPrice = Math.ceil((session.shippingDetails.amount?.value ?? 0) / 100);
+        await Delivery.create({
+          orderId: order.id,
+          method: "bring",
+          amount: deliveryPrice,
+          bringAmount: deliveryPrice,
+          estimatedDelivery: DateTime.now().plus({ days: deliveryDays() + 2 }),
+          facilityAddress: "Martin Lingesvei 25",
+          facilityPostalCode: "1364",
+          facilityPostalCity: "FORNEBU",
+          shipmentName:
+            session.shippingDetails.firstName && session.shippingDetails.lastName
+              ? `${session.shippingDetails.firstName} ${session.shippingDetails.lastName}`
+              : userDetail.name,
+          shipmentAddress: session.shippingDetails.streetAddress ?? userDetail.address,
+          shipmentPostalCode: session.shippingDetails.postalCode ?? userDetail.postCode,
+          shipmentPostalCity: session.shippingDetails.city ?? userDetail.postCity,
+          fromPostalCode: "1364",
+          toPostalCode: session.shippingDetails.postalCode ?? userDetail.postCode,
+          product: session.shippingDetails.shippingMethodId === "mailbox" ? "3584" : "SERVICEPAKKE",
+        });
+      }
+
+      await Payment.create({
         orderId: order.id,
-        method: "bring",
-        amount: deliveryPrice,
-        bringAmount: deliveryPrice,
-        estimatedDelivery: DateTime.now().plus({ days: deliveryDays() + 2 }),
-        facilityAddress: "Martin Lingesvei 25",
-        facilityPostalCode: "1364",
-        facilityPostalCity: "FORNEBU",
-        shipmentName:
-          session.shippingDetails.firstName && session.shippingDetails.lastName
-            ? `${session.shippingDetails.firstName} ${session.shippingDetails.lastName}`
-            : userDetail.name,
-        shipmentAddress: session.shippingDetails.streetAddress ?? userDetail.address,
-        shipmentPostalCode: session.shippingDetails.postalCode ?? userDetail.postCode,
-        shipmentPostalCity: session.shippingDetails.city ?? userDetail.postCity,
-        fromPostalCode: "1364",
-        toPostalCode: session.shippingDetails.postalCode ?? userDetail.postCode,
-        product: session.shippingDetails.shippingMethodId === "mailbox" ? "3584" : "SERVICEPAKKE",
+        method: "vipps-checkout",
+        amount: order.amount + deliveryPrice,
+        confirmed: false,
       });
-    }
 
-    await Payment.create({
-      orderId: order.id,
-      method: "vipps-checkout",
-      amount: order.amount + deliveryPrice,
-      confirmed: false,
+      await new OrderPlacedHandler().placeOrder(order, order.customerId);
+
+      try {
+        await VippsPaymentService.payment.capture(order.id, (order.amount + deliveryPrice) * 100);
+      } catch (error) {
+        Sentry.captureException(error);
+      }
     });
-
-    await new OrderPlacedHandler().placeOrder(order, order.customerId);
-
-    try {
-      await VippsPaymentService.payment.capture(order.id, (order.amount + deliveryPrice) * 100);
-    } catch (error) {
-      Sentry.captureException(error);
-    }
   },
 };

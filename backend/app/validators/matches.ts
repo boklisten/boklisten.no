@@ -76,7 +76,7 @@ const buildOptionalPlanFields = () =>
     Object.entries(planFields).map(([key, field]) => [key, field().optional()]),
   ) as { [K in keyof PlanFields]: ReturnType<ReturnType<PlanFields[K]>["optional"]> };
 
-export const matchRoundPlanSchema = vine.object({
+const matchRoundPlanSchema = vine.object({
   name: vine.string().minLength(1),
   ...buildPlanFields(),
 });
@@ -99,7 +99,7 @@ export const matchTransferValidator = vine.create(matchTransferSchema);
  * while the plan itself may only change before the round has been generated. Both arrive here; the
  * controller is what refuses plan edits once matches exist.
  */
-export const matchRoundPatchSchema = vine.object({
+const matchRoundPatchSchema = vine.object({
   name: vine.string().minLength(1).optional(),
   status: vine.enum(["draft", "active"]).optional(),
   ...buildOptionalPlanFields(),

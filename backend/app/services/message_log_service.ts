@@ -1,9 +1,11 @@
+import { randomUUID } from "node:crypto";
+
 import logger from "@adonisjs/core/services/logger";
 import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
 
 import Message from "#models/message";
-import MessageEvent from "#models/message_event";
+import type MessageEvent from "#models/message_event";
 import Sendout from "#models/sendout";
 import User from "#models/user";
 import type {
@@ -114,11 +116,7 @@ async function createSendout(input: {
   }
 }
 
-/**
- * Records an outgoing message before the provider is called. Logging must never break sending, so
- * failures return null and the send proceeds unlogged.
- */
-async function logOutgoingMessage(input: {
+interface OutgoingMessage {
   channel: MessageChannel;
   recipient: string;
   context: MessageLogContext;
@@ -126,56 +124,93 @@ async function logOutgoingMessage(input: {
   smsBody?: string | null;
   templateId?: string | null;
   templateData?: Record<string, unknown>;
-}): Promise<Message | null> {
-  try {
-    return await Message.create({
-      channel: input.channel,
-      recipient: normalizeRecipient(input.channel, input.recipient),
-      messageType: input.context.messageType,
-      sendoutId: input.context.sendoutId ?? null,
-      regardingCustomerDetailsId: input.context.regardingCustomerDetailsId ?? null,
-      subject: input.subject ?? null,
-      smsBody: input.smsBody ?? null,
-      templateId: input.templateId ?? null,
-      templateData: redactTemplateData(input.templateData),
-      status: "created",
-    });
-  } catch (error) {
-    logger.error(`failed to log outgoing message to "${input.recipient}": ${String(error)}`);
-    return null;
-  }
-}
-
-/** Records the immediate outcome of handing the message to the provider. */
-async function recordSendResult(
-  message: Message | null,
-  result: { status: "sent" | "send-failed" | "skipped"; reason?: string },
-): Promise<void> {
-  if (!message) {
-    return;
-  }
-  try {
-    await MessageEvent.create({
-      messageId: message.id,
-      source: "internal",
-      event: result.status,
-      reason: result.reason ?? null,
-      occurredAt: DateTime.now(),
-    });
-    message.status = result.status;
-    message.statusDetail = result.reason ?? null;
-    await message.save();
-  } catch (error) {
-    logger.error(`failed to record send result for message "${message.id}": ${String(error)}`);
-  }
 }
 
 /**
- * Appends a provider webhook event and advances the message status when the event outranks the
- * current one. Duplicate webhook deliveries are dropped on `provider_event_id`. Returns false when
- * the message is unknown (e.g. an event for the other environment or a deleted row).
+ * Records outgoing messages before the provider is called. Logging must never break sending, so a
+ * failure returns nulls and the send proceeds unlogged.
  */
-async function recordProviderEvent(input: {
+async function logOutgoingMessages(inputs: OutgoingMessage[]): Promise<(Message | null)[]> {
+  if (inputs.length === 0) {
+    return [];
+  }
+  const now = DateTime.now().toSQL();
+  try {
+    const rows: Record<string, unknown>[] = await db
+      .table("messages")
+      .multiInsert(
+        inputs.map((input) => {
+          const templateData = redactTemplateData(input.templateData);
+          return {
+            id: randomUUID(),
+            channel: input.channel,
+            recipient: normalizeRecipient(input.channel, input.recipient),
+            message_type: input.context.messageType,
+            sendout_id: input.context.sendoutId ?? null,
+            regarding_customer_details_id: input.context.regardingCustomerDetailsId ?? null,
+            subject: input.subject ?? null,
+            sms_body: input.smsBody ?? null,
+            template_id: input.templateId ?? null,
+            template_data: templateData ? JSON.stringify(templateData) : null,
+            status: "created",
+            created_at: now,
+            updated_at: now,
+          };
+        }),
+      )
+      .returning("*");
+    return rows.map((row) => Message.$createFromAdapterResult(row));
+  } catch (error) {
+    logger.error(`failed to log ${inputs.length} outgoing message(s): ${String(error)}`);
+    return inputs.map(() => null);
+  }
+}
+
+async function logOutgoingMessage(input: OutgoingMessage): Promise<Message | null> {
+  const [message] = await logOutgoingMessages([input]);
+  return message ?? null;
+}
+
+/** Records the immediate outcome of handing the messages to the provider. */
+async function recordSendResult(
+  messages: (Pick<Message, "id"> | null)[],
+  result: {
+    status: "sent" | "send-failed" | "skipped";
+    reason?: string;
+    providerMessageId?: string;
+  },
+): Promise<void> {
+  const ids = messages.flatMap((message) => (message ? [message.id] : []));
+  if (ids.length === 0) {
+    return;
+  }
+  const now = DateTime.now();
+  try {
+    await db.table("message_events").multiInsert(
+      ids.map((id) => ({
+        message_id: id,
+        source: "internal",
+        event: result.status,
+        reason: result.reason ?? null,
+        occurred_at: now.toSQL(),
+        created_at: now.toSQL(),
+        updated_at: now.toSQL(),
+      })),
+    );
+    await Message.query()
+      .whereIn("id", ids)
+      .update({
+        status: result.status,
+        statusDetail: result.reason ?? null,
+        ...(result.providerMessageId ? { providerMessageId: result.providerMessageId } : {}),
+        updatedAt: now,
+      });
+  } catch (error) {
+    logger.error(`failed to record send result for ${ids.length} message(s): ${String(error)}`);
+  }
+}
+
+interface ProviderEvent {
   messageId: string;
   source: "twilio" | "sendgrid";
   event: string;
@@ -185,44 +220,83 @@ async function recordProviderEvent(input: {
   occurredAt: DateTime;
   providerEventId: string;
   providerMessageId?: string | null;
-}): Promise<boolean> {
-  const message = await Message.find(input.messageId);
-  if (!message) {
-    return false;
+}
+
+function statusRankSql(column: string) {
+  const cases = Object.entries(STATUS_RANK).map(
+    ([status, rank]) => `WHEN '${status}' THEN ${rank}`,
+  );
+  return `CASE ${column} ${cases.join(" ")} END`;
+}
+
+/**
+ * Appends provider webhook events and advances each message's status when an event outranks the
+ * current one. Duplicate deliveries are dropped on `provider_event_id`, events for unknown messages
+ * (the other environment, deleted rows) are ignored. Returns how many events named a known message.
+ */
+async function recordProviderEvents(events: ProviderEvent[]): Promise<number> {
+  const messageIds = [...new Set(events.map(({ messageId }) => messageId))];
+  const known = new Set(
+    (await db.from("messages").whereIn("id", messageIds).select("id")).map(
+      (row: { id: string }) => row.id,
+    ),
+  );
+  const recorded = events.filter(({ messageId }) => known.has(messageId));
+  if (recorded.length === 0) {
+    return 0;
   }
 
-  const inserted = await db
+  const now = DateTime.now().toSQL();
+  const inserted: { provider_event_id: string }[] = await db
     .table("message_events")
-    .insert({
-      message_id: message.id,
-      source: input.source,
-      event: input.event,
-      error_code: input.errorCode ?? null,
-      reason: input.reason ?? null,
-      payload: input.payload ? JSON.stringify(input.payload) : null,
-      provider_event_id: input.providerEventId,
-      occurred_at: input.occurredAt.toSQL(),
-      created_at: DateTime.now().toSQL(),
-      updated_at: DateTime.now().toSQL(),
-    })
+    .multiInsert(
+      recorded.map((event) => ({
+        message_id: event.messageId,
+        source: event.source,
+        event: event.event,
+        error_code: event.errorCode ?? null,
+        reason: event.reason ?? null,
+        payload: event.payload ? JSON.stringify(event.payload) : null,
+        provider_event_id: event.providerEventId,
+        occurred_at: event.occurredAt.toSQL(),
+        created_at: now,
+        updated_at: now,
+      })),
+    )
     .onConflict("provider_event_id")
     .ignore()
-    .returning("id");
-  if (inserted.length === 0) {
-    return true;
-  } // duplicate webhook delivery
+    .returning("provider_event_id");
+  const fresh = new Set(inserted.map((row) => row.provider_event_id));
 
-  const statusMap = input.source === "twilio" ? TWILIO_STATUS_MAP : SENDGRID_EVENT_MAP;
-  const newStatus = statusMap[input.event];
-  if (newStatus && STATUS_RANK[newStatus] > STATUS_RANK[message.status]) {
-    message.status = newStatus;
-    message.statusDetail = input.reason ?? input.errorCode ?? null;
+  const updates = recorded
+    .filter(({ providerEventId }) => fresh.has(providerEventId))
+    .map((event) => ({
+      id: event.messageId,
+      status:
+        (event.source === "twilio" ? TWILIO_STATUS_MAP : SENDGRID_EVENT_MAP)[event.event] ?? null,
+      status_detail: event.reason ?? event.errorCode ?? null,
+      provider_message_id: event.providerMessageId ?? null,
+    }))
+    .toSorted(
+      (a, b) => (a.status ? STATUS_RANK[a.status] : -1) - (b.status ? STATUS_RANK[b.status] : -1),
+    );
+  // Postgres applies one row per target in an UPDATE ... FROM, so keep each message's top event.
+  const byMessage = new Map(updates.map((update) => [update.id, update]));
+  if (byMessage.size > 0) {
+    const outranks = `v.status IS NOT NULL AND ${statusRankSql("v.status")} > ${statusRankSql("m.status")}`;
+    await db.rawQuery(
+      `UPDATE messages AS m SET
+         status = CASE WHEN ${outranks} THEN v.status ELSE m.status END,
+         status_detail = CASE WHEN ${outranks} THEN v.status_detail ELSE m.status_detail END,
+         provider_message_id = COALESCE(m.provider_message_id, v.provider_message_id),
+         updated_at = now()
+       FROM json_to_recordset(?::json)
+         AS v(id uuid, status text, status_detail text, provider_message_id text)
+       WHERE m.id = v.id`,
+      [JSON.stringify([...byMessage.values()])],
+    );
   }
-  if (input.providerMessageId && !message.providerMessageId) {
-    message.providerMessageId = input.providerMessageId;
-  }
-  await message.save();
-  return true;
+  return recorded.length;
 }
 
 function toEventDto(event: MessageEvent): MessageEventDto {
@@ -436,11 +510,11 @@ async function sendoutStats(limit: number): Promise<SendoutStatsDto[]> {
 export const MessageLogService = {
   createSendout,
   logOutgoingMessage,
+  logOutgoingMessages,
   recordSendResult,
-  recordProviderEvent,
+  recordProviderEvents,
   customerLog,
   feed,
   metrics,
   sendoutStats,
-  normalizeRecipient,
 };

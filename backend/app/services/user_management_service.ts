@@ -1,14 +1,12 @@
+import db from "@adonisjs/lucid/services/db";
+import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
+
 import BadRequestException from "#exceptions/bad_request_exception";
-import BookHandover from "#models/book_handover";
-import MatchObligation from "#models/match_obligation";
-import MatchParticipant from "#models/match_participant";
-import Order from "#models/order";
-import Signature from "#models/signature";
 import User from "#models/user";
 import CustomerItem from "#models/customer_item";
 import Invoice from "#models/invoice";
+import Order from "#models/order";
 import { countActiveMatches } from "#services/matches/active_matches";
-import { OrderActive } from "#services/orders/order_active";
 import { SessionRevocationService } from "#services/session_revocation_service";
 import type { UserPermission } from "#shared/user-permission";
 import { USER_PERMISSION } from "#shared/user-permission";
@@ -68,7 +66,7 @@ async function deleteUser(detailsId: string) {
   assertIsCustomer(user, "slettes");
 
   const [activeOrders, activeCustomerItems, activeInvoices, activeMatches] = await Promise.all([
-    new OrderActive().haveActiveOrders(detailsId),
+    Order.hasOpenLines(detailsId),
     CustomerItem.hasActive(detailsId),
     Invoice.hasActive(detailsId),
     countActiveMatches([detailsId]),
@@ -89,11 +87,7 @@ async function deleteUser(detailsId: string) {
   await user.delete();
 }
 
-/**
- * Moves every reference from the source user onto the target user, then
- * deletes the source user. References are re-pointed before
- * anything is deleted, so a mid-way failure leaves no dangling references.
- */
+/** Moves every reference from the source user onto the target user, then deletes the source user. */
 async function mergeUsers(fromDetailsId: string, toDetailsId: string) {
   if (fromDetailsId === toDetailsId) {
     throw new BadRequestException("Kan ikke slå sammen en kunde med seg selv");
@@ -105,68 +99,65 @@ async function mergeUsers(fromDetailsId: string, toDetailsId: string) {
   assertIsCustomer(fromUser, "slås sammen");
   assertIsCustomer(toUser, "slås sammen");
 
-  await Promise.all([
-    Signature.reassignCustomer(fromDetailsId, toDetailsId),
-    CustomerItem.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
-    Order.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
-    Invoice.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
-    BookHandover.query()
-      .where("fromUserDetailId", fromDetailsId)
-      .update({ fromUserDetailId: toDetailsId }),
-    BookHandover.query()
-      .where("toUserDetailId", fromDetailsId)
-      .update({ toUserDetailId: toDetailsId }),
-  ]);
-
-  await mergeMatchParticipants(fromDetailsId, toDetailsId);
-
-  // The source's login tokens, signatures and remaining participations go with the row.
-  await fromUser.delete();
+  await db.transaction(async (trx) => {
+    const repoint = async (table: string, column: string) =>
+      trx
+        .from(table)
+        .where(column, fromDetailsId)
+        .update({ [column]: toDetailsId });
+    await repoint("signatures", "customer_details_id");
+    await repoint("customer_items", "customer_id");
+    await repoint("orders", "customer_id");
+    await repoint("invoices", "customer_id");
+    await repoint("book_handovers", "from_user_detail_id");
+    await repoint("book_handovers", "to_user_detail_id");
+    await mergeMatchParticipants(trx, fromDetailsId, toDetailsId);
+    // The source's login tokens, signatures and remaining participations go with the row.
+    await fromUser.useTransaction(trx).delete();
+  });
 }
 
 /**
- * (matchId, userDetailId) is unique, so when both users participate in the
- * same match the source's obligations are re-pointed onto the target's
- * participant row and the source's row is deleted.
+ * (matchId, userDetailId) is unique, so in a match both users take part in, the source's
+ * obligations move onto the target's participant row and the source's row is deleted.
  */
-async function mergeMatchParticipants(fromDetailsId: string, toDetailsId: string) {
-  const [fromParticipants, toParticipants] = await Promise.all([
-    MatchParticipant.query().where("userDetailId", fromDetailsId),
-    MatchParticipant.query().where("userDetailId", toDetailsId),
-  ]);
-  const targetByMatch = new Map(
-    toParticipants.map((participant) => [participant.matchId, participant]),
-  );
-  for (const participant of fromParticipants) {
-    const existingTarget = targetByMatch.get(participant.matchId);
-    if (!existingTarget) {
-      participant.userDetailId = toDetailsId;
-      await participant.save();
-      continue;
-    }
-    // An obligation between the two merging users becomes an obligation with
-    // yourself, which is both meaningless and forbidden by a check constraint.
-    // Deleting it SET NULLs any handover discharge pointers, keeping history.
-    await MatchObligation.query()
+async function mergeMatchParticipants(
+  trx: TransactionClientContract,
+  fromDetailsId: string,
+  toDetailsId: string,
+) {
+  const shared: { sourceId: number; targetId: number }[] = await trx
+    .from("match_participants as source")
+    .join("match_participants as target", "target.match_id", "source.match_id")
+    .where("source.user_detail_id", fromDetailsId)
+    .where("target.user_detail_id", toDetailsId)
+    .select("source.id as sourceId", "target.id as targetId");
+  for (const { sourceId, targetId } of shared) {
+    // An obligation between the two becomes one with yourself, which a check constraint forbids.
+    // Deleting it sets the handovers' discharge pointers to null, keeping the history.
+    await trx
+      .from("match_obligations")
       .where((query) =>
-        query
-          .where("senderParticipantId", participant.id)
-          .andWhere("receiverParticipantId", existingTarget.id),
+        query.where("sender_participant_id", sourceId).where("receiver_participant_id", targetId),
       )
       .orWhere((query) =>
-        query
-          .where("senderParticipantId", existingTarget.id)
-          .andWhere("receiverParticipantId", participant.id),
+        query.where("sender_participant_id", targetId).where("receiver_participant_id", sourceId),
       )
       .delete();
-    await MatchObligation.query()
-      .where("senderParticipantId", participant.id)
-      .update({ senderParticipantId: existingTarget.id });
-    await MatchObligation.query()
-      .where("receiverParticipantId", participant.id)
-      .update({ receiverParticipantId: existingTarget.id });
-    await participant.delete();
+    await trx
+      .from("match_obligations")
+      .where("sender_participant_id", sourceId)
+      .update({ sender_participant_id: targetId });
+    await trx
+      .from("match_obligations")
+      .where("receiver_participant_id", sourceId)
+      .update({ receiver_participant_id: targetId });
+    await trx.from("match_participants").where("id", sourceId).delete();
   }
+  await trx
+    .from("match_participants")
+    .where("user_detail_id", fromDetailsId)
+    .update({ user_detail_id: toDetailsId });
 }
 
 export const UserManagementService = {

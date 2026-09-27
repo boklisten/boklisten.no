@@ -58,7 +58,7 @@ test.group("generateRound", (group) => {
    *
    * @param wanted who ordered which items themselves at the branch
    */
-  async function stubMongo(
+  async function arrange(
     held: ReturnType<typeof heldBy>[],
     wanted: { id: string; wantedItems: string[] }[],
     userDetails: { id: string; branchMembership?: string }[] = [],
@@ -86,7 +86,7 @@ test.group("generateRound", (group) => {
 
   test("creates an obligation per matched title, with both parties named", async ({ assert }) => {
     // A holds X and wants Y; B holds Y and wants X — a clean two-way swap.
-    await stubMongo(
+    await arrange(
       [heldBy(A, [ITEM_X]), heldBy(B, [ITEM_Y])],
       [
         { id: A, wantedItems: [ITEM_Y] },
@@ -113,7 +113,7 @@ test.group("generateRound", (group) => {
   });
 
   test("every match has exactly two participants", async ({ assert }) => {
-    await stubMongo([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
+    await arrange([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
 
     await generateRound(await plannedRound());
 
@@ -126,7 +126,7 @@ test.group("generateRound", (group) => {
 
   test("a stand pickup owes no particular copy", async ({ assert }) => {
     // B wants X and nobody holds it, so it can only come from the stand.
-    await stubMongo([], [{ id: B, wantedItems: [ITEM_X] }]);
+    await arrange([], [{ id: B, wantedItems: [ITEM_X] }]);
 
     await generateRound(await plannedRound());
 
@@ -141,7 +141,7 @@ test.group("generateRound", (group) => {
   }) => {
     // A holds the 2009 edition; B ordered the 2012 edition. The editions are interchangeable, so
     // the two should meet — and the obligation must name the copy that will actually move: A's.
-    await stubMongo(
+    await arrange(
       [heldBy(A, [GYMNOS_2009]), heldBy(B, [ITEM_Y])],
       [
         { id: A, wantedItems: [ITEM_Y] },
@@ -162,7 +162,7 @@ test.group("generateRound", (group) => {
   }) => {
     // Nobody holds any GYMNOS; B ordered the 2012 edition. The pickup must say 2012, not the
     // equivalence group's canonical id.
-    await stubMongo([], [{ id: B, wantedItems: [GYMNOS_2012] }]);
+    await arrange([], [{ id: B, wantedItems: [GYMNOS_2012] }]);
 
     await generateRound(await plannedRound());
 
@@ -173,7 +173,7 @@ test.group("generateRound", (group) => {
   });
 
   test("a cross-edition stand handoff names the edition the sender holds", async ({ assert }) => {
-    await stubMongo([heldBy(A, [GYMNOS_2012])], []);
+    await arrange([heldBy(A, [GYMNOS_2012])], []);
 
     await generateRound(await plannedRound());
 
@@ -185,7 +185,7 @@ test.group("generateRound", (group) => {
 
   test("a stand handoff records the customer as sender", async ({ assert }) => {
     // A holds X and nobody wants it, so it goes back to the stand.
-    await stubMongo([heldBy(A, [ITEM_X])], []);
+    await arrange([heldBy(A, [ITEM_X])], []);
 
     await generateRound(await plannedRound());
 
@@ -199,7 +199,7 @@ test.group("generateRound", (group) => {
     assert,
   }) => {
     // A and B could swap X for Y, but A is excluded — so B must go through the stand instead.
-    await stubMongo(
+    await arrange(
       [heldBy(A, [ITEM_X]), heldBy(B, [ITEM_Y])],
       [
         { id: A, wantedItems: [ITEM_Y] },
@@ -227,13 +227,13 @@ test.group("generateRound", (group) => {
   });
 
   test("reports when there is nobody to match", async ({ assert }) => {
-    await stubMongo([], []);
+    await arrange([], []);
 
     await assert.rejects(async () => generateRound(await plannedRound()), /Fant ingen elever/);
   });
 
   test("user matches get a slot and location inside the meeting window", async ({ assert }) => {
-    await stubMongo(
+    await arrange(
       [heldBy(A, [ITEM_X]), heldBy(B, [ITEM_Y])],
       [
         { id: A, wantedItems: [ITEM_Y] },
@@ -262,7 +262,7 @@ test.group("generateRound", (group) => {
     assert,
   }) => {
     // A holds X and nobody wants it: a pure stand handoff.
-    await stubMongo([heldBy(A, [ITEM_X])], []);
+    await arrange([heldBy(A, [ITEM_X])], []);
 
     await generateRound(await plannedRound());
 
@@ -284,7 +284,7 @@ test.group("generateRound", (group) => {
     // A's copy is due the day before the deadline; B's three days after, outside the window.
     await createHeldBooks(BRANCH, [heldBy(A, [ITEM_X])], TEST_DEADLINE.minus({ days: 1 }));
     await createHeldBooks(BRANCH, [heldBy(B, [ITEM_Y])], TEST_DEADLINE.plus({ days: 3 }));
-    await stubMongo(
+    await arrange(
       [],
       [
         { id: A, wantedItems: [ITEM_Y] },
@@ -301,7 +301,7 @@ test.group("generateRound", (group) => {
   });
 
   test("refuses to generate a round twice", async ({ assert }) => {
-    await stubMongo([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
+    await arrange([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
     const round = await plannedRound();
 
     await generateRound(round);
@@ -313,7 +313,7 @@ test.group("generateRound", (group) => {
   });
 
   test("refuses a round whose deadline has already passed", async ({ assert }) => {
-    await stubMongo([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
+    await arrange([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
     const round = await createTestRound({
       branches: [BRANCH],
       deadline: DateTime.now().minus({ days: 1 }),
@@ -325,7 +325,7 @@ test.group("generateRound", (group) => {
   test("stamps the round as generated, which is what ends its planned state", async ({
     assert,
   }) => {
-    await stubMongo([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
+    await arrange([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
     const round = await plannedRound();
     assert.isNull(
       (await MatchRound.findOrFail(round.id)).generatedAt,

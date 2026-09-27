@@ -916,6 +916,20 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
     assert.isNotNull(state.order);
   });
 
+  test("parallel polls of an approved request settle it once", async ({ assert }) => {
+    vipps.info.resolves({ state: "AUTHORIZED" });
+    const states = await Promise.all([
+      StandCartCheckoutService.status(NEW_ORDER_ID),
+      StandCartCheckoutService.status(NEW_ORDER_ID),
+    ]);
+    assert.deepEqual(
+      states.map(({ status }) => status),
+      ["paid", "paid"],
+    );
+    assert.lengthOf(await recordedPayments(), 1);
+    assert.isTrue(place.calledOnce);
+  });
+
   test("status keeps waiting while the customer has not answered", async ({ assert }) => {
     const state = await StandCartCheckoutService.status(NEW_ORDER_ID);
     assert.equal(state.status, "pending");

@@ -17,7 +17,7 @@ const childDob = DateTime.now().minus({ years: 10 }).startOf("year");
 
 const emptyContext: GalleryContext = { branchNames: new Map() };
 
-// getPage feeds the ids into Mongo aggregations, so they must be valid ObjectId hex strings.
+// Customer ids are 24-character ObjectId hex strings, like the real primary keys.
 function customerDetailsIdFor(id: number): string {
   return id.toString(16).padStart(24, "0");
 }

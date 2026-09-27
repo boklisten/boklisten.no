@@ -39,7 +39,6 @@ export default await Env.create(new URL("../", import.meta.url), {
   RAILWAY_PUBLIC_DOMAIN: Env.schema.string.optional(),
   RAILWAY_SERVICE_BOKLISTEN_NO_URL: Env.schema.string.optional(),
   PORT: Env.schema.number.optional(),
-  MONGODB_URI: Env.schema.secret(),
   POSTGRES_URL: Env.schema.secret(),
   VIPPS_MSN: Env.schema.string(),
   VIPPS_CLIENT_ID: Env.schema.string(),

@@ -3,7 +3,7 @@ import { isObjectIdHex } from "#models/helpers/object_id";
 /**
  * Deterministic 24-character hex ids for spec fixtures, readable in assertion output:
  * `fixtureId(1)` is `"000000000000000000000001"`, `fixtureId("a1")` is `"0000000000000000000000a1"`.
- * They are valid ObjectId hex, so they pass the same checks as ids transferred from Mongo, and they
+ * They are valid ObjectId hex, so they pass the same checks as real primary keys, and they
  * cannot collide with ids `newObjectId()` generates (those start with the current timestamp).
  */
 export function fixtureId(sequence: number | string): string {

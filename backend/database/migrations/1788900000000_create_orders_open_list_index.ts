@@ -1,7 +1,4 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import mongoose from "mongoose";
-
-import env from "#start/env";
 
 /**
  * The order manager lists placed orders newest first and stops once it has a page of open ones.
@@ -10,29 +7,7 @@ import env from "#start/env";
  */
 export default class extends BaseSchema {
   override async up() {
-    this.defer(async () => {
-      if (env.get("API_ENV") === "test") {
-        return;
-      }
-
-      const connection = await mongoose
-        .createConnection(env.get("MONGODB_URI").release(), {
-          dbName: env.get("API_ENV") === "production" ? "production" : "staging",
-        })
-        .asPromise();
-      try {
-        const mongo = connection.db;
-        if (!mongo) {
-          throw new Error("mongoose connection has no db handle");
-        }
-        const name = await mongo
-          .collection("orders")
-          .createIndex({ placed: 1, creationTime: -1 }, { name: "placed_1_creationTime_-1" });
-        console.log(`orders index ensured: ${name}`);
-      } finally {
-        await connection.close();
-      }
-    });
+    // Changed MongoDB only; emptied when MongoDB was decommissioned (2026-09-28).
   }
 
   override async down() {

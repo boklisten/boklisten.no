@@ -15,7 +15,7 @@ import { BlError } from "#shared/bl-error";
 import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
-import { createUser, userDouble } from "#tests/user_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 test.group("OrderPlacedHandler", (group) => {
   let testOrder: Order;
@@ -36,7 +36,7 @@ test.group("OrderPlacedHandler", (group) => {
     const truncate = await testUtils.db().truncate();
     sandbox = createSandbox();
 
-    sandbox.stub(orderItemMovedFromOrderHandler, "updateOrderItems").resolves(true);
+    sandbox.stub(orderItemMovedFromOrderHandler, "updateOrderItems").resolves();
 
     sandbox
       .stub(User, "find")
@@ -113,17 +113,6 @@ test.group("OrderPlacedHandler", (group) => {
     );
     assert.instanceOf(err, BlError);
     assert.equal(err?.errorStack[0]?.getMsg(), "could not confirm payments");
-  });
-
-  test("should reject if order.customer is not found", async ({ assert }) => {
-    testUserDetail = userDouble({ id: "notTheCustomer" });
-
-    const err = await orderPlacedHandler.placeOrder(testOrder, "userDetail1").then(
-      () => null,
-      (error: BlError) => error,
-    );
-    assert.instanceOf(err, BlError);
-    assert.equal(err?.errorStack[0]?.getMsg(), `customer "${testOrder.customerId}" not found`);
   });
 
   test("should resolve when order was placed", async ({ assert }) => {

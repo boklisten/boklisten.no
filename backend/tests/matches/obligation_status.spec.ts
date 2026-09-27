@@ -1,66 +1,15 @@
 import { test } from "@japa/runner";
 
-import {
-  deriveObligationProgress,
-  dischargesSenderHalf,
-  satisfiesReceiverHalf,
-} from "#services/matches/obligation_status";
+import { deriveObligationProgress } from "#services/matches/obligation_status";
 
 const S = "5d765db5fc8c47001c408d81"; // expected sender
 const R = "5d765db5fc8c47001c408d82"; // expected receiver
 const C = "5d765db5fc8c47001c408d83"; // an unrelated third student
 
 const ITEM_X = "5d765db5fc8c47001c408e01";
-const OTHER_ITEM = "5d765db5fc8c47001c408e02";
-/** Two ids in the same hardcoded equivalence group in shared/item-equivalence.ts. */
-const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
-const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
 
 /** S owes R a copy of item X. */
 const obligation = { senderCustomerId: S, receiverCustomerId: R, itemId: ITEM_X };
-/** The stand owes R a copy of item X. */
-const standObligation = { senderCustomerId: null, receiverCustomerId: R, itemId: ITEM_X };
-
-test.group("dischargesSenderHalf", () => {
-  test("a book belonging to the sender discharges their obligation", ({ assert }) => {
-    // Covers the Gymnos case too: a student who received next year's copy before parting with
-    // their own holds two, and handing over either must credit them — the check only looks at
-    // owner and title, so which copy it is never matters.
-    assert.equal(dischargesSenderHalf(obligation, S, ITEM_X), true);
-  });
-
-  test("a book belonging to someone else does not", ({ assert }) => {
-    assert.equal(dischargesSenderHalf(obligation, C, ITEM_X), false);
-  });
-
-  test("a different title does not", ({ assert }) => {
-    assert.equal(dischargesSenderHalf(obligation, S, OTHER_ITEM), false);
-  });
-
-  test("an equivalent edition counts as the same title", ({ assert }) => {
-    const gymnos = { senderCustomerId: S, receiverCustomerId: R, itemId: GYMNOS_2009 };
-    assert.equal(dischargesSenderHalf(gymnos, S, GYMNOS_2012), true);
-  });
-
-  test("a stand-sourced obligation has no sender to credit", ({ assert }) => {
-    assert.equal(dischargesSenderHalf(standObligation, null, ITEM_X), false);
-  });
-});
-
-test.group("satisfiesReceiverHalf", () => {
-  test("any copy of the title from anyone satisfies the receiver", ({ assert }) => {
-    assert.equal(satisfiesReceiverHalf(obligation, R, ITEM_X), true);
-  });
-
-  test("a different title does not", ({ assert }) => {
-    assert.equal(satisfiesReceiverHalf(obligation, R, OTHER_ITEM), false);
-  });
-
-  test("an equivalent edition does", ({ assert }) => {
-    const gymnos = { senderCustomerId: S, receiverCustomerId: R, itemId: GYMNOS_2009 };
-    assert.equal(satisfiesReceiverHalf(gymnos, R, GYMNOS_2012), true);
-  });
-});
 
 test.group("deriveObligationProgress", () => {
   test("case 1: pending when nothing has happened", ({ assert }) => {

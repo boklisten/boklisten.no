@@ -165,34 +165,31 @@ export default class BulkCollectionController {
   private async buildReceipt(
     collectedByCustomer: Map<string, CollectedBook[]>,
   ): Promise<CustomerCollectionReceipt[]> {
-    const receipt: CustomerCollectionReceipt[] = [];
-    for (const [customerId, collectedBooks] of collectedByCustomer) {
-      const [customerDetail, remainingBooks] = await Promise.all([
-        User.findOrFail(customerId),
-        this.getRemainingBooks(customerId),
-      ]);
-      receipt.push({
+    const customerIds = [...collectedByCustomer.keys()];
+    const [names, stillActive] = await Promise.all([
+      User.namesByIds(customerIds),
+      CustomerItem.whereActive(
+        CustomerItem.query().whereIn("customer_id", customerIds).whereNotNull("blid"),
+      )
+        .preload("item")
+        .orderBy("deadline"),
+    ]);
+    return [...collectedByCustomer].map(([customerId, collectedBooks]) => {
+      const remainingBooks = stillActive
+        .filter((customerItem) => customerItem.customerId === customerId)
+        .map((customerItem) => ({
+          title: customerItem.item.title,
+          deadline: this.toIsoDeadline(customerItem.deadline),
+        }));
+      return {
         customerId,
-        customerName: customerDetail.name,
+        customerName: names.get(customerId) ?? "",
         deliveredCount: collectedBooks.length,
         totalActiveCount: remainingBooks.length + collectedBooks.length,
         collectedBooks,
         remainingBooks,
-      });
-    }
-    return receipt;
-  }
-
-  /** The customer's still-active books (after this collection), used for "Gjenværende bøker". */
-  private async getRemainingBooks(customerId: string) {
-    const remaining = (await CustomerItem.activeFor(customerId)).filter(
-      (customerItem) => customerItem.blid,
-    );
-    const itemsMap = await this.getItemsMap(remaining.map((customerItem) => customerItem.itemId));
-    return remaining.map((customerItem) => ({
-      title: itemsMap.get(customerItem.itemId)?.title ?? "",
-      deadline: this.toIsoDeadline(customerItem.deadline),
-    }));
+      };
+    });
   }
 
   private groupByCustomerAndBranch(customerItems: CustomerItem[]): Map<string, CustomerItem[]> {

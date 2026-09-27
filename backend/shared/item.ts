@@ -1,8 +1,4 @@
-/**
- * A title in the book catalogue. Rows live in Postgres (`items`), keyed by the id the legacy
- * MongoDB documents carried, so every reference elsewhere (orders, customer items, blids) still
- * resolves.
- */
+/** A title in the book catalogue (`items`). */
 export interface Item {
   id: string;
   title: string;

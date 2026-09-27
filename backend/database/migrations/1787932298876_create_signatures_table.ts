@@ -1,7 +1,4 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import mongoose from "mongoose";
-
-import env from "#start/env";
 
 /**
  * Moves signatures from MongoDB to Postgres and inverts the relationship: the signature row now
@@ -34,82 +31,7 @@ export default class extends BaseSchema {
       table.index(["customer_details_id", "created_at"]);
     });
 
-    this.defer(async (database) => {
-      if (env.get("API_ENV") === "test") {
-        return;
-      }
-
-      const connection = await mongoose
-        .createConnection(env.get("MONGODB_URI").release(), {
-          dbName: env.get("API_ENV") === "production" ? "production" : "staging",
-        })
-        .asPromise();
-      try {
-        const mongo = connection.db;
-        if (!mongo) {
-          throw new Error("mongoose connection has no db handle");
-        }
-
-        const customerBySignatureId = new Map<string, string>();
-        const userDetailsCursor = mongo
-          .collection("userdetails")
-          .find({ "signatures.0": { $exists: true } }, { projection: { signatures: 1 } });
-        for await (const userDetail of userDetailsCursor) {
-          for (const signatureId of userDetail["signatures"] ?? []) {
-            customerBySignatureId.set(String(signatureId), String(userDetail._id));
-          }
-        }
-
-        let migrated = 0;
-        let unattributed = 0;
-        let batch: Record<string, unknown>[] = [];
-        const signaturesCursor = mongo.collection("signatures").find();
-        for await (const signature of signaturesCursor) {
-          const customerDetailsId = customerBySignatureId.get(String(signature._id));
-          if (!customerDetailsId) {
-            unattributed++;
-            continue;
-          }
-          const { image } = signature;
-          batch.push({
-            customer_details_id: customerDetailsId,
-            signing_name: signature["signingName"] ?? "",
-            signed_by_guardian: signature["signedByGuardian"] ?? false,
-            image: Buffer.isBuffer(image) ? image : Buffer.from(image.buffer),
-            created_at: signature["creationTime"] ?? new Date(),
-            updated_at: signature["lastUpdated"] ?? signature["creationTime"] ?? new Date(),
-          });
-          if (batch.length >= 200) {
-            await database.table("signatures").multiInsert(batch);
-            migrated += batch.length;
-            batch = [];
-          }
-        }
-        if (batch.length > 0) {
-          await database.table("signatures").multiInsert(batch);
-          migrated += batch.length;
-        }
-        console.log(
-          `signatures backfill: migrated ${migrated}, skipped ${unattributed} unattributed`,
-        );
-
-        for (const obsoleteCollection of ["signatures", "stand_matches", "user_matches"]) {
-          await mongo.dropCollection(obsoleteCollection).catch((error: unknown) => {
-            // NamespaceNotFound: already gone, nothing to drop.
-            const alreadyGone =
-              typeof error === "object" &&
-              error !== null &&
-              "codeName" in error &&
-              error.codeName === "NamespaceNotFound";
-            if (!alreadyGone) {
-              throw error;
-            }
-          });
-        }
-      } finally {
-        await connection.close();
-      }
-    });
+    // The MongoDB transfer that ran here (2026-08-30) was removed on 2026-09-28.
   }
 
   override async down() {

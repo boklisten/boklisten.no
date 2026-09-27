@@ -14,29 +14,32 @@ export default class CustomerItemsController {
       .preload("item")
       .preload("handoutBranch")
       .orderBy("updated_at", "desc");
+    const periodLines = await CustomerItem.lastPeriodLinesOf(customerItems.map(({ id }) => id));
 
-    return Promise.all(
-      customerItems.map(async (customerItem) => {
-        const { item, handoutBranch: branch } = customerItem;
-        return {
-          id: customerItem.id,
-          item: {
-            id: item.id,
-            title: item.title,
-            isbn: String(item.isbn),
-          },
-          blid: customerItem.blid,
-          deadline: customerItem.deadline.toJSDate(),
-          handoutAt: customerItem.handedOutAt.toJSDate(),
-          branch: {
-            id: branch.id,
-            name: branch.name,
-          },
-          status: calculateStatus(customerItem),
-          actions: await buildCustomerItemActions(customerItem, branch),
-        };
-      }),
-    );
+    return customerItems.map((customerItem) => {
+      const { item, handoutBranch: branch } = customerItem;
+      return {
+        id: customerItem.id,
+        item: {
+          id: item.id,
+          title: item.title,
+          isbn: String(item.isbn),
+        },
+        blid: customerItem.blid,
+        deadline: customerItem.deadline.toJSDate(),
+        handoutAt: customerItem.handedOutAt.toJSDate(),
+        branch: {
+          id: branch.id,
+          name: branch.name,
+        },
+        status: calculateStatus(customerItem),
+        actions: buildCustomerItemActions(
+          customerItem,
+          branch,
+          periodLines.get(customerItem.id)?.periodType ?? undefined,
+        ),
+      };
+    });
   }
 
   /**
@@ -55,21 +58,24 @@ export default class CustomerItemsController {
     )
       .preload("item")
       .preload("handoutBranch");
-    const listed = await Promise.all(
-      customerItems.map(async (customerItem): Promise<ActiveCustomerItem> => {
-        const { item, handoutBranch: branch } = customerItem;
-        return {
-          id: customerItem.id,
-          item: item.id,
-          title: item.title,
-          blid: customerItem.blid,
-          type: customerItem.type,
-          deadline: customerItem.deadline.toJSDate(),
-          handoutBranch: { id: branch.id, name: branch.name },
-          actions: await buildCustomerItemActions(customerItem, branch),
-        };
-      }),
-    );
+    const periodLines = await CustomerItem.lastPeriodLinesOf(customerItems.map(({ id }) => id));
+    const listed = customerItems.map((customerItem): ActiveCustomerItem => {
+      const { item, handoutBranch: branch } = customerItem;
+      return {
+        id: customerItem.id,
+        item: item.id,
+        title: item.title,
+        blid: customerItem.blid,
+        type: customerItem.type,
+        deadline: customerItem.deadline.toJSDate(),
+        handoutBranch: { id: branch.id, name: branch.name },
+        actions: buildCustomerItemActions(
+          customerItem,
+          branch,
+          periodLines.get(customerItem.id)?.periodType ?? undefined,
+        ),
+      };
+    });
     return listed.toSorted(
       (a, b) => a.deadline.getTime() - b.deadline.getTime() || a.title.localeCompare(b.title, "nb"),
     );

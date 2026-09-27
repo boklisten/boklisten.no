@@ -45,8 +45,7 @@ export interface BranchPeriods {
 
 /**
  * A school, one of its year groups or classes, a privatist school or the web shop. Rows live in
- * Postgres (`branches`, periods in `branch_periods`), keyed by the id the legacy MongoDB documents
- * carried, so every reference elsewhere (orders, customer items, memberships) still resolves.
+ * `branches`, periods in `branch_periods`.
  */
 export interface Branch extends BranchPeriods {
   id: string;

@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/node";
+import { DateTime } from "luxon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import CustomerItem from "#models/customer_item";
@@ -27,6 +28,13 @@ export function invoicePaidLineAmount(net: number): number {
 
 async function customerItemsOf(invoice: Invoice): Promise<CustomerItem[]> {
   return CustomerItem.findByIds(invoice.lines.map((line) => line.customerItemId));
+}
+
+async function setBuyout(invoice: Invoice, buyout: boolean) {
+  const ids = invoice.lines.flatMap(({ customerItemId }) =>
+    customerItemId ? [customerItemId] : [],
+  );
+  await CustomerItem.query().whereIn("id", ids).update({ buyout, updatedAt: DateTime.now() });
 }
 
 /**
@@ -85,32 +93,40 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
     }
   }
 
-  for (const customerItem of customerItems) {
-    await customerItem.merge({ buyout: true }).save();
-  }
+  await setBuyout(invoice, true);
   return warnings;
 }
 
 /** Undoes {@link recordPayment}: removes the invoice-paid order and clears buyout. */
 async function revertPayment(invoice: Invoice): Promise<string[]> {
   const warnings: string[] = [];
-  const invoiceItemIds = new Set(invoice.lines.map((line) => line.itemId));
-
-  const orders = invoice.customerId ? await Order.placedFor(invoice.customerId) : [];
-  const invoiceOrder = orders.find(
-    (order) =>
-      order.orderItems.some((orderItem) => orderItem.type === "invoice-paid") &&
-      order.orderItems.every((orderItem) => invoiceItemIds.has(orderItem.itemId)),
-  );
+  const invoiceItemIds = invoice.lines.flatMap(({ itemId }) => (itemId ? [itemId] : []));
+  const invoiceOrder = invoice.customerId
+    ? await Order.query()
+        .where("customer_id", invoice.customerId)
+        .where("placed", true)
+        .whereExists((lines) => {
+          void lines
+            .from("order_items")
+            .whereColumn("order_items.order_id", "orders.id")
+            .where("order_items.type", "invoice-paid");
+        })
+        .whereNotExists((lines) => {
+          void lines
+            .from("order_items")
+            .whereColumn("order_items.order_id", "orders.id")
+            .whereNotIn("order_items.item_id", invoiceItemIds);
+        })
+        .orderBy("created_at")
+        .first()
+    : null;
   if (invoiceOrder) {
     await invoiceOrder.delete();
   } else {
     warnings.push("Fant ingen ordre for betalingen å fjerne fra kunden.");
   }
 
-  for (const customerItem of await customerItemsOf(invoice)) {
-    await customerItem.merge({ buyout: false }).save();
-  }
+  await setBuyout(invoice, false);
   return warnings;
 }
 

@@ -1,33 +1,46 @@
+import { Exception } from "@adonisjs/core/exceptions";
+
 import Item from "#models/item";
 import Order from "#models/order";
 import type { NewOrderItem } from "#models/order";
+import OrderItem from "#models/order_item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import CustomerItem from "#models/customer_item";
 import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
 import { OrderItemService } from "#services/order_item_service";
 import type { CartItemType, CheckoutCartItem } from "#shared/cart_item";
 import { ACQUISITION_CART_ITEM_TYPES } from "#shared/cart_item";
-import { isOpenOrderItem } from "#shared/order/open-order-item";
+import { OPEN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 
 export const OrderService = {
   async getOpenOrderItems(customerId: string, types: CartItemType[] = ["rent", "partly-payment"]) {
-    const orders = await Order.placedFor(customerId);
-    // Not handed out and not carried on into a later order. The stand's own orders count too:
-    // a book moved to another branch or period without a handout is still an open order.
-    const openOrderItems = orders.flatMap((order) =>
-      order.orderItems
-        .filter(
-          (orderItem) =>
-            types.some((type) => type === orderItem.type) && isOpenOrderItem(orderItem),
-        )
-        .map((orderItem) => ({
-          orderId: order.id,
-          itemId: orderItem.itemId,
-          deadline: orderItem.periodTo?.toJSDate().toISOString() ?? "",
-          cancelable: order.amount === 0,
-          title: orderItem.title,
-        })),
-    );
+    // The stand's own orders count too: a book moved to another branch or period without a
+    // handout is still an open order.
+    const lines: {
+      orderId: string;
+      itemId: string;
+      periodTo: Date | null;
+      orderAmount: number;
+      title: string;
+    }[] = await OrderItem.openLinesOf(
+      customerId,
+      OPEN_ORDER_ITEM_TYPES.filter((type) => types.some((wanted) => wanted === type)),
+    )
+      .join("items", "items.id", "order_items.item_id")
+      .select(
+        "orders.id as orderId",
+        "order_items.item_id as itemId",
+        "order_items.period_to as periodTo",
+        "orders.amount as orderAmount",
+        "items.title",
+      );
+    const openOrderItems = lines.map((line) => ({
+      orderId: line.orderId,
+      itemId: line.itemId,
+      deadline: line.periodTo?.toISOString() ?? "",
+      cancelable: line.orderAmount === 0,
+      title: line.title,
+    }));
 
     // An item a user match depends on is never cancelable, regardless of match lock
     const blockedItemIds = await itemIdsInActiveUserMatches(customerId);
@@ -62,14 +75,29 @@ export const OrderService = {
         )
       : new Set<string>();
 
+    const itemIds = cartItems.map((cartItem) => cartItem.id);
+    const [items, heldCopies] = await Promise.all([
+      Item.byIds(itemIds),
+      CustomerItem.whereActive(
+        CustomerItem.query().where("customer_id", customerId).whereIn("item_id", itemIds),
+      ),
+    ]);
+    const heldByItem = new Map(
+      heldCopies.map((customerItem) => [customerItem.itemId, customerItem]),
+    );
+
     let total = 0;
     const orderItems: NewOrderItem[] = [];
 
     for (const cartItem of cartItems) {
-      const [item, customerItem] = await Promise.all([
-        Item.findOrFail(cartItem.id),
-        CustomerItem.activeForItem(customerId, cartItem.id),
-      ]);
+      const item = items.get(cartItem.id);
+      if (!item) {
+        throw new Exception(`Fant ikke boken ${cartItem.id}`, {
+          status: 404,
+          code: "E_ROW_NOT_FOUND",
+        });
+      }
+      const customerItem = heldByItem.get(cartItem.id) ?? null;
       if (ACQUISITION_CART_ITEM_TYPES.includes(cartItem.type)) {
         if (customerItem) {
           throw new BadRequestException(`Du har allerede «${item.title}»`);

@@ -1,6 +1,4 @@
-import BookHandover from "#models/book_handover";
-import MatchObligation from "#models/match_obligation";
-import MatchParticipant from "#models/match_participant";
+import db from "@adonisjs/lucid/services/db";
 
 /**
  * Matches where each user still has an obligation no book handover has discharged, keyed by
@@ -8,59 +6,20 @@ import MatchParticipant from "#models/match_participant";
  * guard, so "aktive overleveringer" means the same thing in both places.
  */
 export async function countActiveMatches(detailsIds: string[]): Promise<Map<string, number>> {
-  const counts = new Map<string, number>();
   if (detailsIds.length === 0) {
-    return counts;
+    return new Map();
   }
-  const participants = await MatchParticipant.query().whereIn("userDetailId", detailsIds);
-  if (participants.length === 0) {
-    return counts;
-  }
-  const participantIds = participants.map((participant) => participant.id);
-  const obligations = await MatchObligation.query()
-    .whereIn("senderParticipantId", participantIds)
-    .orWhereIn("receiverParticipantId", participantIds);
-  if (obligations.length === 0) {
-    return counts;
-  }
-  const handovers = await BookHandover.query()
-    .whereIn(
-      "dischargesSenderObligationId",
-      obligations.map((obligation) => obligation.id),
-    )
-    .orWhereIn(
-      "dischargesReceiverObligationId",
-      obligations.map((obligation) => obligation.id),
-    );
-  const dischargedAsSender = new Set(
-    handovers.map((handover) => handover.dischargesSenderObligationId).filter(Boolean),
+  const { rows } = await db.rawQuery<{ rows: { detailsId: string; count: string }[] }>(
+    `SELECT participant.user_detail_id AS "detailsId", count(DISTINCT obligation.match_id) AS count
+     FROM match_participants AS participant
+     JOIN match_obligations AS obligation ON
+       (obligation.sender_participant_id = participant.id AND NOT EXISTS (
+         SELECT 1 FROM book_handovers WHERE discharges_sender_obligation_id = obligation.id))
+       OR (obligation.receiver_participant_id = participant.id AND NOT EXISTS (
+         SELECT 1 FROM book_handovers WHERE discharges_receiver_obligation_id = obligation.id))
+     WHERE participant.user_detail_id = ANY(?)
+     GROUP BY participant.user_detail_id`,
+    [detailsIds],
   );
-  const dischargedAsReceiver = new Set(
-    handovers.map((handover) => handover.dischargesReceiverObligationId).filter(Boolean),
-  );
-
-  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
-  const activeMatchesByUser = new Map<string, Set<number>>();
-  for (const obligation of obligations) {
-    const openSides = [
-      !dischargedAsSender.has(obligation.id)
-        ? participantById.get(obligation.senderParticipantId)
-        : undefined,
-      !dischargedAsReceiver.has(obligation.id)
-        ? participantById.get(obligation.receiverParticipantId)
-        : undefined,
-    ];
-    for (const participant of openSides) {
-      if (!participant?.userDetailId) {
-        continue;
-      }
-      const matches = activeMatchesByUser.get(participant.userDetailId) ?? new Set();
-      matches.add(obligation.matchId);
-      activeMatchesByUser.set(participant.userDetailId, matches);
-    }
-  }
-  for (const [detailsId, matches] of activeMatchesByUser) {
-    counts.set(detailsId, matches.size);
-  }
-  return counts;
+  return new Map(rows.map(({ detailsId, count }) => [detailsId, Number(count)]));
 }

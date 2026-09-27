@@ -36,7 +36,7 @@ test.group("read matches", (group) => {
   });
 
   /** The people lookup is spied so the suite can assert how often Postgres is read. */
-  function stubMongo() {
+  function spyOnPeopleLookup() {
     sandbox.spy(User, "byIds");
   }
 
@@ -62,7 +62,7 @@ test.group("read matches", (group) => {
   }
 
   test("returns a customer's matches with names and titles filled in", async ({ assert }) => {
-    stubMongo();
+    spyOnPeopleLookup();
     await seed();
 
     const matches = await getMatchesForCustomer(A);
@@ -81,7 +81,7 @@ test.group("read matches", (group) => {
   test("names a handover counterparty from outside the match", async ({ assert }) => {
     // The reason handovers record a counterparty at all: B was served by someone they were not
     // matched with, and the UI has to be able to say who.
-    stubMongo();
+    spyOnPeopleLookup();
     const { obligation } = await seed();
     await MatchRepository.recordHandover({
       blid: "BL0001234567",
@@ -108,14 +108,14 @@ test.group("read matches", (group) => {
   });
 
   test("returns nothing for a customer with no matches", async ({ assert }) => {
-    stubMongo();
+    spyOnPeopleLookup();
     await seed();
 
     assert.lengthOf(await getMatchesForCustomer(OUTSIDER), 0);
   });
 
   test("defaults to the newest active round when none is named", async ({ assert }) => {
-    stubMongo();
+    spyOnPeopleLookup();
     await seed();
     const newer = await createTestRound({
       name: "Newer",
@@ -134,7 +134,7 @@ test.group("read matches", (group) => {
   });
 
   test("returns the named round rather than the newest", async ({ assert }) => {
-    stubMongo();
+    spyOnPeopleLookup();
     const { round } = await seed();
     const newer = await createTestRound({ name: "Newer", standLocation: "Kantina" });
     await Match.create({ roundId: newer.id, meetingLocation: "Nyeste" });
@@ -146,12 +146,12 @@ test.group("read matches", (group) => {
   });
 
   test("returns nothing rather than throwing for an unknown round", async ({ assert }) => {
-    stubMongo();
+    spyOnPeopleLookup();
     assert.lengthOf(await getMatchesForRound(999_999), 0);
   });
 
   test("reads the people once however many matches there are", async ({ assert }) => {
-    stubMongo();
+    spyOnPeopleLookup();
     const { round } = await seed();
     const second = await Match.create({ roundId: round.id, meetingLocation: "Andre" });
     const [c, d] = await MatchParticipant.createMany([

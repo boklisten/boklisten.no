@@ -316,6 +316,44 @@ async function markVippsOutcome(
   return present(order, status);
 }
 
+/** Asks Vipps how the request went and places the order the first time it comes back approved. */
+async function currentStatus(orderId: string): Promise<StandCartCheckoutState> {
+  const order = await Order.getOrFail(orderId);
+  if (order.placed) {
+    return present(order, "paid");
+  }
+  switch (order.checkoutState) {
+    case VIPPS_REQUEST_STATE.aborted: {
+      return present(order, "aborted");
+    }
+    case VIPPS_REQUEST_STATE.expired: {
+      return present(order, "expired");
+    }
+    case VIPPS_REQUEST_STATE.cancelled: {
+      return present(order, "cancelled");
+    }
+    case VIPPS_REQUEST_STATE.created:
+    case VIPPS_REQUEST_STATE.paid: {
+      break;
+    }
+    default: {
+      throw new BadRequestException("Denne ordren venter ikke på en Vipps-betaling");
+    }
+  }
+  const outcome = await StandCartPayment.vippsOutcome(order);
+  switch (outcome) {
+    case "authorized": {
+      return settleAuthorizedVipps(order);
+    }
+    case "pending": {
+      return present(order, "pending");
+    }
+    default: {
+      return markVippsOutcome(order, outcome);
+    }
+  }
+}
+
 export const StandCartCheckoutService = {
   /**
    * Turns the employee's cart into one placed order for the customer. Card, cash and refund
@@ -427,55 +465,24 @@ export const StandCartCheckoutService = {
    * Safe to call repeatedly: a placed order is reported as paid without touching Vipps again.
    */
   async status(orderId: string): Promise<StandCartCheckoutState> {
-    const order = await Order.getOrFail(orderId);
-    if (order.placed) {
-      return present(order, "paid");
-    }
-    switch (order.checkoutState) {
-      case VIPPS_REQUEST_STATE.aborted: {
-        return present(order, "aborted");
-      }
-      case VIPPS_REQUEST_STATE.expired: {
-        return present(order, "expired");
-      }
-      case VIPPS_REQUEST_STATE.cancelled: {
-        return present(order, "cancelled");
-      }
-      case VIPPS_REQUEST_STATE.created:
-      case VIPPS_REQUEST_STATE.paid: {
-        break;
-      }
-      default: {
-        throw new BadRequestException("Denne ordren venter ikke på en Vipps-betaling");
-      }
-    }
-    const outcome = await StandCartPayment.vippsOutcome(order);
-    switch (outcome) {
-      case "authorized": {
-        return settleAuthorizedVipps(order);
-      }
-      case "pending": {
-        return present(order, "pending");
-      }
-      default: {
-        return markVippsOutcome(order, outcome);
-      }
-    }
+    return Order.whileLocked(orderId, async () => currentStatus(orderId));
   },
 
   /** The employee gives up waiting. If the customer approved in the meantime, the order is settled instead. */
   async cancel(orderId: string): Promise<StandCartCheckoutState> {
-    const order = await Order.getOrFail(orderId);
-    if (order.placed) {
-      return present(order, "paid");
-    }
-    if (order.checkoutState !== VIPPS_REQUEST_STATE.created) {
-      return StandCartCheckoutService.status(orderId);
-    }
-    if (!(await StandCartPayment.cancelVipps(order))) {
-      // Typically the customer approved just now; the status check settles it
-      return StandCartCheckoutService.status(orderId);
-    }
-    return markVippsOutcome(order, "cancelled");
+    return Order.whileLocked(orderId, async () => {
+      const order = await Order.getOrFail(orderId);
+      if (order.placed) {
+        return present(order, "paid");
+      }
+      if (order.checkoutState !== VIPPS_REQUEST_STATE.created) {
+        return currentStatus(orderId);
+      }
+      if (!(await StandCartPayment.cancelVipps(order))) {
+        // Typically the customer approved just now; the status check settles it
+        return currentStatus(orderId);
+      }
+      return markVippsOutcome(order, "cancelled");
+    });
   },
 };

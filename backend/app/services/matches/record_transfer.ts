@@ -1,17 +1,16 @@
 import * as Sentry from "@sentry/node";
 import type { Infer } from "@vinejs/vine/types";
+import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
-import Item from "#models/item";
 import Order from "#models/order";
 import type { NewOrder } from "#models/order";
-import type OrderItem from "#models/order_item";
+import OrderItem from "#models/order_item";
 import User from "#models/user";
 import BlidService from "#services/blid_service";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
-import { OrderActive } from "#services/orders/order_active";
 import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
 import { OrderValidator } from "#services/orders/validation/order_validator";
 import { extendRemainingCopyDeadlines } from "#services/matches/copy_deadlines";
@@ -21,7 +20,7 @@ import {
   requireHandoverBlid,
 } from "#services/matches/match_repository";
 import { BlError } from "#shared/bl-error";
-import { itemsAreEquivalent } from "#shared/item-equivalence";
+import { getEquivalentItemIds } from "#shared/item-equivalence";
 import type { matchTransferSchema } from "#validators/matches";
 
 const invalidBlidFeedback = "Feil strekkode. Bruk bokas unike ID. Se instruksjoner for hjelp";
@@ -63,51 +62,44 @@ async function unexpectedSenderFeedback(
   return `Boka du skannet var ${actualName} sin. Du skal beholde den, men ${expectedName} er fortsatt ansvarlig for å levere sin opprinnelige bok.`;
 }
 
-interface OriginalOrderInfo {
-  order: Order;
-  relevantOrderItem: OrderItem;
+interface ReceiverRentOrder {
+  orderId: string;
+  branchId: string;
+  periodTo: Date | null;
 }
 
 /** The receiver's live rent order for the title, which the new match-receive order moves from. */
 async function findReceiverRentOrder(
   receiverUserDetailId: string,
   itemId: string,
-): Promise<OriginalOrderInfo | undefined> {
-  const orderActive = new OrderActive();
-  return (await orderActive.getActiveOrders(receiverUserDetailId))
-    .flatMap((order) => {
-      const relevantOrderItem = order.orderItems.find(
-        (orderItem) =>
-          orderActive.isOrderItemActive(orderItem) &&
-          itemsAreEquivalent(orderItem.itemId, itemId) &&
-          orderItem.type === "rent",
-      );
-      return relevantOrderItem ? [{ order, relevantOrderItem }] : [];
-    })
-    .at(0);
+): Promise<ReceiverRentOrder | null> {
+  return OrderItem.whereOpen(db.from("order_items"), ["rent"])
+    .join("orders", "orders.id", "order_items.order_id")
+    .where("orders.customer_id", receiverUserDetailId)
+    .where("orders.placed", true)
+    .whereIn("order_items.item_id", getEquivalentItemIds(itemId))
+    .orderBy("orders.created_at")
+    .select(
+      "orders.id as orderId",
+      "orders.branch_id as branchId",
+      "order_items.period_to as periodTo",
+    )
+    .first();
 }
 
 async function createMatchReceiveOrder(
   customerItem: CustomerItem,
   userDetailId: string,
+  rentOrder: ReceiverRentOrder,
 ): Promise<NewOrder> {
-  const item = await Item.findOrFail(customerItem.itemId);
-
-  const originalReceiverOrderInfo = await findReceiverRentOrder(userDetailId, customerItem.itemId);
-
-  if (!originalReceiverOrderInfo) {
-    throw new BlError("No receiver order for match transfer item").code(200);
-  }
-  const branch = await Branch.findOrFail(originalReceiverOrderInfo.order.branchId);
-
-  const movedFromOrderId = originalReceiverOrderInfo.order.id;
-
-  const originalOrderDeadline = originalReceiverOrderInfo.relevantOrderItem.periodTo;
-  const branchRentDeadline = branch.rentPeriods[0]?.date;
-
-  const deadline =
-    originalOrderDeadline ??
-    (branchRentDeadline === undefined ? null : DateTime.fromJSDate(branchRentDeadline));
+  const branchRentDeadline = rentOrder.periodTo
+    ? undefined
+    : (await Branch.findOrFail(rentOrder.branchId)).rentPeriods[0]?.date;
+  const deadline = rentOrder.periodTo
+    ? DateTime.fromJSDate(rentOrder.periodTo)
+    : branchRentDeadline === undefined
+      ? null
+      : DateTime.fromJSDate(branchRentDeadline);
 
   if (!deadline) {
     throw new BlError(
@@ -118,13 +110,13 @@ async function createMatchReceiveOrder(
   return {
     placed: true,
     amount: 0,
-    branchId: branch.id,
+    branchId: rentOrder.branchId,
     customerId: userDetailId,
     byCustomer: true,
     orderItems: [
       {
-        movedFromOrderId,
-        itemId: item.id,
+        movedFromOrderId: rentOrder.orderId,
+        itemId: customerItem.itemId,
         blid: requireHandoverBlid(customerItem.blid),
         type: "match-receive",
         handout: false,
@@ -140,23 +132,16 @@ async function createMatchReceiveOrder(
   };
 }
 
-async function createMatchDeliverOrder(
-  customerItem: CustomerItem,
-  userDetailId: string,
-): Promise<NewOrder> {
-  const item = await Item.findOrFail(customerItem.itemId);
-
-  const branch = await Branch.findOrFail(customerItem.handoutBranchId);
-
+function createMatchDeliverOrder(customerItem: CustomerItem, userDetailId: string): NewOrder {
   return {
     placed: true,
     amount: 0,
-    branchId: branch.id,
+    branchId: customerItem.handoutBranchId,
     customerId: userDetailId,
     byCustomer: true,
     orderItems: [
       {
-        itemId: item.id,
+        itemId: customerItem.itemId,
         blid: requireHandoverBlid(customerItem.blid),
         customerItemId: customerItem.id,
         type: "match-deliver",
@@ -172,8 +157,13 @@ async function createMatchDeliverOrder(
 async function placeReceiverOrder(
   customerItem: CustomerItem,
   receiverUserDetailId: string,
+  rentOrder: ReceiverRentOrder,
 ): Promise<Order> {
-  const receiverOrder = await createMatchReceiveOrder(customerItem, receiverUserDetailId);
+  const receiverOrder = await createMatchReceiveOrder(
+    customerItem,
+    receiverUserDetailId,
+    rentOrder,
+  );
 
   const placedReceiverOrder = await Order.createWithItems(receiverOrder);
 
@@ -199,7 +189,7 @@ async function returnSenderCustomerItem(
   customerItem: CustomerItem,
   senderUserDetailId: string,
 ): Promise<void> {
-  const senderOrder = await createMatchDeliverOrder(customerItem, senderUserDetailId);
+  const senderOrder = createMatchDeliverOrder(customerItem, senderUserDetailId);
 
   const placedSenderOrder = await Order.createWithItems(senderOrder);
   await new OrderValidator().validate(placedSenderOrder, false);
@@ -258,7 +248,8 @@ export async function recordTransfer(
     };
   }
 
-  if (!(await findReceiverRentOrder(detailsId, customerItem.itemId))) {
+  const rentOrder = await findReceiverRentOrder(detailsId, customerItem.itemId);
+  if (!rentOrder) {
     return { feedback: noActiveOrderFeedback };
   }
 
@@ -300,7 +291,7 @@ export async function recordTransfer(
   let placedReceiverOrder: Order;
   try {
     await returnSenderCustomerItem(customerItem, ownerId);
-    placedReceiverOrder = await placeReceiverOrder(customerItem, detailsId);
+    placedReceiverOrder = await placeReceiverOrder(customerItem, detailsId, rentOrder);
     await recordReceiverCustomerItem(placedReceiverOrder);
   } catch (error) {
     // The books did not actually change owner; take the discharge back so the match still shows

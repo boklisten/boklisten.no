@@ -1,7 +1,4 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import mongoose from "mongoose";
-
-import env from "#start/env";
 
 /**
  * Removes three legacy fields nothing has ever read (survey of staging, 2026-09-18):
@@ -14,44 +11,7 @@ import env from "#start/env";
  */
 export default class extends BaseSchema {
   override async up() {
-    this.defer(async () => {
-      if (env.get("API_ENV") === "test") {
-        return;
-      }
-
-      const connection = await mongoose
-        .createConnection(env.get("MONGODB_URI").release(), {
-          dbName: env.get("API_ENV") === "production" ? "production" : "staging",
-        })
-        .asPromise();
-      try {
-        const mongo = connection.db;
-        if (!mongo) {
-          throw new Error("mongoose connection has no db handle");
-        }
-
-        const customerItems = mongo.collection("customeritems");
-        for (const field of ["totalAmount", "handoutInfo.handoutBy", "returnInfo.returnedTo"]) {
-          const result = await customerItems.updateMany(
-            { [field]: { $exists: true } },
-            { $unset: { [field]: "" } },
-          );
-          console.log(`customerItem cleanup: dropped "${field}" from ${result.modifiedCount} docs`);
-        }
-
-        const deliveries = await mongo
-          .collection("deliveries")
-          .updateMany(
-            { "info.taxAmount": { $exists: true } },
-            { $unset: { "info.taxAmount": "" } },
-          );
-        console.log(
-          `delivery cleanup: dropped "info.taxAmount" from ${deliveries.modifiedCount} docs`,
-        );
-      } finally {
-        await connection.close();
-      }
-    });
+    // Changed MongoDB only; emptied when MongoDB was decommissioned (2026-09-28).
   }
 
   override async down() {

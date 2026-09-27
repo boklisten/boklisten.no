@@ -51,16 +51,12 @@ interface DuplicateCustomersResult {
   pairs: DuplicatePair[];
 }
 
-// Legacy documents sometimes hold numbers where the schema says string
 function normalizeText(value: string | null | undefined) {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase()
-    .replaceAll(/\s+/g, " ");
+  return (value ?? "").trim().toLowerCase().replaceAll(/\s+/g, " ");
 }
 
 function normalizePhone(value: string | null | undefined) {
-  const digits = String(value ?? "").replaceAll(/\D/g, "");
+  const digits = (value ?? "").replaceAll(/\D/g, "");
   return digits.startsWith("0047")
     ? digits.slice(4)
     : digits.startsWith("47") && digits.length === 10

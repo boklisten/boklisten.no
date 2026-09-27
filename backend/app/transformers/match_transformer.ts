@@ -17,10 +17,10 @@ export interface MatchPerson {
 }
 
 /**
- * The Mongo-side context needed to render matches.
+ * The people and titles needed to render matches.
  *
- * Passed in rather than fetched here so a caller rendering many matches makes exactly two Mongo
- * reads — one for people, one for titles — instead of two per match.
+ * Passed in rather than fetched here so a caller rendering many matches makes exactly two reads —
+ * one for people, one for titles — instead of two per match.
  */
 export interface MatchLookups {
   /** UserDetail id → contact details. */
@@ -78,7 +78,7 @@ function toObligationDto(
  * Shapes matches for the API.
  *
  * Unlike the other transformers this is a plain function rather than a `BaseTransformer` subclass,
- * because rendering a match needs cross-record context (the handovers, and Mongo-side names and
+ * because rendering a match needs cross-record context (the handovers, and people's names and
  * titles) that the single-resource `toObject()` shape cannot carry.
  *
  * @param matches with `participants` and `obligations.sender`/`.receiver` preloaded

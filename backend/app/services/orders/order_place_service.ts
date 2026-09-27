@@ -43,60 +43,33 @@ export class OrderPlaceService {
     this.orderValidator = orderValidator ?? new OrderValidator();
   }
 
-  private filterOrdersByAlreadyOrdered(orders: Order[]) {
-    const customerOrderItems = [];
-
-    for (const order of orders) {
-      if (order.orderItems) {
-        for (const orderItem of order.orderItems) {
-          if (!order.byCustomer) {
-            continue;
-          }
-
-          if (orderItem.handout) {
-            continue;
-          }
-
-          if (orderItem.movedToOrderId !== null) {
-            continue;
-          }
-
-          if (
-            orderItem.type === "rent" ||
-            orderItem.type === "buy" ||
-            orderItem.type === "partly-payment"
-          ) {
-            customerOrderItems.push(orderItem);
-          }
-        }
-      }
-    }
-    return customerOrderItems;
-  }
-
+  /** Whether the customer already ordered one of the order's books with the same deadline. */
   private async hasOpenOrderWithOrderItems(order: Order) {
-    if (order.customerId === null) {
+    const lines = order.orderItems.flatMap(({ itemId, periodTo }) =>
+      periodTo ? [{ itemId, periodTo: periodTo.toJSDate() }] : [],
+    );
+    if (order.customerId === null || lines.length === 0) {
       return false;
     }
-    const existingOrders = await Order.placedFor(order.customerId);
-    const alreadyOrderedItems = this.filterOrdersByAlreadyOrdered(existingOrders);
-
-    for (const orderItem of order.orderItems) {
-      for (const alreadyOrderedItem of alreadyOrderedItems) {
-        const deadline = orderItem.periodTo;
-        const alreadyOrderedDeadline = alreadyOrderedItem.periodTo;
-        if (
-          orderItem.itemId === alreadyOrderedItem.itemId &&
-          deadline !== null &&
-          alreadyOrderedDeadline !== null &&
-          deadline.toMillis() === alreadyOrderedDeadline.toMillis()
-        ) {
-          return true;
+    const match = await db
+      .from("order_items")
+      .join("orders", "orders.id", "order_items.order_id")
+      .where("orders.customer_id", order.customerId)
+      .where("orders.placed", true)
+      .where("orders.by_customer", true)
+      .where("order_items.handout", false)
+      .whereNull("order_items.moved_to_order_id")
+      .whereIn("order_items.type", ["rent", "buy", "partly-payment"])
+      .where((query) => {
+        for (const { itemId, periodTo } of lines) {
+          void query.orWhere((line) =>
+            line.where("order_items.item_id", itemId).where("order_items.period_to", periodTo),
+          );
         }
-      }
-    }
-
-    return false;
+      })
+      .select("order_items.id")
+      .first();
+    return match !== null;
   }
 
   /**

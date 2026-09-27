@@ -1,6 +1,12 @@
+import db from "@adonisjs/lucid/services/db";
+import type { DatabaseQueryBuilderContract } from "@adonisjs/lucid/types/querybuilder";
+
 import BadRequestException from "#exceptions/bad_request_exception";
-import { MatchRepository } from "#services/matches/match_repository";
 import { getEquivalentItemIds } from "#shared/item-equivalence";
+
+function participantsOfMatch(query: DatabaseQueryBuilderContract) {
+  return query.from("match_participants").whereColumn("match_participants.match_id", "matches.id");
+}
 
 /**
  * Item ids the given customer may not cancel an order for, because a user match in an active
@@ -9,19 +15,19 @@ import { getEquivalentItemIds } from "#shared/item-equivalence";
  * obligation for one edition can be satisfied by an ordered copy of another.
  */
 export async function itemIdsInActiveUserMatches(customerId: string): Promise<Set<string>> {
-  const matches = await MatchRepository.findForCustomer(customerId);
-  const blocked = new Set<string>();
-  for (const match of matches) {
-    if (match.participants.some((participant) => participant.isStand)) {
-      continue;
-    }
-    for (const obligation of match.obligations) {
-      for (const itemId of getEquivalentItemIds(obligation.itemId)) {
-        blocked.add(itemId);
-      }
-    }
-  }
-  return blocked;
+  const rows: { itemId: string }[] = await db
+    .from("match_obligations")
+    .join("matches", "matches.id", "match_obligations.match_id")
+    .join("match_rounds", "match_rounds.id", "matches.round_id")
+    .where("match_rounds.status", "active")
+    .whereExists((query) => {
+      void participantsOfMatch(query).where("match_participants.user_detail_id", customerId);
+    })
+    .whereNotExists((query) => {
+      void participantsOfMatch(query).whereNull("match_participants.user_detail_id");
+    })
+    .distinct("match_obligations.item_id as itemId");
+  return new Set(rows.flatMap(({ itemId }) => getEquivalentItemIds(itemId)));
 }
 
 export async function assertNotBlockedByUserMatch(customerId: string, itemId: string) {

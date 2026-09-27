@@ -22,12 +22,23 @@ interface ReminderCustomer {
   guardian: { phone: string | null; email: string | null };
 }
 
-async function aggregateCustomersToRemind(
-  customerItemType: "rent" | "partly-payment",
-  branchIDs: string[],
-  deadlineISO: string,
-): Promise<ReminderCustomer[]> {
+interface ReminderFilter {
+  customerItemType: "rent" | "partly-payment";
+  branchIDs: string[];
+  deadlineISO: string;
+}
+
+/** The active books of the given type due around the deadline at the branches. */
+function booksToRemind({ customerItemType, branchIDs, deadlineISO }: ReminderFilter) {
   const { after, before } = deadlineWindow(new Date(deadlineISO));
+  return CustomerItem.whereActive(db.from("customer_items"))
+    .where("customer_items.type", customerItemType)
+    .whereIn("customer_items.handout_branch_id", branchIDs)
+    .where("customer_items.deadline", ">", after)
+    .where("customer_items.deadline", "<", before);
+}
+
+async function aggregateCustomersToRemind(filter: ReminderFilter): Promise<ReminderCustomer[]> {
   const rows: {
     customerId: string;
     name: string;
@@ -38,13 +49,9 @@ async function aggregateCustomersToRemind(
     title: string;
     blid: string | null;
     deadline: Date;
-  }[] = await CustomerItem.whereActive(db.from("customer_items"))
+  }[] = await booksToRemind(filter)
     .join("users", "users.id", "customer_items.customer_id")
     .join("items", "items.id", "customer_items.item_id")
-    .where("customer_items.type", customerItemType)
-    .whereIn("customer_items.handout_branch_id", branchIDs)
-    .where("customer_items.deadline", ">", after)
-    .where("customer_items.deadline", "<", before)
     .orderBy("customer_items.customer_id")
     .orderBy("customer_items.deadline")
     .select(
@@ -123,10 +130,9 @@ async function sendReminderEmail(
 
 export default class RemindersController {
   async countRecipients(ctx: HttpContext) {
-    const { deadlineISO, customerItemType, branchIDs } =
-      await ctx.request.validateUsing(reminderValidator);
-    const customers = await aggregateCustomersToRemind(customerItemType, branchIDs, deadlineISO);
-    return { recipientCount: customers.length };
+    const filter = await ctx.request.validateUsing(reminderValidator);
+    const [row] = await booksToRemind(filter).countDistinct("customer_items.customer_id as count");
+    return { recipientCount: Number(row?.count ?? 0) };
   }
 
   async send(ctx: HttpContext) {
@@ -135,7 +141,11 @@ export default class RemindersController {
     const { deadlineISO, customerItemType, branchIDs, emailTemplateId, smsText } =
       await ctx.request.validateUsing(reminderValidator);
 
-    const customers = await aggregateCustomersToRemind(customerItemType, branchIDs, deadlineISO);
+    const customers = await aggregateCustomersToRemind({
+      customerItemType,
+      branchIDs,
+      deadlineISO,
+    });
 
     const sendout = await MessageLogService.createSendout({
       kind: "reminder",

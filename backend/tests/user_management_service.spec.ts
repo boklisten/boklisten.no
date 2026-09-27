@@ -15,7 +15,6 @@ import Order from "#models/order";
 import PasswordReset from "#models/password_reset";
 import Signature from "#models/signature";
 import User from "#models/user";
-import { OrderActive } from "#services/orders/order_active";
 import { UserManagementService } from "#services/user_management_service";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
@@ -150,6 +149,25 @@ test.group("UserManagementService.mergeUsers", (group) => {
     assert.isNotNull(await User.find(TO));
   });
 
+  test("a merge that fails part way changes nothing", async ({ assert }) => {
+    const [branch, item] = await Promise.all([createBranch(), createItem()]);
+    const order = await createOrder({
+      branchId: branch.id,
+      customerId: FROM,
+      orderItems: [{ itemId: item.id }],
+    });
+    const sandbox = createSandbox();
+    sandbox.stub(User.prototype, "delete").rejects(new Error("boom"));
+    try {
+      await assert.rejects(() => UserManagementService.mergeUsers(FROM, TO), "boom");
+    } finally {
+      sandbox.restore();
+    }
+
+    assert.equal((await Order.getOrFail(order.id)).customerId, FROM);
+    assert.isNotNull(await User.find(FROM));
+  });
+
   test("removes the source user's verification and password reset rows", async ({ assert }) => {
     await EmailVerification.create({ userDetailId: FROM });
     await EmailVerification.create({ userDetailId: TO });
@@ -185,7 +203,7 @@ test.group("UserManagementService.deleteUser", (group) => {
   });
   group.each.setup(() => {
     sandbox = createSandbox();
-    activeOrdersStub = sandbox.stub(OrderActive.prototype, "haveActiveOrders").resolves(false);
+    activeOrdersStub = sandbox.stub(Order, "hasOpenLines").resolves(false);
     activeCustomerItemsStub = sandbox.stub(CustomerItem, "hasActive").resolves(false);
   });
   group.each.teardown(() => sandbox.restore());

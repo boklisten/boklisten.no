@@ -1,3 +1,4 @@
+import { Exception } from "@adonisjs/core/exceptions";
 import db from "@adonisjs/lucid/services/db";
 import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 
@@ -139,7 +140,17 @@ async function assertNoCycle(
       throw new BranchCycleError(currentId);
     }
     blocked.add(currentId);
-    const current = await Branch.query({ client: trx }).where("id", currentId).firstOrFail();
+    const current: { parentBranchId: string | null } | null = await trx
+      .from("branches")
+      .where("id", currentId)
+      .select("parent_branch_id as parentBranchId")
+      .first();
+    if (!current) {
+      throw new Exception(`Fant ikke filial ${currentId}`, {
+        status: 404,
+        code: "E_ROW_NOT_FOUND",
+      });
+    }
     currentId = current.parentBranchId;
   }
 }

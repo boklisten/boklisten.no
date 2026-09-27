@@ -2,7 +2,7 @@ import BadRequestException from "#exceptions/bad_request_exception";
 import Signature from "#models/signature";
 import type User from "#models/user";
 import CustomerItem from "#models/customer_item";
-import { OrderActive } from "#services/orders/order_active";
+import Order from "#models/order";
 import { SIGNATURE_REQUIRING_CART_ITEM_TYPES } from "#shared/cart_item";
 
 const signatureRequiringOrderItemTypes = new Set<string>(SIGNATURE_REQUIRING_CART_ITEM_TYPES);
@@ -56,30 +56,14 @@ export async function reconcileSignatureTask(user: User): Promise<User> {
   }
 
   if (
-    (await hasOpenSignatureRequiringOrder(user.id)) ||
-    (await possessesSignatureRequiringItem(user.id))
+    (await Order.hasOpenLines(user.id, SIGNATURE_REQUIRING_CART_ITEM_TYPES)) ||
+    (await CustomerItem.hasActive(user.id))
   ) {
     user.taskSignAgreement = true;
     await user.save();
   }
 
   return user;
-}
-
-async function hasOpenSignatureRequiringOrder(customerId: string): Promise<boolean> {
-  const orderActive = new OrderActive();
-  const activeOrders = await orderActive.getActiveOrders(customerId);
-  return activeOrders.some((order) =>
-    order.orderItems.some(
-      (orderItem) =>
-        signatureRequiringOrderItemTypes.has(orderItem.type) &&
-        orderActive.isOrderItemActive(orderItem),
-    ),
-  );
-}
-
-async function possessesSignatureRequiringItem(customerId: string): Promise<boolean> {
-  return CustomerItem.hasActive(customerId);
 }
 
 const SIGNATURE_EXCEPTION_REASONS = {

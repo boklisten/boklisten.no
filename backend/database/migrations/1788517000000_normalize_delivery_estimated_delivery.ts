@@ -1,7 +1,4 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import mongoose from "mongoose";
-
-import env from "#start/env";
 
 /**
  * A single delivery from May 2021 stored info.estimatedDelivery as an ISO string instead of a
@@ -11,34 +8,7 @@ import env from "#start/env";
  */
 export default class extends BaseSchema {
   override async up() {
-    this.defer(async () => {
-      if (env.get("API_ENV") === "test") {
-        return;
-      }
-
-      const connection = await mongoose
-        .createConnection(env.get("MONGODB_URI").release(), {
-          dbName: env.get("API_ENV") === "production" ? "production" : "staging",
-        })
-        .asPromise();
-      try {
-        const mongo = connection.db;
-        if (!mongo) {
-          throw new Error("mongoose connection has no db handle");
-        }
-
-        const result = await mongo
-          .collection("deliveries")
-          .updateMany({ "info.estimatedDelivery": { $type: "string" } }, [
-            { $set: { "info.estimatedDelivery": { $toDate: "$info.estimatedDelivery" } } },
-          ]);
-        console.log(
-          `delivery normalization: info.estimatedDelivery converted from string to Date on ${result.modifiedCount} deliveries`,
-        );
-      } finally {
-        await connection.close();
-      }
-    });
+    // Changed MongoDB only; emptied when MongoDB was decommissioned (2026-09-28).
   }
 
   override async down() {

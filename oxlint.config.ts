@@ -44,8 +44,9 @@ export default defineConfig({
     "no-warning-comments": "off",
     // Adding the /u flag can change matching semantics; not a safe bulk fix
     "require-unicode-regexp": "off",
-    // The legacy Mongo/any-typed surface makes the no-unsafe-* family unavoidable
-    // during the Mongoose→Lucid migration — revisit once the legacy layer shrinks
+    // Route params, Lucid query results, middleware `next()` and vendor JSON are `any` by
+    // design; satisfying these rules means casts or generics that read worse than the
+    // explicit type annotations used at those call sites
     "typescript/no-unsafe-member-access": "off",
     "typescript/no-unsafe-assignment": "off",
     "typescript/no-unsafe-argument": "off",
@@ -127,7 +128,7 @@ export default defineConfig({
     "no-nested-ternary": "off",
     "unicorn/no-nested-ternary": "off",
     "no-continue": "off",
-    // null is load-bearing: Mongo documents and JSON APIs distinguish null from undefined
+    // null is load-bearing: Postgres NULLs and JSON APIs distinguish null from undefined
     "unicorn/no-null": "off",
     // Backend is snake_case (Adonis), frontend camelCase — no single case convention
     "unicorn/filename-case": "off",
@@ -143,16 +144,14 @@ export default defineConfig({
     "typescript/parameter-properties": "off",
     // No auto-fix, manual rewrites only
     "unicorn/no-await-expression-member": "off",
-    // All hits are third-party factory idioms (VippsCheckout, JsBarcode, Client) and
-    // `new this.mongooseModel()`; the options needed to allow them gut the rule
+    // All hits are third-party factory idioms (VippsCheckout, JsBarcode, Client,
+    // VippsDriverService); allowing them by name buys nothing
     "new-cap": "off",
     "prefer-destructuring": "off",
     // `typeof window === "undefined"` SSR guards are deliberate
     "unicorn/prefer-global-this": "off",
     // pdfkit's default export genuinely is PDFDocument
     "import/no-named-as-default": "off",
-    // False-positives on MongoDB collection.find(filter, options) as Array#find thisArg
-    "unicorn/no-array-method-this-argument": "off",
     // role="status" containers are fine; swapping in <output> changes element semantics/styling
     "jsx-a11y/prefer-tag-over-role": "off",
     // Adonis config files augment modules with empty single-extends interfaces
@@ -164,15 +163,9 @@ export default defineConfig({
     "@typescript-eslint/unbound-method": "off",
     // Obsolete with the automatic JSX transform (React 17+)
     "react/react-in-jsx-scope": "off",
-    // Type-aware analysis trusts the Mongoose schema types, but legacy Mongo documents hold
-    // numbers/ObjectIds where the schema says string — the "redundant" String()/toString()
-    // conversions it wants removed are load-bearing at runtime
-    "typescript/no-unnecessary-type-conversion": "off",
     // Render callbacks passed as props (ag-grid cellRenderer etc.) are not mounted as
     // component types, so recreating them per render is fine
     "react/no-unstable-nested-components": ["error", { allowAsProps: true }],
-    // Underscore-prefixed members (Mongo `_id`) are idiomatic in this codebase
-    "no-underscore-dangle": "off",
     // Legitimate side-effect imports: stylesheets, dayjs locale, TS/DI runtime hooks
     "import/no-unassigned-import": [
       "error",

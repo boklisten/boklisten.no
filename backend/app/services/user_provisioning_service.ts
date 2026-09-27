@@ -3,10 +3,10 @@ import * as Sentry from "@sentry/node";
 import type { Infer } from "@vinejs/vine/types";
 
 import Branch from "#models/branch";
+import Signature from "#models/signature";
 import User from "#models/user";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import DispatchService from "#services/dispatch_service";
-import { userHasValidSignature } from "#services/signature_helper";
 import { invalidUserFields } from "#services/user_detail_helper";
 import { dobFrom, UserService } from "#services/user_service";
 import type { userProvisioningValidator } from "#validators/user_provisioning";
@@ -160,9 +160,12 @@ async function updateExistingUser(
   candidate: UserCandidate,
   existingUser: User,
   branchId: string | undefined,
+  newestSignature: Signature | undefined,
 ) {
   existingUser.merge(mergeCandidateIntoUser(candidate, existingUser, branchId));
-  existingUser.merge(computeTasks(existingUser, await userHasValidSignature(existingUser)));
+  existingUser.merge(
+    computeTasks(existingUser, newestSignature?.isValidFor(existingUser) ?? false),
+  );
   await existingUser.save();
 }
 
@@ -270,6 +273,11 @@ export const UserProvisioningService = {
       mappings.map((mapping) => [mapping.localName, mapping.branch]),
     );
     const uploadBranch = await Branch.findOrFail(branchId);
+    const signatures = new Map(
+      (
+        await Signature.newestPerCustomer(existingUsers.flatMap((user) => (user ? [user.id] : [])))
+      ).map((signature) => [signature.customerDetailsId, signature]),
+    );
 
     const summary = {
       createdCount: 0,
@@ -295,7 +303,12 @@ export const UserProvisioningService = {
       try {
         const existingUser = existingUsers[index];
         if (existingUser) {
-          await updateExistingUser(candidate, existingUser, branch?.id);
+          await updateExistingUser(
+            candidate,
+            existingUser,
+            branch?.id,
+            signatures.get(existingUser.id),
+          );
           summary.updatedCount++;
         } else {
           await createNewUser(candidate, branch?.id, branch?.name ?? uploadBranch.name);

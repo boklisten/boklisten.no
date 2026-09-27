@@ -63,9 +63,7 @@ async function deliverAndRecord(
     logger.error(`SendGrid send error: ${String(error)}`);
     result = { status: "send-failed", reason: String(error) };
   }
-  for (const logEntry of logEntries) {
-    await MessageLogService.recordSendResult(logEntry, result);
-  }
+  await MessageLogService.recordSendResult(logEntries, result);
   return result.status === "sent";
 }
 
@@ -90,6 +88,8 @@ function twilioStatusCallback(messageId: string | undefined): string | undefined
   return `${apiOrigin}/webhooks/twilio/${messageId}`;
 }
 
+const SMS_CONCURRENCY = 10;
+
 const SmsService = {
   async sendOne(message: SmsMessage, context: MessageLogContext) {
     const logEntry = await MessageLogService.logOutgoingMessage({
@@ -109,7 +109,7 @@ const SmsService = {
       );
       const user = await User.byPhone(message.to);
       if (!user || !hasPermissionLevel(user.permission, "employee")) {
-        await MessageLogService.recordSendResult(logEntry, {
+        await MessageLogService.recordSendResult([logEntry], {
           status: "skipped",
           reason: "Utenfor produksjon sendes SMS bare til ansatte",
         });
@@ -124,14 +124,14 @@ const SmsService = {
         from: "Boklisten",
         statusCallback: twilioStatusCallback(logEntry?.id),
       });
-      if (logEntry) {
-        logEntry.providerMessageId = twilioMessage.sid;
-      }
-      await MessageLogService.recordSendResult(logEntry, { status: "sent" });
+      await MessageLogService.recordSendResult([logEntry], {
+        status: "sent",
+        providerMessageId: twilioMessage.sid,
+      });
       logger.info(`successfully sent SMS to "${message.to}"`);
       return { successCount: 1, failed: [] };
     } catch (error) {
-      await MessageLogService.recordSendResult(logEntry, {
+      await MessageLogService.recordSendResult([logEntry], {
         status: "send-failed",
         reason: String(error),
       });
@@ -140,7 +140,15 @@ const SmsService = {
     }
   },
   async sendMany(messages: SmsMessage[], context: MessageLogContext) {
-    return (await Promise.all(messages.map((message) => this.sendOne(message, context)))).reduce(
+    const results = [];
+    for (let i = 0; i < messages.length; i += SMS_CONCURRENCY) {
+      results.push(
+        ...(await Promise.all(
+          messages.slice(i, i + SMS_CONCURRENCY).map((message) => this.sendOne(message, context)),
+        )),
+      );
+    }
+    return results.reduce(
       (acc, next) => ({
         successCount: acc.successCount + next.successCount,
         failed: [...acc.failed, ...next.failed],
@@ -152,18 +160,37 @@ const SmsService = {
 
 // SendGrid allows a maximum of 1000 personalizations per request
 const SENDGRID_BATCH_SIZE = 1000;
+
+// Validating a sendout checks the template of every recipient; one fetch serves them all.
+const TEMPLATE_CACHE_MS = 60_000;
+let templateCache: {
+  expiresAt: number;
+  templates: Promise<{ id: string; name: string }[]>;
+} | null = null;
+
+async function fetchEmailTemplates() {
+  const [, body] = await sgClient.request({
+    method: "GET",
+    url: "/v3/templates",
+    qs: {
+      generations: "dynamic",
+      page_size: 200,
+    },
+  });
+  const [, data] = await sendgridEmailTemplatesResponseValidator.tryValidate(body);
+  return data?.result ?? [];
+}
+
 const EmailService = {
   async getEmailTemplates() {
-    const [, body] = await sgClient.request({
-      method: "GET",
-      url: "/v3/templates",
-      qs: {
-        generations: "dynamic",
-        page_size: 200,
-      },
-    });
-    const [, data] = await sendgridEmailTemplatesResponseValidator.tryValidate(body);
-    return data?.result ?? [];
+    if (!templateCache || templateCache.expiresAt < Date.now()) {
+      const templates = fetchEmailTemplates();
+      templateCache = { expiresAt: Date.now() + TEMPLATE_CACHE_MS, templates };
+      templates.catch(() => {
+        templateCache = null;
+      });
+    }
+    return templateCache.templates;
   },
   async sendEmail({
     template,
@@ -174,29 +201,26 @@ const EmailService = {
     recipients: EmailRecipient | EmailRecipient[];
     context: MessageLogContext;
   }) {
-    const _personalizations = Array.isArray(recipients) ? recipients : [recipients];
+    const allRecipients = Array.isArray(recipients) ? recipients : [recipients];
 
-    let personalizations = _personalizations;
+    let personalizations = allRecipients;
     if (env.get("API_ENV") !== "production") {
       logger.info(
         "Since API_ENV !== production, emails will only be sent to users with permission 'employee' or above",
       );
       personalizations = [];
       const skipped: EmailRecipient[] = [];
-      for (const personalization of _personalizations) {
+      for (const personalization of allRecipients) {
         if (await mayReceiveOutsideProduction(personalization.to)) {
           personalizations.push(personalization);
         } else {
           skipped.push(personalization);
         }
       }
-      for (const personalization of skipped) {
-        const logEntry = await this.logEmail(template, personalization, context);
-        await MessageLogService.recordSendResult(logEntry, {
-          status: "skipped",
-          reason: SKIPPED_OUTSIDE_PRODUCTION_REASON,
-        });
-      }
+      await MessageLogService.recordSendResult(await this.logEmails(template, skipped, context), {
+        status: "skipped",
+        reason: SKIPPED_OUTSIDE_PRODUCTION_REASON,
+      });
     }
 
     const batches: EmailRecipient[][] = [];
@@ -206,10 +230,7 @@ const EmailService = {
 
     let success = true;
     for (const batch of batches) {
-      const logEntries: (Message | null)[] = [];
-      for (const personalization of batch) {
-        logEntries.push(await this.logEmail(template, personalization, context));
-      }
+      const logEntries = await this.logEmails(template, batch, context);
       const batchOk = await deliverAndRecord(logEntries, () =>
         sgMail.send({
           from: template.sender,
@@ -248,7 +269,7 @@ const EmailService = {
         { to, subject, text },
         "Since API_ENV !== production, the mail is logged, not sent",
       );
-      await MessageLogService.recordSendResult(logEntry, {
+      await MessageLogService.recordSendResult([logEntry], {
         status: "skipped",
         reason: SKIPPED_OUTSIDE_PRODUCTION_REASON,
       });
@@ -270,20 +291,28 @@ const EmailService = {
     );
     return { success };
   },
-  async logEmail(template: EmailTemplate, recipient: EmailRecipient, context: MessageLogContext) {
-    const subject = recipient.dynamicTemplateData?.["subject"];
-    return MessageLogService.logOutgoingMessage({
-      channel: "email",
-      recipient: recipient.to,
-      context: {
-        ...context,
-        regardingCustomerDetailsId:
-          recipient.regardingCustomerDetailsId ?? context.regardingCustomerDetailsId,
-      },
-      subject: typeof subject === "string" ? subject : null,
-      templateId: template.templateId,
-      templateData: recipient.dynamicTemplateData,
-    });
+  async logEmails(
+    template: EmailTemplate,
+    recipients: EmailRecipient[],
+    context: MessageLogContext,
+  ) {
+    return MessageLogService.logOutgoingMessages(
+      recipients.map((recipient) => {
+        const subject = recipient.dynamicTemplateData?.["subject"];
+        return {
+          channel: "email",
+          recipient: recipient.to,
+          context: {
+            ...context,
+            regardingCustomerDetailsId:
+              recipient.regardingCustomerDetailsId ?? context.regardingCustomerDetailsId,
+          },
+          subject: typeof subject === "string" ? subject : null,
+          templateId: template.templateId,
+          templateData: recipient.dynamicTemplateData,
+        };
+      }),
+    );
   },
 };
 

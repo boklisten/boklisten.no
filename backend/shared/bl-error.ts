@@ -1,32 +1,32 @@
 export class BlError extends Error {
   public override name = "BlError";
-  private _code: number;
-  private readonly _errorStack: BlError[];
-  private readonly _store: { key: string; value: unknown }[];
+  private codeValue: number;
+  private readonly stackedErrors: BlError[];
+  private readonly storeEntries: { key: string; value: unknown }[];
 
   constructor(message: string) {
     super(message);
-    this._errorStack = [];
-    this._store = [];
-    this._code = 0;
+    this.stackedErrors = [];
+    this.storeEntries = [];
+    this.codeValue = 0;
   }
 
   add(blError: BlError): this {
-    this._errorStack.push(blError);
+    this.stackedErrors.push(blError);
     return this;
   }
 
   store(key: string, value: unknown) {
-    this._store.push({ key, value });
+    this.storeEntries.push({ key, value });
     return this;
   }
 
   getStore(): { key: string; value: unknown }[] {
-    return this._store;
+    return this.storeEntries;
   }
 
   get errorStack(): BlError[] {
-    return this._errorStack;
+    return this.stackedErrors;
   }
 
   msg(message: string): this {
@@ -39,14 +39,14 @@ export class BlError extends Error {
   }
 
   code(code: number) {
-    this._code = code;
+    this.codeValue = code;
     return this;
   }
 
   getCode(): number {
-    if (!this._code) {
+    if (!this.codeValue) {
       return 0;
     }
-    return this._code;
+    return this.codeValue;
   }
 }

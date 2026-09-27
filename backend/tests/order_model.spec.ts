@@ -128,3 +128,41 @@ test.group("Order model", (group) => {
     await assert.rejects(() => Order.getOrFail("ffffffffffffffffffffffff"), /Fant ikke ordre/);
   });
 });
+
+async function openLinesWorld() {
+  const [branch, customer, item] = await Promise.all([createBranch(), createUser(), createItem()]);
+  const order = (line: { type?: "rent" | "buy"; handout?: boolean }, placed = true) =>
+    createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      placed,
+      orderItems: [{ itemId: item.id, ...line }],
+    });
+  return { customer, order };
+}
+
+test.group("Order.hasOpenLines", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("is false without orders or with only unplaced ones", async ({ assert }) => {
+    const { customer, order } = await openLinesWorld();
+    assert.isFalse(await Order.hasOpenLines(customer.id));
+    await order({}, false);
+    assert.isFalse(await Order.hasOpenLines(customer.id));
+  });
+
+  test("is true for a placed order with a line not yet handed out", async ({ assert }) => {
+    const { customer, order } = await openLinesWorld();
+    await order({ handout: true });
+    assert.isFalse(await Order.hasOpenLines(customer.id));
+    await order({});
+    assert.isTrue(await Order.hasOpenLines(customer.id));
+  });
+
+  test("only counts lines of the given types", async ({ assert }) => {
+    const { customer, order } = await openLinesWorld();
+    await order({ type: "buy" });
+    assert.isTrue(await Order.hasOpenLines(customer.id));
+    assert.isFalse(await Order.hasOpenLines(customer.id, ["rent"]));
+  });
+});

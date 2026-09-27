@@ -50,7 +50,7 @@ test.group("roundPlanMetrics", (group) => {
     });
 
   /** Stubs the member count and inserts the held books, handed out at the round's branch. */
-  async function stubMongo({
+  async function arrange({
     members,
     activeBooks,
   }: {
@@ -64,7 +64,7 @@ test.group("roundPlanMetrics", (group) => {
   }
 
   test("reports the members, the books out and the books ordered", async ({ assert }) => {
-    await stubMongo({
+    await arrange({
       members: { students: 240 },
       activeBooks: [
         { id: SENDER, items: [ITEM_X, ITEM_Y] },
@@ -83,7 +83,7 @@ test.group("roundPlanMetrics", (group) => {
   });
 
   test("reads an empty aggregation as zero rather than nothing", async ({ assert }) => {
-    await stubMongo({});
+    await arrange({});
 
     const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
@@ -97,7 +97,7 @@ test.group("roundPlanMetrics", (group) => {
   test("counts the books generation would pick up: the round's branches, its deadline", async ({
     assert,
   }) => {
-    await stubMongo({});
+    await arrange({});
     await createHeldBooks(BRANCH, [{ id: SENDER, items: [ITEM_X] }]);
     // Inside the two-day window around the deadline
     await createHeldBooks(
@@ -128,7 +128,7 @@ test.group("roundPlanMetrics", (group) => {
   test("follows the students' other books when the plan includes other branches", async ({
     assert,
   }) => {
-    await stubMongo({ activeBooks: [{ id: SENDER, items: [ITEM_X] }] });
+    await arrange({ activeBooks: [{ id: SENDER, items: [ITEM_X] }] });
     await createHeldBooks(OTHER_BRANCH, [{ id: SENDER, items: [ITEM_Y] }]);
     // Holds books only from another branch, so the wider sweep never reaches them
     await createHeldBooks(OTHER_BRANCH, [{ id: OTHER_SENDER, items: [ITEM_X] }]);
@@ -146,7 +146,7 @@ test.group("roundPlanMetrics", (group) => {
   });
 
   test("counts members of the round's branches", async ({ assert }) => {
-    const stubs = await stubMongo({});
+    const stubs = await arrange({});
 
     await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
@@ -154,7 +154,7 @@ test.group("roundPlanMetrics", (group) => {
   });
 
   test("counts ordered books per book, not per order", async ({ assert }) => {
-    await stubMongo({});
+    await arrange({});
     await order([ITEM_X, ITEM_Y]);
     await order([ITEM_Y]);
 
@@ -166,7 +166,7 @@ test.group("roundPlanMetrics", (group) => {
   test("counts only open loans the students ordered themselves at the round's branches", async ({
     assert,
   }) => {
-    await stubMongo({});
+    await arrange({});
     await order([ITEM_X], { branchId: OTHER_BRANCH });
     await order([ITEM_X], { byCustomer: false });
     await order([ITEM_X], { placed: false });

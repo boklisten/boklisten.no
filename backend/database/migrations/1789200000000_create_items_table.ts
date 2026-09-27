@@ -1,23 +1,18 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import type { Document } from "mongodb";
 
-import {
-  assertRowCount,
-  dropCollection,
-  requiredHexId,
-  timestampsOf,
-  transferCollection,
-  withMongo,
-} from "#database/helpers/mongo_transfer";
-import type { MapResult } from "#database/helpers/mongo_transfer";
-import env from "#start/env";
+const REFERENCING_TABLES = [
+  "branch_subject_books",
+  "match_obligations",
+  "book_handovers",
+  "waiting_list_customers",
+];
 
 /**
- * Step 1 of `docs/postgres-migration-plan.md`: the book catalogue (`items`) moves from MongoDB to
+ * Step 1 of the MongoDB → Postgres migration: the book catalogue (`items`) moves from MongoDB to
  * Postgres, keeping its Mongo ids as primary keys, and the four existing columns that already hold
  * item ids become real foreign keys.
  *
- * Schema fixes made on the way (all backed by the staging survey recorded in the plan): the `info`
+ * Schema fixes made on the way (all backed by a staging survey): the `info`
  * subdocument is flattened, `weight` becomes a nullable number in kilograms (legacy `"?"` means
  * unknown), the year-keyed `info.price` map becomes `price_history` jsonb, and the meta fields
  * `user`, `editableFor`, `viewableFor` plus the never-read `taxRate` are dropped. `active` stays:
@@ -50,22 +45,7 @@ export default class extends BaseSchema {
       table.timestamp("updated_at");
     });
 
-    this.defer(async (database) => {
-      if (env.get("API_ENV") === "test") {
-        return;
-      }
-      await withMongo(async (mongo) => {
-        const { migrated } = await transferCollection({
-          mongo,
-          database,
-          collection: "items",
-          table: "items",
-          map: mapItem,
-        });
-        await assertRowCount(database, "items", migrated);
-        await dropCollection(mongo, "items");
-      });
-    });
+    // The MongoDB transfer that ran here (2026-09-16) was removed on 2026-09-28.
 
     // The referencing rows already exist, so the keys can only be added once the transfer above
     // has filled `items` (tracked schema and defer calls run in registration order). RESTRICT: an
@@ -85,87 +65,4 @@ export default class extends BaseSchema {
     }
     this.schema.dropTable("items");
   }
-}
-
-const REFERENCING_TABLES = [
-  "branch_subject_books",
-  "match_obligations",
-  "book_handovers",
-  "waiting_list_customers",
-];
-
-function mapItem(document: Document): MapResult {
-  const id = requiredHexId(document["_id"], "items._id");
-  const info: Record<string, unknown> = isRecord(document["info"]) ? document["info"] : {};
-  return {
-    row: {
-      id,
-      title: requiredString(document["title"], `items.${id}.title`),
-      price: requiredInteger(document["price"], `items.${id}.price`),
-      isbn: requiredInteger(info["isbn"], `items.${id}.info.isbn`),
-      subject: requiredString(info["subject"], `items.${id}.info.subject`),
-      year: requiredInteger(info["year"], `items.${id}.info.year`),
-      weight: weightInKilograms(info["weight"], `items.${id}.info.weight`),
-      distributor: requiredString(info["distributor"], `items.${id}.info.distributor`),
-      discount: requiredNumber(info["discount"], `items.${id}.info.discount`),
-      publisher: requiredString(info["publisher"], `items.${id}.info.publisher`),
-      active: document["active"] !== false,
-      buyback: document["buyback"] === true,
-      price_history: JSON.stringify(priceHistory(info["price"], id)),
-      ...timestampsOf(document),
-    },
-  };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function requiredString(value: unknown, field: string): string {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    throw new TypeError(`${field}: expected a non-empty string, got ${JSON.stringify(value)}`);
-  }
-  return value.trim();
-}
-
-function requiredNumber(value: unknown, field: string): number {
-  if (typeof value !== "number" || Number.isNaN(value)) {
-    throw new TypeError(`${field}: expected a number, got ${JSON.stringify(value)}`);
-  }
-  return value;
-}
-
-function requiredInteger(value: unknown, field: string): number {
-  const number = requiredNumber(value, field);
-  if (!Number.isInteger(number)) {
-    throw new TypeError(`${field}: expected an integer, got ${number}`);
-  }
-  return number;
-}
-
-/**
- * Legacy weights are kilograms stored as either a string or a number; `"?"` is the surveyed way of
- * saying unknown. Anything else is unsurveyed data and fails the transfer rather than becoming NULL.
- */
-function weightInKilograms(value: unknown, field: string): number | null {
-  if (typeof value === "string" && value.trim() === "?") {
-    return null;
-  }
-  if (typeof value === "string" && /^\d+(?:\.\d+)?$/.test(value.trim())) {
-    return Number(value.trim());
-  }
-  return requiredNumber(value, field);
-}
-
-/** The Mongoose `Map<string, number>` arrives from the driver as a plain object keyed by year. */
-function priceHistory(value: unknown, id: string): Record<string, number> {
-  if (!isRecord(value)) {
-    throw new TypeError(`items.${id}.info.price: expected a year → price map`);
-  }
-  return Object.fromEntries(
-    Object.entries(value).map(([year, price]) => [
-      year,
-      requiredInteger(price, `items.${id}.info.price.${year}`),
-    ]),
-  );
 }

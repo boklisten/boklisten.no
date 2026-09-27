@@ -8,7 +8,7 @@ export const SLOT_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]0$/;
 /** The dates, times, places and book selection a round is generated from. */
 interface MatchRoundPlan {
   standLocation: string;
-  /** Mongo branch ids the round draws books from. */
+  /** Ids of the branches the round draws books from. */
   branches: string[];
   /** `YYYY-MM-DD`. The date the round's books are due. */
   deadline: string;
@@ -22,7 +22,7 @@ interface MatchRoundPlan {
   includeCustomerItemsFromOtherBranches: boolean;
   /** Where students meet each other, in the order an admin listed them. */
   userMatchLocations: string[];
-  /** Mongo userDetail ids the match finder skips entirely: no matches, books go via the stand. */
+  /** Ids of the customers the match finder skips entirely: no matches, books go via the stand. */
   excludedCustomerIds: string[];
 }
 

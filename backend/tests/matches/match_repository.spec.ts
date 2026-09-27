@@ -391,31 +391,6 @@ test.group("MatchRepository", (group) => {
     assert.equal(found[0]?.id, match.id);
   });
 
-  test("returns a blid's custody chain oldest first", async ({ assert }) => {
-    await BookHandover.createMany([
-      {
-        blid: "BL0001234567",
-        itemId: ITEM_X,
-        fromUserDetailId: A,
-        toUserDetailId: B,
-        occurredAt: DateTime.fromISO("2026-06-01T10:00:00Z"),
-      },
-      {
-        blid: "BL0001234567",
-        itemId: ITEM_X,
-        fromUserDetailId: null,
-        toUserDetailId: A,
-        occurredAt: DateTime.fromISO("2026-01-05T10:00:00Z"),
-      },
-    ]);
-
-    const chain = await MatchRepository.custodyChain("BL0001234567");
-
-    assert.lengthOf(chain, 2);
-    assert.isNull(chain[0]?.fromUserDetailId);
-    assert.equal(chain[1]?.toUserDetailId, B);
-  });
-
   test("records a handover that discharges both halves", async ({ assert }) => {
     const { obligation } = await seedUserMatch();
 

@@ -106,7 +106,7 @@ test.group("recordTransfer", (group) => {
    * Inserts the scanned copy and gives the receiver their open rent order; the order validator and
    * the moved-order handler are stubbed.
    */
-  async function stubMongo(customerItem: CopySpec | null, options: { orderedItem?: string } = {}) {
+  async function arrange(customerItem: CopySpec | null, options: { orderedItem?: string } = {}) {
     if (customerItem) {
       await createCustomerItem(customerItem);
     }
@@ -125,8 +125,7 @@ test.group("recordTransfer", (group) => {
       ],
     });
 
-    // Names for the unexpected-sender feedback. Without this stub the lookup hangs on a Mongo
-    // connection that does not exist in this suite.
+    // Names for the unexpected-sender feedback.
     sandbox
       .stub(User, "namesByIds")
       .callsFake(
@@ -148,7 +147,7 @@ test.group("recordTransfer", (group) => {
 
   test("a peer's own copy discharges both halves with one handover", async ({ assert }) => {
     const obligation = await seedObligation(B, A);
-    await stubMongo(activeCopy({ customerId: B }));
+    await arrange(activeCopy({ customerId: B }));
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -169,7 +168,7 @@ test.group("recordTransfer", (group) => {
     // B, so C is the one who is credited and B stays on the hook for their own copy.
     const mine = await seedObligation(B, A);
     const theirs = await seedObligation(C, B);
-    await stubMongo(activeCopy({ customerId: C }));
+    await arrange(activeCopy({ customerId: C }));
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -190,7 +189,7 @@ test.group("recordTransfer", (group) => {
     assert,
   }) => {
     const mine = await seedObligation(B, A);
-    await stubMongo(activeCopy({ customerId: C }));
+    await arrange(activeCopy({ customerId: C }));
 
     await recordTransfer(A, { blid: BLID });
 
@@ -201,7 +200,7 @@ test.group("recordTransfer", (group) => {
 
   test("an equivalent edition satisfies the receiver half", async ({ assert }) => {
     const mine = await seedObligation(B, A, GYMNOS_2009);
-    await stubMongo(activeCopy({ customerId: B, itemId: GYMNOS_2012 }));
+    await arrange(activeCopy({ customerId: B, itemId: GYMNOS_2012 }));
 
     await recordTransfer(A, { blid: BLID });
 
@@ -217,12 +216,9 @@ test.group("recordTransfer", (group) => {
     // 2012 edition A actually got, and hand the 2009 order to the moved-order handler — which
     // closes equivalent editions — so A's original order does not stay open.
     await seedObligation(B, A, GYMNOS_2009);
-    const { movedHandlerStub } = await stubMongo(
-      activeCopy({ customerId: B, itemId: GYMNOS_2012 }),
-      {
-        orderedItem: GYMNOS_2009,
-      },
-    );
+    const { movedHandlerStub } = await arrange(activeCopy({ customerId: B, itemId: GYMNOS_2012 }), {
+      orderedItem: GYMNOS_2009,
+    });
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -235,7 +231,7 @@ test.group("recordTransfer", (group) => {
 
   test("scanning the same book twice records only one handover", async ({ assert }) => {
     await seedObligation(B, A);
-    await stubMongo(activeCopy({ customerId: B }));
+    await arrange(activeCopy({ customerId: B }));
 
     await recordTransfer(A, { blid: BLID });
     const { feedback } = await recordTransfer(A, { blid: BLID });
@@ -246,7 +242,7 @@ test.group("recordTransfer", (group) => {
 
   test("refuses to record a handover for a copy with no BL-ID", async ({ assert }) => {
     await seedObligation(B, A);
-    await stubMongo(null);
+    await arrange(null);
     // Found by its blid, a copy always has one; the guard covers a lookup that ever returns
     // one without.
     sandbox
@@ -261,7 +257,7 @@ test.group("recordTransfer", (group) => {
 
   test("writes nothing when the receiver has no obligation for the title", async ({ assert }) => {
     await seedObligation(B, C);
-    await stubMongo(activeCopy({ customerId: B }));
+    await arrange(activeCopy({ customerId: B }));
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -284,7 +280,7 @@ test.group("recordTransfer", (group) => {
       dischargesSenderObligationId: obligation.id,
       dischargesReceiverObligationId: obligation.id,
     });
-    await stubMongo(activeCopy({ customerId: C }));
+    await arrange(activeCopy({ customerId: C }));
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -296,7 +292,7 @@ test.group("recordTransfer", (group) => {
     assert,
   }) => {
     await seedObligation(B, A);
-    await stubMongo(activeCopy({ customerId: B }));
+    await arrange(activeCopy({ customerId: B }));
     sandbox.stub(CustomerItem.prototype, "save").rejects(new Error("postgres down"));
 
     await assert.rejects(() => recordTransfer(A, { blid: BLID }), /postgres down/);
@@ -317,7 +313,7 @@ test.group("recordTransfer", (group) => {
   test("blocks a copy whose deadline has expired", async ({ assert }) => {
     await seedObligation(B, A);
     // A copy the sender kept past its deadline — overdue books must go to the stand, not transfer.
-    await stubMongo(
+    await arrange(
       activeCopy({
         customerId: B,
         deadline: DateTime.now().minus({ years: 1 }),
@@ -338,7 +334,7 @@ test.group("recordTransfer", (group) => {
     round.deadline = yesterday;
     await round.save();
     await seedObligation(B, A);
-    await stubMongo(activeCopy({ customerId: B, deadline: yesterday }));
+    await arrange(activeCopy({ customerId: B, deadline: yesterday }));
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -348,7 +344,7 @@ test.group("recordTransfer", (group) => {
 
   test("rejects a blid with no active copy behind it", async ({ assert }) => {
     await seedObligation(B, A);
-    await stubMongo(null);
+    await arrange(null);
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 

@@ -4,7 +4,7 @@ import CustomerItem from "#models/customer_item";
 import Delivery from "#models/delivery";
 import ItemModel from "#models/item";
 import Order from "#models/order";
-import type OrderItem from "#models/order_item";
+import OrderItem from "#models/order_item";
 import Payment from "#models/payment";
 import User from "#models/user";
 import { periodTypeOfLastOrder } from "#services/customer_item_actions_service";
@@ -19,7 +19,7 @@ import {
 } from "#services/stand_cart/stand_cart_pricing";
 import type { Branch } from "#shared/branch";
 import type { Item } from "#shared/item";
-import { itemsAreEquivalent } from "#shared/item-equivalence";
+import { getEquivalentItemIds, itemsAreEquivalent } from "#shared/item-equivalence";
 import { isOpenOrderItem } from "#shared/order/open-order-item";
 import { lineKey, unlinkedBlidMessage } from "#shared/stand_cart";
 import type {
@@ -344,21 +344,21 @@ async function placeCopy(
   now: Date,
 ): Promise<StandCartResolution> {
   const taken = new Set(request.takenKeys);
-  for (const order of await Order.placedFor(request.customerId)) {
-    for (const orderItem of order.orderItems) {
-      if (!isOpenOrderItem(orderItem) || !itemsAreEquivalent(orderItem.itemId, copy.id)) {
-        continue;
-      }
-      const source = { kind: "order", orderId: order.id, itemId: orderItem.itemId } as const;
-      if (!taken.has(lineKey(source))) {
-        return resolveOrderLine(
-          { ...request, ...(blid === null ? {} : { blid }) },
-          source,
-          branch,
-          now,
-        );
-      }
-    }
+  const openLines: { orderId: string; itemId: string }[] = await OrderItem.openLinesOf(
+    request.customerId,
+  )
+    .whereIn("order_items.item_id", getEquivalentItemIds(copy.id))
+    .select("orders.id as orderId", "order_items.item_id as itemId");
+  const source = openLines
+    .map(({ orderId, itemId }) => ({ kind: "order", orderId, itemId }) as const)
+    .find((line) => !taken.has(lineKey(line)));
+  if (source) {
+    return resolveOrderLine(
+      { ...request, ...(blid === null ? {} : { blid }) },
+      source,
+      branch,
+      now,
+    );
   }
   return resolveItemLine(request, { kind: "item", itemId: copy.id, blid }, branch, now);
 }

@@ -6,7 +6,7 @@ import type { ModelQueryBuilderContract } from "@adonisjs/lucid/types/model";
 import type { HasMany, HasOne } from "@adonisjs/lucid/types/relations";
 
 import Delivery from "#models/delivery";
-import { assignObjectId } from "#models/helpers/object_id";
+import { assignObjectId, distinctIds } from "#models/helpers/object_id";
 import OrderItem from "#models/order_item";
 import Payment from "#models/payment";
 import { OrderSchema } from "#database/schema";
@@ -78,9 +78,40 @@ export default class Order extends OrderSchema {
     return order;
   }
 
+  /**
+   * Runs `work` holding a lock on the order, so a payment callback and a client's status poll
+   * cannot settle it twice. Advisory rather than a row lock because `work` writes the order through
+   * other connections; `work` must read the order itself.
+   */
+  static async whileLocked<T>(id: string, work: () => Promise<T>): Promise<T> {
+    return db.transaction(async (trx) => {
+      await trx.rawQuery("SELECT pg_advisory_xact_lock(hashtext(?))", [`orders:${id}`]);
+      return work();
+    });
+  }
+
+  /**
+   * Whether the customer has a placed order with a line still to be handed out or delivered,
+   * optionally among lines of the given types only.
+   */
+  static async hasOpenLines(customerId: string, types?: readonly string[]): Promise<boolean> {
+    const query = db
+      .from("order_items")
+      .join("orders", "orders.id", "order_items.order_id")
+      .where("orders.customer_id", customerId)
+      .where("orders.placed", true)
+      .where("order_items.handout", false)
+      .where("order_items.delivered", false)
+      .whereNull("order_items.moved_to_order_id");
+    if (types) {
+      void query.whereIn("order_items.type", [...types]);
+    }
+    return (await query.select("order_items.id").first()) !== null;
+  }
+
   /** The orders with the given ids, keyed by id; ids that do not exist are absent. */
   static async byIds(ids: Iterable<string | null | undefined>): Promise<Map<string, Order>> {
-    const unique = [...new Set([...ids].filter((id): id is string => typeof id === "string"))];
+    const unique = distinctIds(ids);
     if (unique.length === 0) {
       return new Map();
     }

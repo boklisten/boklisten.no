@@ -20,7 +20,7 @@ These rules override default agent behavior — follow them on every task:
 
 ## Workspaces
 
-- **`backend/`** — AdonisJS v7 REST API. Dual-DB: legacy data on MongoDB/Mongoose v9, new tables on Postgres via Lucid (active migration in progress).
+- **`backend/`** — AdonisJS v7 REST API on Postgres via Lucid. Tables moved from MongoDB (finished September 2026) keep the 24-char ObjectId hex as a `string(24)` primary key; new rows get one from `newObjectId()` (`app/models/helpers/object_id.ts`).
 - **`frontend/`** — TanStack Start (React 19) SPA with Mantine v9 UI.
 - **`cron_jobs/`** — Standalone scheduled tasks (prod→staging sync).
 
@@ -62,7 +62,7 @@ bun build:frontend && bun start:frontend
 
 ## Environment Setup
 
-Copy `backend/.env.example` → `backend/.env.local` and fill in `MONGODB_URI`, `POSTGRES_URL`, `APP_KEY` and the third-party keys. The frontend needs no `.env.local`. Which environment the code runs in, and the API's and frontend's origins, are never configured: locally they are `dev`, `http://localhost:3333` and `http://localhost:3000`; deployed they come from Railway's own `RAILWAY_ENVIRONMENT_NAME`, `RAILWAY_PUBLIC_DOMAIN` and `RAILWAY_SERVICE_*_URL` (`backend/config/app.ts`, `frontend/vite.config.ts`).
+Copy `backend/.env.example` → `backend/.env.local` and fill in `POSTGRES_URL`, `APP_KEY` and the third-party keys. The frontend needs no `.env.local`. Which environment the code runs in, and the API's and frontend's origins, are never configured: locally they are `dev`, `http://localhost:3333` and `http://localhost:3000`; deployed they come from Railway's own `RAILWAY_ENVIRONMENT_NAME`, `RAILWAY_PUBLIC_DOMAIN` and `RAILWAY_SERVICE_*_URL` (`backend/config/app.ts`, `frontend/vite.config.ts`).
 
 `backend/start/env.ts` is the source of truth for required vars (validated at boot — boot fails if any are missing).
 
@@ -73,10 +73,8 @@ Copy `backend/.env.example` → `backend/.env.local` and fill in `MONGODB_URI`, 
 AdonisJS follows a standard MVC layout:
 
 - `app/models/*.ts` — **Lucid** models; each extends a class from `database/schema.ts`
-- `app/models/mongoose/*.schema.ts` — Legacy **Mongoose** schemas (still in active use during migration)
 - `app/controllers/` — Route handlers; auth has its own subdirectory
 - `app/services/` — Business logic
-- `app/services/legacy/` — Legacy collection-endpoint pattern; large surface still in active use during migration
 - `app/validators/` — VineJS request validators
 - `app/transformers/` — Response shaping
 - `app/middleware/` — HTTP middleware
@@ -98,7 +96,7 @@ Emails and SMS are sent imperatively from services (e.g. `app/services/dispatch_
 
 TanStack Start uses file-based routing:
 
-- `src/routes/` — Pages; route groups in parentheses: `(administrasjon)`, `(offentlig)`, `(legacy)`
+- `src/routes/` — Pages; route groups in parentheses: `(administrasjon)`, `(offentlig)`
 - `src/features/` — Feature modules (auth, order, checkout, payment, cart, items, branches, matches, etc.); each encapsulates its own components, hooks, and queries
 - `src/shared/` — Cross-feature hooks, utilities, and components
 

@@ -6,7 +6,7 @@ import type { HasMany } from "@adonisjs/lucid/types/relations";
 
 import BranchPeriod from "#models/branch_period";
 import type { PeriodKind } from "#models/branch_period";
-import { assignObjectId } from "#models/helpers/object_id";
+import { assignObjectId, distinctIds } from "#models/helpers/object_id";
 import { BranchSchema } from "#database/schema";
 import type {
   Branch as BranchDto,
@@ -129,10 +129,10 @@ export default class Branch extends BranchSchema {
 
   /**
    * The branches with the given ids, keyed by id. Ids that do not exist are simply absent, which
-   * is how callers joining branch data onto Mongo query results detect a dangling reference.
+   * is how callers joining branch data onto other query results detect a dangling reference.
    */
   static async byIds(ids: Iterable<string | null | undefined>): Promise<Map<string, Branch>> {
-    const unique = [...new Set([...ids].filter((id): id is string => typeof id === "string"))];
+    const unique = distinctIds(ids);
     if (unique.length === 0) {
       return new Map();
     }
@@ -141,8 +141,11 @@ export default class Branch extends BranchSchema {
   }
 
   static async namesByIds(ids: Iterable<string | null | undefined>): Promise<Map<string, string>> {
-    const branches = await this.byIds(ids);
-    return new Map([...branches].map(([id, branch]) => [id, branch.name]));
+    const rows: { id: string; name: string }[] = await db
+      .from("branches")
+      .whereIn("id", distinctIds(ids))
+      .select("id", "name");
+    return new Map(rows.map(({ id, name }) => [id, name]));
   }
 
   /**

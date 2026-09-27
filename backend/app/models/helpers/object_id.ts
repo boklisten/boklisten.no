@@ -29,3 +29,8 @@ export function isObjectIdHex(value: string): boolean {
 export function assignObjectId(row: { id: string }): void {
   row.id ||= newObjectId();
 }
+
+/** The ids that are set, each once. */
+export function distinctIds(ids: Iterable<string | null | undefined>): string[] {
+  return [...new Set([...ids].filter((id): id is string => typeof id === "string"))];
+}

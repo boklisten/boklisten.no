@@ -4,16 +4,14 @@ import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
-import type Order from "#models/order";
-import type OrderItem from "#models/order_item";
 import Signature from "#models/signature";
 import User from "#models/user";
-import { OrderActive } from "#services/orders/order_active";
 import { reconcileSignatureTask } from "#services/signature_helper";
+import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
-import { mock } from "#tests/test-doubles";
+import { createOrder } from "#tests/order_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
@@ -44,29 +42,12 @@ function createValidSignature() {
   });
 }
 
-function makeOrderItem(overrides: Partial<OrderItem> = {}): OrderItem {
-  return mock<OrderItem>({
-    type: "rent",
-    itemId: "item1",
-    title: "Some Book",
-    amount: 100,
-    unitPrice: 100,
-    handout: false,
-    delivered: false,
-    movedToOrderId: null,
-    ...overrides,
-  });
-}
-
-function makeRentOrder(orderItems: OrderItem[] = [makeOrderItem()]): Order {
-  return mock<Order>({
-    id: "order1",
-    placed: true,
-    customerId: CUSTOMER_ID,
-    amount: 100,
-    byCustomer: true,
+function createOpenOrder(line: { type?: OrderItemType; handout?: boolean } = {}) {
+  return createOrder({
     branchId: "branch1",
-    orderItems,
+    customerId: CUSTOMER_ID,
+    byCustomer: true,
+    orderItems: [{ itemId: "item1", ...line }],
   });
 }
 
@@ -82,7 +63,6 @@ function makeCustomerItem(overrides: Partial<Parameters<typeof createCustomerIte
 
 test.group("reconcileSignatureTask", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let orders: Order[];
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
@@ -92,10 +72,6 @@ test.group("reconcileSignatureTask", (group) => {
 
   group.each.setup(() => {
     sandbox = createSandbox();
-    orders = [];
-
-    // Every order here is placed, so the active-order query is stubbed with them as is
-    sandbox.stub(OrderActive.prototype, "getActiveOrders").callsFake(() => Promise.resolve(orders));
     saveSpy = sandbox.spy(User.prototype, "save");
   });
 
@@ -134,7 +110,7 @@ test.group("reconcileSignatureTask", (group) => {
       image: Buffer.from("webp"),
       createdAt: DateTime.now().plus({ hours: 1 }),
     });
-    orders = [makeRentOrder()];
+    await createOpenOrder();
 
     const result = await reconcileSignatureTask(userDetail);
 
@@ -145,8 +121,8 @@ test.group("reconcileSignatureTask", (group) => {
   test("sets the task when an open rent order exists and no valid signature", async ({
     assert,
   }) => {
-    orders = [makeRentOrder()];
     const userDetail = await makeUser();
+    await createOpenOrder();
 
     const result = await reconcileSignatureTask(userDetail);
 
@@ -155,19 +131,8 @@ test.group("reconcileSignatureTask", (group) => {
   });
 
   test("sets the task when an open partly-payment order exists", async ({ assert }) => {
-    orders = [
-      makeRentOrder([
-        makeOrderItem({
-          type: "partly-payment",
-          itemId: "item1",
-          title: "A",
-          amount: 100,
-          unitPrice: 100,
-          handout: false,
-        }),
-      ]),
-    ];
     const userDetail = await makeUser();
+    await createOpenOrder({ type: "partly-payment" });
 
     const result = await reconcileSignatureTask(userDetail);
 
@@ -176,19 +141,8 @@ test.group("reconcileSignatureTask", (group) => {
   });
 
   test("does not set the task for orders with only buy items", async ({ assert }) => {
-    orders = [
-      makeRentOrder([
-        makeOrderItem({
-          type: "buy",
-          itemId: "item2",
-          title: "B",
-          amount: 100,
-          unitPrice: 100,
-          handout: false,
-        }),
-      ]),
-    ];
     const userDetail = await makeUser();
+    await createOpenOrder({ type: "buy" });
 
     await reconcileSignatureTask(userDetail);
 
@@ -196,19 +150,8 @@ test.group("reconcileSignatureTask", (group) => {
   });
 
   test("does not set the task when the rent order items are all handed out", async ({ assert }) => {
-    orders = [
-      makeRentOrder([
-        makeOrderItem({
-          type: "rent",
-          itemId: "item1",
-          title: "A",
-          amount: 0,
-          unitPrice: 0,
-          handout: true,
-        }),
-      ]),
-    ];
     const userDetail = await makeUser();
+    await createOpenOrder({ type: "rent", handout: true });
 
     await reconcileSignatureTask(userDetail);
 

@@ -1,7 +1,4 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import mongoose from "mongoose";
-
-import env from "#start/env";
 
 /**
  * Removes `orders.handoutByDelivery`. Whether the books of an order went by mail is now read off
@@ -15,35 +12,7 @@ import env from "#start/env";
  */
 export default class extends BaseSchema {
   override async up() {
-    this.defer(async () => {
-      if (env.get("API_ENV") === "test") {
-        return;
-      }
-
-      const connection = await mongoose
-        .createConnection(env.get("MONGODB_URI").release(), {
-          dbName: env.get("API_ENV") === "production" ? "production" : "staging",
-        })
-        .asPromise();
-      try {
-        const mongo = connection.db;
-        if (!mongo) {
-          throw new Error("mongoose connection has no db handle");
-        }
-
-        const result = await mongo
-          .collection("orders")
-          .updateMany(
-            { handoutByDelivery: { $exists: true } },
-            { $unset: { handoutByDelivery: "" } },
-          );
-        console.log(
-          `order normalization: handoutByDelivery removed from ${result.modifiedCount} orders`,
-        );
-      } finally {
-        await connection.close();
-      }
-    });
+    // Changed MongoDB only; emptied when MongoDB was decommissioned (2026-09-28).
   }
 
   override async down() {

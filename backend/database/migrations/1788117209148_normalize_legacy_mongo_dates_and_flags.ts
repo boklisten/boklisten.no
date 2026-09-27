@@ -1,7 +1,4 @@
 import { BaseSchema } from "@adonisjs/lucid/schema";
-import mongoose from "mongoose";
-
-import env from "#start/env";
 
 /**
  * Normalizes legacy bl-api-era Mongo data that current queries stumble over:
@@ -20,122 +17,9 @@ import env from "#start/env";
  * Unparseable strings (none observed on staging) are left as they are rather than failing
  * the deploy; leftovers are counted and logged.
  */
-const convertedInfoField = (field: "to" | "from") => ({
-  $cond: [
-    { $eq: [{ $type: `$$orderItem.info.${field}` }, "string"] },
-    {
-      [field]: {
-        $convert: {
-          input: `$$orderItem.info.${field}`,
-          to: "date",
-          onError: `$$orderItem.info.${field}`,
-        },
-      },
-    },
-    {},
-  ],
-});
-
 export default class extends BaseSchema {
   override async up() {
-    this.defer(async () => {
-      if (env.get("API_ENV") === "test") {
-        return;
-      }
-
-      const connection = await mongoose
-        .createConnection(env.get("MONGODB_URI").release(), {
-          dbName: env.get("API_ENV") === "production" ? "production" : "staging",
-        })
-        .asPromise();
-      try {
-        const mongo = connection.db;
-        if (!mongo) {
-          throw new Error("mongoose connection has no db handle");
-        }
-        const customerItems = mongo.collection("customeritems");
-        const orders = mongo.collection("orders");
-
-        const cancelResult = await customerItems.updateMany(
-          { cancel: { $exists: false } },
-          { $set: { cancel: false } },
-        );
-        const buybackResult = await customerItems.updateMany(
-          { buyback: { $exists: false } },
-          { $set: { buyback: false } },
-        );
-
-        const returnTimeResult = await customerItems.updateMany(
-          { "returnInfo.time": { $type: "string" } },
-          [
-            {
-              $set: {
-                "returnInfo.time": {
-                  $convert: { input: "$returnInfo.time", to: "date", onError: "$returnInfo.time" },
-                },
-              },
-            },
-          ],
-        );
-
-        const orderResult = await orders.updateMany(
-          {
-            $or: [
-              { "orderItems.info.to": { $type: "string" } },
-              { "orderItems.info.from": { $type: "string" } },
-            ],
-          },
-          [
-            {
-              $set: {
-                orderItems: {
-                  $map: {
-                    input: "$orderItems",
-                    as: "orderItem",
-                    in: {
-                      $mergeObjects: [
-                        "$$orderItem",
-                        {
-                          $cond: [
-                            { $eq: [{ $type: "$$orderItem.info" }, "object"] },
-                            {
-                              info: {
-                                $mergeObjects: [
-                                  "$$orderItem.info",
-                                  convertedInfoField("to"),
-                                  convertedInfoField("from"),
-                                ],
-                              },
-                            },
-                            {},
-                          ],
-                        },
-                      ],
-                    },
-                  },
-                },
-              },
-            },
-          ],
-        );
-
-        const leftoverOrderStrings = await orders.countDocuments({
-          $or: [
-            { "orderItems.info.to": { $type: "string" } },
-            { "orderItems.info.from": { $type: "string" } },
-          ],
-        });
-        console.log(
-          `legacy normalization: cancel backfilled on ${cancelResult.modifiedCount}, ` +
-            `buyback on ${buybackResult.modifiedCount}, returnInfo.time converted on ` +
-            `${returnTimeResult.modifiedCount} customer items; orderItems.info dates ` +
-            `converted on ${orderResult.modifiedCount} orders ` +
-            `(${leftoverOrderStrings} orders still hold unparseable strings)`,
-        );
-      } finally {
-        await connection.close();
-      }
-    });
+    // Changed MongoDB only; emptied when MongoDB was decommissioned (2026-09-28).
   }
 
   override async down() {

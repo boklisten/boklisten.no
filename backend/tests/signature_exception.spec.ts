@@ -1,16 +1,14 @@
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
 
-import type Order from "#models/order";
 import Signature from "#models/signature";
 import type User from "#models/user";
-import { OrderActive } from "#services/orders/order_active";
 import { findSignatureException } from "#services/signature_helper";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
-import { mock } from "#tests/test-doubles";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
@@ -36,46 +34,28 @@ function createSignature(overrides: Partial<Parameters<typeof Signature.create>[
   });
 }
 
-function openOrderWith(type: OrderItemType): Order {
-  return mock<Order>({
-    id: "order1",
-    placed: true,
+function openOrderWith(type: OrderItemType) {
+  return createOrder({
+    branchId: "branch1",
     customerId: CUSTOMER_ID,
-    orderItems: [
-      {
-        type,
-        itemId: "item1",
-        title: "Bok",
-        amount: 100,
-        unitPrice: 100,
-        handout: false,
-        delivered: false,
-        movedToOrderId: null,
-      },
-    ],
+    byCustomer: true,
+    orderItems: [{ type, itemId: "item1" }],
   });
 }
 
 test.group("findSignatureException", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  let orders: Order[];
-
   group.each.setup(() => testUtils.db().truncate());
 
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    orders = [];
-    // Every order here is placed and open, so the active-order query is stubbed with them as is
-    sandbox.stub(OrderActive.prototype, "getActiveOrders").callsFake(() => Promise.resolve(orders));
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
+  group.each.setup(async () => {
+    await createBranch({ id: "branch1" });
+    await createItem({ id: "item1" });
   });
 
   test("an unsigned customer with an open rent order has never signed", async ({ assert }) => {
-    orders = [openOrderWith("rent")];
+    const user = await userWith();
+    await openOrderWith("rent");
 
-    const reason = await findSignatureException(await userWith());
+    const reason = await findSignatureException(user);
 
     assert.equal(reason, "Aldri signert");
   });
@@ -89,17 +69,19 @@ test.group("findSignatureException", (group) => {
   test("an unsigned customer with an open partly-payment order has never signed", async ({
     assert,
   }) => {
-    orders = [openOrderWith("partly-payment")];
+    const user = await userWith();
+    await openOrderWith("partly-payment");
 
-    const reason = await findSignatureException(await userWith());
+    const reason = await findSignatureException(user);
 
     assert.equal(reason, "Aldri signert");
   });
 
   test("an unsigned customer with only a buy order needs no signature", async ({ assert }) => {
-    orders = [openOrderWith("buy")];
+    const user = await userWith();
+    await openOrderWith("buy");
 
-    const reason = await findSignatureException(await userWith());
+    const reason = await findSignatureException(user);
 
     assert.isNull(reason);
   });
@@ -107,8 +89,8 @@ test.group("findSignatureException", (group) => {
   test("an expired signature with an open rent order is reported as expired", async ({
     assert,
   }) => {
-    orders = [openOrderWith("rent")];
     const user = await userWith();
+    await openOrderWith("rent");
     await createSignature({ createdAt: DateTime.local(2000, 1, 1) });
 
     const reason = await findSignatureException(user);
@@ -119,8 +101,8 @@ test.group("findSignatureException", (group) => {
   test("an underage customer who signed without a guardian is reported as such", async ({
     assert,
   }) => {
-    orders = [openOrderWith("rent")];
     const user = await userWith({ dob: childDob });
+    await openOrderWith("rent");
     await createSignature();
 
     const reason = await findSignatureException(user);
@@ -129,8 +111,8 @@ test.group("findSignatureException", (group) => {
   });
 
   test("an adult with a guardian signature is reported as outgrown", async ({ assert }) => {
-    orders = [openOrderWith("rent")];
     const user = await userWith();
+    await openOrderWith("rent");
     await createSignature({ signedByGuardian: true });
 
     const reason = await findSignatureException(user);
@@ -139,8 +121,8 @@ test.group("findSignatureException", (group) => {
   });
 
   test("a customer with a valid signature has no exception", async ({ assert }) => {
-    orders = [openOrderWith("rent")];
     const user = await userWith();
+    await openOrderWith("rent");
     await createSignature();
 
     const reason = await findSignatureException(user);

@@ -1,7 +1,6 @@
 import { DateTime } from "luxon";
 
 import CustomerItem from "#models/customer_item";
-import ItemModel from "#models/item";
 import type { Branch, ExtendPeriod } from "#shared/branch";
 import type {
   CustomerItemAction,
@@ -132,7 +131,11 @@ export async function periodTypeOfLastOrder(
   return lastLines.get(customerItem.id)?.periodType ?? undefined;
 }
 
-async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch | null) {
+function calculateBuyoutStatus(
+  customerItem: CustomerItem,
+  branch: Branch | null,
+  periodType: Period | undefined,
+) {
   if (isDeadlineWithGracePeriodExpired(customerItem)) {
     return {
       canBuyout: false,
@@ -147,15 +150,7 @@ async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch 
     } as const;
   }
 
-  const item = await ItemModel.find(customerItem.itemId);
-  const price = item
-    ? resolveBuyoutPrice({
-        customerItem,
-        item,
-        branch,
-        periodType: await periodTypeOfLastOrder(customerItem),
-      })
-    : null;
+  const price = resolveBuyoutPrice({ customerItem, item: customerItem.item, branch, periodType });
 
   if (price === null) {
     return {
@@ -186,13 +181,17 @@ export function calculateStatus(customerItem: CustomerItem): CustomerItemStatus 
   return { type: "active", text: "Aktiv" };
 }
 
-/** The extend and buyout buttons for one book, priced, and disabled with a reason when blocked. */
-export async function buildCustomerItemActions(
+/**
+ * The extend and buyout buttons for one book (with `item` preloaded), priced, and disabled with a
+ * reason when blocked.
+ */
+export function buildCustomerItemActions(
   customerItem: CustomerItem,
   branch: Branch | null,
-): Promise<CustomerItemAction[]> {
+  periodType: Period | undefined,
+): CustomerItemAction[] {
   const extensionStatus = calculateExtensionStatus(customerItem, branch);
-  const buyoutStatus = await calculateBuyoutStatus(customerItem, branch);
+  const buyoutStatus = calculateBuyoutStatus(customerItem, branch, periodType);
 
   const extendActions: CustomerItemAction[] = extensionStatus.options?.map((extension) => ({
     type: "extend",

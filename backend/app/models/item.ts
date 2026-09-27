@@ -1,6 +1,6 @@
 import { beforeCreate, column, scope } from "@adonisjs/lucid/orm";
 
-import { assignObjectId } from "#models/helpers/object_id";
+import { assignObjectId, distinctIds } from "#models/helpers/object_id";
 import { ItemSchema } from "#database/schema";
 
 /** A title in the book catalogue; see `shared/item.ts` for the field semantics. */
@@ -30,10 +30,10 @@ export default class Item extends ItemSchema {
 
   /**
    * The items with the given ids, keyed by id. Ids that do not exist are simply absent, which
-   * is how callers joining catalogue data onto Mongo query results detect a dangling reference.
+   * is how callers joining catalogue data onto other query results detect a dangling reference.
    */
   static async byIds(ids: Iterable<string | null | undefined>): Promise<Map<string, Item>> {
-    const unique = [...new Set([...ids].filter((id): id is string => typeof id === "string"))];
+    const unique = distinctIds(ids);
     if (unique.length === 0) {
       return new Map();
     }

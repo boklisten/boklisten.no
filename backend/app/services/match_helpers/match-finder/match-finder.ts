@@ -55,8 +55,8 @@ export class MatchFinder {
   private readonly standMatches: CandidateStandMatch[] = [];
   private readonly MAX_USER_MATCH_COUNT = 4;
 
-  constructor(private readonly _users: MatchableUser[]) {
-    this.users = copyUsers(_users);
+  constructor(private readonly inputUsers: MatchableUser[]) {
+    this.users = copyUsers(inputUsers);
     this.verifyMatchableUsers();
     this.groupUsersByMembership();
   }
@@ -194,7 +194,7 @@ export class MatchFinder {
       throw new BlError("Some users did not receive a match!");
     }
 
-    let originalUsers = copyUsers(this._users);
+    let originalUsers = copyUsers(this.inputUsers);
 
     const userMatchCounts: Record<string, number> = {};
     for (const userMatch of this.userMatches) {
@@ -591,7 +591,7 @@ export class MatchFinder {
 
     let totalItems = 0;
     let totalWants = 0;
-    for (const originalUser of this._users) {
+    for (const originalUser of this.inputUsers) {
       totalItems += originalUser.items.size;
       totalWants += originalUser.wantedItems.size;
     }
@@ -630,7 +630,7 @@ export class MatchFinder {
     }
 
     logger.debug(
-      `Started with ${this._users.length} users with ${totalItems} books, wanting ${totalWants} books`,
+      `Started with ${this.inputUsers.length} users with ${totalItems} books, wanting ${totalWants} books`,
     );
     const totalItemMovements = totalItems + totalWants;
 
@@ -638,9 +638,9 @@ export class MatchFinder {
       // Need to multiply by 2 size each item transferred satisfies the needs of two people, the sender and the receiver
       `${totalUserMatchItems} books (${((100 * 2 * totalUserMatchItems) / totalItemMovements).toPrecision(3)}%) will be transferred through users, ${totalHandoffs + totalPickups} books (${((100 * (totalHandoffs + totalPickups)) / totalItemMovements).toPrecision(3)}%) will be handled by stand. `,
     );
-    const onlyUserMatches = this._users.length - this.standMatches.length;
+    const onlyUserMatches = this.inputUsers.length - this.standMatches.length;
     logger.debug(
-      `${onlyUserMatches} users (${((100 * onlyUserMatches) / this._users.length).toPrecision(3)}%) will only have user matches, while ${this.standMatches.length} users (${((100 * this.standMatches.length) / this._users.length).toPrecision(3)}%) will need to visit the stand`,
+      `${onlyUserMatches} users (${((100 * onlyUserMatches) / this.inputUsers.length).toPrecision(3)}%) will only have user matches, while ${this.standMatches.length} users (${((100 * this.standMatches.length) / this.inputUsers.length).toPrecision(3)}%) will need to visit the stand`,
     );
 
     // Number of customers that need to visit stand vs not having to visit

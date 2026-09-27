@@ -51,9 +51,7 @@ interface CustomerBooks {
 async function unreturnedCustomerItems(
   settings: InvoiceGenerationSettings,
 ): Promise<CustomerItem[]> {
-  return CustomerItem.query()
-    .where("returned", false)
-    .where("buyout", false)
+  return CustomerItem.whereActive(CustomerItem.query())
     .where("type", settings.type)
     .where("deadline", ">=", settings.deadlineFrom)
     .where("deadline", "<=", settings.deadlineTo)

@@ -37,9 +37,9 @@ function formatDob(dob: string | null, format: string): string {
   return (dob === null ? DateTime.now() : DateTime.fromISO(dob)).toFormat(format);
 }
 
-/** Article number for a book: the counter part of its Mongo id. */
-export function mongoIdCounter(mongoId: string): number {
-  return Number.parseInt(mongoId.slice(18, 24), 16);
+/** Article number for a book: the counter part of its ObjectId. */
+export function objectIdCounter(objectId: string): number {
+  return Number.parseInt(objectId.slice(18, 24), 16);
 }
 
 /** Legacy bl-admin treated an empty string like a missing value in these fields. */
@@ -201,7 +201,7 @@ function vismaL1(lineNumber: number, invoiceNumber: string, line: InvoiceLine): 
     invoiceNumber, // 3 Invoice number
     "V", // 4 Line type (M)
     line.vat <= 0 ? "FRI" : "PLH", // 5 VAT type (M)
-    line.itemId ? String(mongoIdCounter(line.itemId)) : line.productNumber, // 6 Article number
+    line.itemId ? String(objectIdCounter(line.itemId)) : line.productNumber, // 6 Article number
     line.title, // 7 Article name (M)
     line.numberOfItems, // 8 Invoiced quantity (M)
     line.discount, // 9 Discount %

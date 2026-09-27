@@ -1346,8 +1346,8 @@ test.group("BlidSearchService.assembleBlidSearch() – unique ID registration", 
   });
 
   test("hides the edited event when the update is within a second of creation", ({ assert }) => {
-    // Mongoose stamps the two timestamps in separate calls on insert, so they can drift by
-    // a millisecond without anyone having edited the record.
+    // Records created under MongoDB had the two timestamps stamped in separate calls, so they
+    // can drift by a millisecond without anyone having edited the record.
     const drifted = new Date(REGISTERED_AT.getTime() + 999);
     const result = assembleBlidSearch(
       baseSources({ registration: { createdAt: REGISTERED_AT, updatedAt: drifted } }),

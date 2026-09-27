@@ -36,11 +36,13 @@ export class OrderPlacedHandler {
       order.placed = true;
       await order.save();
 
-      await this.updateCustomerItemsIfPresent(order, detailsId);
+      await this.updateCustomerItems(order, detailsId);
       await this.orderItemMovedFromOrderHandler.updateOrderItems(order);
-      await this.updateUserDetailWithPlacedOrder(order);
-      await this.updateSignatureTask(order);
-      await this.sendOrderConfirmationMail(order);
+      const customer = order.customerId ? await User.find(order.customerId) : null;
+      if (customer) {
+        await this.updateSignatureTask(order, customer);
+        await this.sendOrderConfirmationMail(order, customer);
+      }
 
       return order;
     } catch (error) {
@@ -49,94 +51,61 @@ export class OrderPlacedHandler {
     }
   }
 
-  private async updateSignatureTask(order: Order): Promise<void> {
+  private async updateSignatureTask(order: Order, customer: User): Promise<void> {
     try {
-      if (!order.customerId) {
-        return;
-      }
-      const user = await User.find(order.customerId);
-      if (!user) {
-        return;
-      }
-      await reconcileSignatureTask(user);
+      await reconcileSignatureTask(customer);
     } catch (error) {
       logger.error(`could not update signature task for order ${order.id}: ${String(error)}`);
     }
   }
 
-  private async updateCustomerItemsIfPresent(order: Order, detailsId: string): Promise<Order> {
+  private async updateCustomerItems(order: Order, detailsId: string): Promise<void> {
     for (const orderItem of order.orderItems) {
-      if (
-        orderItem.type === "extend" ||
-        orderItem.type === "return" ||
-        orderItem.type === "buyout" ||
-        orderItem.type === "buyback" ||
-        orderItem.type === "cancel"
-      ) {
-        const customerItemId = orderItem.customerItemId;
-
-        if (customerItemId !== null) {
-          switch (orderItem.type) {
-            case "extend": {
-              await this.customerItemHandler.extend(customerItemId, orderItem, order.branchId);
-
-              break;
-            }
-            case "buyout": {
-              await this.customerItemHandler.buyout(customerItemId, order.id, orderItem);
-
-              break;
-            }
-            case "buyback": {
-              await this.customerItemHandler.buyback(customerItemId, order.id, orderItem);
-
-              break;
-            }
-            case "cancel": {
-              await this.customerItemHandler.cancel(customerItemId, order.id, orderItem);
-
-              break;
-            }
-            case "return": {
-              await this.customerItemHandler.return(
-                customerItemId,
-                orderItem,
-                order.branchId,
-                detailsId,
-              );
-
-              break;
-            }
-            // No default
-          }
+      const { customerItemId } = orderItem;
+      if (customerItemId === null) {
+        continue;
+      }
+      switch (orderItem.type) {
+        case "extend": {
+          await this.customerItemHandler.extend(customerItemId, orderItem, order.branchId);
+          break;
+        }
+        case "buyout": {
+          await this.customerItemHandler.buyout(customerItemId, order.id, orderItem);
+          break;
+        }
+        case "buyback": {
+          await this.customerItemHandler.buyback(customerItemId, order.id, orderItem);
+          break;
+        }
+        case "cancel": {
+          await this.customerItemHandler.cancel(customerItemId, order.id, orderItem);
+          break;
+        }
+        case "return": {
+          await this.customerItemHandler.return(
+            customerItemId,
+            orderItem,
+            order.branchId,
+            detailsId,
+          );
+          break;
+        }
+        default: {
+          break;
         }
       }
     }
-
-    return order;
   }
 
-  private async updateUserDetailWithPlacedOrder(order: Order): Promise<boolean> {
-    if (!order.customerId) {
-      return true;
-    }
-    // The customer's orders are found through `orders.customer_id`; only the customer must exist.
-    const customer = await User.find(order.customerId);
-    if (!customer) {
-      throw new BlError(`customer "${order.customerId}" not found`);
-    }
-    return true;
-  }
-
-  private async sendOrderConfirmationMail(order: Order): Promise<void> {
+  private async sendOrderConfirmationMail(order: Order, customer: User): Promise<void> {
     // makes it possible for admins to disable order alerts to customers in bl-admin
-    if (!order.notifyByEmail || order.customerId === null) {
+    if (!order.notifyByEmail) {
       return;
     }
-    const customerDetail = await User.findOrFail(order.customerId);
     const delivery = await Delivery.ofOrder(order.id);
     await (delivery?.trackingNumber
-      ? DispatchService.sendDeliveryInformation(customerDetail, order, delivery)
-      : OrderEmailHandler.sendOrderReceipt(customerDetail, order));
+      ? DispatchService.sendDeliveryInformation(customer, order, delivery)
+      : OrderEmailHandler.sendOrderReceipt(customer, order));
   }
 }

@@ -53,11 +53,6 @@ async function findForRound(roundId: number): Promise<Match[]> {
   return matchesWithRelations().where("roundId", roundId);
 }
 
-/** Every recorded hop for one physical copy, oldest first, across rounds and stand visits. */
-async function custodyChain(blid: string): Promise<BookHandover[]> {
-  return BookHandover.query().where("blid", blid).orderBy("occurredAt", "asc");
-}
-
 /**
  * Every handover that discharged either half of the given obligations.
  *
@@ -335,7 +330,7 @@ interface RecordHandoverInput {
   /** null means the stand. */
   toUserDetailId: string | null;
   occurredAt: DateTime;
-  /** The Mongo Order that is the authoritative record of this movement. */
+  /** The order that is the authoritative record of this movement. */
   orderId: string | null;
   dischargesSenderObligationId: number | null;
   dischargesReceiverObligationId: number | null;
@@ -442,7 +437,6 @@ export const MatchRepository = {
   findForCustomer,
   findForRound,
   findDefaultRound,
-  custodyChain,
   handoversForObligations,
   unattachedHandoverCount,
   findSenderObligation,

@@ -1,4 +1,5 @@
 import type { HttpContext } from "@adonisjs/core/http";
+import db from "@adonisjs/lucid/services/db";
 
 import {
   questionsAndAnswersOrderValidator,
@@ -24,9 +25,12 @@ export default class QuestionsAndAnswersController {
 
   async updateOrder(ctx: HttpContext) {
     const { ids } = await ctx.request.validateUsing(questionsAndAnswersOrderValidator);
-    for (const [position, id] of ids.entries()) {
-      await QuestionAndAnswer.query().where("id", id).update({ position });
-    }
+    await db.rawQuery(
+      `UPDATE question_and_answers AS qa SET position = ordered.position - 1
+       FROM unnest(?::int[]) WITH ORDINALITY AS ordered(id, position)
+       WHERE qa.id = ordered.id`,
+      [ids],
+    );
   }
 
   async update(ctx: HttpContext) {
