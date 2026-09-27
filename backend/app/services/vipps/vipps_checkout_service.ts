@@ -5,11 +5,11 @@ import { DateTime } from "luxon";
 import Branch from "#models/branch";
 import Delivery from "#models/delivery";
 import Order from "#models/order";
+import Payment from "#models/payment";
 import User from "#models/user";
 import { deliveryDays } from "#services/application_config";
 import { DeliveryService } from "#services/delivery_service";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
-import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import { clientOrigin } from "#config/app";
@@ -194,12 +194,10 @@ export const VippsCheckoutService = {
       });
     }
 
-    await StorageService.Payments.add({
+    await Payment.create({
+      orderId: order.id,
       method: "vipps-checkout",
-      order: order.id,
       amount: order.amount + deliveryPrice,
-      customer: order.customerId,
-      branch: order.branchId,
       confirmed: false,
     });
 

@@ -110,7 +110,6 @@ async function mergeUsers(fromDetailsId: string, toDetailsId: string) {
     Signature.reassignCustomer(fromDetailsId, toDetailsId),
     CustomerItem.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
     Order.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
-    StorageService.Payments.updateMany({ customer: fromDetailsId }, { customer: toDetailsId }),
     StorageService.Invoices.updateMany(
       { "customerInfo.userDetail": fromDetailsId },
       { "customerInfo.userDetail": toDetailsId },

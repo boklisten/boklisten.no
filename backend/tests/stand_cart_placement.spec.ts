@@ -12,14 +12,13 @@ import User from "#models/user";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import { MatchRepository } from "#services/matches/match_repository";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
-import { OrderPayments } from "#services/payments/order_payments";
 import { StandCartPlacement } from "#services/stand_cart/stand_cart_placement";
-import type { Payment } from "#shared/payment/payment";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
-import { asStub, mock, unchecked } from "#tests/test-doubles";
+import { createPayment } from "#tests/payment_fixtures";
+import { asStub, unchecked } from "#tests/test-doubles";
 import { createUser, userDouble } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
@@ -80,7 +79,6 @@ async function handoutOrder(): Promise<Order> {
 
 test.group("StandCartPlacement.place", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let paymentsOf: sinon.SinonStub;
   let placeOrder: sinon.SinonStub;
   let recordHandover: sinon.SinonStub;
   let report: sinon.SinonStub;
@@ -93,7 +91,6 @@ test.group("StandCartPlacement.place", (group) => {
     await createItem({ id: "item1", title: "Sinus 1T" });
     await createItem({ id: "item2", title: "Kosmos SF" });
     sandbox = createSandbox();
-    paymentsOf = sandbox.stub(OrderPayments, "of").resolves([]);
     sandbox.stub(User, "findOrFail").resolves(userDouble({ id: CUSTOMER_ID, name: "Ola" }));
     placeOrder = sandbox
       .stub(OrderPlacedHandler.prototype, "placeOrder")
@@ -208,9 +205,8 @@ test.group("StandCartPlacement.place", (group) => {
       [{ type: "buy", handout: true, amount: 250, unitPrice: 250 }],
       250,
     );
-    paymentsOf.resolves([mock<Payment>({ id: "payment1", method: "cash", amount: 250 })]);
+    await createPayment({ orderId: paidInCash.id, method: "cash", amount: 250 });
     await StandCartPlacement.place(paidInCash, EMPLOYEE);
-    assert.isTrue(paymentsOf.calledOnceWith(ORDER_ID));
     assert.isTrue(report.calledOnce);
     assert.include(report.firstCall.args[0], {
       action: "cash-payment-received",

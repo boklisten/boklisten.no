@@ -8,7 +8,6 @@ import Order from "#models/order";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import type { OrderHistorySources } from "#services/order_history_service";
 import { OrderHistoryService, presentOrderHistory } from "#services/order_history_service";
-import { OrderPayments } from "#services/payments/order_payments";
 import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
 import { createBranch } from "#tests/branch_fixtures";
@@ -16,6 +15,7 @@ import { deliveryDto } from "#tests/delivery_fixtures";
 import { fixtureId } from "#tests/fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
+import { createPayment, paymentDto } from "#tests/payment_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 const IDA = "ida-id";
@@ -79,17 +79,7 @@ function rentItem(overrides: TestOrderItem = {}): OrderItemDto {
 const NO_PERIOD = { periodFrom: null, periodTo: null, numberOfPeriods: null, periodType: null };
 
 function makePayment(overrides: Partial<Payment> = {}): Payment {
-  return {
-    id: "payment-1",
-    method: "card",
-    order: "order-1",
-    amount: 100,
-    customer: IDA,
-    branch: BRANCH,
-    confirmed: true,
-    creationTime: T1,
-    ...overrides,
-  };
+  return paymentDto({ id: "payment-1", orderId: "order-1", createdAt: T1, ...overrides });
 }
 
 function baseSources(overrides: Partial<OrderHistorySources> = {}): OrderHistorySources {
@@ -187,7 +177,6 @@ test.group("OrderHistoryService.presentOrderHistory() – payment status", () =>
         methodLabel: "kort (nettbetaling)",
         amount: 100,
         confirmed: false,
-        branchName: "Ullern VGS",
         time: T1.toISOString(),
       },
     ]);
@@ -710,12 +699,6 @@ test.group("OrderHistoryService.updateItemDeadline()", (group) => {
 
 test.group("OrderHistoryService.getForCustomer()", (group) => {
   group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(() => {
-    // Payments stay in Mongo, which the test environment has none of.
-    const sandbox = createSandbox();
-    sandbox.stub(OrderPayments, "byOrder").resolves(new Map());
-    return () => sandbox.restore();
-  });
 
   test("presents the customer's placed orders newest first, with the catalogue title", async ({
     assert,
@@ -730,8 +713,14 @@ test.group("OrderHistoryService.getForCustomer()", (group) => {
     const newer = await createOrder({
       branchId: branch.id,
       customerId: customer.id,
+      amount: 100,
       createdAt: DateTime.fromISO("2026-08-01T10:00:00Z"),
-      orderItems: [{ itemId: sinus.id }],
+      orderItems: [{ itemId: sinus.id, amount: 100 }],
+    });
+    const payment = await createPayment({
+      orderId: newer.id,
+      method: "vipps-checkout",
+      createdAt: DateTime.fromISO("2026-08-01T10:01:00Z"),
     });
     await createOrder({
       branchId: branch.id,
@@ -748,6 +737,18 @@ test.group("OrderHistoryService.getForCustomer()", (group) => {
     );
     assert.equal(entries[0]?.items[0]?.title, "Sinus 1T");
     assert.deepEqual(entries[0]?.branch, { id: branch.id, name: "Ullern VGS" });
+    assert.equal(entries[0]?.paymentStatus, "paid");
+    assert.deepEqual(entries[0]?.payments, [
+      {
+        id: payment.id,
+        method: "vipps-checkout",
+        methodLabel: "Vipps Checkout",
+        amount: 100,
+        confirmed: true,
+        time: "2026-08-01T10:01:00.000Z",
+      },
+    ]);
+    assert.deepEqual(entries[1]?.payments, []);
   });
 
   test("pairs a legacy received book with another customer's deliver order", async ({ assert }) => {

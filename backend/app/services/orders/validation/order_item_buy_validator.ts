@@ -1,6 +1,6 @@
 import Order from "#models/order";
 import type OrderItem from "#models/order_item";
-import { OrderPayments } from "#services/payments/order_payments";
+import Payment from "#models/payment";
 import { PriceService } from "#services/price_service";
 import { BlError } from "#shared/bl-error";
 import type { Item } from "#shared/item";
@@ -44,7 +44,7 @@ export class OrderItemBuyValidator {
 
     try {
       const order = await Order.getOrFail(orderItem.movedFromOrderId);
-      if (!(await OrderPayments.exist(order.id)) && orderItem.amount === 0) {
+      if (!(await Payment.existFor(order.id)) && orderItem.amount === 0) {
         throw new BlError('the original order has not been payed, but orderItem.amount is "0"');
       }
 

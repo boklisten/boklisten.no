@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 
 import type CustomerItem from "#models/customer_item";
+import type Payment from "#models/payment";
 import type {
   MonitoredAction,
   MonitoredEmployee,
@@ -11,7 +12,6 @@ import type { SignatureExceptionReason } from "#services/signature_helper";
 import { HeldBookRules } from "#services/stand_cart/stand_cart_rules";
 import { TranslationService } from "#services/translation_service";
 import type { OrderItem as OrderItemDto } from "#shared/order/order";
-import type { Payment } from "#shared/payment/payment";
 
 export interface PlacementReport {
   action: MonitoredAction;

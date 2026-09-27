@@ -4,10 +4,9 @@ import { createSandbox } from "sinon";
 
 import Delivery from "#models/delivery";
 import type Order from "#models/order";
+import Payment from "#models/payment";
 import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
-import { OrderPayments } from "#services/payments/order_payments";
 import { BlError } from "#shared/bl-error";
-import type { Payment } from "#shared/payment/payment";
 import { mock } from "#tests/test-doubles";
 
 test.group("OrderPlacedValidator", (group) => {
@@ -49,16 +48,13 @@ test.group("OrderPlacedValidator", (group) => {
       placed: true,
     });
 
-    testPayment = {
+    testPayment = mock<Payment>({
       id: "payment1",
       method: "card",
-      order: "order1",
-      info: {},
+      orderId: "order1",
       amount: 450,
       confirmed: true,
-      customer: "customer1",
-      branch: "branch1",
-    };
+    });
 
     testDelivery = mock<Delivery>({
       id: "delivery1",
@@ -71,8 +67,10 @@ test.group("OrderPlacedValidator", (group) => {
 
     sandbox = createSandbox();
     sandbox
-      .stub(OrderPayments, "of")
-      .callsFake((orderId) => Promise.resolve(orderId === testOrder.id ? testPayments : []));
+      .stub(Payment, "ofOrder")
+      .callsFake((orderId: string) =>
+        Promise.resolve(orderId === testOrder.id ? testPayments : []),
+      );
 
     sandbox
       .stub(Delivery, "ofOrder")

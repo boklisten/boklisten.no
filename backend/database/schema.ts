@@ -634,6 +634,25 @@ export class PasswordResetSchema extends BaseModel {
   declare userDetailId: string
 }
 
+export class PaymentSchema extends BaseModel {
+  static $columns = ['amount', 'confirmed', 'createdAt', 'id', 'method', 'orderId', 'updatedAt'] as const
+  $columns = PaymentSchema.$columns
+  @column()
+  declare amount: number
+  @column()
+  declare confirmed: boolean
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare method: string
+  @column()
+  declare orderId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class QuestionAndAnswerSchema extends BaseModel {
   static $columns = ['answer', 'createdAt', 'id', 'position', 'question', 'updatedAt'] as const
   $columns = QuestionAndAnswerSchema.$columns

@@ -1,22 +1,18 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import { createSandbox } from "sinon";
-import type sinon from "sinon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import type Branch from "#models/branch";
 import type Item from "#models/item";
 import type User from "#models/user";
 import { OrderManagerService, toBringReportRow } from "#services/order_manager_service";
-import { OrderPayments } from "#services/payments/order_payments";
-import type { Payment } from "#shared/payment/payment";
 import { createBranch } from "#tests/branch_fixtures";
 import { createDelivery } from "#tests/delivery_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
+import { createPayment } from "#tests/payment_fixtures";
 import { createUser } from "#tests/user_fixtures";
-import { mock } from "#tests/test-doubles";
 
 const T0 = DateTime.fromISO("2026-09-01T12:00:00.000Z");
 const at = (seconds: number) => T0.plus({ seconds });
@@ -40,21 +36,10 @@ async function seedWorld(): Promise<World> {
   return { branch, otherBranch, customer, sinus, matte };
 }
 
-/** Payments stay in Mongo, which the test environment has none of. */
-function stubPayments(sandbox: sinon.SinonSandbox, payments = new Map<string, Payment[]>()) {
-  sandbox.stub(OrderPayments, "byOrder").resolves(payments);
-}
-
 test.group("OrderManagerService: listing", (group) => {
-  let sandbox: sinon.SinonSandbox;
   group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    return () => sandbox.restore();
-  });
 
   test("only placed orders with a book still owed, newest first", async ({ assert }) => {
-    stubPayments(sandbox);
     const { branch, customer, sinus, matte } = await seedWorld();
     const older = await createOrder({
       branchId: branch.id,
@@ -105,7 +90,6 @@ test.group("OrderManagerService: listing", (group) => {
   });
 
   test("the branch filter narrows to the given branches", async ({ assert }) => {
-    stubPayments(sandbox);
     const { branch, otherBranch, customer, sinus } = await seedWorld();
     await createOrder({
       branchId: branch.id,
@@ -131,7 +115,6 @@ test.group("OrderManagerService: listing", (group) => {
   });
 
   test("an order whose customer is gone is listed without one", async ({ assert }) => {
-    stubPayments(sandbox);
     const { branch, sinus } = await seedWorld();
     await createOrder({
       branchId: branch.id,
@@ -145,7 +128,6 @@ test.group("OrderManagerService: listing", (group) => {
   });
 
   test("the cursor walks every order once, also across equal timestamps", async ({ assert }) => {
-    stubPayments(sandbox);
     const { branch, customer, sinus } = await seedWorld();
     const created = [];
     for (const seconds of [0, 5, 5, 5, 9]) {
@@ -179,7 +161,6 @@ test.group("OrderManagerService: listing", (group) => {
   });
 
   test("a mangled cursor is refused", async ({ assert }) => {
-    stubPayments(sandbox);
     await assert.rejects(
       () => OrderManagerService.listOpenOrders({}, "not-a-cursor", 50),
       BadRequestException,
@@ -208,7 +189,7 @@ test.group("OrderManagerService: listing", (group) => {
       createdAt: at(2),
       orderItems: [{ itemId: sinus.id }],
     });
-    stubPayments(sandbox, new Map([[paid.id, [mock<Payment>({ id: "p" })]]]));
+    await createPayment({ orderId: paid.id, confirmed: false });
 
     const page = await OrderManagerService.listOpenOrders({}, undefined, 50);
 
@@ -240,7 +221,6 @@ test.group("OrderManagerService: listing", (group) => {
         await createDelivery({ orderId: order.id, method: "branch", branchId: branch.id });
       }
     }
-    stubPayments(sandbox);
 
     const all = await OrderManagerService.listOpenOrders({}, undefined, 50);
     assert.deepEqual(
@@ -258,12 +238,7 @@ test.group("OrderManagerService: listing", (group) => {
 });
 
 test.group("OrderManagerService: reports", (group) => {
-  let sandbox: sinon.SinonSandbox;
   group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    return () => sandbox.restore();
-  });
 
   test("the orders report has one row per open book, in the CSV column order", async ({
     assert,
@@ -278,7 +253,7 @@ test.group("OrderManagerService: reports", (group) => {
       createdAt: at(0),
       orderItems: [{ itemId: sinus.id }, { itemId: matte.id, handout: true }],
     });
-    stubPayments(sandbox, new Map([[order.id, [mock<Payment>({ id: "p" })]]]));
+    await createPayment({ orderId: order.id });
 
     const report = await OrderManagerService.ordersReport({});
 
@@ -302,7 +277,7 @@ test.group("OrderManagerService: reports", (group) => {
     assert.equal(report[0]?.school, "Ullern VGS");
     assert.equal(report[0]?.title, "Sinus 1T");
     assert.equal(report[0]?.isbn, String(sinus.isbn));
-    assert.equal(report[0]?.orderTime, at(0).toJSDate().toISOString());
+    assert.equal(report[0]?.orderTime.toISOString(), at(0).toJSDate().toISOString());
     assert.isTrue(report[0]?.paid);
   });
 
@@ -322,7 +297,6 @@ test.group("OrderManagerService: reports", (group) => {
       });
       await createDelivery({ orderId: order.id, shipmentName: name, product });
     }
-    stubPayments(sandbox);
 
     const mailbox = await OrderManagerService.bringReport({}, "postkasse");
     const pickup = await OrderManagerService.bringReport({}, "hentested");

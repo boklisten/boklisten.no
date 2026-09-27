@@ -1252,29 +1252,63 @@ deliveries dropped`, collection dropped, `orders.delivery_id` dropped; 5.7 s. Ev
 - Specs: 1050 passing; `tests/delivery_fixtures.ts` (`createDelivery`, `deliveryDto`), new
   `delivery_model.spec.ts`.
 
-## Step 11 — payments → `payments` — status: not started
+## Step 11 — payments → `payments` — status: done 2026-09-27 (rehearsed on staging, pending merge)
 
-Target schema `payments`: `id string(24) PK`, `order_id FK orders CASCADE`, `customer_id FK users
-SET NULL` (payments outlive a deleted customer, decided 2026-09-21), `branch_id FK branches RESTRICT`, `method enu(card, cash, vipps, vipps-checkout,
-vipps-epayment, bank-transfer, dibs)`, `amount integer`, `confirmed bool default false`,
-`info jsonb null` (vendor payload: Vipps/DIBS/bank-transfer details; the only jsonb column of the
-migration), timestamps. Indexes: `(order_id)`, `(customer_id)`, `(branch_id, created_at)` for the
-cash-payment report.
+Target schema `payments` (as built): `id string(24) PK`, `order_id FK orders CASCADE not null`,
+`method enu(card, cash, vipps, vipps-checkout, vipps-epayment, bank-transfer, dibs)`,
+`amount integer` (negative for a refund), `confirmed bool not null default false`, timestamps.
+Indexes: `(order_id)`, `(created_at)` for the payments report.
 
-If the survey shows that a specific `info` key is queried (for example a Vipps reference looked up
-by the refund flow or webhooks), promote it to an indexed column in this step rather than querying
-inside jsonb.
+Changed from the plan above, decided in the interview after the survey: no `customer_id` and no
+`branch_id` (a payment belongs to its order's customer and branch; reports join through `orders`),
+and no `info` jsonb (see survey). So the migration has no jsonb column at all.
 
 Code to move (11 refs / 10 files): `vipps/` services (ePayment create/capture/refund, webhook
 handling), stand cart Vipps engine and refund plan, `refund_request_service.ts`, order placement,
 reports (`payments` aggregate → SQL), employee monitoring cash report.
 
-Survey queries: `order`/`customer`/`branch` ids missing from Postgres; `method` outside the enum;
-`info` key sets per method; payments whose order lists them nowhere (the `orders.payments` array
-was dropped in step 8, so compare against the pre-step-8 array only if a dump exists; otherwise
-skip).
+Survey results (2026-09-27, staging):
 
-Survey results / notes: (fill in)
+- 59 952 payments, no `method` outside the enum, no decimals, no `active: false`, at most 5 per
+  order, every `branch` exists. 245 payments on placed orders are unconfirmed (mostly DIBS
+  2018–2020), so `confirmed` stays meaningful.
+- 21 497 name an order that no longer exists: 20 937 unconfirmed (almost all abandoned DIBS
+  attempts, 2018–2025), about 560 confirmed spread over 2018–2026. Adrian chose to skip them all,
+  so `order_id` is `not null` and a deleted order takes its payments with it (the admin «Slett
+  ordre» used to leave them behind).
+- `customer` never differs from the order's customer; where the order's customer is NULL (a deleted
+  user) the payment names a deleted user too. `branch` differs from the order's branch on 118
+  payments (cross-chain pairs such as Sonans/Akademiet/Bjørknes, mostly 2023); every current writer
+  records the order's branch. Both columns dropped; those 118 are reported under the order's branch.
+- `info` is only on DIBS payments (35 604) and one Vipps payment, has no writer, and its only
+  reader was a dead currency lookup in the receipt; it held the DIBS `consumer` block (personal
+  details). Dropped.
+- Top-level keys dropped: `user`, `editableFor`, `viewableFor`, `active`, `__v`.
+
+Notes (2026-09-27):
+
+- Staging rehearsal from a laptop: 38 455 migrated, 21 497 skipped (order no longer exists),
+  collection dropped; about 10 s for the whole `migrate:backend`. Every migrated row compared field
+  by field against an NDJSON dump taken before the run: zero differences. A running old dev backend
+  recreates an empty `payments` collection (Mongoose `autoIndex` on `order`); harmless.
+- Model `app/models/payment.ts`: `ofOrder`, `byOrderIds`, `existFor`, `toDto()`; `Order` gained
+  `payments` (hasMany) and `delivery` (hasOne) relations. `PaymentHandler` validates every method
+  before it confirms (and saves) the payments it loaded, so a refused method no longer leaves
+  earlier payments confirmed. `OrderPayments` is gone. `shared/payment/payment.ts` is the flat
+  DTO; `PaymentInfo` is gone.
+- Moved to the database: the orders report's "paid" is an `EXISTS` (`amount = 0 OR confirmed
+payment`), the order-manager export's too (`amount <= 0 OR any payment`); the order manager list
+  uses `withCount("payments")`, `withCount("delivery", bring)` and `whereHas("delivery", bring)`.
+  Every report (customer items, orders, payments, users) and both order-manager exports are one
+  query with joins for user/branch/item columns, in the CSV column order;
+  `services/report_columns.ts` is deleted. User merge no longer touches payments.
+- The order-history payment line lost `branchName` (it repeated the card header's branch).
+- Verified on staging through the local stack (Playwright): the four reports (row shapes and
+  timings), the order manager list flags (unpaid cross-checked in SQL), its CSV and Bring exports,
+  the Kasse order history at 375 px, and a stand-cart cash checkout (payment recorded, confirmed
+  at placement, order shown as paid).
+- Specs: 1059 passing; `tests/payment_fixtures.ts` (`createPayment`, `paymentDto`), new
+  `payment_model.spec.ts`, report specs for all four reports.
 
 ## Step 12 — invoices → `invoices` + `invoice_lines` + `invoice_comments` — status: not started
 
@@ -1401,3 +1435,6 @@ Only after step 12 has run in production.
   15 663 deliveries their order names transferred and 43 997 dead ones skipped, branch pickups
   kept, `info` flattened into columns with two check constraints, `orders.delivery_id` dropped,
   staging rehearsal 5.7 s with zero field diffs).
+- 2026-09-27: step 11 implemented (payments into Postgres without `customer`, `branch` and `info`,
+  21 497 payments of deleted orders skipped, "paid" and report columns moved into SQL, report
+  helpers deleted, staging rehearsal with zero field diffs).

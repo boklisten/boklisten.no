@@ -64,11 +64,10 @@ export interface OrderManagerReportRow {
   dob: string | null;
   branchMembership: string | null;
   /** The order's branch. */
-  school: string | null;
+  school: string;
   title: string;
-  isbn: string | null;
-  /** ISO timestamp. */
-  orderTime: string;
+  isbn: string;
+  orderTime: Date;
   paid: boolean;
   /** Constant 1, so a spreadsheet pivot can count rows. */
   pivot: number;

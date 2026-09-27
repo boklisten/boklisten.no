@@ -252,20 +252,11 @@ function ItemRow({
   );
 }
 
-function PaymentRow({
-  payment,
-  variant,
-}: {
-  payment: OrderHistoryPayment;
-  variant: OrderHistoryVariant;
-}) {
+function PaymentRow({ payment }: { payment: OrderHistoryPayment }) {
   const text = [
     `${payment.amount < 0 ? "Refundert" : "Betalt"} ${Math.abs(payment.amount)} kr med ${payment.methodLabel}`,
-    variant === "admin" ? payment.branchName : null,
-    payment.time ? norwegianTime(payment.time).format("D. MMM [kl.] HH:mm") : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+    norwegianTime(payment.time).format("D. MMM [kl.] HH:mm"),
+  ].join(" · ");
   // Legacy gateway payments are usually flagged unconfirmed although the order went through, so
   // the warning is reserved for methods where the flag is still maintained.
   const warn = !payment.confirmed && payment.method !== "dibs";
@@ -286,13 +277,7 @@ function PaymentRow({
   );
 }
 
-export function PaymentsSection({
-  order,
-  variant,
-}: {
-  order: OrderHistoryEntry;
-  variant: OrderHistoryVariant;
-}) {
+export function PaymentsSection({ order }: { order: OrderHistoryEntry }) {
   if (order.paymentStatus === "free" && order.payments.length === 0) {
     return null;
   }
@@ -300,7 +285,7 @@ export function PaymentsSection({
     <Stack gap={6}>
       <SectionLabel>Betaling</SectionLabel>
       {order.payments.map((payment) => (
-        <PaymentRow key={payment.id} payment={payment} variant={variant} />
+        <PaymentRow key={payment.id} payment={payment} />
       ))}
       {order.paymentStatus === "invoice" && <Text size="sm">Beløpet ble betalt via faktura.</Text>}
       {order.paymentStatus === "unpaid" && order.payments.length === 0 && (
@@ -521,7 +506,7 @@ export default function OrderHistoryCard({
               </Stack>
             ))}
           </Stack>
-          <PaymentsSection order={order} variant={variant} />
+          <PaymentsSection order={order} />
           <DeliverySection order={order} />
           <DetailsSection order={order} variant={variant} readOnly={readOnly} />
           {/* The one destructive action stands alone after the facts, for every employee. */}

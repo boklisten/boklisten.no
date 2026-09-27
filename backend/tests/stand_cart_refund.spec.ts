@@ -2,17 +2,18 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
+import { DateTime } from "luxon";
 
 import type CustomerItem from "#models/customer_item";
 import type Order from "#models/order";
 import type OrderItem from "#models/order_item";
-import { OrderPayments } from "#services/payments/order_payments";
+import Payment from "#models/payment";
 import type { StandCartLineContext } from "#services/stand_cart/stand_cart_line_resolver";
 import type { CheckoutLine } from "#services/stand_cart/stand_cart_order_builder";
 import { allocateRefund, StandCartRefund } from "#services/stand_cart/stand_cart_refund";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { Item } from "#shared/item";
-import type { Payment } from "#shared/payment/payment";
+import type { PaymentMethod } from "#shared/payment/payment-method/payment-method";
 import type { StandCartOption, StandCartRefundPlan } from "#shared/stand_cart";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
@@ -38,8 +39,8 @@ function paidOrder(id: string, orderItems: OrderItem[] = [orderItemFor(item, 250
   return mock<Order>({ id, orderItems });
 }
 
-function payment(id: string, method: Payment["method"], amount: number, creationTime = PAID_AT) {
-  return mock<Payment>({ id, method, amount, creationTime });
+function payment(id: string, method: PaymentMethod, amount: number, paidAt = PAID_AT) {
+  return mock<Payment>({ id, method, amount, createdAt: DateTime.fromJSDate(paidAt) });
 }
 
 function option(type: StandCartOption["type"], price: number): StandCartOption {
@@ -153,7 +154,7 @@ test.group("StandCartRefund.plan", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sandbox = createSandbox();
-    paymentsOf = sandbox.stub(OrderPayments, "of").resolves([]);
+    paymentsOf = sandbox.stub(Payment, "ofOrder").resolves([]);
     info = sandbox.stub().resolves(vippsInfo(250));
     sandbox.stub(VippsPaymentService, "payment").value({ info });
   });

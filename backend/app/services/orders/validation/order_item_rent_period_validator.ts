@@ -1,7 +1,7 @@
 import Order from "#models/order";
 import type OrderItem from "#models/order_item";
+import Payment from "#models/payment";
 import { APP_CONFIG } from "#services/application_config";
-import { OrderPayments } from "#services/payments/order_payments";
 import { PriceService } from "#services/price_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch, RentPeriod } from "#shared/branch";
@@ -78,7 +78,7 @@ export class OrderItemRentPeriodValidator {
     }
 
     const order = await Order.getOrFail(orderItem.movedFromOrderId);
-    const isPaid = await OrderPayments.exist(order.id);
+    const isPaid = await Payment.existFor(order.id);
     if (!isPaid && orderItem.amount === 0) {
       throw new BlError(
         'the original order has not been payed, but current orderItem.amount is "0"',

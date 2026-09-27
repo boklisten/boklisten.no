@@ -5,7 +5,7 @@ import { derivePlacementReports } from "#services/stand_cart/stand_cart_monitori
 import type { PlacementReportInput } from "#services/stand_cart/stand_cart_monitoring";
 import type CustomerItem from "#models/customer_item";
 import type { Order, OrderItem } from "#shared/order/order";
-import type { Payment } from "#shared/payment/payment";
+import type Payment from "#models/payment";
 import { customerItemDouble } from "#tests/customer_item_fixtures";
 import { mock } from "#tests/test-doubles";
 

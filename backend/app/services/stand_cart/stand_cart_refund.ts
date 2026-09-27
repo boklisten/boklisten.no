@@ -2,12 +2,12 @@ import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
 import type Order from "#models/order";
-import { OrderPayments } from "#services/payments/order_payments";
+import Payment from "#models/payment";
 import { findPaidOrderForCustomerItem } from "#services/stand_cart/stand_cart_line_resolver";
 import type { CheckoutLine } from "#services/stand_cart/stand_cart_order_builder";
 import { TranslationService } from "#services/translation_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
-import type { Payment } from "#shared/payment/payment";
+import type { PaymentMethod } from "#shared/payment/payment-method/payment-method";
 import type {
   RefundableVippsMethod,
   StandCartRefundPlan,
@@ -31,7 +31,7 @@ type TracedLine =
   | { kind: "transaction"; orderId: string; payment: Payment; method: RefundableVippsMethod }
   | { kind: "manual"; reason: string };
 
-function isRefundableVippsMethod(method: Payment["method"]): method is RefundableVippsMethod {
+function isRefundableVippsMethod(method: PaymentMethod): method is RefundableVippsMethod {
   return method === "vipps-checkout" || method === "vipps-epayment";
 }
 
@@ -51,7 +51,7 @@ async function paidOrderOf(line: CheckoutLine): Promise<Order | null> {
   }
 }
 
-function paidWithReason(title: string, method: Payment["method"]): string {
+function paidWithReason(title: string, method: PaymentMethod): string {
   switch (method) {
     case "cash": {
       return `«${title}» ble betalt kontant`;
@@ -75,7 +75,7 @@ async function trace(line: CheckoutLine, now: Date): Promise<TracedLine> {
   }
   const order = await paidOrderOf(line);
   const payment = order
-    ? (await OrderPayments.of(order.id)).find((candidate) => candidate.amount > 0)
+    ? (await Payment.ofOrder(order.id)).find((candidate) => candidate.amount > 0)
     : null;
   if (!order || !payment) {
     return { kind: "manual", reason: `«${title}» har ingen betaling å refundere` };
@@ -83,8 +83,7 @@ async function trace(line: CheckoutLine, now: Date): Promise<TracedLine> {
   if (!isRefundableVippsMethod(payment.method)) {
     return { kind: "manual", reason: paidWithReason(title, payment.method) };
   }
-  const paidAt = DateTime.fromJSDate(payment.creationTime ?? new Date(0));
-  if (paidAt < DateTime.fromJSDate(now).minus({ days: REFUND_WINDOW_DAYS })) {
+  if (payment.createdAt < DateTime.fromJSDate(now).minus({ days: REFUND_WINDOW_DAYS })) {
     return { kind: "manual", reason: `«${title}» ble betalt for over ett år siden` };
   }
   return { kind: "transaction", orderId: order.id, payment, method: payment.method };

@@ -5,7 +5,7 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import type OrderItem from "#models/order_item";
-import { OrderPayments } from "#services/payments/order_payments";
+import Payment from "#models/payment";
 import { OrderItemRentPeriodValidator } from "#services/orders/validation/order_item_rent_period_validator";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
@@ -69,7 +69,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
       paymentResponsible: true,
     };
     sandbox = createSandbox();
-    paymentsExistStub = sandbox.stub(OrderPayments, "exist").resolves(false);
+    paymentsExistStub = sandbox.stub(Payment, "existFor").resolves(false);
     return testUtils.db().truncate();
   });
   group.each.teardown(() => {

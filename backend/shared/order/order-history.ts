@@ -49,9 +49,8 @@ export interface OrderHistoryPayment {
   methodLabel: string;
   amount: number;
   confirmed: boolean;
-  branchName: string | null;
   /** ISO timestamp. */
-  time: string | null;
+  time: string;
 }
 
 export type OrderHistoryDelivery =

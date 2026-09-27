@@ -5,12 +5,12 @@ import Delivery from "#models/delivery";
 import ItemModel from "#models/item";
 import Order from "#models/order";
 import type OrderItem from "#models/order_item";
+import Payment from "#models/payment";
 import User from "#models/user";
 import { periodTypeOfLastOrder } from "#services/customer_item_actions_service";
 import { findItemByIsbn, findUniqueItemByBlid } from "#services/item_lookup";
 import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
 import { PeerObligations } from "#services/matches/peer_obligations";
-import { OrderPayments } from "#services/payments/order_payments";
 import {
   alreadyPaidFor,
   priceCustomerItemLine,
@@ -131,7 +131,7 @@ export async function findPaidOrderForCustomerItem(
 /** What the customer paid to get the book. */
 async function paidForCustomerItem(customerItem: CustomerItem): Promise<number> {
   const paid = await findPaidOrderForCustomerItem(customerItem);
-  return paid ? alreadyPaidFor(await OrderPayments.exist(paid.order.id), paid.orderItem) : 0;
+  return paid ? alreadyPaidFor(await Payment.existFor(paid.order.id), paid.orderItem) : 0;
 }
 
 type Unlinked = Extract<StandCartResolveResult, { kind: "unlinked" }>;
@@ -192,7 +192,7 @@ async function resolveOrderLine(
       alreadyHeldNotes(customerId, item.id),
       BranchModel.find(order.branchId),
       isBringDelivery(order),
-      OrderPayments.exist(order.id),
+      Payment.existFor(order.id),
     ]);
   const priced = priceOrderLine({
     branch,

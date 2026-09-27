@@ -3,7 +3,7 @@ import logger from "@adonisjs/core/services/logger";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import type Order from "#models/order";
-import { StorageService } from "#services/storage_service";
+import Payment from "#models/payment";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { PaymentMethod } from "#shared/payment/payment-method/payment-method";
 import type { StandCartVippsRefund } from "#shared/stand_cart";
@@ -72,14 +72,7 @@ async function discard(order: Order): Promise<void> {
 export const StandCartPayment = {
   /** Records an unconfirmed payment on the order, for the whole order unless told otherwise. */
   async record(order: Order, method: PaymentMethod, amount = order.amount): Promise<void> {
-    await StorageService.Payments.add({
-      method,
-      order: order.id,
-      amount,
-      customer: standCustomerId(order),
-      branch: order.branchId,
-      confirmed: false,
-    });
+    await Payment.create({ orderId: order.id, method, amount, confirmed: false });
   },
 
   /**

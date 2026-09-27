@@ -4,12 +4,12 @@ import { DateTime } from "luxon";
 import CustomerItem from "#models/customer_item";
 import type Order from "#models/order";
 import type OrderItem from "#models/order_item";
+import Payment from "#models/payment";
 import User from "#models/user";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { MatchRepository } from "#services/matches/match_repository";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
-import { OrderPayments } from "#services/payments/order_payments";
 import { findSignatureException } from "#services/signature_helper";
 import { standCustomerId } from "#services/stand_cart/stand_cart_payment";
 import {
@@ -43,7 +43,7 @@ async function collectReports(
   return derivePlacementReports({
     order,
     customerItemsBefore: heldBooks,
-    payments: await OrderPayments.of(order.id),
+    payments: await Payment.ofOrder(order.id),
     signatureException,
     now,
   });

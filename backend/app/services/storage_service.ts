@@ -2,7 +2,6 @@ import type { ObjectId } from "mongodb";
 import type { Schema } from "mongoose";
 
 import { InvoiceSchema } from "#models/mongoose/invoice.schema";
-import { PaymentSchema } from "#models/mongoose/payment.schema";
 import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import { MongodbHandler } from "#models/mongoose/storage/mongodb-handler";
 
@@ -10,7 +9,6 @@ export type BlSchema<T> = Schema<ToSchema<T>>;
 
 export const StorageService = {
   Invoices: new MongodbHandler(InvoiceSchema, BlSchemaName.Invoices),
-  Payments: new MongodbHandler(PaymentSchema, BlSchemaName.Payments),
 } as const;
 
 // Re-format BlDocument type to one fitting for mongoose schemas

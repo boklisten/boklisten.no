@@ -1,16 +1,13 @@
-import { DateTime } from "luxon";
-
 import Branch from "#models/branch";
 import Delivery from "#models/delivery";
 import type Order from "#models/order";
 import type OrderItem from "#models/order_item";
+import Payment from "#models/payment";
 import type User from "#models/user";
 import DispatchService from "#services/dispatch_service";
-import { OrderPayments } from "#services/payments/order_payments";
 import { TranslationService } from "#services/translation_service";
 import { BlError } from "#shared/bl-error";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
-import type { Payment } from "#shared/payment/payment";
 import type { EmailOrder, EmailUser } from "#types/email";
 
 export const OrderEmailHandler = {
@@ -38,7 +35,7 @@ export const OrderEmailHandler = {
     await DispatchService.sendOrderReceipt(emailUser, emailOrder, await this.paymentNeeded(order));
   },
   async paymentNeeded(order: Order) {
-    return order.amount > 0 && !(await OrderPayments.exist(order.id));
+    return order.amount > 0 && !(await Payment.existFor(order.id));
   },
   async orderToEmailOrder(order: Order) {
     const emailOrder: EmailOrder = {
@@ -87,37 +84,21 @@ export const OrderEmailHandler = {
     );
   },
 
-  extractEmailOrderPaymentFromOrder(
+  async extractEmailOrderPaymentFromOrder(
     order: Order,
   ): Promise<{ payment: unknown; showPayment: boolean }> {
-    return OrderPayments.of(order.id)
-      .then((payments: Payment[]) => {
-        if (payments.length === 0) {
-          return { payment: null, showPayment: false };
-        }
-        const emailPayment = {
-          total: payments.reduce((subTotal, payment) => subTotal + payment.amount, 0),
-          currency: "NOK",
-          payments: payments.map((payment) => this.paymentToEmailPayment(payment)),
-        };
-
-        if (
-          emailPayment.payments[0] &&
-          // @ts-expect-error fixme: auto ignored
-          emailPayment.payments[0]["info"] &&
-          // @ts-expect-error fixme: auto ignored
-          emailPayment.payments[0]["info"]["orderDetails"]
-        ) {
-          emailPayment.currency =
-            // @ts-expect-error fixme: auto ignored
-            emailPayment.payments[0]["info"]["orderDetails"].currency;
-        }
-
-        return { payment: emailPayment, showPayment: true };
-      })
-      .catch((getPaymentsError) => {
-        throw getPaymentsError;
-      });
+    const payments = await Payment.ofOrder(order.id);
+    if (payments.length === 0) {
+      return { payment: null, showPayment: false };
+    }
+    return {
+      payment: {
+        total: payments.reduce((subTotal, payment) => subTotal + payment.amount, 0),
+        currency: "NOK",
+        payments: payments.map((payment) => this.paymentToEmailPayment(payment)),
+      },
+      showPayment: true,
+    };
   },
 
   async extractEmailOrderDeliveryFromOrder(order: Order) {
@@ -131,34 +112,14 @@ export const OrderEmailHandler = {
   },
 
   paymentToEmailPayment(payment: Payment) {
-    if (!payment) {
-      return null;
-    }
-
-    const paymentObject = {
-      method: "",
-      amount: "",
+    return {
+      method: payment.method,
+      amount: payment.amount === 0 ? "" : payment.amount.toString(),
       cardInfo: null,
-      paymentId: "",
+      paymentId: payment.id,
       status: "bekreftet",
-      creationTime: payment.creationTime
-        ? DateTime.fromJSDate(new Date(payment.creationTime)).toFormat("dd.MM.yyyy HH.mm.ss")
-        : null,
+      creationTime: payment.createdAt.toFormat("dd.MM.yyyy HH.mm.ss"),
     };
-
-    if (payment.method) {
-      paymentObject.method = payment.method;
-    }
-
-    if (payment.amount) {
-      paymentObject.amount = payment.amount.toString();
-    }
-
-    if (payment.id) {
-      paymentObject.paymentId = payment.id;
-    }
-
-    return paymentObject;
   },
 
   deliveryToEmailDelivery(delivery: Delivery) {

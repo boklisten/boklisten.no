@@ -9,6 +9,7 @@ import type CustomerItem from "#models/customer_item";
 import Delivery from "#models/delivery";
 import Order from "#models/order";
 import type OrderItem from "#models/order_item";
+import Payment from "#models/payment";
 import Signature from "#models/signature";
 import User from "#models/user";
 import { OrderHistoryService } from "#services/order_history_service";
@@ -22,7 +23,6 @@ import type {
 } from "#services/stand_cart/stand_cart_line_resolver";
 import { StandCartPlacement } from "#services/stand_cart/stand_cart_placement";
 import { StandCartRefund } from "#services/stand_cart/stand_cart_refund";
-import { StorageService } from "#services/storage_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { Branch } from "#shared/branch";
 import type { Item } from "#shared/item";
@@ -98,6 +98,16 @@ async function createWorld(): Promise<void> {
 /** The orders the checkout created, beside the original order it moves books from. */
 async function createdOrders(): Promise<Order[]> {
   return Order.query().whereNot("id", ORDER_ID);
+}
+
+/** The payments checkout recorded, in the order it recorded them. */
+async function recordedPayments() {
+  return (await Payment.query().orderBy("id")).map(({ orderId, method, amount, confirmed }) => ({
+    orderId,
+    method,
+    amount,
+    confirmed,
+  }));
 }
 
 async function createdOrder(): Promise<Order> {
@@ -208,8 +218,8 @@ function vippsRefund(orderId: string, amount: number): StandCartVippsRefund {
 test.group("StandCartCheckoutService.checkout", (group) => {
   let sandbox: sinon.SinonSandbox;
   let resolve: sinon.SinonStub;
-  let paymentsAdd: sinon.SinonStub;
   let place: sinon.SinonStub;
+  let paymentsAtPlacement: number | null;
   let plan: sinon.SinonStub;
   let sendRefundRequest: sinon.SinonStub;
   let vipps: {
@@ -239,12 +249,11 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     sandbox
       .stub(User, "find")
       .resolves(userDouble({ id: CUSTOMER_ID, name: "Ola", taskSignAgreement: false }));
-    paymentsAdd = sandbox
-      .stub(StorageService.Payments, "add")
-      .resolves(unchecked({ id: "payment1" }));
-    place = sandbox.stub(StandCartPlacement, "place").callsFake((order: Order) => {
+    paymentsAtPlacement = null;
+    place = sandbox.stub(StandCartPlacement, "place").callsFake(async (order: Order) => {
+      paymentsAtPlacement = (await Payment.ofOrder(order.id)).length;
       order.placed = true;
-      return Promise.resolve(order);
+      return order;
     });
     sandbox.stub(OrderHistoryService, "getOne").resolves(unchecked({ id: NEW_ORDER_ID }));
     sandbox.stub(Signature, "validForCustomer").resolves(unchecked({}));
@@ -290,7 +299,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     });
     assert.equal(order.orderItems[0]?.blid, BLID);
     assert.equal(order.orderItems[0]?.movedFromOrderId, ORDER_ID);
-    assert.isFalse(paymentsAdd.called);
+    assert.lengthOf(await recordedPayments(), 0);
     assert.equal(place.firstCall.args[0].id, order.id);
     assert.deepEqual(place.firstCall.args[1], EMPLOYEE);
     assert.equal(state.status, "placed");
@@ -303,15 +312,10 @@ test.group("StandCartCheckoutService.checkout", (group) => {
   }) => {
     resolve.resolves(resolution(ORDER_SOURCE, [rentOption(250)], { blid: BLID }));
     const state = await checkout({ payment: { method: "cash" }, lines: [paidLine()] });
-    assert.include(paymentsAdd.firstCall.args[0], {
-      method: "cash",
-      amount: 250,
-      order: (await createdOrder()).id,
-      customer: CUSTOMER_ID,
-      branch: BRANCH_ID,
-      confirmed: false,
-    });
-    assert.isTrue(paymentsAdd.calledBefore(place));
+    assert.deepEqual(await recordedPayments(), [
+      { orderId: (await createdOrder()).id, method: "cash", amount: 250, confirmed: false },
+    ]);
+    assert.equal(paymentsAtPlacement, 1);
     assert.equal(state.status, "paid");
   });
 
@@ -324,12 +328,10 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     const order = await createdOrder();
     assert.equal(order.amount, -250);
     assert.isTrue(vipps.refund.calledOnceWith(ORDER_ID, 25_000));
-    assert.include(paymentsAdd.firstCall.args[0], {
-      method: "vipps-epayment",
-      amount: -250,
-      order: order.id,
-    });
-    assert.isTrue(paymentsAdd.calledBefore(place));
+    assert.deepEqual(await recordedPayments(), [
+      { orderId: order.id, method: "vipps-epayment", amount: -250, confirmed: false },
+    ]);
+    assert.equal(paymentsAtPlacement, 1);
     assert.isFalse(sendRefundRequest.called);
     assert.equal(state.status, "paid");
   });
@@ -360,7 +362,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       /manuelt/,
     );
     assert.lengthOf(await createdOrders(), 0);
-    assert.isFalse(paymentsAdd.called);
+    assert.lengthOf(await recordedPayments(), 0);
     assert.isFalse(place.called);
   });
 
@@ -378,8 +380,9 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       lines: [{ ...CANCEL_LINE, expectedPrice: -650 }],
       payment: { method: "vipps-refund" },
     });
-    assert.include(paymentsAdd.firstCall.args[0], { method: "vipps-epayment", amount: -250 });
-    assert.include(paymentsAdd.secondCall.args[0], { method: "bank-transfer", amount: -400 });
+    const [refunded, left] = await recordedPayments();
+    assert.include(refunded, { method: "vipps-epayment", amount: -250 });
+    assert.include(left, { method: "bank-transfer", amount: -400 });
     assert.isTrue(place.calledOnce);
     assert.include(sendRefundRequest.firstCall.args[0], {
       employeeDetailsId: EMPLOYEE.detailsId,
@@ -403,11 +406,9 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       },
     });
     const order = await createdOrder();
-    assert.include(paymentsAdd.firstCall.args[0], {
-      method: "bank-transfer",
-      amount: -250,
-      order: order.id,
-    });
+    assert.deepEqual(await recordedPayments(), [
+      { orderId: order.id, method: "bank-transfer", amount: -250, confirmed: false },
+    ]);
     assert.isTrue(place.calledOnce);
     assert.isFalse(vipps.refund.called);
     assert.include(sendRefundRequest.firstCall.args[0], {
@@ -846,7 +847,6 @@ test.group("StandCartCheckoutService.refundPlan", (group) => {
 
 test.group("StandCartCheckoutService.status and cancel", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let paymentsAdd: sinon.SinonStub;
   let place: sinon.SinonStub;
   let vipps: {
     create: sinon.SinonStub;
@@ -876,9 +876,6 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
       orderItems: [{ itemId: item.id, amount: 250, unitPrice: 250 }],
     });
     sandbox = createSandbox();
-    paymentsAdd = sandbox
-      .stub(StorageService.Payments, "add")
-      .resolves(unchecked({ id: "payment1" }));
     place = sandbox.stub(StandCartPlacement, "place").callsFake((order: Order) => {
       order.placed = true;
       return Promise.resolve(order);
@@ -909,7 +906,9 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
   }) => {
     vipps.info.resolves({ state: "AUTHORIZED" });
     const state = await StandCartCheckoutService.status(NEW_ORDER_ID);
-    assert.include(paymentsAdd.firstCall.args[0], { method: "vipps-epayment", amount: 250 });
+    assert.deepEqual(await recordedPayments(), [
+      { orderId: NEW_ORDER_ID, method: "vipps-epayment", amount: 250, confirmed: false },
+    ]);
     assert.deepEqual(place.firstCall.args[1], EMPLOYEE);
     assert.isTrue(vipps.capture.calledWith(NEW_ORDER_ID, 25_000));
     assert.equal(await checkoutStateOf(), "PaymentSuccessful");

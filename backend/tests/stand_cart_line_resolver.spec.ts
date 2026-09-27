@@ -6,9 +6,9 @@ import { DateTime } from "luxon";
 
 import BranchModel from "#models/branch";
 import OrderItem from "#models/order_item";
+import Payment from "#models/payment";
 import { MatchRepository } from "#services/matches/match_repository";
 import { PeerObligations } from "#services/matches/peer_obligations";
-import { OrderPayments } from "#services/payments/order_payments";
 import { StandCartLineResolver } from "#services/stand_cart/stand_cart_line_resolver";
 import User from "#models/user";
 import type { Branch } from "#shared/branch";
@@ -147,7 +147,9 @@ async function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
   }
   await insertOrders(world.orders);
   const paid = new Set(world.orders.filter((order) => order.paid).map((order) => order.id));
-  sandbox.stub(OrderPayments, "exist").callsFake((orderId) => Promise.resolve(paid.has(orderId)));
+  sandbox
+    .stub(Payment, "existFor")
+    .callsFake((orderId: string) => Promise.resolve(paid.has(orderId)));
   for (const orderId of world.bringOrderIds) {
     await createDelivery({ orderId });
   }

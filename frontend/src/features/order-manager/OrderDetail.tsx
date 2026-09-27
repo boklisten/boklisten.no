@@ -182,7 +182,7 @@ export default function OrderDetail({
               <PaymentStatusBadge status={order.paymentStatus} />
             </Group>
             <DeliverySection order={order} />
-            <PaymentsSection order={order} variant="admin" />
+            <PaymentsSection order={order} />
           </Stack>
           <Group gap="sm" wrap="wrap">
             <StandCartScanButton cart={cart} customerId={customer.id} orderId={order.id} />

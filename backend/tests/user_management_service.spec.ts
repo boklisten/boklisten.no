@@ -53,7 +53,6 @@ test.group("UserManagementService.mergeUsers", (group) => {
   group.each.setup(() => {
     sandbox = createSandbox();
     invoicesUpdateManyStub = sandbox.stub(StorageService.Invoices, "updateMany").resolves();
-    sandbox.stub(StorageService.Payments, "updateMany").resolves();
   });
   group.each.teardown(() => sandbox.restore());
 

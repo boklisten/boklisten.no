@@ -6,10 +6,10 @@ import BookHandover from "#models/book_handover";
 import Delivery from "#models/delivery";
 import Order from "#models/order";
 import OrderItem from "#models/order_item";
+import Payment from "#models/payment";
 import User from "#models/user";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
-import { OrderPayments } from "#services/payments/order_payments";
 import { TranslationService } from "#services/translation_service";
 import type { Delivery as DeliveryDto } from "#shared/delivery/delivery";
 import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
@@ -23,7 +23,7 @@ import type {
   OrderHistoryTransfer,
   OrderPaymentStatus,
 } from "#shared/order/order-history";
-import type { Payment } from "#shared/payment/payment";
+import type { Payment as PaymentDto } from "#shared/payment/payment";
 
 type OrderHistoryAudience = "customer" | "employee";
 
@@ -41,7 +41,7 @@ export interface OrderHistorySources {
   audience: OrderHistoryAudience;
   orders: OrderDto[];
   /** The payments of each order, keyed by order id. */
-  payments: Map<string, Payment[]>;
+  payments: Map<string, PaymentDto[]>;
   /** The delivery of each order that has one, keyed by order id. */
   deliveries: Map<string, DeliveryDto>;
   /** Every handover the customer took part in, plus those pointing at one of their orders. */
@@ -104,8 +104,7 @@ function presentPayments(order: OrderDto, sources: OrderHistorySources): OrderHi
     methodLabel: TranslationService.translatePaymentMethod(payment.method),
     amount: payment.amount,
     confirmed: payment.confirmed,
-    branchName: sources.branchNames.get(payment.branch) ?? null,
-    time: iso(payment.creationTime),
+    time: payment.createdAt.toISOString(),
   }));
 }
 
@@ -322,7 +321,7 @@ async function loadSources(
   orders: OrderDto[],
 ): Promise<OrderHistorySources> {
   const [payments, deliveries, handovers, counterpartOrders] = await Promise.all([
-    OrderPayments.byOrder(orders.map((order) => order.id)),
+    Payment.byOrderIds(orders.map((order) => order.id)),
     Delivery.byOrderIds(orders.map((order) => order.id)),
     fetchHandovers(customerId, orders),
     fetchCounterpartOrders(customerId, orders),
@@ -335,9 +334,6 @@ async function loadSources(
     if (order.employeeId) {
       userDetailIds.add(order.employeeId);
     }
-  }
-  for (const payment of [...payments.values()].flat()) {
-    branchIds.add(payment.branch);
   }
   for (const delivery of deliveries.values()) {
     if (delivery.branchId !== null) {
@@ -367,7 +363,12 @@ async function loadSources(
     customerId,
     audience,
     orders,
-    payments,
+    payments: new Map(
+      [...payments].map(([orderId, orderPayments]) => [
+        orderId,
+        orderPayments.map((payment) => payment.toDto()),
+      ]),
+    ),
     deliveries: new Map([...deliveries].map(([orderId, delivery]) => [orderId, delivery.toDto()])),
     handovers,
     counterpartOrders,
@@ -508,9 +509,9 @@ export const OrderHistoryService = {
   },
 
   /**
-   * Delete an order outright. Only the order and its lines go; the customer items, payments,
-   * deliveries and handovers it produced stay as they are, exactly as the legacy admin delete
-   * left them. Any employee may do it, and everyone below admin is reported to the administrator.
+   * Delete an order outright. The order goes with its lines, payments and delivery; the customer
+   * items and handovers it produced stay as they are. Any employee may do it, and everyone below
+   * admin is reported to the administrator.
    */
   async deleteOrder(orderId: string, employee: MonitoredEmployee): Promise<void> {
     const order = await Order.findOptional(orderId);

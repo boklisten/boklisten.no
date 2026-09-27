@@ -12,7 +12,6 @@ import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { PaymentHandler } from "#services/orders/payment_handler";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { BlError } from "#shared/bl-error";
-import type { Payment } from "#shared/payment/payment";
 import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
@@ -20,7 +19,6 @@ import { createUser, userDouble } from "#tests/user_fixtures";
 
 test.group("OrderPlacedHandler", (group) => {
   let testOrder: Order;
-  let testPayment: Payment;
   let paymentsConfirmed: boolean;
   let testUserDetail: User;
 
@@ -55,7 +53,7 @@ test.group("OrderPlacedHandler", (group) => {
         return Promise.reject(new BlError("could not confirm payments"));
       }
 
-      return Promise.resolve([testPayment]);
+      return Promise.resolve();
     });
 
     sandbox.stub(OrderEmailHandler, "sendOrderReceipt").resolves();
@@ -88,19 +86,6 @@ test.group("OrderPlacedHandler", (group) => {
       placed: false,
       notifyByEmail: false,
     });
-
-    testPayment = {
-      id: "payment1",
-      method: "vipps-checkout",
-      order: "order1",
-      amount: 200,
-      customer: "customer1",
-      branch: "branch1",
-      confirmed: false,
-      info: {
-        paymentId: "vipps-checkout1",
-      },
-    };
 
     return truncate;
   });

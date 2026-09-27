@@ -1,50 +1,46 @@
 import Delivery from "#models/delivery";
 import type Order from "#models/order";
-import { OrderPayments } from "#services/payments/order_payments";
-import { StorageService } from "#services/storage_service";
+import Payment from "#models/payment";
 import { BlError } from "#shared/bl-error";
-import type { Payment } from "#shared/payment/payment";
 
 export class PaymentHandler {
-  public async confirmPayments(order: Order): Promise<Payment[]> {
-    const payments = await OrderPayments.of(order.id);
+  /**
+   * Confirms the payments recorded for a placed order, once they add up to what the order and its
+   * delivery cost and every method is permitted for whoever placed it.
+   */
+  public async confirmPayments(order: Order): Promise<void> {
+    const payments = await Payment.ofOrder(order.id);
     if (payments.length <= 0) {
-      return [];
+      return;
     }
 
-    return this.confirmAllPayments(order, payments);
-  }
-
-  private async confirmAllPayments(order: Order, payments: Payment[]): Promise<Payment[]> {
     await this.validateOrderAmount(order, payments);
-
-    for (const payment of payments) {
-      if (payment.confirmed) {
-        continue;
-      }
-
-      await this.confirmPayment(order, payment);
-      await StorageService.Payments.update(payment.id, { confirmed: true });
+    const unconfirmed = payments.filter((payment) => !payment.confirmed);
+    // Every method is checked before any payment is confirmed.
+    for (const payment of unconfirmed) {
+      this.validateMethod(order, payment);
     }
-    return payments;
+    for (const payment of unconfirmed) {
+      await payment.merge({ confirmed: true }).save();
+    }
   }
 
-  private confirmPayment(order: Order, payment: Payment): Promise<boolean> {
+  private validateMethod(order: Order, payment: Payment): void {
     if (["card", "cash", "vipps", "bank-transfer"].includes(payment.method)) {
       if (order.byCustomer) {
         throw new BlError(`payment method "${payment.method}" is not permitted for customer`);
       }
-      return Promise.resolve(true);
+      return;
     }
 
     if (payment.method === "vipps-checkout" || payment.method === "vipps-epayment") {
-      return Promise.resolve(true);
+      return;
     }
 
-    return Promise.reject(new BlError(`payment method "${payment.method}" not supported`));
+    throw new BlError(`payment method "${payment.method}" not supported`);
   }
 
-  private async validateOrderAmount(order: Order, payments: Payment[]): Promise<boolean> {
+  private async validateOrderAmount(order: Order, payments: Payment[]): Promise<void> {
     const total = payments.reduce((subTotal, payment) => subTotal + payment.amount, 0);
     let orderTotal = order.amount;
 
@@ -56,7 +52,5 @@ export class PaymentHandler {
     if (total !== orderTotal) {
       throw new BlError("total of payment amounts does not equal order.amount + delivery.amount");
     }
-
-    return true;
   }
 }

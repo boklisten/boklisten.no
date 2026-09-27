@@ -1,8 +1,7 @@
 import Delivery from "#models/delivery";
 import type Order from "#models/order";
-import { OrderPayments } from "#services/payments/order_payments";
+import Payment from "#models/payment";
 import { BlError } from "#shared/bl-error";
-import type { Payment } from "#shared/payment/payment";
 
 export class OrderPlacedValidator {
   public async validate(order: Order): Promise<boolean> {
@@ -14,7 +13,7 @@ export class OrderPlacedValidator {
       throw new BlError("total of order.orderItems amount is not equal to order.amount");
     }
 
-    const payments = await OrderPayments.of(order.id);
+    const payments = await Payment.ofOrder(order.id);
     if (payments.length <= 0) {
       return true; // if there are no payments, there is no need do do more validation
     }

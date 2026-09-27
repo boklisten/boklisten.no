@@ -1,12 +1,14 @@
 import { Exception } from "@adonisjs/core/exceptions";
 import db from "@adonisjs/lucid/services/db";
-import { beforeCreate, beforeFetch, beforeFind, hasMany } from "@adonisjs/lucid/orm";
+import { beforeCreate, beforeFetch, beforeFind, hasMany, hasOne } from "@adonisjs/lucid/orm";
 import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 import type { ModelQueryBuilderContract } from "@adonisjs/lucid/types/model";
-import type { HasMany } from "@adonisjs/lucid/types/relations";
+import type { HasMany, HasOne } from "@adonisjs/lucid/types/relations";
 
+import Delivery from "#models/delivery";
 import { assignObjectId } from "#models/helpers/object_id";
 import OrderItem from "#models/order_item";
+import Payment from "#models/payment";
 import { OrderSchema } from "#database/schema";
 import type { Order as OrderDto } from "#shared/order/order";
 
@@ -34,6 +36,12 @@ export default class Order extends OrderSchema {
 
   @hasMany(() => OrderItem)
   declare orderItems: HasMany<typeof OrderItem>;
+
+  @hasMany(() => Payment)
+  declare payments: HasMany<typeof Payment>;
+
+  @hasOne(() => Delivery)
+  declare delivery: HasOne<typeof Delivery>;
 
   @beforeCreate()
   static assignId(order: Order) {

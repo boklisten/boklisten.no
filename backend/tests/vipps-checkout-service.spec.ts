@@ -5,9 +5,9 @@ import { createSandbox } from "sinon";
 
 import Delivery from "#models/delivery";
 import Order from "#models/order";
+import Payment from "#models/payment";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import User from "#models/user";
-import { StorageService } from "#services/storage_service";
 import { VippsCheckoutService } from "#services/vipps/vipps_checkout_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { VippsCheckoutSession } from "#validators/checkout_validators";
@@ -40,9 +40,6 @@ test.group("VippsCheckoutService.update", (group) => {
       .stub(User, "findOrFail")
       .resolves(userDouble({ id: customer.id, name: "Ola Nordmann" }));
     sandbox.stub(User.prototype, "save").resolvesThis();
-    sandbox
-      .stub(StorageService.Payments, "add")
-      .callsFake((payment) => Promise.resolve({ ...payment, id: "payment1" }));
     placeOrderStub = sandbox
       .stub(OrderPlacedHandler.prototype, "placeOrder")
       .callsFake(() => Promise.resolve(testOrder));
@@ -75,6 +72,11 @@ test.group("VippsCheckoutService.update", (group) => {
     assert.equal(delivery?.method, "bring");
     assert.equal(delivery?.amount, 75);
     assert.equal(delivery?.product, "3584");
+    const payments = await Payment.ofOrder(testOrder.id);
+    assert.deepEqual(
+      payments.map(({ method, amount, confirmed }) => ({ method, amount, confirmed })),
+      [{ method: "vipps-checkout", amount: 475, confirmed: false }],
+    );
   });
 
   test("should place the order and resolve even if the capture fails", async ({ assert }) => {
