@@ -30,7 +30,7 @@ export default defineRailway((ctx) => {
   const mongodbVolume = volume("mongodb-volume", { region: REGION, sizeMB: 20_000 });
 
   const backend = service("api.boklisten.no", {
-    source: github(MONOREPO, { branch, checkSuites: true }),
+    source: github(MONOREPO, { branch }),
     build: "bun build:backend",
     preDeploy: "bun migrate:backend",
     start: "bun start:backend",
@@ -62,7 +62,7 @@ export default defineRailway((ctx) => {
   });
 
   const frontend = service("boklisten.no", {
-    source: github(MONOREPO, { branch, checkSuites: true }),
+    source: github(MONOREPO, { branch }),
     build: "bun build:frontend",
     start: "bun start:frontend",
     healthcheck: "/health",
