@@ -1,6 +1,7 @@
 import BranchModel from "#models/branch";
 import BranchItem from "#models/branch_item";
 import CustomerItem from "#models/customer_item";
+import Delivery from "#models/delivery";
 import ItemModel from "#models/item";
 import Order from "#models/order";
 import type OrderItem from "#models/order_item";
@@ -16,7 +17,6 @@ import {
   priceItemLine,
   priceOrderLine,
 } from "#services/stand_cart/stand_cart_pricing";
-import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
 import type { Item } from "#shared/item";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
@@ -98,10 +98,7 @@ async function peerMatchNote(customerId: string, itemId: string): Promise<StandC
 }
 
 async function isBringDelivery(order: Order): Promise<boolean> {
-  if (!order.deliveryId) {
-    return false;
-  }
-  const delivery = await StorageService.Deliveries.getOrNull(order.deliveryId);
+  const delivery = await Delivery.ofOrder(order.id);
   return delivery?.method === "bring";
 }
 

@@ -86,7 +86,6 @@ test.group("OrderPlacedHandler", (group) => {
       customerId: customer.id,
       byCustomer: true,
       placed: false,
-      deliveryId: "delivery1",
       notifyByEmail: false,
     });
 

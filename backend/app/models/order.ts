@@ -128,7 +128,6 @@ export default class Order extends OrderSchema {
       byCustomer: this.byCustomer,
       employeeId: this.employeeId,
       placed: this.placed,
-      deliveryId: this.deliveryId,
       notifyByEmail: this.notifyByEmail,
       checkoutState: this.checkoutState,
       createdAt: this.createdAt.toJSDate(),

@@ -1,5 +1,6 @@
 import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
+import Delivery from "#models/delivery";
 import Item from "#models/item";
 import UniqueItem from "#models/unique_item";
 import BookHandover from "#models/book_handover";
@@ -10,7 +11,6 @@ import { ActiveItemCorrections } from "#services/active_item_corrections";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { isMonitored } from "#services/employee_monitoring_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
-import { StorageService } from "#services/storage_service";
 import type {
   BlidActiveItem,
   BlidHistoryAction,
@@ -24,7 +24,6 @@ import type {
 import type { CustomerItem as CustomerItemDto } from "#shared/customer-item/customer-item";
 import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
 import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
-import { USER_PERMISSION } from "#shared/user-permission";
 
 interface HandoverRow {
   fromUserDetailId: string | null;
@@ -754,25 +753,6 @@ async function fetchOrders(blid: string, customerItems: BlidCustomerItem[]): Pro
   return orders.map((order) => order.toDto());
 }
 
-/** The ids of the orders whose delivery document is a Bring shipment. */
-async function fetchBringDeliveryOrderIds(orders: OrderDto[]): Promise<Set<string>> {
-  const deliveryIds = [
-    ...new Set(orders.flatMap((order) => (order.deliveryId ? [order.deliveryId] : []))),
-  ];
-  if (deliveryIds.length === 0) {
-    return new Set();
-  }
-  const deliveries = await StorageService.Deliveries.getMany(deliveryIds, USER_PERMISSION.ADMIN);
-  const bringIds = new Set(
-    deliveries.filter((delivery) => delivery.method === "bring").map((delivery) => delivery.id),
-  );
-  return new Set(
-    orders
-      .filter((order) => order.deliveryId !== null && bringIds.has(order.deliveryId))
-      .map((order) => order.id),
-  );
-}
-
 export const BlidSearchService = {
   /**
    * Corrects the deadline and/or handout branch of an active loan. Any employee may do it; the
@@ -878,7 +858,7 @@ export const BlidSearchService = {
       BookHandover.query().where("blid", blid).orderBy("occurredAt", "asc"),
     ]);
     const orders = await fetchOrders(blid, customerItems);
-    const bringDeliveryOrderIds = await fetchBringDeliveryOrderIds(orders);
+    const bringDeliveryOrderIds = await Delivery.bringOrderIds(orders.map((order) => order.id));
 
     const itemId = uniqueItem?.itemId ?? customerItems[0]?.itemId;
     const item = itemId === undefined ? null : await Item.find(itemId);

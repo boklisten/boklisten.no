@@ -55,7 +55,6 @@ function makeOrder(
     byCustomer: false,
     employeeId: EMPLOYEE,
     placed: true,
-    deliveryId: null,
     notifyByEmail: true,
     checkoutState: null,
     createdAt: T1,
@@ -129,7 +128,7 @@ test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
   test("marks an order-item handout whose order has a Bring delivery as sent by mail", ({
     assert,
   }) => {
-    const order = makeOrder({ deliveryId: "delivery-1", orderItems: [rentItem] });
+    const order = makeOrder({ orderItems: [rentItem] });
     const result = assembleBlidSearch(
       baseSources({ orders: [order], bringDeliveryOrderIds: new Set(["order-1"]) }),
     );
@@ -143,7 +142,7 @@ test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
   test("marks a handover-row handout whose order has a Bring delivery as sent by mail", ({
     assert,
   }) => {
-    const order = makeOrder({ deliveryId: "delivery-1", orderItems: [rentItem] });
+    const order = makeOrder({ orderItems: [rentItem] });
     const result = assembleBlidSearch(
       baseSources({
         orders: [order],
@@ -161,7 +160,6 @@ test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
     assert,
   }) => {
     const order = makeOrder({
-      deliveryId: "delivery-1",
       orderItems: [
         { ...rentItem, blid: null, periodTo: DEADLINE_1, customerItemId: "customer-item-1" },
       ],
@@ -187,7 +185,7 @@ test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
   test("does not mark a handout by mail when the order's delivery is a branch pickup", ({
     assert,
   }) => {
-    const order = makeOrder({ deliveryId: "delivery-1", orderItems: [rentItem] });
+    const order = makeOrder({ orderItems: [rentItem] });
     const result = assembleBlidSearch(baseSources({ orders: [order] }));
     assert.isUndefined(result.history[0]?.byMail);
   });

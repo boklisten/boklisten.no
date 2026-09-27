@@ -323,11 +323,6 @@ export function DeliverySection({ order }: { order: OrderHistoryEntry }) {
       {delivery.method === "branch" && (
         <Text size="sm">Hentes på {delivery.branchName ?? "filialen"}</Text>
       )}
-      {delivery.method === "missing" && (
-        <Text size="sm" c="red">
-          Leveringsinformasjonen mangler.
-        </Text>
-      )}
       {delivery.method === "bring" && (
         <Stack gap={2}>
           <Text size="sm">

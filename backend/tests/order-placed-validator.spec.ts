@@ -2,12 +2,11 @@ import { test } from "@japa/runner";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import Delivery from "#models/delivery";
 import type Order from "#models/order";
 import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
 import { OrderPayments } from "#services/payments/order_payments";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import type { Delivery } from "#shared/delivery/delivery";
 import type { Payment } from "#shared/payment/payment";
 import { mock } from "#tests/test-doubles";
 
@@ -45,7 +44,6 @@ test.group("OrderPlacedValidator", (group) => {
         },
       ],
       customerId: "customer1",
-      deliveryId: "delivery1",
       branchId: "b1",
       byCustomer: true,
       placed: true,
@@ -62,15 +60,12 @@ test.group("OrderPlacedValidator", (group) => {
       branch: "branch1",
     };
 
-    testDelivery = {
+    testDelivery = mock<Delivery>({
       id: "delivery1",
+      orderId: "order1",
       method: "branch",
-      info: {
-        branch: "branch1",
-      },
-      order: "order1",
       amount: 0,
-    };
+    });
 
     testPayments = [testPayment];
 
@@ -79,17 +74,9 @@ test.group("OrderPlacedValidator", (group) => {
       .stub(OrderPayments, "of")
       .callsFake((orderId) => Promise.resolve(orderId === testOrder.id ? testPayments : []));
 
-    sandbox.stub(StorageService.Deliveries, "get").callsFake(
-      (id) =>
-        new Promise((resolve, reject) => {
-          if (id !== "delivery1") {
-            reject(new BlError("not found").code(702));
-            return;
-          }
-
-          resolve(testDelivery);
-        }),
-    );
+    sandbox
+      .stub(Delivery, "ofOrder")
+      .callsFake((orderId) => Promise.resolve(orderId === testOrder.id ? testDelivery : null));
   });
   group.each.teardown(() => {
     sandbox.restore();
@@ -105,15 +92,6 @@ test.group("OrderPlacedValidator", (group) => {
     testPayments = [];
 
     return assert.doesNotReject(() => orderPlacedValidator.validate(testOrder));
-  });
-
-  test("should reject with error if delivery is not found", async ({ assert }) => {
-    testOrder.deliveryId = "notFoundDelivery";
-    await assert.rejects(
-      () => orderPlacedValidator.validate(testOrder),
-      BlError,
-      /delivery "notFoundDelivery" not found/,
-    );
   });
 
   test("should reject with error if payment.confirmed is false", async ({ assert }) => {
@@ -142,7 +120,6 @@ test.group("OrderPlacedValidator", (group) => {
     assert,
   }) => {
     testPayments = [];
-    testOrder.deliveryId = null;
     testOrder.amount = 999;
     await assert.rejects(
       () => orderPlacedValidator.validate(testOrder),

@@ -26,7 +26,7 @@ test.group("PaymentHandler.confirmPayments", (group) => {
       .resolves([
         mock<Payment>({ id: "p1", method: "bank-transfer", amount: -250, confirmed: false }),
       ]);
-    const order = mock<Order>({ id: "o1", amount: -250, byCustomer: false, deliveryId: null });
+    const order = mock<Order>({ id: "o1", amount: -250, byCustomer: false });
 
     await new PaymentHandler().confirmPayments(order);
 

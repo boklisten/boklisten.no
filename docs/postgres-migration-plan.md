@@ -1179,10 +1179,10 @@ missing customer items set to null`, collection dropped; 1 min 8 s. Every migrat
   `customer_item_model.spec.ts`; `createHeldBooks` in the matches test utils. User cleanup is left
   for later (Adrian's decision).
 
-## Step 10 — deliveries → `deliveries` — status: not started
+## Step 10 — deliveries → `deliveries` — status: done 2026-09-27 (rehearsed on staging, pending merge)
 
 Relationship inverted: the delivery owns `order_id` (unique), and `orders.delivery_id` is dropped.
-Code that read `order.delivery` uses `hasOne` on the order model.
+Code that read `order.delivery` asks `Delivery.ofOrder` / `Delivery.byOrderIds`.
 
 Target schema `deliveries`:
 
@@ -1212,7 +1212,45 @@ Survey queries: deliveries whose `order` is missing or unplaced; orders whose `d
 a missing delivery; orders with more than one delivery; `info.branch` values that are not branch
 ids; `method` outside the enum.
 
-Survey results / notes: (fill in)
+Survey results (2026-09-27, staging):
+
+- 59 660 deliveries (22 691 branch, 36 969 bring), no `method` outside the enum, no decimals, every
+  `info.branch` an existing branch. Only 15 663 are the delivery their order names (8 533 Bring,
+  7 130 branch pickups; 1 253 of them on unplaced orders). The rest are dead: 34 218 name an order
+  that no longer exists (unplaced checkout orders the old cleanup deleted), 9 778 were replaced by
+  a later delivery on the same order (the customer picked the delivery method again; up to 152 per
+  order), 1 names an order that points at none. Only 61 of the dead ones carry a tracking number.
+  Adrian chose to transfer only the named ones, so `order_id` is unique.
+- 2 963 orders name a delivery that does not exist (2 961 from 2018, before the collection's first
+  document in 2019). Adrian accepted that they lose the reference with `delivery_id`; order history
+  no longer has a «Leveringsinformasjonen mangler.» state.
+- Branch pickups have no current writer (only Vipps Checkout and the stand cart's tracking-number
+  copy create deliveries, both Bring). Kept as `method = 'branch'` rows by decision; `amount` is
+  always 0, and `info.branch` equals the order's branch on all but one.
+- Every named Bring delivery has `info.amount`, both addresses and both postal codes; the
+  estimate is null on 29, the product absent on 3 114, the tracking number on 4 675. `amount` 0
+  next to `info.amount` 130–516 means free for the customer, so both are kept (`amount`,
+  `bring_amount`). Two check constraints hold this: `branch_id` set exactly for pickups, and
+  shipments complete.
+- Top-level keys dropped: `user`, `editableFor`, `viewableFor`, `active`, `__v`.
+
+Notes (2026-09-27):
+
+- Staging rehearsal from a laptop: `deliveries: migrated 15663, skipped 43997 (34218 order no
+longer exists, 9779 not the delivery its order names)`, `orders: 2963 references to missing
+deliveries dropped`, collection dropped, `orders.delivery_id` dropped; 5.7 s. Every migrated row
+  compared field by field against an NDJSON dump taken before the run: zero differences.
+- Model `app/models/delivery.ts`: `ofOrder`, `byOrderIds` (keyed by order id), `bringOrderIds`,
+  `toDto()`; no relation on `Order`. `shared/delivery/delivery.ts` is the
+  flat DTO; the `delivery-info` union types and `order.deliveryId` are gone.
+- The order manager's Bring filter is an `EXISTS` on `deliveries` and the Bring CSV a join (no more
+  resolving delivery ids first). The stand cart's discard relies on the cascade.
+- Verified on staging through the local stack (Playwright): Kasse order history with a Bring
+  delivery (tracking number, address) at 375 px and a branch pickup, blid history «sendt i
+  posten», order manager Bring flag and Bring-only filter, both Bring exports. The stand-cart
+  tracking-number copy and Vipps Checkout delivery are covered by specs only (no live checkout).
+- Specs: 1050 passing; `tests/delivery_fixtures.ts` (`createDelivery`, `deliveryDto`), new
+  `delivery_model.spec.ts`.
 
 ## Step 11 — payments → `payments` — status: not started
 
@@ -1359,3 +1397,7 @@ Only after step 12 has run in production.
   replaced by `order_items.customer_item_id` with 3 697 lines linked, `handout` and snapshots
   dropped, 4 items naming the deleted book skipped, `order_items.customer_item_id` foreign key,
   staging rehearsal 1 min 8 s with zero field diffs).
+- 2026-09-27: step 10 implemented (deliveries into Postgres owning a unique `order_id`, only the
+  15 663 deliveries their order names transferred and 43 997 dead ones skipped, branch pickups
+  kept, `info` flattened into columns with two check constraints, `orders.delivery_id` dropped,
+  staging rehearsal 5.7 s with zero field diffs).

@@ -17,8 +17,6 @@ export interface Order {
   byCustomer: boolean;
   employeeId: string | null;
   placed: boolean;
-  /** A Bring delivery means the books were sent by mail. */
-  deliveryId: string | null;
   /** False when the order was placed with the receipt e-mail switched off. */
   notifyByEmail: boolean;
   /** Vipps session state of the order's payment request, when one was made. */

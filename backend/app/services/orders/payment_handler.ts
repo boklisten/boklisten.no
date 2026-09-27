@@ -1,3 +1,4 @@
+import Delivery from "#models/delivery";
 import type Order from "#models/order";
 import { OrderPayments } from "#services/payments/order_payments";
 import { StorageService } from "#services/storage_service";
@@ -47,8 +48,8 @@ export class PaymentHandler {
     const total = payments.reduce((subTotal, payment) => subTotal + payment.amount, 0);
     let orderTotal = order.amount;
 
-    if (order.deliveryId) {
-      const delivery = await StorageService.Deliveries.get(order.deliveryId);
+    const delivery = await Delivery.ofOrder(order.id);
+    if (delivery) {
       orderTotal += delivery.amount;
     }
 

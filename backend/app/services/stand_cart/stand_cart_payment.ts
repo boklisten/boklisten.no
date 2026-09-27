@@ -64,11 +64,8 @@ export function standCustomerId(order: Order): string {
   return order.customerId;
 }
 
-/** Removes a half-made order that never reached the customer, and the delivery copied onto it. */
+/** Removes a half-made order that never reached the customer, and (by cascade) its delivery. */
 async function discard(order: Order): Promise<void> {
-  if (order.deliveryId) {
-    await StorageService.Deliveries.remove(order.deliveryId);
-  }
   await order.delete();
 }
 

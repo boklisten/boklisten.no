@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import Delivery from "#models/delivery";
 import Order from "#models/order";
 import User from "#models/user";
 import { deliveryDays } from "#services/application_config";
@@ -171,40 +172,26 @@ export const VippsCheckoutService = {
     let deliveryPrice = 0;
     if (session.shippingDetails?.shippingMethodId?.includes("mail")) {
       deliveryPrice = Math.ceil((session.shippingDetails.amount?.value ?? 0) / 100);
-      const delivery = await StorageService.Deliveries.add({
+      await Delivery.create({
+        orderId: order.id,
         method: "bring",
-        info: {
-          amount: deliveryPrice,
-          estimatedDelivery: DateTime.now()
-            .plus({ days: deliveryDays() + 2 })
-            .toJSDate(),
-          facilityAddress: {
-            address: "Martin Lingesvei 25",
-            postalCode: "1364",
-            postalCity: "FORNEBU",
-          },
-          shipmentAddress: {
-            name:
-              session.shippingDetails.firstName && session.shippingDetails.lastName
-                ? `${session.shippingDetails.firstName} ${session.shippingDetails.lastName}`
-                : userDetail.name,
-            address: session.shippingDetails.streetAddress ?? userDetail.address,
-            postalCode: session.shippingDetails.postalCode ?? userDetail.postCode,
-            postalCity: session.shippingDetails.city ?? userDetail.postCity,
-          },
-          from: "1364",
-          to: session.shippingDetails.postalCode ?? userDetail.postCode,
-          product: session.shippingDetails.shippingMethodId === "mailbox" ? "3584" : "SERVICEPAKKE",
-        },
-        order: session.reference,
         amount: deliveryPrice,
-        user: {
-          id: userDetail.id,
-          permission: userDetail.permission,
-        },
+        bringAmount: deliveryPrice,
+        estimatedDelivery: DateTime.now().plus({ days: deliveryDays() + 2 }),
+        facilityAddress: "Martin Lingesvei 25",
+        facilityPostalCode: "1364",
+        facilityPostalCity: "FORNEBU",
+        shipmentName:
+          session.shippingDetails.firstName && session.shippingDetails.lastName
+            ? `${session.shippingDetails.firstName} ${session.shippingDetails.lastName}`
+            : userDetail.name,
+        shipmentAddress: session.shippingDetails.streetAddress ?? userDetail.address,
+        shipmentPostalCode: session.shippingDetails.postalCode ?? userDetail.postCode,
+        shipmentPostalCity: session.shippingDetails.city ?? userDetail.postCity,
+        fromPostalCode: "1364",
+        toPostalCode: session.shippingDetails.postalCode ?? userDetail.postCode,
+        product: session.shippingDetails.shippingMethodId === "mailbox" ? "3584" : "SERVICEPAKKE",
       });
-      order.deliveryId = delivery.id;
-      await order.save();
     }
 
     await StorageService.Payments.add({

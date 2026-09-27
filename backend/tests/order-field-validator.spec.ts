@@ -30,7 +30,6 @@ test.group("OrderFieldValidator", (group) => {
           periodType: "semester",
         },
       ],
-      deliveryId: "delivery1",
       branchId: "branch1",
       byCustomer: true,
       placed: false,

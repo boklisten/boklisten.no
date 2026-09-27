@@ -9,10 +9,10 @@ import { EmployeeMonitoringService } from "#services/employee_monitoring_service
 import type { OrderHistorySources } from "#services/order_history_service";
 import { OrderHistoryService, presentOrderHistory } from "#services/order_history_service";
 import { OrderPayments } from "#services/payments/order_payments";
-import type { Delivery } from "#shared/delivery/delivery";
 import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
 import { createBranch } from "#tests/branch_fixtures";
+import { deliveryDto } from "#tests/delivery_fixtures";
 import { fixtureId } from "#tests/fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
@@ -42,7 +42,6 @@ function makeOrder(
     byCustomer: false,
     employeeId: EMPLOYEE,
     placed: true,
-    deliveryId: null,
     notifyByEmail: true,
     checkoutState: null,
     createdAt: T1,
@@ -452,25 +451,21 @@ test.group("OrderHistoryService.presentOrderHistory() – match transfers", () =
 test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
   test("presents a Bring delivery with tracking, address and package type", ({ assert }) => {
     const estimated = new Date("2026-08-05T00:00:00.000Z");
-    const delivery: Delivery = {
-      id: "delivery-1",
-      method: "bring",
-      order: "order-1",
+    const delivery = deliveryDto({
+      orderId: "order-1",
       amount: 79,
-      info: {
-        from: "0139",
-        to: "0370",
-        facilityAddress: { address: "Lager 1", postalCode: "0139", postalCity: "Oslo" },
-        shipmentAddress: { name: "Ida", address: "Gata 1", postalCode: "0370", postalCity: "Oslo" },
-        estimatedDelivery: estimated,
-        trackingNumber: "TRACK123",
-        product: "3584",
-      },
-    };
-    const order = makeOrder({ deliveryId: "delivery-1" });
+      shipmentName: "Ida",
+      shipmentAddress: "Gata 1",
+      shipmentPostalCode: "0370",
+      shipmentPostalCity: "Oslo",
+      estimatedDelivery: estimated,
+      trackingNumber: "TRACK123",
+      product: "3584",
+    });
+    const order = makeOrder();
 
     const [entry] = presentOrderHistory(
-      baseSources({ orders: [order], deliveries: new Map([["delivery-1", delivery]]) }),
+      baseSources({ orders: [order], deliveries: new Map([["order-1", delivery]]) }),
     );
 
     assert.deepEqual(entry?.delivery, {
@@ -484,28 +479,14 @@ test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
   });
 
   test("presents a branch pickup delivery by branch name", ({ assert }) => {
-    const delivery: Delivery = {
-      id: "delivery-1",
-      method: "branch",
-      order: "order-1",
-      amount: 0,
-      info: { branch: OTHER_BRANCH },
-    };
-    const order = makeOrder({ deliveryId: "delivery-1" });
+    const delivery = deliveryDto({ orderId: "order-1", method: "branch", branchId: OTHER_BRANCH });
+    const order = makeOrder();
 
     const [entry] = presentOrderHistory(
-      baseSources({ orders: [order], deliveries: new Map([["delivery-1", delivery]]) }),
+      baseSources({ orders: [order], deliveries: new Map([["order-1", delivery]]) }),
     );
 
     assert.deepEqual(entry?.delivery, { method: "branch", branchName: "Nydalen VGS" });
-  });
-
-  test("marks an order whose delivery document is gone", ({ assert }) => {
-    const order = makeOrder({ deliveryId: "gone" });
-
-    const [entry] = presentOrderHistory(baseSources({ orders: [order] }));
-
-    assert.deepEqual(entry?.delivery, { method: "missing" });
   });
 
   test("has no delivery for a plain stand order", ({ assert }) => {

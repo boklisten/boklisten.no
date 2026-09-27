@@ -3,6 +3,7 @@ import type { ChainableContract } from "@adonisjs/lucid/types/querybuilder";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import Branch from "#models/branch";
+import Delivery from "#models/delivery";
 import { isObjectIdHex } from "#models/helpers/object_id";
 import Order from "#models/order";
 import OrderItem from "#models/order_item";
@@ -10,8 +11,6 @@ import User from "#models/user";
 import { OrderHistoryService } from "#services/order_history_service";
 import { OrderPayments } from "#services/payments/order_payments";
 import { withBranchName, withUserColumns } from "#services/report_columns";
-import { StorageService } from "#services/storage_service";
-import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
 import type {
   BringParcelType,
   BringReportRow,
@@ -23,7 +22,6 @@ import type {
 } from "#shared/order_manager";
 import { ORDER_MANAGER_PAGE_SIZE } from "#shared/order_manager";
 import { isOpenOrderItem } from "#shared/order/open-order-item";
-import { USER_PERMISSION } from "#shared/user-permission";
 
 /** Mailbox parcels carry Bring product 3584; every other product (and none) goes to a pickup point. */
 const MAILBOX_PRODUCT = "3584";
@@ -47,47 +45,14 @@ function whereOpenOrder<Query extends ChainableContract>(
   return query;
 }
 
-/**
- * The Bring deliveries among the given ids, keyed by id. Deliveries stay in Mongo until step 10,
- * so the delivery ids come from Postgres and the method from Mongo.
- */
-async function bringDeliveries(
-  deliveryIds: Iterable<string | null>,
-): Promise<Map<string, DeliveryInfoBring>> {
-  const ids = [...new Set([...deliveryIds].filter((id): id is string => id !== null))];
-  if (ids.length === 0) {
-    return new Map();
-  }
-  const deliveries = await StorageService.Deliveries.getMany(ids, USER_PERMISSION.ADMIN);
-  return new Map(
-    deliveries.flatMap((delivery) =>
-      delivery.method === "bring" && "facilityAddress" in delivery.info
-        ? [[delivery.id, delivery.info] as const]
-        : [],
-    ),
-  );
-}
-
-/**
- * The Bring deliveries of every open order the filter matches. The candidates are few (only
- * orders with a book still owed and a delivery at all), so the Bring filter can narrow the SQL by
- * delivery id and paging stays exact.
- */
-async function bringDeliveriesOfOpenOrders(
-  filter: OrderManagerFilter,
-): Promise<Map<string, DeliveryInfoBring>> {
-  const rows: { deliveryId: string }[] = await whereOpenOrder(db.from("orders"), filter)
-    .whereNotNull("orders.delivery_id")
-    .distinct("orders.delivery_id as deliveryId");
-  return bringDeliveries(rows.map((row) => row.deliveryId));
-}
-
-/** Only the orders whose delivery is one of the given Bring deliveries. */
-function whereDeliveredBy<Query extends ChainableContract>(
-  query: Query,
-  deliveries: Map<string, DeliveryInfoBring>,
-): Query {
-  return query.whereIn("orders.delivery_id", [...deliveries.keys()]);
+/** Only the orders shipped with Bring. */
+function whereShippedByBring<Query extends ChainableContract>(query: Query): Query {
+  return query.whereExists((deliveries) => {
+    void deliveries
+      .from("deliveries")
+      .whereColumn("deliveries.order_id", "orders.id")
+      .where("deliveries.method", "bring");
+  });
 }
 
 /**
@@ -157,9 +122,8 @@ export async function findOpenOrdersPage(
   cursor?: Cursor,
 ): Promise<{ orders: Order[]; bring: Set<string> }> {
   const query = whereOpenOrder(Order.query(), filter);
-  const bringOnly = filter.bringOnly ? await bringDeliveriesOfOpenOrders(filter) : null;
-  if (bringOnly) {
-    void whereDeliveredBy(query, bringOnly);
+  if (filter.bringOnly) {
+    void whereShippedByBring(query);
   }
   if (cursor) {
     void query.whereRaw("(orders.created_at, orders.id) < (?, ?)", [cursor.createdAt, cursor.id]);
@@ -168,15 +132,7 @@ export async function findOpenOrdersPage(
     .orderBy("createdAt", "desc")
     .orderBy("id", "desc")
     .limit(limit + 1);
-  const deliveries = bringOnly ?? (await bringDeliveries(orders.map((order) => order.deliveryId)));
-  return {
-    orders,
-    bring: new Set(
-      orders
-        .filter((order) => order.deliveryId !== null && deliveries.has(order.deliveryId))
-        .map((order) => order.id),
-    ),
-  };
+  return { orders, bring: await Delivery.bringOrderIds(orders.map((order) => order.id)) };
 }
 
 /** The customer columns of the orders report, in the order the CSV lists them. */
@@ -295,7 +251,7 @@ export const OrderManagerService = {
       filter,
     );
     if (filter.bringOnly) {
-      void whereDeliveredBy(query, await bringDeliveriesOfOpenOrders(filter));
+      void whereShippedByBring(query);
     }
     const lines: OpenLineRow[] = await query
       .select(
@@ -341,29 +297,28 @@ export const OrderManagerService = {
     filter: OrderManagerFilter,
     parcelType: BringParcelType,
   ): Promise<BringReportRow[]> {
-    const deliveries = await bringDeliveriesOfOpenOrders(filter);
-    const orders: { customerId: string | null; deliveryId: string }[] = await whereDeliveredBy(
-      whereOpenOrder(db.from("orders"), filter),
-      deliveries,
-    )
-      .select("orders.customer_id as customerId", "orders.delivery_id as deliveryId")
+    const query = whereOpenOrder(db.from("orders"), filter)
+      .join("deliveries", "deliveries.order_id", "orders.id")
+      .where("deliveries.method", "bring");
+    if (parcelType === "postkasse") {
+      void query.where("deliveries.product", MAILBOX_PRODUCT);
+    } else {
+      void query.whereRaw("deliveries.product IS DISTINCT FROM ?", [MAILBOX_PRODUCT]);
+    }
+    const rows: {
+      name: string | null;
+      address: string | null;
+      postalCode: string | null;
+      customerId: string | null;
+    }[] = await query
+      .select(
+        "deliveries.shipment_name as name",
+        "deliveries.shipment_address as address",
+        "deliveries.shipment_postal_code as postalCode",
+        "orders.customer_id as customerId",
+      )
       .orderBy("orders.created_at", "desc")
       .orderBy("orders.id", "desc");
-    const rows = orders.flatMap((order) => {
-      const info = deliveries.get(order.deliveryId);
-      const isMailbox = info?.product === MAILBOX_PRODUCT;
-      if (info === undefined || isMailbox !== (parcelType === "postkasse")) {
-        return [];
-      }
-      return [
-        {
-          name: info.shipmentAddress?.name ?? null,
-          address: info.shipmentAddress?.address ?? null,
-          postalCode: info.shipmentAddress?.postalCode ?? null,
-          customerId: order.customerId,
-        },
-      ];
-    });
     const shipments = await withUserColumns(rows, "customerId", (user) => ({
       phone: user?.phone ?? null,
       email: user?.email ?? null,

@@ -50,7 +50,6 @@ test.group("OrderToCustomerItemGenerator.generate", () => {
       byCustomer: false,
       placed: false,
       employeeId: "employee1",
-      deliveryId: "delivery1",
       createdAt: today,
     });
   }

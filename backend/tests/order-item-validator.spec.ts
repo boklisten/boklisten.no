@@ -58,7 +58,6 @@ test.group("OrderItemValidator", (group) => {
           periodType: "semester",
         },
       ],
-      deliveryId: "delivery1",
       branchId: "branch1",
       byCustomer: true,
       placed: false,

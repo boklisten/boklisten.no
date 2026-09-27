@@ -96,7 +96,6 @@ test.group("OrderPlaceService", (group) => {
       customerId: CUSTOMER_1,
       byCustomer: false,
       placed: false,
-      deliveryId: "delivery1",
     });
   }
 

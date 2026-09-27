@@ -3,17 +3,15 @@ import { DateTime } from "luxon";
 import Branch from "#models/branch";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
+import Delivery from "#models/delivery";
 import Order from "#models/order";
 import OrderItem from "#models/order_item";
 import User from "#models/user";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import { OrderPayments } from "#services/payments/order_payments";
-import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
-import type { Delivery } from "#shared/delivery/delivery";
-import type { DeliveryInfoBranch } from "#shared/delivery/delivery-info/delivery-info-branch";
-import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
+import type { Delivery as DeliveryDto } from "#shared/delivery/delivery";
 import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
 import { isOpenOrderItem, LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 import type {
@@ -26,7 +24,6 @@ import type {
   OrderPaymentStatus,
 } from "#shared/order/order-history";
 import type { Payment } from "#shared/payment/payment";
-import { USER_PERMISSION } from "#shared/user-permission";
 
 type OrderHistoryAudience = "customer" | "employee";
 
@@ -45,7 +42,8 @@ export interface OrderHistorySources {
   orders: OrderDto[];
   /** The payments of each order, keyed by order id. */
   payments: Map<string, Payment[]>;
-  deliveries: Map<string, Delivery>;
+  /** The delivery of each order that has one, keyed by order id. */
+  deliveries: Map<string, DeliveryDto>;
   /** Every handover the customer took part in, plus those pointing at one of their orders. */
   handovers: OrderHistoryHandover[];
   /**
@@ -70,14 +68,6 @@ const PERIOD_ITEM_TYPES = new Set<OrderItemDto["type"]>([
   "extend",
   "match-receive",
 ]);
-
-function isBringInfo(info: Delivery["info"]): info is DeliveryInfoBring {
-  return "facilityAddress" in info;
-}
-
-function isBranchInfo(info: Delivery["info"]): info is DeliveryInfoBranch {
-  return "branch" in info;
-}
 
 function iso(date: Date | string | null | undefined): string | null {
   if (date === null || date === undefined) {
@@ -123,40 +113,37 @@ function presentDelivery(
   order: OrderDto,
   sources: OrderHistorySources,
 ): OrderHistoryDelivery | null {
-  if (!order.deliveryId) {
+  const delivery = sources.deliveries.get(order.id);
+  if (delivery === undefined) {
     return null;
   }
-  const delivery = sources.deliveries.get(order.deliveryId);
-  if (delivery === undefined) {
-    return { method: "missing" };
-  }
   if (delivery.method === "branch") {
-    const branchId = isBranchInfo(delivery.info) ? delivery.info.branch : null;
     return {
       method: "branch",
-      branchName: branchId === null ? null : (sources.branchNames.get(branchId) ?? null),
+      branchName:
+        delivery.branchId === null ? null : (sources.branchNames.get(delivery.branchId) ?? null),
     };
-  }
-  const info = isBringInfo(delivery.info) ? delivery.info : null;
-  if (info === null) {
-    return { method: "missing" };
   }
   return {
     method: "bring",
-    trackingNumber: info.trackingNumber ?? null,
-    estimatedDelivery: iso(info.estimatedDelivery),
-    shipmentAddress: info.shipmentAddress
-      ? {
-          name: info.shipmentAddress.name,
-          address: info.shipmentAddress.address,
-          postalCode: info.shipmentAddress.postalCode,
-          postalCity: info.shipmentAddress.postalCity,
-        }
-      : null,
+    trackingNumber: delivery.trackingNumber,
+    estimatedDelivery: iso(delivery.estimatedDelivery),
+    shipmentAddress:
+      delivery.shipmentName !== null &&
+      delivery.shipmentAddress !== null &&
+      delivery.shipmentPostalCode !== null &&
+      delivery.shipmentPostalCity !== null
+        ? {
+            name: delivery.shipmentName,
+            address: delivery.shipmentAddress,
+            postalCode: delivery.shipmentPostalCode,
+            postalCity: delivery.shipmentPostalCity,
+          }
+        : null,
     productLabel:
-      info.product === "3584"
+      delivery.product === "3584"
         ? "pakke i postkassen"
-        : info.product === "SERVICEPAKKE"
+        : delivery.product === "SERVICEPAKKE"
           ? "pakke til hentested"
           : null,
     amount: delivery.amount,
@@ -334,19 +321,9 @@ async function loadSources(
   audience: OrderHistoryAudience,
   orders: OrderDto[],
 ): Promise<OrderHistorySources> {
-  const deliveryIds = [
-    ...new Set(
-      orders
-        .map((order) => order.deliveryId)
-        .filter((id): id is string => typeof id === "string" && id !== ""),
-    ),
-  ];
-
   const [payments, deliveries, handovers, counterpartOrders] = await Promise.all([
     OrderPayments.byOrder(orders.map((order) => order.id)),
-    deliveryIds.length > 0
-      ? StorageService.Deliveries.getMany(deliveryIds, USER_PERMISSION.ADMIN)
-      : [],
+    Delivery.byOrderIds(orders.map((order) => order.id)),
     fetchHandovers(customerId, orders),
     fetchCounterpartOrders(customerId, orders),
   ]);
@@ -362,9 +339,9 @@ async function loadSources(
   for (const payment of [...payments.values()].flat()) {
     branchIds.add(payment.branch);
   }
-  for (const delivery of deliveries) {
-    if (delivery.method === "branch" && isBranchInfo(delivery.info)) {
-      branchIds.add(delivery.info.branch);
+  for (const delivery of deliveries.values()) {
+    if (delivery.branchId !== null) {
+      branchIds.add(delivery.branchId);
     }
   }
   for (const handover of handovers) {
@@ -391,7 +368,7 @@ async function loadSources(
     audience,
     orders,
     payments,
-    deliveries: new Map(deliveries.map((delivery) => [delivery.id, delivery])),
+    deliveries: new Map([...deliveries].map(([orderId, delivery]) => [orderId, delivery.toDto()])),
     handovers,
     counterpartOrders,
     userNames,

@@ -70,9 +70,7 @@ export type OrderHistoryDelivery =
       /** "pakke i postkassen" vs "pakke til hentested"; null when the product is unknown. */
       productLabel: string | null;
       amount: number;
-    }
-  /** The order points at a delivery document that is gone. */
-  | { method: "missing" };
+    };
 
 export interface OrderHistoryEntry {
   id: string;

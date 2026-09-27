@@ -11,16 +11,15 @@ import { PeerObligations } from "#services/matches/peer_obligations";
 import { OrderPayments } from "#services/payments/order_payments";
 import { StandCartLineResolver } from "#services/stand_cart/stand_cart_line_resolver";
 import User from "#models/user";
-import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
-import type { Delivery } from "#shared/delivery/delivery";
 import type { StandCartLine } from "#shared/stand_cart";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
+import { createDelivery } from "#tests/delivery_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { createUniqueItem } from "#tests/unique_item_fixtures";
-import { mock, unchecked } from "#tests/test-doubles";
+import { unchecked } from "#tests/test-doubles";
 import { createUser, userDouble } from "#tests/user_fixtures";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
@@ -36,7 +35,6 @@ const ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f31";
 const PAID_ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f32";
 const HANDOUT_ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f33";
 const CUSTOMER_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f41";
-const DELIVERY_ID = "5f7f7f7f7f7f7f7f7f7f7f51";
 const BLID = "12345678";
 const OTHER_BLID = "87654321";
 // One title in two editions
@@ -111,14 +109,10 @@ const activeCustomerItem: CustomerItemSpec = {
 interface World {
   orders: OrderSpec[];
   customerItems: CustomerItemSpec[];
-  deliveries: Delivery[];
+  /** The orders shipped with Bring. */
+  bringOrderIds: string[];
   peerSender: string | null;
 }
-
-const byId =
-  <T extends { id: string }>(rows: T[]) =>
-  (id: string | undefined) =>
-    Promise.resolve(rows.find((row) => row.id === id) ?? null);
 
 /**
  * Inserts the orders. Moved links may point either way between them, so the lines get them once
@@ -154,7 +148,9 @@ async function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
   await insertOrders(world.orders);
   const paid = new Set(world.orders.filter((order) => order.paid).map((order) => order.id));
   sandbox.stub(OrderPayments, "exist").callsFake((orderId) => Promise.resolve(paid.has(orderId)));
-  sandbox.stub(StorageService.Deliveries, "getOrNull").callsFake(byId(world.deliveries));
+  for (const orderId of world.bringOrderIds) {
+    await createDelivery({ orderId });
+  }
   sandbox.stub(User, "find").resolves(userDouble({ id: OTHER_CUSTOMER_ID, name: "Kari Nordmann" }));
   sandbox.stub(MatchRepository, "findForCustomer").resolves([]);
   sandbox.stub(PeerObligations, "findPeerSender").resolves(world.peerSender);
@@ -187,7 +183,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
     world = {
       orders: [orderWith({})],
       customerItems: [],
-      deliveries: [],
+      bringOrderIds: [],
       peerSender: null,
     };
   });
@@ -234,7 +230,6 @@ test.group("StandCartLineResolver.resolve", (group) => {
         id: PAID_ORDER_ID,
         amount: 250,
         paid: true,
-        deliveryId: DELIVERY_ID,
         orderItems: [
           {
             type: "rent",
@@ -249,7 +244,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
         ],
       }),
     ];
-    world.deliveries = [mock<Delivery>({ id: DELIVERY_ID, method: "bring" })];
+    world.bringOrderIds = [PAID_ORDER_ID];
     const resolved = line(
       await resolve({ kind: "order", orderId: PAID_ORDER_ID, itemId: ITEM_ID }),
     );

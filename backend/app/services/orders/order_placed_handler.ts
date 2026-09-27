@@ -1,5 +1,6 @@
 import logger from "@adonisjs/core/services/logger";
 
+import Delivery from "#models/delivery";
 import type Order from "#models/order";
 import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
@@ -8,7 +9,6 @@ import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_move
 import { PaymentHandler } from "#services/orders/payment_handler";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { reconcileSignatureTask } from "#services/signature_helper";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 
 export class OrderPlacedHandler {
@@ -134,11 +134,9 @@ export class OrderPlacedHandler {
       return;
     }
     const customerDetail = await User.findOrFail(order.customerId);
-    const delivery = order.deliveryId
-      ? await StorageService.Deliveries.get(order.deliveryId)
-      : null;
-    await (delivery?.info && "trackingNumber" in delivery.info
-      ? DispatchService.sendDeliveryInformation(customerDetail, order, delivery.info)
+    const delivery = await Delivery.ofOrder(order.id);
+    await (delivery?.trackingNumber
+      ? DispatchService.sendDeliveryInformation(customerDetail, order, delivery)
       : OrderEmailHandler.sendOrderReceipt(customerDetail, order));
   }
 }

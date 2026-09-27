@@ -3,6 +3,7 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import Delivery from "#models/delivery";
 import Order from "#models/order";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import User from "#models/user";
@@ -42,9 +43,6 @@ test.group("VippsCheckoutService.update", (group) => {
     sandbox
       .stub(StorageService.Payments, "add")
       .callsFake((payment) => Promise.resolve({ ...payment, id: "payment1" }));
-    sandbox
-      .stub(StorageService.Deliveries, "add")
-      .callsFake((delivery) => Promise.resolve({ ...delivery, id: "delivery1" }));
     placeOrderStub = sandbox
       .stub(OrderPlacedHandler.prototype, "placeOrder")
       .callsFake(() => Promise.resolve(testOrder));
@@ -73,7 +71,10 @@ test.group("VippsCheckoutService.update", (group) => {
     });
 
     assert.deepEqual(captureStub.args, [[testOrder.id, 47_500]]);
-    assert.equal((await Order.getOrFail(testOrder.id)).deliveryId, "delivery1");
+    const delivery = await Delivery.ofOrder(testOrder.id);
+    assert.equal(delivery?.method, "bring");
+    assert.equal(delivery?.amount, 75);
+    assert.equal(delivery?.product, "3584");
   });
 
   test("should place the order and resolve even if the capture fails", async ({ assert }) => {

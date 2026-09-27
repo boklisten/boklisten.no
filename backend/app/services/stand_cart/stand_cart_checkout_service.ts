@@ -1,5 +1,6 @@
 import Branch from "#models/branch";
 import BadRequestException from "#exceptions/bad_request_exception";
+import Delivery from "#models/delivery";
 import Order from "#models/order";
 import User from "#models/user";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
@@ -17,10 +18,7 @@ import {
 } from "#services/stand_cart/stand_cart_payment";
 import { StandCartPlacement } from "#services/stand_cart/stand_cart_placement";
 import { StandCartRefund } from "#services/stand_cart/stand_cart_refund";
-import { StorageService } from "#services/storage_service";
 import { normalizeBankAccount } from "#shared/bank_account";
-import type { Delivery } from "#shared/delivery/delivery";
-import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
 import type {
   StandCartCheckoutPayment,
   StandCartCheckoutState,
@@ -168,20 +166,15 @@ async function assertConfirmed(
 
 /** The Bring delivery of the first source order that has one, for the copy onto the new order. */
 async function findBringDelivery(lines: CheckoutLine[]): Promise<Delivery | null> {
-  for (const { context } of lines) {
-    if (context.kind !== "order" || !context.order.deliveryId) {
-      continue;
-    }
-    const delivery = await StorageService.Deliveries.getOrNull(context.order.deliveryId);
-    if (delivery?.method === "bring") {
-      return delivery;
-    }
-  }
-  return null;
-}
-
-function isBringInfo(info: Delivery["info"]): info is DeliveryInfoBring {
-  return "facilityAddress" in info;
+  const orderIds = lines.flatMap(({ context }) =>
+    context.kind === "order" ? [context.order.id] : [],
+  );
+  const deliveries = await Delivery.byOrderIds(orderIds);
+  return (
+    orderIds
+      .map((orderId) => deliveries.get(orderId))
+      .find((delivery) => delivery?.method === "bring") ?? null
+  );
 }
 
 /** A zero-amount copy of the original delivery: the customer paid for shipping when ordering. */
@@ -189,27 +182,25 @@ async function attachDelivery(
   order: Order,
   original: Delivery,
   trackingNumber: string,
-): Promise<Order> {
-  const { info } = original;
-  if (!isBringInfo(info)) {
-    throw new BadRequestException("Leveringen på den opprinnelige bestillingen mangler adresse");
-  }
-  const delivery = await StorageService.Deliveries.add({
+): Promise<void> {
+  await Delivery.create({
+    orderId: order.id,
     method: "bring",
-    order: order.id,
     amount: 0,
-    info: {
-      from: info.from,
-      ...(info.to === undefined ? {} : { to: info.to }),
-      facilityAddress: info.facilityAddress,
-      ...(info.shipmentAddress === undefined ? {} : { shipmentAddress: info.shipmentAddress }),
-      trackingNumber,
-      estimatedDelivery: null,
-      amount: 0,
-    },
+    bringAmount: 0,
+    estimatedDelivery: null,
+    facilityAddress: original.facilityAddress,
+    facilityPostalCode: original.facilityPostalCode,
+    facilityPostalCity: original.facilityPostalCity,
+    shipmentName: original.shipmentName,
+    shipmentAddress: original.shipmentAddress,
+    shipmentPostalCode: original.shipmentPostalCode,
+    shipmentPostalCity: original.shipmentPostalCity,
+    fromPostalCode: original.fromPostalCode,
+    toPostalCode: original.toPostalCode,
+    product: original.product,
+    trackingNumber,
   });
-  order.deliveryId = delivery.id;
-  return order.save();
 }
 
 /** Same wording as Vipps Checkout, so the customer recognises the payment request. */
@@ -363,7 +354,7 @@ export const StandCartCheckoutService = {
     const total = orderItems.reduce((sum, orderItem) => sum + orderItem.amount, 0);
     const money = await planMoney(request, lines, total, now);
 
-    let order = await Order.createWithItems({
+    const order = await Order.createWithItems({
       amount: total,
       orderItems,
       branchId: branch.id,
@@ -374,7 +365,7 @@ export const StandCartCheckoutService = {
       notifyByEmail: request.notifyByEmail,
     });
     if (bringDelivery && request.delivery) {
-      order = await attachDelivery(order, bringDelivery, request.delivery.trackingNumber);
+      await attachDelivery(order, bringDelivery, request.delivery.trackingNumber);
     }
 
     switch (money.kind) {

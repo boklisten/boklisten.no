@@ -1,9 +1,9 @@
 import logger from "@adonisjs/core/services/logger";
 import sgClient from "@sendgrid/client";
 import sgMail from "@sendgrid/mail";
-import { DateTime } from "luxon";
 import twilio from "twilio";
 
+import type Delivery from "#models/delivery";
 import type Message from "#models/message";
 import type Order from "#models/order";
 import User from "#models/user";
@@ -12,7 +12,6 @@ import { isUnderage } from "#models/signature";
 import { userHasValidSignature } from "#services/signature_helper";
 import type { MessageLogContext } from "#services/message_log_service";
 import { MessageLogService } from "#services/message_log_service";
-import type { DeliveryInfoBring } from "#shared/delivery/delivery-info/delivery-info-bring";
 import { apiOrigin, isDeployed, clientOrigin } from "#config/app";
 import env from "#start/env";
 import type { EmailOrder, EmailUser } from "#types/email";
@@ -387,11 +386,7 @@ const DispatchService = {
     }
   },
 
-  async sendDeliveryInformation(
-    customerDetail: User,
-    order: Order,
-    bringDeliveryInfo: DeliveryInfoBring,
-  ) {
+  async sendDeliveryInformation(customerDetail: User, order: Order, delivery: Delivery) {
     await EmailService.sendEmail({
       template: EMAIL_TEMPLATES.deliveryInformation,
       context: { messageType: "delivery-info", regardingCustomerDetailsId: customerDetail.id },
@@ -406,10 +401,8 @@ const DispatchService = {
               type: OrderEmailHandler.translateOrderItemType(orderItem.type),
               deadline: orderItem.periodTo?.toFormat("dd/MM/yyyy") ?? "",
             })),
-            expectedDeliveryDate: bringDeliveryInfo.estimatedDelivery
-              ? DateTime.fromJSDate(bringDeliveryInfo.estimatedDelivery).toFormat("dd/MM/yyyy")
-              : "Ukjent",
-            trackingNumber: bringDeliveryInfo.trackingNumber,
+            expectedDeliveryDate: delivery.estimatedDelivery?.toFormat("dd/MM/yyyy") ?? "Ukjent",
+            trackingNumber: delivery.trackingNumber,
           },
         },
       ],

@@ -1,15 +1,14 @@
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import Delivery from "#models/delivery";
 import type Order from "#models/order";
 import type OrderItem from "#models/order_item";
 import type User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { OrderPayments } from "#services/payments/order_payments";
-import { StorageService } from "#services/storage_service";
 import { TranslationService } from "#services/translation_service";
 import { BlError } from "#shared/bl-error";
-import type { Delivery } from "#shared/delivery/delivery";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import type { Payment } from "#shared/payment/payment";
 import type { EmailOrder, EmailUser } from "#types/email";
@@ -122,12 +121,8 @@ export const OrderEmailHandler = {
   },
 
   async extractEmailOrderDeliveryFromOrder(order: Order) {
-    const deliveryId = order.deliveryId;
-    if (!deliveryId?.length) {
-      return { delivery: null, showDelivery: false };
-    }
-    const delivery = await StorageService.Deliveries.get(deliveryId);
-    return delivery.method === "bring"
+    const delivery = await Delivery.ofOrder(order.id);
+    return delivery?.method === "bring"
       ? {
           delivery: this.deliveryToEmailDelivery(delivery),
           showDelivery: true,
@@ -171,21 +166,9 @@ export const OrderEmailHandler = {
       method: delivery.method,
       currency: "NOK",
       amount: delivery.amount,
-
-      // @ts-expect-error fixme: auto ignored
-      address: delivery.info["shipmentAddress"]
-        ? // @ts-expect-error fixme: auto ignored
-          `${delivery.info["shipmentAddress"].name}, ${delivery.info["shipmentAddress"].address}, ${delivery.info["shipmentAddress"].postalCode} ${delivery.info["shipmentAddress"].postalCity}`
-        : null,
-
-      // @ts-expect-error fixme: auto ignored
-      trackingNumber: delivery.info["trackingNumber"],
-
-      // @ts-expect-error fixme: auto ignored
-      estimatedDeliveryDate: delivery.info["estimatedDelivery"]
-        ? // @ts-expect-error fixme: auto ignored
-          DateTime.fromJSDate(new Date(delivery.info["estimatedDelivery"])).toFormat("dd.MM.yy")
-        : "",
+      address: `${delivery.shipmentName}, ${delivery.shipmentAddress}, ${delivery.shipmentPostalCode} ${delivery.shipmentPostalCity}`,
+      trackingNumber: delivery.trackingNumber ?? undefined,
+      estimatedDeliveryDate: delivery.estimatedDelivery?.toFormat("dd.MM.yy") ?? "",
     };
   },
 

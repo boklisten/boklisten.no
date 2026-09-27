@@ -274,6 +274,51 @@ export class CustomerItemSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
+export class DeliverySchema extends BaseModel {
+  static $columns = ['amount', 'branchId', 'bringAmount', 'createdAt', 'estimatedDelivery', 'facilityAddress', 'facilityPostalCity', 'facilityPostalCode', 'fromPostalCode', 'id', 'method', 'orderId', 'product', 'shipmentAddress', 'shipmentName', 'shipmentPostalCity', 'shipmentPostalCode', 'toPostalCode', 'trackingNumber', 'updatedAt'] as const
+  $columns = DeliverySchema.$columns
+  @column()
+  declare amount: number
+  @column()
+  declare branchId: string | null
+  @column()
+  declare bringAmount: number | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare estimatedDelivery: DateTime | null
+  @column()
+  declare facilityAddress: string | null
+  @column()
+  declare facilityPostalCity: string | null
+  @column()
+  declare facilityPostalCode: string | null
+  @column()
+  declare fromPostalCode: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare method: string
+  @column()
+  declare orderId: string
+  @column()
+  declare product: string | null
+  @column()
+  declare shipmentAddress: string | null
+  @column()
+  declare shipmentName: string | null
+  @column()
+  declare shipmentPostalCity: string | null
+  @column()
+  declare shipmentPostalCode: string | null
+  @column()
+  declare toPostalCode: string | null
+  @column()
+  declare trackingNumber: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class EditableTextSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'text', 'updatedAt'] as const
   $columns = EditableTextSchema.$columns
@@ -548,7 +593,7 @@ export class OrderItemSchema extends BaseModel {
 }
 
 export class OrderSchema extends BaseModel {
-  static $columns = ['amount', 'branchId', 'byCustomer', 'checkoutState', 'createdAt', 'customerId', 'deliveryId', 'employeeId', 'id', 'notifyByEmail', 'placed', 'updatedAt'] as const
+  static $columns = ['amount', 'branchId', 'byCustomer', 'checkoutState', 'createdAt', 'customerId', 'employeeId', 'id', 'notifyByEmail', 'placed', 'updatedAt'] as const
   $columns = OrderSchema.$columns
   @column()
   declare amount: number
@@ -562,8 +607,6 @@ export class OrderSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare customerId: string | null
-  @column()
-  declare deliveryId: string | null
   @column()
   declare employeeId: string | null
   @column({ isPrimary: true })

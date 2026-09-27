@@ -6,6 +6,7 @@ import { createSandbox } from "sinon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import type CustomerItem from "#models/customer_item";
+import Delivery from "#models/delivery";
 import Order from "#models/order";
 import type OrderItem from "#models/order_item";
 import Signature from "#models/signature";
@@ -24,7 +25,6 @@ import { StandCartRefund } from "#services/stand_cart/stand_cart_refund";
 import { StorageService } from "#services/storage_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { Branch } from "#shared/branch";
-import type { Delivery } from "#shared/delivery/delivery";
 import type { Item } from "#shared/item";
 import type {
   StandCartLine,
@@ -34,6 +34,7 @@ import type {
 } from "#shared/stand_cart";
 import { branchDto, createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem, customerItemDouble } from "#tests/customer_item_fixtures";
+import { createDelivery } from "#tests/delivery_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
@@ -79,16 +80,12 @@ const orderedItem = mock<OrderItem>({
   periodTo: DateTime.fromISO(SEMESTER_END),
   periodType: "semester",
 });
-function originalOrderWith(deliveryId: string | null): Order {
-  return mock<Order>({
-    id: ORDER_ID,
-    customerId: CUSTOMER_ID,
-    branchId: BRANCH_ID,
-    deliveryId,
-    orderItems: [orderedItem],
-  });
-}
-const originalOrder = originalOrderWith(null);
+const originalOrder = mock<Order>({
+  id: ORDER_ID,
+  customerId: CUSTOMER_ID,
+  branchId: BRANCH_ID,
+  orderItems: [orderedItem],
+});
 
 /** The rows every test's orders refer to: the cart branch, the people, the book. */
 async function createWorld(): Promise<void> {
@@ -211,9 +208,7 @@ function vippsRefund(orderId: string, amount: number): StandCartVippsRefund {
 test.group("StandCartCheckoutService.checkout", (group) => {
   let sandbox: sinon.SinonSandbox;
   let resolve: sinon.SinonStub;
-  let deliveriesRemove: sinon.SinonStub;
   let paymentsAdd: sinon.SinonStub;
-  let deliveriesAdd: sinon.SinonStub;
   let place: sinon.SinonStub;
   let plan: sinon.SinonStub;
   let sendRefundRequest: sinon.SinonStub;
@@ -244,16 +239,9 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     sandbox
       .stub(User, "find")
       .resolves(userDouble({ id: CUSTOMER_ID, name: "Ola", taskSignAgreement: false }));
-    deliveriesRemove = sandbox.stub(StorageService.Deliveries, "remove").resolves();
     paymentsAdd = sandbox
       .stub(StorageService.Payments, "add")
       .resolves(unchecked({ id: "payment1" }));
-    sandbox.stub(StorageService.Deliveries, "getOrNull").resolves(null);
-    deliveriesAdd = sandbox
-      .stub(StorageService.Deliveries, "add")
-      .callsFake((delivery) =>
-        Promise.resolve(mock<Delivery>({ ...delivery, id: "new-delivery" })),
-      );
     place = sandbox.stub(StandCartPlacement, "place").callsFake((order: Order) => {
       order.placed = true;
       return Promise.resolve(order);
@@ -676,58 +664,60 @@ test.group("StandCartCheckoutService.checkout", (group) => {
   });
 
   /** The source order was sent by Bring, so the cart may send the new order the same way. */
-  function givenBringDelivery(price = 0) {
-    asStub(StorageService.Deliveries.getOrNull).resolves(
-      mock<Delivery>({
-        id: DELIVERY_ID,
-        method: "bring",
-        info: {
-          from: "0150",
-          to: "0151",
-          facilityAddress: { address: "Gata 1", postalCode: "0150", postalCity: "Oslo" },
-          shipmentAddress: {
-            name: "Ola",
-            address: "Veien 2",
-            postalCode: "0151",
-            postalCity: "Oslo",
-          },
-        },
-      }),
-    );
-    const withDelivery = originalOrderWith(DELIVERY_ID);
+  async function givenBringDelivery(price = 0) {
+    await createDelivery({
+      id: DELIVERY_ID,
+      orderId: ORDER_ID,
+      amount: 149,
+      fromPostalCode: "0150",
+      toPostalCode: "0151",
+      facilityAddress: "Gata 1",
+      facilityPostalCode: "0150",
+      facilityPostalCity: "Oslo",
+      shipmentName: "Ola",
+      shipmentAddress: "Veien 2",
+      shipmentPostalCode: "0151",
+      shipmentPostalCity: "Oslo",
+      product: "SERVICEPAKKE",
+    });
     resolve.resolves({
       ...resolution(ORDER_SOURCE, [rentOption(price)], {
         blid: BLID,
         notes: [{ kind: "bring-delivery" }],
       }),
-      context: { kind: "order", order: withDelivery, orderItem: orderedItem, item },
+      context: { kind: "order", order: originalOrder, orderItem: orderedItem, item },
     });
   }
 
   test("sends the order by mail when the original order had a Bring delivery", async ({
     assert,
   }) => {
-    givenBringDelivery();
+    await givenBringDelivery();
 
     await checkout({ delivery: { trackingNumber: "TR123" } });
 
     const order = await createdOrder();
-    assert.include(deliveriesAdd.firstCall.args[0], {
+    const delivery = await Delivery.ofOrder(order.id);
+    assert.deepInclude(delivery?.toDto(), {
+      orderId: order.id,
       method: "bring",
-      order: order.id,
       amount: 0,
-    });
-    assert.deepEqual(deliveriesAdd.firstCall.args[0].info, {
-      from: "0150",
-      to: "0151",
-      facilityAddress: { address: "Gata 1", postalCode: "0150", postalCity: "Oslo" },
-      shipmentAddress: { name: "Ola", address: "Veien 2", postalCode: "0151", postalCity: "Oslo" },
-      trackingNumber: "TR123",
+      branchId: null,
+      bringAmount: 0,
       estimatedDelivery: null,
-      amount: 0,
+      facilityAddress: "Gata 1",
+      facilityPostalCode: "0150",
+      facilityPostalCity: "Oslo",
+      shipmentName: "Ola",
+      shipmentAddress: "Veien 2",
+      shipmentPostalCode: "0151",
+      shipmentPostalCity: "Oslo",
+      fromPostalCode: "0150",
+      toPostalCode: "0151",
+      product: "SERVICEPAKKE",
+      trackingNumber: "TR123",
     });
-    assert.equal(order.deliveryId, "new-delivery");
-    assert.equal(place.firstCall.args[0].deliveryId, "new-delivery");
+    assert.isTrue(place.calledOnce);
   });
 
   test("refuses a tracking number when nothing in the cart goes by mail", async ({ assert }) => {
@@ -772,11 +762,10 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       /ikke registrert i Vipps/,
     );
     assert.lengthOf(await createdOrders(), 0);
-    assert.isFalse(deliveriesRemove.called);
   });
 
   test("a dropped order takes the delivery copied onto it along", async ({ assert }) => {
-    givenBringDelivery(250);
+    await givenBringDelivery(250);
     vipps.create.rejects(new Error("boom"));
     await assert.rejects(
       () =>
@@ -787,8 +776,12 @@ test.group("StandCartCheckoutService.checkout", (group) => {
         }),
       BadRequestException,
     );
-    assert.deepEqual(deliveriesRemove.firstCall.args, ["new-delivery"]);
     assert.lengthOf(await createdOrders(), 0);
+    const deliveries = await Delivery.all();
+    assert.deepEqual(
+      deliveries.map((delivery) => delivery.orderId),
+      [ORDER_ID],
+    );
   });
 
   test("rejects a bad phone number before any order exists", async ({ assert }) => {
