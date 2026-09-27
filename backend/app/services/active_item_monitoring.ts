@@ -23,7 +23,7 @@ export const ActiveItemMonitoring = {
     deadline,
   }: {
     employee: MonitoredEmployee;
-    customerId: string;
+    customerId: string | null;
     title: string;
     blid: string;
     previousDeadline: Date;
@@ -51,7 +51,7 @@ export const ActiveItemMonitoring = {
     branchName,
   }: {
     employee: MonitoredEmployee;
-    customerId: string;
+    customerId: string | null;
     title: string;
     blid: string;
     previousBranchName: string | null;

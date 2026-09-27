@@ -1,13 +1,12 @@
 import { DateTime } from "luxon";
 
+import CustomerItem from "#models/customer_item";
 import ItemModel from "#models/item";
-import OrderItem from "#models/order_item";
 import type { Branch, ExtendPeriod } from "#shared/branch";
 import type {
   CustomerItemAction,
   CustomerItemStatus,
 } from "#shared/customer-item/actionable_customer_item";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import type { Period } from "#shared/period";
 
@@ -15,10 +14,7 @@ export function isHandedOutWithinTheLastTwoWeeks(
   customerItem: CustomerItem,
   now: DateTime = DateTime.now(),
 ) {
-  const handedOutAt = customerItem.creationTime
-    ? DateTime.fromJSDate(customerItem.creationTime)
-    : now;
-  return now <= handedOutAt.plus({ weeks: 2 });
+  return now <= customerItem.createdAt.plus({ weeks: 2 });
 }
 
 export function isDeadlineWithGracePeriodExpired(
@@ -29,7 +25,7 @@ export function isDeadlineWithGracePeriodExpired(
   const graceDeadline =
     now.month === 12
       ? DateTime.fromObject({ year: now.year + 1, month: 1, day: 1 })
-      : DateTime.fromJSDate(customerItem.deadline).endOf("day");
+      : customerItem.deadline.endOf("day");
 
   return now > graceDeadline;
 }
@@ -42,7 +38,7 @@ function periodsAfterDeadline(
 ): ExtendPeriod[] {
   return branch.extendPeriods.filter(
     (period) =>
-      customerItem.deadline.getTime() < period.date.getTime() &&
+      customerItem.deadline.toMillis() < period.date.getTime() &&
       now.getTime() < period.date.getTime(),
   );
 }
@@ -56,7 +52,7 @@ export function availableExtendPeriods(
   branch: Branch,
   now: Date = new Date(),
 ): ExtendPeriod[] {
-  const timesExtended = customerItem.periodExtends?.length ?? 0;
+  const timesExtended = customerItem.periodExtends.length;
   return periodsAfterDeadline(customerItem, branch, now).filter(
     (period) => timesExtended < period.maxNumberOfPeriods,
   );
@@ -128,20 +124,12 @@ export function resolveBuyoutPrice({
   return customerItem.amountLeftToPay || Math.floor((item.price * buyoutPercentage) / 10) * 10;
 }
 
-/** The period type of the order that put the book in the customer's hands. */
+/** The period type of the newest order that set the book's period (handout or extension). */
 export async function periodTypeOfLastOrder(
   customerItem: CustomerItem,
 ): Promise<Period | undefined> {
-  const lastOrderId = customerItem.orders.at(-1);
-  if (lastOrderId === undefined) {
-    return undefined;
-  }
-  const orderItem = await OrderItem.query()
-    .where("order_id", String(lastOrderId))
-    .where("customer_item_id", customerItem.id)
-    .orderBy("position")
-    .first();
-  return orderItem?.periodType ?? undefined;
+  const lastLines = await CustomerItem.lastPeriodLinesOf([customerItem.id]);
+  return lastLines.get(customerItem.id)?.periodType ?? undefined;
 }
 
 async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch | null) {
@@ -159,7 +147,7 @@ async function calculateBuyoutStatus(customerItem: CustomerItem, branch: Branch 
     } as const;
   }
 
-  const item = await ItemModel.find(customerItem.item);
+  const item = await ItemModel.find(customerItem.itemId);
   const price = item
     ? resolveBuyoutPrice({
         customerItem,
@@ -191,7 +179,7 @@ export function calculateStatus(customerItem: CustomerItem): CustomerItemStatus 
     return { type: "returned", text: "Returnert" };
   }
 
-  if (customerItem.deadline.getTime() < Date.now()) {
+  if (customerItem.deadline < DateTime.now()) {
     return { type: "overdue", text: "Fristen har utløpt" };
   }
 

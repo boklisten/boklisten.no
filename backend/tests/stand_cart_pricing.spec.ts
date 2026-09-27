@@ -1,6 +1,7 @@
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 
+import type CustomerItem from "#models/customer_item";
 import type OrderItem from "#models/order_item";
 import {
   alreadyPaidFor,
@@ -10,11 +11,11 @@ import {
 } from "#services/stand_cart/stand_cart_pricing";
 import type { Branch } from "#shared/branch";
 import type { BranchItem } from "#shared/branch-item";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import { findOption } from "#shared/stand_cart";
 import type { StandCartOption } from "#shared/stand_cart";
 import { branchDto } from "#tests/branch_fixtures";
+import { customerItemDouble } from "#tests/customer_item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
@@ -292,20 +293,34 @@ test.group("alreadyPaidFor", () => {
   });
 });
 
-function customerItemWith(overrides: Partial<CustomerItem> = {}): CustomerItem {
-  return mock<CustomerItem>({
+function customerItemWith({
+  deadline = SEMESTER_END,
+  creationTime = new Date("2026-08-20T10:00:00.000Z"),
+  extendedFrom,
+  ...overrides
+}: Partial<Pick<CustomerItem, "type" | "amountLeftToPay">> & {
+  deadline?: Date;
+  creationTime?: Date;
+  /** Adds one earlier extension from this date to the deadline. */
+  extendedFrom?: Date;
+} = {}): CustomerItem {
+  return customerItemDouble({
     id: "ci1",
-    item: ITEM.id,
-    customer: "customer1",
+    itemId: ITEM.id,
+    customerId: "customer1",
     type: "rent",
-    deadline: SEMESTER_END,
-    handout: true,
-    handoutInfo: {
-      handoutById: "branch1",
-      time: new Date("2026-08-20T10:00:00.000Z"),
-    },
-    creationTime: new Date("2026-08-20T10:00:00.000Z"),
-    periodExtends: [],
+    deadline: DateTime.fromJSDate(deadline),
+    handoutBranchId: "branch1",
+    handedOutAt: DateTime.fromJSDate(creationTime),
+    createdAt: DateTime.fromJSDate(creationTime),
+    periodExtends: extendedFrom
+      ? [
+          {
+            periodFrom: DateTime.fromJSDate(extendedFrom),
+            periodTo: DateTime.fromJSDate(deadline),
+          },
+        ]
+      : [],
     ...overrides,
   });
 }
@@ -350,9 +365,7 @@ test.group("priceCustomerItemLine", () => {
 
   test("extend is left out when the customer could not have extended either", ({ assert }) => {
     const capped = customerItemLine({
-      customerItem: customerItemWith({
-        periodExtends: [{ from: PAST, to: SEMESTER_END, periodType: "semester", time: PAST }],
-      }),
+      customerItem: customerItemWith({ extendedFrom: PAST }),
     });
     assert.lengthOf(options(capped, "extend"), 0);
 
@@ -462,13 +475,7 @@ test.group("priceCustomerItemLine", () => {
 
   test("cancelling more than two weeks after the handout is monitored", ({ assert }) => {
     const line = customerItemLine({
-      customerItem: customerItemWith({
-        creationTime: new Date("2026-08-01T10:00:00.000Z"),
-        handoutInfo: {
-          handoutById: "branch1",
-          time: new Date("2026-08-01T10:00:00.000Z"),
-        },
-      }),
+      customerItem: customerItemWith({ creationTime: new Date("2026-08-01T10:00:00.000Z") }),
     });
     const cancel = options(line, "cancel")[0];
     assert.isTrue(cancel?.available);

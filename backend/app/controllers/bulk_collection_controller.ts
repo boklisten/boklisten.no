@@ -2,18 +2,15 @@ import type { HttpContext } from "@adonisjs/core/http";
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import CustomerItem from "#models/customer_item";
 import ItemModel from "#models/item";
 import Order from "#models/order";
 import type { NewOrderItem } from "#models/order";
 import User from "#models/user";
 import BlidService from "#services/blid_service";
 import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
-import { CustomerItemActive } from "#services/customer_items/customer_item_active";
-import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
 import { OrderPlaceService } from "#services/orders/order_place_service";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { PeerObligations } from "#services/matches/peer_obligations";
-import { StorageService } from "#services/storage_service";
 import type {
   BulkCollectionCollectResponse,
   BulkCollectionLookupResponse,
@@ -21,13 +18,10 @@ import type {
   CustomerCollectionReceipt,
   ScannedBook,
 } from "#shared/bulk-collection/bulk-collection-dtos";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import { bulkCollectionCollectValidator } from "#validators/bulk_collection_validator";
 
 export default class BulkCollectionController {
-  private readonly customerItemActive = new CustomerItemActive();
-
   /**
    * Resolve a scanned BL-ID into a row for the to-deliver list, verifying the book is currently
    * in someone's possession.
@@ -39,14 +33,15 @@ export default class BulkCollectionController {
       return { success: false, feedback: "Denne bliden er ikke gyldig." };
     }
 
-    const [customerItem] = await new CustomerItemActiveBlid()
-      .getActiveCustomerItems(blid)
-      .catch(() => []);
-    if (!customerItem) {
+    const [customerItem] = await CustomerItem.activeByBlid(blid);
+    if (!customerItem?.customerId) {
       return { success: false, feedback: "Boken er ikke aktiv." };
     }
 
-    return { success: true, book: await this.resolveScannedBook(customerItem) };
+    return {
+      success: true,
+      book: await this.resolveScannedBook(customerItem, customerItem.customerId),
+    };
   }
 
   /**
@@ -58,27 +53,26 @@ export default class BulkCollectionController {
     const { id: detailsId, permission } = ctx.auth.getUserOrFail();
     const { customerItemIds } = await ctx.request.validateUsing(bulkCollectionCollectValidator);
 
-    const customerItems = await StorageService.CustomerItems.getMany(customerItemIds);
+    const customerItems = await CustomerItem.findByIds(customerItemIds);
 
-    if (customerItems.some((customerItem) => !this.customerItemActive.isActive(customerItem))) {
+    if (
+      customerItems.length !== new Set(customerItemIds).size ||
+      customerItems.some((customerItem) => !customerItem.isActive || !customerItem.customerId)
+    ) {
       return {
         success: false,
         feedback: "En eller flere av bøkene er ikke lenger aktive. Skann dem på nytt.",
       };
     }
-    if (customerItems.some((customerItem) => !customerItem.handoutInfo?.handoutById)) {
-      return {
-        success: false,
-        feedback: "En eller flere av bøkene mangler informasjon om hvor de ble delt ut.",
-      };
-    }
 
-    const itemsMap = await this.getItemsMap(customerItems.map((customerItem) => customerItem.item));
+    const itemsMap = await this.getItemsMap(
+      customerItems.map((customerItem) => customerItem.itemId),
+    );
 
     // Every order item requires a title; bail out with an actionable message rather than letting
     // the order fail validation with a generic 500 if an item could not be resolved.
     const itemsMissingTitle = customerItems.filter(
-      (customerItem) => !itemsMap.get(customerItem.item)?.title,
+      (customerItem) => !itemsMap.get(customerItem.itemId)?.title,
     );
     if (itemsMissingTitle.length > 0) {
       const blids = itemsMissingTitle.map((customerItem) => customerItem.blid).join(", ");
@@ -96,11 +90,12 @@ export default class BulkCollectionController {
     const collectedByCustomer = new Map<string, CollectedBook[]>();
 
     for (const items of this.groupByCustomerAndBranch(customerItems).values()) {
-      const { customer, handoutInfo } = items[0]!;
+      const { customerId, handoutBranchId } = items[0]!;
+      const customer = customerId ?? "";
       const orderItems: NewOrderItem[] = items.map((customerItem) => ({
         type: customerItem.type === "partly-payment" ? "buyback" : "return",
-        itemId: customerItem.item,
-        blid: customerItem.blid ?? null,
+        itemId: customerItem.itemId,
+        blid: customerItem.blid,
         amount: 0,
         unitPrice: 0,
         customerItemId: customerItem.id,
@@ -111,7 +106,7 @@ export default class BulkCollectionController {
       const order = await Order.createWithItems({
         amount: 0,
         orderItems,
-        branchId: handoutInfo!.handoutById,
+        branchId: handoutBranchId,
         customerId: customer,
         byCustomer: false,
         // The book's history and the customer's order history name the employee from the order.
@@ -130,7 +125,7 @@ export default class BulkCollectionController {
       const collected = collectedByCustomer.get(customer) ?? [];
       for (const customerItem of items) {
         collected.push({
-          title: itemsMap.get(customerItem.item)?.title ?? "",
+          title: itemsMap.get(customerItem.itemId)?.title ?? "",
           deadline: this.toIsoDeadline(customerItem.deadline),
           time: collectedAt,
           orderId: order.id,
@@ -142,24 +137,26 @@ export default class BulkCollectionController {
     return { success: true, receipt: await this.buildReceipt(collectedByCustomer) };
   }
 
-  private async resolveScannedBook(customerItem: CustomerItem): Promise<ScannedBook> {
-    const branchId = customerItem.handoutInfo?.handoutById;
+  private async resolveScannedBook(
+    customerItem: CustomerItem,
+    customerId: string,
+  ): Promise<ScannedBook> {
     const [item, branch, customerDetail, recipientCustomerId] = await Promise.all([
-      ItemModel.findOrFail(customerItem.item),
-      Branch.findOptional(branchId),
-      User.findOrFail(customerItem.customer),
-      PeerObligations.findPeerRecipient(customerItem.customer, customerItem.item),
+      ItemModel.findOrFail(customerItem.itemId),
+      Branch.findOptional(customerItem.handoutBranchId),
+      User.findOrFail(customerId),
+      PeerObligations.findPeerRecipient(customerId, customerItem.itemId),
     ]);
     const deliverTo = recipientCustomerId ? await User.find(recipientCustomerId) : null;
 
     return {
       customerItemId: customerItem.id,
       blid: customerItem.blid ?? "",
-      item: customerItem.item,
+      item: customerItem.itemId,
       title: item.title,
       handoutBranchName: branch?.name ?? "Ukjent",
       deadline: this.toIsoDeadline(customerItem.deadline),
-      customerId: customerItem.customer,
+      customerId,
       customerName: customerDetail.name,
       deliverToName: deliverTo?.name ?? (recipientCustomerId ? "en annen elev" : undefined),
     };
@@ -188,17 +185,12 @@ export default class BulkCollectionController {
 
   /** The customer's still-active books (after this collection), used for "Gjenværende bøker". */
   private async getRemainingBooks(customerId: string) {
-    const databaseQuery = new SEDbQuery();
-    databaseQuery.objectIdFilters = [{ fieldName: "customer", value: customerId }];
-    const customerItems = await StorageService.CustomerItems.getByQuery(databaseQuery).catch(
-      () => [] as CustomerItem[],
+    const remaining = (await CustomerItem.activeFor(customerId)).filter(
+      (customerItem) => customerItem.blid,
     );
-    const remaining = customerItems.filter(
-      (customerItem) => this.customerItemActive.isActive(customerItem) && customerItem.blid,
-    );
-    const itemsMap = await this.getItemsMap(remaining.map((customerItem) => customerItem.item));
+    const itemsMap = await this.getItemsMap(remaining.map((customerItem) => customerItem.itemId));
     return remaining.map((customerItem) => ({
-      title: itemsMap.get(customerItem.item)?.title ?? "",
+      title: itemsMap.get(customerItem.itemId)?.title ?? "",
       deadline: this.toIsoDeadline(customerItem.deadline),
     }));
   }
@@ -206,7 +198,7 @@ export default class BulkCollectionController {
   private groupByCustomerAndBranch(customerItems: CustomerItem[]): Map<string, CustomerItem[]> {
     const groups = new Map<string, CustomerItem[]>();
     for (const customerItem of customerItems) {
-      const key = `${customerItem.customer}__${customerItem.handoutInfo?.handoutById}`;
+      const key = `${customerItem.customerId}__${customerItem.handoutBranchId}`;
       groups.set(key, [...(groups.get(key) ?? []), customerItem]);
     }
     return groups;
@@ -218,7 +210,7 @@ export default class BulkCollectionController {
     return ItemModel.byIds(itemIds);
   }
 
-  private toIsoDeadline(deadline: Date): string {
-    return DateTime.fromJSDate(new Date(deadline)).toISO() ?? "";
+  private toIsoDeadline(deadline: DateTime): string {
+    return deadline.toISO() ?? "";
   }
 }

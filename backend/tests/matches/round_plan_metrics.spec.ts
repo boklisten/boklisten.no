@@ -5,20 +5,21 @@ import { createSandbox } from "sinon";
 
 import User from "#models/user";
 import { roundPlanMetrics } from "#services/matches/round_plan_metrics";
-import { StorageService } from "#services/storage_service";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import {
   TEST_DEADLINE,
+  createHeldBooks,
   createTestRound,
   ensureUsers,
   seedTestCatalogue,
 } from "#tests/matches/match-testing-utils";
 import { createOrder } from "#tests/order_fixtures";
-import { unchecked } from "#tests/test-doubles";
 
 const BRANCH = "5d765db5fc8c47001c408b01";
 const OTHER_BRANCH = "5d765db5fc8c47001c408b09";
 const SENDER = "5d765db5fc8c47001c408b02";
+const OTHER_SENDER = "5d765db5fc8c47001c408b03";
 const RECEIVER = "5d765db5fc8c47001c408d81";
 const ITEM_X = "5d765db5fc8c47001c408e01";
 const ITEM_Y = "5d765db5fc8c47001c408e02";
@@ -32,7 +33,7 @@ test.group("roundPlanMetrics", (group) => {
   group.each.teardown(() => sandbox.restore());
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
-  group.each.setup(() => ensureUsers([RECEIVER]));
+  group.each.setup(() => ensureUsers([RECEIVER, SENDER, OTHER_SENDER]));
   group.each.setup(async () => {
     await createBranch({ id: BRANCH });
     await createBranch({ id: OTHER_BRANCH });
@@ -48,28 +49,26 @@ test.group("roundPlanMetrics", (group) => {
       ...overrides,
     });
 
-  /** Members and held books aggregate in Mongo to the per-student rows the pipeline groups into. */
-  function stubMongo({
+  /** Stubs the member count and inserts the held books, handed out at the round's branch. */
+  async function stubMongo({
     members,
     activeBooks,
   }: {
     members?: { students: number };
     activeBooks?: { id: string; items: string[] }[];
   }) {
+    await createHeldBooks(BRANCH, activeBooks ?? []);
     return {
       userDetails: sandbox.stub(User, "countMembersOf").resolves(members?.students ?? 0),
-      customerItems: sandbox
-        .stub(StorageService.CustomerItems, "aggregate")
-        .resolves(activeBooks ?? []),
     };
   }
 
   test("reports the members, the books out and the books ordered", async ({ assert }) => {
-    stubMongo({
+    await stubMongo({
       members: { students: 240 },
       activeBooks: [
-        { id: "sender-1", items: ["item-1", "item-2"] },
-        { id: "sender-2", items: ["item-1"] },
+        { id: SENDER, items: [ITEM_X, ITEM_Y] },
+        { id: OTHER_SENDER, items: [ITEM_X] },
       ],
     });
     await order([ITEM_X, ITEM_Y]);
@@ -84,7 +83,7 @@ test.group("roundPlanMetrics", (group) => {
   });
 
   test("reads an empty aggregation as zero rather than nothing", async ({ assert }) => {
-    stubMongo({});
+    await stubMongo({});
 
     const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
@@ -98,78 +97,56 @@ test.group("roundPlanMetrics", (group) => {
   test("counts the books generation would pick up: the round's branches, its deadline", async ({
     assert,
   }) => {
-    const stubs = stubMongo({});
+    await stubMongo({});
+    await createHeldBooks(BRANCH, [{ id: SENDER, items: [ITEM_X] }]);
+    // Inside the two-day window around the deadline
+    await createHeldBooks(
+      BRANCH,
+      [{ id: SENDER, items: [ITEM_Y] }],
+      TEST_DEADLINE.plus({ days: 1 }),
+    );
+    // Outside the window, at another branch, and returned: none of them count
+    await createHeldBooks(
+      BRANCH,
+      [{ id: OTHER_SENDER, items: [ITEM_X] }],
+      TEST_DEADLINE.plus({ days: 3 }),
+    );
+    await createHeldBooks(OTHER_BRANCH, [{ id: OTHER_SENDER, items: [ITEM_Y] }]);
+    await createCustomerItem({
+      customerId: OTHER_SENDER,
+      itemId: ITEM_X,
+      handoutBranchId: BRANCH,
+      deadline: TEST_DEADLINE,
+      returned: true,
+    });
 
-    await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
+    const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
-    const [match]: [
-      {
-        $match: {
-          returned: boolean;
-          deadline: { $gt: Date; $lt: Date };
-          "handoutInfo.handoutById": { $in: { toString: () => string }[] };
-        };
-      },
-    ] = unchecked(stubs.customerItems.firstCall.args[0]);
-    assert.isFalse(match.$match.returned, "a returned book is nobody's to hand over");
-    assert.equal(
-      match.$match.deadline.$gt.toISOString(),
-      TEST_DEADLINE.minus({ days: 2 }).toJSDate().toISOString(),
-    );
-    assert.equal(
-      match.$match.deadline.$lt.toISOString(),
-      TEST_DEADLINE.plus({ days: 2 }).toJSDate().toISOString(),
-    );
-    assert.deepEqual(
-      match.$match["handoutInfo.handoutById"].$in.map(String),
-      [BRANCH],
-      "only books handed out at the round's own branches",
-    );
-    assert.equal(
-      stubs.customerItems.callCount,
-      1,
-      "a branch-only plan never looks beyond its own handouts",
-    );
+    assert.deepEqual(metrics.activeBooks, { books: 2, students: 1 });
   });
 
   test("follows the students' other books when the plan includes other branches", async ({
     assert,
   }) => {
-    const stubs = stubMongo({});
-    stubs.customerItems.onFirstCall().resolves(unchecked([{ id: SENDER, items: ["item-1"] }]));
-    stubs.customerItems
-      .onSecondCall()
-      .resolves(unchecked([{ id: SENDER, items: ["item-1", "item-2"] }]));
+    await stubMongo({ activeBooks: [{ id: SENDER, items: [ITEM_X] }] });
+    await createHeldBooks(OTHER_BRANCH, [{ id: SENDER, items: [ITEM_Y] }]);
+    // Holds books only from another branch, so the wider sweep never reaches them
+    await createHeldBooks(OTHER_BRANCH, [{ id: OTHER_SENDER, items: [ITEM_X] }]);
 
-    const metrics = await roundPlanMetrics(
+    const branchOnly = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
+    const wider = await roundPlanMetrics(
       await createTestRound({
         branches: [BRANCH],
         includeCustomerItemsFromOtherBranches: true,
       }),
     );
 
-    const [match]: [
-      {
-        $match: {
-          customer: { $in: { toString: () => string }[] };
-          "handoutInfo.handoutById"?: unknown;
-        };
-      },
-    ] = unchecked(stubs.customerItems.secondCall.args[0]);
-    assert.deepEqual(
-      match.$match.customer.$in.map(String),
-      [SENDER],
-      "the wider sweep only follows students already holding books from the round's branches",
-    );
-    assert.isUndefined(
-      match.$match["handoutInfo.handoutById"],
-      "the second sweep does not care where the books were handed out",
-    );
-    assert.deepEqual(metrics.activeBooks, { books: 2, students: 1 });
+    assert.deepEqual(branchOnly.activeBooks, { books: 1, students: 1 });
+    assert.deepEqual(wider.activeBooks, { books: 2, students: 1 });
   });
 
   test("counts members of the round's branches", async ({ assert }) => {
-    const stubs = stubMongo({});
+    const stubs = await stubMongo({});
 
     await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
@@ -177,7 +154,7 @@ test.group("roundPlanMetrics", (group) => {
   });
 
   test("counts ordered books per book, not per order", async ({ assert }) => {
-    stubMongo({});
+    await stubMongo({});
     await order([ITEM_X, ITEM_Y]);
     await order([ITEM_Y]);
 
@@ -189,7 +166,7 @@ test.group("roundPlanMetrics", (group) => {
   test("counts only open loans the students ordered themselves at the round's branches", async ({
     assert,
   }) => {
-    stubMongo({});
+    await stubMongo({});
     await order([ITEM_X], { branchId: OTHER_BRANCH });
     await order([ITEM_X], { byCustomer: false });
     await order([ITEM_X], { placed: false });

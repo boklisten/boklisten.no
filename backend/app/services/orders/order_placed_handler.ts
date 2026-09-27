@@ -78,12 +78,7 @@ export class OrderPlacedHandler {
         if (customerItemId !== null) {
           switch (orderItem.type) {
             case "extend": {
-              await this.customerItemHandler.extend(
-                customerItemId,
-                orderItem,
-                order.branchId,
-                order.id,
-              );
+              await this.customerItemHandler.extend(customerItemId, orderItem, order.branchId);
 
               break;
             }
@@ -105,7 +100,6 @@ export class OrderPlacedHandler {
             case "return": {
               await this.customerItemHandler.return(
                 customerItemId,
-                order.id,
                 orderItem,
                 order.branchId,
                 detailsId,

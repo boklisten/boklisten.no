@@ -1,14 +1,12 @@
 import type { HttpContext } from "@adonisjs/core/http";
+import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
-import { ObjectId } from "mongodb";
 
-import Item from "#models/item";
-import User from "#models/user";
+import CustomerItem from "#models/customer_item";
 import { deadlineWindow } from "#services/deadline_window";
 import DispatchService from "#services/dispatch_service";
 import type { MessageLogContext } from "#services/message_log_service";
 import { MessageLogService } from "#services/message_log_service";
-import { StorageService } from "#services/storage_service";
 import { reminderValidator } from "#validators/reminder";
 
 interface ReminderCustomer {
@@ -24,82 +22,63 @@ interface ReminderCustomer {
   guardian: { phone: string | null; email: string | null };
 }
 
-/** The aggregation's output: the customer is a bare id and books still carry the item id; both are joined from Postgres. */
-interface RemindedCustomerRow {
-  customerDetailsId: string;
-  customerItems: { blid: string; item: ObjectId; deadline: string }[];
-}
-
 async function aggregateCustomersToRemind(
   customerItemType: "rent" | "partly-payment",
   branchIDs: string[],
   deadlineISO: string,
 ): Promise<ReminderCustomer[]> {
   const { after, before } = deadlineWindow(new Date(deadlineISO));
-  const rows = await StorageService.CustomerItems.aggregate<RemindedCustomerRow>([
-    {
-      $match: {
-        returned: false,
-        buyout: false,
-        cancel: false,
-        type: customerItemType,
-        "handoutInfo.handoutById": {
-          $in: branchIDs.map((branchID) => new ObjectId(branchID)),
-        },
-        deadline: { $gt: after, $lt: before },
-      },
-    },
-    {
-      $group: {
-        _id: "$customer",
-        customerItems: {
-          $push: {
-            blid: "$blid",
-            item: "$item",
-            deadline: "$deadline",
-          },
-        },
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-        customerDetailsId: { $toString: "$_id" },
-        customerItems: 1,
-      },
-    },
-  ]);
-  const [titles, customers] = await Promise.all([
-    Item.titlesByIds(
-      rows.flatMap((row) => row.customerItems.map((customerItem) => String(customerItem.item))),
-    ),
-    User.byIds(rows.map((row) => row.customerDetailsId)),
-  ]);
-  // A book whose title is gone from the catalogue is left out, and so is a customer who has been
-  // deleted or is left with no books, as the inner joins did before the data moved to Postgres.
-  return rows.flatMap((row) => {
-    const customer = customers.get(row.customerDetailsId);
-    if (!customer) {
-      return [];
+  const rows: {
+    customerId: string;
+    name: string;
+    phone: string | null;
+    email: string;
+    guardianPhone: string | null;
+    guardianEmail: string | null;
+    title: string;
+    blid: string | null;
+    deadline: Date;
+  }[] = await CustomerItem.whereActive(db.from("customer_items"))
+    .join("users", "users.id", "customer_items.customer_id")
+    .join("items", "items.id", "customer_items.item_id")
+    .where("customer_items.type", customerItemType)
+    .whereIn("customer_items.handout_branch_id", branchIDs)
+    .where("customer_items.deadline", ">", after)
+    .where("customer_items.deadline", "<", before)
+    .orderBy("customer_items.customer_id")
+    .orderBy("customer_items.deadline")
+    .select(
+      "customer_items.customer_id as customerId",
+      "users.name",
+      "users.phone",
+      "users.email",
+      "users.guardian_phone as guardianPhone",
+      "users.guardian_email as guardianEmail",
+      "items.title",
+      "customer_items.blid",
+      "customer_items.deadline",
+    );
+  const byCustomer = new Map<string, ReminderCustomer>();
+  for (const row of rows) {
+    let customer = byCustomer.get(row.customerId);
+    if (customer === undefined) {
+      customer = {
+        customerDetailsId: row.customerId,
+        name: row.name,
+        phone: row.phone,
+        email: row.email,
+        guardian: { phone: row.guardianPhone, email: row.guardianEmail },
+        customerItems: [],
+      };
+      byCustomer.set(row.customerId, customer);
     }
-    const customerItems = row.customerItems.flatMap(({ item, ...customerItem }) => {
-      const title = titles.get(String(item));
-      return title === undefined ? [] : [{ ...customerItem, title }];
+    customer.customerItems.push({
+      title: row.title,
+      blid: row.blid ?? "",
+      deadline: row.deadline.toISOString(),
     });
-    if (customerItems.length === 0) {
-      return [];
-    }
-    return [
-      {
-        customerDetailsId: row.customerDetailsId,
-        name: customer.name,
-        phone: customer.phone,
-        email: customer.email,
-        guardian: { phone: customer.guardianPhone, email: customer.guardianEmail },
-        customerItems,
-      },
-    ];
-  });
+  }
+  return [...byCustomer.values()];
 }
 
 /**

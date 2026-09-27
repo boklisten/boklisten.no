@@ -1,11 +1,10 @@
 import db from "@adonisjs/lucid/services/db";
 import { ObjectId } from "mongodb";
 
+import CustomerItem from "#models/customer_item";
 import OrderItem from "#models/order_item";
 import User from "#models/user";
-import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import { countActiveMatches } from "#services/matches/active_matches";
-import { StorageService } from "#services/storage_service";
 import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 import type { UserPermission } from "#shared/user-permission";
 
@@ -182,16 +181,14 @@ export function findDuplicateCandidatePairs(sources: DuplicateCandidateSource[])
 }
 
 async function countActiveBooks(detailsIds: string[]) {
-  const rows = await StorageService.CustomerItems.aggregate<{ id: string; count: number }>([
-    {
-      $match: {
-        ...ACTIVE_CUSTOMER_ITEM_MATCH,
-        customer: { $in: detailsIds.map((id) => new ObjectId(id)) },
-      },
-    },
-    { $group: { _id: "$customer", count: { $sum: 1 } } },
-  ]);
-  return new Map(rows.map((row) => [String(row.id), row.count]));
+  const rows: { id: string; count: string }[] = await CustomerItem.whereActive(
+    db.from("customer_items"),
+  )
+    .whereIn("customer_items.customer_id", detailsIds)
+    .groupBy("customer_items.customer_id")
+    .select("customer_items.customer_id as id")
+    .count("* as count");
+  return new Map(rows.map((row) => [row.id, Number(row.count)]));
 }
 
 async function countOrderedItems(detailsIds: string[]) {

@@ -12,6 +12,7 @@ import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { invoiceStatus, invoiceStatusFlags } from "#shared/invoice";
 import type { Invoice } from "#shared/invoice";
 import type { Item } from "#shared/item";
+import { customerItemDto } from "#tests/customer_item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const USER_DETAIL_ID = "65041cc7afe72e00496e2640";
@@ -247,16 +248,16 @@ test.group("invoice export: Tripletex", () => {
     customerItems: new Map<string, CustomerItem>([
       [
         CUSTOMER_ITEM_ID,
-        mock<CustomerItem>({
+        customerItemDto({
           id: CUSTOMER_ITEM_ID,
-          item: ITEM_ID,
-          orders: ["order1", "order2"],
-          creationTime: new Date("2025-08-20T10:00:00.000Z"),
+          itemId: ITEM_ID,
+          createdAt: new Date("2025-08-20T10:00:00.000Z"),
           amountLeftToPay: 310,
-          handoutInfo: { handoutById: BRANCH_ID, time: new Date() },
+          handoutBranchId: BRANCH_ID,
         }),
       ],
     ]),
+    lastOrderIds: new Map([[CUSTOMER_ITEM_ID, "order2"]]),
     items: new Map<string, Item>([
       [ITEM_ID, mock<Item>({ id: ITEM_ID, title: "Psykologi 2 2022", isbn: 9_788_203_402_296 })],
     ]),

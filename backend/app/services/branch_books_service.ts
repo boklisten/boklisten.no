@@ -1,8 +1,8 @@
 import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
-import { ObjectId } from "mongodb";
 
 import Branch from "#models/branch";
+import CustomerItem from "#models/customer_item";
 import User from "#models/user";
 import Item from "#models/item";
 import Order from "#models/order";
@@ -10,7 +10,6 @@ import OrderItem from "#models/order_item";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import { DEADLINE_PADDING_DAYS } from "#services/deadline_window";
 import { OrderCancellationService } from "#services/order_cancellation_service";
-import { StorageService } from "#services/storage_service";
 import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 
 interface BranchBooksTitle {
@@ -60,21 +59,16 @@ export interface SummaryRow {
 
 const DEADLINE_PADDING_MS = DEADLINE_PADDING_DAYS * 24 * 60 * 60 * 1000;
 
-export const ACTIVE_CUSTOMER_ITEM_MATCH = {
-  returned: false,
-  buyout: false,
-  cancel: false,
-  handout: true,
-};
-
 async function resolveScope(branchId: string) {
   const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
-  const scopeIds = [branchId, ...descendantIds];
-  return {
-    branchObjectId: new ObjectId(branchId),
-    scopeIds,
-    scopeObjectIds: scopeIds.map((id) => new ObjectId(id)),
-  };
+  return { scopeIds: [branchId, ...descendantIds] };
+}
+
+/** Active customer items handed out from the given branches, as a query on `customer_items`. */
+function activeBooksQuery(branchIds: string[]) {
+  return CustomerItem.whereActive(
+    db.from("customer_items").whereIn("customer_items.handout_branch_id", branchIds),
+  );
 }
 
 /**
@@ -191,18 +185,6 @@ async function withMembershipBranchNames<Row extends { membershipBranchId: strin
   }));
 }
 
-const SUMMARY_ROW_STAGES = [
-  {
-    $project: {
-      _id: 0,
-      deadline: "$_id.deadline",
-      itemId: { $toString: "$_id.item" },
-      direct: 1,
-      total: 1,
-    },
-  },
-];
-
 /**
  * Titles come from the Postgres catalogue. Books referencing a deleted item keep counting in the
  * summary (bulk updates addressed by deadline include them either way), under a placeholder title.
@@ -246,27 +228,27 @@ export const BranchBooksService = {
   clusterDeadlines,
 
   async getActiveBooksSummary(branchId: string): Promise<BranchBooksSummary> {
-    const { branchObjectId, scopeObjectIds } = await resolveScope(branchId);
-    const rows = await StorageService.CustomerItems.aggregate<Omit<SummaryRow, "title">>([
-      {
-        $match: {
-          ...ACTIVE_CUSTOMER_ITEM_MATCH,
-          "handoutInfo.handoutById": { $in: scopeObjectIds },
-          deadline: { $ne: null },
-        },
-      },
-      {
-        $group: {
-          _id: { deadline: "$deadline", item: "$item" },
-          direct: {
-            $sum: { $cond: [{ $eq: ["$handoutInfo.handoutById", branchObjectId] }, 1, 0] },
-          },
-          total: { $sum: 1 },
-        },
-      },
-      ...SUMMARY_ROW_STAGES,
-    ]);
-    return buildSummary(await withTitles(rows));
+    const { scopeIds } = await resolveScope(branchId);
+    const rows: { deadline: Date; itemId: string; direct: string; total: string }[] =
+      await activeBooksQuery(scopeIds)
+        .groupBy("customer_items.deadline", "customer_items.item_id")
+        .select("customer_items.deadline", "customer_items.item_id as itemId")
+        .select(
+          db.raw("count(*) filter (where customer_items.handout_branch_id = ?) as direct", [
+            branchId,
+          ]),
+        )
+        .count("* as total");
+    return buildSummary(
+      await withTitles(
+        rows.map((row) => ({
+          deadline: row.deadline,
+          itemId: row.itemId,
+          direct: Number(row.direct),
+          total: Number(row.total),
+        })),
+      ),
+    );
   },
 
   async getActiveBookDetails({
@@ -278,31 +260,24 @@ export const BranchBooksService = {
     deadlines: string[];
     itemId: string;
   }) {
-    const rows = await StorageService.CustomerItems.aggregate<{
+    const rows: {
       customerItemId: string;
       customerId: string | null;
       blid: string | null;
       handoutTime: Date | null;
-    }>([
-      {
-        $match: {
-          ...ACTIVE_CUSTOMER_ITEM_MATCH,
-          "handoutInfo.handoutById": new ObjectId(branchId),
-          item: new ObjectId(itemId),
-          deadline: { $in: deadlines.map((deadline) => new Date(deadline)) },
-        },
-      },
-      { $sort: { "handoutInfo.time": 1 } },
-      {
-        $project: {
-          _id: 0,
-          customerItemId: { $toString: "$_id" },
-          customerId: { $toString: "$customer" },
-          blid: { $ifNull: ["$blid", null] },
-          handoutTime: { $ifNull: ["$handoutInfo.time", null] },
-        },
-      },
-    ]);
+    }[] = await activeBooksQuery([branchId])
+      .where("customer_items.item_id", itemId)
+      .whereIn(
+        "customer_items.deadline",
+        deadlines.map((deadline) => new Date(deadline)),
+      )
+      .orderBy("customer_items.handed_out_at")
+      .select(
+        "customer_items.id as customerItemId",
+        "customer_items.customer_id as customerId",
+        "customer_items.blid",
+        "customer_items.handed_out_at as handoutTime",
+      );
     return (await withMembershipBranchNames(await withCustomerColumns(rows))).map(
       ({ handoutTime, ...row }) =>
         Object.assign(row, { handoutTime: handoutTime ? handoutTime.toISOString() : null }),
@@ -318,29 +293,29 @@ export const BranchBooksService = {
     filter: BranchBooksFilter & { customerItemIds?: string[] };
     update: BranchBooksUpdate;
   }) {
-    const { branchObjectId, scopeObjectIds } = await resolveScope(branchId);
-    const mongoFilter = {
-      ...ACTIVE_CUSTOMER_ITEM_MATCH,
-      "handoutInfo.handoutById": {
-        $in: filter.includeDescendants ? scopeObjectIds : [branchObjectId],
-      },
-      ...(filter.deadlines && {
-        deadline: { $in: filter.deadlines.map((deadline) => new Date(deadline)) },
-      }),
-      ...(filter.itemId && { item: new ObjectId(filter.itemId) }),
-      ...(filter.customerItemIds && {
-        _id: { $in: filter.customerItemIds.map((id) => new ObjectId(id)) },
-      }),
-    };
-    const set: Record<string, unknown> = { lastUpdated: new Date() };
+    const { scopeIds } = await resolveScope(branchId);
+    const query = activeBooksQuery(filter.includeDescendants ? scopeIds : [branchId]);
+    if (filter.deadlines) {
+      void query.whereIn(
+        "customer_items.deadline",
+        filter.deadlines.map((deadline) => new Date(deadline)),
+      );
+    }
+    if (filter.itemId) {
+      void query.where("customer_items.item_id", filter.itemId);
+    }
+    if (filter.customerItemIds) {
+      void query.whereIn("customer_items.id", filter.customerItemIds);
+    }
+    const set: Record<string, unknown> = { updated_at: new Date() };
     if (update.deadline) {
       set["deadline"] = new Date(update.deadline);
     }
     if (update.branchId) {
-      set["handoutInfo.handoutById"] = new ObjectId(update.branchId);
+      set["handout_branch_id"] = update.branchId;
     }
-    const result = await StorageService.CustomerItems.updateMany(mongoFilter, { $set: set });
-    return { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount };
+    const updated = Number(await query.update(set));
+    return { matchedCount: updated, modifiedCount: updated };
   },
 
   async getOrderedBooksSummary(branchId: string): Promise<BranchBooksSummary> {

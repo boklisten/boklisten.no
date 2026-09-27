@@ -5,7 +5,6 @@ import { createSandbox } from "sinon";
 import { DateTime } from "luxon";
 
 import BranchModel from "#models/branch";
-import type { SEDbQuery } from "#models/mongoose/storage/db-query";
 import OrderItem from "#models/order_item";
 import { MatchRepository } from "#services/matches/match_repository";
 import { PeerObligations } from "#services/matches/peer_obligations";
@@ -14,10 +13,10 @@ import { StandCartLineResolver } from "#services/stand_cart/stand_cart_line_reso
 import User from "#models/user";
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { StandCartLine } from "#shared/stand_cart";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { createUniqueItem } from "#tests/unique_item_fixtures";
@@ -94,37 +93,26 @@ function orderWith(overrides: Partial<OrderSpec>): OrderSpec {
   };
 }
 
-const activeCustomerItem = mock<CustomerItem>({
+/** A customer item row to insert. */
+type CustomerItemSpec = Parameters<typeof createCustomerItem>[0];
+
+const activeCustomerItem: CustomerItemSpec = {
   id: CUSTOMER_ITEM_ID,
-  customer: CUSTOMER_ID,
-  item: ITEM_ID,
+  customerId: CUSTOMER_ID,
+  itemId: ITEM_ID,
   blid: BLID,
   type: "rent",
-  deadline: SEMESTER_END,
-  handout: true,
-  returned: false,
-  buyout: false,
-  cancel: false,
-  buyback: false,
-  handoutInfo: { handoutById: BRANCH_ID, time: NOW },
-  creationTime: new Date("2026-08-01T10:00:00.000Z"),
-  orders: [HANDOUT_ORDER_ID],
-});
+  deadline: DateTime.fromJSDate(SEMESTER_END),
+  handoutBranchId: BRANCH_ID,
+  handedOutAt: DateTime.fromJSDate(NOW),
+  createdAt: DateTime.fromISO("2026-08-01T10:00:00.000Z"),
+};
 
 interface World {
   orders: OrderSpec[];
-  customerItems: CustomerItem[];
+  customerItems: CustomerItemSpec[];
   deliveries: Delivery[];
   peerSender: string | null;
-}
-
-function stringFilter(query: SEDbQuery, field: string): string | undefined {
-  return query.stringFilters.find((filter) => filter.fieldName === field)?.value;
-}
-
-function objectIdFilter(query: SEDbQuery, field: string): string | undefined {
-  const value = query.objectIdFilters.find((filter) => filter.fieldName === field)?.value;
-  return typeof value === "string" ? value : undefined;
 }
 
 const byId =
@@ -159,20 +147,13 @@ async function insertOrders(orders: OrderSpec[]): Promise<void> {
 }
 
 async function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
+  // Order lines may point at the customer items, so those go in first.
+  for (const customerItem of world.customerItems) {
+    await createCustomerItem(customerItem);
+  }
   await insertOrders(world.orders);
   const paid = new Set(world.orders.filter((order) => order.paid).map((order) => order.id));
   sandbox.stub(OrderPayments, "exist").callsFake((orderId) => Promise.resolve(paid.has(orderId)));
-  sandbox.stub(StorageService.CustomerItems, "getOrNull").callsFake(byId(world.customerItems));
-  sandbox.stub(StorageService.CustomerItems, "getByQueryOrNull").callsFake((query) => {
-    const customer = objectIdFilter(query, "customer");
-    return Promise.resolve(
-      world.customerItems.filter((customerItem) =>
-        customer === undefined
-          ? customerItem.blid === stringFilter(query, "blid")
-          : customerItem.customer === customer,
-      ),
-    );
-  });
   sandbox.stub(StorageService.Deliveries, "getOrNull").callsFake(byId(world.deliveries));
   sandbox.stub(User, "find").resolves(userDouble({ id: OTHER_CUSTOMER_ID, name: "Kari Nordmann" }));
   sandbox.stub(MatchRepository, "findForCustomer").resolves([]);
@@ -328,7 +309,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
   });
 
   test("refuses a blid another customer is holding", async ({ assert }) => {
-    world.customerItems = [{ ...activeCustomerItem, customer: OTHER_CUSTOMER_ID }];
+    world.customerItems = [{ ...activeCustomerItem, customerId: OTHER_CUSTOMER_ID }];
     const result = await resolve(
       { kind: "order", orderId: ORDER_ID, itemId: ITEM_ID },
       { blid: BLID },
@@ -361,12 +342,12 @@ test.group("StandCartLineResolver.resolve", (group) => {
       }),
     ];
     world.customerItems = [
-      { ...activeCustomerItem, id: "held-2009", item: GYMNOS_2009, blid: "11111111" },
+      { ...activeCustomerItem, id: "held-2009", itemId: GYMNOS_2009, blid: "11111111" },
       { ...activeCustomerItem, id: "held-sinus", blid: "22222222" },
       {
         ...activeCustomerItem,
         id: "returned-2012",
-        item: GYMNOS_2012,
+        itemId: GYMNOS_2012,
         blid: "33333333",
         returned: true,
       },
@@ -478,7 +459,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
   });
 
   test("a scanned blid another customer holds is refused", async ({ assert }) => {
-    world.customerItems = [{ ...activeCustomerItem, customer: OTHER_CUSTOMER_ID }];
+    world.customerItems = [{ ...activeCustomerItem, customerId: OTHER_CUSTOMER_ID }];
     const result = await resolve({ kind: "blid", blid: BLID });
     assert.equal(result.kind, "refused");
   });

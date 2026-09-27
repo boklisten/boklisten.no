@@ -373,6 +373,8 @@ const TRIPLETEX_EMPTY_CATEGORY_FIELDS = Array.from({ length: 15 }, () => ""); //
 /** Everything a Tripletex export needs besides the invoices themselves. */
 export interface TripletexLookups {
   customerItems: Map<string, CustomerItem>;
+  /** The last order that set each customer item's period, by customer item id. */
+  lastOrderIds: Map<string, string>;
   items: Map<string, Item>;
   branches: Map<string, Branch>;
 }
@@ -416,13 +418,9 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
         customerItemPayment.customerItem,
         "Kundeboka",
       );
-      const item = required(lookups.items, customerItem.item, "Boka");
-      const handoutBranch = required(
-        lookups.branches,
-        customerItem.handoutInfo?.handoutById,
-        "Filialen",
-      );
-      const orderDate = formatExportDate(customerItem.creationTime, "yyyy-MM-dd");
+      const item = required(lookups.items, customerItem.itemId, "Boka");
+      const handoutBranch = required(lookups.branches, customerItem.handoutBranchId, "Filialen");
+      const orderDate = formatExportDate(customerItem.createdAt, "yyyy-MM-dd");
       rows.push([
         invoice.invoiceId,
         invoiceDate,
@@ -430,7 +428,7 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
         "",
         "",
         "",
-        customerItem.orders.at(-1),
+        lookups.lastOrderIds.get(customerItem.id),
         orderDate,
         ...customerFields,
         isFirstItem

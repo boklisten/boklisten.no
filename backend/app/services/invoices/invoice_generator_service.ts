@@ -1,12 +1,10 @@
 import BranchModel from "#models/branch";
+import CustomerItem from "#models/customer_item";
 import ItemModel from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
-import Order from "#models/order";
 import User from "#models/user";
 import { StorageService } from "#services/storage_service";
-import { isNotNullish } from "#services/typescript_helpers";
 import type { Branch } from "#shared/branch";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type {
   Invoice,
   InvoiceCustomerItemPayment,
@@ -14,6 +12,7 @@ import type {
   InvoiceGenerationSettings,
 } from "#shared/invoice";
 import type { Item } from "#shared/item";
+import type { Period } from "#shared/period";
 
 /**
  * Generates invoices for books that were neither returned nor bought out by their deadline, one
@@ -38,27 +37,24 @@ interface CustomerBooks {
 async function unreturnedCustomerItems(
   settings: InvoiceGenerationSettings,
 ): Promise<CustomerItem[]> {
-  return StorageService.CustomerItems.aggregate<CustomerItem>([
-    {
-      $match: {
-        returned: false,
-        buyout: false,
-        type: settings.type,
-        deadline: { $gte: settings.deadlineFrom, $lte: settings.deadlineTo },
-        "handoutInfo.handoutById": { $exists: true },
-      },
-    },
-    { $sort: { deadline: 1, _id: 1 } },
-  ]);
+  return CustomerItem.query()
+    .where("returned", false)
+    .where("buyout", false)
+    .where("type", settings.type)
+    .where("deadline", ">=", settings.deadlineFrom)
+    .where("deadline", "<=", settings.deadlineTo)
+    .orderBy("deadline")
+    .orderBy("id");
 }
 
 /** Groups by customer in order of first appearance, which decides the invoice numbers. */
 function groupByCustomer(customerItems: CustomerItem[]): Map<string, CustomerItem[]> {
   const groups = new Map<string, CustomerItem[]>();
   for (const customerItem of customerItems) {
-    const group = groups.get(customerItem.customer) ?? [];
+    const customerId = customerItem.customerId ?? "";
+    const group = groups.get(customerId) ?? [];
     group.push(customerItem);
-    groups.set(customerItem.customer, group);
+    groups.set(customerId, group);
   }
   return groups;
 }
@@ -67,8 +63,11 @@ function groupByCustomer(customerItems: CustomerItem[]): Map<string, CustomerIte
 interface Lookups {
   items: Map<string, Item>;
   branches: Map<string, Branch>;
-  /** The last order of each partly-payment book without a stored amount, by order id. */
-  lastOrders: Map<string, Order>;
+  /**
+   * The period type of the last order that set the period of each partly-payment book without a
+   * stored amount, by customer item id.
+   */
+  lastPeriodTypes: Map<string, Period | null>;
 }
 
 function needsLastOrder(customerItem: CustomerItem): boolean {
@@ -84,19 +83,15 @@ function partlyPaymentAmountLeft(
   customerItem: CustomerItem,
   item: Item,
   branch: Branch | undefined,
-  lastOrders: Map<string, Order>,
+  lastPeriodTypes: Map<string, Period | null>,
 ): number {
   if (customerItem.amountLeftToPay) {
     return customerItem.amountLeftToPay;
   }
-  const lastOrderId = customerItem.orders.at(-1);
-  const lastOrder = lastOrderId ? lastOrders.get(lastOrderId) : undefined;
-  const orderItem = lastOrder?.orderItems.find(
-    (candidate) => candidate.customerItemId === customerItem.id,
-  );
+  const periodType = lastPeriodTypes.get(customerItem.id);
   const buyoutPercentage =
-    branch?.partlyPaymentPeriods.find((period) => period.type === orderItem?.periodType)
-      ?.percentageBuyout ?? branch?.buyoutPercentage;
+    branch?.partlyPaymentPeriods.find((period) => period.type === periodType)?.percentageBuyout ??
+    branch?.buyoutPercentage;
   if (buyoutPercentage === undefined) {
     throw new BadRequestException(
       `Filialen som delte ut "${item.title}" har ingen utkjøpsprosent, så beløpet kan ikke regnes ut.`,
@@ -110,10 +105,10 @@ function linePayment(
   item: Item,
   branch: Branch | undefined,
   settings: InvoiceGenerationSettings,
-  lastOrders: Map<string, Order>,
+  lastPeriodTypes: Map<string, Period | null>,
 ): LinePayment {
   if (customerItem.type === "partly-payment") {
-    const amountLeft = partlyPaymentAmountLeft(customerItem, item, branch, lastOrders);
+    const amountLeft = partlyPaymentAmountLeft(customerItem, item, branch, lastPeriodTypes);
     return { unit: amountLeft, gross: amountLeft, net: amountLeft, vat: 0, discount: 0 };
   }
   // Books are VAT exempt in the last sales link, rented or sold (mval. § 6-4).
@@ -159,24 +154,22 @@ function buildInvoice(
   invoiceNumber: number,
   duedate: Date,
   settings: InvoiceGenerationSettings,
-  { items, branches, lastOrders }: Lookups,
+  { items, branches, lastPeriodTypes }: Lookups,
 ): Omit<Invoice, "id"> {
   const lines: InvoiceCustomerItemPayment[] = [];
   for (const customerItem of customerItems) {
-    const item = items.get(customerItem.item);
+    const item = items.get(customerItem.itemId);
     if (!item) {
-      throw new BadRequestException(`Boka ${customerItem.item} finnes ikke.`);
+      throw new BadRequestException(`Boka ${customerItem.itemId} finnes ikke.`);
     }
-    const branch = customerItem.handoutInfo
-      ? branches.get(customerItem.handoutInfo.handoutById)
-      : undefined;
+    const branch = branches.get(customerItem.handoutBranchId);
     lines.push({
       customerItem: customerItem.id,
       customerItemType: customerItem.type,
       title: item.title,
       item: item.id,
       numberOfItems: 1,
-      payment: linePayment(customerItem, item, branch, settings, lastOrders),
+      payment: linePayment(customerItem, item, branch, settings, lastPeriodTypes),
     });
   }
 
@@ -193,7 +186,7 @@ function buildInvoice(
     toCreditNote: false,
     toDebtCollection: false,
     toLossNote: false,
-    branch: customerItems[0]?.handoutInfo?.handoutById,
+    branch: customerItems[0]?.handoutBranchId,
     type: settings.type,
     customerItemPayments: lines,
     customerInfo: {
@@ -223,27 +216,25 @@ export async function generateInvoices(
   const customerItems = await unreturnedCustomerItems(settings);
   const groups = groupByCustomer(customerItems);
 
-  const [customers, items, branches, lastOrders] = await Promise.all([
-    User.findMany([...groups.keys()]),
-    ItemModel.findMany([...new Set(customerItems.map((customerItem) => customerItem.item))]),
+  const [customers, items, branches, lastPeriodLines] = await Promise.all([
+    User.findMany([...groups.keys()].filter((customerId) => customerId !== "")),
+    ItemModel.findMany([...new Set(customerItems.map((customerItem) => customerItem.itemId))]),
     BranchModel.findMany([
-      ...new Set(
-        customerItems
-          .map((customerItem) => customerItem.handoutInfo?.handoutById)
-          .filter(isNotNullish),
-      ),
+      ...new Set(customerItems.map((customerItem) => customerItem.handoutBranchId)),
     ]),
-    Order.byIds(
+    CustomerItem.lastPeriodLinesOf(
       customerItems
         .filter((customerItem) => needsLastOrder(customerItem))
-        .map((customerItem) => customerItem.orders.at(-1)),
+        .map((customerItem) => customerItem.id),
     ),
   ]);
   const customersById = new Map(customers.map((customer) => [customer.id, customer]));
   const lookups: Lookups = {
     items: new Map(items.map((item) => [item.id, item])),
     branches: new Map(branches.map((branch) => [branch.id, branch])),
-    lastOrders,
+    lastPeriodTypes: new Map(
+      [...lastPeriodLines].map(([customerItemId, line]) => [customerItemId, line.periodType]),
+    ),
   };
 
   const skipped: InvoiceGenerationResult["skipped"] = [];
@@ -256,7 +247,7 @@ export async function generateInvoices(
       skipped.push(
         ...books.map((customerItem) => ({
           customerItemId: customerItem.id,
-          reason: `Kunden ${customerId} finnes ikke lenger.`,
+          reason: "Kunden finnes ikke lenger.",
         })),
       );
       continue;

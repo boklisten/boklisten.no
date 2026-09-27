@@ -1,16 +1,18 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
+import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import CustomerItem from "#models/customer_item";
 import { BlidSearchService } from "#services/blid_search_service";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
-import { StorageService } from "#services/storage_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { fixtureId } from "#tests/fixtures";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
-import { mock, unchecked } from "#tests/test-doubles";
+import { createUniqueItem } from "#tests/unique_item_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f70";
 const OLD_BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f71";
@@ -24,28 +26,23 @@ const ITEM_ID = fixtureId("1");
 test.group("BlidSearchService.updateActiveItem()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
-  let updateMany: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     await createItem({ id: ITEM_ID, title: "Sinus 1T" });
     await createBranch({ id: OLD_BRANCH_ID, name: "Ullern VGS" });
     await createBranch({ id: NEW_BRANCH_ID, name: "Persbråten VGS" });
+    await createUser({ id: CUSTOMER_ID });
+    await createCustomerItem({
+      id: CUSTOMER_ITEM_ID,
+      itemId: ITEM_ID,
+      blid: "12345678",
+      customerId: CUSTOMER_ID,
+      deadline: DateTime.fromISO("2026-06-30T22:00:00.000Z"),
+      handoutBranchId: OLD_BRANCH_ID,
+    });
     sandbox = createSandbox();
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
-    updateMany = sandbox
-      .stub(StorageService.CustomerItems, "updateMany")
-      .resolves(unchecked({ matchedCount: 1 }));
-    sandbox.stub(StorageService.CustomerItems, "getOrNull").resolves(
-      mock<CustomerItem>({
-        id: CUSTOMER_ITEM_ID,
-        item: ITEM_ID,
-        blid: "12345678",
-        customer: CUSTOMER_ID,
-        deadline: new Date("2026-06-30T22:00:00.000Z"),
-        handoutInfo: { handoutById: OLD_BRANCH_ID },
-      }),
-    );
   });
   group.each.teardown(() => sandbox.restore());
 
@@ -57,7 +54,10 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
       EMPLOYEE,
     );
 
-    assert.isTrue(updateMany.calledOnce);
+    assert.equal(
+      (await CustomerItem.findOrFail(CUSTOMER_ITEM_ID)).deadline.toISO(),
+      DateTime.fromISO("2026-12-19T23:00:00.000Z").toISO(),
+    );
     assert.isTrue(report.calledOnce);
     assert.deepEqual(report.firstCall.args[0], {
       action: "active-item-deadline-changed",
@@ -77,6 +77,8 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
       { customerItemId: CUSTOMER_ITEM_ID, branchId: NEW_BRANCH_ID },
       EMPLOYEE,
     );
+
+    assert.equal((await CustomerItem.findOrFail(CUSTOMER_ITEM_ID)).handoutBranchId, NEW_BRANCH_ID);
 
     assert.isTrue(report.calledOnce);
     assert.deepEqual(report.firstCall.args[0], {
@@ -98,14 +100,17 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
       ADMIN,
     );
 
-    assert.isTrue(updateMany.calledOnce);
+    assert.equal(
+      (await CustomerItem.findOrFail(CUSTOMER_ITEM_ID)).deadline.toISO(),
+      DateTime.fromISO("2026-12-19T23:00:00.000Z").toISO(),
+    );
     assert.isFalse(report.called);
   });
 
   test("refuses when the book is not actively handed out, and reports nothing", async ({
     assert,
   }) => {
-    updateMany.resolves(unchecked({ matchedCount: 0 }));
+    await CustomerItem.query().where("id", CUSTOMER_ITEM_ID).update({ returned: true });
 
     await assert.rejects(() =>
       BlidSearchService.updateActiveItem(
@@ -115,5 +120,33 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
     );
 
     assert.isFalse(report.called);
+  });
+});
+
+test.group("BlidSearchService.search()", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("ranks held copies first and names their holder", async ({ assert }) => {
+    await createItem({ id: ITEM_ID, title: "Sinus 1T" });
+    await createBranch({ id: OLD_BRANCH_ID });
+    await createUser({ id: CUSTOMER_ID, name: "Ida Holder" });
+    await createUniqueItem({ itemId: ITEM_ID, blid: "12345679" });
+    await createUniqueItem({ itemId: ITEM_ID, blid: "12345678" });
+    await createCustomerItem({
+      itemId: ITEM_ID,
+      blid: "12345679",
+      customerId: CUSTOMER_ID,
+      handoutBranchId: OLD_BRANCH_ID,
+    });
+
+    const { hits } = await BlidSearchService.search("1234567");
+
+    assert.deepEqual(
+      hits.map((hit) => [hit.blid, hit.holder?.name ?? null]),
+      [
+        ["12345679", "Ida Holder"],
+        ["12345678", null],
+      ],
+    );
   });
 });

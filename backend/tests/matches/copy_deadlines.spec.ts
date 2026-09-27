@@ -1,89 +1,87 @@
 import { test } from "@japa/runner";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import testUtils from "@adonisjs/core/services/test_utils";
+import { DateTime } from "luxon";
 
+import CustomerItem from "#models/customer_item";
 import { extendRemainingCopyDeadlines } from "#services/matches/copy_deadlines";
-import { StorageService } from "#services/storage_service";
-import { unchecked } from "#tests/test-doubles";
+import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
+import { ensureUsers, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 
 const A = "5d765db5fc8c47001c408d81";
+const B = "5d765db5fc8c47001c408d82";
+const BRANCH = "5d765db5fc8c47001c408b01";
 const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
 const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
+const OTHER_TITLE = "5d765db5fc8c47001c408e01";
 
-const JUNE = new Date("2026-06-15T00:00:00Z");
-const AUGUST = new Date("2026-08-20T00:00:00Z");
+const JUNE = DateTime.fromISO("2026-06-15T00:00:00Z");
+const AUGUST = DateTime.fromISO("2026-08-20T00:00:00Z");
+
+const deadlineOf = async (customerItem: CustomerItem) =>
+  (await CustomerItem.findOrFail(customerItem.id)).deadline.toMillis();
 
 test.group("extendRemainingCopyDeadlines", (group) => {
-  let sandbox: sinon.SinonSandbox;
-
-  group.each.setup(() => {
-    sandbox = createSandbox();
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(seedTestCatalogue);
+  group.each.setup(() => ensureUsers([A, B]));
+  group.each.setup(async () => {
+    await createBranch({ id: BRANCH });
   });
-  group.each.teardown(() => sandbox.restore());
 
-  function stubRemaining(remaining: { id: string; deadline: Date }[]) {
-    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves(remaining);
-    return sandbox.stub(StorageService.CustomerItems, "update").resolves(unchecked({}));
-  }
+  const copy = (
+    deadline: DateTime,
+    overrides: Partial<Parameters<typeof createCustomerItem>[0]> = {},
+  ) =>
+    createCustomerItem({
+      customerId: A,
+      itemId: GYMNOS_2009,
+      handoutBranchId: BRANCH,
+      deadline,
+      ...overrides,
+    });
 
   test("the kept copy inherits the later deadline of the pair", async ({ assert }) => {
     // The VG1 student: their own Gymnos is due in June, the one they were given in June runs to
     // August. They hand over the August copy, so the copy they keep must run to August too.
-    const update = stubRemaining([{ id: "ci-june", deadline: JUNE }]);
+    const june = await copy(JUNE);
 
-    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST);
+    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST.toJSDate());
 
-    assert.equal(update.calledOnce, true);
-    assert.equal(update.firstCall.args[0], "ci-june");
-    assert.deepEqual(update.firstCall.args[1], { deadline: AUGUST });
+    assert.equal(await deadlineOf(june), AUGUST.toMillis());
   });
 
   test("a copy already running longer is left alone", async ({ assert }) => {
-    const update = stubRemaining([{ id: "ci-august", deadline: AUGUST }]);
+    const august = await copy(AUGUST);
 
-    await extendRemainingCopyDeadlines(A, GYMNOS_2009, JUNE);
+    await extendRemainingCopyDeadlines(A, GYMNOS_2009, JUNE.toJSDate());
 
-    assert.equal(update.called, false);
+    assert.equal(await deadlineOf(august), AUGUST.toMillis());
   });
 
-  test("does nothing when no copies remain", async ({ assert }) => {
-    const update = stubRemaining([]);
+  test("extends every remaining copy that is running short, and only those", async ({ assert }) => {
+    const first = await copy(JUNE);
+    const second = await copy(JUNE);
+    const returned = await copy(JUNE, { returned: true });
+    const someoneElses = await copy(JUNE, { customerId: B });
+    const otherTitle = await copy(JUNE, { itemId: OTHER_TITLE });
 
-    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST);
+    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST.toJSDate());
 
-    assert.equal(update.called, false);
-  });
-
-  test("extends every remaining copy that is running short", async ({ assert }) => {
-    const update = stubRemaining([
-      { id: "ci-1", deadline: JUNE },
-      { id: "ci-2", deadline: JUNE },
-      { id: "ci-3", deadline: AUGUST },
-    ]);
-
-    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST);
-
-    assert.equal(update.callCount, 2);
+    assert.equal(await deadlineOf(first), AUGUST.toMillis());
+    assert.equal(await deadlineOf(second), AUGUST.toMillis());
+    assert.equal(await deadlineOf(returned), JUNE.toMillis());
+    assert.equal(await deadlineOf(someoneElses), JUNE.toMillis());
+    assert.equal(await deadlineOf(otherTitle), JUNE.toMillis());
   });
 
   test("looks across equivalent editions", async ({ assert }) => {
     // A student can hold GYMNOS 2009 and GYMNOS 2012 interchangeably, so both count as the
     // same title when deciding which deadline the kept copy carries.
-    const aggregate = sandbox
-      .stub(StorageService.CustomerItems, "aggregate")
-      .resolves(unchecked([]));
-    sandbox.stub(StorageService.CustomerItems, "update").resolves(unchecked({}));
+    const edition2012 = await copy(JUNE, { itemId: GYMNOS_2012 });
 
-    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST);
+    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST.toJSDate());
 
-    const pipeline: { $match: { item: { $in: unknown[] } } }[] = unchecked(
-      aggregate.firstCall.args[0],
-    );
-    assert.lengthOf(pipeline[0]!.$match.item.$in, 2);
-    assert.include(
-      pipeline[0]!.$match.item.$in.map(String),
-      GYMNOS_2012,
-      "the equivalent edition must be included",
-    );
+    assert.equal(await deadlineOf(edition2012), AUGUST.toMillis());
   });
 });

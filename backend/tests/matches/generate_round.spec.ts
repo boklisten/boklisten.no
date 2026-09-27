@@ -9,9 +9,9 @@ import MatchObligation from "#models/match_obligation";
 import MatchRound from "#models/match_round";
 import { generateRound } from "#services/matches/generate_round";
 import User from "#models/user";
-import { StorageService } from "#services/storage_service";
 import { createBranch } from "#tests/branch_fixtures";
 import {
+  createHeldBooks,
   createTestRound,
   ensureUsers,
   seedTestCatalogue,
@@ -19,7 +19,6 @@ import {
   TEST_MEETING_DATE,
 } from "#tests/matches/match-testing-utils";
 import { createOrder } from "#tests/order_fixtures";
-import { unchecked } from "#tests/test-doubles";
 import { userDouble } from "#tests/user_fixtures";
 
 const A = "5d765db5fc8c47001c408d81";
@@ -35,7 +34,7 @@ const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
 const plannedRound = () =>
   createTestRound({ name: "Ullern Vår 2026", branches: [BRANCH], standLocation: "Kantina" });
 
-/** One aggregated `{ id, items }` row as `getHeldItems` expects it back from Mongo. */
+/** The titles a customer holds, handed out at the round's branch and due on its deadline. */
 function heldBy(customerId: string, itemIds: string[]) {
   return { id: customerId, items: itemIds };
 }
@@ -55,7 +54,7 @@ test.group("generateRound", (group) => {
   });
 
   /**
-   * Stubs the held books (Mongo) and inserts the orders (Postgres).
+   * Inserts the held books and the orders.
    *
    * @param wanted who ordered which items themselves at the branch
    */
@@ -64,7 +63,7 @@ test.group("generateRound", (group) => {
     wanted: { id: string; wantedItems: string[] }[],
     userDetails: { id: string; branchMembership?: string }[] = [],
   ) {
-    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves(held);
+    await createHeldBooks(BRANCH, held);
     for (const { id, wantedItems } of wanted) {
       await createOrder({
         branchId: BRANCH,
@@ -282,27 +281,23 @@ test.group("generateRound", (group) => {
   });
 
   test("looks for books due on the deadline, give or take two days", async ({ assert }) => {
-    const aggregateStub = sandbox
-      .stub(StorageService.CustomerItems, "aggregate")
-      .resolves(unchecked([heldBy(A, [ITEM_X])]));
-    sandbox.stub(User, "byIds").resolves(new Map());
+    // A's copy is due the day before the deadline; B's three days after, outside the window.
+    await createHeldBooks(BRANCH, [heldBy(A, [ITEM_X])], TEST_DEADLINE.minus({ days: 1 }));
+    await createHeldBooks(BRANCH, [heldBy(B, [ITEM_Y])], TEST_DEADLINE.plus({ days: 3 }));
+    await stubMongo(
+      [],
+      [
+        { id: A, wantedItems: [ITEM_Y] },
+        { id: B, wantedItems: [ITEM_X] },
+      ],
+    );
 
     await generateRound(await plannedRound());
 
-    const pipeline: [{ $match: { deadline: { $gt: Date; $lt: Date } } }] = unchecked(
-      aggregateStub.firstCall.args[0],
-    );
-    const { $gt, $lt } = pipeline[0].$match.deadline;
-    assert.equal(
-      $gt.toISOString(),
-      TEST_DEADLINE.minus({ days: 2 }).toJSDate().toISOString(),
-      "two days before the deadline, covering timezone drift in stored deadlines",
-    );
-    assert.equal(
-      $lt.toISOString(),
-      TEST_DEADLINE.plus({ days: 2 }).toJSDate().toISOString(),
-      "two days after the deadline",
-    );
+    const obligations = await MatchObligation.query().preload("sender");
+    const senders = obligations.map((obligation) => obligation.sender.userDetailId);
+    assert.include(senders, A, "a book due within two days of the deadline is picked up");
+    assert.notInclude(senders, B, "a book due three days after the deadline is not");
   });
 
   test("refuses to generate a round twice", async ({ assert }) => {

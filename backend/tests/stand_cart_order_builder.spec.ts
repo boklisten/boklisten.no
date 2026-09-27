@@ -7,9 +7,9 @@ import type { StandCartLineContext } from "#services/stand_cart/stand_cart_line_
 import { planCheckout } from "#services/stand_cart/stand_cart_order_builder";
 import type { CheckoutLine } from "#services/stand_cart/stand_cart_order_builder";
 import type { Branch } from "#shared/branch";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import type { StandCartLine, StandCartOption } from "#shared/stand_cart";
+import { customerItemDouble } from "#tests/customer_item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
@@ -30,12 +30,12 @@ const orderedItem = mock<OrderItem>({
 });
 const order = mock<Order>({ id: "order1", branchId: "branch-order", orderItems: [orderedItem] });
 
-const customerItem = mock<CustomerItem>({
+const customerItem = customerItemDouble({
   id: "ci1",
-  item: ITEM.id,
+  itemId: ITEM.id,
   blid: "12345678",
   type: "rent",
-  handoutInfo: { handoutById: "branch-handout" },
+  handoutBranchId: "branch-handout",
 });
 
 function checkoutLine(

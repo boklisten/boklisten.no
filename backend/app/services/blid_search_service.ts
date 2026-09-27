@@ -1,4 +1,5 @@
 import Branch from "#models/branch";
+import CustomerItem from "#models/customer_item";
 import Item from "#models/item";
 import UniqueItem from "#models/unique_item";
 import BookHandover from "#models/book_handover";
@@ -6,11 +7,9 @@ import Order from "#models/order";
 import User from "#models/user";
 import { ActiveItemMonitoring, FALLBACK_BRANCH_NAME } from "#services/active_item_monitoring";
 import { ActiveItemCorrections } from "#services/active_item_corrections";
-import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { isMonitored } from "#services/employee_monitoring_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import { StorageService } from "#services/storage_service";
 import type {
   BlidActiveItem,
@@ -22,7 +21,7 @@ import type {
   BlidSearchResult,
   BlidStatus,
 } from "#shared/blid_search";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type { CustomerItem as CustomerItemDto } from "#shared/customer-item/customer-item";
 import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
 import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
 import { USER_PERMISSION } from "#shared/user-permission";
@@ -34,6 +33,9 @@ interface HandoverRow {
   orderId: string | null;
 }
 
+/** A customer item that carried the blid, with the orders whose lines name it. */
+export type BlidCustomerItem = CustomerItemDto & { orderIds: string[] };
+
 export interface BlidSearchSources {
   blid: string;
   item: { id: string; title: string; isbn: string } | null;
@@ -41,7 +43,7 @@ export interface BlidSearchSources {
   registered: boolean;
   /** When the unique item was created and last changed; null when it is gone or undated. */
   registration: { createdAt: Date; updatedAt: Date } | null;
-  customerItems: CustomerItem[];
+  customerItems: BlidCustomerItem[];
   orders: OrderDto[];
   handovers: HandoverRow[];
   /** Orders whose delivery document is a Bring shipment: their handouts went by mail. */
@@ -172,7 +174,7 @@ function handoutTypeOf(orderItem: OrderItemDto | undefined): CustomerItemType | 
 }
 
 export function collectReferencedIds(
-  customerItems: CustomerItem[],
+  customerItems: BlidCustomerItem[],
   orders: OrderDto[],
   handovers: HandoverRow[],
 ): { userDetailIds: string[]; branchIds: string[] } {
@@ -180,19 +182,18 @@ export function collectReferencedIds(
   const branchIds = new Set<string>();
 
   for (const customerItem of customerItems) {
-    userDetailIds.add(customerItem.customer);
-    const { handoutInfo, returnInfo } = customerItem;
-    if (handoutInfo) {
-      branchIds.add(handoutInfo.handoutById);
-      if (handoutInfo.handoutEmployee) {
-        userDetailIds.add(handoutInfo.handoutEmployee);
+    for (const userDetailId of [
+      customerItem.customerId,
+      customerItem.handoutEmployeeId,
+      customerItem.returnEmployeeId,
+    ]) {
+      if (userDetailId) {
+        userDetailIds.add(userDetailId);
       }
     }
-    if (returnInfo) {
-      branchIds.add(returnInfo.returnedToId);
-      if (returnInfo.returnEmployee) {
-        userDetailIds.add(returnInfo.returnEmployee);
-      }
+    branchIds.add(customerItem.handoutBranchId);
+    if (customerItem.returnBranchId) {
+      branchIds.add(customerItem.returnBranchId);
     }
   }
   for (const order of orders) {
@@ -480,14 +481,14 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   // order items. A customer's handout/return is only synthesized when no event already tells
   // that story for the same customer — receiving via a transfer counts as having gotten the
   // book, and giving it away via a transfer counts as having parted with it.
-  const gotBook = (detailsId: string) =>
+  const gotBook = (detailsId: string | null) =>
     events.some(
       (event) =>
         (event.action === "handout" || event.action === "match-transfer") &&
         event.to?.type === "customer" &&
         event.to.detailsId === detailsId,
     );
-  const gaveBook = (detailsId: string) =>
+  const gaveBook = (detailsId: string | null) =>
     events.some(
       (event) =>
         (event.action === "return" || event.action === "match-transfer") &&
@@ -502,43 +503,43 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   );
 
   for (const customerItem of sources.customerItems) {
-    const { handoutInfo, returnInfo } = customerItem;
-    if (handoutInfo && !gotBook(customerItem.customer)) {
-      const deadlineAtHandout = customerItem.periodExtends?.[0]?.from ?? customerItem.deadline;
+    const { customerId } = customerItem;
+    if (!gotBook(customerId)) {
+      const deadlineAtHandout = customerItem.periodExtends[0]?.periodFrom ?? customerItem.deadline;
       events.push({
-        time: new Date(handoutInfo.time).toISOString(),
+        time: new Date(customerItem.handedOutAt).toISOString(),
         action: "handout",
         from: { type: "stand" },
-        to: customerParty(customerItem.customer),
-        employee: employeeOf(handoutInfo.handoutEmployee),
+        to: customerParty(customerId),
+        employee: employeeOf(customerItem.handoutEmployeeId),
         byCustomer: false,
-        branchName: branchName(handoutInfo.handoutById),
+        branchName: branchName(customerItem.handoutBranchId),
         deadline: new Date(deadlineAtHandout).toISOString(),
         handoutType: customerItem.type,
       });
     }
-    if (customerItem.returned && returnInfo && !gaveBook(customerItem.customer)) {
+    if (customerItem.returned && customerItem.returnedAt && !gaveBook(customerId)) {
       events.push({
-        time: new Date(returnInfo.time).toISOString(),
+        time: new Date(customerItem.returnedAt).toISOString(),
         action: "return",
-        from: customerParty(customerItem.customer),
+        from: customerParty(customerId),
         to: { type: "stand" },
-        employee: employeeOf(returnInfo.returnEmployee),
+        employee: employeeOf(customerItem.returnEmployeeId),
         byCustomer: false,
-        branchName: branchName(returnInfo.returnedToId),
+        branchName: branchName(customerItem.returnBranchId ?? undefined),
       });
     }
-    for (const periodExtend of customerItem.periodExtends ?? []) {
-      const deadline = new Date(periodExtend.to).toISOString();
+    for (const periodExtend of customerItem.periodExtends) {
+      const deadline = new Date(periodExtend.periodTo).toISOString();
       if (extendDeadlines.has(deadline)) {
         continue;
       }
       events.push({
-        time: new Date(periodExtend.time).toISOString(),
+        time: new Date(periodExtend.createdAt).toISOString(),
         action: "extend",
-        to: customerParty(customerItem.customer),
+        to: customerParty(customerId),
         byCustomer: false,
-        previousDeadline: new Date(periodExtend.from).toISOString(),
+        previousDeadline: new Date(periodExtend.periodFrom).toISOString(),
         deadline,
       });
     }
@@ -547,26 +548,30 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
     const endings: {
       action: "buyout" | "buyback" | "cancel";
       done: boolean;
-      info: { order?: string; time?: Date } | undefined;
+      orderId: string | null;
+      time: Date | null;
       /** Events that already tell this ending; a paid invoice is a buyout by other means. */
       toldBy: BlidHistoryAction[];
     }[] = [
       {
         action: "buyout",
         done: customerItem.buyout,
-        info: customerItem.buyoutInfo,
+        orderId: customerItem.buyoutOrderId,
+        time: customerItem.boughtOutAt,
         toldBy: ["buyout", "invoice-paid"],
       },
       {
         action: "buyback",
         done: customerItem.buyback,
-        info: customerItem.buybackInfo,
+        orderId: customerItem.buybackOrderId,
+        time: customerItem.boughtBackAt,
         toldBy: ["buyback"],
       },
       {
         action: "cancel",
         done: customerItem.cancel,
-        info: customerItem.cancelInfo,
+        orderId: customerItem.cancelOrderId,
+        time: customerItem.cancelledAt,
         toldBy: ["cancel"],
       },
     ];
@@ -574,9 +579,9 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       if (!ending.done) {
         continue;
       }
-      const orderId = ending.info?.order;
+      const orderId = ending.orderId ?? undefined;
       const order = orderId === undefined ? undefined : ordersById.get(orderId);
-      const time = ending.info?.time ?? order?.createdAt;
+      const time = ending.time ?? order?.createdAt;
       const alreadyTold = events.some(
         (event) =>
           ending.toldBy.includes(event.action) &&
@@ -585,7 +590,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       if (alreadyTold || time === undefined) {
         continue;
       }
-      const customer = customerParty(customerItem.customer);
+      const customer = customerParty(customerId);
       events.push({
         time: new Date(time).toISOString(),
         action: ending.action,
@@ -625,7 +630,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
     events.push({
       time: deadline,
       action: "deadline-expired",
-      to: customerParty(heldCustomerItem.customer),
+      to: customerParty(heldCustomerItem.customerId),
       byCustomer: false,
       deadline,
     });
@@ -635,15 +640,14 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   // customer item is authoritative for display: its events show its branch (the return its
   // return branch), and its newest deadline-carrying event shows its current deadline.
   for (const customerItem of sources.customerItems) {
-    const orderIds = new Set(customerItem.orders);
+    const orderIds = new Set(customerItem.orderIds);
     const attributed = events.filter(
       (event) => event.orderId !== undefined && orderIds.has(event.orderId),
     );
-    const { handoutInfo, returnInfo } = customerItem;
     for (const event of attributed) {
       const branchId =
-        event.action === "return" ? returnInfo?.returnedToId : handoutInfo?.handoutById;
-      if (branchId !== undefined) {
+        event.action === "return" ? customerItem.returnBranchId : customerItem.handoutBranchId;
+      if (branchId !== null) {
         event.branchName = branchName(branchId);
       }
     }
@@ -692,7 +696,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   };
 }
 
-function deriveActiveItem(customerItems: CustomerItem[]): BlidActiveItem | undefined {
+function deriveActiveItem(customerItems: BlidCustomerItem[]): BlidActiveItem | undefined {
   const active = customerItems.find(isActivelyHeld);
   if (!active) {
     return undefined;
@@ -700,17 +704,16 @@ function deriveActiveItem(customerItems: CustomerItem[]): BlidActiveItem | undef
   return {
     customerItemId: active.id,
     deadline: new Date(active.deadline).toISOString(),
-    handoutBranchId: active.handoutInfo?.handoutById ?? null,
+    handoutBranchId: active.handoutBranchId,
   };
 }
 
-function isActivelyHeld(customerItem: CustomerItem): boolean {
-  return Boolean(
-    customerItem.handout &&
-    !customerItem.returned &&
-    !customerItem.buyout &&
-    !customerItem.cancel &&
-    !customerItem.buyback,
+function isActivelyHeld(customerItem: BlidCustomerItem): boolean {
+  return !(
+    customerItem.returned ||
+    customerItem.buyout ||
+    customerItem.cancel ||
+    customerItem.buyback
   );
 }
 
@@ -718,48 +721,30 @@ function isActivelyHeld(customerItem: CustomerItem): boolean {
  * The customer items are authoritative for where the book is now: a buyout means the customer
  * bought and keeps the book, while returns, buybacks and cancels all leave it back at the stand.
  */
-function deriveStatus(customerItems: CustomerItem[]): BlidStatus {
+function deriveStatus(customerItems: BlidCustomerItem[]): BlidStatus {
   if (customerItems.some(isActivelyHeld)) {
     return "handed-out";
   }
-  const newest = customerItems.toSorted((a, b) => customerItemTime(b) - customerItemTime(a))[0];
+  const newest = customerItems.toSorted(
+    (a, b) => new Date(b.handedOutAt).getTime() - new Date(a.handedOutAt).getTime(),
+  )[0];
   return newest?.buyout && !newest.returned ? "bought-out" : "not-handed-out";
 }
 
-function customerItemTime(customerItem: CustomerItem): number {
-  const time = customerItem.handoutInfo?.time ?? customerItem.creationTime;
-  return time === undefined ? 0 : new Date(time).getTime();
+async function fetchCustomerItems(blid: string): Promise<BlidCustomerItem[]> {
+  const customerItems = await CustomerItem.query().where("blid", blid);
+  const orderIds = await CustomerItem.orderIdsOf(
+    customerItems.map((customerItem) => customerItem.id),
+  );
+  return customerItems.map((customerItem) =>
+    Object.assign(customerItem.toDto(), { orderIds: orderIds.get(customerItem.id) ?? [] }),
+  );
 }
 
-/**
- * blid → holding customer for every actively held book whose blid contains the text, ignoring
- * case. Runs over the partial customer-items blid index (string blid, not returned, not bought
- * out), which the filter spells out so the planner uses it.
- */
-async function fetchHoldersByBlidText(text: string): Promise<Map<string, string>> {
-  const rows = await StorageService.CustomerItems.aggregate<{ blid: string; customer: string }>([
-    {
-      $match: {
-        blid: { $type: "string", $regex: text, $options: "i" },
-        ...ACTIVE_CUSTOMER_ITEM_MATCH,
-        buyback: { $ne: true },
-      },
-    },
-    { $project: { _id: 0, blid: 1, customer: { $toString: "$customer" } } },
-  ]);
-  return new Map(rows.map((row) => [row.blid, row.customer]));
-}
-
-async function fetchCustomerItems(blid: string): Promise<CustomerItem[]> {
-  const databaseQuery = new SEDbQuery();
-  databaseQuery.stringFilters = [{ fieldName: "blid", value: blid }];
-  return (await StorageService.CustomerItems.getByQueryOrNull(databaseQuery)) ?? [];
-}
-
-async function fetchOrders(blid: string, customerItems: CustomerItem[]): Promise<OrderDto[]> {
-  // Legacy order items often lack the blid, but the customer item lists its orders.
+async function fetchOrders(blid: string, customerItems: BlidCustomerItem[]): Promise<OrderDto[]> {
+  // Legacy order items often lack the blid, but they point at the customer item.
   const customerItemOrderIds = [
-    ...new Set(customerItems.flatMap((customerItem) => customerItem.orders ?? []).map(String)),
+    ...new Set(customerItems.flatMap((customerItem) => customerItem.orderIds)),
   ];
   const orders = await Order.query()
     .whereHas("orderItems", (orderItems) => {
@@ -813,22 +798,22 @@ export const BlidSearchService = {
     if (!isMonitored(employee)) {
       return;
     }
-    const item = await Item.find(previous.item);
+    const item = await Item.find(previous.itemId);
     const reported = {
       employee,
-      customerId: previous.customer,
+      customerId: previous.customerId,
       title: item?.title ?? "",
       blid: previous.blid ?? "",
     };
     if (deadline) {
       await ActiveItemMonitoring.reportDeadlineChange({
         ...reported,
-        previousDeadline: new Date(previous.deadline),
+        previousDeadline: previous.deadline,
         deadline: new Date(deadline),
       });
     }
     if (branchId) {
-      const previousBranchId = previous.handoutInfo?.handoutById ?? null;
+      const previousBranchId = previous.handoutBranchId;
       const [previousBranch, branch] = await Promise.all([
         Branch.findOptional(previousBranchId),
         Branch.findOptional(branchId),
@@ -843,16 +828,18 @@ export const BlidSearchService = {
 
   /**
    * Ranked by tier, then books a customer currently holds before books at the stand, then by
-   * blid. The registry is in Postgres and the holders in Mongo, so both are fetched for the whole
-   * match set and ranked in code; only the shown rows pay for the catalogue and name lookups.
+   * blid. The whole match set is ranked in code; only the shown rows pay for the catalogue and
+   * name lookups.
    *
    * @param query Alphanumeric text (the validator guarantees no regex or LIKE metacharacters).
    */
   async search(query: string): Promise<BlidSearchResponse> {
-    const [matches, held] = await Promise.all([
-      UniqueItem.matching(query),
-      fetchHoldersByBlidText(query),
-    ]);
+    const matches = await UniqueItem.matching(query);
+    const held = new Map(
+      matches.flatMap((match) =>
+        match.holderId === null ? [] : [[match.blid, match.holderId] as const],
+      ),
+    );
     const ranked = rankBlidMatches(matches, held, query);
     // One past the limit tells whether the list was cut short.
     const hasMore = ranked.length > SEARCH_HIT_LIMIT;
@@ -893,7 +880,7 @@ export const BlidSearchService = {
     const orders = await fetchOrders(blid, customerItems);
     const bringDeliveryOrderIds = await fetchBringDeliveryOrderIds(orders);
 
-    const itemId = uniqueItem?.itemId ?? customerItems[0]?.item;
+    const itemId = uniqueItem?.itemId ?? customerItems[0]?.itemId;
     const item = itemId === undefined ? null : await Item.find(itemId);
 
     const handovers: HandoverRow[] = handoverModels.map((handover) => ({

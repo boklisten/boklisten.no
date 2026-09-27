@@ -5,11 +5,11 @@ import {
   isDeadlineWithGracePeriodExpired,
   resolveBuyoutPrice,
 } from "#services/customer_item_actions_service";
+import type CustomerItem from "#models/customer_item";
 import type OrderItem from "#models/order_item";
 import { HeldBookRules } from "#services/stand_cart/stand_cart_rules";
 import type { Branch, PartlyPaymentPeriod } from "#shared/branch";
 import type { BranchItem } from "#shared/branch-item";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import type { Period } from "#shared/period";
 import { futureRentPeriods } from "#shared/rent-periods";

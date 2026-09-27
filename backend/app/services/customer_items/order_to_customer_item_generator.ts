@@ -1,134 +1,79 @@
+import CustomerItem from "#models/customer_item";
 import type Order from "#models/order";
 import type OrderItem from "#models/order_item";
-import User from "#models/user";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
+
+type CustomerItemColumns = Pick<CustomerItem, (typeof CustomerItem.$columns)[number]>;
+
+/** The columns a customer item is created with; the rest take their defaults. */
+export type NewCustomerItem = Pick<
+  CustomerItemColumns,
+  | "type"
+  | "itemId"
+  | "blid"
+  | "customerId"
+  | "deadline"
+  | "handoutBranchId"
+  | "handoutEmployeeId"
+  | "handedOutAt"
+  | "amountLeftToPay"
+>;
 
 export class OrderToCustomerItemGenerator {
   /**
-   * The customer items the order's loans hand out. `orderItems` narrows the lines considered
-   * (default: all of the order's lines).
+   * The customer items the order's loans hand out, each with the line it comes from.
+   * `orderItems` narrows the lines considered (default: all of the order's lines).
    */
-  public async generate(
+  public generate(
+    order: Order,
+    orderItems: OrderItem[] = order.orderItems,
+  ): { orderItem: OrderItem; customerItem: NewCustomerItem }[] {
+    const { customerId } = order;
+    if (!customerId) {
+      return [];
+    }
+    return orderItems.filter(createsCustomerItem).map((orderItem) => {
+      if (!orderItem.periodTo) {
+        throw new Error(`order item ${orderItem.id} of type ${orderItem.type} has no deadline`);
+      }
+      return {
+        orderItem,
+        customerItem: {
+          type: orderItem.type === "partly-payment" ? "partly-payment" : "rent",
+          itemId: orderItem.itemId,
+          blid: orderItem.blid,
+          customerId,
+          deadline: orderItem.periodTo,
+          handoutBranchId: order.branchId,
+          handoutEmployeeId: order.employeeId,
+          handedOutAt: order.createdAt,
+          amountLeftToPay: orderItem.type === "partly-payment" ? orderItem.amountLeftToPay : null,
+        },
+      };
+    });
+  }
+
+  /**
+   * Creates the customer items the order's loans hand out and points each line at its customer
+   * item. The caller persists the lines (`order.saveWithItems()`).
+   */
+  public async createFor(
     order: Order,
     orderItems: OrderItem[] = order.orderItems,
   ): Promise<CustomerItem[]> {
-    const customerItems = [];
-
-    if (!order.customerId) {
-      return [];
+    const created: CustomerItem[] = [];
+    for (const { orderItem, customerItem } of this.generate(order, orderItems)) {
+      const row = await CustomerItem.create(customerItem);
+      orderItem.customerItemId = row.id;
+      created.push(row);
     }
-
-    const customerDetail = await User.findOrFail(order.customerId);
-
-    for (const orderItem of orderItems) {
-      if (this.shouldCreateCustomerItem(orderItem)) {
-        const customerItem = this.convertOrderItemToCustomerItem(customerDetail, order, orderItem);
-        customerItems.push(customerItem);
-      }
-    }
-
-    return customerItems;
+    return created;
   }
+}
 
-  private shouldCreateCustomerItem(orderItem: OrderItem) {
-    return (
-      orderItem.type === "partly-payment" ||
-      orderItem.type === "rent" ||
-      orderItem.type === "match-receive"
-    );
-  }
-
-  private convertOrderItemToCustomerItem(
-    customerDetail: User,
-    order: Order,
-    orderItem: OrderItem,
-  ): CustomerItem {
-    switch (orderItem.type) {
-      case "partly-payment": {
-        return this.createPartlyPaymentCustomerItem(customerDetail, order, orderItem);
-      }
-      case "rent":
-      case "match-receive": {
-        return this.createRentCustomerItem(customerDetail, order, orderItem);
-      }
-      // No default
-    }
-
-    throw new Error(`orderItem type "${orderItem.type}" is not supported`);
-  }
-
-  private createPartlyPaymentCustomerItem(
-    customerDetail: User,
-    order: Order,
-    orderItem: OrderItem,
-  ): CustomerItem {
-    return {
-      // @ts-expect-error fixme: auto ignored
-      id: null,
-      type: "partly-payment",
-      item: orderItem.itemId,
-      blid: orderItem.blid ?? undefined,
-      customer: customerDetail.id,
-      // @ts-expect-error fixme: auto ignored
-      deadline: orderItem.periodTo?.toJSDate(),
-      handout: true,
-      handoutInfo: this.createHandoutInfo(order),
-      returned: false,
-      buyout: false,
-      cancel: false,
-      buyback: false,
-      amountLeftToPay: orderItem.amountLeftToPay ?? undefined,
-      orders: [order.id],
-      customerInfo: this.createCustomerInfo(customerDetail),
-    };
-  }
-
-  private createRentCustomerItem(
-    customerDetail: User,
-    order: Order,
-    orderItem: OrderItem,
-  ): CustomerItem {
-    return {
-      // @ts-expect-error fixme: auto ignored
-      id: null,
-      type: "rent",
-      item: orderItem.itemId,
-      blid: orderItem.blid ?? undefined,
-      customer: customerDetail.id,
-      // @ts-expect-error fixme: auto ignored
-      deadline: orderItem.periodTo?.toJSDate(),
-      handout: true,
-      handoutInfo: this.createHandoutInfo(order),
-      returned: false,
-      buyout: false,
-      cancel: false,
-      buyback: false,
-      orders: [order.id],
-      customerInfo: this.createCustomerInfo(customerDetail),
-    };
-  }
-
-  private createHandoutInfo(order: Order) {
-    return {
-      handoutById: order.branchId,
-      handoutEmployee: order.employeeId ?? undefined,
-      time: order.createdAt.toJSDate(),
-    };
-  }
-
-  private createCustomerInfo(customerDetail: User) {
-    return {
-      name: customerDetail.name,
-      phone: customerDetail.phone ?? "",
-      address: customerDetail.address,
-      postCode: customerDetail.postCode,
-      postCity: customerDetail.postCity,
-      dob: customerDetail.dob?.toJSDate(),
-      guardian: {
-        name: customerDetail.guardianName ?? "",
-        email: customerDetail.guardianEmail ?? "",
-        phone: customerDetail.guardianPhone ?? "",
-      },
-    };
-  }
+function createsCustomerItem(orderItem: OrderItem): boolean {
+  return (
+    orderItem.type === "partly-payment" ||
+    orderItem.type === "rent" ||
+    orderItem.type === "match-receive"
+  );
 }

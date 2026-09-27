@@ -11,7 +11,6 @@ import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_move
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { PaymentHandler } from "#services/orders/payment_handler";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Payment } from "#shared/payment/payment";
 import { createBranch } from "#tests/branch_fixtures";
@@ -40,20 +39,6 @@ test.group("OrderPlacedHandler", (group) => {
     sandbox = createSandbox();
 
     sandbox.stub(orderItemMovedFromOrderHandler, "updateOrderItems").resolves(true);
-
-    const customerItemsStub = {
-      add: sandbox.stub().callsFake((customerItem) => {
-        if (customerItem.item === "item1") {
-          customerItem.id = "customerItem1";
-          return Promise.resolve(customerItem);
-        } else if (customerItem.item === "item2") {
-          customerItem.id = "customerItem2";
-          return Promise.resolve(customerItem);
-        }
-        return Promise.reject(new BlError("could not add doc"));
-      }),
-    };
-    sandbox.stub(StorageService, "CustomerItems").value(customerItemsStub);
 
     sandbox
       .stub(User, "find")

@@ -1,8 +1,6 @@
-import { DateTime } from "luxon";
-
+import type CustomerItem from "#models/customer_item";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { isDeadlineOverdue } from "#shared/deadline";
 
 /**
@@ -24,19 +22,19 @@ export const BulkCollectionMonitoring = {
     now: Date;
   }): Promise<void> {
     for (const customerItem of customerItems) {
-      if (!isDeadlineOverdue(customerItem.deadline, now)) {
+      if (!isDeadlineOverdue(customerItem.deadline.toJSDate(), now)) {
         continue;
       }
       await EmployeeMonitoringService.report({
         action: "overdue-book-collected",
         employee,
-        customerId: customerItem.customer,
+        customerId: customerItem.customerId,
         details: [
-          { label: "Bok", value: `«${titles.get(customerItem.item) ?? ""}»` },
+          { label: "Bok", value: `«${titles.get(customerItem.itemId) ?? ""}»` },
           { label: "Unik ID", value: customerItem.blid ?? "" },
           {
             label: "Frist",
-            value: DateTime.fromJSDate(customerItem.deadline).toFormat("dd.MM.yyyy"),
+            value: customerItem.deadline.toFormat("dd.MM.yyyy"),
           },
         ],
       });

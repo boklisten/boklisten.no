@@ -1,27 +1,35 @@
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 
 import { derivePlacementReports } from "#services/stand_cart/stand_cart_monitoring";
 import type { PlacementReportInput } from "#services/stand_cart/stand_cart_monitoring";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type CustomerItem from "#models/customer_item";
 import type { Order, OrderItem } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
+import { customerItemDouble } from "#tests/customer_item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
 const SEMESTER_END = new Date("2026-12-20T00:00:00.000Z");
 const PAST = new Date("2026-06-20T00:00:00.000Z");
 
-function customerItemWith(overrides: Partial<CustomerItem> = {}): CustomerItem {
-  return mock<CustomerItem>({
+function customerItemWith({
+  deadline = SEMESTER_END,
+  creationTime = new Date("2026-08-01T10:00:00.000Z"),
+  ...overrides
+}: Partial<Pick<CustomerItem, "id" | "blid" | "type">> & {
+  deadline?: Date;
+  creationTime?: Date;
+} = {}): CustomerItem {
+  return customerItemDouble({
     id: "ci1",
-    item: "item1",
+    itemId: "item1",
     blid: "12345678",
     type: "rent",
-    deadline: SEMESTER_END,
-    handout: true,
-    creationTime: new Date("2026-08-01T10:00:00.000Z"),
-    handoutInfo: { handoutById: "branch1", time: NOW },
-    periodExtends: [],
+    deadline: DateTime.fromJSDate(deadline),
+    createdAt: DateTime.fromJSDate(creationTime),
+    handoutBranchId: "branch1",
+    handedOutAt: DateTime.fromJSDate(NOW),
     ...overrides,
   });
 }

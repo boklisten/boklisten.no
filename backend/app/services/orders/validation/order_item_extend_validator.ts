@@ -1,5 +1,5 @@
 import type OrderItem from "#models/order_item";
-import { StorageService } from "#services/storage_service";
+import CustomerItem from "#models/customer_item";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
 
@@ -40,11 +40,7 @@ export class OrderItemExtendValidator {
     orderItem: OrderItem,
     customerItemId: string,
   ): Promise<boolean> {
-    const customerItem = await StorageService.CustomerItems.get(customerItemId);
-    if (!customerItem.periodExtends) {
-      return true;
-    }
-
+    const customerItem = await CustomerItem.findOrFail(customerItemId);
     let totalOfSelectedPeriod = 0;
     for (const periodExtend of customerItem.periodExtends) {
       if (periodExtend.periodType === orderItem.periodType) {

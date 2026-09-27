@@ -60,7 +60,7 @@ interface ObligationFacts {
 /**
  * Whether a handover discharges the sender half of this obligation.
  *
- * Ownership follows possession — `CustomerItemActiveBlid` resolves a blid to its currently active
+ * Ownership follows possession — `CustomerItem.activeByBlid` resolves a blid to its currently active
  * `CustomerItem`, and both peer transfers and stand returns move that record to the new holder. So
  * the party handing a book over is always the party responsible for it, and the only questions left
  * are whether they are this obligation's sender and whether the title matches.

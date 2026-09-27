@@ -3,6 +3,7 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import CustomerItem from "#models/customer_item";
 import Order from "#models/order";
 import {
   deleteInvoice,
@@ -13,9 +14,9 @@ import {
 } from "#services/invoices/invoice_status_service";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { StorageService } from "#services/storage_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Invoice } from "#shared/invoice";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { mock } from "#tests/test-doubles";
@@ -54,14 +55,10 @@ function invoice(overrides: Partial<Invoice> = {}): Invoice {
   });
 }
 
-function customerItem(overrides: Partial<CustomerItem>): CustomerItem {
-  return mock<CustomerItem>({
-    customer: CUSTOMER_ID,
-    returned: false,
-    buyout: false,
-    handoutInfo: { handoutById: "branch1", time: new Date() },
-    ...overrides,
-  });
+/** The buyout flag of each invoiced book, by customer item id. */
+async function buyoutFlags() {
+  const customerItems = await CustomerItem.query().orderBy("id");
+  return customerItems.map((customerItem) => [customerItem.id, customerItem.buyout]);
 }
 
 test.group("invoice status changes", (group) => {
@@ -69,7 +66,6 @@ test.group("invoice status changes", (group) => {
   let getInvoice: sinon.SinonStub;
   let updateInvoice: sinon.SinonStub;
   let removeInvoice: sinon.SinonStub;
-  let customerItems: { getMany: sinon.SinonStub; update: sinon.SinonStub };
   let placeOrder: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
@@ -79,6 +75,15 @@ test.group("invoice status changes", (group) => {
     await createUser({ id: EMPLOYEE_ID });
     await createItem({ id: "i1", title: "Psykologi 2 2022" });
     await createItem({ id: "i2", title: "Matematikk R1" });
+    const invoiced = { customerId: CUSTOMER_ID, handoutBranchId: "branch1" };
+    await createCustomerItem({ ...invoiced, id: "ci1", itemId: "i1", blid: "blid1" });
+    await createCustomerItem({
+      ...invoiced,
+      id: "ci2",
+      itemId: "i2",
+      blid: "blid2",
+      returned: true,
+    });
     sandbox = createSandbox();
     getInvoice = sandbox.stub().resolves(invoice());
     updateInvoice = sandbox
@@ -88,16 +93,6 @@ test.group("invoice status changes", (group) => {
     sandbox
       .stub(StorageService, "Invoices")
       .value({ get: getInvoice, update: updateInvoice, remove: removeInvoice });
-    customerItems = {
-      getMany: sandbox
-        .stub()
-        .resolves([
-          customerItem({ id: "ci1", item: "i1", blid: "blid1" }),
-          customerItem({ id: "ci2", item: "i2", blid: "blid2", returned: true }),
-        ]),
-      update: sandbox.stub().resolves({}),
-    };
-    sandbox.stub(StorageService, "CustomerItems").value(customerItems);
     placeOrder = sandbox
       .stub(OrderPlacedHandler.prototype, "placeOrder")
       .callsFake((order: Order) => Promise.resolve(order));
@@ -159,20 +154,17 @@ test.group("invoice status changes", (group) => {
       ],
     );
     assert.equal(placeOrder.firstCall.args[0].id, order?.id);
-    assert.deepEqual(
-      customerItems.update.args.map(([id, patch]) => [id, patch]),
-      [
-        ["ci1", { buyout: true }],
-        ["ci2", { buyout: true }],
-      ],
-    );
+    assert.deepEqual(await buyoutFlags(), [
+      ["ci1", true],
+      ["ci2", true],
+    ]);
     assert.deepEqual(warnings, []);
   });
 
   test("marking paid when no book is active still sets the flags, with a warning", async ({
     assert,
   }) => {
-    customerItems.getMany.resolves([customerItem({ id: "ci1", item: "i1", returned: true })]);
+    await CustomerItem.query().where("id", "ci1").update({ returned: true });
 
     const { warnings } = await setInvoiceStatus("inv1", "paid", EMPLOYEE_ID);
 
@@ -213,13 +205,10 @@ test.group("invoice status changes", (group) => {
       (await Order.all()).map((order) => order.id),
       ["unrelated"],
     );
-    assert.deepEqual(
-      customerItems.update.args.map(([id, patch]) => [id, patch]),
-      [
-        ["ci1", { buyout: false }],
-        ["ci2", { buyout: false }],
-      ],
-    );
+    assert.deepEqual(await buyoutFlags(), [
+      ["ci1", false],
+      ["ci2", false],
+    ]);
     assert.deepEqual(warnings, []);
   });
 
@@ -243,7 +232,10 @@ test.group("invoice status changes", (group) => {
     await setInvoiceStatus("inv1", "debtCollection", EMPLOYEE_ID);
 
     assert.lengthOf(await Order.all(), 0);
-    assert.isTrue(customerItems.update.notCalled);
+    assert.deepEqual(await buyoutFlags(), [
+      ["ci1", false],
+      ["ci2", false],
+    ]);
   });
 
   test("a bulk change applies to every invoice in order and names the invoice in each warning", async ({

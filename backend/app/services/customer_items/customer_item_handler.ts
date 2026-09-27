@@ -1,11 +1,17 @@
+import { DateTime } from "luxon";
+
 import BranchModel from "#models/branch";
+import CustomerItem from "#models/customer_item";
 import type OrderItem from "#models/order_item";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import type { Branch, ExtendPeriod } from "#shared/branch";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Period } from "#shared/period";
 
+/**
+ * Applies a placed order's lines to the customer items they name. The order line's
+ * `customer_item_id` is what ties the order to the customer item, so nothing here records the
+ * order on the customer item beyond the state change it causes.
+ */
 export class CustomerItemHandler {
   /**
    * Extends the deadline of a customer item
@@ -16,9 +22,8 @@ export class CustomerItemHandler {
     customerItemId: string,
     orderItem: OrderItem,
     branchId: string,
-    orderId: string,
   ): Promise<CustomerItem> {
-    const customerItem = await StorageService.CustomerItems.get(customerItemId);
+    const customerItem = await CustomerItem.findOrFail(customerItemId);
 
     if (customerItem.returned) {
       throw new BlError("can not extend when returned is true");
@@ -36,25 +41,15 @@ export class CustomerItemHandler {
 
     this.getExtendPeriod(branch, orderItem.periodType);
 
-    const periodExtends = customerItem.periodExtends ?? [];
-
-    const customerItemOrders = customerItem.orders ?? [];
-
-    const deadline = orderItem.periodTo.toJSDate();
-    periodExtends.push({
-      // @ts-expect-error fixme: auto ignored
-      from: orderItem.periodFrom?.toJSDate(),
-      to: deadline,
+    await customerItem.related("periodExtends").create({
+      periodFrom: orderItem.periodFrom ?? customerItem.deadline,
+      periodTo: orderItem.periodTo,
       periodType: orderItem.periodType,
-      time: new Date(),
+      createdAt: DateTime.now(),
     });
-
-    customerItemOrders.push(orderId);
-    return StorageService.CustomerItems.update(customerItemId, {
-      deadline,
-      periodExtends,
-      orders: customerItemOrders,
-    });
+    customerItem.deadline = orderItem.periodTo;
+    await customerItem.save();
+    return customerItem;
   }
 
   /**
@@ -68,30 +63,19 @@ export class CustomerItemHandler {
       throw new BlError(`orderItem.type is not "buyout"`);
     }
 
-    const customerItem = await StorageService.CustomerItems.get(customerItemId);
-    const customerItemOrders = customerItem.orders ?? [];
-
-    customerItemOrders.push(orderId);
-
-    return StorageService.CustomerItems.update(customerItemId, {
-      buyout: true,
-      orders: customerItemOrders,
-      buyoutInfo: {
-        order: orderId,
-        time: new Date(),
-      },
-    });
+    const customerItem = await CustomerItem.findOrFail(customerItemId);
+    return customerItem
+      .merge({ buyout: true, buyoutOrderId: orderId, boughtOutAt: DateTime.now() })
+      .save();
   }
 
   /**
    * Returns a customer item
    * @param customerItemId
-   * @param orderId
    * @param orderItem
    */
   public async return(
     customerItemId: string,
-    orderId: string,
     orderItem: OrderItem,
     branchId: string,
     employeeId: string,
@@ -100,21 +84,15 @@ export class CustomerItemHandler {
       throw new BlError(`orderItem.type is not "return"`);
     }
 
-    const customerItem = await StorageService.CustomerItems.get(customerItemId);
-
-    const customerItemOrders = customerItem.orders ?? [];
-
-    customerItemOrders.push(orderId);
-
-    return StorageService.CustomerItems.update(customerItemId, {
-      returned: true,
-      orders: customerItemOrders,
-      returnInfo: {
-        returnedToId: branchId,
-        returnEmployee: employeeId,
-        time: new Date(),
-      },
-    });
+    const customerItem = await CustomerItem.findOrFail(customerItemId);
+    return customerItem
+      .merge({
+        returned: true,
+        returnBranchId: branchId,
+        returnEmployeeId: employeeId || null,
+        returnedAt: DateTime.now(),
+      })
+      .save();
   }
 
   /**
@@ -128,21 +106,10 @@ export class CustomerItemHandler {
       throw new BlError(`orderItem.type is not "cancel"`);
     }
 
-    const customerItem = await StorageService.CustomerItems.get(customerItemId);
-
-    const customerItemOrders = customerItem.orders ?? [];
-
-    customerItemOrders.push(orderId);
-
-    return StorageService.CustomerItems.update(customerItemId, {
-      returned: true,
-      orders: customerItemOrders,
-      cancel: true,
-      cancelInfo: {
-        time: new Date(),
-        order: orderId,
-      },
-    });
+    const customerItem = await CustomerItem.findOrFail(customerItemId);
+    return customerItem
+      .merge({ returned: true, cancel: true, cancelOrderId: orderId, cancelledAt: DateTime.now() })
+      .save();
   }
 
   /**
@@ -156,20 +123,15 @@ export class CustomerItemHandler {
       throw new BlError(`orderItem.type is not "buyback"`);
     }
 
-    const customerItem = await StorageService.CustomerItems.get(customerItemId);
-    const customerItemOrders = customerItem.orders ?? [];
-
-    customerItemOrders.push(orderId);
-
-    return StorageService.CustomerItems.update(customerItemId, {
-      returned: true,
-      orders: customerItemOrders,
-      buyback: true,
-      buybackInfo: {
-        order: orderId,
-        time: new Date(),
-      },
-    });
+    const customerItem = await CustomerItem.findOrFail(customerItemId);
+    return customerItem
+      .merge({
+        returned: true,
+        buyback: true,
+        buybackOrderId: orderId,
+        boughtBackAt: DateTime.now(),
+      })
+      .save();
   }
 
   private getExtendPeriod(branch: Branch, period: Period): ExtendPeriod {

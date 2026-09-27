@@ -1,17 +1,13 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { DateTime } from "luxon";
 
 import { PublicBlidLookupService } from "#services/public_blid_lookup_service";
-import { StorageService } from "#services/storage_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createUniqueItem } from "#tests/unique_item_fixtures";
-import { mock } from "#tests/test-doubles";
-import User from "#models/user";
-import { userDouble } from "#tests/user_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 const BLID = "12345678";
@@ -19,41 +15,32 @@ const ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
 
 test.group("PublicBlidLookupService.lookup()", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  let aggregate: sinon.SinonStub;
-  let customerItems: sinon.SinonStub;
-
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     await createItem({ id: ITEM_ID, title: "Sinus 1T", isbn: 9_788_202_418_304 });
     await createBranch({ id: BRANCH_ID, name: "Ullern VGS" });
-    sandbox = createSandbox();
-    aggregate = sandbox.stub(StorageService.CustomerItems, "aggregate").resolves([]);
-    customerItems = sandbox.stub(StorageService.CustomerItems, "getByQueryOrNull").resolves(null);
+    await createUser({
+      id: CUSTOMER_ID,
+      name: "Ola Nordmann",
+      email: "ola@example.com",
+      phone: "12345678",
+    });
   });
-  group.each.teardown(() => sandbox.restore());
+
+  const copy = (returned: boolean) =>
+    createCustomerItem({
+      blid: BLID,
+      itemId: ITEM_ID,
+      customerId: CUSTOMER_ID,
+      handoutBranchId: BRANCH_ID,
+      handedOutAt: DateTime.fromISO("2026-08-20T10:00:00.000Z"),
+      deadline: DateTime.fromISO("2026-12-20T23:00:00.000Z"),
+      returned,
+    });
 
   test("a book someone holds right now is reported with its holder", async ({ assert }) => {
-    aggregate.resolves([
-      {
-        handoutBranchId: BRANCH_ID,
-        handoutTime: "2026-08-20T10:00:00.000Z",
-        deadline: "2026-12-20T23:00:00.000Z",
-        itemId: ITEM_ID,
-        customerId: CUSTOMER_ID,
-      },
-    ]);
-    sandbox
-      .stub(User, "findOptional")
-      .withArgs(CUSTOMER_ID)
-      .resolves(
-        userDouble({
-          id: CUSTOMER_ID,
-          name: "Ola Nordmann",
-          email: "ola@example.com",
-          phone: "12345678",
-        }),
-      );
+    await copy(true);
+    await copy(false);
 
     const result = await PublicBlidLookupService.lookup(BLID);
 
@@ -66,6 +53,10 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
       isbn: "9788202418304",
       handoutBranch: "Ullern VGS",
     });
+    if (result.status === "handedOut") {
+      assert.equal(new Date(result.handoutTime).toISOString(), "2026-08-20T10:00:00.000Z");
+      assert.equal(new Date(result.deadline).toISOString(), "2026-12-20T23:00:00.000Z");
+    }
     assert.notProperty(result, "itemId");
   });
 
@@ -82,7 +73,7 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
   test("a legacy blid known only from a returned customer item is still reported as not handed out", async ({
     assert,
   }) => {
-    customerItems.resolves([mock<CustomerItem>({ blid: BLID, item: ITEM_ID, returned: true })]);
+    await copy(true);
 
     const result = await PublicBlidLookupService.lookup(BLID);
 

@@ -1,14 +1,16 @@
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 
 import {
   availableExtendPeriods,
   calculateExtensionStatus,
   resolveBuyoutPrice,
 } from "#services/customer_item_actions_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
+import type CustomerItem from "#models/customer_item";
 import type { Item } from "#shared/item";
 import type { Branch as BranchDto } from "#shared/branch";
 import { branchDto } from "#tests/branch_fixtures";
+import { customerItemDouble } from "#tests/customer_item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const DEADLINE = new Date("2027-01-15T00:00:00.000Z");
@@ -16,14 +18,11 @@ const LATER = new Date("2027-07-01T00:00:00.000Z");
 const EARLIER = new Date("2026-12-20T00:00:00.000Z");
 
 function customerItemWith(extensions: number): CustomerItem {
-  return mock<CustomerItem>({
-    id: "ci1",
-    deadline: DEADLINE,
+  return customerItemDouble({
+    deadline: DateTime.fromJSDate(DEADLINE),
     periodExtends: Array.from({ length: extensions }, () => ({
-      from: EARLIER,
-      to: DEADLINE,
-      periodType: "semester",
-      time: EARLIER,
+      periodFrom: DateTime.fromJSDate(EARLIER),
+      periodTo: DateTime.fromJSDate(DEADLINE),
     })),
   });
 }
@@ -138,7 +137,7 @@ test.group("resolveBuyoutPrice", () => {
 
   test("uses the branch buyout share of the item price, rounded down to 10 kr", ({ assert }) => {
     const price = resolveBuyoutPrice({
-      customerItem: mock<CustomerItem>({}),
+      customerItem: customerItemDouble(),
       item,
       branch: branchDto({ buyoutPercentage: 0.5 }),
       periodType: "year",
@@ -150,7 +149,7 @@ test.group("resolveBuyoutPrice", () => {
     assert,
   }) => {
     const price = resolveBuyoutPrice({
-      customerItem: mock<CustomerItem>({}),
+      customerItem: customerItemDouble(),
       item,
       branch: branchDto({
         buyoutPercentage: 0.5,
@@ -172,7 +171,7 @@ test.group("resolveBuyoutPrice", () => {
     const branch = branchDto({ buyoutPercentage: 0.5 });
     assert.equal(
       resolveBuyoutPrice({
-        customerItem: mock<CustomerItem>({ amountLeftToPay: 333 }),
+        customerItem: customerItemDouble({ amountLeftToPay: 333 }),
         item,
         branch,
         periodType: undefined,
@@ -181,7 +180,7 @@ test.group("resolveBuyoutPrice", () => {
     );
     assert.equal(
       resolveBuyoutPrice({
-        customerItem: mock<CustomerItem>({ amountLeftToPay: 0 }),
+        customerItem: customerItemDouble({ amountLeftToPay: 0 }),
         item,
         branch,
         periodType: undefined,
@@ -192,7 +191,7 @@ test.group("resolveBuyoutPrice", () => {
 
   test("has no price when the branch never set a buyout share", ({ assert }) => {
     const price = resolveBuyoutPrice({
-      customerItem: mock<CustomerItem>({}),
+      customerItem: customerItemDouble(),
       item,
       branch: branchDto({ buyoutPercentage: 0 }),
       periodType: undefined,

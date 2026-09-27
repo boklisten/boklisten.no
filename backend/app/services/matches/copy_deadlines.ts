@@ -1,7 +1,6 @@
-import { ObjectId } from "mongodb";
+import db from "@adonisjs/lucid/services/db";
 
-import { StorageService } from "#services/storage_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
+import CustomerItem from "#models/customer_item";
 import { getEquivalentItemIds } from "#shared/item-equivalence";
 
 /**
@@ -20,26 +19,11 @@ export async function extendRemainingCopyDeadlines(
   itemId: string,
   releasedDeadline: Date,
 ) {
-  const equivalentItemIds = getEquivalentItemIds(itemId);
-
-  const remaining = await StorageService.CustomerItems.aggregate<CustomerItem>([
-    {
-      $match: {
-        customer: new ObjectId(customerId),
-        item: { $in: equivalentItemIds.map((id) => new ObjectId(id)) },
-        returned: false,
-        buyout: false,
-        cancel: false,
-        buyback: false,
-      },
-    },
-  ]);
-
-  await Promise.all(
-    remaining
-      .filter((customerItem) => new Date(customerItem.deadline) < releasedDeadline)
-      .map((customerItem) =>
-        StorageService.CustomerItems.update(customerItem.id, { deadline: releasedDeadline }),
-      ),
-  );
+  await CustomerItem.whereActive(
+    db
+      .from("customer_items")
+      .where("customer_id", customerId)
+      .whereIn("item_id", getEquivalentItemIds(itemId))
+      .where("deadline", "<", releasedDeadline),
+  ).update({ deadline: releasedDeadline, updated_at: new Date() });
 }

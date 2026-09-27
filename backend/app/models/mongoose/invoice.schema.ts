@@ -1,6 +1,5 @@
 import { Schema } from "mongoose";
 
-import { BlSchemaName } from "#models/mongoose/storage/bl-schema-names";
 import type { BlSchema } from "#services/storage_service";
 import type { Invoice } from "#shared/invoice";
 
@@ -36,10 +35,7 @@ export const InvoiceSchema: BlSchema<Invoice> = new Schema({
   customerItemPayments: {
     type: [
       {
-        customerItem: {
-          type: Schema.Types.ObjectId,
-          ref: BlSchemaName.CustomerItems,
-        },
+        customerItem: { type: Schema.Types.ObjectId },
         title: String,
         item: { type: Schema.Types.ObjectId },
         numberOfItems: String,

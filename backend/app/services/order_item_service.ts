@@ -1,9 +1,9 @@
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import type CustomerItem from "#models/customer_item";
 import type { NewOrderItem } from "#models/order";
 import { periodTypeOfLastOrder, resolveBuyoutPrice } from "#services/customer_item_actions_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 
 /** Deadlines are compared as Oslo calendar days, so a date picked in a form matches the branch period. */
@@ -13,7 +13,7 @@ function isSameDeadlineDay(a: Date, b: Date): boolean {
 
 export const OrderItemService = {
   async createBuyoutOrderItem(customerItem: CustomerItem, item: Item) {
-    const branch = await Branch.findOptional(customerItem.handoutInfo?.handoutById);
+    const branch = await Branch.findOptional(customerItem.handoutBranchId);
     const price = resolveBuyoutPrice({
       customerItem,
       item,
@@ -37,17 +37,17 @@ export const OrderItemService = {
   },
 
   async createExtendOrderItem(customerItem: CustomerItem, item: Item, to: Date) {
-    const branch = await Branch.getOrFail(customerItem.handoutInfo?.handoutById);
+    const branch = await Branch.getOrFail(customerItem.handoutBranchId);
     const extendPeriod = branch.extendPeriods.find((period) => isSameDeadlineDay(period.date, to));
     if (!extendPeriod) {
       throw new Error(
-        `Extend period not found in checkout customer: ${customerItem.customer}, branch: ${branch.id}, customer item: ${customerItem.id}`,
+        `Extend period not found in checkout customer: ${customerItem.customerId}, branch: ${branch.id}, customer item: ${customerItem.id}`,
       );
     }
 
-    if ((customerItem.periodExtends?.length ?? 0) >= extendPeriod.maxNumberOfPeriods) {
+    if (customerItem.periodExtends.length >= extendPeriod.maxNumberOfPeriods) {
       throw new Error(
-        `Customer item does not qualify for extension: ${customerItem.customer}, branch: ${branch.id}, customer item: ${customerItem.id}`,
+        `Customer item does not qualify for extension: ${customerItem.customerId}, branch: ${branch.id}, customer item: ${customerItem.id}`,
       );
     }
 

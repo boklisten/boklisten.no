@@ -1,9 +1,8 @@
-import { ObjectId } from "mongodb";
+import { DateTime } from "luxon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
-import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
-import { StorageService } from "#services/storage_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
+import CustomerItem from "#models/customer_item";
+import type { CustomerItem as CustomerItemDto } from "#shared/customer-item/customer-item";
 
 interface ActiveItemCorrection {
   customerItemId: string;
@@ -18,27 +17,24 @@ interface ActiveItemCorrection {
  */
 export const ActiveItemCorrections = {
   /** Writes the correction and returns the book as it was, for the report. */
-  async write({ customerItemId, deadline, branchId }: ActiveItemCorrection): Promise<CustomerItem> {
-    // Read before writing so the report can say what the values were.
-    const previous = await StorageService.CustomerItems.getOrNull(customerItemId);
-    const set: Record<string, unknown> = { lastUpdated: new Date() };
-    if (deadline) {
-      set["deadline"] = deadline;
-    }
-    if (branchId) {
-      set["handoutInfo.handoutById"] = new ObjectId(branchId);
-    }
-    const result = await StorageService.CustomerItems.updateMany(
-      {
-        _id: new ObjectId(customerItemId),
-        ...ACTIVE_CUSTOMER_ITEM_MATCH,
-        buyback: { $ne: true },
-      },
-      { $set: set },
-    );
-    if (result.matchedCount === 0 || !previous) {
+  async write({
+    customerItemId,
+    deadline,
+    branchId,
+  }: ActiveItemCorrection): Promise<CustomerItemDto> {
+    const customerItem = await CustomerItem.find(customerItemId);
+    if (!customerItem?.isActive) {
       throw new BadRequestException("Boka er ikke aktivt utdelt");
     }
+    // The values before the write, so the report can say what they were.
+    const previous = customerItem.toDto();
+    if (deadline) {
+      customerItem.deadline = DateTime.fromJSDate(deadline);
+    }
+    if (branchId) {
+      customerItem.handoutBranchId = branchId;
+    }
+    await customerItem.save();
     return previous;
   },
 };

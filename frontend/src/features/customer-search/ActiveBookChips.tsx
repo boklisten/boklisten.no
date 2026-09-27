@@ -62,11 +62,11 @@ export function ActiveBookBranchChip({ book }: { book: ActiveCustomerItem }) {
         title="Endre filial"
         onClick={() => setEditing(true)}
       >
-        {book.handoutBranch?.name ?? "Velg filial"}
+        {book.handoutBranch.name}
       </ChipButton>
       {editing && (
         <ChangeBranchModal
-          currentBranchId={book.handoutBranch?.id ?? null}
+          currentBranchId={book.handoutBranch.id}
           description="Boka regnes som utdelt fra denne filialen"
           isPending={updateMutation.isPending}
           onClose={() => setEditing(false)}

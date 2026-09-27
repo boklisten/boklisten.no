@@ -1,8 +1,6 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import { createSandbox } from "sinon";
 
-import { StorageService } from "#services/storage_service";
 import type { DuplicateCandidateSource } from "#services/user_duplicates_service";
 import {
   findDuplicateCandidatePairs,
@@ -130,12 +128,6 @@ test.group("findDuplicateCandidatePairs", () => {
 
 test.group("UserDuplicatesService.summarizeUserDetails", (group) => {
   group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(() => {
-    // Customer items stay in Mongo, which the test environment has none of.
-    const sandbox = createSandbox();
-    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves([]);
-    return () => sandbox.restore();
-  });
 
   test("counts the open rent and partly-payment lines of placed orders", async ({ assert }) => {
     const [branch, customer, other, item] = await Promise.all([

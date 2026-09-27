@@ -5,7 +5,7 @@ import MatchParticipant from "#models/match_participant";
 import Order from "#models/order";
 import Signature from "#models/signature";
 import User from "#models/user";
-import { CustomerHaveActiveCustomerItems } from "#services/customer_items/customer_have_active_customer_items";
+import CustomerItem from "#models/customer_item";
 import { CustomerInvoiceActive } from "#services/invoices/customer_invoice_active";
 import { countActiveMatches } from "#services/matches/active_matches";
 import { OrderActive } from "#services/orders/order_active";
@@ -70,7 +70,7 @@ async function deleteUser(detailsId: string) {
 
   const [activeOrders, activeCustomerItems, activeInvoices, activeMatches] = await Promise.all([
     new OrderActive().haveActiveOrders(detailsId),
-    new CustomerHaveActiveCustomerItems().haveActiveCustomerItems(detailsId),
+    CustomerItem.hasActive(detailsId),
     new CustomerInvoiceActive().haveActiveInvoices(detailsId),
     countActiveMatches([detailsId]),
   ]);
@@ -108,7 +108,7 @@ async function mergeUsers(fromDetailsId: string, toDetailsId: string) {
 
   await Promise.all([
     Signature.reassignCustomer(fromDetailsId, toDetailsId),
-    StorageService.CustomerItems.updateMany({ customer: fromDetailsId }, { customer: toDetailsId }),
+    CustomerItem.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
     Order.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
     StorageService.Payments.updateMany({ customer: fromDetailsId }, { customer: toDetailsId }),
     StorageService.Invoices.updateMany(

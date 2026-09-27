@@ -1,66 +1,44 @@
 import db from "@adonisjs/lucid/services/db";
 import type { DateTime } from "luxon";
-import { ObjectId } from "mongodb";
 
+import CustomerItem from "#models/customer_item";
 import { deadlineWindow } from "#services/deadline_window";
-import { StorageService } from "#services/storage_service";
 import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 
-function toObjectIds(ids: string[]): ObjectId[] {
-  return ids.map((id) => new ObjectId(id));
-}
-
+/** Active customer items due in the window around `deadline`, as a query on `customer_items`. */
 function activeBooksAtDeadline(deadline: DateTime) {
   const { after, before } = deadlineWindow(deadline);
-  return {
-    returned: false,
-    buyout: false,
-    cancel: false,
-    buyback: false,
-    deadline: { $gt: after, $lt: before },
-  };
+  return CustomerItem.whereActive(
+    db
+      .from("customer_items")
+      .whereNotNull("customer_items.customer_id")
+      .where("customer_items.deadline", ">", after)
+      .where("customer_items.deadline", "<", before),
+  );
 }
 
-function activeBooksHandedOutAt(branchIds: string[], deadline: DateTime) {
-  return {
-    ...activeBooksAtDeadline(deadline),
-    "handoutInfo.handoutById": { $in: toObjectIds(branchIds) },
-  };
+function groupByCustomer(rows: { customerId: string; itemId: string }[]) {
+  const held = new Map<string, Set<string>>();
+  for (const { customerId, itemId } of rows) {
+    held.set(customerId, (held.get(customerId) ?? new Set()).add(itemId));
+  }
+  return held;
 }
-
-const groupByCustomer = {
-  $group: {
-    _id: "$customer",
-    id: { $first: "$customer" },
-    items: { $addToSet: "$item" },
-  },
-};
 
 export async function getHeldItems(
   branchIds: string[],
   deadline: DateTime,
   includeItemsFromOtherBranches: boolean,
 ): Promise<Map<string, Set<string>>> {
-  let aggregated = await StorageService.CustomerItems.aggregate<{ id: string; items: string[] }>([
-    { $match: activeBooksHandedOutAt(branchIds, deadline) },
-    groupByCustomer,
-  ]);
-
-  if (includeItemsFromOtherBranches) {
-    aggregated = await StorageService.CustomerItems.aggregate<{ id: string; items: string[] }>([
-      {
-        $match: {
-          ...activeBooksAtDeadline(deadline),
-          customer: { $in: aggregated.map((sender) => new ObjectId(sender.id)) },
-        },
-      },
-      groupByCustomer,
-    ]);
-  }
-
-  return new Map(
-    aggregated.map((sender) => [String(sender.id), new Set(sender.items.map(String))]),
-  );
+  const holders = activeBooksAtDeadline(deadline)
+    .whereIn("customer_items.handout_branch_id", branchIds)
+    .select("customer_items.customer_id");
+  const rows: { customerId: string; itemId: string }[] = await (
+    includeItemsFromOtherBranches
+      ? activeBooksAtDeadline(deadline).whereIn("customer_items.customer_id", holders)
+      : activeBooksAtDeadline(deadline).whereIn("customer_items.handout_branch_id", branchIds)
+  ).distinct("customer_items.customer_id as customerId", "customer_items.item_id as itemId");
+  return groupByCustomer(rows);
 }
 
 /**
@@ -80,9 +58,5 @@ export async function getWantedItems(branchIds: string[]): Promise<Map<string, S
     .whereIn("order_items.type", [...LOAN_ORDER_ITEM_TYPES])
     .distinct("orders.customer_id as customerId", "order_items.item_id as itemId");
 
-  const wanted = new Map<string, Set<string>>();
-  for (const { customerId, itemId } of rows) {
-    wanted.set(customerId, (wanted.get(customerId) ?? new Set()).add(itemId));
-  }
-  return wanted;
+  return groupByCustomer(rows);
 }

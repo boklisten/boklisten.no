@@ -3,6 +3,7 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import type CustomerItem from "#models/customer_item";
 import type Order from "#models/order";
 import type OrderItem from "#models/order_item";
 import { OrderPayments } from "#services/payments/order_payments";
@@ -10,11 +11,11 @@ import type { StandCartLineContext } from "#services/stand_cart/stand_cart_line_
 import type { CheckoutLine } from "#services/stand_cart/stand_cart_order_builder";
 import { allocateRefund, StandCartRefund } from "#services/stand_cart/stand_cart_refund";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import type { Payment } from "#shared/payment/payment";
 import type { StandCartOption, StandCartRefundPlan } from "#shared/stand_cart";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { mock } from "#tests/test-doubles";
@@ -179,13 +180,14 @@ test.group("StandCartRefund.plan", (group) => {
   test("a held book follows the handout order back to the order that was paid", async ({
     assert,
   }) => {
-    const customerItem = mock<CustomerItem>({
-      id: "ci1",
-      item: item.id,
-      orders: [HANDOUT_ORDER_ID],
-    });
     const branch = await createBranch();
     await createItem({ id: item.id, title: item.title, price: item.price });
+    const customerItem = await createCustomerItem({
+      id: "ci1",
+      itemId: item.id,
+      customerId: null,
+      handoutBranchId: branch.id,
+    });
     await createOrder({
       id: PAID_ORDER_ID,
       branchId: branch.id,
@@ -209,13 +211,14 @@ test.group("StandCartRefund.plan", (group) => {
   test("a held book whose handout order was itself paid is refunded on that order", async ({
     assert,
   }) => {
-    const customerItem = mock<CustomerItem>({
-      id: "ci1",
-      item: item.id,
-      orders: [HANDOUT_ORDER_ID],
-    });
     const branch = await createBranch();
     await createItem({ id: item.id, title: item.title, price: item.price });
+    const customerItem = await createCustomerItem({
+      id: "ci1",
+      itemId: item.id,
+      customerId: null,
+      handoutBranchId: branch.id,
+    });
     await createOrder({
       id: HANDOUT_ORDER_ID,
       branchId: branch.id,

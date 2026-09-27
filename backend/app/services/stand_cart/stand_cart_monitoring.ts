@@ -1,5 +1,6 @@
 import { DateTime } from "luxon";
 
+import type CustomerItem from "#models/customer_item";
 import type {
   MonitoredAction,
   MonitoredEmployee,
@@ -9,7 +10,6 @@ import { EmployeeMonitoringService } from "#services/employee_monitoring_service
 import type { SignatureExceptionReason } from "#services/signature_helper";
 import { HeldBookRules } from "#services/stand_cart/stand_cart_rules";
 import { TranslationService } from "#services/translation_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { OrderItem as OrderItemDto } from "#shared/order/order";
 import type { Payment } from "#shared/payment/payment";
 
@@ -40,8 +40,8 @@ export function isLoanHandout(orderItem: Pick<OrderItem, "type" | "handout">): b
   return orderItem.handout && (orderItem.type === "rent" || orderItem.type === "partly-payment");
 }
 
-function formatDeadline(deadline: Date | string): string {
-  return DateTime.fromJSDate(new Date(deadline)).toFormat("dd.MM.yyyy");
+function formatDeadline(deadline: DateTime): string {
+  return deadline.toFormat("dd.MM.yyyy");
 }
 
 function bookDetails(orderItem: OrderItem): MonitoringDetail[] {

@@ -1,15 +1,13 @@
-import { ObjectId } from "mongodb";
+import { DateTime } from "luxon";
 
+import CustomerItem from "#models/customer_item";
 import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import type UniqueItem from "#models/unique_item";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { isMonitored } from "#services/employee_monitoring_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
-import { StorageService } from "#services/storage_service";
 import { UniqueItemMonitoring } from "#services/unique_item_monitoring";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 
 const HELD_BOOK_MESSAGE = "Boka er utdelt og kan ikke slettes";
 
@@ -23,17 +21,8 @@ async function uniqueItemOrFail(blid: string): Promise<UniqueItem> {
 
 /** The customer item, if any, of a customer who currently holds the book. */
 async function findHeldCustomerItem(blid: string): Promise<CustomerItem | undefined> {
-  const databaseQuery = new SEDbQuery();
-  databaseQuery.stringFilters = [{ fieldName: "blid", value: blid }];
-  const customerItems = (await StorageService.CustomerItems.getByQueryOrNull(databaseQuery)) ?? [];
-  return customerItems.find(
-    (customerItem) =>
-      customerItem.handout &&
-      !customerItem.returned &&
-      !customerItem.buyout &&
-      !customerItem.cancel &&
-      !customerItem.buyback,
-  );
+  const [held] = await CustomerItem.activeByBlid(blid);
+  return held;
 }
 
 /**
@@ -57,10 +46,9 @@ export const UniqueItemEditService = {
     const previousItemId = uniqueItem.itemId;
 
     await uniqueItem.merge({ itemId: item.id }).save();
-    const result = await StorageService.CustomerItems.updateMany(
-      { blid },
-      { $set: { item: new ObjectId(item.id), lastUpdated: new Date() } },
-    );
+    const [customerItemCount = 0] = await CustomerItem.query()
+      .where("blid", blid)
+      .update({ itemId: item.id, updatedAt: DateTime.now().toSQL() });
 
     if (!isMonitored(employee)) {
       return;
@@ -71,11 +59,11 @@ export const UniqueItemEditService = {
     ]);
     await UniqueItemMonitoring.reportRelink({
       employee,
-      customerId: heldCustomerItem?.customer ?? null,
+      customerId: heldCustomerItem?.customerId ?? null,
       blid,
       previousTitle: previousItem?.title ?? "",
       title: item.title,
-      customerItemCount: result.modifiedCount,
+      customerItemCount,
     });
   },
 

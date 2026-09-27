@@ -2,7 +2,7 @@ import Item from "#models/item";
 import Order from "#models/order";
 import type { NewOrderItem } from "#models/order";
 import BadRequestException from "#exceptions/bad_request_exception";
-import { CustomerItemService } from "#services/customer_item_service";
+import CustomerItem from "#models/customer_item";
 import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
 import { OrderItemService } from "#services/order_item_service";
 import type { CartItemType, CheckoutCartItem } from "#shared/cart_item";
@@ -68,10 +68,7 @@ export const OrderService = {
     for (const cartItem of cartItems) {
       const [item, customerItem] = await Promise.all([
         Item.findOrFail(cartItem.id),
-        CustomerItemService.getCustomerItemByItemIdOrNull({
-          customerId,
-          itemId: cartItem.id,
-        }),
+        CustomerItem.activeForItem(customerId, cartItem.id),
       ]);
       if (ACQUISITION_CART_ITEM_TYPES.includes(cartItem.type)) {
         if (customerItem) {

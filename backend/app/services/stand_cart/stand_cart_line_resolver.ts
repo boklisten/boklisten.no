@@ -1,7 +1,7 @@
 import BranchModel from "#models/branch";
 import BranchItem from "#models/branch_item";
+import CustomerItem from "#models/customer_item";
 import ItemModel from "#models/item";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
 import Order from "#models/order";
 import type OrderItem from "#models/order_item";
 import User from "#models/user";
@@ -18,7 +18,6 @@ import {
 } from "#services/stand_cart/stand_cart_pricing";
 import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Item } from "#shared/item";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
 import { isOpenOrderItem } from "#shared/order/open-order-item";
@@ -61,36 +60,21 @@ function refused(message: string): Refused {
   return { kind: "refused", message };
 }
 
-function isActiveCustomerItem(customerItem: CustomerItem): boolean {
-  return (
-    customerItem.handout &&
-    !customerItem.returned &&
-    !customerItem.buyout &&
-    !customerItem.cancel &&
-    !customerItem.buyback
-  );
-}
-
 /** The customer item, if any, of whoever currently holds the copy. */
 async function findHolder(blid: string): Promise<CustomerItem | null> {
-  const query = new SEDbQuery();
-  query.stringFilters = [{ fieldName: "blid", value: blid }];
-  const customerItems = (await StorageService.CustomerItems.getByQueryOrNull(query)) ?? [];
-  return customerItems.find((customerItem) => isActiveCustomerItem(customerItem)) ?? null;
+  const [holder] = await CustomerItem.activeByBlid(blid);
+  return holder ?? null;
 }
 
 /** One note per copy of the title the customer is holding, named by the edition in hand. */
 async function alreadyHeldNotes(customerId: string, itemId: string): Promise<StandCartNote[]> {
-  const query = new SEDbQuery();
-  query.objectIdFilters = [{ fieldName: "customer", value: customerId }];
-  const customerItems = (await StorageService.CustomerItems.getByQueryOrNull(query)) ?? [];
-  const held = customerItems.filter(
-    (customerItem) =>
-      isActiveCustomerItem(customerItem) && itemsAreEquivalent(customerItem.item, itemId),
+  const customerItems = await CustomerItem.activeFor(customerId);
+  const held = customerItems.filter((customerItem) =>
+    itemsAreEquivalent(customerItem.itemId, itemId),
   );
   return Promise.all(
     held.map(async (customerItem) => {
-      const heldItem = await ItemModel.find(customerItem.item);
+      const heldItem = await ItemModel.find(customerItem.itemId);
       return {
         kind: "already-held",
         customerItemId: customerItem.id,
@@ -129,11 +113,10 @@ async function isBringDelivery(order: Order): Promise<boolean> {
 export async function findPaidOrderForCustomerItem(
   customerItem: CustomerItem,
 ): Promise<{ order: Order; orderItem: OrderItem } | null> {
-  const handoutOrder = await Order.findOptional(customerItem.orders[0]);
+  const orderIds = await CustomerItem.orderIdsOf([customerItem.id]);
+  const handoutOrder = await Order.findOptional(orderIds.get(customerItem.id)?.[0]);
   const handoutItem = handoutOrder?.orderItems.find(
-    (orderItem) =>
-      orderItem.customerItemId === customerItem.id ||
-      (orderItem.customerItemId === null && orderItem.itemId === customerItem.item),
+    (orderItem) => orderItem.customerItemId === customerItem.id,
   );
   if (!handoutOrder || !handoutItem) {
     return null;
@@ -143,7 +126,7 @@ export async function findPaidOrderForCustomerItem(
   }
   const original = await Order.findOptional(handoutItem.movedFromOrderId);
   const originalItem = original?.orderItems.find((orderItem) =>
-    itemsAreEquivalent(orderItem.itemId, customerItem.item),
+    itemsAreEquivalent(orderItem.itemId, customerItem.itemId),
   );
   return original && originalItem ? { order: original, orderItem: originalItem } : null;
 }
@@ -163,7 +146,7 @@ async function loadFreeCopy(blid: string, customerId: string): Promise<Item | Re
     return { kind: "unlinked", blid };
   }
   const holder = await findHolder(blid);
-  if (holder !== null && holder.customer !== customerId) {
+  if (holder !== null && holder.customerId !== customerId) {
     return refused(HELD_BY_OTHER_CUSTOMER_MESSAGE);
   }
   const item = await ItemModel.find(uniqueItem.itemId);
@@ -260,19 +243,19 @@ async function resolveCustomerItemLine(
   branch: Branch,
   now: Date,
 ): Promise<StandCartResolution> {
-  const customerItem = await StorageService.CustomerItems.getOrNull(source.customerItemId);
-  if (!customerItem || customerItem.customer !== customerId) {
+  const customerItem = await CustomerItem.find(source.customerItemId);
+  if (!customerItem || customerItem.customerId !== customerId) {
     return refused("Fant ikke boka");
   }
-  const item = await ItemModel.find(customerItem.item);
+  const item = await ItemModel.find(customerItem.itemId);
   if (!item) {
     return refused("Fant ikke boka");
   }
-  if (!isActiveCustomerItem(customerItem)) {
+  if (!customerItem.isActive) {
     return refused(`Kunden har ikke «${item.title}» lenger`);
   }
   const [handoutBranch, paidAmount, periodType] = await Promise.all([
-    BranchModel.findOptional(customerItem.handoutInfo?.handoutById),
+    BranchModel.findOptional(customerItem.handoutBranchId),
     paidForCustomerItem(customerItem),
     periodTypeOfLastOrder(customerItem),
   ]);
@@ -292,7 +275,7 @@ async function resolveCustomerItemLine(
       source,
       itemId: item.id,
       title: item.title,
-      blid: customerItem.blid ?? null,
+      blid: customerItem.blid,
       ...priced,
       originalBranch: handoutBranch ? { id: handoutBranch.id, name: handoutBranch.name } : null,
       notes: [],

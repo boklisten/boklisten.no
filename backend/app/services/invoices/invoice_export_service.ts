@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import CustomerItem from "#models/customer_item";
 import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import { toSemicolonCsv } from "#services/invoices/csv";
@@ -45,17 +46,22 @@ async function tripletexLookups(invoices: Invoice[]): Promise<TripletexLookups> 
       "Tripletex-format kan bare lages for elevfakturaer, ikke for selskapsfakturaer.",
     );
   }
-  const customerItems = await StorageService.CustomerItems.getMany(customerItemIds, "admin");
-  const itemIds = [...new Set(customerItems.map((customerItem) => customerItem.item))];
-  const branchIds = [
-    ...new Set(
-      customerItems
-        .map((customerItem) => customerItem.handoutInfo?.handoutById)
-        .filter(isNotNullish),
+  const customerItems = await CustomerItem.findByIds(customerItemIds);
+  const itemIds = [...new Set(customerItems.map((customerItem) => customerItem.itemId))];
+  const branchIds = [...new Set(customerItems.map((customerItem) => customerItem.handoutBranchId))];
+  const [items, branches, lastPeriodLines] = await Promise.all([
+    Item.findMany(itemIds),
+    Branch.findMany(branchIds),
+    CustomerItem.lastPeriodLinesOf(customerItemIds),
+  ]);
+  return {
+    customerItems: byId(customerItems.map((customerItem) => customerItem.toDto())),
+    lastOrderIds: new Map(
+      [...lastPeriodLines].map(([customerItemId, line]) => [customerItemId, line.orderId]),
     ),
-  ];
-  const [items, branches] = await Promise.all([Item.findMany(itemIds), Branch.findMany(branchIds)]);
-  return { customerItems: byId(customerItems), items: byId(items), branches: byId(branches) };
+    items: byId(items),
+    branches: byId(branches),
+  };
 }
 
 /** Legacy bl-admin named the files after the year and the hour of the export, e.g. 202614_visma_invoice.csv. */

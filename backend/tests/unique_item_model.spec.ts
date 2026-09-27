@@ -3,8 +3,11 @@ import testUtils from "@adonisjs/core/services/test_utils";
 
 import { isObjectIdHex } from "#models/helpers/object_id";
 import UniqueItem from "#models/unique_item";
+import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createUniqueItem } from "#tests/unique_item_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 test.group("UniqueItem model", (group) => {
   group.each.setup(() => testUtils.db().truncate());
@@ -50,8 +53,24 @@ test.group("UniqueItem model", (group) => {
     await createUniqueItem({ itemId: item.id, blid: "12345678" });
 
     assert.sameDeepMembers(await UniqueItem.matching("abcd"), [
-      { blid: "abcd12345678", itemId: item.id },
-      { blid: "zzABCDzzzzzz", itemId: item.id },
+      { blid: "abcd12345678", itemId: item.id, holderId: null },
+      { blid: "zzABCDzzzzzz", itemId: item.id, holderId: null },
+    ]);
+  });
+
+  test("matching names the customer actively holding the sticker", async ({ assert }) => {
+    const [item, branch, customer] = await Promise.all([
+      createItem(),
+      createBranch(),
+      createUser(),
+    ]);
+    await createUniqueItem({ itemId: item.id, blid: "abcd12345678" });
+    const loan = { itemId: item.id, handoutBranchId: branch.id, blid: "abcd12345678" };
+    await createCustomerItem({ ...loan, customerId: (await createUser()).id, returned: true });
+    await createCustomerItem({ ...loan, customerId: customer.id });
+
+    assert.deepEqual(await UniqueItem.matching("abcd"), [
+      { blid: "abcd12345678", itemId: item.id, holderId: customer.id },
     ]);
   });
 

@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import CustomerItem from "#models/customer_item";
 import BookHandover from "#models/book_handover";
 import EmailVerification from "#models/email_verification";
 import Match from "#models/match";
@@ -13,12 +14,12 @@ import Order from "#models/order";
 import PasswordReset from "#models/password_reset";
 import Signature from "#models/signature";
 import User from "#models/user";
-import { CustomerHaveActiveCustomerItems } from "#services/customer_items/customer_have_active_customer_items";
 import { CustomerInvoiceActive } from "#services/invoices/customer_invoice_active";
 import { OrderActive } from "#services/orders/order_active";
 import { StorageService } from "#services/storage_service";
 import { UserManagementService } from "#services/user_management_service";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import { createOrder } from "#tests/order_fixtures";
@@ -40,7 +41,6 @@ async function seedMatch(customerIds: string[]) {
 
 test.group("UserManagementService.mergeUsers", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let customerItemsUpdateManyStub: sinon.SinonStub;
   let invoicesUpdateManyStub: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
@@ -52,9 +52,6 @@ test.group("UserManagementService.mergeUsers", (group) => {
   });
   group.each.setup(() => {
     sandbox = createSandbox();
-    customerItemsUpdateManyStub = sandbox
-      .stub(StorageService.CustomerItems, "updateMany")
-      .resolves();
     invoicesUpdateManyStub = sandbox.stub(StorageService.Invoices, "updateMany").resolves();
     sandbox.stub(StorageService.Payments, "updateMany").resolves();
   });
@@ -143,13 +140,16 @@ test.group("UserManagementService.mergeUsers", (group) => {
       customerId: FROM,
       orderItems: [{ itemId: item.id }],
     });
+    const customerItem = await createCustomerItem({
+      itemId: item.id,
+      customerId: FROM,
+      handoutBranchId: branch.id,
+    });
 
     await UserManagementService.mergeUsers(FROM, TO);
 
     assert.equal((await Order.getOrFail(order.id)).customerId, TO);
-    assert.isTrue(
-      customerItemsUpdateManyStub.calledWithMatch({ customer: FROM }, { customer: TO }),
-    );
+    assert.equal((await CustomerItem.findOrFail(customerItem.id)).customerId, TO);
     assert.isTrue(
       invoicesUpdateManyStub.calledWithMatch(
         { "customerInfo.userDetail": FROM },
@@ -197,9 +197,7 @@ test.group("UserManagementService.deleteUser", (group) => {
   group.each.setup(() => {
     sandbox = createSandbox();
     activeOrdersStub = sandbox.stub(OrderActive.prototype, "haveActiveOrders").resolves(false);
-    activeCustomerItemsStub = sandbox
-      .stub(CustomerHaveActiveCustomerItems.prototype, "haveActiveCustomerItems")
-      .resolves(false);
+    activeCustomerItemsStub = sandbox.stub(CustomerItem, "hasActive").resolves(false);
     activeInvoicesStub = sandbox
       .stub(CustomerInvoiceActive.prototype, "haveActiveInvoices")
       .resolves(false);

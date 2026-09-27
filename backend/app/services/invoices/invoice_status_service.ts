@@ -1,12 +1,11 @@
 import * as Sentry from "@sentry/node";
 
 import BadRequestException from "#exceptions/bad_request_exception";
+import CustomerItem from "#models/customer_item";
 import Order from "#models/order";
 import type { NewOrderItem } from "#models/order";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { StorageService } from "#services/storage_service";
-import { isNotNullish } from "#services/typescript_helpers";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { invoiceStatus, invoiceStatusFlags } from "#shared/invoice";
 import type {
   Invoice,
@@ -26,10 +25,9 @@ export function invoicePaidLineAmount(net: number): number {
 }
 
 async function customerItemsOf(invoice: Invoice): Promise<CustomerItem[]> {
-  const ids = invoice.customerItemPayments
-    .map((payment) => payment.customerItem)
-    .filter(isNotNullish);
-  return ids.length === 0 ? [] : StorageService.CustomerItems.getMany(ids, "admin");
+  return CustomerItem.findByIds(
+    invoice.customerItemPayments.map((payment) => payment.customerItem),
+  );
 }
 
 /**
@@ -50,8 +48,8 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
     return [
       {
         type: "invoice-paid",
-        itemId: customerItem.item,
-        blid: customerItem.blid ?? null,
+        itemId: customerItem.itemId,
+        blid: customerItem.blid,
         amount,
         unitPrice: amount,
         handout: true,
@@ -61,8 +59,8 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
     ];
   });
 
-  const customer = unreturned[0]?.customer;
-  const branch = invoice.branch ?? unreturned[0]?.handoutInfo?.handoutById;
+  const customer = unreturned[0]?.customerId ?? undefined;
+  const branch = invoice.branch ?? unreturned[0]?.handoutBranchId;
   if (orderItems.length === 0 || customer === undefined || branch === undefined) {
     warnings.push(
       "Ingen ordre ble registrert på kunden, siden ingen av bøkene på fakturaen er aktive.",
@@ -89,7 +87,7 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
   }
 
   for (const customerItem of customerItems) {
-    await StorageService.CustomerItems.update(customerItem.id, { buyout: true });
+    await customerItem.merge({ buyout: true }).save();
   }
   return warnings;
 }
@@ -113,7 +111,7 @@ async function revertPayment(invoice: Invoice): Promise<string[]> {
   }
 
   for (const customerItem of await customerItemsOf(invoice)) {
-    await StorageService.CustomerItems.update(customerItem.id, { buyout: false });
+    await customerItem.merge({ buyout: false }).save();
   }
   return warnings;
 }

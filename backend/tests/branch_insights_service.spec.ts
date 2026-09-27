@@ -10,6 +10,7 @@ import {
   findMatchItemRows,
 } from "#services/branch_insights_service";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 
@@ -159,6 +160,11 @@ test.group("BranchInsightsService: SQL rows", (group) => {
       createBranch(),
       createItem(),
     ]);
+    const cancelled = await createCustomerItem({
+      itemId: item.id,
+      customerId: null,
+      handoutBranchId: branch.id,
+    });
     // New Year's Eve 23:30 UTC is already the next year in Oslo.
     await createOrder({
       branchId: branch.id,
@@ -167,7 +173,7 @@ test.group("BranchInsightsService: SQL rows", (group) => {
       orderItems: [
         { itemId: item.id, handout: true },
         { itemId: item.id, handout: true },
-        { itemId: item.id, type: "cancel", customerItemId: "5f7f7f7f7f7f7f7f7f7f7f01" },
+        { itemId: item.id, type: "cancel", customerItemId: cancelled.id },
         { itemId: item.id, type: "extend" },
       ],
     });

@@ -12,6 +12,7 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import {
@@ -23,7 +24,6 @@ import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderPlaceService } from "#services/orders/order_place_service";
 import { OrderValidator } from "#services/orders/validation/order_validator";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
 import { fixtureId } from "#tests/fixtures";
 import { createUser } from "#tests/user_fixtures";
@@ -53,8 +53,6 @@ test.group("OrderPlaceService", (group) => {
   );
 
   let placeOrderStub: sinon.SinonStub;
-  let aggregateCustomerItemsStub: sinon.SinonStub;
-  let getManyCustomerItemsStub: sinon.SinonStub;
   let generateCustomerItemStub: sinon.SinonStub;
   let validateOrderStub: sinon.SinonStub;
   let sandbox: sinon.SinonSandbox;
@@ -62,10 +60,7 @@ test.group("OrderPlaceService", (group) => {
   group.each.setup(() => {
     sandbox = createSandbox();
     placeOrderStub = sandbox.stub(orderPlacedHandler, "placeOrder");
-    sandbox.stub(StorageService.CustomerItems, "get");
-    aggregateCustomerItemsStub = sandbox.stub(StorageService.CustomerItems, "aggregate");
-    getManyCustomerItemsStub = sandbox.stub(StorageService.CustomerItems, "getMany");
-    generateCustomerItemStub = sandbox.stub(orderToCustomerItemGenerator, "generate");
+    generateCustomerItemStub = sandbox.stub(orderToCustomerItemGenerator, "createFor").resolves([]);
     validateOrderStub = sandbox.stub(orderValidator, "validate");
   });
   group.each.teardown(() => {
@@ -95,7 +90,6 @@ test.group("OrderPlaceService", (group) => {
           unitPrice: 100,
           blid: "blid1",
           handout: true,
-          customerItemId: "customerItem1",
         },
       ],
       branchId: BRANCH,
@@ -112,8 +106,6 @@ test.group("OrderPlaceService", (group) => {
   test("should reject if orderPlacedHandler.placeOrder rejects", async ({ assert }) => {
     const validOrder = await createValidOrder();
     placeOrderStub.rejects(new BlError("order could not be placed"));
-    getManyCustomerItemsStub.resolves([]);
-    aggregateCustomerItemsStub.resolves([]);
 
     await assert.rejects(() =>
       orderPlaceService.place(validOrder.id, { id: "user1", permission: "admin" }),
@@ -124,8 +116,6 @@ test.group("OrderPlaceService", (group) => {
     const validOrder = await createValidOrder();
     placeOrderStub.resolves({});
     validateOrderStub.rejects(new BlError("order not valid!"));
-    getManyCustomerItemsStub.resolves([]);
-    aggregateCustomerItemsStub.resolves([]);
 
     return assert.rejects(() =>
       orderPlaceService.place(validOrder.id, { id: "user1", permission: "admin" }),
@@ -133,8 +123,6 @@ test.group("OrderPlaceService", (group) => {
   });
 
   test("should resolve if order is valid", async ({ assert }) => {
-    getManyCustomerItemsStub.resolves([]);
-    aggregateCustomerItemsStub.resolves([]);
     const order = await createOrder({
       branchId: BRANCH,
       customerId: CUSTOMER_1,
@@ -143,7 +131,6 @@ test.group("OrderPlaceService", (group) => {
       orderItems: [{ type: "buy", itemId: "item1", amount: 100, unitPrice: 100 }],
     });
 
-    generateCustomerItemStub.resolves([]);
     placeOrderStub.callsFake((placing: Order) => Promise.resolve(placing));
     validateOrderStub.resolves(true);
 
@@ -188,8 +175,17 @@ test.group("OrderPlaceService", (group) => {
 
   async function stubStandOrder(
     orderItem: Partial<NewOrderItem> & Pick<NewOrderItem, "type">,
-    customerItem: Record<string, unknown>,
+    customerItem: { id: string; blid?: string } | null,
   ) {
+    if (customerItem) {
+      await createCustomerItem({
+        blid: null,
+        ...customerItem,
+        customerId: CUSTOMER,
+        itemId: ITEM,
+        handoutBranchId: BRANCH,
+      });
+    }
     const order = await createOrder({
       branchId: BRANCH,
       customerId: CUSTOMER,
@@ -199,11 +195,6 @@ test.group("OrderPlaceService", (group) => {
       orderItems: [{ itemId: ITEM, amount: 0, unitPrice: 0, ...orderItem }],
     });
 
-    getManyCustomerItemsStub.callsFake(async (ids: string[]) =>
-      [customerItem].filter((candidate) => ids.includes(String(candidate["id"]))),
-    );
-    aggregateCustomerItemsStub.resolves([]);
-    generateCustomerItemStub.resolves([]);
     placeOrderStub.resolves(order);
     validateOrderStub.resolves(true);
     return order;
@@ -215,7 +206,7 @@ test.group("OrderPlaceService", (group) => {
     const obligation = await seedStandObligation("delivers");
     const order = await stubStandOrder(
       { type: "return", customerItemId: "ci1" },
-      { id: "ci1", customer: CUSTOMER, item: ITEM, blid: BLID },
+      { id: "ci1", blid: BLID },
     );
 
     await orderPlaceService.place(order.id, asAdmin);
@@ -230,10 +221,18 @@ test.group("OrderPlaceService", (group) => {
 
   test("records a stand handout as a handover from the stand", async ({ assert }) => {
     const obligation = await seedStandObligation("collects");
-    const order = await stubStandOrder(
-      { type: "rent", handout: true, customerItemId: "ci2", blid: BLID },
-      { id: "ci2", customer: CUSTOMER, item: ITEM, blid: BLID },
-    );
+    const order = await stubStandOrder({ type: "rent", handout: true, blid: BLID }, null);
+    // Placement creates the customer item for the handout and points the line at it
+    generateCustomerItemStub.callsFake(async (placing: Order) => {
+      const created = await createCustomerItem({
+        blid: BLID,
+        customerId: CUSTOMER,
+        itemId: ITEM,
+        handoutBranchId: BRANCH,
+      });
+      placing.orderItems[0]!.customerItemId = created.id;
+      return [created];
+    });
 
     await orderPlaceService.place(order.id, asAdmin);
 
@@ -247,7 +246,7 @@ test.group("OrderPlaceService", (group) => {
   test("records a book that moves outside any match", async ({ assert }) => {
     const order = await stubStandOrder(
       { type: "return", customerItemId: "ci1" },
-      { id: "ci1", customer: CUSTOMER, item: ITEM, blid: BLID },
+      { id: "ci1", blid: BLID },
     );
 
     await orderPlaceService.place(order.id, asAdmin);
@@ -259,10 +258,7 @@ test.group("OrderPlaceService", (group) => {
 
   test("records a stand return for a legacy book with no BL-ID", async ({ assert }) => {
     const obligation = await seedStandObligation("delivers");
-    const order = await stubStandOrder(
-      { type: "return", customerItemId: "ci1" },
-      { id: "ci1", customer: CUSTOMER, item: ITEM },
-    );
+    const order = await stubStandOrder({ type: "return", customerItemId: "ci1" }, { id: "ci1" });
 
     await orderPlaceService.place(order.id, asAdmin);
 

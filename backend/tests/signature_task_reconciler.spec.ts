@@ -10,8 +10,9 @@ import Signature from "#models/signature";
 import User from "#models/user";
 import { OrderActive } from "#services/orders/order_active";
 import { reconcileSignatureTask } from "#services/signature_helper";
-import { StorageService } from "#services/storage_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
+import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
+import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
 import { createUser } from "#tests/user_fixtures";
 
@@ -69,40 +70,32 @@ function makeRentOrder(orderItems: OrderItem[] = [makeOrderItem()]): Order {
   });
 }
 
-function makeCustomerItem(overrides: Partial<CustomerItem> = {}): CustomerItem {
-  return {
-    id: "customerItem1",
-    item: "item1",
-    type: "rent",
-    customer: CUSTOMER_ID,
-    deadline: new Date(),
-    handout: true,
-    returned: false,
-    buyout: false,
-    cancel: false,
-    buyback: false,
-    orders: [],
+/** A book the customer holds; the customer must have been created first. */
+function makeCustomerItem(overrides: Partial<Parameters<typeof createCustomerItem>[0]> = {}) {
+  return createCustomerItem({
+    itemId: "item1",
+    customerId: CUSTOMER_ID,
+    handoutBranchId: "branch1",
     ...overrides,
-  };
+  });
 }
 
 test.group("reconcileSignatureTask", (group) => {
   let sandbox: sinon.SinonSandbox;
   let orders: Order[];
-  let customerItems: CustomerItem[];
 
   group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(async () => {
+    await createBranch({ id: "branch1" });
+    await createItem({ id: "item1", title: "Some Book" });
+  });
 
   group.each.setup(() => {
     sandbox = createSandbox();
     orders = [];
-    customerItems = [];
 
     // Every order here is placed, so the active-order query is stubbed with them as is
     sandbox.stub(OrderActive.prototype, "getActiveOrders").callsFake(() => Promise.resolve(orders));
-    sandbox.stub(StorageService, "CustomerItems").value({
-      getByQuery: sandbox.stub().callsFake(() => Promise.resolve(customerItems)),
-    });
     saveSpy = sandbox.spy(User.prototype, "save");
   });
 
@@ -223,8 +216,8 @@ test.group("reconcileSignatureTask", (group) => {
   });
 
   test("sets the task when the customer possesses an active rent item", async ({ assert }) => {
-    customerItems = [makeCustomerItem()];
     const userDetail = await makeUser();
+    await makeCustomerItem();
 
     const result = await reconcileSignatureTask(userDetail);
 
@@ -233,30 +226,19 @@ test.group("reconcileSignatureTask", (group) => {
   });
 
   test("sets the task for active customer items regardless of type", async ({ assert }) => {
-    customerItems = [makeCustomerItem({ type: "partly-payment" })];
     const userDetail = await makeUser();
+    await makeCustomerItem({ type: "partly-payment" });
 
     await reconcileSignatureTask(userDetail);
 
     assert.equal(await storedTask(), true);
   });
 
-  test("sets the task for customer items without a type", async ({ assert }) => {
-    customerItems = [makeCustomerItem({ type: undefined })];
+  test("ignores returned, bought out and cancelled customer items", async ({ assert }) => {
     const userDetail = await makeUser();
-
-    await reconcileSignatureTask(userDetail);
-
-    assert.equal(await storedTask(), true);
-  });
-
-  test("ignores returned, bought out and not handed out customer items", async ({ assert }) => {
-    customerItems = [
-      makeCustomerItem({ returned: true }),
-      makeCustomerItem({ id: "customerItem2", buyout: true }),
-      makeCustomerItem({ id: "customerItem3", handout: false }),
-    ];
-    const userDetail = await makeUser();
+    await makeCustomerItem({ returned: true });
+    await makeCustomerItem({ buyout: true });
+    await makeCustomerItem({ returned: true, cancel: true });
 
     await reconcileSignatureTask(userDetail);
 

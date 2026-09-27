@@ -9,7 +9,6 @@ import Signature from "#models/signature";
 import type User from "#models/user";
 import { OrderActive } from "#services/orders/order_active";
 import { findSignatureException } from "#services/signature_helper";
-import { StorageService } from "#services/storage_service";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import { mock } from "#tests/test-doubles";
 import { createUser } from "#tests/user_fixtures";
@@ -68,7 +67,6 @@ test.group("findSignatureException", (group) => {
     orders = [];
     // Every order here is placed and open, so the active-order query is stubbed with them as is
     sandbox.stub(OrderActive.prototype, "getActiveOrders").callsFake(() => Promise.resolve(orders));
-    sandbox.stub(StorageService.CustomerItems, "getByQuery").callsFake(() => Promise.resolve([]));
   });
   group.each.teardown(() => {
     sandbox.restore();

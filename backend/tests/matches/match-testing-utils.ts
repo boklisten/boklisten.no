@@ -7,6 +7,7 @@ import type {
   MatchableUser,
 } from "#services/match_helpers/match-finder/match-types";
 import MatchRound from "#models/match_round";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import User from "#models/user";
 import { createUser } from "#tests/user_fixtures";
@@ -63,6 +64,22 @@ export async function seedTestCatalogue(): Promise<void> {
   await createItem({ id: "5d765db5fc8c47001c408e02", title: "Kjemien stemmer" });
   await createItem({ id: "5b6441c4d2e733002fae89a6", title: "GYMNOS 2009", price: 400 });
   await createItem({ id: "5b6441b2d2e733002fae87a6", title: "GYMNOS 2012", price: 400 });
+}
+
+/**
+ * Inserts an active customer item for every title each customer holds, handed out at the branch
+ * and due on the deadline. The customers and titles must exist already.
+ */
+export async function createHeldBooks(
+  branchId: string,
+  held: { id: string; items: string[] }[],
+  deadline: DateTime = TEST_DEADLINE,
+): Promise<void> {
+  for (const { id, items } of held) {
+    for (const itemId of items) {
+      await createCustomerItem({ customerId: id, itemId, handoutBranchId: branchId, deadline });
+    }
+  }
 }
 
 /** A planned round: plan filled in, no matches yet. */

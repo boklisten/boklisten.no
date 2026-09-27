@@ -3,27 +3,24 @@ import type { Infer } from "@vinejs/vine/types";
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import CustomerItem from "#models/customer_item";
 import Item from "#models/item";
 import Order from "#models/order";
 import type { NewOrder } from "#models/order";
 import type OrderItem from "#models/order_item";
 import User from "#models/user";
 import BlidService from "#services/blid_service";
-import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import { OrderActive } from "#services/orders/order_active";
 import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
 import { OrderValidator } from "#services/orders/validation/order_validator";
-import { isNullish } from "#services/typescript_helpers";
 import { extendRemainingCopyDeadlines } from "#services/matches/copy_deadlines";
 import {
   isDischargeConflict,
   MatchRepository,
   requireHandoverBlid,
 } from "#services/matches/match_repository";
-import { StorageService } from "#services/storage_service";
 import { BlError } from "#shared/bl-error";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { itemsAreEquivalent } from "#shared/item-equivalence";
 import type { matchTransferSchema } from "#validators/matches";
 
@@ -94,9 +91,9 @@ async function createMatchReceiveOrder(
   customerItem: CustomerItem,
   userDetailId: string,
 ): Promise<NewOrder> {
-  const item = await Item.findOrFail(customerItem.item);
+  const item = await Item.findOrFail(customerItem.itemId);
 
-  const originalReceiverOrderInfo = await findReceiverRentOrder(userDetailId, customerItem.item);
+  const originalReceiverOrderInfo = await findReceiverRentOrder(userDetailId, customerItem.itemId);
 
   if (!originalReceiverOrderInfo) {
     throw new BlError("No receiver order for match transfer item").code(200);
@@ -147,12 +144,9 @@ async function createMatchDeliverOrder(
   customerItem: CustomerItem,
   userDetailId: string,
 ): Promise<NewOrder> {
-  const item = await Item.findOrFail(customerItem.item);
+  const item = await Item.findOrFail(customerItem.itemId);
 
-  if (isNullish(customerItem.handoutInfo)) {
-    throw new BlError("No handout-info for customerItem").code(200);
-  }
-  const branch = await Branch.findOrFail(customerItem.handoutInfo.handoutById);
+  const branch = await Branch.findOrFail(customerItem.handoutBranchId);
 
   return {
     placed: true,
@@ -191,36 +185,32 @@ async function placeReceiverOrder(
 }
 
 async function recordReceiverCustomerItem(placedReceiverOrder: Order): Promise<void> {
-  const [generatedReceiverCustomerItem] = await new OrderToCustomerItemGenerator().generate(
+  const [addedCustomerItem] = await new OrderToCustomerItemGenerator().createFor(
     placedReceiverOrder,
   );
 
-  if (generatedReceiverCustomerItem === undefined) {
+  if (addedCustomerItem === undefined) {
     throw new BlError("Failed to create new customer items");
-  }
-
-  const addedCustomerItem = await StorageService.CustomerItems.add(generatedReceiverCustomerItem);
-
-  for (const orderItem of placedReceiverOrder.orderItems) {
-    orderItem.customerItemId = addedCustomerItem.id;
   }
   await placedReceiverOrder.saveWithItems();
 }
 
-async function returnSenderCustomerItem(customerItem: CustomerItem): Promise<void> {
-  const senderOrder = await createMatchDeliverOrder(customerItem, customerItem.customer);
+async function returnSenderCustomerItem(
+  customerItem: CustomerItem,
+  senderUserDetailId: string,
+): Promise<void> {
+  const senderOrder = await createMatchDeliverOrder(customerItem, senderUserDetailId);
 
   const placedSenderOrder = await Order.createWithItems(senderOrder);
   await new OrderValidator().validate(placedSenderOrder, false);
 
-  await StorageService.CustomerItems.update(customerItem.id, {
-    returned: true,
-  });
+  customerItem.returned = true;
+  await customerItem.save();
 
   await extendRemainingCopyDeadlines(
-    customerItem.customer,
-    customerItem.item,
-    new Date(customerItem.deadline),
+    senderUserDetailId,
+    customerItem.itemId,
+    customerItem.deadline.toJSDate(),
   );
 }
 
@@ -241,53 +231,46 @@ export async function recordTransfer(
     return { feedback: invalidBlidFeedback };
   }
 
-  let blidNotActiveError = false;
-  const [customerItem] = await new CustomerItemActiveBlid()
-    .getActiveCustomerItems(blid)
-    .catch(() => {
-      blidNotActiveError = true;
-      return [];
-    });
-  if (!customerItem || blidNotActiveError) {
+  const [customerItem] = await CustomerItem.activeByBlid(blid);
+  // A copy whose owner was deleted has nobody to transfer it from.
+  const ownerId = customerItem?.customerId;
+  if (!customerItem || !ownerId) {
     return { feedback: inactiveBlidFeedback };
   }
 
-  if (customerItem.customer === detailsId) {
+  if (ownerId === detailsId) {
     return { feedback: alreadyYoursFeedback };
   }
 
-  if (new Date(customerItem.deadline) < new Date()) {
-    return { feedback: await expiredDeadlineFeedback(customerItem.customer) };
+  if (customerItem.deadline < DateTime.now()) {
+    return { feedback: await expiredDeadlineFeedback(ownerId) };
   }
 
   const receiverObligation = await MatchRepository.findReceiverObligation(
     detailsId,
-    customerItem.item,
+    customerItem.itemId,
   );
   if (!receiverObligation) {
     return {
-      feedback: (await MatchRepository.hasReceivedTitle(detailsId, customerItem.item))
+      feedback: (await MatchRepository.hasReceivedTitle(detailsId, customerItem.itemId))
         ? alreadyReceivedFeedback
         : notOrderedFeedback,
     };
   }
 
-  if (!(await findReceiverRentOrder(detailsId, customerItem.item))) {
+  if (!(await findReceiverRentOrder(detailsId, customerItem.itemId))) {
     return { feedback: noActiveOrderFeedback };
   }
 
   const handoverBlid = requireHandoverBlid(customerItem.blid);
 
-  const senderObligation = await MatchRepository.findSenderObligation(
-    customerItem.customer,
-    customerItem.item,
-  );
+  const senderObligation = await MatchRepository.findSenderObligation(ownerId, customerItem.itemId);
 
   const recordDischarge = (dischargesSenderObligationId: number | null) =>
     MatchRepository.recordHandover({
       blid: handoverBlid,
-      itemId: customerItem.item,
-      fromUserDetailId: customerItem.customer,
+      itemId: customerItem.itemId,
+      fromUserDetailId: ownerId,
       toUserDetailId: detailsId,
       occurredAt: DateTime.now(),
       orderId: null,
@@ -308,15 +291,15 @@ export async function recordTransfer(
     // A concurrent scan settled the sender's obligation with their other copy first. This copy
     // still satisfies the receiver; credit the sender's next open obligation, if any is left.
     const nextSenderObligation = await MatchRepository.findSenderObligation(
-      customerItem.customer,
-      customerItem.item,
+      ownerId,
+      customerItem.itemId,
     );
     handover = await recordDischarge(nextSenderObligation?.id ?? null);
   }
 
   let placedReceiverOrder: Order;
   try {
-    await returnSenderCustomerItem(customerItem);
+    await returnSenderCustomerItem(customerItem, ownerId);
     placedReceiverOrder = await placeReceiverOrder(customerItem, detailsId);
     await recordReceiverCustomerItem(placedReceiverOrder);
   } catch (error) {
@@ -337,8 +320,8 @@ export async function recordTransfer(
   const expectedSender = receiverObligation.sender.userDetailId;
   return {
     feedback:
-      expectedSender !== null && expectedSender !== customerItem.customer
-        ? await unexpectedSenderFeedback(customerItem.customer, expectedSender)
+      expectedSender !== null && expectedSender !== ownerId
+        ? await unexpectedSenderFeedback(ownerId, expectedSender)
         : undefined,
   };
 }

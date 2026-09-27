@@ -1,11 +1,12 @@
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
-import { mock } from "#tests/test-doubles";
+import type CustomerItem from "#models/customer_item";
+import { customerItemDouble } from "#tests/customer_item_fixtures";
 
 const EMPLOYEE = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
 const IDA = "ida-id";
@@ -17,13 +18,18 @@ const titles = new Map([
   ["item-2", "Sinus 1P"],
 ]);
 
-function customerItem(overrides: Partial<CustomerItem>): CustomerItem {
-  return mock<CustomerItem>({
+function customerItem({
+  deadline = new Date("2027-07-01T00:00:00.000Z"),
+  ...overrides
+}: Partial<Pick<CustomerItem, "id" | "itemId" | "blid" | "customerId">> & {
+  deadline?: Date;
+}): CustomerItem {
+  return customerItemDouble({
     id: "ci-1",
-    item: "item-1",
+    itemId: "item-1",
     blid: "12345678",
-    customer: IDA,
-    deadline: new Date("2027-07-01T00:00:00.000Z"),
+    customerId: IDA,
+    deadline: DateTime.fromJSDate(deadline),
     ...overrides,
   });
 }
@@ -45,9 +51,9 @@ test.group("BulkCollectionMonitoring.reportOverdueBooks", (group) => {
         customerItem({ deadline: new Date("2026-06-30T22:00:00.000Z") }),
         customerItem({
           id: "ci-2",
-          item: "item-2",
+          itemId: "item-2",
           blid: "87654321",
-          customer: PETRA,
+          customerId: PETRA,
           deadline: new Date("2026-08-31T22:00:00.000Z"),
         }),
         customerItem({ id: "ci-3", blid: "11111111" }),

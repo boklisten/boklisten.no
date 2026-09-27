@@ -1,12 +1,11 @@
 import type { Limiter } from "@adonisjs/limiter";
+import db from "@adonisjs/lucid/services/db";
 
 import Branch from "#models/branch";
+import CustomerItem from "#models/customer_item";
 import Item from "#models/item";
 import UniqueItem from "#models/unique_item";
 import User from "#models/user";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
-import { StorageService } from "#services/storage_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type {
   PublicBlidHandedOut,
   PublicBlidLookupResult,
@@ -17,55 +16,20 @@ import type {
 /** How long a new account has to exist before it may look up who holds a book. */
 const LOOKUP_WAITING_PERIOD_MS = 24 * 60 * 60 * 1000;
 
-function byBlid(blid: string): SEDbQuery {
-  const databaseQuery = new SEDbQuery();
-  databaseQuery.stringFilters = [{ fieldName: "blid", value: blid }];
-  return databaseQuery;
-}
-
 async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> {
-  const [row] = await StorageService.CustomerItems.aggregate<
-    Omit<
-      PublicBlidHandedOut,
-      "status" | "title" | "isbn" | "handoutBranch" | "name" | "email" | "phone"
-    > & {
-      itemId: string | null;
-      handoutBranchId: string | null;
-      customerId: string | null;
-    }
-  >([
-    {
-      $match: {
-        returned: false,
-        buyout: false,
-        cancel: false,
-        buyback: false,
-        blid,
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-        handoutBranchId: { $toString: "$handoutInfo.handoutById" },
-        handoutTime: "$handoutInfo.time",
-        deadline: 1,
-        itemId: { $toString: "$item" },
-        customerId: { $toString: "$customer" },
-      },
-    },
-  ]);
-  if (row === undefined) {
+  const [customerItem] = await CustomerItem.activeByBlid(blid);
+  if (customerItem === undefined) {
     return null;
   }
-  const { itemId, handoutBranchId, customerId, ...handedOut } = row;
   const [item, branch, customer] = await Promise.all([
-    itemId === null ? null : Item.find(itemId),
-    Branch.findOptional(handoutBranchId),
-    User.findOptional(customerId),
+    Item.find(customerItem.itemId),
+    Branch.findOptional(customerItem.handoutBranchId),
+    User.findOptional(customerItem.customerId),
   ]);
   return {
     status: "handedOut",
-    ...handedOut,
+    handoutTime: customerItem.handedOutAt.toJSDate().toISOString(),
+    deadline: customerItem.deadline.toJSDate().toISOString(),
     name: customer?.name ?? "",
     email: customer?.email ?? "",
     phone: customer?.phone ?? "",
@@ -73,11 +37,6 @@ async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> 
     title: item?.title ?? "",
     isbn: item === null ? "" : String(item.isbn),
   };
-}
-
-function activityTime(customerItem: CustomerItem): number {
-  const time = customerItem.handoutInfo?.time ?? customerItem.creationTime;
-  return time === undefined ? 0 : new Date(time).getTime();
 }
 
 /**
@@ -89,9 +48,13 @@ async function findRegisteredItemId(blid: string): Promise<string | null> {
   if (uniqueItem !== null) {
     return uniqueItem.itemId;
   }
-  const customerItems = (await StorageService.CustomerItems.getByQueryOrNull(byBlid(blid))) ?? [];
-  const latest = customerItems.toSorted((a, b) => activityTime(b) - activityTime(a))[0];
-  return latest?.item ?? null;
+  const latest: { item_id: string } | null = await db
+    .from("customer_items")
+    .where("blid", blid)
+    .orderBy("handed_out_at", "desc")
+    .select("item_id")
+    .first();
+  return latest?.item_id ?? null;
 }
 
 async function findNotHandedOut(blid: string): Promise<PublicBlidNotHandedOut | null> {

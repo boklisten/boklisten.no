@@ -62,41 +62,59 @@ export default class ReportsController {
       includeBuyout,
     } = await ctx.request.validateUsing(customerItemsReportValidator);
 
-    const rows = await StorageService.CustomerItems.aggregate<{
+    const query = db.from("customer_items");
+    if (branchFilter && branchFilter.length > 0) {
+      void query.whereIn("handout_branch_id", branchFilter);
+    }
+    for (const [column, after, before] of [
+      ["created_at", createdAfter, createdBefore],
+      ["deadline", deadlineAfter, deadlineBefore],
+    ] as const) {
+      if (after) {
+        void query.where(column, ">=", new Date(after));
+      }
+      if (before) {
+        void query.where(column, "<=", new Date(before));
+      }
+    }
+    if (!includeReturned) {
+      void query.where("returned", false);
+    }
+    if (!includeBuyout) {
+      void query.where("buyout", false);
+    }
+    // The branch, item, customer and employee ids are replaced by their Postgres columns in code,
+    // in place, so the CSV keeps this column order.
+    const rows: {
+      id: string;
       handoutBranchId: string | null;
+      handoutTime: Date;
+      lastUpdated: Date;
+      deadline: Date;
+      returned: boolean;
+      buyout: boolean;
+      blid: string | null;
       itemId: string | null;
       customerId: string | null;
       handoutEmployeeId: string | null;
-    }>([
-      {
-        $match: {
-          ...branchFieldFilter("handoutInfo.handoutById", branchFilter),
-          ...dateRangeFilter("creationTime", createdAfter, createdBefore),
-          ...dateRangeFilter("deadline", deadlineAfter, deadlineBefore),
-          ...(includeReturned ? {} : { returned: false }),
-          ...(includeBuyout ? {} : { buyout: false }),
-        },
-      },
-      {
-        // The branch, item, customer and employee ids are replaced by their Postgres columns in
-        // code, in place, so the CSV keeps this column order.
-        $project: {
-          _id: 0,
-          id: { $toString: "$_id" },
-          handoutBranchId: { $toString: "$handoutInfo.handoutById" },
-          handoutTime: "$handoutInfo.time",
-          lastUpdated: 1,
-          deadline: 1,
-          returned: 1,
-          buyout: 1,
-          blid: 1,
-          itemId: { $toString: "$item" },
-          customerId: { $toString: "$customer" },
-          handoutEmployeeId: { $toString: "$handoutInfo.handoutEmployee" },
-          pivot: "1",
-        },
-      },
-    ]);
+      pivot: string;
+    }[] = await query
+      .select(
+        "id",
+        "handout_branch_id as handoutBranchId",
+        "handed_out_at as handoutTime",
+        "updated_at as lastUpdated",
+        "deadline",
+        "returned",
+        "buyout",
+        "blid",
+        "item_id as itemId",
+        "customer_id as customerId",
+        "handout_employee_id as handoutEmployeeId",
+        db.raw("'1' as pivot"),
+      )
+      .orderBy("created_at")
+      .orderBy("id");
     const withCustomer = await withUserColumns(rows, "customerId", (user) => ({
       name: user?.name ?? null,
       email: user?.email ?? null,

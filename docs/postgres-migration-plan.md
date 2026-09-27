@@ -1047,7 +1047,7 @@ set to null, 122 lines whose item is no longer in the catalogue dropped`,
   older than a year) is dropped instead of rewritten, Adrian's decision 2026-09-27; its service is
   removed from `.railway/railway.ts`. Unplaced orders now stay in `orders`.
 
-## Step 9 — customeritems → `customer_items` + `customer_item_period_extends` — status: not started
+## Step 9 — customeritems → `customer_items` + `customer_item_period_extends` — status: done 2026-09-27 (rehearsed on staging, pending merge)
 
 Target schema `customer_items`:
 
@@ -1113,7 +1113,71 @@ branches; order ids in `cancelInfo`/`buyoutInfo`/`buybackInfo`/`orders` missing 
 violate the partial unique index; `type` outside the enum; `periodExtends` entries with missing
 fields.
 
-Survey results / notes: (fill in; include the measured transfer duration)
+Survey results (2026-09-27, staging):
+
+- 164 970 customer items, every `type` rent or partly-payment, every `deadline` a date, no active
+  blid duplicates (the partial unique index holds). `handout` is true on every document and every
+  writer sets it, and `handoutInfo` (branch + time) is always present with an existing branch, so
+  `handout` is dropped and `handout_branch_id` / `handed_out_at` are `not null` (the branch
+  `RESTRICT`, not `SET NULL` as the table above said). `returnInfo` is missing on 42 778 returned
+  items, `buyoutInfo` on 7 946 bought-out ones; those columns stay nullable. `totalAmount` was
+  already removed (`1789800000000_unset_dead_customer_item_and_delivery_fields`), so there is no
+  `total_amount` column; `buybackInfo.time` is kept as `bought_back_at`.
+- Deleted users → NULL: 53 366 customers (2018–2022, none active: deleting a user is blocked
+  while they hold books), 33 268 handout and 8 838 return employees. Order references to deleted
+  orders → NULL: 4 197 buyout, 45 buyback, 53 cancel.
+- 4 customer items (2021) name the book deleted from the catalogue; skipped (Adrian's decision,
+  as in steps 7 and 8). 6 `active: false` documents (returned, 2019, read by nothing) and 24 stray
+  `comment: "plogingv26"` tags (2025) are dropped, as are `customerInfo`, `user`, `editableFor`,
+  `viewableFor`.
+- `periodExtends`: 5 476 entries, at most 5 per item, all `semester`, no missing fields.
+- `orders` array vs `order_items.customer_item_id`: 268 641 entries agree; 3 697 are repaired by
+  linking the one same-item line without a customer item in that order (3 673 `match-receive`);
+  23 cannot be resolved and 6 318 name deleted orders (both dropped). 40 943 lines point at a
+  customer item whose array does not list them (return 17.8k, invoice-paid 12k, match-deliver 9.8k,
+  cancel/buyout/extend 1.3k): the array was never complete, so `order_items` is the better source.
+  6 lines name customer items that no longer exist and are unlinked before the foreign key.
+
+Notes (2026-09-27):
+
+- Staging rehearsal from a laptop: `customer_items: migrated 164966, skipped 4 (4 item no longer
+in the catalogue); customer_item_period_extends: migrated 5475`, then `53363 deleted customers,
+33266 deleted handout employees and 8838 deleted return employees set to null, 4294 cancel/buyout/
+buyback references to missing orders set to null; orders array: 268641 already linked, 3697 lines
+linked, 15 unresolved and 6317 naming deleted orders dropped`, `order_items: 6 references to
+missing customer items set to null`, collection dropped; 1 min 8 s. Every migrated customer item
+  and extension compared field by field against an NDJSON dump taken before the run: zero
+  differences; `order_items` changed by exactly the 3 697 links and 6 unlinks.
+- Model `app/models/customer_item.ts` preloads `periodExtends` (oldest first) on every read.
+  Statics: `whereActive(query)`, `activeFor`, `activeByBlid`, `activeForItem`, `hasActive`,
+  `findByIds` (not `findMany`, which is Lucid's own), `orderIdsOf(ids)` (the orders behind a
+  customer item: those with a line naming it, oldest first) and `lastPeriodLinesOf(ids)` (newest
+  rent/partly-payment/match-receive/extend line, one `DISTINCT ON` query: its period type prices a
+  buyout, its order is the invoice export's order column; it replaces `orders.at(-1)`). `orders[0]`
+  (the handout order the stand-cart refund follows) is the oldest of `orderIdsOf`. Blid search
+  holders come from a correlated subquery in `UniqueItem.matching`. A model query with a partial `select` breaks the
+  preload hook; use `db.from("customer_items")` for column-only queries.
+- `shared/customer-item/customer-item.ts` is the plain DTO (`customerItem.toDto()`, model field
+  names) for pure code (blid search history takes `BlidCustomerItem` = DTO + `orderIds`, Tripletex
+  export rows). The four one-method helper classes (`CustomerItemActive`, `…ActiveBlid`,
+  `CustomerHaveActiveCustomerItems`, `CustomerItemService`) are gone.
+- `OrderToCustomerItemGenerator.generate` returns `{ orderItem, customerItem }` pairs and
+  `createFor(order, lines)` inserts them and links each line to its own customer item. The old
+  placement linked every line with the same item, so a return line of the same title in the same
+  order was re-pointed at the new copy.
+- Behaviour notes: blid-search attribution now sees every order behind a copy (returns, invoice
+  payments and match deliveries too). A customer item whose customer was deleted counts as not
+  active in match transfers and bulk collection (none exist). Invoice generation reports such items
+  as «Kunden finnes ikke lenger.». Holders for blid search come from Postgres (`ILIKE`).
+- Verified on staging through the local stack (Playwright): Kasse «Kundens bøker», blid search and
+  history, bulk-collection lookup, public blid lookup, branch «Aktive bøker» and details, the
+  customer-items report, reminder recipient count, a partly-payment invoice dry run (98 invoices),
+  «Mine bøker» at 375 px, and a stand-cart return followed by a handout of the same copy (return
+  and new customer item written, lines linked, handovers recorded both ways).
+- Specs: 1048 passing, customer items as real rows (`tests/customer_item_fixtures.ts`:
+  `createCustomerItem`, `customerItemDouble` for pure functions, `customerItemDto`); new
+  `customer_item_model.spec.ts`; `createHeldBooks` in the matches test utils. User cleanup is left
+  for later (Adrian's decision).
 
 ## Step 10 — deliveries → `deliveries` — status: not started
 
@@ -1291,3 +1355,7 @@ Only after step 12 has run in production.
   title snapshot and payments array dropped, 8 orders / 122 lines naming the deleted book skipped,
   deleted customers/employees nulled, Database Cleanup cron dropped, staging rehearsal 2 min 40 s with
   zero field diffs).
+- 2026-09-27: step 9 implemented (customer items + period extends into Postgres, `orders` array
+  replaced by `order_items.customer_item_id` with 3 697 lines linked, `handout` and snapshots
+  dropped, 4 items naming the deleted book skipped, `order_items.customer_item_id` foreign key,
+  staging rehearsal 1 min 8 s with zero field diffs).

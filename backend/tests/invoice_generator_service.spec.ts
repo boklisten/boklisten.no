@@ -5,36 +5,42 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import { generateInvoices } from "#services/invoices/invoice_generator_service";
-import User from "#models/user";
 import { StorageService } from "#services/storage_service";
+import type CustomerItem from "#models/customer_item";
 import type { Branch } from "#shared/branch";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { InvoiceGenerationSettings } from "#shared/invoice";
 import type { Item } from "#shared/item";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { mock } from "#tests/test-doubles";
-import { userDouble } from "#tests/user_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 const BRANCH_ID = "5b6442ecd2e733002fae8a44";
 
-function customerItem(overrides: Partial<CustomerItem>): CustomerItem {
-  return mock<CustomerItem>({
+/** An unreturned book due inside `rentSettings`' deadline range. */
+function customerItem({
+  customer,
+  item,
+  ...overrides
+}: Partial<Parameters<typeof createCustomerItem>[0]> & {
+  customer: string | null;
+  item: string;
+}): Promise<CustomerItem> {
+  return createCustomerItem({
+    customerId: customer,
+    itemId: item,
+    handoutBranchId: BRANCH_ID,
     type: "rent",
-    handout: true,
-    returned: false,
-    buyout: false,
-    orders: ["order1"],
-    deadline: new Date("2026-06-30T22:00:00.000Z"),
-    handoutInfo: { handoutById: BRANCH_ID, time: new Date() },
+    deadline: DateTime.fromISO("2026-06-30T22:00:00.000Z"),
     ...overrides,
   });
 }
 
 const KARI_DOB = DateTime.fromISO("2008-02-02");
-const customers: User[] = [
-  userDouble({
+const customers = [
+  {
     id: "c1",
     name: "Kari Nordmann",
     email: "kari@example.com",
@@ -43,8 +49,8 @@ const customers: User[] = [
     address: "Veien 1",
     postCode: "0001",
     postCity: "Oslo",
-  }),
-  userDouble({ id: "c2", name: "Ola Nordmann", email: "ola@example.com", phone: "40000002" }),
+  },
+  { id: "c2", name: "Ola Nordmann", email: "ola@example.com", phone: "40000002" },
 ];
 const items: Item[] = [
   mock<Item>({ id: "6100000000000000000000b1", title: "Psykologi 2 2022", price: 1049 }),
@@ -78,7 +84,6 @@ const rentSettings: InvoiceGenerationSettings = {
 
 test.group("invoice generation", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let aggregate: sinon.SinonStub;
   let addInvoice: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
@@ -87,10 +92,10 @@ test.group("invoice generation", (group) => {
       await createItem({ id: item.id, title: item.title, price: item.price });
     }
     await createBranch(branch);
+    for (const customer of customers) {
+      await createUser(customer);
+    }
     sandbox = createSandbox();
-    aggregate = sandbox.stub().resolves([]);
-    sandbox.stub(StorageService, "CustomerItems").value({ aggregate });
-    sandbox.stub(User, "findMany").resolves(customers);
     addInvoice = sandbox
       .stub()
       .callsFake((invoice) => Promise.resolve({ ...invoice, id: "saved" }));
@@ -100,30 +105,35 @@ test.group("invoice generation", (group) => {
     sandbox.restore();
   });
 
-  test("selects unreturned, not bought out books of the type with a deadline in the range", async () => {
-    await generateInvoices(rentSettings, true);
+  test("selects unreturned, not bought out books of the type with a deadline in the range", async ({
+    assert,
+  }) => {
+    const book = "6100000000000000000000b1";
+    await customerItem({ id: "due", customer: "c1", item: book });
+    await customerItem({ id: "returned", customer: "c1", item: book, returned: true });
+    await customerItem({ id: "bought-out", customer: "c1", item: book, buyout: true });
+    await customerItem({ id: "partly", customer: "c1", item: book, type: "partly-payment" });
+    await customerItem({
+      id: "later",
+      customer: "c1",
+      item: book,
+      deadline: DateTime.fromISO("2026-08-01T00:00:00.000Z"),
+    });
 
-    const [pipeline] = aggregate.firstCall.args;
-    const match = pipeline[0].$match;
-    if (match.returned !== false || match.buyout !== false || match.type !== "rent") {
-      throw new Error(`unexpected match ${JSON.stringify(match)}`);
-    }
-    if (
-      match.deadline.$gte.getTime() !== rentSettings.deadlineFrom.getTime() ||
-      match.deadline.$lte.getTime() !== rentSettings.deadlineTo.getTime()
-    ) {
-      throw new Error("deadline range not applied");
-    }
+    const { invoices } = await generateInvoices(rentSettings, true);
+
+    assert.deepEqual(
+      invoices.flatMap((invoice) => invoice.customerItemPayments.map((line) => line.customerItem)),
+      ["due"],
+    );
   });
 
   test("one invoice per customer, numbered in order, with legacy bl-admin's rent arithmetic", async ({
     assert,
   }) => {
-    aggregate.resolves([
-      customerItem({ id: "ci1", customer: "c1", item: "6100000000000000000000b1" }),
-      customerItem({ id: "ci2", customer: "c2", item: "6100000000000000000000b2" }),
-      customerItem({ id: "ci3", customer: "c1", item: "6100000000000000000000b2" }),
-    ]);
+    await customerItem({ id: "ci1", customer: "c1", item: "6100000000000000000000b1" });
+    await customerItem({ id: "ci2", customer: "c2", item: "6100000000000000000000b2" });
+    await customerItem({ id: "ci3", customer: "c1", item: "6100000000000000000000b2" });
 
     const { invoices, skipped } = await generateInvoices(rentSettings, true);
 
@@ -163,9 +173,7 @@ test.group("invoice generation", (group) => {
   });
 
   test("a dry run saves nothing; a real run saves every invoice", async ({ assert }) => {
-    aggregate.resolves([
-      customerItem({ id: "ci1", customer: "c1", item: "6100000000000000000000b1" }),
-    ]);
+    await customerItem({ id: "ci1", customer: "c1", item: "6100000000000000000000b1" });
 
     await generateInvoices(rentSettings, true);
     assert.isTrue(addInvoice.notCalled);
@@ -178,15 +186,13 @@ test.group("invoice generation", (group) => {
   test("partly-payment lines invoice the amount left to pay, without a percentage", async ({
     assert,
   }) => {
-    aggregate.resolves([
-      customerItem({
-        id: "ci1",
-        customer: "c1",
-        item: "6100000000000000000000b1",
-        type: "partly-payment",
-        amountLeftToPay: 310,
-      }),
-    ]);
+    await customerItem({
+      id: "ci1",
+      customer: "c1",
+      item: "6100000000000000000000b1",
+      type: "partly-payment",
+      amountLeftToPay: 310,
+    });
 
     const { invoices } = await generateInvoices(
       { ...rentSettings, type: "partly-payment", fee: 320, feePercentage: 0.33 },
@@ -212,15 +218,13 @@ test.group("invoice generation", (group) => {
   test("a partly-payment book with no stored amount is priced from the period's buyout percentage", async ({
     assert,
   }) => {
-    aggregate.resolves([
-      customerItem({
-        id: "ci1",
-        customer: "c1",
-        item: "6100000000000000000000b1",
-        type: "partly-payment",
-        amountLeftToPay: 0,
-      }),
-    ]);
+    await customerItem({
+      id: "ci1",
+      customer: "c1",
+      item: "6100000000000000000000b1",
+      type: "partly-payment",
+      amountLeftToPay: 0,
+    });
     await createOrder({
       id: "order1",
       branchId: BRANCH_ID,
@@ -242,17 +246,13 @@ test.group("invoice generation", (group) => {
   });
 
   test("books whose customer no longer exists are skipped and reported", async ({ assert }) => {
-    aggregate.resolves([
-      customerItem({ id: "ci1", customer: "gone", item: "6100000000000000000000b1" }),
-      customerItem({ id: "ci2", customer: "c2", item: "6100000000000000000000b2" }),
-    ]);
+    await customerItem({ id: "ci1", customer: null, item: "6100000000000000000000b1" });
+    await customerItem({ id: "ci2", customer: "c2", item: "6100000000000000000000b2" });
 
     const { invoices, skipped } = await generateInvoices(rentSettings, true);
 
     assert.lengthOf(invoices, 1);
     assert.equal(invoices[0]?.invoiceId, "20263000");
-    assert.deepEqual(skipped, [
-      { customerItemId: "ci1", reason: "Kunden gone finnes ikke lenger." },
-    ]);
+    assert.deepEqual(skipped, [{ customerItemId: "ci1", reason: "Kunden finnes ikke lenger." }]);
   });
 });

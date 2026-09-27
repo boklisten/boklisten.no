@@ -5,14 +5,13 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import Order from "#models/order";
-import { CustomerItemService } from "#services/customer_item_service";
 import { OrderItemService } from "#services/order_item_service";
 import { OrderService } from "#services/order_service";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { fixtureId } from "#tests/fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
-import { asStub } from "#tests/test-doubles";
 import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = fixtureId("c91");
@@ -36,7 +35,6 @@ test.group("OrderService.createFromCart", (group) => {
       createBranch({ id: BRANCH_ID }),
       createUser({ id: CUSTOMER_ID }),
     ]);
-    sandbox.stub(CustomerItemService, "getCustomerItemByItemIdOrNull").resolves();
     sandbox.stub(OrderItemService, "createRentOrderItem").resolves({
       type: "rent",
       itemId: ITEM_ID,
@@ -98,8 +96,11 @@ test.group("OrderService.createFromCart", (group) => {
   });
 
   test("rejects rent when the customer already has the book", async ({ assert }) => {
-    asStub(CustomerItemService.getCustomerItemByItemIdOrNull).resolves({
+    await createCustomerItem({
       id: "ci1",
+      itemId: ITEM_ID,
+      customerId: CUSTOMER_ID,
+      handoutBranchId: BRANCH_ID,
     });
     await assert.rejects(
       () => OrderService.createFromCart(CUSTOMER_ID, [rentCartItem()]),
@@ -133,8 +134,11 @@ test.group("OrderService.createFromCart", (group) => {
   });
 
   test("allows buyout even though the customer has the book", async ({ assert }) => {
-    asStub(CustomerItemService.getCustomerItemByItemIdOrNull).resolves({
+    await createCustomerItem({
       id: "ci1",
+      itemId: ITEM_ID,
+      customerId: CUSTOMER_ID,
+      handoutBranchId: BRANCH_ID,
     });
     const order = await OrderService.createFromCart(CUSTOMER_ID, [
       { id: ITEM_ID, branchId: BRANCH_ID, type: "buyout" },

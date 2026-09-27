@@ -1,7 +1,7 @@
 import type { DateTime } from "luxon";
 
+import type CustomerItem from "#models/customer_item";
 import { isHandedOutWithinTheLastTwoWeeks } from "#services/customer_item_actions_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { isDeadlineOverdue } from "#shared/deadline";
 
 /**
@@ -12,7 +12,9 @@ import { isDeadlineOverdue } from "#shared/deadline";
 export const HeldBookRules = {
   /** Handing a book back after its deadline. */
   takeBack(customerItem: CustomerItem, now: Date): string | null {
-    return isDeadlineOverdue(customerItem.deadline, now) ? "Fristen for boka har gått ut" : null;
+    return isDeadlineOverdue(customerItem.deadline.toJSDate(), now)
+      ? "Fristen for boka har gått ut"
+      : null;
   },
 
   /** Undoing a handout is expected right after it, not weeks later. */

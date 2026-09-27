@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
+import CustomerItem from "#models/customer_item";
 import type Order from "#models/order";
 import type OrderItem from "#models/order_item";
 import User from "#models/user";
@@ -17,9 +18,6 @@ import {
   StandCartMonitoring,
 } from "#services/stand_cart/stand_cart_monitoring";
 import type { PlacementReport } from "#services/stand_cart/stand_cart_monitoring";
-import { StorageService } from "#services/storage_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
-import { USER_PERMISSION } from "#shared/user-permission";
 
 function isTakenBack(orderItem: OrderItem): boolean {
   return orderItem.type === "return" || orderItem.type === "buyback";
@@ -27,11 +25,9 @@ function isTakenBack(orderItem: OrderItem): boolean {
 
 /** The held books the order acts on, as they are before the placement changes them. */
 async function loadHeldBooks(order: Order): Promise<Map<string, CustomerItem>> {
-  const ids = [...new Set(order.orderItems.map((orderItem) => orderItem.customerItemId))].filter(
-    (id): id is string => id !== null,
+  const customerItems = await CustomerItem.findByIds(
+    order.orderItems.map((orderItem) => orderItem.customerItemId),
   );
-  const customerItems =
-    ids.length === 0 ? [] : await StorageService.CustomerItems.getMany(ids, USER_PERMISSION.ADMIN);
   return new Map(customerItems.map((customerItem) => [customerItem.id, customerItem]));
 }
 
@@ -58,14 +54,10 @@ async function collectReports(
  * the legacy place operation did it. Buys and changes create nothing.
  */
 async function createCustomerItems(order: Order): Promise<void> {
-  const generator = new OrderToCustomerItemGenerator();
   const loans = order.orderItems.filter(isLoanHandout);
-  for (const orderItem of loans) {
-    const [generated] = await generator.generate(order, [orderItem]);
-    if (!generated) {
-      throw new Error(`no customer item generated for ${orderItem.title}`);
-    }
-    orderItem.customerItemId = (await StorageService.CustomerItems.add(generated)).id;
+  const created = await new OrderToCustomerItemGenerator().createFor(order, loans);
+  if (created.length !== loans.length) {
+    throw new Error(`generated ${created.length} customer items for ${loans.length} loans`);
   }
   if (loans.length > 0) {
     await order.saveWithItems();
@@ -99,17 +91,17 @@ async function recordHandovers(
   }
   for (const orderItem of order.orderItems.filter(isTakenBack)) {
     const customerItem = heldBooks.get(orderItem.customerItemId ?? "");
-    if (!customerItem) {
+    if (!customerItem?.customerId) {
       continue;
     }
     const obligation = await MatchRepository.findSenderObligation(
-      customerItem.customer,
-      customerItem.item,
+      customerItem.customerId,
+      customerItem.itemId,
     );
     await MatchRepository.recordHandover({
-      blid: customerItem.blid ?? null,
-      itemId: customerItem.item,
-      fromUserDetailId: customerItem.customer,
+      blid: customerItem.blid,
+      itemId: customerItem.itemId,
+      fromUserDetailId: customerItem.customerId,
       toUserDetailId: null,
       occurredAt,
       orderId: order.id,

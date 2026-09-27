@@ -1,13 +1,9 @@
 import BadRequestException from "#exceptions/bad_request_exception";
 import Signature from "#models/signature";
 import type User from "#models/user";
-import { CustomerItemActive } from "#services/customer_items/customer_item_active";
+import CustomerItem from "#models/customer_item";
 import { OrderActive } from "#services/orders/order_active";
-import { SEDbQuery } from "#models/mongoose/storage/db-query";
-import { StorageService } from "#services/storage_service";
-import { BlError } from "#shared/bl-error";
 import { SIGNATURE_REQUIRING_CART_ITEM_TYPES } from "#shared/cart_item";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 
 const signatureRequiringOrderItemTypes = new Set<string>(SIGNATURE_REQUIRING_CART_ITEM_TYPES);
 
@@ -83,23 +79,7 @@ async function hasOpenSignatureRequiringOrder(customerId: string): Promise<boole
 }
 
 async function possessesSignatureRequiringItem(customerId: string): Promise<boolean> {
-  const databaseQuery = new SEDbQuery();
-  databaseQuery.objectIdFilters = [{ fieldName: "customer", value: customerId }];
-
-  let customerItems: CustomerItem[];
-  try {
-    customerItems = await StorageService.CustomerItems.getByQuery(databaseQuery);
-  } catch (error) {
-    if (error instanceof BlError && error.getCode() === 702) {
-      return false;
-    }
-    throw error;
-  }
-
-  const customerItemActive = new CustomerItemActive();
-  return customerItems.some(
-    (customerItem) => customerItem.handout && customerItemActive.isActive(customerItem),
-  );
+  return CustomerItem.hasActive(customerId);
 }
 
 const SIGNATURE_EXCEPTION_REASONS = {

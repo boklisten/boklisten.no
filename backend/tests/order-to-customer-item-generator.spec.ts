@@ -1,61 +1,21 @@
 import { test } from "@japa/runner";
+import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
 
+import CustomerItem from "#models/customer_item";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import type Order from "#models/order";
 import type OrderItem from "#models/order_item";
-import User from "#models/user";
-import { BlError } from "#shared/bl-error";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
+import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
+import { createOrder } from "#tests/order_fixtures";
 import { mock } from "#tests/test-doubles";
-import { userDouble } from "#tests/user_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
-test.group("OrderToCustomerItemGenerator", (group) => {
-  const userDetail = userDouble({
-    id: "customer1",
-    name: "Hans Hansen",
-    email: "hanshansen@hansen.com",
-    phone: "12345678",
-    address: "hanseveien 10",
-    postCode: "1234",
-    postCity: "oslo",
-    dob: DateTime.fromISO("2008-03-04"),
-    guardianName: "Lathans Hansen",
-    guardianEmail: "lathanshansen@hansen.com",
-    guardianPhone: "12345678",
-  });
-  /** The snapshot of the customer that a customer item carries. */
-  const customerInfo = {
-    name: userDetail.name,
-    phone: userDetail.phone ?? "",
-    address: userDetail.address,
-    postCode: userDetail.postCode,
-    postCity: userDetail.postCity,
-    dob: userDetail.dob?.toJSDate(),
-    guardian: {
-      name: userDetail.guardianName ?? "",
-      email: userDetail.guardianEmail ?? "",
-      phone: userDetail.guardianPhone ?? "",
-    },
-  };
+test.group("OrderToCustomerItemGenerator.generate", () => {
   const deadline = DateTime.fromObject({ year: 2100, month: 2, day: 1 });
   const today = DateTime.now();
-  let sandbox: sinon.SinonSandbox;
-
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    sandbox.stub(User, "findOrFail").callsFake((id) => {
-      if (id === userDetail.id) {
-        return Promise.resolve(userDetail);
-      }
-      throw new BlError("not found").code(702);
-    });
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
-  });
   const generator = new OrderToCustomerItemGenerator();
 
   function orderItem(
@@ -80,13 +40,13 @@ test.group("OrderToCustomerItemGenerator", (group) => {
     });
   }
 
-  function orderWith(orderItems: OrderItem[]): Order {
+  function orderWith(orderItems: OrderItem[], customerId: string | null = "customer1"): Order {
     return mock<Order>({
       id: "order1",
       amount: 100,
       orderItems,
       branchId: "branch1",
-      customerId: "customer1",
+      customerId,
       byCustomer: false,
       placed: false,
       employeeId: "employee1",
@@ -96,39 +56,30 @@ test.group("OrderToCustomerItemGenerator", (group) => {
   }
 
   /** The customer item the generator makes for a handed-out line of `orderWith`. */
-  function expectedCustomerItem(line: OrderItem) {
+  function expected(line: OrderItem) {
     return {
-      id: null,
-      item: line.itemId,
-      type: line.type,
-      customer: "customer1",
-      deadline: deadline.toJSDate(),
-      handout: true,
-      handoutInfo: {
-        handoutById: "branch1",
-        handoutEmployee: "employee1",
-        time: today.toJSDate(),
+      orderItem: line,
+      customerItem: {
+        type: line.type === "partly-payment" ? "partly-payment" : "rent",
+        itemId: line.itemId,
+        blid: line.blid,
+        customerId: "customer1",
+        deadline,
+        handoutBranchId: "branch1",
+        handoutEmployeeId: "employee1",
+        handedOutAt: today,
+        amountLeftToPay: line.type === "partly-payment" ? line.amountLeftToPay : null,
       },
-      returned: false,
-      buyout: false,
-      cancel: false,
-      buyback: false,
-      ...(line.type === "partly-payment"
-        ? { amountLeftToPay: line.amountLeftToPay ?? undefined }
-        : {}),
-      blid: line.blid ?? undefined,
-      orders: ["order1"],
-      customerInfo,
     };
   }
 
-  test('should return customer-item type "partly-payment', async ({ assert }) => {
+  test('should return customer-item type "partly-payment', ({ assert }) => {
     const line = orderItem("partly-payment", "blid1", { amountLeftToPay: 200 });
 
-    assert.deepEqual(await generator.generate(orderWith([line])), [expectedCustomerItem(line)]);
+    assert.deepEqual(generator.generate(orderWith([line])), [expected(line)]);
   });
 
-  test('should return multiple customer-items when more than one order-item has type "partly-payment', async ({
+  test('should return multiple customer-items when more than one order-item has type "partly-payment', ({
     assert,
   }) => {
     const line = orderItem("partly-payment", "blid1", { amountLeftToPay: 200 });
@@ -137,55 +88,86 @@ test.group("OrderToCustomerItemGenerator", (group) => {
       periodType: "year",
     });
 
-    assert.deepEqual(await generator.generate(orderWith([line, line2])), [
-      expectedCustomerItem(line),
-      expectedCustomerItem(line2),
+    assert.deepEqual(generator.generate(orderWith([line, line2])), [
+      expected(line),
+      expected(line2),
     ]);
   });
 
-  test("should return empty array if no order-item shall be converted to customer-items when more than one order-item", async ({
+  test("should return empty array if no order-item shall be converted to customer-items when more than one order-item", ({
     assert,
   }) => {
     const order = orderWith([orderItem("extend", null), orderItem("buy", null)]);
 
-    assert.deepEqual(await generator.generate(order), []);
+    assert.deepEqual(generator.generate(order), []);
   });
 
-  test('should return customer-item type "rent"', async ({ assert }) => {
+  test('should return customer-item type "rent", for rentals and match handouts alike', ({
+    assert,
+  }) => {
     const line = orderItem("rent", "blid1");
+    const line2 = orderItem("match-receive", "blid2");
 
-    assert.deepEqual(await generator.generate(orderWith([line])), [expectedCustomerItem(line)]);
-  });
-
-  test('should return multiple customer-items with type "rent"', async ({ assert }) => {
-    const line = orderItem("rent", "blid1");
-    const line2 = orderItem("rent", "blid2");
-
-    assert.deepEqual(await generator.generate(orderWith([line, line2])), [
-      expectedCustomerItem(line),
-      expectedCustomerItem(line2),
+    assert.deepEqual(generator.generate(orderWith([line, line2])), [
+      expected(line),
+      expected(line2),
     ]);
   });
 
-  test('should return multiple customer-items with enums "rent" and "partly-payment"', async ({
+  test('should return multiple customer-items with enums "rent" and "partly-payment"', ({
     assert,
   }) => {
     const line2 = orderItem("rent", "blid2");
     const line3 = orderItem("partly-payment", "blid3");
     const line4 = orderItem("buy", "blid4");
 
-    assert.deepEqual(await generator.generate(orderWith([line2, line3, line4])), [
-      expectedCustomerItem(line2),
-      expectedCustomerItem(line3),
+    assert.deepEqual(generator.generate(orderWith([line2, line3, line4])), [
+      expected(line2),
+      expected(line3),
     ]);
   });
 
-  test("considers only the given order items when they are passed", async ({ assert }) => {
+  test("considers only the given order items when they are passed", ({ assert }) => {
     const line = orderItem("rent", "blid1");
     const line2 = orderItem("rent", "blid2");
 
-    assert.deepEqual(await generator.generate(orderWith([line, line2]), [line2]), [
-      expectedCustomerItem(line2),
+    assert.deepEqual(generator.generate(orderWith([line, line2]), [line2]), [expected(line2)]);
+  });
+
+  test("an order without a customer hands out nothing", ({ assert }) => {
+    assert.deepEqual(generator.generate(orderWith([orderItem("rent", "blid1")], null)), []);
+  });
+});
+
+test.group("OrderToCustomerItemGenerator.createFor", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("creates the customer items and points each loan line at its own", async ({ assert }) => {
+    const [branch, item, customer] = await Promise.all([
+      createBranch(),
+      createItem(),
+      createUser(),
     ]);
+    const order = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [
+        { itemId: item.id, type: "rent", blid: "blid0001", periodTo: DateTime.now() },
+        { itemId: item.id, type: "return" },
+        { itemId: item.id, type: "rent", blid: "blid0002", periodTo: DateTime.now() },
+      ],
+    });
+
+    const created = await new OrderToCustomerItemGenerator().createFor(order);
+
+    assert.lengthOf(created, 2);
+    assert.deepEqual(
+      order.orderItems.map((line) => line.customerItemId),
+      [created[0]?.id, null, created[1]?.id],
+    );
+    assert.deepEqual(
+      (await CustomerItem.query().orderBy("blid")).map((customerItem) => customerItem.blid),
+      ["blid0001", "blid0002"],
+    );
   });
 });

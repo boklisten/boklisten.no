@@ -1,9 +1,9 @@
 import { test } from "@japa/runner";
 
-import type { BlidSearchSources } from "#services/blid_search_service";
+import type { BlidCustomerItem, BlidSearchSources } from "#services/blid_search_service";
 import { assembleBlidSearch, collectReferencedIds } from "#services/blid_search_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Order, OrderItem } from "#shared/order/order";
+import { customerItemDto } from "#tests/customer_item_fixtures";
 
 const BLID = "12345678";
 const IDA = "ida-id";
@@ -84,25 +84,19 @@ function makeOrder(
   };
 }
 
-function makeCustomerItem(overrides: Partial<CustomerItem> = {}): CustomerItem {
+function makeCustomerItem(overrides: Partial<BlidCustomerItem> = {}): BlidCustomerItem {
   return {
-    id: "customer-item-1",
-    item: "item-1",
-    type: "rent",
-    blid: BLID,
-    customer: IDA,
-    deadline: DEADLINE_1,
-    handout: true,
-    handoutInfo: {
-      handoutById: BRANCH,
-      handoutEmployee: EMPLOYEE,
-      time: T1,
-    },
-    returned: false,
-    buyout: false,
-    cancel: false,
-    buyback: false,
-    orders: [],
+    ...customerItemDto({
+      id: "customer-item-1",
+      itemId: "item-1",
+      blid: BLID,
+      customerId: IDA,
+      deadline: DEADLINE_1,
+      handoutBranchId: BRANCH,
+      handoutEmployeeId: EMPLOYEE,
+      handedOutAt: T1,
+    }),
+    orderIds: [],
     ...overrides,
   };
 }
@@ -175,7 +169,7 @@ test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
     const result = assembleBlidSearch(
       baseSources({
         orders: [order],
-        customerItems: [makeCustomerItem({ orders: ["order-1"] })],
+        customerItems: [makeCustomerItem({ orderIds: ["order-1"] })],
         bringDeliveryOrderIds: new Set(["order-1"]),
       }),
     );
@@ -435,7 +429,9 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
     ];
     const customerItem = makeCustomerItem({
       deadline: DEADLINE_2,
-      periodExtends: [{ from: T2, to: DEADLINE_2, periodType: "semester", time: T2 }],
+      periodExtends: [
+        { periodFrom: T2, periodTo: DEADLINE_2, periodType: "semester", createdAt: T2 },
+      ],
     });
     const result = assembleBlidSearch(baseSources({ orders, customerItems: [customerItem] }));
 
@@ -571,7 +567,8 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     const customerItem = makeCustomerItem({
       type: "partly-payment",
       returned: true,
-      returnInfo: { returnedToId: BRANCH, time: T2 },
+      returnBranchId: BRANCH,
+      returnedAt: T2,
     });
     const result = assembleBlidSearch(baseSources({ customerItems: [customerItem] }));
     assert.deepEqual(
@@ -611,7 +608,9 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
   test("uses the first extend's previous deadline for the synthesized handout", ({ assert }) => {
     const customerItem = makeCustomerItem({
       deadline: DEADLINE_2,
-      periodExtends: [{ from: DEADLINE_1, to: DEADLINE_2, periodType: "year", time: T2 }],
+      periodExtends: [
+        { periodFrom: DEADLINE_1, periodTo: DEADLINE_2, periodType: "year", createdAt: T2 },
+      ],
     });
     const result = assembleBlidSearch(baseSources({ customerItems: [customerItem] }));
     const handout = result.history.find((event) => event.action === "handout");
@@ -621,7 +620,9 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
   test("synthesizes extend events not covered by an extend order", ({ assert }) => {
     const customerItem = makeCustomerItem({
       deadline: DEADLINE_2,
-      periodExtends: [{ from: DEADLINE_1, to: DEADLINE_2, periodType: "year", time: T2 }],
+      periodExtends: [
+        { periodFrom: DEADLINE_1, periodTo: DEADLINE_2, periodType: "year", createdAt: T2 },
+      ],
     });
     const result = assembleBlidSearch(baseSources({ customerItems: [customerItem] }));
     const extend = result.history.find((event) => event.action === "extend");
@@ -650,7 +651,9 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     });
     const customerItem = makeCustomerItem({
       deadline: DEADLINE_2,
-      periodExtends: [{ from: DEADLINE_1, to: DEADLINE_2, periodType: "year", time: T2 }],
+      periodExtends: [
+        { periodFrom: DEADLINE_1, periodTo: DEADLINE_2, periodType: "year", createdAt: T2 },
+      ],
     });
     const result = assembleBlidSearch(
       baseSources({ orders: [order], customerItems: [customerItem] }),
@@ -665,7 +668,8 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
   test("synthesizes a buyout event when no blid-tagged order tells the story", ({ assert }) => {
     const customerItem = makeCustomerItem({
       buyout: true,
-      buyoutInfo: { order: "buyout-order", time: T2 },
+      buyoutOrderId: "buyout-order",
+      boughtOutAt: T2,
     });
     const result = assembleBlidSearch(baseSources({ customerItems: [customerItem] }));
     const buyout = result.history.find((event) => event.action === "buyout");
@@ -678,7 +682,8 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     const boughtBack = makeCustomerItem({
       returned: true,
       buyback: true,
-      buybackInfo: { order: "buyback-order", time: T2 },
+      buybackOrderId: "buyback-order",
+      boughtBackAt: T2,
     });
     const buyback = assembleBlidSearch(baseSources({ customerItems: [boughtBack] })).history.find(
       (event) => event.action === "buyback",
@@ -690,7 +695,8 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     const cancelled = makeCustomerItem({
       returned: true,
       cancel: true,
-      cancelInfo: { order: "cancel-order", time: T3 },
+      cancelOrderId: "cancel-order",
+      cancelledAt: T3,
     });
     const cancel = assembleBlidSearch(baseSources({ customerItems: [cancelled] })).history.find(
       (event) => event.action === "cancel",
@@ -721,7 +727,8 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     const customerItem = makeCustomerItem({
       returned: true,
       buyback: true,
-      buybackInfo: { order: "buyback-order", time: T3 },
+      buybackOrderId: "buyback-order",
+      boughtBackAt: T3,
     });
     const result = assembleBlidSearch(
       baseSources({ orders: [order], customerItems: [customerItem] }),
@@ -750,7 +757,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
         },
       ],
     });
-    const customerItem = makeCustomerItem({ buyout: true, orders: ["invoice-order"] });
+    const customerItem = makeCustomerItem({ buyout: true, orderIds: ["invoice-order"] });
     const result = assembleBlidSearch(
       baseSources({ orders: [order], customerItems: [customerItem] }),
     );
@@ -785,7 +792,8 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     });
     const customerItem = makeCustomerItem({
       buyout: true,
-      buyoutInfo: { order: "invoice-order", time: T3 },
+      buyoutOrderId: "invoice-order",
+      boughtOutAt: T3,
     });
     const result = assembleBlidSearch(
       baseSources({ orders: [order], customerItems: [customerItem] }),
@@ -817,7 +825,8 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     });
     const customerItem = makeCustomerItem({
       buyout: true,
-      buyoutInfo: { order: "buyout-order", time: T2 },
+      buyoutOrderId: "buyout-order",
+      boughtOutAt: T2,
     });
     const result = assembleBlidSearch(
       baseSources({ orders: [order], customerItems: [customerItem] }),
@@ -872,7 +881,8 @@ test.group("BlidSearchService.assembleBlidSearch() – deadline expiry", () => {
           makeCustomerItem({
             deadline: EXPIRED_DEADLINE,
             returned: true,
-            returnInfo: { returnedToId: BRANCH, time: T2 },
+            returnBranchId: BRANCH,
+            returnedAt: T2,
           }),
         ],
       }),
@@ -893,7 +903,7 @@ test.group("BlidSearchService.assembleBlidSearch() – status", () => {
   test("is bought-out when the newest customer item was bought out", ({ assert }) => {
     const result = assembleBlidSearch(
       baseSources({
-        customerItems: [makeCustomerItem({ buyout: true, buyoutInfo: { time: T2 } })],
+        customerItems: [makeCustomerItem({ buyout: true, boughtOutAt: T2 })],
       }),
     );
     assert.equal(result.status, "bought-out");
@@ -902,7 +912,7 @@ test.group("BlidSearchService.assembleBlidSearch() – status", () => {
   test("is not-handed-out after a buyback", ({ assert }) => {
     const result = assembleBlidSearch(
       baseSources({
-        customerItems: [makeCustomerItem({ buyback: true, buybackInfo: { order: "order-1" } })],
+        customerItems: [makeCustomerItem({ buyback: true, buybackOrderId: "order-1" })],
       }),
     );
     assert.equal(result.status, "not-handed-out");
@@ -914,15 +924,20 @@ test.group("BlidSearchService.assembleBlidSearch() – status", () => {
     const boughtOutThenBack = makeCustomerItem({
       id: "customer-item-old",
       buyout: true,
-      buyoutInfo: { time: T1 },
-      handoutInfo: { handoutById: BRANCH, time: T1 },
+      boughtOutAt: T1,
+      handoutBranchId: BRANCH,
+      handedOutAt: T1,
+      handoutEmployeeId: null,
     });
     const returnedLater = makeCustomerItem({
       id: "customer-item-new",
-      customer: PETRA,
+      customerId: PETRA,
       returned: true,
-      returnInfo: { returnedToId: BRANCH, time: T3 },
-      handoutInfo: { handoutById: BRANCH, time: T2 },
+      returnBranchId: BRANCH,
+      returnedAt: T3,
+      handoutBranchId: BRANCH,
+      handedOutAt: T2,
+      handoutEmployeeId: null,
     });
     const result = assembleBlidSearch(
       baseSources({ customerItems: [boughtOutThenBack, returnedLater] }),
@@ -964,8 +979,10 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item authority",
         orders: [order],
         customerItems: [
           makeCustomerItem({
-            orders: [order.id],
-            handoutInfo: { handoutById: BRANCH_2, time: T1 },
+            orderIds: [order.id],
+            handoutBranchId: BRANCH_2,
+            handedOutAt: T1,
+            handoutEmployeeId: null,
           }),
         ],
       }),
@@ -994,9 +1011,10 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item authority",
         orders: [order],
         customerItems: [
           makeCustomerItem({
-            orders: [order.id],
+            orderIds: [order.id],
             returned: true,
-            returnInfo: { returnedToId: BRANCH_2, time: T2 },
+            returnBranchId: BRANCH_2,
+            returnedAt: T2,
           }),
         ],
       }),
@@ -1042,7 +1060,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item authority",
         orders: [handoutOrder, extendOrder],
         customerItems: [
           makeCustomerItem({
-            orders: [handoutOrder.id, extendOrder.id],
+            orderIds: [handoutOrder.id, extendOrder.id],
             deadline: CORRECTED_DEADLINE,
           }),
         ],
@@ -1067,22 +1085,14 @@ test.group("BlidSearchService.assembleBlidSearch() – active item", () => {
     });
   });
 
-  test("has a null handout branch when a legacy item lacks handoutInfo", ({ assert }) => {
-    const result = assembleBlidSearch(
-      baseSources({
-        customerItems: [makeCustomerItem({ handoutInfo: undefined })],
-      }),
-    );
-    assert.equal(result.activeItem?.handoutBranchId, null);
-  });
-
   test("is absent once the book is returned", ({ assert }) => {
     const result = assembleBlidSearch(
       baseSources({
         customerItems: [
           makeCustomerItem({
             returned: true,
-            returnInfo: { returnedToId: BRANCH, time: T2 },
+            returnBranchId: BRANCH,
+            returnedAt: T2,
           }),
         ],
       }),
@@ -1266,7 +1276,9 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     // The receiver's customer item is created by the transfer, so it must not add its own
     // "got the book from stand" story on top of the transfer event.
     const customerItem = makeCustomerItem({
-      handoutInfo: { handoutById: BRANCH, time: T2 },
+      handoutBranchId: BRANCH,
+      handedOutAt: T2,
+      handoutEmployeeId: null,
     });
     const result = assembleBlidSearch(
       baseSources({

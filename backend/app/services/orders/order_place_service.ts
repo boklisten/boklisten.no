@@ -1,16 +1,16 @@
+import db from "@adonisjs/lucid/services/db";
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
+import CustomerItem from "#models/customer_item";
 import Order from "#models/order";
 import type OrderItem from "#models/order_item";
 import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import { MatchRepository } from "#services/matches/match_repository";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderValidator } from "#services/orders/validation/order_validator";
-import { StorageService } from "#services/storage_service";
 import { isNotNullish } from "#services/typescript_helpers";
 import { BlError } from "#shared/bl-error";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import type { UserPermission } from "#shared/user-permission";
 import { hasPermissionLevel } from "#shared/user-permission";
@@ -112,34 +112,25 @@ export class OrderPlaceService {
    */
   private async isSomeBlidAlreadyHandedOut(order: Order): Promise<boolean> {
     const handoutOrderTypes = new Set<OrderItemType>(["buy", "rent", "partly-payment"]);
-    const handoutItems = order.orderItems.filter(
-      (orderItem) => handoutOrderTypes.has(orderItem.type) && orderItem.blid != null,
-    );
-    if (handoutItems.length === 0) {
+    const blids = order.orderItems
+      .filter((orderItem) => handoutOrderTypes.has(orderItem.type))
+      .map((orderItem) => orderItem.blid)
+      .filter(isNotNullish);
+    if (blids.length === 0) {
       return false;
     }
 
-    try {
-      // One aggregation for every blid in the order instead of a query per order item.
-      const unreturnedItems = await StorageService.CustomerItems.aggregate([
-        {
-          $match: {
-            blid: {
-              $in: handoutItems.map((handoutItem) => handoutItem.blid),
-            },
-            returned: false,
-            // In some cases, books that have previously been bought out get returned
-            // to Boklistens possesion without being registered as a buyback
-            // Therefore, it should be possible to hand out books that have been bought out
-            buyout: false,
-          },
-        },
-      ]);
-      return unreturnedItems.length > 0;
-    } catch {
-      console.error("Could not check whether some items are already handed out");
-      return false;
-    }
+    // In some cases, books that have previously been bought out get returned
+    // to Boklistens possesion without being registered as a buyback
+    // Therefore, it should be possible to hand out books that have been bought out
+    const unreturned = await db
+      .from("customer_items")
+      .whereIn("blid", blids)
+      .where("returned", false)
+      .where("buyout", false)
+      .select("id")
+      .first();
+    return unreturned !== null;
   }
 
   /**
@@ -165,23 +156,22 @@ export class OrderPlaceService {
     }
 
     const [returnCustomerItems, handoutCustomerItems] = await Promise.all([
-      StorageService.CustomerItems.getMany(
-        returnOrderItems.map((orderItem) => orderItem.customerItemId).filter(isNotNullish),
-      ),
-      StorageService.CustomerItems.getMany(
-        handoutOrderItems.map((orderItem) => orderItem.customerItemId).filter(isNotNullish),
-      ),
+      CustomerItem.findByIds(returnOrderItems.map((orderItem) => orderItem.customerItemId)),
+      CustomerItem.findByIds(handoutOrderItems.map((orderItem) => orderItem.customerItemId)),
     ]);
 
     for (const customerItem of returnCustomerItems) {
+      if (customerItem.customerId === null) {
+        continue;
+      }
       const obligation = await MatchRepository.findSenderObligation(
-        customerItem.customer,
-        customerItem.item,
+        customerItem.customerId,
+        customerItem.itemId,
       );
       await MatchRepository.recordHandover({
-        blid: customerItem.blid ?? null,
-        itemId: customerItem.item,
-        fromUserDetailId: customerItem.customer,
+        blid: customerItem.blid,
+        itemId: customerItem.itemId,
+        fromUserDetailId: customerItem.customerId,
         toUserDetailId: null,
         occurredAt: DateTime.now(),
         orderId,
@@ -191,15 +181,18 @@ export class OrderPlaceService {
     }
 
     for (const customerItem of handoutCustomerItems) {
+      if (customerItem.customerId === null) {
+        continue;
+      }
       const obligation = await MatchRepository.findReceiverObligation(
-        customerItem.customer,
-        customerItem.item,
+        customerItem.customerId,
+        customerItem.itemId,
       );
       await MatchRepository.recordHandover({
-        blid: customerItem.blid ?? null,
-        itemId: customerItem.item,
+        blid: customerItem.blid,
+        itemId: customerItem.itemId,
         fromUserDetailId: null,
-        toUserDetailId: customerItem.customer,
+        toUserDetailId: customerItem.customerId,
         occurredAt: DateTime.now(),
         orderId,
         dischargesSenderObligationId: null,
@@ -242,12 +235,8 @@ export class OrderPlaceService {
       (orderItem) => orderItem.handout && orderItem.type === "rent",
     );
 
-    let customerItems = await this.orderToCustomerItemGenerator.generate(order);
-
-    if (customerItems && customerItems.length > 0) {
-      customerItems = await this.addCustomerItems(customerItems, user);
-      this.addCustomerItemIdToOrderItems(order, customerItems);
-
+    const customerItems = await this.orderToCustomerItemGenerator.createFor(order);
+    if (customerItems.length > 0) {
       await order.saveWithItems();
     }
 
@@ -269,28 +258,5 @@ export class OrderPlaceService {
     }
 
     return order;
-  }
-
-  private async addCustomerItems(
-    customerItems: CustomerItem[],
-    user?: PlacingUser,
-  ): Promise<CustomerItem[]> {
-    const addedCustomerItems = [];
-    for (const customerItem of customerItems) {
-      const ci = await StorageService.CustomerItems.add(customerItem, user);
-      addedCustomerItems.push(ci);
-    }
-
-    return addedCustomerItems;
-  }
-
-  private addCustomerItemIdToOrderItems(order: Order, customerItems: CustomerItem[]) {
-    for (const customerItem of customerItems) {
-      for (const orderItem of order.orderItems) {
-        if (String(customerItem.item) === orderItem.itemId) {
-          orderItem.customerItemId = customerItem.id;
-        }
-      }
-    }
   }
 }

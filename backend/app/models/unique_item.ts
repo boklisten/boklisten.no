@@ -1,6 +1,8 @@
+import db from "@adonisjs/lucid/services/db";
 import { beforeCreate, belongsTo } from "@adonisjs/lucid/orm";
 import type { BelongsTo } from "@adonisjs/lucid/types/relations";
 
+import CustomerItem from "#models/customer_item";
 import { assignObjectId } from "#models/helpers/object_id";
 import Item from "#models/item";
 import { UniqueItemSchema } from "#database/schema";
@@ -46,14 +48,24 @@ export default class UniqueItem extends UniqueItemSchema {
   }
 
   /**
-   * Every sticker whose blid contains the text, ignoring case, as bare blid/item pairs in no
-   * particular order. Ranking happens in code (`rankBlidMatches`), since the held-or-not order
-   * needs the customer items.
+   * Every sticker whose blid contains the text, ignoring case, with the customer actively holding
+   * it, in no particular order. Ranking happens in code (`rankBlidMatches`).
    *
    * @param text Alphanumeric text (the validator guarantees no LIKE metacharacters).
    */
-  static async matching(text: string): Promise<{ blid: string; itemId: string }[]> {
-    const rows = await this.query().select("blid", "itemId").whereILike("blid", `%${text}%`);
-    return rows.map((row) => ({ blid: row.blid, itemId: row.itemId }));
+  static async matching(
+    text: string,
+  ): Promise<{ blid: string; itemId: string; holderId: string | null }[]> {
+    return db
+      .from("unique_items")
+      .whereILike("blid", `%${text}%`)
+      .select(
+        "blid",
+        "item_id as itemId",
+        CustomerItem.whereActive(db.from("customer_items"))
+          .whereColumn("customer_items.blid", "unique_items.blid")
+          .select("customer_id")
+          .as("holderId"),
+      );
   }
 }

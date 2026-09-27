@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import CustomerItem from "#models/customer_item";
 import Order from "#models/order";
 import Signature from "#models/signature";
 import User from "#models/user";
@@ -13,10 +14,9 @@ import { MatchRepository } from "#services/matches/match_repository";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { OrderPayments } from "#services/payments/order_payments";
 import { StandCartPlacement } from "#services/stand_cart/stand_cart_placement";
-import { StorageService } from "#services/storage_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Payment } from "#shared/payment/payment";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
@@ -80,7 +80,6 @@ async function handoutOrder(): Promise<Order> {
 
 test.group("StandCartPlacement.place", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let customerItemsAdd: sinon.SinonStub;
   let paymentsOf: sinon.SinonStub;
   let placeOrder: sinon.SinonStub;
   let recordHandover: sinon.SinonStub;
@@ -94,11 +93,6 @@ test.group("StandCartPlacement.place", (group) => {
     await createItem({ id: "item1", title: "Sinus 1T" });
     await createItem({ id: "item2", title: "Kosmos SF" });
     sandbox = createSandbox();
-    customerItemsAdd = sandbox
-      .stub(StorageService.CustomerItems, "add")
-      .callsFake((customerItem) => Promise.resolve({ ...customerItem, id: "new-ci" }));
-    sandbox.stub(StorageService.CustomerItems, "getMany").resolves([]);
-    sandbox.stub(StorageService.CustomerItems, "getOrNull").resolves(null);
     paymentsOf = sandbox.stub(OrderPayments, "of").resolves([]);
     sandbox.stub(User, "findOrFail").resolves(userDouble({ id: CUSTOMER_ID, name: "Ola" }));
     placeOrder = sandbox
@@ -121,18 +115,32 @@ test.group("StandCartPlacement.place", (group) => {
   }) => {
     const placed = await StandCartPlacement.place(await handoutOrder(), EMPLOYEE);
 
-    assert.isTrue(customerItemsAdd.calledOnce);
-    assert.include(customerItemsAdd.firstCall.args[0], {
-      item: "item1",
-      blid: "12345678",
-      customer: CUSTOMER_ID,
-      type: "rent",
-      handout: true,
-    });
+    const created = await CustomerItem.all();
+    assert.lengthOf(created, 1);
+    const [customerItem] = created;
+    assert.deepEqual(
+      customerItem && {
+        itemId: customerItem.itemId,
+        blid: customerItem.blid,
+        customerId: customerItem.customerId,
+        type: customerItem.type,
+        handoutBranchId: customerItem.handoutBranchId,
+        handoutEmployeeId: customerItem.handoutEmployeeId,
+      },
+      {
+        itemId: "item1",
+        blid: "12345678",
+        customerId: CUSTOMER_ID,
+        type: "rent",
+        handoutBranchId: BRANCH_ID,
+        handoutEmployeeId: EMPLOYEE.detailsId,
+      },
+    );
+    assert.equal(created[0]?.deadline.toMillis(), SEMESTER_END.getTime());
     const stored = await Order.findOrFail(ORDER_ID);
-    assert.equal(stored.orderItems[0]?.customerItemId, "new-ci");
+    assert.equal(stored.orderItems[0]?.customerItemId, created[0]?.id);
     assert.isNull(stored.orderItems[1]?.customerItemId);
-    assert.equal(placeOrder.firstCall.args[0].orderItems[0].customerItemId, "new-ci");
+    assert.equal(placeOrder.firstCall.args[0].orderItems[0].customerItemId, created[0]?.id);
     // The employee, not the customer: the handler names them on returned books
     assert.equal(placeOrder.firstCall.args[1], EMPLOYEE.detailsId);
     assert.isTrue(placed.placed);
@@ -143,7 +151,7 @@ test.group("StandCartPlacement.place", (group) => {
       await orderWith([{ type: "cancel", handout: false, delivered: true }]),
       EMPLOYEE,
     );
-    assert.isFalse(customerItemsAdd.called);
+    assert.lengthOf(await CustomerItem.all(), 0);
   });
 
   test("records a handover from the stand for each copy handed out", async ({ assert }) => {
@@ -159,17 +167,15 @@ test.group("StandCartPlacement.place", (group) => {
   });
 
   test("records a handover to the stand for each copy taken back", async ({ assert }) => {
-    const heldBook = mock<CustomerItem>({
-      id: "ci1",
-      item: "item1",
+    const heldBook = await createCustomerItem({
+      itemId: "item1",
       blid: "12345678",
-      customer: CUSTOMER_ID,
-      deadline: SEMESTER_END,
-      handoutInfo: { handoutById: BRANCH_ID },
+      customerId: CUSTOMER_ID,
+      deadline: DateTime.fromJSDate(SEMESTER_END),
+      handoutBranchId: BRANCH_ID,
     });
-    asStub(StorageService.CustomerItems.getMany).resolves([heldBook]);
     await StandCartPlacement.place(
-      await orderWith([{ type: "return", customerItemId: "ci1" }]),
+      await orderWith([{ type: "return", customerItemId: heldBook.id }]),
       EMPLOYEE,
     );
     assert.equal(recordHandover.callCount, 1);

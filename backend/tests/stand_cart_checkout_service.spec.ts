@@ -5,6 +5,7 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
+import type CustomerItem from "#models/customer_item";
 import Order from "#models/order";
 import type OrderItem from "#models/order_item";
 import Signature from "#models/signature";
@@ -23,7 +24,6 @@ import { StandCartRefund } from "#services/stand_cart/stand_cart_refund";
 import { StorageService } from "#services/storage_service";
 import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { Branch } from "#shared/branch";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
 import type { Delivery } from "#shared/delivery/delivery";
 import type { Item } from "#shared/item";
 import type {
@@ -33,6 +33,7 @@ import type {
   StandCartVippsRefund,
 } from "#shared/stand_cart";
 import { branchDto, createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem, customerItemDouble } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
@@ -109,15 +110,16 @@ async function createdOrder(): Promise<Order> {
   }
   return order;
 }
-const customerItem = mock<CustomerItem>({
+const customerItemColumns = {
   id: CUSTOMER_ITEM_ID,
-  item: item.id,
+  itemId: item.id,
   blid: BLID,
-  customer: CUSTOMER_ID,
+  customerId: CUSTOMER_ID,
   type: "rent",
-  deadline: new Date(SEMESTER_END),
-  handoutInfo: { handoutById: BRANCH_ID },
-});
+  deadline: DateTime.fromISO(SEMESTER_END),
+  handoutBranchId: BRANCH_ID,
+} satisfies Partial<CustomerItem>;
+const customerItem = customerItemDouble(customerItemColumns);
 
 const ORDER_SOURCE: StandCartSource = { kind: "order", orderId: ORDER_ID, itemId: item.id };
 
@@ -226,6 +228,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     await createWorld();
+    await createCustomerItem(customerItemColumns);
     await createOrder({
       id: ORDER_ID,
       customerId: CUSTOMER_ID,
@@ -868,6 +871,7 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     await createWorld();
+    await createCustomerItem(customerItemColumns);
     await createOrder({
       id: NEW_ORDER_ID,
       amount: 250,

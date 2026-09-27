@@ -5,11 +5,13 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import BookHandover from "#models/book_handover";
+import CustomerItem from "#models/customer_item";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import type MatchRound from "#models/match_round";
 import { createBranch } from "#tests/branch_fixtures";
+import { createCustomerItem, customerItemDouble } from "#tests/customer_item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import {
   createTestRound,
@@ -17,15 +19,10 @@ import {
   seedTestCatalogue,
 } from "#tests/matches/match-testing-utils";
 import User from "#models/user";
-import { CustomerItemActiveBlid } from "#services/customer_items/customer_item_active_blid";
-import { OrderToCustomerItemGenerator } from "#services/customer_items/order_to_customer_item_generator";
 import { OrderItemMovedFromOrderHandler } from "#services/orders/order_item_moved_from_order_handler";
 import { OrderValidator } from "#services/orders/validation/order_validator";
 import { MatchRepository } from "#services/matches/match_repository";
 import { recordTransfer } from "#services/matches/record_transfer";
-import { StorageService } from "#services/storage_service";
-import type { CustomerItem } from "#shared/customer-item/customer-item";
-import { asStub, mock, unchecked } from "#tests/test-doubles";
 
 /** The receiver doing the scanning. */
 const A = "5d765db5fc8c47001c408d81";
@@ -45,21 +42,22 @@ function inOneMonth(): Date {
   return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 }
 
-/** The minimum of an active `CustomerItem` that the transfer path actually reads. */
-function activeCopy(overrides: Partial<CustomerItem> & { customer: string }): CustomerItem {
-  return mock<CustomerItem>({
+type CopySpec = Parameters<typeof createCustomerItem>[0];
+
+/** An active copy of the title held by `customerId`, due in a month. */
+function activeCopy({
+  customerId,
+  ...overrides
+}: Partial<CopySpec> & { customerId: string }): CopySpec {
+  return {
     id: "customer-item-1",
     blid: BLID,
-    item: ITEM_X,
-    deadline: inOneMonth(),
-    handoutInfo: {
-      handoutById: BRANCH,
-      handoutEmployee: "",
-      time: new Date(),
-    },
-    returned: false,
+    itemId: ITEM_X,
+    customerId,
+    deadline: DateTime.fromJSDate(inOneMonth()),
+    handoutBranchId: BRANCH,
     ...overrides,
-  });
+  };
 }
 
 test.group("recordTransfer", (group) => {
@@ -105,16 +103,13 @@ test.group("recordTransfer", (group) => {
   }
 
   /**
-   * Gives the receiver their open rent order and stubs every Mongo-side collaborator; the
-   * Postgres side stays real.
+   * Inserts the scanned copy and gives the receiver their open rent order; the order validator and
+   * the moved-order handler are stubbed.
    */
-  async function stubMongo(
-    customerItem: CustomerItem | null,
-    options: { orderedItem?: string } = {},
-  ) {
-    sandbox
-      .stub(CustomerItemActiveBlid.prototype, "getActiveCustomerItems")
-      .resolves(customerItem ? [customerItem] : []);
+  async function stubMongo(customerItem: CopySpec | null, options: { orderedItem?: string } = {}) {
+    if (customerItem) {
+      await createCustomerItem(customerItem);
+    }
 
     await createOrder({
       id: "receiver-rent-order",
@@ -124,7 +119,7 @@ test.group("recordTransfer", (group) => {
       orderItems: [
         {
           type: "rent",
-          itemId: options.orderedItem ?? customerItem?.item ?? ITEM_X,
+          itemId: options.orderedItem ?? customerItem?.itemId ?? ITEM_X,
           periodTo: DateTime.fromJSDate(inOneMonth()),
         },
       ],
@@ -143,16 +138,6 @@ test.group("recordTransfer", (group) => {
           ),
       );
 
-    sandbox.stub(StorageService.CustomerItems, "update").resolvesArg(0);
-    // No other copies of the title, so no deadline is extended.
-    sandbox.stub(StorageService.CustomerItems, "aggregate").resolves(unchecked([]));
-    sandbox
-      .stub(StorageService.CustomerItems, "add")
-      .resolves(unchecked({ id: "new-customer-item" }));
-
-    sandbox
-      .stub(OrderToCustomerItemGenerator.prototype, "generate")
-      .resolves(unchecked([{ id: "generated-customer-item" }]));
     sandbox.stub(OrderValidator.prototype, "validate").resolves();
     return {
       movedHandlerStub: sandbox
@@ -163,7 +148,7 @@ test.group("recordTransfer", (group) => {
 
   test("a peer's own copy discharges both halves with one handover", async ({ assert }) => {
     const obligation = await seedObligation(B, A);
-    await stubMongo(activeCopy({ customer: B }));
+    await stubMongo(activeCopy({ customerId: B }));
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -184,7 +169,7 @@ test.group("recordTransfer", (group) => {
     // B, so C is the one who is credited and B stays on the hook for their own copy.
     const mine = await seedObligation(B, A);
     const theirs = await seedObligation(C, B);
-    await stubMongo(activeCopy({ customer: C }));
+    await stubMongo(activeCopy({ customerId: C }));
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -205,7 +190,7 @@ test.group("recordTransfer", (group) => {
     assert,
   }) => {
     const mine = await seedObligation(B, A);
-    await stubMongo(activeCopy({ customer: C }));
+    await stubMongo(activeCopy({ customerId: C }));
 
     await recordTransfer(A, { blid: BLID });
 
@@ -216,7 +201,7 @@ test.group("recordTransfer", (group) => {
 
   test("an equivalent edition satisfies the receiver half", async ({ assert }) => {
     const mine = await seedObligation(B, A, GYMNOS_2009);
-    await stubMongo(activeCopy({ customer: B, item: GYMNOS_2012 }));
+    await stubMongo(activeCopy({ customerId: B, itemId: GYMNOS_2012 }));
 
     await recordTransfer(A, { blid: BLID });
 
@@ -232,9 +217,12 @@ test.group("recordTransfer", (group) => {
     // 2012 edition A actually got, and hand the 2009 order to the moved-order handler — which
     // closes equivalent editions — so A's original order does not stay open.
     await seedObligation(B, A, GYMNOS_2009);
-    const { movedHandlerStub } = await stubMongo(activeCopy({ customer: B, item: GYMNOS_2012 }), {
-      orderedItem: GYMNOS_2009,
-    });
+    const { movedHandlerStub } = await stubMongo(
+      activeCopy({ customerId: B, itemId: GYMNOS_2012 }),
+      {
+        orderedItem: GYMNOS_2009,
+      },
+    );
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -247,7 +235,7 @@ test.group("recordTransfer", (group) => {
 
   test("scanning the same book twice records only one handover", async ({ assert }) => {
     await seedObligation(B, A);
-    await stubMongo(activeCopy({ customer: B }));
+    await stubMongo(activeCopy({ customerId: B }));
 
     await recordTransfer(A, { blid: BLID });
     const { feedback } = await recordTransfer(A, { blid: BLID });
@@ -258,7 +246,12 @@ test.group("recordTransfer", (group) => {
 
   test("refuses to record a handover for a copy with no BL-ID", async ({ assert }) => {
     await seedObligation(B, A);
-    await stubMongo(activeCopy({ customer: B, blid: undefined }));
+    await stubMongo(null);
+    // Found by its blid, a copy always has one; the guard covers a lookup that ever returns
+    // one without.
+    sandbox
+      .stub(CustomerItem, "activeByBlid")
+      .resolves([customerItemDouble({ customerId: B, itemId: ITEM_X, blid: null })]);
 
     await assert.rejects(
       () => recordTransfer(A, { blid: BLID }),
@@ -268,7 +261,7 @@ test.group("recordTransfer", (group) => {
 
   test("writes nothing when the receiver has no obligation for the title", async ({ assert }) => {
     await seedObligation(B, C);
-    await stubMongo(activeCopy({ customer: B }));
+    await stubMongo(activeCopy({ customerId: B }));
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -291,7 +284,7 @@ test.group("recordTransfer", (group) => {
       dischargesSenderObligationId: obligation.id,
       dischargesReceiverObligationId: obligation.id,
     });
-    await stubMongo(activeCopy({ customer: C }));
+    await stubMongo(activeCopy({ customerId: C }));
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 
@@ -299,13 +292,14 @@ test.group("recordTransfer", (group) => {
     assert.lengthOf(await BookHandover.all(), 1, "the second copy must not be recorded");
   });
 
-  test("takes the discharge back when the Mongo side of the transfer fails", async ({ assert }) => {
+  test("takes the discharge back when the customer-item side of the transfer fails", async ({
+    assert,
+  }) => {
     await seedObligation(B, A);
-    await stubMongo(activeCopy({ customer: B }));
-    asStub(StorageService.CustomerItems.update).restore();
-    sandbox.stub(StorageService.CustomerItems, "update").rejects(new Error("mongo down"));
+    await stubMongo(activeCopy({ customerId: B }));
+    sandbox.stub(CustomerItem.prototype, "save").rejects(new Error("postgres down"));
 
-    await assert.rejects(() => recordTransfer(A, { blid: BLID }), /mongo down/);
+    await assert.rejects(() => recordTransfer(A, { blid: BLID }), /postgres down/);
 
     assert.isEmpty(
       await BookHandover.all(),
@@ -325,8 +319,8 @@ test.group("recordTransfer", (group) => {
     // A copy the sender kept past its deadline — overdue books must go to the stand, not transfer.
     await stubMongo(
       activeCopy({
-        customer: B,
-        deadline: DateTime.now().minus({ years: 1 }).toJSDate(),
+        customerId: B,
+        deadline: DateTime.now().minus({ years: 1 }),
       }),
     );
 
@@ -344,7 +338,7 @@ test.group("recordTransfer", (group) => {
     round.deadline = yesterday;
     await round.save();
     await seedObligation(B, A);
-    await stubMongo(activeCopy({ customer: B, deadline: yesterday.toJSDate() }));
+    await stubMongo(activeCopy({ customerId: B, deadline: yesterday }));
 
     const { feedback } = await recordTransfer(A, { blid: BLID });
 

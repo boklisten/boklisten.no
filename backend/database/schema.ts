@@ -202,6 +202,78 @@ export class CompanySchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class CustomerItemPeriodExtendSchema extends BaseModel {
+  static $columns = ['createdAt', 'customerItemId', 'id', 'periodFrom', 'periodTo', 'periodType'] as const
+  $columns = CustomerItemPeriodExtendSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare customerItemId: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime()
+  declare periodFrom: DateTime
+  @column.dateTime()
+  declare periodTo: DateTime
+  @column()
+  declare periodType: string
+}
+
+export class CustomerItemSchema extends BaseModel {
+  static $columns = ['amountLeftToPay', 'blid', 'boughtBackAt', 'boughtOutAt', 'buyback', 'buybackOrderId', 'buyout', 'buyoutOrderId', 'cancel', 'cancelOrderId', 'cancelledAt', 'createdAt', 'customerId', 'deadline', 'handedOutAt', 'handoutBranchId', 'handoutEmployeeId', 'id', 'itemId', 'returnBranchId', 'returnEmployeeId', 'returned', 'returnedAt', 'type', 'updatedAt'] as const
+  $columns = CustomerItemSchema.$columns
+  @column()
+  declare amountLeftToPay: number | null
+  @column()
+  declare blid: string | null
+  @column.dateTime()
+  declare boughtBackAt: DateTime | null
+  @column.dateTime()
+  declare boughtOutAt: DateTime | null
+  @column()
+  declare buyback: boolean
+  @column()
+  declare buybackOrderId: string | null
+  @column()
+  declare buyout: boolean
+  @column()
+  declare buyoutOrderId: string | null
+  @column()
+  declare cancel: boolean
+  @column()
+  declare cancelOrderId: string | null
+  @column.dateTime()
+  declare cancelledAt: DateTime | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare customerId: string | null
+  @column.dateTime()
+  declare deadline: DateTime
+  @column.dateTime()
+  declare handedOutAt: DateTime
+  @column()
+  declare handoutBranchId: string
+  @column()
+  declare handoutEmployeeId: string | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare itemId: string
+  @column()
+  declare returnBranchId: string | null
+  @column()
+  declare returnEmployeeId: string | null
+  @column()
+  declare returned: boolean
+  @column.dateTime()
+  declare returnedAt: DateTime | null
+  @column()
+  declare type: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class EditableTextSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'text', 'updatedAt'] as const
   $columns = EditableTextSchema.$columns

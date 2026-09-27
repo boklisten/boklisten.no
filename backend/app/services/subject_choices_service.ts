@@ -1,15 +1,14 @@
 import { DateTime } from "luxon";
-import { ObjectId } from "mongodb";
+import db from "@adonisjs/lucid/services/db";
 
+import CustomerItem from "#models/customer_item";
 import Order from "#models/order";
 import OrderItem from "#models/order_item";
 import User from "#models/user";
-import { ACTIVE_CUSTOMER_ITEM_MATCH } from "#services/branch_books_service";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import type { SubjectForUpload } from "#services/branch_subjects_service";
 import { fetchSubjectsForUpload, normalizeSubjectName } from "#services/branch_subjects_service";
 import Branch from "#models/branch";
-import { StorageService } from "#services/storage_service";
 import { buildBranchMappings } from "#services/user_provisioning_service";
 import { canonicalItemId, getEquivalentItemIds } from "#shared/item-equivalence";
 import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
@@ -348,12 +347,12 @@ async function fetchOwnedItemKeys(customerIds: string[]): Promise<Set<string>> {
   if (customerIds.length === 0) {
     return new Set();
   }
-  const customerObjectIds = customerIds.map((id) => new ObjectId(id));
   const [activeCustomerItems, openOrderItems] = await Promise.all([
-    StorageService.CustomerItems.aggregate<{ customer: string; item: string }>([
-      { $match: { ...ACTIVE_CUSTOMER_ITEM_MATCH, customer: { $in: customerObjectIds } } },
-      { $project: { customer: { $toString: "$customer" }, item: { $toString: "$item" } } },
-    ]),
+    CustomerItem.whereActive(db.from("customer_items"))
+      .whereIn("customer_items.customer_id", customerIds)
+      .select("customer_id as customer", "item_id as item") as Promise<
+      { customer: string; item: string }[]
+    >,
     OrderItem.whereOpen(
       OrderItem.query().join("orders", "orders.id", "order_items.order_id"),
       LOAN_ORDER_ITEM_TYPES,
