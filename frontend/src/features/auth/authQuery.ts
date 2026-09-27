@@ -8,15 +8,31 @@ import { apiClient } from "@/shared/utils/apiClient";
  * Who is logged in, asked of the API while the page is rendered on the server. The browser's
  * cookies travel with the page request, so they are handed on to the API with this one call;
  * without a cookie there is nobody to look up.
+ *
+ * The cookies the API sets are handed back to the browser the same way: once the session has
+ * expired, this call is the one that spends the remember-me token, and the browser must receive
+ * its replacement or it is logged out.
  */
 const fetchSessionUser = createServerFn({ method: "GET" }).handler(
   async (): Promise<User | null> => {
-    const { getRequestHeader } = await import("@tanstack/react-start/server");
+    const { getRequestHeader, setResponseHeader } = await import("@tanstack/react-start/server");
     const cookie = getRequestHeader("cookie");
     if (!cookie) {
       return null;
     }
-    const { user } = await apiClient.api.auth.me({ headers: { cookie } });
+    const { user } = await apiClient.api.auth.me({
+      headers: { cookie },
+      hooks: {
+        afterResponse: [
+          (_request, _options, response) => {
+            const setCookies = response.headers.getSetCookie();
+            if (setCookies.length > 0) {
+              setResponseHeader("set-cookie", setCookies);
+            }
+          },
+        ],
+      },
+    });
     return user;
   },
 );
