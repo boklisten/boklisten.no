@@ -6,11 +6,10 @@ import Order from "#models/order";
 import Signature from "#models/signature";
 import User from "#models/user";
 import CustomerItem from "#models/customer_item";
-import { CustomerInvoiceActive } from "#services/invoices/customer_invoice_active";
+import Invoice from "#models/invoice";
 import { countActiveMatches } from "#services/matches/active_matches";
 import { OrderActive } from "#services/orders/order_active";
 import { SessionRevocationService } from "#services/session_revocation_service";
-import { StorageService } from "#services/storage_service";
 import type { UserPermission } from "#shared/user-permission";
 import { USER_PERMISSION } from "#shared/user-permission";
 
@@ -57,9 +56,9 @@ function assertIsCustomer(user: User, action: string) {
 
 /**
  * Deletes a customer who has nothing open: no active order, book, invoice or undischarged match
- * obligation. Their orders, customer items and invoices in Mongo are kept for the book history; in
- * Postgres the foreign keys cascade (signatures, login tokens, settled match participations) or
- * set the reference to null (handovers, messages, sendouts).
+ * obligation. The foreign keys cascade (signatures, login tokens, settled match participations) or
+ * set the reference to null: orders, customer items and invoices are kept for the book history and
+ * the accounts (invoices keep their copy of the customer), as are handovers, messages and sendouts.
  */
 async function deleteUser(detailsId: string) {
   const user = await User.find(detailsId);
@@ -71,7 +70,7 @@ async function deleteUser(detailsId: string) {
   const [activeOrders, activeCustomerItems, activeInvoices, activeMatches] = await Promise.all([
     new OrderActive().haveActiveOrders(detailsId),
     CustomerItem.hasActive(detailsId),
-    new CustomerInvoiceActive().haveActiveInvoices(detailsId),
+    Invoice.hasActive(detailsId),
     countActiveMatches([detailsId]),
   ]);
   if (activeOrders) {
@@ -110,10 +109,7 @@ async function mergeUsers(fromDetailsId: string, toDetailsId: string) {
     Signature.reassignCustomer(fromDetailsId, toDetailsId),
     CustomerItem.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
     Order.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
-    StorageService.Invoices.updateMany(
-      { "customerInfo.userDetail": fromDetailsId },
-      { "customerInfo.userDetail": toDetailsId },
-    ),
+    Invoice.query().where("customerId", fromDetailsId).update({ customerId: toDetailsId }),
     BookHandover.query()
       .where("fromUserDetailId", fromDetailsId)
       .update({ fromUserDetailId: toDetailsId }),

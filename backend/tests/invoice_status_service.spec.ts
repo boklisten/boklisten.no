@@ -3,7 +3,10 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
+import Invoice from "#models/invoice";
+import InvoiceLine from "#models/invoice_line";
 import Order from "#models/order";
 import {
   deleteInvoice,
@@ -13,46 +16,50 @@ import {
   setInvoiceStatuses,
 } from "#services/invoices/invoice_status_service";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
-import { StorageService } from "#services/storage_service";
-import type { Invoice } from "#shared/invoice";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
+import { createInvoice } from "#tests/invoice_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
-import { mock } from "#tests/test-doubles";
 import { createUser } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "6100000000000000000000c1";
 const EMPLOYEE_ID = "6100000000000000000000e1";
 
-function invoice(overrides: Partial<Invoice> = {}): Invoice {
-  return mock<Invoice>({
+/** Inserts the invoice for Elise's two books; ci2 is already returned. */
+function createEliseInvoice(overrides: Parameters<typeof createInvoice>[0] = {}) {
+  return createInvoice({
     id: "inv1",
-    invoiceId: "20263071",
-    branch: "branch1",
-    customerHavePayed: false,
-    toCreditNote: false,
-    toDebtCollection: false,
-    toLossNote: false,
-    customerInfo: { userDetail: CUSTOMER_ID, name: "Elise Nordmann" },
-    customerItemPayments: [
+    invoiceNumber: "20263071",
+    branchId: "branch1",
+    customerId: CUSTOMER_ID,
+    customerName: "Elise Nordmann",
+    lines: [
       {
-        customerItem: "ci1",
-        item: "i1",
+        customerItemId: "ci1",
+        itemId: "i1",
         title: "Psykologi 2 2022",
-        numberOfItems: 1,
-        payment: { unit: 1049, gross: 1154, net: 1154, vat: 0, discount: 0 },
+        unit: 1049,
+        gross: 1154,
+        net: 1154,
       },
       {
-        customerItem: "ci2",
-        item: "i2",
+        customerItemId: "ci2",
+        itemId: "i2",
         title: "Matematikk R1",
-        numberOfItems: 1,
-        payment: { unit: 899, gross: 989, net: 989, vat: 0, discount: 0 },
+        unit: 899,
+        gross: 989,
+        net: 989,
       },
     ],
     ...overrides,
   });
+}
+
+async function flagsOf(invoiceId: string) {
+  const { customerHasPaid, toCreditNote, toDebtCollection, toLossNote } =
+    await Invoice.getOrFail(invoiceId);
+  return { customerHasPaid, toCreditNote, toDebtCollection, toLossNote };
 }
 
 /** The buyout flag of each invoiced book, by customer item id. */
@@ -63,9 +70,6 @@ async function buyoutFlags() {
 
 test.group("invoice status changes", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let getInvoice: sinon.SinonStub;
-  let updateInvoice: sinon.SinonStub;
-  let removeInvoice: sinon.SinonStub;
   let placeOrder: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
@@ -85,14 +89,6 @@ test.group("invoice status changes", (group) => {
       returned: true,
     });
     sandbox = createSandbox();
-    getInvoice = sandbox.stub().resolves(invoice());
-    updateInvoice = sandbox
-      .stub()
-      .callsFake((_id: string, patch: Partial<Invoice>) => Promise.resolve(invoice(patch)));
-    removeInvoice = sandbox.stub().resolves();
-    sandbox
-      .stub(StorageService, "Invoices")
-      .value({ get: getInvoice, update: updateInvoice, remove: removeInvoice });
     placeOrder = sandbox
       .stub(OrderPlacedHandler.prototype, "placeOrder")
       .callsFake((order: Order) => Promise.resolve(order));
@@ -113,10 +109,13 @@ test.group("invoice status changes", (group) => {
   test("marking paid writes the flags, records an invoice-paid order for the unreturned books and sets buyout on all", async ({
     assert,
   }) => {
-    const { warnings } = await setInvoiceStatus("inv1", "paid", EMPLOYEE_ID);
+    await createEliseInvoice();
+    const { invoice, warnings } = await setInvoiceStatus("inv1", "paid", EMPLOYEE_ID);
 
-    assert.deepEqual(updateInvoice.firstCall.args[1], {
-      customerHavePayed: true,
+    assert.isTrue(invoice.customerHasPaid);
+    assert.equal(invoice.branchName, (await Branch.findOrFail("branch1")).name);
+    assert.deepEqual(await flagsOf("inv1"), {
+      customerHasPaid: true,
       toCreditNote: false,
       toDebtCollection: false,
       toLossNote: false,
@@ -164,19 +163,20 @@ test.group("invoice status changes", (group) => {
   test("marking paid when no book is active still sets the flags, with a warning", async ({
     assert,
   }) => {
+    await createEliseInvoice();
     await CustomerItem.query().where("id", "ci1").update({ returned: true });
 
     const { warnings } = await setInvoiceStatus("inv1", "paid", EMPLOYEE_ID);
 
     assert.lengthOf(await Order.all(), 0);
     assert.lengthOf(warnings, 1);
-    assert.equal(updateInvoice.callCount, 1);
+    assert.isTrue((await flagsOf("inv1")).customerHasPaid);
   });
 
   test("leaving paid removes the invoice-paid order from the customer and clears buyout", async ({
     assert,
   }) => {
-    getInvoice.resolves(invoice({ customerHavePayed: true }));
+    await createEliseInvoice({ customerHasPaid: true });
     await createOrder({
       id: "unrelated",
       branchId: "branch1",
@@ -195,8 +195,8 @@ test.group("invoice status changes", (group) => {
 
     const { warnings } = await setInvoiceStatus("inv1", "creditNote", EMPLOYEE_ID);
 
-    assert.deepEqual(updateInvoice.firstCall.args[1], {
-      customerHavePayed: false,
+    assert.deepEqual(await flagsOf("inv1"), {
+      customerHasPaid: false,
       toCreditNote: true,
       toDebtCollection: false,
       toLossNote: false,
@@ -213,7 +213,7 @@ test.group("invoice status changes", (group) => {
   });
 
   test("leaving paid without a matching order warns instead of failing", async ({ assert }) => {
-    getInvoice.resolves(invoice({ customerHavePayed: true }));
+    await createEliseInvoice({ customerHasPaid: true });
 
     await createOrder({
       id: "unrelated",
@@ -228,9 +228,23 @@ test.group("invoice status changes", (group) => {
     assert.lengthOf(warnings, 1);
   });
 
+  test("leaving paid for a deleted customer warns instead of failing", async ({ assert }) => {
+    await createEliseInvoice({ customerHasPaid: true, customerId: null });
+
+    const { warnings } = await setInvoiceStatus("inv1", "unpaid", EMPLOYEE_ID);
+
+    assert.deepEqual(warnings, ["Fant ingen ordre for betalingen å fjerne fra kunden."]);
+    assert.deepEqual(await buyoutFlags(), [
+      ["ci1", false],
+      ["ci2", false],
+    ]);
+  });
+
   test("changing between the other statuses touches nothing but the flags", async ({ assert }) => {
+    await createEliseInvoice();
     await setInvoiceStatus("inv1", "debtCollection", EMPLOYEE_ID);
 
+    assert.isTrue((await flagsOf("inv1")).toDebtCollection);
     assert.lengthOf(await Order.all(), 0);
     assert.deepEqual(await buyoutFlags(), [
       ["ci1", false],
@@ -241,18 +255,13 @@ test.group("invoice status changes", (group) => {
   test("a bulk change applies to every invoice in order and names the invoice in each warning", async ({
     assert,
   }) => {
-    getInvoice.callsFake((id: string) =>
-      Promise.resolve(
-        id === "inv2"
-          ? invoice({ id: "inv2", invoiceId: "20263072", customerHavePayed: true })
-          : invoice(),
-      ),
-    );
-    updateInvoice.callsFake((id: string, patch: Partial<Invoice>) =>
-      Promise.resolve(
-        invoice({ ...patch, id, invoiceId: id === "inv2" ? "20263072" : "20263071" }),
-      ),
-    );
+    await createEliseInvoice();
+    await createInvoice({
+      id: "inv2",
+      invoiceNumber: "20263072",
+      customerId: CUSTOMER_ID,
+      customerHasPaid: true,
+    });
 
     const { invoices, warnings } = await setInvoiceStatuses(
       ["inv1", "inv2"],
@@ -260,10 +269,6 @@ test.group("invoice status changes", (group) => {
       EMPLOYEE_ID,
     );
 
-    assert.deepEqual(
-      updateInvoice.args.map(([id]) => id),
-      ["inv1", "inv2"],
-    );
     assert.deepEqual(
       invoices.map((updated) => [updated.id, updated.toLossNote]),
       [
@@ -275,43 +280,48 @@ test.group("invoice status changes", (group) => {
   });
 
   test("cancelling a line keeps the other lines as they are", async ({ assert }) => {
-    await setInvoiceLineCancelled("inv1", 1, true);
+    await createEliseInvoice();
+    const updated = await setInvoiceLineCancelled("inv1", 1, true);
 
-    const [, patch] = updateInvoice.firstCall.args;
+    const expected = [
+      ["Psykologi 2 2022", false],
+      ["Matematikk R1", true],
+    ];
     assert.deepEqual(
-      patch.customerItemPayments.map((line: { title: string; cancel?: boolean }) => [
-        line.title,
-        line.cancel,
-      ]),
-      [
-        ["Psykologi 2 2022", undefined],
-        ["Matematikk R1", true],
-      ],
+      updated.lines.map((line) => [line.title, line.cancel]),
+      expected,
+    );
+    assert.deepEqual(
+      (await Invoice.getOrFail("inv1")).lines.map((line) => [line.title, line.cancel]),
+      expected,
     );
   });
 
   test("cancelling a line that does not exist is refused", async ({ assert }) => {
+    await createEliseInvoice();
     await assert.rejects(
       () => setInvoiceLineCancelled("inv1", 5, true),
       /Fakturalinjen finnes ikke/,
     );
   });
 
-  test("an unpaid invoice can be deleted", async ({ assert }) => {
+  test("an unpaid invoice can be deleted, lines and all", async ({ assert }) => {
+    await createEliseInvoice();
     await deleteInvoice("inv1");
-    assert.isTrue(removeInvoice.calledOnceWithExactly("inv1"));
+    assert.lengthOf(await Invoice.all(), 0);
+    assert.lengthOf(await InvoiceLine.all(), 0);
   });
 
   test("deleting an invoice that is not unpaid is refused", async ({ assert }) => {
-    for (const flags of [
-      { customerHavePayed: true },
+    for (const [index, flags] of [
+      { customerHasPaid: true },
       { toCreditNote: true },
       { toDebtCollection: true },
       { toLossNote: true },
-    ]) {
-      getInvoice.resolves(invoice(flags));
-      await assert.rejects(() => deleteInvoice("inv1"), /Bare ubetalte fakturaer kan slettes/);
+    ].entries()) {
+      const { id } = await createInvoice({ id: `kept${index}`, ...flags });
+      await assert.rejects(() => deleteInvoice(id), /Bare ubetalte fakturaer kan slettes/);
     }
-    assert.isFalse(removeInvoice.called);
+    assert.lengthOf(await Invoice.all(), 4);
   });
 });

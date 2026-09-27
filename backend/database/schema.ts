@@ -345,6 +345,116 @@ export class EmailVerificationSchema extends BaseModel {
   declare userDetailId: string
 }
 
+export class InvoiceLineSchema extends BaseModel {
+  static $columns = ['cancel', 'customerItemId', 'customerItemType', 'discount', 'gross', 'id', 'invoiceId', 'itemId', 'net', 'numberOfItems', 'position', 'productNumber', 'title', 'unit', 'vat'] as const
+  $columns = InvoiceLineSchema.$columns
+  @column()
+  declare cancel: boolean
+  @column()
+  declare customerItemId: string | null
+  @column()
+  declare customerItemType: string | null
+  @column()
+  declare discount: number
+  @column()
+  declare gross: number
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare invoiceId: string
+  @column()
+  declare itemId: string | null
+  @column()
+  declare net: number
+  @column()
+  declare numberOfItems: number
+  @column()
+  declare position: number
+  @column()
+  declare productNumber: number | null
+  @column()
+  declare title: string
+  @column()
+  declare unit: number
+  @column()
+  declare vat: number
+}
+
+export class InvoiceSchema extends BaseModel {
+  static $columns = ['branchId', 'comment', 'createdAt', 'customerAddress', 'customerCountry', 'customerDob', 'customerEmail', 'customerHasPaid', 'customerId', 'customerName', 'customerNumber', 'customerOrganizationNumber', 'customerPhone', 'customerPostCity', 'customerPostCode', 'dueDate', 'feeDiscount', 'feeGross', 'feeNet', 'feeUnit', 'feeVat', 'id', 'invoiceNumber', 'ourReference', 'reference', 'toCreditNote', 'toDebtCollection', 'toLossNote', 'totalDiscount', 'totalGross', 'totalIncludingFee', 'totalNet', 'totalVat', 'type', 'updatedAt'] as const
+  $columns = InvoiceSchema.$columns
+  @column()
+  declare branchId: string | null
+  @column()
+  declare comment: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare customerAddress: string
+  @column()
+  declare customerCountry: string | null
+  @column.date()
+  declare customerDob: DateTime | null
+  @column()
+  declare customerEmail: string
+  @column()
+  declare customerHasPaid: boolean
+  @column()
+  declare customerId: string | null
+  @column()
+  declare customerName: string
+  @column()
+  declare customerNumber: string
+  @column()
+  declare customerOrganizationNumber: string | null
+  @column()
+  declare customerPhone: string
+  @column()
+  declare customerPostCity: string
+  @column()
+  declare customerPostCode: string
+  @column.dateTime()
+  declare dueDate: DateTime
+  @column()
+  declare feeDiscount: number | null
+  @column()
+  declare feeGross: number | null
+  @column()
+  declare feeNet: number | null
+  @column()
+  declare feeUnit: number | null
+  @column()
+  declare feeVat: number | null
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare invoiceNumber: string
+  @column()
+  declare ourReference: string | null
+  @column()
+  declare reference: string
+  @column()
+  declare toCreditNote: boolean
+  @column()
+  declare toDebtCollection: boolean
+  @column()
+  declare toLossNote: boolean
+  @column()
+  declare totalDiscount: number
+  @column()
+  declare totalGross: number
+  @column()
+  declare totalIncludingFee: number
+  @column()
+  declare totalNet: number
+  @column()
+  declare totalVat: number
+  @column()
+  declare type: string | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+}
+
 export class ItemSchema extends BaseModel {
   static $columns = ['active', 'buyback', 'createdAt', 'discount', 'distributor', 'id', 'isbn', 'price', 'priceHistory', 'publisher', 'subject', 'title', 'updatedAt', 'weight', 'year'] as const
   $columns = ItemSchema.$columns

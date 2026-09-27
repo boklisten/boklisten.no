@@ -2,23 +2,31 @@ import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
+import Invoice from "#models/invoice";
 import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import { toSemicolonCsv } from "#services/invoices/csv";
 import { tripletexRows, vismaRows } from "#services/invoices/invoice_export_rows";
 import type { TripletexLookups } from "#services/invoices/invoice_export_rows";
 import { isNotNullish } from "#services/typescript_helpers";
-import { StorageService } from "#services/storage_service";
-import type { BlDocument } from "#shared/bl-document";
-import type { Invoice, InvoiceExportFile, InvoiceExportFormat } from "#shared/invoice";
+import type {
+  Invoice as InvoiceDto,
+  InvoiceExportFile,
+  InvoiceExportFormat,
+} from "#shared/invoice";
 
-function byId<T extends BlDocument>(documents: T[]): Map<string, T> {
+function byId<T extends { id: string }>(documents: T[]): Map<string, T> {
   return new Map(documents.map((document) => [document.id, document]));
 }
 
-/** The invoices in the order they were asked for, which is the order they appear in the file. */
-async function invoicesInOrder(invoiceIds: string[]): Promise<Invoice[]> {
-  const invoices = byId(await StorageService.Invoices.getMany(invoiceIds, "admin"));
+/**
+ * The invoices, with the branch name printed on them, in the order they were asked for, which is
+ * the order they appear in the file.
+ */
+async function invoicesInOrder(invoiceIds: string[]): Promise<InvoiceDto[]> {
+  const invoices = byId(
+    await Invoice.toDtos(await Invoice.query().whereIn("id", [...new Set(invoiceIds)])),
+  );
   const missing = invoiceIds.filter((id) => !invoices.has(id));
   if (missing.length > 0) {
     throw new BadRequestException(`Fant ikke faktura ${missing.join(", ")}`);
@@ -26,22 +34,10 @@ async function invoicesInOrder(invoiceIds: string[]): Promise<Invoice[]> {
   return invoiceIds.map((id) => invoices.get(id)).filter(isNotNullish);
 }
 
-/** The branch name is printed on the invoice, but only the branch id is stored. */
-async function withBranchNames(invoices: Invoice[]): Promise<Invoice[]> {
-  const names = await Branch.namesByIds(invoices.map((invoice) => invoice.branch));
-  return invoices.map((invoice) => {
-    const branchName = invoice.branch ? names.get(invoice.branch) : undefined;
-    return branchName === undefined
-      ? invoice
-      : { ...invoice, customerInfo: { ...invoice.customerInfo, branchName } };
-  });
-}
-
-async function tripletexLookups(invoices: Invoice[]): Promise<TripletexLookups> {
-  const customerItemIds = invoices.flatMap((invoice) =>
-    invoice.customerItemPayments.map((payment) => payment.customerItem).filter(isNotNullish),
-  );
-  if (customerItemIds.length < invoices.flatMap((invoice) => invoice.customerItemPayments).length) {
+async function tripletexLookups(invoices: InvoiceDto[]): Promise<TripletexLookups> {
+  const lines = invoices.flatMap((invoice) => invoice.lines);
+  const customerItemIds = lines.map((line) => line.customerItemId).filter(isNotNullish);
+  if (customerItemIds.length < lines.length) {
     throw new BadRequestException(
       "Tripletex-format kan bare lages for elevfakturaer, ikke for selskapsfakturaer.",
     );
@@ -74,7 +70,7 @@ export async function exportInvoices(
   invoiceIds: string[],
   format: InvoiceExportFormat,
 ): Promise<InvoiceExportFile> {
-  const invoices = await withBranchNames(await invoicesInOrder(invoiceIds));
+  const invoices = await invoicesInOrder(invoiceIds);
   if (format === "tripletex") {
     const rows = tripletexRows(invoices, await tripletexLookups(invoices));
     return { filename: filename("tripletex"), csv: toSemicolonCsv(rows) };

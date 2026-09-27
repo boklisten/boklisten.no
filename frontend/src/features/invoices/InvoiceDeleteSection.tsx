@@ -22,7 +22,7 @@ export default function InvoiceDeleteSection({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [confirmText, setConfirmText] = useState("");
-  const confirmPhrase = String(invoice.invoiceId);
+  const confirmPhrase = invoice.invoiceNumber;
 
   const deleteMutation = useMutation({
     mutationFn: () => apiClient.api.invoices.destroy({ params: { invoiceId: invoice.id } }),

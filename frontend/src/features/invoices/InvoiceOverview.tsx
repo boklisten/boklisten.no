@@ -122,7 +122,7 @@ export default function InvoiceOverview() {
   const rows =
     selectedBatches.length === 0
       ? allRows
-      : allRows.filter((row) => selectedBatches.includes(invoiceBatchPrefix(row.invoiceId)));
+      : allRows.filter((row) => selectedBatches.includes(invoiceBatchPrefix(row.invoiceNumber)));
   const visibleRows = rows.filter((row) => statuses.includes(row.status));
   const selectedRows = rows.filter((row) => selectedIds.includes(row.id));
   const selectedTotal = selectedRows.reduce((sum, row) => sum + row.totalIncludingFee, 0);

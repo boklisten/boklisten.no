@@ -1,5 +1,5 @@
 import type { CompanyInvoiceLine } from "@boklisten/backend/shared/invoice";
-import { companyLinePayment } from "@boklisten/backend/shared/invoice";
+import { companyLinePayment, invoiceBatchPrefix } from "@boklisten/backend/shared/invoice";
 import {
   ActionIcon,
   Button,
@@ -37,7 +37,7 @@ interface Draft {
   reference: string;
   ourReference: string;
   comment: string;
-  duedate: Date;
+  dueDate: Date;
   lines: CompanyInvoiceLine[];
 }
 
@@ -48,7 +48,7 @@ function emptyDraft(): Draft {
     reference: "",
     ourReference: "",
     comment: "",
-    duedate: dayjs().add(14, "day").toDate(),
+    dueDate: dayjs().add(14, "day").toDate(),
     lines: [],
   };
 }
@@ -70,18 +70,18 @@ export default function CompanyInvoiceTab() {
           invoiceNumber: draft.invoiceNumber,
           reference: draft.reference,
           ourReference: draft.ourReference,
-          duedate: draft.duedate.toISOString(),
+          dueDate: draft.dueDate.toISOString(),
           ...(draft.comment.trim() ? { comment: draft.comment.trim() } : {}),
           lines: draft.lines,
         },
       }),
     onSuccess: (invoice) => {
-      showSuccessNotification(`Faktura ${invoice.invoiceId} ble opprettet`);
+      showSuccessNotification(`Faktura ${invoice.invoiceNumber} ble opprettet`);
       void queryClient.invalidateQueries({ queryKey: api.invoices.index.pathKey() });
       void navigate({
         search: {
           fakturaFane: undefined,
-          fakturarunde: invoice.invoiceId ? invoice.invoiceId.slice(0, 5) : undefined,
+          fakturarunde: invoiceBatchPrefix(invoice.invoiceNumber),
           faktura: invoice.id,
         },
       });
@@ -169,8 +169,8 @@ export default function CompanyInvoiceTab() {
               <DateInput
                 label="Forfall"
                 valueFormat="DD.MM.YYYY"
-                value={draft.duedate}
-                onChange={(value) => value && update({ duedate: new Date(value) })}
+                value={draft.dueDate}
+                onChange={(value) => value && update({ dueDate: new Date(value) })}
               />
             </Group>
             <Textarea

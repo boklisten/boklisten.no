@@ -50,11 +50,11 @@ export default class InvoicesController {
 
   async setLineCancelled(ctx: HttpContext) {
     const { cancel } = await ctx.request.validateUsing(invoiceLineCancelValidator);
-    const lineIndex = Number(ctx.request.param("lineIndex"));
-    if (!Number.isInteger(lineIndex) || lineIndex < 0) {
+    const position = Number(ctx.request.param("lineIndex"));
+    if (!Number.isInteger(position) || position < 0) {
       throw new BadRequestException("Fakturalinjen finnes ikke.");
     }
-    return setInvoiceLineCancelled(ctx.request.param("invoiceId"), lineIndex, cancel);
+    return setInvoiceLineCancelled(ctx.request.param("invoiceId"), position, cancel);
   }
 
   async export(ctx: HttpContext) {
@@ -80,7 +80,7 @@ export default class InvoicesController {
   }
 
   async createCompanyInvoice(ctx: HttpContext) {
-    const { duedate, ...input } = await ctx.request.validateUsing(companyInvoiceValidator);
-    return createCompanyInvoice({ ...input, duedate: new Date(duedate) });
+    const { dueDate, ...input } = await ctx.request.validateUsing(companyInvoiceValidator);
+    return createCompanyInvoice({ ...input, dueDate: new Date(dueDate) });
   }
 }

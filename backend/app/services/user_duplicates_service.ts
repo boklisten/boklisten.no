@@ -1,7 +1,7 @@
 import db from "@adonisjs/lucid/services/db";
-import { ObjectId } from "mongodb";
 
 import CustomerItem from "#models/customer_item";
+import { isObjectIdHex } from "#models/helpers/object_id";
 import OrderItem from "#models/order_item";
 import User from "#models/user";
 import { countActiveMatches } from "#services/matches/active_matches";
@@ -231,7 +231,7 @@ async function buildSummarizer(involvedIds: string[]) {
 
 /** Activity summaries for specific users, e.g. to preview a merge. Unknown ids are omitted. */
 async function summarizeUserDetails(detailsIds: string[]): Promise<DuplicateUserSummary[]> {
-  const validIds = detailsIds.filter((id) => ObjectId.isValid(id));
+  const validIds = detailsIds.filter((id) => isObjectIdHex(id));
   if (validIds.length === 0) {
     return [];
   }

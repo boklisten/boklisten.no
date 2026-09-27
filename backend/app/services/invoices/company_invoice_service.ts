@@ -1,8 +1,15 @@
+import { DateTime } from "luxon";
+
 import BadRequestException from "#exceptions/bad_request_exception";
 import Company from "#models/company";
-import { StorageService } from "#services/storage_service";
+import Invoice from "#models/invoice";
+import type { NewInvoice } from "#models/invoice";
 import { companyLinePayment } from "#shared/invoice";
-import type { CompanyInvoiceInput, CompanyInvoiceLine, Invoice } from "#shared/invoice";
+import type {
+  CompanyInvoiceInput,
+  CompanyInvoiceLine,
+  Invoice as InvoiceDto,
+} from "#shared/invoice";
 
 /**
  * Invoices to companies (schools buying books outright) are written by hand: a company, a
@@ -20,46 +27,54 @@ export function companyInvoiceTotal(lines: CompanyInvoiceLine[]) {
   };
 }
 
-export async function createCompanyInvoice(input: CompanyInvoiceInput): Promise<Invoice> {
-  const invoice: Omit<Invoice, "id"> = await buildCompanyInvoice(input);
-  return StorageService.Invoices.add(invoice);
+export async function createCompanyInvoice(input: CompanyInvoiceInput): Promise<InvoiceDto> {
+  const invoice = await Invoice.createWithLines(await buildCompanyInvoice(input));
+  return invoice.toDto(null);
 }
 
-async function buildCompanyInvoice(input: CompanyInvoiceInput): Promise<Omit<Invoice, "id">> {
+async function buildCompanyInvoice(input: CompanyInvoiceInput): Promise<NewInvoice> {
   const company = await Company.find(input.companyId);
   if (!company) {
     throw new BadRequestException("Selskapet finnes ikke.");
   }
   const total = companyInvoiceTotal(input.lines);
   return {
-    invoiceId: input.invoiceNumber,
+    invoiceNumber: input.invoiceNumber,
+    type: null,
     reference: input.reference,
     ourReference: input.ourReference,
-    duedate: input.duedate,
-    customerHavePayed: false,
-    toCreditNote: false,
-    toDebtCollection: false,
-    toLossNote: false,
-    customerItemPayments: input.lines.map((line) => ({
+    dueDate: DateTime.fromJSDate(input.dueDate),
+    branchId: null,
+    customerId: null,
+    customerNumber: company.customerNumber,
+    customerName: company.name,
+    customerEmail: company.email,
+    customerPhone: company.phone,
+    customerDob: null,
+    customerOrganizationNumber: company.organizationNumber,
+    customerAddress: company.address,
+    customerPostCode: company.postCode,
+    customerPostCity: company.postCity,
+    customerCountry: "norway",
+    totalGross: total.gross,
+    totalNet: total.net,
+    totalVat: total.vat,
+    totalDiscount: total.discount,
+    feeUnit: null,
+    feeGross: null,
+    feeNet: null,
+    feeVat: null,
+    feeDiscount: null,
+    totalIncludingFee: total.gross,
+    comment: input.comment ?? null,
+    lines: input.lines.map((line) => ({
+      customerItemId: null,
+      itemId: null,
+      customerItemType: null,
       title: line.title,
-      numberOfItems: line.numberOfUnits,
       productNumber: line.productNumber,
-      payment: companyLinePayment(line),
+      numberOfItems: line.numberOfUnits,
+      ...companyLinePayment(line),
     })),
-    customerInfo: {
-      name: company.name,
-      email: company.email,
-      phone: company.phone,
-      organizationNumber: company.organizationNumber,
-      customerNumber: company.customerNumber,
-      postal: {
-        address: company.address,
-        city: company.postCity,
-        code: company.postCode,
-        country: "norway",
-      },
-    },
-    payment: { total, totalIncludingFee: total.gross },
-    comments: input.comment ? [{ msg: input.comment, creationTime: new Date() }] : [],
   };
 }

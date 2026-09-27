@@ -3,7 +3,7 @@ import { DateTime } from "luxon";
 import type { CsvCell } from "#services/invoices/csv";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import type { Invoice, InvoiceCustomerItemPayment } from "#shared/invoice";
+import type { Invoice, InvoiceLine } from "#shared/invoice";
 import type { Item } from "#shared/item";
 
 /**
@@ -27,34 +27,14 @@ const TEXT_LINES = {
   phone: "Kundens telefonnummer: ",
   contact: "Alle fakturahenvendelser sendes til info@boklisten.no",
 } as const;
-/** Invoices created before this date get customer numbers from the old, less unique scheme. */
-const NEW_MINI_ID_FROM = "2023-01-25";
+function formatExportDate(date: Date, format: string): string {
+  return DateTime.fromJSDate(date).toFormat(format);
+}
 
-function formatExportDate(date: Date | string | undefined, format: string): string {
+function formatDob(dob: string | null, format: string): string {
   // Legacy bl-admin called moment(undefined), which is "now". A missing date of birth therefore printed
   // as today's date, and still does.
-  return (date === undefined ? DateTime.now() : DateTime.fromJSDate(new Date(date))).toFormat(
-    format,
-  );
-}
-
-function mongoIdEpoch(mongoId: string): number {
-  return new Date(Number.parseInt(mongoId.slice(0, 8), 16)).getTime();
-}
-
-function cantorPair(a: number, b: number): number {
-  return ((a + b) * (a + b + 1)) / 2 + b;
-}
-
-function newMongoMiniId(mongoId: string): number {
-  const epoch = mongoIdEpoch(mongoId);
-  const increment = Number.parseInt(mongoId.slice(-6), 16);
-  // The middle of the pair has the most entropy, so it is the least likely to collide.
-  return Number(String(cantorPair(epoch, increment)).slice(6, 14));
-}
-
-function mongoIdMiniEpoch(mongoId: string): number {
-  return Math.trunc(Number(String(mongoIdEpoch(mongoId)).slice(2)));
+  return (dob === null ? DateTime.now() : DateTime.fromISO(dob)).toFormat(format);
 }
 
 /** Article number for a book: the counter part of its Mongo id. */
@@ -62,28 +42,9 @@ export function mongoIdCounter(mongoId: string): number {
   return Number.parseInt(mongoId.slice(18, 24), 16);
 }
 
-/**
- * The customer number Visma and Tripletex know a pupil by, derived from the user detail id.
- * The derivation changed on 2023-01-25; older invoices keep the old number so re-exports match.
- */
-export function invoiceMiniId(invoice: Invoice): number {
-  const userDetail = String(invoice.customerInfo.userDetail);
-  // Legacy bl-admin treated a missing creation time as "now", which is after the cut-over.
-  return invoice.creationTime !== undefined &&
-    DateTime.fromJSDate(invoice.creationTime) < DateTime.fromISO(NEW_MINI_ID_FROM)
-    ? mongoIdMiniEpoch(userDetail)
-    : newMongoMiniId(userDetail);
-}
-
 /** Legacy bl-admin treated an empty string like a missing value in these fields. */
-function nonEmpty(value: string | undefined): string | undefined {
-  return value === undefined || value === "" ? undefined : value;
-}
-
-function customerNumber(invoice: Invoice): string | undefined {
-  return invoice.customerInfo.userDetail
-    ? String(invoiceMiniId(invoice))
-    : invoice.customerInfo.customerNumber;
+function nonEmpty(value: string | null): string | null {
+  return value === "" ? null : value;
 }
 
 function inOre(amount: number): number {
@@ -110,39 +71,35 @@ function vismaRowsForInvoice(invoice: Invoice, options: VismaExportOptions): Csv
   );
   lineNumber++;
 
-  for (const customerItemPayment of invoice.customerItemPayments) {
-    rows.push(vismaL1(lineNumber, invoice.invoiceId, customerItemPayment));
+  for (const line of invoice.lines) {
+    rows.push(vismaL1(lineNumber, invoice.invoiceNumber, line));
     lineNumber++;
   }
 
-  if (invoice.payment.fee) {
+  if (invoice.feeGross !== null) {
     rows.push(vismaL1Fee(lineNumber, invoice));
     lineNumber++;
   }
 
-  if (invoice.customerInfo.organizationNumber) {
-    for (const comment of invoice.comments ?? []) {
-      rows.push(vismaL1Text(lineNumber, invoice.invoiceId, comment.msg));
+  if (invoice.customerOrganizationNumber) {
+    if (invoice.comment !== null) {
+      rows.push(vismaL1Text(lineNumber, invoice.invoiceNumber, invoice.comment));
       lineNumber++;
     }
   } else {
     const title =
-      invoice.type === undefined ||
-      invoice.type === null ||
-      invoice.type === "rent" ||
-      invoice.type === "loan"
+      invoice.type === null || invoice.type === "rent" || invoice.type === "loan"
         ? TEXT_LINES.title.rent
         : TEXT_LINES.title["partly-payment"];
-    const branchName = invoice.customerInfo.branchName;
     rows.push(
-      vismaL1Text(lineNumber, invoice.invoiceId, title + branchName),
+      vismaL1Text(lineNumber, invoice.invoiceNumber, title + (invoice.branchName ?? "")),
       vismaL1Text(
         lineNumber + 1,
-        invoice.invoiceId,
-        TEXT_LINES.dob + formatExportDate(invoice.customerInfo.dob, "dd.MM.yyyy"),
+        invoice.invoiceNumber,
+        TEXT_LINES.dob + formatDob(invoice.customerDob, "dd.MM.yyyy"),
       ),
-      vismaL1Text(lineNumber + 2, invoice.invoiceId, TEXT_LINES.phone + invoice.customerInfo.phone),
-      vismaL1Text(lineNumber + 3, invoice.invoiceId, TEXT_LINES.contact),
+      vismaL1Text(lineNumber + 2, invoice.invoiceNumber, TEXT_LINES.phone + invoice.customerPhone),
+      vismaL1Text(lineNumber + 3, invoice.invoiceNumber, TEXT_LINES.contact),
     );
   }
   return rows;
@@ -152,44 +109,43 @@ function vismaH3(lineNumber: number, invoice: Invoice): CsvCell[] {
   return [
     "H3", // 1 Record Type (M)
     lineNumber, // 2 Line number (M)
-    customerNumber(invoice), // 3 Customer no (M)
-    invoice.invoiceId, // 4 Invoice number (M)
+    invoice.customerNumber, // 3 Customer no (M)
+    invoice.invoiceNumber, // 4 Invoice number (M)
   ];
 }
 
 function vismaH1(lineNumber: number, invoice: Invoice, ehf: boolean): CsvCell[] {
-  const { customerInfo, payment } = invoice;
   const dobOrOrganizationNumber =
-    nonEmpty(customerInfo.organizationNumber) ?? formatExportDate(customerInfo.dob, "ddMMyyyy");
+    nonEmpty(invoice.customerOrganizationNumber) ?? formatDob(invoice.customerDob, "ddMMyyyy");
   return [
     "H1", // 1 Record Type (M)
     lineNumber, // 2 Line number (M)
-    customerNumber(invoice), // 3 Customer no (M)
-    customerInfo.name, // 4 Customer name (M)
-    customerInfo.postal.address, // 5 Address 1
+    invoice.customerNumber, // 3 Customer no (M)
+    invoice.customerName, // 4 Customer name (M)
+    invoice.customerAddress, // 5 Address 1
     "", // 6 Address 2
-    customerInfo.postal.code, // 7 Postal code (M)
-    customerInfo.postal.city, // 8 City (M)
-    customerInfo.postal.country, // 9 Country
-    customerInfo.phone, // 10 Customer phone (M)
+    invoice.customerPostCode, // 7 Postal code (M)
+    invoice.customerPostCity, // 8 City (M)
+    invoice.customerCountry, // 9 Country
+    invoice.customerPhone, // 10 Customer phone (M)
     "", // 11 Customer Fax
-    customerInfo.email, // 12 Customer Email
-    formatExportDate(invoice.creationTime, "ddMMyyyy"), // 13 Invoice Date (M)
+    invoice.customerEmail, // 12 Customer Email
+    formatExportDate(invoice.createdAt, "ddMMyyyy"), // 13 Invoice Date (M)
     "", // 14 Credit Invoice
-    invoice.invoiceId, // 15 Invoice number (M)
+    invoice.invoiceNumber, // 15 Invoice number (M)
     "", // 16 KID/ODCR
     "", // 17 Currency
     "", // 18 Exchange Rate
-    formatExportDate(invoice.duedate, "ddMMyyyy"), // 19 Invoice due date (M)
+    formatExportDate(invoice.dueDate, "ddMMyyyy"), // 19 Invoice due date (M)
     dobOrOrganizationNumber, // 20 Customer organisation no
-    inOre(payment.total.gross), // 21 Invoice gross amount (M)
-    inOre(payment.total.net), // 22 Invoice net amount (M)
-    inOre(payment.total.vat), // 23 VAT (M)
-    payment.total.gross >= 0 ? "IN" : "CR", // 24 Document Type (M): IN = invoice, CR = credit note
+    inOre(invoice.totalGross), // 21 Invoice gross amount (M)
+    inOre(invoice.totalNet), // 22 Invoice net amount (M)
+    inOre(invoice.totalVat), // 23 VAT (M)
+    invoice.totalGross >= 0 ? "IN" : "CR", // 24 Document Type (M): IN = invoice, CR = credit note
     "", // 25 Order number
     "", // 26 Project Number
     "", // 27 Department/Dimension
-    nonEmpty(customerInfo.branchName) ?? invoice.ourReference, // 28 Our reference
+    nonEmpty(invoice.branchName) ?? invoice.ourReference, // 28 Our reference
     "", // 29 Your reference
     invoice.reference, // 30 Reference
     "", // 31 Ref. 1
@@ -200,16 +156,16 @@ function vismaH1(lineNumber: number, invoice: Invoice, ehf: boolean): CsvCell[] 
     "", // 36 Cent rounding threshold
     "P", // 37 Brand
     "", // 38 Amount type
-    customerInfo.name, // 39 Delivery address name
-    customerInfo.postal.address, // 40 Delivery address 1
+    invoice.customerName, // 39 Delivery address name
+    invoice.customerAddress, // 40 Delivery address 1
     "", // 41 Delivery address 2
-    customerInfo.postal.code, // 42 Delivery address Postal code
-    customerInfo.postal.city, // 43 Delivery address city
-    customerInfo.postal.country, // 44 Delivery address country
+    invoice.customerPostCode, // 42 Delivery address Postal code
+    invoice.customerPostCity, // 43 Delivery address city
+    invoice.customerCountry, // 44 Delivery address country
     "", // 45 Rating Date
     "", // 46 Rating poeng
     "", // 47 Client ID
-    customerInfo.email, // 48 Delivery address Email
+    invoice.customerEmail, // 48 Delivery address Email
     "", // 49 Postal charge
     "", // 50 Fees
     "", // 51 Discount
@@ -224,7 +180,7 @@ function vismaH1(lineNumber: number, invoice: Invoice, ehf: boolean): CsvCell[] 
     "", // 60 Invoice Country
     "", // 61 Marketing message code
     ehf ? "EHF" : "", // 62 eInvoice code
-    ehf ? customerInfo.organizationNumber : "", // 63 eInvoice Reference: the org number for EHF
+    ehf ? invoice.customerOrganizationNumber : "", // 63 eInvoice Reference: the org number for EHF
     "", // 64 VAT Code fields 49-52
     "", // 65 Invoice address Email
     "", // 66 Settlement ratio
@@ -238,62 +194,55 @@ function vismaH1(lineNumber: number, invoice: Invoice, ehf: boolean): CsvCell[] 
 
 const L1_TRAILING_FIELDS: CsvCell[] = Array.from({ length: 25 }, () => ""); // fields 15–39
 
-function vismaL1(
-  lineNumber: number,
-  invoiceId: string | undefined,
-  customerItemPayment: InvoiceCustomerItemPayment,
-): CsvCell[] {
-  const { payment } = customerItemPayment;
+function vismaL1(lineNumber: number, invoiceNumber: string, line: InvoiceLine): CsvCell[] {
   return [
     "L1", // 1 Record type
     lineNumber, // 2 Line number
-    invoiceId, // 3 Invoice number
+    invoiceNumber, // 3 Invoice number
     "V", // 4 Line type (M)
-    payment.vat <= 0 ? "FRI" : "PLH", // 5 VAT type (M)
-    customerItemPayment.item
-      ? String(mongoIdCounter(String(customerItemPayment.item)))
-      : customerItemPayment.productNumber, // 6 Article number
-    customerItemPayment.title, // 7 Article name (M)
-    customerItemPayment.numberOfItems, // 8 Invoiced quantity (M)
-    payment.discount, // 9 Discount %
+    line.vat <= 0 ? "FRI" : "PLH", // 5 VAT type (M)
+    line.itemId ? String(mongoIdCounter(line.itemId)) : line.productNumber, // 6 Article number
+    line.title, // 7 Article name (M)
+    line.numberOfItems, // 8 Invoiced quantity (M)
+    line.discount, // 9 Discount %
     "", // 10 Currency
-    inOre(payment.gross), // 11 Gross amount (M)
-    inOre(payment.unit), // 12 Price per unit without VAT
-    inOre(payment.net), // 13 Net amount (M)
-    inOre(payment.vat), // 14 VAT amount (M)
+    inOre(line.gross), // 11 Gross amount (M)
+    inOre(line.unit), // 12 Price per unit without VAT
+    inOre(line.net), // 13 Net amount (M)
+    inOre(line.vat), // 14 VAT amount (M)
     ...L1_TRAILING_FIELDS,
   ];
 }
 
 function vismaL1Fee(lineNumber: number, invoice: Invoice): CsvCell[] {
-  const fee = invoice.payment.fee;
-  if (!fee) {
+  const { feeGross, feeUnit, feeNet, feeVat } = invoice;
+  if (feeGross === null || feeUnit === null || feeNet === null || feeVat === null) {
     throw new Error("fee line requested for an invoice without a fee");
   }
   return [
     "L1", // 1 Record type
     lineNumber, // 2 Line number
-    invoice.invoiceId, // 3 Invoice number
+    invoice.invoiceNumber, // 3 Invoice number
     "V", // 4 Line type (M)
     "PLH", // 5 VAT type (M)
     FEE_ARTICLE_NUMBER, // 6 Article number
     FEE_TITLE, // 7 Article name (M)
-    invoice.customerItemPayments.length, // 8 Invoiced quantity (M)
-    invoice.payment.total.discount, // 9 Discount %
+    invoice.lines.length, // 8 Invoiced quantity (M)
+    invoice.totalDiscount, // 9 Discount %
     "", // 10 Currency
-    inOre(fee.gross), // 11 Gross amount (M)
-    inOre(fee.unit), // 12 Price per unit without VAT
-    inOre(fee.net), // 13 Net amount (M)
-    inOre(fee.vat), // 14 VAT amount (M)
+    inOre(feeGross), // 11 Gross amount (M)
+    inOre(feeUnit), // 12 Price per unit without VAT
+    inOre(feeNet), // 13 Net amount (M)
+    inOre(feeVat), // 14 VAT amount (M)
     ...L1_TRAILING_FIELDS,
   ];
 }
 
-function vismaL1Text(lineNumber: number, invoiceId: string | undefined, text: string): CsvCell[] {
+function vismaL1Text(lineNumber: number, invoiceNumber: string, text: string): CsvCell[] {
   return [
     "L1", // 1 Record type
     lineNumber, // 2 Line number
-    invoiceId, // 3 Invoice number
+    invoiceNumber, // 3 Invoice number
     "K", // 4 Line type (M)
     "txt", // 5 VAT type (M)
     "", // 6 Article number
@@ -390,19 +339,19 @@ function required<T>(map: Map<string, T>, id: string | null | undefined, what: s
 export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): CsvCell[][] {
   const rows: CsvCell[][] = [[...TRIPLETEX_HEADERS]];
   for (const invoice of invoices) {
-    const invoiceDate = formatExportDate(invoice.creationTime, "yyyy-MM-dd");
-    const dueDate = formatExportDate(invoice.duedate, "yyyy-MM-dd");
+    const invoiceDate = formatExportDate(invoice.createdAt, "yyyy-MM-dd");
+    const dueDate = formatExportDate(invoice.dueDate, "yyyy-MM-dd");
     const customerFields = [
-      invoiceMiniId(invoice).toString(),
-      invoice.customerInfo.name,
+      invoice.customerNumber,
+      invoice.customerName,
       "",
-      invoice.customerInfo.email,
-      invoice.customerInfo.phone,
+      invoice.customerEmail,
+      invoice.customerPhone,
       "",
-      invoice.customerInfo.postal.address,
+      invoice.customerAddress,
       "",
-      invoice.customerInfo.postal.code,
-      invoice.customerInfo.postal.city,
+      invoice.customerPostCode,
+      invoice.customerPostCity,
       "NO",
       ...TRIPLETEX_EMPTY_CATEGORY_FIELDS,
       invoice.reference,
@@ -412,17 +361,13 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
       "",
     ];
     let isFirstItem = true;
-    for (const customerItemPayment of invoice.customerItemPayments) {
-      const customerItem = required(
-        lookups.customerItems,
-        customerItemPayment.customerItem,
-        "Kundeboka",
-      );
+    for (const line of invoice.lines) {
+      const customerItem = required(lookups.customerItems, line.customerItemId, "Kundeboka");
       const item = required(lookups.items, customerItem.itemId, "Boka");
       const handoutBranch = required(lookups.branches, customerItem.handoutBranchId, "Filialen");
       const orderDate = formatExportDate(customerItem.createdAt, "yyyy-MM-dd");
       rows.push([
-        invoice.invoiceId,
+        invoice.invoiceNumber,
         invoiceDate,
         dueDate,
         "",
@@ -456,13 +401,13 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
       isFirstItem = false;
     }
     rows.push([
-      invoice.invoiceId,
+      invoice.invoiceNumber,
       invoiceDate,
       dueDate,
       "",
       "",
       "",
-      invoice.invoiceId,
+      invoice.invoiceNumber,
       invoiceDate,
       ...customerFields,
       "",
@@ -478,9 +423,9 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
       FEE_ARTICLE_NUMBER,
       FEE_TITLE,
       "",
-      String(invoice.payment.fee?.unit),
-      String(invoice.customerItemPayments.length),
-      String(invoice.payment.total.discount),
+      String(invoice.feeUnit),
+      String(invoice.lines.length),
+      String(invoice.totalDiscount),
       "3",
     ]);
   }

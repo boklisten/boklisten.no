@@ -1,5 +1,5 @@
-import { StorageService } from "#services/storage_service";
-import type { GeneratableInvoiceType, Invoice, InvoiceGenerationDefaults } from "#shared/invoice";
+import Invoice from "#models/invoice";
+import type { GeneratableInvoiceType, InvoiceGenerationDefaults } from "#shared/invoice";
 
 const LEGACY_DEFAULTS: Record<GeneratableInvoiceType, InvoiceGenerationDefaults> = {
   "partly-payment": {
@@ -23,30 +23,32 @@ function settingsFrom(
   invoice: Invoice,
   fallback: InvoiceGenerationDefaults,
 ): InvoiceGenerationDefaults {
-  const fee = invoice.payment.fee;
-  const firstLine = invoice.customerItemPayments[0];
+  const firstLine = invoice.lines[0];
   const feePercentage =
-    invoice.type === "rent" && firstLine && firstLine.payment.unit > 0
-      ? Number((firstLine.payment.gross / firstLine.payment.unit).toFixed(2))
+    invoice.type === "rent" && firstLine && firstLine.unit > 0
+      ? Number((firstLine.gross / firstLine.unit).toFixed(2))
       : fallback.feePercentage;
   return {
-    fee: fee?.unit ?? fallback.fee,
+    fee: invoice.feeUnit ?? fallback.fee,
     feeVatPercentage:
-      fee && fee.net > 0 ? Number((fee.vat / fee.net).toFixed(2)) : fallback.feeVatPercentage,
+      invoice.feeNet !== null && invoice.feeVat !== null && invoice.feeNet > 0
+        ? Number((invoice.feeVat / invoice.feeNet).toFixed(2))
+        : fallback.feeVatPercentage,
     feePercentage,
     daysToDeadline: fallback.daysToDeadline,
-    reference: invoice.reference ?? fallback.reference,
+    reference: invoice.reference,
   };
 }
 
 export async function generationDefaults(
   type: GeneratableInvoiceType,
 ): Promise<InvoiceGenerationDefaults> {
-  const [newest] = await StorageService.Invoices.aggregate<Invoice>([
-    { $match: { type, "payment.fee": { $ne: null } } },
-    { $sort: { creationTime: -1 } },
-    { $limit: 1 },
-  ]);
+  const newest = await Invoice.query()
+    .where("type", type)
+    .whereNotNull("fee_unit")
+    .orderBy("created_at", "desc")
+    .orderBy("id", "desc")
+    .first();
   const fallback = LEGACY_DEFAULTS[type];
   return newest ? settingsFrom(newest, fallback) : fallback;
 }

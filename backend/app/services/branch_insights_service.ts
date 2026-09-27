@@ -1,8 +1,6 @@
 import db from "@adonisjs/lucid/services/db";
-import { ObjectId } from "mongodb";
 
 import { BranchRelationshipService } from "#services/branch_relationship_service";
-import { StorageService } from "#services/storage_service";
 import type { BranchBookMovements, BranchBookMovementsYear } from "#shared/branch_insights";
 
 const OSLO = "Europe/Oslo";
@@ -195,6 +193,22 @@ export async function countMovementRows(branchIds: string[]): Promise<MovementRo
 }
 
 /**
+ * Lines on invoices of the branches that name a book we lent out (company invoice lines carry no
+ * customer item), counted per year the invoice was made, credited or not.
+ */
+export async function countInvoiceRows(branchIds: string[]): Promise<InvoiceRow[]> {
+  const rows: { year: number; count: string }[] = await db
+    .from("invoice_lines")
+    .join("invoices", "invoices.id", "invoice_lines.invoice_id")
+    .whereIn("invoices.branch_id", branchIds)
+    .whereNotNull("invoice_lines.customer_item_id")
+    .select(db.raw("extract(year from invoices.created_at at time zone ?)::int as year", [OSLO]))
+    .count("* as count")
+    .groupByRaw("1");
+  return rows.map((row) => ({ year: row.year, count: Number(row.count) }));
+}
+
+/**
  * Match lines on placed orders: of the given branches, or (with `outside`) of every other branch,
  * narrowed to the given types and blids.
  */
@@ -225,23 +239,10 @@ export const BranchInsightsService = {
   async getBookMovements(branchId: string): Promise<BranchBookMovements> {
     const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
     const scopeIds = [branchId, ...descendantIds];
-    const scope = scopeIds.map((id) => new ObjectId(id));
 
     const [rows, invoiceRows, scopedMatchItems] = await Promise.all([
       countMovementRows(scopeIds),
-      // One line per book; company invoice lines carry no customer item and are not books we lent.
-      StorageService.Invoices.aggregate<InvoiceRow>([
-        { $match: { branch: { $in: scope } } },
-        { $unwind: "$customerItemPayments" },
-        { $match: { "customerItemPayments.customerItem": { $ne: null } } },
-        {
-          $group: {
-            _id: { $year: { date: "$creationTime", timezone: OSLO } },
-            count: { $sum: 1 },
-          },
-        },
-        { $project: { _id: 0, year: "$_id", count: 1 } },
-      ]),
+      countInvoiceRows(scopeIds),
       findMatchItemRows({ branchIds: scopeIds }),
     ]);
 

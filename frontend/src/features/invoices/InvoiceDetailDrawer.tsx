@@ -32,16 +32,6 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 import type { ReactNode } from "react";
 import { useState } from "react";
 
-/** The write endpoints return the stored document, which has the branch id but not its name. */
-function withBranchName(updated: Invoice, current: Invoice | undefined): Invoice {
-  return current?.customerInfo.branchName
-    ? {
-        ...updated,
-        customerInfo: { ...updated.customerInfo, branchName: current.customerInfo.branchName },
-      }
-    : updated;
-}
-
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
     <Group justify="space-between" gap="md" wrap="nowrap" align="baseline">
@@ -67,13 +57,12 @@ function InvoiceDocument({
 }: {
   invoice: Invoice;
   onStatusChange: (status: InvoiceStatus) => void;
-  onLineCancel: (lineIndex: number, cancel: boolean) => void;
+  onLineCancel: (position: number, cancel: boolean) => void;
   busy: boolean;
   compact: boolean;
   warnings: string[];
 }) {
-  const { customerInfo, payment } = invoice;
-  const isCompany = Boolean(customerInfo.organizationNumber);
+  const isCompany = Boolean(invoice.customerOrganizationNumber);
   return (
     <Stack gap="lg">
       <Group justify="space-between" align="flex-start" wrap="wrap" gap="sm">
@@ -86,7 +75,7 @@ function InvoiceDocument({
                 : "Faktura"}
           </Text>
           <Title order={2} style={amountStyle}>
-            {invoice.invoiceId}
+            {invoice.invoiceNumber}
           </Title>
         </Stack>
         <InvoiceStatusControl
@@ -103,8 +92,8 @@ function InvoiceDocument({
       ))}
 
       <Stack gap={4}>
-        <Fact label="Opprettet">{formatDate(invoice.creationTime)}</Fact>
-        <Fact label="Forfall">{formatDate(invoice.duedate)}</Fact>
+        <Fact label="Opprettet">{formatDate(invoice.createdAt)}</Fact>
+        <Fact label="Forfall">{formatDate(invoice.dueDate)}</Fact>
         {invoice.reference && <Fact label="Referanse">{invoice.reference}</Fact>}
         {invoice.ourReference && <Fact label="Vår referanse">{invoice.ourReference}</Fact>}
       </Stack>
@@ -112,25 +101,25 @@ function InvoiceDocument({
       <Divider label="Kunde" labelPosition="left" />
       <Stack gap={4}>
         <Text fw={600}>
-          {customerInfo.userDetail ? (
-            <EntityLink to="/admin/kasse" search={showCustomer(customerInfo.userDetail)}>
-              {customerInfo.name}
+          {invoice.customerId ? (
+            <EntityLink to="/admin/kasse" search={showCustomer(invoice.customerId)}>
+              {invoice.customerName}
             </EntityLink>
           ) : (
-            customerInfo.name
+            invoice.customerName
           )}
         </Text>
-        {customerInfo.branchName && <Text size="sm">{customerInfo.branchName}</Text>}
+        {invoice.branchName && <Text size="sm">{invoice.branchName}</Text>}
         <Text size="sm">
-          {customerInfo.postal.address}, {customerInfo.postal.code} {customerInfo.postal.city}
+          {invoice.customerAddress}, {invoice.customerPostCode} {invoice.customerPostCity}
         </Text>
         <Text size="sm">
-          {customerInfo.phone}
-          {customerInfo.email && ` · ${customerInfo.email}`}
+          {invoice.customerPhone}
+          {invoice.customerEmail && ` · ${invoice.customerEmail}`}
         </Text>
-        {customerInfo.dob && <Fact label="Fødselsdato">{formatDate(customerInfo.dob)}</Fact>}
-        {customerInfo.organizationNumber && (
-          <Fact label="Organisasjonsnummer">{customerInfo.organizationNumber}</Fact>
+        {invoice.customerDob && <Fact label="Fødselsdato">{formatDate(invoice.customerDob)}</Fact>}
+        {invoice.customerOrganizationNumber && (
+          <Fact label="Organisasjonsnummer">{invoice.customerOrganizationNumber}</Fact>
         )}
       </Stack>
 
@@ -147,9 +136,9 @@ function InvoiceDocument({
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {invoice.customerItemPayments.map((line, index) => (
+          {invoice.lines.map((line, position) => (
             <Table.Tr
-              key={`${line.title}-${index}`}
+              key={position}
               c={line.cancel ? "dimmed" : undefined}
               td={line.cancel ? "line-through" : undefined}
             >
@@ -158,13 +147,13 @@ function InvoiceDocument({
                 {line.numberOfItems}
               </Table.Td>
               <Table.Td ta="right" style={amountStyle}>
-                {formatKroner(line.payment.unit)}
+                {formatKroner(line.unit)}
               </Table.Td>
               <Table.Td ta="right" style={amountStyle}>
-                {line.payment.discount ? `${line.payment.discount} %` : ""}
+                {line.discount ? `${line.discount} %` : ""}
               </Table.Td>
               <Table.Td ta="right" style={amountStyle}>
-                {formatKroner(line.payment.gross)}
+                {formatKroner(line.gross)}
               </Table.Td>
               <Table.Td>
                 <Tooltip label={line.cancel ? "Ta med linjen igjen" : "Stryk linjen"}>
@@ -173,7 +162,7 @@ function InvoiceDocument({
                     color="gray"
                     aria-label={line.cancel ? `Ta med ${line.title} igjen` : `Stryk ${line.title}`}
                     disabled={busy}
-                    onClick={() => onLineCancel(index, !line.cancel)}
+                    onClick={() => onLineCancel(position, !line.cancel)}
                   >
                     {line.cancel ? <IconArrowBackUp size={16} /> : <IconBan size={16} />}
                   </ActionIcon>
@@ -181,18 +170,18 @@ function InvoiceDocument({
               </Table.Td>
             </Table.Tr>
           ))}
-          {payment.fee && (
+          {invoice.feeUnit !== null && invoice.feeGross !== null && (
             <Table.Tr c="dimmed">
               <Table.Td>Administrasjonsgebyr</Table.Td>
               <Table.Td ta="right" style={amountStyle}>
-                {invoice.customerItemPayments.length}
+                {invoice.lines.length}
               </Table.Td>
               <Table.Td ta="right" style={amountStyle}>
-                {formatKroner(payment.fee.unit)}
+                {formatKroner(invoice.feeUnit)}
               </Table.Td>
               <Table.Td />
               <Table.Td ta="right" style={amountStyle}>
-                {formatKroner(payment.fee.gross)}
+                {formatKroner(invoice.feeGross)}
               </Table.Td>
               <Table.Td />
             </Table.Tr>
@@ -204,28 +193,22 @@ function InvoiceDocument({
               <Group justify="space-between">
                 <span>Å betale</span>
                 <Text span size="xs" c="dimmed" fw={400}>
-                  herav mva {formatKroner(payment.total.vat)}
+                  herav mva {formatKroner(invoice.totalVat)}
                 </Text>
               </Group>
             </Table.Th>
             <Table.Th ta="right" style={amountStyle}>
-              {formatKroner(payment.totalIncludingFee)}
+              {formatKroner(invoice.totalIncludingFee)}
             </Table.Th>
             <Table.Th />
           </Table.Tr>
         </Table.Tfoot>
       </Table>
 
-      {invoice.comments && invoice.comments.length > 0 && (
+      {invoice.comment && (
         <>
-          <Divider label="Kommentarer" labelPosition="left" />
-          <Stack gap={4}>
-            {invoice.comments.map((comment, index) => (
-              <Text key={`${comment.msg}-${index}`} size="sm">
-                {comment.msg}
-              </Text>
-            ))}
-          </Stack>
+          <Divider label="Kommentar" labelPosition="left" />
+          <Text size="sm">{invoice.comment}</Text>
         </>
       )}
     </Stack>
@@ -257,9 +240,7 @@ export default function InvoiceDetailDrawer({
         body: { status },
       }),
     onSuccess: (result) => {
-      queryClient.setQueryData(detailQuery.queryKey, (current) =>
-        withBranchName(result.invoice, current),
-      );
+      queryClient.setQueryData(detailQuery.queryKey, result.invoice);
       setWarnings(result.warnings);
       if (result.warnings.length === 0) {
         showSuccessNotification("Statusen ble endret");
@@ -271,13 +252,13 @@ export default function InvoiceDetailDrawer({
   });
 
   const cancelLine = useMutation({
-    mutationFn: ({ lineIndex, cancel }: { lineIndex: number; cancel: boolean }) =>
+    mutationFn: ({ position, cancel }: { position: number; cancel: boolean }) =>
       apiClient.api.invoices.setLineCancelled({
-        params: { invoiceId: invoiceId ?? "", lineIndex: String(lineIndex) },
+        params: { invoiceId: invoiceId ?? "", lineIndex: String(position) },
         body: { cancel },
       }),
     onSuccess: (updated) => {
-      queryClient.setQueryData(detailQuery.queryKey, (current) => withBranchName(updated, current));
+      queryClient.setQueryData(detailQuery.queryKey, updated);
     },
     onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke endre linjen")),
   });
@@ -331,7 +312,7 @@ export default function InvoiceDetailDrawer({
           <InvoiceDocument
             invoice={invoice.data}
             onStatusChange={(status) => void onStatusChange(status)}
-            onLineCancel={(lineIndex, cancel) => cancelLine.mutate({ lineIndex, cancel })}
+            onLineCancel={(position, cancel) => cancelLine.mutate({ position, cancel })}
             busy={changeStatus.isPending || cancelLine.isPending}
             compact={narrow ?? false}
             warnings={warnings}

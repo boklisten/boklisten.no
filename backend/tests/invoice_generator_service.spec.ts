@@ -1,14 +1,15 @@
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
 
-import { generateInvoices } from "#services/invoices/invoice_generator_service";
-import { StorageService } from "#services/storage_service";
+import Invoice from "#models/invoice";
+import {
+  generateInvoices,
+  pupilCustomerNumber,
+} from "#services/invoices/invoice_generator_service";
 import type CustomerItem from "#models/customer_item";
 import type { Branch } from "#shared/branch";
-import type { InvoiceGenerationSettings } from "#shared/invoice";
+import type { Invoice as InvoiceDto, InvoiceGenerationSettings } from "#shared/invoice";
 import type { Item } from "#shared/item";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
@@ -82,10 +83,14 @@ const rentSettings: InvoiceGenerationSettings = {
   reference: "Manglende levering av skolebøker",
 };
 
-test.group("invoice generation", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  let addInvoice: sinon.SinonStub;
+/** Runs a real generation and reads the saved invoices back, in number order. */
+async function generateAndRead(settings: InvoiceGenerationSettings): Promise<InvoiceDto[]> {
+  await generateInvoices(settings, false);
+  const invoices = await Invoice.query().orderBy("invoice_number");
+  return invoices.map((invoice) => invoice.toDto(null));
+}
 
+test.group("invoice generation", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     for (const item of items) {
@@ -95,14 +100,6 @@ test.group("invoice generation", (group) => {
     for (const customer of customers) {
       await createUser(customer);
     }
-    sandbox = createSandbox();
-    addInvoice = sandbox
-      .stub()
-      .callsFake((invoice) => Promise.resolve({ ...invoice, id: "saved" }));
-    sandbox.stub(StorageService, "Invoices").value({ add: addInvoice });
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
   });
 
   test("selects unreturned, not bought out books of the type with a deadline in the range", async ({
@@ -120,10 +117,10 @@ test.group("invoice generation", (group) => {
       deadline: DateTime.fromISO("2026-08-01T00:00:00.000Z"),
     });
 
-    const { invoices } = await generateInvoices(rentSettings, true);
+    const invoices = await generateAndRead(rentSettings);
 
     assert.deepEqual(
-      invoices.flatMap((invoice) => invoice.customerItemPayments.map((line) => line.customerItem)),
+      invoices.flatMap((invoice) => invoice.lines.map((line) => line.customerItemId)),
       ["due"],
     );
   });
@@ -135,30 +132,46 @@ test.group("invoice generation", (group) => {
     await customerItem({ id: "ci2", customer: "c2", item: "6100000000000000000000b2" });
     await customerItem({ id: "ci3", customer: "c1", item: "6100000000000000000000b2" });
 
-    const { invoices, skipped } = await generateInvoices(rentSettings, true);
-
+    const { skipped } = await generateInvoices(rentSettings, true);
     assert.lengthOf(skipped, 0);
+    const invoices = await generateAndRead(rentSettings);
+
     assert.deepEqual(
-      invoices.map((invoice) => [invoice.invoiceId, invoice.customerInfo.name]),
+      invoices.map((invoice) => [invoice.invoiceNumber, invoice.customerName]),
       [
         ["20263000", "Kari Nordmann"],
         ["20263001", "Ola Nordmann"],
       ],
     );
     const [kari] = invoices;
-    assert.equal(kari?.type, "rent");
-    assert.equal(kari?.branch, BRANCH_ID);
-    assert.equal(kari?.reference, rentSettings.reference);
-    assert.deepEqual(kari?.customerInfo, {
-      userDetail: "c1",
-      name: "Kari Nordmann",
-      email: "kari@example.com",
-      phone: "40000001",
-      dob: KARI_DOB.toJSDate(),
-      postal: { address: "Veien 1", city: "Oslo", code: "0001" },
+    assert.deepInclude(kari, {
+      type: "rent",
+      branchId: BRANCH_ID,
+      reference: rentSettings.reference,
+      customerId: "c1",
+      customerNumber: pupilCustomerNumber("c1"),
+      customerName: "Kari Nordmann",
+      customerEmail: "kari@example.com",
+      customerPhone: "40000001",
+      customerDob: KARI_DOB.toISODate(),
+      customerAddress: "Veien 1",
+      customerPostCity: "Oslo",
+      customerPostCode: "0001",
+      customerCountry: null,
+      customerOrganizationNumber: null,
     });
     assert.deepEqual(
-      kari?.customerItemPayments.map((line) => [line.customerItem, line.title, line.payment]),
+      kari?.lines.map((line) => [
+        line.customerItemId,
+        line.title,
+        {
+          unit: line.unit,
+          gross: line.gross,
+          net: line.net,
+          vat: line.vat,
+          discount: line.discount,
+        },
+      ]),
       [
         // 1049 * 1.1 = 1153.9, rounded to whole kroner
         ["ci1", "Psykologi 2 2022", { unit: 1049, gross: 1154, net: 1154, vat: 0, discount: 0 }],
@@ -166,21 +179,39 @@ test.group("invoice generation", (group) => {
       ],
     );
     // Two books: fee 2 * 96 = 192 net, 48 VAT
-    assert.deepEqual(kari?.payment.fee, { unit: 96, net: 192, vat: 48, gross: 240, discount: 0 });
-    assert.deepEqual(kari?.payment.total, { gross: 2383, net: 2335, vat: 48, discount: 0 });
-    assert.equal(kari?.payment.totalIncludingFee, 2383);
-    assert.isFalse(kari?.customerHavePayed);
+    assert.deepInclude(kari, {
+      feeUnit: 96,
+      feeNet: 192,
+      feeVat: 48,
+      feeGross: 240,
+      feeDiscount: 0,
+      totalGross: 2383,
+      totalNet: 2335,
+      totalVat: 48,
+      totalDiscount: 0,
+      totalIncludingFee: 2383,
+      customerHasPaid: false,
+    });
   });
 
   test("a dry run saves nothing; a real run saves every invoice", async ({ assert }) => {
     await customerItem({ id: "ci1", customer: "c1", item: "6100000000000000000000b1" });
 
-    await generateInvoices(rentSettings, true);
-    assert.isTrue(addInvoice.notCalled);
+    const preview = await generateInvoices(rentSettings, true);
+    assert.lengthOf(await Invoice.all(), 0);
+    assert.equal(preview.invoices[0]?.id, "20263000");
 
     const { invoices } = await generateInvoices(rentSettings, false);
-    assert.equal(addInvoice.callCount, 1);
-    assert.equal(invoices[0]?.id, "saved");
+    const saved = await Invoice.all();
+    assert.lengthOf(saved, 1);
+    assert.equal(invoices[0]?.id, saved[0]?.id);
+    assert.deepInclude(invoices[0], {
+      invoiceNumber: "20263000",
+      customerName: "Kari Nordmann",
+      customerId: "c1",
+      totalIncludingFee: 1274,
+      status: "unpaid",
+    });
   });
 
   test("partly-payment lines invoice the amount left to pay, without a percentage", async ({
@@ -194,24 +225,20 @@ test.group("invoice generation", (group) => {
       amountLeftToPay: 310,
     });
 
-    const { invoices } = await generateInvoices(
-      { ...rentSettings, type: "partly-payment", fee: 320, feePercentage: 0.33 },
-      true,
-    );
-
-    assert.deepEqual(invoices[0]?.customerItemPayments[0]?.payment, {
-      unit: 310,
-      gross: 310,
-      net: 310,
-      vat: 0,
-      discount: 0,
+    const [invoice] = await generateAndRead({
+      ...rentSettings,
+      type: "partly-payment",
+      fee: 320,
+      feePercentage: 0.33,
     });
-    assert.deepEqual(invoices[0]?.payment.fee, {
-      unit: 320,
-      net: 320,
-      vat: 80,
-      gross: 400,
-      discount: 0,
+
+    assert.deepInclude(invoice?.lines[0], { unit: 310, gross: 310, net: 310, vat: 0, discount: 0 });
+    assert.deepInclude(invoice, {
+      feeUnit: 320,
+      feeNet: 320,
+      feeVat: 80,
+      feeGross: 400,
+      feeDiscount: 0,
     });
   });
 
@@ -239,10 +266,10 @@ test.group("invoice generation", (group) => {
       ],
     });
 
-    const { invoices } = await generateInvoices({ ...rentSettings, type: "partly-payment" }, true);
+    const [invoice] = await generateAndRead({ ...rentSettings, type: "partly-payment" });
 
     // 1049 * 0.5 = 524.5, floored to a multiple of ten
-    assert.equal(invoices[0]?.customerItemPayments[0]?.payment.gross, 520);
+    assert.equal(invoice?.lines[0]?.gross, 520);
   });
 
   test("books whose customer no longer exists are skipped and reported", async ({ assert }) => {
@@ -252,7 +279,7 @@ test.group("invoice generation", (group) => {
     const { invoices, skipped } = await generateInvoices(rentSettings, true);
 
     assert.lengthOf(invoices, 1);
-    assert.equal(invoices[0]?.invoiceId, "20263000");
+    assert.equal(invoices[0]?.invoiceNumber, "20263000");
     assert.deepEqual(skipped, [{ customerItemId: "ci1", reason: "Kunden finnes ikke lenger." }]);
   });
 });

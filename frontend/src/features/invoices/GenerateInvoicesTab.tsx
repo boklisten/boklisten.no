@@ -2,7 +2,6 @@ import type {
   GeneratableInvoiceType,
   InvoiceGenerationDefaults,
   InvoiceGenerationResult,
-  InvoiceListRow,
 } from "@boklisten/backend/shared/invoice";
 import {
   Button,
@@ -90,21 +89,6 @@ function settingsFromDefaults(defaults: InvoiceGenerationDefaults): Settings {
   };
 }
 
-function previewRows(result: InvoiceGenerationResult): InvoiceListRow[] {
-  return result.invoices.map((invoice) => ({
-    id: invoice.invoiceId ?? "",
-    invoiceId: invoice.invoiceId ?? "",
-    customerName: invoice.customerInfo.name,
-    customerDetailsId: invoice.customerInfo.userDetail ?? null,
-    organizationNumber: null,
-    type: invoice.type ?? null,
-    created: invoice.creationTime ?? null,
-    duedate: invoice.duedate,
-    totalIncludingFee: invoice.payment.totalIncludingFee,
-    status: "unpaid",
-  }));
-}
-
 export default function GenerateInvoicesTab() {
   const queryClient = useQueryClient();
   const navigate = route.useNavigate();
@@ -183,7 +167,7 @@ export default function GenerateInvoicesTab() {
 
   const ready = payload(true) !== null;
   const previewTotal = preview?.invoices.reduce(
-    (sum, invoice) => sum + invoice.payment.totalIncludingFee,
+    (sum, invoice) => sum + invoice.totalIncludingFee,
     0,
   );
 
@@ -341,7 +325,7 @@ export default function GenerateInvoicesTab() {
             </WarningAlert>
           )}
           {preview.invoices.length > 0 && (
-            <InvoiceGrid rows={previewRows(preview)} loading={false} height="60vh" />
+            <InvoiceGrid rows={preview.invoices} loading={false} height="60vh" />
           )}
         </Stack>
       )}

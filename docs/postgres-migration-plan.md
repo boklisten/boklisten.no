@@ -1310,7 +1310,7 @@ payment`), the order-manager export's too (`amount <= 0 OR any payment`); the or
 - Specs: 1059 passing; `tests/payment_fixtures.ts` (`createPayment`, `paymentDto`), new
   `payment_model.spec.ts`, report specs for all four reports.
 
-## Step 12 — invoices → `invoices` + `invoice_lines` + `invoice_comments` — status: not started
+## Step 12 — invoices → `invoices` + `invoice_lines` — status: done 2026-09-28 (rehearsed on staging, pending merge)
 
 Invoices are accounting documents, so their snapshots survive as columns. Naming fixes: the
 `customerHavePayed` flag becomes `customer_has_paid`; `customerItemPayments` becomes `invoice_lines`.
@@ -1354,12 +1354,80 @@ Survey queries: `branch`/`customerInfo.userDetail`/`companyDetail`/`customerItem
 ids missing from Postgres; `numberOfItems` values not integers; `type` values; decimals in money
 fields; `dob` strings that do not parse as dates.
 
-Survey results / notes: (fill in)
+Target schema (as built), changed from the plan above in the interview after the survey:
+`invoices` has the snapshot as `customer_*` columns (`customer_number`, `customer_name`,
+`customer_email`, `customer_phone`, `customer_dob date`, `customer_organization_number`,
+`customer_address`, `customer_post_code`, `customer_post_city`, `customer_country`), money as
+`decimal(10,2)`, the fee columns all set or all null (check constraint `invoices_fee_complete`),
+`invoice_number` indexed but not unique, and one `comment text` column instead of an
+`invoice_comments` table. No `company_id` (nothing ever set `companyDetail`) and no
+`customer_branch_name` (every reader showed the branch's current name). `invoice_lines` as planned,
+without the line `customer_number`/`organization_number` (no document carries them), money as
+`decimal(10,2)`, and `item_id` RESTRICT instead of SET NULL (the exported article number is derived
+from the item id). A pg type parser reads `numeric` as a JS number, and `database/schema_rules.ts`
+types `decimal` columns as `number` in the generated schema.
+
+Survey results (2026-09-27, staging):
+
+- 7 764 invoices, 14 720 lines (at most 15 per invoice), 105 comments. No `active: false`.
+  Every branch, customer item and item exists; `comments.user` is always null.
+- 4 029 invoices name a user that no longer exists (2019–2025); they keep their snapshot with
+  `customer_id` NULL. Pupils' Visma/Tripletex customer numbers were derived from that user id (two
+  schemes, split at 2023-01-25), so the transfer derives and stores them in `customer_number` once;
+  company invoices already stored theirs. A user merge now moves `customer_id` only, so the
+  customer number no longer changes on merge.
+- 105 company invoices (org number set): no branch, `payment.fee` null (3 recent ones lack it
+  entirely), exactly one comment each, `type` null. `companyDetail` is missing on every document.
+- Money: 27 invoice totals and 55 lines carry real øre (company invoices); 12 values carry float
+  noise (`9.999999999999998`), which `decimal(10,2)` rounds to what the export already printed.
+  Max amount 1 332 451.25.
+- `numberOfItems` is always an integer string; `productNumber` (169 company lines) always numeric;
+  no line carries `cancel`, `customerNumber` or `organizationNumber`.
+- `invoiceId` is a string on every invoice; two numbers are duplicated (20208001, 20208011: 2020
+  credit note plus reissue).
+- `type`: partly-payment 5 884, rent 1 131, loan 279, null/missing 470. Line `customerItemType` is
+  missing only on lines of type-less invoices.
+- `dob`: 7 628 ISO strings, 1 Date, 26 `Date.toString()` strings (the 2026 generator wrote a Date
+  into a String field), 105 missing. Ten are impossible (years 1, 97, 506, 2979, 11996, 91103,
+  200206, 201002) and became NULL, the users-table rule.
+- `customerInfo.branchName` stored on 3 295 invoices, 201 of them differing from the branch's
+  current name; nothing read it.
+- Top-level keys dropped: `user`, `editableFor`, `viewableFor`, `active`, `__v`, subdocument `_id`s.
+
+Notes (2026-09-28):
+
+- Staging rehearsal from a laptop: 7 764 invoices, 14 720 lines, `4029 deleted customers set to
+null, 10 impossible dates of birth cleared`, collection dropped; about 11 s for the whole
+  `migrate:backend`. Every row compared field by field against an NDJSON dump taken before the run:
+  zero differences.
+- Export byte-identity: all four formats exported for all 7 764 invoices (Tripletex for the 7 659
+  pupil invoices) before and after. Tripletex identical; the three Visma formats differ only on the
+  ten cleared dates of birth, which now print today's date (legacy behaviour for a missing date).
+  Branch insights identical for all 115 branches; list and detail responses identical apart from
+  the renamed fields and the tie order of the duplicated 20208001.
+- Model `app/models/invoice.ts` (lines preloaded in position order, `createWithLines`,
+  `hasActive`, `toDtos` with the branch's current name) and `app/models/invoice_line.ts`.
+  `shared/invoice.ts` is the flat DTO (`customerHasPaid`, `invoiceNumber`, `dueDate`, `lines`);
+  the generation result returns list rows. `CustomerInvoiceActive`/`InvoiceActive` are replaced
+  by `Invoice.hasActive`; branch insights counts invoice lines in SQL.
+- With the last collection gone, the runtime Mongo layer was deleted in this step (decided in the
+  interview): `app/models/mongoose/`, `storage_service.ts`, `start/mongoose.ts` and its preload,
+  `shared/bl-document.ts`, `tests/mongoDb.spec.ts`, `tests/se.db-query.spec.ts`; the two
+  `ObjectId.isValid` checks use `isObjectIdHex`. The `mongoose`/`mongodb` packages and
+  `MONGODB_URI` stay for the transfer migrations until step 13.
+- Verified on staging through the local stack (Playwright): list and status summary, detail drawer
+  for a deleted customer's invoice (full snapshot, no link), a live customer's (linked) and a
+  company invoice (comment), line strike/undo, status round trip, company invoice create and
+  delete (VAT 3.085 stored as 3.09), generator preview (98 partly-payment invoices), drawer at
+  375 px. Specs: `tests/invoice_fixtures.ts` (`createInvoice`, `invoiceDto`), new
+  `invoice_model.spec.ts`.
 
 ## Step 13 — Decommission MongoDB — status: not started
 
 Only after step 12 has run in production.
 
+- Already done in step 12: the runtime layer (`app/models/mongoose/`, `storage_service.ts`,
+  `start/mongoose.ts`, `shared/bl-document.ts`, `tests/mongoDb.spec.ts`) is deleted.
 - Remove `mongoose` and `mongodb` from `backend/package.json` (keep `bson` for id generation).
   Delete `app/models/mongoose/` (schemas, `MongodbHandler`, `SEDbQuery`, `MongooseModelCreator`,
   `BlSchemaName`), `app/services/storage_service.ts`, `start/mongoose.ts`, the `ToSchema` type, and
@@ -1438,3 +1506,8 @@ Only after step 12 has run in production.
 - 2026-09-27: step 11 implemented (payments into Postgres without `customer`, `branch` and `info`,
   21 497 payments of deleted orders skipped, "paid" and report columns moved into SQL, report
   helpers deleted, staging rehearsal with zero field diffs).
+- 2026-09-28: step 12 implemented (invoices + lines into Postgres with the customer snapshot as
+  columns that outlive the customer, pupils' customer numbers derived and stored, one comment
+  column, decimal money, 4 029 deleted customers nulled and 10 impossible dates of birth cleared,
+  runtime Mongo layer deleted, staging rehearsal 11 s with zero field diffs and byte-identical
+  exports apart from the cleared dates).

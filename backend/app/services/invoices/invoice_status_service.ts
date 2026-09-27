@@ -2,13 +2,14 @@ import * as Sentry from "@sentry/node";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import CustomerItem from "#models/customer_item";
+import Invoice from "#models/invoice";
 import Order from "#models/order";
 import type { NewOrderItem } from "#models/order";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
-import { StorageService } from "#services/storage_service";
+import { invoiceDto } from "#services/invoices/invoice_query_service";
 import { invoiceStatus, invoiceStatusFlags } from "#shared/invoice";
 import type {
-  Invoice,
+  Invoice as InvoiceDto,
   InvoiceBulkStatusChangeResult,
   InvoiceStatus,
   InvoiceStatusChangeResult,
@@ -25,9 +26,7 @@ export function invoicePaidLineAmount(net: number): number {
 }
 
 async function customerItemsOf(invoice: Invoice): Promise<CustomerItem[]> {
-  return CustomerItem.findByIds(
-    invoice.customerItemPayments.map((payment) => payment.customerItem),
-  );
+  return CustomerItem.findByIds(invoice.lines.map((line) => line.customerItemId));
 }
 
 /**
@@ -39,12 +38,12 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
   const warnings: string[] = [];
   const customerItems = await customerItemsOf(invoice);
   const unreturned = customerItems.filter((customerItem) => !customerItem.returned);
-  const orderItems: NewOrderItem[] = invoice.customerItemPayments.flatMap((payment) => {
-    const customerItem = unreturned.find((candidate) => candidate.id === payment.customerItem);
+  const orderItems: NewOrderItem[] = invoice.lines.flatMap((line) => {
+    const customerItem = unreturned.find((candidate) => candidate.id === line.customerItemId);
     if (!customerItem) {
       return [];
     }
-    const amount = invoicePaidLineAmount(payment.payment.net);
+    const amount = invoicePaidLineAmount(line.net);
     return [
       {
         type: "invoice-paid",
@@ -60,7 +59,7 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
   });
 
   const customer = unreturned[0]?.customerId ?? undefined;
-  const branch = invoice.branch ?? unreturned[0]?.handoutBranchId;
+  const branch = invoice.branchId ?? unreturned[0]?.handoutBranchId;
   if (orderItems.length === 0 || customer === undefined || branch === undefined) {
     warnings.push(
       "Ingen ordre ble registrert på kunden, siden ingen av bøkene på fakturaen er aktive.",
@@ -95,10 +94,9 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
 /** Undoes {@link recordPayment}: removes the invoice-paid order and clears buyout. */
 async function revertPayment(invoice: Invoice): Promise<string[]> {
   const warnings: string[] = [];
-  const customerDetailsId = invoice.customerInfo.userDetail;
-  const invoiceItemIds = new Set(invoice.customerItemPayments.map((payment) => payment.item));
+  const invoiceItemIds = new Set(invoice.lines.map((line) => line.itemId));
 
-  const orders = customerDetailsId ? await Order.placedFor(customerDetailsId) : [];
+  const orders = invoice.customerId ? await Order.placedFor(invoice.customerId) : [];
   const invoiceOrder = orders.find(
     (order) =>
       order.orderItems.some((orderItem) => orderItem.type === "invoice-paid") &&
@@ -121,9 +119,9 @@ export async function setInvoiceStatus(
   status: InvoiceStatus,
   employeeDetailsId: string,
 ): Promise<InvoiceStatusChangeResult> {
-  const before = await StorageService.Invoices.get(invoiceId);
-  const previousStatus = invoiceStatus(before);
-  const invoice = await StorageService.Invoices.update(invoiceId, invoiceStatusFlags(status));
+  const invoice = await Invoice.getOrFail(invoiceId);
+  const previousStatus = invoiceStatus(invoice);
+  await invoice.merge(invoiceStatusFlags(status)).save();
 
   let warnings: string[] = [];
   if (status === "paid" && previousStatus !== "paid") {
@@ -131,7 +129,7 @@ export async function setInvoiceStatus(
   } else if (status !== "paid" && previousStatus === "paid") {
     warnings = await revertPayment(invoice);
   }
-  return { invoice, warnings };
+  return { invoice: await invoiceDto(invoice), warnings };
 }
 
 /**
@@ -144,13 +142,13 @@ export async function setInvoiceStatuses(
   status: InvoiceStatus,
   employeeDetailsId: string,
 ): Promise<InvoiceBulkStatusChangeResult> {
-  const invoices: Invoice[] = [];
+  const invoices: InvoiceDto[] = [];
   const warnings: string[] = [];
   for (const invoiceId of invoiceIds) {
     const result = await setInvoiceStatus(invoiceId, status, employeeDetailsId);
     invoices.push(result.invoice);
     warnings.push(
-      ...result.warnings.map((warning) => `${result.invoice.invoiceId ?? invoiceId}: ${warning}`),
+      ...result.warnings.map((warning) => `${result.invoice.invoiceNumber}: ${warning}`),
     );
   }
   return { invoices, warnings };
@@ -158,17 +156,16 @@ export async function setInvoiceStatuses(
 
 export async function setInvoiceLineCancelled(
   invoiceId: string,
-  lineIndex: number,
+  position: number,
   cancel: boolean,
-): Promise<Invoice> {
-  const invoice = await StorageService.Invoices.get(invoiceId);
-  const line = invoice.customerItemPayments[lineIndex];
+): Promise<InvoiceDto> {
+  const invoice = await Invoice.getOrFail(invoiceId);
+  const line = invoice.lines.find((candidate) => candidate.position === position);
   if (line === undefined) {
     throw new BadRequestException("Fakturalinjen finnes ikke.");
   }
-  const customerItemPayments = [...invoice.customerItemPayments];
-  customerItemPayments[lineIndex] = { ...line, cancel };
-  return StorageService.Invoices.update(invoiceId, { customerItemPayments });
+  await line.merge({ cancel }).save();
+  return invoiceDto(invoice);
 }
 
 /**
@@ -177,9 +174,9 @@ export async function setInvoiceLineCancelled(
  * bookkeeping the accountants rely on.
  */
 export async function deleteInvoice(invoiceId: string): Promise<void> {
-  const invoice = await StorageService.Invoices.get(invoiceId);
+  const invoice = await Invoice.getOrFail(invoiceId);
   if (invoiceStatus(invoice) !== "unpaid") {
     throw new BadRequestException("Bare ubetalte fakturaer kan slettes.");
   }
-  await StorageService.Invoices.remove(invoiceId);
+  await invoice.delete();
 }

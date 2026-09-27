@@ -1,7 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import { ObjectId } from "mongodb";
 
 import CustomerItem from "#models/customer_item";
+import { isObjectIdHex } from "#models/helpers/object_id";
 import { buildCustomerItemActions, calculateStatus } from "#services/customer_item_actions_service";
 import type { ActiveCustomerItem } from "#shared/customer-item/active-customer-item";
 
@@ -46,7 +46,7 @@ export default class CustomerItemsController {
    */
   async forCustomer(ctx: HttpContext) {
     const detailsId = String(ctx.request.param("detailsId"));
-    if (!ObjectId.isValid(detailsId)) {
+    if (!isObjectIdHex(detailsId)) {
       return [];
     }
 

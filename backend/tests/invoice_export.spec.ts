@@ -1,18 +1,16 @@
 import { test } from "@japa/runner";
+import { DateTime } from "luxon";
 
 import { toSemicolonCsv } from "#services/invoices/csv";
-import {
-  invoiceMiniId,
-  mongoIdCounter,
-  tripletexRows,
-  vismaRows,
-} from "#services/invoices/invoice_export_rows";
+import { mongoIdCounter, tripletexRows, vismaRows } from "#services/invoices/invoice_export_rows";
+import { pupilCustomerNumber } from "#services/invoices/invoice_generator_service";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
 import { invoiceStatus, invoiceStatusFlags } from "#shared/invoice";
 import type { Invoice } from "#shared/invoice";
 import type { Item } from "#shared/item";
 import { customerItemDto } from "#tests/customer_item_fixtures";
+import { invoiceDto, invoiceLineDto } from "#tests/invoice_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const USER_DETAIL_ID = "65041cc7afe72e00496e2640";
@@ -22,83 +20,96 @@ const BRANCH_ID = "5b6442ecd2e733002fae8a44";
 
 /** A rent invoice as legacy bl-admin generated it in July 2026 (staging data, anonymised). */
 function rentInvoice(overrides: Partial<Invoice> = {}): Invoice {
-  return mock<Invoice>({
+  return invoiceDto({
     id: "6a68aa7decdfd227ebc8f6dd",
-    invoiceId: "20263071",
+    invoiceNumber: "20263071",
     type: "rent",
-    branch: BRANCH_ID,
-    creationTime: new Date("2026-07-28T13:11:25.417Z"),
-    duedate: new Date("2026-08-11T13:11:05.460Z"),
-    customerHavePayed: false,
-    toCreditNote: false,
-    toDebtCollection: false,
-    toLossNote: false,
+    branchId: BRANCH_ID,
+    branchName: "Ullern VG3 ST",
+    createdAt: new Date("2026-07-28T13:11:25.417Z"),
+    dueDate: new Date("2026-08-11T13:11:05.460Z"),
     reference: "Manglende levering av skolebøker",
-    customerItemPayments: [
-      {
-        customerItem: CUSTOMER_ITEM_ID,
+    lines: [
+      invoiceLineDto({
+        customerItemId: CUSTOMER_ITEM_ID,
         title: "Psykologi 2 2022",
-        item: ITEM_ID,
+        itemId: ITEM_ID,
         numberOfItems: 1,
         customerItemType: "rent",
-        payment: { unit: 1049, gross: 1154, net: 1154, vat: 0, discount: 0 },
-      },
+        unit: 1049,
+        gross: 1154,
+        net: 1154,
+        vat: 0,
+        discount: 0,
+      }),
     ],
-    customerInfo: {
-      userDetail: USER_DETAIL_ID,
-      name: "Elise Nordmann",
-      email: "elise@example.com",
-      phone: "48190306",
-      dob: new Date("2007-06-06T22:00:00.000Z"),
-      branchName: "Ullern VG3 ST",
-      postal: { address: "Agmund Bolts Vei 11", city: "Oslo", code: "0664" },
-    },
-    payment: {
-      total: { gross: 1274, net: 1250, vat: 24, discount: 0 },
-      fee: { unit: 96, gross: 120, net: 96, vat: 24, discount: 0 },
-      totalIncludingFee: 1274,
-    },
+    customerId: USER_DETAIL_ID,
+    customerNumber: "93996",
+    customerName: "Elise Nordmann",
+    customerEmail: "elise@example.com",
+    customerPhone: "48190306",
+    customerDob: "2007-06-07",
+    customerAddress: "Agmund Bolts Vei 11",
+    customerPostCity: "Oslo",
+    customerPostCode: "0664",
+    totalGross: 1274,
+    totalNet: 1250,
+    totalVat: 24,
+    totalDiscount: 0,
+    feeUnit: 96,
+    feeGross: 120,
+    feeNet: 96,
+    feeVat: 24,
+    feeDiscount: 0,
+    totalIncludingFee: 1274,
     ...overrides,
   });
 }
 
 /** A company invoice written by hand, with a comment. */
 function companyInvoice(): Invoice {
-  return mock<Invoice>({
+  return invoiceDto({
     id: "6a98230a50a5b79c10143698",
-    invoiceId: "20268005",
+    invoiceNumber: "20268005",
     type: null,
-    creationTime: new Date("2026-09-02T13:22:18.705Z"),
-    duedate: new Date("2026-09-16T13:22:17.867Z"),
+    createdAt: new Date("2026-09-02T13:22:18.705Z"),
+    dueDate: new Date("2026-09-16T13:22:17.867Z"),
     ourReference: "Jørgen Rosenlund",
     reference: "Tove Fj. Johansen",
-    customerItemPayments: [
-      {
+    lines: [
+      invoiceLineDto({
+        customerItemType: null,
         title: "Bios 1 2021",
         numberOfItems: 17,
         productNumber: 1,
-        payment: { unit: 1249, gross: 8493.2, net: 8493.2, vat: 0, discount: 60 },
-      },
+        unit: 1249,
+        gross: 8493.2,
+        net: 8493.2,
+        vat: 0,
+        discount: 60,
+      }),
     ],
-    customerInfo: {
-      customerNumber: "988982857",
-      name: "Kvitsund Gymnas",
-      email: "bibliotek@kvitsund.vgs.no",
-      organizationNumber: "988982857",
-      phone: "99240588",
-      postal: {
-        address: "Jacob Naadlands veg 2",
-        city: "Kviteseid",
-        code: "3850",
-        country: "norway",
-      },
-    },
-    payment: {
-      total: { gross: 17_365.7, net: 17_365.7, vat: 0, discount: 220 },
-      fee: null,
-      totalIncludingFee: 17_365.7,
-    },
-    comments: [{ msg: "Bestillinger av 23.06.26 og 24.06.2026", creationTime: new Date() }],
+    customerNumber: "988982857",
+    customerName: "Kvitsund Gymnas",
+    customerEmail: "bibliotek@kvitsund.vgs.no",
+    customerOrganizationNumber: "988982857",
+    customerPhone: "99240588",
+    customerDob: null,
+    customerAddress: "Jacob Naadlands veg 2",
+    customerPostCity: "Kviteseid",
+    customerPostCode: "3850",
+    customerCountry: "norway",
+    totalGross: 17_365.7,
+    totalNet: 17_365.7,
+    totalVat: 0,
+    totalDiscount: 220,
+    feeUnit: null,
+    feeGross: null,
+    feeNet: null,
+    feeVat: null,
+    feeDiscount: null,
+    totalIncludingFee: 17_365.7,
+    comment: "Bestillinger av 23.06.26 og 24.06.2026",
   });
 }
 
@@ -133,7 +144,7 @@ test.group("invoice export: Visma", () => {
     const [header] = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: false });
 
     assert.equal(header?.length, 71);
-    assert.equal(header?.[2], String(invoiceMiniId(rentInvoice())));
+    assert.equal(header?.[2], "93996");
     assert.equal(header?.[12], "28072026");
     assert.equal(header?.[18], "11082026");
     assert.equal(header?.[19], "07062007");
@@ -185,7 +196,7 @@ test.group("invoice export: Visma", () => {
     ]);
   });
 
-  test("a company invoice has no fee, uses its comments as text lines and the org number in the header", ({
+  test("a company invoice has no fee, uses its comment as a text line and the org number in the header", ({
     assert,
   }) => {
     const rows = vismaRows([companyInvoice()], { ehf: false, creditOfInvoice: false });
@@ -217,31 +228,37 @@ test.group("invoice export: Visma", () => {
   test("a credit note export replaces the header with a four-field H3 record", ({ assert }) => {
     const [header, line] = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: true });
 
-    assert.deepEqual(header, ["H3", 0, String(invoiceMiniId(rentInvoice())), "20263071"]);
+    assert.deepEqual(header, ["H3", 0, "93996", "20263071"]);
     assert.equal(line?.[0], "L1");
   });
 });
 
 test.group("invoice export: customer numbers", () => {
-  test("invoices from before 2023-01-25 use the epoch of the user detail id", ({ assert }) => {
-    const invoice = rentInvoice({ creationTime: new Date("2019-03-12T19:22:50.747Z") });
-    assert.equal(invoiceMiniId(invoice), mongoIdMiniEpochOf(USER_DETAIL_ID));
+  test("a pupil's number pairs the epoch and the counter of their user id", ({ assert }) => {
+    // Computed by legacy bl-admin's InvoiceVismaService for the same id.
+    assert.equal(pupilCustomerNumber(USER_DETAIL_ID), "93996");
   });
 
-  test("newer invoices pair the epoch and the counter of the user detail id", ({ assert }) => {
-    // Computed by legacy bl-admin's InvoiceVismaService for the same id.
-    assert.equal(invoiceMiniId(rentInvoice()), 93_996);
+  test("the stored number is exported, also once the customer is deleted", ({ assert }) => {
+    const [header] = vismaRows([rentInvoice({ customerId: null })], {
+      ehf: false,
+      creditOfInvoice: false,
+    });
+    assert.equal(header?.[2], "93996");
+  });
+
+  test("a missing date of birth prints as today's date, as legacy bl-admin did", ({ assert }) => {
+    const rows = vismaRows([rentInvoice({ customerDob: null })], {
+      ehf: false,
+      creditOfInvoice: false,
+    });
+    assert.equal(rows[4]?.[6], `Kundens fødselsdato: ${DateTime.now().toFormat("dd.MM.yyyy")}`);
   });
 
   test("the article number is the counter part of the item id", ({ assert }) => {
     assert.equal(mongoIdCounter(ITEM_ID), 0xf9_b3_e6);
   });
 });
-
-function mongoIdMiniEpochOf(mongoId: string): number {
-  const epoch = new Date(Number.parseInt(mongoId.slice(0, 8), 16)).getTime();
-  return Math.trunc(Number(String(epoch).slice(2)));
-}
 
 test.group("invoice export: Tripletex", () => {
   const lookups = {
@@ -322,8 +339,10 @@ test.group("invoice export: Tripletex", () => {
 
   test("only the first book row of an invoice carries the comment", ({ assert }) => {
     const invoice = rentInvoice();
-    invoice.customerItemPayments.push({ ...invoice.customerItemPayments[0]! });
-    const rows = tripletexRows([invoice], lookups);
+    const rows = tripletexRows(
+      [{ ...invoice, lines: [...invoice.lines, ...invoice.lines] }],
+      lookups,
+    );
 
     assert.match(
       String(rows[1]?.[39]),
@@ -333,10 +352,7 @@ test.group("invoice export: Tripletex", () => {
   });
 
   test("a line without a customer item cannot be exported", ({ assert }) => {
-    assert.throws(
-      () => tripletexRows([companyInvoice()], lookups),
-      /Kundeboka undefined finnes ikke/,
-    );
+    assert.throws(() => tripletexRows([companyInvoice()], lookups), /Kundeboka null finnes ikke/);
   });
 });
 
@@ -380,7 +396,7 @@ test.group("invoice status", () => {
   test("debt collection wins when old data has several flags set", ({ assert }) => {
     assert.equal(
       invoiceStatus({
-        customerHavePayed: true,
+        customerHasPaid: true,
         toDebtCollection: true,
         toCreditNote: false,
         toLossNote: false,

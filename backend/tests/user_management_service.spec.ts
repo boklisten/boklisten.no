@@ -5,6 +5,7 @@ import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
 import CustomerItem from "#models/customer_item";
+import Invoice from "#models/invoice";
 import BookHandover from "#models/book_handover";
 import EmailVerification from "#models/email_verification";
 import Match from "#models/match";
@@ -14,12 +15,11 @@ import Order from "#models/order";
 import PasswordReset from "#models/password_reset";
 import Signature from "#models/signature";
 import User from "#models/user";
-import { CustomerInvoiceActive } from "#services/invoices/customer_invoice_active";
 import { OrderActive } from "#services/orders/order_active";
-import { StorageService } from "#services/storage_service";
 import { UserManagementService } from "#services/user_management_service";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
+import { createInvoice } from "#tests/invoice_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import { createOrder } from "#tests/order_fixtures";
@@ -40,9 +40,6 @@ async function seedMatch(customerIds: string[]) {
 }
 
 test.group("UserManagementService.mergeUsers", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  let invoicesUpdateManyStub: sinon.SinonStub;
-
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
   group.each.setup(async () => {
@@ -50,11 +47,6 @@ test.group("UserManagementService.mergeUsers", (group) => {
     await createUser({ id: TO });
     await createUser({ id: OTHER });
   });
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    invoicesUpdateManyStub = sandbox.stub(StorageService.Invoices, "updateMany").resolves();
-  });
-  group.each.teardown(() => sandbox.restore());
 
   test("repoints participants and handovers at the surviving user", async ({ assert }) => {
     const { match } = await seedMatch([FROM, OTHER]);
@@ -132,7 +124,7 @@ test.group("UserManagementService.mergeUsers", (group) => {
     assert.lengthOf(await MatchObligation.query().where("matchId", match.id), 0);
   });
 
-  test("moves orders and mongo references and deletes the source user", async ({ assert }) => {
+  test("moves orders, books and invoices and deletes the source user", async ({ assert }) => {
     const [branch, item] = await Promise.all([createBranch(), createItem()]);
     const order = await createOrder({
       branchId: branch.id,
@@ -144,17 +136,16 @@ test.group("UserManagementService.mergeUsers", (group) => {
       customerId: FROM,
       handoutBranchId: branch.id,
     });
+    const invoice = await createInvoice({ customerId: FROM, customerName: "Gammelt navn" });
 
     await UserManagementService.mergeUsers(FROM, TO);
 
     assert.equal((await Order.getOrFail(order.id)).customerId, TO);
     assert.equal((await CustomerItem.findOrFail(customerItem.id)).customerId, TO);
-    assert.isTrue(
-      invoicesUpdateManyStub.calledWithMatch(
-        { "customerInfo.userDetail": FROM },
-        { "customerInfo.userDetail": TO },
-      ),
-    );
+    const merged = await Invoice.getOrFail(invoice.id);
+    assert.equal(merged.customerId, TO);
+    // The invoice keeps the customer as they were invoiced.
+    assert.equal(merged.customerName, "Gammelt navn");
     assert.isNull(await User.find(FROM));
     assert.isNotNull(await User.find(TO));
   });
@@ -186,7 +177,6 @@ test.group("UserManagementService.deleteUser", (group) => {
   let sandbox: sinon.SinonSandbox;
   let activeOrdersStub: sinon.SinonStub;
   let activeCustomerItemsStub: sinon.SinonStub;
-  let activeInvoicesStub: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
@@ -197,9 +187,6 @@ test.group("UserManagementService.deleteUser", (group) => {
     sandbox = createSandbox();
     activeOrdersStub = sandbox.stub(OrderActive.prototype, "haveActiveOrders").resolves(false);
     activeCustomerItemsStub = sandbox.stub(CustomerItem, "hasActive").resolves(false);
-    activeInvoicesStub = sandbox
-      .stub(CustomerInvoiceActive.prototype, "haveActiveInvoices")
-      .resolves(false);
   });
   group.each.teardown(() => sandbox.restore());
 
@@ -288,9 +275,37 @@ test.group("UserManagementService.deleteUser", (group) => {
   });
 
   test("refuses when the customer has active invoices", async ({ assert }) => {
-    activeInvoicesStub.resolves(true);
-    await assert.rejects(() => UserManagementService.deleteUser(FROM));
+    await createInvoice({ customerId: FROM });
+    await assert.rejects(
+      () => UserManagementService.deleteUser(FROM),
+      "Kunden har aktive fakturaer og kan ikke slettes",
+    );
     assert.isNotNull(await User.find(FROM));
+  });
+
+  test("keeps settled invoices with the customer's details, unlinked from the deleted user", async ({
+    assert,
+  }) => {
+    const invoice = await createInvoice({
+      customerId: FROM,
+      customerHasPaid: true,
+      customerName: "Kari Nordmann",
+      customerEmail: "kari@example.com",
+      customerNumber: "93996",
+    });
+
+    await UserManagementService.deleteUser(FROM);
+
+    const kept = await Invoice.getOrFail(invoice.id);
+    assert.isNull(kept.customerId);
+    assert.deepInclude(kept.toDto(null), {
+      customerName: "Kari Nordmann",
+      customerEmail: "kari@example.com",
+      customerNumber: "93996",
+      customerPhone: invoice.customerPhone,
+      customerAddress: invoice.customerAddress,
+      customerDob: invoice.customerDob?.toISODate() ?? null,
+    });
   });
 
   test("refuses to delete employees or admins", async ({ assert }) => {

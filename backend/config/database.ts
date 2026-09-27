@@ -7,6 +7,9 @@ import env from "#start/env";
 // local midnight, so a calendar day never shifts with the server's time zone. Lucid's
 // `@column.date()` reads that text into a Luxon date in the app's default zone.
 types.setTypeParser(types.builtins.DATE, (value) => value);
+// `decimal` columns (invoice amounts, at most eight digits before the point) come back as numbers
+// instead of text; they fit a JS number exactly to the øre.
+types.setTypeParser(types.builtins.NUMERIC, Number);
 
 const dbConfig = defineConfig({
   connection: "postgres",
@@ -17,6 +20,9 @@ const dbConfig = defineConfig({
       migrations: {
         naturalSort: true,
         paths: ["database/migrations"],
+      },
+      schemaGeneration: {
+        rulesPaths: ["#database/schema_rules"],
       },
     },
   },

@@ -48,7 +48,7 @@ function StatusCell({ value, data, compact, busy, onStatusChange }: StatusCellPa
           compact={compact}
           disabled={busy}
           onChange={(status) => onStatusChange(data, status)}
-          ariaLabel={`Status for faktura ${data.invoiceId}`}
+          ariaLabel={`Status for faktura ${data.invoiceNumber}`}
         />
       ) : (
         <Badge variant="light" color={INVOICE_STATUS_COLORS[value]} radius="sm" tt="none" fw={600}>
@@ -94,14 +94,14 @@ export default function InvoiceGrid({
     onStatusChange,
   };
   const columnDefs: ColDef<InvoiceListRow>[] = [
-    { field: "invoiceId", headerName: "Nr", width: 120, flex: 0, cellDataType: "text" },
+    { field: "invoiceNumber", headerName: "Nr", width: 120, flex: 0, cellDataType: "text" },
     {
       colId: "batch",
       headerName: "Runde",
       width: 110,
       flex: 0,
       hide: !showBatch,
-      valueGetter: ({ data }) => (data ? invoiceBatchPrefix(data.invoiceId) : ""),
+      valueGetter: ({ data }) => (data ? invoiceBatchPrefix(data.invoiceNumber) : ""),
     },
     {
       field: "customerName",
@@ -109,10 +109,10 @@ export default function InvoiceGrid({
       flex: 2,
       minWidth: 160,
       cellRenderer: ({ data, value }: ICellRendererParams<InvoiceListRow, string>) =>
-        data?.customerDetailsId ? (
+        data?.customerId ? (
           // The link navigates away, so the row click that would open the drawer is stopped
           <CustomerLink
-            detailsId={data.customerDetailsId}
+            detailsId={data.customerId}
             fw={400}
             onClick={(event) => event.stopPropagation()}
           >
@@ -130,11 +130,11 @@ export default function InvoiceGrid({
       hide: narrow,
       valueGetter: ({ data }) =>
         data
-          ? invoiceKindLabel({ type: data.type, company: data.organizationNumber !== null })
+          ? invoiceKindLabel({ type: data.type, company: data.customerOrganizationNumber !== null })
           : "",
     },
     {
-      field: "duedate",
+      field: "dueDate",
       headerName: "Forfall",
       width: 120,
       flex: 0,

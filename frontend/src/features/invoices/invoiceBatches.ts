@@ -14,7 +14,7 @@ export interface InvoiceBatch {
 export function invoiceBatches(rows: InvoiceListRow[]): InvoiceBatch[] {
   const batches = new Map<string, InvoiceBatch>();
   for (const row of rows) {
-    const prefix = invoiceBatchPrefix(row.invoiceId);
+    const prefix = invoiceBatchPrefix(row.invoiceNumber);
     const batch = batches.get(prefix) ?? {
       prefix,
       count: 0,
@@ -24,9 +24,9 @@ export function invoiceBatches(rows: InvoiceListRow[]): InvoiceBatch[] {
     };
     batch.count += 1;
     batch.type ??= row.type;
-    batch.company ||= row.organizationNumber !== null;
-    if (row.created && (batch.firstCreated === null || row.created < batch.firstCreated)) {
-      batch.firstCreated = row.created;
+    batch.company ||= row.customerOrganizationNumber !== null;
+    if (batch.firstCreated === null || row.createdAt < batch.firstCreated) {
+      batch.firstCreated = row.createdAt;
     }
     batches.set(prefix, batch);
   }

@@ -1,4 +1,3 @@
-import type { BlDocument } from "#shared/bl-document";
 import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
 
 /**
@@ -8,78 +7,86 @@ import type { CustomerItemType } from "#shared/customer-item/customer-item-type"
  */
 export type InvoiceType = CustomerItemType | "loan";
 
-export interface InvoiceCustomerItemPayment {
-  /** Missing on company invoice lines, which are not tied to a book we lent out. */
-  customerItem?: string | null;
-  productNumber?: number;
-  item?: string | null;
+/** Amounts are in kroner; company invoices are written by hand and may carry øre. */
+export interface InvoiceLine {
+  /** Null on company invoice lines, which are not tied to a book we lent out. */
+  customerItemId: string | null;
+  itemId: string | null;
+  customerItemType: CustomerItemType | null;
+  /** The title when the invoice was made. */
   title: string;
+  /** Only on company invoice lines. */
+  productNumber: number | null;
   numberOfItems: number;
-  customerItemType?: CustomerItemType | null;
-  cancel?: boolean;
-  payment: {
-    unit: number; // price per unit without vat
-    gross: number;
-    net: number;
-    vat: number;
-    discount: number; // in percentage
-  };
+  /** Struck from the invoice by an admin. */
+  cancel: boolean;
+  /** Price per unit without VAT. */
+  unit: number;
+  gross: number;
+  net: number;
+  vat: number;
+  /** In percent. */
+  discount: number;
 }
 
-export interface Invoice extends BlDocument {
-  duedate: Date;
-  /** Missing on the oldest invoices and null on company invoices. */
-  type?: InvoiceType | null;
-  customerHavePayed: boolean;
+/**
+ * An invoice is an accounting document: the customer fields are a copy of the customer when the
+ * invoice was made and outlive them, while `customerId` links to the customer only as long as they
+ * exist.
+ */
+export interface Invoice {
+  id: string;
+  /** e.g. 201810000; see {@link invoiceBatchPrefix}. Not unique on two reissued 2020 invoices. */
+  invoiceNumber: string;
+  /** Null on company invoices and the oldest invoices. */
+  type: InvoiceType | null;
+  dueDate: Date;
+  customerHasPaid: boolean;
   toDebtCollection: boolean;
   toCreditNote: boolean;
   toLossNote: boolean;
-  branch?: string;
-  customerItemPayments: InvoiceCustomerItemPayment[];
-  customerInfo: {
-    userDetail?: string;
-    customerNumber?: string;
-    name: string;
-    branchName?: string;
-    organizationNumber?: string;
-    email: string;
-    phone: string;
-    dob?: Date;
-    postal: {
-      address: string;
-      city: string;
-      code: string;
-      /** Only company invoices carry a country; pupils' invoices never did. */
-      country?: string;
-    };
-  };
-  payment: {
-    total: {
-      // amounts are a sum of all items
-      gross: number;
-      net: number;
-      vat: number;
-      discount: number; // in percentage
-    };
-    /** Pupils' invoices carry a fee; company invoices store null. */
-    fee?: {
-      unit: number; // fee per unit without vat
-      gross: number;
-      net: number;
-      vat: number;
-      discount: number; // in percentage
-    } | null;
-    totalIncludingFee: number; // total.gross + fee.gross
-  };
-  ourReference?: string;
-  invoiceId?: string; // ex. 201810000
-  reference?: string; // ex. 'Not delivered books in time'
-  comments?: InvoiceComment[];
-}
-
-interface InvoiceComment {
-  msg: string;
-  creationTime: Date;
+  /** Null on company invoices. */
+  branchId: string | null;
+  /** The branch's current name, printed on the invoice. */
+  branchName: string | null;
+  /** Null on company invoices and once the customer is deleted. */
+  customerId: string | null;
+  /** The number the accounting systems know the customer by. */
+  customerNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  /** A calendar date (yyyy-MM-dd); company invoices have none. */
+  customerDob: string | null;
+  /** Only company invoices carry one, which is how they are told apart. */
+  customerOrganizationNumber: string | null;
+  customerAddress: string;
+  customerPostCode: string;
+  customerPostCity: string;
+  /** Only company invoices carry a country. */
+  customerCountry: string | null;
+  /** Sums of the lines and the fee. */
+  totalGross: number;
+  totalNet: number;
+  totalVat: number;
+  /** The sum of the line discounts, not a percentage of the total. */
+  totalDiscount: number;
+  /** The fee is on pupils' invoices only; company invoices have null in all five. */
+  feeUnit: number | null;
+  feeGross: number | null;
+  feeNet: number | null;
+  feeVat: number | null;
+  feeDiscount: number | null;
+  /** totalGross, which already includes the fee. */
+  totalIncludingFee: number;
+  /** e.g. 'Manglende levering av skolebøker' */
+  reference: string;
+  ourReference: string | null;
+  /** Only company invoices carry a comment. */
+  comment: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  lines: InvoiceLine[];
 }
 
 /**
@@ -97,7 +104,7 @@ export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 
 type InvoiceStatusFlags = Pick<
   Invoice,
-  "customerHavePayed" | "toCreditNote" | "toDebtCollection" | "toLossNote"
+  "customerHasPaid" | "toCreditNote" | "toDebtCollection" | "toLossNote"
 >;
 
 /** Old data may have several flags set; the first match wins, in the order legacy bl-admin coloured rows. */
@@ -105,7 +112,7 @@ export function invoiceStatus(flags: InvoiceStatusFlags): InvoiceStatus {
   if (flags.toDebtCollection) {
     return "debtCollection";
   }
-  if (flags.customerHavePayed) {
+  if (flags.customerHasPaid) {
     return "paid";
   }
   if (flags.toCreditNote) {
@@ -119,7 +126,7 @@ export function invoiceStatus(flags: InvoiceStatusFlags): InvoiceStatus {
 
 export function invoiceStatusFlags(status: InvoiceStatus): InvoiceStatusFlags {
   return {
-    customerHavePayed: status === "paid",
+    customerHasPaid: status === "paid",
     toCreditNote: status === "creditNote",
     toDebtCollection: status === "debtCollection",
     toLossNote: status === "lossNote",
@@ -135,22 +142,21 @@ export type InvoiceExportFormat = (typeof INVOICE_EXPORT_FORMATS)[number];
  */
 const INVOICE_BATCH_PREFIX_LENGTH = 5;
 
-export function invoiceBatchPrefix(invoiceId: string): string {
-  return invoiceId.slice(0, INVOICE_BATCH_PREFIX_LENGTH);
+export function invoiceBatchPrefix(invoiceNumber: string): string {
+  return invoiceNumber.slice(0, INVOICE_BATCH_PREFIX_LENGTH);
 }
 
 /** One row of the invoice list. The full document is fetched when a row is opened. */
 export interface InvoiceListRow {
   id: string;
-  invoiceId: string;
+  invoiceNumber: string;
   customerName: string;
-  /** The customer's user detail id; null for company invoices and the oldest customer invoices. */
-  customerDetailsId: string | null;
-  organizationNumber: string | null;
+  /** Null for company invoices and once the customer is deleted. */
+  customerId: string | null;
+  customerOrganizationNumber: string | null;
   type: InvoiceType | null;
-  /** Missing on the oldest invoices. */
-  created: Date | null;
-  duedate: Date;
+  createdAt: Date;
+  dueDate: Date;
   totalIncludingFee: number;
   status: InvoiceStatus;
 }
@@ -193,7 +199,8 @@ export interface InvoiceGenerationDefaults {
 }
 
 export interface InvoiceGenerationResult {
-  invoices: Invoice[];
+  /** On a dry run the invoices are not saved, and each row's id is its invoice number. */
+  invoices: InvoiceListRow[];
   /** Customer items that could not be invoiced, e.g. because the customer no longer exists. */
   skipped: { customerItemId: string; reason: string }[];
 }
@@ -232,7 +239,7 @@ export interface CompanyInvoiceInput {
   invoiceNumber: string;
   reference: string;
   ourReference: string;
-  duedate: Date;
+  dueDate: Date;
   comment?: string;
   lines: CompanyInvoiceLine[];
 }

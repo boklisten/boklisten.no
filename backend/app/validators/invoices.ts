@@ -60,7 +60,7 @@ export const companyInvoiceValidator = vine.create(
     invoiceNumber: vine.string().trim().minLength(1),
     reference: vine.string().trim(),
     ourReference: vine.string().trim(),
-    duedate: dateStringField.clone(),
+    dueDate: dateStringField.clone(),
     comment: vine.string().trim().optional(),
     lines: vine
       .array(
@@ -68,7 +68,7 @@ export const companyInvoiceValidator = vine.create(
           title: vine.string().trim().minLength(1),
           productNumber: vine.number().withoutDecimals().min(0),
           price: vine.number().min(0),
-          numberOfUnits: vine.number().positive(),
+          numberOfUnits: vine.number().withoutDecimals().positive(),
           discount: vine.number().min(0).max(100),
           taxPercentage: vine.number().min(0).max(100),
         }),

@@ -1,13 +1,12 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
 
+import Company from "#models/company";
+import Invoice from "#models/invoice";
 import {
   companyInvoiceTotal,
   createCompanyInvoice,
 } from "#services/invoices/company_invoice_service";
-import { StorageService } from "#services/storage_service";
 import { companyLinePayment } from "#shared/invoice";
 import type { CompanyInvoiceLine } from "#shared/invoice";
 import { createCompany } from "#tests/company_fixtures";
@@ -93,13 +92,10 @@ test.group("company invoice arithmetic", () => {
 });
 
 test.group("company invoice creation", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  let addInvoice: sinon.SinonStub;
   let companyId: string;
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
-    sandbox = createSandbox();
     companyId = (
       await createCompany({
         name: "Kvitsund Gymnas",
@@ -112,55 +108,80 @@ test.group("company invoice creation", (group) => {
         postCity: "Kviteseid",
       })
     ).id;
-    addInvoice = sandbox
-      .stub()
-      .callsFake((invoice) => Promise.resolve({ ...invoice, id: "saved" }));
-    sandbox.stub(StorageService, "Invoices").value({ add: addInvoice });
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
   });
 
   test("stores the company as customer, the lines and a comment", async ({ assert }) => {
-    const duedate = new Date("2026-09-16T13:22:17.867Z");
-    await createCompanyInvoice({
+    const dueDate = new Date("2026-09-16T13:22:17.867Z");
+    const created = await createCompanyInvoice({
       companyId,
       invoiceNumber: "20268005",
       reference: "Tove Fj. Johansen",
       ourReference: "Jørgen Rosenlund",
-      duedate,
+      dueDate,
       comment: "Bestillinger av 23.06.26 og 24.06.2026",
       lines: KVITSUND_LINES,
     });
 
-    const [invoice] = addInvoice.firstCall.args;
-    assert.equal(invoice.invoiceId, "20268005");
-    assert.equal(invoice.duedate, duedate);
-    assert.deepEqual(invoice.customerInfo, {
-      name: "Kvitsund Gymnas",
-      email: "bibliotek@kvitsund.vgs.no",
-      phone: "99240588",
-      organizationNumber: "988982857",
+    const invoice = (await Invoice.getOrFail(created.id)).toDto(null);
+    assert.deepEqual(invoice, created);
+    assert.equal(invoice.invoiceNumber, "20268005");
+    assert.deepEqual(invoice.dueDate, dueDate);
+    assert.isNull(invoice.type);
+    assert.isNull(invoice.customerId);
+    assert.isNull(invoice.branchId);
+    assert.deepInclude(invoice, {
+      customerName: "Kvitsund Gymnas",
+      customerEmail: "bibliotek@kvitsund.vgs.no",
+      customerPhone: "99240588",
+      customerOrganizationNumber: "988982857",
       customerNumber: "988982857",
-      postal: {
-        address: "Jacob Naadlands veg 2",
-        city: "Kviteseid",
-        code: "3850",
-        country: "norway",
-      },
+      customerAddress: "Jacob Naadlands veg 2",
+      customerPostCity: "Kviteseid",
+      customerPostCode: "3850",
+      customerCountry: "norway",
+      customerDob: null,
     });
-    assert.deepEqual(invoice.customerItemPayments[0], {
+    assert.lengthOf(invoice.lines, 4);
+    assert.deepEqual(invoice.lines[0], {
+      customerItemId: null,
+      itemId: null,
+      customerItemType: null,
       title: "Bios 1 2021",
       numberOfItems: 17,
       productNumber: 1,
-      payment: { unit: 1249, gross: 8493.2, net: 8493.2, vat: 0, discount: 60 },
+      cancel: false,
+      unit: 1249,
+      gross: 8493.2,
+      net: 8493.2,
+      vat: 0,
+      discount: 60,
     });
-    assert.deepEqual(invoice.payment, {
-      total: { gross: 17_365.7, net: 17_365.7, vat: 0, discount: 220 },
+    assert.deepInclude(invoice, {
+      totalGross: 17_365.7,
+      totalNet: 17_365.7,
+      totalVat: 0,
+      totalDiscount: 220,
       totalIncludingFee: 17_365.7,
+      feeUnit: null,
+      feeGross: null,
     });
-    assert.equal(invoice.comments[0].msg, "Bestillinger av 23.06.26 og 24.06.2026");
-    assert.isFalse(invoice.customerHavePayed);
+    assert.equal(invoice.comment, "Bestillinger av 23.06.26 og 24.06.2026");
+    assert.isFalse(invoice.customerHasPaid);
+  });
+
+  test("keeps the company's details when the company changes", async ({ assert }) => {
+    const created = await createCompanyInvoice({
+      companyId,
+      invoiceNumber: "20268006",
+      reference: "",
+      ourReference: "",
+      dueDate: new Date(),
+      lines: KVITSUND_LINES,
+    });
+    await Company.query().where("id", companyId).update({ name: "Nytt navn AS" });
+
+    assert.equal((await Invoice.getOrFail(created.id)).customerName, "Kvitsund Gymnas");
+    assert.isNull((await Invoice.getOrFail(created.id)).comment);
   });
 
   test("refuses an unknown company", async ({ assert }) => {
@@ -171,11 +192,11 @@ test.group("company invoice creation", (group) => {
           invoiceNumber: "1",
           reference: "",
           ourReference: "",
-          duedate: new Date(),
+          dueDate: new Date(),
           lines: KVITSUND_LINES,
         }),
       /Selskapet finnes ikke/,
     );
-    assert.isTrue(addInvoice.notCalled);
+    assert.lengthOf(await Invoice.all(), 0);
   });
 });

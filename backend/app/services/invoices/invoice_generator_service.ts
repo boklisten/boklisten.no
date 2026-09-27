@@ -1,15 +1,17 @@
+import { DateTime } from "luxon";
+
 import BranchModel from "#models/branch";
 import CustomerItem from "#models/customer_item";
+import Invoice from "#models/invoice";
+import type { NewInvoice, NewInvoiceLine } from "#models/invoice";
 import ItemModel from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import User from "#models/user";
-import { StorageService } from "#services/storage_service";
 import type { Branch } from "#shared/branch";
 import type {
-  Invoice,
-  InvoiceCustomerItemPayment,
   InvoiceGenerationResult,
   InvoiceGenerationSettings,
+  InvoiceListRow,
 } from "#shared/invoice";
 import type { Item } from "#shared/item";
 import type { Period } from "#shared/period";
@@ -27,7 +29,19 @@ function wholeKroner(amount: number): number {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-type LinePayment = InvoiceCustomerItemPayment["payment"];
+type LinePayment = Pick<NewInvoiceLine, "unit" | "gross" | "net" | "vat" | "discount">;
+
+/**
+ * The number the accounting systems know a pupil by, derived from their user id the way legacy
+ * bl-admin did since 2023-01-25 (the pair's middle digits have the most entropy). It is stored on
+ * the invoice, so it survives the customer.
+ */
+export function pupilCustomerNumber(userId: string): string {
+  const epoch = new Date(Number.parseInt(userId.slice(0, 8), 16)).getTime();
+  const increment = Number.parseInt(userId.slice(-6), 16);
+  const pair = ((epoch + increment) * (epoch + increment + 1)) / 2 + increment;
+  return String(Number(String(pair).slice(6, 14)));
+}
 
 interface CustomerBooks {
   customer: User;
@@ -126,37 +140,49 @@ function feePayment(lineCount: number, settings: InvoiceGenerationSettings) {
  * An amount that is not a number would be stored as null and exported as 0, which silently
  * gives wrong invoices, so refuse to create the invoice instead.
  */
-function assertFiniteAmounts(invoice: Invoice) {
+function assertFiniteAmounts(invoice: NewInvoice, fee: LinePayment) {
   const payments = [
-    ...invoice.customerItemPayments.map((line) => ({ label: line.title, payment: line.payment })),
-    { label: "gebyr", payment: invoice.payment.fee },
-    { label: "total", payment: invoice.payment.total },
+    ...invoice.lines.map((line) => ({ label: line.title, payment: linePaymentOf(line) })),
+    { label: "gebyr", payment: fee },
+    {
+      label: "total",
+      payment: {
+        gross: invoice.totalGross,
+        net: invoice.totalNet,
+        vat: invoice.totalVat,
+        discount: invoice.totalDiscount,
+      },
+    },
   ];
   const invalid = payments
     .map(({ label, payment }) => ({
       label,
-      fields: Object.entries(payment ?? {})
+      fields: Object.entries(payment)
         .filter(([, value]) => !Number.isFinite(value))
         .map(([field]) => field),
     }))
     .filter(({ fields }) => fields.length > 0);
   if (invalid.length > 0) {
     throw new BadRequestException(
-      `Faktura ${invoice.invoiceId} til ${invoice.customerInfo.name} har ugyldige beløp: ${invalid
+      `Faktura ${invoice.invoiceNumber} til ${invoice.customerName} har ugyldige beløp: ${invalid
         .map(({ label, fields }) => `${label} (${fields.join(", ")})`)
         .join(", ")}`,
     );
   }
 }
 
+function linePaymentOf({ unit, gross, net, vat, discount }: LinePayment): LinePayment {
+  return { unit, gross, net, vat, discount };
+}
+
 function buildInvoice(
   { customer, customerItems }: CustomerBooks,
   invoiceNumber: number,
-  duedate: Date,
+  dueDate: Date,
   settings: InvoiceGenerationSettings,
   { items, branches, lastPeriodTypes }: Lookups,
-): Omit<Invoice, "id"> {
-  const lines: InvoiceCustomerItemPayment[] = [];
+): NewInvoice {
+  const lines: NewInvoiceLine[] = [];
   for (const customerItem of customerItems) {
     const item = items.get(customerItem.itemId);
     if (!item) {
@@ -164,49 +190,66 @@ function buildInvoice(
     }
     const branch = branches.get(customerItem.handoutBranchId);
     lines.push({
-      customerItem: customerItem.id,
+      customerItemId: customerItem.id,
       customerItemType: customerItem.type,
       title: item.title,
-      item: item.id,
+      itemId: item.id,
+      productNumber: null,
       numberOfItems: 1,
-      payment: linePayment(customerItem, item, branch, settings, lastPeriodTypes),
+      ...linePayment(customerItem, item, branch, settings, lastPeriodTypes),
     });
   }
 
   const fee = feePayment(lines.length, settings);
-  const total = {
-    gross: lines.reduce((sum, line) => sum + line.payment.gross, 0) + fee.gross,
-    net: lines.reduce((sum, line) => sum + line.payment.net, 0) + fee.net,
-    vat: lines.reduce((sum, line) => sum + line.payment.vat, 0) + fee.vat,
-    discount: 0,
-  };
-  const invoice: Omit<Invoice, "id"> = {
-    duedate,
-    customerHavePayed: false,
-    toCreditNote: false,
-    toDebtCollection: false,
-    toLossNote: false,
-    branch: customerItems[0]?.handoutBranchId,
+  const totalGross = lines.reduce((sum, line) => sum + line.gross, 0) + fee.gross;
+  const invoice: NewInvoice = {
+    invoiceNumber: String(invoiceNumber),
     type: settings.type,
-    customerItemPayments: lines,
-    customerInfo: {
-      userDetail: customer.id,
-      name: customer.name,
-      email: customer.email,
-      phone: customer.phone ?? "",
-      dob: customer.dob?.toJSDate(),
-      postal: {
-        address: customer.address,
-        city: customer.postCity,
-        code: customer.postCode,
-      },
-    },
-    payment: { total, fee, totalIncludingFee: total.gross },
+    dueDate: DateTime.fromJSDate(dueDate),
+    branchId: customerItems[0]?.handoutBranchId ?? null,
+    customerId: customer.id,
+    customerNumber: pupilCustomerNumber(customer.id),
+    customerName: customer.name,
+    customerEmail: customer.email,
+    customerPhone: customer.phone ?? "",
+    customerDob: customer.dob,
+    customerOrganizationNumber: null,
+    customerAddress: customer.address,
+    customerPostCode: customer.postCode,
+    customerPostCity: customer.postCity,
+    customerCountry: null,
+    totalGross,
+    totalNet: lines.reduce((sum, line) => sum + line.net, 0) + fee.net,
+    totalVat: lines.reduce((sum, line) => sum + line.vat, 0) + fee.vat,
+    totalDiscount: 0,
+    feeUnit: fee.unit,
+    feeGross: fee.gross,
+    feeNet: fee.net,
+    feeVat: fee.vat,
+    feeDiscount: fee.discount,
+    totalIncludingFee: totalGross,
     reference: settings.reference,
-    invoiceId: String(invoiceNumber),
+    ourReference: null,
+    comment: null,
+    lines,
   };
-  assertFiniteAmounts({ ...invoice, id: "" });
+  assertFiniteAmounts(invoice, fee);
   return invoice;
+}
+
+function listRow(invoice: NewInvoice, id: string, createdAt: Date): InvoiceListRow {
+  return {
+    id,
+    invoiceNumber: invoice.invoiceNumber,
+    customerName: invoice.customerName,
+    customerId: invoice.customerId,
+    customerOrganizationNumber: null,
+    type: invoice.type,
+    createdAt,
+    dueDate: invoice.dueDate.toJSDate(),
+    totalIncludingFee: invoice.totalIncludingFee,
+    status: "unpaid",
+  };
 }
 
 export async function generateInvoices(
@@ -238,9 +281,9 @@ export async function generateInvoices(
   };
 
   const skipped: InvoiceGenerationResult["skipped"] = [];
-  const duedate = new Date(Date.now() + settings.daysToDeadline * DAY_MS);
+  const dueDate = new Date(Date.now() + settings.daysToDeadline * DAY_MS);
   let invoiceNumber = settings.invoiceNumber;
-  const invoices: Invoice[] = [];
+  const invoices: InvoiceListRow[] = [];
   for (const [customerId, books] of groups) {
     const customer = customersById.get(customerId);
     if (!customer) {
@@ -255,12 +298,18 @@ export async function generateInvoices(
     const invoice = buildInvoice(
       { customer, customerItems: books },
       invoiceNumber,
-      duedate,
+      dueDate,
       settings,
       lookups,
     );
     invoiceNumber++;
-    invoices.push(dryRun ? { ...invoice, id: "" } : await StorageService.Invoices.add(invoice));
+    if (dryRun) {
+      // Not saved, so the number stands in for the id; it is unique within the batch.
+      invoices.push(listRow(invoice, invoice.invoiceNumber, new Date()));
+    } else {
+      const saved = await Invoice.createWithLines(invoice);
+      invoices.push(listRow(invoice, saved.id, saved.createdAt.toJSDate()));
+    }
   }
   return { invoices, skipped };
 }
