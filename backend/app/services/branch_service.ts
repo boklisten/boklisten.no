@@ -41,7 +41,7 @@ export async function createBranch(input: BranchCreateInput): Promise<Branch> {
     address: input.address ?? null,
     type: input.type,
   });
-  // Read back so the column defaults (`active`, percentages, …) and the empty period lists are
+  // Read back so the column defaults (`visibility`, percentages, …) and the empty period lists are
   // populated like on every other read.
   return Branch.findOrFail(branch.id);
 }

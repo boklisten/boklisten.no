@@ -136,8 +136,6 @@ router
     router.patch("/branches/members", [controllers.branches.BranchMembers, "update"]);
     router.patch("/branches/:branchId", [controllers.branches.Branches, "update"]);
 
-    router.get("/branches/:branchId/items", [controllers.branches.BranchItems, "index"]);
-    router.put("/branches/:branchId/items", [controllers.branches.BranchItems, "update"]);
     router.post("/opening_hours", [controllers.OpeningHours, "store"]);
     router.delete("/opening_hours/:id", [controllers.OpeningHours, "destroy"]);
 
@@ -153,10 +151,6 @@ router
 
     router.get("/branches/:branchId/subjects", [controllers.branches.BranchSubjects, "index"]);
     router.post("/branches/:branchId/subjects", [controllers.branches.BranchSubjects, "store"]);
-    router.post("/branches/:branchId/subjects/import", [
-      controllers.branches.BranchSubjects,
-      "import",
-    ]);
     router.put("/branches/:branchId/subjects/:subjectId", [
       controllers.branches.BranchSubjects,
       "update",

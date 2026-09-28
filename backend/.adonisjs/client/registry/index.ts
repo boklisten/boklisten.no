@@ -288,18 +288,6 @@ const routes = {
     tokens: [{"old":"/branches/:branchId","type":0,"val":"branches","end":""},{"old":"/branches/:branchId","type":1,"val":"branchId","end":""}],
     types: placeholder as Registry['branches.update']['types'],
   },
-  'branch_items.index': {
-    methods: ["GET","HEAD"],
-    pattern: '/branches/:branchId/items',
-    tokens: [{"old":"/branches/:branchId/items","type":0,"val":"branches","end":""},{"old":"/branches/:branchId/items","type":1,"val":"branchId","end":""},{"old":"/branches/:branchId/items","type":0,"val":"items","end":""}],
-    types: placeholder as Registry['branch_items.index']['types'],
-  },
-  'branch_items.update': {
-    methods: ["PUT"],
-    pattern: '/branches/:branchId/items',
-    tokens: [{"old":"/branches/:branchId/items","type":0,"val":"branches","end":""},{"old":"/branches/:branchId/items","type":1,"val":"branchId","end":""},{"old":"/branches/:branchId/items","type":0,"val":"items","end":""}],
-    types: placeholder as Registry['branch_items.update']['types'],
-  },
   'opening_hours.store': {
     methods: ["POST"],
     pattern: '/opening_hours',
@@ -341,12 +329,6 @@ const routes = {
     pattern: '/branches/:branchId/subjects',
     tokens: [{"old":"/branches/:branchId/subjects","type":0,"val":"branches","end":""},{"old":"/branches/:branchId/subjects","type":1,"val":"branchId","end":""},{"old":"/branches/:branchId/subjects","type":0,"val":"subjects","end":""}],
     types: placeholder as Registry['branch_subjects.store']['types'],
-  },
-  'branch_subjects.import': {
-    methods: ["POST"],
-    pattern: '/branches/:branchId/subjects/import',
-    tokens: [{"old":"/branches/:branchId/subjects/import","type":0,"val":"branches","end":""},{"old":"/branches/:branchId/subjects/import","type":1,"val":"branchId","end":""},{"old":"/branches/:branchId/subjects/import","type":0,"val":"subjects","end":""},{"old":"/branches/:branchId/subjects/import","type":0,"val":"import","end":""}],
-    types: placeholder as Registry['branch_subjects.import']['types'],
   },
   'branch_subjects.update': {
     methods: ["PUT"],

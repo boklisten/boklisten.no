@@ -1,7 +1,7 @@
 import { Accordion, Badge, Button, Group, Skeleton, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { IconFileImport, IconPlus } from "@tabler/icons-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { IconPlus } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { Activity, useState } from "react";
 
 import BranchSubjectEditor from "@/features/branches/subjects/BranchSubjectEditor";
@@ -11,7 +11,6 @@ import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
-import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 function bookCountLabel(count: number) {
   if (count === 0) {
@@ -21,28 +20,11 @@ function bookCountLabel(count: number) {
 }
 
 export default function BranchSubjectSettings({ branchId }: { branchId: string }) {
-  const queryClient = useQueryClient();
   const {
     data: subjects,
     isLoading,
     isError,
   } = useQuery(api.branchSubjects.index.queryOptions({ params: { branchId } }));
-
-  const invalidateSubjects = () =>
-    queryClient.invalidateQueries({
-      queryKey: api.branchSubjects.index.pathKey(),
-    });
-
-  const importMutation = useMutation(
-    api.branchSubjects.import.mutationOptions({
-      onSuccess: ({ createdSubjects, skippedExisting }) => {
-        const skippedText = skippedExisting > 0 ? ` (${skippedExisting} fantes fra før)` : "";
-        showSuccessNotification(`Importerte ${createdSubjects} fag${skippedText}`);
-      },
-      onError: () => showErrorNotification("Klarte ikke importere fagene"),
-      onSettled: invalidateSubjects,
-    }),
-  );
 
   // A snapshot taken on open, so refetches do not reach the editor while it is open.
   const [openSubject, setOpenSubject] = useState<BranchSubject | null>(null);
@@ -61,14 +43,6 @@ export default function BranchSubjectSettings({ branchId }: { branchId: string }
       <Group>
         <Button leftSection={<IconPlus />} onClick={openCreateModal}>
           Nytt fag
-        </Button>
-        <Button
-          variant="outline"
-          leftSection={<IconFileImport />}
-          loading={importMutation.isPending}
-          onClick={() => importMutation.mutate({ params: { branchId } })}
-        >
-          Importer fra bøker
         </Button>
       </Group>
       <Activity mode={isLoading ? "visible" : "hidden"}>

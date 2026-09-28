@@ -8,6 +8,9 @@ import BranchPeriod from "#models/branch_period";
 import type { PeriodKind } from "#models/branch_period";
 import { assignObjectId, distinctIds } from "#models/helpers/object_id";
 import { BranchSchema } from "#database/schema";
+import type { BranchVisibility } from "#shared/branch-visibility";
+import { visibilitiesFor } from "#shared/branch-visibility";
+import type { UserPermission } from "#shared/user-permission";
 import type {
   Branch as BranchDto,
   BranchType,
@@ -29,6 +32,8 @@ export default class Branch extends BranchSchema {
   static override selfAssignPrimaryKey = true;
 
   declare type: BranchType | null;
+
+  declare visibility: BranchVisibility;
 
   @hasMany(() => BranchPeriod)
   declare periods: HasMany<typeof BranchPeriod>;
@@ -78,14 +83,13 @@ export default class Branch extends BranchSchema {
       parentBranchId: this.parentBranchId,
       localName: this.localName,
       childLabel: this.childLabel,
-      active: this.active,
+      visibility: this.visibility,
       paymentResponsible: this.paymentResponsible,
       responsibleForDelivery: this.responsibleForDelivery,
       buyoutPercentage: this.buyoutPercentage,
       sellPercentage: this.sellPercentage,
       deliveryAtBranch: this.deliveryAtBranch,
       deliveryByMail: this.deliveryByMail,
-      branchItemsLiveOnline: this.branchItemsLiveOnline,
       region: this.region,
       address: this.address,
       rentPeriods: this.rentPeriods,
@@ -103,14 +107,30 @@ export default class Branch extends BranchSchema {
     return (periods as BranchPeriod[]).filter((period) => period.kind === kind);
   }
 
-  /** Every branch, sorted the way Norwegians read names (Æ, Ø and Å after Z). */
-  static async allByName(): Promise<Branch[]> {
-    return byName(await this.all());
+  /**
+   * The branches a viewer with `permission` (`null` for a guest) may see, sorted the way Norwegians
+   * read names (Æ, Ø and Å after Z).
+   */
+  static async visibleByName(permission: UserPermission | null): Promise<Branch[]> {
+    return byName(await this.query().whereIn("visibility", visibilitiesFor(permission)));
   }
 
-  /** What customers may pick from: active branches whose books are orderable online. */
-  static async publicByName(): Promise<Branch[]> {
-    return byName(await this.query().where("active", true).where("branch_items_live_online", true));
+  /** What customers may order from online: public branches with at least one subject book. */
+  static async orderableByName(): Promise<Branch[]> {
+    return byName(
+      await this.query()
+        .where("visibility", "public")
+        .whereExists((subjects) =>
+          subjects
+            .from("branch_subjects")
+            .join(
+              "branch_subject_books",
+              "branch_subject_books.branch_subject_id",
+              "branch_subjects.id",
+            )
+            .whereColumn("branch_subjects.branch_id", "branches.id"),
+        ),
+    );
   }
 
   /** `find` for references that may be absent. */

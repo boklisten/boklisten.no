@@ -1,13 +1,17 @@
 import type { Infer } from "@vinejs/vine/types";
 import { DateTime } from "luxon";
 
+import BadRequestException from "#exceptions/bad_request_exception";
+import Branch from "#models/branch";
 import EmailVerification from "#models/email_verification";
 import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { PasswordService } from "#services/password_service";
 import { reconcileSignatureTask } from "#services/signature_helper";
 import { invalidUserFields } from "#services/user_fields";
+import { canSeeBranch } from "#shared/branch-visibility";
 import type { User as UserDto } from "#shared/user";
+import type { UserPermission } from "#shared/user-permission";
 import type { VippsUser } from "#types/user";
 import type { registerSchema } from "#validators/auth_validators";
 import type { userProvisioningValidator } from "#validators/user_provisioning";
@@ -38,6 +42,24 @@ export function userFieldsFrom({
     guardianEmail: guardianEmail ?? null,
     guardianPhone: guardianPhone ?? null,
   };
+}
+
+/**
+ * A user may be moved only into a branch the person moving them may see. Keeping the current
+ * membership, or clearing it, is always allowed, even when the current branch is hidden from them.
+ */
+export async function assertMembershipAllowed(
+  actorPermission: UserPermission,
+  currentBranchId: string | null,
+  nextBranchId: string | null,
+): Promise<void> {
+  if (nextBranchId === null || nextBranchId === currentBranchId) {
+    return;
+  }
+  const branch = await Branch.find(nextBranchId);
+  if (branch === null || !canSeeBranch(actorPermission, branch.visibility)) {
+    throw new BadRequestException("Du kan ikke velge denne skolen");
+  }
 }
 
 export const UserService = {
@@ -105,8 +127,10 @@ export const UserService = {
     password,
     ...details
   }: Infer<typeof registerSchema>): Promise<User> {
+    const fields = userFieldsFrom(details);
+    await assertMembershipAllowed("customer", null, fields.branchMembershipId);
     const user = await User.create({
-      ...userFieldsFrom(details),
+      ...fields,
       email,
       emailConfirmed: false,
       permission: "customer",

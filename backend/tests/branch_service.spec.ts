@@ -31,7 +31,7 @@ test.group("branch_service", (group) => {
     assert.equal(branch.type, "vgs");
     assert.isNull(branch.logo);
     assert.isNull(branch.address);
-    assert.isTrue(branch.active);
+    assert.equal(branch.visibility, "employee");
     assert.deepEqual(branch.rentPeriods, []);
   });
 

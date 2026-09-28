@@ -5,11 +5,18 @@ import { DateTime } from "luxon";
 import Branch from "#models/branch";
 import BranchPeriod from "#models/branch_period";
 import { isObjectIdHex } from "#models/helpers/object_id";
+import { BranchSubjectsService } from "#services/branch_subjects_service";
+import type { UserPermission } from "#shared/user-permission";
 import { createBranch } from "#tests/branch_fixtures";
+import { createItem } from "#tests/item_fixtures";
 import { fixtureId } from "#tests/fixtures";
 
 const SEMESTER_END = "2026-12-20";
 const YEAR_END = "2027-07-01";
+
+async function visibleNames(permission: UserPermission | null) {
+  return (await Branch.visibleByName(permission)).map((branch) => branch.name);
+}
 
 test.group("Branch model", (group) => {
   group.each.setup(() => testUtils.db().truncate());
@@ -100,20 +107,44 @@ test.group("Branch model", (group) => {
     assert.throws(() => reloaded.rentPeriods, /percentage is null/);
   });
 
-  test("allByName sorts Norwegian letters after Z, publicByName hides inactive and offline branches", async ({
+  test("visibleByName shows each viewer what their permission allows, Norwegian letters after Z", async ({
     assert,
   }) => {
     await createBranch({ name: "Østfold" });
-    await createBranch({ name: "Wang", active: false });
-    await createBranch({ name: "Akademiet", branchItemsLiveOnline: false });
+    await createBranch({ name: "Wang", visibility: "admin" });
+    await createBranch({ name: "Akademiet", visibility: "employee" });
     await createBranch({ name: "Bjørknes" });
+
+    assert.deepEqual(await visibleNames(null), ["Bjørknes", "Østfold"]);
+    assert.deepEqual(await visibleNames("customer"), ["Bjørknes", "Østfold"]);
+    assert.deepEqual(await visibleNames("employee"), ["Akademiet", "Bjørknes", "Østfold"]);
+    assert.deepEqual(await visibleNames("admin"), ["Akademiet", "Bjørknes", "Wang", "Østfold"]);
+  });
+
+  test("orderableByName lists the public branches that have subject books", async ({ assert }) => {
+    const item = await createItem();
+    const withBooks = await createBranch({ name: "Ullern" });
+    const hidden = await createBranch({ name: "Wang", visibility: "employee" });
+    const emptySubject = await createBranch({ name: "Oslo innsamling" });
+    await createBranch({ name: "Bjørknes" });
+    const book = { itemId: item.id, rent: true, partlyPayment: false, buy: false };
+    const atBranch = { rentAtBranch: true, partlyPaymentAtBranch: false, buyAtBranch: false };
+    for (const branch of [withBooks, hidden]) {
+      await BranchSubjectsService.create(branch.id, {
+        name: "Kjemi 2",
+        externalName: null,
+        books: [{ ...book, ...atBranch }],
+      });
+    }
+    await BranchSubjectsService.create(emptySubject.id, {
+      name: "Gym",
+      externalName: null,
+      books: [],
+    });
+
     assert.deepEqual(
-      (await Branch.allByName()).map((branch) => branch.name),
-      ["Akademiet", "Bjørknes", "Wang", "Østfold"],
-    );
-    assert.deepEqual(
-      (await Branch.publicByName()).map((branch) => branch.name),
-      ["Bjørknes", "Østfold"],
+      (await Branch.orderableByName()).map((branch) => branch.name),
+      ["Ullern"],
     );
   });
 

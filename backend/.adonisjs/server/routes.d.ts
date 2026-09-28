@@ -51,8 +51,6 @@ export type ScannedRoutes = {
     'branch_relationships.update': { paramsTuple?: []; params?: {} }
     'branch_members.update': { paramsTuple?: []; params?: {} }
     'branches.update': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
-    'branch_items.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
-    'branch_items.update': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'opening_hours.store': { paramsTuple?: []; params?: {} }
     'opening_hours.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'branch_members.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -60,7 +58,6 @@ export type ScannedRoutes = {
     'branch_members.destroy_indirect': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.store': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
-    'branch_subjects.import': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.update': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
     'branch_subjects.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
     'branch_subject_choices.evaluate': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -198,7 +195,6 @@ export type ScannedRoutes = {
     'orders.show_me': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'matches.me': { paramsTuple?: []; params?: {} }
-    'branch_items.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_members.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_signature_status.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -280,7 +276,6 @@ export type ScannedRoutes = {
     'orders.show_me': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'matches.me': { paramsTuple?: []; params?: {} }
-    'branch_items.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_members.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_signature_status.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -357,7 +352,6 @@ export type ScannedRoutes = {
     'branches.store': { paramsTuple?: []; params?: {} }
     'opening_hours.store': { paramsTuple?: []; params?: {} }
     'branch_subjects.store': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
-    'branch_subjects.import': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subject_choices.evaluate': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subject_choices.upload': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.cancel_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -409,12 +403,6 @@ export type ScannedRoutes = {
     'blids.update_active_item': { paramsTuple?: []; params?: {} }
     'blids.relink': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
   }
-  PUT: {
-    'branch_items.update': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
-    'branch_subjects.update': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
-    'users.set_permission': { paramsTuple?: []; params?: {} }
-    'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-  }
   DELETE: {
     'opening_hours.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'branch_members.destroy_direct': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -430,6 +418,11 @@ export type ScannedRoutes = {
     'orders.destroy': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'blids.destroy': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'waiting_list_customers.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+  }
+  PUT: {
+    'branch_subjects.update': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
+    'users.set_permission': { paramsTuple?: []; params?: {} }
+    'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

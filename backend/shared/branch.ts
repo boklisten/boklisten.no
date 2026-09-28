@@ -1,3 +1,4 @@
+import type { BranchVisibility } from "#shared/branch-visibility";
 import type { Period } from "#shared/period";
 
 export const BRANCH_TYPES = ["vgs", "privatist"] as const;
@@ -63,8 +64,8 @@ export interface Branch extends BranchPeriods {
   localName: string | null;
   /** What this branch's children represent, e.g. "klasse". */
   childLabel: string | null;
-  /** Inactive branches are hidden from customers. */
-  active: boolean;
+  /** Who sees the branch; only `public` branches are orderable online. */
+  visibility: BranchVisibility;
   /** The branch pays for the books instead of the customer. */
   paymentResponsible: boolean;
   /** The branch pays for postal delivery. */
@@ -75,8 +76,6 @@ export interface Branch extends BranchPeriods {
   sellPercentage: number;
   deliveryAtBranch: boolean;
   deliveryByMail: boolean;
-  /** Customers can order this branch's books online. */
-  branchItemsLiveOnline: boolean;
   /** Free text, e.g. "Oslo"; groups branches in the order flow's branch picker. */
   region: string;
   address: string | null;

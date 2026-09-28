@@ -9,7 +9,7 @@ import type CustomerItem from "#models/customer_item";
 import type OrderItem from "#models/order_item";
 import { HeldBookRules } from "#services/stand_cart/stand_cart_rules";
 import type { Branch, PartlyPaymentPeriod } from "#shared/branch";
-import type { BranchItem } from "#shared/branch-item";
+import type { BookListing } from "#shared/book-listing";
 import type { Item } from "#shared/item";
 import type { Period } from "#shared/period";
 import { futureRentPeriods } from "#shared/rent-periods";
@@ -109,7 +109,7 @@ export function alreadyPaidFor(orderPaid: boolean, orderItem: Pick<OrderItem, "a
 function handoutOptions({
   branch,
   item,
-  branchItem,
+  listing,
   alwaysAllow,
   alreadyPaid,
   scanned,
@@ -117,23 +117,23 @@ function handoutOptions({
 }: {
   branch: Branch;
   item: Item;
-  branchItem: BranchItem | null;
-  /** The type the customer ordered is offered whatever the branch item says. */
+  listing: BookListing | null;
+  /** The type the customer ordered is offered whatever the listing says. */
   alwaysAllow: StandCartActionType | null;
   alreadyPaid: number;
   /** A copy with a sticker is in hand. */
   scanned: boolean;
   now: Date;
 }): StandCartOption[] {
-  // A branch without an entry for the book still lends it: that is what happens when a book
+  // A branch that does not list the book still lends it: that is what happens when a book
   // nobody ordered is scanned at the stand today.
   const allows = (type: StandCartActionType, flag: boolean | undefined) =>
     (scanned || allowedWithoutBlid(type)) &&
-    (type === alwaysAllow || (branchItem ? flag === true : type === "rent"));
+    (type === alwaysAllow || (listing ? flag === true : type === "rent"));
   const options: StandCartOption[] = [];
   const today = DateTime.fromJSDate(now).toISODate()!;
 
-  if (allows("rent", branchItem?.rentAtBranch)) {
+  if (allows("rent", listing?.rentAtBranch)) {
     for (const period of futureRentPeriods(branch, today)) {
       options.push(
         option("rent", rentPrice(branch, item, period.percentage) - alreadyPaid, {
@@ -143,7 +143,7 @@ function handoutOptions({
       );
     }
   }
-  if (allows("partly-payment", branchItem?.partlyPaymentAtBranch)) {
+  if (allows("partly-payment", listing?.partlyPaymentAtBranch)) {
     for (const period of futurePartlyPaymentPeriods(branch, today)) {
       const { price, payLater } = partlyPaymentPrices(branch, item, period);
       options.push(
@@ -155,7 +155,7 @@ function handoutOptions({
       );
     }
   }
-  if (allows("buy", branchItem?.buyAtBranch)) {
+  if (allows("buy", listing?.buyAtBranch)) {
     options.push(option("buy", buyPrice(branch, item) - alreadyPaid));
   }
   return options;
@@ -185,7 +185,7 @@ function indexOfOrderedOption(
 export function priceOrderLine({
   branch,
   item,
-  branchItem,
+  listing,
   originalOrderPaid,
   originalOrderItem,
   blockedByMatch,
@@ -194,7 +194,7 @@ export function priceOrderLine({
 }: {
   branch: Branch;
   item: Item;
-  branchItem: BranchItem | null;
+  listing: BookListing | null;
   /** The original order has payments recorded. */
   originalOrderPaid: boolean;
   originalOrderItem: Pick<OrderItem, "type" | "amount" | "periodTo">;
@@ -209,7 +209,7 @@ export function priceOrderLine({
     ...handoutOptions({
       branch,
       item,
-      branchItem,
+      listing,
       alwaysAllow: orderedActionType(originalOrderItem),
       alreadyPaid,
       scanned,
@@ -309,13 +309,13 @@ export function priceCustomerItemLine({
 export function priceItemLine({
   branch,
   item,
-  branchItem,
+  listing,
   scanned,
   now,
 }: {
   branch: Branch;
   item: Item;
-  branchItem: BranchItem | null;
+  listing: BookListing | null;
   /** A copy with a sticker is in hand. */
   scanned: boolean;
   now: Date;
@@ -323,7 +323,7 @@ export function priceItemLine({
   const options = handoutOptions({
     branch,
     item,
-    branchItem,
+    listing,
     alwaysAllow: null,
     alreadyPaid: 0,
     scanned,
@@ -335,17 +335,17 @@ export function priceItemLine({
   return {
     options,
     defaultOptionIndex: scanned ? 0 : indexOfType(options, "sell"),
-    unavailableReason: options.length === 0 ? nothingOfferedReason(branch, branchItem) : null,
+    unavailableReason: options.length === 0 ? nothingOfferedReason(branch, listing) : null,
   };
 }
 
 /**
- * Why a scanned copy cannot go out from this branch. Without a branch item the book is not on
+ * Why a scanned copy cannot go out from this branch. Without a listing the book is not on
  * the branch's list, and the fallback rent needs a period the branch does not have; with one,
  * every flagged action came up without a period or a price.
  */
-function nothingOfferedReason(branch: Branch, branchItem: BranchItem | null): string {
-  return branchItem
+function nothingOfferedReason(branch: Branch, listing: BookListing | null): string {
+  return listing
     ? `${branch.name} har ingen gyldig periode eller pris for denne boka`
     : `Boka står ikke i boklisten til ${branch.name}`;
 }

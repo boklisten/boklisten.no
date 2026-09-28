@@ -2,6 +2,7 @@ import vine from "@vinejs/vine";
 
 import { calendarDateField, objectIdField, percentageField } from "#validators/common/fields";
 import { BRANCH_TYPES } from "#shared/branch";
+import { BRANCH_VISIBILITIES } from "#shared/branch-visibility";
 import env from "#start/env";
 
 const logoField = vine
@@ -31,6 +32,16 @@ const partlyPaymentPeriodSchema = vine.object({
   percentageUpFront: percentageField,
 });
 
+/**
+ * `include` names one more branch to return even when the viewer could not see it otherwise: the
+ * membership a school picker shows as the current value. A customer may only include their own.
+ */
+export const branchIndexValidator = vine.create(
+  vine.object({
+    include: objectIdField.clone().optional(),
+  }),
+);
+
 export const branchCreateValidator = vine.create(
   vine.object({
     name: vine.string().trim(),
@@ -49,8 +60,7 @@ export const branchValidator = vine.create(
     region: vine.string().trim().optional(),
     address: vine.string().trim().nullable().optional(),
     type: vine.enum(BRANCH_TYPES).nullable().optional(),
-    active: vine.boolean().optional(),
-    branchItemsLiveOnline: vine.boolean().optional(),
+    visibility: vine.enum(BRANCH_VISIBILITIES).optional(),
     paymentResponsible: vine.boolean().optional(),
     responsibleForDelivery: vine.boolean().optional(),
     buyoutPercentage: percentageField.optional(),

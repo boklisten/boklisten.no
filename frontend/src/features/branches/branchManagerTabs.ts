@@ -6,7 +6,6 @@ const BRANCH_MANAGER_TABS = [
   "general",
   "relationships",
   "payment",
-  "books",
   "subjects",
   "hours",
   "members",

@@ -1,6 +1,7 @@
 import { Anchor, Button, Group, Stack, TreeSelect } from "@mantine/core";
 import type { TreeSelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { useFieldContext } from "@/shared/hooks/form";
 import { getBranchNodeShortLabel, toBranchTreeNodeData } from "@/shared/utils/branchTree";
@@ -11,7 +12,14 @@ export default function SelectBranchField({
   ...props
 }: Omit<TreeSelectProps, "data"> & { perspective: string }) {
   const field = useFieldContext<string | null>();
-  const { data: branches } = useQuery(api.branches.index.queryOptions());
+  // The branches the viewer may see, plus the stored membership even when it is hidden from them,
+  // so it still shows by name until they pick another. Only the stored value can be hidden (the
+  // tree offers nothing else), so it is read once instead of refetching on every pick.
+  // oxlint-disable-next-line react/hook-use-state -- never set again, so no setter
+  const [include] = useState(field.state.value);
+  const { data: branches } = useQuery(
+    api.branches.index.queryOptions({ query: include ? { include } : {} }),
+  );
 
   const subject = perspective === "personal" ? "din" : "kundens";
 

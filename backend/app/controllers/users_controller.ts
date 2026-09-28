@@ -5,7 +5,7 @@ import User from "#models/user";
 import { UserDuplicatesService } from "#services/user_duplicates_service";
 import { UserManagementService } from "#services/user_management_service";
 import { UserMetricsService } from "#services/user_metrics_service";
-import { userFieldsFrom, UserService } from "#services/user_service";
+import { assertMembershipAllowed, userFieldsFrom, UserService } from "#services/user_service";
 import { mergeUsersValidator, setPermissionValidator } from "#validators/user_management";
 import { updateMeValidator, updateUserValidator, userSearchValidator } from "#validators/users";
 
@@ -16,7 +16,13 @@ export default class UsersController {
     const details = await ctx.request.validateUsing(updateMeValidator, {
       meta: { userId: user.id },
     });
-    user.merge({ ...userFieldsFrom(details), taskConfirmDetails: false });
+    const fields = userFieldsFrom(details);
+    await assertMembershipAllowed(
+      user.permission,
+      user.branchMembershipId,
+      fields.branchMembershipId,
+    );
+    user.merge({ ...fields, taskConfirmDetails: false });
     await user.save();
   }
 
@@ -38,8 +44,14 @@ export default class UsersController {
       { meta: { userId } },
     );
     const user = await User.findOrFail(userId);
+    const fields = userFieldsFrom(details);
+    await assertMembershipAllowed(
+      ctx.auth.getUserOrFail().permission,
+      user.branchMembershipId,
+      fields.branchMembershipId,
+    );
     await UserService.updateAsEmployee(user, {
-      ...userFieldsFrom(details),
+      ...fields,
       email,
       emailConfirmed,
     });

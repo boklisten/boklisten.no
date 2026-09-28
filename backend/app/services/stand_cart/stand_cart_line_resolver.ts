@@ -1,5 +1,5 @@
 import BranchModel from "#models/branch";
-import BranchItem from "#models/branch_item";
+import BranchSubjectBook from "#models/branch_subject_book";
 import CustomerItem from "#models/customer_item";
 import Delivery from "#models/delivery";
 import ItemModel from "#models/item";
@@ -184,9 +184,9 @@ async function resolveOrderLine(
     item = copy;
   }
 
-  const [branchItem, blockedItemIds, peerNote, heldNotes, orderBranch, bringDelivery, orderPaid] =
+  const [listing, blockedItemIds, peerNote, heldNotes, orderBranch, bringDelivery, orderPaid] =
     await Promise.all([
-      BranchItem.findPair(branchId, item.id),
+      BranchSubjectBook.listingAt(branchId, item.id),
       itemIdsInActiveUserMatches(customerId),
       peerMatchNote(customerId, item.id),
       alreadyHeldNotes(customerId, item.id),
@@ -197,7 +197,7 @@ async function resolveOrderLine(
   const priced = priceOrderLine({
     branch,
     item,
-    branchItem,
+    listing,
     originalOrderPaid: orderPaid,
     originalOrderItem: orderItem,
     blockedByMatch: blockedItemIds.has(source.itemId),
@@ -307,8 +307,8 @@ async function resolveItemLine(
   if ("kind" in item) {
     return item;
   }
-  const [branchItem, peerNote, heldNotes] = await Promise.all([
-    BranchItem.findPair(branchId, item.id),
+  const [listing, peerNote, heldNotes] = await Promise.all([
+    BranchSubjectBook.listingAt(branchId, item.id),
     peerMatchNote(customerId, item.id),
     alreadyHeldNotes(customerId, item.id),
   ]);
@@ -320,7 +320,7 @@ async function resolveItemLine(
       itemId: item.id,
       title: item.title,
       blid: source.blid,
-      ...priceItemLine({ branch, item, branchItem, scanned: source.blid !== null, now }),
+      ...priceItemLine({ branch, item, listing, scanned: source.blid !== null, now }),
       originalBranch: null,
       notes: peerNote ? [...heldNotes, peerNote] : heldNotes,
     },

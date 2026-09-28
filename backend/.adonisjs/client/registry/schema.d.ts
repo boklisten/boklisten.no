@@ -182,9 +182,9 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/branch').branchIndexValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['index']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['index']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'branches.index_public': {
@@ -571,30 +571,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'branch_items.index': {
-    methods: ["GET","HEAD"]
-    pattern: '/branches/:branchId/items'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { branchId: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_items_controller').default['index']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_items_controller').default['index']>>>
-    }
-  }
-  'branch_items.update': {
-    methods: ["PUT"]
-    pattern: '/branches/:branchId/items'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/branch_items').branchItemsValidator)>>
-      paramsTuple: [ParamValue]
-      params: { branchId: ParamValue }
-      query: ExtractQuery<InferInput<(typeof import('#validators/branch_items').branchItemsValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_items_controller').default['update']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_items_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
   'opening_hours.store': {
     methods: ["POST"]
     pattern: '/opening_hours'
@@ -677,18 +653,6 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/branch_subjects').branchSubjectValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['store']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'branch_subjects.import': {
-    methods: ["POST"]
-    pattern: '/branches/:branchId/subjects/import'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { branchId: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['import']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_subjects_controller').default['import']>>>
     }
   }
   'branch_subjects.update': {

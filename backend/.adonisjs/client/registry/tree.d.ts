@@ -147,14 +147,9 @@ export interface ApiDefinition {
     destroyDirect: typeof routes['branch_members.destroy_direct']
     destroyIndirect: typeof routes['branch_members.destroy_indirect']
   }
-  branchItems: {
-    index: typeof routes['branch_items.index']
-    update: typeof routes['branch_items.update']
-  }
   branchSubjects: {
     index: typeof routes['branch_subjects.index']
     store: typeof routes['branch_subjects.store']
-    import: typeof routes['branch_subjects.import']
     update: typeof routes['branch_subjects.update']
     destroy: typeof routes['branch_subjects.destroy']
   }

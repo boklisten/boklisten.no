@@ -11,16 +11,20 @@ export function toBranchTreeNodeData(branches: Branch[]) {
     (branch) => branch.parentBranchId,
   );
 
-  const toNode = (branch: Branch): TreeNodeData => ({
+  // A top-level node has no parent shown above it to give its local name ("VG1") context, which
+  // happens when the viewer may not see the parent; it goes by its full name.
+  const toNode = (branch: Branch, topLevel: boolean): TreeNodeData => ({
     value: branch.id,
     label: branch.name,
-    nodeProps: { shortLabel: branch.localName ?? branch.name },
-    children: (childrenOf.get(branch.id) ?? []).map(toNode).toSorted(byShortLabel),
+    nodeProps: { shortLabel: topLevel ? branch.name : (branch.localName ?? branch.name) },
+    children: (childrenOf.get(branch.id) ?? [])
+      .map((child) => toNode(child, false))
+      .toSorted(byShortLabel),
   });
 
   return branches
     .filter((branch) => branch.parentBranchId === null || !branchIds.has(branch.parentBranchId))
-    .map(toNode)
+    .map((branch) => toNode(branch, true))
     .toSorted(byShortLabel);
 }
 
@@ -34,6 +38,22 @@ export function descendantsOf(branches: Branch[], rootId: string): Branch[] {
     queue.push(...(childrenOf.get(branch.id) ?? []));
   }
   return below;
+}
+
+/** The branches that pass `keep`, plus every ancestor of theirs, so the tree keeps its grouping. */
+export function withAncestors(branches: Branch[], keep: (branch: Branch) => boolean): Branch[] {
+  const byId = new Map(branches.map((branch) => [branch.id, branch]));
+  const kept = new Set<string>();
+  for (const branch of branches.filter(keep)) {
+    for (
+      let current: Branch | undefined = branch;
+      current && !kept.has(current.id);
+      current = current.parentBranchId === null ? undefined : byId.get(current.parentBranchId)
+    ) {
+      kept.add(current.id);
+    }
+  }
+  return branches.filter((branch) => kept.has(branch.id));
 }
 
 function byShortLabel(a: TreeNodeData, b: TreeNodeData) {

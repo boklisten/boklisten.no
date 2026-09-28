@@ -1,7 +1,6 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 
-import BranchItem from "#models/branch_item";
 import BranchSubject from "#models/branch_subject";
 import BranchSubjectBook from "#models/branch_subject_book";
 import { BranchSubjectsService, fetchSubjectsForUpload } from "#services/branch_subjects_service";
@@ -188,58 +187,42 @@ test.group("BranchSubjectsService", (group) => {
     assert.lengthOf(await BranchSubjectBook.all(), 0);
   });
 
-  test("import creates one subject per category with the books' options copied", async ({
+  test("listingAt unions the options of every subject listing the book at the branch", async ({
     assert,
   }) => {
-    await BranchItem.createMany([
-      {
-        branchId: BRANCH,
-        itemId: ITEM_KJEMI,
-        categories: ["Kjemi 2", "Realfag"],
-        ...ALL_OFF,
-        rent: true,
-      },
-      { branchId: BRANCH, itemId: ITEM_FYSIKK, categories: ["Realfag"], ...ALL_OFF, buy: true },
-      // Another branch's entries are not imported.
-      { branchId: OTHER_BRANCH, itemId: ITEM_FYSIKK, categories: ["Fysikk 1"], ...ALL_OFF },
-    ]);
-
-    const result = await BranchSubjectsService.importFromBranchItems(BRANCH);
-
-    assert.deepEqual(result, { createdSubjects: 2, skippedExisting: 0 });
-    const subjects = await BranchSubjectsService.list(BRANCH);
-    assert.deepEqual(
-      subjects.map((subject) => [subject.name, subject.externalName]),
-      [
-        ["Kjemi 2", null],
-        ["Realfag", null],
-      ],
-    );
-    const realfag = subjects.find((subject) => subject.name === "Realfag");
-    assert.lengthOf(realfag?.books ?? [], 2);
-    assert.equal(realfag?.books.find((b) => b.item.id === ITEM_KJEMI)?.rent, true);
-    assert.equal(realfag?.books.find((b) => b.item.id === ITEM_FYSIKK)?.buy, true);
-  });
-
-  test("import skips categories that already exist as subjects and is re-runnable", async ({
-    assert,
-  }) => {
-    await BranchItem.create({
-      branchId: BRANCH,
-      itemId: ITEM_KJEMI,
-      categories: ["Kjemi 2"],
-      ...ALL_OFF,
+    await BranchSubjectsService.create(BRANCH, {
+      name: "Kjemi 2",
+      externalName: null,
+      books: [{ itemId: ITEM_KJEMI, ...ALL_OFF, rent: true, rentAtBranch: true }],
     });
     await BranchSubjectsService.create(BRANCH, {
-      name: "kjemi2",
-      externalName: "noe annet",
-      books: [],
+      name: "Realfag",
+      externalName: null,
+      books: [{ itemId: ITEM_KJEMI, ...ALL_OFF, buyAtBranch: true }],
+    });
+    // Another branch's subjects do not count.
+    await BranchSubjectsService.create(OTHER_BRANCH, {
+      name: "Kjemi 2",
+      externalName: null,
+      books: [{ itemId: ITEM_KJEMI, ...ALL_OFF, partlyPaymentAtBranch: true }],
     });
 
-    const result = await BranchSubjectsService.importFromBranchItems(BRANCH);
+    assert.deepEqual(await BranchSubjectBook.listingAt(BRANCH, ITEM_KJEMI), {
+      ...ALL_OFF,
+      rent: true,
+      rentAtBranch: true,
+      buyAtBranch: true,
+    });
+  });
 
-    assert.deepEqual(result, { createdSubjects: 0, skippedExisting: 1 });
-    assert.lengthOf(await BranchSubject.all(), 1);
+  test("listingAt is null for a book the branch does not list", async ({ assert }) => {
+    await BranchSubjectsService.create(OTHER_BRANCH, {
+      name: "Fysikk 1",
+      externalName: null,
+      books: [{ itemId: ITEM_FYSIKK, ...ALL_OFF, rent: true }],
+    });
+
+    assert.isNull(await BranchSubjectBook.listingAt(BRANCH, ITEM_FYSIKK));
   });
 
   test("fetchSubjectsForUpload groups subjects by upload name with resolved titles", async ({

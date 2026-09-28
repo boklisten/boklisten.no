@@ -25,10 +25,10 @@ async function staticPaths(): Promise<string[]> {
   return [...new Set(paths)];
 }
 
-/** One page per school, listing when we are on stand there. */
+/** One page per public branch (as a guest sees the list), listing when we are on stand there. */
 async function branchPaths(): Promise<string[]> {
   try {
-    const branches = await apiClient.api.branches.indexPublic({});
+    const branches = await apiClient.api.branches.index({});
     return branches.map((branch) => `/info/branch/${branch.id}`);
   } catch {
     // A sitemap missing the school pages is far better than no sitemap at all

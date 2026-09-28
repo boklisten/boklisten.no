@@ -1,6 +1,5 @@
 import db from "@adonisjs/lucid/services/db";
 
-import BranchItem from "#models/branch_item";
 import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BranchSubject from "#models/branch_subject";
@@ -191,65 +190,5 @@ export const BranchSubjectsService = {
   async destroy(branchId: string, subjectId: number) {
     const subject = await findSubjectOrFail(branchId, subjectId);
     await subject.delete();
-  },
-
-  /**
-   * Seeds subjects from the branch's legacy branchItem categories: one subject per category, with
-   * the tagged books and their options copied over. Categories whose name or upload name already
-   * exists as a subject (normalized) are skipped, so the import is re-runnable and never
-   * overwrites manual edits.
-   */
-  async importFromBranchItems(branchId: string) {
-    const branchItems = await BranchItem.forBranch(branchId);
-
-    const booksByCategory = new Map<string, { name: string; books: BranchSubjectBookInput[] }>();
-    for (const branchItem of branchItems) {
-      for (const category of branchItem.categories) {
-        const name = category.trim();
-        if (name.length === 0) {
-          continue;
-        }
-        const key = normalizeSubjectName(name);
-        const entry = booksByCategory.get(key) ?? { name, books: [] };
-        if (!entry.books.some((book) => book.itemId === branchItem.itemId)) {
-          entry.books.push({
-            itemId: branchItem.itemId,
-            rent: branchItem.rent,
-            partlyPayment: branchItem.partlyPayment,
-            buy: branchItem.buy,
-            rentAtBranch: branchItem.rentAtBranch,
-            partlyPaymentAtBranch: branchItem.partlyPaymentAtBranch,
-            buyAtBranch: branchItem.buyAtBranch,
-          });
-        }
-        booksByCategory.set(key, entry);
-      }
-    }
-
-    const existingSubjects = await BranchSubject.query().where("branchId", branchId);
-    const existingKeys = new Set(
-      existingSubjects.flatMap((subject) => [
-        normalizeSubjectName(subject.name),
-        normalizeSubjectName(uploadName(subject)),
-      ]),
-    );
-
-    let createdSubjects = 0;
-    let skippedExisting = 0;
-    await db.transaction(async (trx) => {
-      for (const [key, { name, books }] of booksByCategory) {
-        if (existingKeys.has(key)) {
-          skippedExisting++;
-          continue;
-        }
-        const subject = await BranchSubject.create(
-          { branchId, name, externalName: null },
-          { client: trx },
-        );
-        await subject.related("books").createMany(toBookRows(books));
-        createdSubjects++;
-      }
-    });
-    return { createdSubjects, skippedExisting };
   },
 };

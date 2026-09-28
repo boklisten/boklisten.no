@@ -2,7 +2,6 @@ import { Box, Button, Divider, Grid, Stack, Tabs, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import {
   IconBook2,
-  IconBooks,
   IconBuildingStore,
   IconCashRegister,
   IconChartAreaLine,
@@ -22,7 +21,6 @@ import ActiveBooksTab from "@/features/branches/branch-books/ActiveBooksTab";
 import BranchBookMovements from "@/features/branches/insights/BranchBookMovements";
 import OrderedBooksTab from "@/features/branches/branch-books/OrderedBooksTab";
 import BranchGeneralSettings from "@/features/branches/BranchGeneralSettings";
-import BranchItemSettings from "@/features/branches/BranchItemSettings";
 import BranchMembers from "@/features/branches/BranchMembers";
 import BranchPaymentSettings from "@/features/branches/BranchPaymentSettings";
 import BranchRelationshipSettings from "@/features/branches/BranchRelationshipSettings";
@@ -114,9 +112,6 @@ export default function BranchManager() {
                   <Tabs.Tab value="payment" leftSection={<IconCashRegister />}>
                     Betaling
                   </Tabs.Tab>
-                  <Tabs.Tab value="books" leftSection={<IconBooks />}>
-                    Bøker
-                  </Tabs.Tab>
                   <Tabs.Tab value="subjects" leftSection={<IconSchool />}>
                     Fag
                   </Tabs.Tab>
@@ -150,9 +145,6 @@ export default function BranchManager() {
                 </Tabs.Panel>
                 <Tabs.Panel value="payment">
                   <BranchPaymentSettings key={selectedBranchId} existingBranch={selectedBranch} />
-                </Tabs.Panel>
-                <Tabs.Panel value="books">
-                  <BranchItemSettings key={selectedBranchId} branchId={selectedBranch.id} />
                 </Tabs.Panel>
                 <Tabs.Panel value="subjects">
                   <BranchSubjectSettings key={selectedBranchId} branchId={selectedBranch.id} />

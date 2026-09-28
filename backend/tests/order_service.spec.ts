@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import Branch from "#models/branch";
 import Order from "#models/order";
 import { OrderItemService } from "#services/order_item_service";
 import { OrderService } from "#services/order_service";
@@ -85,6 +86,15 @@ test.group("OrderService.createFromCart", (group) => {
       stored.orderItems.map((orderItem) => [orderItem.type, orderItem.itemId, orderItem.title]),
       [["rent", ITEM_ID, TITLE]],
     );
+  });
+
+  test("rejects ordering from a branch that is not public", async ({ assert }) => {
+    await Branch.query().where("id", BRANCH_ID).update({ visibility: "employee" });
+    await assert.rejects(
+      () => OrderService.createFromCart(CUSTOMER_ID, [rentCartItem()]),
+      /Det er ikke mulig å bestille fra/,
+    );
+    assert.equal(await unplacedOrderCount(), 0);
   });
 
   test("rejects a cart containing the same item twice", async ({ assert }) => {

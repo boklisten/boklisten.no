@@ -34,35 +34,6 @@ export class BookHandoverSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
-export class BranchItemSchema extends BaseModel {
-  static $columns = ['branchId', 'buy', 'buyAtBranch', 'categories', 'createdAt', 'id', 'itemId', 'partlyPayment', 'partlyPaymentAtBranch', 'rent', 'rentAtBranch', 'updatedAt'] as const
-  $columns = BranchItemSchema.$columns
-  @column()
-  declare branchId: string
-  @column()
-  declare buy: boolean
-  @column()
-  declare buyAtBranch: boolean
-  @column()
-  declare categories: any
-  @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime
-  @column({ isPrimary: true })
-  declare id: string
-  @column()
-  declare itemId: string
-  @column()
-  declare partlyPayment: boolean
-  @column()
-  declare partlyPaymentAtBranch: boolean
-  @column()
-  declare rent: boolean
-  @column()
-  declare rentAtBranch: boolean
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime
-}
-
 export class BranchPeriodSchema extends BaseModel {
   static $columns = ['branchId', 'date', 'id', 'kind', 'maxNumberOfPeriods', 'percentage', 'percentageBuyout', 'percentageUpFront', 'periodType', 'price'] as const
   $columns = BranchPeriodSchema.$columns
@@ -133,14 +104,10 @@ export class BranchSubjectSchema extends BaseModel {
 }
 
 export class BranchSchema extends BaseModel {
-  static $columns = ['active', 'address', 'branchItemsLiveOnline', 'buyoutPercentage', 'childLabel', 'createdAt', 'deliveryAtBranch', 'deliveryByMail', 'id', 'localName', 'logo', 'name', 'parentBranchId', 'paymentResponsible', 'region', 'responsibleForDelivery', 'sellPercentage', 'type', 'updatedAt'] as const
+  static $columns = ['address', 'buyoutPercentage', 'childLabel', 'createdAt', 'deliveryAtBranch', 'deliveryByMail', 'id', 'localName', 'logo', 'name', 'parentBranchId', 'paymentResponsible', 'region', 'responsibleForDelivery', 'sellPercentage', 'type', 'updatedAt', 'visibility'] as const
   $columns = BranchSchema.$columns
   @column()
-  declare active: boolean
-  @column()
   declare address: string | null
-  @column()
-  declare branchItemsLiveOnline: boolean
   @column()
   declare buyoutPercentage: number
   @column()
@@ -173,6 +140,8 @@ export class BranchSchema extends BaseModel {
   declare type: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+  @column()
+  declare visibility: string
 }
 
 export class CompanySchema extends BaseModel {

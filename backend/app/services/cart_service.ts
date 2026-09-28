@@ -1,18 +1,18 @@
 import type { Branch } from "#shared/branch";
-import type { BranchItem } from "#shared/branch-item";
+import type { BookListing } from "#shared/book-listing";
 import type { CartItemOption } from "#shared/cart_item";
 import type { Item } from "#shared/item";
 
 export const CartService = {
   /**
    * The ways a customer may order `item` from `branch` online, priced from the branch's periods
-   * and the item's price. `branch` and `item` are the two sides of `branchItem`; the caller has
-   * them loaded already (a catalog prices a whole branch against the same branch row).
+   * and the item's price, for a title the branch lists as `listing`. The caller has `branch` and
+   * `item` loaded already (a catalog prices a whole branch against the same branch row).
    */
-  getOptions(branchItem: BranchItem, branch: Branch, item: Item): CartItemOption[] {
+  getOptions(listing: BookListing, branch: Branch, item: Item): CartItemOption[] {
     const options: CartItemOption[] = [];
 
-    if (branchItem.rent) {
+    if (listing.rent) {
       for (const rentPeriod of branch.rentPeriods) {
         options.push({
           type: "rent",
@@ -22,7 +22,7 @@ export const CartService = {
       }
     }
 
-    if (branchItem.partlyPayment) {
+    if (listing.partlyPayment) {
       for (const partlyPaymentPeriod of branch.partlyPaymentPeriods) {
         const priceUpFront =
           Math.floor((item.price * partlyPaymentPeriod.percentageUpFront) / 10) * 10;
@@ -37,7 +37,7 @@ export const CartService = {
       }
     }
 
-    if (branchItem.buy) {
+    if (listing.buy) {
       options.push({
         type: "buy",
         price: branch.paymentResponsible ? 0 : Math.floor(item.price / 10) * 10,

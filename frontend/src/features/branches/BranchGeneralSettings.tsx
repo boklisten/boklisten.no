@@ -3,6 +3,7 @@ import { Button, Stack } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Activity } from "react";
 
+import { VISIBILITY_SEGMENTS, visibilityDescription } from "@/features/branches/branchVisibility";
 import useUpdateBranchMutation from "@/features/branches/useUpdateBranchMutation";
 import { useAppForm } from "@/shared/hooks/form";
 import { api } from "@/shared/utils/apiClient";
@@ -43,8 +44,7 @@ export default function BranchGeneralSettings({
       region: existingBranch?.region ?? "",
       address: existingBranch?.address ?? "",
       type: existingBranch?.type ?? null,
-      active: existingBranch?.active ?? true,
-      branchItemsLiveOnline: existingBranch?.branchItemsLiveOnline ?? false,
+      visibility: existingBranch?.visibility ?? "employee",
     },
     onSubmit: ({ value }) => {
       // Empty optional text fields mean "not set".
@@ -90,11 +90,14 @@ export default function BranchGeneralSettings({
         )}
       </form.AppField>
       <Activity mode={existingBranch ? "visible" : "hidden"}>
-        <form.AppField name="active">
-          {(field) => <field.SwitchField label="Aktiv" />}
-        </form.AppField>
-        <form.AppField name="branchItemsLiveOnline">
-          {(field) => <field.SwitchField label="Synlig for kunder" />}
+        <form.AppField name="visibility">
+          {(field) => (
+            <field.SegmentedControlField
+              label="Synlighet"
+              data={VISIBILITY_SEGMENTS}
+              description={visibilityDescription(field.state.value)}
+            />
+          )}
         </form.AppField>
       </Activity>
       <form.AppForm>

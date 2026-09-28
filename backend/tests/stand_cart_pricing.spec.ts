@@ -10,7 +10,7 @@ import {
   priceOrderLine,
 } from "#services/stand_cart/stand_cart_pricing";
 import type { Branch } from "#shared/branch";
-import type { BranchItem } from "#shared/branch-item";
+import type { BookListing } from "#shared/book-listing";
 import type { Item } from "#shared/item";
 import { findOption } from "#shared/stand_cart";
 import type { StandCartOption } from "#shared/stand_cart";
@@ -61,7 +61,7 @@ function orderLine(overrides: Partial<Parameters<typeof priceOrderLine>[0]> = {}
   return priceOrderLine({
     branch: branchWith(),
     item: ITEM,
-    branchItem: null,
+    listing: null,
     originalOrderPaid: false,
     originalOrderItem: orderItemWith(),
     blockedByMatch: false,
@@ -103,7 +103,7 @@ test.group("priceOrderLine", () => {
   }) => {
     const line = orderLine({
       scanned: false,
-      branchItem: mock<BranchItem>({
+      listing: mock<BookListing>({
         rentAtBranch: true,
         partlyPaymentAtBranch: true,
         buyAtBranch: true,
@@ -194,7 +194,7 @@ test.group("priceOrderLine", () => {
       branch,
       originalOrderPaid: true,
       originalOrderItem: orderItemWith({ amount: 250, unitPrice: 250 }),
-      branchItem: mock<BranchItem>({ buyAtBranch: true }),
+      listing: mock<BookListing>({ buyAtBranch: true }),
     });
     assert.equal(options(line, "rent")[0]?.price, 0);
     assert.equal(options(line, "buy")[0]?.price, 250);
@@ -216,7 +216,7 @@ test.group("priceOrderLine", () => {
     assert.equal(options(line, "cancel")[0]?.price, 0);
   });
 
-  test("offers partly-payment and buy only when the branch item allows them at the stand", ({
+  test("offers partly-payment and buy only when the listing allows them at the stand", ({
     assert,
   }) => {
     const branch = branchWith({
@@ -230,13 +230,13 @@ test.group("priceOrderLine", () => {
         },
       ],
     });
-    const closed = orderLine({ branch, branchItem: null });
+    const closed = orderLine({ branch, listing: null });
     assert.lengthOf(options(closed, "partly-payment"), 0);
     assert.lengthOf(options(closed, "buy"), 0);
 
     const open = orderLine({
       branch,
-      branchItem: mock<BranchItem>({ partlyPaymentAtBranch: true, buyAtBranch: true }),
+      listing: mock<BookListing>({ partlyPaymentAtBranch: true, buyAtBranch: true }),
     });
     assert.deepEqual(options(open, "partly-payment")[0], {
       type: "partly-payment",
@@ -250,9 +250,7 @@ test.group("priceOrderLine", () => {
     assert.equal(options(open, "buy")[0]?.price, 500);
   });
 
-  test("always offers the ordered type even when the branch item does not allow it", ({
-    assert,
-  }) => {
+  test("always offers the ordered type even when the listing does not allow it", ({ assert }) => {
     const branch = branchWith({
       paymentResponsible: false,
       partlyPaymentPeriods: [
@@ -526,7 +524,7 @@ function itemLine(overrides: Partial<Parameters<typeof priceItemLine>[0]> = {}) 
   return priceItemLine({
     branch: branchWith(),
     item: ITEM,
-    branchItem: null,
+    listing: null,
     scanned: true,
     now: NOW,
     ...overrides,
@@ -534,7 +532,7 @@ function itemLine(overrides: Partial<Parameters<typeof priceItemLine>[0]> = {}) 
 }
 
 test.group("priceItemLine", () => {
-  test("a book with no branch item can only be rented", ({ assert }) => {
+  test("a book the branch does not list can only be rented", ({ assert }) => {
     const line = itemLine();
     assert.deepEqual(
       line.options.map((option) => option.type),
@@ -551,12 +549,10 @@ test.group("priceItemLine", () => {
     assert.equal(line.unavailableReason, "Boka står ikke i boklisten til Ullern VGS");
   });
 
-  test("says the branch has no period or price when its branch item yields nothing", ({
-    assert,
-  }) => {
+  test("says the branch has no period or price when its listing yields nothing", ({ assert }) => {
     const line = itemLine({
       branch: branchWith({ rentPeriods: [] }),
-      branchItem: mock<BranchItem>({
+      listing: mock<BookListing>({
         rentAtBranch: true,
         partlyPaymentAtBranch: false,
         buyAtBranch: false,
@@ -569,7 +565,7 @@ test.group("priceItemLine", () => {
     );
   });
 
-  test("follows the branch item's at-branch flags", ({ assert }) => {
+  test("follows the listing's at-branch flags", ({ assert }) => {
     const line = itemLine({
       branch: branchWith({
         paymentResponsible: false,
@@ -582,7 +578,7 @@ test.group("priceItemLine", () => {
           },
         ],
       }),
-      branchItem: mock<BranchItem>({
+      listing: mock<BookListing>({
         rentAtBranch: false,
         partlyPaymentAtBranch: true,
         buyAtBranch: true,
@@ -619,7 +615,7 @@ test.group("priceItemLine", () => {
       scanned: false,
       branch: branchWith({ sellPercentage: 0.33 }),
       item: mock<Item>({ ...ITEM, buyback: true }),
-      branchItem: mock<BranchItem>({
+      listing: mock<BookListing>({
         rentAtBranch: true,
         partlyPaymentAtBranch: false,
         buyAtBranch: true,
@@ -635,7 +631,7 @@ test.group("priceItemLine", () => {
   test("without a sticker a copy the stand does not buy back defaults to buy", ({ assert }) => {
     const line = itemLine({
       scanned: false,
-      branchItem: mock<BranchItem>({
+      listing: mock<BookListing>({
         rentAtBranch: true,
         partlyPaymentAtBranch: false,
         buyAtBranch: true,
@@ -648,7 +644,7 @@ test.group("priceItemLine", () => {
     assert.equal(line.defaultOptionIndex, 0);
   });
 
-  test("without a sticker and a branch item nothing can be offered for a book nobody buys back", ({
+  test("without a sticker and a listing nothing can be offered for a book nobody buys back", ({
     assert,
   }) => {
     const line = itemLine({ scanned: false });

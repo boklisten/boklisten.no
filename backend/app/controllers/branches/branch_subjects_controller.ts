@@ -28,8 +28,4 @@ export default class BranchSubjectsController {
       Number(ctx.request.param("subjectId")),
     );
   }
-
-  async import(ctx: HttpContext) {
-    return BranchSubjectsService.importFromBranchItems(ctx.request.param("branchId"));
-  }
 }

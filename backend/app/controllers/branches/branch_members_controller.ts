@@ -2,6 +2,7 @@ import type { HttpContext } from "@adonisjs/core/http";
 
 import User from "#models/user";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
+import { assertMembershipAllowed } from "#services/user_service";
 import { updateBranchMembershipValidator } from "#validators/branch_membership";
 
 export default class BranchMembersController {
@@ -28,6 +29,11 @@ export default class BranchMembersController {
       updateBranchMembershipValidator,
     );
     const user = await User.findOrFail(userId);
+    await assertMembershipAllowed(
+      ctx.auth.getUserOrFail().permission,
+      user.branchMembershipId,
+      branchMembership,
+    );
     user.branchMembershipId = branchMembership;
     await user.save();
   }

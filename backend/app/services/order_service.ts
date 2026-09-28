@@ -1,5 +1,6 @@
 import { Exception } from "@adonisjs/core/exceptions";
 
+import Branch from "#models/branch";
 import Item from "#models/item";
 import Order from "#models/order";
 import type { NewOrderItem } from "#models/order";
@@ -63,6 +64,19 @@ export const OrderService = {
   ) {
     if (new Set(cartItems.map((cartItem) => cartItem.id)).size !== cartItems.length) {
       throw new BadRequestException("Du kan ikke bestille flere av samme bok");
+    }
+
+    // Only public branches are orderable online. Extending or buying out a book the customer
+    // already has is not ordering from the branch, so those lines are not checked.
+    const orderedFrom = await Branch.byIds(
+      cartItems
+        .filter((cartItem) => ACQUISITION_CART_ITEM_TYPES.includes(cartItem.type))
+        .map((cartItem) => cartItem.branchId),
+    );
+    for (const branch of orderedFrom.values()) {
+      if (branch.visibility !== "public") {
+        throw new BadRequestException(`Det er ikke mulig å bestille fra ${branch.name}`);
+      }
     }
 
     const openOrderItemIds = cartItems.some((cartItem) =>
