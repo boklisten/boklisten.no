@@ -150,9 +150,6 @@ async function attachMatches(roundId: number, matches: MatchDraft[]): Promise<Ma
       throw new BlError("Runden har allerede overleveringer").code(200);
     }
 
-    // The models would fill these via their autoCreate hooks; raw inserts must say so themselves.
-    const now = DateTime.now().toJSDate();
-
     const matchRows: { id: number }[] = await trx
       .table("matches")
       .insert(
@@ -160,8 +157,6 @@ async function attachMatches(roundId: number, matches: MatchDraft[]): Promise<Ma
           round_id: round.id,
           meeting_location: draft.meetingLocation,
           meeting_time: draft.meetingTime?.toJSDate() ?? null,
-          created_at: now,
-          updated_at: now,
         })),
       )
       .returning("id");
@@ -174,8 +169,6 @@ async function attachMatches(roundId: number, matches: MatchDraft[]): Promise<Ma
       return draft.participantCustomerIds.map((userDetailId) => ({
         match_id: matchId,
         user_detail_id: userDetailId,
-        created_at: now,
-        updated_at: now,
       }));
     });
     const createdParticipants: {
@@ -214,8 +207,6 @@ async function attachMatches(roundId: number, matches: MatchDraft[]): Promise<Ma
             sender_participant_id: senderParticipantId,
             receiver_participant_id: receiverParticipantId,
             item_id: obligation.itemId,
-            created_at: now,
-            updated_at: now,
           };
         });
       }),

@@ -134,7 +134,6 @@ async function logOutgoingMessages(inputs: OutgoingMessage[]): Promise<(Message 
   if (inputs.length === 0) {
     return [];
   }
-  const now = DateTime.now().toSQL();
   try {
     const rows: Record<string, unknown>[] = await db
       .table("messages")
@@ -153,8 +152,6 @@ async function logOutgoingMessages(inputs: OutgoingMessage[]): Promise<(Message 
             template_id: input.templateId ?? null,
             template_data: templateData ? JSON.stringify(templateData) : null,
             status: "created",
-            created_at: now,
-            updated_at: now,
           };
         }),
       )
@@ -193,8 +190,6 @@ async function recordSendResult(
         event: result.status,
         reason: result.reason ?? null,
         occurred_at: now.toSQL(),
-        created_at: now.toSQL(),
-        updated_at: now.toSQL(),
       })),
     );
     await Message.query()
@@ -246,7 +241,6 @@ async function recordProviderEvents(events: ProviderEvent[]): Promise<number> {
     return 0;
   }
 
-  const now = DateTime.now().toSQL();
   const inserted: { provider_event_id: string }[] = await db
     .table("message_events")
     .multiInsert(
@@ -259,8 +253,6 @@ async function recordProviderEvents(events: ProviderEvent[]): Promise<number> {
         payload: event.payload ? JSON.stringify(event.payload) : null,
         provider_event_id: event.providerEventId,
         occurred_at: event.occurredAt.toSQL(),
-        created_at: now,
-        updated_at: now,
       })),
     )
     .onConflict("provider_event_id")
@@ -324,7 +316,7 @@ function toEntryDto(message: Message): MessageLogEntryDto {
     statusDetail: message.statusDetail,
     sendoutId: message.sendoutId,
     sendoutName: message.sendout?.name ?? null,
-    createdAt: message.createdAt?.toISO() ?? "",
+    createdAt: message.createdAt.toISO() ?? "",
     events: message.events
       .toSorted((a, b) => a.occurredAt.toMillis() - b.occurredAt.toMillis())
       .map(toEventDto),
@@ -500,7 +492,7 @@ async function sendoutStats(limit: number): Promise<SendoutStatsDto[]> {
       id: sendout.id,
       kind: sendout.kind,
       name: sendout.name,
-      createdAt: sendout.createdAt?.toISO() ?? "",
+      createdAt: sendout.createdAt.toISO() ?? "",
       messageCount: Object.values(statusCounts).reduce((sum, count) => sum + count, 0),
       statusCounts,
     };

@@ -19,8 +19,8 @@ test.group("Signature.expiresAtFor", () => {
     const signature = makeSignature(false);
     const expiresAt = signature.expiresAtFor({ dob: dobForAge(16) });
     assert.equal(
-      expiresAt?.toISODate(),
-      signature.createdAt?.plus({ months: SIGNATURE_NUM_MONTHS_VALID }).toISODate(),
+      expiresAt.toISODate(),
+      signature.createdAt.plus({ months: SIGNATURE_NUM_MONTHS_VALID }).toISODate(),
     );
   });
 
@@ -29,7 +29,7 @@ test.group("Signature.expiresAtFor", () => {
     const dob = dobForAge(16);
     const expiresAt = signature.expiresAtFor({ dob });
     const eighteenthBirthday = dob.plus({ years: 18 });
-    assert.equal(expiresAt?.toISODate(), eighteenthBirthday.toISODate());
+    assert.equal(expiresAt.toISODate(), eighteenthBirthday.toISODate());
   });
 
   test("keeps the ordinary window for a guardian signature when it ends before the 18th birthday", ({
@@ -38,8 +38,8 @@ test.group("Signature.expiresAtFor", () => {
     const signature = makeSignature(true);
     const expiresAt = signature.expiresAtFor({ dob: dobForAge(10) });
     assert.equal(
-      expiresAt?.toISODate(),
-      signature.createdAt?.plus({ months: SIGNATURE_NUM_MONTHS_VALID }).toISODate(),
+      expiresAt.toISODate(),
+      signature.createdAt.plus({ months: SIGNATURE_NUM_MONTHS_VALID }).toISODate(),
     );
   });
 
@@ -47,8 +47,8 @@ test.group("Signature.expiresAtFor", () => {
     const signature = makeSignature(true);
     const expiresAt = signature.expiresAtFor({ dob: null });
     assert.equal(
-      expiresAt?.toISODate(),
-      signature.createdAt?.plus({ months: SIGNATURE_NUM_MONTHS_VALID }).toISODate(),
+      expiresAt.toISODate(),
+      signature.createdAt.plus({ months: SIGNATURE_NUM_MONTHS_VALID }).toISODate(),
     );
   });
 });

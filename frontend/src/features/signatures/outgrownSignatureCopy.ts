@@ -9,8 +9,7 @@ export function describeOutgrownSignature({
   signedAtText,
 }: {
   signingName: string;
-  signedAtText?: string | undefined;
+  signedAtText: string;
 }): string {
-  const signedAt = signedAtText ? ` ${signedAtText}` : "";
-  return `${signingName} (foresatt) signerte låneavtalen på dine vegne${signedAt}. Nå som du er myndig, må du signere låneavtalen selv.`;
+  return `${signingName} (foresatt) signerte låneavtalen på dine vegne ${signedAtText}. Nå som du er myndig, må du signere låneavtalen selv.`;
 }

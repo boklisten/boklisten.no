@@ -1,5 +1,6 @@
 import db from "@adonisjs/lucid/services/db";
 import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
+import { DateTime } from "luxon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import User from "#models/user";
@@ -38,7 +39,7 @@ async function setPermission(detailsIds: string[], permission: UserPermission) {
   if (missing !== undefined) {
     throw new BadRequestException(`Fant ingen bruker for kunde ${missing}`);
   }
-  await User.query().whereIn("id", detailsIds).update({ permission });
+  await User.query().whereIn("id", detailsIds).update({ permission, updatedAt: DateTime.now() });
   // The new level applies from their next login, not from whenever their cookie would have expired.
   await Promise.all(detailsIds.map((detailsId) => SessionRevocationService.revokeAll(detailsId)));
   return { updated: detailsIds.length };

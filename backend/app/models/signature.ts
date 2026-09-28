@@ -108,8 +108,8 @@ export default class Signature extends SignatureSchema {
     return this.createdAt.toJSDate() < oldestAllowedSignatureTime;
   }
 
-  get expiresAt(): DateTime | null {
-    return this.createdAt?.plus({ months: SIGNATURE_NUM_MONTHS_VALID }) ?? null;
+  get expiresAt(): DateTime {
+    return this.createdAt.plus({ months: SIGNATURE_NUM_MONTHS_VALID });
   }
 
   /**
@@ -117,15 +117,12 @@ export default class Signature extends SignatureSchema {
    * the customer's 18th birthday (isValidFor starts rejecting it), if that comes before the
    * ordinary validity window runs out.
    */
-  expiresAtFor(userDetail: { dob: DateTime | null }): DateTime | null {
+  expiresAtFor(userDetail: { dob: DateTime | null }): DateTime {
     const { expiresAt } = this;
     if (!this.signedByGuardian || !userDetail.dob) {
       return expiresAt;
     }
     const eighteenthBirthday = userDetail.dob.plus({ years: 18 });
-    if (!expiresAt) {
-      return eighteenthBirthday;
-    }
     return expiresAt < eighteenthBirthday ? expiresAt : eighteenthBirthday;
   }
 }

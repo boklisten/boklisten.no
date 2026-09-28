@@ -206,7 +206,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
     assert.equal(
       page.nextCursor,
       SignatureGalleryService.encodeCursor({
-        createdAt: lastJudged?.createdAt?.toJSDate() ?? new Date(0),
+        createdAt: lastJudged?.createdAt.toJSDate() ?? new Date(0),
         id: lastJudged?.id ?? 0,
       }),
     );

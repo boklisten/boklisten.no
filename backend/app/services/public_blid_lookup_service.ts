@@ -107,13 +107,10 @@ export const PublicBlidLookupService = {
   /**
    * When a user may start looking up books: 24 hours after registering, so a throwaway account
    * cannot be created and used to read a stranger's contact details in one sitting. Null when the
-   * user may look up now. Records without a creation time predate timestamps and are old.
+   * user may look up now.
    */
-  opensAt(creationTime: Date | string | undefined, now: Date = new Date()): Date | null {
-    if (creationTime === undefined) {
-      return null;
-    }
-    const opensAt = new Date(new Date(creationTime).getTime() + LOOKUP_WAITING_PERIOD_MS);
+  opensAt(creationTime: Date, now: Date = new Date()): Date | null {
+    const opensAt = new Date(creationTime.getTime() + LOOKUP_WAITING_PERIOD_MS);
     return opensAt.getTime() > now.getTime() ? opensAt : null;
   },
 };

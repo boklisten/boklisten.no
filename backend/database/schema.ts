@@ -13,7 +13,7 @@ export class BookHandoverSchema extends BaseModel {
   @column()
   declare blid: string | null
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column()
   declare dischargesReceiverObligationId: number | null
   @column()
@@ -31,7 +31,7 @@ export class BookHandoverSchema extends BaseModel {
   @column()
   declare toUserDetailId: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class BranchItemSchema extends BaseModel {
@@ -46,7 +46,7 @@ export class BranchItemSchema extends BaseModel {
   @column()
   declare categories: any
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -60,7 +60,7 @@ export class BranchItemSchema extends BaseModel {
   @column()
   declare rentAtBranch: boolean
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class BranchPeriodSchema extends BaseModel {
@@ -98,7 +98,7 @@ export class BranchSubjectBookSchema extends BaseModel {
   @column()
   declare buyAtBranch: boolean
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -112,7 +112,7 @@ export class BranchSubjectBookSchema extends BaseModel {
   @column()
   declare rentAtBranch: boolean
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class BranchSubjectSchema extends BaseModel {
@@ -121,7 +121,7 @@ export class BranchSubjectSchema extends BaseModel {
   @column()
   declare branchId: string
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column()
   declare externalName: string
   @column({ isPrimary: true })
@@ -129,7 +129,7 @@ export class BranchSubjectSchema extends BaseModel {
   @column()
   declare name: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class BranchSchema extends BaseModel {
@@ -146,7 +146,7 @@ export class BranchSchema extends BaseModel {
   @column()
   declare childLabel: string | null
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column()
   declare deliveryAtBranch: boolean
   @column()
@@ -172,7 +172,7 @@ export class BranchSchema extends BaseModel {
   @column()
   declare type: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class CompanySchema extends BaseModel {
@@ -181,7 +181,7 @@ export class CompanySchema extends BaseModel {
   @column()
   declare address: string
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column()
   declare customerNumber: string
   @column()
@@ -199,7 +199,7 @@ export class CompanySchema extends BaseModel {
   @column()
   declare postCode: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class CustomerItemPeriodExtendSchema extends BaseModel {
@@ -323,24 +323,24 @@ export class EditableTextSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'text', 'updatedAt'] as const
   $columns = EditableTextSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: string
   @column()
   declare text: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class EmailVerificationSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'updatedAt', 'userDetailId'] as const
   $columns = EmailVerificationSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
   @column()
   declare userDetailId: string
 }
@@ -463,7 +463,7 @@ export class ItemSchema extends BaseModel {
   @column()
   declare buyback: boolean
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column()
   declare discount: number
   @column()
@@ -483,7 +483,7 @@ export class ItemSchema extends BaseModel {
   @column()
   declare title: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
   @column()
   declare weight: number | null
   @column()
@@ -494,7 +494,7 @@ export class MatchObligationSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'itemId', 'matchId', 'receiverParticipantId', 'senderParticipantId', 'updatedAt'] as const
   $columns = MatchObligationSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -506,20 +506,20 @@ export class MatchObligationSchema extends BaseModel {
   @column()
   declare senderParticipantId: number
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class MatchParticipantSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'matchId', 'updatedAt', 'userDetailId'] as const
   $columns = MatchParticipantSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: number
   @column()
   declare matchId: number
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
   @column()
   declare userDetailId: string | null
 }
@@ -530,7 +530,7 @@ export class MatchRoundSchema extends BaseModel {
   @column()
   declare branches: any
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column.date()
   declare deadline: DateTime
   @column()
@@ -554,7 +554,7 @@ export class MatchRoundSchema extends BaseModel {
   @column()
   declare status: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
   @column()
   declare userMatchLocations: any
   @column()
@@ -567,7 +567,7 @@ export class MatchSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'meetingLocation', 'meetingTime', 'roundId', 'updatedAt'] as const
   $columns = MatchSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -577,14 +577,14 @@ export class MatchSchema extends BaseModel {
   @column()
   declare roundId: number
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class MessageEventSchema extends BaseModel {
   static $columns = ['createdAt', 'errorCode', 'event', 'id', 'messageId', 'occurredAt', 'payload', 'providerEventId', 'reason', 'source', 'updatedAt'] as const
   $columns = MessageEventSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column()
   declare errorCode: string | null
   @column()
@@ -604,7 +604,7 @@ export class MessageEventSchema extends BaseModel {
   @column()
   declare source: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class MessageSchema extends BaseModel {
@@ -613,7 +613,7 @@ export class MessageSchema extends BaseModel {
   @column()
   declare channel: string
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -639,7 +639,7 @@ export class MessageSchema extends BaseModel {
   @column()
   declare templateId: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class OpeningHourSchema extends BaseModel {
@@ -648,7 +648,7 @@ export class OpeningHourSchema extends BaseModel {
   @column()
   declare branchId: string
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column.dateTime()
   declare from: DateTime
   @column({ isPrimary: true })
@@ -656,7 +656,7 @@ export class OpeningHourSchema extends BaseModel {
   @column.dateTime()
   declare to: DateTime
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class OrderItemSchema extends BaseModel {
@@ -733,13 +733,13 @@ export class PasswordResetSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'tokenHash', 'updatedAt', 'userDetailId'] as const
   $columns = PasswordResetSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: number
   @column()
   declare tokenHash: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
   @column()
   declare userDetailId: string
 }
@@ -769,7 +769,7 @@ export class QuestionAndAnswerSchema extends BaseModel {
   @column()
   declare answer: string
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -777,7 +777,7 @@ export class QuestionAndAnswerSchema extends BaseModel {
   @column()
   declare question: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class RateLimitSchema extends BaseModel {
@@ -812,7 +812,7 @@ export class SendoutSchema extends BaseModel {
   static $columns = ['createdAt', 'id', 'initiatedByDetailsId', 'kind', 'name', 'updatedAt'] as const
   $columns = SendoutSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -822,7 +822,7 @@ export class SendoutSchema extends BaseModel {
   @column()
   declare name: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class SessionSchema extends BaseModel {
@@ -842,7 +842,7 @@ export class SignatureSchema extends BaseModel {
   static $columns = ['createdAt', 'customerDetailsId', 'id', 'image', 'signedByGuardian', 'signingName', 'updatedAt'] as const
   $columns = SignatureSchema.$columns
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column()
   declare customerDetailsId: string
   @column({ isPrimary: true })
@@ -854,7 +854,7 @@ export class SignatureSchema extends BaseModel {
   @column()
   declare signingName: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class UniqueItemSchema extends BaseModel {
@@ -863,13 +863,13 @@ export class UniqueItemSchema extends BaseModel {
   @column()
   declare blid: string
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: string
   @column()
   declare itemId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }
 
 export class UserSchema extends BaseModel {
@@ -880,7 +880,7 @@ export class UserSchema extends BaseModel {
   @column()
   declare branchMembershipId: string | null
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column.date()
   declare dob: DateTime | null
   @column()
@@ -914,7 +914,7 @@ export class UserSchema extends BaseModel {
   @column()
   declare taskSignAgreement: boolean
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
   @column()
   declare vippsUserId: string | null
 }
@@ -925,7 +925,7 @@ export class WaitingListCustomerSchema extends BaseModel {
   @column()
   declare branchId: string
   @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime | null
+  declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -935,5 +935,5 @@ export class WaitingListCustomerSchema extends BaseModel {
   @column()
   declare phoneNumber: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  declare updatedAt: DateTime
 }

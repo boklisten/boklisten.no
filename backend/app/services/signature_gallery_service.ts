@@ -109,7 +109,7 @@ export const SignatureGalleryService = {
         if (item) {
           signatures.push(item);
         }
-        currentCursor = { createdAt: row.createdAt?.toJSDate() ?? new Date(0), id: row.id };
+        currentCursor = { createdAt: row.createdAt.toJSDate(), id: row.id };
         if (signatures.length >= PAGE_SIZE) {
           return { signatures, nextCursor: SignatureGalleryService.encodeCursor(currentCursor) };
         }

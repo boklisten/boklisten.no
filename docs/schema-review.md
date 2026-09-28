@@ -267,7 +267,7 @@ after a grep over the migrations confirms nothing calls `uuid_generate_*`.
 Order: DB-only, low-risk tightening first, then renames that touch the API, then steps that need
 decisions. Each step is one migration.
 
-### Step 1 — Index every foreign key, drop redundant indexes ◐
+### Step 1 — Index every foreign key, drop redundant indexes ☑
 
 - **Findings:** X1, X2 (X2 only once production index stats are read)
 - **Changes:**
@@ -298,13 +298,30 @@ permission <> 'customer'`, which serves `User.employees()`.
     `orders_placed_updated_at_index` 0, `users_permission_index` 1 (the staff list, now served by
     `users_staff_name_index`). All three drops confirmed. Ready to ship.
 
-### Step 2 — Audit timestamps NOT NULL with defaults ☐
+### Step 2 — Audit timestamps NOT NULL with defaults ◐
 
 - **Findings:** I3
 - **Changes:** `alter column created_at/updated_at set not null, set default now()` on the 23
   tables. Remove the `| null` handling this makes redundant in models and transformers.
 - **API impact:** only where shared types say `createdAt: string | null`; those become non-null.
 - **Survey:** count NULLs per table again (Appendix A.2). The step expects 0.
+- **Done (2026-09-28, on staging, awaiting review):** migration
+  `1791100000000_audit_timestamps_not_null`. The re-survey matched: 23 nullable tables, 0 NULLs.
+  - Decided on the way: the tables that were already `NOT NULL` (`orders`, `customer_items`,
+    `deliveries`, `invoices`, `payments`, and `customer_item_period_extends.created_at`) also get
+    `DEFAULT now()`. Now every application audit column is `NOT NULL DEFAULT now()`;
+    `remember_me_tokens` is left alone.
+  - No `updated_at` trigger; Lucid stays in charge. The one raw update that skipped it
+    (`UserManagementService.setPermission`) now sets `updatedAt`.
+  - The raw inserts in `message_log_service` and `match_repository.attachMatches` no longer set
+    `created_at`/`updated_at` by hand; the DB default fills them in.
+  - Dead fallbacks removed: `Signature.expiresAt`/`expiresAtFor` return `DateTime`,
+    `PublicBlidLookupService.opensAt` takes a `Date` (its "no creation time" test was dropped),
+    and the signature date texts in the API and `describeOutgrownSignature` are plain strings.
+    No shared type had `createdAt: string | null`, so the wire format is unchanged.
+  - Verified: rollback and re-run both work, 1,030 tests pass, a rolled-back raw insert into
+    `matches`/`match_participants`/`match_obligations` without timestamps gets them from the
+    default.
 
 ### Step 3 — `varchar(255)` → `text`, drop `uuid-ossp` ☐
 

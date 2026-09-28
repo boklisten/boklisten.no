@@ -53,7 +53,7 @@ test.group("LoginService.trackActivity()", (group) => {
 
     const after = await storedActivity(user);
     assert.isNotNull(after.lastActiveAt);
-    assert.equal(after.updatedAt?.toMillis(), before.updatedAt?.toMillis());
+    assert.equal(after.updatedAt.toMillis(), before.updatedAt.toMillis());
   });
 
   test("refreshes an activity older than the resolution and keeps a recent one", async ({

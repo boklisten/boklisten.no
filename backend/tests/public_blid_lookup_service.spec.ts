@@ -99,8 +99,4 @@ test.group("PublicBlidLookupService.opensAt()", () => {
   test("a user registered more than 24 hours ago may look up books", ({ assert }) => {
     assert.isNull(PublicBlidLookupService.opensAt(new Date("2026-09-12T11:59:00.000Z"), now));
   });
-
-  test("a user record without a creation time is treated as old", ({ assert }) => {
-    assert.isNull(PublicBlidLookupService.opensAt(undefined, now));
-  });
 });

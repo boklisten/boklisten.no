@@ -10,10 +10,7 @@ import { reconcileSignatureTask, userHasValidSignature } from "#services/signatu
 import { SignatureGalleryService } from "#services/signature_gallery_service";
 import { signValidator } from "#validators/signature";
 
-function formatSignedDate(dateTime: DateTime | null): string | undefined {
-  if (!dateTime) {
-    return undefined;
-  }
+function formatSignedDate(dateTime: DateTime): string {
   return dateTime.toFormat("dd/MM/yyyy");
 }
 
