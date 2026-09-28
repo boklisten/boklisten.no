@@ -128,7 +128,7 @@ test.group("RefundRequestService.send", (group) => {
 
     await RefundRequestService.send({
       order,
-      employeeDetailsId: EMPLOYEE_ID,
+      employeeId: EMPLOYEE_ID,
       amount: 450,
       accountNumber: "12345678903",
       comment: "Kunden har byttet skole",
@@ -142,7 +142,7 @@ test.group("RefundRequestService.send", (group) => {
     assert.include(mail.text, "Kontonummer: 1234.56.78903");
     assert.deepEqual(mail.context, {
       messageType: "refund-request",
-      regardingCustomerDetailsId: CUSTOMER_ID,
+      customerId: CUSTOMER_ID,
     });
   });
 
@@ -154,7 +154,7 @@ test.group("RefundRequestService.send", (group) => {
 
     await RefundRequestService.send({
       order,
-      employeeDetailsId: EMPLOYEE_ID,
+      employeeId: EMPLOYEE_ID,
       amount: 450,
       accountNumber: "12345678903",
       comment: null,

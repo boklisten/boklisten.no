@@ -18,7 +18,7 @@ test.group("PublicBlidLookupService.guardedLookup()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let lookup: sinon.SinonStub;
   let account = 0;
-  let detailsId: string;
+  let userId: string;
   // The real limiter on the in-memory store: the behaviour under test is the counting itself.
   const misses = limiter.use("memory", { requests: 10, duration: "1 day", blockDuration: "1 day" });
 
@@ -26,13 +26,13 @@ test.group("PublicBlidLookupService.guardedLookup()", (group) => {
     sandbox = createSandbox();
     lookup = sandbox.stub(PublicBlidLookupService, "lookup");
     account += 1;
-    detailsId = `5f7f7f7f7f7f7f7f7f7f7f${String(account).padStart(2, "0")}`;
+    userId = `5f7f7f7f7f7f7f7f7f7f7f${String(account).padStart(2, "0")}`;
   });
   group.each.teardown(() => sandbox.restore());
 
   async function lookUp(outcome: PublicBlidLookupResult) {
     lookup.resolves(outcome);
-    return PublicBlidLookupService.guardedLookup({ detailsId, blid: "12345678" }, misses, NOW);
+    return PublicBlidLookupService.guardedLookup({ userId, blid: "12345678" }, misses, NOW);
   }
 
   test("ten unknown IDs in a day suspend the account for 24 hours, even for a known book", async ({
@@ -73,7 +73,7 @@ test.group("PublicBlidLookupService.guardedLookup()", (group) => {
     for (let index = 0; index < 10; index++) {
       await lookUp(UNKNOWN);
     }
-    detailsId = "5f7f7f7f7f7f7f7f7f7f7fff";
+    userId = "5f7f7f7f7f7f7f7f7f7f7fff";
 
     assert.deepEqual(await lookUp(KNOWN), KNOWN);
   });

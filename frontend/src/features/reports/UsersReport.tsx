@@ -6,16 +6,16 @@ import ReportCard from "@/features/reports/ReportCard";
 import useReportDownload from "@/features/reports/useReportDownload";
 import { apiClient } from "@/shared/utils/apiClient";
 
-interface UserDetailsReportQuery {
+interface UsersReportQuery {
   branchFilter?: string[];
 }
 
-export default function UserDetailsReport() {
+export default function UsersReport() {
   const [branchFilter, setBranchFilter] = useState<string[]>([]);
 
   const { download, isLoading } = useReportDownload({
     fetchRows: async () => {
-      const query: UserDetailsReportQuery = {
+      const query: UsersReportQuery = {
         ...(branchFilter.length > 0 && { branchFilter }),
       };
       const rows = await apiClient.api.reports.users({ query });

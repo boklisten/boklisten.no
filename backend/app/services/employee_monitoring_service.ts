@@ -38,13 +38,13 @@ export interface MonitoringDetail {
 
 /** The acting employee, as recorded on a monitoring report. */
 export interface MonitoredEmployee {
-  detailsId: string;
+  userId: string;
   permission: UserPermission;
 }
 
 /** The logged-in user (`ctx.auth.getUserOrFail()`) as the acting employee. */
 export function monitoredEmployee(user: User): MonitoredEmployee {
-  return { detailsId: user.id, permission: user.permission };
+  return { userId: user.id, permission: user.permission };
 }
 
 interface MonitoringReport {
@@ -104,11 +104,11 @@ async function sendReport({
   customerId?: string | null;
   details: MonitoringDetail[];
 }): Promise<void> {
-  const employeeDetail = await User.findOrFail(employee.detailsId);
+  const employeeUser = await User.findOrFail(employee.userId);
   const customer = customerId ? await User.findOrFail(customerId) : null;
   const mail = buildMonitoringMail({
     action,
-    employee: employeeDetail,
+    employee: employeeUser,
     customer,
     details,
     occurredAt: DateTime.now(),
@@ -117,7 +117,7 @@ async function sendReport({
     ...mail,
     context: {
       messageType: "employee-monitoring",
-      regardingCustomerDetailsId: customer?.id ?? null,
+      customerId: customer?.id ?? null,
     },
   });
 }
@@ -142,7 +142,7 @@ export const EmployeeMonitoringService = {
     } catch (error) {
       Sentry.captureException(error, {
         tags: { monitoredAction: input.action },
-        extra: { employeeDetailsId: input.employee.detailsId, customerId: input.customerId },
+        extra: { employeeId: input.employee.userId, customerId: input.customerId },
       });
     }
   },

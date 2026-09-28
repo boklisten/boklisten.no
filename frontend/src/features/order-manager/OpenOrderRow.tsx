@@ -37,11 +37,7 @@ export default function OpenOrderRow({
       }}
     >
       <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
-        {row.customer ? (
-          <CustomerAvatar detailsId={row.customer.id} />
-        ) : (
-          <Avatar alt="" radius="xl" />
-        )}
+        {row.customer ? <CustomerAvatar userId={row.customer.id} /> : <Avatar alt="" radius="xl" />}
         <Stack gap={4} miw={0} flex={1}>
           <Text fw={600} truncate>
             {row.customer?.name ?? "Slettet kunde"}

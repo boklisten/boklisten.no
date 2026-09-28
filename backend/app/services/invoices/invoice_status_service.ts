@@ -42,7 +42,7 @@ async function setBuyout(invoice: Invoice, buyout: boolean) {
  * "invoice-paid" order on the customer, so the books show up as paid for in the order history,
  * and set buyout on every invoiced customer item.
  */
-async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promise<string[]> {
+async function recordPayment(invoice: Invoice, employeeId: string): Promise<string[]> {
   const warnings: string[] = [];
   const customerItems = await customerItemsOf(invoice);
   const unreturned = customerItems.filter((customerItem) => !customerItem.returned);
@@ -80,11 +80,11 @@ async function recordPayment(invoice: Invoice, employeeDetailsId: string): Promi
         branchId: branch,
         customerId: customer,
         byCustomer: false,
-        employeeId: employeeDetailsId,
+        employeeId,
         placed: false,
         notifyByEmail: false,
       });
-      await new OrderPlacedHandler().placeOrder(order, employeeDetailsId);
+      await new OrderPlacedHandler().placeOrder(order, employeeId);
     } catch (error) {
       Sentry.captureException(error);
       warnings.push(
@@ -133,7 +133,7 @@ async function revertPayment(invoice: Invoice): Promise<string[]> {
 export async function setInvoiceStatus(
   invoiceId: string,
   status: InvoiceStatus,
-  employeeDetailsId: string,
+  employeeId: string,
 ): Promise<InvoiceStatusChangeResult> {
   const invoice = await Invoice.getOrFail(invoiceId);
   const previousStatus = invoiceStatus(invoice);
@@ -141,7 +141,7 @@ export async function setInvoiceStatus(
 
   let warnings: string[] = [];
   if (status === "paid" && previousStatus !== "paid") {
-    warnings = await recordPayment(invoice, employeeDetailsId);
+    warnings = await recordPayment(invoice, employeeId);
   } else if (status !== "paid" && previousStatus === "paid") {
     warnings = await revertPayment(invoice);
   }
@@ -156,12 +156,12 @@ export async function setInvoiceStatus(
 export async function setInvoiceStatuses(
   invoiceIds: string[],
   status: InvoiceStatus,
-  employeeDetailsId: string,
+  employeeId: string,
 ): Promise<InvoiceBulkStatusChangeResult> {
   const invoices: InvoiceDto[] = [];
   const warnings: string[] = [];
   for (const invoiceId of invoiceIds) {
-    const result = await setInvoiceStatus(invoiceId, status, employeeDetailsId);
+    const result = await setInvoiceStatus(invoiceId, status, employeeId);
     invoices.push(result.invoice);
     warnings.push(
       ...result.warnings.map((warning) => `${result.invoice.invoiceNumber}: ${warning}`),

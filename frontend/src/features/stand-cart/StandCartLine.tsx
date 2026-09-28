@@ -249,7 +249,7 @@ function LineTitle({ line }: { line: CartLine }) {
       {peer !== null && (
         <PeerBadge>
           Skal mottas fra{" "}
-          <CustomerLink detailsId={peer.deliverFromId} inherit>
+          <CustomerLink userId={peer.deliverFromId} inherit>
             {peer.deliverFromName}
           </CustomerLink>
         </PeerBadge>

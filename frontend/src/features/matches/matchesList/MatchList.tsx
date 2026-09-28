@@ -10,14 +10,14 @@ import { api } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 
 export default function MatchList() {
-  const { detailsId } = useAuth();
+  const { userId } = useAuth();
   const { data, error, isLoading } = useQuery(api.matches.me.queryOptions({}, { staleTime: 5000 }));
 
   if (isLoading) {
     return <Skeleton height={110} />;
   }
 
-  if (error || !data || !detailsId) {
+  if (error || !data || !userId) {
     return <ErrorAlert title="Klarte ikke laste inn dine overleveringer" />;
   }
 
@@ -35,8 +35,6 @@ export default function MatchList() {
   }
 
   return (
-    <MatchOverview
-      viewerMatches={sortByMeeting(data.map((match) => forViewer(match, detailsId)))}
-    />
+    <MatchOverview viewerMatches={sortByMeeting(data.map((match) => forViewer(match, userId)))} />
   );
 }

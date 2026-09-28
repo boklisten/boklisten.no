@@ -17,10 +17,10 @@ import { showErrorNotification } from "@/shared/utils/notifications";
 import { authQueryKey } from "@/features/auth/authQuery";
 import { api } from "@/shared/utils/apiClient";
 
-export default function SignAgreement({ userDetailId }: { userDetailId: string }) {
+export default function SignAgreement({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery(
-    api.signatures.valid.queryOptions({ params: { detailsId: userDetailId } }),
+    api.signatures.valid.queryOptions({ params: { userId } }),
   );
   const signMutation = useMutation(
     api.signatures.sign.mutationOptions({
@@ -28,7 +28,7 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
       onSettled: () => {
         void queryClient.invalidateQueries({
           queryKey: api.signatures.valid.queryKey({
-            params: { detailsId: userDetailId },
+            params: { userId },
           }),
         });
         void queryClient.invalidateQueries({
@@ -45,8 +45,7 @@ export default function SignAgreement({ userDetailId }: { userDetailId: string }
       signingName: data && !data.isUnderage && "name" in data ? (data.name ?? "") : "",
       base64EncodedImage: "",
     },
-    onSubmit: ({ value }) =>
-      signMutation.mutate({ params: { detailsId: userDetailId }, body: value }),
+    onSubmit: ({ value }) => signMutation.mutate({ params: { userId }, body: value }),
   });
 
   if (isLoading) {

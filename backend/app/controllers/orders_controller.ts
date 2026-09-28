@@ -28,7 +28,7 @@ function findOpenOrderItem(order: Order, itemId: string) {
 }
 
 /**
- * Orders as seen by employees (`/orders`, `/users/:detailsId/orders`) and by the
+ * Orders as seen by employees (`/orders`, `/users/:userId/orders`) and by the
  * customer themselves (`/orders/me`).
  */
 export default class OrdersController {
@@ -86,12 +86,12 @@ export default class OrdersController {
 
   /** The order history of a given customer, for the employee view. */
   async forCustomer(ctx: HttpContext) {
-    return OrderHistoryService.getForCustomer(ctx.request.param("detailsId"), "employee");
+    return OrderHistoryService.getForCustomer(ctx.request.param("userId"), "employee");
   }
 
   /** Every placed order of a given customer, as stored. */
   async placedForCustomer(ctx: HttpContext) {
-    const orders = await Order.placedFor(ctx.request.param("detailsId"));
+    const orders = await Order.placedFor(ctx.request.param("userId"));
     return orders.map((order) => order.toDto());
   }
 
@@ -113,10 +113,10 @@ export default class OrdersController {
   }
 
   async cancelItemMe(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const { id: userId } = ctx.auth.getUserOrFail();
     const { orderId, itemId } = await ctx.request.validateUsing(cancelOrderItemValidator);
     const order = await Order.findOptional(orderId);
-    if (!order || order.customerId !== detailsId) {
+    if (!order || order.customerId !== userId) {
       return ctx.response.notFound();
     }
     const orderItem = findOpenOrderItem(order, itemId);
@@ -124,7 +124,7 @@ export default class OrdersController {
       return ctx.response.notFound();
     }
 
-    await assertNotBlockedByUserMatch(detailsId, itemId);
+    await assertNotBlockedByUserMatch(userId, itemId);
 
     const cancelOrder = await OrderCancellationService.cancelOrderItems({
       originalOrder: order,

@@ -41,7 +41,7 @@ test.group("OrderCancellationService", (group) => {
     sandbox.restore();
   });
 
-  function cancel(options: { employeeDetailsId?: string; notifyCustomer: boolean }) {
+  function cancel(options: { employeeId?: string; notifyCustomer: boolean }) {
     return OrderCancellationService.cancelOrderItems({
       originalOrder,
       orderItems: [{ itemId: item.id }],
@@ -100,7 +100,7 @@ test.group("OrderCancellationService", (group) => {
   test("marks admin cancellations with the employee and honours notifyCustomer off", async ({
     assert,
   }) => {
-    const cancelOrder = await cancel({ employeeDetailsId: employee.id, notifyCustomer: false });
+    const cancelOrder = await cancel({ employeeId: employee.id, notifyCustomer: false });
 
     const stored = await Order.getOrFail(cancelOrder.id);
     assert.isFalse(stored.byCustomer);

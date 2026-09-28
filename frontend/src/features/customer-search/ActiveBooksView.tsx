@@ -29,7 +29,7 @@ function DeliverToBadge({ peer }: { peer: PeerBook }) {
       {peer.personId === null ? (
         peer.personName
       ) : (
-        <CustomerLink detailsId={peer.personId} inherit>
+        <CustomerLink userId={peer.personId} inherit>
           {peer.personName}
         </CustomerLink>
       )}
@@ -174,11 +174,11 @@ export default function ActiveBooksView({ customer }: { customer: User }) {
     isError,
   } = useQuery(
     api.customerItems.forCustomer.queryOptions({
-      params: { detailsId: customerId },
+      params: { userId: customerId },
     }),
   );
   const { data: matches } = useQuery(
-    api.matches.forCustomer.queryOptions({ params: { detailsId: customerId } }),
+    api.matches.forCustomer.queryOptions({ params: { userId: customerId } }),
   );
 
   if (isPending) {

@@ -8,7 +8,7 @@ import type Order from "#models/order";
 import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
 import { OrderItemValidator } from "#services/orders/validation/order_item_validator";
 import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
-import { OrderUserDetailValidator } from "#services/orders/validation/order_user_detail_validator";
+import { OrderUserValidator } from "#services/orders/validation/order_user_validator";
 import { OrderValidator } from "#services/orders/validation/order_validator";
 import { BlError } from "#shared/bl-error";
 import type { Branch } from "#shared/branch";
@@ -19,7 +19,7 @@ test.group("OrderValidator", (group) => {
   let testOrder: Order;
   let testBranch: Branch;
 
-  const orderUserDetailValidator = new OrderUserDetailValidator();
+  const orderUserValidator = new OrderUserValidator();
 
   const orderItemValidator = new OrderItemValidator();
   const orderPlacedValidator = new OrderPlacedValidator();
@@ -28,7 +28,7 @@ test.group("OrderValidator", (group) => {
     orderItemValidator,
     orderPlacedValidator,
     orderFieldValidator,
-    orderUserDetailValidator,
+    orderUserValidator,
   );
 
   // @ts-expect-error fixme: auto ignored
@@ -38,7 +38,7 @@ test.group("OrderValidator", (group) => {
   let orderPlacedShouldResolve;
 
   // @ts-expect-error fixme: auto ignored
-  let orderUserDetailValidatorShouldResolve;
+  let orderUserValidatorShouldResolve;
   let sandbox: sinon.SinonSandbox;
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
@@ -60,10 +60,10 @@ test.group("OrderValidator", (group) => {
       return Promise.resolve(true);
     });
 
-    sandbox.stub(orderUserDetailValidator, "validate").callsFake(() => {
+    sandbox.stub(orderUserValidator, "validate").callsFake(() => {
       // @ts-expect-error fixme: auto ignored
-      if (!orderUserDetailValidatorShouldResolve) {
-        return Promise.reject(new BlError("validation of UserDetail failed"));
+      if (!orderUserValidatorShouldResolve) {
+        return Promise.reject(new BlError("validation of user failed"));
       }
 
       return Promise.resolve(true);
@@ -71,7 +71,7 @@ test.group("OrderValidator", (group) => {
 
     orderItemShouldResolve = true;
     orderPlacedShouldResolve = true;
-    orderUserDetailValidatorShouldResolve = true;
+    orderUserValidatorShouldResolve = true;
 
     testOrder = mock<Order>({
       id: "order1",
@@ -171,13 +171,13 @@ test.group("OrderValidator", (group) => {
     );
   });
 
-  test("should reject if orderUserDetailValidator rejects", async ({ assert }) => {
-    orderUserDetailValidatorShouldResolve = false;
+  test("should reject if orderUserValidator rejects", async ({ assert }) => {
+    orderUserValidatorShouldResolve = false;
 
     return assert.rejects(
       () => orderValidator.validate(testOrder, false),
       BlError,
-      /validation of UserDetail failed/,
+      /validation of user failed/,
     );
   });
 });

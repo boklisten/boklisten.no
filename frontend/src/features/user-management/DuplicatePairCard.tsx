@@ -47,7 +47,7 @@ function UserSummary({ user, branchName }: { user: DuplicateUserSummary; branchN
       <CountsLine user={user} />
       <TanStackButton
         to="/admin/kasse"
-        search={{ kunde: user.detailsId }}
+        search={{ kunde: user.userId }}
         variant="subtle"
         size="compact-sm"
         leftSection={<IconExternalLink size={16} />}

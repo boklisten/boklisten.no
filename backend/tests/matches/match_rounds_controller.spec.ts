@@ -59,11 +59,11 @@ test.group("match round management", (group) => {
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const sender = await MatchParticipant.create({
       matchId: match.id,
-      userDetailId: "5d765db5fc8c47001c408d81",
+      userId: "5d765db5fc8c47001c408d81",
     });
     const receiver = await MatchParticipant.create({
       matchId: match.id,
-      userDetailId: "5d765db5fc8c47001c408d82",
+      userId: "5d765db5fc8c47001c408d82",
     });
     const obligation = await MatchObligation.create({
       matchId: match.id,
@@ -74,8 +74,8 @@ test.group("match round management", (group) => {
     const handover = await BookHandover.create({
       blid: "BL0001234567",
       itemId: "5b6441c4d2e733002fae89a6",
-      fromUserDetailId: "5d765db5fc8c47001c408d81",
-      toUserDetailId: "5d765db5fc8c47001c408d82",
+      fromUserId: "5d765db5fc8c47001c408d81",
+      toUserId: "5d765db5fc8c47001c408d82",
       occurredAt: DateTime.now(),
       dischargesSenderObligationId: obligation.id,
     });
@@ -129,7 +129,7 @@ test.group("match round management", (group) => {
       userMatchLocations: ["Biblioteket", "Aulaen"],
     });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
-    await MatchParticipant.create({ matchId: match.id, userDetailId: "5d765db5fc8c47001c408d81" });
+    await MatchParticipant.create({ matchId: match.id, userId: "5d765db5fc8c47001c408d81" });
 
     await MatchRepository.deleteMatches(round.id);
 
@@ -148,11 +148,11 @@ test.group("match round management", (group) => {
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const sender = await MatchParticipant.create({
       matchId: match.id,
-      userDetailId: "5d765db5fc8c47001c408d81",
+      userId: "5d765db5fc8c47001c408d81",
     });
     const receiver = await MatchParticipant.create({
       matchId: match.id,
-      userDetailId: "5d765db5fc8c47001c408d82",
+      userId: "5d765db5fc8c47001c408d82",
     });
     const obligation = await MatchObligation.create({
       matchId: match.id,
@@ -163,8 +163,8 @@ test.group("match round management", (group) => {
     const handover = await BookHandover.create({
       blid: "BL0001234567",
       itemId: "5b6441c4d2e733002fae89a6",
-      fromUserDetailId: "5d765db5fc8c47001c408d81",
-      toUserDetailId: "5d765db5fc8c47001c408d82",
+      fromUserId: "5d765db5fc8c47001c408d81",
+      toUserId: "5d765db5fc8c47001c408d82",
       occurredAt: DateTime.now(),
       dischargesSenderObligationId: obligation.id,
     });
@@ -180,11 +180,11 @@ test.group("match round management", (group) => {
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const sender = await MatchParticipant.create({
       matchId: match.id,
-      userDetailId: "5d765db5fc8c47001c408d81",
+      userId: "5d765db5fc8c47001c408d81",
     });
     const receiver = await MatchParticipant.create({
       matchId: match.id,
-      userDetailId: "5d765db5fc8c47001c408d82",
+      userId: "5d765db5fc8c47001c408d82",
     });
     const outgoing = await MatchObligation.create({
       matchId: match.id,
@@ -202,8 +202,8 @@ test.group("match round management", (group) => {
     await BookHandover.create({
       blid: "BL0001234567",
       itemId: "5b6441c4d2e733002fae89a6",
-      fromUserDetailId: "5d765db5fc8c47001c408d81",
-      toUserDetailId: "5d765db5fc8c47001c408d82",
+      fromUserId: "5d765db5fc8c47001c408d81",
+      toUserId: "5d765db5fc8c47001c408d82",
       occurredAt: DateTime.now(),
       dischargesSenderObligationId: outgoing.id,
       dischargesReceiverObligationId: incoming.id,

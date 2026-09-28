@@ -38,8 +38,8 @@ function handover(input: {
   return MatchRepository.recordHandover({
     blid: nextBlid(),
     itemId: ITEM_X,
-    fromUserDetailId: input.from,
-    toUserDetailId: input.to,
+    fromUserId: input.from,
+    toUserId: input.to,
     occurredAt: DateTime.now(),
     orderId: null,
     dischargesSenderObligationId: input.sender ?? null,
@@ -78,8 +78,8 @@ test.group("computeMatchStatistics", (group) => {
       meetingLocation: "Biblioteket",
     });
     const [sender, receiver] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: senderId },
-      { matchId: match.id, userDetailId: receiverId },
+      { matchId: match.id, userId: senderId },
+      { matchId: match.id, userId: receiverId },
     ]);
     return MatchObligation.create({
       matchId: match.id,

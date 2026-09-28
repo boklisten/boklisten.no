@@ -8,7 +8,7 @@ import { useState } from "react";
 import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
 import UserDangerZone from "@/features/user/UserDangerZone";
 import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
-import UserInfoFields, { userDetailsBody } from "@/features/user/UserInfoFields";
+import UserInfoFields, { userFieldsBody } from "@/features/user/UserInfoFields";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
@@ -43,33 +43,33 @@ function isSavingUnderageWithoutGuardian(values: UserInfoFieldValues): boolean {
 }
 
 export default function AdministrateUserForm({
-  userDetail,
+  user,
   onSaved,
   onDeleted,
   onMerged,
 }: {
-  userDetail: User;
+  user: User;
   onSaved?: (() => void) | undefined;
   onDeleted?: (() => void) | undefined;
-  onMerged?: ((toDetailsId: string) => void) | undefined;
+  onMerged?: ((toUserId: string) => void) | undefined;
 }) {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const defaultValues: AdministrateUserFormValues = {
-    email: userDetail.email,
-    emailConfirmed: userDetail.emailConfirmed,
-    name: userDetail.name,
-    phoneNumber: userDetail.phone ?? "",
-    address: userDetail.address,
+    email: user.email,
+    emailConfirmed: user.emailConfirmed,
+    name: user.name,
+    phoneNumber: user.phone ?? "",
+    address: user.address,
     postal: {
-      code: userDetail.postCode,
-      city: userDetail.postCity,
+      code: user.postCode,
+      city: user.postCity,
     },
-    birthday: userDetail.dob ?? "",
-    guardianName: userDetail.guardianName ?? "",
-    guardianEmail: userDetail.guardianEmail ?? "",
-    guardianPhoneNumber: userDetail.guardianPhone ?? "",
-    branchMembership: userDetail.branchMembershipId ?? "",
+    birthday: user.dob ?? "",
+    guardianName: user.guardianName ?? "",
+    guardianEmail: user.guardianEmail ?? "",
+    guardianPhoneNumber: user.guardianPhone ?? "",
+    branchMembership: user.branchMembershipId ?? "",
   };
   const [confirmingWithoutGuardian, setConfirmingWithoutGuardian] = useState(false);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
@@ -93,10 +93,10 @@ export default function AdministrateUserForm({
         setConfirmingWithoutGuardian(false);
         return Promise.all([
           queryClient.invalidateQueries({
-            queryKey: api.users.show.queryKey({ params: { detailsId: userDetail.id } }),
+            queryKey: api.users.show.queryKey({ params: { userId: user.id } }),
           }),
           queryClient.invalidateQueries({
-            queryKey: api.signatures.show.queryKey({ params: { detailsId: userDetail.id } }),
+            queryKey: api.signatures.show.queryKey({ params: { userId: user.id } }),
           }),
         ]);
       },
@@ -104,9 +104,9 @@ export default function AdministrateUserForm({
   );
   const save = (values: AdministrateUserFormValues) =>
     updateUserMutation.mutate({
-      params: { detailsId: userDetail.id },
+      params: { userId: user.id },
       body: {
-        ...userDetailsBody(values),
+        ...userFieldsBody(values),
         email: values.email,
         emailConfirmed: values.emailConfirmed,
       },
@@ -172,7 +172,7 @@ export default function AdministrateUserForm({
       </form.AppField>
       <Space />
       {/* Above the customer's own details: the contract is the first thing to check on them */}
-      <SignatureStatusBanner userDetail={userDetail} inForm />
+      <SignatureStatusBanner user={user} inForm />
       <UserInfoFields
         perspective="administrate"
         fields={createFieldMap(defaultValues)}
@@ -220,7 +220,7 @@ export default function AdministrateUserForm({
       {isAdmin && (
         <>
           <Space />
-          <UserDangerZone userDetail={userDetail} onDeleted={onDeleted} onMerged={onMerged} />
+          <UserDangerZone user={user} onDeleted={onDeleted} onMerged={onMerged} />
         </>
       )}
     </Stack>

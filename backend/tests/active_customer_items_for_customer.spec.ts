@@ -11,14 +11,14 @@ import { createItem } from "#tests/item_fixtures";
 import { mock } from "#tests/test-doubles";
 import { createUser, userDouble } from "#tests/user_fixtures";
 
-const DETAILS_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
+const USER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 const OTHER_ID = "5f7f7f7f7f7f7f7f7f7f7f70";
 const ITEM_ID = fixtureId("a1");
 const BRANCH_ID = fixtureId("b1");
 
-function contextFor(detailsId: string) {
+function contextFor(userId: string) {
   return mock<HttpContext>({
-    request: { param: () => detailsId },
+    request: { param: () => userId },
     auth: { getUserOrFail: () => userDouble({ id: "someone-else", permission: "employee" }) },
   });
 }
@@ -26,7 +26,7 @@ function contextFor(detailsId: string) {
 const book = (overrides: Partial<Parameters<typeof createCustomerItem>[0]> = {}) =>
   createCustomerItem({
     itemId: ITEM_ID,
-    customerId: DETAILS_ID,
+    customerId: USER_ID,
     handoutBranchId: BRANCH_ID,
     ...overrides,
   });
@@ -38,7 +38,7 @@ test.group("CustomerItemsController.forCustomer", (group) => {
   group.each.setup(async () => {
     await createItem({ id: ITEM_ID, title: "Mønster 1T" });
     await createBranch({ id: BRANCH_ID, name: "Ullern VGS" });
-    await createUser({ id: DETAILS_ID });
+    await createUser({ id: USER_ID });
     await createUser({ id: OTHER_ID });
   });
 
@@ -54,7 +54,7 @@ test.group("CustomerItemsController.forCustomer", (group) => {
     await book({ cancel: true });
     await book({ buyback: true });
 
-    const result = await controller.forCustomer(contextFor(DETAILS_ID));
+    const result = await controller.forCustomer(contextFor(USER_ID));
 
     assert.deepEqual(
       result.map((row) => row.id),
@@ -68,7 +68,7 @@ test.group("CustomerItemsController.forCustomer", (group) => {
       deadline: DateTime.fromISO("2027-09-01"),
     });
 
-    const result = await controller.forCustomer(contextFor(DETAILS_ID));
+    const result = await controller.forCustomer(contextFor(USER_ID));
 
     assert.lengthOf(result, 1);
     assert.include(result[0], {

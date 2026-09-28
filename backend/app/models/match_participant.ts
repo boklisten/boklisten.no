@@ -9,6 +9,6 @@ export default class MatchParticipant extends MatchParticipantSchema {
   declare match: BelongsTo<typeof Match>;
 
   get isStand(): boolean {
-    return this.userDetailId === null;
+    return this.userId === null;
   }
 }

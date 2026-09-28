@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import CustomerItemsReport from "@/features/reports/CustomerItemsReport";
 import OrdersReport from "@/features/reports/OrdersReport";
 import PaymentsReport from "@/features/reports/PaymentsReport";
-import UserDetailsReport from "@/features/reports/UserDetailsReport";
+import UsersReport from "@/features/reports/UsersReport";
 
 export const Route = createFileRoute("/(administrasjon)/admin/database/rapporter")({
   component: DatabaseReportsPage,
@@ -18,7 +18,7 @@ function DatabaseReportsPage() {
         <CustomerItemsReport />
         <OrdersReport />
         <PaymentsReport />
-        <UserDetailsReport />
+        <UsersReport />
       </Stack>
     </Container>
   );

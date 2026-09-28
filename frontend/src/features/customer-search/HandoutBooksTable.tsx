@@ -89,7 +89,7 @@ function TitleNotes({ row }: { row: HandoutRow }) {
       {id === null ? (
         name
       ) : (
-        <CustomerLink detailsId={id} inherit>
+        <CustomerLink userId={id} inherit>
           {name}
         </CustomerLink>
       )}

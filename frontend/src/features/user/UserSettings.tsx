@@ -26,7 +26,7 @@ function UserSettings() {
     return null;
   }
 
-  return <UserSettingsForm userDetail={data} />;
+  return <UserSettingsForm user={data} />;
 }
 
 export default UserSettings;

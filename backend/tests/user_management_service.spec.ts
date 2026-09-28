@@ -33,7 +33,7 @@ async function seedMatch(customerIds: string[]) {
   const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
   const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
   const participants = await MatchParticipant.createMany(
-    customerIds.map((userDetailId) => ({ matchId: match.id, userDetailId })),
+    customerIds.map((userId) => ({ matchId: match.id, userId })),
   );
   return { match, participants };
 }
@@ -52,8 +52,8 @@ test.group("UserManagementService.mergeUsers", (group) => {
     await BookHandover.create({
       blid: "BL0001234567",
       itemId: ITEM_X,
-      fromUserDetailId: FROM,
-      toUserDetailId: OTHER,
+      fromUserId: FROM,
+      toUserId: OTHER,
       occurredAt: DateTime.now(),
     });
 
@@ -61,15 +61,15 @@ test.group("UserManagementService.mergeUsers", (group) => {
 
     const participants = await MatchParticipant.query().where("matchId", match.id);
     assert.sameMembers(
-      participants.map((participant) => participant.userDetailId),
+      participants.map((participant) => participant.userId),
       [TO, OTHER],
     );
-    assert.equal((await BookHandover.firstOrFail()).fromUserDetailId, TO);
+    assert.equal((await BookHandover.firstOrFail()).fromUserId, TO);
   });
 
   test("moves signatures onto the surviving user", async ({ assert }) => {
     await Signature.create({
-      customerDetailsId: FROM,
+      customerId: FROM,
       signingName: "Test Testersen",
       signedByGuardian: false,
       image: Buffer.from("webp"),
@@ -77,7 +77,7 @@ test.group("UserManagementService.mergeUsers", (group) => {
 
     await UserManagementService.mergeUsers(FROM, TO);
 
-    assert.equal((await Signature.firstOrFail()).customerDetailsId, TO);
+    assert.equal((await Signature.firstOrFail()).customerId, TO);
   });
 
   test("when both users are in the same match, obligations move to the surviving participant", async ({
@@ -96,7 +96,7 @@ test.group("UserManagementService.mergeUsers", (group) => {
 
     const remaining = await MatchParticipant.query().where("matchId", match.id);
     assert.sameMembers(
-      remaining.map((participant) => participant.userDetailId),
+      remaining.map((participant) => participant.userId),
       [TO, OTHER],
     );
     const updatedObligation = await MatchObligation.findOrFail(obligationToOther.id);
@@ -119,7 +119,7 @@ test.group("UserManagementService.mergeUsers", (group) => {
 
     const remaining = await MatchParticipant.query().where("matchId", match.id);
     assert.lengthOf(remaining, 1);
-    assert.equal(remaining[0]?.userDetailId, TO);
+    assert.equal(remaining[0]?.userId, TO);
     assert.lengthOf(await MatchObligation.query().where("matchId", match.id), 0);
   });
 
@@ -169,15 +169,15 @@ test.group("UserManagementService.mergeUsers", (group) => {
   });
 
   test("removes the source user's verification and password reset rows", async ({ assert }) => {
-    await EmailVerification.create({ userDetailId: FROM });
-    await EmailVerification.create({ userDetailId: TO });
-    await PasswordReset.create({ userDetailId: FROM, tokenHash: "hash" });
+    await EmailVerification.create({ userId: FROM });
+    await EmailVerification.create({ userId: TO });
+    await PasswordReset.create({ userId: FROM, tokenHash: "hash" });
 
     await UserManagementService.mergeUsers(FROM, TO);
 
-    assert.lengthOf(await EmailVerification.query().where("userDetailId", FROM), 0);
-    assert.lengthOf(await EmailVerification.query().where("userDetailId", TO), 1);
-    assert.lengthOf(await PasswordReset.query().where("userDetailId", FROM), 0);
+    assert.lengthOf(await EmailVerification.query().where("userId", FROM), 0);
+    assert.lengthOf(await EmailVerification.query().where("userId", TO), 1);
+    assert.lengthOf(await PasswordReset.query().where("userId", FROM), 0);
   });
 
   test("refuses to merge a user with itself", async ({ assert }) => {
@@ -209,10 +209,10 @@ test.group("UserManagementService.deleteUser", (group) => {
   group.each.teardown(() => sandbox.restore());
 
   test("deletes the user with their auth artifacts and signatures", async ({ assert }) => {
-    await EmailVerification.create({ userDetailId: FROM });
-    await PasswordReset.create({ userDetailId: FROM, tokenHash: "hash" });
+    await EmailVerification.create({ userId: FROM });
+    await PasswordReset.create({ userId: FROM, tokenHash: "hash" });
     await Signature.create({
-      customerDetailsId: FROM,
+      customerId: FROM,
       signingName: "Test Testersen",
       signedByGuardian: false,
       image: Buffer.from("webp"),
@@ -221,9 +221,9 @@ test.group("UserManagementService.deleteUser", (group) => {
     await UserManagementService.deleteUser(FROM);
 
     assert.isNull(await User.find(FROM));
-    assert.lengthOf(await EmailVerification.query().where("userDetailId", FROM), 0);
-    assert.lengthOf(await PasswordReset.query().where("userDetailId", FROM), 0);
-    assert.lengthOf(await Signature.query().where("customerDetailsId", FROM), 0);
+    assert.lengthOf(await EmailVerification.query().where("userId", FROM), 0);
+    assert.lengthOf(await PasswordReset.query().where("userId", FROM), 0);
+    assert.lengthOf(await Signature.query().where("customerId", FROM), 0);
   });
 
   test("refuses while the customer has a match obligation no handover has discharged", async ({
@@ -260,8 +260,8 @@ test.group("UserManagementService.deleteUser", (group) => {
     await BookHandover.create({
       blid: "BL0001234567",
       itemId: ITEM_X,
-      fromUserDetailId: FROM,
-      toUserDetailId: OTHER,
+      fromUserId: FROM,
+      toUserId: OTHER,
       occurredAt: DateTime.now(),
       dischargesSenderObligationId: obligation.id,
       dischargesReceiverObligationId: obligation.id,
@@ -272,11 +272,11 @@ test.group("UserManagementService.deleteUser", (group) => {
     assert.isNotNull(await Match.find(match.id));
     const remaining = await MatchParticipant.query().where("matchId", match.id);
     assert.deepEqual(
-      remaining.map((participant) => participant.userDetailId),
+      remaining.map((participant) => participant.userId),
       [OTHER],
     );
     const handover = await BookHandover.query().where("itemId", ITEM_X).firstOrFail();
-    assert.isNull(handover.fromUserDetailId);
+    assert.isNull(handover.fromUserId);
     assert.isNull(handover.dischargesSenderObligationId);
   });
 

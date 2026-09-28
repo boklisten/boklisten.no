@@ -23,7 +23,7 @@ export interface MatchPerson {
  * one for people, one for titles — instead of two per match.
  */
 export interface MatchLookups {
-  /** UserDetail id → contact details. */
+  /** User id → contact details. */
   people: Map<string, MatchPerson>;
   /** Item id → title. */
   titles: Map<string, string>;
@@ -48,8 +48,8 @@ function toHandoverDto(handover: BookHandover, lookups: MatchLookups): HandoverD
     id: String(handover.id),
     blid: handover.blid,
     occurredAt: handover.occurredAt.toISO() ?? "",
-    from: toParty(handover.fromUserDetailId, lookups),
-    to: toParty(handover.toUserDetailId, lookups),
+    from: toParty(handover.fromUserId, lookups),
+    to: toParty(handover.toUserId, lookups),
   };
 }
 
@@ -67,8 +67,8 @@ function toObligationDto(
     itemId: obligation.itemId,
     // Same fallback the statistics use: a deleted item must not render as a blank row.
     title: lookups.titles.get(obligation.itemId) ?? "Ukjent bok",
-    sender: toParty(obligation.sender.userDetailId, lookups),
-    receiver: toParty(obligation.receiver.userDetailId, lookups),
+    sender: toParty(obligation.sender.userId, lookups),
+    receiver: toParty(obligation.receiver.userId, lookups),
     senderHandover: senderHandover ? toHandoverDto(senderHandover, lookups) : null,
     receiverHandover: receiverHandover ? toHandoverDto(receiverHandover, lookups) : null,
   };
@@ -98,9 +98,7 @@ export function toMatchDtos(
     isStandMatch: match.participants.some((participant) => participant.isStand),
     meetingLocation: match.meetingLocation,
     meetingTime: match.meetingTime?.toISO() ?? null,
-    participants: match.participants.map((participant) =>
-      toParty(participant.userDetailId, lookups),
-    ),
+    participants: match.participants.map((participant) => toParty(participant.userId, lookups)),
     obligations: match.obligations.map((obligation) =>
       toObligationDto(obligation, bySenderHalf, byReceiverHalf, lookups),
     ),

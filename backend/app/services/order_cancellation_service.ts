@@ -13,13 +13,13 @@ export const OrderCancellationService = {
   async cancelOrderItems({
     originalOrder,
     orderItems,
-    employeeDetailsId,
+    employeeId,
     notifyCustomer,
   }: {
     originalOrder: Pick<Order, "id" | "branchId" | "customerId">;
     orderItems: CancellableOrderItem[];
     /** Set when an employee cancels on the customer's behalf; omit for customer-initiated cancels */
-    employeeDetailsId?: string;
+    employeeId?: string;
     notifyCustomer: boolean;
   }) {
     const cancelOrder = await Order.createWithItems({
@@ -27,8 +27,8 @@ export const OrderCancellationService = {
       amount: 0,
       branchId: originalOrder.branchId,
       customerId: originalOrder.customerId,
-      byCustomer: !employeeDetailsId,
-      employeeId: employeeDetailsId ?? null,
+      byCustomer: !employeeId,
+      employeeId: employeeId ?? null,
       notifyByEmail: notifyCustomer,
       orderItems: orderItems.map((orderItem) => ({
         movedFromOrderId: originalOrder.id,

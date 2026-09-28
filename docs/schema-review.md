@@ -381,7 +381,7 @@ permission <> 'customer'`, which serves `User.employees()`.
   - Verified: rollback and re-run both work, 1,030 tests pass. Filialer: a privatist and a vgs
     branch both show their period section and save (200).
 
-### Step 5 — Fractions to `numeric` ◐
+### Step 5 — Fractions to `numeric` ☑
 
 - **Findings:** T2
 - **Changes:** switch the float columns to `numeric(4,3)` / `numeric(6,3)` and add the range CHECKs.
@@ -390,7 +390,7 @@ permission <> 'customer'`, which serves `User.employees()`.
 - **Survey:** max scale per column (branch_periods percentage has at most 3 decimals). Check no
   value falls outside 0–1.
 - **Decision:** confirm 3 decimals is enough for every percentage (the smallest value is 0.001).
-- **Done (2026-09-28, on staging, awaiting review):** migration `1791400000000_fractions_as_numeric`.
+- **Done (2026-09-28, shipped to production in af43333f):** migration `1791400000000_fractions_as_numeric`.
   The re-survey matched T2 except for one value: Akademiet Sandnes had `sell_percentage 0.333333`.
   - Decided on the way (Adrian): fractions keep **whole percents**, the precision the admin
     sliders (0.01 steps) and the whole-percent discount field use. So the fractions become
@@ -410,14 +410,14 @@ permission <> 'customer'`, which serves `User.employees()`.
     (PATCH 200, reads back `0.35`, then reset to `0.33`). Item PATCH with weight 0 returns 422,
     and `0.7805`/`0.175` are stored as `0.781`/`0.18`.
 
-### Step 6 — `opening_hours` reserved-word rename ☐
+### Step 6 — `opening_hours` reserved-word rename ◐
 
 - **Findings:** N2
 - **Changes:** `from`/`to` → `opens_at`/`closes_at` in the DB, the model, the shared type, the
   Åpningstider tab and the public branch page.
 - **API impact:** yes, the field names change.
 
-### Step 7 — Rename user references (auth + signatures) ☐
+### Step 7 — Rename user references (auth + signatures) ◐
 
 - **Findings:** N1 (part 1)
 - **Changes:** `email_verifications.user_detail_id`, `password_resets.user_detail_id` →
@@ -425,7 +425,7 @@ permission <> 'customer'`, which serves `User.employees()`.
   constraints and indexes so their names follow the columns.
 - **API impact:** the signature endpoints/types (1 frontend file).
 
-### Step 8 — Rename user references (matching + handovers) ☐
+### Step 8 — Rename user references (matching + handovers) ◐
 
 - **Findings:** N1 (part 2)
 - **Changes:** `match_participants.user_detail_id` → `user_id`.
@@ -434,13 +434,36 @@ permission <> 'customer'`, which serves `User.employees()`.
 - **API impact:** the match types. The match generator and the overleveringer page are the main
   code paths; Playwright on `/admin/overleveringer`.
 
-### Step 9 — Rename user references (message log) ☐
+### Step 9 — Rename user references (message log) ◐
 
 - **Findings:** N1 (part 3)
 - **Changes:** `messages.regarding_customer_details_id` → `customer_id`.
   `sendouts.initiated_by_details_id` → `initiated_by_id`. Includes the index
   `messages_regarding_customer_details_id_created_at_index`.
 - **API impact:** the message-log types (the logg page and the Meldinger tab).
+
+**Steps 6–9 done together (2026-09-28, on staging, awaiting review):** one migration,
+`1791500000000_rename_reserved_and_user_columns`, for all four steps (Adrian: one migration).
+
+- The re-survey matched N1/N2. Every column in the four steps was renamed, together with its FK,
+  its PG 18 `*_not_null` constraint, its indexes and the `match_participants` unique constraint
+  (`match_participants_single_stand` keeps its name). Catalog-only, no table rewrite. No jsonb
+  data or session holds the old names.
+- `users.branch_membership_id` keeps its name (Adrian).
+- API: opening hours are `opensAt`/`closesAt`. Adrian widened the scope to **every**
+  legacy `*DetailId`/`*DetailsId` name in code, not only the columns: the `:detailsId` route
+  params (`/users/:userId/...`, `/signatures/:userId/...`,
+  `/users/merge_preview/:fromUserId/:toUserId`), `useAuth().detailsId` → `userId`, the merge
+  body `fromUserId`/`toUserId`, `employeeDetailsId` → `employeeId` and the
+  `/signering/$userId` route param. The URLs themselves don't change. The message DTO field
+  `regardingCustomerDetailsId` is now `customerId`, and the signature one `customerId`.
+- Verified: rollback and re-run both work, 1,030 tests pass. Playwright: an opening hour
+  created through the API shows on the Åpningstider tab and the public branch page (with its
+  JSON-LD event), then is deleted through the tab. Logg, Meldinger, Kasse customer, signature
+  gallery, `/signering/<id>` and the overleveringer list (round 2, 69 cards) load with no API
+  errors, and their responses have no `detailsId` left. The overleveringer list logs a
+  nested-`<a>` hydration warning in `MatchListItemCard`; that component wasn't changed here, so
+  the warning predates this step.
 
 ### Step 10 — `match_rounds`: junction tables and `time` columns ☐
 

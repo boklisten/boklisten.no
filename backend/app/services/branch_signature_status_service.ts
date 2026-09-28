@@ -38,7 +38,7 @@ export const BranchSignatureStatusService = {
     const members = await User.membersOf(scopeIds).select("id", "dob");
     const newestSignatures = await Signature.newestPerCustomer(members.map((member) => member.id));
     const signatureByCustomer = new Map(
-      newestSignatures.map((signature) => [signature.customerDetailsId, signature]),
+      newestSignatures.map((signature) => [signature.customerId, signature]),
     );
     const rows = members.map((member) => ({
       dob: member.dob,

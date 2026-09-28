@@ -32,7 +32,7 @@ const COLUMNS: BranchBooksDetailColumn<OrderedBookDetail>[] = [
     header: "Navn",
     render: (row) =>
       row.customerId ? (
-        <CustomerLink detailsId={row.customerId} fw={400}>
+        <CustomerLink userId={row.customerId} fw={400}>
           {row.customerName ?? "Ukjent kunde"}
         </CustomerLink>
       ) : (

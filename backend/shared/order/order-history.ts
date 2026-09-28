@@ -10,7 +10,7 @@ import type { Period } from "#shared/period";
 export type OrderPaymentStatus = "paid" | "unpaid" | "refunded" | "free" | "invoice";
 
 export interface OrderHistoryParty {
-  detailsId: string;
+  userId: string;
   name: string;
 }
 

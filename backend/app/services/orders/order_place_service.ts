@@ -145,8 +145,8 @@ export class OrderPlaceService {
       await MatchRepository.recordHandover({
         blid: customerItem.blid,
         itemId: customerItem.itemId,
-        fromUserDetailId: customerItem.customerId,
-        toUserDetailId: null,
+        fromUserId: customerItem.customerId,
+        toUserId: null,
         occurredAt: DateTime.now(),
         orderId,
         dischargesSenderObligationId: obligation?.id ?? null,
@@ -165,8 +165,8 @@ export class OrderPlaceService {
       await MatchRepository.recordHandover({
         blid: customerItem.blid,
         itemId: customerItem.itemId,
-        fromUserDetailId: null,
-        toUserDetailId: customerItem.customerId,
+        fromUserId: null,
+        toUserId: customerItem.customerId,
         occurredAt: DateTime.now(),
         orderId,
         dischargesSenderObligationId: null,

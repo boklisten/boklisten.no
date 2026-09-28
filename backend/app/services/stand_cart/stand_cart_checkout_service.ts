@@ -295,7 +295,7 @@ async function employeeOf(order: Order): Promise<MonitoredEmployee> {
     throw new Error(`stand order ${order.id} has no employee`);
   }
   const user = await User.find(order.employeeId);
-  return { detailsId: order.employeeId, permission: user?.permission ?? USER_PERMISSION.EMPLOYEE };
+  return { userId: order.employeeId, permission: user?.permission ?? USER_PERMISSION.EMPLOYEE };
 }
 
 async function settleAuthorizedVipps(order: Order): Promise<StandCartCheckoutState> {
@@ -399,7 +399,7 @@ export const StandCartCheckoutService = {
       customerId: customer.id,
       placed: false,
       byCustomer: false,
-      employeeId: employee.detailsId,
+      employeeId: employee.userId,
       notifyByEmail: request.notifyByEmail,
     });
     if (bringDelivery && request.delivery) {
@@ -417,7 +417,7 @@ export const StandCartCheckoutService = {
         if (shortfall > 0) {
           await RefundRequestService.send({
             order: placed,
-            employeeDetailsId: employee.detailsId,
+            employeeId: employee.userId,
             amount: shortfall,
             accountNumber: null,
             comment: null,
@@ -430,7 +430,7 @@ export const StandCartCheckoutService = {
         const placed = await StandCartPlacement.place(order, employee, now);
         await RefundRequestService.send({
           order: placed,
-          employeeDetailsId: employee.detailsId,
+          employeeId: employee.userId,
           amount: -total,
           accountNumber: money.accountNumber,
           comment: money.comment,

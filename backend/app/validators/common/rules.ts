@@ -8,13 +8,13 @@ export const uniqueEmail = vine.createRule(async (value, options, field) => {
   if (typeof value !== "string") {
     return;
   }
-  const foundUserDetail = await User.byEmail(value);
-  const detailsId: string | null = field.meta["detailsId"] ?? null;
-  if (foundUserDetail?.id === detailsId) {
+  const existingUser = await User.byEmail(value);
+  const userId: string | null = field.meta["userId"] ?? null;
+  if (existingUser?.id === userId) {
     return;
   }
 
-  if (foundUserDetail) {
+  if (existingUser) {
     field.report(
       `Det eksisterer allerede en konto med e-postadressen ${value}`,
       "unique_email",
@@ -27,13 +27,13 @@ export const uniquePhoneNumber = vine.createRule(async (value, options, field) =
   if (typeof value !== "string") {
     return;
   }
-  const foundUserDetail = await User.byPhone(value);
-  const detailsId: string | null = field.meta["detailsId"] ?? null;
-  if (foundUserDetail?.id === detailsId) {
+  const existingUser = await User.byPhone(value);
+  const userId: string | null = field.meta["userId"] ?? null;
+  if (existingUser?.id === userId) {
     return;
   }
 
-  if (foundUserDetail) {
+  if (existingUser) {
     field.report(
       `Det eksisterer allerede en konto med telefonnummeret ${value}`,
       "unique_phone",

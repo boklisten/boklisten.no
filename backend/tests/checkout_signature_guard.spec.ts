@@ -28,7 +28,7 @@ function underage() {
 
 function createSignature(signingName: string, signedByGuardian: boolean) {
   return Signature.create({
-    customerDetailsId: CUSTOMER_ID,
+    customerId: CUSTOMER_ID,
     signingName,
     signedByGuardian,
     image: Buffer.from("webp"),

@@ -55,7 +55,7 @@ import { Route as offentligKasseBekreftRouteImport } from './routes/(offentlig)/
 import { Route as offentligKasseSigneringRouteImport } from './routes/(offentlig)/kasse/signering'
 import { Route as offentligOverleveringerIndexRouteImport } from './routes/(offentlig)/overleveringer/index'
 import { Route as offentligOverleveringerMatchIdRouteImport } from './routes/(offentlig)/overleveringer/$matchId'
-import { Route as offentligSigneringUserDetailIdRouteImport } from './routes/(offentlig)/signering.$userDetailId'
+import { Route as offentligSigneringUserIdRouteImport } from './routes/(offentlig)/signering.$userId'
 import { Route as administrasjonAdminDatabaseBokerRouteImport } from './routes/(administrasjon)/admin/database/boker'
 import { Route as administrasjonAdminDatabaseBrukereRouteImport } from './routes/(administrasjon)/admin/database/brukere'
 import { Route as administrasjonAdminDatabaseDynamisk_innholdRouteImport } from './routes/(administrasjon)/admin/database/dynamisk_innhold'
@@ -324,10 +324,10 @@ const offentligOverleveringerMatchIdRoute =
     path: '/$matchId',
     getParentRoute: () => offentligOverleveringerRouteRoute,
   } as any)
-const offentligSigneringUserDetailIdRoute =
-  offentligSigneringUserDetailIdRouteImport.update({
-    id: '/signering/$userDetailId',
-    path: '/signering/$userDetailId',
+const offentligSigneringUserIdRoute =
+  offentligSigneringUserIdRouteImport.update({
+    id: '/signering/$userId',
+    path: '/signering/$userId',
     getParentRoute: () => offentligRouteRoute,
   } as any)
 const administrasjonAdminDatabaseBokerRoute =
@@ -504,7 +504,7 @@ export interface FileRoutesByFullPath {
   '/kasse/bekreft': typeof offentligKasseBekreftRoute
   '/kasse/signering': typeof offentligKasseSigneringRoute
   '/overleveringer/$matchId': typeof offentligOverleveringerMatchIdRoute
-  '/signering/$userDetailId': typeof offentligSigneringUserDetailIdRoute
+  '/signering/$userId': typeof offentligSigneringUserIdRoute
   '/admin/': typeof administrasjonAdminIndexRoute
   '/bestilling/': typeof offentligBestillingIndexRoute
   '/kasse/': typeof offentligKasseIndexRoute
@@ -571,7 +571,7 @@ export interface FileRoutesByTo {
   '/kasse/bekreft': typeof offentligKasseBekreftRoute
   '/kasse/signering': typeof offentligKasseSigneringRoute
   '/overleveringer/$matchId': typeof offentligOverleveringerMatchIdRoute
-  '/signering/$userDetailId': typeof offentligSigneringUserDetailIdRoute
+  '/signering/$userId': typeof offentligSigneringUserIdRoute
   '/admin': typeof administrasjonAdminIndexRoute
   '/bestilling': typeof offentligBestillingIndexRoute
   '/kasse': typeof offentligKasseIndexRoute
@@ -643,7 +643,7 @@ export interface FileRoutesById {
   '/(offentlig)/kasse/bekreft': typeof offentligKasseBekreftRoute
   '/(offentlig)/kasse/signering': typeof offentligKasseSigneringRoute
   '/(offentlig)/overleveringer/$matchId': typeof offentligOverleveringerMatchIdRoute
-  '/(offentlig)/signering/$userDetailId': typeof offentligSigneringUserDetailIdRoute
+  '/(offentlig)/signering/$userId': typeof offentligSigneringUserIdRoute
   '/(administrasjon)/admin/': typeof administrasjonAdminIndexRoute
   '/(offentlig)/bestilling/': typeof offentligBestillingIndexRoute
   '/(offentlig)/kasse/': typeof offentligKasseIndexRoute
@@ -715,7 +715,7 @@ export interface FileRouteTypes {
     | '/kasse/bekreft'
     | '/kasse/signering'
     | '/overleveringer/$matchId'
-    | '/signering/$userDetailId'
+    | '/signering/$userId'
     | '/admin/'
     | '/bestilling/'
     | '/kasse/'
@@ -782,7 +782,7 @@ export interface FileRouteTypes {
     | '/kasse/bekreft'
     | '/kasse/signering'
     | '/overleveringer/$matchId'
-    | '/signering/$userDetailId'
+    | '/signering/$userId'
     | '/admin'
     | '/bestilling'
     | '/kasse'
@@ -853,7 +853,7 @@ export interface FileRouteTypes {
     | '/(offentlig)/kasse/bekreft'
     | '/(offentlig)/kasse/signering'
     | '/(offentlig)/overleveringer/$matchId'
-    | '/(offentlig)/signering/$userDetailId'
+    | '/(offentlig)/signering/$userId'
     | '/(administrasjon)/admin/'
     | '/(offentlig)/bestilling/'
     | '/(offentlig)/kasse/'
@@ -1217,11 +1217,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligOverleveringerMatchIdRouteImport
       parentRoute: typeof offentligOverleveringerRouteRoute
     }
-    '/(offentlig)/signering/$userDetailId': {
-      id: '/(offentlig)/signering/$userDetailId'
-      path: '/signering/$userDetailId'
-      fullPath: '/signering/$userDetailId'
-      preLoaderRoute: typeof offentligSigneringUserDetailIdRouteImport
+    '/(offentlig)/signering/$userId': {
+      id: '/(offentlig)/signering/$userId'
+      path: '/signering/$userId'
+      fullPath: '/signering/$userId'
+      preLoaderRoute: typeof offentligSigneringUserIdRouteImport
       parentRoute: typeof offentligRouteRoute
     }
     '/(administrasjon)/admin/database/boker': {
@@ -1474,7 +1474,7 @@ interface offentligRouteRouteChildren {
   offentligBestillingBranchIdRoute: typeof offentligBestillingBranchIdRoute
   offentligKasseBekreftRoute: typeof offentligKasseBekreftRoute
   offentligKasseSigneringRoute: typeof offentligKasseSigneringRoute
-  offentligSigneringUserDetailIdRoute: typeof offentligSigneringUserDetailIdRoute
+  offentligSigneringUserIdRoute: typeof offentligSigneringUserIdRoute
   offentligBestillingIndexRoute: typeof offentligBestillingIndexRoute
   offentligKasseIndexRoute: typeof offentligKasseIndexRoute
   offentligAuthPermissionDeniedRoute: typeof offentligAuthPermissionDeniedRoute
@@ -1503,7 +1503,7 @@ const offentligRouteRouteChildren: offentligRouteRouteChildren = {
   offentligBestillingBranchIdRoute: offentligBestillingBranchIdRoute,
   offentligKasseBekreftRoute: offentligKasseBekreftRoute,
   offentligKasseSigneringRoute: offentligKasseSigneringRoute,
-  offentligSigneringUserDetailIdRoute: offentligSigneringUserDetailIdRoute,
+  offentligSigneringUserIdRoute: offentligSigneringUserIdRoute,
   offentligBestillingIndexRoute: offentligBestillingIndexRoute,
   offentligKasseIndexRoute: offentligKasseIndexRoute,
   offentligAuthPermissionDeniedRoute: offentligAuthPermissionDeniedRoute,

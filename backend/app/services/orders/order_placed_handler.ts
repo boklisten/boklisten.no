@@ -29,14 +29,14 @@ export class OrderPlacedHandler {
       orderItemMovedFromOrderHandler ?? new OrderItemMovedFromOrderHandler();
   }
 
-  public async placeOrder(order: Order, detailsId: string): Promise<Order> {
+  public async placeOrder(order: Order, userId: string): Promise<Order> {
     try {
       await this.paymentHandler.confirmPayments(order);
 
       order.placed = true;
       await order.save();
 
-      await this.updateCustomerItems(order, detailsId);
+      await this.updateCustomerItems(order, userId);
       await this.orderItemMovedFromOrderHandler.updateOrderItems(order);
       const customer = order.customerId ? await User.find(order.customerId) : null;
       if (customer) {
@@ -59,7 +59,7 @@ export class OrderPlacedHandler {
     }
   }
 
-  private async updateCustomerItems(order: Order, detailsId: string): Promise<void> {
+  private async updateCustomerItems(order: Order, userId: string): Promise<void> {
     for (const orderItem of order.orderItems) {
       const { customerItemId } = orderItem;
       if (customerItemId === null) {
@@ -83,12 +83,7 @@ export class OrderPlacedHandler {
           break;
         }
         case "return": {
-          await this.customerItemHandler.return(
-            customerItemId,
-            orderItem,
-            order.branchId,
-            detailsId,
-          );
+          await this.customerItemHandler.return(customerItemId, orderItem, order.branchId, userId);
           break;
         }
         default: {

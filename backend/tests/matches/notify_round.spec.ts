@@ -24,9 +24,7 @@ const D = "5d765db5fc8c47001c408d84";
 async function seedRoundWithUserMatch(customerIds: string[], status = "active") {
   const round = await createTestRound({ name: "Round", standLocation: "Kantina", status });
   const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
-  await MatchParticipant.createMany(
-    customerIds.map((userDetailId) => ({ matchId: match.id, userDetailId })),
-  );
+  await MatchParticipant.createMany(customerIds.map((userId) => ({ matchId: match.id, userId })));
   return round;
 }
 

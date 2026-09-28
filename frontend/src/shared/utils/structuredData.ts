@@ -103,14 +103,16 @@ export function branchSchema({
   pathname: string;
   openingHours: readonly {
     id: string | number;
-    from: Date | string | null;
-    to: Date | string | null;
+    opensAt: Date | string | null;
+    closesAt: Date | string | null;
   }[];
 }) {
   const url = absoluteUrl(pathname);
   const datedOpeningHours = openingHours.filter(
-    (openingHour): openingHour is typeof openingHour & { from: Date | string; to: Date | string } =>
-      openingHour.from !== null && openingHour.to !== null,
+    (
+      openingHour,
+    ): openingHour is typeof openingHour & { opensAt: Date | string; closesAt: Date | string } =>
+      openingHour.opensAt !== null && openingHour.closesAt !== null,
   );
 
   return {
@@ -136,8 +138,8 @@ export function branchSchema({
         "@id": `${url}#stand-${openingHour.id}`,
         name: `Boklisten på ${branchName}`,
         description: `Utdeling, innsamling og kjøp av pensumbøker på stand ved ${branchName}.`,
-        startDate: new Date(openingHour.from).toISOString(),
-        endDate: new Date(openingHour.to).toISOString(),
+        startDate: new Date(openingHour.opensAt).toISOString(),
+        endDate: new Date(openingHour.closesAt).toISOString(),
         eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
         eventStatus: "https://schema.org/EventScheduled",
         location: { "@id": `${url}#place` },

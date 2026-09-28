@@ -29,9 +29,9 @@ const inactiveBlidFeedback = "Boka du har skannet er ikke aktiv. Vennligst lever
 const genericExpiredDeadlineFeedback =
   "Boka du har skannet har en utgått frist og kan ikke overleveres. Eieren må beholde boka og vil få faktura. Kom på stand for å få boka du skal ha.";
 
-async function expiredDeadlineFeedback(ownerDetailsId: string): Promise<string> {
-  const ownerName = await User.namesByIds([ownerDetailsId])
-    .then((names) => names.get(ownerDetailsId))
+async function expiredDeadlineFeedback(ownerId: string): Promise<string> {
+  const ownerName = await User.namesByIds([ownerId])
+    .then((names) => names.get(ownerId))
     .catch(() => {});
   if (!ownerName) {
     return genericExpiredDeadlineFeedback;
@@ -72,12 +72,12 @@ interface ReceiverRentOrder {
 
 /** The receiver's live rent order for the title, which the new match-receive order moves from. */
 async function findReceiverRentOrder(
-  receiverUserDetailId: string,
+  receiverUserId: string,
   itemId: string,
 ): Promise<ReceiverRentOrder | null> {
   return OrderItem.whereOpen(db.from("order_items"), ["rent"])
     .join("orders", "orders.id", "order_items.order_id")
-    .where("orders.customer_id", receiverUserDetailId)
+    .where("orders.customer_id", receiverUserId)
     .where("orders.placed", true)
     .whereIn("order_items.item_id", getEquivalentItemIds(itemId))
     .orderBy("orders.created_at")
@@ -91,7 +91,7 @@ async function findReceiverRentOrder(
 
 async function createMatchReceiveOrder(
   customerItem: CustomerItem,
-  userDetailId: string,
+  userId: string,
   rentOrder: ReceiverRentOrder,
 ): Promise<NewOrder> {
   const branchRentDeadline = rentOrder.periodTo
@@ -110,7 +110,7 @@ async function createMatchReceiveOrder(
     placed: true,
     amount: 0,
     branchId: rentOrder.branchId,
-    customerId: userDetailId,
+    customerId: userId,
     byCustomer: true,
     orderItems: [
       {
@@ -131,12 +131,12 @@ async function createMatchReceiveOrder(
   };
 }
 
-function createMatchDeliverOrder(customerItem: CustomerItem, userDetailId: string): NewOrder {
+function createMatchDeliverOrder(customerItem: CustomerItem, userId: string): NewOrder {
   return {
     placed: true,
     amount: 0,
     branchId: customerItem.handoutBranchId,
-    customerId: userDetailId,
+    customerId: userId,
     byCustomer: true,
     orderItems: [
       {
@@ -155,14 +155,10 @@ function createMatchDeliverOrder(customerItem: CustomerItem, userDetailId: strin
 
 async function placeReceiverOrder(
   customerItem: CustomerItem,
-  receiverUserDetailId: string,
+  receiverUserId: string,
   rentOrder: ReceiverRentOrder,
 ): Promise<Order> {
-  const receiverOrder = await createMatchReceiveOrder(
-    customerItem,
-    receiverUserDetailId,
-    rentOrder,
-  );
+  const receiverOrder = await createMatchReceiveOrder(customerItem, receiverUserId, rentOrder);
 
   const placedReceiverOrder = await Order.createWithItems(receiverOrder);
 
@@ -186,9 +182,9 @@ async function recordReceiverCustomerItem(placedReceiverOrder: Order): Promise<v
 
 async function returnSenderCustomerItem(
   customerItem: CustomerItem,
-  senderUserDetailId: string,
+  senderUserId: string,
 ): Promise<void> {
-  const senderOrder = createMatchDeliverOrder(customerItem, senderUserDetailId);
+  const senderOrder = createMatchDeliverOrder(customerItem, senderUserId);
 
   const placedSenderOrder = await Order.createWithItems(senderOrder);
   await new OrderValidator().validate(placedSenderOrder, false);
@@ -197,7 +193,7 @@ async function returnSenderCustomerItem(
   await customerItem.save();
 
   await extendRemainingCopyDeadlines(
-    senderUserDetailId,
+    senderUserId,
     customerItem.itemId,
     customerItem.deadline.toISODate()!,
   );
@@ -212,10 +208,7 @@ async function returnSenderCustomerItem(
  * the receiver half is satisfied by any copy of the title, from anyone. The two halves therefore
  * belong to different matches, which is the whole point of recording them separately.
  */
-export async function recordTransfer(
-  detailsId: string,
-  { blid }: Infer<typeof matchTransferSchema>,
-) {
+export async function recordTransfer(userId: string, { blid }: Infer<typeof matchTransferSchema>) {
   if (!BlidService.isValidBlid(blid)) {
     return { feedback: invalidBlidFeedback };
   }
@@ -227,7 +220,7 @@ export async function recordTransfer(
     return { feedback: inactiveBlidFeedback };
   }
 
-  if (ownerId === detailsId) {
+  if (ownerId === userId) {
     return { feedback: alreadyYoursFeedback };
   }
 
@@ -236,18 +229,18 @@ export async function recordTransfer(
   }
 
   const receiverObligation = await MatchRepository.findReceiverObligation(
-    detailsId,
+    userId,
     customerItem.itemId,
   );
   if (!receiverObligation) {
     return {
-      feedback: (await MatchRepository.hasReceivedTitle(detailsId, customerItem.itemId))
+      feedback: (await MatchRepository.hasReceivedTitle(userId, customerItem.itemId))
         ? alreadyReceivedFeedback
         : notOrderedFeedback,
     };
   }
 
-  const rentOrder = await findReceiverRentOrder(detailsId, customerItem.itemId);
+  const rentOrder = await findReceiverRentOrder(userId, customerItem.itemId);
   if (!rentOrder) {
     return { feedback: noActiveOrderFeedback };
   }
@@ -260,8 +253,8 @@ export async function recordTransfer(
     MatchRepository.recordHandover({
       blid: handoverBlid,
       itemId: customerItem.itemId,
-      fromUserDetailId: ownerId,
-      toUserDetailId: detailsId,
+      fromUserId: ownerId,
+      toUserId: userId,
       occurredAt: DateTime.now(),
       orderId: null,
       dischargesSenderObligationId,
@@ -290,7 +283,7 @@ export async function recordTransfer(
   let placedReceiverOrder: Order;
   try {
     await returnSenderCustomerItem(customerItem, ownerId);
-    placedReceiverOrder = await placeReceiverOrder(customerItem, detailsId, rentOrder);
+    placedReceiverOrder = await placeReceiverOrder(customerItem, userId, rentOrder);
     await recordReceiverCustomerItem(placedReceiverOrder);
   } catch (error) {
     // The books did not actually change owner; take the discharge back so the match still shows
@@ -307,7 +300,7 @@ export async function recordTransfer(
     Sentry.captureException(error);
   }
 
-  const expectedSender = receiverObligation.sender.userDetailId;
+  const expectedSender = receiverObligation.sender.userId;
   return {
     feedback:
       expectedSender !== null && expectedSender !== ownerId

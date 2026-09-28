@@ -24,7 +24,7 @@ import { createUser, userDouble } from "#tests/user_fixtures";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
 const ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f31";
-const EMPLOYEE = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
+const EMPLOYEE = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
 const SEMESTER_END = "2026-12-20";
 
 /**
@@ -53,7 +53,7 @@ async function orderWith(orderItems: Partial<OrderLine>[], amount = 0): Promise<
     id: ORDER_ID,
     customerId: CUSTOMER_ID,
     branchId: BRANCH_ID,
-    employeeId: EMPLOYEE.detailsId,
+    employeeId: EMPLOYEE.userId,
     placed: false,
     byCustomer: false,
     amount,
@@ -87,7 +87,7 @@ test.group("StandCartPlacement.place", (group) => {
   group.each.setup(async () => {
     await createBranch({ id: BRANCH_ID });
     await createUser({ id: CUSTOMER_ID });
-    await createUser({ id: EMPLOYEE.detailsId });
+    await createUser({ id: EMPLOYEE.userId });
     await createItem({ id: "item1", title: "Sinus 1T" });
     await createItem({ id: "item2", title: "Kosmos SF" });
     sandbox = createSandbox();
@@ -130,7 +130,7 @@ test.group("StandCartPlacement.place", (group) => {
         customerId: CUSTOMER_ID,
         type: "rent",
         handoutBranchId: BRANCH_ID,
-        handoutEmployeeId: EMPLOYEE.detailsId,
+        handoutEmployeeId: EMPLOYEE.userId,
       },
     );
     assert.equal(created[0]?.deadline.toISODate(), SEMESTER_END);
@@ -139,7 +139,7 @@ test.group("StandCartPlacement.place", (group) => {
     assert.isNull(stored.orderItems[1]?.customerItemId);
     assert.equal(placeOrder.firstCall.args[0].orderItems[0].customerItemId, created[0]?.id);
     // The employee, not the customer: the handler names them on returned books
-    assert.equal(placeOrder.firstCall.args[1], EMPLOYEE.detailsId);
+    assert.equal(placeOrder.firstCall.args[1], EMPLOYEE.userId);
     assert.isTrue(placed.placed);
   });
 
@@ -157,8 +157,8 @@ test.group("StandCartPlacement.place", (group) => {
     assert.include(recordHandover.firstCall.args[0], {
       blid: "12345678",
       itemId: "item1",
-      fromUserDetailId: null,
-      toUserDetailId: CUSTOMER_ID,
+      fromUserId: null,
+      toUserId: CUSTOMER_ID,
       orderId: ORDER_ID,
     });
   });
@@ -178,8 +178,8 @@ test.group("StandCartPlacement.place", (group) => {
     assert.equal(recordHandover.callCount, 1);
     assert.include(recordHandover.firstCall.args[0], {
       blid: "12345678",
-      fromUserDetailId: CUSTOMER_ID,
-      toUserDetailId: null,
+      fromUserId: CUSTOMER_ID,
+      toUserId: null,
     });
   });
 

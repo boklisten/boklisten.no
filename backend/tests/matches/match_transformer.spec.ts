@@ -51,8 +51,8 @@ async function seedUserMatch() {
     meetingTime: DateTime.fromISO("2026-06-01T10:00:00Z"),
   });
   const [a, b] = await MatchParticipant.createMany([
-    { matchId: match.id, userDetailId: A },
-    { matchId: match.id, userDetailId: B },
+    { matchId: match.id, userId: A },
+    { matchId: match.id, userId: B },
   ]);
   const obligation = await MatchObligation.create({
     matchId: match.id,
@@ -99,8 +99,8 @@ test.group("toMatchDtos", (group) => {
     const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Kantina" });
     const [customer, stand] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: A },
-      { matchId: match.id, userDetailId: null },
+      { matchId: match.id, userId: A },
+      { matchId: match.id, userId: null },
     ]);
     await MatchObligation.create({
       matchId: match.id,
@@ -122,8 +122,8 @@ test.group("toMatchDtos", (group) => {
     await MatchRepository.recordHandover({
       blid: OWN_COPY,
       itemId: ITEM_X,
-      fromUserDetailId: A,
-      toUserDetailId: B,
+      fromUserId: A,
+      toUserId: B,
       occurredAt: DateTime.fromISO("2026-06-01T10:05:00Z"),
       orderId: null,
       dischargesSenderObligationId: obligation.id,
@@ -151,8 +151,8 @@ test.group("toMatchDtos", (group) => {
     await MatchRepository.recordHandover({
       blid: OTHER_COPY,
       itemId: ITEM_X,
-      fromUserDetailId: C,
-      toUserDetailId: B,
+      fromUserId: C,
+      toUserId: B,
       occurredAt: DateTime.fromISO("2026-06-01T10:05:00Z"),
       orderId: null,
       dischargesSenderObligationId: null,
@@ -180,8 +180,8 @@ test.group("toMatchDtos", (group) => {
     const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const [a, b] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: UNKNOWN },
-      { matchId: match.id, userDetailId: B },
+      { matchId: match.id, userId: UNKNOWN },
+      { matchId: match.id, userId: B },
     ]);
     await MatchObligation.create({
       matchId: match.id,

@@ -140,14 +140,14 @@ test.group("BranchSignatureStatusService.getStatus", (group) => {
     await createUser({ dob: yearsAgo(30), branchMembershipId: null });
     // An old guardian-signed signature that the newer valid one must shadow.
     await Signature.create({
-      customerDetailsId: signedMemberId,
+      customerId: signedMemberId,
       signingName: "Guardian Guardiansen",
       signedByGuardian: true,
       image: Buffer.from("webp"),
       createdAt: DateTime.now().minus({ years: 1 }),
     });
     await Signature.create({
-      customerDetailsId: signedMemberId,
+      customerId: signedMemberId,
       signingName: "Medlem Medlemsen",
       signedByGuardian: false,
       image: Buffer.from("webp"),

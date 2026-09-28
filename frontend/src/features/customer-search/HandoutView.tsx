@@ -21,13 +21,13 @@ export default function HandoutView({ customer }: { customer: User }) {
   const queryClient = useQueryClient();
   const { data: orders } = useQuery(
     api.orders.placedForCustomer.queryOptions(
-      { params: { detailsId: customer.id } },
+      { params: { userId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
   const { data: matchData } = useQuery(
     api.matches.forCustomer.queryOptions(
-      { params: { detailsId: customer.id } },
+      { params: { userId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );

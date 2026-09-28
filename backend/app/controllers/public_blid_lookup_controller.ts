@@ -12,7 +12,7 @@ export default class PublicBlidLookupController {
       return { status: "notOpenYet", opensAt: opensAt.toISOString() };
     }
     return PublicBlidLookupService.guardedLookup(
-      { detailsId: user.id, blid: ctx.request.param("blid") },
+      { userId: user.id, blid: ctx.request.param("blid") },
       publicBlidMissLimiter,
     );
   }

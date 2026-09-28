@@ -5,7 +5,7 @@ import { Activity, useState } from "react";
 
 import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
 import UserInfoFields, {
-  userDetailsBody,
+  userFieldsBody,
   userInfoFieldDefaultValues,
 } from "@/features/user/UserInfoFields";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
@@ -69,7 +69,7 @@ export default function SignupForm() {
     defaultValues,
     onSubmit: ({ value }) =>
       registerMutation.mutate({
-        body: { email: value.email, password: value.password, ...userDetailsBody(value) },
+        body: { email: value.email, password: value.password, ...userFieldsBody(value) },
       }),
     validators: {
       onSubmit: ({ value }) => {

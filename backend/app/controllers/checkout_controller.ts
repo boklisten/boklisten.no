@@ -30,15 +30,15 @@ export default class CheckoutController {
     return { nextStep: "payment", token, checkoutFrontendUrl } as const;
   }
   async confirm(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const { id: userId } = ctx.auth.getUserOrFail();
     const orderId = String(ctx.request.param("orderId"));
     await Order.whileLocked(orderId, async () => {
       const order = await Order.getOrFail(orderId);
-      if (detailsId !== order.customerId || order.checkoutState || order.amount > 0) {
+      if (userId !== order.customerId || order.checkoutState || order.amount > 0) {
         throw new Error("You do not have permission to confirm this order");
       }
       if (!order.placed) {
-        await new OrderPlacedHandler().placeOrder(order, detailsId);
+        await new OrderPlacedHandler().placeOrder(order, userId);
       }
     });
   }
@@ -52,10 +52,10 @@ export default class CheckoutController {
   }
 
   async status(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const { id: userId } = ctx.auth.getUserOrFail();
     const orderId = ctx.request.param("orderId");
     const order = await Order.getOrFail(orderId);
-    if (detailsId !== order.customerId) {
+    if (userId !== order.customerId) {
       throw new Error("You do not have permission to access this payment information");
     }
 

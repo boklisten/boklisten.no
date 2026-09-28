@@ -160,25 +160,25 @@ export default function CustomerSearchTabs({
   // Polling lives here rather than only in the panels so the counts stay live on every tab.
   const { data: orders } = useQuery(
     api.orders.placedForCustomer.queryOptions(
-      { params: { detailsId: customer.id } },
+      { params: { userId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
   const { data: matches } = useQuery(
     api.matches.forCustomer.queryOptions(
-      { params: { detailsId: customer.id } },
+      { params: { userId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
   const { data: activeBooks } = useQuery(
     api.customerItems.forCustomer.queryOptions(
-      { params: { detailsId: customer.id } },
+      { params: { userId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
   const { data: messageLog } = useQuery(
     api.messageLogs.forCustomer.queryOptions(
-      { params: { detailsId: customer.id } },
+      { params: { userId: customer.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );

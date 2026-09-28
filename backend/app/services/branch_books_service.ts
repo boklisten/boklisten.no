@@ -353,12 +353,12 @@ export const BranchBooksService = {
     branchId,
     filter,
     notifyCustomers,
-    employeeDetailsId,
+    employeeId,
   }: {
     branchId: string;
     filter: BranchBooksFilter & { orderItemIds?: number[] };
     notifyCustomers: boolean;
-    employeeDetailsId: string;
+    employeeId: string;
   }) {
     const { scopeIds } = await resolveScope(branchId);
     const lines: { orderId: string; itemId: string }[] = await orderedBooksQuery(
@@ -385,7 +385,7 @@ export const BranchBooksService = {
       await OrderCancellationService.cancelOrderItems({
         originalOrder: order,
         orderItems: cancelItems,
-        employeeDetailsId,
+        employeeId,
         notifyCustomer: notifyCustomers,
       });
     }

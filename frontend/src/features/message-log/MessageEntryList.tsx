@@ -137,11 +137,11 @@ function MessageEntry({
             </Text>
           )}
           <EventTrail entry={entry} />
-          {withCustomerLink && entry.regardingCustomerDetailsId && (
+          {withCustomerLink && entry.customerId && (
             <EntityLink
               size="sm"
               to="/admin/kasse"
-              search={{ kunde: entry.regardingCustomerDetailsId, visning: "meldinger" }}
+              search={{ kunde: entry.customerId, visning: "meldinger" }}
             >
               Gå til kunden
             </EntityLink>

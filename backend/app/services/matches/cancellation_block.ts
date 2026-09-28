@@ -21,10 +21,10 @@ export async function itemIdsInActiveUserMatches(customerId: string): Promise<Se
     .join("match_rounds", "match_rounds.id", "matches.round_id")
     .where("match_rounds.status", "active")
     .whereExists((query) => {
-      void participantsOfMatch(query).where("match_participants.user_detail_id", customerId);
+      void participantsOfMatch(query).where("match_participants.user_id", customerId);
     })
     .whereNotExists((query) => {
-      void participantsOfMatch(query).whereNull("match_participants.user_detail_id");
+      void participantsOfMatch(query).whereNull("match_participants.user_id");
     })
     .distinct("match_obligations.item_id as itemId");
   return new Set(rows.flatMap(({ itemId }) => getEquivalentItemIds(itemId)));

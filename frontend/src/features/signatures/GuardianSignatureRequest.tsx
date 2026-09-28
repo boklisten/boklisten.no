@@ -11,14 +11,14 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
  * How an underage customer gets the agreement signed: the registered guardian is sent a signing
  * link. Shared by the tasks page and the checkout's signing step so the two never drift apart.
  */
-export default function GuardianSignatureRequest({ userDetail }: { userDetail: User }) {
+export default function GuardianSignatureRequest({ user }: { user: User }) {
   const requestSignatureMutation = useMutation(
     api.signatures.sendLinkMe.mutationOptions({
       onSuccess: () => showSuccessNotification("Signaturforespørsel har blitt sendt!"),
       onError: () => showErrorNotification("Klarte ikke sende signaturforespørsel"),
     }),
   );
-  const guardianName = userDetail.guardianName;
+  const guardianName = user.guardianName;
   return (
     <Stack>
       <InfoAlert title="Send signaturforespørsel til foresatt">
@@ -33,11 +33,11 @@ export default function GuardianSignatureRequest({ userDetail }: { userDetail: U
           </Group>
           <Group gap={5}>
             <Text>Telefonnummer:</Text>
-            <Text fw="bold">{userDetail.guardianPhone}</Text>
+            <Text fw="bold">{user.guardianPhone}</Text>
           </Group>
           <Group gap={5}>
             <Text>E-post:</Text>
-            <Text fw="bold">{userDetail.guardianEmail}</Text>
+            <Text fw="bold">{user.guardianEmail}</Text>
           </Group>
           <Text fs="italic" size="sm" mt="xs">
             Du kan endre foresatt-opplysninger i brukerinnstillinger

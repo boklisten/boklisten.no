@@ -111,7 +111,7 @@ test.group("OrderHistoryService.presentOrderHistory() – header", () => {
     assert.equal(entry?.id, "order-1");
     assert.equal(entry?.creationTime, T1.toISOString());
     assert.deepEqual(entry?.branch, { id: BRANCH, name: "Ullern VGS" });
-    assert.deepEqual(entry?.employee, { detailsId: EMPLOYEE, name: "Emil Ansatt" });
+    assert.deepEqual(entry?.employee, { userId: EMPLOYEE, name: "Emil Ansatt" });
     assert.isFalse(entry?.byCustomer);
     assert.isFalse(entry?.emailSuppressed);
     assert.isNull(entry?.checkoutState);
@@ -332,8 +332,8 @@ test.group("OrderHistoryService.presentOrderHistory() – match transfers", () =
         handovers: [
           {
             blid: BLID,
-            fromUserDetailId: PETRA,
-            toUserDetailId: IDA,
+            fromUserId: PETRA,
+            toUserId: IDA,
             occurredAt,
             orderId: "receive-order",
           },
@@ -343,7 +343,7 @@ test.group("OrderHistoryService.presentOrderHistory() – match transfers", () =
 
     assert.deepEqual(entry?.items[0]?.transfer, {
       direction: "received",
-      counterparty: { detailsId: PETRA, name: "Petra" },
+      counterparty: { userId: PETRA, name: "Petra" },
       time: occurredAt.toISOString(),
     });
   });
@@ -359,8 +359,8 @@ test.group("OrderHistoryService.presentOrderHistory() – match transfers", () =
         handovers: [
           {
             blid: BLID,
-            fromUserDetailId: IDA,
-            toUserDetailId: PETRA,
+            fromUserId: IDA,
+            toUserId: PETRA,
             occurredAt,
             // The handover row points at the receiver's order, never the sender's.
             orderId: "petras-receive-order",
@@ -371,7 +371,7 @@ test.group("OrderHistoryService.presentOrderHistory() – match transfers", () =
 
     assert.deepEqual(entry?.items[0]?.transfer, {
       direction: "delivered",
-      counterparty: { detailsId: PETRA, name: "Petra" },
+      counterparty: { userId: PETRA, name: "Petra" },
       time: occurredAt.toISOString(),
     });
   });
@@ -392,7 +392,7 @@ test.group("OrderHistoryService.presentOrderHistory() – match transfers", () =
 
     assert.deepEqual(entry?.items[0]?.transfer, {
       direction: "received",
-      counterparty: { detailsId: PETRA, name: "Petra" },
+      counterparty: { userId: PETRA, name: "Petra" },
       time: T1.toISOString(),
     });
   });
@@ -425,8 +425,8 @@ test.group("OrderHistoryService.presentOrderHistory() – match transfers", () =
         handovers: [
           {
             blid: "87654321",
-            fromUserDetailId: IDA,
-            toUserDetailId: PETRA,
+            fromUserId: IDA,
+            toUserId: PETRA,
             occurredAt: T1,
             orderId: "petras-receive-order",
           },
@@ -500,7 +500,7 @@ async function seedOrderWorld() {
 test.group("OrderHistoryService.deleteOrder()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
-  const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
+  const employee = { userId: EMPLOYEE, permission: "employee" as const };
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
@@ -545,7 +545,7 @@ test.group("OrderHistoryService.deleteOrder()", (group) => {
 test.group("OrderHistoryService.updateBranch()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
-  const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
+  const employee = { userId: EMPLOYEE, permission: "employee" as const };
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
@@ -619,7 +619,7 @@ async function orderWith(line: Partial<OrderItemDto> = {}) {
 test.group("OrderHistoryService.updateItemDeadline()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
-  const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
+  const employee = { userId: EMPLOYEE, permission: "employee" as const };
   const NEW_DEADLINE = "2027-12-01";
 
   group.each.setup(() => testUtils.db().truncate());
@@ -774,7 +774,7 @@ test.group("OrderHistoryService.getForCustomer()", (group) => {
     const [entry] = await OrderHistoryService.getForCustomer(customer.id, "customer");
 
     assert.deepEqual(entry?.items[0]?.transfer?.counterparty, {
-      detailsId: petra.id,
+      userId: petra.id,
       name: "Petra",
     });
   });

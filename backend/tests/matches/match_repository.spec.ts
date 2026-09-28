@@ -75,8 +75,8 @@ test.group("match participants", (group) => {
     const round = await createRound();
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: A },
-      { matchId: match.id, userDetailId: B },
+      { matchId: match.id, userId: A },
+      { matchId: match.id, userId: B },
     ]);
 
     const loaded = await Match.query().where("id", match.id).preload("participants").firstOrFail();
@@ -88,8 +88,8 @@ test.group("match participants", (group) => {
     const round = await createRound();
     const match = await Match.create({ roundId: round.id, meetingLocation: "Kantina" });
     await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: C },
-      { matchId: match.id, userDetailId: null },
+      { matchId: match.id, userId: C },
+      { matchId: match.id, userId: null },
     ]);
 
     const loaded = await Match.query().where("id", match.id).preload("participants").firstOrFail();
@@ -104,15 +104,13 @@ test.group("match participants", (group) => {
     const mine = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const other = await Match.create({ roundId: round.id, meetingLocation: "Kantina" });
     await MatchParticipant.createMany([
-      { matchId: mine.id, userDetailId: A },
-      { matchId: mine.id, userDetailId: B },
-      { matchId: other.id, userDetailId: C },
-      { matchId: other.id, userDetailId: null },
+      { matchId: mine.id, userId: A },
+      { matchId: mine.id, userId: B },
+      { matchId: other.id, userId: C },
+      { matchId: other.id, userId: null },
     ]);
 
-    const found = await Match.query().whereHas("participants", (query) =>
-      query.where("userDetailId", A),
-    );
+    const found = await Match.query().whereHas("participants", (query) => query.where("userId", A));
     assert.lengthOf(found, 1);
     assert.equal(found[0]?.id, mine.id);
   });
@@ -120,11 +118,11 @@ test.group("match participants", (group) => {
   test("rejects the same customer joining a match twice", async () => {
     const round = await createRound();
     const match = await Match.create({ roundId: round.id, meetingLocation: "Kantina" });
-    await MatchParticipant.create({ matchId: match.id, userDetailId: A });
+    await MatchParticipant.create({ matchId: match.id, userId: A });
 
-    await MatchParticipant.create({ matchId: match.id, userDetailId: A }).then(
+    await MatchParticipant.create({ matchId: match.id, userId: A }).then(
       () => {
-        throw new Error("expected the (match_id, user_detail_id) unique constraint to reject this");
+        throw new Error("expected the (match_id, user_id) unique constraint to reject this");
       },
       () => {},
     );
@@ -133,9 +131,9 @@ test.group("match participants", (group) => {
   test("rejects a second stand participant in the same match", async () => {
     const round = await createRound();
     const match = await Match.create({ roundId: round.id, meetingLocation: "Kantina" });
-    await MatchParticipant.create({ matchId: match.id, userDetailId: null });
+    await MatchParticipant.create({ matchId: match.id, userId: null });
 
-    await MatchParticipant.create({ matchId: match.id, userDetailId: null }).then(
+    await MatchParticipant.create({ matchId: match.id, userId: null }).then(
       () => {
         throw new Error("expected the single-stand partial unique index to reject this");
       },
@@ -146,7 +144,7 @@ test.group("match participants", (group) => {
   test("cascades participants when a match is deleted", async ({ assert }) => {
     const round = await createRound();
     const match = await Match.create({ roundId: round.id, meetingLocation: "Kantina" });
-    await MatchParticipant.create({ matchId: match.id, userDetailId: A });
+    await MatchParticipant.create({ matchId: match.id, userId: A });
 
     await match.delete();
 
@@ -158,8 +156,8 @@ async function createUserMatch() {
   const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
   const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
   const [a, b] = await MatchParticipant.createMany([
-    { matchId: match.id, userDetailId: A },
-    { matchId: match.id, userDetailId: B },
+    { matchId: match.id, userId: A },
+    { matchId: match.id, userId: B },
   ]);
   return { match, a: a!, b: b! };
 }
@@ -183,8 +181,8 @@ test.group("match obligations", (group) => {
       .preload("receiver")
       .firstOrFail();
     assert.equal(loaded.itemId, ITEM_X);
-    assert.equal(loaded.sender.userDetailId, A);
-    assert.equal(loaded.receiver.userDetailId, B);
+    assert.equal(loaded.sender.userId, A);
+    assert.equal(loaded.receiver.userId, B);
   });
 
   test("allows two rows for two copies of the same title", async ({ assert }) => {
@@ -240,29 +238,29 @@ test.group("book handovers", (group) => {
     await BookHandover.create({
       blid: "BL0001234567",
       itemId: ITEM_X,
-      fromUserDetailId: null,
-      toUserDetailId: A,
+      fromUserId: null,
+      toUserId: A,
       occurredAt: DateTime.fromISO("2026-06-01T10:00:00Z"),
       orderId: await createHandoverOrder(),
     });
 
     const loaded = await BookHandover.firstOrFail();
-    assert.isNull(loaded.fromUserDetailId);
-    assert.equal(loaded.toUserDetailId, A);
+    assert.isNull(loaded.fromUserId);
+    assert.equal(loaded.toUserId, A);
   });
 
   test("records a stand return with the stand as the destination", async ({ assert }) => {
     await BookHandover.create({
       blid: "BL0001234567",
       itemId: ITEM_X,
-      fromUserDetailId: A,
-      toUserDetailId: null,
+      fromUserId: A,
+      toUserId: null,
       occurredAt: DateTime.fromISO("2026-06-01T10:00:00Z"),
     });
 
     const loaded = await BookHandover.firstOrFail();
-    assert.equal(loaded.fromUserDetailId, A);
-    assert.isNull(loaded.toUserDetailId);
+    assert.equal(loaded.fromUserId, A);
+    assert.isNull(loaded.toUserId);
   });
 
   test("returns a blid's full chain of custody in order", async ({ assert }) => {
@@ -270,22 +268,22 @@ test.group("book handovers", (group) => {
       {
         blid: "BL0001234567",
         itemId: ITEM_X,
-        fromUserDetailId: null,
-        toUserDetailId: A,
+        fromUserId: null,
+        toUserId: A,
         occurredAt: DateTime.fromISO("2026-01-05T10:00:00Z"),
       },
       {
         blid: "BL0001234567",
         itemId: ITEM_X,
-        fromUserDetailId: A,
-        toUserDetailId: B,
+        fromUserId: A,
+        toUserId: B,
         occurredAt: DateTime.fromISO("2026-06-01T10:00:00Z"),
       },
       {
         blid: "BL0009999999",
         itemId: ITEM_X,
-        fromUserDetailId: null,
-        toUserDetailId: C,
+        fromUserId: null,
+        toUserId: C,
         occurredAt: DateTime.fromISO("2026-06-01T10:00:00Z"),
       },
     ]);
@@ -295,16 +293,16 @@ test.group("book handovers", (group) => {
       .orderBy("occurredAt", "asc");
 
     assert.lengthOf(chain, 2);
-    assert.isNull(chain[0]?.fromUserDetailId);
-    assert.equal(chain[1]?.fromUserDetailId, A);
+    assert.isNull(chain[0]?.fromUserId);
+    assert.equal(chain[1]?.fromUserId, A);
   });
 
   test("refuses to discharge the same obligation half twice", async ({ assert }) => {
     const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const [a, b] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: A },
-      { matchId: match.id, userDetailId: B },
+      { matchId: match.id, userId: A },
+      { matchId: match.id, userId: B },
     ]);
     const obligation = await MatchObligation.create({
       matchId: match.id,
@@ -316,8 +314,8 @@ test.group("book handovers", (group) => {
     await BookHandover.create({
       blid: "BL0001234567",
       itemId: ITEM_X,
-      fromUserDetailId: A,
-      toUserDetailId: B,
+      fromUserId: A,
+      toUserId: B,
       occurredAt: DateTime.now(),
       dischargesSenderObligationId: obligation.id,
     });
@@ -325,8 +323,8 @@ test.group("book handovers", (group) => {
     await BookHandover.create({
       blid: "BL0007654321",
       itemId: ITEM_X,
-      fromUserDetailId: A,
-      toUserDetailId: B,
+      fromUserId: A,
+      toUserId: B,
       occurredAt: DateTime.now(),
       dischargesSenderObligationId: obligation.id,
     }).then(
@@ -348,8 +346,8 @@ async function seedUserMatch() {
   });
   const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
   const [a, b] = await MatchParticipant.createMany([
-    { matchId: match.id, userDetailId: A },
-    { matchId: match.id, userDetailId: B },
+    { matchId: match.id, userId: A },
+    { matchId: match.id, userId: B },
   ]);
   const obligation = await MatchObligation.create({
     matchId: match.id,
@@ -369,8 +367,8 @@ async function seedDraftUserMatch() {
   });
   const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
   const [a, b] = await MatchParticipant.createMany([
-    { matchId: match.id, userDetailId: A },
-    { matchId: match.id, userDetailId: B },
+    { matchId: match.id, userId: A },
+    { matchId: match.id, userId: B },
   ]);
   const obligation = await MatchObligation.create({
     matchId: match.id,
@@ -395,7 +393,7 @@ test.group("MatchRepository", (group) => {
     assert.equal(found[0]?.id, match.id);
     assert.lengthOf(found[0]!.participants, 2);
     assert.lengthOf(found[0]!.obligations, 1);
-    assert.equal(found[0]!.obligations[0]?.sender.userDetailId, A);
+    assert.equal(found[0]!.obligations[0]?.sender.userId, A);
   });
 
   test("does not return matches the customer is not part of", async ({ assert }) => {
@@ -418,8 +416,8 @@ test.group("MatchRepository", (group) => {
     const handover = await MatchRepository.recordHandover({
       blid: "BL0001234567",
       itemId: ITEM_X,
-      fromUserDetailId: A,
-      toUserDetailId: B,
+      fromUserId: A,
+      toUserId: B,
       occurredAt: DateTime.fromISO("2026-06-01T10:00:00Z"),
       orderId: await createHandoverOrder(),
       dischargesSenderObligationId: obligation.id,
@@ -436,8 +434,8 @@ test.group("MatchRepository", (group) => {
     const handover = await MatchRepository.recordHandover({
       blid: "BL0001234567",
       itemId: ITEM_X,
-      fromUserDetailId: A,
-      toUserDetailId: C,
+      fromUserId: A,
+      toUserId: C,
       occurredAt: DateTime.now(),
       orderId: null,
       dischargesSenderObligationId: null,
@@ -506,8 +504,8 @@ test.group("MatchRepository", (group) => {
     await MatchRepository.recordHandover({
       blid: "BL0001234567",
       itemId: ITEM_X,
-      fromUserDetailId: A,
-      toUserDetailId: B,
+      fromUserId: A,
+      toUserId: B,
       occurredAt: DateTime.now(),
       orderId: null,
       dischargesSenderObligationId: null,
@@ -523,8 +521,8 @@ test.group("MatchRepository", (group) => {
       MatchRepository.recordHandover({
         blid,
         itemId: ITEM_X,
-        fromUserDetailId: A,
-        toUserDetailId: B,
+        fromUserId: A,
+        toUserId: B,
         occurredAt: DateTime.now(),
         orderId: null,
         dischargesSenderObligationId: obligation.id,
@@ -551,8 +549,8 @@ test.group("MatchRepository", (group) => {
     await MatchRepository.recordHandover({
       blid: "BL0001234567",
       itemId: ITEM_X,
-      fromUserDetailId: A,
-      toUserDetailId: B,
+      fromUserId: A,
+      toUserId: B,
       occurredAt: DateTime.now(),
       orderId: null,
       dischargesSenderObligationId: obligation.id,
@@ -562,8 +560,8 @@ test.group("MatchRepository", (group) => {
     await MatchRepository.recordHandover({
       blid: "BL0007654321",
       itemId: ITEM_X,
-      fromUserDetailId: A,
-      toUserDetailId: B,
+      fromUserId: A,
+      toUserId: B,
       occurredAt: DateTime.now(),
       orderId: null,
       dischargesSenderObligationId: obligation.id,

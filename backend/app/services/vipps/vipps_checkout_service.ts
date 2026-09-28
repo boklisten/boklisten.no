@@ -16,10 +16,7 @@ import { clientOrigin } from "#config/app";
 import env from "#start/env";
 import type { VippsCheckoutSession } from "#validators/checkout_validators";
 
-async function updateUserDetailWithBillingDetails(
-  session: VippsCheckoutSession,
-  customerId: string,
-) {
+async function updateCustomerWithBillingDetails(session: VippsCheckoutSession, customerId: string) {
   try {
     if (session.billingDetails) {
       const user = await User.findOrFail(customerId);
@@ -96,17 +93,17 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
 
 export const VippsCheckoutService = {
   async create(order: Order, isDeliveryFree: boolean) {
-    const userDetail = await User.findOrFail(order.customerId);
+    const customer = await User.findOrFail(order.customerId);
     const { token, checkoutFrontendUrl } = await VippsPaymentService.checkout.create({
       type: "PAYMENT",
       prefillCustomer: {
-        firstName: userDetail.name.split(" ")[0] ?? null,
-        lastName: userDetail.name.split(" ").slice(1).join(" ") ?? null,
-        email: userDetail.email,
-        phoneNumber: userDetail.phone === null ? null : `47${userDetail.phone}`,
-        streetAddress: userDetail.address ?? null,
-        city: userDetail.postCity ?? null,
-        postalCode: userDetail.postCode ?? null,
+        firstName: customer.name.split(" ")[0] ?? null,
+        lastName: customer.name.split(" ").slice(1).join(" ") ?? null,
+        email: customer.email,
+        phoneNumber: customer.phone === null ? null : `47${customer.phone}`,
+        streetAddress: customer.address ?? null,
+        city: customer.postCity ?? null,
+        postalCode: customer.postCode ?? null,
         country: "NO",
       },
       merchantInfo: {
@@ -121,7 +118,7 @@ export const VippsCheckoutService = {
           currency: "NOK",
           value: order.amount * 100,
         },
-        paymentDescription: `${userDetail.name} sin ordre fra Boklisten.no`,
+        paymentDescription: `${customer.name} sin ordre fra Boklisten.no`,
         orderSummary: {
           orderLines: order.orderItems.map((orderItem) => {
             const priceInMinors = orderItem.amount * 100;
@@ -168,7 +165,7 @@ export const VippsCheckoutService = {
       if (order.customerId === null) {
         throw new Error(`order "${order.id}" has no customer`);
       }
-      const userDetail = await updateUserDetailWithBillingDetails(session, order.customerId);
+      const customer = await updateCustomerWithBillingDetails(session, order.customerId);
 
       let deliveryPrice = 0;
       if (session.shippingDetails?.shippingMethodId?.includes("mail")) {
@@ -185,12 +182,12 @@ export const VippsCheckoutService = {
           shipmentName:
             session.shippingDetails.firstName && session.shippingDetails.lastName
               ? `${session.shippingDetails.firstName} ${session.shippingDetails.lastName}`
-              : userDetail.name,
-          shipmentAddress: session.shippingDetails.streetAddress ?? userDetail.address,
-          shipmentPostalCode: session.shippingDetails.postalCode ?? userDetail.postCode,
-          shipmentPostalCity: session.shippingDetails.city ?? userDetail.postCity,
+              : customer.name,
+          shipmentAddress: session.shippingDetails.streetAddress ?? customer.address,
+          shipmentPostalCode: session.shippingDetails.postalCode ?? customer.postCode,
+          shipmentPostalCity: session.shippingDetails.city ?? customer.postCity,
           fromPostalCode: "1364",
-          toPostalCode: session.shippingDetails.postalCode ?? userDetail.postCode,
+          toPostalCode: session.shippingDetails.postalCode ?? customer.postCode,
           product: session.shippingDetails.shippingMethodId === "mailbox" ? "3584" : "SERVICEPAKKE",
         });
       }

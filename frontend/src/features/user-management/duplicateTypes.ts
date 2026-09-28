@@ -1,7 +1,7 @@
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
 
 export interface DuplicateUserSummary {
-  detailsId: string;
+  userId: string;
   name: string;
   email: string;
   phone: string;
@@ -21,7 +21,7 @@ export interface DuplicatePair {
 
 export function duplicatePairKey(pair: DuplicatePair) {
   return pair.users
-    .map((user) => user.detailsId)
+    .map((user) => user.userId)
     .toSorted()
     .join("|");
 }

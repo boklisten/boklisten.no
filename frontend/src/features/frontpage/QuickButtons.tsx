@@ -7,14 +7,14 @@ import { Activity } from "react";
 import useAuth from "@/shared/hooks/useAuth";
 
 export default function QuickButtons() {
-  const { isLoggedIn, detailsId } = useAuth();
+  const { isLoggedIn, userId } = useAuth();
   return (
     <Group justify="center">
       <Activity mode={isLoggedIn ? "visible" : "hidden"}>
         <Button component={TanStackAnchor} to="/items" leftSection={<IconBook />}>
           Dine bøker
         </Button>
-        {detailsId && <ShowCustomerIdButton customerId={detailsId} />}
+        {userId && <ShowCustomerIdButton customerId={userId} />}
       </Activity>
       <Activity mode={!isLoggedIn ? "visible" : "hidden"}>
         <Button component={TanStackAnchor} to="/auth/login" bg="green">

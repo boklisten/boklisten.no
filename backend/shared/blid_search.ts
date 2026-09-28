@@ -2,8 +2,8 @@ import type { CustomerItemType } from "#shared/customer-item/customer-item-type"
 
 /** A party that can hold or hand over a book: a customer, or the stand itself. */
 export type BlidParty =
-  /** detailsId is null for an order's customer whose account has been deleted. */
-  { type: "customer"; detailsId: string | null; name: string } | { type: "stand" };
+  /** userId is null for an order's customer whose account has been deleted. */
+  { type: "customer"; userId: string | null; name: string } | { type: "stand" };
 
 export type BlidHistoryAction =
   | "handout"
@@ -32,7 +32,7 @@ export interface BlidHistoryEvent {
   /** Who got the book — or, for buyout/extend, the customer holding it. */
   to?: BlidParty;
   /** The employee on the order, when one was involved and still resolvable. */
-  employee?: { detailsId: string; name: string };
+  employee?: { userId: string; name: string };
   /** True when the customer performed the action themselves (e.g. scanned a match transfer). */
   byCustomer: boolean;
   /** The branch the order/handout belongs to. */
@@ -85,7 +85,7 @@ export interface BlidSearchHit {
   /** For showing the cover; null when the linked item is gone. */
   isbn: string | null;
   /** The customer currently holding the book, or null when it is at the stand. */
-  holder: { detailsId: string; name: string } | null;
+  holder: { userId: string; name: string } | null;
 }
 
 export interface BlidSearchResponse {

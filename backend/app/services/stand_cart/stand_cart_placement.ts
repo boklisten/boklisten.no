@@ -80,8 +80,8 @@ async function recordHandovers(
       await MatchRepository.recordHandover({
         blid: orderItem.blid,
         itemId: orderItem.itemId,
-        fromUserDetailId: null,
-        toUserDetailId: customerId,
+        fromUserId: null,
+        toUserId: customerId,
         occurredAt,
         orderId: order.id,
         dischargesSenderObligationId: null,
@@ -101,8 +101,8 @@ async function recordHandovers(
     await MatchRepository.recordHandover({
       blid: customerItem.blid,
       itemId: customerItem.itemId,
-      fromUserDetailId: customerItem.customerId,
-      toUserDetailId: null,
+      fromUserId: customerItem.customerId,
+      toUserId: null,
       occurredAt,
       orderId: order.id,
       dischargesSenderObligationId: obligation?.id ?? null,
@@ -133,7 +133,7 @@ export const StandCartPlacement = {
     const reports = await collectReports(order, customerId, heldBooks, now);
     await createCustomerItems(order);
     // The handler records who took returned books back, so it is told the employee, not the customer
-    const placed = await new OrderPlacedHandler().placeOrder(order, employee.detailsId);
+    const placed = await new OrderPlacedHandler().placeOrder(order, employee.userId);
 
     await afterPlacement(() =>
       recordHandovers(placed, customerId, heldBooks, DateTime.fromJSDate(now)),

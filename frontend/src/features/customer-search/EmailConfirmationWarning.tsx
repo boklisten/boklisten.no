@@ -18,7 +18,7 @@ export default function EmailConfirmationWarning({ customer }: { customer: User 
         showErrorNotification(errorMessage(error, "Klarte ikke bekrefte e-postadressen")),
       onSettled: () =>
         queryClient.invalidateQueries({
-          queryKey: api.users.show.queryKey({ params: { detailsId: customer.id } }),
+          queryKey: api.users.show.queryKey({ params: { userId: customer.id } }),
         }),
     }),
   );
@@ -46,7 +46,7 @@ export default function EmailConfirmationWarning({ customer }: { customer: User 
           color="yellow"
           variant="filled"
           loading={confirmEmailMutation.isPending}
-          onClick={() => confirmEmailMutation.mutate({ params: { detailsId: customer.id } })}
+          onClick={() => confirmEmailMutation.mutate({ params: { userId: customer.id } })}
         >
           Bekreft e-postadressen
         </Button>

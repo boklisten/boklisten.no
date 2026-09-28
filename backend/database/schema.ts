@@ -8,7 +8,7 @@ import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
 export class BookHandoverSchema extends BaseModel {
-  static $columns = ['blid', 'createdAt', 'dischargesReceiverObligationId', 'dischargesSenderObligationId', 'fromUserDetailId', 'id', 'itemId', 'occurredAt', 'orderId', 'toUserDetailId', 'updatedAt'] as const
+  static $columns = ['blid', 'createdAt', 'dischargesReceiverObligationId', 'dischargesSenderObligationId', 'fromUserId', 'id', 'itemId', 'occurredAt', 'orderId', 'toUserId', 'updatedAt'] as const
   $columns = BookHandoverSchema.$columns
   @column()
   declare blid: string | null
@@ -19,7 +19,7 @@ export class BookHandoverSchema extends BaseModel {
   @column()
   declare dischargesSenderObligationId: number | null
   @column()
-  declare fromUserDetailId: string | null
+  declare fromUserId: string | null
   @column({ isPrimary: true })
   declare id: number
   @column()
@@ -29,7 +29,7 @@ export class BookHandoverSchema extends BaseModel {
   @column()
   declare orderId: string | null
   @column()
-  declare toUserDetailId: string | null
+  declare toUserId: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 }
@@ -333,7 +333,7 @@ export class EditableTextSchema extends BaseModel {
 }
 
 export class EmailVerificationSchema extends BaseModel {
-  static $columns = ['createdAt', 'id', 'updatedAt', 'userDetailId'] as const
+  static $columns = ['createdAt', 'id', 'updatedAt', 'userId'] as const
   $columns = EmailVerificationSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -342,7 +342,7 @@ export class EmailVerificationSchema extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
-  declare userDetailId: string
+  declare userId: string
 }
 
 export class InvoiceLineSchema extends BaseModel {
@@ -510,7 +510,7 @@ export class MatchObligationSchema extends BaseModel {
 }
 
 export class MatchParticipantSchema extends BaseModel {
-  static $columns = ['createdAt', 'id', 'matchId', 'updatedAt', 'userDetailId'] as const
+  static $columns = ['createdAt', 'id', 'matchId', 'updatedAt', 'userId'] as const
   $columns = MatchParticipantSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -521,7 +521,7 @@ export class MatchParticipantSchema extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
-  declare userDetailId: string | null
+  declare userId: string | null
 }
 
 export class MatchRoundSchema extends BaseModel {
@@ -608,12 +608,14 @@ export class MessageEventSchema extends BaseModel {
 }
 
 export class MessageSchema extends BaseModel {
-  static $columns = ['channel', 'createdAt', 'id', 'messageType', 'providerMessageId', 'recipient', 'regardingCustomerDetailsId', 'sendoutId', 'smsBody', 'status', 'statusDetail', 'subject', 'templateData', 'templateId', 'updatedAt'] as const
+  static $columns = ['channel', 'createdAt', 'customerId', 'id', 'messageType', 'providerMessageId', 'recipient', 'sendoutId', 'smsBody', 'status', 'statusDetail', 'subject', 'templateData', 'templateId', 'updatedAt'] as const
   $columns = MessageSchema.$columns
   @column()
   declare channel: string
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column()
+  declare customerId: string | null
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -622,8 +624,6 @@ export class MessageSchema extends BaseModel {
   declare providerMessageId: string | null
   @column()
   declare recipient: string
-  @column()
-  declare regardingCustomerDetailsId: string | null
   @column()
   declare sendoutId: number | null
   @column()
@@ -643,18 +643,18 @@ export class MessageSchema extends BaseModel {
 }
 
 export class OpeningHourSchema extends BaseModel {
-  static $columns = ['branchId', 'createdAt', 'from', 'id', 'to', 'updatedAt'] as const
+  static $columns = ['branchId', 'closesAt', 'createdAt', 'id', 'opensAt', 'updatedAt'] as const
   $columns = OpeningHourSchema.$columns
   @column()
   declare branchId: string
+  @column.dateTime()
+  declare closesAt: DateTime
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
-  @column.dateTime()
-  declare from: DateTime
   @column({ isPrimary: true })
   declare id: number
   @column.dateTime()
-  declare to: DateTime
+  declare opensAt: DateTime
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 }
@@ -730,7 +730,7 @@ export class OrderSchema extends BaseModel {
 }
 
 export class PasswordResetSchema extends BaseModel {
-  static $columns = ['createdAt', 'id', 'tokenHash', 'updatedAt', 'userDetailId'] as const
+  static $columns = ['createdAt', 'id', 'tokenHash', 'updatedAt', 'userId'] as const
   $columns = PasswordResetSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -741,7 +741,7 @@ export class PasswordResetSchema extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
-  declare userDetailId: string
+  declare userId: string
 }
 
 export class PaymentSchema extends BaseModel {
@@ -809,14 +809,14 @@ export class RememberMeTokenSchema extends BaseModel {
 }
 
 export class SendoutSchema extends BaseModel {
-  static $columns = ['createdAt', 'id', 'initiatedByDetailsId', 'kind', 'name', 'updatedAt'] as const
+  static $columns = ['createdAt', 'id', 'initiatedById', 'kind', 'name', 'updatedAt'] as const
   $columns = SendoutSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: number
   @column()
-  declare initiatedByDetailsId: string | null
+  declare initiatedById: string | null
   @column()
   declare kind: string
   @column()
@@ -839,12 +839,12 @@ export class SessionSchema extends BaseModel {
 }
 
 export class SignatureSchema extends BaseModel {
-  static $columns = ['createdAt', 'customerDetailsId', 'id', 'image', 'signedByGuardian', 'signingName', 'updatedAt'] as const
+  static $columns = ['createdAt', 'customerId', 'id', 'image', 'signedByGuardian', 'signingName', 'updatedAt'] as const
   $columns = SignatureSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
-  declare customerDetailsId: string
+  declare customerId: string
   @column({ isPrimary: true })
   declare id: number
   @column()

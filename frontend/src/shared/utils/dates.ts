@@ -9,13 +9,16 @@ export function isUnder18(birthday: Date | string | null | undefined) {
   return dayjs(birthday).isAfter(dayjs().subtract(18, "year"));
 }
 
-export function formatOpeningHour(openingHour: { from: dayjs.ConfigType; to: dayjs.ConfigType }) {
-  const from = norwegianTime(openingHour.from);
+export function formatOpeningHour(openingHour: {
+  opensAt: dayjs.ConfigType;
+  closesAt: dayjs.ConfigType;
+}) {
+  const from = norwegianTime(openingHour.opensAt);
   const weekday = from.format("dddd");
   return {
     weekday: weekday.charAt(0).toUpperCase() + weekday.slice(1),
     date: from.format("DD.MM.YYYY"),
     fromTime: from.format("HH:mm"),
-    toTime: norwegianTime(openingHour.to).format("HH:mm"),
+    toTime: norwegianTime(openingHour.closesAt).format("HH:mm"),
   };
 }

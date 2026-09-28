@@ -18,8 +18,8 @@ const CUSTOMER_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f70";
 const OLD_BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f71";
 const NEW_BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f72";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
-const EMPLOYEE = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
-const ADMIN = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "admin" as const };
+const EMPLOYEE = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
+const ADMIN = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "admin" as const };
 
 const ITEM_ID = fixtureId("1");
 

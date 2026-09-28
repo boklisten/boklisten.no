@@ -67,7 +67,7 @@ export default function useStandCartSubmit({
 }): StandCartSubmitter {
   const queryClient = useQueryClient();
   const { data: signatureStatus } = useQuery(
-    api.signatures.show.queryOptions({ params: { detailsId: customer.id } }),
+    api.signatures.show.queryOptions({ params: { userId: customer.id } }),
   );
   const checkoutMutation = useMutation(
     api.standCart.checkout.mutationOptions({

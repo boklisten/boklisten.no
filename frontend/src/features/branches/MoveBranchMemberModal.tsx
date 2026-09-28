@@ -37,7 +37,7 @@ export default function MoveBranchMemberModal({
     onSubmit: ({ value }) =>
       updateBranchMembershipMutation.mutate({
         body: {
-          detailsId: memberId,
+          userId: memberId,
           branchMembership: value.branchMembership,
         },
       }),

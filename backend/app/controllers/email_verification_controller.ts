@@ -7,13 +7,13 @@ import DispatchService from "#services/dispatch_service";
 export default class EmailVerificationController {
   async send(ctx: HttpContext) {
     const user = ctx.auth.getUserOrFail();
-    const emailVerification = await EmailVerification.create({ userDetailId: user.id });
+    const emailVerification = await EmailVerification.create({ userId: user.id });
     await DispatchService.sendEmailVerification(user.email, emailVerification.id);
   }
 
   async verify(ctx: HttpContext) {
     const emailVerification = await EmailVerification.findOrFail(ctx.request.param("id"));
-    const user = await User.findOrFail(emailVerification.userDetailId);
+    const user = await User.findOrFail(emailVerification.userId);
     user.emailConfirmed = true;
     await user.save();
     await emailVerification.delete();

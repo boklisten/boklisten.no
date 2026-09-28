@@ -160,7 +160,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
   const { data: branches } = useQuery(api.branches.index.queryOptions());
   const { data: customer } = useQuery(
     api.users.show.queryOptions(
-      { params: { detailsId: customerId ?? "" } },
+      { params: { userId: customerId ?? "" } },
       { enabled: customerId !== null },
     ),
   );

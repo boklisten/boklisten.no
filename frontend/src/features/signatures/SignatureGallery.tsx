@@ -42,7 +42,7 @@ const CardLink = createLink(CardAnchor);
 
 interface GallerySignature {
   id: number;
-  customerDetailsId: string;
+  customerId: string;
   customerName: string;
   signingName: string;
   signedByGuardian: boolean;
@@ -64,7 +64,7 @@ function SignatureCard({ signature }: { signature: GallerySignature }) {
     <CardLink
       ref={ref}
       to="/admin/kasse"
-      search={{ kunde: signature.customerDetailsId }}
+      search={{ kunde: signature.customerId }}
       aria-label={`Åpne ${signature.customerName} i kundesøk`}
       withBorder
       radius="md"

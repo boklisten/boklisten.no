@@ -27,7 +27,7 @@ function matchesWithRelations() {
  */
 async function findForCustomer(customerId: string): Promise<Match[]> {
   return matchesWithRelations()
-    .whereHas("participants", (participants) => participants.where("userDetailId", customerId))
+    .whereHas("participants", (participants) => participants.where("userId", customerId))
     .whereHas("round", (round) => round.where("status", "active"));
 }
 
@@ -74,8 +74,8 @@ function roundParticipantCustomerIds(roundId: number) {
     .from("match_participants")
     .join("matches", "matches.id", "match_participants.match_id")
     .where("matches.round_id", roundId)
-    .whereNotNull("match_participants.user_detail_id")
-    .select("match_participants.user_detail_id");
+    .whereNotNull("match_participants.user_id")
+    .select("match_participants.user_id");
 }
 
 /**
@@ -97,8 +97,8 @@ async function unattachedHandoverCount(
     .where("occurredAt", ">=", from.toISO()!)
     .where((participant) => {
       void participant
-        .whereIn("fromUserDetailId", roundParticipantCustomerIds(roundId))
-        .orWhereIn("toUserDetailId", roundParticipantCustomerIds(roundId));
+        .whereIn("fromUserId", roundParticipantCustomerIds(roundId))
+        .orWhereIn("toUserId", roundParticipantCustomerIds(roundId));
     });
   if (until) {
     void query.where("occurredAt", "<", until.toISO()!);
@@ -166,22 +166,22 @@ async function attachMatches(roundId: number, matches: MatchDraft[]): Promise<Ma
       if (matchId === undefined) {
         throw new BlError("Insert returned fewer matches than were drafted");
       }
-      return draft.participantCustomerIds.map((userDetailId) => ({
+      return draft.participantCustomerIds.map((userId) => ({
         match_id: matchId,
-        user_detail_id: userDetailId,
+        user_id: userId,
       }));
     });
     const createdParticipants: {
       id: number;
       match_id: number;
-      user_detail_id: string | null;
+      user_id: string | null;
     }[] = await trx
       .table("match_participants")
       .insert(participantRows)
-      .returning(["id", "match_id", "user_detail_id"]);
+      .returning(["id", "match_id", "user_id"]);
     const participantIds = new Map(
       createdParticipants.map((participant) => [
-        `${participant.match_id}:${participant.user_detail_id}`,
+        `${participant.match_id}:${participant.user_id}`,
         participant.id,
       ]),
     );
@@ -317,9 +317,9 @@ interface RecordHandoverInput {
   blid: string | null;
   itemId: string;
   /** null means the stand. */
-  fromUserDetailId: string | null;
+  fromUserId: string | null;
   /** null means the stand. */
-  toUserDetailId: string | null;
+  toUserId: string | null;
   occurredAt: DateTime;
   /** The order that is the authoritative record of this movement. */
   orderId: string | null;
@@ -380,7 +380,7 @@ async function findSenderObligation(
 ): Promise<MatchObligation | null> {
   return obligationsInLiveRounds()
     .whereIn("itemId", getEquivalentItemIds(itemId))
-    .whereHas("sender", (sender) => sender.where("userDetailId", customerId))
+    .whereHas("sender", (sender) => sender.where("userId", customerId))
     .whereNotIn("id", dischargedHalves("sender"))
     .orderBy("id", "asc")
     .preload("sender")
@@ -399,7 +399,7 @@ async function findReceiverObligation(
 ): Promise<MatchObligation | null> {
   return obligationsInLiveRounds()
     .whereIn("itemId", getEquivalentItemIds(itemId))
-    .whereHas("receiver", (receiver) => receiver.where("userDetailId", customerId))
+    .whereHas("receiver", (receiver) => receiver.where("userId", customerId))
     .whereNotIn("id", dischargedHalves("receiver"))
     .orderBy("id", "asc")
     .preload("sender")
@@ -414,7 +414,7 @@ async function findReceiverObligation(
 async function hasReceivedTitle(customerId: string, itemId: string): Promise<boolean> {
   const discharged = await obligationsInLiveRounds()
     .whereIn("itemId", getEquivalentItemIds(itemId))
-    .whereHas("receiver", (receiver) => receiver.where("userDetailId", customerId))
+    .whereHas("receiver", (receiver) => receiver.where("userId", customerId))
     .whereIn("id", dischargedHalves("receiver"))
     .first();
   return discharged !== null;

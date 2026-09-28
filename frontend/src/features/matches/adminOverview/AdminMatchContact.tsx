@@ -16,7 +16,7 @@ export default function AdminMatchContact({
     <Group gap="lg">
       <Group gap={5}>
         <IconUser />
-        <CustomerLink detailsId={customerId} fw={400}>
+        <CustomerLink userId={customerId} fw={400}>
           {name}
         </CustomerLink>
       </Group>

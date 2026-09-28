@@ -28,7 +28,7 @@ export default function StandCartCustomerCard({
       </Text>
       <Paper withBorder radius="md" px="md" py="sm">
         <Group gap="sm" wrap="nowrap" align="flex-start">
-          <CustomerAvatar detailsId={customer.id} />
+          <CustomerAvatar userId={customer.id} />
           <Stack gap={4} miw={0}>
             <Text lh={1.2}>
               <EntityLink to="/admin/kasse" search={{ kunde: customer.id }} onClick={onNavigate}>

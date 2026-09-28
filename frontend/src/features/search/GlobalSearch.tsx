@@ -21,9 +21,7 @@ export default function GlobalSearch() {
     <SearchSpotlight
       store={globalSearchStore}
       kinds={{ customers: true, books: true, pages: true }}
-      onSelectCustomer={(detailsId) =>
-        void navigate({ to: KASSE_PATH, search: showCustomer(detailsId) })
-      }
+      onSelectCustomer={(userId) => void navigate({ to: KASSE_PATH, search: showCustomer(userId) })}
       onSelectBook={(blid) => void navigate({ to: KASSE_PATH, search: showBlid(blid) })}
     />
   );

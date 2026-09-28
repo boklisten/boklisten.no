@@ -31,13 +31,11 @@ export default function MergeCustomersModal({
   const [first, second] = pair.users;
   // Keep the account that is actually in use unless the admin swaps direction
   const defaultKeepId =
-    first && second && totalActivity(first) < totalActivity(second)
-      ? second.detailsId
-      : first?.detailsId;
+    first && second && totalActivity(first) < totalActivity(second) ? second.userId : first?.userId;
   const [keepId, setKeepId] = useState(defaultKeepId);
 
   const mergeMutation = useMutation({
-    mutationFn: (input: { fromDetailsId: string; toDetailsId: string }) =>
+    mutationFn: (input: { fromUserId: string; toUserId: string }) =>
       apiClient.api.users.merge({ body: input }),
     onSuccess: async () => {
       showSuccessNotification("Kundene ble slått sammen");
@@ -56,8 +54,8 @@ export default function MergeCustomersModal({
   if (!first || !second) {
     return null;
   }
-  const keptUser = first.detailsId === keepId ? first : second;
-  const deletedUser = first.detailsId === keepId ? second : first;
+  const keptUser = first.userId === keepId ? first : second;
+  const deletedUser = first.userId === keepId ? second : first;
 
   return (
     <Modal opened={opened} onClose={onClose} title="Slå sammen kunder" size="lg">
@@ -76,7 +74,7 @@ export default function MergeCustomersModal({
             variant="default"
             size="compact-sm"
             leftSection={<IconArrowsExchange size={16} />}
-            onClick={() => setKeepId(deletedUser.detailsId)}
+            onClick={() => setKeepId(deletedUser.userId)}
           >
             Bytt retning
           </Button>
@@ -100,8 +98,8 @@ export default function MergeCustomersModal({
             loading={mergeMutation.isPending}
             onClick={() =>
               mergeMutation.mutate({
-                fromDetailsId: deletedUser.detailsId,
-                toDetailsId: keptUser.detailsId,
+                fromUserId: deletedUser.userId,
+                toUserId: keptUser.userId,
               })
             }
           >

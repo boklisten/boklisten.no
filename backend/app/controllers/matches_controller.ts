@@ -12,9 +12,9 @@ import { matchNotifyValidator, matchTransferValidator } from "#validators/matche
 
 export default class MatchesController {
   async notify(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const { id: userId } = ctx.auth.getUserOrFail();
     const matchNotifyConfiguration = await ctx.request.validateUsing(matchNotifyValidator);
-    return notify(matchNotifyConfiguration, detailsId);
+    return notify(matchNotifyConfiguration, userId);
   }
 
   async me(ctx: HttpContext) {
@@ -23,7 +23,7 @@ export default class MatchesController {
 
   /** Employee-facing: the matches of a given customer, used by the customer search stand view. */
   async forCustomer(ctx: HttpContext) {
-    return ctx.serialize(await readMatchesForCustomer(ctx.request.param("detailsId")));
+    return ctx.serialize(await readMatchesForCustomer(ctx.request.param("userId")));
   }
 
   async show(ctx: HttpContext) {
@@ -44,8 +44,8 @@ export default class MatchesController {
   }
 
   async transferItem(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const { id: userId } = ctx.auth.getUserOrFail();
     const transferData = await ctx.request.validateUsing(matchTransferValidator);
-    return recordTransfer(detailsId, transferData);
+    return recordTransfer(userId, transferData);
   }
 }

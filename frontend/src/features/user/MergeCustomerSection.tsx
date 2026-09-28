@@ -32,17 +32,17 @@ const MIN_SEARCH_LENGTH = 3;
  * the same ModalsProvider reason as the delete flow.
  */
 export default function MergeCustomerSection({
-  userDetail,
+  user,
   expanded,
   onExpand,
   onCollapse,
   onMerged,
 }: {
-  userDetail: User;
+  user: User;
   expanded: boolean;
   onExpand: () => void;
   onCollapse: () => void;
-  onMerged?: ((toDetailsId: string) => void) | undefined;
+  onMerged?: ((toUserId: string) => void) | undefined;
 }) {
   const queryClient = useQueryClient();
   const branchNames = useBranchNames();
@@ -50,7 +50,7 @@ export default function MergeCustomerSection({
   const [debouncedSearch] = useDebouncedValue(searchValue.trim(), 250);
   const [targetId, setTargetId] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState("");
-  const confirmPhrase = userDetail.name || userDetail.email;
+  const confirmPhrase = user.name || user.email;
 
   const searchActive =
     !targetId &&
@@ -58,18 +58,18 @@ export default function MergeCustomerSection({
     debouncedSearch.length >= MIN_SEARCH_LENGTH;
 
   const { data: searchResults, isFetching } = useQuery({
-    queryKey: ["userDetail", "search", debouncedSearch] as const,
+    queryKey: ["users", "search", debouncedSearch] as const,
     queryFn: async () =>
       (await apiClient.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: searchActive,
   });
   const candidates = searchActive
-    ? (searchResults ?? []).filter((result) => result.id !== userDetail.id)
+    ? (searchResults ?? []).filter((result) => result.id !== user.id)
     : [];
 
   const { data: preview, isPending: previewPending } = useQuery(
     api.users.mergePreview.queryOptions(
-      { params: { fromDetailsId: userDetail.id, toDetailsId: targetId ?? "" } },
+      { params: { fromUserId: user.id, toUserId: targetId ?? "" } },
       { enabled: Boolean(targetId) },
     ),
   );
@@ -82,9 +82,9 @@ export default function MergeCustomerSection({
   };
 
   const mergeMutation = useMutation({
-    mutationFn: (input: { fromDetailsId: string; toDetailsId: string }) =>
+    mutationFn: (input: { fromUserId: string; toUserId: string }) =>
       apiClient.api.users.merge({ body: input }),
-    onSuccess: async (_, { toDetailsId }) => {
+    onSuccess: async (_, { toUserId }) => {
       showSuccessNotification("Kundene ble slått sammen");
       reset();
       // A merge re-points orders, books, payments and matches, so every
@@ -92,7 +92,7 @@ export default function MergeCustomerSection({
       // refetching: refetching here would hit endpoints for the just-deleted
       // customer before onMerged navigates away from them.
       await queryClient.invalidateQueries({ refetchType: "none" });
-      onMerged?.(toDetailsId);
+      onMerged?.(toUserId);
     },
     onError: (error) =>
       showErrorNotification(errorMessage(error, "Klarte ikke å slå sammen kundene")),
@@ -223,8 +223,8 @@ export default function MergeCustomerSection({
                 loading={mergeMutation.isPending}
                 onClick={() =>
                   mergeMutation.mutate({
-                    fromDetailsId: userDetail.id,
-                    toDetailsId: targetId,
+                    fromUserId: user.id,
+                    toUserId: targetId,
                   })
                 }
               >

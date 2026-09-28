@@ -13,7 +13,7 @@ import { api } from "@/shared/utils/apiClient";
 
 /** The customer half of a Kasse lookup: who they are, what needs attention, their books, and the cart. */
 export default function CustomerResult({
-  detailsId,
+  userId,
   cart,
   tab,
   onTabChange,
@@ -22,13 +22,13 @@ export default function CustomerResult({
   cartOpened,
   onCartClose,
 }: {
-  detailsId: string;
+  userId: string;
   /** The page owns the cart: its bar and the camera reach it from outside this card. */
   cart: StandCart;
   tab: CustomerSearchTab;
   onTabChange: (tab: CustomerSearchTab) => void;
   onDeselect: () => void;
-  onMerged: (toDetailsId: string) => void;
+  onMerged: (toUserId: string) => void;
   /** The cart drawer is opened from the page's list bar, so the page owns its state. */
   cartOpened: boolean;
   onCartClose: () => void;
@@ -37,7 +37,7 @@ export default function CustomerResult({
     data: customer,
     isPending,
     isError,
-  } = useQuery(api.users.show.queryOptions({ params: { detailsId } }));
+  } = useQuery(api.users.show.queryOptions({ params: { userId } }));
 
   if (isPending) {
     return (
@@ -65,7 +65,7 @@ export default function CustomerResult({
             withCustomerId
           />
           <EmailConfirmationWarning customer={customer} />
-          <SignatureStatusBanner userDetail={customer} />
+          <SignatureStatusBanner user={customer} />
           <CustomerSearchTabs
             key={customer.id}
             customer={customer}

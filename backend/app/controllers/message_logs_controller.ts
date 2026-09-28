@@ -6,7 +6,7 @@ import { messageLogFeedValidator, messageLogMetricsValidator } from "#validators
 export default class MessageLogsController {
   /** All messages sent to the customer's current contact info, guardians included. */
   async forCustomer(ctx: HttpContext) {
-    return MessageLogService.customerLog(ctx.request.param("detailsId"));
+    return MessageLogService.customerLog(ctx.request.param("userId"));
   }
 
   /** Newest slice of the global message log, polled by the live feed. */

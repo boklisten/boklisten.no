@@ -18,7 +18,7 @@ const PLAIN_MAIL = {
   subject: "Ansattvarsel: test",
   text: "Linje 1\nLinje 2",
   replyTo: { email: "kari@example.com", name: "Kari" },
-  context: { messageType: "employee-monitoring" as const, regardingCustomerDetailsId: CUSTOMER_ID },
+  context: { messageType: "employee-monitoring" as const, customerId: CUSTOMER_ID },
 };
 
 function runAsProduction(sandbox: sinon.SinonSandbox) {
@@ -56,7 +56,7 @@ test.group("DispatchService.sendPlainEmail", (group) => {
     assert.equal(logged.recipient, "info@boklisten.no");
     assert.equal(logged.status, "skipped");
     assert.equal(logged.messageType, "employee-monitoring");
-    assert.equal(logged.regardingCustomerDetailsId, CUSTOMER_ID);
+    assert.equal(logged.customerId, CUSTOMER_ID);
     assert.equal(logged.subject, "Ansattvarsel: test");
     assert.deepEqual(logged.templateData, { text: "Linje 1\nLinje 2" });
   });

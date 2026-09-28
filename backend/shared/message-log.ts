@@ -67,7 +67,7 @@ export interface MessageLogEntryDto {
   channel: MessageChannel;
   recipient: string;
   messageType: MessageType;
-  regardingCustomerDetailsId: string | null;
+  customerId: string | null;
   subject: string | null;
   smsBody: string | null;
   templateId: string | null;

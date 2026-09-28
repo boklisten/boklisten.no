@@ -21,11 +21,11 @@ const ITEM_Y = "5d765db5fc8c47001c408e02";
 const BLID = "BL0001234567";
 
 function standParticipant(match: Match): MatchParticipant {
-  return match.participants.find((participant) => participant.userDetailId === null)!;
+  return match.participants.find((participant) => participant.userId === null)!;
 }
 
 function customerParticipant(match: Match): MatchParticipant {
-  return match.participants.find((participant) => participant.userDetailId !== null)!;
+  return match.participants.find((participant) => participant.userId !== null)!;
 }
 
 test.group("sendMatchToStand", (group) => {
@@ -54,8 +54,8 @@ test.group("sendMatchToStand", (group) => {
   ): Promise<SeededMatch> {
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const [sender, receiver] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: senderId },
-      { matchId: match.id, userDetailId: receiverId },
+      { matchId: match.id, userId: senderId },
+      { matchId: match.id, userId: receiverId },
     ]);
     const obligations = await MatchObligation.createMany(
       itemIds.map((itemId) => ({
@@ -72,8 +72,8 @@ test.group("sendMatchToStand", (group) => {
   async function seedStandMatch(customerId: string): Promise<Match> {
     const match = await Match.create({ roundId: round.id, meetingLocation: "Kantina" });
     await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: customerId },
-      { matchId: match.id, userDetailId: null },
+      { matchId: match.id, userId: customerId },
+      { matchId: match.id, userId: null },
     ]);
     return match;
   }
@@ -82,8 +82,8 @@ test.group("sendMatchToStand", (group) => {
   async function findStandMatch(customerId: string): Promise<Match | null> {
     return Match.query()
       .where("roundId", round.id)
-      .whereHas("participants", (participants) => participants.whereNull("userDetailId"))
-      .whereHas("participants", (participants) => participants.where("userDetailId", customerId))
+      .whereHas("participants", (participants) => participants.whereNull("userId"))
+      .whereHas("participants", (participants) => participants.where("userId", customerId))
       .preload("participants")
       .preload("obligations")
       .first();
@@ -151,8 +151,8 @@ test.group("sendMatchToStand", (group) => {
     const handover = await BookHandover.create({
       blid: BLID,
       itemId: ITEM_X,
-      fromUserDetailId: PETTER,
-      toUserDetailId: MAYA,
+      fromUserId: PETTER,
+      toUserId: MAYA,
       occurredAt: DateTime.now(),
       orderId: null,
       dischargesSenderObligationId: obligations[0]!.id,
@@ -172,8 +172,8 @@ test.group("sendMatchToStand", (group) => {
     // The handover still names Petter and Maya, so Maya's stand match shows she got Petter's book.
     assert.equal(handover.dischargesSenderObligationId, petterDelivered.id);
     assert.equal(handover.dischargesReceiverObligationId, mayaReceived.id);
-    assert.equal(handover.fromUserDetailId, PETTER);
-    assert.equal(handover.toUserDetailId, MAYA);
+    assert.equal(handover.fromUserId, PETTER);
+    assert.equal(handover.toUserId, MAYA);
   });
 
   test("carries a half-delivered obligation as one settled and one pending half", async ({
@@ -184,8 +184,8 @@ test.group("sendMatchToStand", (group) => {
     const handover = await BookHandover.create({
       blid: BLID,
       itemId: ITEM_X,
-      fromUserDetailId: PETTER,
-      toUserDetailId: null,
+      fromUserId: PETTER,
+      toUserId: null,
       occurredAt: DateTime.now(),
       orderId: null,
       dischargesSenderObligationId: obligations[0]!.id,
@@ -222,8 +222,8 @@ test.group("sendMatchToStand", (group) => {
     await BookHandover.create({
       blid: BLID,
       itemId: ITEM_X,
-      fromUserDetailId: PETTER,
-      toUserDetailId: MAYA,
+      fromUserId: PETTER,
+      toUserId: MAYA,
       occurredAt: DateTime.now(),
       orderId: null,
       dischargesSenderObligationId: obligations[0]!.id,

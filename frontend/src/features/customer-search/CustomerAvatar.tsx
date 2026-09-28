@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 // One parsed style for the whole app; parsing the definition is the expensive part.
 const critterStyle = new Style(critters);
 
-type CustomerAvatarProps = { detailsId: string } & (
+type CustomerAvatarProps = { userId: string } & (
   | { enlargeable?: false; name?: never }
   | {
       /** Opens larger on click, like a book cover. Off inside rows that are themselves buttons. */
@@ -24,8 +24,8 @@ type CustomerAvatarProps = { detailsId: string } & (
  */
 export default function CustomerAvatar(props: CustomerAvatarProps) {
   const src = useMemo(
-    () => new Critter(critterStyle, { seed: props.detailsId }).toDataUri(),
-    [props.detailsId],
+    () => new Critter(critterStyle, { seed: props.userId }).toDataUri(),
+    [props.userId],
   );
   const avatar = <Avatar src={src} alt="" radius="xl" />;
   return props.enlargeable ? <Enlargeable src={src} name={props.name} avatar={avatar} /> : avatar;

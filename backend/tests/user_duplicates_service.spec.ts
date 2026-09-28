@@ -126,7 +126,7 @@ test.group("findDuplicateCandidatePairs", () => {
   });
 });
 
-test.group("UserDuplicatesService.summarizeUserDetails", (group) => {
+test.group("UserDuplicatesService.summarizeUsers", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
   test("counts the open rent and partly-payment lines of placed orders", async ({ assert }) => {
@@ -158,9 +158,9 @@ test.group("UserDuplicatesService.summarizeUserDetails", (group) => {
       orderItems: [{ itemId: item.id }],
     });
 
-    const summaries = await UserDuplicatesService.summarizeUserDetails([customer.id, other.id]);
+    const summaries = await UserDuplicatesService.summarizeUsers([customer.id, other.id]);
 
-    const ordered = new Map(summaries.map((summary) => [summary.detailsId, summary.orderedItems]));
+    const ordered = new Map(summaries.map((summary) => [summary.userId, summary.orderedItems]));
     assert.equal(ordered.get(customer.id), 2);
     assert.equal(ordered.get(other.id), 1);
   });

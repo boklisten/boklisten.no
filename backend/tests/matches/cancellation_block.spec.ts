@@ -37,8 +37,8 @@ async function createUserMatch({
 }) {
   const match = await Match.create({ roundId, meetingLocation: "Biblioteket" });
   const [senderParticipant, receiverParticipant] = await MatchParticipant.createMany([
-    { matchId: match.id, userDetailId: sender },
-    { matchId: match.id, userDetailId: receiver },
+    { matchId: match.id, userId: sender },
+    { matchId: match.id, userId: receiver },
   ]);
   await MatchObligation.createMany(
     itemIds.map((itemId) => ({
@@ -62,8 +62,8 @@ async function createStandMatch({
 }) {
   const match = await Match.create({ roundId, meetingLocation: "Kantina" });
   const [standParticipant, customerParticipant] = await MatchParticipant.createMany([
-    { matchId: match.id, userDetailId: null },
-    { matchId: match.id, userDetailId: customer },
+    { matchId: match.id, userId: null },
+    { matchId: match.id, userId: customer },
   ]);
   await MatchObligation.createMany(
     itemIds.map((itemId) => ({

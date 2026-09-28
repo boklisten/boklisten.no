@@ -21,16 +21,16 @@ const POLL_INTERVAL_MS = 5000;
  * the details unfold under it: a second modal would unmount the form and drop unsaved edits.
  */
 export default function SignatureStatusBanner({
-  userDetail,
+  user,
   inForm = false,
 }: {
-  userDetail: User;
+  user: User;
   inForm?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const { data, isPending, isError } = useQuery(
     api.signatures.show.queryOptions(
-      { params: { detailsId: userDetail.id } },
+      { params: { userId: user.id } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );
@@ -51,7 +51,7 @@ export default function SignatureStatusBanner({
     }
     modals.open({
       title: "Signatur",
-      children: <AdministrateUserSignatures userDetail={userDetail} />,
+      children: <AdministrateUserSignatures user={user} />,
     });
   };
 
@@ -76,7 +76,7 @@ export default function SignatureStatusBanner({
       {content}
       {inForm && (
         <Collapse expanded={expanded}>
-          <AdministrateUserSignatures userDetail={userDetail} />
+          <AdministrateUserSignatures user={user} />
         </Collapse>
       )}
     </Stack>

@@ -9,11 +9,11 @@ import EntityLink from "@/shared/components/EntityLink";
  * name uses this, so the name reads and behaves the same everywhere.
  */
 export default function CustomerLink({
-  detailsId,
+  userId,
   children,
   ...props
 }: Omit<AnchorProps, "href"> & {
-  detailsId: string;
+  userId: string;
   children: ReactNode;
   onClick?: MouseEventHandler<HTMLAnchorElement>;
   "aria-label"?: string;
@@ -21,7 +21,7 @@ export default function CustomerLink({
   return (
     <EntityLink
       to="/admin/kasse"
-      search={showCustomer(detailsId)}
+      search={showCustomer(userId)}
       // `inherit` alone leaves the standard weight in place; inside a badge or heading the name
       // should weigh exactly what its neighbours do
       {...(props.inherit ? { fw: "inherit" } : {})}

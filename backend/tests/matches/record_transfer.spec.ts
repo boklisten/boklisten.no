@@ -93,8 +93,8 @@ test.group("recordTransfer", (group) => {
   ): Promise<MatchObligation> {
     const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
     const [sender, receiver] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: senderId },
-      { matchId: match.id, userDetailId: receiverId },
+      { matchId: match.id, userId: senderId },
+      { matchId: match.id, userId: receiverId },
     ]);
     return MatchObligation.create({
       matchId: match.id,
@@ -157,8 +157,8 @@ test.group("recordTransfer", (group) => {
     const handovers = await BookHandover.all();
     assert.lengthOf(handovers, 1);
     assert.equal(handovers[0]!.blid, BLID);
-    assert.equal(handovers[0]!.fromUserDetailId, B);
-    assert.equal(handovers[0]!.toUserDetailId, A);
+    assert.equal(handovers[0]!.fromUserId, B);
+    assert.equal(handovers[0]!.toUserId, A);
     assert.equal(handovers[0]!.dischargesSenderObligationId, obligation.id);
     assert.equal(handovers[0]!.dischargesReceiverObligationId, obligation.id);
   });
@@ -275,8 +275,8 @@ test.group("recordTransfer", (group) => {
     await MatchRepository.recordHandover({
       blid: "BL0009999999",
       itemId: ITEM_X,
-      fromUserDetailId: B,
-      toUserDetailId: A,
+      fromUserId: B,
+      toUserId: A,
       occurredAt: DateTime.now(),
       orderId: null,
       dischargesSenderObligationId: obligation.id,

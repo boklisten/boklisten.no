@@ -5,7 +5,7 @@ import { createSandbox } from "sinon";
 import { ActiveItemMonitoring } from "#services/active_item_monitoring";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 
-const EMPLOYEE = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
+const EMPLOYEE = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 
 test.group("ActiveItemMonitoring", (group) => {

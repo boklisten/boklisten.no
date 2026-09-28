@@ -25,14 +25,14 @@ function liveObligations() {
 async function findPeerSender(customerId: string, itemId: string): Promise<string | null> {
   const obligation = await liveObligations()
     .whereIn("itemId", getEquivalentItemIds(itemId))
-    .whereHas("receiver", (receiver) => receiver.where("userDetailId", customerId))
-    .whereHas("sender", (sender) => sender.whereNotNull("userDetailId"))
+    .whereHas("receiver", (receiver) => receiver.where("userId", customerId))
+    .whereHas("sender", (sender) => sender.whereNotNull("userId"))
     .whereNotIn("id", dischargedHalves("receiver"))
     .orderBy("id", "asc")
     .preload("sender")
     .first();
 
-  return obligation?.sender.userDetailId ?? null;
+  return obligation?.sender.userId ?? null;
 }
 
 /**
@@ -43,14 +43,14 @@ async function findPeerSender(customerId: string, itemId: string): Promise<strin
 async function findPeerRecipient(customerId: string, itemId: string): Promise<string | null> {
   const obligation = await liveObligations()
     .whereIn("itemId", getEquivalentItemIds(itemId))
-    .whereHas("sender", (sender) => sender.where("userDetailId", customerId))
-    .whereHas("receiver", (receiver) => receiver.whereNotNull("userDetailId"))
+    .whereHas("sender", (sender) => sender.where("userId", customerId))
+    .whereHas("receiver", (receiver) => receiver.whereNotNull("userId"))
     .whereNotIn("id", dischargedHalves("sender"))
     .orderBy("id", "asc")
     .preload("receiver")
     .first();
 
-  return obligation?.receiver.userDetailId ?? null;
+  return obligation?.receiver.userId ?? null;
 }
 
 export const PeerObligations = {

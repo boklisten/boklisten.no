@@ -51,16 +51,16 @@ export default function Tasks() {
       <Stepper active={0}>
         {data.taskConfirmDetails && (
           <Stepper.Step label="Bekreft din informasjon">
-            <UserSettingsForm userDetail={data} />
+            <UserSettingsForm user={data} />
           </Stepper.Step>
         )}
         {data.taskSignAgreement && (
           <Stepper.Step label="Signer låneavtale">
             <Activity mode={isUnder18(data.dob) ? "visible" : "hidden"}>
-              <GuardianSignatureRequest userDetail={data} />
+              <GuardianSignatureRequest user={data} />
             </Activity>
             <Activity mode={!isUnder18(data.dob) ? "visible" : "hidden"}>
-              <SignAgreement userDetailId={data.id} />
+              <SignAgreement userId={data.id} />
             </Activity>
           </Stepper.Step>
         )}

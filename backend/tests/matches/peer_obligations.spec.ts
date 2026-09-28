@@ -25,8 +25,8 @@ async function discharge(obligation: MatchObligation, half: "sender" | "receiver
   await MatchRepository.recordHandover({
     blid: "BL0001234567",
     itemId: obligation.itemId,
-    fromUserDetailId: A,
-    toUserDetailId: B,
+    fromUserId: A,
+    toUserId: B,
     occurredAt: DateTime.now(),
     orderId: null,
     dischargesSenderObligationId: half === "sender" ? obligation.id : null,
@@ -55,8 +55,8 @@ test.group("PeerObligations", (group) => {
       meetingLocation: "Biblioteket",
     });
     const [sender, receiver] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: senderId },
-      { matchId: match.id, userDetailId: receiverId },
+      { matchId: match.id, userId: senderId },
+      { matchId: match.id, userId: receiverId },
     ]);
     return MatchObligation.create({
       matchId: match.id,

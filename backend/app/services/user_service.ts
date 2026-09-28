@@ -6,12 +6,12 @@ import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { PasswordService } from "#services/password_service";
 import { reconcileSignatureTask } from "#services/signature_helper";
-import { invalidUserFields } from "#services/user_detail_helper";
+import { invalidUserFields } from "#services/user_fields";
 import type { User as UserDto } from "#shared/user";
 import type { VippsUser } from "#types/user";
 import type { registerSchema } from "#validators/auth_validators";
 import type { userProvisioningValidator } from "#validators/user_provisioning";
-import type { userDetailsSchema } from "#validators/users";
+import type { userFieldsSchema } from "#validators/users";
 
 /** A `vine.date()` value (midnight of the chosen day) as the calendar date it names. */
 export function dobFrom(date: Date | null | undefined): DateTime | null {
@@ -19,17 +19,17 @@ export function dobFrom(date: Date | null | undefined): DateTime | null {
 }
 
 /**
- * A validated `userDetailsSchema` payload as the columns it sets: the request names match the
+ * A validated `userFieldsSchema` payload as the columns it sets: the request names match the
  * model's, so only the date and the optional-to-nullable fields need translating.
  */
-export function userDetailsFrom({
+export function userFieldsFrom({
   dob,
   branchMembershipId,
   guardianName,
   guardianEmail,
   guardianPhone,
   ...details
-}: Infer<typeof userDetailsSchema>) {
+}: Infer<typeof userFieldsSchema>) {
   return {
     ...details,
     dob: dobFrom(dob),
@@ -106,13 +106,13 @@ export const UserService = {
     ...details
   }: Infer<typeof registerSchema>): Promise<User> {
     const user = await User.create({
-      ...userDetailsFrom(details),
+      ...userFieldsFrom(details),
       email,
       emailConfirmed: false,
       permission: "customer",
       localHashedPassword: await PasswordService.hash(password),
     });
-    const emailVerification = await EmailVerification.create({ userDetailId: user.id });
+    const emailVerification = await EmailVerification.create({ userId: user.id });
     await DispatchService.sendEmailVerification(email, emailVerification.id);
     return user;
   },

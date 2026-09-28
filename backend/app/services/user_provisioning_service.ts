@@ -7,7 +7,7 @@ import Signature from "#models/signature";
 import User from "#models/user";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import DispatchService from "#services/dispatch_service";
-import { invalidUserFields } from "#services/user_detail_helper";
+import { invalidUserFields } from "#services/user_fields";
 import { dobFrom, UserService } from "#services/user_service";
 import type { userProvisioningValidator } from "#validators/user_provisioning";
 
@@ -176,7 +176,7 @@ async function createNewUser(
 ) {
   const user = await UserService.createProvisionedUser(candidate, branchMembershipId);
   await DispatchService.sendOnboardingMessage({
-    userDetail: user,
+    user,
     branchName,
   });
 }
@@ -276,7 +276,7 @@ export const UserProvisioningService = {
     const signatures = new Map(
       (
         await Signature.newestPerCustomer(existingUsers.flatMap((user) => (user ? [user.id] : [])))
-      ).map((signature) => [signature.customerDetailsId, signature]),
+      ).map((signature) => [signature.customerId, signature]),
     );
 
     const summary = {

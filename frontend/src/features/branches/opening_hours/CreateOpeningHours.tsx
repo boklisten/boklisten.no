@@ -35,8 +35,8 @@ export default function CreateOpeningHours({ branchId }: { branchId: string }) {
     onSubmit: ({ value }) =>
       createOpeningHourMutation.mutate({
         body: {
-          from: combineDateAndTime(value.date, value.start),
-          to: combineDateAndTime(value.date, value.end),
+          opensAt: combineDateAndTime(value.date, value.start),
+          closesAt: combineDateAndTime(value.date, value.end),
           branchId,
         },
       }),

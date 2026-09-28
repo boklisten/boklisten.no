@@ -70,7 +70,7 @@ async function deliverAndRecord(
 interface SmsMessage {
   to: string;
   body: string;
-  regardingCustomerDetailsId?: string | null;
+  customerId?: string | null;
 }
 
 /**
@@ -97,8 +97,7 @@ const SmsService = {
       recipient: message.to,
       context: {
         ...context,
-        regardingCustomerDetailsId:
-          message.regardingCustomerDetailsId ?? context.regardingCustomerDetailsId,
+        customerId: message.customerId ?? context.customerId,
       },
       smsBody: message.body,
     });
@@ -304,8 +303,7 @@ const EmailService = {
           recipient: recipient.to,
           context: {
             ...context,
-            regardingCustomerDetailsId:
-              recipient.regardingCustomerDetailsId ?? context.regardingCustomerDetailsId,
+            customerId: recipient.customerId ?? context.customerId,
           },
           subject: typeof subject === "string" ? subject : null,
           templateId: template.templateId,
@@ -318,7 +316,7 @@ const EmailService = {
 
 const DispatchService = {
   async sendReminderSms(
-    recipients: { to: string; regardingCustomerDetailsId?: string | null }[],
+    recipients: { to: string; customerId?: string | null }[],
     body: string,
     context: MessageLogContext,
   ) {
@@ -333,7 +331,7 @@ const DispatchService = {
   async sendOrderReceipt(emailUser: EmailUser, emailOrder: EmailOrder, paymentNeeded: boolean) {
     await EmailService.sendEmail({
       template: EMAIL_TEMPLATES.receipt,
-      context: { messageType: "receipt", regardingCustomerDetailsId: emailUser.id },
+      context: { messageType: "receipt", customerId: emailUser.id },
       recipients: [
         {
           to: emailUser.email,
@@ -353,38 +351,38 @@ const DispatchService = {
       ],
     });
   },
-  async sendSignatureLink(customerDetail: User, branchName: string) {
-    if (await userHasValidSignature(customerDetail)) {
+  async sendSignatureLink(customer: User, branchName: string) {
+    if (await userHasValidSignature(customer)) {
       return;
     }
-    customerDetail.taskSignAgreement = true;
-    await customerDetail.save();
+    customer.taskSignAgreement = true;
+    await customer.save();
 
     const context: MessageLogContext = {
       messageType: "signature",
-      regardingCustomerDetailsId: customerDetail.id,
+      customerId: customer.id,
     };
 
-    if (isUnderage(customerDetail) && customerDetail.guardianEmail) {
+    if (isUnderage(customer) && customer.guardianEmail) {
       await EmailService.sendEmail({
         template: EMAIL_TEMPLATES.guardianSignature,
         context,
         recipients: {
-          to: customerDetail.guardianEmail,
+          to: customer.guardianEmail,
           dynamicTemplateData: {
-            guardianSignatureUri: `${clientOrigin}/signering/${customerDetail.id}`,
-            customerName: customerDetail.name,
-            guardianName: customerDetail.guardianName ?? "",
+            guardianSignatureUri: `${clientOrigin}/signering/${customer.id}`,
+            customerName: customer.name,
+            guardianName: customer.guardianName ?? "",
             branchName,
           },
         },
       });
 
-      if (customerDetail.guardianPhone) {
+      if (customer.guardianPhone) {
         await SmsService.sendOne(
           {
-            to: customerDetail.guardianPhone,
-            body: `Hei. ${customerDetail.name} skal snart motta bøker fra ${branchName} via Boklisten.no. Siden ${customerDetail.name} er under 18 år, krever vi at du som foresatt signerer låneavtalen. Vi har derfor sendt en e-post til ${customerDetail.guardianEmail} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
+            to: customer.guardianPhone,
+            body: `Hei. ${customer.name} skal snart motta bøker fra ${branchName} via Boklisten.no. Siden ${customer.name} er under 18 år, krever vi at du som foresatt signerer låneavtalen. Vi har derfor sendt en e-post til ${customer.guardianEmail} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
           },
           context,
         );
@@ -394,20 +392,20 @@ const DispatchService = {
         template: EMAIL_TEMPLATES.signature,
         context,
         recipients: {
-          to: customerDetail.email,
+          to: customer.email,
           dynamicTemplateData: {
-            signatureUri: `${clientOrigin}/signering/${customerDetail.id}`,
-            name: customerDetail.name,
+            signatureUri: `${clientOrigin}/signering/${customer.id}`,
+            name: customer.name,
             branchName,
           },
         },
       });
 
-      if (customerDetail.phone) {
+      if (customer.phone) {
         await SmsService.sendOne(
           {
-            to: customerDetail.phone,
-            body: `Hei. Du skal snart motta bøker fra ${branchName} via Boklisten.no. Før du kan motta bøkene må du signere vår låneavtale. Vi har derfor sendt en e-post til ${customerDetail.email} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
+            to: customer.phone,
+            body: `Hei. Du skal snart motta bøker fra ${branchName} via Boklisten.no. Før du kan motta bøkene må du signere vår låneavtale. Vi har derfor sendt en e-post til ${customer.email} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
           },
           context,
         );
@@ -415,15 +413,15 @@ const DispatchService = {
     }
   },
 
-  async sendDeliveryInformation(customerDetail: User, order: Order, delivery: Delivery) {
+  async sendDeliveryInformation(customer: User, order: Order, delivery: Delivery) {
     await EmailService.sendEmail({
       template: EMAIL_TEMPLATES.deliveryInformation,
-      context: { messageType: "delivery-info", regardingCustomerDetailsId: customerDetail.id },
+      context: { messageType: "delivery-info", customerId: customer.id },
       recipients: [
         {
-          to: customerDetail.email,
+          to: customer.email,
           dynamicTemplateData: {
-            firstName: customerDetail.name.split(" ")[0],
+            firstName: customer.name.split(" ")[0],
             orderId: order.id,
             orderItems: order.orderItems.map((orderItem) => ({
               title: orderItem.title,
@@ -483,7 +481,7 @@ const DispatchService = {
         context,
         recipients: customers.map((customer) => ({
           to: customer.email,
-          regardingCustomerDetailsId: customer.id,
+          customerId: customer.id,
           dynamicTemplateData: {
             name: customer.name.split(" ")[0] ?? customer.name,
             username: customer.email,
@@ -497,7 +495,7 @@ const DispatchService = {
             : [
                 {
                   to: customer.phone,
-                  regardingCustomerDetailsId: customer.id,
+                  customerId: customer.id,
                   body: `Hei, ${customer.name.split(" ")[0]}. ${smsBody} Mvh Boklisten`,
                 },
               ],
@@ -525,23 +523,17 @@ const DispatchService = {
       context,
     });
   },
-  async sendOnboardingMessage({
-    userDetail,
-    branchName,
-  }: {
-    userDetail: User;
-    branchName: string;
-  }) {
+  async sendOnboardingMessage({ user, branchName }: { user: User; branchName: string }) {
     const context: MessageLogContext = {
       messageType: "onboarding",
-      regardingCustomerDetailsId: userDetail.id,
+      customerId: user.id,
     };
-    const firstName = userDetail.name.split(" ")[0];
+    const firstName = user.name.split(" ")[0];
     const emailStatus = await EmailService.sendEmail({
       template: EMAIL_TEMPLATES.onboarding,
       context,
       recipients: {
-        to: userDetail.email,
+        to: user.email,
         dynamicTemplateData: {
           firstName,
           branchName,
@@ -549,12 +541,12 @@ const DispatchService = {
         },
       },
     });
-    if (userDetail.phone === null) {
+    if (user.phone === null) {
       return { emailStatus, smsStatus: null };
     }
     const smsStatus = await SmsService.sendOne(
       {
-        to: userDetail.phone,
+        to: user.phone,
         body: `Hei ${firstName}, velkommen til ${branchName}! Vi i Boklisten administrerer utlån av bøkene du skal bruke, og før du kan få dem trenger vi at du bekrefter informasjonen din og signerer vår låneavtale på Boklisten.no. Er du under 18 år, må en foresatt signere. Vi har opprettet en konto til deg, og du kan logge inn med Vipps eller opprette et passord for å komme i gang. Mvh. Boklisten.no`,
       },
       context,

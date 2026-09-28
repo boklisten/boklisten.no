@@ -2,7 +2,7 @@ import vine from "@vinejs/vine";
 
 import { emailField, passwordField } from "#validators/common/fields";
 import { uniqueEmail } from "#validators/common/rules";
-import { userDetailsSchema } from "#validators/users";
+import { userFieldsSchema } from "#validators/users";
 
 export const forgotPasswordValidator = vine.create(
   vine.object({
@@ -21,7 +21,7 @@ export const passwordResetValidator = vine.create({
 export const registerSchema = vine.object({
   email: emailField.clone().use(uniqueEmail()),
   password: passwordField.clone(),
-  ...userDetailsSchema.getProperties(),
+  ...userFieldsSchema.getProperties(),
 });
 
 export const registerValidator = vine.create(registerSchema);

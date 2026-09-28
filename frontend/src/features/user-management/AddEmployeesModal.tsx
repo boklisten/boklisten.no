@@ -29,7 +29,7 @@ const GRANTABLE_PERMISSIONS = (["employee", "admin"] as const).map((permission) 
 }));
 
 interface SelectedUser {
-  detailsId: string;
+  userId: string;
   name: string;
   email: string;
 }
@@ -49,14 +49,14 @@ export default function AddEmployeesModal({
 
   const searchActive = debouncedSearch.length >= MIN_SEARCH_LENGTH;
   const { data: searchResults, isFetching } = useQuery({
-    queryKey: ["userDetail", "search", debouncedSearch],
+    queryKey: ["users", "search", debouncedSearch],
     queryFn: async () =>
       (await apiClient.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: searchActive,
   });
 
   const addMutation = useMutation({
-    mutationFn: (input: { detailsIds: string[]; permission: UserPermission }) =>
+    mutationFn: (input: { userIds: string[]; permission: UserPermission }) =>
       apiClient.api.users.setPermission({ body: input }),
     onSuccess: async () => {
       showSuccessNotification(
@@ -83,12 +83,12 @@ export default function AddEmployeesModal({
     setSelectedUsers((previous) =>
       checked
         ? [...previous, user]
-        : previous.filter((selected) => selected.detailsId !== user.detailsId),
+        : previous.filter((selected) => selected.userId !== user.userId),
     );
   }
 
-  const isSelected = (detailsId: string) =>
-    selectedUsers.some((selected) => selected.detailsId === detailsId);
+  const isSelected = (userId: string) =>
+    selectedUsers.some((selected) => selected.userId === userId);
 
   return (
     <Modal opened={opened} onClose={closeAndReset} title="Legg til ansatte" size="lg">
@@ -115,7 +115,7 @@ export default function AddEmployeesModal({
                 checked={isSelected(result.id)}
                 onChange={(event) =>
                   toggleUser(
-                    { detailsId: result.id, name: result.name ?? "", email: result.email },
+                    { userId: result.id, name: result.name ?? "", email: result.email },
                     event.currentTarget.checked,
                   )
                 }
@@ -142,7 +142,7 @@ export default function AddEmployeesModal({
         {selectedUsers.length > 0 && (
           <Pill.Group>
             {selectedUsers.map((user) => (
-              <Pill key={user.detailsId} withRemoveButton onRemove={() => toggleUser(user, false)}>
+              <Pill key={user.userId} withRemoveButton onRemove={() => toggleUser(user, false)}>
                 {user.name || user.email}
               </Pill>
             ))}
@@ -163,7 +163,7 @@ export default function AddEmployeesModal({
           loading={addMutation.isPending}
           onClick={() =>
             addMutation.mutate({
-              detailsIds: selectedUsers.map((user) => user.detailsId),
+              userIds: selectedUsers.map((user) => user.userId),
               permission,
             })
           }

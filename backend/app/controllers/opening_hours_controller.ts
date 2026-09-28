@@ -11,17 +11,17 @@ export default class OpeningHoursController {
       OpeningHourTransformer.transform(
         await OpeningHour.query()
           .where("branchId", ctx.request.param("branchId"))
-          .where("to", ">", DateTime.now().toSQL())
-          .orderBy("to", "asc"),
+          .where("closesAt", ">", DateTime.now().toSQL())
+          .orderBy("closesAt", "asc"),
       ),
     );
   }
   async store(ctx: HttpContext) {
-    const { branchId, from, to } = await ctx.request.validateUsing(openingHoursValidator);
+    const { branchId, opensAt, closesAt } = await ctx.request.validateUsing(openingHoursValidator);
     await OpeningHour.create({
       branchId,
-      from: DateTime.fromJSDate(from),
-      to: DateTime.fromJSDate(to),
+      opensAt: DateTime.fromJSDate(opensAt),
+      closesAt: DateTime.fromJSDate(closesAt),
     });
   }
   async destroy(ctx: HttpContext) {

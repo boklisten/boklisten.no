@@ -82,7 +82,7 @@ export const RefundRequestService = {
    */
   async send(input: {
     order: RefundOrder;
-    employeeDetailsId: string;
+    employeeId: string;
     amount: number;
     accountNumber: string | null;
     comment: string | null;
@@ -90,7 +90,7 @@ export const RefundRequestService = {
     try {
       const [customer, employee] = await Promise.all([
         User.findOrFail(input.order.customerId),
-        User.findOrFail(input.employeeDetailsId),
+        User.findOrFail(input.employeeId),
       ]);
       const mail = buildRefundRequestMail({
         ...input,
@@ -100,12 +100,12 @@ export const RefundRequestService = {
       });
       await DispatchService.sendPlainEmail({
         ...mail,
-        context: { messageType: "refund-request", regardingCustomerDetailsId: customer.id },
+        context: { messageType: "refund-request", customerId: customer.id },
       });
     } catch (error) {
       Sentry.captureException(error, {
         tags: { messageType: "refund-request" },
-        extra: { orderId: input.order.id, employeeDetailsId: input.employeeDetailsId },
+        extra: { orderId: input.order.id, employeeId: input.employeeId },
       });
     }
   },

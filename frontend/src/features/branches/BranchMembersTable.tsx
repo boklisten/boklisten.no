@@ -29,7 +29,7 @@ export default function BranchMembersTable({
             headerName: "Navn",
             cellRenderer: ({ data }: ICellRendererParams<BranchMember>) =>
               data && (
-                <CustomerLink detailsId={data.id} fw={400}>
+                <CustomerLink userId={data.id} fw={400}>
                   {data.name}
                 </CustomerLink>
               ),

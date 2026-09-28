@@ -10,7 +10,7 @@ import type { matchNotifySchema } from "#validators/matches";
 
 export async function notify(
   { target, message, roundId }: Infer<typeof matchNotifySchema>,
-  initiatedByDetailsId?: string,
+  initiatedById?: string,
 ) {
   const round =
     roundId === undefined
@@ -33,14 +33,12 @@ export async function notify(
   const userMatchCustomers = new Set<string>();
   const standMatchCustomers = new Set<string>();
   for (const match of matches) {
-    const isStandMatch = match.participants.some(
-      (participant) => participant.userDetailId === null,
-    );
+    const isStandMatch = match.participants.some((participant) => participant.userId === null);
     for (const participant of match.participants) {
-      if (participant.userDetailId === null) {
+      if (participant.userId === null) {
         continue;
       }
-      (isStandMatch ? standMatchCustomers : userMatchCustomers).add(participant.userDetailId);
+      (isStandMatch ? standMatchCustomers : userMatchCustomers).add(participant.userId);
     }
   }
 
@@ -64,7 +62,7 @@ export async function notify(
   const sendout = await MessageLogService.createSendout({
     kind: "match-notify",
     name: round.name,
-    initiatedByDetailsId,
+    initiatedById,
   });
   const { mailStatus, smsStatus } = await DispatchService.sendMatchInformation({
     customers: targetCustomers,

@@ -8,9 +8,9 @@ import type { ActiveCustomerItem } from "#shared/customer-item/active-customer-i
 export default class CustomerItemsController {
   /** The caller's own books, with the actions they can take on them. */
   async me(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const { id: userId } = ctx.auth.getUserOrFail();
     const customerItems = await CustomerItem.query()
-      .where("customer_id", detailsId)
+      .where("customer_id", userId)
       .preload("item")
       .preload("handoutBranch")
       .orderBy("updated_at", "desc");
@@ -48,13 +48,13 @@ export default class CustomerItemsController {
    * rental type.
    */
   async forCustomer(ctx: HttpContext) {
-    const detailsId = String(ctx.request.param("detailsId"));
-    if (!isObjectIdHex(detailsId)) {
+    const userId = String(ctx.request.param("userId"));
+    if (!isObjectIdHex(userId)) {
       return [];
     }
 
     const customerItems = await CustomerItem.whereActive(
-      CustomerItem.query().where("customer_id", detailsId),
+      CustomerItem.query().where("customer_id", userId),
     )
       .preload("item")
       .preload("handoutBranch");

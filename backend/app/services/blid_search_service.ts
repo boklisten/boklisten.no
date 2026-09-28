@@ -29,8 +29,8 @@ import { isDeadlineOverdue } from "#shared/deadline";
 import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
 
 interface HandoverRow {
-  fromUserDetailId: string | null;
-  toUserDetailId: string | null;
+  fromUserId: string | null;
+  toUserId: string | null;
   occurredAt: Date;
   orderId: string | null;
 }
@@ -50,8 +50,8 @@ export interface BlidSearchSources {
   handovers: HandoverRow[];
   /** Orders whose delivery document is a Bring shipment: their handouts went by mail. */
   bringDeliveryOrderIds: Set<string>;
-  /** User detail id → display name. */
-  userDetails: Map<string, string>;
+  /** User id → display name. */
+  userNames: Map<string, string>;
   branchNames: Map<string, string>;
   /** The moment the search runs, for judging whether the held book is overdue. */
   now: Date;
@@ -144,24 +144,24 @@ export function rankBlidMatches<T extends BlidMatch>(
 export interface BlidSearchHitSources {
   /** Already in the order they should be shown. */
   uniqueItems: { blid: string; title: string; isbn: string | null }[];
-  /** blid → user detail id of the customer actively holding the book. */
+  /** blid → user id of the customer actively holding the book. */
   holders: Map<string, string>;
-  /** User detail id → display name. */
-  userDetails: Map<string, string>;
+  /** User id → display name. */
+  userNames: Map<string, string>;
 }
 
 /** Attaches the holding customer to each matched book. */
 export function assembleBlidSearchHits(sources: BlidSearchHitSources): BlidSearchHit[] {
   return sources.uniqueItems.map(({ blid, title, isbn }) => {
-    const detailsId = sources.holders.get(blid);
+    const userId = sources.holders.get(blid);
     return {
       blid,
       title,
       isbn,
       holder:
-        detailsId === undefined
+        userId === undefined
           ? null
-          : { detailsId, name: sources.userDetails.get(detailsId) ?? FALLBACK_NAME },
+          : { userId, name: sources.userNames.get(userId) ?? FALLBACK_NAME },
     };
   });
 }
@@ -184,18 +184,18 @@ export function collectReferencedIds(
   customerItems: BlidCustomerItem[],
   orders: OrderDto[],
   handovers: HandoverRow[],
-): { userDetailIds: string[]; branchIds: string[] } {
-  const userDetailIds = new Set<string>();
+): { userIds: string[]; branchIds: string[] } {
+  const userIds = new Set<string>();
   const branchIds = new Set<string>();
 
   for (const customerItem of customerItems) {
-    for (const userDetailId of [
+    for (const userId of [
       customerItem.customerId,
       customerItem.handoutEmployeeId,
       customerItem.returnEmployeeId,
     ]) {
-      if (userDetailId) {
-        userDetailIds.add(userDetailId);
+      if (userId) {
+        userIds.add(userId);
       }
     }
     branchIds.add(customerItem.handoutBranchId);
@@ -205,23 +205,23 @@ export function collectReferencedIds(
   }
   for (const order of orders) {
     if (order.customerId) {
-      userDetailIds.add(order.customerId);
+      userIds.add(order.customerId);
     }
     if (order.employeeId) {
-      userDetailIds.add(order.employeeId);
+      userIds.add(order.employeeId);
     }
     branchIds.add(order.branchId);
   }
   for (const handover of handovers) {
-    if (handover.fromUserDetailId) {
-      userDetailIds.add(handover.fromUserDetailId);
+    if (handover.fromUserId) {
+      userIds.add(handover.fromUserId);
     }
-    if (handover.toUserDetailId) {
-      userDetailIds.add(handover.toUserDetailId);
+    if (handover.toUserId) {
+      userIds.add(handover.toUserId);
     }
   }
 
-  return { userDetailIds: [...userDetailIds], branchIds: [...branchIds] };
+  return { userIds: [...userIds], branchIds: [...branchIds] };
 }
 
 // One physical transfer can leave three records made within moments of each other: the
@@ -230,10 +230,7 @@ const TRANSFER_PAIRING_WINDOW_MS = 120_000;
 
 function sameCustomer(a: BlidParty | undefined, b: BlidParty | undefined): boolean {
   return (
-    a?.type === "customer" &&
-    b?.type === "customer" &&
-    a.detailsId !== null &&
-    a.detailsId === b.detailsId
+    a?.type === "customer" && b?.type === "customer" && a.userId !== null && a.userId === b.userId
   );
 }
 
@@ -297,15 +294,13 @@ function reconcileOneSidedMatches(
 }
 
 export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult {
-  const customerParty = (detailsId: string | null): BlidParty =>
-    detailsId === null
-      ? { type: "customer", detailsId: null, name: DELETED_CUSTOMER_NAME }
-      : { type: "customer", detailsId, name: sources.userDetails.get(detailsId) ?? FALLBACK_NAME };
+  const customerParty = (userId: string | null): BlidParty =>
+    userId === null
+      ? { type: "customer", userId: null, name: DELETED_CUSTOMER_NAME }
+      : { type: "customer", userId, name: sources.userNames.get(userId) ?? FALLBACK_NAME };
   const employeeOf = (id: string | null | undefined) => {
-    const name = id === undefined || id === null ? undefined : sources.userDetails.get(id);
-    return id === undefined || id === null || name === undefined
-      ? undefined
-      : { detailsId: id, name };
+    const name = id === undefined || id === null ? undefined : sources.userNames.get(id);
+    return id === undefined || id === null || name === undefined ? undefined : { userId: id, name };
   };
   const branchName = (id: string | undefined) =>
     id === undefined ? undefined : (sources.branchNames.get(id) ?? FALLBACK_NAME);
@@ -336,7 +331,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   // Handover rows are the authoritative movement record: they know both parties.
   const orderIdsCoveredByHandover = new Set<string>();
   for (const handover of sources.handovers) {
-    if (handover.fromUserDetailId === null && handover.toUserDetailId === null) {
+    if (handover.fromUserId === null && handover.toUserId === null) {
       continue;
     }
     if (handover.orderId !== null) {
@@ -346,22 +341,16 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
     const order = handover.orderId === null ? undefined : ordersById.get(handover.orderId);
     const relevantOrderItem = order?.orderItems.find(belongsToBlid);
     const action =
-      handover.fromUserDetailId !== null && handover.toUserDetailId !== null
+      handover.fromUserId !== null && handover.toUserId !== null
         ? "match-transfer"
-        : handover.fromUserDetailId === null
+        : handover.fromUserId === null
           ? "handout"
           : "return";
     const event: BlidHistoryEvent = {
       time: new Date(handover.occurredAt).toISOString(),
       action,
-      from:
-        handover.fromUserDetailId === null
-          ? { type: "stand" }
-          : customerParty(handover.fromUserDetailId),
-      to:
-        handover.toUserDetailId === null
-          ? { type: "stand" }
-          : customerParty(handover.toUserDetailId),
+      from: handover.fromUserId === null ? { type: "stand" } : customerParty(handover.fromUserId),
+      to: handover.toUserId === null ? { type: "stand" } : customerParty(handover.toUserId),
       employee: employeeOf(order?.employeeId),
       byCustomer: order?.byCustomer ?? action === "match-transfer",
       branchName: branchName(order?.branchId),
@@ -488,19 +477,19 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   // order items. A customer's handout/return is only synthesized when no event already tells
   // that story for the same customer — receiving via a transfer counts as having gotten the
   // book, and giving it away via a transfer counts as having parted with it.
-  const gotBook = (detailsId: string | null) =>
+  const gotBook = (userId: string | null) =>
     events.some(
       (event) =>
         (event.action === "handout" || event.action === "match-transfer") &&
         event.to?.type === "customer" &&
-        event.to.detailsId === detailsId,
+        event.to.userId === userId,
     );
-  const gaveBook = (detailsId: string | null) =>
+  const gaveBook = (userId: string | null) =>
     events.some(
       (event) =>
         (event.action === "return" || event.action === "match-transfer") &&
         event.from?.type === "customer" &&
-        event.from.detailsId === detailsId,
+        event.from.userId === userId,
     );
   const extendDeadlines = new Set(
     events
@@ -857,7 +846,7 @@ export const BlidSearchService = {
       hits: assembleBlidSearchHits({
         uniqueItems: winners,
         holders,
-        userDetails: userNames,
+        userNames,
       }),
       hasMore,
     };
@@ -876,15 +865,15 @@ export const BlidSearchService = {
     const item = itemId === undefined ? null : await Item.find(itemId);
 
     const handovers: HandoverRow[] = handoverModels.map((handover) => ({
-      fromUserDetailId: handover.fromUserDetailId,
-      toUserDetailId: handover.toUserDetailId,
+      fromUserId: handover.fromUserId,
+      toUserId: handover.toUserId,
       occurredAt: handover.occurredAt.toJSDate(),
       orderId: handover.orderId,
     }));
 
-    const { userDetailIds, branchIds } = collectReferencedIds(customerItems, orders, handovers);
+    const { userIds, branchIds } = collectReferencedIds(customerItems, orders, handovers);
     const [userNames, branchNames] = await Promise.all([
-      User.namesByIds(userDetailIds),
+      User.namesByIds(userIds),
       Branch.namesByIds(branchIds),
     ]);
 
@@ -903,7 +892,7 @@ export const BlidSearchService = {
       orders,
       handovers,
       bringDeliveryOrderIds,
-      userDetails: userNames,
+      userNames,
       branchNames,
       now: new Date(),
     });

@@ -11,9 +11,9 @@ import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-export default function AdministrateUserSignatures({ userDetail }: { userDetail: User }) {
+export default function AdministrateUserSignatures({ user }: { user: User }) {
   const { data, isLoading, isError } = useQuery(
-    api.signatures.show.queryOptions({ params: { detailsId: userDetail.id } }),
+    api.signatures.show.queryOptions({ params: { userId: user.id } }),
   );
   const requestSignatureMutation = useMutation(
     api.signatures.sendLink.mutationOptions({
@@ -29,12 +29,12 @@ export default function AdministrateUserSignatures({ userDetail }: { userDetail:
   }
 
   if (data.isSignatureValid) {
-    return <SignedSignatureDetails signature={data} name={userDetail.name} />;
+    return <SignedSignatureDetails signature={data} name={user.name} />;
   }
 
   const signingLinkActions = (
     <Group>
-      <CopyButton value={`${window.location.origin}/signering/${userDetail.id}`}>
+      <CopyButton value={`${window.location.origin}/signering/${user.id}`}>
         {({ copy }) => (
           <Button
             leftSection={<IconCopy />}
@@ -50,7 +50,7 @@ export default function AdministrateUserSignatures({ userDetail }: { userDetail:
       <Button
         leftSection={<IconSend />}
         loading={requestSignatureMutation.isPending}
-        onClick={() => requestSignatureMutation.mutate({ params: { detailsId: userDetail.id } })}
+        onClick={() => requestSignatureMutation.mutate({ params: { userId: user.id } })}
       >
         Send signeringslenke
       </Button>
@@ -72,8 +72,8 @@ export default function AdministrateUserSignatures({ userDetail }: { userDetail:
         <WarningAlert title="Foresatt sin signatur gjelder ikke lenger">
           <Stack gap="xs">
             <Text>
-              {outgrown.signingName} (foresatt) signerte kontrakten på vegne av {userDetail.name}{" "}
-              {outgrown.signedAtText}. {userDetail.name} har fylt 18 år og må signere selv.
+              {outgrown.signingName} (foresatt) signerte kontrakten på vegne av {user.name}{" "}
+              {outgrown.signedAtText}. {user.name} har fylt 18 år og må signere selv.
             </Text>
             {signingLinkActions}
           </Stack>

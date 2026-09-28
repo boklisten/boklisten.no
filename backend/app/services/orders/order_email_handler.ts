@@ -11,7 +11,7 @@ import type { OrderItemType } from "#shared/order/order-item/order-item-type";
 import type { EmailOrder, EmailUser } from "#types/email";
 
 export const OrderEmailHandler = {
-  async sendOrderReceipt(customerDetail: User, order: Order) {
+  async sendOrderReceipt(customer: User, order: Order) {
     const branchId = order.branchId;
 
     const withAgreement: boolean = await this.shouldSendAgreement(order);
@@ -20,16 +20,16 @@ export const OrderEmailHandler = {
     emailOrder.loan = withAgreement;
 
     const emailUser: EmailUser = {
-      id: customerDetail.id,
-      dob: customerDetail.dob?.toFormat("dd.MM.yy") ?? "",
-      name: customerDetail.name,
-      email: customerDetail.email,
-      address: customerDetail.address,
+      id: customer.id,
+      dob: customer.dob?.toFormat("dd.MM.yy") ?? "",
+      name: customer.name,
+      email: customer.email,
+      address: customer.address,
     };
 
     if (withAgreement) {
       const branch = await Branch.findOrFail(branchId);
-      await DispatchService.sendSignatureLink(customerDetail, branch.name);
+      await DispatchService.sendSignatureLink(customer, branch.name);
     }
 
     await DispatchService.sendOrderReceipt(emailUser, emailOrder, await this.paymentNeeded(order));

@@ -29,8 +29,8 @@ async function seed() {
   });
   const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
   const [a, b] = await MatchParticipant.createMany([
-    { matchId: match.id, userDetailId: A },
-    { matchId: match.id, userDetailId: B },
+    { matchId: match.id, userId: A },
+    { matchId: match.id, userId: B },
   ]);
   const obligation = await MatchObligation.create({
     matchId: match.id,
@@ -86,8 +86,8 @@ test.group("read matches", (group) => {
     await MatchRepository.recordHandover({
       blid: "BL0001234567",
       itemId: ITEM_X,
-      fromUserDetailId: OUTSIDER,
-      toUserDetailId: B,
+      fromUserId: OUTSIDER,
+      toUserId: B,
       occurredAt: DateTime.now(),
       orderId: null,
       dischargesSenderObligationId: null,
@@ -155,8 +155,8 @@ test.group("read matches", (group) => {
     const { round } = await seed();
     const second = await Match.create({ roundId: round.id, meetingLocation: "Andre" });
     const [c, d] = await MatchParticipant.createMany([
-      { matchId: second.id, userDetailId: OUTSIDER },
-      { matchId: second.id, userDetailId: null },
+      { matchId: second.id, userId: OUTSIDER },
+      { matchId: second.id, userId: null },
     ]);
     await MatchObligation.create({
       matchId: second.id,

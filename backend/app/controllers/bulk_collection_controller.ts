@@ -50,7 +50,7 @@ export default class BulkCollectionController {
    * customer items returned, updates matches and sends the receipt email).
    */
   async collect(ctx: HttpContext): Promise<BulkCollectionCollectResponse> {
-    const { id: detailsId, permission } = ctx.auth.getUserOrFail();
+    const { id: userId, permission } = ctx.auth.getUserOrFail();
     const { customerItemIds } = await ctx.request.validateUsing(bulkCollectionCollectValidator);
 
     const customerItems = await CustomerItem.findByIds(customerItemIds);
@@ -83,8 +83,8 @@ export default class BulkCollectionController {
     }
 
     // The employee's user id is not used when placing pure return/buyback orders (no new customer
-    // items are generated), so the detailsId is sufficient for the place operation.
-    const user = { id: detailsId, permission };
+    // items are generated), so the userId is sufficient for the place operation.
+    const user = { id: userId, permission };
     const collectedAt = DateTime.now().toFormat("HH:mm:ss");
     const orderPlaceService = new OrderPlaceService();
     const collectedByCustomer = new Map<string, CollectedBook[]>();
@@ -110,13 +110,13 @@ export default class BulkCollectionController {
         customerId: customer,
         byCustomer: false,
         // The book's history and the customer's order history name the employee from the order.
-        employeeId: detailsId,
+        employeeId: userId,
         placed: false,
       });
 
       await orderPlaceService.place(order.id, user);
       await BulkCollectionMonitoring.reportOverdueBooks({
-        employee: { detailsId, permission },
+        employee: { userId, permission },
         customerItems: items,
         titles: new Map([...itemsMap].map(([id, item]) => [id, item.title])),
         now: new Date(),
@@ -141,7 +141,7 @@ export default class BulkCollectionController {
     customerItem: CustomerItem,
     customerId: string,
   ): Promise<ScannedBook> {
-    const [item, branch, customerDetail, recipientCustomerId] = await Promise.all([
+    const [item, branch, customer, recipientCustomerId] = await Promise.all([
       ItemModel.findOrFail(customerItem.itemId),
       Branch.findOptional(customerItem.handoutBranchId),
       User.findOrFail(customerId),
@@ -157,7 +157,7 @@ export default class BulkCollectionController {
       handoutBranchName: branch?.name ?? "Ukjent",
       deadline: customerItem.deadline.toISODate()!,
       customerId,
-      customerName: customerDetail.name,
+      customerName: customer.name,
       deliverToName: deliverTo?.name ?? (recipientCustomerId ? "en annen elev" : undefined),
     };
   }

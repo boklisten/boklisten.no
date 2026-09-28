@@ -18,12 +18,12 @@ export default class DispatchController {
       .toSorted((a, b) => a.name.localeCompare(b.name));
   }
   async store(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const { id: userId } = ctx.auth.getUserOrFail();
     const { name, recipients } = await ctx.request.validateUsing(createDispatchValidator);
     const sendout = await MessageLogService.createSendout({
       kind: "custom",
       name: name ?? null,
-      initiatedByDetailsId: detailsId,
+      initiatedById: userId,
     });
     const context: MessageLogContext = { messageType: "custom", sendoutId: sendout?.id };
     await Promise.all(

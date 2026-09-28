@@ -40,7 +40,7 @@ export const userInfoFieldDefaultValues: UserInfoFieldValues = {
 };
 
 /** The field values as the `users` endpoints take them; blank optional fields are sent as null. */
-export function userDetailsBody(values: UserInfoFieldValues) {
+export function userFieldsBody(values: UserInfoFieldValues) {
   return {
     name: values.name,
     phone: values.phoneNumber,

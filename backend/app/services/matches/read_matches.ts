@@ -34,17 +34,17 @@ async function buildLookups(matches: Match[], handovers: BookHandover[]): Promis
   const customerIds = new Set<string>();
   for (const match of matches) {
     for (const participant of match.participants) {
-      if (participant.userDetailId !== null) {
-        customerIds.add(participant.userDetailId);
+      if (participant.userId !== null) {
+        customerIds.add(participant.userId);
       }
     }
   }
   for (const handover of handovers) {
-    if (handover.fromUserDetailId !== null) {
-      customerIds.add(handover.fromUserDetailId);
+    if (handover.fromUserId !== null) {
+      customerIds.add(handover.fromUserId);
     }
-    if (handover.toUserDetailId !== null) {
-      customerIds.add(handover.toUserDetailId);
+    if (handover.toUserId !== null) {
+      customerIds.add(handover.toUserId);
     }
   }
 

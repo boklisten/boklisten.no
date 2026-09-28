@@ -39,10 +39,10 @@ function formatMoment(date: Date | string): string {
 /** The customer-facing Boksøk: scan or type a blid and see who the book belongs to. */
 export default function PublicBlidSearch() {
   const [blid, setBlid] = useState<string | null>(null);
-  const { data: userDetail } = useQuery(authQueryOptions());
+  const { data: user } = useQuery(authQueryOptions());
 
-  const opensAt = userDetail
-    ? norwegianTime(userDetail.createdAt).add(LOOKUP_WAITING_PERIOD_HOURS, "hour")
+  const opensAt = user
+    ? norwegianTime(user.createdAt).add(LOOKUP_WAITING_PERIOD_HOURS, "hour")
     : null;
   if (opensAt !== null && opensAt.isAfter(norwegianTime())) {
     return <LookupOpensLater opensAt={opensAt.toDate()} />;

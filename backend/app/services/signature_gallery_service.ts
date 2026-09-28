@@ -12,7 +12,7 @@ const MAX_BATCHES = 5;
 
 interface GallerySignature {
   id: number;
-  customerDetailsId: string;
+  customerId: string;
   customerName: string;
   signingName: string;
   signedByGuardian: boolean;
@@ -71,7 +71,7 @@ export const SignatureGalleryService = {
     }
     return {
       id: signature.id,
-      customerDetailsId: signature.customerDetailsId,
+      customerId: signature.customerId,
       customerName: customer.name,
       signingName: signature.signingName,
       signedByGuardian: signature.signedByGuardian,
@@ -98,14 +98,12 @@ export const SignatureGalleryService = {
       if (rows.length === 0) {
         return { signatures, nextCursor: null };
       }
-      const customersById = await User.byIds(rows.map((row) => row.customerDetailsId));
+      const customersById = await User.byIds(rows.map((row) => row.customerId));
       await addMissingBranchNames(branchNames, [...customersById.values()]);
       for (const row of rows) {
-        const item = SignatureGalleryService.toGalleryItem(
-          row,
-          customersById.get(row.customerDetailsId),
-          { branchNames },
-        );
+        const item = SignatureGalleryService.toGalleryItem(row, customersById.get(row.customerId), {
+          branchNames,
+        });
         if (item) {
           signatures.push(item);
         }

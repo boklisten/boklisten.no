@@ -11,7 +11,7 @@ const POLL_INTERVAL_MS = 5000;
 export default function CustomerOrderHistoryView({ customerId }: { customerId: string }) {
   const { data, isPending, isError } = useQuery(
     api.orders.forCustomer.queryOptions(
-      { params: { detailsId: customerId } },
+      { params: { userId: customerId } },
       { refetchInterval: POLL_INTERVAL_MS },
     ),
   );

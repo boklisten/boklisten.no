@@ -108,7 +108,7 @@ function PersonName({
     return party.name;
   }
   return (
-    <EntityLink to="/admin/kasse" search={showCustomer(party.detailsId)} size="inherit">
+    <EntityLink to="/admin/kasse" search={showCustomer(party.userId)} size="inherit">
       {party.name}
     </EntityLink>
   );

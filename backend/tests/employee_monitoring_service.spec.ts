@@ -17,8 +17,8 @@ import { userDouble } from "#tests/user_fixtures";
 const EMPLOYEE_ID = "5f7f7f7f7f7f7f7f7f7f7f7e";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 
-const EMPLOYEE = { detailsId: EMPLOYEE_ID, permission: "employee" as const };
-const ADMIN = { detailsId: EMPLOYEE_ID, permission: "admin" as const };
+const EMPLOYEE = { userId: EMPLOYEE_ID, permission: "employee" as const };
+const ADMIN = { userId: EMPLOYEE_ID, permission: "admin" as const };
 
 const employee = userDouble({
   id: EMPLOYEE_ID,
@@ -121,7 +121,7 @@ test.group("EmployeeMonitoringService", (group) => {
     assert.include(mail.text, "Kunde: Kari Kunde");
     assert.deepEqual(mail.context, {
       messageType: "employee-monitoring",
-      regardingCustomerDetailsId: CUSTOMER_ID,
+      customerId: CUSTOMER_ID,
     });
   });
 

@@ -36,7 +36,7 @@ export default function KasseListBar({
     return (
       <StandCartBar
         cart={cart}
-        customer={{ detailsId: cartCustomerId, name: cart.cart.customerName }}
+        customer={{ userId: cartCustomerId, name: cart.cart.customerName }}
         onOpen={onOpenCart}
       />
     );

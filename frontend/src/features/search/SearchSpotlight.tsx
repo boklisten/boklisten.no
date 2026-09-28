@@ -24,7 +24,7 @@ const MIN_SEARCH_LENGTH = 3;
 
 type SpotlightStore = ReturnType<typeof createSpotlight>[0];
 
-const customerQueryKey = (searchTerm: string) => ["userDetail", "search", searchTerm] as const;
+const customerQueryKey = (searchTerm: string) => ["users", "search", searchTerm] as const;
 /** Prefix of the book search cache, so a delivery can invalidate every cached term at once. */
 export const BLID_SEARCH_QUERY_KEY = ["blidSearch", "search"] as const;
 const blidQueryKey = (searchTerm: string) => [...BLID_SEARCH_QUERY_KEY, searchTerm] as const;
@@ -147,7 +147,7 @@ export default function SearchSpotlight({
 }: {
   store: SpotlightStore;
   kinds: { customers: boolean; books: boolean; pages: boolean };
-  onSelectCustomer?: (detailsId: string) => void;
+  onSelectCustomer?: (userId: string) => void;
   onSelectBook?: (blid: string) => void;
 }) {
   const navigate = useNavigate();
@@ -227,9 +227,9 @@ export default function SearchSpotlight({
 
   // The modal's exit transition is interrupted by the navigation a pick triggers, so Mantine's
   // clearQueryOnClose (which runs onExited) never fires — clear ourselves.
-  const pickCustomer = (detailsId: string) => {
+  const pickCustomer = (userId: string) => {
     setSearchValue("");
-    onSelectCustomer?.(detailsId);
+    onSelectCustomer?.(userId);
   };
   const pickBook = (blid: string) => {
     setSearchValue("");
@@ -268,24 +268,24 @@ export default function SearchSpotlight({
     );
   });
 
-  const customerActions = customerHits.map((userDetail) => (
-    <Spotlight.Action key={userDetail.id} onClick={() => pickCustomer(userDetail.id)}>
+  const customerActions = customerHits.map((user) => (
+    <Spotlight.Action key={user.id} onClick={() => pickCustomer(user.id)}>
       <Group gap="sm" wrap="nowrap" w="100%">
-        <CustomerAvatar detailsId={userDetail.id} />
+        <CustomerAvatar userId={user.id} />
         {/* The list sizes to its widest row's minimum width; a no-wrap e-mail must not set it. */}
         <Stack gap={4} miw={0} flex={1} style={{ contain: "inline-size" }}>
           <Group gap="xs" justify="space-between">
-            <Text fw={600}>{displayName(userDetail.name)}</Text>
+            <Text fw={600}>{displayName(user.name)}</Text>
             <Group gap={6}>
-              <PermissionBadge permission={userDetail.permission} size="sm" />
-              {userDetail.branchMembershipId && branchNames.has(userDetail.branchMembershipId) && (
+              <PermissionBadge permission={user.permission} size="sm" />
+              {user.branchMembershipId && branchNames.has(user.branchMembershipId) && (
                 <Badge variant="light" size="sm">
-                  {branchNames.get(userDetail.branchMembershipId)}
+                  {branchNames.get(user.branchMembershipId)}
                 </Badge>
               )}
             </Group>
           </Group>
-          <CustomerContactRow customer={userDetail} inheritColor />
+          <CustomerContactRow customer={user} inheritColor />
         </Stack>
       </Group>
     </Spotlight.Action>

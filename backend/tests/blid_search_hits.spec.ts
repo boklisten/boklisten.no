@@ -17,7 +17,7 @@ function sources(overrides: Partial<BlidSearchHitSources> = {}): BlidSearchHitSo
       ["12345678", IDA],
       ["1234abcdEFGH", PETRA],
     ]),
-    userDetails: new Map([[IDA, "Ida"]]),
+    userNames: new Map([[IDA, "Ida"]]),
     ...overrides,
   };
 }
@@ -34,8 +34,8 @@ test.group("assembleBlidSearchHits", () => {
   test("attaches the holder's name, falling back when the user detail is gone", ({ assert }) => {
     const hits = assembleBlidSearchHits(sources());
     const byBlid = new Map(hits.map((hit) => [hit.blid, hit.holder]));
-    assert.deepEqual(byBlid.get("12345678"), { detailsId: IDA, name: "Ida" });
-    assert.deepEqual(byBlid.get("1234abcdEFGH"), { detailsId: PETRA, name: "Ukjent" });
+    assert.deepEqual(byBlid.get("12345678"), { userId: IDA, name: "Ida" });
+    assert.deepEqual(byBlid.get("1234abcdEFGH"), { userId: PETRA, name: "Ukjent" });
     assert.isNull(byBlid.get("12340000"));
   });
 

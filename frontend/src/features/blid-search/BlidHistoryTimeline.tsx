@@ -27,10 +27,10 @@ const NON_CUSTODY_ACTIONS = new Set<BlidHistoryAction>([
  * A named person in an event sentence: bold like plain text, but a link to their customer page.
  * On a phone the sentence has to fit beside the timeline bullet, so the name is shortened there.
  */
-function PersonLink({ detailsId, name }: { detailsId: string; name: string }) {
+function PersonLink({ userId, name }: { userId: string; name: string }) {
   const displayName = useDisplayName();
   return (
-    <EntityLink to="/admin/kasse" search={showCustomer(detailsId)}>
+    <EntityLink to="/admin/kasse" search={showCustomer(userId)}>
       {displayName(name)}
     </EntityLink>
   );
@@ -41,12 +41,12 @@ function Party({ party }: { party: BlidParty }) {
     return <>stand</>;
   }
   // An order's customer whose account is deleted has no page to link to.
-  return party.detailsId === null ? (
+  return party.userId === null ? (
     <Text span fw={700} inherit>
       {party.name}
     </Text>
   ) : (
-    <PersonLink detailsId={party.detailsId} name={party.name} />
+    <PersonLink userId={party.userId} name={party.name} />
   );
 }
 
@@ -58,7 +58,7 @@ function Party({ party }: { party: BlidParty }) {
 function describeEvent(event: BlidHistoryEvent): ReactNode {
   const { action, from, to, byCustomer, handoutType, byMail } = event;
   const employee = event.employee && (
-    <PersonLink detailsId={event.employee.detailsId} name={event.employee.name} />
+    <PersonLink userId={event.employee.userId} name={event.employee.name} />
   );
   switch (action) {
     case "handout": {

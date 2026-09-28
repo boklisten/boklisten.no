@@ -106,7 +106,7 @@ function KasseContent() {
     }
   }, [view]);
 
-  const openCustomer = (detailsId: string) => void navigate({ search: showCustomer(detailsId) });
+  const openCustomer = (userId: string) => void navigate({ search: showCustomer(userId) });
   const openBlid = (scanned: string) => void navigate({ search: showBlid(scanned) });
   const openInnsamling = () => void navigate({ search: showInnsamling() });
   const openEmpty = () => void navigate({ search: {} });
@@ -226,15 +226,15 @@ function KasseContent() {
         </KasseControls>
         {shownView === "kunde" && kunde !== undefined && (
           <CustomerResult
-            detailsId={kunde}
+            userId={kunde}
             cart={cart}
             tab={visning ?? "bestillinger"}
             onTabChange={selectTab}
             onDeselect={() => void leaveToStart()}
             // The merged-away customer is gone, so their cart goes with them without a question
-            onMerged={(toDetailsId) => {
+            onMerged={(toUserId) => {
               forget();
-              openCustomer(toDetailsId);
+              openCustomer(toUserId);
             }}
             cartOpened={cartOpen}
             onCartClose={() => setCartOpen(false)}
@@ -267,7 +267,7 @@ function KasseContent() {
             <StandCartBar
               cart={waitingStandCart}
               customer={{
-                detailsId: waitingCart.customerId,
+                userId: waitingCart.customerId,
                 name: waitingStandCart.cart.customerName,
                 // Following the name leaves the camera behind
                 onFollow: scanner.closeScanner,

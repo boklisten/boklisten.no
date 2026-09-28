@@ -18,19 +18,19 @@ const childDob = DateTime.now().minus({ years: 10 }).startOf("year");
 const emptyContext: GalleryContext = { branchNames: new Map() };
 
 // Customer ids are 24-character ObjectId hex strings, like the real primary keys.
-function customerDetailsIdFor(id: number): string {
+function customerIdFor(id: number): string {
   return id.toString(16).padStart(24, "0");
 }
 
 function makeSignature(overrides: {
   id: number;
-  customerDetailsId?: string;
+  customerId?: string;
   createdAt?: DateTime;
   signedByGuardian?: boolean;
 }): Signature {
   const signature = new Signature();
   signature.id = overrides.id;
-  signature.customerDetailsId = overrides.customerDetailsId ?? customerDetailsIdFor(overrides.id);
+  signature.customerId = overrides.customerId ?? customerIdFor(overrides.id);
   signature.createdAt = overrides.createdAt ?? DateTime.now().minus({ days: overrides.id });
   signature.signedByGuardian = overrides.signedByGuardian ?? false;
   signature.signingName = `Signerer ${overrides.id}`;
@@ -45,7 +45,7 @@ function customerFor(
   permission: UserPermission = "customer",
 ): GalleryCustomer {
   return {
-    id: signature.customerDetailsId,
+    id: signature.customerId,
     name: `Kunde ${signature.id}`,
     dob,
     branchMembershipId,
@@ -92,7 +92,7 @@ test.group("SignatureGalleryService.toGalleryItem", () => {
     );
     assert.deepEqual(item, {
       id: 1,
-      customerDetailsId: signature.customerDetailsId,
+      customerId: signature.customerId,
       customerName: "Kunde 1",
       signingName: "Signerer 1",
       signedByGuardian: false,

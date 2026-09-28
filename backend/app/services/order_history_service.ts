@@ -30,8 +30,8 @@ type OrderHistoryAudience = "customer" | "employee";
 /** One row of the book_handovers table, reduced to what pairing needs. */
 interface OrderHistoryHandover {
   blid: string | null;
-  fromUserDetailId: string | null;
-  toUserDetailId: string | null;
+  fromUserId: string | null;
+  toUserId: string | null;
   occurredAt: Date;
   orderId: string | null;
 }
@@ -149,8 +149,8 @@ function presentDelivery(
   };
 }
 
-function customerParty(detailsId: string, sources: OrderHistorySources): OrderHistoryParty {
-  return { detailsId, name: sources.userNames.get(detailsId) ?? FALLBACK_NAME };
+function customerParty(userId: string, sources: OrderHistorySources): OrderHistoryParty {
+  return { userId, name: sources.userNames.get(userId) ?? FALLBACK_NAME };
 }
 
 /**
@@ -172,15 +172,14 @@ function presentTransfer(
 
   const handover = sources.handovers.find((candidate) =>
     direction === "received"
-      ? candidate.orderId === order.id && candidate.toUserDetailId === sources.customerId
-      : candidate.fromUserDetailId === sources.customerId &&
+      ? candidate.orderId === order.id && candidate.toUserId === sources.customerId
+      : candidate.fromUserId === sources.customerId &&
         candidate.blid !== null &&
         candidate.blid === orderItem.blid &&
         withinPairingWindow(candidate.occurredAt, orderTime),
   );
   if (handover) {
-    const counterpartId =
-      direction === "received" ? handover.fromUserDetailId : handover.toUserDetailId;
+    const counterpartId = direction === "received" ? handover.fromUserId : handover.toUserId;
     return {
       direction,
       counterparty: counterpartId === null ? null : customerParty(counterpartId, sources),
@@ -300,16 +299,16 @@ async function fetchHandovers(
   orders: OrderDto[],
 ): Promise<OrderHistoryHandover[]> {
   const rows = await BookHandover.query()
-    .where("fromUserDetailId", customerId)
-    .orWhere("toUserDetailId", customerId)
+    .where("fromUserId", customerId)
+    .orWhere("toUserId", customerId)
     .orWhereIn(
       "orderId",
       orders.map((order) => order.id),
     );
   return rows.map((row) => ({
     blid: row.blid,
-    fromUserDetailId: row.fromUserDetailId,
-    toUserDetailId: row.toUserDetailId,
+    fromUserId: row.fromUserId,
+    toUserId: row.toUserId,
     occurredAt: row.occurredAt.toJSDate(),
     orderId: row.orderId,
   }));
@@ -327,12 +326,12 @@ async function loadSources(
     fetchCounterpartOrders(customerId, orders),
   ]);
 
-  const userDetailIds = new Set<string>();
+  const userIds = new Set<string>();
   const branchIds = new Set<string>();
   for (const order of orders) {
     branchIds.add(order.branchId);
     if (order.employeeId) {
-      userDetailIds.add(order.employeeId);
+      userIds.add(order.employeeId);
     }
   }
   for (const delivery of deliveries.values()) {
@@ -341,21 +340,21 @@ async function loadSources(
     }
   }
   for (const handover of handovers) {
-    if (handover.fromUserDetailId) {
-      userDetailIds.add(handover.fromUserDetailId);
+    if (handover.fromUserId) {
+      userIds.add(handover.fromUserId);
     }
-    if (handover.toUserDetailId) {
-      userDetailIds.add(handover.toUserDetailId);
+    if (handover.toUserId) {
+      userIds.add(handover.toUserId);
     }
   }
   for (const order of counterpartOrders) {
     if (order.customerId) {
-      userDetailIds.add(order.customerId);
+      userIds.add(order.customerId);
     }
   }
 
   const [userNames, branchNames] = await Promise.all([
-    User.namesByIds(userDetailIds),
+    User.namesByIds(userIds),
     Branch.namesByIds(branchIds),
   ]);
 

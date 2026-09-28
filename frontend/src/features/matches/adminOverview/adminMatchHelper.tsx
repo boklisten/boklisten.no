@@ -69,7 +69,7 @@ export function PartyName({ party, linked = true }: { party: HandoverParty; link
     return displayName(party);
   }
   return (
-    <CustomerLink detailsId={party.customerId} inherit>
+    <CustomerLink userId={party.customerId} inherit>
       {party.name}
     </CustomerLink>
   );

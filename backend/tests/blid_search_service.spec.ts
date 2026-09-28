@@ -31,7 +31,7 @@ function baseSources(overrides: Partial<BlidSearchSources> = {}): BlidSearchSour
     orders: [],
     handovers: [],
     bringDeliveryOrderIds: new Set(),
-    userDetails: new Map([
+    userNames: new Map([
       [IDA, "Ida"],
       [PETRA, "Petra"],
       [EMPLOYEE, "Emil Ansatt"],
@@ -136,7 +136,7 @@ test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
     assert.equal(event?.action, "handout");
     assert.isTrue(event?.byMail);
     assert.equal(event?.handoutType, "rent");
-    assert.deepEqual(event?.employee, { detailsId: EMPLOYEE, name: "Emil Ansatt" });
+    assert.deepEqual(event?.employee, { userId: EMPLOYEE, name: "Emil Ansatt" });
   });
 
   test("marks a handover-row handout whose order has a Bring delivery as sent by mail", ({
@@ -146,9 +146,7 @@ test.group("BlidSearchService.assembleBlidSearch() – postal handouts", () => {
     const result = assembleBlidSearch(
       baseSources({
         orders: [order],
-        handovers: [
-          { fromUserDetailId: null, toUserDetailId: IDA, occurredAt: T1, orderId: "order-1" },
-        ],
+        handovers: [{ fromUserId: null, toUserId: IDA, occurredAt: T1, orderId: "order-1" }],
         bringDeliveryOrderIds: new Set(["order-1"]),
       }),
     );
@@ -210,17 +208,15 @@ test.group("BlidSearchService.assembleBlidSearch() – handover events", () => {
     const result = assembleBlidSearch(
       baseSources({
         orders: [order],
-        handovers: [
-          { fromUserDetailId: null, toUserDetailId: IDA, occurredAt: T1, orderId: "order-1" },
-        ],
+        handovers: [{ fromUserId: null, toUserId: IDA, occurredAt: T1, orderId: "order-1" }],
       }),
     );
     assert.lengthOf(result.history, 1);
     const [event] = result.history;
     assert.equal(event?.action, "handout");
     assert.deepEqual(event?.from, { type: "stand" });
-    assert.deepEqual(event?.to, { type: "customer", detailsId: IDA, name: "Ida" });
-    assert.deepEqual(event?.employee, { detailsId: EMPLOYEE, name: "Emil Ansatt" });
+    assert.deepEqual(event?.to, { type: "customer", userId: IDA, name: "Ida" });
+    assert.deepEqual(event?.employee, { userId: EMPLOYEE, name: "Emil Ansatt" });
     assert.equal(event?.branchName, "Ullern VGS");
     assert.equal(event?.deadline, DEADLINE_1);
     assert.equal(event?.time, T1.toISOString());
@@ -231,12 +227,12 @@ test.group("BlidSearchService.assembleBlidSearch() – handover events", () => {
   test("maps a return handover to a return event", ({ assert }) => {
     const result = assembleBlidSearch(
       baseSources({
-        handovers: [{ fromUserDetailId: IDA, toUserDetailId: null, occurredAt: T2, orderId: null }],
+        handovers: [{ fromUserId: IDA, toUserId: null, occurredAt: T2, orderId: null }],
       }),
     );
     const [event] = result.history;
     assert.equal(event?.action, "return");
-    assert.deepEqual(event?.from, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(event?.from, { type: "customer", userId: IDA, name: "Ida" });
     assert.deepEqual(event?.to, { type: "stand" });
   });
 
@@ -245,15 +241,13 @@ test.group("BlidSearchService.assembleBlidSearch() – handover events", () => {
   }) => {
     const result = assembleBlidSearch(
       baseSources({
-        handovers: [
-          { fromUserDetailId: PETRA, toUserDetailId: IDA, occurredAt: T2, orderId: null },
-        ],
+        handovers: [{ fromUserId: PETRA, toUserId: IDA, occurredAt: T2, orderId: null }],
       }),
     );
     const [event] = result.history;
     assert.equal(event?.action, "match-transfer");
-    assert.deepEqual(event?.from, { type: "customer", detailsId: PETRA, name: "Petra" });
-    assert.deepEqual(event?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(event?.from, { type: "customer", userId: PETRA, name: "Petra" });
+    assert.deepEqual(event?.to, { type: "customer", userId: IDA, name: "Ida" });
     assert.isTrue(event?.byCustomer);
   });
 
@@ -275,9 +269,7 @@ test.group("BlidSearchService.assembleBlidSearch() – handover events", () => {
     const result = assembleBlidSearch(
       baseSources({
         orders: [order],
-        handovers: [
-          { fromUserDetailId: PETRA, toUserDetailId: IDA, occurredAt: T2, orderId: "order-1" },
-        ],
+        handovers: [{ fromUserId: PETRA, toUserId: IDA, occurredAt: T2, orderId: "order-1" }],
       }),
     );
     assert.lengthOf(result.history, 1);
@@ -296,7 +288,7 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
 
     assert.deepEqual(result.history[0]?.to, {
       type: "customer",
-      detailsId: null,
+      userId: null,
       name: "Slettet kunde",
     });
   });
@@ -354,14 +346,14 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
       ["buyout", "return", "handout"],
     );
     const returnEvent = result.history[1];
-    assert.deepEqual(returnEvent?.from, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(returnEvent?.from, { type: "customer", userId: IDA, name: "Ida" });
     assert.deepEqual(returnEvent?.to, { type: "stand" });
     const handoutEvent = result.history[2];
     assert.deepEqual(handoutEvent?.from, { type: "stand" });
-    assert.deepEqual(handoutEvent?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(handoutEvent?.to, { type: "customer", userId: IDA, name: "Ida" });
     const buyoutEvent = result.history[0];
-    assert.deepEqual(buyoutEvent?.to, { type: "customer", detailsId: IDA, name: "Ida" });
-    assert.deepEqual(buyoutEvent?.employee, { detailsId: EMPLOYEE, name: "Emil Ansatt" });
+    assert.deepEqual(buyoutEvent?.to, { type: "customer", userId: IDA, name: "Ida" });
+    assert.deepEqual(buyoutEvent?.employee, { userId: EMPLOYEE, name: "Emil Ansatt" });
   });
 
   test("carries the handout type onto handout events", ({ assert }) => {
@@ -439,7 +431,7 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
     assert.equal(extend?.orderId, "order-2");
     assert.equal(extend?.previousDeadline, DEADLINE_1);
     assert.equal(extend?.deadline, DEADLINE_2);
-    assert.deepEqual(extend?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(extend?.to, { type: "customer", userId: IDA, name: "Ida" });
   });
 
   test("names the customer who sold the book on a buyback event", ({ assert }) => {
@@ -456,7 +448,7 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
       ],
     });
     const result = assembleBlidSearch(baseSources({ orders: [order] }));
-    assert.deepEqual(result.history[0]?.from, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(result.history[0]?.from, { type: "customer", userId: IDA, name: "Ida" });
   });
 
   test("builds an extend event with both deadlines", ({ assert }) => {
@@ -500,7 +492,7 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
     const [event] = result.history;
     assert.equal(event?.action, "match-transfer");
     assert.isUndefined(event?.from);
-    assert.deepEqual(event?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(event?.to, { type: "customer", userId: IDA, name: "Ida" });
   });
 
   test("ignores order items that only place a booking (no handout flag)", ({ assert }) => {
@@ -576,7 +568,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     const handout = result.history[1];
     assert.equal(handout?.time, T1.toISOString());
     assert.equal(handout?.branchName, "Ullern VGS");
-    assert.deepEqual(handout?.employee, { detailsId: EMPLOYEE, name: "Emil Ansatt" });
+    assert.deepEqual(handout?.employee, { userId: EMPLOYEE, name: "Emil Ansatt" });
     assert.equal(handout?.deadline, DEADLINE_1);
     assert.equal(handout?.handoutType, "partly-payment");
   });
@@ -688,7 +680,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     const buyout = result.history.find((event) => event.action === "buyout");
     assert.equal(buyout?.time, T2.toISOString());
     assert.equal(buyout?.orderId, "buyout-order");
-    assert.deepEqual(buyout?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(buyout?.to, { type: "customer", userId: IDA, name: "Ida" });
   });
 
   test("synthesizes buyback and cancel events from the customer item alone", ({ assert }) => {
@@ -703,7 +695,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     );
     assert.equal(buyback?.time, T2.toISOString());
     assert.equal(buyback?.orderId, "buyback-order");
-    assert.deepEqual(buyback?.from, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(buyback?.from, { type: "customer", userId: IDA, name: "Ida" });
 
     const cancelled = makeCustomerItem({
       returned: true,
@@ -716,7 +708,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     );
     assert.equal(cancel?.time, T3.toISOString());
     assert.equal(cancel?.orderId, "cancel-order");
-    assert.deepEqual(cancel?.from, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(cancel?.from, { type: "customer", userId: IDA, name: "Ida" });
   });
 
   test("does not repeat a buyback the blid-tagged order already tells", ({ assert }) => {
@@ -777,7 +769,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     const invoicePaid = result.history.find((event) => event.action === "invoice-paid");
     assert.equal(invoicePaid?.time, T3.toISOString());
     assert.equal(invoicePaid?.orderId, "invoice-order");
-    assert.deepEqual(invoicePaid?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(invoicePaid?.to, { type: "customer", userId: IDA, name: "Ida" });
     assert.notInclude(
       result.history.map((event) => event.action),
       "buyout",
@@ -861,7 +853,7 @@ test.group("BlidSearchService.assembleBlidSearch() – deadline expiry", () => {
     // Timed at the end of the deadline day, Norwegian time.
     assert.equal(newest?.time, "2026-08-15T21:59:59.999Z");
     assert.equal(newest?.deadline, EXPIRED_DEADLINE);
-    assert.deepEqual(newest?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(newest?.to, { type: "customer", userId: IDA, name: "Ida" });
   });
 
   test("keeps the deadline-expired event on top when the deadline predates the handout", ({
@@ -1180,8 +1172,8 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
         orders: [senderOrder, receiverOrder],
         handovers: [
           {
-            fromUserDetailId: PETRA,
-            toUserDetailId: IDA,
+            fromUserId: PETRA,
+            toUserId: IDA,
             occurredAt: T2,
             orderId: "order-receive",
           },
@@ -1191,8 +1183,8 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     assert.lengthOf(result.history, 1);
     const [event] = result.history;
     assert.equal(event?.action, "match-transfer");
-    assert.deepEqual(event?.from, { type: "customer", detailsId: PETRA, name: "Petra" });
-    assert.deepEqual(event?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(event?.from, { type: "customer", userId: PETRA, name: "Petra" });
+    assert.deepEqual(event?.to, { type: "customer", userId: IDA, name: "Ida" });
   });
 
   test("merges a legacy match-deliver and match-receive pair into one two-sided event", ({
@@ -1236,8 +1228,8 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     assert.lengthOf(result.history, 1);
     const [event] = result.history;
     assert.equal(event?.action, "match-transfer");
-    assert.deepEqual(event?.from, { type: "customer", detailsId: PETRA, name: "Petra" });
-    assert.deepEqual(event?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(event?.from, { type: "customer", userId: PETRA, name: "Petra" });
+    assert.deepEqual(event?.to, { type: "customer", userId: IDA, name: "Ida" });
   });
 
   test("drops the receiver's stray deliver order left by a double scan", ({ assert }) => {
@@ -1256,8 +1248,8 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     assert.lengthOf(result.history, 1);
     const [event] = result.history;
     assert.equal(event?.action, "match-transfer");
-    assert.deepEqual(event?.from, { type: "customer", detailsId: PETRA, name: "Petra" });
-    assert.deepEqual(event?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(event?.from, { type: "customer", userId: PETRA, name: "Petra" });
+    assert.deepEqual(event?.to, { type: "customer", userId: IDA, name: "Ida" });
   });
 
   test("never pairs a customer's receive with their own deliver order", ({ assert }) => {
@@ -1273,7 +1265,7 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     const [event] = result.history;
     assert.equal(event?.action, "match-transfer");
     assert.isUndefined(event?.from);
-    assert.deepEqual(event?.to, { type: "customer", detailsId: IDA, name: "Ida" });
+    assert.deepEqual(event?.to, { type: "customer", userId: IDA, name: "Ida" });
   });
 
   test("does not synthesize a stand handout for a customer who got the book via a transfer", ({
@@ -1289,9 +1281,7 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
     const result = assembleBlidSearch(
       baseSources({
         customerItems: [customerItem],
-        handovers: [
-          { fromUserDetailId: PETRA, toUserDetailId: IDA, occurredAt: T2, orderId: null },
-        ],
+        handovers: [{ fromUserId: PETRA, toUserId: IDA, occurredAt: T2, orderId: null }],
       }),
     );
     assert.lengthOf(result.history, 1);
@@ -1323,9 +1313,9 @@ test.group("BlidSearchService.assembleBlidSearch() – ordering", () => {
     const result = assembleBlidSearch(
       baseSources({
         handovers: [
-          { fromUserDetailId: null, toUserDetailId: PETRA, occurredAt: T1, orderId: null },
-          { fromUserDetailId: PETRA, toUserDetailId: IDA, occurredAt: T2, orderId: null },
-          { fromUserDetailId: IDA, toUserDetailId: null, occurredAt: T3, orderId: null },
+          { fromUserId: null, toUserId: PETRA, occurredAt: T1, orderId: null },
+          { fromUserId: PETRA, toUserId: IDA, occurredAt: T2, orderId: null },
+          { fromUserId: IDA, toUserId: null, occurredAt: T3, orderId: null },
         ],
       }),
     );
@@ -1412,12 +1402,12 @@ test.group("BlidSearchService.collectReferencedIds()", () => {
         },
       ],
     });
-    const { userDetailIds, branchIds } = collectReferencedIds(
+    const { userIds, branchIds } = collectReferencedIds(
       [makeCustomerItem()],
       [order],
-      [{ fromUserDetailId: PETRA, toUserDetailId: null, occurredAt: T2, orderId: null }],
+      [{ fromUserId: PETRA, toUserId: null, occurredAt: T2, orderId: null }],
     );
-    assert.includeMembers(userDetailIds, [IDA, PETRA, EMPLOYEE]);
+    assert.includeMembers(userIds, [IDA, PETRA, EMPLOYEE]);
     assert.includeMembers(branchIds, [BRANCH]);
   });
 });

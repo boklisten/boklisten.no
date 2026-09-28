@@ -3,7 +3,7 @@ import vine from "@vinejs/vine";
 export const openingHoursValidator = vine.create(
   vine.object({
     branchId: vine.string(),
-    from: vine.date({ formats: ["iso8601"] }).afterOrEqual("today"),
-    to: vine.date({ formats: ["iso8601"] }).afterOrEqual("today"),
+    opensAt: vine.date({ formats: ["iso8601"] }).afterOrEqual("today"),
+    closesAt: vine.date({ formats: ["iso8601"] }).afterOrEqual("today"),
   }),
 );

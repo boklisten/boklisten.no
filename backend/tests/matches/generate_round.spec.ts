@@ -61,7 +61,7 @@ test.group("generateRound", (group) => {
   async function arrange(
     held: ReturnType<typeof heldBy>[],
     wanted: { id: string; wantedItems: string[] }[],
-    userDetails: { id: string; branchMembership?: string }[] = [],
+    users: { id: string; branchMembership?: string }[] = [],
   ) {
     await createHeldBooks(BRANCH, held);
     for (const { id, wantedItems } of wanted) {
@@ -76,9 +76,9 @@ test.group("generateRound", (group) => {
       .stub(User, "byIds")
       .resolves(
         new Map(
-          userDetails.map((detail) => [
-            detail.id,
-            userDouble({ id: detail.id, branchMembershipId: detail.branchMembership ?? null }),
+          users.map((user) => [
+            user.id,
+            userDouble({ id: user.id, branchMembershipId: user.branchMembership ?? null }),
           ]),
         ),
       );
@@ -103,13 +103,13 @@ test.group("generateRound", (group) => {
     const obligations = await MatchObligation.query().preload("sender").preload("receiver");
     assert.lengthOf(obligations, 2);
 
-    const fromA = obligations.find((o) => o.sender.userDetailId === A);
+    const fromA = obligations.find((o) => o.sender.userId === A);
     assert.equal(fromA?.itemId, ITEM_X);
-    assert.equal(fromA?.receiver.userDetailId, B);
+    assert.equal(fromA?.receiver.userId, B);
 
-    const fromB = obligations.find((o) => o.sender.userDetailId === B);
+    const fromB = obligations.find((o) => o.sender.userId === B);
     assert.equal(fromB?.itemId, ITEM_Y);
-    assert.equal(fromB?.receiver.userDetailId, A);
+    assert.equal(fromB?.receiver.userId, A);
   });
 
   test("every match has exactly two participants", async ({ assert }) => {
@@ -131,9 +131,9 @@ test.group("generateRound", (group) => {
     await generateRound(await plannedRound());
 
     const obligations = await MatchObligation.query().preload("sender").preload("receiver");
-    const pickup = obligations.find((o) => o.sender.userDetailId === null);
+    const pickup = obligations.find((o) => o.sender.userId === null);
     assert.isDefined(pickup);
-    assert.equal(pickup!.receiver.userDetailId, B);
+    assert.equal(pickup!.receiver.userId, B);
   });
 
   test("matches equivalent editions between students, naming the sender's edition", async ({
@@ -152,8 +152,8 @@ test.group("generateRound", (group) => {
     await generateRound(await plannedRound());
 
     const obligations = await MatchObligation.query().preload("sender").preload("receiver");
-    const fromA = obligations.find((o) => o.sender.userDetailId === A);
-    assert.equal(fromA?.receiver.userDetailId, B, "the two students are matched with each other");
+    const fromA = obligations.find((o) => o.sender.userId === A);
+    assert.equal(fromA?.receiver.userId, B, "the two students are matched with each other");
     assert.equal(fromA?.itemId, GYMNOS_2009, "the obligation names the edition A actually holds");
   });
 
@@ -167,8 +167,8 @@ test.group("generateRound", (group) => {
     await generateRound(await plannedRound());
 
     const obligations = await MatchObligation.query().preload("sender").preload("receiver");
-    const pickup = obligations.find((o) => o.sender.userDetailId === null);
-    assert.equal(pickup?.receiver.userDetailId, B);
+    const pickup = obligations.find((o) => o.sender.userId === null);
+    assert.equal(pickup?.receiver.userId, B);
     assert.equal(pickup?.itemId, GYMNOS_2012);
   });
 
@@ -178,8 +178,8 @@ test.group("generateRound", (group) => {
     await generateRound(await plannedRound());
 
     const obligations = await MatchObligation.query().preload("sender").preload("receiver");
-    const handoff = obligations.find((o) => o.receiver.userDetailId === null);
-    assert.equal(handoff?.sender.userDetailId, A);
+    const handoff = obligations.find((o) => o.receiver.userId === null);
+    assert.equal(handoff?.sender.userId, A);
     assert.equal(handoff?.itemId, GYMNOS_2012);
   });
 
@@ -190,9 +190,9 @@ test.group("generateRound", (group) => {
     await generateRound(await plannedRound());
 
     const obligations = await MatchObligation.query().preload("sender").preload("receiver");
-    const handoff = obligations.find((o) => o.receiver.userDetailId === null);
+    const handoff = obligations.find((o) => o.receiver.userId === null);
     assert.isDefined(handoff);
-    assert.equal(handoff!.sender.userDetailId, A);
+    assert.equal(handoff!.sender.userId, A);
   });
 
   test("an excluded customer gets no matches, and their books come from the stand", async ({
@@ -213,17 +213,17 @@ test.group("generateRound", (group) => {
     const obligations = await MatchObligation.query().preload("sender").preload("receiver");
     assert.isNotEmpty(obligations);
     for (const o of obligations) {
-      assert.notEqual(o.sender.userDetailId, A, "an excluded customer must never send");
-      assert.notEqual(o.receiver.userDetailId, A, "an excluded customer must never receive");
+      assert.notEqual(o.sender.userId, A, "an excluded customer must never send");
+      assert.notEqual(o.receiver.userId, A, "an excluded customer must never receive");
     }
 
-    const pickup = obligations.find((o) => o.receiver.userDetailId === B && o.itemId === ITEM_X);
+    const pickup = obligations.find((o) => o.receiver.userId === B && o.itemId === ITEM_X);
     assert.isDefined(pickup, "B still gets the book they wanted");
-    assert.isNull(pickup!.sender.userDetailId, "…but from the stand, not from A");
+    assert.isNull(pickup!.sender.userId, "…but from the stand, not from A");
 
-    const handoff = obligations.find((o) => o.sender.userDetailId === B && o.itemId === ITEM_Y);
+    const handoff = obligations.find((o) => o.sender.userId === B && o.itemId === ITEM_Y);
     assert.isDefined(handoff, "B still returns their book");
-    assert.isNull(handoff!.receiver.userDetailId, "…but to the stand, not to A");
+    assert.isNull(handoff!.receiver.userId, "…but to the stand, not to A");
   });
 
   test("reports when there is nobody to match", async ({ assert }) => {
@@ -245,7 +245,7 @@ test.group("generateRound", (group) => {
 
     const matches = await Match.query().preload("participants");
     const userMatches = matches.filter((match) =>
-      match.participants.every((participant) => participant.userDetailId !== null),
+      match.participants.every((participant) => participant.userId !== null),
     );
     assert.isNotEmpty(userMatches);
     for (const match of userMatches) {
@@ -268,7 +268,7 @@ test.group("generateRound", (group) => {
 
     const matches = await Match.query().preload("participants");
     const standMatches = matches.filter((match) =>
-      match.participants.some((participant) => participant.userDetailId === null),
+      match.participants.some((participant) => participant.userId === null),
     );
     assert.isNotEmpty(standMatches);
     for (const match of standMatches) {
@@ -295,7 +295,7 @@ test.group("generateRound", (group) => {
     await generateRound(await plannedRound());
 
     const obligations = await MatchObligation.query().preload("sender");
-    const senders = obligations.map((obligation) => obligation.sender.userDetailId);
+    const senders = obligations.map((obligation) => obligation.sender.userId);
     assert.include(senders, A, "a book due on the deadline is picked up");
     assert.notInclude(senders, B, "a book due the day after the deadline is not");
   });

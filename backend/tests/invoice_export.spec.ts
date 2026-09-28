@@ -13,7 +13,7 @@ import { customerItemDto } from "#tests/customer_item_fixtures";
 import { invoiceDto, invoiceLineDto } from "#tests/invoice_fixtures";
 import { mock } from "#tests/test-doubles";
 
-const USER_DETAIL_ID = "65041cc7afe72e00496e2640";
+const USER_ID = "65041cc7afe72e00496e2640";
 const ITEM_ID = "6294d66878497a0046f9b3e6";
 const CUSTOMER_ITEM_ID = "68a725b6dae0db228265cfd2";
 const BRANCH_ID = "5b6442ecd2e733002fae8a44";
@@ -43,7 +43,7 @@ function rentInvoice(overrides: Partial<Invoice> = {}): Invoice {
         discount: 0,
       }),
     ],
-    customerId: USER_DETAIL_ID,
+    customerId: USER_ID,
     customerNumber: "93996",
     customerName: "Elise Nordmann",
     customerEmail: "elise@example.com",
@@ -236,7 +236,7 @@ test.group("invoice export: Visma", () => {
 test.group("invoice export: customer numbers", () => {
   test("a pupil's number pairs the epoch and the counter of their user id", ({ assert }) => {
     // Computed by legacy bl-admin's InvoiceVismaService for the same id.
-    assert.equal(pupilCustomerNumber(USER_DETAIL_ID), "93996");
+    assert.equal(pupilCustomerNumber(USER_ID), "93996");
   });
 
   test("the stored number is exported, also once the customer is deleted", ({ assert }) => {

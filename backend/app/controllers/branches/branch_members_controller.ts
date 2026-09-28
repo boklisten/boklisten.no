@@ -24,10 +24,10 @@ export default class BranchMembersController {
     };
   }
   async update(ctx: HttpContext) {
-    const { branchMembership, detailsId } = await ctx.request.validateUsing(
+    const { branchMembership, userId } = await ctx.request.validateUsing(
       updateBranchMembershipValidator,
     );
-    const user = await User.findOrFail(detailsId);
+    const user = await User.findOrFail(userId);
     user.branchMembershipId = branchMembership;
     await user.save();
   }

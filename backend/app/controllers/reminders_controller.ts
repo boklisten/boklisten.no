@@ -9,7 +9,7 @@ import { MessageLogService } from "#services/message_log_service";
 import { reminderValidator } from "#validators/reminder";
 
 interface ReminderCustomer {
-  customerDetailsId: string;
+  customerId: string;
   name: string;
   customerItems: {
     title: string;
@@ -68,7 +68,7 @@ async function aggregateCustomersToRemind(filter: ReminderFilter): Promise<Remin
     let customer = byCustomer.get(row.customerId);
     if (customer === undefined) {
       customer = {
-        customerDetailsId: row.customerId,
+        customerId: row.customerId,
         name: row.name,
         phone: row.phone,
         email: row.email,
@@ -110,7 +110,7 @@ async function sendReminderEmail(
     context,
     recipients: filteredCustomers.map((customer) => ({
       to: target === "primary" ? customer.email : (customer.guardian.email ?? ""),
-      regardingCustomerDetailsId: customer.customerDetailsId,
+      customerId: customer.customerId,
       dynamicTemplateData: {
         name: customer.name?.split(" ")?.[0] ?? "",
         items: customer.customerItems.map((customerItem) => ({
@@ -130,7 +130,7 @@ export default class RemindersController {
   }
 
   async send(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const { id: userId } = ctx.auth.getUserOrFail();
 
     const { deadline, customerItemType, branchIDs, emailTemplateId, smsText } =
       await ctx.request.validateUsing(reminderValidator);
@@ -144,7 +144,7 @@ export default class RemindersController {
     const sendout = await MessageLogService.createSendout({
       kind: "reminder",
       name: `Påminnelse ${customerItemType === "rent" ? "lån" : "avbetaling"}, frist ${formatDeadline(deadline)}`,
-      initiatedByDetailsId: detailsId,
+      initiatedById: userId,
     });
     const context: MessageLogContext = { messageType: "reminder", sendoutId: sendout?.id };
 
@@ -175,9 +175,7 @@ export default class RemindersController {
     if (smsText) {
       await DispatchService.sendReminderSms(
         customers.flatMap((customer) =>
-          customer.phone === null
-            ? []
-            : [{ to: customer.phone, regardingCustomerDetailsId: customer.customerDetailsId }],
+          customer.phone === null ? [] : [{ to: customer.phone, customerId: customer.customerId }],
         ),
         smsText,
         context,
@@ -188,7 +186,7 @@ export default class RemindersController {
             .filter((customer) => (customer.guardian.phone?.length ?? 0) > 0)
             .map((customer) => ({
               to: customer.guardian.phone ?? "",
-              regardingCustomerDetailsId: customer.customerDetailsId,
+              customerId: customer.customerId,
             })),
           smsText,
           context,

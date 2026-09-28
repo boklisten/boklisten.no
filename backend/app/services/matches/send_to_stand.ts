@@ -21,8 +21,8 @@ async function standMatchFor(
 ): Promise<Match> {
   const existing = await Match.query({ client: trx })
     .where("roundId", roundId)
-    .whereHas("participants", (participants) => participants.whereNull("userDetailId"))
-    .whereHas("participants", (participants) => participants.where("userDetailId", customerId))
+    .whereHas("participants", (participants) => participants.whereNull("userId"))
+    .whereHas("participants", (participants) => participants.where("userId", customerId))
     .preload("participants")
     .first();
   if (existing) {
@@ -35,8 +35,8 @@ async function standMatchFor(
   );
   await MatchParticipant.createMany(
     [
-      { matchId: created.id, userDetailId: customerId },
-      { matchId: created.id, userDetailId: null },
+      { matchId: created.id, userId: customerId },
+      { matchId: created.id, userId: null },
     ],
     { client: trx },
   );
@@ -44,8 +44,8 @@ async function standMatchFor(
   return created;
 }
 
-function participantIn(match: Match, userDetailId: string | null): MatchParticipant {
-  const participant = match.participants.find((p) => p.userDetailId === userDetailId);
+function participantIn(match: Match, userId: string | null): MatchParticipant {
+  const participant = match.participants.find((p) => p.userId === userId);
   if (!participant) {
     throw new BlError("Standoverleveringen mangler en part").store("matchId", match.id);
   }
@@ -78,7 +78,7 @@ export async function sendMatchToStand(matchId: number): Promise<void> {
     if (!match) {
       throw new BlError("Overleveringen finnes ikke").code(702);
     }
-    if (match.participants.some((participant) => participant.userDetailId === null)) {
+    if (match.participants.some((participant) => participant.userId === null)) {
       throw new BlError("Overleveringen er allerede en standoverlevering").code(200);
     }
 
@@ -115,14 +115,14 @@ export async function sendMatchToStand(matchId: number): Promise<void> {
     const standMatches = new Map<string, Match>();
     for (const participant of match.participants) {
       standMatches.set(
-        participant.userDetailId!,
-        await standMatchFor(trx, match.roundId, participant.userDetailId!, round.standLocation),
+        participant.userId!,
+        await standMatchFor(trx, match.roundId, participant.userId!, round.standLocation),
       );
     }
 
     for (const obligation of match.obligations) {
-      const senderId = participantsById.get(obligation.senderParticipantId)!.userDetailId!;
-      const receiverId = participantsById.get(obligation.receiverParticipantId)!.userDetailId!;
+      const senderId = participantsById.get(obligation.senderParticipantId)!.userId!;
+      const receiverId = participantsById.get(obligation.receiverParticipantId)!.userId!;
       const senderStand = standMatches.get(senderId)!;
       const receiverStand = standMatches.get(receiverId)!;
 

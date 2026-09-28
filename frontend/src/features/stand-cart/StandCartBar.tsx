@@ -46,7 +46,7 @@ export default function StandCartBar({
    * Whose cart it is; shown when the cart may be on screen without its customer. `onFollow` runs
    * when the name is followed, for a host that must get out of the way (the camera modal).
    */
-  customer?: { detailsId: string; name: string | null; onFollow?: () => void } | undefined;
+  customer?: { userId: string; name: string | null; onFollow?: () => void } | undefined;
   onOpen: () => void;
 }) {
   const displayName = useDisplayName();
@@ -65,7 +65,7 @@ export default function StandCartBar({
             // Reads like the detail line it is, and only shows as a link on hover
             <EntityLink
               to="/admin/kasse"
-              search={showCustomer(customer.detailsId)}
+              search={showCustomer(customer.userId)}
               onClick={customer.onFollow}
               size="sm"
               fw={400}

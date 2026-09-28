@@ -13,8 +13,8 @@ import classes from "@/features/bokflyt/bokflyt.module.css";
 const BRANCH = "Ullern VG2 ST";
 const STAND: BlidParty = { type: "stand" };
 
-function student(detailsId: string, name: string): BlidParty {
-  return { type: "customer", detailsId, name };
+function student(userId: string, name: string): BlidParty {
+  return { type: "customer", userId, name };
 }
 
 /**
@@ -60,7 +60,7 @@ const EXAMPLE_BOOK: BlidSearchResult = {
       action: "handout",
       from: STAND,
       to: SOLVEIG,
-      employee: { detailsId: "ansatt", name: "en ansatt" },
+      employee: { userId: "ansatt", name: "en ansatt" },
       byCustomer: false,
       branchName: BRANCH,
       deadline: "2023-07-01",

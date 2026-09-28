@@ -16,14 +16,14 @@ import { authQueryOptions } from "@/features/auth/authQuery";
  */
 export default function MySignatureStatusCard() {
   const navigate = useNavigate();
-  const { data: userDetail } = useQuery(authQueryOptions());
+  const { data: user } = useQuery(authQueryOptions());
   const { data, isError } = useQuery({
     ...api.signatures.me.queryOptions(),
     staleTime: 0,
   });
 
   // The details carry the name the modal refers to, so wait for both before showing anything
-  if (!data || isError || !userDetail) {
+  if (!data || isError || !user) {
     return null;
   }
 
@@ -45,7 +45,7 @@ export default function MySignatureStatusCard() {
         onClick={() =>
           modals.open({
             title: "Din signatur",
-            children: <SignedSignatureDetails signature={data} name={userDetail.name} />,
+            children: <SignedSignatureDetails signature={data} name={user.name} />,
           })
         }
       />

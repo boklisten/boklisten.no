@@ -16,20 +16,20 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
  * administrate-user form underneath. One action is expanded at a time.
  */
 export default function UserDangerZone({
-  userDetail,
+  user,
   onDeleted,
   onMerged,
 }: {
-  userDetail: User;
+  user: User;
   onDeleted?: (() => void) | undefined;
-  onMerged?: ((toDetailsId: string) => void) | undefined;
+  onMerged?: ((toUserId: string) => void) | undefined;
 }) {
   const [expandedAction, setExpandedAction] = useState<"merge" | "delete" | null>(null);
   const [confirmText, setConfirmText] = useState("");
-  const confirmPhrase = userDetail.name || userDetail.email;
+  const confirmPhrase = user.name || user.email;
 
   const deleteMutation = useMutation({
-    mutationFn: () => apiClient.api.users.destroy({ params: { detailsId: userDetail.id } }),
+    mutationFn: () => apiClient.api.users.destroy({ params: { userId: user.id } }),
     onSuccess: () => {
       showSuccessNotification("Kunden ble slettet");
       onDeleted?.();
@@ -44,7 +44,7 @@ export default function UserDangerZone({
           Faresone
         </Text>
         <MergeCustomerSection
-          userDetail={userDetail}
+          user={user}
           expanded={expandedAction === "merge"}
           onExpand={() => setExpandedAction("merge")}
           onCollapse={() => setExpandedAction(null)}

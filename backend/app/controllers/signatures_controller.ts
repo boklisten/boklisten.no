@@ -14,15 +14,15 @@ function formatSignedDate(dateTime: DateTime): string {
   return dateTime.toFormat("dd/MM/yyyy");
 }
 
-async function getSignatureStatus(detailsId: string) {
-  const userDetail = await User.find(detailsId);
-  if (!userDetail) {
+async function getSignatureStatus(userId: string) {
+  const user = await User.find(userId);
+  if (!user) {
     return null;
   }
 
-  await reconcileSignatureTask(userDetail);
-  const newestSignature = await Signature.newestForCustomer(userDetail.id, { withImage: true });
-  if (newestSignature?.isValidFor(userDetail)) {
+  await reconcileSignatureTask(user);
+  const newestSignature = await Signature.newestForCustomer(user.id, { withImage: true });
+  if (newestSignature?.isValidFor(user)) {
     return {
       image: newestSignature.image.toString("base64"),
       isSignatureValid: true,
@@ -30,15 +30,15 @@ async function getSignatureStatus(detailsId: string) {
       signedByGuardian: newestSignature.signedByGuardian,
       signingName: newestSignature.signingName,
       signedAtText: formatSignedDate(newestSignature.createdAt),
-      expiresAtText: formatSignedDate(newestSignature.expiresAtFor(userDetail)),
+      expiresAtText: formatSignedDate(newestSignature.expiresAtFor(user)),
     };
   }
 
   return {
     isSignatureValid: false,
-    signatureRequired: userDetail.taskSignAgreement,
+    signatureRequired: user.taskSignAgreement,
     // A guardian signature the customer has outgrown is shown until they sign for themselves.
-    outgrownGuardianSignature: newestSignature?.isOutgrownGuardianFor(userDetail)
+    outgrownGuardianSignature: newestSignature?.isOutgrownGuardianFor(user)
       ? {
           image: newestSignature.image.toString("base64"),
           signingName: newestSignature.signingName,
@@ -54,55 +54,55 @@ export default class SignaturesController {
     return SignatureGalleryService.getPage(cursor);
   }
   async show(ctx: HttpContext) {
-    return getSignatureStatus(ctx.request.param("detailsId"));
+    return getSignatureStatus(ctx.request.param("userId"));
   }
   async me(ctx: HttpContext) {
     return getSignatureStatus(ctx.auth.getUserOrFail().id);
   }
   async sendLink(ctx: HttpContext) {
-    const targetDetailsId = ctx.request.param("detailsId");
+    const targetUserId = ctx.request.param("userId");
 
-    const userDetail = await User.find(targetDetailsId);
-    const branch = await Branch.findOptional(userDetail?.branchMembershipId);
-    if (userDetail) {
-      await DispatchService.sendSignatureLink(userDetail, branch?.name ?? "en filial");
+    const user = await User.find(targetUserId);
+    const branch = await Branch.findOptional(user?.branchMembershipId);
+    if (user) {
+      await DispatchService.sendSignatureLink(user, branch?.name ?? "en filial");
     }
   }
   async sendLinkMe(ctx: HttpContext) {
-    const userDetail = ctx.auth.getUserOrFail();
-    const branch = await Branch.findOptional(userDetail.branchMembershipId);
-    await DispatchService.sendSignatureLink(userDetail, branch?.name ?? "en filial");
+    const user = ctx.auth.getUserOrFail();
+    const branch = await Branch.findOptional(user.branchMembershipId);
+    await DispatchService.sendSignatureLink(user, branch?.name ?? "en filial");
   }
   async valid(ctx: HttpContext) {
-    const detailsId = ctx.request.param("detailsId");
-    const userDetail = await User.find(detailsId);
-    if (!userDetail) {
+    const userId = ctx.request.param("userId");
+    const user = await User.find(userId);
+    if (!user) {
       return {
         isSignatureValid: false,
         message:
           "Lenken er ugyldig. Vennligst prøv igjen, eller ta kontakt hvis problemet vedvarer.",
       };
     }
-    const validSignature = await Signature.validForCustomer(userDetail);
+    const validSignature = await Signature.validForCustomer(user);
     if (validSignature) {
       return {
         isSignatureValid: true,
-        name: userDetail.name,
+        name: user.name,
         signedByGuardian: validSignature.signedByGuardian,
         signingName: validSignature.signingName,
         signedAtText: formatSignedDate(validSignature.createdAt),
-        expiresAtText: formatSignedDate(validSignature.expiresAtFor(userDetail)),
+        expiresAtText: formatSignedDate(validSignature.expiresAtFor(user)),
       };
     }
 
     // Tell a customer who has turned 18 why they are asked to sign again. The guardian's
     // signature itself stays private to the admin view.
-    const newestSignature = await Signature.newestForCustomer(userDetail.id);
+    const newestSignature = await Signature.newestForCustomer(user.id);
     return {
       isSignatureValid: false,
-      name: userDetail.name,
-      isUnderage: isUnderage(userDetail),
-      outgrownGuardianSignature: newestSignature?.isOutgrownGuardianFor(userDetail)
+      name: user.name,
+      isUnderage: isUnderage(user),
+      outgrownGuardianSignature: newestSignature?.isOutgrownGuardianFor(user)
         ? {
             signingName: newestSignature.signingName,
             signedAtText: formatSignedDate(newestSignature.createdAt),
@@ -112,24 +112,24 @@ export default class SignaturesController {
   }
   async sign(ctx: HttpContext) {
     const { base64EncodedImage, signingName } = await ctx.request.validateUsing(signValidator);
-    const detailsId = ctx.request.param("detailsId");
-    const userDetail = await User.find(detailsId);
+    const userId = ctx.request.param("userId");
+    const user = await User.find(userId);
     if (
-      !userDetail ||
-      (isUnderage(userDetail) && signingName === userDetail.name) ||
-      (await userHasValidSignature(userDetail))
+      !user ||
+      (isUnderage(user) && signingName === user.name) ||
+      (await userHasValidSignature(user))
     ) {
       ctx.response.badRequest();
       return;
     }
     const image = await new Transformer(Buffer.from(base64EncodedImage, "base64")).webp(10);
     await Signature.create({
-      customerDetailsId: userDetail.id,
-      signingName: isUnderage(userDetail) ? signingName : userDetail.name,
-      signedByGuardian: isUnderage(userDetail),
+      customerId: user.id,
+      signingName: isUnderage(user) ? signingName : user.name,
+      signedByGuardian: isUnderage(user),
       image,
     });
-    userDetail.taskSignAgreement = false;
-    await userDetail.save();
+    user.taskSignAgreement = false;
+    await user.save();
   }
 }

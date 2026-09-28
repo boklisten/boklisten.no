@@ -59,7 +59,7 @@ test.group("roundPlanMetrics", (group) => {
   }) {
     await createHeldBooks(BRANCH, activeBooks ?? []);
     return {
-      userDetails: sandbox.stub(User, "countMembersOf").resolves(members?.students ?? 0),
+      memberCount: sandbox.stub(User, "countMembersOf").resolves(members?.students ?? 0),
     };
   }
 
@@ -144,7 +144,7 @@ test.group("roundPlanMetrics", (group) => {
 
     await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
 
-    assert.deepEqual(stubs.userDetails.firstCall.args[0], [BRANCH]);
+    assert.deepEqual(stubs.memberCount.firstCall.args[0], [BRANCH]);
   });
 
   test("counts ordered books per book, not per order", async ({ assert }) => {

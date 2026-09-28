@@ -31,7 +31,7 @@ async function getPasswordReset({ id, token }: { id: string; token: string }) {
     };
   }
 
-  const user = await User.find(passwordReset.userDetailId);
+  const user = await User.find(passwordReset.userId);
   if (!user) {
     return {
       message: `Lenken er ugyldig. Du kan be om å få tilsendt en ny lenke på 'glemt passord'-siden`,
@@ -56,7 +56,7 @@ export default class PasswordResetController {
     }
 
     const passwordReset = await PasswordReset.create({
-      userDetailId: user.id,
+      userId: user.id,
       tokenHash,
     });
 

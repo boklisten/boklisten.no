@@ -34,7 +34,7 @@ interface DuplicatePair {
 }
 
 interface DuplicateUserSummary {
-  detailsId: string;
+  userId: string;
   name: string;
   email: string;
   phone: string;
@@ -176,24 +176,24 @@ export function findDuplicateCandidatePairs(sources: DuplicateCandidateSource[])
   return pairs.toSorted((first, second) => second.score - first.score);
 }
 
-async function countActiveBooks(detailsIds: string[]) {
+async function countActiveBooks(userIds: string[]) {
   const rows: { id: string; count: string }[] = await CustomerItem.whereActive(
     db.from("customer_items"),
   )
-    .whereIn("customer_items.customer_id", detailsIds)
+    .whereIn("customer_items.customer_id", userIds)
     .groupBy("customer_items.customer_id")
     .select("customer_items.customer_id as id")
     .count("* as count");
   return new Map(rows.map((row) => [row.id, Number(row.count)]));
 }
 
-async function countOrderedItems(detailsIds: string[]) {
+async function countOrderedItems(userIds: string[]) {
   const rows: { id: string; count: string }[] = await OrderItem.whereOpen(
     db.from("order_items").join("orders", "orders.id", "order_items.order_id"),
     LOAN_ORDER_ITEM_TYPES,
   )
     .where("orders.placed", true)
-    .whereIn("orders.customer_id", detailsIds)
+    .whereIn("orders.customer_id", userIds)
     .groupBy("orders.customer_id")
     .select("orders.customer_id as id")
     .count("* as count");
@@ -211,7 +211,7 @@ async function buildSummarizer(involvedIds: string[]) {
   return (source: DuplicateCandidateSource): DuplicateUserSummary => {
     const account = accounts.get(source.id);
     return {
-      detailsId: source.id,
+      userId: source.id,
       name: source.name ?? "",
       email: source.email ?? "",
       phone: source.phone ?? "",
@@ -226,8 +226,8 @@ async function buildSummarizer(involvedIds: string[]) {
 }
 
 /** Activity summaries for specific users, e.g. to preview a merge. Unknown ids are omitted. */
-async function summarizeUserDetails(detailsIds: string[]): Promise<DuplicateUserSummary[]> {
-  const validIds = detailsIds.filter((id) => isObjectIdHex(id));
+async function summarizeUsers(userIds: string[]): Promise<DuplicateUserSummary[]> {
+  const validIds = userIds.filter((id) => isObjectIdHex(id));
   if (validIds.length === 0) {
     return [];
   }
@@ -284,5 +284,5 @@ function toCandidateSource(user: User): DuplicateCandidateSource {
 
 export const UserDuplicatesService = {
   findDuplicateCustomers,
-  summarizeUserDetails,
+  summarizeUsers,
 };

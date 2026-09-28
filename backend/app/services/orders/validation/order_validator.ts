@@ -3,7 +3,7 @@ import type Order from "#models/order";
 import { OrderFieldValidator } from "#services/orders/validation/order_field_validator";
 import { OrderItemValidator } from "#services/orders/validation/order_item_validator";
 import { OrderPlacedValidator } from "#services/orders/validation/order_placed_validator";
-import { OrderUserDetailValidator } from "#services/orders/validation/order_user_detail_validator";
+import { OrderUserValidator } from "#services/orders/validation/order_user_validator";
 import { BlError } from "#shared/bl-error";
 
 export class OrderValidator {
@@ -11,26 +11,26 @@ export class OrderValidator {
   private readonly orderItemValidator: OrderItemValidator;
 
   private readonly orderFieldValidator: OrderFieldValidator;
-  private readonly orderUserDetailValidator: OrderUserDetailValidator;
+  private readonly orderUserValidator: OrderUserValidator;
 
   constructor(
     orderItemValidator?: OrderItemValidator,
     orderPlacedValidator?: OrderPlacedValidator,
 
     orderFieldValidator?: OrderFieldValidator,
-    orderUserDetailValidator?: OrderUserDetailValidator,
+    orderUserValidator?: OrderUserValidator,
   ) {
     this.orderItemValidator = orderItemValidator ?? new OrderItemValidator();
     this.orderPlacedValidator = orderPlacedValidator ?? new OrderPlacedValidator();
 
     this.orderFieldValidator = orderFieldValidator ?? new OrderFieldValidator();
-    this.orderUserDetailValidator = orderUserDetailValidator ?? new OrderUserDetailValidator();
+    this.orderUserValidator = orderUserValidator ?? new OrderUserValidator();
   }
 
   public async validate(order: Order, isAdmin: boolean): Promise<boolean> {
     try {
       if (this.mustHaveCustomer(order)) {
-        await this.orderUserDetailValidator.validate(order);
+        await this.orderUserValidator.validate(order);
       }
 
       await this.orderFieldValidator.validate(order);

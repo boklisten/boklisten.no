@@ -9,7 +9,7 @@ import { cleanUserInput } from "#validators/common/transformers";
  * by registration and both update endpoints; the guardian fields are only required (by
  * `invalidUserFields`) when the customer is underage.
  */
-export const userDetailsSchema = vine.object({
+export const userFieldsSchema = vine.object({
   name: vine.string().transform((value) => cleanUserInput(value)),
   phone: phoneField.clone().use(uniquePhoneNumber()),
   address: vine.string().transform((value) => cleanUserInput(value)),
@@ -32,14 +32,12 @@ export const userSearchValidator = vine.create(
   }),
 );
 
-export const updateMeValidator = vine
-  .withMetaData<{ detailsId: string }>()
-  .create(userDetailsSchema);
+export const updateMeValidator = vine.withMetaData<{ userId: string }>().create(userFieldsSchema);
 
 /** Employees may also change the email and vouch for it. */
-export const updateUserValidator = vine.withMetaData<{ detailsId: string }>().create(
+export const updateUserValidator = vine.withMetaData<{ userId: string }>().create(
   vine.object({
-    ...userDetailsSchema.getProperties(),
+    ...userFieldsSchema.getProperties(),
     email: emailField.clone().use(uniqueEmail()),
     emailConfirmed: vine.boolean(),
   }),

@@ -112,7 +112,7 @@ export default function InvoiceGrid({
         data?.customerId ? (
           // The link navigates away, so the row click that would open the drawer is stopped
           <CustomerLink
-            detailsId={data.customerId}
+            userId={data.customerId}
             fw={400}
             onClick={(event) => event.stopPropagation()}
           >

@@ -20,7 +20,7 @@ const MIN_SEARCH_LENGTH = 3;
 
 function ExcludedCustomerRow({ id, onRemove }: { id: string; onRemove: () => void }) {
   const { data: detail, isPending } = useQuery(
-    api.users.show.queryOptions({ params: { detailsId: id } }),
+    api.users.show.queryOptions({ params: { userId: id } }),
   );
 
   return (
@@ -70,7 +70,7 @@ export default function ExcludedCustomersField({
     trimmedSearch.length >= MIN_SEARCH_LENGTH && debouncedSearch.length >= MIN_SEARCH_LENGTH;
 
   const { data: searchResults, isFetching } = useQuery({
-    queryKey: ["userDetail", "search", debouncedSearch] as const,
+    queryKey: ["users", "search", debouncedSearch] as const,
     queryFn: async () =>
       (await apiClient.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: searchActive,
@@ -78,19 +78,16 @@ export default function ExcludedCustomersField({
 
   // Mounted eagerly so every row's name is in flight before the rows render one by one.
   useQueries({
-    queries: value.map((id) => api.users.show.queryOptions({ params: { detailsId: id } })),
+    queries: value.map((id) => api.users.show.queryOptions({ params: { userId: id } })),
   });
 
   const candidates = searchActive
     ? (searchResults ?? []).filter((result) => !value.includes(result.id))
     : [];
 
-  const add = (userDetail: (typeof candidates)[number]) => {
-    queryClient.setQueryData(
-      api.users.show.queryKey({ params: { detailsId: userDetail.id } }),
-      userDetail,
-    );
-    onChange([...value, userDetail.id]);
+  const add = (user: (typeof candidates)[number]) => {
+    queryClient.setQueryData(api.users.show.queryKey({ params: { userId: user.id } }), user);
+    onChange([...value, user.id]);
     setSearchValue("");
   };
 

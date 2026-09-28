@@ -33,7 +33,7 @@ export default function CustomerHeader({
   linkToKasse?: boolean;
   /** Makes the name open the customer's ID as a QR code; only in the customer view. */
   withCustomerId?: boolean;
-  onMerged: (toDetailsId: string) => void;
+  onMerged: (toUserId: string) => void;
 }) {
   const { data: branch } = useQuery(
     api.branches.show.queryOptions(
@@ -76,7 +76,7 @@ export default function CustomerHeader({
     <Stack gap="sm">
       <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
         <Group gap="sm" align="center" wrap="nowrap" miw={0}>
-          <CustomerAvatar detailsId={customer.id} name={shownName} enlargeable />
+          <CustomerAvatar userId={customer.id} name={shownName} enlargeable />
           <Stack gap={4} miw={0}>
             <Title order={2} size="h4" lh={1.2}>
               {name(shownName)}
@@ -102,15 +102,15 @@ export default function CustomerHeader({
                   title: "Rediger brukerdetaljer",
                   children: (
                     <AdministrateUserForm
-                      userDetail={customer}
+                      user={customer}
                       onSaved={() => modals.close(ADMINISTRATE_USER_MODAL_ID)}
                       onDeleted={() => {
                         modals.close(ADMINISTRATE_USER_MODAL_ID);
                         onDeselect();
                       }}
-                      onMerged={(toDetailsId) => {
+                      onMerged={(toUserId) => {
                         modals.close(ADMINISTRATE_USER_MODAL_ID);
-                        onMerged(toDetailsId);
+                        onMerged(toUserId);
                       }}
                     />
                   ),

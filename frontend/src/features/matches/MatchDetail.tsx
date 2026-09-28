@@ -11,7 +11,7 @@ import useAuth from "@/shared/hooks/useAuth";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 function MatchDetail({ matchId }: { matchId: string }) {
-  const { detailsId } = useAuth();
+  const { userId } = useAuth();
 
   const { data, isLoading, isError } = useQuery(
     api.matches.me.queryOptions({}, { staleTime: 5000 }),
@@ -21,7 +21,7 @@ function MatchDetail({ matchId }: { matchId: string }) {
     return <Skeleton height={500} />;
   }
 
-  if (isError || !data || !detailsId) {
+  if (isError || !data || !userId) {
     return <ErrorAlert title={GENERIC_ERROR_TEXT}>{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>;
   }
 
@@ -40,7 +40,7 @@ function MatchDetail({ matchId }: { matchId: string }) {
         </TanStackAnchor>
       </Box>
 
-      <MatchDetailView viewerMatch={forViewer(match, detailsId)} viewerCustomerId={detailsId} />
+      <MatchDetailView viewerMatch={forViewer(match, userId)} viewerCustomerId={userId} />
     </>
   );
 }

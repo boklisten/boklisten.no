@@ -230,7 +230,7 @@ test.group("BranchBooksService: ordered books", (group) => {
         branchId: parent.id,
         filter: { deadline: JULY_1, includeDescendants: false },
         notifyCustomers: false,
-        employeeDetailsId: customer.id,
+        employeeId: customer.id,
       });
 
       assert.deepEqual(result, { cancelledOrders: 1, cancelledBooks: 2, skippedBooks: 1 });

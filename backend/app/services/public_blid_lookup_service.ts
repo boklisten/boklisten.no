@@ -85,11 +85,11 @@ export const PublicBlidLookupService = {
    * for logins), so guessing through a dense range of IDs still runs out of misses.
    */
   async guardedLookup(
-    { detailsId, blid }: { detailsId: string; blid: string },
+    { userId, blid }: { userId: string; blid: string },
     misses: Limiter,
     now: Date = new Date(),
   ): Promise<PublicBlidLookupResult | PublicBlidLookupSuspended> {
-    const key = `public_blid_lookup_misses_${detailsId}`;
+    const key = `public_blid_lookup_misses_${userId}`;
     if (await misses.isBlocked(key)) {
       const seconds = await misses.availableIn(key);
       return { status: "suspended", until: new Date(now.getTime() + seconds * 1000).toISOString() };

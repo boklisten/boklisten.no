@@ -33,7 +33,7 @@ const BRANCH = fixtureId("b1");
 
 function createValidSignature() {
   return Signature.create({
-    customerDetailsId: CUSTOMER_1,
+    customerId: CUSTOMER_1,
     signingName: "",
     signedByGuardian: true,
     image: Buffer.from("test"),
@@ -161,8 +161,8 @@ test.group("OrderPlaceService", (group) => {
     });
     const match = await Match.create({ roundId: round.id, meetingLocation: "Kantina" });
     const [customer, stand] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: CUSTOMER },
-      { matchId: match.id, userDetailId: null },
+      { matchId: match.id, userId: CUSTOMER },
+      { matchId: match.id, userId: null },
     ]);
     return MatchObligation.create({
       matchId: match.id,
@@ -212,8 +212,8 @@ test.group("OrderPlaceService", (group) => {
 
     const handovers = await BookHandover.all();
     assert.lengthOf(handovers, 1);
-    assert.equal(handovers[0]!.fromUserDetailId, CUSTOMER);
-    assert.isNull(handovers[0]!.toUserDetailId, "the stand is the destination");
+    assert.equal(handovers[0]!.fromUserId, CUSTOMER);
+    assert.isNull(handovers[0]!.toUserId, "the stand is the destination");
     assert.equal(handovers[0]!.dischargesSenderObligationId, obligation.id);
     assert.isNull(handovers[0]!.dischargesReceiverObligationId);
   });
@@ -237,8 +237,8 @@ test.group("OrderPlaceService", (group) => {
 
     const handovers = await BookHandover.all();
     assert.lengthOf(handovers, 1);
-    assert.isNull(handovers[0]!.fromUserDetailId, "the stand is the origin");
-    assert.equal(handovers[0]!.toUserDetailId, CUSTOMER);
+    assert.isNull(handovers[0]!.fromUserId, "the stand is the origin");
+    assert.equal(handovers[0]!.toUserId, CUSTOMER);
     assert.equal(handovers[0]!.dischargesReceiverObligationId, obligation.id);
   });
 

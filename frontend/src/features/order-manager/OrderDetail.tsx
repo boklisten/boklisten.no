@@ -92,7 +92,7 @@ export default function OrderDetail({
     isPending,
     isError,
   } = useQuery({
-    ...api.users.show.queryOptions({ params: { detailsId: customerId ?? "" } }),
+    ...api.users.show.queryOptions({ params: { userId: customerId ?? "" } }),
     enabled: customerId !== null,
   });
   const [cartOpen, setCartOpen] = useState(false);
@@ -171,7 +171,7 @@ export default function OrderDetail({
             onMerged={onBack}
           />
           <EmailConfirmationWarning customer={customer} />
-          <SignatureStatusBanner userDetail={customer} />
+          <SignatureStatusBanner user={customer} />
           <Stack gap={6}>
             <Group gap="xs" align="baseline" wrap="wrap">
               <Text fw={600}>Bestilt {describeOrderTime(order.creationTime)}</Text>

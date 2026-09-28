@@ -34,13 +34,13 @@ const PERMISSION_OPTIONS = (["customer", "employee", "admin"] as const).map((per
 }));
 
 export default function EmployeesTab() {
-  const { detailsId: myDetailsId } = useAuth();
+  const { userId: myUserId } = useAuth();
   const queryClient = useQueryClient();
   const [addModalOpen, setAddModalOpen] = useState(false);
   const { data: employees, isPending, isError } = useQuery(api.users.employees.queryOptions());
 
   const permissionMutation = useMutation({
-    mutationFn: (input: { detailsIds: string[]; permission: UserPermission }) =>
+    mutationFn: (input: { userIds: string[]; permission: UserPermission }) =>
       apiClient.api.users.setPermission({ body: input }),
     onSuccess: async () => {
       showSuccessNotification("Tilgangsnivået ble endret");
@@ -53,10 +53,10 @@ export default function EmployeesTab() {
   });
 
   function confirmPermissionChange(
-    employee: { detailsId: string; name: string },
+    employee: { userId: string; name: string },
     permission: UserPermission,
   ) {
-    const isSelf = employee.detailsId === myDetailsId;
+    const isSelf = employee.userId === myUserId;
     modals.openConfirmModal({
       title: "Endre tilgangsnivå",
       children: (
@@ -76,7 +76,7 @@ export default function EmployeesTab() {
       ),
       labels: { confirm: "Endre tilgangsnivå", cancel: "Avbryt" },
       confirmProps: { color: isSelf || permission === "customer" ? "red" : "blue" },
-      onConfirm: () => permissionMutation.mutate({ detailsIds: [employee.detailsId], permission }),
+      onConfirm: () => permissionMutation.mutate({ userIds: [employee.userId], permission }),
     });
   }
 
@@ -131,17 +131,17 @@ export default function EmployeesTab() {
           </Table.Thead>
           <Table.Tbody>
             {employees.map((employee) => (
-              <Table.Tr key={employee.detailsId}>
+              <Table.Tr key={employee.userId}>
                 <Table.Td>
                   <Group gap="sm" wrap="nowrap">
                     <CustomerAvatar
-                      detailsId={employee.detailsId}
+                      userId={employee.userId}
                       name={employee.name || employee.email}
                       enlargeable
                     />
                     <Stack gap={0} miw={0}>
                       <Text size="sm" lh={1.3}>
-                        <EntityLink to="/admin/kasse" search={{ kunde: employee.detailsId }}>
+                        <EntityLink to="/admin/kasse" search={{ kunde: employee.userId }}>
                           {employee.name || "Uten navn"}
                         </EntityLink>
                       </Text>

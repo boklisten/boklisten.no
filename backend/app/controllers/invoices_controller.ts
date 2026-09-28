@@ -32,15 +32,15 @@ export default class InvoicesController {
   }
 
   async setStatus(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const { id: userId } = ctx.auth.getUserOrFail();
     const { status } = await ctx.request.validateUsing(invoiceStatusValidator);
-    return setInvoiceStatus(ctx.request.param("invoiceId"), status, detailsId);
+    return setInvoiceStatus(ctx.request.param("invoiceId"), status, userId);
   }
 
   async setStatuses(ctx: HttpContext) {
-    const { id: detailsId } = ctx.auth.getUserOrFail();
+    const { id: userId } = ctx.auth.getUserOrFail();
     const { invoiceIds, status } = await ctx.request.validateUsing(invoiceBulkStatusValidator);
-    return setInvoiceStatuses(invoiceIds, status, detailsId);
+    return setInvoiceStatuses(invoiceIds, status, userId);
   }
 
   async destroy(ctx: HttpContext) {

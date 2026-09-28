@@ -7,7 +7,7 @@ import { Activity, useState } from "react";
 
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
-import UserInfoFields, { userDetailsBody } from "@/features/user/UserInfoFields";
+import UserInfoFields, { userFieldsBody } from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
@@ -19,21 +19,21 @@ import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 import { authQueryKey } from "@/features/auth/authQuery";
 
-export default function UserSettingsForm({ userDetail }: { userDetail: User }) {
+export default function UserSettingsForm({ user }: { user: User }) {
   const queryClient = useQueryClient();
   const defaultValues: UserInfoFieldValues = {
-    name: userDetail.name,
-    phoneNumber: userDetail.phone ?? "",
-    address: userDetail.address,
+    name: user.name,
+    phoneNumber: user.phone ?? "",
+    address: user.address,
     postal: {
-      code: userDetail.postCode,
-      city: userDetail.postCity,
+      code: user.postCode,
+      city: user.postCity,
     },
-    birthday: userDetail.dob ?? "",
-    guardianName: userDetail.guardianName ?? "",
-    guardianEmail: userDetail.guardianEmail ?? "",
-    guardianPhoneNumber: userDetail.guardianPhone ?? "",
-    branchMembership: userDetail.branchMembershipId ?? "",
+    birthday: user.dob ?? "",
+    guardianName: user.guardianName ?? "",
+    guardianEmail: user.guardianEmail ?? "",
+    guardianPhoneNumber: user.guardianPhone ?? "",
+    branchMembership: user.branchMembershipId ?? "",
   };
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const updateUserMutation = useMutation(
@@ -54,14 +54,14 @@ export default function UserSettingsForm({ userDetail }: { userDetail: User }) {
   );
   const form = useAppForm({
     defaultValues,
-    onSubmit: ({ value }) => updateUserMutation.mutate({ body: userDetailsBody(value) }),
+    onSubmit: ({ value }) => updateUserMutation.mutate({ body: userFieldsBody(value) }),
     validators: {
       onSubmit: ({ value }) => {
         if (isUnder18(new Date(value.birthday))) {
           return {
             fields: {
               guardianName: nameFieldValidator(value.guardianName, "guardian"),
-              guardianEmail: emailFieldValidator(value.guardianEmail, "guardian", userDetail.email),
+              guardianEmail: emailFieldValidator(value.guardianEmail, "guardian", user.email),
               guardianPhoneNumber: phoneNumberFieldValidator(
                 value.guardianPhoneNumber,
                 "guardian",
@@ -86,10 +86,10 @@ export default function UserSettingsForm({ userDetail }: { userDetail: User }) {
         disabled
         label="E-post"
         description="Ta kontakt dersom du ønsker å endre e-postadresse"
-        value={userDetail.email}
+        value={user.email}
         rightSection={
-          <Tooltip label={userDetail.emailConfirmed ? "Bekreftet" : "Ikke bekreftet"}>
-            {userDetail.emailConfirmed ? (
+          <Tooltip label={user.emailConfirmed ? "Bekreftet" : "Ikke bekreftet"}>
+            {user.emailConfirmed ? (
               <IconCheck color="green" />
             ) : (
               <IconInfoCircleFilled color="orange" />
@@ -97,7 +97,7 @@ export default function UserSettingsForm({ userDetail }: { userDetail: User }) {
           </Tooltip>
         }
       />
-      <Activity mode={!userDetail.emailConfirmed ? "visible" : "hidden"}>
+      <Activity mode={!user.emailConfirmed ? "visible" : "hidden"}>
         <Stack>
           <Activity mode={sendEmailVerification.isSuccess ? "visible" : "hidden"}>
             <InfoAlert icon={<IconMailFast />}>
@@ -107,8 +107,8 @@ export default function UserSettingsForm({ userDetail }: { userDetail: User }) {
           </Activity>
           <Activity mode={!sendEmailVerification.isSuccess ? "visible" : "hidden"}>
             <WarningAlert title="E-postadressen er ikke bekreftet">
-              En bekreftelseslenke har blitt sendt til {userDetail.email}. Trykk på knappen nedenfor
-              for å sende en ny lenke.
+              En bekreftelseslenke har blitt sendt til {user.email}. Trykk på knappen nedenfor for å
+              sende en ny lenke.
             </WarningAlert>
             <Button leftSection={<IconMailFast />} onClick={() => sendEmailVerification.mutate({})}>
               Send bekreftelseslenke på nytt
@@ -116,12 +116,12 @@ export default function UserSettingsForm({ userDetail }: { userDetail: User }) {
           </Activity>
         </Stack>
       </Activity>
-      {userDetail.permission !== "customer" && (
+      {user.permission !== "customer" && (
         <Group gap="xs">
           <Text size="sm" c="dimmed">
             Tilgangsnivå:
           </Text>
-          <PermissionBadge permission={userDetail.permission} />
+          <PermissionBadge permission={user.permission} />
         </Group>
       )}
       <Space />

@@ -213,12 +213,12 @@ test.group("MessageLogService", (group) => {
     await MessageLogService.logOutgoingMessage({
       channel: "email",
       recipient: "info@boklisten.no",
-      context: { messageType: "employee-monitoring", regardingCustomerDetailsId: CUSTOMER },
+      context: { messageType: "employee-monitoring", customerId: CUSTOMER },
     });
     await MessageLogService.logOutgoingMessage({
       channel: "email",
       recipient: "info@boklisten.no",
-      context: { messageType: "employee-monitoring", regardingCustomerDetailsId: other.id },
+      context: { messageType: "employee-monitoring", customerId: other.id },
     });
 
     const { entries } = await MessageLogService.customerLog(CUSTOMER);

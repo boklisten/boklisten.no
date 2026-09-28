@@ -56,8 +56,7 @@ interface SettledObligation {
  */
 function countableHalves(obligation: MatchObligation): number {
   return (
-    (obligation.sender.userDetailId === null ? 0 : 1) +
-    (obligation.receiver.userDetailId === null ? 0 : 1)
+    (obligation.sender.userId === null ? 0 : 1) + (obligation.receiver.userId === null ? 0 : 1)
   );
 }
 
@@ -67,8 +66,8 @@ function toHandoverFacts(handover: BookHandover | null): HandoverFacts | null {
   }
   return {
     id: handover.id,
-    fromCustomerId: handover.fromUserDetailId,
-    toCustomerId: handover.toUserDetailId,
+    fromCustomerId: handover.fromUserId,
+    toCustomerId: handover.toUserId,
   };
 }
 
@@ -78,8 +77,8 @@ function settledHalves({
   receiverHandover,
 }: SettledObligation): number {
   return (
-    (obligation.sender.userDetailId !== null && senderHandover !== null ? 1 : 0) +
-    (obligation.receiver.userDetailId !== null && receiverHandover !== null ? 1 : 0)
+    (obligation.sender.userId !== null && senderHandover !== null ? 1 : 0) +
+    (obligation.receiver.userId !== null && receiverHandover !== null ? 1 : 0)
   );
 }
 
@@ -178,11 +177,9 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
 
   for (const match of matches) {
     const customers = match.participants
-      .map((participant) => participant.userDetailId)
+      .map((participant) => participant.userId)
       .filter((id): id is string => id !== null);
-    const isStandMatch = match.participants.some(
-      (participant) => participant.userDetailId === null,
-    );
+    const isStandMatch = match.participants.some((participant) => participant.userId === null);
     const date = match.meetingTime ? match.meetingTime.toISO() : null;
 
     if (isStandMatch) {
@@ -221,8 +218,8 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
       countable += countableHalves(obligation);
       settled += settledHalves(state);
 
-      const senderIsStand = obligation.sender.userDetailId === null;
-      const receiverIsStand = obligation.receiver.userDetailId === null;
+      const senderIsStand = obligation.sender.userId === null;
+      const receiverIsStand = obligation.receiver.userId === null;
 
       if (senderIsStand) {
         standBooksOut.expected++;
@@ -248,7 +245,7 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
       // A student's own copy that has not been handed over anywhere keeps them liable.
       if (!senderIsStand && state.senderHandover === null) {
         copiesOutstanding++;
-        liableStudents.add(obligation.sender.userDetailId!);
+        liableStudents.add(obligation.sender.userId!);
       }
 
       // One verdict per settled obligation, not per half — a planned student-to-student
@@ -257,8 +254,8 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
       // halves) never applies; a half settled without an unexpected party stands in for it.
       const progress = deriveObligationProgress(
         {
-          senderCustomerId: obligation.sender.userDetailId,
-          receiverCustomerId: obligation.receiver.userDetailId,
+          senderCustomerId: obligation.sender.userId,
+          receiverCustomerId: obligation.receiver.userId,
           itemId: obligation.itemId,
         },
         toHandoverFacts(state.senderHandover),

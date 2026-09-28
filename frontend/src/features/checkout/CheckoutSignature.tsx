@@ -38,7 +38,7 @@ export default function CheckoutSignature() {
   const cart = useCart({ immediately: true });
   const navigate = useNavigate();
 
-  const { data: userDetail, isError: userDetailFailed } = useQuery(authQueryOptions());
+  const { data: user, isError: userFailed } = useQuery(authQueryOptions());
   const { data: signature, isError: signatureFailed } = useQuery({
     ...api.signatures.me.queryOptions(),
     refetchInterval: POLL_INTERVAL_MS,
@@ -59,22 +59,22 @@ export default function CheckoutSignature() {
     }
   }, [cartIsEmpty, needsSignature, isSigned, navigate]);
 
-  if (userDetailFailed || signatureFailed) {
+  if (userFailed || signatureFailed) {
     return (
       <ErrorAlert title="Klarte ikke laste signaturstatus">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>
     );
   }
-  if (!userDetail || !signature || isSigned || !needsSignature) {
+  if (!user || !signature || isSigned || !needsSignature) {
     return <CheckoutSignaturePending />;
   }
 
-  const underage = isUnder18(userDetail.dob);
+  const underage = isUnder18(user.dob);
   return (
     <Stack>
       <Text>Du må signere låneavtalen før du kan fullføre bestillingen.</Text>
       {underage ? (
         <Stack>
-          <GuardianSignatureRequest userDetail={userDetail} />
+          <GuardianSignatureRequest user={user} />
           <Group gap="xs" wrap="nowrap">
             <Loader size="xs" type="dots" />
             <Text size="sm" c="dimmed">
@@ -83,7 +83,7 @@ export default function CheckoutSignature() {
           </Group>
         </Stack>
       ) : (
-        <SignAgreement userDetailId={userDetail.id} />
+        <SignAgreement userId={user.id} />
       )}
       <TanStackButton
         to="/handlekurv"

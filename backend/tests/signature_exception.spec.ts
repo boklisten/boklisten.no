@@ -26,7 +26,7 @@ function userWith(overrides: { dob?: DateTime; taskSignAgreement?: boolean } = {
 
 function createSignature(overrides: Partial<Parameters<typeof Signature.create>[0]> = {}) {
   return Signature.create({
-    customerDetailsId: CUSTOMER_ID,
+    customerId: CUSTOMER_ID,
     signingName: "Test Kunde",
     signedByGuardian: false,
     image: Buffer.from("webp"),

@@ -6,7 +6,7 @@ import { SignatureSchema } from "#database/schema";
 export const SIGNATURE_NUM_MONTHS_VALID = 4 * 12;
 
 /** Every column but the image, which only the pages showing the signature need. */
-const WITHOUT_IMAGE = ["id", "customerDetailsId", "signingName", "signedByGuardian", "createdAt"];
+const WITHOUT_IMAGE = ["id", "customerId", "signingName", "signedByGuardian", "createdAt"];
 
 export default class Signature extends SignatureSchema {
   static newestFirst = scope((query) => {
@@ -18,20 +18,20 @@ export default class Signature extends SignatureSchema {
    * signature is judged: a newer invalid signature shadows older valid ones, so the customer must
    * sign again.
    */
-  static async validForCustomer(userDetail: {
+  static async validForCustomer(customer: {
     id: string;
     dob: DateTime | null;
   }): Promise<Signature | null> {
-    const newestSignature = await this.newestForCustomer(userDetail.id);
-    return newestSignature?.isValidFor(userDetail) ? newestSignature : null;
+    const newestSignature = await this.newestForCustomer(customer.id);
+    return newestSignature?.isValidFor(customer) ? newestSignature : null;
   }
 
   static async newestForCustomer(
-    customerDetailsId: string,
+    customerId: string,
     { withImage = false } = {},
   ): Promise<Signature | null> {
     const query = this.query()
-      .where("customerDetailsId", customerDetailsId)
+      .where("customerId", customerId)
       .withScopes((scopes) => scopes.newestFirst());
     if (!withImage) {
       void query.select(WITHOUT_IMAGE);
@@ -42,12 +42,12 @@ export default class Signature extends SignatureSchema {
   /**
    * The newest signature for each of the given customers, without the image payload.
    */
-  static async newestPerCustomer(customerDetailsIds: string[]): Promise<Signature[]> {
+  static async newestPerCustomer(customerIds: string[]): Promise<Signature[]> {
     return this.query()
       .select(WITHOUT_IMAGE)
-      .whereIn("customerDetailsId", customerDetailsIds)
-      .distinctOn("customerDetailsId")
-      .orderBy("customerDetailsId")
+      .whereIn("customerId", customerIds)
+      .distinctOn("customerId")
+      .orderBy("customerId")
       .withScopes((scopes) => scopes.newestFirst());
   }
 
@@ -63,7 +63,7 @@ export default class Signature extends SignatureSchema {
       .whereNotExists((newer) => {
         void newer
           .from("signatures as newer")
-          .whereColumn("newer.customer_details_id", "signatures.customer_details_id")
+          .whereColumn("newer.customer_id", "signatures.customer_id")
           .whereRaw(
             '("newer"."created_at", "newer"."id") > ("signatures"."created_at", "signatures"."id")',
           );
@@ -80,19 +80,19 @@ export default class Signature extends SignatureSchema {
    * A signature is valid for a customer while it is within the validity window and was signed by
    * the right hand: a guardian for an underage customer, the customer themselves otherwise.
    */
-  isValidFor(userDetail: { dob: DateTime | null }): boolean {
+  isValidFor(customer: { dob: DateTime | null }): boolean {
     if (this.isExpired()) {
       return false;
     }
-    return isUnderage(userDetail) === this.signedByGuardian;
+    return isUnderage(customer) === this.signedByGuardian;
   }
 
   /**
    * A guardian signature that only stopped counting because the customer has turned 18: still
    * inside the validity window, but the customer must now sign for themselves.
    */
-  isOutgrownGuardianFor(userDetail: { dob: DateTime | null }): boolean {
-    return this.signedByGuardian && !this.isExpired() && !isUnderage(userDetail);
+  isOutgrownGuardianFor(customer: { dob: DateTime | null }): boolean {
+    return this.signedByGuardian && !this.isExpired() && !isUnderage(customer);
   }
 
   isExpired(): boolean {
@@ -117,21 +117,21 @@ export default class Signature extends SignatureSchema {
    * the customer's 18th birthday (isValidFor starts rejecting it), if that comes before the
    * ordinary validity window runs out.
    */
-  expiresAtFor(userDetail: { dob: DateTime | null }): DateTime {
+  expiresAtFor(customer: { dob: DateTime | null }): DateTime {
     const { expiresAt } = this;
-    if (!this.signedByGuardian || !userDetail.dob) {
+    if (!this.signedByGuardian || !customer.dob) {
       return expiresAt;
     }
-    const eighteenthBirthday = userDetail.dob.plus({ years: 18 });
+    const eighteenthBirthday = customer.dob.plus({ years: 18 });
     return expiresAt < eighteenthBirthday ? expiresAt : eighteenthBirthday;
   }
 }
 
 /** Younger than 18 today, by calendar date; unknown dates of birth count as adult. */
-export function isUnderage(userDetail: { dob: DateTime | null }): boolean {
-  if (!userDetail.dob) {
+export function isUnderage(customer: { dob: DateTime | null }): boolean {
+  if (!customer.dob) {
     return false;
   }
   const latestAdultBirthDate = DateTime.now().startOf("day").minus({ years: 18 });
-  return userDetail.dob.startOf("day") > latestAdultBirthDate;
+  return customer.dob.startOf("day") > latestAdultBirthDate;
 }

@@ -5,7 +5,7 @@ import User from "#models/user";
 import { UserDuplicatesService } from "#services/user_duplicates_service";
 import { UserManagementService } from "#services/user_management_service";
 import { UserMetricsService } from "#services/user_metrics_service";
-import { userDetailsFrom, UserService } from "#services/user_service";
+import { userFieldsFrom, UserService } from "#services/user_service";
 import { mergeUsersValidator, setPermissionValidator } from "#validators/user_management";
 import { updateMeValidator, updateUserValidator, userSearchValidator } from "#validators/users";
 
@@ -14,9 +14,9 @@ export default class UsersController {
   async updateMe(ctx: HttpContext) {
     const user = ctx.auth.getUserOrFail();
     const details = await ctx.request.validateUsing(updateMeValidator, {
-      meta: { detailsId: user.id },
+      meta: { userId: user.id },
     });
-    user.merge({ ...userDetailsFrom(details), taskConfirmDetails: false });
+    user.merge({ ...userFieldsFrom(details), taskConfirmDetails: false });
     await user.save();
   }
 
@@ -27,19 +27,19 @@ export default class UsersController {
 
   /** The user with both task flags brought up to date, or null when there is no such user. */
   async show(ctx: HttpContext) {
-    const user = await User.find(ctx.request.param("detailsId"));
+    const user = await User.find(ctx.request.param("userId"));
     return user === null ? null : UserService.withTasksReconciled(user);
   }
 
   async update(ctx: HttpContext) {
-    const detailsId = ctx.request.param("detailsId");
+    const userId = ctx.request.param("userId");
     const { email, emailConfirmed, ...details } = await ctx.request.validateUsing(
       updateUserValidator,
-      { meta: { detailsId } },
+      { meta: { userId } },
     );
-    const user = await User.findOrFail(detailsId);
+    const user = await User.findOrFail(userId);
     await UserService.updateAsEmployee(user, {
-      ...userDetailsFrom(details),
+      ...userFieldsFrom(details),
       email,
       emailConfirmed,
     });
@@ -47,7 +47,7 @@ export default class UsersController {
 
   /** For when the customer has verbally confirmed their address to an employee at the stand. */
   async confirmEmail(ctx: HttpContext) {
-    const user = await User.findOrFail(ctx.request.param("detailsId"));
+    const user = await User.findOrFail(ctx.request.param("userId"));
     user.emailConfirmed = true;
     await user.save();
     return { emailConfirmed: true };
@@ -62,14 +62,11 @@ export default class UsersController {
   }
 
   async mergePreview(ctx: HttpContext) {
-    const fromDetailsId = ctx.request.param("fromDetailsId");
-    const toDetailsId = ctx.request.param("toDetailsId");
-    const summaries = await UserDuplicatesService.summarizeUserDetails([
-      fromDetailsId,
-      toDetailsId,
-    ]);
-    const from = summaries.find((summary) => summary.detailsId === fromDetailsId);
-    const to = summaries.find((summary) => summary.detailsId === toDetailsId);
+    const fromUserId = ctx.request.param("fromUserId");
+    const toUserId = ctx.request.param("toUserId");
+    const summaries = await UserDuplicatesService.summarizeUsers([fromUserId, toUserId]);
+    const from = summaries.find((summary) => summary.userId === fromUserId);
+    const to = summaries.find((summary) => summary.userId === toUserId);
     if (!from || !to) {
       throw new BadRequestException("Fant ikke begge kundene");
     }
@@ -77,13 +74,13 @@ export default class UsersController {
   }
 
   async merge(ctx: HttpContext) {
-    const { fromDetailsId, toDetailsId } = await ctx.request.validateUsing(mergeUsersValidator);
-    await UserManagementService.mergeUsers(fromDetailsId, toDetailsId);
+    const { fromUserId, toUserId } = await ctx.request.validateUsing(mergeUsersValidator);
+    await UserManagementService.mergeUsers(fromUserId, toUserId);
     return { merged: true };
   }
 
   async destroy(ctx: HttpContext) {
-    await UserManagementService.deleteUser(ctx.request.param("detailsId"));
+    await UserManagementService.deleteUser(ctx.request.param("userId"));
     return { deleted: true };
   }
 
@@ -92,7 +89,7 @@ export default class UsersController {
   }
 
   async setPermission(ctx: HttpContext) {
-    const { detailsIds, permission } = await ctx.request.validateUsing(setPermissionValidator);
-    return UserManagementService.setPermission(detailsIds, permission);
+    const { userIds, permission } = await ctx.request.validateUsing(setPermissionValidator);
+    return UserManagementService.setPermission(userIds, permission);
   }
 }

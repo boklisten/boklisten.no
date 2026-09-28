@@ -34,7 +34,7 @@ export default function MergeRoleCard({
             {isKeep ? "Beholdes" : "Slettes"}
           </Text>
           <Group gap="xs">
-            <CustomerLink detailsId={user.detailsId}>{user.name || "Uten navn"}</CustomerLink>
+            <CustomerLink userId={user.userId}>{user.name || "Uten navn"}</CustomerLink>
             {branchName && (
               <Badge variant="light" size="sm">
                 {branchName}

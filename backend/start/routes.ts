@@ -19,7 +19,7 @@ import {
 | to the most privileged, except that admin routes come before employee routes. That order keeps
 | static paths ahead of the dynamic ones that would otherwise shadow them: `/orders/me` (customer)
 | is declared before `/orders/:orderId` (employee), and `/signatures/gallery` and `/users/metrics`
-| (admin) before `/signatures/:detailsId` and `/users/:detailsId` (employee). Within a group, keep
+| (admin) before `/signatures/:userId` and `/users/:userId` (employee). Within a group, keep
 | static paths above dynamic ones too.
 |
 | Route names are derived from `<controller>.<method>`; the frontend addresses endpoints by that
@@ -83,8 +83,8 @@ router.get("/items/buyback", [controllers.Items, "buyback"]);
 router.get("/editable_texts/:id", [controllers.EditableTexts, "show"]);
 router.get("/questions_and_answers", [controllers.QuestionsAndAnswers, "index"]);
 
-router.get("/signatures/:detailsId/valid", [controllers.Signatures, "valid"]);
-router.post("/signatures/:detailsId/sign", [controllers.Signatures, "sign"]);
+router.get("/signatures/:userId/valid", [controllers.Signatures, "valid"]);
+router.post("/signatures/:userId/sign", [controllers.Signatures, "sign"]);
 
 router.get("/unique_ids/pdf/:token", [controllers.UniqueIds, "pdf"]);
 
@@ -219,13 +219,10 @@ router
     router.get("/users/metrics", [controllers.Users, "metrics"]);
     router.get("/users/duplicates", [controllers.Users, "duplicates"]);
     router.get("/users/employees", [controllers.Users, "employees"]);
-    router.get("/users/merge_preview/:fromDetailsId/:toDetailsId", [
-      controllers.Users,
-      "mergePreview",
-    ]);
+    router.get("/users/merge_preview/:fromUserId/:toUserId", [controllers.Users, "mergePreview"]);
     router.post("/users/merge", [controllers.Users, "merge"]);
     router.put("/users/permission", [controllers.Users, "setPermission"]);
-    router.delete("/users/:detailsId", [controllers.Users, "destroy"]);
+    router.delete("/users/:userId", [controllers.Users, "destroy"]);
 
     router.get("/signatures/gallery", [controllers.Signatures, "gallery"]);
 
@@ -293,17 +290,17 @@ router
   .group(() => {
     // customers
     router.get("/users/search", [controllers.Users, "search"]);
-    router.get("/users/:detailsId", [controllers.Users, "show"]);
-    router.patch("/users/:detailsId", [controllers.Users, "update"]);
-    router.post("/users/:detailsId/confirm_email", [controllers.Users, "confirmEmail"]);
-    router.get("/users/:detailsId/customer_items", [controllers.CustomerItems, "forCustomer"]);
-    router.get("/users/:detailsId/orders", [controllers.Orders, "forCustomer"]);
-    router.get("/users/:detailsId/placed_orders", [controllers.Orders, "placedForCustomer"]);
-    router.get("/users/:detailsId/matches", [controllers.Matches, "forCustomer"]);
-    router.get("/users/:detailsId/message_logs", [controllers.MessageLogs, "forCustomer"]);
+    router.get("/users/:userId", [controllers.Users, "show"]);
+    router.patch("/users/:userId", [controllers.Users, "update"]);
+    router.post("/users/:userId/confirm_email", [controllers.Users, "confirmEmail"]);
+    router.get("/users/:userId/customer_items", [controllers.CustomerItems, "forCustomer"]);
+    router.get("/users/:userId/orders", [controllers.Orders, "forCustomer"]);
+    router.get("/users/:userId/placed_orders", [controllers.Orders, "placedForCustomer"]);
+    router.get("/users/:userId/matches", [controllers.Matches, "forCustomer"]);
+    router.get("/users/:userId/message_logs", [controllers.MessageLogs, "forCustomer"]);
 
-    router.get("/signatures/:detailsId", [controllers.Signatures, "show"]);
-    router.post("/signatures/:detailsId/send", [controllers.Signatures, "sendLink"]);
+    router.get("/signatures/:userId", [controllers.Signatures, "show"]);
+    router.post("/signatures/:userId/send", [controllers.Signatures, "sendLink"]);
 
     // orders
     router.get("/orders", [controllers.Orders, "index"]);

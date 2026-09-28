@@ -273,11 +273,11 @@ export interface Registry {
   }
   'signatures.valid': {
     methods: ["GET","HEAD"]
-    pattern: '/signatures/:detailsId/valid'
+    pattern: '/signatures/:userId/valid'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['valid']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['valid']>>>
@@ -285,11 +285,11 @@ export interface Registry {
   }
   'signatures.sign': {
     methods: ["POST"]
-    pattern: '/signatures/:detailsId/sign'
+    pattern: '/signatures/:userId/sign'
     types: {
       body: ExtractBody<InferInput<(typeof import('#validators/signature').signValidator)>>
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: ExtractQuery<InferInput<(typeof import('#validators/signature').signValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['sign']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['sign']>>> | { status: 422; response: { errors: SimpleError[] } }
@@ -909,11 +909,11 @@ export interface Registry {
   }
   'users.merge_preview': {
     methods: ["GET","HEAD"]
-    pattern: '/users/merge_preview/:fromDetailsId/:toDetailsId'
+    pattern: '/users/merge_preview/:fromUserId/:toUserId'
     types: {
       body: {}
       paramsTuple: [ParamValue, ParamValue]
-      params: { fromDetailsId: ParamValue; toDetailsId: ParamValue }
+      params: { fromUserId: ParamValue; toUserId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['mergePreview']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['mergePreview']>>>
@@ -945,11 +945,11 @@ export interface Registry {
   }
   'users.destroy': {
     methods: ["DELETE"]
-    pattern: '/users/:detailsId'
+    pattern: '/users/:userId'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['destroy']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['destroy']>>>
@@ -1461,11 +1461,11 @@ export interface Registry {
   }
   'users.show': {
     methods: ["GET","HEAD"]
-    pattern: '/users/:detailsId'
+    pattern: '/users/:userId'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['show']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['show']>>>
@@ -1473,11 +1473,11 @@ export interface Registry {
   }
   'users.update': {
     methods: ["PATCH"]
-    pattern: '/users/:detailsId'
+    pattern: '/users/:userId'
     types: {
       body: ExtractBody<InferInput<(typeof import('#validators/users').updateUserValidator)>>
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: ExtractQuery<InferInput<(typeof import('#validators/users').updateUserValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['update']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
@@ -1485,11 +1485,11 @@ export interface Registry {
   }
   'users.confirm_email': {
     methods: ["POST"]
-    pattern: '/users/:detailsId/confirm_email'
+    pattern: '/users/:userId/confirm_email'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['confirmEmail']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['confirmEmail']>>>
@@ -1497,11 +1497,11 @@ export interface Registry {
   }
   'customer_items.for_customer': {
     methods: ["GET","HEAD"]
-    pattern: '/users/:detailsId/customer_items'
+    pattern: '/users/:userId/customer_items'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['forCustomer']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['forCustomer']>>>
@@ -1509,11 +1509,11 @@ export interface Registry {
   }
   'orders.for_customer': {
     methods: ["GET","HEAD"]
-    pattern: '/users/:detailsId/orders'
+    pattern: '/users/:userId/orders'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['forCustomer']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['forCustomer']>>>
@@ -1521,11 +1521,11 @@ export interface Registry {
   }
   'orders.placed_for_customer': {
     methods: ["GET","HEAD"]
-    pattern: '/users/:detailsId/placed_orders'
+    pattern: '/users/:userId/placed_orders'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['placedForCustomer']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['placedForCustomer']>>>
@@ -1533,11 +1533,11 @@ export interface Registry {
   }
   'matches.for_customer': {
     methods: ["GET","HEAD"]
-    pattern: '/users/:detailsId/matches'
+    pattern: '/users/:userId/matches'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['forCustomer']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['forCustomer']>>>
@@ -1545,11 +1545,11 @@ export interface Registry {
   }
   'message_logs.for_customer': {
     methods: ["GET","HEAD"]
-    pattern: '/users/:detailsId/message_logs'
+    pattern: '/users/:userId/message_logs'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['forCustomer']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['forCustomer']>>>
@@ -1557,11 +1557,11 @@ export interface Registry {
   }
   'signatures.show': {
     methods: ["GET","HEAD"]
-    pattern: '/signatures/:detailsId'
+    pattern: '/signatures/:userId'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['show']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['show']>>>
@@ -1569,11 +1569,11 @@ export interface Registry {
   }
   'signatures.send_link': {
     methods: ["POST"]
-    pattern: '/signatures/:detailsId/send'
+    pattern: '/signatures/:userId/send'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { detailsId: ParamValue }
+      params: { userId: ParamValue }
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['sendLink']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['sendLink']>>>

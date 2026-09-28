@@ -96,19 +96,19 @@ function redactTemplateData(
 export interface MessageLogContext {
   messageType: MessageType;
   sendoutId?: number | null;
-  regardingCustomerDetailsId?: string | null;
+  customerId?: string | null;
 }
 
 async function createSendout(input: {
   kind: SendoutKind;
   name?: string | null;
-  initiatedByDetailsId?: string | null;
+  initiatedById?: string | null;
 }): Promise<Sendout | null> {
   try {
     return await Sendout.create({
       kind: input.kind,
       name: input.name ?? null,
-      initiatedByDetailsId: input.initiatedByDetailsId ?? null,
+      initiatedById: input.initiatedById ?? null,
     });
   } catch (error) {
     logger.error(`failed to create sendout: ${String(error)}`);
@@ -146,7 +146,7 @@ async function logOutgoingMessages(inputs: OutgoingMessage[]): Promise<(Message 
             recipient: normalizeRecipient(input.channel, input.recipient),
             message_type: input.context.messageType,
             sendout_id: input.context.sendoutId ?? null,
-            regarding_customer_details_id: input.context.regardingCustomerDetailsId ?? null,
+            customer_id: input.context.customerId ?? null,
             subject: input.subject ?? null,
             sms_body: input.smsBody ?? null,
             template_id: input.templateId ?? null,
@@ -308,7 +308,7 @@ function toEntryDto(message: Message): MessageLogEntryDto {
     channel: message.channel,
     recipient: message.recipient,
     messageType: message.messageType,
-    regardingCustomerDetailsId: message.regardingCustomerDetailsId,
+    customerId: message.customerId,
     subject: message.subject,
     smsBody: message.smsBody,
     templateId: message.templateId,
@@ -327,11 +327,11 @@ function toEntryDto(message: Message): MessageLogEntryDto {
  * All messages sent to the customer's *current* contact info — their own email and phone plus
  * their guardian's. Guardian recipients are shared between siblings by design.
  */
-async function customerLog(detailsId: string): Promise<{
+async function customerLog(userId: string): Promise<{
   entries: MessageLogEntryDto[];
   recipients: { email: string[]; phone: string[] };
 }> {
-  const customer = await User.findOrFail(detailsId);
+  const customer = await User.findOrFail(userId);
   const emails = [customer.email, customer.guardianEmail]
     .filter((email): email is string => (email?.length ?? 0) > 0)
     .map((email) => normalizeRecipient("email", email));
@@ -343,7 +343,7 @@ async function customerLog(detailsId: string): Promise<{
 
   // Mail about the customer that went to someone else (an exception report to the office) belongs
   // in their log too, so the regarding-customer column is matched alongside the recipients.
-  const aboutCustomer = Message.query().where("regardingCustomerDetailsId", detailsId);
+  const aboutCustomer = Message.query().where("customerId", userId);
   const messages = await (
     recipients.length > 0 ? aboutCustomer.orWhereIn("recipient", recipients) : aboutCustomer
   )

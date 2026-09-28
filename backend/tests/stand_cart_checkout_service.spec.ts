@@ -48,7 +48,7 @@ const ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f31";
 const NEW_ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f39";
 const CUSTOMER_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f41";
 const DELIVERY_ID = "5f7f7f7f7f7f7f7f7f7f7f51";
-const EMPLOYEE = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
+const EMPLOYEE = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
 const BLID = "12345678";
 
 const item = mock<Item>({ id: "item1", title: "Sinus 1T", price: 500 });
@@ -89,7 +89,7 @@ const originalOrder = mock<Order>({
 async function createWorld(): Promise<void> {
   await createBranch(branch);
   await createUser({ id: CUSTOMER_ID });
-  await createUser({ id: EMPLOYEE.detailsId });
+  await createUser({ id: EMPLOYEE.userId });
   await createItem({ id: item.id, title: item.title, price: item.price });
 }
 
@@ -290,7 +290,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       branchId: BRANCH_ID,
       customerId: CUSTOMER_ID,
       byCustomer: false,
-      employeeId: EMPLOYEE.detailsId,
+      employeeId: EMPLOYEE.userId,
       // The stub stands in for placement, so the stored order is as checkout left it
       placed: false,
       notifyByEmail: true,
@@ -383,7 +383,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     assert.include(left, { method: "bank-transfer", amount: -400 });
     assert.isTrue(place.calledOnce);
     assert.include(sendRefundRequest.firstCall.args[0], {
-      employeeDetailsId: EMPLOYEE.detailsId,
+      employeeId: EMPLOYEE.userId,
       amount: 400,
       accountNumber: null,
       comment: null,
@@ -410,7 +410,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     assert.isTrue(place.calledOnce);
     assert.isFalse(vipps.refund.called);
     assert.include(sendRefundRequest.firstCall.args[0], {
-      employeeDetailsId: EMPLOYEE.detailsId,
+      employeeId: EMPLOYEE.userId,
       amount: 250,
       accountNumber: "12345678903",
       comment: "Kunden har byttet skole",
@@ -868,7 +868,7 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
       amount: 250,
       customerId: CUSTOMER_ID,
       branchId: BRANCH_ID,
-      employeeId: EMPLOYEE.detailsId,
+      employeeId: EMPLOYEE.userId,
       placed: false,
       checkoutState: "SessionCreated",
       orderItems: [{ itemId: item.id, amount: 250, unitPrice: 250 }],
@@ -880,7 +880,7 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
     });
     sandbox
       .stub(User, "find")
-      .resolves(userDouble({ id: EMPLOYEE.detailsId, permission: "employee" }));
+      .resolves(userDouble({ id: EMPLOYEE.userId, permission: "employee" }));
     sandbox.stub(OrderHistoryService, "getOne").resolves(unchecked({ id: NEW_ORDER_ID }));
     vipps = {
       create: sandbox.stub().resolves({}),
