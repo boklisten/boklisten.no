@@ -47,20 +47,11 @@ test.group("notify", (group) => {
   });
   group.each.teardown(() => sandbox.restore());
 
-  test("messages the named round rather than the default one", async ({ assert }) => {
+  test("messages only the named round", async ({ assert }) => {
     const oldRound = await seedRoundWithUserMatch([A, B]);
     await seedRoundWithUserMatch([C, D]);
 
     await notify({ target: "all", message: "Husk overleveringen!", roundId: oldRound.id });
-
-    assert.sameMembers(mock<string[]>(getManyStub.firstCall.args[0]), [A, B]);
-  });
-
-  test("defaults to the newest active round", async ({ assert }) => {
-    await seedRoundWithUserMatch([A, B]);
-    await seedRoundWithUserMatch([C, D], "draft");
-
-    await notify({ target: "all", message: "Husk overleveringen!" });
 
     assert.sameMembers(mock<string[]>(getManyStub.firstCall.args[0]), [A, B]);
   });

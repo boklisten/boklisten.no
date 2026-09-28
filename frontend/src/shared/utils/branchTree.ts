@@ -24,6 +24,18 @@ export function toBranchTreeNodeData(branches: Branch[]) {
     .toSorted(byShortLabel);
 }
 
+/** Every branch below `rootId`, the root itself left out. */
+export function descendantsOf(branches: Branch[], rootId: string): Branch[] {
+  const childrenOf = Map.groupBy(branches, (branch) => branch.parentBranchId);
+  const below: Branch[] = [];
+  const queue = [...(childrenOf.get(rootId) ?? [])];
+  for (let branch = queue.shift(); branch; branch = queue.shift()) {
+    below.push(branch);
+    queue.push(...(childrenOf.get(branch.id) ?? []));
+  }
+  return below;
+}
+
 function byShortLabel(a: TreeNodeData, b: TreeNodeData) {
   return getBranchNodeShortLabel(a).localeCompare(getBranchNodeShortLabel(b));
 }

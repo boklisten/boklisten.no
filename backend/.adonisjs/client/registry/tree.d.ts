@@ -133,10 +133,10 @@ export interface ApiDefinition {
   matches: {
     me: typeof routes['matches.me']
     transferItem: typeof routes['matches.transfer_item']
+    show: typeof routes['matches.show']
     notify: typeof routes['matches.notify']
     sendToStand: typeof routes['matches.send_to_stand']
     forCustomer: typeof routes['matches.for_customer']
-    show: typeof routes['matches.show']
   }
   branchRelationships: {
     update: typeof routes['branch_relationships.update']
@@ -182,15 +182,15 @@ export interface ApiDefinition {
     provision: typeof routes['user_provisioning.provision']
   }
   matchRounds: {
+    index: typeof routes['match_rounds.index']
+    matches: typeof routes['match_rounds.matches']
+    statistics: typeof routes['match_rounds.statistics']
+    planMetrics: typeof routes['match_rounds.plan_metrics']
     store: typeof routes['match_rounds.store']
     update: typeof routes['match_rounds.update']
     generate: typeof routes['match_rounds.generate']
     destroyMatches: typeof routes['match_rounds.destroy_matches']
     destroy: typeof routes['match_rounds.destroy']
-    index: typeof routes['match_rounds.index']
-    matches: typeof routes['match_rounds.matches']
-    statistics: typeof routes['match_rounds.statistics']
-    planMetrics: typeof routes['match_rounds.plan_metrics']
   }
   invoices: {
     index: typeof routes['invoices.index']

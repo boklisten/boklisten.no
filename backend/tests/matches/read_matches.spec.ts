@@ -114,25 +114,6 @@ test.group("read matches", (group) => {
     assert.lengthOf(await getMatchesForCustomer(OUTSIDER), 0);
   });
 
-  test("defaults to the newest active round when none is named", async ({ assert }) => {
-    spyOnPeopleLookup();
-    await seed();
-    const newer = await createTestRound({
-      name: "Newer",
-      standLocation: "Kantina",
-      status: "active",
-    });
-    await Match.create({ roundId: newer.id, meetingLocation: "Nyeste" });
-    // Newer still, but a draft — being newest must not make an unchecked round the default.
-    const draft = await createTestRound({ name: "Draft", standLocation: "Kantina" });
-    await Match.create({ roundId: draft.id, meetingLocation: "Utkastet" });
-
-    const matches = await getMatchesForRound();
-
-    assert.lengthOf(matches, 1);
-    assert.equal(matches[0]?.meetingLocation, "Nyeste");
-  });
-
   test("returns the named round rather than the newest", async ({ assert }) => {
     spyOnPeopleLookup();
     const { round } = await seed();

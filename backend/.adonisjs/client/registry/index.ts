@@ -486,6 +486,36 @@ const routes = {
     tokens: [{"old":"/signatures/gallery","type":0,"val":"signatures","end":""},{"old":"/signatures/gallery","type":0,"val":"gallery","end":""}],
     types: placeholder as Registry['signatures.gallery']['types'],
   },
+  'matches.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/matches/:matchId',
+    tokens: [{"old":"/matches/:matchId","type":0,"val":"matches","end":""},{"old":"/matches/:matchId","type":1,"val":"matchId","end":""}],
+    types: placeholder as Registry['matches.show']['types'],
+  },
+  'match_rounds.index': {
+    methods: ["GET","HEAD"],
+    pattern: '/match_rounds',
+    tokens: [{"old":"/match_rounds","type":0,"val":"match_rounds","end":""}],
+    types: placeholder as Registry['match_rounds.index']['types'],
+  },
+  'match_rounds.matches': {
+    methods: ["GET","HEAD"],
+    pattern: '/match_rounds/:id/matches',
+    tokens: [{"old":"/match_rounds/:id/matches","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/matches","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/matches","type":0,"val":"matches","end":""}],
+    types: placeholder as Registry['match_rounds.matches']['types'],
+  },
+  'match_rounds.statistics': {
+    methods: ["GET","HEAD"],
+    pattern: '/match_rounds/:id/statistics',
+    tokens: [{"old":"/match_rounds/:id/statistics","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/statistics","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/statistics","type":0,"val":"statistics","end":""}],
+    types: placeholder as Registry['match_rounds.statistics']['types'],
+  },
+  'match_rounds.plan_metrics': {
+    methods: ["GET","HEAD"],
+    pattern: '/match_rounds/:id/plan_metrics',
+    tokens: [{"old":"/match_rounds/:id/plan_metrics","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/plan_metrics","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/plan_metrics","type":0,"val":"plan_metrics","end":""}],
+    types: placeholder as Registry['match_rounds.plan_metrics']['types'],
+  },
   'matches.notify': {
     methods: ["POST"],
     pattern: '/matches/notify',
@@ -929,36 +959,6 @@ const routes = {
     pattern: '/unique_ids/:blid/label',
     tokens: [{"old":"/unique_ids/:blid/label","type":0,"val":"unique_ids","end":""},{"old":"/unique_ids/:blid/label","type":1,"val":"blid","end":""},{"old":"/unique_ids/:blid/label","type":0,"val":"label","end":""}],
     types: placeholder as Registry['unique_ids.label']['types'],
-  },
-  'matches.show': {
-    methods: ["GET","HEAD"],
-    pattern: '/matches/:matchId',
-    tokens: [{"old":"/matches/:matchId","type":0,"val":"matches","end":""},{"old":"/matches/:matchId","type":1,"val":"matchId","end":""}],
-    types: placeholder as Registry['matches.show']['types'],
-  },
-  'match_rounds.index': {
-    methods: ["GET","HEAD"],
-    pattern: '/match_rounds',
-    tokens: [{"old":"/match_rounds","type":0,"val":"match_rounds","end":""}],
-    types: placeholder as Registry['match_rounds.index']['types'],
-  },
-  'match_rounds.matches': {
-    methods: ["GET","HEAD"],
-    pattern: '/match_rounds/:id/matches',
-    tokens: [{"old":"/match_rounds/:id/matches","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/matches","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/matches","type":0,"val":"matches","end":""}],
-    types: placeholder as Registry['match_rounds.matches']['types'],
-  },
-  'match_rounds.statistics': {
-    methods: ["GET","HEAD"],
-    pattern: '/match_rounds/:id/statistics',
-    tokens: [{"old":"/match_rounds/:id/statistics","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/statistics","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/statistics","type":0,"val":"statistics","end":""}],
-    types: placeholder as Registry['match_rounds.statistics']['types'],
-  },
-  'match_rounds.plan_metrics': {
-    methods: ["GET","HEAD"],
-    pattern: '/match_rounds/:id/plan_metrics',
-    tokens: [{"old":"/match_rounds/:id/plan_metrics","type":0,"val":"match_rounds","end":""},{"old":"/match_rounds/:id/plan_metrics","type":1,"val":"id","end":""},{"old":"/match_rounds/:id/plan_metrics","type":0,"val":"plan_metrics","end":""}],
-    types: placeholder as Registry['match_rounds.plan_metrics']['types'],
   },
   'items.index': {
     methods: ["GET","HEAD"],

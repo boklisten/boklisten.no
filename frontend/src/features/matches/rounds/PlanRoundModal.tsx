@@ -1,17 +1,19 @@
 import { Button, Card, Fieldset, Group, Modal, Stack, Text } from "@mantine/core";
-import { IconPlus, IconTrash } from "@tabler/icons-react";
-import { useMutation } from "@tanstack/react-query";
+import { IconBuildingStore, IconPlus, IconTrash } from "@tabler/icons-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Activity, useState } from "react";
 
 import { SLOT_TIME_PATTERN } from "@boklisten/backend/shared/match/match-round-dto";
 
-import ExcludedCustomersField from "@/features/matches/rounds/ExcludedCustomersField";
+import StandBranchesField from "@/features/matches/rounds/standRules/StandBranchesField";
+import StandCustomersField from "@/features/matches/rounds/standRules/StandCustomersField";
 import { useRefreshRounds } from "@/features/matches/rounds/useRounds";
 import type { Round } from "@/features/matches/rounds/useRounds";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { useAppForm } from "@/shared/hooks/form";
-import { apiClient } from "@/shared/utils/apiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
+import { descendantsOf } from "@/shared/utils/branchTree";
 import { showSuccessNotification } from "@/shared/utils/notifications";
 
 const asDate = (value: string) => dayjs(value).format("YYYY-MM-DD");
@@ -32,49 +34,68 @@ const requireEndAfter = (value: string, start: string) =>
 
 interface PlanFields {
   name: string;
-  branches: string[];
   standLocation: string;
   deadline: string | null;
-  includeCustomerItemsFromOtherBranches: boolean;
   meetingDate: string | null;
   userMeetingFrom: string;
   userMeetingTo: string;
   standFrom: string;
   standTo: string;
   userMatchLocations: { name: string }[];
-  excludedCustomerIds: string[];
+  standBranchIds: string[];
+  standCustomerIds: string[];
 }
 
 const emptyPlan: PlanFields = {
   name: "",
-  branches: [],
   standLocation: "",
   deadline: null,
-  includeCustomerItemsFromOtherBranches: false,
   meetingDate: null,
   userMeetingFrom: "",
   userMeetingTo: "",
   standFrom: "",
   standTo: "",
   userMatchLocations: [{ name: "" }],
-  excludedCustomerIds: [],
+  standBranchIds: [],
+  standCustomerIds: [],
 };
 
 function planOf(round: Round): PlanFields {
   return {
     name: round.name,
-    branches: round.branches,
     standLocation: round.standLocation,
     deadline: round.deadline,
-    includeCustomerItemsFromOtherBranches: round.includeCustomerItemsFromOtherBranches,
     meetingDate: round.meetingDate,
     userMeetingFrom: round.userMeetingFrom,
     userMeetingTo: round.userMeetingTo,
     standFrom: round.standFrom,
     standTo: round.standTo,
     userMatchLocations: round.userMatchLocations.map((name) => ({ name })),
-    excludedCustomerIds: round.excludedCustomerIds,
+    standBranchIds: round.standBranchIds,
+    standCustomerIds: round.standCustomerIds,
   };
+}
+
+/** What the round covers, said once at the top so the admin knows before filling anything in. */
+function RoundScope({ branchId }: { branchId: string }) {
+  const { data: branches = [] } = useQuery(api.branches.index.queryOptions());
+  const branch = branches.find((candidate) => candidate.id === branchId);
+  const below = descendantsOf(branches, branchId).length;
+
+  return (
+    <Group gap="sm" wrap="nowrap" align="flex-start">
+      <IconBuildingStore size={20} style={{ flexShrink: 0, marginTop: 2 }} aria-hidden />
+      <Text size="sm">
+        Runden tar med bøker som er delt ut eller bestilt på{" "}
+        <Text span fw={600}>
+          {branch?.name ?? "filialen"}
+        </Text>
+        {below > 0 &&
+          (below === 1 ? " og den ene underfilialen." : ` og alle de ${below} underfilialene.`)}
+        {below === 0 && "."}
+      </Text>
+    </Group>
+  );
 }
 
 /**
@@ -89,10 +110,13 @@ function planOf(round: Round): PlanFields {
  * for.
  */
 export default function PlanRoundModal({
+  branchId,
   round,
   onClose,
   onSaved,
 }: {
+  /** The branch the round belongs to. It covers this branch and every descendant. */
+  branchId: string;
   /** The round being edited, or undefined when planning a new one. */
   round?: Round;
   onClose: () => void;
@@ -120,22 +144,21 @@ export default function PlanRoundModal({
 
       const body = {
         name: values.name.trim(),
-        branches: values.branches,
         standLocation: values.standLocation.trim(),
         deadline: asDate(values.deadline),
-        includeCustomerItemsFromOtherBranches: values.includeCustomerItemsFromOtherBranches,
         meetingDate: asDate(values.meetingDate),
         userMeetingFrom: values.userMeetingFrom,
         userMeetingTo: values.userMeetingTo,
         standFrom: values.standFrom,
         standTo: values.standTo,
         userMatchLocations: locations,
-        excludedCustomerIds: values.excludedCustomerIds,
+        standBranchIds: values.standBranchIds,
+        standCustomerIds: values.standCustomerIds,
       };
 
       return round
         ? apiClient.api.matchRounds.update({ params: { id: round.id }, body })
-        : apiClient.api.matchRounds.store({ body });
+        : apiClient.api.matchRounds.store({ body: { ...body, branchId } });
     },
     onSuccess: (result) => {
       showSuccessNotification(
@@ -169,6 +192,8 @@ export default function PlanRoundModal({
           </ErrorAlert>
         </Activity>
 
+        <RoundScope branchId={round?.branchId ?? branchId} />
+
         <form.AppField
           name="name"
           validators={{
@@ -185,15 +210,6 @@ export default function PlanRoundModal({
           )}
         </form.AppField>
 
-        <form.AppField
-          name="branches"
-          validators={{
-            onBlur: ({ value }) => (value.length === 0 ? "Velg minst én filial" : null),
-          }}
-        >
-          {(field) => <field.SelectBranchesField required />}
-        </form.AppField>
-
         <form.AppField name="deadline">
           {(field) => (
             <field.DeadlinePickerField
@@ -204,18 +220,23 @@ export default function PlanRoundModal({
           )}
         </form.AppField>
 
-        <form.AppField name="includeCustomerItemsFromOtherBranches">
-          {(field) => <field.CheckboxField label="Ta med bøker delt ut ved andre filialer" />}
-        </form.AppField>
-
-        <Fieldset legend="Ekskluderte elever">
-          <Stack>
+        <Fieldset legend="Via stand">
+          <Stack gap="lg">
             <Text size="sm" c="dimmed">
-              Disse elevene holdes helt utenfor runden og får ingen overleveringer.
+              Utdelte og bestilte bøker leveres og hentes på standen i stedet for hos andre elever.
             </Text>
-            <form.AppField name="excludedCustomerIds">
+            <form.AppField name="standBranchIds">
               {(field) => (
-                <ExcludedCustomersField value={field.state.value} onChange={field.setValue} />
+                <StandBranchesField
+                  rootBranchId={round?.branchId ?? branchId}
+                  value={field.state.value}
+                  onChange={field.setValue}
+                />
+              )}
+            </form.AppField>
+            <form.AppField name="standCustomerIds">
+              {(field) => (
+                <StandCustomersField value={field.state.value} onChange={field.setValue} />
               )}
             </form.AppField>
           </Stack>

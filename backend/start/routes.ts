@@ -227,6 +227,11 @@ router
     router.get("/signatures/gallery", [controllers.Signatures, "gallery"]);
 
     // matches
+    router.get("/matches/:matchId", [controllers.Matches, "show"]);
+    router.get("/match_rounds", [controllers.MatchRounds, "index"]);
+    router.get("/match_rounds/:id/matches", [controllers.MatchRounds, "matches"]);
+    router.get("/match_rounds/:id/statistics", [controllers.MatchRounds, "statistics"]);
+    router.get("/match_rounds/:id/plan_metrics", [controllers.MatchRounds, "planMetrics"]);
     router.post("/matches/notify", [controllers.Matches, "notify"]);
     router.post("/matches/:matchId/send_to_stand", [controllers.Matches, "sendToStand"]);
     router.post("/match_rounds", [controllers.MatchRounds, "store"]);
@@ -330,13 +335,6 @@ router
     router.patch("/blids/:blid/item", [controllers.Blids, "relink"]);
     router.delete("/blids/:blid", [controllers.Blids, "destroy"]);
     router.get("/unique_ids/:blid/label", [controllers.UniqueIds, "label"]);
-
-    // matches
-    router.get("/matches/:matchId", [controllers.Matches, "show"]);
-    router.get("/match_rounds", [controllers.MatchRounds, "index"]);
-    router.get("/match_rounds/:id/matches", [controllers.MatchRounds, "matches"]);
-    router.get("/match_rounds/:id/statistics", [controllers.MatchRounds, "statistics"]);
-    router.get("/match_rounds/:id/plan_metrics", [controllers.MatchRounds, "planMetrics"]);
 
     // items and misc
     router.get("/items", [controllers.Items, "index"]);

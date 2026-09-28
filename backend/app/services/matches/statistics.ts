@@ -121,11 +121,8 @@ function emptyStatistics(): MatchStatistics {
 const increment = (map: Map<string, number>, item: string) =>
   map.set(item, (map.get(item) ?? 0) + 1);
 
-export async function computeMatchStatistics(roundId?: number): Promise<MatchStatistics> {
-  const round =
-    roundId === undefined
-      ? await MatchRepository.findDefaultRound()
-      : await MatchRound.find(roundId);
+export async function computeMatchStatistics(roundId: number): Promise<MatchStatistics> {
+  const round = await MatchRound.find(roundId);
   if (!round) {
     return emptyStatistics();
   }
@@ -354,8 +351,8 @@ export async function computeMatchStatistics(roundId?: number): Promise<MatchSta
 }
 
 /**
- * Books the round's participants moved between this round being generated and the next one,
- * settling nothing.
+ * Books the round's participants moved between this round being generated and the branch's next
+ * one, settling nothing.
  */
 async function countUnattachedHandovers(round: MatchRound): Promise<number> {
   const from = round.generatedAt ?? round.createdAt;
@@ -363,6 +360,7 @@ async function countUnattachedHandovers(round: MatchRound): Promise<number> {
     return 0;
   }
   const nextRound = await MatchRound.query()
+    .where("branchId", round.branchId)
     .where("id", ">", round.id)
     .orderBy("id", "asc")
     .first();

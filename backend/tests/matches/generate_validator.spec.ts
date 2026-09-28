@@ -12,7 +12,7 @@ import { matchRoundCreateValidator } from "#validators/matches";
  */
 const base = {
   name: "Ullern Vår 2026",
-  branches: ["5d765db5fc8c47001c408b01"],
+  branchId: "5d765db5fc8c47001c408b01",
   standLocation: "Kantina",
   deadline: "2026-07-01",
   meetingDate: "2026-06-01",
@@ -21,8 +21,8 @@ const base = {
   standFrom: "12:00",
   standTo: "16:00",
   userMatchLocations: ["Biblioteket"],
-  includeCustomerItemsFromOtherBranches: false,
-  excludedCustomerIds: [],
+  standBranchIds: [],
+  standCustomerIds: [],
 };
 
 async function rejection(payload: object): Promise<Error | null> {
@@ -43,18 +43,22 @@ test.group("matchRoundCreateValidator", () => {
     assert.deepEqual(result.userMatchLocations, ["Biblioteket"]);
   });
 
-  test("keeps the excluded customer list, empty or not", async ({ assert }) => {
-    const excluded = await matchRoundCreateValidator.validate({
+  test("keeps the stand lists, empty or not", async ({ assert }) => {
+    const stand = await matchRoundCreateValidator.validate({
       ...base,
-      excludedCustomerIds: ["5d765db5fc8c47001c408d81"],
+      standBranchIds: ["5d765db5fc8c47001c408b02"],
+      standCustomerIds: ["5d765db5fc8c47001c408d81"],
     });
-    assert.deepEqual(excluded.excludedCustomerIds, ["5d765db5fc8c47001c408d81"]);
+    assert.deepEqual(stand.standBranchIds, ["5d765db5fc8c47001c408b02"]);
+    assert.deepEqual(stand.standCustomerIds, ["5d765db5fc8c47001c408d81"]);
 
-    const nobody = await matchRoundCreateValidator.validate({
-      ...base,
-      excludedCustomerIds: [],
-    });
-    assert.deepEqual(nobody.excludedCustomerIds, []);
+    const nobody = await matchRoundCreateValidator.validate(base);
+    assert.deepEqual(nobody.standCustomerIds, []);
+  });
+
+  test("rejects a stand list that names someone twice", async ({ assert }) => {
+    const id = "5d765db5fc8c47001c408d81";
+    assert.isNotNull(await rejection({ ...base, standCustomerIds: [id, id] }));
   });
 
   test("rejects an ISO timestamp deadline", async ({ assert }) => {
@@ -75,9 +79,10 @@ test.group("matchRoundCreateValidator", () => {
     assert.isNotNull(await rejection({ ...base, userMatchLocations: [] }));
   });
 
-  test("rejects a round with no branches", async ({ assert }) => {
-    // The old generate endpoint let this through and relied on the form to catch it.
-    assert.isNotNull(await rejection({ ...base, branches: [] }));
+  test("rejects a round with no branch", async ({ assert }) => {
+    const { branchId: _branchId, ...withoutBranch } = base;
+    assert.isNotNull(await rejection(withoutBranch));
+    assert.isNotNull(await rejection({ ...base, branchId: "not-an-id" }));
   });
 
   test("rejects a date that does not exist", async ({ assert }) => {

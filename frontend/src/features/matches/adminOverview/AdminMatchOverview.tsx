@@ -15,7 +15,7 @@ type MatchTypeFilter = "both" | "user" | "stand";
 
 const ROW_CAP = 200;
 
-const listRoute = getRouteApi("/(administrasjon)/admin/overleveringer/");
+const listRoute = getRouteApi("/(administrasjon)/admin/database/filialer");
 
 function rowMatchesSearch(match: MatchDto, needle: string): boolean {
   return match.participants
@@ -59,10 +59,10 @@ export default function AdminMatchOverview({ roundId }: { roundId: string }) {
   const { data, error, isLoading } = useAllMatches(roundId);
   // Search and type filter live in the URL so they survive a round-trip to a
   // match detail page (and are shareable/bookmarkable).
-  const { sok, type } = listRoute.useSearch();
+  const { rundeSok, rundeType } = listRoute.useSearch();
   const navigate = listRoute.useNavigate();
-  const search = sok ?? "";
-  const typeFilter: MatchTypeFilter = type ?? "both";
+  const search = rundeSok ?? "";
+  const typeFilter: MatchTypeFilter = rundeType ?? "both";
 
   const needle = search.trim().toLowerCase();
 
@@ -111,7 +111,7 @@ export default function AdminMatchOverview({ roundId }: { roundId: string }) {
           onChange={(event) => {
             const { value } = event.currentTarget;
             void navigate({
-              search: (previous) => ({ ...previous, sok: value || undefined }),
+              search: (previous) => ({ ...previous, rundeSok: value || undefined }),
               replace: true,
             });
           }}
@@ -123,7 +123,7 @@ export default function AdminMatchOverview({ roundId }: { roundId: string }) {
             void navigate({
               search: (previous) => ({
                 ...previous,
-                type: value === "user" || value === "stand" ? value : undefined,
+                rundeType: value === "user" || value === "stand" ? value : undefined,
               }),
               replace: true,
             })

@@ -14,6 +14,7 @@ const BRANCH_MANAGER_TABS = [
   "active-books",
   "ordered-books",
   "insights",
+  "rounds",
 ] as const;
 export type BranchManagerTab = (typeof BRANCH_MANAGER_TABS)[number];
 

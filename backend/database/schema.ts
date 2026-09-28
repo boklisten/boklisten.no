@@ -524,23 +524,37 @@ export class MatchParticipantSchema extends BaseModel {
   declare userId: string | null
 }
 
+export class MatchRoundStandBranchSchema extends BaseModel {
+  static $columns = ['branchId', 'roundId'] as const
+  $columns = MatchRoundStandBranchSchema.$columns
+  @column()
+  declare branchId: string
+  @column({ isPrimary: true })
+  declare roundId: number
+}
+
+export class MatchRoundStandCustomerSchema extends BaseModel {
+  static $columns = ['customerId', 'roundId'] as const
+  $columns = MatchRoundStandCustomerSchema.$columns
+  @column()
+  declare customerId: string
+  @column({ isPrimary: true })
+  declare roundId: number
+}
+
 export class MatchRoundSchema extends BaseModel {
-  static $columns = ['branches', 'createdAt', 'deadline', 'excludedCustomerIds', 'generatedAt', 'id', 'includeCustomerItemsFromOtherBranches', 'meetingDate', 'name', 'standFrom', 'standLocation', 'standTo', 'status', 'updatedAt', 'userMatchLocations', 'userMeetingFrom', 'userMeetingTo'] as const
+  static $columns = ['branchId', 'createdAt', 'deadline', 'generatedAt', 'id', 'meetingDate', 'name', 'standFrom', 'standLocation', 'standTo', 'status', 'updatedAt', 'userMatchLocations', 'userMeetingFrom', 'userMeetingTo'] as const
   $columns = MatchRoundSchema.$columns
   @column()
-  declare branches: any
+  declare branchId: string
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column.date()
   declare deadline: DateTime
-  @column()
-  declare excludedCustomerIds: any
   @column.dateTime()
   declare generatedAt: DateTime | null
   @column({ isPrimary: true })
   declare id: number
-  @column()
-  declare includeCustomerItemsFromOtherBranches: boolean
   @column.date()
   declare meetingDate: DateTime
   @column()

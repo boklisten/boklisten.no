@@ -2,12 +2,17 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 
+import db from "@adonisjs/lucid/services/db";
+
 import BookHandover from "#models/book_handover";
+import Branch from "#models/branch";
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import MatchRound from "#models/match_round";
+import User from "#models/user";
 import { MatchRepository } from "#services/matches/match_repository";
+import { createBranch } from "#tests/branch_fixtures";
 import {
   createTestRound,
   ensureUsers,
@@ -30,6 +35,35 @@ test.group("match round management", (group) => {
       rounds.map((round) => round.name),
       ["Vår 2026", "Høst 2025"],
     );
+  });
+
+  test("reads its times of day back as HH:MM", async ({ assert }) => {
+    const round = await createTestRound({ userMeetingFrom: "09:30", standTo: "16:00" });
+
+    const loaded = await MatchRound.findOrFail(round.id);
+
+    assert.equal(loaded.userMeetingFrom, "09:30");
+    assert.equal(loaded.standTo, "16:00");
+  });
+
+  test("deleting a round deletes its stand rules, not the branches or students", async ({
+    assert,
+  }) => {
+    const customerId = "5d765db5fc8c47001c408d81";
+    const root = await createBranch();
+    const standClass = await createBranch({ parentBranchId: root.id });
+    const round = await createTestRound({
+      branchId: root.id,
+      standBranchIds: [standClass.id],
+      standCustomerIds: [customerId],
+    });
+
+    await round.delete();
+
+    assert.lengthOf(await db.from("match_round_stand_branches"), 0);
+    assert.lengthOf(await db.from("match_round_stand_customers"), 0);
+    assert.isNotNull(await Branch.find(standClass.id));
+    assert.isNotNull(await User.find(customerId));
   });
 
   test("renames a round", async ({ assert }) => {

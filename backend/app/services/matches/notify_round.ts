@@ -12,10 +12,7 @@ export async function notify(
   { target, message, roundId }: Infer<typeof matchNotifySchema>,
   initiatedById?: string,
 ) {
-  const round =
-    roundId === undefined
-      ? await MatchRepository.findDefaultRound()
-      : await MatchRound.find(roundId);
+  const round = await MatchRound.find(roundId);
   if (!round) {
     return "Could not find any matches!";
   }

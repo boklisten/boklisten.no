@@ -1,28 +1,32 @@
 import type MatchRound from "#models/match_round";
 import User from "#models/user";
-import { getHeldItems, getWantedItems } from "#services/matches/round_scope";
+import { getRoundBooks, resolveRoundScope } from "#services/matches/round_scope";
+import type { BooksByCustomer } from "#services/matches/round_scope";
 import type { BookTally, MatchRoundPlanMetrics } from "#shared/match/match-round-dto";
 
-function tally(booksByStudent: Map<string, Set<string>>): BookTally {
+function tally(...parts: BooksByCustomer[]): BookTally {
+  const students = new Set<string>();
   let books = 0;
-  for (const items of booksByStudent.values()) {
-    books += items.size;
+  for (const part of parts) {
+    for (const [customerId, items] of part) {
+      students.add(customerId);
+      books += items.size;
+    }
   }
-  return { books, students: booksByStudent.size };
+  return { books, students: students.size };
 }
 
 export async function roundPlanMetrics(round: MatchRound): Promise<MatchRoundPlanMetrics> {
-  const { branches, deadline, includeCustomerItemsFromOtherBranches } = round;
-
-  const [members, heldBooks, orderedBooks] = await Promise.all([
-    User.countMembersOf(branches),
-    getHeldItems(branches, deadline, includeCustomerItemsFromOtherBranches),
-    getWantedItems(branches),
+  const scope = await resolveRoundScope(round);
+  const [members, { held, wanted }] = await Promise.all([
+    User.countMembersOf(scope.branchIds),
+    getRoundBooks(round, scope),
   ]);
 
   return {
     branchMembers: members,
-    activeBooks: tally(heldBooks),
-    orderedBooks: tally(orderedBooks),
+    activeBooks: tally(held.matchable, held.standOnly),
+    orderedBooks: tally(wanted.matchable, wanted.standOnly),
+    standOnlyBooks: tally(held.standOnly, wanted.standOnly),
   };
 }

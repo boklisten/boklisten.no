@@ -1,17 +1,21 @@
 import type { HttpContext } from "@adonisjs/core/http";
+import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
 
+import Branch from "#models/branch";
 import MatchRound from "#models/match_round";
 import { generateRound } from "#services/matches/generate_round";
 import { getMatchesForRound } from "#services/matches/read_matches";
 import { MatchRepository } from "#services/matches/match_repository";
 import { roundPlanMetrics } from "#services/matches/round_plan_metrics";
+import { assertStandRules } from "#services/matches/round_scope";
 import { computeMatchStatistics } from "#services/matches/statistics";
 import { BlError } from "#shared/bl-error";
 import MatchRoundTransformer from "#transformers/match_round_transformer";
 import {
   PLAN_PATCH_KEYS,
   matchRoundCreateValidator,
+  matchRoundIndexValidator,
   matchRoundPatchValidator,
 } from "#validators/matches";
 
@@ -23,18 +27,28 @@ function roundIdParameter(ctx: HttpContext): number {
   return roundId;
 }
 
+function withStandRules() {
+  return MatchRound.query()
+    .preload("standBranches", (branches) => branches.orderBy("name"))
+    .preload("standCustomers", (customers) => customers.orderBy("name"));
+}
+
 export default class MatchRoundsController {
   async index(ctx: HttpContext) {
+    const { branchId } = await ctx.request.validateUsing(matchRoundIndexValidator);
     const [rounds, counts] = await Promise.all([
-      MatchRound.query().orderBy("id", "desc"),
+      withStandRules().where("branchId", branchId).orderBy("id", "desc"),
       MatchRepository.roundCounts(),
     ]);
 
     return ctx.serialize(MatchRoundTransformer.transform(rounds, counts));
   }
 
-  private async serializeRound(ctx: HttpContext, round: MatchRound) {
-    const counts = await MatchRepository.roundCounts(round.id);
+  private async serializeRound(ctx: HttpContext, roundId: number) {
+    const [round, counts] = await Promise.all([
+      withStandRules().where("id", roundId).firstOrFail(),
+      MatchRepository.roundCounts(roundId),
+    ]);
     return ctx.serialize(MatchRoundTransformer.transform(round, counts));
   }
 
@@ -43,16 +57,27 @@ export default class MatchRoundsController {
    * first, looks the plan over, and generates from it as a separate, deliberate step.
    */
   async store(ctx: HttpContext) {
-    const plan = await ctx.request.validateUsing(matchRoundCreateValidator);
+    const { standBranchIds, standCustomerIds, ...plan } =
+      await ctx.request.validateUsing(matchRoundCreateValidator);
+    await Branch.findOrFail(plan.branchId);
+    await assertStandRules(plan.branchId, { standBranchIds, standCustomerIds });
 
-    const round = await MatchRound.create({
-      ...plan,
-      deadline: DateTime.fromISO(plan.deadline),
-      meetingDate: DateTime.fromISO(plan.meetingDate),
-      status: "draft",
+    const round = await db.transaction(async (trx) => {
+      const created = await MatchRound.create(
+        {
+          ...plan,
+          deadline: DateTime.fromISO(plan.deadline),
+          meetingDate: DateTime.fromISO(plan.meetingDate),
+          status: "draft",
+        },
+        { client: trx },
+      );
+      await created.related("standBranches").attach(standBranchIds, trx);
+      await created.related("standCustomers").attach(standCustomerIds, trx);
+      return created;
     });
 
-    return this.serializeRound(ctx, round);
+    return this.serializeRound(ctx, round.id);
   }
 
   async update(ctx: HttpContext) {
@@ -71,16 +96,26 @@ export default class MatchRoundsController {
       throw new BlError("Runden må genereres før den kan bli synlig for elevene").code(200);
     }
 
-    const { deadline, meetingDate, ...rest } = patch;
-    await round
-      .merge({
-        ...rest,
-        ...(deadline !== undefined && { deadline: DateTime.fromISO(deadline) }),
-        ...(meetingDate !== undefined && { meetingDate: DateTime.fromISO(meetingDate) }),
-      })
-      .save();
+    const { deadline, meetingDate, standBranchIds, standCustomerIds, ...rest } = patch;
+    await assertStandRules(round.branchId, { standBranchIds, standCustomerIds });
+    await db.transaction(async (trx) => {
+      round.useTransaction(trx);
+      await round
+        .merge({
+          ...rest,
+          ...(deadline !== undefined && { deadline: DateTime.fromISO(deadline) }),
+          ...(meetingDate !== undefined && { meetingDate: DateTime.fromISO(meetingDate) }),
+        })
+        .save();
+      if (standBranchIds !== undefined) {
+        await round.related("standBranches").sync(standBranchIds, true, trx);
+      }
+      if (standCustomerIds !== undefined) {
+        await round.related("standCustomers").sync(standCustomerIds, true, trx);
+      }
+    });
 
-    return this.serializeRound(ctx, round);
+    return this.serializeRound(ctx, round.id);
   }
 
   async matches(ctx: HttpContext) {

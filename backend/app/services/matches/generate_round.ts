@@ -3,14 +3,18 @@ import { DateTime } from "luxon";
 import type MatchRound from "#models/match_round";
 import User from "#models/user";
 import { MatchFinder } from "#services/match_helpers/match-finder/match-finder";
-import type { MatchableUser } from "#services/match_helpers/match-finder/match-types";
+import type {
+  CandidateStandMatch,
+  MatchableUser,
+} from "#services/match_helpers/match-finder/match-types";
 import {
   buildSlots,
   scheduleMatches,
 } from "#services/match_helpers/match-scheduler/match-scheduler";
 import { MatchRepository } from "#services/matches/match_repository";
 import type { MatchDraft, ObligationDraft } from "#services/matches/match_repository";
-import { getHeldItems, getWantedItems } from "#services/matches/round_scope";
+import { getRoundBooks, resolveRoundScope } from "#services/matches/round_scope";
+import type { BooksByCustomer } from "#services/matches/round_scope";
 import { BlError } from "#shared/bl-error";
 import { canonicalItemId } from "#shared/item-equivalence";
 
@@ -75,17 +79,52 @@ function obligation(
   return { senderCustomerId, receiverCustomerId, itemId };
 }
 
+/**
+ * Joins the finder's stand visits with the books that go via the stand regardless, into one visit
+ * per customer. Items are the physical editions, not the canonical ids the finder works with.
+ */
+function standVisits(
+  finderMatches: CandidateStandMatch[],
+  toActual: Record<"handoff" | "pickup", (customerId: string, itemId: string) => string>,
+  standOnly: { held: BooksByCustomer; wanted: BooksByCustomer },
+): CandidateStandMatch[] {
+  const visits = new Map<string, CandidateStandMatch>();
+  const visit = (customer: string) => {
+    const existing = visits.get(customer);
+    if (existing) {
+      return existing;
+    }
+    const created = {
+      customer,
+      expectedHandoffItems: new Set<string>(),
+      expectedPickupItems: new Set<string>(),
+    };
+    visits.set(customer, created);
+    return created;
+  };
+  for (const { customer, expectedHandoffItems, expectedPickupItems } of finderMatches) {
+    for (const itemId of expectedHandoffItems) {
+      visit(customer).expectedHandoffItems.add(toActual.handoff(customer, itemId));
+    }
+    for (const itemId of expectedPickupItems) {
+      visit(customer).expectedPickupItems.add(toActual.pickup(customer, itemId));
+    }
+  }
+  for (const [customer, items] of standOnly.held) {
+    for (const itemId of items) {
+      visit(customer).expectedHandoffItems.add(itemId);
+    }
+  }
+  for (const [customer, items] of standOnly.wanted) {
+    for (const itemId of items) {
+      visit(customer).expectedPickupItems.add(itemId);
+    }
+  }
+  return [...visits.values()];
+}
+
 export async function generateRound(round: MatchRound) {
-  const {
-    id,
-    standLocation,
-    branches,
-    deadline,
-    includeCustomerItemsFromOtherBranches,
-    meetingDate,
-    userMatchLocations,
-    excludedCustomerIds,
-  } = round;
+  const { id, standLocation, deadline, meetingDate, userMatchLocations } = round;
 
   if (deadline.startOf("day") < DateTime.now().startOf("day")) {
     throw new BlError("Fristen for runden har allerede passert").code(200);
@@ -104,21 +143,21 @@ export async function generateRound(round: MatchRound) {
     throw new BlError("Standens åpningstid må vare i minst ti minutter").code(200);
   }
 
-  const [heldByCustomer, wantedByCustomer] = await Promise.all([
-    getHeldItems(branches, deadline, includeCustomerItemsFromOtherBranches),
-    getWantedItems(branches),
-  ]);
-
-  for (const excludedId of excludedCustomerIds) {
-    heldByCustomer.delete(excludedId);
-    wantedByCustomer.delete(excludedId);
-  }
+  const { held: heldBooks, wanted: wantedBooks } = await getRoundBooks(
+    round,
+    await resolveRoundScope(round),
+  );
 
   const groupMemberships = await getGroupMemberships([
-    ...new Set([...heldByCustomer.keys(), ...wantedByCustomer.keys()]),
+    ...new Set([
+      ...heldBooks.matchable.keys(),
+      ...wantedBooks.matchable.keys(),
+      ...heldBooks.standOnly.keys(),
+      ...wantedBooks.standOnly.keys(),
+    ]),
   ]);
-  const held = canonicalizeItems(heldByCustomer);
-  const wanted = canonicalizeItems(wantedByCustomer);
+  const held = canonicalizeItems(heldBooks.matchable);
+  const wanted = canonicalizeItems(wantedBooks.matchable);
   // The obligations name the physical book: the edition the sender holds for handovers to a
   // student or the stand, and the edition the receiver ordered for pure stand pickups.
   const heldEdition = (customerId: string, itemId: string) =>
@@ -130,13 +169,21 @@ export async function generateRound(round: MatchRound) {
     wanted.canonicalByCustomer,
     groupMemberships,
   );
-  if (matchableUsers.length === 0) {
+  if (
+    matchableUsers.length === 0 &&
+    heldBooks.standOnly.size === 0 &&
+    wantedBooks.standOnly.size === 0
+  ) {
     throw new BlError("Fant ingen elever å lage overleveringer for").code(200);
   }
 
-  const [candidateUserMatches, candidateStandMatches] = new MatchFinder(
-    matchableUsers,
-  ).generateMatches();
+  const [candidateUserMatches, finderStandMatches] =
+    matchableUsers.length === 0 ? [[], []] : new MatchFinder(matchableUsers).generateMatches();
+  const candidateStandMatches = standVisits(
+    finderStandMatches,
+    { handoff: heldEdition, pickup: wantedEdition },
+    { held: heldBooks.standOnly, wanted: wantedBooks.standOnly },
+  );
 
   if (candidateUserMatches.length === 0 && candidateStandMatches.length === 0) {
     throw new BlError("Fant ingen overleveringer å lage").code(200);
@@ -177,11 +224,9 @@ export async function generateRound(round: MatchRound) {
         participantCustomerIds: [customer, null],
         obligations: [
           ...[...candidate.expectedHandoffItems].map((itemId) =>
-            obligation(customer, null, heldEdition(customer, itemId)),
+            obligation(customer, null, itemId),
           ),
-          ...[...candidate.expectedPickupItems].map((itemId) =>
-            obligation(null, customer, wantedEdition(customer, itemId)),
-          ),
+          ...[...candidate.expectedPickupItems].map((itemId) => obligation(null, customer, itemId)),
         ],
       };
     }),

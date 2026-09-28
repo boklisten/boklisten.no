@@ -8,8 +8,6 @@ export const SLOT_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]0$/;
 /** The dates, times, places and book selection a round is generated from. */
 interface MatchRoundPlan {
   standLocation: string;
-  /** Ids of the branches the round draws books from. */
-  branches: string[];
   /** `YYYY-MM-DD`. The date the round's books are due. */
   deadline: string;
   /** `YYYY-MM-DD`. Every meeting and stand visit happens on this day. */
@@ -19,11 +17,15 @@ interface MatchRoundPlan {
   userMeetingTo: string;
   standFrom: string;
   standTo: string;
-  includeCustomerItemsFromOtherBranches: boolean;
   /** Where students meet each other, in the order an admin listed them. */
   userMatchLocations: string[];
-  /** Ids of the customers the match finder skips entirely: no matches, books go via the stand. */
-  excludedCustomerIds: string[];
+  /**
+   * Descendants of the round's branch whose books — handed out or ordered there, subtree included —
+   * all go via the stand.
+   */
+  standBranchIds: string[];
+  /** Students who get no student matches: all their books go via the stand. */
+  standCustomerIds: string[];
 }
 
 /**
@@ -35,6 +37,8 @@ interface MatchRoundPlan {
  */
 export interface MatchRoundDto extends MatchRoundPlan {
   id: string;
+  /** The round covers this branch and every descendant. Fixed once the round exists. */
+  branchId: string;
   name: string;
   status: string;
   /** ISO timestamp, or null while the round is still only planned. */
@@ -53,4 +57,6 @@ export interface MatchRoundPlanMetrics {
   branchMembers: number;
   activeBooks: BookTally;
   orderedBooks: BookTally;
+  /** The share of the books above that the stand rules send via the stand. */
+  standOnlyBooks: BookTally;
 }

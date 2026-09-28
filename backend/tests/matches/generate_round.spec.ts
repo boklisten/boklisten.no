@@ -32,7 +32,7 @@ const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
 
 /** A planned round with the shape these tests assert against. */
 const plannedRound = () =>
-  createTestRound({ name: "Ullern Vår 2026", branches: [BRANCH], standLocation: "Kantina" });
+  createTestRound({ name: "Ullern Vår 2026", branchId: BRANCH, standLocation: "Kantina" });
 
 /** The titles a customer holds, handed out at the round's branch and due on its deadline. */
 function heldBy(customerId: string, itemIds: string[]) {
@@ -195,10 +195,10 @@ test.group("generateRound", (group) => {
     assert.equal(handoff!.sender.userId, A);
   });
 
-  test("an excluded customer gets no matches, and their books come from the stand", async ({
+  test("a stand student gets no student matches: all their books go via the stand", async ({
     assert,
   }) => {
-    // A and B could swap X for Y, but A is excluded — so B must go through the stand instead.
+    // A and B could swap X for Y, but A must go via the stand — so B goes via the stand too.
     await arrange(
       [heldBy(A, [ITEM_X]), heldBy(B, [ITEM_Y])],
       [
@@ -206,24 +206,84 @@ test.group("generateRound", (group) => {
         { id: B, wantedItems: [ITEM_X] },
       ],
     );
-    const round = await createTestRound({ branches: [BRANCH], excludedCustomerIds: [A] });
+    const round = await createTestRound({ branchId: BRANCH, standCustomerIds: [A] });
 
-    await generateRound(round);
+    const result = await generateRound(round);
 
+    assert.equal(result.userMatchCount, 0, "nobody is matched with a stand student");
     const obligations = await MatchObligation.query().preload("sender").preload("receiver");
-    assert.isNotEmpty(obligations);
-    for (const o of obligations) {
-      assert.notEqual(o.sender.userId, A, "an excluded customer must never send");
-      assert.notEqual(o.receiver.userId, A, "an excluded customer must never receive");
-    }
+    const involvingA = obligations.filter((o) => o.sender.userId === A || o.receiver.userId === A);
+    assert.sameDeepMembers(
+      involvingA.map((o) => [o.sender.userId, o.receiver.userId, o.itemId]),
+      [
+        [A, null, ITEM_X],
+        [null, A, ITEM_Y],
+      ],
+      "A hands in X and picks up Y at the stand",
+    );
 
     const pickup = obligations.find((o) => o.receiver.userId === B && o.itemId === ITEM_X);
-    assert.isDefined(pickup, "B still gets the book they wanted");
-    assert.isNull(pickup!.sender.userId, "…but from the stand, not from A");
-
+    assert.isNull(pickup!.sender.userId, "B gets X from the stand, not from A");
     const handoff = obligations.find((o) => o.sender.userId === B && o.itemId === ITEM_Y);
-    assert.isDefined(handoff, "B still returns their book");
-    assert.isNull(handoff!.receiver.userId, "…but to the stand, not to A");
+    assert.isNull(handoff!.receiver.userId, "B returns Y to the stand, not to A");
+  });
+
+  test("covers the books of every descendant, and nothing outside the round's branch", async ({
+    assert,
+  }) => {
+    const child = await createBranch({ parentBranchId: BRANCH });
+    const grandchild = await createBranch({ parentBranchId: child.id });
+    const outside = await createBranch();
+    await arrange([], []);
+    await createHeldBooks(grandchild.id, [heldBy(A, [ITEM_X])]);
+    await createOrder({
+      branchId: child.id,
+      customerId: B,
+      byCustomer: true,
+      orderItems: [{ itemId: ITEM_X }],
+    });
+    await createHeldBooks(outside.id, [heldBy(B, [ITEM_Y])]);
+
+    const result = await generateRound(await plannedRound());
+
+    assert.equal(result.userMatchCount, 1, "A (grandchild) and B (child) swap X");
+    const items = (await MatchObligation.all()).map((o) => o.itemId);
+    assert.notInclude(items, ITEM_Y, "the book handed out outside the round stays out");
+  });
+
+  test("books handed out or ordered in a stand subtree go via the stand, the rest still match", async ({
+    assert,
+  }) => {
+    const standProgram = await createBranch({ parentBranchId: BRANCH });
+    const standClass = await createBranch({ parentBranchId: standProgram.id });
+    // Y is handed out and X ordered in the stand subtree, so both go via the stand. B's copy of
+    // X was handed out at the round's own branch, so B could still swap it with anyone.
+    await arrange([heldBy(B, [ITEM_X])], []);
+    await createHeldBooks(standClass.id, [heldBy(A, [ITEM_Y])]);
+    await createOrder({
+      branchId: standClass.id,
+      customerId: A,
+      byCustomer: true,
+      orderItems: [{ itemId: ITEM_X }],
+    });
+    const round = await createTestRound({ branchId: BRANCH, standBranchIds: [standProgram.id] });
+
+    const result = await generateRound(round);
+
+    assert.equal(result.userMatchCount, 0, "A's stand books are not offered to B");
+    const obligations = await MatchObligation.query().preload("sender").preload("receiver");
+    assert.sameDeepMembers(
+      obligations.map((o) => [o.sender.userId, o.receiver.userId, o.itemId]),
+      [
+        [A, null, ITEM_Y],
+        [null, A, ITEM_X],
+        [B, null, ITEM_X],
+      ],
+    );
+    const aStandMatches = await Match.query().whereHas("participants", (participants) =>
+      participants.where("userId", A),
+    );
+    assert.lengthOf(aStandMatches, 1, "one stand visit per student");
   });
 
   test("reports when there is nobody to match", async ({ assert }) => {
@@ -315,7 +375,7 @@ test.group("generateRound", (group) => {
   test("refuses a round whose deadline has already passed", async ({ assert }) => {
     await arrange([heldBy(A, [ITEM_X])], [{ id: B, wantedItems: [ITEM_X] }]);
     const round = await createTestRound({
-      branches: [BRANCH],
+      branchId: BRANCH,
       deadline: DateTime.now().minus({ days: 1 }),
     });
 

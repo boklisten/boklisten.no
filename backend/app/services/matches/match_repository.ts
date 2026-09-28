@@ -31,18 +31,6 @@ async function findForCustomer(customerId: string): Promise<Match[]> {
     .whereHas("round", (round) => round.where("status", "active"));
 }
 
-/**
- * The round meant when no round is named: the newest active one, or failing that the newest
- * overall. The same rule the admin UI uses to pick its default, so an admin and the backend fall
- * back to the same round.
- */
-async function findDefaultRound(): Promise<MatchRound | null> {
-  return (
-    (await MatchRound.query().where("status", "active").orderBy("id", "desc").first()) ??
-    (await MatchRound.query().orderBy("id", "desc").first())
-  );
-}
-
 /** One match by id, with the same relations preloaded as the listing queries. */
 async function findById(matchId: number): Promise<Match | null> {
   return matchesWithRelations().where("id", matchId).first();
@@ -427,7 +415,6 @@ export const MatchRepository = {
   findById,
   findForCustomer,
   findForRound,
-  findDefaultRound,
   handoversForObligations,
   unattachedHandoverCount,
   findSenderObligation,

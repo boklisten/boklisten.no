@@ -1,61 +1,38 @@
-import {
-  Button,
-  Card,
-  Group,
-  Loader,
-  Paper,
-  ScrollArea,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
+import { Button, Group, Loader, Paper, ScrollArea, Stack, Text, TextInput } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
-import { IconSearch, IconTrash } from "@tabler/icons-react";
+import { IconSearch } from "@tabler/icons-react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import CustomerAvatar from "@/features/customer-search/CustomerAvatar";
+import { StandRuleGroup, StandRuleRow } from "@/features/matches/rounds/standRules/StandRuleGroup";
 import { api, apiClient } from "@/shared/utils/apiClient";
 
 const MIN_SEARCH_LENGTH = 3;
 
-function ExcludedCustomerRow({ id, onRemove }: { id: string; onRemove: () => void }) {
+function StandCustomerRow({ id, onRemove }: { id: string; onRemove: () => void }) {
   const { data: detail, isPending } = useQuery(
     api.users.show.queryOptions({ params: { userId: id } }),
   );
+  const name = isPending ? "Laster…" : (detail?.name ?? "Fant ikke eleven");
 
   return (
-    <Card withBorder padding="xs">
-      <Group justify="space-between" wrap="nowrap">
-        <Stack gap={0} style={{ minWidth: 0 }}>
-          <Text fw={500} truncate>
-            {isPending ? "Laster…" : (detail?.name ?? "Fant ikke eleven")}
-          </Text>
-          {detail?.email && (
-            <Text size="sm" c="dimmed" truncate>
-              {detail.email}
-            </Text>
-          )}
-        </Stack>
-        <Button
-          variant="subtle"
-          color="red"
-          leftSection={<IconTrash size={16} />}
-          style={{ flexShrink: 0 }}
-          onClick={onRemove}
-        >
-          Fjern
-        </Button>
-      </Group>
-    </Card>
+    <StandRuleRow
+      leading={<CustomerAvatar userId={id} />}
+      title={name}
+      description={detail?.email}
+      removeLabel={`Fjern ${name}`}
+      onRemove={onRemove}
+    />
   );
 }
 
 /**
- * Search-and-add list of students an admin keeps out of the round. Holds only their ids; names are
+ * Search-and-add list of students who get no student matches. Holds only their ids; names are
  * read through the same per-id query the rest of admin uses, primed from the search result on add
  * so a freshly added student never flashes a loading state.
  */
-export default function ExcludedCustomersField({
+export default function StandCustomersField({
   value,
   onChange,
 }: {
@@ -91,19 +68,11 @@ export default function ExcludedCustomersField({
     setSearchValue("");
   };
 
-  return (
-    <Stack>
-      {value.map((id) => (
-        <ExcludedCustomerRow
-          key={id}
-          id={id}
-          onRemove={() => onChange(value.filter((existing) => existing !== id))}
-        />
-      ))}
-
+  const addControl = (
+    <Stack gap="xs">
       <TextInput
-        label="Legg til elev"
-        placeholder="Telefonnummer, e-post, navn eller adresse"
+        aria-label="Søk etter elev som skal via stand"
+        placeholder="Søk etter elev"
         value={searchValue}
         onChange={(event) => setSearchValue(event.currentTarget.value)}
         leftSection={<IconSearch size={16} aria-hidden />}
@@ -128,12 +97,15 @@ export default function ExcludedCustomersField({
                 py="xs"
                 onClick={() => add(result)}
               >
-                <Stack gap={0} align="flex-start">
-                  <Text fw={500}>{result.name}</Text>
-                  <Text size="sm" c="dimmed">
-                    {[result.phone, result.email].filter(Boolean).join(" · ")}
-                  </Text>
-                </Stack>
+                <Group gap="sm" wrap="nowrap">
+                  <CustomerAvatar userId={result.id} />
+                  <Stack gap={0} align="flex-start">
+                    <Text fw={500}>{result.name}</Text>
+                    <Text size="sm" c="dimmed">
+                      {[result.phone, result.email].filter(Boolean).join(" · ")}
+                    </Text>
+                  </Stack>
+                </Group>
               </Button>
             ))}
             {candidates.length === 0 && !isFetching && (
@@ -145,5 +117,17 @@ export default function ExcludedCustomersField({
         </Paper>
       )}
     </Stack>
+  );
+
+  return (
+    <StandRuleGroup title="Elever" count={value.length} addControl={addControl}>
+      {value.map((id) => (
+        <StandCustomerRow
+          key={id}
+          id={id}
+          onRemove={() => onChange(value.filter((existing) => existing !== id))}
+        />
+      ))}
+    </StandRuleGroup>
   );
 }

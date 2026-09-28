@@ -1,6 +1,6 @@
 import vine from "@vinejs/vine";
 
-import { calendarDateField } from "#validators/common/fields";
+import { calendarDateField, objectIdField } from "#validators/common/fields";
 import { SLOT_TIME_PATTERN } from "#shared/match/match-round-dto";
 
 /**
@@ -32,16 +32,15 @@ const slotTime = () => vine.string().regex(SLOT_TIME_PATTERN);
  */
 const planFields = {
   standLocation: () => vine.string().minLength(1),
-  branches: () => vine.array(vine.string()).minLength(1),
   deadline: () => calendarDateField.clone(),
   meetingDate: () => calendarDateField.clone(),
   userMeetingFrom: () => slotTime(),
   userMeetingTo: () => slotTime().use(laterThan("userMeetingFrom")),
   standFrom: () => slotTime(),
   standTo: () => slotTime().use(laterThan("standFrom")),
-  includeCustomerItemsFromOtherBranches: () => vine.boolean(),
   userMatchLocations: () => vine.array(vine.string().minLength(1)).minLength(1),
-  excludedCustomerIds: () => vine.array(vine.string().minLength(1)),
+  standBranchIds: () => vine.array(objectIdField.clone()).distinct(),
+  standCustomerIds: () => vine.array(objectIdField.clone()).distinct(),
 };
 type PlanFields = typeof planFields;
 type PlanSchema = { [K in keyof PlanFields]: ReturnType<PlanFields[K]> };
@@ -62,6 +61,7 @@ const buildOptionalPlanFields = () => {
 
 const matchRoundPlanSchema = vine.object({
   name: vine.string().minLength(1),
+  branchId: objectIdField.clone(),
   ...buildPlanFields(),
 });
 export const matchRoundCreateValidator = vine.create(matchRoundPlanSchema);
@@ -69,7 +69,7 @@ export const matchRoundCreateValidator = vine.create(matchRoundPlanSchema);
 export const matchNotifySchema = vine.object({
   target: vine.enum(["user-matches", "stand-only", "all"]),
   message: vine.string().minLength(10),
-  roundId: vine.number().withoutDecimals().positive().optional(),
+  roundId: vine.number().withoutDecimals().positive(),
 });
 export const matchNotifyValidator = vine.create(matchNotifySchema);
 
@@ -98,3 +98,10 @@ export const matchRoundPatchValidator = vine.create(matchRoundPatchSchema);
  */
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.keys widens to string[]; planFields is a closed local object so its keys are exactly keyof PlanFields
 export const PLAN_PATCH_KEYS = Object.keys(planFields) as (keyof PlanFields)[];
+
+/** The rounds of one branch: those created on it, not those of its ancestors or descendants. */
+export const matchRoundIndexValidator = vine.create(
+  vine.object({
+    branchId: objectIdField.clone(),
+  }),
+);

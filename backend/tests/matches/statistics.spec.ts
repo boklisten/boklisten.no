@@ -95,7 +95,7 @@ test.group("computeMatchStatistics", (group) => {
     const obligation = await seedObligation(A, B);
     await handover({ from: A, to: B, sender: obligation.id, receiver: obligation.id });
 
-    const stats = await computeMatchStatistics();
+    const stats = await computeMatchStatistics(round.id);
 
     assert.equal(stats.handoverVerdicts.asPlanned, 1, "counted once per handover");
     assert.equal(stats.handoverVerdicts.fromUnexpectedSender, 0);
@@ -111,7 +111,7 @@ test.group("computeMatchStatistics", (group) => {
     await handover({ from: null, to: A, receiver: pickup.id });
     await handover({ from: B, to: null, sender: dropoff.id });
 
-    const stats = await computeMatchStatistics();
+    const stats = await computeMatchStatistics(round.id);
 
     assert.equal(stats.handoverVerdicts.asPlanned, 2, "one per stand handover");
     assert.equal(stats.handoverVerdicts.fromUnexpectedSender, 0);
@@ -127,7 +127,7 @@ test.group("computeMatchStatistics", (group) => {
     const theirs = await seedObligation(C, A);
     await handover({ from: C, to: B, sender: theirs.id, receiver: mine.id });
 
-    const stats = await computeMatchStatistics();
+    const stats = await computeMatchStatistics(round.id);
 
     assert.equal(
       stats.handoverVerdicts.fromUnexpectedSender,
@@ -144,7 +144,7 @@ test.group("computeMatchStatistics", (group) => {
     const settled = await seedObligation(B, A);
     await handover({ from: B, to: A, sender: settled.id, receiver: settled.id });
 
-    const stats = await computeMatchStatistics();
+    const stats = await computeMatchStatistics(round.id);
 
     assert.deepEqual(stats.senderLiability, {
       studentsStillResponsible: 1,
@@ -157,7 +157,7 @@ test.group("computeMatchStatistics", (group) => {
     await handover({ from: C, to: A });
     await handover({ from: A, to: C });
 
-    const stats = await computeMatchStatistics();
+    const stats = await computeMatchStatistics(round.id);
 
     assert.equal(stats.handoverVerdicts.outsideAnyMatch, 2);
   });
@@ -171,7 +171,7 @@ test.group("computeMatchStatistics", (group) => {
     await handover({ from: C, to: D });
     await handover({ from: C, to: A });
 
-    const stats = await computeMatchStatistics();
+    const stats = await computeMatchStatistics(round.id);
 
     assert.equal(stats.handoverVerdicts.outsideAnyMatch, 1, "only A's handover involves the round");
   });
@@ -182,7 +182,7 @@ test.group("computeMatchStatistics", (group) => {
     const obligation = await seedObligation(null, A);
     await handover({ from: null, to: A, receiver: obligation.id });
 
-    const stats = await computeMatchStatistics();
+    const stats = await computeMatchStatistics(round.id);
 
     assert.equal(stats.standMatchCompletion.completed, 1);
     assert.equal(stats.standMatchCompletion.started, 0);
@@ -193,21 +193,21 @@ test.group("computeMatchStatistics", (group) => {
     const obligation = await seedObligation(A, null);
     await handover({ from: A, to: null, sender: obligation.id });
 
-    const stats = await computeMatchStatistics();
+    const stats = await computeMatchStatistics(round.id);
 
     assert.equal(stats.standMatchCompletion.completed, 1);
     assert.deepEqual(stats.standBooksIn, { expected: 1, transferred: 1 });
     assert.equal(stats.senderLiability.copiesOutstanding, 0);
   });
 
-  test("reports on the named round rather than the newest", async ({ assert }) => {
+  test("reports on the named round only", async ({ assert }) => {
     await seedObligation(A, B);
     const newer = await createTestRound({ name: "Newer", standLocation: "Kantina" });
     await seedObligation(A, C, newer.id);
     await seedObligation(B, C, newer.id);
 
     const older = await computeMatchStatistics(round.id);
-    const newest = await computeMatchStatistics();
+    const newest = await computeMatchStatistics(newer.id);
 
     assert.equal(older.roundName, "Round");
     assert.equal(older.userMatchCount, 1);
@@ -218,7 +218,7 @@ test.group("computeMatchStatistics", (group) => {
   test("reports nothing rather than failing when no round exists", async ({ assert }) => {
     await round.delete();
 
-    const stats = await computeMatchStatistics();
+    const stats = await computeMatchStatistics(round.id);
 
     assert.equal(stats.roundId, "");
     assert.equal(stats.userMatchCount, 0);
@@ -228,7 +228,7 @@ test.group("computeMatchStatistics", (group) => {
     await seedObligation(A, B);
     await seedObligation(null, C);
 
-    const stats = await computeMatchStatistics();
+    const stats = await computeMatchStatistics(round.id);
 
     assert.equal(stats.studentReach.totalStudents, 3);
     assert.equal(stats.studentReach.onlyUserHandovers, 2);

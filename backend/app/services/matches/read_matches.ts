@@ -77,15 +77,9 @@ export async function getMatchById(matchId: number): Promise<MatchDto | null> {
   return (await render([match]))[0] ?? null;
 }
 
-/**
- * Every match in a round. Falls back to the newest live round when none is named, which is the
- * one an admin opening the overview almost always means.
- */
-export async function getMatchesForRound(roundId?: number): Promise<MatchDto[]> {
-  const round =
-    roundId === undefined
-      ? await MatchRepository.findDefaultRound()
-      : await MatchRound.find(roundId);
+/** Every match in a round. */
+export async function getMatchesForRound(roundId: number): Promise<MatchDto[]> {
+  const round = await MatchRound.find(roundId);
   if (!round) {
     return [];
   }

@@ -470,32 +470,6 @@ test.group("MatchRepository", (group) => {
     assert.equal(receiverObligation?.id, obligation.id);
   });
 
-  test("prefers the newest active round as the default", async ({ assert }) => {
-    const active = await createTestRound({
-      name: "Live",
-      standLocation: "Kantina",
-      status: "active",
-    });
-    await createTestRound({
-      name: "Newer but still a draft",
-      standLocation: "Kantina",
-      status: "draft",
-    });
-
-    assert.equal((await MatchRepository.findDefaultRound())?.id, active.id);
-  });
-
-  test("falls back to the newest round when no round is active", async ({ assert }) => {
-    await createTestRound({ name: "First", standLocation: "Kantina", status: "draft" });
-    const last = await createTestRound({
-      name: "Last",
-      standLocation: "Kantina",
-      status: "draft",
-    });
-
-    assert.equal((await MatchRepository.findDefaultRound())?.id, last.id);
-  });
-
   test("knows when a customer has already received a title", async ({ assert }) => {
     const { obligation } = await seedUserMatch();
 

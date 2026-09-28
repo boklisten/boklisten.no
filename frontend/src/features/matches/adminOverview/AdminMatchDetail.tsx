@@ -37,7 +37,10 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
       <SendMatchToStandButton
         match={match}
         onSent={() =>
-          void navigate({ to: "/admin/overleveringer", search: (previous) => previous })
+          void navigate({
+            to: "/admin/database/filialer",
+            search: (previous) => ({ ...previous, overlevering: undefined }),
+          })
         }
       />
 

@@ -73,24 +73,26 @@ test.group("roundPlanMetrics", (group) => {
     });
     await order([ITEM_X, ITEM_Y]);
 
-    const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
+    const metrics = await roundPlanMetrics(await createTestRound({ branchId: BRANCH }));
 
     assert.deepEqual(metrics, {
       branchMembers: 240,
       activeBooks: { books: 3, students: 2 },
       orderedBooks: { books: 2, students: 1 },
+      standOnlyBooks: { books: 0, students: 0 },
     });
   });
 
   test("reads an empty aggregation as zero rather than nothing", async ({ assert }) => {
     await arrange({});
 
-    const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
+    const metrics = await roundPlanMetrics(await createTestRound({ branchId: BRANCH }));
 
     assert.deepEqual(metrics, {
       branchMembers: 0,
       activeBooks: { books: 0, students: 0 },
       orderedBooks: { books: 0, students: 0 },
+      standOnlyBooks: { books: 0, students: 0 },
     });
   });
 
@@ -114,37 +116,36 @@ test.group("roundPlanMetrics", (group) => {
       returned: true,
     });
 
-    const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
+    const metrics = await roundPlanMetrics(await createTestRound({ branchId: BRANCH }));
 
     assert.deepEqual(metrics.activeBooks, { books: 2, students: 1 });
   });
 
-  test("follows the students' other books when the plan includes other branches", async ({
-    assert,
-  }) => {
-    await arrange({ activeBooks: [{ id: SENDER, items: [ITEM_X] }] });
-    await createHeldBooks(OTHER_BRANCH, [{ id: SENDER, items: [ITEM_Y] }]);
-    // Holds books only from another branch, so the wider sweep never reaches them
-    await createHeldBooks(OTHER_BRANCH, [{ id: OTHER_SENDER, items: [ITEM_X] }]);
+  test("counts members of the round's branch and every descendant", async ({ assert }) => {
+    const stubs = await arrange({});
+    const child = await createBranch({ parentBranchId: BRANCH });
 
-    const branchOnly = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
-    const wider = await roundPlanMetrics(
+    await roundPlanMetrics(await createTestRound({ branchId: BRANCH }));
+
+    assert.sameMembers(stubs.memberCount.firstCall.args[0], [BRANCH, child.id]);
+  });
+
+  test("counts the books the stand rules send via the stand", async ({ assert }) => {
+    const standClass = await createBranch({ parentBranchId: BRANCH });
+    await arrange({ activeBooks: [{ id: SENDER, items: [ITEM_X] }] });
+    await createHeldBooks(standClass.id, [{ id: OTHER_SENDER, items: [ITEM_X, ITEM_Y] }]);
+    await order([ITEM_Y]);
+
+    const metrics = await roundPlanMetrics(
       await createTestRound({
-        branches: [BRANCH],
-        includeCustomerItemsFromOtherBranches: true,
+        branchId: BRANCH,
+        standBranchIds: [standClass.id],
+        standCustomerIds: [RECEIVER],
       }),
     );
 
-    assert.deepEqual(branchOnly.activeBooks, { books: 1, students: 1 });
-    assert.deepEqual(wider.activeBooks, { books: 2, students: 1 });
-  });
-
-  test("counts members of the round's branches", async ({ assert }) => {
-    const stubs = await arrange({});
-
-    await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
-
-    assert.deepEqual(stubs.memberCount.firstCall.args[0], [BRANCH]);
+    assert.deepEqual(metrics.activeBooks, { books: 3, students: 2 }, "stand books still count");
+    assert.deepEqual(metrics.standOnlyBooks, { books: 3, students: 2 });
   });
 
   test("counts ordered books per book, not per order", async ({ assert }) => {
@@ -152,7 +153,7 @@ test.group("roundPlanMetrics", (group) => {
     await order([ITEM_X, ITEM_Y]);
     await order([ITEM_Y]);
 
-    const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
+    const metrics = await roundPlanMetrics(await createTestRound({ branchId: BRANCH }));
 
     assert.deepEqual(metrics.orderedBooks, { books: 2, students: 1 });
   });
@@ -169,7 +170,7 @@ test.group("roundPlanMetrics", (group) => {
     const later = await order([]);
     await order([], { orderItems: [{ itemId: ITEM_X, movedToOrderId: later.id }] });
 
-    const metrics = await roundPlanMetrics(await createTestRound({ branches: [BRANCH] }));
+    const metrics = await roundPlanMetrics(await createTestRound({ branchId: BRANCH }));
 
     assert.deepEqual(metrics.orderedBooks, { books: 0, students: 0 });
   });

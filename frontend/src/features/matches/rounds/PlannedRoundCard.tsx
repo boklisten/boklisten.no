@@ -7,6 +7,7 @@ import dayjs from "dayjs";
 import PlanMetrics from "@/features/matches/rounds/PlanMetrics";
 import type { Round } from "@/features/matches/rounds/useRounds";
 import { api } from "@/shared/utils/apiClient";
+import { descendantsOf } from "@/shared/utils/branchTree";
 import useAuth from "@/shared/hooks/useAuth";
 // The month and weekday names below read Norwegian only because the shared dayjs setup registered
 // the locale. Imported here so the card carries that dependency itself rather than relying on
@@ -118,6 +119,9 @@ export default function PlannedRoundCard({
   const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   const meetingDay = dayjs(round.meetingDate);
+  const branchName = (id: string) =>
+    branches?.find((branch) => branch.id === id)?.name ?? "Ukjent filial";
+  const hasSubBranches = descendantsOf(branches ?? [], round.branchId).length > 0;
 
   return (
     <Card withBorder radius="md" padding="lg">
@@ -176,20 +180,31 @@ export default function PlannedRoundCard({
             </Group>
           </Detail>
 
-          <Detail label="Filialer">
-            <Group gap={6}>
-              {round.branches.map((id) => (
-                <Badge key={id} variant="default" radius="sm">
-                  {branches?.find((branch) => branch.id === id)?.name ?? "Ukjent filial"}
-                </Badge>
-              ))}
-            </Group>
-            {round.includeCustomerItemsFromOtherBranches && (
-              <Text size="xs" c="dimmed">
-                Tar også med bøker delt ut ved andre filialer
-              </Text>
-            )}
+          <Detail label="Filial">
+            <Text fw={500}>
+              {branchName(round.branchId)}
+              {hasSubBranches && " med underfilialer"}
+            </Text>
           </Detail>
+
+          {(round.standBranchIds.length > 0 || round.standCustomerIds.length > 0) && (
+            <Detail label="Via stand">
+              <Group gap={6}>
+                {round.standBranchIds.map((id) => (
+                  <Badge key={id} variant="light" color="teal" radius="sm">
+                    {branchName(id)}
+                  </Badge>
+                ))}
+                {round.standCustomerIds.length > 0 && (
+                  <Badge variant="light" color="teal" radius="sm">
+                    {round.standCustomerIds.length === 1
+                      ? "1 elev"
+                      : `${round.standCustomerIds.length} elever`}
+                  </Badge>
+                )}
+              </Group>
+            </Detail>
+          )}
         </Group>
 
         {isAdmin && (

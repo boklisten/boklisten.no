@@ -1,0 +1,28 @@
+.card {
+  position: relative;
+}
+
+/* The open button's hit area covers the whole card, so the card stays one click target without
+   being an <a> itself — the card can hold links of its own (opening hours on stand matches). */
+.open {
+  /* Mantine positions buttons; static lets the hit area below anchor to the card instead. */
+  position: static;
+}
+
+.open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* Links inside the card sit above the stretched hit area so they stay clickable. */
+.card a:not(.open) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mantine nudges a pressed button with a transform, which would make the button the hit area's
+   containing block mid-click: it shrinks on mouse-down and the mouse-up misses the link. */
+.card .open:active {
+  transform: none;
+}

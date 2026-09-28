@@ -2,9 +2,12 @@ import BranchManager from "@/features/branches/BranchManager";
 import { parseBranchManagerTab } from "@/features/branches/branchManagerTabs";
 import type { BranchManagerTab } from "@/features/branches/branchManagerTabs";
 import { createFileRoute } from "@tanstack/react-router";
+
+import { validateBranchRoundsSearch } from "@/features/matches/adminOverview/branchRoundsSearch";
+import type { BranchRoundsSearch } from "@/features/matches/adminOverview/branchRoundsSearch";
 import { seo } from "@/shared/utils/seo";
 
-interface BranchManagerSearch {
+interface BranchManagerSearch extends BranchRoundsSearch {
   filial?: string;
   filialFane?: BranchManagerTab;
 }
@@ -16,6 +19,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/database/filialer"
         ? search["filial"]
         : undefined,
     filialFane: parseBranchManagerTab(search["filialFane"]),
+    ...validateBranchRoundsSearch(search),
   }),
   head: () =>
     seo({

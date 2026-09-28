@@ -465,7 +465,7 @@ permission <> 'customer'`, which serves `User.employees()`.
   nested-`<a>` hydration warning in `MatchListItemCard`; that component wasn't changed here, so
   the warning predates this step.
 
-### Step 10 — `match_rounds`: junction tables and `time` columns ☐
+### Step 10 — `match_rounds`: junction tables and `time` columns ◐
 
 - **Findings:** I2, T3
 - **Changes:**
@@ -476,6 +476,37 @@ permission <> 'customer'`, which serves `User.employees()`.
 - **API impact:** the round DTO can keep `branches: string[]` (built from the relation), so the
   frontend may barely change.
 - **Decision:** the wire format for times (see T3).
+
+**Done (2026-09-28, on staging, awaiting review):** migration
+`1791600000000_scope_match_rounds_to_branch`. Adrian widened the scope: a round now belongs to
+one branch.
+
+- `match_rounds.branch_id` (FK `RESTRICT`) replaces `branches text[]`. A round covers that branch
+  and every descendant. The branch is fixed once the round exists.
+- The junction tables are `match_round_stand_branches(round_id, branch_id)` and
+  `match_round_stand_customers(round_id, customer_id)`, not the ones proposed in I2. What they
+  mean changed too. A stand branch (a descendant, its subtree included) sends every book handed
+  out or ordered there via the stand. A stand student gets no student matches: all their books
+  go via the stand. The old "excluded" students got no matches at all, not even at the stand.
+- Migration: each round gets the lowest branch whose subtree holds every branch it picked. Both
+  rounds (EL and the rest) came out as Ullern videregående skole. Both are already generated, so
+  the wider scope only matters if they are generated again. Adrian accepted that; there is no
+  "left out" rule. Round 2's one excluded student became a stand student.
+- `include_customer_items_from_other_branches` is dropped, together with the form's "Ta med
+  bøker delt ut ved andre filialer" option: no round used it (Adrian).
+- Times are `time`, with `to > from` CHECKs. The wire format stays `HH:MM` (the model formats
+  it).
+- UI: the standalone `/admin/overleveringer` page, its match-detail route and the nav entry are
+  gone, with no redirect. Rounds live in the branch page's Overleveringer tab
+  (`filialFane=rounds&runde=&rundeFane=&rundeSok=&rundeType=&overlevering=<matchId>`), which is
+  admin-only. The match-round read routes moved to the admin group. The "newest round" fallback
+  (`findDefaultRound`) is gone, so every round endpoint takes an explicit round id. The plan
+  form's "Via stand" section has two lists, "Underfilialer" and "Elever". `MatchListItemCard` is no
+  longer one big `<a>`; its "Åpne" link is stretched over the card, which fixes the nested-link
+  hydration warning.
+- Verified: rollback and re-run both work, 1,031 tests pass. Playwright: tab, list, match detail
+  and back, planning with a stand program and a stand student, edit, generate, the empty state,
+  375 px.
 
 ### Step 11 — Unique invoice numbers ☐
 

@@ -7,6 +7,7 @@ import {
   IconCashRegister,
   IconChartAreaLine,
   IconClock,
+  IconHeartHandshake,
   IconHierarchy3,
   IconPlus,
   IconSchool,
@@ -28,6 +29,7 @@ import BranchRelationshipSettings from "@/features/branches/BranchRelationshipSe
 import BranchSignatureStatus from "@/features/branches/BranchSignatureStatus";
 import OpeningHoursSettings from "@/features/branches/opening_hours/OpeningHoursSettings";
 import BranchSubjectSettings from "@/features/branches/subjects/BranchSubjectSettings";
+import BranchRounds from "@/features/matches/rounds/BranchRounds";
 import UploadBranchUsers from "@/features/branches/UploadBranchUsers";
 import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
 import { parseBranchManagerTab } from "@/features/branches/branchManagerTabs";
@@ -136,6 +138,9 @@ export default function BranchManager() {
                   <Tabs.Tab value="insights" leftSection={<IconChartAreaLine />}>
                     Innsikt
                   </Tabs.Tab>
+                  <Tabs.Tab value="rounds" leftSection={<IconHeartHandshake />}>
+                    Overleveringer
+                  </Tabs.Tab>
                 </Tabs.List>
                 <Tabs.Panel value="general">
                   <BranchGeneralSettings key={selectedBranchId} existingBranch={selectedBranch} />
@@ -178,6 +183,9 @@ export default function BranchManager() {
                 </Tabs.Panel>
                 <Tabs.Panel value="insights">
                   <BranchBookMovements key={selectedBranch.id} branchId={selectedBranch.id} />
+                </Tabs.Panel>
+                <Tabs.Panel value="rounds">
+                  <BranchRounds key={selectedBranch.id} branchId={selectedBranch.id} />
                 </Tabs.Panel>
               </Tabs>
             </Stack>

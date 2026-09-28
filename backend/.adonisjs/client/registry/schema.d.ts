@@ -967,6 +967,66 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['gallery']>>>
     }
   }
+  'matches.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/matches/:matchId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { matchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['show']>>>
+    }
+  }
+  'match_rounds.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/match_rounds'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/matches').matchRoundIndexValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'match_rounds.matches': {
+    methods: ["GET","HEAD"]
+    pattern: '/match_rounds/:id/matches'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['matches']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['matches']>>>
+    }
+  }
+  'match_rounds.statistics': {
+    methods: ["GET","HEAD"]
+    pattern: '/match_rounds/:id/statistics'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['statistics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['statistics']>>>
+    }
+  }
+  'match_rounds.plan_metrics': {
+    methods: ["GET","HEAD"]
+    pattern: '/match_rounds/:id/plan_metrics'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['planMetrics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['planMetrics']>>>
+    }
+  }
   'matches.notify': {
     methods: ["POST"]
     pattern: '/matches/notify'
@@ -1853,66 +1913,6 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['label']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['label']>>>
-    }
-  }
-  'matches.show': {
-    methods: ["GET","HEAD"]
-    pattern: '/matches/:matchId'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { matchId: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['show']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['show']>>>
-    }
-  }
-  'match_rounds.index': {
-    methods: ["GET","HEAD"]
-    pattern: '/match_rounds'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>>
-    }
-  }
-  'match_rounds.matches': {
-    methods: ["GET","HEAD"]
-    pattern: '/match_rounds/:id/matches'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['matches']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['matches']>>>
-    }
-  }
-  'match_rounds.statistics': {
-    methods: ["GET","HEAD"]
-    pattern: '/match_rounds/:id/statistics'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['statistics']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['statistics']>>>
-    }
-  }
-  'match_rounds.plan_metrics': {
-    methods: ["GET","HEAD"]
-    pattern: '/match_rounds/:id/plan_metrics'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['planMetrics']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['planMetrics']>>>
     }
   }
   'items.index': {

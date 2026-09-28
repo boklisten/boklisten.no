@@ -33,7 +33,7 @@ export default function NotifyRoundButton({
         body: {
           target: values.target,
           message: values.message.trim(),
-          ...(roundId !== null && { roundId: Number(roundId) }),
+          roundId: Number(roundId),
         },
       });
     },

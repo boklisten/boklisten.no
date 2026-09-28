@@ -1,7 +1,8 @@
-import { Button, Card, Stack } from "@mantine/core";
+import { Card, Stack } from "@mantine/core";
 import type { ReactNode } from "react";
 
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import classes from "@/features/matches/matchesList/MatchListItemCard.module.css";
+import TanStackButton from "@/shared/components/TanStackButton";
 
 export default function MatchListItemCard({
   finished,
@@ -14,25 +15,33 @@ export default function MatchListItemCard({
   admin?: boolean;
   children: ReactNode;
 }) {
+  const buttonProps = {
+    className: classes.open,
+    mt: "md",
+    variant: finished ? "transparent" : "filled",
+    color: "green",
+    children: "Åpne",
+  } as const;
+
   return (
-    <TanStackAnchor
-      underline="never"
-      to={admin ? "/admin/overleveringer/$matchId" : "/overleveringer/$matchId"}
-      params={{ matchId }}
-      search={admin ? (previous) => previous : undefined}
+    <Card
+      className={classes.card}
+      shadow={finished ? "xs" : "lg"}
+      withBorder
+      bg={finished ? "rgba(134, 200, 134, 0.2)" : ""}
     >
-      <Card
-        shadow={finished ? "xs" : "lg"}
-        withBorder
-        bg={finished ? "rgba(134, 200, 134, 0.2)" : ""}
-      >
-        <Stack gap="xs">
-          {children}
-          <Button mt="md" variant={finished ? "transparent" : "filled"} color="green">
-            Åpne
-          </Button>
-        </Stack>
-      </Card>
-    </TanStackAnchor>
+      <Stack gap="xs">
+        {children}
+        {admin ? (
+          <TanStackButton
+            {...buttonProps}
+            to="/admin/database/filialer"
+            search={(previous) => ({ ...previous, overlevering: matchId })}
+          />
+        ) : (
+          <TanStackButton {...buttonProps} to="/overleveringer/$matchId" params={{ matchId }} />
+        )}
+      </Stack>
+    </Card>
   );
 }
