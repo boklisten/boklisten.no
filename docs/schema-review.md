@@ -323,7 +323,7 @@ permission <> 'customer'`, which serves `User.employees()`.
     `matches`/`match_participants`/`match_obligations` without timestamps gets them from the
     default.
 
-### Step 3 — `varchar(255)` → `text`, drop `uuid-ossp` ◐
+### Step 3 — `varchar(255)` → `text`, drop `uuid-ossp` ☑
 
 - **Findings:** T1, H1, and the type half of N4 (`waiting_list_customers.item_id` →
   `varchar(24)`, `phone_number` → `text`)
@@ -331,7 +331,7 @@ permission <> 'customer'`, which serves `User.employees()`.
 - **API impact:** none (`schema.ts` still says `string`).
 - **Rename in the same step?** Renaming `waiting_list_customers.phone_number` → `phone` is cheap
   here. Adrian decides.
-- **Done (2026-09-28, on staging, awaiting review):** migration
+- **Done (2026-09-28, shipped to production in 05f7fdfa):** migration
   `1791200000000_text_columns_and_phone_checks`. The re-survey matched: the same 23 `varchar(255)`
   columns (T1 lists 23; the "21" was a miscount), `uuid-ossp` unused, 0 waiting-list rows.
   - All 23 columns are now `text`. `waiting_list_customers.item_id` is `varchar(24)`, and
@@ -351,7 +351,7 @@ permission <> 'customer'`, which serves `User.employees()`.
     post of `+47 987 65 432` (stored as `98765432`) and a rejected `1234567` (422) all behave as
     expected.
 
-### Step 4 — CHECK constraints on enum-like columns ☐
+### Step 4 — CHECK constraints on enum-like columns ◐
 
 - **Findings:** T4, N3
 - **Changes:**
@@ -364,6 +364,22 @@ permission <> 'customer'`, which serves `User.employees()`.
     same values.
 - **API impact:** none, or only tighter types.
 - **Survey:** `select distinct` on every column, compared against the unions.
+- **Done (2026-09-28, on staging, awaiting review):** migration `1791300000000_enum_value_checks`.
+  The re-survey matched T4: every stored value is in its TS union.
+  - CHECKs only on `messages.channel`, `message_events.source` and `sendouts.kind`, with the lists
+    from `shared/message-log.ts` written into the migration.
+  - Left unchecked by decision: `messages.message_type` and `messages.status` are expected to
+    gain values, and each new value should not need a migration. `message_events.event` and
+    `orders.checkout_state` use names SendGrid, Twilio and Vipps own; a name a provider adds later
+    must still be stored, not fail the insert.
+  - `branch_periods.kind` `partly_payment` → `partly-payment` (65 rows, `PERIOD_KINDS`).
+  - Added on the way (Adrian): `branches.type` `VGS` → `vgs` (28 rows). This is an API value:
+    `BRANCH_TYPES`, the Filialer Type select (label still "VGS") and the Betaling tab changed.
+    `match_rounds_status_check` is recreated without the `::character varying` casts Step 3
+    left in it.
+  - No drift spec between the CHECK lists and the TS unions (Adrian: no).
+  - Verified: rollback and re-run both work, 1,030 tests pass. Filialer: a privatist and a vgs
+    branch both show their period section and save (200).
 
 ### Step 5 — Fractions to `numeric` ☐
 

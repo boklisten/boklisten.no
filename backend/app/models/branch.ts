@@ -62,7 +62,7 @@ export default class Branch extends BranchSchema {
   }
 
   get partlyPaymentPeriods(): PartlyPaymentPeriod[] {
-    return this.periodsOf("partly_payment").map((period) => period.toPartlyPaymentPeriod());
+    return this.periodsOf("partly-payment").map((period) => period.toPartlyPaymentPeriod());
   }
 
   /**

@@ -79,7 +79,10 @@ export default function BranchGeneralSettings({
       <form.AppField name="type">
         {(field) => (
           <field.SelectField
-            data={["privatist", "VGS"]}
+            data={[
+              { value: "privatist", label: "privatist" },
+              { value: "vgs", label: "VGS" },
+            ]}
             label="Type"
             placeholder="privatist eller VGS"
             clearable

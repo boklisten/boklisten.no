@@ -1,6 +1,6 @@
 import type { Period } from "#shared/period";
 
-export const BRANCH_TYPES = ["VGS", "privatist"] as const;
+export const BRANCH_TYPES = ["vgs", "privatist"] as const;
 /** Which set of payment periods applies: VGS branches rent books, privatist branches sell them in instalments. */
 export type BranchType = (typeof BRANCH_TYPES)[number];
 

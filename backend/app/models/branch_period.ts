@@ -4,12 +4,12 @@ import { BranchPeriodSchema } from "#database/schema";
 import type { BranchPeriods, ExtendPeriod, PartlyPaymentPeriod, RentPeriod } from "#shared/branch";
 import type { Period } from "#shared/period";
 
-export const PERIOD_KINDS = ["partly_payment", "rent", "extend"] as const;
+export const PERIOD_KINDS = ["partly-payment", "rent", "extend"] as const;
 export type PeriodKind = (typeof PERIOD_KINDS)[number];
 
 /** The `BranchPeriods` list each kind of row is read from and written to. */
 export const PERIOD_LIST_BY_KIND = {
-  partly_payment: "partlyPaymentPeriods",
+  "partly-payment": "partlyPaymentPeriods",
   rent: "rentPeriods",
   extend: "extendPeriods",
 } as const satisfies Record<PeriodKind, keyof BranchPeriods>;
@@ -54,7 +54,7 @@ export default class BranchPeriod extends BranchPeriodSchema {
   static rowsFor(branchId: string, periods: Partial<BranchPeriods>): BranchPeriodRow[] {
     return [
       ...(periods.partlyPaymentPeriods ?? []).map((period) =>
-        periodRow(branchId, "partly_payment", period, {
+        periodRow(branchId, "partly-payment", period, {
           percentageBuyout: period.percentageBuyout,
           percentageUpFront: period.percentageUpFront,
         }),

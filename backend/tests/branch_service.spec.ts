@@ -25,10 +25,10 @@ test.group("branch_service", (group) => {
     const branch = await createBranchThroughService({
       name: "Flåklypa vgs",
       region: "Flåklypa",
-      type: "VGS",
+      type: "vgs",
     });
     assert.equal(branch.name, "Flåklypa vgs");
-    assert.equal(branch.type, "VGS");
+    assert.equal(branch.type, "vgs");
     assert.isNull(branch.logo);
     assert.isNull(branch.address);
     assert.isTrue(branch.active);

@@ -59,7 +59,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
           </InfoAlert>
         </Fieldset>
       </Activity>
-      <Activity mode={existingBranch.type === "VGS" ? "visible" : "hidden"}>
+      <Activity mode={existingBranch.type === "vgs" ? "visible" : "hidden"}>
         <Fieldset legend="Låneperioder">
           <Stack align="center">
             <form.AppField name="rentPeriods" mode="array">
