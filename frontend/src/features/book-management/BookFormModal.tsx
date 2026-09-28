@@ -165,10 +165,15 @@ export default function BookFormModal({
             />
           )}
         </form.AppField>
-        <form.AppField name="weight">
+        <form.AppField
+          name="weight"
+          validators={{
+            onSubmit: ({ value }) =>
+              value === null || value > 0 ? null : "Vekt må være større enn 0 kg",
+          }}
+        >
           {(field) => (
             // An empty field means the weight is unknown, which the shared number field cannot say.
-            // Negative input is blocked by the control, so there is nothing left to validate.
             <NumberInput
               label="Vekt"
               description="La stå tom hvis vekten er ukjent."
@@ -179,6 +184,7 @@ export default function BookFormModal({
               decimalSeparator=","
               suffix=" kg"
               value={field.state.value ?? ""}
+              error={field.state.meta.errors.join(", ")}
               onChange={(value) => field.handleChange(value === "" ? null : Number(value))}
               onBlur={field.handleBlur}
             />

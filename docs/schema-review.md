@@ -351,7 +351,7 @@ permission <> 'customer'`, which serves `User.employees()`.
     post of `+47 987 65 432` (stored as `98765432`) and a rejected `1234567` (422) all behave as
     expected.
 
-### Step 4 — CHECK constraints on enum-like columns ◐
+### Step 4 — CHECK constraints on enum-like columns ☑
 
 - **Findings:** T4, N3
 - **Changes:**
@@ -364,7 +364,7 @@ permission <> 'customer'`, which serves `User.employees()`.
     same values.
 - **API impact:** none, or only tighter types.
 - **Survey:** `select distinct` on every column, compared against the unions.
-- **Done (2026-09-28, on staging, awaiting review):** migration `1791300000000_enum_value_checks`.
+- **Done (2026-09-28, shipped to production in 860d5f12):** migration `1791300000000_enum_value_checks`.
   The re-survey matched T4: every stored value is in its TS union.
   - CHECKs only on `messages.channel`, `message_events.source` and `sendouts.kind`, with the lists
     from `shared/message-log.ts` written into the migration.
@@ -381,7 +381,7 @@ permission <> 'customer'`, which serves `User.employees()`.
   - Verified: rollback and re-run both work, 1,030 tests pass. Filialer: a privatist and a vgs
     branch both show their period section and save (200).
 
-### Step 5 — Fractions to `numeric` ☐
+### Step 5 — Fractions to `numeric` ◐
 
 - **Findings:** T2
 - **Changes:** switch the float columns to `numeric(4,3)` / `numeric(6,3)` and add the range CHECKs.
@@ -390,6 +390,25 @@ permission <> 'customer'`, which serves `User.employees()`.
 - **Survey:** max scale per column (branch_periods percentage has at most 3 decimals). Check no
   value falls outside 0–1.
 - **Decision:** confirm 3 decimals is enough for every percentage (the smallest value is 0.001).
+- **Done (2026-09-28, on staging, awaiting review):** migration `1791400000000_fractions_as_numeric`.
+  The re-survey matched T2 except for one value: Akademiet Sandnes had `sell_percentage 0.333333`.
+  - Decided on the way (Adrian): fractions keep **whole percents**, the precision the admin
+    sliders (0.01 steps) and the whole-percent discount field use. So the fractions become
+    `numeric(3,2)` (not `numeric(4,3)`) with `<table>_<column>_check (col between 0 and 1)`.
+    `items.weight` becomes `numeric(6,3)` with `items_weight_check (weight > 0)`; an unknown weight
+    stays NULL. The API validator is now `positive()`, and the Bøker form checks it on submit.
+  - The conversion rounds the stored data (staging): 1/3 stored as `0.333`/`0.333333` → `0.33` on
+    56 branches' `sell_percentage` and 10 `percentage_buyout` rows, so some buyback/buyout prices
+    drop by 10 kr. The two Samfunnsgeografi items go from `0.175` → `0.18` discount, and the
+    inactive test branch Flåklypa VGS's `0.001` rent → `0`.
+  - Extra decimals written later are rounded by Postgres, not rejected (Adrian: silent rounding).
+    A PATCH response echoes the unrounded input until the next read.
+  - The branches' `default 1` is re-set so it loses the `'1'::double precision` cast. `schema.ts`
+    is unchanged (the `decimal` schema rule already types numeric as `number`). `down()` restores
+    the float type, not the unrounded values.
+  - Verified: rollback and re-run both work, 1,030 tests pass. The Filialer Betaling tab saves
+    (PATCH 200, reads back `0.35`, then reset to `0.33`). Item PATCH with weight 0 returns 422,
+    and `0.7805`/`0.175` are stored as `0.781`/`0.18`.
 
 ### Step 6 — `opening_hours` reserved-word rename ☐
 

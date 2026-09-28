@@ -601,14 +601,14 @@ test.group("priceItemLine", () => {
     assert,
   }) => {
     const line = itemLine({
-      branch: branchWith({ sellPercentage: 0.333 }),
+      branch: branchWith({ sellPercentage: 0.33 }),
       item: mock<Item>({ ...ITEM, buyback: true }),
     });
     assert.equal(options(line, "sell")[0]?.price, -160);
   });
 
   test("does not offer sell when the item is not bought back", ({ assert }) => {
-    const line = itemLine({ branch: branchWith({ sellPercentage: 0.333 }) });
+    const line = itemLine({ branch: branchWith({ sellPercentage: 0.33 }) });
     assert.lengthOf(options(line, "sell"), 0);
   });
 
@@ -617,7 +617,7 @@ test.group("priceItemLine", () => {
   }) => {
     const line = itemLine({
       scanned: false,
-      branch: branchWith({ sellPercentage: 0.333 }),
+      branch: branchWith({ sellPercentage: 0.33 }),
       item: mock<Item>({ ...ITEM, buyback: true }),
       branchItem: mock<BranchItem>({
         rentAtBranch: true,
