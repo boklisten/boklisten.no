@@ -1,23 +1,23 @@
 import type { RentPeriod } from "#shared/branch";
 
 /**
- * The branch's rent periods still ahead of `now`, soonest first — the deadlines a book may be
- * handed out on. Dates are compared through `new Date()` because the periods arrive as ISO
- * strings over the API.
+ * The branch's rent periods whose deadline is after `today` (`YYYY-MM-DD`), soonest first — the
+ * deadlines a book may be handed out on. A book is never handed out on the day it is due.
  */
-export function futureRentPeriods(branch: { rentPeriods: RentPeriod[] }, now: Date): RentPeriod[] {
+export function futureRentPeriods(
+  branch: { rentPeriods: RentPeriod[] },
+  today: string,
+): RentPeriod[] {
   return branch.rentPeriods
-    .filter((period) => new Date(period.date).getTime() > now.getTime())
-    .toSorted((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .filter((period) => period.date > today)
+    .toSorted((a, b) => a.date.localeCompare(b.date));
 }
 
 /** The branch's future rent period matching the picked deadline, if the pick is valid. */
 export function findFutureRentPeriod(
   branch: { rentPeriods: RentPeriod[] },
-  deadline: Date,
-  now: Date,
+  deadline: string,
+  today: string,
 ): RentPeriod | undefined {
-  return futureRentPeriods(branch, now).find(
-    (period) => new Date(period.date).getTime() === deadline.getTime(),
-  );
+  return futureRentPeriods(branch, today).find((period) => period.date === deadline);
 }

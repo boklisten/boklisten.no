@@ -15,8 +15,8 @@ const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
 const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
 const OTHER_TITLE = "5d765db5fc8c47001c408e01";
 
-const JUNE = DateTime.fromISO("2026-06-15T00:00:00Z");
-const AUGUST = DateTime.fromISO("2026-08-20T00:00:00Z");
+const JUNE = DateTime.fromISO("2026-06-15");
+const AUGUST = DateTime.fromISO("2026-08-20");
 
 const deadlineOf = async (customerItem: CustomerItem) =>
   (await CustomerItem.findOrFail(customerItem.id)).deadline.toMillis();
@@ -46,7 +46,7 @@ test.group("extendRemainingCopyDeadlines", (group) => {
     // August. They hand over the August copy, so the copy they keep must run to August too.
     const june = await copy(JUNE);
 
-    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST.toJSDate());
+    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST.toISODate()!);
 
     assert.equal(await deadlineOf(june), AUGUST.toMillis());
   });
@@ -54,7 +54,7 @@ test.group("extendRemainingCopyDeadlines", (group) => {
   test("a copy already running longer is left alone", async ({ assert }) => {
     const august = await copy(AUGUST);
 
-    await extendRemainingCopyDeadlines(A, GYMNOS_2009, JUNE.toJSDate());
+    await extendRemainingCopyDeadlines(A, GYMNOS_2009, JUNE.toISODate()!);
 
     assert.equal(await deadlineOf(august), AUGUST.toMillis());
   });
@@ -66,7 +66,7 @@ test.group("extendRemainingCopyDeadlines", (group) => {
     const someoneElses = await copy(JUNE, { customerId: B });
     const otherTitle = await copy(JUNE, { itemId: OTHER_TITLE });
 
-    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST.toJSDate());
+    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST.toISODate()!);
 
     assert.equal(await deadlineOf(first), AUGUST.toMillis());
     assert.equal(await deadlineOf(second), AUGUST.toMillis());
@@ -80,7 +80,7 @@ test.group("extendRemainingCopyDeadlines", (group) => {
     // same title when deciding which deadline the kept copy carries.
     const edition2012 = await copy(JUNE, { itemId: GYMNOS_2012 });
 
-    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST.toJSDate());
+    await extendRemainingCopyDeadlines(A, GYMNOS_2009, AUGUST.toISODate()!);
 
     assert.equal(await deadlineOf(edition2012), AUGUST.toMillis());
   });

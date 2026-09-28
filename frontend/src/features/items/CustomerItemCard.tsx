@@ -10,12 +10,12 @@ import {
   IconSchool,
   IconShoppingCart,
 } from "@tabler/icons-react";
-import dayjs from "dayjs";
 import { Activity } from "react";
 import type { ReactNode } from "react";
 
 import useCart from "@/shared/hooks/useCart";
 import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline } from "@/shared/utils/deadline";
 import type { Route } from "@tuyau/core/types";
 
 function InfoEntry({
@@ -88,9 +88,7 @@ export default function CustomerItemCard({
         <Group>
           <IconCalendarEvent />
           <Text>Frist: </Text>
-          <Text fw="bold">
-            {norwegianTime(actionableCustomerItem.deadline).format("DD/MM/YYYY")}
-          </Text>
+          <Text fw="bold">{formatDeadline(actionableCustomerItem.deadline)}</Text>
         </Group>
         <Activity
           mode={
@@ -107,9 +105,7 @@ export default function CustomerItemCard({
                   (entry) =>
                     entry.id === actionableCustomerItem.item.id &&
                     cart.getSelectedOption(entry).type === action.type &&
-                    ("to" in action
-                      ? dayjs(cart.getSelectedOption(entry).to).isSame(action.to)
-                      : true),
+                    ("to" in action ? cart.getSelectedOption(entry).to === action.to : true),
                 );
               return (
                 <Tooltip key={action.type} label={action.tooltip} disabled={!action.tooltip}>

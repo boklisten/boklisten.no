@@ -106,7 +106,7 @@ export function customerItemDto(overrides: Partial<CustomerItemDto> = {}): Custo
     blid: null,
     type: "rent",
     customerId: fixtureId("c0"),
-    deadline: new Date("2027-07-01T00:00:00Z"),
+    deadline: "2027-07-01",
     handoutBranchId: fixtureId("b1"),
     handoutEmployeeId: null,
     handedOutAt: new Date("2026-08-15T10:00:00Z"),

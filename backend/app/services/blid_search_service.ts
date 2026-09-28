@@ -1,3 +1,5 @@
+import { DateTime } from "luxon";
+
 import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
 import Delivery from "#models/delivery";
@@ -23,6 +25,7 @@ import type {
 } from "#shared/blid_search";
 import type { CustomerItem as CustomerItemDto } from "#shared/customer-item/customer-item";
 import type { CustomerItemType } from "#shared/customer-item/customer-item-type";
+import { isDeadlineOverdue } from "#shared/deadline";
 import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order/order";
 
 interface HandoverRow {
@@ -163,8 +166,12 @@ export function assembleBlidSearchHits(sources: BlidSearchHitSources): BlidSearc
   });
 }
 
-function isoOrUndefined(date: Date | null | undefined): string | undefined {
-  return date === undefined || date === null ? undefined : new Date(date).toISOString();
+/**
+ * The Norwegian calendar day of an instant, `YYYY-MM-DD`. A `periodFrom` is usually the moment
+ * the period was bought, and only a fallback for the deadline it replaced.
+ */
+function dayOf(date: Date | null): string | undefined {
+  return date === null ? undefined : (DateTime.fromJSDate(new Date(date)).toISODate() ?? undefined);
 }
 
 function handoutTypeOf(orderItem: OrderItemDto | undefined): CustomerItemType | undefined {
@@ -358,7 +365,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       employee: employeeOf(order?.employeeId),
       byCustomer: order?.byCustomer ?? action === "match-transfer",
       branchName: branchName(order?.branchId),
-      deadline: isoOrUndefined(relevantOrderItem?.periodTo),
+      deadline: relevantOrderItem?.periodTo ?? undefined,
       handoutType: action === "handout" ? handoutTypeOf(relevantOrderItem) : undefined,
       byMail: action === "handout" ? byMailOf(order) : undefined,
       orderId: handover.orderId ?? undefined,
@@ -395,7 +402,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
             action: "handout",
             from: { type: "stand" },
             to: customerParty(order.customerId),
-            deadline: isoOrUndefined(orderItem.periodTo),
+            deadline: orderItem.periodTo ?? undefined,
             handoutType: orderItem.type,
             byMail: byMailOf(order),
           };
@@ -413,7 +420,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
           event = {
             action: "match-transfer",
             to: customerParty(order.customerId),
-            deadline: isoOrUndefined(orderItem.periodTo),
+            deadline: orderItem.periodTo ?? undefined,
           };
           break;
         }
@@ -425,8 +432,8 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
           event = {
             action: "extend",
             to: customerParty(order.customerId),
-            previousDeadline: isoOrUndefined(orderItem.periodFrom),
-            deadline: isoOrUndefined(orderItem.periodTo),
+            previousDeadline: dayOf(orderItem.periodFrom),
+            deadline: orderItem.periodTo ?? undefined,
           };
           break;
         }
@@ -505,7 +512,8 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
   for (const customerItem of sources.customerItems) {
     const { customerId } = customerItem;
     if (!gotBook(customerId)) {
-      const deadlineAtHandout = customerItem.periodExtends[0]?.periodFrom ?? customerItem.deadline;
+      const firstExtend = customerItem.periodExtends[0];
+      const deadlineAtHandout = firstExtend ? dayOf(firstExtend.periodFrom) : customerItem.deadline;
       events.push({
         time: new Date(customerItem.handedOutAt).toISOString(),
         action: "handout",
@@ -514,7 +522,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
         employee: employeeOf(customerItem.handoutEmployeeId),
         byCustomer: false,
         branchName: branchName(customerItem.handoutBranchId),
-        deadline: new Date(deadlineAtHandout).toISOString(),
+        deadline: deadlineAtHandout,
         handoutType: customerItem.type,
       });
     }
@@ -530,7 +538,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       });
     }
     for (const periodExtend of customerItem.periodExtends) {
-      const deadline = new Date(periodExtend.periodTo).toISOString();
+      const deadline = periodExtend.periodTo;
       if (extendDeadlines.has(deadline)) {
         continue;
       }
@@ -539,7 +547,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
         action: "extend",
         to: customerParty(customerId),
         byCustomer: false,
-        previousDeadline: new Date(periodExtend.periodFrom).toISOString(),
+        previousDeadline: dayOf(periodExtend.periodFrom),
         deadline,
       });
     }
@@ -622,13 +630,16 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
     }
   }
 
-  // A held book past its deadline gets a synthetic event, timed at the deadline itself. It
-  // vanishes once the book is returned or the deadline extended.
+  // A held book past its deadline gets a synthetic event, timed at the end of the deadline day.
+  // It vanishes once the book is returned or the deadline extended.
   const heldCustomerItem = sources.customerItems.find(isActivelyHeld);
-  if (heldCustomerItem && new Date(heldCustomerItem.deadline) < sources.now) {
-    const deadline = new Date(heldCustomerItem.deadline).toISOString();
+  if (
+    heldCustomerItem &&
+    isDeadlineOverdue(heldCustomerItem.deadline, DateTime.fromJSDate(sources.now).toISODate()!)
+  ) {
+    const { deadline } = heldCustomerItem;
     events.push({
-      time: deadline,
+      time: DateTime.fromISO(deadline).endOf("day").toJSDate().toISOString(),
       action: "deadline-expired",
       to: customerParty(heldCustomerItem.customerId),
       byCustomer: false,
@@ -655,7 +666,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
       .filter((event) => event.deadline !== undefined)
       .toSorted((a, b) => b.time.localeCompare(a.time))[0];
     if (newestWithDeadline) {
-      newestWithDeadline.deadline = new Date(customerItem.deadline).toISOString();
+      newestWithDeadline.deadline = customerItem.deadline;
     }
   }
 
@@ -703,7 +714,7 @@ function deriveActiveItem(customerItems: BlidCustomerItem[]): BlidActiveItem | u
   }
   return {
     customerItemId: active.id,
-    deadline: new Date(active.deadline).toISOString(),
+    deadline: active.deadline,
     handoutBranchId: active.handoutBranchId,
   };
 }
@@ -773,7 +784,7 @@ export const BlidSearchService = {
   ): Promise<void> {
     const previous = await ActiveItemCorrections.write({
       customerItemId,
-      deadline: deadline ? new Date(deadline) : undefined,
+      deadline,
       branchId,
     });
     if (!isMonitored(employee)) {
@@ -790,7 +801,7 @@ export const BlidSearchService = {
       await ActiveItemMonitoring.reportDeadlineChange({
         ...reported,
         previousDeadline: previous.deadline,
-        deadline: new Date(deadline),
+        deadline,
       });
     }
     if (branchId) {

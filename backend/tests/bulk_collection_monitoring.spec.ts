@@ -19,17 +19,17 @@ const titles = new Map([
 ]);
 
 function customerItem({
-  deadline = new Date("2027-07-01T00:00:00.000Z"),
+  deadline = "2027-07-01",
   ...overrides
 }: Partial<Pick<CustomerItem, "id" | "itemId" | "blid" | "customerId">> & {
-  deadline?: Date;
+  deadline?: string;
 }): CustomerItem {
   return customerItemDouble({
     id: "ci-1",
     itemId: "item-1",
     blid: "12345678",
     customerId: IDA,
-    deadline: DateTime.fromJSDate(deadline),
+    deadline: DateTime.fromISO(deadline),
     ...overrides,
   });
 }
@@ -48,13 +48,13 @@ test.group("BulkCollectionMonitoring.reportOverdueBooks", (group) => {
     await BulkCollectionMonitoring.reportOverdueBooks({
       employee: EMPLOYEE,
       customerItems: [
-        customerItem({ deadline: new Date("2026-06-30T22:00:00.000Z") }),
+        customerItem({ deadline: "2026-07-01" }),
         customerItem({
           id: "ci-2",
           itemId: "item-2",
           blid: "87654321",
           customerId: PETRA,
-          deadline: new Date("2026-08-31T22:00:00.000Z"),
+          deadline: "2026-09-01",
         }),
         customerItem({ id: "ci-3", blid: "11111111" }),
       ],
@@ -85,10 +85,10 @@ test.group("BulkCollectionMonitoring.reportOverdueBooks", (group) => {
     });
   });
 
-  test("a book returned within the day of grace is not reported", async ({ assert }) => {
+  test("a book returned on its deadline day is not reported", async ({ assert }) => {
     await BulkCollectionMonitoring.reportOverdueBooks({
       employee: EMPLOYEE,
-      customerItems: [customerItem({ deadline: new Date("2026-09-05T12:00:00.000Z") })],
+      customerItems: [customerItem({ deadline: "2026-09-06" })],
       titles,
       now: NOW,
     });

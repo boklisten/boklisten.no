@@ -26,7 +26,7 @@ export default class CustomerItemsController {
           isbn: String(item.isbn),
         },
         blid: customerItem.blid,
-        deadline: customerItem.deadline.toJSDate(),
+        deadline: customerItem.deadline.toISODate()!,
         handoutAt: customerItem.handedOutAt.toJSDate(),
         branch: {
           id: branch.id,
@@ -67,7 +67,7 @@ export default class CustomerItemsController {
         title: item.title,
         blid: customerItem.blid,
         type: customerItem.type,
-        deadline: customerItem.deadline.toJSDate(),
+        deadline: customerItem.deadline.toISODate()!,
         handoutBranch: { id: branch.id, name: branch.name },
         actions: buildCustomerItemActions(
           customerItem,
@@ -77,7 +77,7 @@ export default class CustomerItemsController {
       };
     });
     return listed.toSorted(
-      (a, b) => a.deadline.getTime() - b.deadline.getTime() || a.title.localeCompare(b.title, "nb"),
+      (a, b) => a.deadline.localeCompare(b.deadline) || a.title.localeCompare(b.title, "nb"),
     );
   }
 }

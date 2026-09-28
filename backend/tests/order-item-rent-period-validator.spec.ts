@@ -127,7 +127,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
     rentPeriods: [
       {
         type: "semester",
-        date: new Date(),
+        date: "2027-07-01",
         maxNumberOfPeriods: 1,
         percentage: 0.5,
       },
@@ -215,7 +215,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
       rentPeriods: [
         {
           type: "semester",
-          date: new Date(),
+          date: "2027-07-01",
           maxNumberOfPeriods: 1,
           percentage: 0.5,
         },
@@ -244,7 +244,7 @@ test.group("OrderItemRentPeriodValidator", (group) => {
       rentPeriods: [
         {
           type: "semester",
-          date: new Date(),
+          date: "2027-07-01",
           maxNumberOfPeriods: 1,
           percentage: 0.5,
         },

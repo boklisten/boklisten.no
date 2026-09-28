@@ -43,7 +43,7 @@ async function buildCompanyInvoice(input: CompanyInvoiceInput): Promise<NewInvoi
     type: null,
     reference: input.reference,
     ourReference: input.ourReference,
-    dueDate: DateTime.fromJSDate(input.dueDate),
+    dueDate: DateTime.fromISO(input.dueDate),
     branchId: null,
     customerId: null,
     customerNumber: company.customerNumber,

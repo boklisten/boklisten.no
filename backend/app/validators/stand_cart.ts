@@ -1,5 +1,6 @@
 import vine from "@vinejs/vine";
 
+import { calendarDateField } from "#validators/common/fields";
 import { STAND_CART_ACTION_TYPES, STAND_CART_CONFIRMATIONS } from "#shared/stand_cart";
 
 const OBJECT_ID_PATTERN = /^[0-9a-f]{24}$/i;
@@ -60,8 +61,7 @@ const linesSchema = vine
       source: sourceSchema,
       choice: vine.object({
         type: vine.enum(STAND_CART_ACTION_TYPES),
-        /** ISO timestamp. */
-        to: vine.string().optional(),
+        to: calendarDateField.clone().optional(),
       }),
       blid: vine.string().trim().optional(),
       /** The price the cart showed; the checkout refuses when the server's differs. */

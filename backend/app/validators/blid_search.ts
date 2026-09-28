@@ -1,14 +1,14 @@
 import vine from "@vinejs/vine";
 
+import { calendarDateField } from "#validators/common/fields";
 import { BLID_SEARCH_PATTERN } from "#shared/blid_search";
 
 const OBJECT_ID_PATTERN = /^[0-9a-f]{24}$/i;
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 
 export const blidActiveItemUpdateValidator = vine.create(
   vine.object({
     customerItemId: vine.string().regex(OBJECT_ID_PATTERN),
-    deadline: vine.string().regex(ISO_DATE_PATTERN).optional(),
+    deadline: calendarDateField.clone().optional(),
     branchId: vine.string().regex(OBJECT_ID_PATTERN).optional(),
   }),
 );

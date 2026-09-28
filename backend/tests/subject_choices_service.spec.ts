@@ -189,15 +189,15 @@ test.group("SubjectChoicesService.resolveSubjectItems()", () => {
 
 test.group("SubjectChoicesService.resolvePeriodType()", () => {
   test("uses year when the deadline is more than six months away", ({ assert }) => {
-    assert.equal(resolvePeriodType(new Date("2027-07-01"), NOW), "year");
+    assert.equal(resolvePeriodType("2027-07-01", NOW), "year");
   });
 
   test("uses semester when the deadline is within six months", ({ assert }) => {
-    assert.equal(resolvePeriodType(new Date("2026-12-20"), NOW), "semester");
+    assert.equal(resolvePeriodType("2026-12-20", NOW), "semester");
   });
 
   test("uses semester when the deadline is exactly six months away", ({ assert }) => {
-    assert.equal(resolvePeriodType(new Date("2027-02-17T12:00:00.000Z"), NOW), "semester");
+    assert.equal(resolvePeriodType("2027-02-17", NOW), "semester");
   });
 });
 

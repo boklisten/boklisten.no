@@ -3,6 +3,7 @@ export interface PublicBlidHandedOut {
   status: "handedOut";
   handoutBranch: string;
   handoutTime: string;
+  /** `YYYY-MM-DD`. */
   deadline: string;
   title: string;
   isbn: string;

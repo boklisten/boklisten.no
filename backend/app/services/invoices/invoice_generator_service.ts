@@ -27,8 +27,6 @@ function wholeKroner(amount: number): number {
   return Number(amount.toFixed(0));
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 type LinePayment = Pick<NewInvoiceLine, "unit" | "gross" | "net" | "vat" | "discount">;
 
 /**
@@ -176,7 +174,7 @@ function linePaymentOf({ unit, gross, net, vat, discount }: LinePayment): LinePa
 function buildInvoice(
   { customer, customerItems }: CustomerBooks,
   invoiceNumber: number,
-  dueDate: Date,
+  dueDate: DateTime,
   settings: InvoiceGenerationSettings,
   { items, branches, lastPeriodTypes }: Lookups,
 ): NewInvoice {
@@ -203,7 +201,7 @@ function buildInvoice(
   const invoice: NewInvoice = {
     invoiceNumber: String(invoiceNumber),
     type: settings.type,
-    dueDate: DateTime.fromJSDate(dueDate),
+    dueDate,
     branchId: customerItems[0]?.handoutBranchId ?? null,
     customerId: customer.id,
     customerNumber: pupilCustomerNumber(customer.id),
@@ -244,7 +242,7 @@ function listRow(invoice: NewInvoice, id: string, createdAt: Date): InvoiceListR
     customerOrganizationNumber: null,
     type: invoice.type,
     createdAt,
-    dueDate: invoice.dueDate.toJSDate(),
+    dueDate: invoice.dueDate.toISODate()!,
     totalIncludingFee: invoice.totalIncludingFee,
     status: "unpaid",
   };
@@ -279,7 +277,7 @@ export async function generateInvoices(
   };
 
   const skipped: InvoiceGenerationResult["skipped"] = [];
-  const dueDate = new Date(Date.now() + settings.daysToDeadline * DAY_MS);
+  const dueDate = DateTime.now().plus({ days: settings.daysToDeadline });
   let invoiceNumber = settings.invoiceNumber;
   const invoices: InvoiceListRow[] = [];
   for (const [customerId, books] of groups) {

@@ -28,6 +28,7 @@ import { capitalize, formatAmount, pluralBooks } from "@/features/order-history/
 import EntityLink from "@/shared/components/EntityLink";
 import OrderItemTypeIcon from "@/shared/components/OrderItemTypeIcon";
 import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline } from "@/shared/utils/deadline";
 
 /** Admin cards link to books and people and can move the order; customer cards only tell. */
 export type OrderHistoryVariant = "admin" | "customer";
@@ -77,7 +78,7 @@ function itemDescription(item: OrderHistoryItem): string {
   // A received match book is a loan like any other; who it came from is the note below.
   const parts = [item.type === "match-receive" ? "Lån" : capitalize(item.typeLabel)];
   if (item.period) {
-    parts[0] += ` til ${formatDate(item.period.to)}`;
+    parts[0] += ` til ${formatDeadline(item.period.to, "D. MMM YYYY")}`;
   }
   if (item.amountLeftToPay !== null && item.amountLeftToPay > 0) {
     parts.push(`${item.amountLeftToPay} kr igjen å betale`);

@@ -6,7 +6,8 @@ import type { CustomerItem as CustomerItemDto } from "#shared/customer-item/cust
 
 interface ActiveItemCorrection {
   customerItemId: string;
-  deadline?: Date | undefined;
+  /** `YYYY-MM-DD`. */
+  deadline?: string | undefined;
   branchId?: string | undefined;
 }
 
@@ -29,7 +30,7 @@ export const ActiveItemCorrections = {
     // The values before the write, so the report can say what they were.
     const previous = customerItem.toDto();
     if (deadline) {
-      customerItem.deadline = DateTime.fromJSDate(deadline);
+      customerItem.deadline = DateTime.fromISO(deadline);
     }
     if (branchId) {
       customerItem.handoutBranchId = branchId;

@@ -213,7 +213,7 @@ function presentItem(
   orderItem: OrderItemDto,
   sources: OrderHistorySources,
 ): OrderHistoryItem {
-  const to = iso(orderItem.periodTo);
+  const to = orderItem.periodTo;
   return {
     type: orderItem.type,
     typeLabel: TranslationService.translateOrderItemTypePastTense(orderItem.type),
@@ -467,7 +467,8 @@ export const OrderHistoryService = {
     }: {
       orderId: string;
       itemId: string;
-      deadline: Date;
+      /** `YYYY-MM-DD`. */
+      deadline: string;
     },
     employee: MonitoredEmployee,
   ): Promise<void> {
@@ -486,7 +487,7 @@ export const OrderHistoryService = {
     }
     // The same rule again in the write, so it cannot race a handout.
     const [updated] = await OrderItem.whereOpen(OrderItem.query().where("id", orderItem.id)).update(
-      { periodTo: DateTime.fromJSDate(deadline) },
+      { periodTo: DateTime.fromISO(deadline) },
     );
     if (!updated) {
       throw new BadRequestException("Boka er ikke lenger bestilt");
@@ -503,7 +504,7 @@ export const OrderHistoryService = {
           label: "Gammel frist",
           value: orderItem.periodTo ? formatDeadline(orderItem.periodTo) : "Ingen",
         },
-        { label: "Ny frist", value: formatDeadline(DateTime.fromJSDate(deadline)) },
+        { label: "Ny frist", value: formatDeadline(DateTime.fromISO(deadline)) },
       ],
     });
   },

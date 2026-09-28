@@ -171,7 +171,7 @@ export default class CustomerItem extends CustomerItemSchema {
       blid: this.blid,
       type: this.type,
       customerId: this.customerId,
-      deadline: this.deadline.toJSDate(),
+      deadline: this.deadline.toISODate()!,
       handoutBranchId: this.handoutBranchId,
       handoutEmployeeId: this.handoutEmployeeId,
       handedOutAt: this.handedOutAt.toJSDate(),
@@ -191,7 +191,7 @@ export default class CustomerItem extends CustomerItemSchema {
       amountLeftToPay: this.amountLeftToPay,
       periodExtends: this.periodExtends.map((periodExtend) => ({
         periodFrom: periodExtend.periodFrom.toJSDate(),
-        periodTo: periodExtend.periodTo.toJSDate(),
+        periodTo: periodExtend.periodTo.toISODate()!,
         periodType: periodExtend.periodType,
         createdAt: periodExtend.createdAt.toJSDate(),
       })),

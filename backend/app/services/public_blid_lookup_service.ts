@@ -29,7 +29,7 @@ async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> 
   return {
     status: "handedOut",
     handoutTime: customerItem.handedOutAt.toJSDate().toISOString(),
-    deadline: customerItem.deadline.toJSDate().toISOString(),
+    deadline: customerItem.deadline.toISODate()!,
     name: customer?.name ?? "",
     email: customer?.email ?? "",
     phone: customer?.phone ?? "",

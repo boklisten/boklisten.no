@@ -18,14 +18,14 @@ test.group("ActiveItemMonitoring", (group) => {
   });
   group.each.teardown(() => sandbox.restore());
 
-  test("a changed deadline is reported with both dates in Norwegian time", async ({ assert }) => {
+  test("a changed deadline is reported with both dates", async ({ assert }) => {
     await ActiveItemMonitoring.reportDeadlineChange({
       employee: EMPLOYEE,
       customerId: CUSTOMER_ID,
       title: "Matematikk R1",
       blid: "12345678",
-      previousDeadline: new Date("2026-06-30T22:00:00.000Z"),
-      deadline: new Date("2026-12-19T23:00:00.000Z"),
+      previousDeadline: "2026-07-01",
+      deadline: "2026-12-20",
     });
 
     assert.isTrue(report.calledOnce);

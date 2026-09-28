@@ -163,8 +163,8 @@ export function findPastDeadlines(rows: Pick<SubjectChoiceRow, "deadline">[], no
   ].toSorted();
 }
 
-export function resolvePeriodType(deadline: Date, now: Date): "year" | "semester" {
-  return DateTime.fromJSDate(now).plus({ months: 6 }) < DateTime.fromJSDate(deadline)
+export function resolvePeriodType(deadline: string, now: Date): "year" | "semester" {
+  return DateTime.fromJSDate(now).plus({ months: 6 }) < DateTime.fromISO(deadline)
     ? "year"
     : "semester";
 }
@@ -282,7 +282,7 @@ export function planSubjectChoices({
         if (existing) {
           if (choice.deadline < existing.deadline) {
             existing.deadline = choice.deadline;
-            existing.periodType = resolvePeriodType(new Date(choice.deadline), now);
+            existing.periodType = resolvePeriodType(choice.deadline, now);
           }
           continue;
         }
@@ -290,7 +290,7 @@ export function planSubjectChoices({
           itemId: item.itemId,
           title: item.title,
           deadline: choice.deadline,
-          periodType: resolvePeriodType(new Date(choice.deadline), now),
+          periodType: resolvePeriodType(choice.deadline, now),
           branchId: resolved.branchId,
         });
       }
@@ -449,7 +449,7 @@ export const SubjectChoicesService = {
             handout: false,
             delivered: false,
             periodFrom: DateTime.now(),
-            periodTo: DateTime.fromJSDate(new Date(orderItem.deadline)),
+            periodTo: DateTime.fromISO(orderItem.deadline),
             numberOfPeriods: 1,
             periodType: orderItem.periodType,
           })),

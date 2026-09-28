@@ -8,7 +8,6 @@ import Item from "#models/item";
 import Order from "#models/order";
 import OrderItem from "#models/order_item";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
-import { DEADLINE_PADDING_DAYS } from "#services/deadline_window";
 import { OrderCancellationService } from "#services/order_cancellation_service";
 import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 
@@ -21,10 +20,8 @@ interface BranchBooksTitle {
 }
 
 interface BranchBooksGroup {
-  /** Canonical deadline for display, ISO string */
+  /** `YYYY-MM-DD`. */
   deadline: string;
-  /** Exact deadline values covered by this group, used to address it in details/updates */
-  deadlines: string[];
   direct: number;
   indirect: number;
   total: number;
@@ -39,7 +36,7 @@ interface BranchBooksSummary {
 }
 
 interface BranchBooksFilter {
-  deadlines?: string[];
+  deadline?: string;
   itemId?: string;
   includeDescendants: boolean;
 }
@@ -50,14 +47,13 @@ export interface BranchBooksUpdate {
 }
 
 export interface SummaryRow {
-  deadline: Date;
+  /** `YYYY-MM-DD`. */
+  deadline: string;
   itemId: string;
   title: string;
   direct: number;
   total: number;
 }
-
-const DEADLINE_PADDING_MS = DEADLINE_PADDING_DAYS * 24 * 60 * 60 * 1000;
 
 async function resolveScope(branchId: string) {
   const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
@@ -71,53 +67,11 @@ function activeBooksQuery(branchIds: string[]) {
   );
 }
 
-/**
- * Group deadlines that fall within DEADLINE_PADDING_DAYS of each other, so deadlines that are
- * off by a day or two (the same drift deadlineWindow pads around) are treated as one deadline.
- * The most common deadline in a cluster becomes its anchor.
- */
-export function clusterDeadlines(
-  deadlineCounts: { deadline: Date; count: number }[],
-): { anchor: Date; members: Date[] }[] {
-  const countByTime = new Map<number, number>();
-  for (const { deadline, count } of deadlineCounts) {
-    const time = deadline.getTime();
-    countByTime.set(time, (countByTime.get(time) ?? 0) + count);
-  }
-  const sorted = [...countByTime.entries()].toSorted(
-    ([timeA, countA], [timeB, countB]) => countB - countA || timeA - timeB,
-  );
-  const claimed = new Set<number>();
-  const clusters: { anchor: Date; members: Date[] }[] = [];
-  for (const [anchorTime] of sorted) {
-    if (claimed.has(anchorTime)) {
-      continue;
-    }
-    const members = sorted
-      .map(([time]) => time)
-      .filter((time) => !claimed.has(time) && Math.abs(time - anchorTime) < DEADLINE_PADDING_MS);
-    for (const memberTime of members) {
-      claimed.add(memberTime);
-    }
-    clusters.push({
-      anchor: new Date(anchorTime),
-      members: members.toSorted((a, b) => a - b).map((time) => new Date(time)),
-    });
-  }
-  return clusters.toSorted((a, b) => a.anchor.getTime() - b.anchor.getTime());
-}
-
 export function buildSummary(rows: SummaryRow[]): BranchBooksSummary {
-  const clusters = clusterDeadlines(
-    rows.map((row) => ({ deadline: row.deadline, count: row.total })),
-  );
-  const groups = clusters.map(({ anchor, members }) => {
-    const memberTimes = new Set(members.map((member) => member.getTime()));
+  const deadlines = [...new Set(rows.map((row) => row.deadline))].toSorted();
+  const groups = deadlines.map((deadline) => {
     const titleById = new Map<string, BranchBooksTitle>();
-    for (const row of rows) {
-      if (!memberTimes.has(row.deadline.getTime())) {
-        continue;
-      }
+    for (const row of rows.filter((candidate) => candidate.deadline === deadline)) {
       const entry = titleById.get(row.itemId) ?? {
         itemId: row.itemId,
         title: row.title,
@@ -132,8 +86,7 @@ export function buildSummary(rows: SummaryRow[]): BranchBooksSummary {
     }
     const titles = [...titleById.values()].toSorted((a, b) => a.title.localeCompare(b.title));
     return {
-      deadline: anchor.toISOString(),
-      deadlines: members.map((member) => member.toISOString()),
+      deadline,
       direct: titles.reduce((sum, title) => sum + title.direct, 0),
       indirect: titles.reduce((sum, title) => sum + title.indirect, 0),
       total: titles.reduce((sum, title) => sum + title.total, 0),
@@ -200,7 +153,7 @@ async function withTitles(rows: Omit<SummaryRow, "title">[]): Promise<SummaryRow
  */
 function orderedBooksQuery(
   branchIds: string[],
-  filter: { deadlines?: string[]; itemId?: string; orderItemIds?: number[] } = {},
+  filter: { deadline?: string; itemId?: string; orderItemIds?: number[] } = {},
 ) {
   const query = OrderItem.whereOpen(
     db.from("order_items").join("orders", "orders.id", "order_items.order_id"),
@@ -209,11 +162,8 @@ function orderedBooksQuery(
     .where("orders.placed", true)
     .whereIn("orders.branch_id", branchIds)
     .whereNotNull("order_items.period_to");
-  if (filter.deadlines) {
-    void query.whereIn(
-      "order_items.period_to",
-      filter.deadlines.map((deadline) => new Date(deadline)),
-    );
+  if (filter.deadline) {
+    void query.where("order_items.period_to", filter.deadline);
   }
   if (filter.itemId) {
     void query.where("order_items.item_id", filter.itemId);
@@ -227,7 +177,7 @@ function orderedBooksQuery(
 export const BranchBooksService = {
   async getActiveBooksSummary(branchId: string): Promise<BranchBooksSummary> {
     const { scopeIds } = await resolveScope(branchId);
-    const rows: { deadline: Date; itemId: string; direct: string; total: string }[] =
+    const rows: { deadline: string; itemId: string; direct: string; total: string }[] =
       await activeBooksQuery(scopeIds)
         .groupBy("customer_items.deadline", "customer_items.item_id")
         .select("customer_items.deadline", "customer_items.item_id as itemId")
@@ -251,11 +201,11 @@ export const BranchBooksService = {
 
   async getActiveBookDetails({
     branchId,
-    deadlines,
+    deadline,
     itemId,
   }: {
     branchId: string;
-    deadlines: string[];
+    deadline: string;
     itemId: string;
   }) {
     const rows: {
@@ -265,10 +215,7 @@ export const BranchBooksService = {
       handoutTime: Date | null;
     }[] = await activeBooksQuery([branchId])
       .where("customer_items.item_id", itemId)
-      .whereIn(
-        "customer_items.deadline",
-        deadlines.map((deadline) => new Date(deadline)),
-      )
+      .where("customer_items.deadline", deadline)
       .orderBy("customer_items.handed_out_at")
       .select(
         "customer_items.id as customerItemId",
@@ -293,11 +240,8 @@ export const BranchBooksService = {
   }) {
     const { scopeIds } = await resolveScope(branchId);
     const query = activeBooksQuery(filter.includeDescendants ? scopeIds : [branchId]);
-    if (filter.deadlines) {
-      void query.whereIn(
-        "customer_items.deadline",
-        filter.deadlines.map((deadline) => new Date(deadline)),
-      );
+    if (filter.deadline) {
+      void query.where("customer_items.deadline", filter.deadline);
     }
     if (filter.itemId) {
       void query.where("customer_items.item_id", filter.itemId);
@@ -307,7 +251,7 @@ export const BranchBooksService = {
     }
     const set: Record<string, unknown> = { updated_at: new Date() };
     if (update.deadline) {
-      set["deadline"] = new Date(update.deadline);
+      set["deadline"] = update.deadline;
     }
     if (update.branchId) {
       set["handout_branch_id"] = update.branchId;
@@ -318,7 +262,7 @@ export const BranchBooksService = {
 
   async getOrderedBooksSummary(branchId: string): Promise<BranchBooksSummary> {
     const { scopeIds } = await resolveScope(branchId);
-    const rows: { deadline: Date; itemId: string; direct: string; total: string }[] =
+    const rows: { deadline: string; itemId: string; direct: string; total: string }[] =
       await orderedBooksQuery(scopeIds)
         .groupBy("order_items.period_to", "order_items.item_id")
         .select("order_items.period_to as deadline", "order_items.item_id as itemId")
@@ -338,11 +282,11 @@ export const BranchBooksService = {
 
   async getOrderedBookDetails({
     branchId,
-    deadlines,
+    deadline,
     itemId,
   }: {
     branchId: string;
-    deadlines: string[];
+    deadline: string;
     itemId: string;
   }) {
     const rows: {
@@ -350,7 +294,7 @@ export const BranchBooksService = {
       orderItemId: number;
       customerId: string | null;
       orderTime: Date;
-    }[] = await orderedBooksQuery([branchId], { deadlines, itemId })
+    }[] = await orderedBooksQuery([branchId], { deadline, itemId })
       .select(
         "orders.id as orderId",
         "order_items.id as orderItemId",
@@ -390,7 +334,7 @@ export const BranchBooksService = {
         .update({ branchId: update.branchId, updatedAt: DateTime.now() });
       return { matchedCount: orderIds.length, modifiedCount: Number(moved[0] ?? 0) };
     }
-    const deadline = DateTime.fromJSDate(new Date(update.deadline ?? ""));
+    const deadline = DateTime.fromISO(update.deadline ?? "");
     await db.transaction(async (trx) => {
       await OrderItem.query({ client: trx })
         .whereIn(

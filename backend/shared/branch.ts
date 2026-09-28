@@ -7,7 +7,8 @@ export type BranchType = (typeof BRANCH_TYPES)[number];
 /** A deadline a VGS branch's books may be rented until. */
 export interface RentPeriod {
   type: Period;
-  date: Date;
+  /** `YYYY-MM-DD`. */
+  date: string;
   /** How many periods of this type one book may be rented. */
   maxNumberOfPeriods: number;
   /** Fraction of the item price the rent costs. */
@@ -17,7 +18,8 @@ export interface RentPeriod {
 /** A deadline a rented book may be extended to. */
 export interface ExtendPeriod {
   type: Period;
-  date: Date;
+  /** `YYYY-MM-DD`. */
+  date: string;
   /** How many periods of this type one book may be extended. */
   maxNumberOfPeriods: number;
   /** Price of the extension in whole NOK. */
@@ -29,7 +31,8 @@ export interface ExtendPeriod {
 /** A deadline a privatist branch's books are paid in instalments until. */
 export interface PartlyPaymentPeriod {
   type: Period;
-  date: Date;
+  /** `YYYY-MM-DD`. */
+  date: string;
   /** Fraction of the item price the customer pays to buy the book out. */
   percentageBuyout: number;
   /** Fraction of the item price the customer pays up front. */

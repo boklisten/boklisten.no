@@ -37,7 +37,8 @@ interface Draft {
   reference: string;
   ourReference: string;
   comment: string;
-  dueDate: Date;
+  /** `YYYY-MM-DD`. */
+  dueDate: string;
   lines: CompanyInvoiceLine[];
 }
 
@@ -48,7 +49,7 @@ function emptyDraft(): Draft {
     reference: "",
     ourReference: "",
     comment: "",
-    dueDate: dayjs().add(14, "day").toDate(),
+    dueDate: dayjs().add(14, "day").format("YYYY-MM-DD"),
     lines: [],
   };
 }
@@ -70,7 +71,7 @@ export default function CompanyInvoiceTab() {
           invoiceNumber: draft.invoiceNumber,
           reference: draft.reference,
           ourReference: draft.ourReference,
-          dueDate: draft.dueDate.toISOString(),
+          dueDate: draft.dueDate,
           ...(draft.comment.trim() ? { comment: draft.comment.trim() } : {}),
           lines: draft.lines,
         },
@@ -170,7 +171,7 @@ export default function CompanyInvoiceTab() {
                 label="Forfall"
                 valueFormat="DD.MM.YYYY"
                 value={draft.dueDate}
-                onChange={(value) => value && update({ dueDate: new Date(value) })}
+                onChange={(value) => value && update({ dueDate: value })}
               />
             </Group>
             <Textarea

@@ -10,15 +10,15 @@ import { customerItemDouble } from "#tests/customer_item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
-const SEMESTER_END = new Date("2026-12-20T00:00:00.000Z");
-const PAST = new Date("2026-06-20T00:00:00.000Z");
+const SEMESTER_END = "2026-12-20";
+const PAST = "2026-06-20";
 
 function customerItemWith({
   deadline = SEMESTER_END,
   creationTime = new Date("2026-08-01T10:00:00.000Z"),
   ...overrides
 }: Partial<Pick<CustomerItem, "id" | "blid" | "type">> & {
-  deadline?: Date;
+  deadline?: string;
   creationTime?: Date;
 } = {}): CustomerItem {
   return customerItemDouble({
@@ -26,7 +26,7 @@ function customerItemWith({
     itemId: "item1",
     blid: "12345678",
     type: "rent",
-    deadline: DateTime.fromJSDate(deadline),
+    deadline: DateTime.fromISO(deadline),
     createdAt: DateTime.fromJSDate(creationTime),
     handoutBranchId: "branch1",
     handedOutAt: DateTime.fromJSDate(NOW),

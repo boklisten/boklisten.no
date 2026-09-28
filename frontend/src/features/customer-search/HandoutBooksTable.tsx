@@ -9,7 +9,7 @@ import CustomerLink from "@/features/kasse/CustomerLink";
 import OrderBranchChip from "@/features/order-history/OrderBranchChip";
 import AddToCartButton from "@/features/stand-cart/AddToCartButton";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";
-import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline } from "@/shared/utils/deadline";
 
 const TYPE_LABELS: Partial<Record<OrderItemType, string>> = {
   rent: "Lån",
@@ -29,7 +29,8 @@ export interface HandoutRow {
   branchName: string | null;
   /** Titles of the other ordered books on the same order, which move with it when its branch changes. */
   alsoMoving: string[];
-  deadline: Date | string | undefined;
+  /** `YYYY-MM-DD`. */
+  deadline: string | undefined;
   /** The student the book is due from, when it comes from a peer rather than the stand. */
   receiveFrom: { id: string | null; name: string } | undefined;
   /** How the book goes into the cart; null for a peer book, which never passes the stand. */
@@ -44,7 +45,7 @@ function periodLabel(row: HandoutRow): string | null {
   const label = TYPE_LABELS[row.type] ?? row.type;
   return row.deadline === undefined
     ? label
-    : `${label} til ${norwegianTime(row.deadline).format("DD.MM.YYYY")}`;
+    : `${label} til ${formatDeadline(row.deadline, "DD.MM.YYYY")}`;
 }
 
 /**

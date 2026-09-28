@@ -44,7 +44,8 @@ export interface OrderItem {
   customerItemId: string | null;
   /** The rental or extension period, for rent, extend and partly-payment lines. */
   periodFrom: Date | null;
-  periodTo: Date | null;
+  /** `YYYY-MM-DD`. The deadline the line sets. */
+  periodTo: string | null;
   numberOfPeriods: number | null;
   periodType: Period | null;
   amountLeftToPay: number | null;

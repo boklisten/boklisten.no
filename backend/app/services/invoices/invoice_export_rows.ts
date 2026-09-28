@@ -136,7 +136,7 @@ function vismaH1(lineNumber: number, invoice: Invoice, ehf: boolean): CsvCell[] 
     "", // 16 KID/ODCR
     "", // 17 Currency
     "", // 18 Exchange Rate
-    formatExportDate(invoice.dueDate, "ddMMyyyy"), // 19 Invoice due date (M)
+    DateTime.fromISO(invoice.dueDate).toFormat("ddMMyyyy"), // 19 Invoice due date (M)
     dobOrOrganizationNumber, // 20 Customer organisation no
     inOre(invoice.totalGross), // 21 Invoice gross amount (M)
     inOre(invoice.totalNet), // 22 Invoice net amount (M)
@@ -340,7 +340,7 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
   const rows: CsvCell[][] = [[...TRIPLETEX_HEADERS]];
   for (const invoice of invoices) {
     const invoiceDate = formatExportDate(invoice.createdAt, "yyyy-MM-dd");
-    const dueDate = formatExportDate(invoice.dueDate, "yyyy-MM-dd");
+    const dueDate = invoice.dueDate;
     const customerFields = [
       invoice.customerNumber,
       invoice.customerName,

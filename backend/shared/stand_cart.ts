@@ -81,7 +81,7 @@ export function unlinkedBlidMessage(blid: string): string {
  */
 export interface StandCartOption {
   type: StandCartActionType;
-  /** ISO timestamp of the period end, for actions that carry a period. */
+  /** `YYYY-MM-DD`. The period end, for actions that carry a period. */
   to?: string;
   periodType?: Period;
   /** What the customer pays now; negative when money goes back to the customer. */
@@ -125,13 +125,8 @@ export interface StandCartLine {
 /** What the employee picked for a line: an option's type and period end. */
 export interface StandCartChoice {
   type: StandCartActionType;
-  /** ISO timestamp. */
+  /** `YYYY-MM-DD`. */
   to?: string;
-}
-
-/** Period ends are compared as Oslo calendar days, so a date picked in a form matches the branch period. */
-function osloDay(iso: string): string {
-  return new Date(iso).toLocaleDateString("sv-SE", { timeZone: "Europe/Oslo" });
 }
 
 /** The option behind the employee's pick; null when the line offers nothing of the kind. */
@@ -140,13 +135,7 @@ export function findOption(
   choice: StandCartChoice,
 ): StandCartOption | null {
   return (
-    line.options.find(
-      (option) =>
-        option.type === choice.type &&
-        (option.to === undefined || choice.to === undefined
-          ? option.to === choice.to
-          : osloDay(option.to) === osloDay(choice.to)),
-    ) ?? null
+    line.options.find((option) => option.type === choice.type && option.to === choice.to) ?? null
   );
 }
 

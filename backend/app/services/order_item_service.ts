@@ -6,11 +6,6 @@ import type { NewOrderItem } from "#models/order";
 import { periodTypeOfLastOrder, resolveBuyoutPrice } from "#services/customer_item_actions_service";
 import type { Item } from "#shared/item";
 
-/** Deadlines are compared as Oslo calendar days, so a date picked in a form matches the branch period. */
-function isSameDeadlineDay(a: Date, b: Date): boolean {
-  return DateTime.fromJSDate(a).hasSame(DateTime.fromJSDate(b), "day");
-}
-
 export const OrderItemService = {
   async createBuyoutOrderItem(customerItem: CustomerItem, item: Item) {
     const branch = await Branch.findOptional(customerItem.handoutBranchId);
@@ -36,9 +31,9 @@ export const OrderItemService = {
     } as const satisfies NewOrderItem;
   },
 
-  async createExtendOrderItem(customerItem: CustomerItem, item: Item, to: Date) {
+  async createExtendOrderItem(customerItem: CustomerItem, item: Item, to: string) {
     const branch = await Branch.getOrFail(customerItem.handoutBranchId);
-    const extendPeriod = branch.extendPeriods.find((period) => isSameDeadlineDay(period.date, to));
+    const extendPeriod = branch.extendPeriods.find((period) => period.date === to);
     if (!extendPeriod) {
       throw new Error(
         `Extend period not found in checkout customer: ${customerItem.customerId}, branch: ${branch.id}, customer item: ${customerItem.id}`,
@@ -59,7 +54,7 @@ export const OrderItemService = {
       amount: extendPeriod.price,
       unitPrice: extendPeriod.price,
       periodFrom: DateTime.now(),
-      periodTo: DateTime.fromJSDate(extendPeriod.date),
+      periodTo: DateTime.fromISO(extendPeriod.date),
       numberOfPeriods: 1,
       periodType: extendPeriod.type,
       customerItemId: customerItem.id,
@@ -76,12 +71,12 @@ export const OrderItemService = {
       unitPrice: price,
     } as const satisfies NewOrderItem;
   },
-  async createRentOrderItem(item: Item, branchId: string, to: Date) {
+  async createRentOrderItem(item: Item, branchId: string, to: string) {
     const branch = await Branch.findOrFail(branchId);
-    const rentPeriod = branch.rentPeriods.find((period) => isSameDeadlineDay(period.date, to));
+    const rentPeriod = branch.rentPeriods.find((period) => period.date === to);
     if (!rentPeriod) {
       throw new Error(
-        `Rent period not found in checkout branch: ${branchId} to: ${to.toISOString()} item: ${item.id}`,
+        `Rent period not found in checkout branch: ${branchId} to: ${to} item: ${item.id}`,
       );
     }
 
@@ -93,20 +88,18 @@ export const OrderItemService = {
       amount: branch.paymentResponsible ? 0 : item.price,
       unitPrice: branch.paymentResponsible ? 0 : item.price,
       periodFrom: DateTime.now(),
-      periodTo: DateTime.fromJSDate(rentPeriod.date),
+      periodTo: DateTime.fromISO(rentPeriod.date),
       numberOfPeriods: 1,
       periodType: rentPeriod.type,
     } as const satisfies NewOrderItem;
   },
 
-  async createPartlyPaymentOrderItem(item: Item, branchId: string, to: Date) {
+  async createPartlyPaymentOrderItem(item: Item, branchId: string, to: string) {
     const branch = await Branch.findOrFail(branchId);
-    const partlyPaymentPeriod = branch.partlyPaymentPeriods.find((period) =>
-      isSameDeadlineDay(period.date, to),
-    );
+    const partlyPaymentPeriod = branch.partlyPaymentPeriods.find((period) => period.date === to);
     if (!partlyPaymentPeriod) {
       throw new Error(
-        `Rent period not found in checkout branch: ${branchId} to: ${to.toISOString()} item: ${item.id}`,
+        `Rent period not found in checkout branch: ${branchId} to: ${to} item: ${item.id}`,
       );
     }
 
@@ -120,7 +113,7 @@ export const OrderItemService = {
       amount: branch.paymentResponsible ? 0 : priceUpFront,
       unitPrice: branch.paymentResponsible ? 0 : priceUpFront,
       periodFrom: DateTime.now(),
-      periodTo: DateTime.fromJSDate(partlyPaymentPeriod.date),
+      periodTo: DateTime.fromISO(partlyPaymentPeriod.date),
       numberOfPeriods: 1,
       periodType: partlyPaymentPeriod.type,
     } as const satisfies NewOrderItem;

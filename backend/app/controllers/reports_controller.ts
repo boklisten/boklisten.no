@@ -34,16 +34,17 @@ export default class ReportsController {
     if (branchFilter && branchFilter.length > 0) {
       void query.whereIn("customer_items.handout_branch_id", branchFilter);
     }
-    for (const [column, after, before] of [
-      ["customer_items.created_at", createdAfter, createdBefore],
-      ["customer_items.deadline", deadlineAfter, deadlineBefore],
-    ] as const) {
-      if (after) {
-        void query.where(column, ">=", new Date(after));
-      }
-      if (before) {
-        void query.where(column, "<=", new Date(before));
-      }
+    if (createdAfter) {
+      void query.where("customer_items.created_at", ">=", new Date(createdAfter));
+    }
+    if (createdBefore) {
+      void query.where("customer_items.created_at", "<=", new Date(createdBefore));
+    }
+    if (deadlineAfter) {
+      void query.where("customer_items.deadline", ">=", deadlineAfter);
+    }
+    if (deadlineBefore) {
+      void query.where("customer_items.deadline", "<=", deadlineBefore);
     }
     if (!includeReturned) {
       void query.where("customer_items.returned", false);
@@ -56,7 +57,8 @@ export default class ReportsController {
       handoutBranch: string;
       handoutTime: Date;
       lastUpdated: Date;
-      deadline: Date;
+      /** `YYYY-MM-DD`. */
+      deadline: string;
       returned: boolean;
       buyout: boolean;
       blid: string | null;

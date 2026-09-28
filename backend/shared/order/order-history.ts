@@ -31,7 +31,10 @@ export interface OrderHistoryItem {
   blid: string | null;
   amount: number;
   unitPrice: number;
-  /** The rental/partly-payment period, for the item types that carry one. ISO timestamps. */
+  /**
+   * The rental/partly-payment period, for the item types that carry one. `from` is an ISO
+   * timestamp, `to` the deadline (`YYYY-MM-DD`).
+   */
   period: { from: string | null; to: string; periodType: Period | null } | null;
   amountLeftToPay: number | null;
   buybackAmount: number | null;

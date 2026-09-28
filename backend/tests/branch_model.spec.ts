@@ -8,8 +8,8 @@ import { isObjectIdHex } from "#models/helpers/object_id";
 import { createBranch } from "#tests/branch_fixtures";
 import { fixtureId } from "#tests/fixtures";
 
-const SEMESTER_END = new Date("2026-12-20T00:00:00.000Z");
-const YEAR_END = new Date("2027-07-01T00:00:00.000Z");
+const SEMESTER_END = "2026-12-20";
+const YEAR_END = "2027-07-01";
 
 test.group("Branch model", (group) => {
   group.each.setup(() => testUtils.db().truncate());
@@ -92,7 +92,7 @@ test.group("Branch model", (group) => {
       branchId: branch.id,
       kind: "rent",
       periodType: "year",
-      date: DateTime.fromJSDate(YEAR_END),
+      date: DateTime.fromISO(YEAR_END),
       maxNumberOfPeriods: 1,
       percentage: null,
     });

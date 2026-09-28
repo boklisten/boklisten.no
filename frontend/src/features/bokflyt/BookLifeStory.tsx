@@ -51,10 +51,10 @@ const EXAMPLE_BOOK: BlidSearchResult = {
   registered: true,
   status: "handed-out",
   history: [
-    transfer("2026-06-17T12:31:00+02:00", JONATAN, ANNIKA, "2027-07-01T00:00:00+02:00"),
-    transfer("2025-06-18T11:52:00+02:00", PIPPI, JONATAN, "2026-07-01T00:00:00+02:00"),
-    transfer("2024-06-19T13:07:00+02:00", KASPER, PIPPI, "2025-06-30T00:00:00+02:00"),
-    transfer("2023-06-19T12:44:00+02:00", SOLVEIG, KASPER, "2024-06-30T00:00:00+02:00"),
+    transfer("2026-06-17T12:31:00+02:00", JONATAN, ANNIKA, "2027-07-01"),
+    transfer("2025-06-18T11:52:00+02:00", PIPPI, JONATAN, "2026-07-01"),
+    transfer("2024-06-19T13:07:00+02:00", KASPER, PIPPI, "2025-07-01"),
+    transfer("2023-06-19T12:44:00+02:00", SOLVEIG, KASPER, "2024-07-01"),
     {
       time: "2022-08-24T10:12:00+02:00",
       action: "handout",
@@ -63,7 +63,7 @@ const EXAMPLE_BOOK: BlidSearchResult = {
       employee: { detailsId: "ansatt", name: "en ansatt" },
       byCustomer: false,
       branchName: BRANCH,
-      deadline: "2023-06-30T00:00:00+02:00",
+      deadline: "2023-07-01",
       handoutType: "rent",
     },
   ],

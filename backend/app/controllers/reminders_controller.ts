@@ -3,7 +3,6 @@ import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
 
 import CustomerItem from "#models/customer_item";
-import { deadlineWindow } from "#services/deadline_window";
 import DispatchService from "#services/dispatch_service";
 import type { MessageLogContext } from "#services/message_log_service";
 import { MessageLogService } from "#services/message_log_service";
@@ -25,17 +24,16 @@ interface ReminderCustomer {
 interface ReminderFilter {
   customerItemType: "rent" | "partly-payment";
   branchIDs: string[];
-  deadlineISO: string;
+  /** `YYYY-MM-DD`. */
+  deadline: string;
 }
 
-/** The active books of the given type due around the deadline at the branches. */
-function booksToRemind({ customerItemType, branchIDs, deadlineISO }: ReminderFilter) {
-  const { after, before } = deadlineWindow(new Date(deadlineISO));
+/** The active books of the given type due on the deadline at the branches. */
+function booksToRemind({ customerItemType, branchIDs, deadline }: ReminderFilter) {
   return CustomerItem.whereActive(db.from("customer_items"))
     .where("customer_items.type", customerItemType)
     .whereIn("customer_items.handout_branch_id", branchIDs)
-    .where("customer_items.deadline", ">", after)
-    .where("customer_items.deadline", "<", before);
+    .where("customer_items.deadline", deadline);
 }
 
 async function aggregateCustomersToRemind(filter: ReminderFilter): Promise<ReminderCustomer[]> {
@@ -48,7 +46,7 @@ async function aggregateCustomersToRemind(filter: ReminderFilter): Promise<Remin
     guardianEmail: string | null;
     title: string;
     blid: string | null;
-    deadline: Date;
+    deadline: string;
   }[] = await booksToRemind(filter)
     .join("users", "users.id", "customer_items.customer_id")
     .join("items", "items.id", "customer_items.item_id")
@@ -82,19 +80,15 @@ async function aggregateCustomersToRemind(filter: ReminderFilter): Promise<Remin
     customer.customerItems.push({
       title: row.title,
       blid: row.blid ?? "",
-      deadline: row.deadline.toISOString(),
+      deadline: row.deadline,
     });
   }
   return [...byCustomer.values()];
 }
 
-/**
- * The deadline as it should read in an email. Deadlines are picked as calendar dates and stored
- * as midnight, Norwegian or UTC depending on who wrote them; both read as the intended day once
- * formatted in Norwegian local time (the app's default zone).
- */
+/** The deadline (`YYYY-MM-DD`) as it should read in an email. */
 function formatDeadline(deadline: string) {
-  return DateTime.fromJSDate(new Date(deadline)).toFormat("dd/MM/yyyy");
+  return DateTime.fromISO(deadline).toFormat("dd/MM/yyyy");
 }
 
 async function sendReminderEmail(
@@ -138,18 +132,18 @@ export default class RemindersController {
   async send(ctx: HttpContext) {
     const { id: detailsId } = ctx.auth.getUserOrFail();
 
-    const { deadlineISO, customerItemType, branchIDs, emailTemplateId, smsText } =
+    const { deadline, customerItemType, branchIDs, emailTemplateId, smsText } =
       await ctx.request.validateUsing(reminderValidator);
 
     const customers = await aggregateCustomersToRemind({
       customerItemType,
       branchIDs,
-      deadlineISO,
+      deadline,
     });
 
     const sendout = await MessageLogService.createSendout({
       kind: "reminder",
-      name: `Påminnelse ${customerItemType === "rent" ? "lån" : "avbetaling"}, frist ${formatDeadline(deadlineISO)}`,
+      name: `Påminnelse ${customerItemType === "rent" ? "lån" : "avbetaling"}, frist ${formatDeadline(deadline)}`,
       initiatedByDetailsId: detailsId,
     });
     const context: MessageLogContext = { messageType: "reminder", sendoutId: sendout?.id };

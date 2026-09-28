@@ -43,13 +43,13 @@ const COLUMNS: BranchBooksDetailColumn<ActiveBookDetail>[] = [
 
 function ActiveBookDetails({
   branchId,
-  deadlines,
+  deadline,
   itemId,
   enabled,
   onEditRow,
 }: {
   branchId: string;
-  deadlines: string[];
+  deadline: string;
   itemId: string;
   enabled: boolean;
   onEditRow: (kind: BranchBooksEditKind, row: ActiveBookDetail) => void;
@@ -57,7 +57,7 @@ function ActiveBookDetails({
   const detailsQuery = useQuery({
     ...api.branchBooks.getActiveBookDetails.queryOptions({
       params: { branchId },
-      query: { deadlines, itemId },
+      query: { deadline, itemId },
     }),
     enabled,
   });
@@ -111,7 +111,7 @@ export default function ActiveBooksTab({ branchId }: { branchId: string }) {
               params: { branchId },
               body: {
                 filter: {
-                  ...(target.filter.deadlines && { deadlines: target.filter.deadlines }),
+                  ...(target.filter.deadline && { deadline: target.filter.deadline }),
                   ...(target.filter.itemId && { itemId: target.filter.itemId }),
                   ...(target.filter.ids && { customerItemIds: target.filter.ids }),
                   includeDescendants,
@@ -143,10 +143,10 @@ export default function ActiveBooksTab({ branchId }: { branchId: string }) {
         treeLabel="Aktive bøker etter frist"
         emptyLabel="Ingen aktive bøker på denne filialen."
         onEdit={openEdit}
-        renderDetails={(deadlines, itemId, enabled) => (
+        renderDetails={(deadline, itemId, enabled) => (
           <ActiveBookDetails
             branchId={branchId}
-            deadlines={deadlines}
+            deadline={deadline}
             itemId={itemId}
             enabled={enabled}
             onEditRow={(kind, row) =>

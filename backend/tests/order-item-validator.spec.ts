@@ -67,9 +67,17 @@ test.group("OrderItemValidator", (group) => {
       id: "branch1",
       type: "privatist",
       name: "Sonans",
-      rentPeriods: [{ type: "semester", date: new Date(), maxNumberOfPeriods: 0, percentage: 0.5 }],
+      rentPeriods: [
+        { type: "semester", date: "2027-07-01", maxNumberOfPeriods: 0, percentage: 0.5 },
+      ],
       extendPeriods: [
-        { type: "semester", date: new Date(), maxNumberOfPeriods: 1, price: 100, percentage: null },
+        {
+          type: "semester",
+          date: "2027-07-01",
+          maxNumberOfPeriods: 1,
+          price: 100,
+          percentage: null,
+        },
       ],
       buyoutPercentage: 0.5,
       region: "unknown",

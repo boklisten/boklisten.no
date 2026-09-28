@@ -6,7 +6,7 @@ import { useState } from "react";
 import ChipButton from "@/shared/components/ChipButton";
 import ChangeDeadlineModal from "@/shared/components/corrections/ChangeDeadlineModal";
 import { api } from "@/shared/utils/apiClient";
-import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline } from "@/shared/utils/deadline";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -30,7 +30,8 @@ export default function OrderItemDeadlineChip({
   orderId: string;
   itemId: string;
   type: OrderItemType;
-  deadline: string | Date;
+  /** `YYYY-MM-DD`. */
+  deadline: string;
   onChanged: () => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -53,7 +54,7 @@ export default function OrderItemDeadlineChip({
         title="Endre frist"
         onClick={() => setEditing(true)}
       >
-        {label} til {norwegianTime(deadline).format("DD.MM.YYYY")}
+        {label} til {formatDeadline(deadline, "DD.MM.YYYY")}
       </ChipButton>
       {editing && (
         <ChangeDeadlineModal

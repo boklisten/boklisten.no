@@ -6,7 +6,7 @@ import { Activity } from "react";
 
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { api } from "@/shared/utils/apiClient";
-import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline } from "@/shared/utils/deadline";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -50,7 +50,7 @@ export default function OpenOrdersList({
             {openOrderItems?.map((orderItem) => (
               <Table.Tr key={orderItem.orderId + orderItem.itemId}>
                 <Table.Td>{orderItem.title}</Table.Td>
-                <Table.Td>{norwegianTime(orderItem.deadline).format("DD/MM/YYYY")}</Table.Td>
+                <Table.Td>{formatDeadline(orderItem.deadline)}</Table.Td>
                 <Table.Td>
                   <Tooltip
                     disabled={orderItem.cancelable}

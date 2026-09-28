@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 
 import CustomerItem from "#models/customer_item";
+import { isDeadlineOverdue } from "#shared/deadline";
 import type { Branch, ExtendPeriod } from "#shared/branch";
 import type {
   CustomerItemAction,
@@ -29,17 +30,15 @@ export function isDeadlineWithGracePeriodExpired(
   return now > graceDeadline;
 }
 
-/** The branch's extend periods that would move the deadline forward: after it, and still ahead of today. */
+/** The branch's extend periods that would move the deadline forward: after it, and after today. */
 function periodsAfterDeadline(
   customerItem: CustomerItem,
   branch: Branch,
   now: Date,
 ): ExtendPeriod[] {
-  return branch.extendPeriods.filter(
-    (period) =>
-      customerItem.deadline.toMillis() < period.date.getTime() &&
-      now.getTime() < period.date.getTime(),
-  );
+  const deadline = customerItem.deadline.toISODate()!;
+  const today = DateTime.fromJSDate(now).toISODate()!;
+  return branch.extendPeriods.filter((period) => deadline < period.date && today < period.date);
 }
 
 /**
@@ -174,7 +173,7 @@ export function calculateStatus(customerItem: CustomerItem): CustomerItemStatus 
     return { type: "returned", text: "Returnert" };
   }
 
-  if (customerItem.deadline < DateTime.now()) {
+  if (isDeadlineOverdue(customerItem.deadline.toISODate()!, DateTime.now().toISODate())) {
     return { type: "overdue", text: "Fristen har utløpt" };
   }
 
@@ -199,7 +198,7 @@ export function buildCustomerItemActions(
     to: extension.date,
     available: true,
     tooltip: "",
-    label: `Forleng til ${DateTime.fromJSDate(extension.date).toFormat("dd/MM/yyyy")}`,
+    label: `Forleng til ${DateTime.fromISO(extension.date).toFormat("dd/MM/yyyy")}`,
   })) ?? [
     {
       type: "extend",

@@ -13,8 +13,8 @@ export interface CustomerItem {
   type: CustomerItemType;
   /** Null once the customer's account has been deleted. */
   customerId: string | null;
-  /** When the book must be returned (or, for a partly payment, bought out). */
-  deadline: Date;
+  /** `YYYY-MM-DD`. The day the book must be returned (or, for a partly payment, bought out) by. */
+  deadline: string;
 
   handoutBranchId: string;
   handoutEmployeeId: string | null;
@@ -44,8 +44,8 @@ export interface CustomerItem {
   periodExtends: {
     /** The deadline before the extension. */
     periodFrom: Date;
-    /** The new deadline. */
-    periodTo: Date;
+    /** `YYYY-MM-DD`. The new deadline. */
+    periodTo: string;
     periodType: Period;
     /** When the extension was bought. */
     createdAt: Date;

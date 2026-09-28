@@ -1,4 +1,5 @@
 import vine from "@vinejs/vine";
+import { DateTime } from "luxon";
 
 import { phoneDigits } from "#shared/phone_number";
 
@@ -12,6 +13,19 @@ const parsableDate = vine.createRule((value, options, field) => {
   }
   if (Number.isNaN(Date.parse(value))) {
     field.report(`${value} er ikke en gyldig dato`, "parsable_date", field);
+  }
+});
+
+/**
+ * The regex only pins the shape; `2026-02-30` fits it, and `Date.parse` quietly rolls such dates
+ * into March. Luxon is the one that actually refuses a day that does not exist.
+ */
+const realCalendarDate = vine.createRule((value, _options, field) => {
+  if (typeof value !== "string") {
+    return;
+  }
+  if (!DateTime.fromISO(value).isValid) {
+    field.report(`${value} er ikke en gyldig dato`, "real_calendar_date", field);
   }
 });
 
@@ -35,6 +49,11 @@ const norwegianMobile = vine.createRule((value, _options, field) => {
 export const emailField = vine.string().trim().toLowerCase().email();
 export const objectIdField = vine.string().regex(/^[\da-f]{24}$/i);
 export const dateStringField = vine.string().use(parsableDate());
+/** A calendar day such as a deadline, `YYYY-MM-DD`. */
+export const calendarDateField = vine
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .use(realCalendarDate());
 export const phoneField = vine.string().trim().use(norwegianMobile());
 export const passwordField = vine.string().minLength(10).maxLength(256);
 export const postalCodeField = vine.string().postalCode({ countryCode: ["NO"] });

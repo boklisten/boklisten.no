@@ -1,4 +1,4 @@
-import type { DateTime } from "luxon";
+import { DateTime } from "luxon";
 
 import type CustomerItem from "#models/customer_item";
 import { isHandedOutWithinTheLastTwoWeeks } from "#services/customer_item_actions_service";
@@ -12,7 +12,10 @@ import { isDeadlineOverdue } from "#shared/deadline";
 export const HeldBookRules = {
   /** Handing a book back after its deadline. */
   takeBack(customerItem: CustomerItem, now: Date): string | null {
-    return isDeadlineOverdue(customerItem.deadline.toJSDate(), now)
+    return isDeadlineOverdue(
+      customerItem.deadline.toISODate()!,
+      DateTime.fromJSDate(now).toISODate()!,
+    )
       ? "Fristen for boka har gått ut"
       : null;
   },

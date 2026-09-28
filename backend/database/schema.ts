@@ -68,7 +68,7 @@ export class BranchPeriodSchema extends BaseModel {
   $columns = BranchPeriodSchema.$columns
   @column()
   declare branchId: string
-  @column.dateTime()
+  @column.date()
   declare date: DateTime
   @column({ isPrimary: true })
   declare id: number
@@ -213,7 +213,7 @@ export class CustomerItemPeriodExtendSchema extends BaseModel {
   declare id: number
   @column.dateTime()
   declare periodFrom: DateTime
-  @column.dateTime()
+  @column.date()
   declare periodTo: DateTime
   @column()
   declare periodType: string
@@ -248,7 +248,7 @@ export class CustomerItemSchema extends BaseModel {
   declare createdAt: DateTime
   @column()
   declare customerId: string | null
-  @column.dateTime()
+  @column.date()
   declare deadline: DateTime
   @column.dateTime()
   declare handedOutAt: DateTime
@@ -413,7 +413,7 @@ export class InvoiceSchema extends BaseModel {
   declare customerPostCity: string
   @column()
   declare customerPostCode: string
-  @column.dateTime()
+  @column.date()
   declare dueDate: DateTime
   @column()
   declare feeDiscount: number | null
@@ -690,7 +690,7 @@ export class OrderItemSchema extends BaseModel {
   declare orderId: string
   @column.dateTime()
   declare periodFrom: DateTime | null
-  @column.dateTime()
+  @column.date()
   declare periodTo: DateTime | null
   @column()
   declare periodType: string | null

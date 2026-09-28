@@ -126,7 +126,7 @@ export default class BulkCollectionController {
       for (const customerItem of items) {
         collected.push({
           title: itemsMap.get(customerItem.itemId)?.title ?? "",
-          deadline: this.toIsoDeadline(customerItem.deadline),
+          deadline: customerItem.deadline.toISODate()!,
           time: collectedAt,
           orderId: order.id,
         });
@@ -155,7 +155,7 @@ export default class BulkCollectionController {
       item: customerItem.itemId,
       title: item.title,
       handoutBranchName: branch?.name ?? "Ukjent",
-      deadline: this.toIsoDeadline(customerItem.deadline),
+      deadline: customerItem.deadline.toISODate()!,
       customerId,
       customerName: customerDetail.name,
       deliverToName: deliverTo?.name ?? (recipientCustomerId ? "en annen elev" : undefined),
@@ -179,7 +179,7 @@ export default class BulkCollectionController {
         .filter((customerItem) => customerItem.customerId === customerId)
         .map((customerItem) => ({
           title: customerItem.item.title,
-          deadline: this.toIsoDeadline(customerItem.deadline),
+          deadline: customerItem.deadline.toISODate()!,
         }));
       return {
         customerId,
@@ -205,9 +205,5 @@ export default class BulkCollectionController {
     // Deliberately not filtered on `active`: a book a customer physically possesses must be
     // returnable even if its catalogue item was deactivated.
     return ItemModel.byIds(itemIds);
-  }
-
-  private toIsoDeadline(deadline: DateTime): string {
-    return deadline.toISO() ?? "";
   }
 }

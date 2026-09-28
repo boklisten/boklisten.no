@@ -50,13 +50,13 @@ const COLUMNS: BranchBooksDetailColumn<OrderedBookDetail>[] = [
 
 function OrderedBookDetails({
   branchId,
-  deadlines,
+  deadline,
   itemId,
   enabled,
   onEditRow,
 }: {
   branchId: string;
-  deadlines: string[];
+  deadline: string;
   itemId: string;
   enabled: boolean;
   onEditRow: (kind: BranchBooksEditKind, row: OrderedBookDetail) => void;
@@ -64,7 +64,7 @@ function OrderedBookDetails({
   const detailsQuery = useQuery({
     ...api.branchBooks.getOrderedBookDetails.queryOptions({
       params: { branchId },
-      query: { deadlines, itemId },
+      query: { deadline, itemId },
     }),
     enabled,
   });
@@ -85,7 +85,7 @@ function OrderedBookDetails({
 
 function bulkFilter(target: BranchBooksEditTarget, includeDescendants: boolean) {
   return {
-    ...(target.filter.deadlines && { deadlines: target.filter.deadlines }),
+    ...(target.filter.deadline && { deadline: target.filter.deadline }),
     ...(target.filter.itemId && { itemId: target.filter.itemId }),
     ...(target.filter.orderItemIds && { orderItemIds: target.filter.orderItemIds }),
     includeDescendants,
@@ -194,10 +194,10 @@ export default function OrderedBooksTab({ branchId }: { branchId: string }) {
         emptyLabel="Ingen bestilte bøker på denne filialen."
         allowCancel
         onEdit={openEdit}
-        renderDetails={(deadlines, itemId, enabled) => (
+        renderDetails={(deadline, itemId, enabled) => (
           <OrderedBookDetails
             branchId={branchId}
-            deadlines={deadlines}
+            deadline={deadline}
             itemId={itemId}
             enabled={enabled}
             onEditRow={(kind, row) =>

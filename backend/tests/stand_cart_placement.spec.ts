@@ -25,7 +25,7 @@ const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
 const ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f31";
 const EMPLOYEE = { detailsId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
-const SEMESTER_END = new Date("2026-12-20T00:00:00.000Z");
+const SEMESTER_END = "2026-12-20";
 
 /**
  * Sentry is never initialised under API_ENV=test, so stand up a throwaway client whose beforeSend
@@ -70,7 +70,7 @@ async function handoutOrder(): Promise<Order> {
   return orderWith([
     {
       handout: true,
-      periodTo: DateTime.fromJSDate(SEMESTER_END),
+      periodTo: DateTime.fromISO(SEMESTER_END),
       periodType: "semester",
     },
     { type: "buy", handout: true, blid: "87654321", itemId: "item2" },
@@ -133,7 +133,7 @@ test.group("StandCartPlacement.place", (group) => {
         handoutEmployeeId: EMPLOYEE.detailsId,
       },
     );
-    assert.equal(created[0]?.deadline.toMillis(), SEMESTER_END.getTime());
+    assert.equal(created[0]?.deadline.toISODate(), SEMESTER_END);
     const stored = await Order.findOrFail(ORDER_ID);
     assert.equal(stored.orderItems[0]?.customerItemId, created[0]?.id);
     assert.isNull(stored.orderItems[1]?.customerItemId);
@@ -168,7 +168,7 @@ test.group("StandCartPlacement.place", (group) => {
       itemId: "item1",
       blid: "12345678",
       customerId: CUSTOMER_ID,
-      deadline: DateTime.fromJSDate(SEMESTER_END),
+      deadline: DateTime.fromISO(SEMESTER_END),
       handoutBranchId: BRANCH_ID,
     });
     await StandCartPlacement.place(

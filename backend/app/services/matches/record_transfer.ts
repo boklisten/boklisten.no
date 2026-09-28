@@ -20,6 +20,7 @@ import {
   requireHandoverBlid,
 } from "#services/matches/match_repository";
 import { BlError } from "#shared/bl-error";
+import { isDeadlineOverdue } from "#shared/deadline";
 import { getEquivalentItemIds } from "#shared/item-equivalence";
 import type { matchTransferSchema } from "#validators/matches";
 
@@ -65,7 +66,8 @@ async function unexpectedSenderFeedback(
 interface ReceiverRentOrder {
   orderId: string;
   branchId: string;
-  periodTo: Date | null;
+  /** `YYYY-MM-DD`. */
+  periodTo: string | null;
 }
 
 /** The receiver's live rent order for the title, which the new match-receive order moves from. */
@@ -95,11 +97,8 @@ async function createMatchReceiveOrder(
   const branchRentDeadline = rentOrder.periodTo
     ? undefined
     : (await Branch.findOrFail(rentOrder.branchId)).rentPeriods[0]?.date;
-  const deadline = rentOrder.periodTo
-    ? DateTime.fromJSDate(rentOrder.periodTo)
-    : branchRentDeadline === undefined
-      ? null
-      : DateTime.fromJSDate(branchRentDeadline);
+  const deadlineDay = rentOrder.periodTo ?? branchRentDeadline;
+  const deadline = deadlineDay === undefined ? null : DateTime.fromISO(deadlineDay);
 
   if (!deadline) {
     throw new BlError(
@@ -200,7 +199,7 @@ async function returnSenderCustomerItem(
   await extendRemainingCopyDeadlines(
     senderUserDetailId,
     customerItem.itemId,
-    customerItem.deadline.toJSDate(),
+    customerItem.deadline.toISODate()!,
   );
 }
 
@@ -232,7 +231,7 @@ export async function recordTransfer(
     return { feedback: alreadyYoursFeedback };
   }
 
-  if (customerItem.deadline < DateTime.now()) {
+  if (isDeadlineOverdue(customerItem.deadline.toISODate()!, DateTime.now().toISODate())) {
     return { feedback: await expiredDeadlineFeedback(ownerId) };
   }
 

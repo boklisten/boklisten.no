@@ -111,7 +111,7 @@ test.group("company invoice creation", (group) => {
   });
 
   test("stores the company as customer, the lines and a comment", async ({ assert }) => {
-    const dueDate = new Date("2026-09-16T13:22:17.867Z");
+    const dueDate = "2026-09-16";
     const created = await createCompanyInvoice({
       companyId,
       invoiceNumber: "20268005",
@@ -125,7 +125,7 @@ test.group("company invoice creation", (group) => {
     const invoice = (await Invoice.getOrFail(created.id)).toDto(null);
     assert.deepEqual(invoice, created);
     assert.equal(invoice.invoiceNumber, "20268005");
-    assert.deepEqual(invoice.dueDate, dueDate);
+    assert.equal(invoice.dueDate, dueDate);
     assert.isNull(invoice.type);
     assert.isNull(invoice.customerId);
     assert.isNull(invoice.branchId);
@@ -175,7 +175,7 @@ test.group("company invoice creation", (group) => {
       invoiceNumber: "20268006",
       reference: "",
       ourReference: "",
-      dueDate: new Date(),
+      dueDate: "2026-09-30",
       lines: KVITSUND_LINES,
     });
     await Company.query().where("id", companyId).update({ name: "Nytt navn AS" });
@@ -192,7 +192,7 @@ test.group("company invoice creation", (group) => {
           invoiceNumber: "1",
           reference: "",
           ourReference: "",
-          dueDate: new Date(),
+          dueDate: "2026-09-30",
           lines: KVITSUND_LINES,
         }),
       /Selskapet finnes ikke/,

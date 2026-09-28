@@ -38,8 +38,8 @@ const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
 
 const BLID = "BL0001234567";
 
-function inOneMonth(): Date {
-  return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+function inOneMonth(): DateTime {
+  return DateTime.now().plus({ days: 30 }).startOf("day");
 }
 
 type CopySpec = Parameters<typeof createCustomerItem>[0];
@@ -54,7 +54,7 @@ function activeCopy({
     blid: BLID,
     itemId: ITEM_X,
     customerId,
-    deadline: DateTime.fromJSDate(inOneMonth()),
+    deadline: inOneMonth(),
     handoutBranchId: BRANCH,
     ...overrides,
   };
@@ -77,7 +77,9 @@ test.group("recordTransfer", (group) => {
     round = await createTestRound({ name: "Round", standLocation: "Kantina", status: "active" });
     await createBranch({
       id: BRANCH,
-      rentPeriods: [{ type: "semester", date: inOneMonth(), maxNumberOfPeriods: 1, percentage: 1 }],
+      rentPeriods: [
+        { type: "semester", date: inOneMonth().toISODate()!, maxNumberOfPeriods: 1, percentage: 1 },
+      ],
     });
   });
 
@@ -120,7 +122,7 @@ test.group("recordTransfer", (group) => {
         {
           type: "rent",
           itemId: options.orderedItem ?? customerItem?.itemId ?? ITEM_X,
-          periodTo: DateTime.fromJSDate(inOneMonth()),
+          periodTo: inOneMonth(),
         },
       ],
     });

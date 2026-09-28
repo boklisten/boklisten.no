@@ -40,7 +40,8 @@ export interface Invoice {
   invoiceNumber: string;
   /** Null on company invoices and the oldest invoices. */
   type: InvoiceType | null;
-  dueDate: Date;
+  /** `YYYY-MM-DD`. */
+  dueDate: string;
   customerHasPaid: boolean;
   toDebtCollection: boolean;
   toCreditNote: boolean;
@@ -156,7 +157,8 @@ export interface InvoiceListRow {
   customerOrganizationNumber: string | null;
   type: InvoiceType | null;
   createdAt: Date;
-  dueDate: Date;
+  /** `YYYY-MM-DD`. */
+  dueDate: string;
   totalIncludingFee: number;
   status: InvoiceStatus;
 }
@@ -174,9 +176,9 @@ export type GeneratableInvoiceType = (typeof GENERATABLE_INVOICE_TYPES)[number];
 
 export interface InvoiceGenerationSettings {
   type: GeneratableInvoiceType;
-  /** Customer items with a deadline in [deadlineFrom, deadlineTo] are invoiced. */
-  deadlineFrom: Date;
-  deadlineTo: Date;
+  /** Customer items with a deadline in [deadlineFrom, deadlineTo] are invoiced, both `YYYY-MM-DD`. */
+  deadlineFrom: string;
+  deadlineTo: string;
   /** The first invoice number; each customer gets the next one. */
   invoiceNumber: number;
   /** Fee per book, without VAT. */
@@ -239,7 +241,8 @@ export interface CompanyInvoiceInput {
   invoiceNumber: string;
   reference: string;
   ourReference: string;
-  dueDate: Date;
+  /** `YYYY-MM-DD`. */
+  dueDate: string;
   comment?: string;
   lines: CompanyInvoiceLine[];
 }

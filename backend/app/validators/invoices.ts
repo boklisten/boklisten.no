@@ -1,6 +1,6 @@
 import vine from "@vinejs/vine";
 
-import { dateStringField, objectIdField } from "#validators/common/fields";
+import { calendarDateField, objectIdField } from "#validators/common/fields";
 import {
   GENERATABLE_INVOICE_TYPES,
   INVOICE_EXPORT_FORMATS,
@@ -36,8 +36,8 @@ export const invoiceExportValidator = vine.create(
 export const invoiceGenerationValidator = vine.create(
   vine.object({
     type: vine.enum(GENERATABLE_INVOICE_TYPES),
-    deadlineFrom: dateStringField.clone(),
-    deadlineTo: dateStringField.clone(),
+    deadlineFrom: calendarDateField.clone(),
+    deadlineTo: calendarDateField.clone(),
     invoiceNumber: vine.number().withoutDecimals().positive(),
     fee: vine.number().min(0),
     feeVatPercentage: vine.number().min(0).max(1),
@@ -60,7 +60,7 @@ export const companyInvoiceValidator = vine.create(
     invoiceNumber: vine.string().trim().minLength(1),
     reference: vine.string().trim(),
     ourReference: vine.string().trim(),
-    dueDate: dateStringField.clone(),
+    dueDate: calendarDateField.clone(),
     comment: vine.string().trim().optional(),
     lines: vine
       .array(

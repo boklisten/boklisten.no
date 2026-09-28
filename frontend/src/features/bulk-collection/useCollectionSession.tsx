@@ -10,7 +10,7 @@ import {
   useCollectionState,
 } from "@/features/bulk-collection/collectionStore";
 import type { StoredCollection } from "@/features/bulk-collection/collectionStore";
-import { isOverdue } from "@/features/bulk-collection/deadline";
+import { isOverdue } from "@/shared/utils/deadline";
 import useDisplayName from "@/features/customer-search/useDisplayName";
 import { BLID_SEARCH_QUERY_KEY } from "@/features/search/SearchSpotlight";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";

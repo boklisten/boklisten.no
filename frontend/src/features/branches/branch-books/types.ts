@@ -12,7 +12,8 @@ export type BranchBooksEditKind = "deadline" | "branch" | "cancel";
 export interface BranchBooksEditTarget {
   description: string;
   filter: {
-    deadlines?: string[];
+    /** `YYYY-MM-DD`. */
+    deadline?: string;
     itemId?: string;
     /** Active books only: the customer items to address */
     ids?: string[];

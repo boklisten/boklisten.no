@@ -22,7 +22,7 @@ import { unchecked } from "#tests/test-doubles";
 import { createUser, userDouble } from "#tests/user_fixtures";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
-const SEMESTER_END = new Date("2026-12-20T00:00:00.000Z");
+const SEMESTER_END = "2026-12-20";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const OTHER_CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f02";
@@ -82,7 +82,7 @@ function orderWith(overrides: Partial<OrderSpec>): OrderSpec {
       {
         type: "rent",
         itemId: ITEM_ID,
-        periodTo: DateTime.fromJSDate(SEMESTER_END),
+        periodTo: DateTime.fromISO(SEMESTER_END),
         periodType: "semester",
       },
     ],
@@ -99,7 +99,7 @@ const activeCustomerItem: CustomerItemSpec = {
   itemId: ITEM_ID,
   blid: BLID,
   type: "rent",
-  deadline: DateTime.fromJSDate(SEMESTER_END),
+  deadline: DateTime.fromISO(SEMESTER_END),
   handoutBranchId: BRANCH_ID,
   handedOutAt: DateTime.fromJSDate(NOW),
   createdAt: DateTime.fromISO("2026-08-01T10:00:00.000Z"),
@@ -238,7 +238,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
             unitPrice: 250,
             handout: false,
             delivered: false,
-            periodTo: DateTime.fromJSDate(SEMESTER_END),
+            periodTo: DateTime.fromISO(SEMESTER_END),
             periodType: "semester",
           },
         ],
@@ -330,7 +330,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
             unitPrice: 0,
             handout: false,
             delivered: false,
-            periodTo: DateTime.fromJSDate(SEMESTER_END),
+            periodTo: DateTime.fromISO(SEMESTER_END),
             periodType: "semester",
           },
         ],
@@ -386,7 +386,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
             delivered: false,
             customerItemId: CUSTOMER_ITEM_ID,
             movedFromOrderId: PAID_ORDER_ID,
-            periodTo: DateTime.fromJSDate(SEMESTER_END),
+            periodTo: DateTime.fromISO(SEMESTER_END),
             periodType: "semester",
           },
         ],
@@ -404,7 +404,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
             handout: false,
             delivered: false,
             movedToOrderId: HANDOUT_ORDER_ID,
-            periodTo: DateTime.fromJSDate(SEMESTER_END),
+            periodTo: DateTime.fromISO(SEMESTER_END),
             periodType: "semester",
           },
         ],

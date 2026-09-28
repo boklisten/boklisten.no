@@ -38,6 +38,7 @@ import {
 } from "@/features/stand-cart/standCartStore";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import { api, apiClient } from "@/shared/utils/apiClient";
+import { today } from "@/shared/utils/deadline";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showSuccessNotification } from "@/shared/utils/notifications";
 import { describeRejectedScan, determineScanCodeType } from "@/shared/utils/scanCodes";
@@ -50,14 +51,13 @@ import type { ScanCodeType } from "@/shared/utils/scanCodes";
 function branchWithPeriods(
   branches: Branch[],
   startBranchId: string | null | undefined,
-  now: Date,
 ): string | null {
   const byId = new Map(branches.map((branch) => [branch.id, branch]));
   const visited = new Set<string>();
   let current = startBranchId ? byId.get(startBranchId) : undefined;
   while (current && !visited.has(current.id)) {
     visited.add(current.id);
-    if (futureRentPeriods(current, now).length > 0) {
+    if (futureRentPeriods(current, today()).length > 0) {
       return current.id;
     }
     current = current.parentBranchId === null ? undefined : byId.get(current.parentBranchId);
@@ -190,7 +190,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
   function provisionalBranchId(): string | null {
     return (
       cartRef.current.branchId ??
-      branchWithPeriods(branches ?? [], customer?.branchMembershipId, new Date()) ??
+      branchWithPeriods(branches ?? [], customer?.branchMembershipId) ??
       branches?.[0]?.id ??
       null
     );

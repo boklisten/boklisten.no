@@ -57,9 +57,17 @@ test.group("OrderItemExtendValidator", (group) => {
       id: "branch1",
       type: "privatist",
       name: "Sonans",
-      rentPeriods: [{ type: "semester", maxNumberOfPeriods: 2, date: new Date(), percentage: 0.5 }],
+      rentPeriods: [
+        { type: "semester", maxNumberOfPeriods: 2, date: "2027-07-01", percentage: 0.5 },
+      ],
       extendPeriods: [
-        { type: "semester", maxNumberOfPeriods: 1, date: new Date(), price: 100, percentage: null },
+        {
+          type: "semester",
+          maxNumberOfPeriods: 1,
+          date: "2027-07-01",
+          price: 100,
+          percentage: null,
+        },
       ],
       buyoutPercentage: 0.5,
       region: "unknown",
@@ -82,7 +90,7 @@ test.group("OrderItemExtendValidator", (group) => {
     testOrderItem.periodType = "year";
 
     testBranch.extendPeriods = [
-      { type: "semester", price: 100, date: new Date(), maxNumberOfPeriods: 1, percentage: null },
+      { type: "semester", price: 100, date: "2027-07-01", maxNumberOfPeriods: 1, percentage: null },
     ];
 
     return assert.rejects(
@@ -114,7 +122,7 @@ test.group("OrderItemExtendValidator", (group) => {
     });
 
     testBranch.extendPeriods = [
-      { type: "semester", price: 100, date: new Date(), maxNumberOfPeriods: 1, percentage: null },
+      { type: "semester", price: 100, date: "2027-07-01", maxNumberOfPeriods: 1, percentage: null },
     ];
 
     testOrderItem.customerItemId = "maxExtendedCustomerItem";

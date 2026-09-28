@@ -26,7 +26,7 @@ const OTHER_BRANCH = "other-branch-id";
 const BLID = "12345678";
 
 const T1 = new Date("2026-08-01T10:00:00.000Z");
-const DEADLINE = new Date("2027-07-01T00:00:00.000Z");
+const DEADLINE = "2027-07-01";
 
 type TestOrderItem = Partial<OrderItemDto>;
 
@@ -240,7 +240,7 @@ test.group("OrderHistoryService.presentOrderHistory() – items", () => {
         blid: BLID,
         amount: 0,
         unitPrice: 0,
-        period: { from: T1.toISOString(), to: DEADLINE.toISOString(), periodType: "year" },
+        period: { from: T1.toISOString(), to: DEADLINE, periodType: "year" },
         amountLeftToPay: null,
         buybackAmount: null,
         customerItemId: null,
@@ -602,7 +602,7 @@ test.group("OrderHistoryService.updateItemDeadline()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
   const employee = { detailsId: EMPLOYEE, permission: "employee" as const };
-  const NEW_DEADLINE = new Date("2027-12-01T00:00:00.000Z");
+  const NEW_DEADLINE = "2027-12-01";
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
@@ -619,7 +619,7 @@ test.group("OrderHistoryService.updateItemDeadline()", (group) => {
       orderItems: [
         {
           itemId: sinus.id,
-          periodTo: DateTime.fromJSDate(DEADLINE),
+          periodTo: DateTime.fromISO(DEADLINE),
           handout: line.handout ?? false,
           movedToOrderId: line.movedToOrderId ?? null,
         },
@@ -637,7 +637,7 @@ test.group("OrderHistoryService.updateItemDeadline()", (group) => {
     );
 
     const [line] = (await Order.getOrFail(order.id)).orderItems;
-    assert.equal(line?.periodTo?.toJSDate().toISOString(), NEW_DEADLINE.toISOString());
+    assert.equal(line?.periodTo?.toISODate(), NEW_DEADLINE);
     assert.isTrue(report.calledOnce);
     assert.deepEqual(report.firstCall.args[0], {
       action: "order-item-deadline-changed",
@@ -668,7 +668,7 @@ test.group("OrderHistoryService.updateItemDeadline()", (group) => {
     );
 
     const [line] = (await Order.getOrFail(order.id)).orderItems;
-    assert.equal(line?.periodTo?.toJSDate().toISOString(), DEADLINE.toISOString());
+    assert.equal(line?.periodTo?.toISODate(), DEADLINE);
     assert.isFalse(report.called);
   });
 
@@ -681,7 +681,7 @@ test.group("OrderHistoryService.updateItemDeadline()", (group) => {
       orderItems: [
         {
           itemId: later.orderItems[0]?.itemId ?? "",
-          periodTo: DateTime.fromJSDate(DEADLINE),
+          periodTo: DateTime.fromISO(DEADLINE),
           movedToOrderId: later.id,
         },
       ],

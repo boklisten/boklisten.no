@@ -34,7 +34,7 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
       customerId: CUSTOMER_ID,
       handoutBranchId: BRANCH_ID,
       handedOutAt: DateTime.fromISO("2026-08-20T10:00:00.000Z"),
-      deadline: DateTime.fromISO("2026-12-20T23:00:00.000Z"),
+      deadline: DateTime.fromISO("2026-12-20"),
       returned,
     });
 
@@ -55,7 +55,7 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
     });
     if (result.status === "handedOut") {
       assert.equal(new Date(result.handoutTime).toISOString(), "2026-08-20T10:00:00.000Z");
-      assert.equal(new Date(result.deadline).toISOString(), "2026-12-20T23:00:00.000Z");
+      assert.equal(result.deadline, "2026-12-20");
     }
     assert.notProperty(result, "itemId");
   });

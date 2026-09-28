@@ -12,12 +12,12 @@ import { getEquivalentItemIds } from "#shared/item-equivalence";
  * the later deadline — otherwise handing over the long-dated copy would leave the student holding a
  * book that is instantly overdue, purely as an artefact of which barcode was scanned.
  *
- * Call this after the released copy has been marked returned, passing its deadline.
+ * Call this after the released copy has been marked returned, passing its deadline (`YYYY-MM-DD`).
  */
 export async function extendRemainingCopyDeadlines(
   customerId: string,
   itemId: string,
-  releasedDeadline: Date,
+  releasedDeadline: string,
 ) {
   await CustomerItem.whereActive(
     db

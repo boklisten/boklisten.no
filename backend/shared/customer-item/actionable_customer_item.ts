@@ -15,4 +15,4 @@ interface CustomerItemActionBase {
 /** What a customer (or an employee on their behalf) can do with a book they are holding. */
 export type CustomerItemAction =
   | (CustomerItemActionBase & { type: "buyout" })
-  | (CustomerItemActionBase & { type: "extend"; to?: Date });
+  | (CustomerItemActionBase & { type: "extend"; /** `YYYY-MM-DD`. */ to?: string });

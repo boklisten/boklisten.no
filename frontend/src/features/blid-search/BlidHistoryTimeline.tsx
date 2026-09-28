@@ -14,6 +14,7 @@ import useDisplayName from "@/features/customer-search/useDisplayName";
 import { BOOK_EVENT_APPEARANCE } from "@/shared/components/bookEventAppearance";
 import EntityLink from "@/shared/components/EntityLink";
 import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline } from "@/shared/utils/deadline";
 
 /** Entries that describe a state or the unique ID record rather than a hand-over of the book. */
 const NON_CUSTODY_ACTIONS = new Set<BlidHistoryAction>([
@@ -202,6 +203,10 @@ function formatDate(iso: string): string {
   return norwegianTime(iso).format("DD.MM.YYYY");
 }
 
+function formatDay(deadline: string): string {
+  return formatDeadline(deadline, "DD.MM.YYYY");
+}
+
 function metaLine(event: BlidHistoryEvent): string {
   // The expiry is a state of affairs, not a recorded moment — a clock time would be noise.
   if (event.action === "deadline-expired") {
@@ -212,9 +217,9 @@ function metaLine(event: BlidHistoryEvent): string {
 
 function fristLabel(event: BlidHistoryEvent): string | null {
   if (event.action === "extend" && event.previousDeadline && event.deadline) {
-    return `${formatDate(event.previousDeadline)} → ${formatDate(event.deadline)}`;
+    return `${formatDay(event.previousDeadline)} → ${formatDay(event.deadline)}`;
   }
-  return event.deadline ? formatDate(event.deadline) : null;
+  return event.deadline ? formatDay(event.deadline) : null;
 }
 
 /** Chips on the live entry describe the book's current state, not history. */
@@ -256,12 +261,12 @@ function EventChips({ event, live }: { event: BlidHistoryEvent; live?: LiveChips
       <ActiveItemChips
         activeItem={live.item}
         branchLabel={event.branchName ?? null}
-        fristLabel={fristLabel(event) ?? formatDate(live.item.deadline)}
+        fristLabel={fristLabel(event) ?? formatDay(live.item.deadline)}
         expired={live.expired}
       />
     );
   }
-  const frist = fristLabel(event) ?? (live ? formatDate(live.item.deadline) : null);
+  const frist = fristLabel(event) ?? (live ? formatDay(live.item.deadline) : null);
   if (!event.branchName && frist === null) {
     return null;
   }

@@ -18,7 +18,7 @@ async function heldBook(overrides: Partial<Pick<CustomerItem, "returned">> = {})
       extendPeriods: [
         {
           type: "semester",
-          date: new Date("2028-01-01"),
+          date: "2028-01-01",
           maxNumberOfPeriods: 1,
           price: 100,
           percentage: null,

@@ -12,7 +12,7 @@ import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import { useAppForm } from "@/shared/hooks/form";
 import { api } from "@/shared/utils/apiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
-import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline } from "@/shared/utils/deadline";
 
 /**
  * Shared mass-edit form for both branch-book pages: pick a new deadline or a new branch, choose
@@ -51,13 +51,13 @@ export default function BranchBooksEditModal({
   const targetBranch = branches?.find((branch) => branch.id === selectedBranchId);
 
   async function submit() {
-    if (isSubmitting) {
+    const { deadline } = form.state.values;
+    if (isSubmitting || (kind === "deadline" && deadline === null)) {
       return;
     }
-    const { deadline } = form.state.values;
     const sentence =
       kind === "deadline"
-        ? `Setter ny frist ${norwegianTime(deadline).format("D. MMMM YYYY")} for ${target.description}.`
+        ? `Setter ny frist ${formatDeadline(deadline ?? "", "D. MMMM YYYY")} for ${target.description}.`
         : `Flytter ${target.description} til ${targetBranch?.name}.`;
     const confirmed = await asyncConfirmModal({
       title: kind === "deadline" ? "Bekreft ny frist" : "Bekreft flytting",
@@ -71,9 +71,7 @@ export default function BranchBooksEditModal({
     setIsSubmitting(true);
     try {
       await onSubmit(
-        kind === "deadline"
-          ? { deadline: new Date(`${deadline}T00:00:00.000Z`).toISOString() }
-          : { branchId: selectedBranchId ?? "" },
+        kind === "deadline" ? { deadline: deadline ?? "" } : { branchId: selectedBranchId ?? "" },
         includeDescendants,
       );
       onClose();

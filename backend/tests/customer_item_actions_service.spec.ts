@@ -13,22 +13,22 @@ import { branchDto } from "#tests/branch_fixtures";
 import { customerItemDouble } from "#tests/customer_item_fixtures";
 import { mock } from "#tests/test-doubles";
 
-const DEADLINE = new Date("2027-01-15T00:00:00.000Z");
-const LATER = new Date("2027-07-01T00:00:00.000Z");
-const EARLIER = new Date("2026-12-20T00:00:00.000Z");
+const DEADLINE = "2027-01-15";
+const LATER = "2027-07-01";
+const EARLIER = "2026-12-20";
 
 function customerItemWith(extensions: number): CustomerItem {
   return customerItemDouble({
-    deadline: DateTime.fromJSDate(DEADLINE),
+    deadline: DateTime.fromISO(DEADLINE),
     periodExtends: Array.from({ length: extensions }, () => ({
-      periodFrom: DateTime.fromJSDate(EARLIER),
-      periodTo: DateTime.fromJSDate(DEADLINE),
+      periodFrom: DateTime.fromISO(EARLIER),
+      periodTo: DateTime.fromISO(DEADLINE),
     })),
   });
 }
 
 function branchWith(
-  extendPeriods: { date: Date; maxNumberOfPeriods: number; price?: number }[],
+  extendPeriods: { date: string; maxNumberOfPeriods: number; price?: number }[],
 ): BranchDto {
   return branchDto({
     extendPeriods: extendPeriods.map((period) => ({
@@ -83,7 +83,7 @@ test.group("availableExtendPeriods", () => {
   });
 
   test("keeps periods with room while dropping those already used up", ({ assert }) => {
-    const once = new Date("2027-03-01T00:00:00.000Z");
+    const once = "2027-03-01";
     const periods = availableExtendPeriods(
       customerItemWith(1),
       branchWith([

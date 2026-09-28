@@ -66,14 +66,10 @@ function buyPrice(branch: Branch, item: Item): number {
   return customerPays(branch) ? roundDownToTen(item.price) : 0;
 }
 
-function futurePartlyPaymentPeriods(branch: Branch, now: Date): PartlyPaymentPeriod[] {
+function futurePartlyPaymentPeriods(branch: Branch, today: string): PartlyPaymentPeriod[] {
   return branch.partlyPaymentPeriods
-    .filter((period) => new Date(period.date).getTime() > now.getTime())
-    .toSorted((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-}
-
-function iso(date: Date): string {
-  return new Date(date).toISOString();
+    .filter((period) => period.date > today)
+    .toSorted((a, b) => a.date.localeCompare(b.date));
 }
 
 function option(
@@ -135,23 +131,24 @@ function handoutOptions({
     (scanned || allowedWithoutBlid(type)) &&
     (type === alwaysAllow || (branchItem ? flag === true : type === "rent"));
   const options: StandCartOption[] = [];
+  const today = DateTime.fromJSDate(now).toISODate()!;
 
   if (allows("rent", branchItem?.rentAtBranch)) {
-    for (const period of futureRentPeriods(branch, now)) {
+    for (const period of futureRentPeriods(branch, today)) {
       options.push(
         option("rent", rentPrice(branch, item, period.percentage) - alreadyPaid, {
-          to: iso(period.date),
+          to: period.date,
           periodType: period.type,
         }),
       );
     }
   }
   if (allows("partly-payment", branchItem?.partlyPaymentAtBranch)) {
-    for (const period of futurePartlyPaymentPeriods(branch, now)) {
+    for (const period of futurePartlyPaymentPeriods(branch, today)) {
       const { price, payLater } = partlyPaymentPrices(branch, item, period);
       options.push(
         option("partly-payment", price - alreadyPaid, {
-          to: iso(period.date),
+          to: period.date,
           periodType: period.type,
           payLater,
         }),
@@ -178,7 +175,7 @@ function indexOfOrderedOption(
   const orderedTo = orderItem.periodTo;
   const ordered =
     type !== null && orderedTo !== null
-      ? findOption({ options }, { type, to: iso(orderedTo.toJSDate()) })
+      ? findOption({ options }, { type, to: orderedTo.toISODate()! })
       : null;
   return ordered
     ? options.indexOf(ordered)
@@ -251,9 +248,7 @@ function extendOptions(
   const recordable = new Set(branch.extendPeriods.map((period) => period.type));
   return availableExtendPeriods(customerItem, handoutBranch, now.toJSDate())
     .filter((period) => recordable.has(period.type))
-    .map((period) =>
-      option("extend", period.price, { to: iso(period.date), periodType: period.type }),
-    );
+    .map((period) => option("extend", period.price, { to: period.date, periodType: period.type }));
 }
 
 /** Buying out is always allowed at the stand; outside the rules it is reported, not blocked. */

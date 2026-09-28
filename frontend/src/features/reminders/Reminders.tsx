@@ -3,7 +3,6 @@ import { Button, Grid, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconMailFast, IconSend } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import { Activity } from "react";
 
 import { calculateSmsSegmentFeedback } from "@/features/reminders/sms";
@@ -64,7 +63,7 @@ export default function Reminders() {
     onSubmit: async ({ value }) => {
       const formData = form.state.values;
       const payload = {
-        deadlineISO: dayjs(formData.deadline).toISOString(),
+        deadline: formData.deadline ?? "",
         customerItemType: formData.customerItemType,
         branchIDs: formData.branchIds,
         emailTemplateId: formData.emailTemplateId,

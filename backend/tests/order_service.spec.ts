@@ -17,7 +17,7 @@ import { createUser } from "#tests/user_fixtures";
 const CUSTOMER_ID = fixtureId("c91");
 const BRANCH_ID = fixtureId("b81");
 const ITEM_ID = "6100000000000000000000a1";
-const DEADLINE = new Date("2027-07-01");
+const DEADLINE = "2027-07-01";
 const TITLE = "Kjemien stemmer";
 
 async function unplacedOrderCount() {
@@ -43,7 +43,7 @@ test.group("OrderService.createFromCart", (group) => {
       amount: 0,
       unitPrice: 0,
       periodFrom: DateTime.now(),
-      periodTo: DateTime.fromJSDate(DEADLINE),
+      periodTo: DateTime.fromISO(DEADLINE),
       numberOfPeriods: 1,
       periodType: "year",
     });
@@ -69,7 +69,7 @@ test.group("OrderService.createFromCart", (group) => {
     return createOrder({
       branchId: BRANCH_ID,
       customerId: CUSTOMER_ID,
-      orderItems: [{ type, itemId: ITEM_ID, periodTo: DateTime.fromJSDate(DEADLINE) }],
+      orderItems: [{ type, itemId: ITEM_ID, periodTo: DateTime.fromISO(DEADLINE) }],
     });
   }
 
@@ -158,7 +158,7 @@ test.group("OrderService.getOpenOrderItems", (group) => {
       createItem({ title: "Utlevert" }),
       createItem({ title: "Kjøpt" }),
     ]);
-    const deadline = DateTime.fromISO("2027-06-30T00:00:00Z");
+    const deadline = DateTime.fromISO("2027-06-30");
     const order = await createOrder({
       branchId: branch.id,
       customerId: customer.id,
@@ -179,7 +179,7 @@ test.group("OrderService.getOpenOrderItems", (group) => {
       {
         orderId: order.id,
         itemId: open.id,
-        deadline: "2027-06-30T00:00:00.000Z",
+        deadline: "2027-06-30",
         cancelable: true,
         title: "Åpen",
       },

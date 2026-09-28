@@ -1,3 +1,5 @@
+import { DateTime } from "luxon";
+
 import type CustomerItem from "#models/customer_item";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
@@ -22,7 +24,12 @@ export const BulkCollectionMonitoring = {
     now: Date;
   }): Promise<void> {
     for (const customerItem of customerItems) {
-      if (!isDeadlineOverdue(customerItem.deadline.toJSDate(), now)) {
+      if (
+        !isDeadlineOverdue(
+          customerItem.deadline.toISODate()!,
+          DateTime.fromJSDate(now).toISODate()!,
+        )
+      ) {
         continue;
       }
       await EmployeeMonitoringService.report({

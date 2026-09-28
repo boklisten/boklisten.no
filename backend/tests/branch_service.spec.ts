@@ -13,8 +13,8 @@ import { createBranch } from "#tests/branch_fixtures";
 
 const parentOf = async (id: string) => (await Branch.findOrFail(id)).parentBranchId;
 
-const SEMESTER_END = new Date("2026-12-20T00:00:00.000Z");
-const YEAR_END = new Date("2027-07-01T00:00:00.000Z");
+const SEMESTER_END = "2026-12-20";
+const YEAR_END = "2027-07-01";
 
 test.group("branch_service", (group) => {
   group.each.setup(() => testUtils.db().truncate());

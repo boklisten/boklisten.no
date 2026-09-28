@@ -110,8 +110,8 @@ export default function GenerateInvoicesTab() {
     }
     return {
       type,
-      deadlineFrom: dayjs(from).startOf("day").toISOString(),
-      deadlineTo: dayjs(to).endOf("day").toISOString(),
+      deadlineFrom: dayjs(from).format("YYYY-MM-DD"),
+      deadlineTo: dayjs(to).format("YYYY-MM-DD"),
       invoiceNumber: settings.invoiceNumber,
       fee: settings.fee,
       feeVatPercentage: settings.feeVatPercent / 100,

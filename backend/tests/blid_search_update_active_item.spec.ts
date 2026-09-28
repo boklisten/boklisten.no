@@ -38,7 +38,7 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
       itemId: ITEM_ID,
       blid: "12345678",
       customerId: CUSTOMER_ID,
-      deadline: DateTime.fromISO("2026-06-30T22:00:00.000Z"),
+      deadline: DateTime.fromISO("2026-07-01"),
       handoutBranchId: OLD_BRANCH_ID,
     });
     sandbox = createSandbox();
@@ -50,13 +50,13 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
     assert,
   }) => {
     await BlidSearchService.updateActiveItem(
-      { customerItemId: CUSTOMER_ITEM_ID, deadline: "2026-12-19T23:00:00.000Z" },
+      { customerItemId: CUSTOMER_ITEM_ID, deadline: "2026-12-20" },
       EMPLOYEE,
     );
 
     assert.equal(
-      (await CustomerItem.findOrFail(CUSTOMER_ITEM_ID)).deadline.toISO(),
-      DateTime.fromISO("2026-12-19T23:00:00.000Z").toISO(),
+      (await CustomerItem.findOrFail(CUSTOMER_ITEM_ID)).deadline.toISODate(),
+      "2026-12-20",
     );
     assert.isTrue(report.calledOnce);
     assert.deepEqual(report.firstCall.args[0], {
@@ -96,13 +96,13 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
 
   test("an admin's change is written but never reported", async ({ assert }) => {
     await BlidSearchService.updateActiveItem(
-      { customerItemId: CUSTOMER_ITEM_ID, deadline: "2026-12-19T23:00:00.000Z" },
+      { customerItemId: CUSTOMER_ITEM_ID, deadline: "2026-12-20" },
       ADMIN,
     );
 
     assert.equal(
-      (await CustomerItem.findOrFail(CUSTOMER_ITEM_ID)).deadline.toISO(),
-      DateTime.fromISO("2026-12-19T23:00:00.000Z").toISO(),
+      (await CustomerItem.findOrFail(CUSTOMER_ITEM_ID)).deadline.toISODate(),
+      "2026-12-20",
     );
     assert.isFalse(report.called);
   });
@@ -114,7 +114,7 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
 
     await assert.rejects(() =>
       BlidSearchService.updateActiveItem(
-        { customerItemId: CUSTOMER_ITEM_ID, deadline: "2026-12-19T23:00:00.000Z" },
+        { customerItemId: CUSTOMER_ITEM_ID, deadline: "2026-12-20" },
         EMPLOYEE,
       ),
     );

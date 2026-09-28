@@ -18,18 +18,9 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
       responsibleForDelivery: existingBranch.responsibleForDelivery,
       buyoutPercentage: existingBranch.buyoutPercentage,
       sellPercentage: existingBranch.sellPercentage,
-      partlyPaymentPeriods: existingBranch.partlyPaymentPeriods.map((partlyPaymentPeriod) => ({
-        ...partlyPaymentPeriod,
-        date: dayjs(partlyPaymentPeriod.date).format("YYYY-MM-DD"),
-      })),
-      rentPeriods: existingBranch.rentPeriods.map((rentPeriod) => ({
-        ...rentPeriod,
-        date: dayjs(rentPeriod.date).format("YYYY-MM-DD"),
-      })),
-      extendPeriods: existingBranch.extendPeriods.map((extendPeriod) => ({
-        ...extendPeriod,
-        date: dayjs(extendPeriod.date).format("YYYY-MM-DD"),
-      })),
+      partlyPaymentPeriods: existingBranch.partlyPaymentPeriods,
+      rentPeriods: existingBranch.rentPeriods,
+      extendPeriods: existingBranch.extendPeriods,
     },
     onSubmit: ({ value }) =>
       updateBranchMutation.mutate({ params: { branchId: existingBranch.id }, body: value }),

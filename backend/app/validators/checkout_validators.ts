@@ -1,6 +1,8 @@
 import vine from "@vinejs/vine";
 import type { Infer } from "@vinejs/vine/types";
 
+import { calendarDateField } from "#validators/common/fields";
+
 export const initializeCheckoutValidator = vine.create(
   vine.object({
     cartItems: vine.array(
@@ -8,7 +10,7 @@ export const initializeCheckoutValidator = vine.create(
         id: vine.string(),
         branchId: vine.string(),
         type: vine.enum(["rent", "partly-payment", "extend", "buy", "buyout"]),
-        to: vine.date().optional(),
+        to: calendarDateField.clone().optional(),
       }),
     ),
   }),

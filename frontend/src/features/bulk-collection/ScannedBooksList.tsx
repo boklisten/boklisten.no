@@ -3,7 +3,7 @@ import { Badge, Button, Card, Group, SimpleGrid, Stack, Text } from "@mantine/co
 import { IconAlertTriangle, IconUsers } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
-import { formatDeadline, isOverdue } from "@/features/bulk-collection/deadline";
+import { formatDeadline, isOverdue } from "@/shared/utils/deadline";
 import useDisplayName from "@/features/customer-search/useDisplayName";
 import { showBlid, showCustomer } from "@/features/kasse/kasseParams";
 import EntityLink from "@/shared/components/EntityLink";

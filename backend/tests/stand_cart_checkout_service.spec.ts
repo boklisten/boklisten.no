@@ -41,7 +41,7 @@ import { asStub, mock, unchecked } from "#tests/test-doubles";
 import { createUser, userDouble } from "#tests/user_fixtures";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
-const SEMESTER_END = "2026-12-20T00:00:00.000Z";
+const SEMESTER_END = "2026-12-20";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
 const ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f31";
@@ -56,13 +56,11 @@ const branch: Branch = branchDto({
   id: BRANCH_ID,
   name: "Ullern VGS",
   paymentResponsible: true,
-  rentPeriods: [
-    { type: "semester", date: new Date(SEMESTER_END), maxNumberOfPeriods: 1, percentage: 1 },
-  ],
+  rentPeriods: [{ type: "semester", date: SEMESTER_END, maxNumberOfPeriods: 1, percentage: 1 }],
   extendPeriods: [
     {
       type: "semester",
-      date: new Date(SEMESTER_END),
+      date: SEMESTER_END,
       maxNumberOfPeriods: 1,
       price: 100,
       percentage: null,

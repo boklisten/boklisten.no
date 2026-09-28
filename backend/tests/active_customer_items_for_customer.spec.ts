@@ -65,7 +65,7 @@ test.group("CustomerItemsController.forCustomer", (group) => {
   test("passes the books through, priced with the customer's own rules", async ({ assert }) => {
     const held = await book({
       blid: "abc123",
-      deadline: DateTime.fromISO("2027-09-01T00:00:00.000Z"),
+      deadline: DateTime.fromISO("2027-09-01"),
     });
 
     const result = await controller.forCustomer(contextFor(DETAILS_ID));
@@ -78,7 +78,7 @@ test.group("CustomerItemsController.forCustomer", (group) => {
       blid: "abc123",
       type: "rent",
     });
-    assert.equal(result[0]?.deadline.toISOString(), "2027-09-01T00:00:00.000Z");
+    assert.equal(result[0]?.deadline, "2027-09-01");
     assert.deepEqual(result[0]?.handoutBranch, { id: BRANCH_ID, name: "Ullern VGS" });
     assert.deepEqual(
       result[0]?.actions.map((action) => [action.type, action.available]),

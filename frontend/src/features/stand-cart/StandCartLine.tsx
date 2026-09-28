@@ -11,7 +11,8 @@ import { IconAlertTriangle, IconX } from "@tabler/icons-react";
 import CustomerLink from "@/features/kasse/CustomerLink";
 import { showBlid } from "@/features/kasse/kasseParams";
 import { Amount } from "@/features/stand-cart/StandCartAmounts";
-import { actionLabel, formatAmount, formatDeadline } from "@/features/stand-cart/standCartLabels";
+import { actionLabel, formatAmount } from "@/features/stand-cart/standCartLabels";
+import { formatDeadline } from "@/shared/utils/deadline";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { cartActionAppearance } from "@/shared/components/bookEventAppearance";
 import EntityLink from "@/shared/components/EntityLink";
@@ -63,7 +64,8 @@ function actionEntries(line: CartLine): ActionEntry[] {
       key,
       choice,
       type: option.type,
-      label: option.to === undefined ? label : `${label} til ${formatDeadline(option.to)}`,
+      label:
+        option.to === undefined ? label : `${label} til ${formatDeadline(option.to, "DD.MM.YYYY")}`,
       available: option.available,
       reason: option.reason,
     });

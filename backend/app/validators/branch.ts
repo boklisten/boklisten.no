@@ -1,6 +1,6 @@
 import vine from "@vinejs/vine";
 
-import { objectIdField, percentageField } from "#validators/common/fields";
+import { calendarDateField, objectIdField, percentageField } from "#validators/common/fields";
 import { BRANCH_TYPES } from "#shared/branch";
 import env from "#start/env";
 
@@ -11,14 +11,14 @@ const periodTypeField = vine.enum(["semester", "year"]);
 
 const rentPeriodSchema = vine.object({
   type: periodTypeField,
-  date: vine.date(),
+  date: calendarDateField.clone(),
   maxNumberOfPeriods: vine.number().positive(),
   percentage: percentageField,
 });
 
 const extendPeriodSchema = vine.object({
   type: periodTypeField,
-  date: vine.date(),
+  date: calendarDateField.clone(),
   maxNumberOfPeriods: vine.number().positive(),
   price: vine.number().positive(),
   percentage: percentageField.nullable(),
@@ -26,7 +26,7 @@ const extendPeriodSchema = vine.object({
 
 const partlyPaymentPeriodSchema = vine.object({
   type: periodTypeField,
-  date: vine.date(),
+  date: calendarDateField.clone(),
   percentageBuyout: percentageField,
   percentageUpFront: percentageField,
 });

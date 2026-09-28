@@ -116,7 +116,7 @@ export default class Invoice extends InvoiceSchema {
       id: this.id,
       invoiceNumber: this.invoiceNumber,
       type: this.type,
-      dueDate: this.dueDate.toJSDate(),
+      dueDate: this.dueDate.toISODate()!,
       customerHasPaid: this.customerHasPaid,
       toCreditNote: this.toCreditNote,
       toDebtCollection: this.toDebtCollection,

@@ -4,7 +4,7 @@ import type {
   StandCartLine,
   StandCartSource,
 } from "@boklisten/backend/shared/stand_cart";
-import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline } from "@/shared/utils/deadline";
 
 const ACTION_LABELS: Record<StandCartActionType, string> = {
   rent: "Lån",
@@ -26,10 +26,6 @@ export function actionLabel(
   return type === "cancel" && sourceKind === "customerItem" ? "Kanseller" : ACTION_LABELS[type];
 }
 
-export function formatDeadline(iso: string): string {
-  return norwegianTime(iso).format("DD.MM.YYYY");
-}
-
 export function formatAmount(amount: number): string {
   return amount < 0 ? `−${Math.abs(amount)} kr` : `${amount} kr`;
 }
@@ -40,7 +36,9 @@ export function describeChoice(
   sourceKind: StandCartSource["kind"],
 ): string {
   const label = actionLabel(choice.type, sourceKind);
-  return choice.to === undefined ? label : `${label} til ${formatDeadline(choice.to)}`;
+  return choice.to === undefined
+    ? label
+    : `${label} til ${formatDeadline(choice.to, "DD.MM.YYYY")}`;
 }
 
 export function defaultChoice(line: StandCartLine): StandCartChoice {

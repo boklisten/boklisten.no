@@ -2,12 +2,10 @@ import { Button, Group, Modal, Stack } from "@mantine/core";
 
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
 import { useAppForm } from "@/shared/hooks/form";
-import { norwegianTime } from "@/shared/utils/dayjs";
 
 /**
  * An employee's correction of a book's deadline. The change is monitored, so the modal says so
- * before the form. The caller owns the write; this only collects the date, as a UTC-midnight ISO
- * timestamp the way deadlines are stored.
+ * before the form. The caller owns the write; this only collects the day, `YYYY-MM-DD`.
  */
 export default function ChangeDeadlineModal({
   currentDeadline,
@@ -16,19 +14,19 @@ export default function ChangeDeadlineModal({
   onClose,
   onSubmit,
 }: {
-  currentDeadline: string | Date;
+  /** `YYYY-MM-DD`. */
+  currentDeadline: string;
   /** What the deadline means for this thing, shown under the picker label. */
   description: string;
   isPending: boolean;
   onClose: () => void;
   onSubmit: (deadline: string) => void;
 }) {
-  const current = norwegianTime(currentDeadline).format("YYYY-MM-DD");
   const form = useAppForm({
-    defaultValues: { deadline: current },
+    defaultValues: { deadline: currentDeadline },
     onSubmit: ({ value }) => {
       if (value.deadline !== null) {
-        onSubmit(new Date(`${value.deadline}T00:00:00.000Z`).toISOString());
+        onSubmit(value.deadline);
       }
     },
   });
@@ -47,7 +45,7 @@ export default function ChangeDeadlineModal({
             {(deadline) => (
               <Button
                 loading={isPending}
-                disabled={deadline === null || deadline === current}
+                disabled={deadline === null || deadline === currentDeadline}
                 onClick={form.handleSubmit}
               >
                 Endre frist

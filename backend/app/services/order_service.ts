@@ -19,7 +19,7 @@ export const OrderService = {
     const lines: {
       orderId: string;
       itemId: string;
-      periodTo: Date | null;
+      periodTo: string | null;
       orderAmount: number;
       title: string;
     }[] = await OrderItem.openLinesOf(
@@ -37,7 +37,7 @@ export const OrderService = {
     const openOrderItems = lines.map((line) => ({
       orderId: line.orderId,
       itemId: line.itemId,
-      deadline: line.periodTo?.toISOString() ?? "",
+      deadline: line.periodTo ?? "",
       cancelable: line.orderAmount === 0,
       title: line.title,
     }));

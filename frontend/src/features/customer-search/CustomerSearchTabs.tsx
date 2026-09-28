@@ -24,7 +24,7 @@ import {
 import type { CustomerSearchTab } from "@/features/customer-search/customerSearchTab";
 import CustomerOrderHistoryView from "@/features/customer-search/CustomerOrderHistoryView";
 import { countStandBooksToHandOut } from "@/features/customer-search/handoutBooks";
-import { isOverdue } from "@/features/bulk-collection/deadline";
+import { isOverdue } from "@/shared/utils/deadline";
 import HandoutView from "@/features/customer-search/HandoutView";
 import { api } from "@/shared/utils/apiClient";
 
@@ -186,7 +186,7 @@ export default function CustomerSearchTabs({
   const toHandOut = countStandBooksToHandOut(orders, matches, customer.id);
   const matchCount = peerMatches(matches).length;
   const bookCount = activeBooks?.length ?? 0;
-  const hasOverdue = (activeBooks ?? []).some((book) => isOverdue(String(book.deadline)));
+  const hasOverdue = (activeBooks ?? []).some((book) => isOverdue(book.deadline));
   // The badge counts problems, not traffic: a full message count would always be noise here.
   const failedMessages = (messageLog?.entries ?? []).filter((entry) =>
     isFailureStatus(entry.status),

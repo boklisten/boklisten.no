@@ -34,7 +34,7 @@ test.group("Order model", (group) => {
           itemId: sinus.id,
           amount: 200,
           unitPrice: 200,
-          periodTo: DateTime.fromISO("2027-06-30T00:00:00Z"),
+          periodTo: DateTime.fromISO("2027-06-30"),
         },
       ],
     });
@@ -50,7 +50,7 @@ test.group("Order model", (group) => {
     );
     assert.isTrue(order.notifyByEmail);
     assert.isFalse(order.placed);
-    assert.equal(order.toDto().orderItems[1]?.periodTo?.toISOString(), "2027-06-30T00:00:00.000Z");
+    assert.equal(order.toDto().orderItems[1]?.periodTo, "2027-06-30");
   });
 
   test("saveWithItems persists lines changed in place", async ({ assert }) => {

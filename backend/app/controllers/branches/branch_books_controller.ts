@@ -19,17 +19,17 @@ export default class BranchBooksController {
   }
 
   async getActiveBookDetails(ctx: HttpContext) {
-    const { deadlines, itemId } = await ctx.request.validateUsing(branchBooksDetailsValidator);
+    const { deadline, itemId } = await ctx.request.validateUsing(branchBooksDetailsValidator);
     return BranchBooksService.getActiveBookDetails({
       branchId: ctx.request.param("branchId"),
-      deadlines,
+      deadline,
       itemId,
     });
   }
 
   async bulkUpdateActiveBooks(ctx: HttpContext) {
     const { filter, update } = await ctx.request.validateUsing(activeBooksBulkUpdateValidator);
-    if (!hasExactlyOneUpdate(update) || (!filter.deadlines && !filter.customerItemIds)) {
+    if (!hasExactlyOneUpdate(update) || (!filter.deadline && !filter.customerItemIds)) {
       return ctx.response.badRequest();
     }
     return BranchBooksService.bulkUpdateActiveBooks({
@@ -44,17 +44,17 @@ export default class BranchBooksController {
   }
 
   async getOrderedBookDetails(ctx: HttpContext) {
-    const { deadlines, itemId } = await ctx.request.validateUsing(branchBooksDetailsValidator);
+    const { deadline, itemId } = await ctx.request.validateUsing(branchBooksDetailsValidator);
     return BranchBooksService.getOrderedBookDetails({
       branchId: ctx.request.param("branchId"),
-      deadlines,
+      deadline,
       itemId,
     });
   }
 
   async bulkUpdateOrderedBooks(ctx: HttpContext) {
     const { filter, update } = await ctx.request.validateUsing(orderedBooksBulkUpdateValidator);
-    if (!hasExactlyOneUpdate(update) || (!filter.deadlines && !filter.orderItemIds)) {
+    if (!hasExactlyOneUpdate(update) || (!filter.deadline && !filter.orderItemIds)) {
       return ctx.response.badRequest();
     }
     return BranchBooksService.bulkUpdateOrderedBooks({
@@ -69,7 +69,7 @@ export default class BranchBooksController {
     const { filter, notifyCustomers } = await ctx.request.validateUsing(
       orderedBooksCancelValidator,
     );
-    if (!filter.deadlines && !filter.orderItemIds) {
+    if (!filter.deadline && !filter.orderItemIds) {
       return ctx.response.badRequest();
     }
     return BranchBooksService.bulkCancelOrderedBooks({

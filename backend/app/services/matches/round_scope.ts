@@ -2,18 +2,15 @@ import db from "@adonisjs/lucid/services/db";
 import type { DateTime } from "luxon";
 
 import CustomerItem from "#models/customer_item";
-import { deadlineWindow } from "#services/deadline_window";
 import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 
-/** Active customer items due in the window around `deadline`, as a query on `customer_items`. */
+/** Active customer items due on `deadline`, as a query on `customer_items`. */
 function activeBooksAtDeadline(deadline: DateTime) {
-  const { after, before } = deadlineWindow(deadline);
   return CustomerItem.whereActive(
     db
       .from("customer_items")
       .whereNotNull("customer_items.customer_id")
-      .where("customer_items.deadline", ">", after)
-      .where("customer_items.deadline", "<", before),
+      .where("customer_items.deadline", deadline.toISODate() ?? ""),
   );
 }
 

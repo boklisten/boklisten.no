@@ -36,7 +36,8 @@ interface OpenOrderInfo {
   /** The order's branch, shared by every book in it. */
   branchId: string;
   /** The period end the order was placed with; legacy items may lack one. */
-  deadline: Date | undefined;
+  /** `YYYY-MM-DD`. */
+  deadline: string | undefined;
 }
 
 /** The open order behind each unfulfilled item. */

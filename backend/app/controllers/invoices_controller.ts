@@ -71,16 +71,13 @@ export default class InvoicesController {
     const { dryRun, deadlineFrom, deadlineTo, ...settings } = await ctx.request.validateUsing(
       invoiceGenerationValidator,
     );
-    const from = new Date(deadlineFrom);
-    const to = new Date(deadlineTo);
-    if (from > to) {
+    if (deadlineFrom > deadlineTo) {
       throw new BadRequestException("Fristen må starte før den slutter.");
     }
-    return generateInvoices({ ...settings, deadlineFrom: from, deadlineTo: to }, dryRun);
+    return generateInvoices({ ...settings, deadlineFrom, deadlineTo }, dryRun);
   }
 
   async createCompanyInvoice(ctx: HttpContext) {
-    const { dueDate, ...input } = await ctx.request.validateUsing(companyInvoiceValidator);
-    return createCompanyInvoice({ ...input, dueDate: new Date(dueDate) });
+    return createCompanyInvoice(await ctx.request.validateUsing(companyInvoiceValidator));
   }
 }

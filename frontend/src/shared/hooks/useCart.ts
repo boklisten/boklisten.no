@@ -3,7 +3,7 @@ import type { CartItem, CartItemOption } from "@boklisten/backend/shared/cart_it
 import type { OrderItemType } from "@boklisten/backend/shared/order/order-item/order-item-type";
 import { useSessionStorage } from "@mantine/hooks";
 
-import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline } from "@/shared/utils/deadline";
 
 const translations = {
   rent: "lån til",
@@ -67,7 +67,7 @@ export default function useCart({ immediately = false }: { immediately?: boolean
     if (!option) {
       throw new Error("Invalid cart item option!");
     }
-    return `${translations[option.type]} ${option.to ? norwegianTime(option.to).format("DD/MM/YYYY") : ""}`;
+    return `${translations[option.type]} ${option.to ? formatDeadline(option.to) : ""}`;
   }
   return {
     get: () => cart,

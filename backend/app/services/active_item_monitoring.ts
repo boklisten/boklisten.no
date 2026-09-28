@@ -5,8 +5,8 @@ import { EmployeeMonitoringService } from "#services/employee_monitoring_service
 
 export const FALLBACK_BRANCH_NAME = "Ukjent filial";
 
-function formatDeadline(deadline: Date): string {
-  return DateTime.fromJSDate(deadline).toFormat("dd.MM.yyyy");
+function formatDeadline(deadline: string): string {
+  return DateTime.fromISO(deadline).toFormat("dd.MM.yyyy");
 }
 
 /**
@@ -26,8 +26,10 @@ export const ActiveItemMonitoring = {
     customerId: string | null;
     title: string;
     blid: string;
-    previousDeadline: Date;
-    deadline: Date;
+    /** `YYYY-MM-DD`. */
+    previousDeadline: string;
+    /** `YYYY-MM-DD`. */
+    deadline: string;
   }): Promise<void> {
     await EmployeeMonitoringService.report({
       action: "active-item-deadline-changed",

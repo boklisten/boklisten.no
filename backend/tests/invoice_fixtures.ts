@@ -10,7 +10,7 @@ let sequence = 0;
 const PUPIL: Omit<NewInvoice, "lines"> = {
   invoiceNumber: "20268001",
   type: "rent",
-  dueDate: DateTime.fromISO("2026-09-30T00:00:00Z"),
+  dueDate: DateTime.fromISO("2026-09-30"),
   branchId: null,
   customerId: null,
   customerNumber: "12345678",
@@ -84,7 +84,7 @@ export function invoiceDto(overrides: Partial<InvoiceDto> = {}): InvoiceDto {
   return {
     ...PUPIL,
     id: fixtureId("1e0"),
-    dueDate: new Date("2026-09-30T00:00:00Z"),
+    dueDate: "2026-09-30",
     customerDob: "2008-04-28",
     customerHasPaid: false,
     toCreditNote: false,

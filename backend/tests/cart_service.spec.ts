@@ -42,7 +42,7 @@ test.group("CartService.getOptions", () => {
       partlyPaymentPeriods: [
         {
           type: "year",
-          date: new Date("2027-07-01"),
+          date: "2027-07-01",
           percentageUpFront: 0.5,
           percentageBuyout: 0.5,
         },
@@ -50,16 +50,14 @@ test.group("CartService.getOptions", () => {
     });
     const options = CartService.getOptions(branchItem({ partlyPayment: true }), branch, ITEM);
     assert.deepEqual(options, [
-      { type: "partly-payment", price: 410, payLater: 410, to: new Date("2027-07-01") },
+      { type: "partly-payment", price: 410, payLater: 410, to: "2027-07-01" },
     ]);
   });
 
   test("a title the branch offers no way to order has no options", ({ assert }) => {
     const branch = branchDto({
       id: BRANCH_ID,
-      rentPeriods: [
-        { type: "year", date: new Date("2027-07-01"), maxNumberOfPeriods: 1, percentage: 0.5 },
-      ],
+      rentPeriods: [{ type: "year", date: "2027-07-01", maxNumberOfPeriods: 1, percentage: 0.5 }],
     });
     assert.deepEqual(CartService.getOptions(branchItem({}), branch, ITEM), []);
   });

@@ -6,7 +6,7 @@ import { IconAlertTriangle, IconBook2, IconCalendar, IconCheck } from "@tabler/i
 
 import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
 import { InnsamlingIcon } from "@/features/bulk-collection/innsamlingIcon";
-import { formatDeadline, isOverdue } from "@/features/bulk-collection/deadline";
+import { formatDeadline, isOverdue } from "@/shared/utils/deadline";
 import useDisplayName from "@/features/customer-search/useDisplayName";
 import { showCustomer } from "@/features/kasse/kasseParams";
 import EntityLink from "@/shared/components/EntityLink";
@@ -16,8 +16,7 @@ interface ReceiptBook {
   deadline: string;
 }
 
-const byDeadline = (a: ReceiptBook, b: ReceiptBook) =>
-  Date.parse(a.deadline) - Date.parse(b.deadline);
+const byDeadline = (a: ReceiptBook, b: ReceiptBook) => a.deadline.localeCompare(b.deadline);
 
 /** Books under their deadline, earliest first: a customer rarely has more than a few deadlines. */
 function groupByDeadline(books: ReceiptBook[]): { deadline: string; titles: string[] }[] {

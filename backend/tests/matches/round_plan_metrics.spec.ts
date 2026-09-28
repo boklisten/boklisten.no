@@ -98,18 +98,12 @@ test.group("roundPlanMetrics", (group) => {
     assert,
   }) => {
     await arrange({});
-    await createHeldBooks(BRANCH, [{ id: SENDER, items: [ITEM_X] }]);
-    // Inside the two-day window around the deadline
-    await createHeldBooks(
-      BRANCH,
-      [{ id: SENDER, items: [ITEM_Y] }],
-      TEST_DEADLINE.plus({ days: 1 }),
-    );
-    // Outside the window, at another branch, and returned: none of them count
+    await createHeldBooks(BRANCH, [{ id: SENDER, items: [ITEM_X, ITEM_Y] }]);
+    // Due the day after the deadline, at another branch, and returned: none of them count
     await createHeldBooks(
       BRANCH,
       [{ id: OTHER_SENDER, items: [ITEM_X] }],
-      TEST_DEADLINE.plus({ days: 3 }),
+      TEST_DEADLINE.plus({ days: 1 }),
     );
     await createHeldBooks(OTHER_BRANCH, [{ id: OTHER_SENDER, items: [ITEM_Y] }]);
     await createCustomerItem({

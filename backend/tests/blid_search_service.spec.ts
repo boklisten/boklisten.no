@@ -15,10 +15,10 @@ const T1 = new Date("2026-08-01T10:00:00.000Z");
 const T2 = new Date("2026-08-02T11:30:15.000Z");
 const T3 = new Date("2026-08-03T12:45:30.000Z");
 
-const DEADLINE_1 = new Date("2026-12-20T00:00:00.000Z");
-const DEADLINE_2 = new Date("2027-07-01T00:00:00.000Z");
+const DEADLINE_1 = "2026-12-20";
+const DEADLINE_2 = "2027-07-01";
 // After the T1 handout, before NOW: the expiry slots in as the newest event.
-const EXPIRED_DEADLINE = new Date("2026-08-15T00:00:00.000Z");
+const EXPIRED_DEADLINE = "2026-08-15";
 const NOW = new Date("2026-08-30T12:00:00.000Z");
 
 function baseSources(overrides: Partial<BlidSearchSources> = {}): BlidSearchSources {
@@ -222,7 +222,7 @@ test.group("BlidSearchService.assembleBlidSearch() – handover events", () => {
     assert.deepEqual(event?.to, { type: "customer", detailsId: IDA, name: "Ida" });
     assert.deepEqual(event?.employee, { detailsId: EMPLOYEE, name: "Emil Ansatt" });
     assert.equal(event?.branchName, "Ullern VGS");
-    assert.equal(event?.deadline, DEADLINE_1.toISOString());
+    assert.equal(event?.deadline, DEADLINE_1);
     assert.equal(event?.time, T1.toISOString());
     assert.isFalse(event?.byCustomer);
     assert.equal(event?.handoutType, "rent");
@@ -437,8 +437,8 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
     assert.lengthOf(extendEvents, 1);
     const [extend] = extendEvents;
     assert.equal(extend?.orderId, "order-2");
-    assert.equal(extend?.previousDeadline, DEADLINE_1.toISOString());
-    assert.equal(extend?.deadline, DEADLINE_2.toISOString());
+    assert.equal(extend?.previousDeadline, DEADLINE_1);
+    assert.equal(extend?.deadline, DEADLINE_2);
     assert.deepEqual(extend?.to, { type: "customer", detailsId: IDA, name: "Ida" });
   });
 
@@ -469,7 +469,7 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
           title: "Sinus 1T",
           amount: 0,
           unitPrice: 0,
-          periodFrom: DEADLINE_1,
+          periodFrom: new Date(DEADLINE_1),
           periodTo: DEADLINE_2,
         },
       ],
@@ -477,8 +477,8 @@ test.group("BlidSearchService.assembleBlidSearch() – order events (legacy, no 
     const result = assembleBlidSearch(baseSources({ orders: [order] }));
     const [event] = result.history;
     assert.equal(event?.action, "extend");
-    assert.equal(event?.previousDeadline, DEADLINE_1.toISOString());
-    assert.equal(event?.deadline, DEADLINE_2.toISOString());
+    assert.equal(event?.previousDeadline, DEADLINE_1);
+    assert.equal(event?.deadline, DEADLINE_2);
   });
 
   test("shows a legacy match-receive without a counterparty", ({ assert }) => {
@@ -577,7 +577,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     assert.equal(handout?.time, T1.toISOString());
     assert.equal(handout?.branchName, "Ullern VGS");
     assert.deepEqual(handout?.employee, { detailsId: EMPLOYEE, name: "Emil Ansatt" });
-    assert.equal(handout?.deadline, DEADLINE_1.toISOString());
+    assert.equal(handout?.deadline, DEADLINE_1);
     assert.equal(handout?.handoutType, "partly-payment");
   });
 
@@ -607,25 +607,35 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     const customerItem = makeCustomerItem({
       deadline: DEADLINE_2,
       periodExtends: [
-        { periodFrom: DEADLINE_1, periodTo: DEADLINE_2, periodType: "year", createdAt: T2 },
+        {
+          periodFrom: new Date(DEADLINE_1),
+          periodTo: DEADLINE_2,
+          periodType: "year",
+          createdAt: T2,
+        },
       ],
     });
     const result = assembleBlidSearch(baseSources({ customerItems: [customerItem] }));
     const handout = result.history.find((event) => event.action === "handout");
-    assert.equal(handout?.deadline, DEADLINE_1.toISOString());
+    assert.equal(handout?.deadline, DEADLINE_1);
   });
 
   test("synthesizes extend events not covered by an extend order", ({ assert }) => {
     const customerItem = makeCustomerItem({
       deadline: DEADLINE_2,
       periodExtends: [
-        { periodFrom: DEADLINE_1, periodTo: DEADLINE_2, periodType: "year", createdAt: T2 },
+        {
+          periodFrom: new Date(DEADLINE_1),
+          periodTo: DEADLINE_2,
+          periodType: "year",
+          createdAt: T2,
+        },
       ],
     });
     const result = assembleBlidSearch(baseSources({ customerItems: [customerItem] }));
     const extend = result.history.find((event) => event.action === "extend");
-    assert.equal(extend?.previousDeadline, DEADLINE_1.toISOString());
-    assert.equal(extend?.deadline, DEADLINE_2.toISOString());
+    assert.equal(extend?.previousDeadline, DEADLINE_1);
+    assert.equal(extend?.deadline, DEADLINE_2);
     assert.equal(extend?.time, T2.toISOString());
   });
 
@@ -642,7 +652,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
           title: "Sinus 1T",
           amount: 0,
           unitPrice: 0,
-          periodFrom: DEADLINE_1,
+          periodFrom: new Date(DEADLINE_1),
           periodTo: DEADLINE_2,
         },
       ],
@@ -650,7 +660,12 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item fallbacks",
     const customerItem = makeCustomerItem({
       deadline: DEADLINE_2,
       periodExtends: [
-        { periodFrom: DEADLINE_1, periodTo: DEADLINE_2, periodType: "year", createdAt: T2 },
+        {
+          periodFrom: new Date(DEADLINE_1),
+          periodTo: DEADLINE_2,
+          periodType: "year",
+          createdAt: T2,
+        },
       ],
     });
     const result = assembleBlidSearch(
@@ -843,8 +858,9 @@ test.group("BlidSearchService.assembleBlidSearch() – deadline expiry", () => {
     );
     const [newest] = result.history;
     assert.equal(newest?.action, "deadline-expired");
-    assert.equal(newest?.time, EXPIRED_DEADLINE.toISOString());
-    assert.equal(newest?.deadline, EXPIRED_DEADLINE.toISOString());
+    // Timed at the end of the deadline day, Norwegian time.
+    assert.equal(newest?.time, "2026-08-15T21:59:59.999Z");
+    assert.equal(newest?.deadline, EXPIRED_DEADLINE);
     assert.deepEqual(newest?.to, { type: "customer", detailsId: IDA, name: "Ida" });
   });
 
@@ -853,12 +869,12 @@ test.group("BlidSearchService.assembleBlidSearch() – deadline expiry", () => {
   }) => {
     // An admin can backdate the deadline to before the handout was even recorded; the expiry
     // still describes the current state, so it must not sink into the middle of the history.
-    const backdated = new Date("2026-07-15T00:00:00.000Z");
+    const backdated = "2026-07-15";
     const result = assembleBlidSearch(
       baseSources({ customerItems: [makeCustomerItem({ deadline: backdated })] }),
     );
     assert.equal(result.history[0]?.action, "deadline-expired");
-    assert.equal(result.history[0]?.time, backdated.toISOString());
+    assert.equal(result.history[0]?.time, "2026-07-15T21:59:59.999Z");
     assert.equal(result.history[1]?.action, "handout");
   });
 
@@ -1022,7 +1038,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item authority",
   });
 
   test("the newest deadline-carrying event displays the customer item's deadline", ({ assert }) => {
-    const CORRECTED_DEADLINE = new Date("2028-02-01T00:00:00.000Z");
+    const CORRECTED_DEADLINE = "2028-02-01";
     const handoutOrder = makeOrder({
       orderItems: [
         {
@@ -1048,7 +1064,7 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item authority",
           title: "Sinus 1T",
           amount: 50,
           unitPrice: 50,
-          periodFrom: DEADLINE_1,
+          periodFrom: new Date(DEADLINE_1),
           periodTo: DEADLINE_2,
         },
       ],
@@ -1066,8 +1082,8 @@ test.group("BlidSearchService.assembleBlidSearch() – customer item authority",
     );
     const extend = result.history.find((event) => event.action === "extend");
     const handout = result.history.find((event) => event.action === "handout");
-    assert.equal(extend?.deadline, CORRECTED_DEADLINE.toISOString());
-    assert.equal(handout?.deadline, DEADLINE_1.toISOString());
+    assert.equal(extend?.deadline, CORRECTED_DEADLINE);
+    assert.equal(handout?.deadline, DEADLINE_1);
   });
 });
 
@@ -1078,7 +1094,7 @@ test.group("BlidSearchService.assembleBlidSearch() – active item", () => {
     const result = assembleBlidSearch(baseSources({ customerItems: [makeCustomerItem()] }));
     assert.deepEqual(result.activeItem, {
       customerItemId: "customer-item-1",
-      deadline: new Date(DEADLINE_1).toISOString(),
+      deadline: DEADLINE_1,
       handoutBranchId: BRANCH,
     });
   });

@@ -9,7 +9,8 @@ export interface ActiveCustomerItem {
   title: string;
   blid: string | null;
   type: CustomerItemType;
-  deadline: Date;
+  /** `YYYY-MM-DD`. */
+  deadline: string;
   /** The branch the book was handed out from. */
   handoutBranch: { id: string; name: string };
   /** Extension and buyout, priced and gated by the same rules the customer sees. */

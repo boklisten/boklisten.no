@@ -1,20 +1,7 @@
 import vine from "@vinejs/vine";
-import { DateTime } from "luxon";
 
+import { calendarDateField } from "#validators/common/fields";
 import { SLOT_TIME_PATTERN } from "#shared/match/match-round-dto";
-
-/**
- * The regex only pins the shape; `2026-02-30` fits it, and `Date.parse` quietly rolls such dates
- * into March. Luxon is the one that actually refuses a day that does not exist.
- */
-const realCalendarDate = vine.createRule((value, _, field) => {
-  if (typeof value !== "string") {
-    return;
-  }
-  if (!DateTime.fromISO(value).isValid) {
-    field.report(`${value} er ikke en gyldig dato`, "real_calendar_date", field);
-  }
-});
 
 /**
  * Zero-padded `HH:MM` sorts as plain strings, so "ends after it starts" is a string comparison
@@ -32,11 +19,6 @@ const laterThan = vine.createRule((value, startField: string, field) => {
 });
 
 const slotTime = () => vine.string().regex(SLOT_TIME_PATTERN);
-const calendarDate = () =>
-  vine
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .use(realCalendarDate());
 
 /**
  * The plan itself: everything a round needs before it can be generated, bar its name. Kept flat so
@@ -51,8 +33,8 @@ const calendarDate = () =>
 const planFields = {
   standLocation: () => vine.string().minLength(1),
   branches: () => vine.array(vine.string()).minLength(1),
-  deadline: () => calendarDate(),
-  meetingDate: () => calendarDate(),
+  deadline: () => calendarDateField.clone(),
+  meetingDate: () => calendarDateField.clone(),
   userMeetingFrom: () => slotTime(),
   userMeetingTo: () => slotTime().use(laterThan("userMeetingFrom")),
   standFrom: () => slotTime(),

@@ -34,7 +34,7 @@ function customerItem({
     itemId: item,
     handoutBranchId: BRANCH_ID,
     type: "rent",
-    deadline: DateTime.fromISO("2026-06-30T22:00:00.000Z"),
+    deadline: DateTime.fromISO("2026-07-01"),
     ...overrides,
   });
 }
@@ -63,7 +63,7 @@ const branch: Partial<Branch> = {
   partlyPaymentPeriods: [
     {
       type: "year",
-      date: new Date(),
+      date: "2027-07-01",
       percentageBuyout: 0.5,
       percentageUpFront: 0.5,
     },
@@ -73,8 +73,8 @@ const branch: Partial<Branch> = {
 
 const rentSettings: InvoiceGenerationSettings = {
   type: "rent",
-  deadlineFrom: new Date("2026-06-01T00:00:00.000Z"),
-  deadlineTo: new Date("2026-07-31T23:59:59.999Z"),
+  deadlineFrom: "2026-06-01",
+  deadlineTo: "2026-07-31",
   invoiceNumber: 20_263_000,
   fee: 96,
   feeVatPercentage: 0.25,
@@ -114,7 +114,7 @@ test.group("invoice generation", (group) => {
       id: "later",
       customer: "c1",
       item: book,
-      deadline: DateTime.fromISO("2026-08-01T00:00:00.000Z"),
+      deadline: DateTime.fromISO("2026-08-01"),
     });
 
     const invoices = await generateAndRead(rentSettings);

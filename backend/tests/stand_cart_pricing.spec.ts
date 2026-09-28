@@ -19,9 +19,9 @@ import { customerItemDouble } from "#tests/customer_item_fixtures";
 import { mock } from "#tests/test-doubles";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
-const SEMESTER_END = new Date("2026-12-20T00:00:00.000Z");
-const YEAR_END = new Date("2027-07-01T00:00:00.000Z");
-const PAST = new Date("2026-06-20T00:00:00.000Z");
+const SEMESTER_END = "2026-12-20";
+const YEAR_END = "2027-07-01";
+const PAST = "2026-06-20";
 
 const ITEM = mock<Item>({ id: "item1", title: "Sinus 1T", price: 500, buyback: false });
 
@@ -47,7 +47,7 @@ function orderItemWith(overrides: Partial<OrderItem> = {}): OrderItem {
     unitPrice: 0,
     handout: false,
     delivered: false,
-    periodTo: DateTime.fromJSDate(SEMESTER_END),
+    periodTo: DateTime.fromISO(SEMESTER_END),
     periodType: "semester",
     ...overrides,
   });
@@ -120,7 +120,7 @@ test.group("priceOrderLine", () => {
     const line = orderLine();
     assert.deepEqual(
       options(line, "rent").map((option) => option.to),
-      [SEMESTER_END.toISOString(), YEAR_END.toISOString()],
+      [SEMESTER_END, YEAR_END],
     );
     assert.lengthOf(options(line, "cancel"), 1);
   });
@@ -128,24 +128,24 @@ test.group("priceOrderLine", () => {
   test("defaults to the ordered action and period", ({ assert }) => {
     const line = orderLine({
       originalOrderItem: orderItemWith({
-        periodTo: DateTime.fromJSDate(YEAR_END),
+        periodTo: DateTime.fromISO(YEAR_END),
         periodType: "year",
       }),
     });
     const chosen = line.options[line.defaultOptionIndex];
     assert.equal(chosen?.type, "rent");
-    assert.equal(chosen?.to, YEAR_END.toISOString());
+    assert.equal(chosen?.to, YEAR_END);
   });
 
   test("falls back to the first option of the ordered type when the ordered period has passed", ({
     assert,
   }) => {
     const line = orderLine({
-      originalOrderItem: orderItemWith({ periodTo: DateTime.fromJSDate(PAST) }),
+      originalOrderItem: orderItemWith({ periodTo: DateTime.fromISO(PAST) }),
     });
     const chosen = line.options[line.defaultOptionIndex];
     assert.equal(chosen?.type, "rent");
-    assert.equal(chosen?.to, SEMESTER_END.toISOString());
+    assert.equal(chosen?.to, SEMESTER_END);
   });
 
   test("leaves out rent periods that have passed", ({ assert }) => {
@@ -159,7 +159,7 @@ test.group("priceOrderLine", () => {
     });
     assert.deepEqual(
       options(line, "rent").map((option) => option.to),
-      [YEAR_END.toISOString()],
+      [YEAR_END],
     );
   });
 
@@ -240,7 +240,7 @@ test.group("priceOrderLine", () => {
     });
     assert.deepEqual(options(open, "partly-payment")[0], {
       type: "partly-payment",
-      to: SEMESTER_END.toISOString(),
+      to: SEMESTER_END,
       periodType: "semester",
       price: 150,
       payLater: 250,
@@ -299,7 +299,7 @@ function customerItemWith({
   extendedFrom,
   ...overrides
 }: Partial<Pick<CustomerItem, "type" | "amountLeftToPay">> & {
-  deadline?: Date;
+  deadline?: string;
   creationTime?: Date;
   /** Adds one earlier extension from this date to the deadline. */
   extendedFrom?: Date;
@@ -309,7 +309,7 @@ function customerItemWith({
     itemId: ITEM.id,
     customerId: "customer1",
     type: "rent",
-    deadline: DateTime.fromJSDate(deadline),
+    deadline: DateTime.fromISO(deadline),
     handoutBranchId: "branch1",
     handedOutAt: DateTime.fromJSDate(creationTime),
     createdAt: DateTime.fromJSDate(creationTime),
@@ -317,7 +317,7 @@ function customerItemWith({
       ? [
           {
             periodFrom: DateTime.fromJSDate(extendedFrom),
-            periodTo: DateTime.fromJSDate(deadline),
+            periodTo: DateTime.fromISO(deadline),
           },
         ]
       : [],
@@ -359,13 +359,13 @@ test.group("priceCustomerItemLine", () => {
         ["buyout", 250, false],
       ],
     );
-    assert.equal(options(line, "extend")[0]?.to, YEAR_END.toISOString());
+    assert.equal(options(line, "extend")[0]?.to, YEAR_END);
     assert.equal(line.defaultOptionIndex, 0);
   });
 
   test("extend is left out when the customer could not have extended either", ({ assert }) => {
     const capped = customerItemLine({
-      customerItem: customerItemWith({ extendedFrom: PAST }),
+      customerItem: customerItemWith({ extendedFrom: new Date(PAST) }),
     });
     assert.lengthOf(options(capped, "extend"), 0);
 
@@ -411,7 +411,7 @@ test.group("priceCustomerItemLine", () => {
     // Priced and dated from the handout branch; the cart branch only has to know the type
     assert.deepEqual(
       options(sameType, "extend").map((option) => [option.to, option.price]),
-      [[YEAR_END.toISOString(), 100]],
+      [[YEAR_END, 100]],
     );
   });
 
@@ -424,7 +424,7 @@ test.group("priceCustomerItemLine", () => {
       extendPeriods: [
         {
           type: "semester",
-          date: new Date("2026-12-10T00:00:00.000Z"),
+          date: "2026-12-10",
           maxNumberOfPeriods: 1,
           price: 100,
           percentage: null,
@@ -436,12 +436,12 @@ test.group("priceCustomerItemLine", () => {
     const line = customerItemLine({
       branch: handoutBranch,
       handoutBranch,
-      customerItem: customerItemWith({ deadline: new Date("2026-12-01T00:00:00.000Z") }),
+      customerItem: customerItemWith({ deadline: "2026-12-01" }),
       now: december,
     });
     assert.deepEqual(
       options(line, "extend").map((option) => option.to),
-      [YEAR_END.toISOString()],
+      [YEAR_END],
     );
   });
 
@@ -660,20 +660,14 @@ test.group("priceItemLine", () => {
 test.group("findOption", () => {
   test("finds the option with the chosen type and period end", ({ assert }) => {
     const line = orderLine();
-    const resolved = findOption(line, { type: "rent", to: YEAR_END.toISOString() });
-    assert.equal(resolved?.to, YEAR_END.toISOString());
-  });
-
-  test("matches a period end by calendar day, whatever the time of day", ({ assert }) => {
-    const line = orderLine();
-    const resolved = findOption(line, { type: "rent", to: "2026-12-20T15:30:00.000Z" });
-    assert.equal(resolved?.to, SEMESTER_END.toISOString());
+    const resolved = findOption(line, { type: "rent", to: YEAR_END });
+    assert.equal(resolved?.to, YEAR_END);
   });
 
   test("refuses a date that is not one of the line's periods", ({ assert }) => {
     const line = orderLine();
-    assert.isNull(findOption(line, { type: "rent", to: "2027-03-01T00:00:00.000Z" }));
-    assert.isNull(findOption(line, { type: "cancel", to: "2027-03-01T00:00:00.000Z" }));
+    assert.isNull(findOption(line, { type: "rent", to: "2027-03-01" }));
+    assert.isNull(findOption(line, { type: "cancel", to: "2027-03-01" }));
   });
 
   test("refuses a type the line does not offer", ({ assert }) => {

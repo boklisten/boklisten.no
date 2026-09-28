@@ -280,10 +280,10 @@ test.group("generateRound", (group) => {
     }
   });
 
-  test("looks for books due on the deadline, give or take two days", async ({ assert }) => {
-    // A's copy is due the day before the deadline; B's three days after, outside the window.
-    await createHeldBooks(BRANCH, [heldBy(A, [ITEM_X])], TEST_DEADLINE.minus({ days: 1 }));
-    await createHeldBooks(BRANCH, [heldBy(B, [ITEM_Y])], TEST_DEADLINE.plus({ days: 3 }));
+  test("looks for books due on the deadline day only", async ({ assert }) => {
+    // A's copy is due on the deadline; B's the day after.
+    await createHeldBooks(BRANCH, [heldBy(A, [ITEM_X])], TEST_DEADLINE);
+    await createHeldBooks(BRANCH, [heldBy(B, [ITEM_Y])], TEST_DEADLINE.plus({ days: 1 }));
     await arrange(
       [],
       [
@@ -296,8 +296,8 @@ test.group("generateRound", (group) => {
 
     const obligations = await MatchObligation.query().preload("sender");
     const senders = obligations.map((obligation) => obligation.sender.userDetailId);
-    assert.include(senders, A, "a book due within two days of the deadline is picked up");
-    assert.notInclude(senders, B, "a book due three days after the deadline is not");
+    assert.include(senders, A, "a book due on the deadline is picked up");
+    assert.notInclude(senders, B, "a book due the day after the deadline is not");
   });
 
   test("refuses to generate a round twice", async ({ assert }) => {

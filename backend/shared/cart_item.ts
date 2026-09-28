@@ -10,7 +10,8 @@ export interface CartItemOption {
   type: CartItemType;
   price: number;
   payLater?: number;
-  to?: Date;
+  /** `YYYY-MM-DD`. */
+  to?: string;
 }
 
 export interface CartItem {
@@ -26,5 +27,6 @@ export interface CheckoutCartItem {
   id: string;
   branchId: string;
   type: CartItemType;
-  to?: Date | undefined;
+  /** `YYYY-MM-DD`. */
+  to?: string | undefined;
 }

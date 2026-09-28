@@ -17,20 +17,16 @@ import type {
   BranchBooksSummary,
   BranchBooksTitle,
 } from "@/features/branches/branch-books/types";
-import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline, isOverdue } from "@/shared/utils/deadline";
 
-function formatDeadlineLabel(deadlineISO: string) {
-  return norwegianTime(deadlineISO).format("D. MMMM YYYY");
-}
-
-function deadlineHasExpired(deadlineISO: string) {
-  return norwegianTime(deadlineISO).isBefore(norwegianTime(), "day");
+function formatDeadlineLabel(deadline: string) {
+  return formatDeadline(deadline, "D. MMMM YYYY");
 }
 
 function groupTarget(group: BranchBooksGroup): BranchBooksEditTarget {
   return {
     description: `bøker med frist ${formatDeadlineLabel(group.deadline)}`,
-    filter: { deadlines: group.deadlines },
+    filter: { deadline: group.deadline },
     direct: group.direct,
     total: group.total,
     allowDescendants: true,
@@ -40,7 +36,7 @@ function groupTarget(group: BranchBooksGroup): BranchBooksEditTarget {
 function titleTarget(group: BranchBooksGroup, title: BranchBooksTitle): BranchBooksEditTarget {
   return {
     description: `«${title.title}» med frist ${formatDeadlineLabel(group.deadline)}`,
-    filter: { deadlines: group.deadlines, itemId: title.itemId },
+    filter: { deadline: group.deadline, itemId: title.itemId },
     direct: title.direct,
     total: title.total,
     allowDescendants: true,
@@ -71,7 +67,7 @@ export default function BranchBooksTree({
   /** Adds the destructive "Avbestill" entry to every edit menu; only ordered books can be cancelled */
   allowCancel?: boolean;
   onEdit: (kind: BranchBooksEditKind, target: BranchBooksEditTarget) => void;
-  renderDetails: (deadlines: string[], itemId: string, enabled: boolean) => ReactNode;
+  renderDetails: (deadline: string, itemId: string, enabled: boolean) => ReactNode;
 }) {
   const [openTitles, setOpenTitles] = useState<Record<string, string[]>>({});
 
@@ -128,7 +124,7 @@ export default function BranchBooksTree({
                       <IconCalendarDue size={18} />
                       <Text fw="bold">{formatDeadlineLabel(group.deadline)}</Text>
                     </Group>
-                    {deadlineHasExpired(group.deadline) && (
+                    {isOverdue(group.deadline) && (
                       <>
                         <Badge
                           visibleFrom="sm"
@@ -198,7 +194,7 @@ export default function BranchBooksTree({
                     </Group>
                     <Accordion.Panel>
                       {renderDetails(
-                        group.deadlines,
+                        group.deadline,
                         title.itemId,
                         (openTitles[group.deadline] ?? []).includes(title.itemId),
                       )}

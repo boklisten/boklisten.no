@@ -26,6 +26,7 @@ import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { api } from "@/shared/utils/apiClient";
 import { norwegianTime } from "@/shared/utils/dayjs";
+import { formatDeadline } from "@/shared/utils/deadline";
 import { authQueryOptions } from "@/features/auth/authQuery";
 
 /** Mirrors the backend's waiting period for new accounts, so the page can say so before a search. */
@@ -214,7 +215,7 @@ function HolderDetails({ result }: { result: PublicBlidHandedOut }) {
           </Table.Tr>
           <Table.Tr>
             <Table.Th>Frist</Table.Th>
-            <Table.Td>{norwegianTime(result.deadline).format("DD.MM.YYYY")}</Table.Td>
+            <Table.Td>{formatDeadline(result.deadline, "DD.MM.YYYY")}</Table.Td>
           </Table.Tr>
         </Table.Tbody>
       </Table>

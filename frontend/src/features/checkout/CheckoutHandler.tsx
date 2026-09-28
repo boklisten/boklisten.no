@@ -8,7 +8,6 @@ import { api, apiClient } from "@/shared/utils/apiClient";
 import useCart from "@/shared/hooks/useCart";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification } from "@/shared/utils/notifications";
-import { norwegianTime } from "@/shared/utils/dayjs";
 import { useNavigate } from "@tanstack/react-router";
 
 /** Shown while the checkout starts, and by the server while the cart is still only in the browser. */
@@ -47,7 +46,7 @@ export default function CheckoutHandler() {
               branchId: cartItem.branchId,
               type: selectedOption.type,
               price: selectedOption.price,
-              to: norwegianTime(selectedOption.to).format("YYYY-MM-DD"),
+              to: selectedOption.to,
             };
           }),
         },

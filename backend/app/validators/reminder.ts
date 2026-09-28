@@ -1,10 +1,11 @@
 import vine from "@vinejs/vine";
 
 import { existingEmailTemplateId } from "#validators/common/rules";
+import { calendarDateField } from "#validators/common/fields";
 
 export const reminderValidator = vine.create(
   vine.object({
-    deadlineISO: vine.string(),
+    deadline: calendarDateField.clone(),
     customerItemType: vine.enum(["partly-payment", "rent"]),
     branchIDs: vine.array(vine.string()),
     emailTemplateId: vine.string().use(existingEmailTemplateId()).nullable(),

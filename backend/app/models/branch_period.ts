@@ -22,18 +22,18 @@ type KindColumns = Pick<
   "maxNumberOfPeriods" | "percentage" | "price" | "percentageBuyout" | "percentageUpFront"
 >;
 
-/** One row; the columns the kind does not use stay null. `date` may arrive as an ISO string over the API. */
+/** One row; the columns the kind does not use stay null. */
 function periodRow(
   branchId: string,
   kind: PeriodKind,
-  period: { type: Period; date: Date },
+  period: { type: Period; date: string },
   columns: Partial<KindColumns>,
 ): BranchPeriodRow {
   return {
     branchId,
     kind,
     periodType: period.type,
-    date: DateTime.fromJSDate(new Date(period.date)),
+    date: DateTime.fromISO(period.date),
     maxNumberOfPeriods: columns.maxNumberOfPeriods ?? null,
     percentage: columns.percentage ?? null,
     price: columns.price ?? null,
@@ -78,7 +78,7 @@ export default class BranchPeriod extends BranchPeriodSchema {
   toRentPeriod(): RentPeriod {
     return {
       type: this.periodType,
-      date: this.date.toJSDate(),
+      date: this.date.toISODate()!,
       maxNumberOfPeriods: this.required(this.maxNumberOfPeriods, "maxNumberOfPeriods"),
       percentage: this.required(this.percentage, "percentage"),
     };
@@ -87,7 +87,7 @@ export default class BranchPeriod extends BranchPeriodSchema {
   toExtendPeriod(): ExtendPeriod {
     return {
       type: this.periodType,
-      date: this.date.toJSDate(),
+      date: this.date.toISODate()!,
       maxNumberOfPeriods: this.required(this.maxNumberOfPeriods, "maxNumberOfPeriods"),
       price: this.required(this.price, "price"),
       percentage: this.percentage,
@@ -97,7 +97,7 @@ export default class BranchPeriod extends BranchPeriodSchema {
   toPartlyPaymentPeriod(): PartlyPaymentPeriod {
     return {
       type: this.periodType,
-      date: this.date.toJSDate(),
+      date: this.date.toISODate()!,
       percentageBuyout: this.required(this.percentageBuyout, "percentageBuyout"),
       percentageUpFront: this.required(this.percentageUpFront, "percentageUpFront"),
     };

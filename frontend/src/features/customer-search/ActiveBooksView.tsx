@@ -5,7 +5,7 @@ import type { User } from "@boklisten/backend/shared/user";
 import { Badge, Box, Group, Skeleton, Stack, Table, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
-import { isOverdue } from "@/features/bulk-collection/deadline";
+import { isOverdue } from "@/shared/utils/deadline";
 import {
   ActiveBookBranchChip,
   ActiveBookDeadlineChip,
@@ -199,7 +199,7 @@ export default function ActiveBooksView({ customer }: { customer: User }) {
     return <InfoAlert>Kunden har ingen aktive bøker.</InfoAlert>;
   }
 
-  const overdueCount = books.filter((book) => isOverdue(String(book.deadline))).length;
+  const overdueCount = books.filter((book) => isOverdue(book.deadline)).length;
   const deliverToPeers = buildDeliverToPeers(books, matches ?? [], customerId);
 
   return (

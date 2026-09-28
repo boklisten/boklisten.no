@@ -35,8 +35,8 @@ export default function CustomerItemsReport() {
         ...(branchFilter.length > 0 && { branchFilter }),
         ...(created.from && { createdAfter: created.from.toISOString() }),
         ...(created.to && { createdBefore: created.to.toISOString() }),
-        ...(deadline.from && { deadlineAfter: deadline.from.toISOString() }),
-        ...(deadline.to && { deadlineBefore: deadline.to.toISOString() }),
+        ...(deadline.from && { deadlineAfter: dayjs(deadline.from).format("YYYY-MM-DD") }),
+        ...(deadline.to && { deadlineBefore: dayjs(deadline.to).format("YYYY-MM-DD") }),
         ...(includeReturned && { includeReturned }),
         ...(includeBuyout && { includeBuyout }),
       };

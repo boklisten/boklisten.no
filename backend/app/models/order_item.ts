@@ -73,7 +73,7 @@ export default class OrderItem extends OrderItemSchema {
       handout: this.handout,
       customerItemId: this.customerItemId,
       periodFrom: this.periodFrom?.toJSDate() ?? null,
-      periodTo: this.periodTo?.toJSDate() ?? null,
+      periodTo: this.periodTo?.toISODate() ?? null,
       numberOfPeriods: this.numberOfPeriods,
       periodType: this.periodType,
       amountLeftToPay: this.amountLeftToPay,

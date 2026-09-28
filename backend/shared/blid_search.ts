@@ -37,9 +37,9 @@ export interface BlidHistoryEvent {
   byCustomer: boolean;
   /** The branch the order/handout belongs to. */
   branchName?: string;
-  /** The deadline in effect after this event. */
+  /** `YYYY-MM-DD`. The deadline in effect after this event. */
   deadline?: string;
-  /** The deadline that was replaced, for extends. */
+  /** `YYYY-MM-DD`. The deadline that was replaced, for extends. */
   previousDeadline?: string;
   /** For handouts: whether the book was rented/loaned out or partly paid. Missing when unknown. */
   handoutType?: CustomerItemType;
@@ -57,7 +57,7 @@ export type BlidStatus = "handed-out" | "bought-out" | "not-handed-out";
 /** The actively held customer item, present when status is "handed-out" — what admin corrections operate on. */
 export interface BlidActiveItem {
   customerItemId: string;
-  /** ISO timestamp. */
+  /** `YYYY-MM-DD`. */
   deadline: string;
   /** null on legacy items handed out by a customer, where no branch is recorded. */
   handoutBranchId: string | null;

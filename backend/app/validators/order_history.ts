@@ -1,5 +1,7 @@
 import vine from "@vinejs/vine";
 
+import { calendarDateField } from "#validators/common/fields";
+
 const OBJECT_ID_PATTERN = /^[0-9a-f]{24}$/i;
 
 export const orderBranchUpdateValidator = vine.create(
@@ -11,6 +13,6 @@ export const orderBranchUpdateValidator = vine.create(
 export const orderItemDeadlineUpdateValidator = vine.create(
   vine.object({
     itemId: vine.string().regex(OBJECT_ID_PATTERN),
-    deadline: vine.date({ formats: ["iso8601"] }),
+    deadline: calendarDateField.clone(),
   }),
 );

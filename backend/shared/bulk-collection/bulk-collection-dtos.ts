@@ -2,7 +2,7 @@
  * DTOs for the "Hurtiginnsamling" (bulk collection) feature, where a stand employee scans the
  * BL-IDs of books that customers are returning and then delivers (collects) them.
  *
- * Deadlines are ISO date strings; the frontend formats them and decides whether they are overdue.
+ * Deadlines are `YYYY-MM-DD` strings; the frontend formats them and decides whether they are overdue.
  */
 
 /** A single book resolved from a scanned BL-ID, shown as a row in the to-deliver list. */
@@ -13,7 +13,7 @@ export interface ScannedBook {
   title: string;
   /** Name of the branch where the book was originally handed out. */
   handoutBranchName: string;
-  /** ISO date string. */
+  /** `YYYY-MM-DD`. */
   deadline: string;
   customerId: string;
   /** Name of the customer who currently possesses the book. */
@@ -29,7 +29,7 @@ export interface ScannedBook {
 /** A book that was collected in the current session, shown in the receipt. */
 export interface CollectedBook {
   title: string;
-  /** ISO date string of the rental deadline. */
+  /** `YYYY-MM-DD`. The rental deadline. */
   deadline: string;
   /** Time of collection, formatted hh:mm:ss. */
   time: string;
@@ -40,7 +40,7 @@ export interface CollectedBook {
 /** A book the customer still has out after this collection. */
 interface RemainingBook {
   title: string;
-  /** ISO date string. */
+  /** `YYYY-MM-DD`. */
   deadline: string;
 }
 

@@ -4,12 +4,11 @@ import { IconBuildingStore, IconCalendarDue } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { isOverdue } from "@/features/bulk-collection/deadline";
+import { formatDeadline, isOverdue } from "@/shared/utils/deadline";
 import ChipButton from "@/shared/components/ChipButton";
 import ChangeBranchModal from "@/shared/components/corrections/ChangeBranchModal";
 import ChangeDeadlineModal from "@/shared/components/corrections/ChangeDeadlineModal";
 import { api } from "@/shared/utils/apiClient";
-import { norwegianTime } from "@/shared/utils/dayjs";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -91,11 +90,11 @@ export function ActiveBookDeadlineChip({ book }: { book: ActiveCustomerItem }) {
     <>
       <ChipButton
         icon={IconCalendarDue}
-        color={isOverdue(String(book.deadline)) ? "red" : "gray"}
+        color={isOverdue(book.deadline) ? "red" : "gray"}
         title="Endre frist"
         onClick={() => setEditing(true)}
       >
-        {TYPE_LABELS[book.type]} til {norwegianTime(book.deadline).format("DD.MM.YYYY")}
+        {TYPE_LABELS[book.type]} til {formatDeadline(book.deadline, "DD.MM.YYYY")}
       </ChipButton>
       {editing && (
         <ChangeDeadlineModal

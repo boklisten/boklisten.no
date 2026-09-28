@@ -1,10 +1,12 @@
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+/**
+ * Deadlines are calendar days in `YYYY-MM-DD` form (Postgres `date` columns): a book is due by the
+ * end of its deadline day, Norwegian time. Days in this form sort and compare correctly as strings.
+ */
 
 /**
- * Whether a loan deadline has passed. The deadline day itself and the day after are not counted,
- * matching the old bl-admin's `moment().isAfter(moment(deadline).add(1, "day"))`. Shared so the
+ * Whether the deadline day has ended by `today` (`YYYY-MM-DD`, Norwegian time). Shared so the
  * warning the employee sees and the report the administrator gets follow the same rule.
  */
-export function isDeadlineOverdue(deadline: Date | string, now: Date): boolean {
-  return now.getTime() > new Date(deadline).getTime() + ONE_DAY_MS;
+export function isDeadlineOverdue(deadline: string, today: string): boolean {
+  return deadline < today;
 }

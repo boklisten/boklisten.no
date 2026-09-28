@@ -13,7 +13,7 @@ interface ListRow {
   customer_organization_number: string | null;
   type: InvoiceType | null;
   created_at: Date;
-  due_date: Date;
+  due_date: string;
   total_including_fee: number;
   customer_has_paid: boolean;
   to_credit_note: boolean;

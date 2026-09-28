@@ -45,9 +45,10 @@ export class OrderPlaceService {
 
   /** Whether the customer already ordered one of the order's books with the same deadline. */
   private async hasOpenOrderWithOrderItems(order: Order) {
-    const lines = order.orderItems.flatMap(({ itemId, periodTo }) =>
-      periodTo ? [{ itemId, periodTo: periodTo.toJSDate() }] : [],
-    );
+    const lines = order.orderItems.flatMap(({ itemId, periodTo }) => {
+      const deadline = periodTo?.toISODate();
+      return deadline ? [{ itemId, periodTo: deadline }] : [];
+    });
     if (order.customerId === null || lines.length === 0) {
       return false;
     }

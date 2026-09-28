@@ -27,7 +27,7 @@ function rentInvoice(overrides: Partial<Invoice> = {}): Invoice {
     branchId: BRANCH_ID,
     branchName: "Ullern VG3 ST",
     createdAt: new Date("2026-07-28T13:11:25.417Z"),
-    dueDate: new Date("2026-08-11T13:11:05.460Z"),
+    dueDate: "2026-08-11",
     reference: "Manglende levering av skolebøker",
     lines: [
       invoiceLineDto({
@@ -73,7 +73,7 @@ function companyInvoice(): Invoice {
     invoiceNumber: "20268005",
     type: null,
     createdAt: new Date("2026-09-02T13:22:18.705Z"),
-    dueDate: new Date("2026-09-16T13:22:17.867Z"),
+    dueDate: "2026-09-16",
     ourReference: "Jørgen Rosenlund",
     reference: "Tove Fj. Johansen",
     lines: [
