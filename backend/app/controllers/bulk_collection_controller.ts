@@ -157,7 +157,7 @@ export default class BulkCollectionController {
       handoutBranchName: branch?.name ?? "Ukjent",
       deadline: customerItem.deadline.toISODate()!,
       customerId,
-      customerName: customer.name,
+      customerName: customer.name ?? "",
       deliverToName: deliverTo?.name ?? (recipientCustomerId ? "en annen elev" : undefined),
     };
   }

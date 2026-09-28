@@ -22,9 +22,9 @@ export const OrderEmailHandler = {
     const emailUser: EmailUser = {
       id: customer.id,
       dob: customer.dob?.toFormat("dd.MM.yy") ?? "",
-      name: customer.name,
+      name: customer.name ?? "",
       email: customer.email,
-      address: customer.address,
+      address: customer.address ?? "",
     };
 
     if (withAgreement) {

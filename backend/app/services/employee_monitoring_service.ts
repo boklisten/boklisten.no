@@ -69,13 +69,13 @@ export function buildMonitoringMail(report: MonitoringReport) {
     "",
     `Hva: ${headline}`,
     `Tidspunkt: ${occurredAt}`,
-    `Ansatt: ${report.employee.name} (${report.employee.email})`,
+    `Ansatt: ${report.employee.name ?? "(uten navn)"} (${report.employee.email})`,
   ];
 
   if (report.customer) {
     lines.push(
       "",
-      `Kunde: ${report.customer.name}`,
+      `Kunde: ${report.customer.name ?? "(uten navn)"}`,
       `Telefon: ${report.customer.phone ?? ""}`,
       `E-post: ${report.customer.email}`,
       `Kasse: ${clientOrigin}/admin/kasse?kunde=${report.customer.id}`,

@@ -64,7 +64,7 @@ test.group("CustomerItemsController.forCustomer", (group) => {
 
   test("passes the books through, priced with the customer's own rules", async ({ assert }) => {
     const held = await book({
-      blid: "abc123",
+      blid: "abc12345",
       deadline: DateTime.fromISO("2027-09-01"),
     });
 
@@ -75,7 +75,7 @@ test.group("CustomerItemsController.forCustomer", (group) => {
       id: held.id,
       item: ITEM_ID,
       title: "Mønster 1T",
-      blid: "abc123",
+      blid: "abc12345",
       type: "rent",
     });
     assert.equal(result[0]?.deadline, "2027-09-01");

@@ -15,7 +15,8 @@ export interface BookSuggestions {
 
 interface BookFormValues {
   title: string;
-  isbn: number;
+  /** Null for an item that is not a book. */
+  isbn: number | null;
   subject: string;
   year: number;
   price: number;
@@ -31,7 +32,7 @@ interface BookFormValues {
 function initialValues(item: Item | undefined): BookFormValues {
   return {
     title: item?.title ?? "",
-    isbn: item?.isbn ?? 0,
+    isbn: item === undefined ? null : item.isbn,
     subject: item?.subject ?? "",
     year: item?.year ?? new Date().getFullYear(),
     price: item?.price ?? 0,
@@ -111,17 +112,24 @@ export default function BookFormModal({
           name="isbn"
           validators={{
             onSubmit: ({ value }) =>
-              /^(?:\d{10}|\d{13})$/.test(String(value)) ? null : "ISBN må ha 10 eller 13 siffer",
+              value === null || /^97[89]\d{10}$/.test(String(value))
+                ? null
+                : "ISBN må ha 13 siffer og begynne med 978 eller 979",
           }}
         >
           {(field) => (
-            <field.NumberField
+            // An empty field means the item is not a book, which the shared number field cannot say.
+            <NumberInput
               label="ISBN"
-              required
+              description="La stå tom hvis det ikke er en bok."
               hideControls
               allowDecimal={false}
               allowNegative={false}
               thousandSeparator=""
+              value={field.state.value ?? ""}
+              error={field.state.meta.errors.join(", ")}
+              onChange={(value) => field.handleChange(value === "" ? null : Number(value))}
+              onBlur={field.handleBlur}
             />
           )}
         </form.AppField>

@@ -23,7 +23,7 @@ export default class CustomerItemsController {
         item: {
           id: item.id,
           title: item.title,
-          isbn: String(item.isbn),
+          isbn: item.isbn === null ? null : String(item.isbn),
         },
         blid: customerItem.blid,
         deadline: customerItem.deadline.toISODate()!,

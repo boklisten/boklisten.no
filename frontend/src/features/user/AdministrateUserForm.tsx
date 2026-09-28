@@ -58,12 +58,12 @@ export default function AdministrateUserForm({
   const defaultValues: AdministrateUserFormValues = {
     email: user.email,
     emailConfirmed: user.emailConfirmed,
-    name: user.name,
+    name: user.name ?? "",
     phoneNumber: user.phone ?? "",
-    address: user.address,
+    address: user.address ?? "",
     postal: {
-      code: user.postCode,
-      city: user.postCity,
+      code: user.postCode ?? "",
+      city: user.postCity ?? "",
     },
     birthday: user.dob ?? "",
     guardianName: user.guardianName ?? "",

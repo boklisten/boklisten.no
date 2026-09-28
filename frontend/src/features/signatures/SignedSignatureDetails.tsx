@@ -16,7 +16,7 @@ export default function SignedSignatureDetails({
     expiresAtText?: string | undefined;
   };
   /** The customer's name, which the details refer to. */
-  name: string;
+  name: string | null;
 }) {
   return (
     <Stack align="center">
@@ -31,7 +31,8 @@ export default function SignedSignatureDetails({
       <SignedContractDetails
         signedByGuardian={signature.signedByGuardian ?? false}
         signingName={signature.signingName ?? ""}
-        name={name}
+        // A customer without a name on file is referred to by the name they signed with.
+        name={name ?? signature.signingName ?? ""}
         signedAtText={signature.signedAtText ?? ""}
         expiresAtText={signature.expiresAtText ?? ""}
       />

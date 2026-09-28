@@ -77,6 +77,19 @@ test.group("ItemManagementService", (group) => {
     assert.deepEqual(stored.priceHistory, { [currentPriceYear()]: 935 });
   });
 
+  test("items that are not books carry no isbn, however many there are", async ({ assert }) => {
+    await ItemManagementService.create({ ...SINUS, title: "Kalkulator", isbn: null });
+    await ItemManagementService.create({ ...SINUS, title: "Passer", isbn: null });
+
+    assert.deepEqual(
+      (await Item.query().orderBy("title")).map((item) => [item.title, item.isbn]),
+      [
+        ["Kalkulator", null],
+        ["Passer", null],
+      ],
+    );
+  });
+
   test("create refuses an isbn another book already carries", async ({ assert }) => {
     await createItem({ title: "Sinus 1T (gammel)", isbn: SINUS.isbn });
     await assert.rejects(() => ItemManagementService.create(SINUS), /Sinus 1T \(gammel\)/);

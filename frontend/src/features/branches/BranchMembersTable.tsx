@@ -48,7 +48,7 @@ export default function BranchMembersTable({
                   variant="subtle"
                   onClick={() => {
                     const modalId = modals.open({
-                      title: `Flytt ${data.name}`,
+                      title: `Flytt ${data.name ?? "eleven"}`,
                       children: (
                         <MoveBranchMemberModal
                           branchId={branchId}

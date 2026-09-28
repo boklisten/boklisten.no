@@ -66,9 +66,15 @@ export interface BlidActiveItem {
 export interface BlidSearchResult {
   blid: string;
   /** null when the blid has never been connected to an item. */
-  book: { id: string; title: string; isbn: string } | null;
+  /** `isbn` is null when the item is not a book. */
+  book: { id: string; title: string; isbn: string | null } | null;
   /** Whether a unique item exists for the blid, i.e. there is a link to edit or delete. */
   registered: boolean;
+  /**
+   * Whether a customer item carries the blid. Such a blid can only be relinked, never deleted:
+   * the customer items reference it.
+   */
+  hasCustomerItems: boolean;
   status: BlidStatus;
   activeItem?: BlidActiveItem;
   /** Sorted newest first. */

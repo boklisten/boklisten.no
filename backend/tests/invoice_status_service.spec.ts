@@ -56,10 +56,8 @@ function createEliseInvoice(overrides: Parameters<typeof createInvoice>[0] = {})
   });
 }
 
-async function flagsOf(invoiceId: string) {
-  const { customerHasPaid, toCreditNote, toDebtCollection, toLossNote } =
-    await Invoice.getOrFail(invoiceId);
-  return { customerHasPaid, toCreditNote, toDebtCollection, toLossNote };
+async function statusOf(invoiceId: string) {
+  return (await Invoice.getOrFail(invoiceId)).status;
 }
 
 /** The buyout flag of each invoiced book, by customer item id. */
@@ -80,12 +78,12 @@ test.group("invoice status changes", (group) => {
     await createItem({ id: "i1", title: "Psykologi 2 2022" });
     await createItem({ id: "i2", title: "Matematikk R1" });
     const invoiced = { customerId: CUSTOMER_ID, handoutBranchId: "branch1" };
-    await createCustomerItem({ ...invoiced, id: "ci1", itemId: "i1", blid: "blid1" });
+    await createCustomerItem({ ...invoiced, id: "ci1", itemId: "i1", blid: "blid0001" });
     await createCustomerItem({
       ...invoiced,
       id: "ci2",
       itemId: "i2",
-      blid: "blid2",
+      blid: "blid0002",
       returned: true,
     });
     sandbox = createSandbox();
@@ -106,20 +104,15 @@ test.group("invoice status changes", (group) => {
     assert.equal(invoicePaidLineAmount(1153.9), 1150);
   });
 
-  test("marking paid writes the flags, records an invoice-paid order for the unreturned books and sets buyout on all", async ({
+  test("marking paid writes the status, records an invoice-paid order for the unreturned books and sets buyout on all", async ({
     assert,
   }) => {
     await createEliseInvoice();
     const { invoice, warnings } = await setInvoiceStatus("inv1", "paid", EMPLOYEE_ID);
 
-    assert.isTrue(invoice.customerHasPaid);
+    assert.equal(invoice.status, "paid");
     assert.equal(invoice.branchName, (await Branch.findOrFail("branch1")).name);
-    assert.deepEqual(await flagsOf("inv1"), {
-      customerHasPaid: true,
-      toCreditNote: false,
-      toDebtCollection: false,
-      toLossNote: false,
-    });
+    assert.equal(await statusOf("inv1"), "paid");
     const [order, ...others] = await Order.all();
     assert.lengthOf(others, 0);
     assert.include(order?.toDto(), {
@@ -143,7 +136,7 @@ test.group("invoice status changes", (group) => {
           type: "invoice-paid",
           itemId: "i1",
           title: "Psykologi 2 2022",
-          blid: "blid1",
+          blid: "blid0001",
           amount: 1150,
           unitPrice: 1150,
           handout: true,
@@ -170,13 +163,13 @@ test.group("invoice status changes", (group) => {
 
     assert.lengthOf(await Order.all(), 0);
     assert.lengthOf(warnings, 1);
-    assert.isTrue((await flagsOf("inv1")).customerHasPaid);
+    assert.equal(await statusOf("inv1"), "paid");
   });
 
   test("leaving paid removes the invoice-paid order from the customer and clears buyout", async ({
     assert,
   }) => {
-    await createEliseInvoice({ customerHasPaid: true });
+    await createEliseInvoice({ status: "paid" });
     await createOrder({
       id: "unrelated",
       branchId: "branch1",
@@ -193,14 +186,9 @@ test.group("invoice status changes", (group) => {
       ],
     });
 
-    const { warnings } = await setInvoiceStatus("inv1", "creditNote", EMPLOYEE_ID);
+    const { warnings } = await setInvoiceStatus("inv1", "credit-note", EMPLOYEE_ID);
 
-    assert.deepEqual(await flagsOf("inv1"), {
-      customerHasPaid: false,
-      toCreditNote: true,
-      toDebtCollection: false,
-      toLossNote: false,
-    });
+    assert.equal(await statusOf("inv1"), "credit-note");
     assert.deepEqual(
       (await Order.all()).map((order) => order.id),
       ["unrelated"],
@@ -213,7 +201,7 @@ test.group("invoice status changes", (group) => {
   });
 
   test("leaving paid without a matching order warns instead of failing", async ({ assert }) => {
-    await createEliseInvoice({ customerHasPaid: true });
+    await createEliseInvoice({ status: "paid" });
 
     await createOrder({
       id: "unrelated",
@@ -229,7 +217,7 @@ test.group("invoice status changes", (group) => {
   });
 
   test("leaving paid for a deleted customer warns instead of failing", async ({ assert }) => {
-    await createEliseInvoice({ customerHasPaid: true, customerId: null });
+    await createEliseInvoice({ status: "paid", customerId: null });
 
     const { warnings } = await setInvoiceStatus("inv1", "unpaid", EMPLOYEE_ID);
 
@@ -240,11 +228,11 @@ test.group("invoice status changes", (group) => {
     ]);
   });
 
-  test("changing between the other statuses touches nothing but the flags", async ({ assert }) => {
+  test("changing between the other statuses touches nothing but the status", async ({ assert }) => {
     await createEliseInvoice();
-    await setInvoiceStatus("inv1", "debtCollection", EMPLOYEE_ID);
+    await setInvoiceStatus("inv1", "debt-collection", EMPLOYEE_ID);
 
-    assert.isTrue((await flagsOf("inv1")).toDebtCollection);
+    assert.equal(await statusOf("inv1"), "debt-collection");
     assert.lengthOf(await Order.all(), 0);
     assert.deepEqual(await buyoutFlags(), [
       ["ci1", false],
@@ -260,20 +248,20 @@ test.group("invoice status changes", (group) => {
       id: "inv2",
       invoiceNumber: "20263072",
       customerId: CUSTOMER_ID,
-      customerHasPaid: true,
+      status: "paid",
     });
 
     const { invoices, warnings } = await setInvoiceStatuses(
       ["inv1", "inv2"],
-      "lossNote",
+      "loss-note",
       EMPLOYEE_ID,
     );
 
     assert.deepEqual(
-      invoices.map((updated) => [updated.id, updated.toLossNote]),
+      invoices.map((updated) => [updated.id, updated.status]),
       [
-        ["inv1", true],
-        ["inv2", true],
+        ["inv1", "loss-note"],
+        ["inv2", "loss-note"],
       ],
     );
     assert.deepEqual(warnings, ["20263072: Fant ingen ordre for betalingen å fjerne fra kunden."]);
@@ -288,11 +276,11 @@ test.group("invoice status changes", (group) => {
       ["Matematikk R1", true],
     ];
     assert.deepEqual(
-      updated.lines.map((line) => [line.title, line.cancel]),
+      updated.lines.map((line) => [line.title, line.cancelled]),
       expected,
     );
     assert.deepEqual(
-      (await Invoice.getOrFail("inv1")).lines.map((line) => [line.title, line.cancel]),
+      (await Invoice.getOrFail("inv1")).lines.map((line) => [line.title, line.cancelled]),
       expected,
     );
   });
@@ -313,13 +301,8 @@ test.group("invoice status changes", (group) => {
   });
 
   test("deleting an invoice that is not unpaid is refused", async ({ assert }) => {
-    for (const [index, flags] of [
-      { customerHasPaid: true },
-      { toCreditNote: true },
-      { toDebtCollection: true },
-      { toLossNote: true },
-    ].entries()) {
-      const { id } = await createInvoice({ id: `kept${index}`, ...flags });
+    for (const status of ["paid", "credit-note", "debt-collection", "loss-note"] as const) {
+      const { id } = await createInvoice({ id: `kept-${status}`, status });
       await assert.rejects(() => deleteInvoice(id), /Bare ubetalte fakturaer kan slettes/);
     }
     assert.lengthOf(await Invoice.all(), 4);

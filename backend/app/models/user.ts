@@ -57,11 +57,12 @@ export default class User extends UserSchema {
   }
 
   static async namesByIds(ids: Iterable<string | null | undefined>): Promise<Map<string, string>> {
-    const rows: { id: string; name: string }[] = await db
+    const rows: { id: string; name: string | null }[] = await db
       .from("users")
       .whereIn("id", distinctIds(ids))
+      .whereNotNull("name")
       .select("id", "name");
-    return new Map(rows.map(({ id, name }) => [id, name]));
+    return new Map(rows.map(({ id, name }) => [id, name ?? ""]));
   }
 
   static async byEmail(email: string): Promise<User | null> {

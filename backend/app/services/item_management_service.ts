@@ -5,7 +5,8 @@ import { findItemByIsbn } from "#services/item_lookup";
 /** The flat shape the admin book form sends. */
 export interface ItemInput {
   title: string;
-  isbn: number;
+  /** Null for an item that is not a book. */
+  isbn: number | null;
   subject: string;
   year: number;
   price: number;
@@ -26,7 +27,7 @@ type BulkUpsertRow = ItemInput & { id?: string };
 interface BulkUpsertSummary {
   createdCount: number;
   updatedCount: number;
-  errors: { isbn: number; title: string; message: string }[];
+  errors: { isbn: number | null; title: string; message: string }[];
 }
 
 export function currentPriceYear(now = new Date()): string {
@@ -48,7 +49,10 @@ export function applyPatch(item: Item, patch: ItemPatch, year: string): Item {
   return item;
 }
 
-async function assertIsbnAvailable(isbn: number, exceptItemId?: string) {
+async function assertIsbnAvailable(isbn: number | null, exceptItemId?: string) {
+  if (isbn === null) {
+    return;
+  }
   const existing = await findItemByIsbn(String(isbn));
   if (existing !== null && existing.id !== exceptItemId) {
     throw new BadRequestException(`ISBN ${isbn} er allerede i bruk av «${existing.title}»`);
@@ -87,7 +91,7 @@ async function update(id: string, patch: ItemPatch): Promise<Item> {
  * Rows are written one by one (no transaction), so a failing row is reported and the rest still land.
  */
 async function bulkUpsert(rows: BulkUpsertRow[]): Promise<BulkUpsertSummary> {
-  const repeatedIsbns = duplicates(rows.map((row) => row.isbn));
+  const repeatedIsbns = duplicates(rows.flatMap((row) => (row.isbn === null ? [] : [row.isbn])));
   if (repeatedIsbns.length > 0) {
     throw new BadRequestException(
       `Filen inneholder samme ISBN flere ganger: ${repeatedIsbns.join(", ")}`,
@@ -104,7 +108,11 @@ async function bulkUpsert(rows: BulkUpsertRow[]): Promise<BulkUpsertSummary> {
   for (const { id, ...input } of rows) {
     try {
       const existing =
-        id === undefined ? await findItemByIsbn(String(input.isbn)) : await Item.find(id);
+        id === undefined
+          ? input.isbn === null
+            ? null
+            : await findItemByIsbn(String(input.isbn))
+          : await Item.find(id);
       if (id !== undefined && existing === null) {
         throw new BadRequestException(`Fant ingen bok med id ${id}`);
       }

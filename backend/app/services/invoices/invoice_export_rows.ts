@@ -98,7 +98,11 @@ function vismaRowsForInvoice(invoice: Invoice, options: VismaExportOptions): Csv
         invoice.invoiceNumber,
         TEXT_LINES.dob + formatDob(invoice.customerDob, "dd.MM.yyyy"),
       ),
-      vismaL1Text(lineNumber + 2, invoice.invoiceNumber, TEXT_LINES.phone + invoice.customerPhone),
+      vismaL1Text(
+        lineNumber + 2,
+        invoice.invoiceNumber,
+        TEXT_LINES.phone + (invoice.customerPhone ?? ""),
+      ),
       vismaL1Text(lineNumber + 3, invoice.invoiceNumber, TEXT_LINES.contact),
     );
   }
@@ -389,7 +393,7 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
         "",
         "",
         "",
-        String(item.isbn),
+        item.isbn === null ? "" : String(item.isbn),
         item.title,
         "",
         // Legacy bl-admin exported the stored amount, which is 0 for books moved between orders.

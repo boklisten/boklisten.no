@@ -9,10 +9,19 @@ import { cleanUserInput } from "#validators/common/transformers";
  * by registration and both update endpoints; the guardian fields are only required (by
  * `invalidUserFields`) when the customer is underage.
  */
+/** Something `cleanUserInput` keeps; separators alone would clean to `''`, which the database rejects. */
+const HAS_LETTER_OR_DIGIT = /[\p{L}\p{N}]/u;
+
 export const userFieldsSchema = vine.object({
-  name: vine.string().transform((value) => cleanUserInput(value)),
+  name: vine
+    .string()
+    .regex(HAS_LETTER_OR_DIGIT)
+    .transform((value) => cleanUserInput(value)),
   phone: phoneField.clone().use(uniquePhoneNumber()),
-  address: vine.string().transform((value) => cleanUserInput(value)),
+  address: vine
+    .string()
+    .regex(HAS_LETTER_OR_DIGIT)
+    .transform((value) => cleanUserInput(value)),
   postCode: postalCodeField.clone(),
   postCity: vine.string(),
   dob: vine.date().before("today"),

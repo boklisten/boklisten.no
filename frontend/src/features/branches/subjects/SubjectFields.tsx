@@ -43,7 +43,7 @@ function SubjectBookSelect({
           if (option.label.toLowerCase().trim().includes(search.toLowerCase().trim())) {
             return true;
           }
-          const isbn = items?.find((item) => item.id === option.value)?.isbn.toString();
+          const isbn = items?.find((item) => item.id === option.value)?.isbn?.toString();
           return isbn?.includes(search.trim()) ?? false;
         })
       }

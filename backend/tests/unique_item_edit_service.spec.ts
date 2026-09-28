@@ -109,15 +109,29 @@ test.group("UniqueItemEditService", (group) => {
     assert.deepEqual(await customerItemTitles(), [OLD_ITEM_ID]);
   });
 
-  test("delete removes the unique item and leaves the customer items alone", async ({ assert }) => {
+  test("delete removes a unique item no customer item carries", async ({ assert }) => {
+    await CustomerItem.query().where("blid", BLID).delete();
     await UniqueItemEditService.remove({ blid: BLID }, ADMIN);
 
     assert.isNull(await UniqueItem.find(UNIQUE_ITEM_ID));
+    assert.isFalse(report.called);
+  });
+
+  test("delete refuses a blid with returned customer items, and reports nothing", async ({
+    assert,
+  }) => {
+    await assert.rejects(
+      () => UniqueItemEditService.remove({ blid: BLID }, EMPLOYEE),
+      /har vært utlånt/,
+    );
+
+    assert.isNotNull(await UniqueItem.find(UNIQUE_ITEM_ID));
     assert.deepEqual(await customerItemTitles(), [OLD_ITEM_ID]);
     assert.isFalse(report.called);
   });
 
   test("an employee's delete is reported", async ({ assert }) => {
+    await CustomerItem.query().where("blid", BLID).delete();
     await UniqueItemEditService.remove({ blid: BLID }, EMPLOYEE);
 
     assert.isTrue(report.calledOnce);

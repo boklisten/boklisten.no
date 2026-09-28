@@ -26,7 +26,7 @@ export default function UserDangerZone({
 }) {
   const [expandedAction, setExpandedAction] = useState<"merge" | "delete" | null>(null);
   const [confirmText, setConfirmText] = useState("");
-  const confirmPhrase = user.name || user.email;
+  const confirmPhrase = user.name ?? user.email;
 
   const deleteMutation = useMutation({
     mutationFn: () => apiClient.api.users.destroy({ params: { userId: user.id } }),

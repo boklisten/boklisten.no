@@ -40,7 +40,7 @@ export type BlidCustomerItem = CustomerItemDto & { orderIds: string[] };
 
 export interface BlidSearchSources {
   blid: string;
-  item: { id: string; title: string; isbn: string } | null;
+  item: { id: string; title: string; isbn: string | null } | null;
   /** Whether a unique item exists for the blid. */
   registered: boolean;
   /** When the unique item was created and last changed; null when it is gone or undated. */
@@ -690,6 +690,7 @@ export function assembleBlidSearch(sources: BlidSearchSources): BlidSearchResult
     blid: sources.blid,
     book: sources.item,
     registered: sources.registered,
+    hasCustomerItems: sources.customerItems.length > 0,
     status: deriveStatus(sources.customerItems),
     activeItem: deriveActiveItem(sources.customerItems),
     history: events,
@@ -831,7 +832,7 @@ export const BlidSearchService = {
       return {
         blid: row.blid,
         title: catalogueItem?.title ?? "",
-        isbn: catalogueItem === undefined ? null : String(catalogueItem.isbn),
+        isbn: catalogueItem?.isbn == null ? null : String(catalogueItem.isbn),
       };
     });
     const holders = new Map(
@@ -879,7 +880,14 @@ export const BlidSearchService = {
 
     return assembleBlidSearch({
       blid,
-      item: item === null ? null : { id: item.id, title: item.title, isbn: String(item.isbn) },
+      item:
+        item === null
+          ? null
+          : {
+              id: item.id,
+              title: item.title,
+              isbn: item.isbn === null ? null : String(item.isbn),
+            },
       registered: uniqueItem !== null,
       registration:
         uniqueItem?.createdAt && uniqueItem.updatedAt

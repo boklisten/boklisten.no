@@ -2,23 +2,24 @@ import db from "@adonisjs/lucid/services/db";
 
 import Branch from "#models/branch";
 import Invoice from "#models/invoice";
-import { invoiceStatus } from "#shared/invoice";
-import type { Invoice as InvoiceDto, InvoiceListRow, InvoiceType } from "#shared/invoice";
+import type {
+  Invoice as InvoiceDto,
+  InvoiceListRow,
+  InvoiceStatus,
+  InvoiceType,
+} from "#shared/invoice";
 
 interface ListRow {
   id: string;
   invoice_number: string;
-  customer_name: string;
+  customer_name: string | null;
   customer_id: string | null;
   customer_organization_number: string | null;
   type: InvoiceType | null;
   created_at: Date;
   due_date: string;
   total_including_fee: number;
-  customer_has_paid: boolean;
-  to_credit_note: boolean;
-  to_debt_collection: boolean;
-  to_loss_note: boolean;
+  status: InvoiceStatus;
 }
 
 /** Every invoice, oldest number first. The overview filters and searches client-side. */
@@ -35,10 +36,7 @@ export async function listInvoices(): Promise<InvoiceListRow[]> {
       "created_at",
       "due_date",
       "total_including_fee",
-      "customer_has_paid",
-      "to_credit_note",
-      "to_debt_collection",
-      "to_loss_note",
+      "status",
     )
     .orderBy("invoice_number")
     .orderBy("id");
@@ -52,12 +50,7 @@ export async function listInvoices(): Promise<InvoiceListRow[]> {
     createdAt: row.created_at,
     dueDate: row.due_date,
     totalIncludingFee: row.total_including_fee,
-    status: invoiceStatus({
-      customerHasPaid: row.customer_has_paid,
-      toCreditNote: row.to_credit_note,
-      toDebtCollection: row.to_debt_collection,
-      toLossNote: row.to_loss_note,
-    }),
+    status: row.status,
   }));
 }
 

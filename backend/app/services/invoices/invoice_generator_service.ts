@@ -160,7 +160,7 @@ function assertFiniteAmounts(invoice: NewInvoice, fee: LinePayment) {
     .filter(({ fields }) => fields.length > 0);
   if (invalid.length > 0) {
     throw new BadRequestException(
-      `Faktura ${invoice.invoiceNumber} til ${invoice.customerName} har ugyldige beløp: ${invalid
+      `Faktura ${invoice.invoiceNumber} til ${invoice.customerName ?? invoice.customerNumber} har ugyldige beløp: ${invalid
         .map(({ label, fields }) => `${label} (${fields.join(", ")})`)
         .join(", ")}`,
     );
@@ -279,7 +279,7 @@ export async function generateInvoices(
   const skipped: InvoiceGenerationResult["skipped"] = [];
   const dueDate = DateTime.now().plus({ days: settings.daysToDeadline });
   let invoiceNumber = settings.invoiceNumber;
-  const invoices: InvoiceListRow[] = [];
+  const built: NewInvoice[] = [];
   for (const [customerId, books] of groups) {
     const customer = customersById.get(customerId);
     if (!customer) {
@@ -299,6 +299,18 @@ export async function generateInvoices(
       lookups,
     );
     invoiceNumber++;
+    built.push(invoice);
+  }
+
+  const taken = await Invoice.takenNumbers(built.map((invoice) => invoice.invoiceNumber));
+  if (taken.length > 0) {
+    throw new BadRequestException(
+      `Fakturanummer ${taken.join(", ")} er allerede i bruk. Velg et annet startnummer.`,
+    );
+  }
+
+  const invoices: InvoiceListRow[] = [];
+  for (const invoice of built) {
     if (dryRun) {
       // Not saved, so the number stands in for the id; it is unique within the batch.
       invoices.push(listRow(invoice, invoice.invoiceNumber, new Date()));

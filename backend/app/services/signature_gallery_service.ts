@@ -29,7 +29,7 @@ interface GalleryPage {
 
 export interface GalleryCustomer {
   id: string;
-  name: string;
+  name: string | null;
   dob: DateTime | null;
   branchMembershipId: string | null;
   permission: UserPermission;
@@ -72,7 +72,7 @@ export const SignatureGalleryService = {
     return {
       id: signature.id,
       customerId: signature.customerId,
-      customerName: customer.name,
+      customerName: customer.name ?? "",
       signingName: signature.signingName,
       signedByGuardian: signature.signedByGuardian,
       signedAtText: formatSignedDate(signature.createdAt),

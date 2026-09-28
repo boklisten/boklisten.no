@@ -11,6 +11,7 @@ import { createBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { mock } from "#tests/test-doubles";
+import { createUniqueItem } from "#tests/unique_item_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 test.group("OrderToCustomerItemGenerator.generate", () => {
@@ -147,6 +148,8 @@ test.group("OrderToCustomerItemGenerator.createFor", (group) => {
       createItem(),
       createUser(),
     ]);
+    await createUniqueItem({ blid: "blid0001", itemId: item.id });
+    await createUniqueItem({ blid: "blid0002", itemId: item.id });
     const order = await createOrder({
       branchId: branch.id,
       customerId: customer.id,

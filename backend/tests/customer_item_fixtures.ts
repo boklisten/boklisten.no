@@ -2,9 +2,11 @@ import { DateTime } from "luxon";
 
 import CustomerItem from "#models/customer_item";
 import CustomerItemPeriodExtend from "#models/customer_item_period_extend";
+import UniqueItem from "#models/unique_item";
 import type { CustomerItem as CustomerItemDto } from "#shared/customer-item/customer-item";
 import type { Period } from "#shared/period";
 import { fixtureId } from "#tests/fixtures";
+import { createUniqueItem } from "#tests/unique_item_fixtures";
 
 let sequence = 0;
 
@@ -49,7 +51,8 @@ function withDefaults(
 /**
  * Inserts a customer item (and its extensions) into the test Postgres and reads it back. The item,
  * the handout branch and the customer (unless null) must exist already, since they are foreign
- * keys. Pass only what the test cares about.
+ * keys. A blid no sticker has yet is registered on the item first (`blid` is a foreign key too).
+ * Pass only what the test cares about.
  */
 export async function createCustomerItem(
   overrides: Partial<CustomerItemColumns> &
@@ -59,6 +62,9 @@ export async function createCustomerItem(
 ): Promise<CustomerItem> {
   sequence++;
   const { periodExtends = [], ...columns } = overrides;
+  if (columns.blid != null && (await UniqueItem.findBy("blid", columns.blid)) === null) {
+    await createUniqueItem({ blid: columns.blid, itemId: columns.itemId });
+  }
   const customerItem = await CustomerItem.create(
     withDefaults(columns, fixtureId(`e${sequence.toString(16)}`)),
   );

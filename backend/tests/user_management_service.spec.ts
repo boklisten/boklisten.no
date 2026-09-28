@@ -306,7 +306,7 @@ test.group("UserManagementService.deleteUser", (group) => {
   }) => {
     const invoice = await createInvoice({
       customerId: FROM,
-      customerHasPaid: true,
+      status: "paid",
       customerName: "Kari Nordmann",
       customerEmail: "kari@example.com",
       customerNumber: "93996",

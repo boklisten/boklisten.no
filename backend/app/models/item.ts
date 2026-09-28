@@ -7,9 +7,12 @@ import { ItemSchema } from "#database/schema";
 export default class Item extends ItemSchema {
   static override selfAssignPrimaryKey = true;
 
-  /** int8 arrives from the pg driver as a string; a 13-digit ISBN fits a JS number with room to spare. */
-  @column({ consume: Number })
-  declare isbn: number;
+  /**
+   * int8 arrives from the pg driver as a string; a 13-digit ISBN fits a JS number with room to
+   * spare. Null for an item that is not a book.
+   */
+  @column({ consume: (isbn: string | null) => (isbn === null ? null : Number(isbn)) })
+  declare isbn: number | null;
 
   /** The price each calendar year, keyed by the year. */
   declare priceHistory: Record<string, number>;

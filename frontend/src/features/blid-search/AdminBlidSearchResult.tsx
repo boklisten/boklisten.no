@@ -53,7 +53,7 @@ export default function AdminBlidSearchResult({
         <Stack gap="md">
           <BlidBookHeader
             result={data}
-            // A blid known only from old customer items has no unique item to edit or delete.
+            // A blid known only from old orders has no unique item to edit or delete.
             onEdit={data.registered ? () => setEditing(true) : undefined}
             onClear={onClear}
             onShowIsbn={data.book?.isbn ? () => setShowingIsbn(true) : undefined}

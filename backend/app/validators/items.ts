@@ -2,7 +2,7 @@ import vine from "@vinejs/vine";
 
 const itemFields = {
   title: vine.string().trim().minLength(1),
-  isbn: vine.number().withoutDecimals().positive(),
+  isbn: vine.number().withoutDecimals().range([9_780_000_000_000, 9_799_999_999_999]).nullable(),
   subject: vine.string().trim().minLength(1),
   year: vine.number().withoutDecimals().min(1900).max(2100),
   price: vine.number().withoutDecimals().min(0),

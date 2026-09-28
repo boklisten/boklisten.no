@@ -35,7 +35,7 @@ async function findHandedOut(blid: string): Promise<PublicBlidHandedOut | null> 
     phone: customer?.phone ?? "",
     handoutBranch: branch?.name ?? "",
     title: item?.title ?? "",
-    isbn: item === null ? "" : String(item.isbn),
+    isbn: item?.isbn == null ? "" : String(item.isbn),
   };
 }
 
@@ -66,7 +66,7 @@ async function findNotHandedOut(blid: string): Promise<PublicBlidNotHandedOut | 
   return {
     status: "notHandedOut",
     title: item?.title ?? "",
-    isbn: item === null ? "" : String(item.isbn),
+    isbn: item?.isbn == null ? "" : String(item.isbn),
   };
 }
 

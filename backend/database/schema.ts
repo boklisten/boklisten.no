@@ -154,7 +154,7 @@ export class CompanySchema extends BaseModel {
   @column()
   declare customerNumber: string
   @column()
-  declare email: string
+  declare email: string | null
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -162,7 +162,7 @@ export class CompanySchema extends BaseModel {
   @column()
   declare organizationNumber: string
   @column()
-  declare phone: string
+  declare phone: string | null
   @column()
   declare postCity: string
   @column()
@@ -315,10 +315,10 @@ export class EmailVerificationSchema extends BaseModel {
 }
 
 export class InvoiceLineSchema extends BaseModel {
-  static $columns = ['cancel', 'customerItemId', 'customerItemType', 'discount', 'gross', 'id', 'invoiceId', 'itemId', 'net', 'numberOfItems', 'position', 'productNumber', 'title', 'unit', 'vat'] as const
+  static $columns = ['cancelled', 'customerItemId', 'customerItemType', 'discount', 'gross', 'id', 'invoiceId', 'itemId', 'net', 'numberOfItems', 'position', 'productNumber', 'title', 'unit', 'vat'] as const
   $columns = InvoiceLineSchema.$columns
   @column()
-  declare cancel: boolean
+  declare cancelled: boolean
   @column()
   declare customerItemId: string | null
   @column()
@@ -350,7 +350,7 @@ export class InvoiceLineSchema extends BaseModel {
 }
 
 export class InvoiceSchema extends BaseModel {
-  static $columns = ['branchId', 'comment', 'createdAt', 'customerAddress', 'customerCountry', 'customerDob', 'customerEmail', 'customerHasPaid', 'customerId', 'customerName', 'customerNumber', 'customerOrganizationNumber', 'customerPhone', 'customerPostCity', 'customerPostCode', 'dueDate', 'feeDiscount', 'feeGross', 'feeNet', 'feeUnit', 'feeVat', 'id', 'invoiceNumber', 'ourReference', 'reference', 'toCreditNote', 'toDebtCollection', 'toLossNote', 'totalDiscount', 'totalGross', 'totalIncludingFee', 'totalNet', 'totalVat', 'type', 'updatedAt'] as const
+  static $columns = ['branchId', 'comment', 'createdAt', 'customerAddress', 'customerCountry', 'customerDob', 'customerEmail', 'customerId', 'customerName', 'customerNumber', 'customerOrganizationNumber', 'customerPhone', 'customerPostCity', 'customerPostCode', 'dueDate', 'feeDiscount', 'feeGross', 'feeNet', 'feeUnit', 'feeVat', 'id', 'invoiceNumber', 'ourReference', 'reference', 'status', 'totalDiscount', 'totalGross', 'totalIncludingFee', 'totalNet', 'totalVat', 'type', 'updatedAt'] as const
   $columns = InvoiceSchema.$columns
   @column()
   declare branchId: string | null
@@ -359,29 +359,27 @@ export class InvoiceSchema extends BaseModel {
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
-  declare customerAddress: string
+  declare customerAddress: string | null
   @column()
   declare customerCountry: string | null
   @column.date()
   declare customerDob: DateTime | null
   @column()
-  declare customerEmail: string
-  @column()
-  declare customerHasPaid: boolean
+  declare customerEmail: string | null
   @column()
   declare customerId: string | null
   @column()
-  declare customerName: string
+  declare customerName: string | null
   @column()
   declare customerNumber: string
   @column()
   declare customerOrganizationNumber: string | null
   @column()
-  declare customerPhone: string
+  declare customerPhone: string | null
   @column()
-  declare customerPostCity: string
+  declare customerPostCity: string | null
   @column()
-  declare customerPostCode: string
+  declare customerPostCode: string | null
   @column.date()
   declare dueDate: DateTime
   @column()
@@ -403,11 +401,7 @@ export class InvoiceSchema extends BaseModel {
   @column()
   declare reference: string
   @column()
-  declare toCreditNote: boolean
-  @column()
-  declare toDebtCollection: boolean
-  @column()
-  declare toLossNote: boolean
+  declare status: string
   @column()
   declare totalDiscount: number
   @column()
@@ -440,7 +434,7 @@ export class ItemSchema extends BaseModel {
   @column({ isPrimary: true })
   declare id: string
   @column()
-  declare isbn: bigint | number
+  declare isbn: bigint | number | null
   @column()
   declare price: number
   @column()
@@ -859,7 +853,7 @@ export class UserSchema extends BaseModel {
   static $columns = ['address', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastActiveAt', 'localHashedPassword', 'name', 'permission', 'phone', 'postCity', 'postCode', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsUserId'] as const
   $columns = UserSchema.$columns
   @column()
-  declare address: string
+  declare address: string | null
   @column()
   declare branchMembershipId: string | null
   @column.dateTime({ autoCreate: true })
@@ -883,15 +877,15 @@ export class UserSchema extends BaseModel {
   @column()
   declare localHashedPassword: string | null
   @column()
-  declare name: string
+  declare name: string | null
   @column()
   declare permission: string
   @column()
   declare phone: string | null
   @column()
-  declare postCity: string
+  declare postCity: string | null
   @column()
-  declare postCode: string
+  declare postCode: string | null
   @column()
   declare taskConfirmDetails: boolean
   @column()

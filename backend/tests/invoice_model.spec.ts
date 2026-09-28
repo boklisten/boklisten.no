@@ -53,13 +53,23 @@ test.group("Invoice model", (group) => {
     const other = await createUser();
 
     assert.isFalse(await Invoice.hasActive(customer.id));
-    await createInvoice({ customerId: customer.id, customerHasPaid: true });
-    await createInvoice({ customerId: customer.id, toCreditNote: true });
+    await createInvoice({ customerId: customer.id, status: "paid" });
+    await createInvoice({ customerId: customer.id, status: "credit-note" });
     await createInvoice({ customerId: other.id });
     assert.isFalse(await Invoice.hasActive(customer.id));
 
-    await createInvoice({ customerId: customer.id, toDebtCollection: true });
+    await createInvoice({ customerId: customer.id, status: "debt-collection" });
     assert.isTrue(await Invoice.hasActive(customer.id));
+  });
+
+  test("a second invoice with a number already in use is refused", async ({ assert }) => {
+    await createInvoice({ invoiceNumber: "20263001" });
+
+    await assert.rejects(
+      () => createInvoice({ invoiceNumber: "20263001" }),
+      /Fakturanummer 20263001 er allerede i bruk/,
+    );
+    assert.lengthOf(await Invoice.all(), 1);
   });
 
   test("the API shows the branch's current name", async ({ assert }) => {
@@ -84,7 +94,7 @@ test.group("Invoice model", (group) => {
       invoiceNumber: "20263001",
       customerId: customer.id,
       totalIncludingFee: 1274.5,
-      toLossNote: true,
+      status: "loss-note",
     });
 
     const rows = await listInvoices();
@@ -97,7 +107,7 @@ test.group("Invoice model", (group) => {
         row.status,
       ]),
       [
-        ["20263001", customer.id, null, "lossNote"],
+        ["20263001", customer.id, null, "loss-note"],
         ["20268001", null, "988982857", "unpaid"],
       ],
     );
@@ -131,7 +141,7 @@ test.group("branch insights: invoiced books", (group) => {
     await createInvoice({
       branchId: branch.id,
       createdAt: DateTime.fromISO("2025-06-01T10:00:00Z"),
-      toCreditNote: true,
+      status: "credit-note",
       // A company line is not a book we lent out.
       lines: [book, { customerItemType: null, title: "Administrasjon" }],
     });

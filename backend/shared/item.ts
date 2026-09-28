@@ -4,7 +4,8 @@ export interface Item {
   title: string;
   /** Current price in whole NOK. */
   price: number;
-  isbn: number;
+  /** A 978/979 EAN; null for an item that is not a book, such as a calculator. */
+  isbn: number | null;
   subject: string;
   /** Year of publication. */
   year: number;

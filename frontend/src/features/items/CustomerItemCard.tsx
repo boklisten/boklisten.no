@@ -73,7 +73,11 @@ export default function CustomerItemCard({
           label="Unik ID"
           text={actionableCustomerItem.blid ?? ""}
         />
-        <InfoEntry label="ISBN" startIcon={<IconBook2 />} text={actionableCustomerItem.item.isbn} />
+        <InfoEntry
+          label="ISBN"
+          startIcon={<IconBook2 />}
+          text={actionableCustomerItem.item.isbn ?? "Ingen"}
+        />
         <InfoEntry
           label="Ansvarlig filial"
           startIcon={<IconSchool />}

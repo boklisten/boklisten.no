@@ -4,7 +4,7 @@ import type { ComboboxItem, ComboboxParsedItem } from "@mantine/core";
 interface SelectableItem {
   id: string;
   title: string;
-  isbn: number;
+  isbn: number | null;
 }
 
 export function toItemSelectData(items: SelectableItem[] | undefined): ComboboxItem[] {
@@ -25,7 +25,7 @@ export function itemSelectFilter(items: SelectableItem[] | undefined) {
       if (option.label.toLowerCase().trim().includes(needle)) {
         return true;
       }
-      const isbn = items?.find((item) => item.id === option.value)?.isbn.toString();
+      const isbn = items?.find((item) => item.id === option.value)?.isbn?.toString();
       return isbn?.includes(needle) ?? false;
     });
   };

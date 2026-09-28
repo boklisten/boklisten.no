@@ -94,11 +94,12 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
 export const VippsCheckoutService = {
   async create(order: Order, isDeliveryFree: boolean) {
     const customer = await User.findOrFail(order.customerId);
+    const [firstName, ...lastNames] = customer.name?.split(" ") ?? [];
     const { token, checkoutFrontendUrl } = await VippsPaymentService.checkout.create({
       type: "PAYMENT",
       prefillCustomer: {
-        firstName: customer.name.split(" ")[0] ?? null,
-        lastName: customer.name.split(" ").slice(1).join(" ") ?? null,
+        firstName: firstName ?? null,
+        lastName: lastNames.length > 0 ? lastNames.join(" ") : null,
         email: customer.email,
         phoneNumber: customer.phone === null ? null : `47${customer.phone}`,
         streetAddress: customer.address ?? null,
@@ -118,7 +119,10 @@ export const VippsCheckoutService = {
           currency: "NOK",
           value: order.amount * 100,
         },
-        paymentDescription: `${customer.name} sin ordre fra Boklisten.no`,
+        paymentDescription:
+          customer.name === null
+            ? "Ordre fra Boklisten.no"
+            : `${customer.name} sin ordre fra Boklisten.no`,
         orderSummary: {
           orderLines: order.orderItems.map((orderItem) => {
             const priceInMinors = orderItem.amount * 100;

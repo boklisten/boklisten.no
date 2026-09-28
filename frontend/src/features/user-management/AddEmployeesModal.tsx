@@ -122,7 +122,7 @@ export default function AddEmployeesModal({
                 label={
                   <>
                     <Text span size="sm" fw={600}>
-                      {result.name || result.email}
+                      {result.name ?? result.email}
                     </Text>
                     {result.permission !== "customer" && (
                       <Text span size="sm" c="dimmed">

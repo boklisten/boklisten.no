@@ -6,8 +6,6 @@ import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import type { Branch } from "@boklisten/backend/shared/branch";
 import { api } from "@/shared/utils/apiClient";
 
-const capitalize = (s: string) => (s.length > 0 ? s[0]?.toUpperCase() + s.slice(1) : "");
-
 export default function SelectOrderBranch() {
   const { data: branches } = useQuery(api.branches.indexPublic.queryOptions());
 
@@ -31,7 +29,7 @@ export default function SelectOrderBranch() {
   }
 
   const groupedBranches = branches.reduce((m, b) => {
-    const k = capitalize(b.region);
+    const k = b.region;
 
     if (m.has(k)) {
       m.get(k)!.push(b);

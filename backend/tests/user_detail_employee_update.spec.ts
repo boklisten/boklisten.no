@@ -67,7 +67,7 @@ test.group("UserService.updateAsEmployee", (group) => {
   test("sets the task when a required field is emptied", async ({ assert }) => {
     const user = await createUser({ id: CUSTOMER_ID });
 
-    const result = await UserService.updateAsEmployee(user, { address: "" });
+    const result = await UserService.updateAsEmployee(user, { address: null });
 
     assert.isTrue(result.taskConfirmDetails);
   });

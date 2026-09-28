@@ -12,6 +12,8 @@ import { itemSelectFilter, toItemSelectData } from "@/shared/utils/itemSelectFil
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 const HELD_REASON = "Boka er utdelt til en kunde og kan ikke slettes før den er levert tilbake.";
+const LENT_REASON =
+  "Boka har vært utlånt, så den unike ID-en kan ikke slettes. Endre bok over hvis den er koblet feil.";
 
 /**
  * Corrections to which book a blid is: move the sticker to another title, or delete it. Both
@@ -33,6 +35,7 @@ export default function EditBlidModal({
   const [itemId, setItemId] = useState(currentItemId);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const held = result.status === "handed-out";
+  const deleteBlocker = held ? HELD_REASON : result.hasCustomerItems ? LENT_REASON : null;
 
   const invalidate = () =>
     Promise.all([
@@ -109,11 +112,9 @@ export default function EditBlidModal({
             Slett unik ID
           </Text>
           <Text size="sm">
-            {held
-              ? HELD_REASON
-              : "Sletter koblingen mellom den unike ID-en og boka. Kundenes historikk beholdes."}
+            {deleteBlocker ?? "Sletter koblingen mellom den unike ID-en og boka."}
           </Text>
-          {!held && <MonitoringNotice />}
+          {deleteBlocker === null && <MonitoringNotice />}
           {!confirmingDelete && (
             <Group>
               <Button
@@ -121,7 +122,7 @@ export default function EditBlidModal({
                 variant="outline"
                 leftSection={<IconTrash size={16} aria-hidden />}
                 // The sentence above already says why, so no tooltip is needed.
-                disabled={held}
+                disabled={deleteBlocker !== null}
                 onClick={() => setConfirmingDelete(true)}
               >
                 Slett unik ID

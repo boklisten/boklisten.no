@@ -11,7 +11,8 @@ export default function BookLinkFigure({
   title,
 }: {
   blid: string;
-  isbn: string | number;
+  /** Null when the item is not a book. */
+  isbn: string | number | null;
   title: string;
 }) {
   return (
@@ -36,9 +37,11 @@ export default function BookLinkFigure({
         <Text size="sm" fw={600} ta="center" lineClamp={3} className={classes.wrap}>
           {title}
         </Text>
-        <Text size="xs" c="dimmed">
-          ISBN {isbn}
-        </Text>
+        {isbn !== null && (
+          <Text size="xs" c="dimmed">
+            ISBN {isbn}
+          </Text>
+        )}
       </Stack>
     </div>
   );

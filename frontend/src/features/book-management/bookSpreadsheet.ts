@@ -9,7 +9,8 @@ import { cellToString } from "@/shared/utils/csvNormalizers";
 export interface BookRow {
   id?: string;
   title: string;
-  isbn: number;
+  /** Null (an empty cell) for an item that is not a book. */
+  isbn: number | null;
   subject: string;
   year: number;
   price: number;
@@ -97,10 +98,13 @@ export const BOOK_IMPORT_COLUMNS: Column[] = [
   {
     id: "isbn",
     label: FIELDS.isbn,
-    description: "Bare siffer, f.eks. 9788202516260",
+    description: "13 siffer, f.eks. 9788202516260. Tom hvis det ikke er en bok",
     validators: [
-      ...required(FIELDS.isbn),
-      { type: "regex", pattern: "^\\d+$", message: "Må være bare siffer" },
+      {
+        type: "regex",
+        pattern: "^(?:97[89]\\d{10})?$",
+        message: "Må være 13 siffer som begynner med 978 eller 979",
+      },
     ],
     transformations: [{ type: "custom", fn: normalizeIsbn, stage: "pre" }],
   },
@@ -196,7 +200,7 @@ export function toBookRows(result: ImportResult): BookRow[] {
     return {
       ...(id.length > 0 && { id }),
       title: cellText(row, "title"),
-      isbn: Number(normalizeIsbn(row["isbn"])),
+      isbn: normalizeIsbn(row["isbn"]) === "" ? null : Number(normalizeIsbn(row["isbn"])),
       subject: cellText(row, "subject"),
       year: Number(cellText(row, "year")),
       price: Number(normalizeDecimal(row["price"])),

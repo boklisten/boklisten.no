@@ -8,7 +8,6 @@ import Order from "#models/order";
 import type { NewOrderItem } from "#models/order";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { invoiceDto } from "#services/invoices/invoice_query_service";
-import { invoiceStatus, invoiceStatusFlags } from "#shared/invoice";
 import type {
   Invoice as InvoiceDto,
   InvoiceBulkStatusChangeResult,
@@ -136,8 +135,8 @@ export async function setInvoiceStatus(
   employeeId: string,
 ): Promise<InvoiceStatusChangeResult> {
   const invoice = await Invoice.getOrFail(invoiceId);
-  const previousStatus = invoiceStatus(invoice);
-  await invoice.merge(invoiceStatusFlags(status)).save();
+  const previousStatus = invoice.status;
+  await invoice.merge({ status }).save();
 
   let warnings: string[] = [];
   if (status === "paid" && previousStatus !== "paid") {
@@ -173,14 +172,14 @@ export async function setInvoiceStatuses(
 export async function setInvoiceLineCancelled(
   invoiceId: string,
   position: number,
-  cancel: boolean,
+  cancelled: boolean,
 ): Promise<InvoiceDto> {
   const invoice = await Invoice.getOrFail(invoiceId);
   const line = invoice.lines.find((candidate) => candidate.position === position);
   if (line === undefined) {
     throw new BadRequestException("Fakturalinjen finnes ikke.");
   }
-  await line.merge({ cancel }).save();
+  await line.merge({ cancelled }).save();
   return invoiceDto(invoice);
 }
 
@@ -191,7 +190,7 @@ export async function setInvoiceLineCancelled(
  */
 export async function deleteInvoice(invoiceId: string): Promise<void> {
   const invoice = await Invoice.getOrFail(invoiceId);
-  if (invoiceStatus(invoice) !== "unpaid") {
+  if (invoice.status !== "unpaid") {
     throw new BadRequestException("Bare ubetalte fakturaer kan slettes.");
   }
   await invoice.delete();

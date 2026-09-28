@@ -4,30 +4,36 @@ import { beforeCreate, beforeFetch, beforeFind, hasMany } from "@adonisjs/lucid/
 import type { ModelQueryBuilderContract } from "@adonisjs/lucid/types/model";
 import type { HasMany } from "@adonisjs/lucid/types/relations";
 
+import BadRequestException from "#exceptions/bad_request_exception";
 import Branch from "#models/branch";
 import { assignObjectId } from "#models/helpers/object_id";
 import InvoiceLine from "#models/invoice_line";
 import { InvoiceSchema } from "#database/schema";
-import type { Invoice as InvoiceDto, InvoiceType } from "#shared/invoice";
+import type { Invoice as InvoiceDto, InvoiceStatus, InvoiceType } from "#shared/invoice";
+
+/** True when `error` is Postgres rejecting a second invoice with the same number. */
+function isInvoiceNumberTaken(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  const { code, constraint } = error as { code?: unknown; constraint?: unknown };
+  return code === "23505" && constraint === "invoices_invoice_number_unique";
+}
 
 type InvoiceColumns = Pick<Invoice, (typeof InvoiceSchema.$columns)[number]>;
 type InvoiceLineColumns = Pick<InvoiceLine, (typeof InvoiceLine.$columns)[number]>;
 
 /** The columns a new line is given; the rest take their defaults. */
-export type NewInvoiceLine = Omit<InvoiceLineColumns, "id" | "invoiceId" | "position" | "cancel">;
+export type NewInvoiceLine = Omit<
+  InvoiceLineColumns,
+  "id" | "invoiceId" | "position" | "cancelled"
+>;
 
-type DefaultedInvoiceColumns =
-  | "id"
-  | "createdAt"
-  | "updatedAt"
-  | "customerHasPaid"
-  | "toCreditNote"
-  | "toDebtCollection"
-  | "toLossNote";
+type DefaultedInvoiceColumns = "id" | "createdAt" | "updatedAt" | "status";
 
 /**
  * The columns a new invoice is given, with its lines in the order they are printed. The id,
- * timestamps and status flags take their defaults unless given.
+ * timestamps and status take their defaults unless given.
  */
 export type NewInvoice = Omit<InvoiceColumns, DefaultedInvoiceColumns> &
   Partial<Pick<InvoiceColumns, DefaultedInvoiceColumns>> & { lines: NewInvoiceLine[] };
@@ -44,6 +50,8 @@ export default class Invoice extends InvoiceSchema {
   static override selfAssignPrimaryKey = true;
 
   declare type: InvoiceType | null;
+
+  declare status: InvoiceStatus;
 
   @hasMany(() => InvoiceLine)
   declare lines: HasMany<typeof InvoiceLine>;
@@ -78,15 +86,38 @@ export default class Invoice extends InvoiceSchema {
     return invoice;
   }
 
-  /** Inserts the invoice and its lines in one transaction and returns it read back. */
+  /**
+   * Inserts the invoice and its lines in one transaction and returns it read back. A number that
+   * is already in use is refused with a message the admin can act on.
+   */
   static async createWithLines({ lines, ...columns }: NewInvoice): Promise<Invoice> {
-    return db.transaction(async (trx) => {
-      const invoice = await Invoice.create(columns, { client: trx });
-      await invoice
-        .related("lines")
-        .createMany(lines.map((line, position) => ({ ...line, position })));
-      return Invoice.query({ client: trx }).where("id", invoice.id).firstOrFail();
-    });
+    try {
+      return await db.transaction(async (trx) => {
+        const invoice = await Invoice.create(columns, { client: trx });
+        await invoice
+          .related("lines")
+          .createMany(lines.map((line, position) => ({ ...line, position })));
+        return Invoice.query({ client: trx }).where("id", invoice.id).firstOrFail();
+      });
+    } catch (error) {
+      if (isInvoiceNumberTaken(error)) {
+        throw new BadRequestException(`Fakturanummer ${columns.invoiceNumber} er allerede i bruk.`);
+      }
+      throw error;
+    }
+  }
+
+  /** Those of `invoiceNumbers` that an invoice already has, in order. */
+  static async takenNumbers(invoiceNumbers: string[]): Promise<string[]> {
+    if (invoiceNumbers.length === 0) {
+      return [];
+    }
+    const rows: { invoice_number: string }[] = await db
+      .from("invoices")
+      .whereIn("invoice_number", invoiceNumbers)
+      .select("invoice_number")
+      .orderBy("invoice_number");
+    return rows.map((row) => row.invoice_number);
   }
 
   /**
@@ -97,8 +128,7 @@ export default class Invoice extends InvoiceSchema {
     const row = await db
       .from("invoices")
       .where("customer_id", customerId)
-      .where("customer_has_paid", false)
-      .where("to_credit_note", false)
+      .whereNotIn("status", ["paid", "credit-note"])
       .first();
     return row !== null;
   }
@@ -117,10 +147,7 @@ export default class Invoice extends InvoiceSchema {
       invoiceNumber: this.invoiceNumber,
       type: this.type,
       dueDate: this.dueDate.toISODate()!,
-      customerHasPaid: this.customerHasPaid,
-      toCreditNote: this.toCreditNote,
-      toDebtCollection: this.toDebtCollection,
-      toLossNote: this.toLossNote,
+      status: this.status,
       branchId: this.branchId,
       branchName,
       customerId: this.customerId,

@@ -19,7 +19,7 @@ export interface InvoiceLine {
   productNumber: number | null;
   numberOfItems: number;
   /** Struck from the invoice by an admin. */
-  cancel: boolean;
+  cancelled: boolean;
   /** Price per unit without VAT. */
   unit: number;
   gross: number;
@@ -36,16 +36,16 @@ export interface InvoiceLine {
  */
 export interface Invoice {
   id: string;
-  /** e.g. 201810000; see {@link invoiceBatchPrefix}. Not unique on two reissued 2020 invoices. */
+  /**
+   * e.g. 201810000; see {@link invoiceBatchPrefix}. Unique; the credited originals of two numbers
+   * reissued in 2020 carry a `-K` suffix.
+   */
   invoiceNumber: string;
   /** Null on company invoices and the oldest invoices. */
   type: InvoiceType | null;
   /** `YYYY-MM-DD`. */
   dueDate: string;
-  customerHasPaid: boolean;
-  toDebtCollection: boolean;
-  toCreditNote: boolean;
-  toLossNote: boolean;
+  status: InvoiceStatus;
   /** Null on company invoices. */
   branchId: string | null;
   /** The branch's current name, printed on the invoice. */
@@ -54,16 +54,17 @@ export interface Invoice {
   customerId: string | null;
   /** The number the accounting systems know the customer by. */
   customerNumber: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
+  /** The contact fields are null when the customer had not given them. */
+  customerName: string | null;
+  customerEmail: string | null;
+  customerPhone: string | null;
   /** A calendar date (yyyy-MM-dd); company invoices have none. */
   customerDob: string | null;
   /** Only company invoices carry one, which is how they are told apart. */
   customerOrganizationNumber: string | null;
-  customerAddress: string;
-  customerPostCode: string;
-  customerPostCity: string;
+  customerAddress: string | null;
+  customerPostCode: string | null;
+  customerPostCity: string | null;
   /** Only company invoices carry a country. */
   customerCountry: string | null;
   /** Sums of the lines and the fee. */
@@ -90,49 +91,15 @@ export interface Invoice {
   lines: InvoiceLine[];
 }
 
-/**
- * The four status flags on an invoice are mutually exclusive in practice (legacy bl-admin cleared the
- * others whenever one was set), so the API presents them as one status.
- */
+/** Where the invoice stands; one value, since legacy bl-admin's four flags were never combined. */
 export const INVOICE_STATUSES = [
   "unpaid",
   "paid",
-  "creditNote",
-  "debtCollection",
-  "lossNote",
+  "credit-note",
+  "debt-collection",
+  "loss-note",
 ] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
-
-type InvoiceStatusFlags = Pick<
-  Invoice,
-  "customerHasPaid" | "toCreditNote" | "toDebtCollection" | "toLossNote"
->;
-
-/** Old data may have several flags set; the first match wins, in the order legacy bl-admin coloured rows. */
-export function invoiceStatus(flags: InvoiceStatusFlags): InvoiceStatus {
-  if (flags.toDebtCollection) {
-    return "debtCollection";
-  }
-  if (flags.customerHasPaid) {
-    return "paid";
-  }
-  if (flags.toCreditNote) {
-    return "creditNote";
-  }
-  if (flags.toLossNote) {
-    return "lossNote";
-  }
-  return "unpaid";
-}
-
-export function invoiceStatusFlags(status: InvoiceStatus): InvoiceStatusFlags {
-  return {
-    customerHasPaid: status === "paid",
-    toCreditNote: status === "creditNote",
-    toDebtCollection: status === "debtCollection",
-    toLossNote: status === "lossNote",
-  };
-}
 
 export const INVOICE_EXPORT_FORMATS = ["tripletex", "visma", "visma-credit", "visma-ehf"] as const;
 export type InvoiceExportFormat = (typeof INVOICE_EXPORT_FORMATS)[number];
@@ -151,7 +118,7 @@ export function invoiceBatchPrefix(invoiceNumber: string): string {
 export interface InvoiceListRow {
   id: string;
   invoiceNumber: string;
-  customerName: string;
+  customerName: string | null;
   /** Null for company invoices and once the customer is deleted. */
   customerId: string | null;
   customerOrganizationNumber: string | null;

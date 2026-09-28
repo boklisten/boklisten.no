@@ -1,5 +1,4 @@
 import type { Invoice, InvoiceStatus } from "@boklisten/backend/shared/invoice";
-import { invoiceStatus } from "@boklisten/backend/shared/invoice";
 import {
   ActionIcon,
   Box,
@@ -57,7 +56,7 @@ function InvoiceDocument({
 }: {
   invoice: Invoice;
   onStatusChange: (status: InvoiceStatus) => void;
-  onLineCancel: (position: number, cancel: boolean) => void;
+  onLineCancel: (position: number, cancelled: boolean) => void;
   busy: boolean;
   compact: boolean;
   warnings: string[];
@@ -79,7 +78,7 @@ function InvoiceDocument({
           </Title>
         </Stack>
         <InvoiceStatusControl
-          value={invoiceStatus(invoice)}
+          value={invoice.status}
           onChange={onStatusChange}
           disabled={busy}
           compact={compact}
@@ -139,8 +138,8 @@ function InvoiceDocument({
           {invoice.lines.map((line, position) => (
             <Table.Tr
               key={position}
-              c={line.cancel ? "dimmed" : undefined}
-              td={line.cancel ? "line-through" : undefined}
+              c={line.cancelled ? "dimmed" : undefined}
+              td={line.cancelled ? "line-through" : undefined}
             >
               <Table.Td>{line.title}</Table.Td>
               <Table.Td ta="right" style={amountStyle}>
@@ -156,15 +155,17 @@ function InvoiceDocument({
                 {formatKroner(line.gross)}
               </Table.Td>
               <Table.Td>
-                <Tooltip label={line.cancel ? "Ta med linjen igjen" : "Stryk linjen"}>
+                <Tooltip label={line.cancelled ? "Ta med linjen igjen" : "Stryk linjen"}>
                   <ActionIcon
                     variant="subtle"
                     color="gray"
-                    aria-label={line.cancel ? `Ta med ${line.title} igjen` : `Stryk ${line.title}`}
+                    aria-label={
+                      line.cancelled ? `Ta med ${line.title} igjen` : `Stryk ${line.title}`
+                    }
                     disabled={busy}
-                    onClick={() => onLineCancel(position, !line.cancel)}
+                    onClick={() => onLineCancel(position, !line.cancelled)}
                   >
-                    {line.cancel ? <IconArrowBackUp size={16} /> : <IconBan size={16} />}
+                    {line.cancelled ? <IconArrowBackUp size={16} /> : <IconBan size={16} />}
                   </ActionIcon>
                 </Tooltip>
               </Table.Td>
@@ -252,10 +253,10 @@ export default function InvoiceDetailDrawer({
   });
 
   const cancelLine = useMutation({
-    mutationFn: ({ position, cancel }: { position: number; cancel: boolean }) =>
+    mutationFn: ({ position, cancelled }: { position: number; cancelled: boolean }) =>
       apiClient.api.invoices.setLineCancelled({
         params: { invoiceId: invoiceId ?? "", lineIndex: String(position) },
-        body: { cancel },
+        body: { cancelled },
       }),
     onSuccess: (updated) => {
       queryClient.setQueryData(detailQuery.queryKey, updated);
@@ -279,7 +280,7 @@ export default function InvoiceDetailDrawer({
     if (!invoice.data) {
       return;
     }
-    const wasPaid = invoiceStatus(invoice.data) === "paid";
+    const wasPaid = invoice.data.status === "paid";
     if (
       (status === "paid" || wasPaid) &&
       !(await confirmPaymentChange({ count: 1, toPaid: status === "paid", zIndex: 1200 }))
@@ -312,12 +313,12 @@ export default function InvoiceDetailDrawer({
           <InvoiceDocument
             invoice={invoice.data}
             onStatusChange={(status) => void onStatusChange(status)}
-            onLineCancel={(position, cancel) => cancelLine.mutate({ position, cancel })}
+            onLineCancel={(position, cancelled) => cancelLine.mutate({ position, cancelled })}
             busy={changeStatus.isPending || cancelLine.isPending}
             compact={narrow ?? false}
             warnings={warnings}
           />
-          {invoiceStatus(invoice.data) === "unpaid" && (
+          {invoice.data.status === "unpaid" && (
             <InvoiceDeleteSection invoice={invoice.data} onDeleted={onDeleted} />
           )}
         </Stack>

@@ -205,7 +205,9 @@ async function attachDelivery(
 
 /** Same wording as Vipps Checkout, so the customer recognises the payment request. */
 function describeForVipps(customer: User): string {
-  return `${customer.name} sin ordre fra Boklisten.no`;
+  return customer.name === null
+    ? "Ordre fra Boklisten.no"
+    : `${customer.name} sin ordre fra Boklisten.no`;
 }
 
 /** How the money moves, decided before anything is written so a bad request leaves no order behind. */

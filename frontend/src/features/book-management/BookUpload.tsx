@@ -36,12 +36,14 @@ function previewUpload(rows: BookRow[], items: Item[]) {
   const knownIds = new Set(items.map((item) => item.id));
   const knownIsbns = new Set(items.map((item) => item.isbn));
   const unknownIds = rows.filter((row) => row.id !== undefined && !knownIds.has(row.id));
-  const newBooks = rows.filter((row) => row.id === undefined && !knownIsbns.has(row.isbn));
+  const newBooks = rows.filter(
+    (row) => row.id === undefined && (row.isbn === null || !knownIsbns.has(row.isbn)),
+  );
   return {
     unknownIds,
     newBooks,
     updateCount: rows.length - newBooks.length - unknownIds.length,
-    duplicateIsbns: duplicates(rows.map((row) => row.isbn)),
+    duplicateIsbns: duplicates(rows.flatMap((row) => (row.isbn === null ? [] : [row.isbn]))),
     duplicateIds: duplicates(rows.flatMap((row) => (row.id === undefined ? [] : [row.id]))),
   };
 }
@@ -49,16 +51,17 @@ function previewUpload(rows: BookRow[], items: Item[]) {
 function UploadErrorsDialog({
   errors,
 }: {
-  errors: { isbn: number; title: string; message: string }[];
+  errors: { isbn: number | null; title: string; message: string }[];
 }) {
   return (
     <Stack>
       <Text>{`${bookCount(errors.length)} kunne ikke lagres:`}</Text>
       <List>
-        {errors.map((error) => (
+        {errors.map((error, index) => (
           <List.Item
-            key={error.isbn}
-          >{`${error.title} (${error.isbn}): ${error.message}`}</List.Item>
+            // oxlint-disable-next-line react/no-array-index-key -- errors have no id; a book without an ISBN has no other key
+            key={index}
+          >{`${error.title}${error.isbn === null ? "" : ` (${error.isbn})`}: ${error.message}`}</List.Item>
         ))}
       </List>
     </Stack>
@@ -148,7 +151,9 @@ export default function BookUpload({ items }: { items: Item[] }) {
                 <ScrollArea.Autosize mah={240}>
                   <List size="sm">
                     {preview.newBooks.map((book) => (
-                      <List.Item key={book.isbn}>{`${book.title} (${book.isbn})`}</List.Item>
+                      <List.Item key={book.isbn ?? book.title}>
+                        {book.isbn === null ? book.title : `${book.title} (${book.isbn})`}
+                      </List.Item>
                     ))}
                   </List>
                 </ScrollArea.Autosize>

@@ -7,13 +7,14 @@ import type { UserPermission } from "#shared/user-permission";
  */
 export interface User {
   id: string;
-  name: string;
+  /** The contact fields are null until the user gives them; `taskConfirmDetails` asks for them. */
+  name: string | null;
   email: string;
   /** Eight digits, or null when the user has not given one. */
   phone: string | null;
-  address: string;
-  postCode: string;
-  postCity: string;
+  address: string | null;
+  postCode: string | null;
+  postCity: string | null;
   emailConfirmed: boolean;
   /** Calendar date, `yyyy-MM-dd`. */
   dob: string | null;

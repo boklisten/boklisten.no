@@ -18,6 +18,7 @@ import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { createPayment } from "#tests/payment_fixtures";
+import { createUniqueItem } from "#tests/unique_item_fixtures";
 import { asStub, unchecked } from "#tests/test-doubles";
 import { createUser, userDouble } from "#tests/user_fixtures";
 
@@ -90,6 +91,9 @@ test.group("StandCartPlacement.place", (group) => {
     await createUser({ id: EMPLOYEE.userId });
     await createItem({ id: "item1", title: "Sinus 1T" });
     await createItem({ id: "item2", title: "Kosmos SF" });
+    // The stand hands out only registered stickers.
+    await createUniqueItem({ blid: "12345678", itemId: "item1" });
+    await createUniqueItem({ blid: "87654321", itemId: "item2" });
     sandbox = createSandbox();
     sandbox.stub(User, "findOrFail").resolves(userDouble({ id: CUSTOMER_ID, name: "Ola" }));
     placeOrder = sandbox

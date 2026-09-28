@@ -53,8 +53,8 @@ const LINE: NewInvoiceLine = {
 };
 
 /**
- * Inserts an invoice and its lines into the test Postgres: an unpaid pupil rent invoice without a
- * customer or branch unless told otherwise. Referenced branches, customers, customer items and
+ * Inserts an invoice and its lines into the test Postgres: an unpaid pupil rent invoice with a
+ * number of its own, without a customer or branch unless told otherwise. Referenced branches, customers, customer items and
  * items must exist already, since they are foreign keys. Pass only what the test cares about.
  */
 export async function createInvoice(
@@ -65,6 +65,8 @@ export async function createInvoice(
   return Invoice.createWithLines({
     id: fixtureId(`1e${sequence.toString(16)}`),
     ...PUPIL,
+    // Invoice numbers are unique.
+    invoiceNumber: String(20_269_000 + sequence),
     ...columns,
     lines: lines.map(withLineDefaults),
   });
@@ -76,7 +78,7 @@ function withLineDefaults(line: Partial<NewInvoiceLine>): NewInvoiceLine {
 
 /** A plain invoice line for pure functions. */
 export function invoiceLineDto(overrides: Partial<InvoiceLineDto> = {}): InvoiceLineDto {
-  return { ...LINE, cancel: false, ...overrides };
+  return { ...LINE, cancelled: false, ...overrides };
 }
 
 /** A plain `Invoice` for pure functions, with the same defaults as {@link createInvoice}. */
@@ -86,10 +88,7 @@ export function invoiceDto(overrides: Partial<InvoiceDto> = {}): InvoiceDto {
     id: fixtureId("1e0"),
     dueDate: "2026-09-30",
     customerDob: "2008-04-28",
-    customerHasPaid: false,
-    toCreditNote: false,
-    toDebtCollection: false,
-    toLossNote: false,
+    status: "unpaid",
     branchName: null,
     createdAt: new Date("2026-09-16T10:00:00Z"),
     updatedAt: new Date("2026-09-16T10:00:00Z"),

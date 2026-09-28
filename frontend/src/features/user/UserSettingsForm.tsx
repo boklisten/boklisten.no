@@ -22,12 +22,12 @@ import { authQueryKey } from "@/features/auth/authQuery";
 export default function UserSettingsForm({ user }: { user: User }) {
   const queryClient = useQueryClient();
   const defaultValues: UserInfoFieldValues = {
-    name: user.name,
+    name: user.name ?? "",
     phoneNumber: user.phone ?? "",
-    address: user.address,
+    address: user.address ?? "",
     postal: {
-      code: user.postCode,
-      city: user.postCity,
+      code: user.postCode ?? "",
+      city: user.postCity ?? "",
     },
     birthday: user.dob ?? "",
     guardianName: user.guardianName ?? "",

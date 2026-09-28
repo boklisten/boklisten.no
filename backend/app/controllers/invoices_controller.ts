@@ -49,12 +49,12 @@ export default class InvoicesController {
   }
 
   async setLineCancelled(ctx: HttpContext) {
-    const { cancel } = await ctx.request.validateUsing(invoiceLineCancelValidator);
+    const { cancelled } = await ctx.request.validateUsing(invoiceLineCancelValidator);
     const position = Number(ctx.request.param("lineIndex"));
     if (!Number.isInteger(position) || position < 0) {
       throw new BadRequestException("Fakturalinjen finnes ikke.");
     }
-    return setInvoiceLineCancelled(ctx.request.param("invoiceId"), position, cancel);
+    return setInvoiceLineCancelled(ctx.request.param("invoiceId"), position, cancelled);
   }
 
   async export(ctx: HttpContext) {

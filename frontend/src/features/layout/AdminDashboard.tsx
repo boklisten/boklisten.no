@@ -86,7 +86,7 @@ function AdminNavGrid({ links }: { links: AdminNavLink[] }) {
 export default function AdminDashboard() {
   const { isAdmin } = useAuth();
   const { data: user } = useQuery(authQueryOptions());
-  const firstName = user?.name.trim().split(" ")[0];
+  const firstName = user?.name?.trim().split(" ")[0];
 
   return (
     <Container size="lg" py="xl">

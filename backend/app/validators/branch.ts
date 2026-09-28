@@ -42,11 +42,17 @@ export const branchIndexValidator = vine.create(
   }),
 );
 
+/** Stored capitalised ("Oslo"), as the order flow groups the branches by it. */
+const regionField = vine
+  .string()
+  .trim()
+  .transform((region) => region.charAt(0).toUpperCase() + region.slice(1));
+
 export const branchCreateValidator = vine.create(
   vine.object({
     name: vine.string().trim(),
     logo: logoField.nullable().optional(),
-    region: vine.string().trim(),
+    region: regionField.clone(),
     address: vine.string().trim().nullable().optional(),
     type: vine.enum(BRANCH_TYPES).nullable(),
   }),
@@ -57,7 +63,7 @@ export const branchValidator = vine.create(
   vine.object({
     name: vine.string().trim().optional(),
     logo: logoField.nullable().optional(),
-    region: vine.string().trim().optional(),
+    region: regionField.clone().optional(),
     address: vine.string().trim().nullable().optional(),
     type: vine.enum(BRANCH_TYPES).nullable().optional(),
     visibility: vine.enum(BRANCH_VISIBILITIES).optional(),

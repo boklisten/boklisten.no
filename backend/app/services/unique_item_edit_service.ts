@@ -10,6 +10,7 @@ import { findUniqueItemByBlid } from "#services/item_lookup";
 import { UniqueItemMonitoring } from "#services/unique_item_monitoring";
 
 const HELD_BOOK_MESSAGE = "Boka er utdelt og kan ikke slettes";
+const LENT_BOOK_MESSAGE = "Boka har vært utlånt og kan ikke slettes. Endre bok i stedet";
 
 async function uniqueItemOrFail(blid: string): Promise<UniqueItem> {
   const uniqueItem = await findUniqueItemByBlid(blid);
@@ -68,13 +69,16 @@ export const UniqueItemEditService = {
   },
 
   /**
-   * Deletes the blid. Refused while a customer holds the book; the customer items keep their
-   * blid, so the book's history stays readable afterwards.
+   * Deletes the blid, e.g. a sticker put on by mistake. Refused once any customer item carries
+   * it (their FK restricts the delete), so a book's history is never cut loose from its sticker.
    */
   async remove({ blid }: { blid: string }, employee: MonitoredEmployee): Promise<void> {
     const uniqueItem = await uniqueItemOrFail(blid);
     if (await findHeldCustomerItem(blid)) {
       throw new BadRequestException(HELD_BOOK_MESSAGE);
+    }
+    if (await CustomerItem.query().where("blid", blid).first()) {
+      throw new BadRequestException(LENT_BOOK_MESSAGE);
     }
 
     await uniqueItem.delete();

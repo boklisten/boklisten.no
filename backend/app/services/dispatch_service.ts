@@ -314,6 +314,17 @@ const EmailService = {
   },
 };
 
+/** The first word of the name, or "" when the customer has not given one. */
+function firstName(name: string | null): string {
+  return name?.split(" ")[0] ?? "";
+}
+
+/** "Hei, Kari." or, without a name, "Hei." */
+function greeting(name: string | null): string {
+  const first = firstName(name);
+  return first === "" ? "Hei." : `Hei, ${first}.`;
+}
+
 const DispatchService = {
   async sendReminderSms(
     recipients: { to: string; customerId?: string | null }[],
@@ -371,7 +382,7 @@ const DispatchService = {
           to: customer.guardianEmail,
           dynamicTemplateData: {
             guardianSignatureUri: `${clientOrigin}/signering/${customer.id}`,
-            customerName: customer.name,
+            customerName: customer.name ?? "",
             guardianName: customer.guardianName ?? "",
             branchName,
           },
@@ -382,7 +393,7 @@ const DispatchService = {
         await SmsService.sendOne(
           {
             to: customer.guardianPhone,
-            body: `Hei. ${customer.name} skal snart motta bøker fra ${branchName} via Boklisten.no. Siden ${customer.name} er under 18 år, krever vi at du som foresatt signerer låneavtalen. Vi har derfor sendt en e-post til ${customer.guardianEmail} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
+            body: `Hei. ${customer.name ?? "Eleven"} skal snart motta bøker fra ${branchName} via Boklisten.no. Siden ${customer.name ?? "eleven"} er under 18 år, krever vi at du som foresatt signerer låneavtalen. Vi har derfor sendt en e-post til ${customer.guardianEmail} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
           },
           context,
         );
@@ -421,7 +432,7 @@ const DispatchService = {
         {
           to: customer.email,
           dynamicTemplateData: {
-            firstName: customer.name.split(" ")[0],
+            firstName: firstName(customer.name),
             orderId: order.id,
             orderItems: order.orderItems.map((orderItem) => ({
               title: orderItem.title,
@@ -483,7 +494,7 @@ const DispatchService = {
           to: customer.email,
           customerId: customer.id,
           dynamicTemplateData: {
-            name: customer.name.split(" ")[0] ?? customer.name,
+            name: firstName(customer.name),
             username: customer.email,
           },
         })),
@@ -496,7 +507,7 @@ const DispatchService = {
                 {
                   to: customer.phone,
                   customerId: customer.id,
-                  body: `Hei, ${customer.name.split(" ")[0]}. ${smsBody} Mvh Boklisten`,
+                  body: `${greeting(customer.name)} ${smsBody} Mvh Boklisten`,
                 },
               ],
         ),
@@ -528,14 +539,14 @@ const DispatchService = {
       messageType: "onboarding",
       customerId: user.id,
     };
-    const firstName = user.name.split(" ")[0];
+    const userFirstName = firstName(user.name);
     const emailStatus = await EmailService.sendEmail({
       template: EMAIL_TEMPLATES.onboarding,
       context,
       recipients: {
         to: user.email,
         dynamicTemplateData: {
-          firstName,
+          firstName: userFirstName,
           branchName,
           loginUri: `${clientOrigin}/auth/login`,
         },
@@ -547,7 +558,7 @@ const DispatchService = {
     const smsStatus = await SmsService.sendOne(
       {
         to: user.phone,
-        body: `Hei ${firstName}, velkommen til ${branchName}! Vi i Boklisten administrerer utlån av bøkene du skal bruke, og før du kan få dem trenger vi at du bekrefter informasjonen din og signerer vår låneavtale på Boklisten.no. Er du under 18 år, må en foresatt signere. Vi har opprettet en konto til deg, og du kan logge inn med Vipps eller opprette et passord for å komme i gang. Mvh. Boklisten.no`,
+        body: `Hei ${userFirstName}, velkommen til ${branchName}! Vi i Boklisten administrerer utlån av bøkene du skal bruke, og før du kan få dem trenger vi at du bekrefter informasjonen din og signerer vår låneavtale på Boklisten.no. Er du under 18 år, må en foresatt signere. Vi har opprettet en konto til deg, og du kan logge inn med Vipps eller opprette et passord for å komme i gang. Mvh. Boklisten.no`,
       },
       context,
     );

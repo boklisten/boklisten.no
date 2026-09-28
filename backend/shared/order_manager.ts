@@ -66,7 +66,8 @@ export interface OrderManagerReportRow {
   /** The order's branch. */
   school: string;
   title: string;
-  isbn: string;
+  /** Null when the item is not a book. */
+  isbn: string | null;
   orderTime: Date;
   paid: boolean;
   /** Constant 1, so a spreadsheet pivot can count rows. */

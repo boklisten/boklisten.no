@@ -58,7 +58,7 @@ test.group("assertSignedForCheckout", (group) => {
 
   test("lets a rent cart through once the customer has a valid signature", async () => {
     const customer = await adult();
-    await createSignature(customer.name, false);
+    await createSignature(customer.name ?? "", false);
     await assertSignedForCheckout(customer, [{ type: "rent" }]);
   });
 

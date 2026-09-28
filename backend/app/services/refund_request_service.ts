@@ -50,9 +50,9 @@ export function buildRefundRequestMail(request: RefundRequest) {
     `Beløp: ${amount} kr`,
     `Kontonummer: ${accountLine(accountNumber)}`,
     `Tidspunkt: ${occurredAt}`,
-    `Ansatt: ${employee.name} (${employee.email})`,
+    `Ansatt: ${employee.name ?? "(uten navn)"} (${employee.email})`,
     "",
-    `Kunde: ${customer.name}`,
+    `Kunde: ${customer.name ?? "(uten navn)"}`,
     `Telefon: ${customer.phone ?? ""}`,
     `E-post: ${customer.email}`,
     `Kasse: ${clientOrigin}/admin/kasse?kunde=${customer.id}&visning=ordrehistorikk`,
@@ -69,7 +69,7 @@ export function buildRefundRequestMail(request: RefundRequest) {
 
   return {
     to: REFUND_REQUEST_RECIPIENT,
-    subject: `Refusjon: ${amount} kr til ${customer.name}${failed}`,
+    subject: `Refusjon: ${amount} kr til ${customer.name ?? customer.email}${failed}`,
     text: lines.join("\n"),
   };
 }

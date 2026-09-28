@@ -338,7 +338,7 @@ async function fetchMembers(scopeIds: string[]): Promise<MemberSummary[]> {
   const members = await User.membersOf(scopeIds).select("id", "name", "branchMembershipId");
   return members.map((member) => ({
     id: member.id,
-    name: member.name,
+    name: member.name ?? "",
     branchMembership: member.branchMembershipId,
   }));
 }

@@ -125,7 +125,7 @@ export default class SignaturesController {
     const image = await new Transformer(Buffer.from(base64EncodedImage, "base64")).webp(10);
     await Signature.create({
       customerId: user.id,
-      signingName: isUnderage(user) ? signingName : user.name,
+      signingName: isUnderage(user) ? signingName : (user.name ?? signingName),
       signedByGuardian: isUnderage(user),
       image,
     });

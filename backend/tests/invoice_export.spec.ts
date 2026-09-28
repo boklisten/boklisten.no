@@ -6,7 +6,6 @@ import { objectIdCounter, tripletexRows, vismaRows } from "#services/invoices/in
 import { pupilCustomerNumber } from "#services/invoices/invoice_generator_service";
 import type { Branch } from "#shared/branch";
 import type { CustomerItem } from "#shared/customer-item/customer-item";
-import { invoiceStatus, invoiceStatusFlags } from "#shared/invoice";
 import type { Invoice } from "#shared/invoice";
 import type { Item } from "#shared/item";
 import { customerItemDto } from "#tests/customer_item_fixtures";
@@ -382,26 +381,6 @@ test.group("invoice export: CSV", () => {
     assert.equal(
       toSemicolonCsv([[849_320.0000000001, 1_736_569.9999999998, 12.5, 0, undefined, null]]),
       "849320;1736570;12.5;0;;\n",
-    );
-  });
-});
-
-test.group("invoice status", () => {
-  test("the four flags map to one status and back", ({ assert }) => {
-    for (const status of ["unpaid", "paid", "creditNote", "debtCollection", "lossNote"] as const) {
-      assert.equal(invoiceStatus(invoiceStatusFlags(status)), status);
-    }
-  });
-
-  test("debt collection wins when old data has several flags set", ({ assert }) => {
-    assert.equal(
-      invoiceStatus({
-        customerHasPaid: true,
-        toDebtCollection: true,
-        toCreditNote: false,
-        toLossNote: false,
-      }),
-      "debtCollection",
     );
   });
 });

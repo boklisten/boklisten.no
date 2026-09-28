@@ -12,17 +12,17 @@ import type { InvoiceBatch } from "@/features/invoices/invoiceBatches";
 export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   unpaid: "Ubetalt",
   paid: "Betalt",
-  creditNote: "Kreditnota",
-  debtCollection: "Inkasso",
-  lossNote: "Tapsført",
+  "credit-note": "Kreditnota",
+  "debt-collection": "Inkasso",
+  "loss-note": "Tapsført",
 };
 
 export const INVOICE_STATUS_COLORS: Record<InvoiceStatus, MantineColor> = {
   unpaid: "orange",
   paid: "green",
-  creditNote: "blue",
-  debtCollection: "red",
-  lossNote: "violet",
+  "credit-note": "blue",
+  "debt-collection": "red",
+  "loss-note": "violet",
 };
 
 export const INVOICE_STATUS_OPTIONS = INVOICE_STATUSES.map((status) => ({

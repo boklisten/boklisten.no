@@ -49,6 +49,7 @@ const EXAMPLE_BOOK: BlidSearchResult = {
   blid: "eksempelBLID",
   book: { id: "eksempel", title: "Tidslinjer 1", isbn: "9788203334047" },
   registered: true,
+  hasCustomerItems: true,
   status: "handed-out",
   history: [
     transfer("2026-06-17T12:31:00+02:00", JONATAN, ANNIKA, "2027-07-01"),

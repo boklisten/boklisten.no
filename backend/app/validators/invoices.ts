@@ -22,7 +22,7 @@ export const invoiceBulkStatusValidator = vine.create(
 
 export const invoiceLineCancelValidator = vine.create(
   vine.object({
-    cancel: vine.boolean(),
+    cancelled: vine.boolean(),
   }),
 );
 

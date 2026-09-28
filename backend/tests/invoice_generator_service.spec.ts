@@ -13,6 +13,7 @@ import type { Invoice as InvoiceDto, InvoiceGenerationSettings } from "#shared/i
 import type { Item } from "#shared/item";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
+import { createInvoice } from "#tests/invoice_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { mock } from "#tests/test-doubles";
@@ -190,7 +191,7 @@ test.group("invoice generation", (group) => {
       totalVat: 48,
       totalDiscount: 0,
       totalIncludingFee: 2383,
-      customerHasPaid: false,
+      status: "unpaid",
     });
   });
 
@@ -212,6 +213,20 @@ test.group("invoice generation", (group) => {
       totalIncludingFee: 1274,
       status: "unpaid",
     });
+  });
+
+  test("a run that would reuse an invoice number is refused before anything is saved", async ({
+    assert,
+  }) => {
+    await customerItem({ id: "ci1", customer: "c1", item: "6100000000000000000000b1" });
+    await createInvoice({ invoiceNumber: "20263000" });
+
+    await assert.rejects(
+      () => generateInvoices(rentSettings, true),
+      /Fakturanummer 20263000 er allerede i bruk/,
+    );
+    await assert.rejects(() => generateInvoices(rentSettings, false), /allerede i bruk/);
+    assert.lengthOf(await Invoice.all(), 1);
   });
 
   test("partly-payment lines invoice the amount left to pay, without a percentage", async ({

@@ -17,7 +17,7 @@ export default class InvoiceLine extends InvoiceLineSchema {
       title: this.title,
       productNumber: this.productNumber,
       numberOfItems: this.numberOfItems,
-      cancel: this.cancel,
+      cancelled: this.cancelled,
       unit: this.unit,
       gross: this.gross,
       net: this.net,

@@ -149,7 +149,7 @@ test.group("company invoice creation", (group) => {
       title: "Bios 1 2021",
       numberOfItems: 17,
       productNumber: 1,
-      cancel: false,
+      cancelled: false,
       unit: 1249,
       gross: 8493.2,
       net: 8493.2,
@@ -166,7 +166,7 @@ test.group("company invoice creation", (group) => {
       feeGross: null,
     });
     assert.equal(invoice.comment, "Bestillinger av 23.06.26 og 24.06.2026");
-    assert.isFalse(invoice.customerHasPaid);
+    assert.equal(invoice.status, "unpaid");
   });
 
   test("keeps the company's details when the company changes", async ({ assert }) => {

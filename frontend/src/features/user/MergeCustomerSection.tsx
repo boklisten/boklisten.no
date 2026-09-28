@@ -50,7 +50,7 @@ export default function MergeCustomerSection({
   const [debouncedSearch] = useDebouncedValue(searchValue.trim(), 250);
   const [targetId, setTargetId] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState("");
-  const confirmPhrase = user.name || user.email;
+  const confirmPhrase = user.name ?? user.email;
 
   const searchActive =
     !targetId &&

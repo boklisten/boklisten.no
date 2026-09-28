@@ -63,7 +63,7 @@ export default class ReportsController {
       buyout: boolean;
       blid: string | null;
       title: string;
-      isbn: string;
+      isbn: string | null;
       name: string | null;
       email: string | null;
       phone: string | null;

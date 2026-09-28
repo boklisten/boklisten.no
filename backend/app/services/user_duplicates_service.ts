@@ -15,11 +15,11 @@ const MAX_BLOCK_SIZE = 20;
 
 export interface DuplicateCandidateSource {
   id: string;
-  name?: string;
+  name?: string | null;
   email?: string;
   phone?: string | null;
-  address?: string;
-  postCode?: string;
+  address?: string | null;
+  postCode?: string | null;
   /** Calendar date `yyyy-MM-dd`, or a legacy Date. */
   dob?: Date | string | null;
   guardianEmail?: string | null;

@@ -25,7 +25,7 @@ async function getEmployees(): Promise<EmployeeRow[]> {
   const employees = await User.employees();
   return employees.map((employee) => ({
     userId: employee.id,
-    name: employee.name,
+    name: employee.name ?? "",
     email: employee.email,
     phone: employee.phone ?? "",
     permission: employee.permission,

@@ -13,7 +13,7 @@ async function getPeople(customerIds: string[]): Promise<Map<string, MatchPerson
   return new Map(
     [...users.values()].map((user) => [
       user.id,
-      { name: user.name, phone: user.phone ?? "", email: user.email },
+      { name: user.name ?? "", phone: user.phone ?? "", email: user.email },
     ]),
   );
 }

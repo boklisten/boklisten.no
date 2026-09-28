@@ -4,10 +4,10 @@ import { isUnderage } from "#models/signature";
 
 /** The columns the completeness check reads; the `User` model satisfies it. */
 export interface UserFields {
-  name: string;
-  address: string;
-  postCode: string;
-  postCity: string;
+  name: string | null;
+  address: string | null;
+  postCode: string | null;
+  postCity: string | null;
   phone: string | null;
   dob: DateTime | null;
   guardianName: string | null;
