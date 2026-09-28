@@ -20,6 +20,13 @@ const translations = {
   "match-deliver": "overlevere til elev",
 } satisfies Record<OrderItemType, string>;
 
+function getOptionLabel(option?: CartItemOption) {
+  if (!option) {
+    throw new Error("Invalid cart item option!");
+  }
+  return `${translations[option.type]} ${option.to ? formatDeadline(option.to) : ""}`;
+}
+
 /**
  * The customer's cart in session storage. It is read after the first render so hydration matches
  * the server; a component that never renders on the server (`use(browser())`) reads it `immediately`.
@@ -61,13 +68,6 @@ export default function useCart({ immediately = false }: { immediately?: boolean
     return cart.some((cartItem) =>
       SIGNATURE_REQUIRING_CART_ITEM_TYPES.includes(getSelectedOption(cartItem).type),
     );
-  }
-
-  function getOptionLabel(option?: CartItemOption) {
-    if (!option) {
-      throw new Error("Invalid cart item option!");
-    }
-    return `${translations[option.type]} ${option.to ? formatDeadline(option.to) : ""}`;
   }
   return {
     get: () => cart,

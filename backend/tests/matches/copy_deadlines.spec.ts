@@ -21,6 +21,18 @@ const AUGUST = DateTime.fromISO("2026-08-20");
 const deadlineOf = async (customerItem: CustomerItem) =>
   (await CustomerItem.findOrFail(customerItem.id)).deadline.toMillis();
 
+const copy = (
+  deadline: DateTime,
+  overrides: Partial<Parameters<typeof createCustomerItem>[0]> = {},
+) =>
+  createCustomerItem({
+    customerId: A,
+    itemId: GYMNOS_2009,
+    handoutBranchId: BRANCH,
+    deadline,
+    ...overrides,
+  });
+
 test.group("extendRemainingCopyDeadlines", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
@@ -28,18 +40,6 @@ test.group("extendRemainingCopyDeadlines", (group) => {
   group.each.setup(async () => {
     await createBranch({ id: BRANCH });
   });
-
-  const copy = (
-    deadline: DateTime,
-    overrides: Partial<Parameters<typeof createCustomerItem>[0]> = {},
-  ) =>
-    createCustomerItem({
-      customerId: A,
-      itemId: GYMNOS_2009,
-      handoutBranchId: BRANCH,
-      deadline,
-      ...overrides,
-    });
 
   test("the kept copy inherits the later deadline of the pair", async ({ assert }) => {
     // The VG1 student: their own Gymnos is due in June, the one they were given in June runs to

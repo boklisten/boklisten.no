@@ -29,6 +29,24 @@ function nextBlid() {
   return `BL${String(++blidCounter).padStart(10, "0")}`;
 }
 
+function handover(input: {
+  from: string | null;
+  to: string | null;
+  sender?: number | null;
+  receiver?: number | null;
+}) {
+  return MatchRepository.recordHandover({
+    blid: nextBlid(),
+    itemId: ITEM_X,
+    fromUserDetailId: input.from,
+    toUserDetailId: input.to,
+    occurredAt: DateTime.now(),
+    orderId: null,
+    dischargesSenderObligationId: input.sender ?? null,
+    dischargesReceiverObligationId: input.receiver ?? null,
+  });
+}
+
 test.group("computeMatchStatistics", (group) => {
   let sandbox: sinon.SinonSandbox;
   let round: MatchRound;
@@ -68,24 +86,6 @@ test.group("computeMatchStatistics", (group) => {
       senderParticipantId: sender!.id,
       receiverParticipantId: receiver!.id,
       itemId: ITEM_X,
-    });
-  }
-
-  function handover(input: {
-    from: string | null;
-    to: string | null;
-    sender?: number | null;
-    receiver?: number | null;
-  }) {
-    return MatchRepository.recordHandover({
-      blid: nextBlid(),
-      itemId: ITEM_X,
-      fromUserDetailId: input.from,
-      toUserDetailId: input.to,
-      occurredAt: DateTime.now(),
-      orderId: null,
-      dischargesSenderObligationId: input.sender ?? null,
-      dischargesReceiverObligationId: input.receiver ?? null,
     });
   }
 

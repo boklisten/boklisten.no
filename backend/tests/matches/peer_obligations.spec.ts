@@ -21,6 +21,19 @@ const ITEM_X = "5d765db5fc8c47001c408e01";
 const GYMNOS_2009 = "5b6441c4d2e733002fae89a6";
 const GYMNOS_2012 = "5b6441b2d2e733002fae87a6";
 
+async function discharge(obligation: MatchObligation, half: "sender" | "receiver") {
+  await MatchRepository.recordHandover({
+    blid: "BL0001234567",
+    itemId: obligation.itemId,
+    fromUserDetailId: A,
+    toUserDetailId: B,
+    occurredAt: DateTime.now(),
+    orderId: null,
+    dischargesSenderObligationId: half === "sender" ? obligation.id : null,
+    dischargesReceiverObligationId: half === "receiver" ? obligation.id : null,
+  });
+}
+
 test.group("PeerObligations", (group) => {
   let round: MatchRound;
 
@@ -50,19 +63,6 @@ test.group("PeerObligations", (group) => {
       senderParticipantId: sender!.id,
       receiverParticipantId: receiver!.id,
       itemId: options.itemId ?? ITEM_X,
-    });
-  }
-
-  async function discharge(obligation: MatchObligation, half: "sender" | "receiver") {
-    await MatchRepository.recordHandover({
-      blid: "BL0001234567",
-      itemId: obligation.itemId,
-      fromUserDetailId: A,
-      toUserDetailId: B,
-      occurredAt: DateTime.now(),
-      orderId: null,
-      dischargesSenderObligationId: half === "sender" ? obligation.id : null,
-      dischargesReceiverObligationId: half === "receiver" ? obligation.id : null,
     });
   }
 

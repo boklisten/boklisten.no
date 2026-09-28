@@ -123,6 +123,17 @@ function lineProblem({ line, choice, problem }: StoredLine): string | null {
   return null;
 }
 
+/** What the employee sees of a line: its choice, what that costs, and whether it can go through. */
+function fingerprint(stored: StoredLine): string {
+  return [
+    stored.line.key,
+    stored.choice.type,
+    stored.choice.to ?? "",
+    findOption(stored.line, stored.choice)?.price ?? "",
+    lineProblem(stored) ?? "",
+  ].join("|");
+}
+
 /** What the employee sees when the page's guard said no to an add. */
 const REFUSED_ADD_MESSAGE = "Boka ble ikke lagt i handlekurven.";
 
@@ -455,17 +466,6 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
         stored.line.key === key ? { ...stored, choice } : stored,
       ),
     }));
-  }
-
-  /** What the employee sees of a line: its choice, what that costs, and whether it can go through. */
-  function fingerprint(stored: StoredLine): string {
-    return [
-      stored.line.key,
-      stored.choice.type,
-      stored.choice.to ?? "",
-      findOption(stored.line, stored.choice)?.price ?? "",
-      lineProblem(stored) ?? "",
-    ].join("|");
   }
 
   /**

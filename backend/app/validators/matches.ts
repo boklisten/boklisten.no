@@ -44,19 +44,21 @@ const planFields = {
   excludedCustomerIds: () => vine.array(vine.string().minLength(1)),
 };
 type PlanFields = typeof planFields;
+type PlanSchema = { [K in keyof PlanFields]: ReturnType<PlanFields[K]> };
+type OptionalPlanSchema = { [K in keyof PlanFields]: ReturnType<PlanSchema[K]["optional"]> };
 
-const buildPlanFields = () =>
+const buildPlanFields = () => {
+  const fields = Object.entries(planFields).map(([key, field]) => [key, field()]);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries erases the key/value pairing TS can see in planFields; the assertion restores it
-  Object.fromEntries(Object.entries(planFields).map(([key, field]) => [key, field()])) as {
-    [K in keyof PlanFields]: ReturnType<PlanFields[K]>;
-  };
+  return Object.fromEntries(fields) as PlanSchema;
+};
 
 /** The same fields, each made optional — VineJS has no `.partial()` on an assembled object. */
-const buildOptionalPlanFields = () =>
+const buildOptionalPlanFields = () => {
+  const fields = Object.entries(planFields).map(([key, field]) => [key, field().optional()]);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.fromEntries erases the key/value pairing TS can see in planFields; the assertion restores it
-  Object.fromEntries(
-    Object.entries(planFields).map(([key, field]) => [key, field().optional()]),
-  ) as { [K in keyof PlanFields]: ReturnType<ReturnType<PlanFields[K]>["optional"]> };
+  return Object.fromEntries(fields) as OptionalPlanSchema;
+};
 
 const matchRoundPlanSchema = vine.object({
   name: vine.string().minLength(1),

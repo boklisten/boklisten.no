@@ -19,20 +19,18 @@ class ApiSerializer extends BaseSerializer<{
 }
 
 const serializer = new ApiSerializer();
-// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- framework macro glue: Object.assign cannot express the merged callable-with-method type
-const serialize = Object.assign(function serialize(
+function serialize(
   this: HttpContext,
   ...[data, resolver]: Parameters<ApiSerializer["serializeWithoutWrapping"]>
 ) {
   return serializer.serializeWithoutWrapping(data, resolver ?? this.containerResolver);
-}) as ApiSerializer["serializeWithoutWrapping"] & { withWrapping: ApiSerializer["serialize"] };
+}
 
-HttpContext.instanceProperty("serialize", serialize);
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- serializeWithoutWrapping is overloaded; a single implementation can only be matched to the overloads by assertion
+HttpContext.instanceProperty("serialize", serialize as HttpContext["serialize"]);
 
 declare module "@adonisjs/core/http" {
   export interface HttpContext {
-    serialize: ApiSerializer["serializeWithoutWrapping"] & {
-      withWrapping: ApiSerializer["serialize"];
-    };
+    serialize: ApiSerializer["serializeWithoutWrapping"];
   }
 }

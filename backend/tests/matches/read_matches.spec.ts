@@ -20,6 +20,27 @@ const B = "5d765db5fc8c47001c408d82";
 const OUTSIDER = "5d765db5fc8c47001c408d99";
 const ITEM_X = "5d765db5fc8c47001c408e01";
 
+async function seed() {
+  // Explicitly active: students only see rounds that are switched on.
+  const round = await createTestRound({
+    name: "Round",
+    standLocation: "Kantina",
+    status: "active",
+  });
+  const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
+  const [a, b] = await MatchParticipant.createMany([
+    { matchId: match.id, userDetailId: A },
+    { matchId: match.id, userDetailId: B },
+  ]);
+  const obligation = await MatchObligation.create({
+    matchId: match.id,
+    senderParticipantId: a!.id,
+    receiverParticipantId: b!.id,
+    itemId: ITEM_X,
+  });
+  return { round, match, obligation };
+}
+
 test.group("read matches", (group) => {
   let sandbox: sinon.SinonSandbox;
 
@@ -38,27 +59,6 @@ test.group("read matches", (group) => {
   /** The people lookup is spied so the suite can assert how often Postgres is read. */
   function spyOnPeopleLookup() {
     sandbox.spy(User, "byIds");
-  }
-
-  async function seed() {
-    // Explicitly active: students only see rounds that are switched on.
-    const round = await createTestRound({
-      name: "Round",
-      standLocation: "Kantina",
-      status: "active",
-    });
-    const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
-    const [a, b] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: A },
-      { matchId: match.id, userDetailId: B },
-    ]);
-    const obligation = await MatchObligation.create({
-      matchId: match.id,
-      senderParticipantId: a!.id,
-      receiverParticipantId: b!.id,
-      itemId: ITEM_X,
-    });
-    return { round, match, obligation };
   }
 
   test("returns a customer's matches with names and titles filled in", async ({ assert }) => {

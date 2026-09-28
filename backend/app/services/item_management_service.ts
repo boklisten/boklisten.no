@@ -34,10 +34,9 @@ export function currentPriceYear(now = new Date()): string {
 }
 
 function withoutUndefined<T extends object>(patch: T): Partial<T> {
+  const defined = Object.entries(patch).filter(([, value]) => value !== undefined);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the entries are T's own, minus the undefined ones
-  return Object.fromEntries(
-    Object.entries(patch).filter(([, value]) => value !== undefined),
-  ) as Partial<T>;
+  return Object.fromEntries(defined) as Partial<T>;
 }
 
 /** A price change also replaces this year's entry in the price history; other years stay. */

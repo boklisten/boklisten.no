@@ -157,8 +157,7 @@ async function assertNoCycle(
 
 /** `merge` would store `undefined` for keys that were simply not sent, so they are dropped first. */
 function definedEntries<T extends object>(values: T): Partial<T> {
+  const defined = Object.entries(values).filter(([, value]) => value !== undefined);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- same keys, undefined values removed
-  return Object.fromEntries(
-    Object.entries(values).filter(([, value]) => value !== undefined),
-  ) as Partial<T>;
+  return Object.fromEntries(defined) as Partial<T>;
 }

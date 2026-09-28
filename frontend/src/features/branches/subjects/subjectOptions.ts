@@ -53,11 +53,15 @@ export function formValueToBook(book: SubjectBookFormValue) {
   };
 }
 
-export function describeOptions(flags: SubjectBookFlags) {
-  const describe = (values: string[]) =>
+function describe(values: string[]) {
+  return (
     PAYMENT_OPTIONS.filter((option) => values.includes(option.value))
       .map((option) => option.label)
-      .join(" · ") || "Ingen";
+      .join(" · ") || "Ingen"
+  );
+}
+
+export function describeOptions(flags: SubjectBookFlags) {
   const formValue = bookToFormValue({ ...flags, item: { id: "", title: "" } });
   return {
     ordering: describe(formValue.ordering),

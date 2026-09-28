@@ -83,6 +83,19 @@ test.group("buildSlots", () => {
   });
 });
 
+/** Four user matches over two locations, where p1 and p4 each meet two people. */
+function overlappingPairsInput(): ScheduleInput {
+  return input({
+    userMatches: [
+      userMatch("p1", "p2"),
+      userMatch("p3", "p4"),
+      userMatch("p1", "p4"),
+      userMatch("p5", "p6"),
+    ],
+    locations: ["X", "Y"],
+  });
+}
+
 test.group("scheduleUserMeetings", () => {
   test("both participants share a slot and a location", ({ assert }) => {
     const scheduleInput = input({ userMatches: [userMatch("anna", "bo")] });
@@ -184,19 +197,8 @@ test.group("scheduleUserMeetings", () => {
   });
 
   test("is deterministic", ({ assert }) => {
-    const make = () =>
-      input({
-        userMatches: [
-          userMatch("p1", "p2"),
-          userMatch("p3", "p4"),
-          userMatch("p1", "p4"),
-          userMatch("p5", "p6"),
-        ],
-        locations: ["X", "Y"],
-      });
-
-    const first = scheduleUserMeetings(make());
-    const second = scheduleUserMeetings(make());
+    const first = scheduleUserMeetings(overlappingPairsInput());
+    const second = scheduleUserMeetings(overlappingPairsInput());
 
     assert.deepEqual(
       first.map((a) => `${a.time.toISO()}@${a.location}`),

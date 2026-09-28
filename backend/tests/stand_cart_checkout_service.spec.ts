@@ -213,6 +213,9 @@ function vippsRefund(orderId: string, amount: number): StandCartVippsRefund {
   return { orderId, method: "vipps-epayment", amount };
 }
 
+const checkout = (overrides: Partial<StandCartCheckoutRequest> = {}) =>
+  StandCartCheckoutService.checkout(request(overrides), EMPLOYEE, NOW);
+
 test.group("StandCartCheckoutService.checkout", (group) => {
   let sandbox: sinon.SinonSandbox;
   let resolve: sinon.SinonStub;
@@ -266,9 +269,6 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     sandbox.stub(VippsPaymentService, "payment").value(vipps);
   });
   group.each.teardown(() => sandbox.restore());
-
-  const checkout = (overrides: Partial<StandCartCheckoutRequest> = {}) =>
-    StandCartCheckoutService.checkout(request(overrides), EMPLOYEE, NOW);
 
   test("re-resolves every line with the cart branch and the scanned blid", async ({ assert }) => {
     await checkout();
@@ -843,6 +843,12 @@ test.group("StandCartCheckoutService.refundPlan", (group) => {
   });
 });
 
+/** Changes the stored pending order the way an earlier request would have. */
+const updatePendingOrder = (columns: Partial<Pick<Order, "placed" | "checkoutState">>) =>
+  Order.query().where("id", NEW_ORDER_ID).update(columns);
+
+const checkoutStateOf = async () => (await Order.findOrFail(NEW_ORDER_ID)).checkoutState;
+
 test.group("StandCartCheckoutService.status and cancel", (group) => {
   let sandbox: sinon.SinonSandbox;
   let place: sinon.SinonStub;
@@ -852,12 +858,6 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
     cancel: sinon.SinonStub;
     capture: sinon.SinonStub;
   };
-
-  /** Changes the stored pending order the way an earlier request would have. */
-  const updatePendingOrder = (columns: Partial<Pick<Order, "placed" | "checkoutState">>) =>
-    Order.query().where("id", NEW_ORDER_ID).update(columns);
-
-  const checkoutStateOf = async () => (await Order.findOrFail(NEW_ORDER_ID)).checkoutState;
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {

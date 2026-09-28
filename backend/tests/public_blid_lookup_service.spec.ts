@@ -14,6 +14,17 @@ const BLID = "12345678";
 const ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
 
+const copy = (returned: boolean) =>
+  createCustomerItem({
+    blid: BLID,
+    itemId: ITEM_ID,
+    customerId: CUSTOMER_ID,
+    handoutBranchId: BRANCH_ID,
+    handedOutAt: DateTime.fromISO("2026-08-20T10:00:00.000Z"),
+    deadline: DateTime.fromISO("2026-12-20"),
+    returned,
+  });
+
 test.group("PublicBlidLookupService.lookup()", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
@@ -26,17 +37,6 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
       phone: "12345678",
     });
   });
-
-  const copy = (returned: boolean) =>
-    createCustomerItem({
-      blid: BLID,
-      itemId: ITEM_ID,
-      customerId: CUSTOMER_ID,
-      handoutBranchId: BRANCH_ID,
-      handedOutAt: DateTime.fromISO("2026-08-20T10:00:00.000Z"),
-      deadline: DateTime.fromISO("2026-12-20"),
-      returned,
-    });
 
   test("a book someone holds right now is reported with its holder", async ({ assert }) => {
     await copy(true);

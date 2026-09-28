@@ -41,6 +41,26 @@ function createValidSignature() {
   });
 }
 
+function createValidOrder() {
+  return createOrder({
+    amount: 100,
+    orderItems: [
+      {
+        type: "buy",
+        itemId: "item1",
+        amount: 100,
+        unitPrice: 100,
+        blid: "blid1",
+        handout: true,
+      },
+    ],
+    branchId: BRANCH,
+    customerId: CUSTOMER_1,
+    byCustomer: false,
+    placed: false,
+  });
+}
+
 test.group("OrderPlaceService", (group) => {
   const orderToCustomerItemGenerator = new OrderToCustomerItemGenerator();
   const orderPlacedHandler = new OrderPlacedHandler();
@@ -78,26 +98,6 @@ test.group("OrderPlaceService", (group) => {
     await createUser({ id: CUSTOMER_1 });
     await createValidSignature();
   });
-
-  function createValidOrder() {
-    return createOrder({
-      amount: 100,
-      orderItems: [
-        {
-          type: "buy",
-          itemId: "item1",
-          amount: 100,
-          unitPrice: 100,
-          blid: "blid1",
-          handout: true,
-        },
-      ],
-      branchId: BRANCH,
-      customerId: CUSTOMER_1,
-      byCustomer: false,
-      placed: false,
-    });
-  }
 
   test("should reject if order is not found", async ({ assert }) =>
     assert.rejects(() => orderPlaceService.place("randomOrder"), /order "randomOrder" not found/));

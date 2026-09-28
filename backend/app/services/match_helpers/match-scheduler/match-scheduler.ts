@@ -186,6 +186,8 @@ export function scheduleUserMeetings(input: ScheduleInput): UserMatchAssignment[
     () => null,
   );
   for (const person of people) {
+    const counterpartyOf = (entry: { match: CandidateUserMatch }) =>
+      entry.match.customerA === person ? entry.match.customerB : entry.match.customerA;
     const pending = userMatches
       .map((match, index) => ({ match, index }))
       .filter(
@@ -193,8 +195,6 @@ export function scheduleUserMeetings(input: ScheduleInput): UserMatchAssignment[
           assignments[index] === null && (match.customerA === person || match.customerB === person),
       )
       .toSorted((a, b) => {
-        const counterpartyOf = (entry: { match: CandidateUserMatch }) =>
-          entry.match.customerA === person ? entry.match.customerB : entry.match.customerA;
         const byCounterparty = counterpartyOf(a).localeCompare(counterpartyOf(b));
         return byCounterparty !== 0 ? byCounterparty : a.index - b.index;
       });

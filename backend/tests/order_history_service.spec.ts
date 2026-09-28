@@ -306,22 +306,23 @@ test.group("OrderHistoryService.presentOrderHistory() – items", () => {
   });
 });
 
-test.group("OrderHistoryService.presentOrderHistory() – match transfers", () => {
-  const receiveOrder = () =>
-    makeOrder({
-      id: "receive-order",
-      byCustomer: true,
-      employeeId: null,
-      orderItems: [rentItem({ type: "match-receive", movedFromOrderId: "order-0" })],
-    });
-  const deliverOrder = () =>
-    makeOrder({
-      id: "deliver-order",
-      byCustomer: true,
-      employeeId: null,
-      orderItems: [rentItem({ type: "match-deliver", ...NO_PERIOD })],
-    });
+const receiveOrder = () =>
+  makeOrder({
+    id: "receive-order",
+    byCustomer: true,
+    employeeId: null,
+    orderItems: [rentItem({ type: "match-receive", movedFromOrderId: "order-0" })],
+  });
 
+const deliverOrder = () =>
+  makeOrder({
+    id: "deliver-order",
+    byCustomer: true,
+    employeeId: null,
+    orderItems: [rentItem({ type: "match-deliver", ...NO_PERIOD })],
+  });
+
+test.group("OrderHistoryService.presentOrderHistory() – match transfers", () => {
   test("names the sender of a received book from the handover row on the order", ({ assert }) => {
     const occurredAt = new Date("2026-08-01T09:59:58.000Z");
 
@@ -598,6 +599,23 @@ test.group("OrderHistoryService.updateBranch()", (group) => {
   });
 });
 
+async function orderWith(line: Partial<OrderItemDto> = {}) {
+  const { branch, customer, sinus } = await seedOrderWorld();
+  const order = await createOrder({
+    branchId: branch.id,
+    customerId: customer.id,
+    orderItems: [
+      {
+        itemId: sinus.id,
+        periodTo: DateTime.fromISO(DEADLINE),
+        handout: line.handout ?? false,
+        movedToOrderId: line.movedToOrderId ?? null,
+      },
+    ],
+  });
+  return { order, customer, itemId: sinus.id };
+}
+
 test.group("OrderHistoryService.updateItemDeadline()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
@@ -610,23 +628,6 @@ test.group("OrderHistoryService.updateItemDeadline()", (group) => {
     report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
   });
   group.each.teardown(() => sandbox.restore());
-
-  async function orderWith(line: Partial<OrderItemDto> = {}) {
-    const { branch, customer, sinus } = await seedOrderWorld();
-    const order = await createOrder({
-      branchId: branch.id,
-      customerId: customer.id,
-      orderItems: [
-        {
-          itemId: sinus.id,
-          periodTo: DateTime.fromISO(DEADLINE),
-          handout: line.handout ?? false,
-          movedToOrderId: line.movedToOrderId ?? null,
-        },
-      ],
-    });
-    return { order, customer, itemId: sinus.id };
-  }
 
   test("moves the period end of the open item and reports both deadlines", async ({ assert }) => {
     const { order, customer, itemId } = await orderWith();

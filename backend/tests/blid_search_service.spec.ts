@@ -1115,6 +1115,25 @@ test.group("BlidSearchService.assembleBlidSearch() – active item", () => {
   });
 });
 
+/** A customer's own receive or deliver order for the book, `offsetMs` after T2. */
+function matchOrder(
+  id: string,
+  customer: string,
+  type: "match-receive" | "match-deliver",
+  offsetMs: number,
+) {
+  return makeOrder({
+    id,
+    customerId: customer,
+    byCustomer: true,
+    employeeId: null,
+    createdAt: new Date(T2.getTime() + offsetMs),
+    orderItems: [
+      { type, itemId: "item-1", blid: BLID, title: "Sinus 1T", amount: 0, unitPrice: 0 },
+    ],
+  });
+}
+
 test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation", () => {
   test("a transfer shows once even when both parties' orders and the handover exist", ({
     assert,
@@ -1224,22 +1243,6 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
   test("drops the receiver's stray deliver order left by a double scan", ({ assert }) => {
     // Seen on legacy matches (blid 87767074): a double scan records the receive twice and, on
     // the second pass, a deliver order in the receiver's own name — all within one second.
-    const matchOrder = (
-      id: string,
-      customer: string,
-      type: "match-receive" | "match-deliver",
-      offsetMs: number,
-    ) =>
-      makeOrder({
-        id,
-        customerId: customer,
-        byCustomer: true,
-        employeeId: null,
-        createdAt: new Date(T2.getTime() + offsetMs),
-        orderItems: [
-          { type, itemId: "item-1", blid: BLID, title: "Sinus 1T", amount: 0, unitPrice: 0 },
-        ],
-      });
     const result = assembleBlidSearch(
       baseSources({
         orders: [
@@ -1258,22 +1261,11 @@ test.group("BlidSearchService.assembleBlidSearch() – transfer reconciliation",
   });
 
   test("never pairs a customer's receive with their own deliver order", ({ assert }) => {
-    const matchOrder = (id: string, type: "match-receive" | "match-deliver", offsetMs: number) =>
-      makeOrder({
-        id,
-        customerId: IDA,
-        byCustomer: true,
-        employeeId: null,
-        createdAt: new Date(T2.getTime() + offsetMs),
-        orderItems: [
-          { type, itemId: "item-1", blid: BLID, title: "Sinus 1T", amount: 0, unitPrice: 0 },
-        ],
-      });
     const result = assembleBlidSearch(
       baseSources({
         orders: [
-          matchOrder("order-deliver-echo", "match-deliver", 0),
-          matchOrder("order-receive", "match-receive", 100),
+          matchOrder("order-deliver-echo", IDA, "match-deliver", 0),
+          matchOrder("order-receive", IDA, "match-receive", 100),
         ],
       }),
     );

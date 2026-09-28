@@ -23,6 +23,14 @@ function contextFor(detailsId: string) {
   });
 }
 
+const book = (overrides: Partial<Parameters<typeof createCustomerItem>[0]> = {}) =>
+  createCustomerItem({
+    itemId: ITEM_ID,
+    customerId: DETAILS_ID,
+    handoutBranchId: BRANCH_ID,
+    ...overrides,
+  });
+
 test.group("CustomerItemsController.forCustomer", (group) => {
   const controller = new CustomerItemsController();
 
@@ -33,14 +41,6 @@ test.group("CustomerItemsController.forCustomer", (group) => {
     await createUser({ id: DETAILS_ID });
     await createUser({ id: OTHER_ID });
   });
-
-  const book = (overrides: Partial<Parameters<typeof createCustomerItem>[0]> = {}) =>
-    createCustomerItem({
-      itemId: ITEM_ID,
-      customerId: DETAILS_ID,
-      handoutBranchId: BRANCH_ID,
-      ...overrides,
-    });
 
   test("returns nothing for an id that is not an object id", async ({ assert }) => {
     assert.deepEqual(await controller.forCustomer(contextFor("not-an-id")), []);

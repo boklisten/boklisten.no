@@ -24,6 +24,19 @@ async function unplacedOrderCount() {
   return (await Order.query().where("placed", false)).length;
 }
 
+function rentCartItem() {
+  return { id: ITEM_ID, branchId: BRANCH_ID, type: "rent", to: DEADLINE } as const;
+}
+
+/** A placed order the customer already has, with one open line for the item. */
+function existingOpenOrder(type: "rent" | "buy") {
+  return createOrder({
+    branchId: BRANCH_ID,
+    customerId: CUSTOMER_ID,
+    orderItems: [{ type, itemId: ITEM_ID, periodTo: DateTime.fromISO(DEADLINE) }],
+  });
+}
+
 test.group("OrderService.createFromCart", (group) => {
   let sandbox: sinon.SinonSandbox;
 
@@ -59,19 +72,6 @@ test.group("OrderService.createFromCart", (group) => {
     return truncate;
   });
   group.each.teardown(() => sandbox.restore());
-
-  function rentCartItem() {
-    return { id: ITEM_ID, branchId: BRANCH_ID, type: "rent", to: DEADLINE } as const;
-  }
-
-  /** A placed order the customer already has, with one open line for the item. */
-  function existingOpenOrder(type: "rent" | "buy") {
-    return createOrder({
-      branchId: BRANCH_ID,
-      customerId: CUSTOMER_ID,
-      orderItems: [{ type, itemId: ITEM_ID, periodTo: DateTime.fromISO(DEADLINE) }],
-    });
-  }
 
   test("creates an order when there are no conflicts", async ({ assert }) => {
     const order = await OrderService.createFromCart(CUSTOMER_ID, [rentCartItem()]);

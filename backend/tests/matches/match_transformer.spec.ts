@@ -43,30 +43,30 @@ async function render() {
   return toMatchDtos(matches, handovers, lookups);
 }
 
+async function seedUserMatch() {
+  const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
+  const match = await Match.create({
+    roundId: round.id,
+    meetingLocation: "Biblioteket",
+    meetingTime: DateTime.fromISO("2026-06-01T10:00:00Z"),
+  });
+  const [a, b] = await MatchParticipant.createMany([
+    { matchId: match.id, userDetailId: A },
+    { matchId: match.id, userDetailId: B },
+  ]);
+  const obligation = await MatchObligation.create({
+    matchId: match.id,
+    senderParticipantId: a!.id,
+    receiverParticipantId: b!.id,
+    itemId: ITEM_X,
+  });
+  return { round, match, a: a!, b: b!, obligation };
+}
+
 test.group("toMatchDtos", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
-
-  async function seedUserMatch() {
-    const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
-    const match = await Match.create({
-      roundId: round.id,
-      meetingLocation: "Biblioteket",
-      meetingTime: DateTime.fromISO("2026-06-01T10:00:00Z"),
-    });
-    const [a, b] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: A },
-      { matchId: match.id, userDetailId: B },
-    ]);
-    const obligation = await MatchObligation.create({
-      matchId: match.id,
-      senderParticipantId: a!.id,
-      receiverParticipantId: b!.id,
-      itemId: ITEM_X,
-    });
-    return { round, match, a: a!, b: b!, obligation };
-  }
 
   test("names both parties and the title", async ({ assert }) => {
     const { match, round } = await seedUserMatch();

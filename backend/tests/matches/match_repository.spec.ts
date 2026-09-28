@@ -154,20 +154,20 @@ test.group("match participants", (group) => {
   });
 });
 
+async function createUserMatch() {
+  const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
+  const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
+  const [a, b] = await MatchParticipant.createMany([
+    { matchId: match.id, userDetailId: A },
+    { matchId: match.id, userDetailId: B },
+  ]);
+  return { match, a: a!, b: b! };
+}
+
 test.group("match obligations", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
-
-  async function createUserMatch() {
-    const round = await createTestRound({ name: "Round", standLocation: "Kantina" });
-    const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
-    const [a, b] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: A },
-      { matchId: match.id, userDetailId: B },
-    ]);
-    return { match, a: a!, b: b! };
-  }
 
   test("stores an obligation between two parties of the match", async ({ assert }) => {
     const { match, a, b } = await createUserMatch();
@@ -340,30 +340,51 @@ test.group("book handovers", (group) => {
   });
 });
 
+async function seedUserMatch() {
+  const round = await createTestRound({
+    name: "Round",
+    standLocation: "Kantina",
+    status: "active",
+  });
+  const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
+  const [a, b] = await MatchParticipant.createMany([
+    { matchId: match.id, userDetailId: A },
+    { matchId: match.id, userDetailId: B },
+  ]);
+  const obligation = await MatchObligation.create({
+    matchId: match.id,
+    senderParticipantId: a!.id,
+    receiverParticipantId: b!.id,
+    itemId: ITEM_X,
+  });
+  return { round, match, a: a!, b: b!, obligation };
+}
+
+/** The same match shape as `seedUserMatch`, but in a round that is switched off. */
+async function seedDraftUserMatch() {
+  const round = await createTestRound({
+    name: "Old round",
+    standLocation: "Kantina",
+    status: "draft",
+  });
+  const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
+  const [a, b] = await MatchParticipant.createMany([
+    { matchId: match.id, userDetailId: A },
+    { matchId: match.id, userDetailId: B },
+  ]);
+  const obligation = await MatchObligation.create({
+    matchId: match.id,
+    senderParticipantId: a!.id,
+    receiverParticipantId: b!.id,
+    itemId: ITEM_X,
+  });
+  return { round, match, obligation };
+}
+
 test.group("MatchRepository", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
-
-  async function seedUserMatch() {
-    const round = await createTestRound({
-      name: "Round",
-      standLocation: "Kantina",
-      status: "active",
-    });
-    const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
-    const [a, b] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: A },
-      { matchId: match.id, userDetailId: B },
-    ]);
-    const obligation = await MatchObligation.create({
-      matchId: match.id,
-      senderParticipantId: a!.id,
-      receiverParticipantId: b!.id,
-      itemId: ITEM_X,
-    });
-    return { round, match, a: a!, b: b!, obligation };
-  }
 
   test("finds a customer's matches with parties and obligations preloaded", async ({ assert }) => {
     const { match } = await seedUserMatch();
@@ -427,27 +448,6 @@ test.group("MatchRepository", (group) => {
     assert.isNull(stored.dischargesSenderObligationId);
     assert.isNull(stored.dischargesReceiverObligationId);
   });
-
-  /** The same match shape as `seedUserMatch`, but in a round that is switched off. */
-  async function seedDraftUserMatch() {
-    const round = await createTestRound({
-      name: "Old round",
-      standLocation: "Kantina",
-      status: "draft",
-    });
-    const match = await Match.create({ roundId: round.id, meetingLocation: "Biblioteket" });
-    const [a, b] = await MatchParticipant.createMany([
-      { matchId: match.id, userDetailId: A },
-      { matchId: match.id, userDetailId: B },
-    ]);
-    const obligation = await MatchObligation.create({
-      matchId: match.id,
-      senderParticipantId: a!.id,
-      receiverParticipantId: b!.id,
-      itemId: ITEM_X,
-    });
-    return { round, match, obligation };
-  }
 
   test("excludes matches in draft rounds from a customer's matches", async ({ assert }) => {
     await seedDraftUserMatch();

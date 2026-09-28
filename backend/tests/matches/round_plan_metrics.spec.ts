@@ -24,6 +24,16 @@ const RECEIVER = "5d765db5fc8c47001c408d81";
 const ITEM_X = "5d765db5fc8c47001c408e01";
 const ITEM_Y = "5d765db5fc8c47001c408e02";
 
+/** The student ordered the books themselves at the branch. */
+const order = (itemIds: string[], overrides: Partial<Parameters<typeof createOrder>[0]> = {}) =>
+  createOrder({
+    branchId: BRANCH,
+    customerId: RECEIVER,
+    byCustomer: true,
+    orderItems: itemIds.map((itemId) => ({ itemId })),
+    ...overrides,
+  });
+
 test.group("roundPlanMetrics", (group) => {
   let sandbox: sinon.SinonSandbox;
 
@@ -38,16 +48,6 @@ test.group("roundPlanMetrics", (group) => {
     await createBranch({ id: BRANCH });
     await createBranch({ id: OTHER_BRANCH });
   });
-
-  /** The student ordered the books themselves at the branch. */
-  const order = (itemIds: string[], overrides: Partial<Parameters<typeof createOrder>[0]> = {}) =>
-    createOrder({
-      branchId: BRANCH,
-      customerId: RECEIVER,
-      byCustomer: true,
-      orderItems: itemIds.map((itemId) => ({ itemId })),
-      ...overrides,
-    });
 
   /** Stubs the member count and inserts the held books, handed out at the round's branch. */
   async function arrange({
