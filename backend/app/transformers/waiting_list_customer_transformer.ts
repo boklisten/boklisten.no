@@ -5,7 +5,7 @@ export default class WaitingListCustomerTransformer extends BaseTransformer<Wait
   toObject() {
     return {
       id: this.resource.id.toString(),
-      ...this.pick(this.resource, ["name", "phoneNumber", "itemId", "branchId"]),
+      ...this.pick(this.resource, ["name", "phone", "itemId", "branchId"]),
     };
   }
 }

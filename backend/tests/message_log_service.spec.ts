@@ -186,7 +186,7 @@ test.group("MessageLogService", (group) => {
       email: "Elev@Example.com",
       phone: "91234567",
       guardianEmail: "foresatt@example.com",
-      guardianPhone: "+4798765432",
+      guardianPhone: "98765432",
     });
 
     await logSms("91234567");

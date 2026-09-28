@@ -920,7 +920,7 @@ export class UserSchema extends BaseModel {
 }
 
 export class WaitingListCustomerSchema extends BaseModel {
-  static $columns = ['branchId', 'createdAt', 'id', 'itemId', 'name', 'phoneNumber', 'updatedAt'] as const
+  static $columns = ['branchId', 'createdAt', 'id', 'itemId', 'name', 'phone', 'updatedAt'] as const
   $columns = WaitingListCustomerSchema.$columns
   @column()
   declare branchId: string
@@ -933,7 +933,7 @@ export class WaitingListCustomerSchema extends BaseModel {
   @column()
   declare name: string
   @column()
-  declare phoneNumber: string
+  declare phone: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 }

@@ -298,14 +298,14 @@ permission <> 'customer'`, which serves `User.employees()`.
     `orders_placed_updated_at_index` 0, `users_permission_index` 1 (the staff list, now served by
     `users_staff_name_index`). All three drops confirmed. Ready to ship.
 
-### Step 2 — Audit timestamps NOT NULL with defaults ◐
+### Step 2 — Audit timestamps NOT NULL with defaults ☑
 
 - **Findings:** I3
 - **Changes:** `alter column created_at/updated_at set not null, set default now()` on the 23
   tables. Remove the `| null` handling this makes redundant in models and transformers.
 - **API impact:** only where shared types say `createdAt: string | null`; those become non-null.
 - **Survey:** count NULLs per table again (Appendix A.2). The step expects 0.
-- **Done (2026-09-28, on staging, awaiting review):** migration
+- **Done (2026-09-28, shipped to production in 7c92b808):** migration
   `1791100000000_audit_timestamps_not_null`. The re-survey matched: 23 nullable tables, 0 NULLs.
   - Decided on the way: the tables that were already `NOT NULL` (`orders`, `customer_items`,
     `deliveries`, `invoices`, `payments`, and `customer_item_period_extends.created_at`) also get
@@ -323,7 +323,7 @@ permission <> 'customer'`, which serves `User.employees()`.
     `matches`/`match_participants`/`match_obligations` without timestamps gets them from the
     default.
 
-### Step 3 — `varchar(255)` → `text`, drop `uuid-ossp` ☐
+### Step 3 — `varchar(255)` → `text`, drop `uuid-ossp` ◐
 
 - **Findings:** T1, H1, and the type half of N4 (`waiting_list_customers.item_id` →
   `varchar(24)`, `phone_number` → `text`)
@@ -331,6 +331,25 @@ permission <> 'customer'`, which serves `User.employees()`.
 - **API impact:** none (`schema.ts` still says `string`).
 - **Rename in the same step?** Renaming `waiting_list_customers.phone_number` → `phone` is cheap
   here. Adrian decides.
+- **Done (2026-09-28, on staging, awaiting review):** migration
+  `1791200000000_text_columns_and_phone_checks`. The re-survey matched: the same 23 `varchar(255)`
+  columns (T1 lists 23; the "21" was a miscount), `uuid-ossp` unused, 0 waiting-list rows.
+  - All 23 columns are now `text`. `waiting_list_customers.item_id` is `varchar(24)`, and
+    `phone_number varchar(8)` is renamed to `phone text` (Adrian: rename). The API field is now
+    `phone` (validator, transformer, controller, Venteliste form and grid).
+  - Decided on the way: the varchar(8) limit becomes a format CHECK, `^[0-9]{8}$`, on
+    `users.phone`, `users.guardian_phone` and `waiting_list_customers.phone`
+    (`<table>_<column>_check`). Repairs inside the migration (approved by Adrian): the one 7-digit
+    `users.phone` becomes NULL with `task_confirm_details = true`. All 7 bad `guardian_phone`
+    values become NULL (two had a stray `+`, five had the wrong length), and the task is set only
+    for customers still under 18. `down()` does not restore the cleared values.
+  - The waiting-list validator used vine's `.mobile()`, which accepts `+47…`. It now uses the
+    shared `phoneField`, which normalises to 8 digits. `MessageLogService.customerLog` no longer
+    re-normalises stored phones.
+  - `companies.phone` keeps its `'0'` placeholders until Step 14 (I5) and gets no CHECK yet.
+  - Verified: rollback and re-run both work, 1,030 tests pass. On Venteliste, a form save, an API
+    post of `+47 987 65 432` (stored as `98765432`) and a rejected `1234567` (422) all behave as
+    expected.
 
 ### Step 4 — CHECK constraints on enum-like columns ☐
 

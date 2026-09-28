@@ -10,10 +10,10 @@ export default class WaitingListCustomersController {
   }
 
   async store(ctx: HttpContext) {
-    const { name, phoneNumber, itemId, branchId } = await ctx.request.validateUsing(
+    const { name, phone, itemId, branchId } = await ctx.request.validateUsing(
       waitingListCustomerValidator,
     );
-    await WaitingListCustomer.create({ name, phoneNumber, itemId, branchId });
+    await WaitingListCustomer.create({ name, phone, itemId, branchId });
   }
 
   async destroy(ctx: HttpContext) {

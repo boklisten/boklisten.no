@@ -335,9 +335,10 @@ async function customerLog(detailsId: string): Promise<{
   const emails = [customer.email, customer.guardianEmail]
     .filter((email): email is string => (email?.length ?? 0) > 0)
     .map((email) => normalizeRecipient("email", email));
-  const phones = [customer.phone, customer.guardianPhone]
-    .filter((phone): phone is string => (phone?.length ?? 0) > 0)
-    .map((phone) => normalizeRecipient("sms", phone));
+  // Stored phones are already the eight digits the log keys SMS by (`users_phone_check`).
+  const phones = [customer.phone, customer.guardianPhone].filter(
+    (phone): phone is string => phone !== null,
+  );
   const recipients = [...new Set([...emails, ...phones])];
 
   // Mail about the customer that went to someone else (an exception report to the office) belongs

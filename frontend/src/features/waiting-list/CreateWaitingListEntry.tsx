@@ -10,13 +10,13 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 
 interface WaitingListEntryForm {
   name: string;
-  phoneNumber: string;
+  phone: string;
   itemIds: string[];
   branchId: string;
 }
 const defaultValues: WaitingListEntryForm = {
   name: "",
-  phoneNumber: "",
+  phone: "",
   itemIds: [],
   branchId: "",
 };
@@ -38,7 +38,7 @@ export default function CreateWaitingListEntry({
         await apiClient.api.waitingListCustomers.store({
           body: {
             name: data.name,
-            phoneNumber: data.phoneNumber,
+            phone: data.phone,
             branchId: data.branchId,
             itemId,
           },
@@ -74,7 +74,7 @@ export default function CreateWaitingListEntry({
             {(field) => <field.NameField autoComplete="off" />}
           </form.AppField>
           <form.AppField
-            name="phoneNumber"
+            name="phone"
             validators={{
               onSubmit: ({ value }) => phoneNumberFieldValidator(value, "administrate"),
             }}

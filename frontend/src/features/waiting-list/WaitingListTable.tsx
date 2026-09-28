@@ -63,7 +63,7 @@ export default function WaitingListTable({
           rowData={waitingList}
           columnDefs={[
             { field: "name", headerName: "Navn" },
-            { field: "phoneNumber", headerName: "Telefonnummer" },
+            { field: "phone", headerName: "Telefonnummer" },
             {
               headerName: "Bok",
               valueGetter: ({ data }) => (data ? itemTitleById.get(data.itemId) : undefined),
