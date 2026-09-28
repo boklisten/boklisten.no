@@ -85,16 +85,16 @@ test.group("SubjectChoicesService.resolveSubjectItems()", () => {
   const subjectsByBranchId = new Map([
     [
       "branch-st",
-      [{ externalName: "Kjemi 2", books: [{ itemId: "item-kjemi", title: "Kjemien stemmer" }] }],
+      [{ uploadName: "Kjemi 2", books: [{ itemId: "item-kjemi", title: "Kjemien stemmer" }] }],
     ],
     [
       "branch-vg1",
       [
         {
-          externalName: "Kjemi 2",
+          uploadName: "Kjemi 2",
           books: [{ itemId: "item-kjemi-old", title: "Gammel kjemibok" }],
         },
-        { externalName: "Norsk", books: [{ itemId: "item-norsk", title: "Norskboka" }] },
+        { uploadName: "Norsk", books: [{ itemId: "item-norsk", title: "Norskboka" }] },
       ],
     ],
   ]);
@@ -149,7 +149,7 @@ test.group("SubjectChoicesService.resolveSubjectItems()", () => {
       parentByBranchId,
       subjectsByBranchId: new Map([
         ...subjectsByBranchId,
-        ["branch-school", [{ externalName: "Gym", books: [] }]],
+        ["branch-school", [{ uploadName: "Gym", books: [] }]],
       ]),
     });
     assert.deepEqual(resolved, { branchId: "branch-school", items: [] });
@@ -175,7 +175,7 @@ test.group("SubjectChoicesService.resolveSubjectItems()", () => {
         ...subjectsByBranchId,
         [
           "branch-global",
-          [{ externalName: "Religion", books: [{ itemId: "item-global", title: "Global bok" }] }],
+          [{ uploadName: "Religion", books: [{ itemId: "item-global", title: "Global bok" }] }],
         ],
       ]),
     };
@@ -215,13 +215,13 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
         "branch-school",
         [
           {
-            externalName: "Kjemi 2",
+            uploadName: "Kjemi 2",
             books: [
               { itemId: "item-kjemi", title: "Kjemien stemmer" },
               { itemId: "item-kjemi-2", title: "Kjemien stemmer arbeidsbok" },
             ],
           },
-          { externalName: "Fysikk 2", books: [{ itemId: "item-fysikk", title: "Fysikkboka" }] },
+          { uploadName: "Fysikk 2", books: [{ itemId: "item-fysikk", title: "Fysikkboka" }] },
         ],
       ],
     ]),
@@ -285,8 +285,8 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
         [
           "branch-school",
           [
-            { externalName: "Kjemi 2", books: [{ itemId: "item-shared", title: "Delt bok" }] },
-            { externalName: "Fysikk 2", books: [{ itemId: "item-shared", title: "Delt bok" }] },
+            { uploadName: "Kjemi 2", books: [{ itemId: "item-shared", title: "Delt bok" }] },
+            { uploadName: "Fysikk 2", books: [{ itemId: "item-shared", title: "Delt bok" }] },
           ],
         ],
       ]),
@@ -311,7 +311,7 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
           "branch-school",
           [
             {
-              externalName: "Kroppsøving",
+              uploadName: "Kroppsøving",
               books: [{ itemId: GYMNOS_2012, title: "Gymnos 2012" }],
             },
           ],
@@ -340,11 +340,11 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
           "branch-school",
           [
             {
-              externalName: "Kroppsøving",
+              uploadName: "Kroppsøving",
               books: [{ itemId: GYMNOS_2009, title: "Gymnos 2009" }],
             },
             {
-              externalName: "Toppidrett",
+              uploadName: "Toppidrett",
               books: [{ itemId: GYMNOS_2012, title: "Gymnos 2012" }],
             },
           ],
@@ -392,9 +392,9 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
         [
           "branch-school",
           [
-            { externalName: "Gym", books: [] },
+            { uploadName: "Gym", books: [] },
             {
-              externalName: "Kjemi 2",
+              uploadName: "Kjemi 2",
               books: [{ itemId: "item-kjemi", title: "Kjemien stemmer" }],
             },
           ],
@@ -463,7 +463,7 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
           "branch-3sta",
           [
             {
-              externalName: "Kjemi 2",
+              uploadName: "Kjemi 2",
               books: [{ itemId: "item-kjemi", title: "Kjemien stemmer" }],
             },
           ],
@@ -516,14 +516,14 @@ test.group("SubjectChoicesService.planSubjectChoices()", () => {
           "branch-3sta",
           [
             {
-              externalName: "Kjemi 2",
+              uploadName: "Kjemi 2",
               books: [{ itemId: "item-kjemi", title: "Kjemien stemmer" }],
             },
           ],
         ],
         [
           "branch-school",
-          [{ externalName: "Fysikk 2", books: [{ itemId: "item-fysikk", title: "Fysikkboka" }] }],
+          [{ uploadName: "Fysikk 2", books: [{ itemId: "item-fysikk", title: "Fysikkboka" }] }],
         ],
       ]),
       rows: [

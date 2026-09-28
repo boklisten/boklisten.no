@@ -123,7 +123,7 @@ export class BranchSubjectSchema extends BaseModel {
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
-  declare externalName: string
+  declare externalName: string | null
   @column({ isPrimary: true })
   declare id: number
   @column()

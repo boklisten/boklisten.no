@@ -2,10 +2,10 @@ import { Accordion, Badge, Button, Group, Skeleton, Stack, Text } from "@mantine
 import { modals } from "@mantine/modals";
 import { IconFileImport, IconPlus } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity } from "react";
+import { Activity, useState } from "react";
 
+import BranchSubjectEditor from "@/features/branches/subjects/BranchSubjectEditor";
 import { BranchSubjectModal } from "@/features/branches/subjects/BranchSubjectModal";
-import { describeOptions } from "@/features/branches/subjects/subjectOptions";
 import type { BranchSubject } from "@/features/branches/subjects/subjectOptions";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
@@ -44,49 +44,22 @@ export default function BranchSubjectSettings({ branchId }: { branchId: string }
     }),
   );
 
-  const deleteMutation = useMutation(
-    api.branchSubjects.destroy.mutationOptions({
-      onSuccess: () => showSuccessNotification("Faget ble slettet!"),
-      onError: () => showErrorNotification("Klarte ikke slette faget"),
-      onSettled: invalidateSubjects,
-    }),
-  );
+  // A snapshot taken on open, so refetches do not reach the editor while it is open.
+  const [openSubject, setOpenSubject] = useState<BranchSubject | null>(null);
 
-  const modalId = "branch-subject-editor";
-  function openSubjectModal(existingSubject?: BranchSubject) {
+  const modalId = "branch-subject-create";
+  function openCreateModal() {
     modals.open({
       modalId,
-      title: existingSubject ? "Rediger fag" : "Nytt fag",
-      children: (
-        <BranchSubjectModal
-          branchId={branchId}
-          modalId={modalId}
-          existingSubject={existingSubject}
-        />
-      ),
-    });
-  }
-
-  function confirmDelete(subject: BranchSubject) {
-    modals.openConfirmModal({
-      title: "Slett fag",
-      children: (
-        <Text size="sm">
-          Er du sikker på at du vil slette faget «{subject.name}»? Dette påvirker ikke bøkene i
-          Bøker-fanen.
-        </Text>
-      ),
-      labels: { confirm: "Slett", cancel: "Avbryt" },
-      confirmProps: { color: "red" },
-      onConfirm: () =>
-        deleteMutation.mutate({ params: { branchId, subjectId: String(subject.id) } }),
+      title: "Nytt fag",
+      children: <BranchSubjectModal branchId={branchId} modalId={modalId} />,
     });
   }
 
   return (
     <Stack>
       <Group>
-        <Button leftSection={<IconPlus />} onClick={() => openSubjectModal()}>
+        <Button leftSection={<IconPlus />} onClick={openCreateModal}>
           Nytt fag
         </Button>
         <Button
@@ -115,14 +88,20 @@ export default function BranchSubjectSettings({ branchId }: { branchId: string }
         </InfoAlert>
       )}
       {(subjects?.length ?? 0) > 0 && (
-        <Accordion variant="separated">
+        <Accordion
+          variant="separated"
+          value={openSubject === null ? null : String(openSubject.id)}
+          onChange={(value) =>
+            setOpenSubject(subjects?.find((subject) => String(subject.id) === value) ?? null)
+          }
+        >
           {subjects?.map((subject) => (
             <Accordion.Item key={subject.id} value={String(subject.id)}>
               <Accordion.Control>
                 <Group justify="space-between" pr="md">
                   <Stack gap={0}>
                     <Text fw={600}>{subject.name}</Text>
-                    {subject.externalName !== subject.name && (
+                    {subject.externalName !== null && (
                       <Text size="xs" c="dimmed">
                         Lastes opp som «{subject.externalName}»
                       </Text>
@@ -134,40 +113,9 @@ export default function BranchSubjectSettings({ branchId }: { branchId: string }
                 </Group>
               </Accordion.Control>
               <Accordion.Panel>
-                <Stack gap="sm">
-                  {subject.books.length === 0 && (
-                    <Text size="sm" c="dimmed">
-                      Faget har ingen bøker. Fagvalg med dette faget blir godkjent uten bestilling
-                      når fagvalg lastes opp.
-                    </Text>
-                  )}
-                  {subject.books.map((book) => {
-                    const options = describeOptions(book);
-                    return (
-                      <Stack key={book.item.id} gap={0}>
-                        <Text size="sm" fw={500}>
-                          {book.item.title}
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                          Bestilling: {options.ordering} — På filial: {options.atBranch}
-                        </Text>
-                      </Stack>
-                    );
-                  })}
-                  <Group>
-                    <Button size="xs" variant="light" onClick={() => openSubjectModal(subject)}>
-                      Rediger
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="light"
-                      color="red"
-                      onClick={() => confirmDelete(subject)}
-                    >
-                      Slett
-                    </Button>
-                  </Group>
-                </Stack>
+                {openSubject?.id === subject.id && (
+                  <BranchSubjectEditor branchId={branchId} subject={openSubject} />
+                )}
               </Accordion.Panel>
             </Accordion.Item>
           ))}

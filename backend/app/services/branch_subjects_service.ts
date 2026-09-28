@@ -17,16 +17,27 @@ interface BranchSubjectBookInput {
 
 interface BranchSubjectInput {
   name: string;
-  externalName: string;
+  externalName: string | null;
   books: BranchSubjectBookInput[];
 }
 
 /**
- * The matching key for subject names: uploads compare CSV subject names against externalName with
- * this normalization, so uniqueness within a branch must be enforced with the same rule.
+ * The matching key for subject names: uploads compare CSV subject names against the upload name
+ * with this normalization, so uniqueness within a branch must be enforced with the same rule.
  */
 export function normalizeSubjectName(value: string) {
   return value.replaceAll(/\s/g, "").toLowerCase();
+}
+
+/** The name subject-choice uploads match on: the external name, or the name when there is none */
+export function uploadName(subject: { name: string; externalName: string | null }) {
+  return subject.externalName ?? subject.name;
+}
+
+/** An external name that is blank or only repeats the name is not stored */
+function toExternalName(input: BranchSubjectInput) {
+  const externalName = input.externalName?.trim() ?? "";
+  return externalName.length === 0 || externalName === input.name.trim() ? null : externalName;
 }
 
 async function fetchItemTitles(itemIds: string[]): Promise<Map<string, string>> {
@@ -34,7 +45,7 @@ async function fetchItemTitles(itemIds: string[]): Promise<Map<string, string>> 
 }
 
 export interface SubjectForUpload {
-  externalName: string;
+  uploadName: string;
   books: { itemId: string; title: string }[];
 }
 
@@ -56,7 +67,7 @@ export async function fetchSubjectsForUpload(
   for (const subject of subjects) {
     const branchSubjects = subjectsByBranchId.get(subject.branchId) ?? [];
     branchSubjects.push({
-      externalName: subject.externalName,
+      uploadName: uploadName(subject),
       books: subject.books.map((book) => ({
         itemId: book.itemId,
         title: titleByItemId.get(book.itemId) ?? "",
@@ -92,23 +103,23 @@ async function toResponse(subjects: BranchSubject[]) {
 
 function assertValidInput(input: BranchSubjectInput, existingSubjects: BranchSubject[]) {
   const normalizedName = normalizeSubjectName(input.name);
-  const normalizedExternalName = normalizeSubjectName(input.externalName);
   if (normalizedName.length === 0) {
     throw new BadRequestException("Faget må ha et navn");
-  }
-  if (normalizedExternalName.length === 0) {
-    throw new BadRequestException("Faget må ha et eksternt navn");
   }
   if (existingSubjects.some((subject) => normalizeSubjectName(subject.name) === normalizedName)) {
     throw new BadRequestException(`Det finnes allerede et fag med navnet "${input.name}"`);
   }
-  if (
-    existingSubjects.some(
-      (subject) => normalizeSubjectName(subject.externalName) === normalizedExternalName,
-    )
-  ) {
+  const inputUploadName = uploadName({
+    name: input.name.trim(),
+    externalName: toExternalName(input),
+  });
+  const clash = existingSubjects.find(
+    (subject) =>
+      normalizeSubjectName(uploadName(subject)) === normalizeSubjectName(inputUploadName),
+  );
+  if (clash) {
     throw new BadRequestException(
-      `Det finnes allerede et fag med det eksterne navnet "${input.externalName}"`,
+      `Faget "${clash.name}" lastes allerede opp som "${inputUploadName}". Velg et annet eksternt navn.`,
     );
   }
   const itemIds = input.books.map((book) => book.itemId);
@@ -151,7 +162,7 @@ export const BranchSubjectsService = {
     assertValidInput(input, existingSubjects);
     await db.transaction(async (trx) => {
       const subject = await BranchSubject.create(
-        { branchId, name: input.name.trim(), externalName: input.externalName.trim() },
+        { branchId, name: input.name.trim(), externalName: toExternalName(input) },
         { client: trx },
       );
       await subject.related("books").createMany(toBookRows(input.books));
@@ -170,7 +181,7 @@ export const BranchSubjectsService = {
     );
     await db.transaction(async (trx) => {
       subject.useTransaction(trx);
-      subject.merge({ name: input.name.trim(), externalName: input.externalName.trim() });
+      subject.merge({ name: input.name.trim(), externalName: toExternalName(input) });
       await subject.save();
       await subject.related("books").query().delete();
       await subject.related("books").createMany(toBookRows(input.books));
@@ -184,7 +195,7 @@ export const BranchSubjectsService = {
 
   /**
    * Seeds subjects from the branch's legacy branchItem categories: one subject per category, with
-   * the tagged books and their options copied over. Categories whose name or external name already
+   * the tagged books and their options copied over. Categories whose name or upload name already
    * exists as a subject (normalized) are skipped, so the import is re-runnable and never
    * overwrites manual edits.
    */
@@ -219,7 +230,7 @@ export const BranchSubjectsService = {
     const existingKeys = new Set(
       existingSubjects.flatMap((subject) => [
         normalizeSubjectName(subject.name),
-        normalizeSubjectName(subject.externalName),
+        normalizeSubjectName(uploadName(subject)),
       ]),
     );
 
@@ -232,7 +243,7 @@ export const BranchSubjectsService = {
           continue;
         }
         const subject = await BranchSubject.create(
-          { branchId, name, externalName: name },
+          { branchId, name, externalName: null },
           { client: trx },
         );
         await subject.related("books").createMany(toBookRows(books));

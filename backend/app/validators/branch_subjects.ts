@@ -3,7 +3,7 @@ import vine from "@vinejs/vine";
 export const branchSubjectValidator = vine.create(
   vine.object({
     name: vine.string().trim().minLength(1),
-    externalName: vine.string().trim().minLength(1),
+    externalName: vine.string().trim().nullable(),
     books: vine.array(
       vine.object({
         itemId: vine.string(),

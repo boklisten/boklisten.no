@@ -20,7 +20,7 @@ interface BranchSubjectBook extends SubjectBookFlags {
 export interface BranchSubject {
   id: number;
   name: string;
-  externalName: string;
+  externalName: string | null;
   books: BranchSubjectBook[];
 }
 
@@ -50,21 +50,5 @@ export function formValueToBook(book: SubjectBookFormValue) {
     rentAtBranch: book.atBranch.includes("rent"),
     partlyPaymentAtBranch: book.atBranch.includes("partlyPayment"),
     buyAtBranch: book.atBranch.includes("buy"),
-  };
-}
-
-function describe(values: string[]) {
-  return (
-    PAYMENT_OPTIONS.filter((option) => values.includes(option.value))
-      .map((option) => option.label)
-      .join(" · ") || "Ingen"
-  );
-}
-
-export function describeOptions(flags: SubjectBookFlags) {
-  const formValue = bookToFormValue({ ...flags, item: { id: "", title: "" } });
-  return {
-    ordering: describe(formValue.ordering),
-    atBranch: describe(formValue.atBranch),
   };
 }

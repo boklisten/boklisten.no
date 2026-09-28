@@ -70,7 +70,44 @@ test.group("BranchSubjectsService", (group) => {
     await BranchSubjectsService.create(BRANCH, { name: "Kjemi 2", externalName: "K2", books: [] });
     await assert.rejects(
       () => BranchSubjectsService.create(BRANCH, { name: "Annet", externalName: "k 2", books: [] }),
-      /finnes allerede et fag med det eksterne navnet/,
+      /lastes allerede opp som/,
+    );
+  });
+
+  test("stores no external name when it is blank or repeats the name", async ({ assert }) => {
+    await BranchSubjectsService.create(BRANCH, { name: "Gym", externalName: null, books: [] });
+    await BranchSubjectsService.create(BRANCH, { name: "Norsk", externalName: "  ", books: [] });
+    await BranchSubjectsService.create(BRANCH, { name: "Tysk", externalName: "Tysk", books: [] });
+
+    const subjects = await BranchSubjectsService.list(BRANCH);
+    assert.deepEqual(
+      subjects.map((subject) => subject.externalName),
+      [null, null, null],
+    );
+  });
+
+  test("rejects an external name that another subject is uploaded as by its name", async ({
+    assert,
+  }) => {
+    await BranchSubjectsService.create(BRANCH, { name: "Kjemi 2", externalName: null, books: [] });
+    await assert.rejects(
+      () =>
+        BranchSubjectsService.create(BRANCH, {
+          name: "Kjemi",
+          externalName: "kjemi 2",
+          books: [],
+        }),
+      /lastes allerede opp som/,
+    );
+  });
+
+  test("rejects a name without external name that another subject is uploaded as", async ({
+    assert,
+  }) => {
+    await BranchSubjectsService.create(BRANCH, { name: "Kjemi", externalName: "K2", books: [] });
+    await assert.rejects(
+      () => BranchSubjectsService.create(BRANCH, { name: "K2", externalName: null, books: [] }),
+      /lastes allerede opp som/,
     );
   });
 
@@ -172,8 +209,11 @@ test.group("BranchSubjectsService", (group) => {
     assert.deepEqual(result, { createdSubjects: 2, skippedExisting: 0 });
     const subjects = await BranchSubjectsService.list(BRANCH);
     assert.deepEqual(
-      subjects.map((subject) => subject.name),
-      ["Kjemi 2", "Realfag"],
+      subjects.map((subject) => [subject.name, subject.externalName]),
+      [
+        ["Kjemi 2", null],
+        ["Realfag", null],
+      ],
     );
     const realfag = subjects.find((subject) => subject.name === "Realfag");
     assert.lengthOf(realfag?.books ?? [], 2);
@@ -202,7 +242,7 @@ test.group("BranchSubjectsService", (group) => {
     assert.lengthOf(await BranchSubject.all(), 1);
   });
 
-  test("fetchSubjectsForUpload groups subjects by branch with resolved titles", async ({
+  test("fetchSubjectsForUpload groups subjects by upload name with resolved titles", async ({
     assert,
   }) => {
     await BranchSubjectsService.create(BRANCH, {
@@ -210,21 +250,20 @@ test.group("BranchSubjectsService", (group) => {
       externalName: "Kjemi 2 programfag",
       books: [{ itemId: ITEM_KJEMI, ...ALL_OFF, rent: true }],
     });
-    await BranchSubjectsService.create(BRANCH, { name: "Gym", externalName: "Gym", books: [] });
+    await BranchSubjectsService.create(BRANCH, { name: "Gym", externalName: null, books: [] });
 
     const subjectsByBranchId = await fetchSubjectsForUpload([BRANCH, OTHER_BRANCH]);
 
     assert.deepEqual(
       subjectsByBranchId
         .get(BRANCH)
-        ?.map((subject) => subject.externalName)
+        ?.map((subject) => subject.uploadName)
         .toSorted(),
       ["Gym", "Kjemi 2 programfag"],
     );
     assert.deepEqual(
-      subjectsByBranchId
-        .get(BRANCH)
-        ?.find((subject) => subject.externalName === "Kjemi 2 programfag")?.books,
+      subjectsByBranchId.get(BRANCH)?.find((subject) => subject.uploadName === "Kjemi 2 programfag")
+        ?.books,
       [{ itemId: ITEM_KJEMI, title: "Kjemien stemmer" }],
     );
     assert.isUndefined(subjectsByBranchId.get(OTHER_BRANCH));

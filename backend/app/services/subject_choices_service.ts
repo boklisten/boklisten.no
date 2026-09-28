@@ -135,7 +135,7 @@ export function resolveSubjectItems({
   while (branchId && !visited.has(branchId)) {
     visited.add(branchId);
     const match = (subjectsByBranchId.get(branchId) ?? []).find(
-      (branchSubject) => normalizeSubjectName(branchSubject.externalName) === normalizedSubject,
+      (branchSubject) => normalizeSubjectName(branchSubject.uploadName) === normalizedSubject,
     );
     if (match) {
       return { branchId, items: match.books };
