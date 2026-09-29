@@ -1,0 +1,18 @@
+/*
+ * A link made of an icon and text ("↑ Arvet fra VG1", "Arves av alle underfilialer"): the hover
+ * underline runs under the icon too, so it is drawn as a bottom border on the whole link rather
+ * than as text decoration, which skips the icon.
+ */
+.iconLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  margin-bottom: -1px;
+}
+
+.iconLink:hover {
+  text-decoration: none;
+  border-bottom-color: currentColor;
+}

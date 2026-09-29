@@ -1,3 +1,4 @@
+import type { InheritedBranchField } from "#shared/branch-inheritance";
 import type { BranchVisibility } from "#shared/branch-visibility";
 import type { Period } from "#shared/period";
 
@@ -64,7 +65,11 @@ export interface Branch extends BranchPeriods {
   localName: string | null;
   /** What this branch's children represent, e.g. "klasse". */
   childLabel: string | null;
-  /** Who sees the branch; only `public` branches are orderable online. */
+  /**
+   * Who sees the branch; only `public` branches are orderable online. Inherited, like the four
+   * flags and the two percentages below: each is the value in force, and `overrides` says which
+   * the branch sets itself (see `shared/branch-inheritance.ts`).
+   */
   visibility: BranchVisibility;
   /** The branch pays for the books instead of the customer. */
   paymentResponsible: boolean;
@@ -76,7 +81,15 @@ export interface Branch extends BranchPeriods {
   sellPercentage: number;
   deliveryAtBranch: boolean;
   deliveryByMail: boolean;
+  /** What the branch sets itself per inherited field; `null` where it inherits from its parent. */
+  overrides: InheritedOverrides;
   /** Free text, e.g. "Oslo"; groups branches in the order flow's branch picker. */
   region: string;
   address: string | null;
 }
+
+/** The values in force of the inherited fields. */
+export type InheritedValues = Pick<Branch, InheritedBranchField>;
+
+/** A branch's own value per inherited field, `null` where it inherits. A root never holds `null`. */
+export type InheritedOverrides = { [K in InheritedBranchField]: Branch[K] | null };

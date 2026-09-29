@@ -80,6 +80,7 @@ export default function BranchManager() {
           <SelectBranchTreeView
             label="Velg filial"
             branches={branches ?? []}
+            selectedBranchId={selectedBranchId ?? null}
             onSelect={(branchId) => {
               setSelectedBranchId(branchId);
             }}

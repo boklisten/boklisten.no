@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import Branch from "#models/branch";
 import BranchPeriod from "#models/branch_period";
 import { isObjectIdHex } from "#models/helpers/object_id";
+import { ROOT_VALUES, overrideColumns } from "#services/branch_inheritance_service";
 import { BranchSubjectsService } from "#services/branch_subjects_service";
 import type { UserPermission } from "#shared/user-permission";
 import { createBranch } from "#tests/branch_fixtures";
@@ -85,7 +86,11 @@ test.group("Branch model", (group) => {
   });
 
   test("a branch created without loading its periods refuses to guess them", async ({ assert }) => {
-    const branch = await Branch.create({ name: "Ny", region: "Oslo" });
+    const branch = await Branch.create({
+      name: "Ny",
+      region: "Oslo",
+      ...overrideColumns(ROOT_VALUES),
+    });
     assert.throws(() => branch.rentPeriods, /periods were not loaded/);
     await branch.load("periods");
     assert.deepEqual(branch.rentPeriods, []);

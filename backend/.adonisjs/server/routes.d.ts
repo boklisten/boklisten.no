@@ -51,6 +51,7 @@ export type ScannedRoutes = {
     'branch_relationships.update': { paramsTuple?: []; params?: {} }
     'branch_members.update': { paramsTuple?: []; params?: {} }
     'branches.update': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branches.inherit_below': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'opening_hours.store': { paramsTuple?: []; params?: {} }
     'opening_hours.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'branch_members.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -350,6 +351,7 @@ export type ScannedRoutes = {
     'checkout.confirm': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'matches.transfer_item': { paramsTuple?: []; params?: {} }
     'branches.store': { paramsTuple?: []; params?: {} }
+    'branches.inherit_below': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'opening_hours.store': { paramsTuple?: []; params?: {} }
     'branch_subjects.store': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subject_choices.evaluate': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }

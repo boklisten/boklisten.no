@@ -571,6 +571,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'branches.inherit_below': {
+    methods: ["POST"]
+    pattern: '/branches/:branchId/inherit_below'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/branch').branchInheritBelowValidator)>>
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/branch').branchInheritBelowValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['inheritBelow']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['inheritBelow']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'opening_hours.store': {
     methods: ["POST"]
     pattern: '/opening_hours'

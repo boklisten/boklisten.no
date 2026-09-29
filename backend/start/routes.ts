@@ -135,6 +135,10 @@ router
     router.patch("/branches/relationships", [controllers.branches.BranchRelationships, "update"]);
     router.patch("/branches/members", [controllers.branches.BranchMembers, "update"]);
     router.patch("/branches/:branchId", [controllers.branches.Branches, "update"]);
+    router.post("/branches/:branchId/inherit_below", [
+      controllers.branches.Branches,
+      "inheritBelow",
+    ]);
 
     router.post("/opening_hours", [controllers.OpeningHours, "store"]);
     router.delete("/opening_hours/:id", [controllers.OpeningHours, "destroy"]);

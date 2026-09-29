@@ -1,18 +1,34 @@
 import { Exception } from "@adonisjs/core/exceptions";
-import db from "@adonisjs/lucid/services/db";
 import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 
 import Branch from "#models/branch";
 import BranchPeriod, { PERIOD_KINDS, PERIOD_LIST_BY_KIND } from "#models/branch_period";
-import type { Branch as BranchDto, BranchPeriods } from "#shared/branch";
+import {
+  ROOT_VALUES,
+  applyOverrides,
+  keepValuesInForce,
+  overrideColumns,
+} from "#services/branch_inheritance_service";
+import type { Branch as BranchDto, BranchPeriods, InheritedOverrides } from "#shared/branch";
+import { INHERITED_BRANCH_FIELDS } from "#shared/branch-inheritance";
+import type { InheritedBranchField } from "#shared/branch-inheritance";
 
 /** The columns an admin edits on a branch; the id and the tree position have their own flows. */
-type BranchColumns = Omit<BranchDto, "id" | "parentBranchId" | keyof BranchPeriods>;
+type BranchColumns = Omit<
+  BranchDto,
+  "id" | "parentBranchId" | "overrides" | InheritedBranchField | keyof BranchPeriods
+>;
 
 type BranchCreateInput = Pick<BranchColumns, "name" | "type" | "region"> &
-  Partial<Pick<BranchColumns, "logo" | "address">>;
+  Partial<Pick<BranchColumns, "logo" | "address">> & {
+    /** `null` creates a root with `ROOT_VALUES`; under a parent every inherited field inherits. */
+    parentBranchId: string | null;
+  };
 
-type BranchUpdateInput = Partial<BranchColumns> & Partial<BranchPeriods>;
+/** An inherited field set to a value overrides the parent's, even an equal one; `null` inherits again. */
+type BranchUpdateInput = Partial<BranchColumns> &
+  Partial<InheritedOverrides> &
+  Partial<BranchPeriods>;
 
 interface BranchRelationshipInput {
   id: string;
@@ -34,16 +50,27 @@ export class BranchCycleError extends Error {
 }
 
 export async function createBranch(input: BranchCreateInput): Promise<Branch> {
-  const branch = await Branch.create({
-    name: input.name,
-    logo: input.logo ?? null,
-    region: input.region,
-    address: input.address ?? null,
-    type: input.type,
+  return Branch.whileLocked(async (trx) => {
+    const parent =
+      input.parentBranchId === null
+        ? null
+        : await Branch.query({ client: trx }).where("id", input.parentBranchId).firstOrFail();
+    const branch = await Branch.create(
+      {
+        name: input.name,
+        logo: input.logo ?? null,
+        region: input.region,
+        address: input.address ?? null,
+        type: input.type,
+        parentBranchId: input.parentBranchId,
+        ...(parent ? {} : overrideColumns(ROOT_VALUES)),
+      },
+      { client: trx },
+    );
+    // Read back so the values in force and the empty period lists are populated like on every
+    // other read.
+    return Branch.query({ client: trx }).where("id", branch.id).firstOrFail();
   });
-  // Read back so the column defaults (`visibility`, percentages, …) and the empty period lists are
-  // populated like on every other read.
-  return Branch.findOrFail(branch.id);
 }
 
 /**
@@ -51,11 +78,17 @@ export async function createBranch(input: BranchCreateInput): Promise<Branch> {
  * kind wholesale (the form always sends the whole list); absent lists are left alone.
  */
 export async function updateBranch(branchId: string, input: BranchUpdateInput): Promise<Branch> {
-  const { rentPeriods, extendPeriods, partlyPaymentPeriods, ...columns } = input;
+  const { rentPeriods, extendPeriods, partlyPaymentPeriods, ...rest } = input;
   const periods: Partial<BranchPeriods> = { rentPeriods, extendPeriods, partlyPaymentPeriods };
-  return db.transaction(async (trx) => {
+  const overrides: Partial<InheritedOverrides> = {};
+  const columns: Partial<BranchColumns> = {};
+  for (const [key, value] of Object.entries(rest)) {
+    Object.assign(isInheritedField(key) ? overrides : columns, { [key]: value });
+  }
+  return Branch.whileLocked(async (trx) => {
     const branch = await lockedBranch(branchId, trx);
     branch.merge(definedEntries(columns));
+    applyOverrides(branch, overrides);
     await branch.save();
     for (const kind of PERIOD_KINDS) {
       const list = periods[PERIOD_LIST_BY_KIND[kind]];
@@ -71,26 +104,32 @@ export async function updateBranch(branchId: string, input: BranchUpdateInput): 
         { client: trx },
       );
     }
-    await branch.load("periods", (query) => void query.orderBy("id"));
-    return branch;
+    return lockedBranch(branchId, trx);
   });
 }
 
 /**
  * Moves a branch in the tree. `childBranchIds` is a command: the branches listed get this branch
- * as parent, and the branch's current children missing from the list become roots.
+ * as parent, and the branch's current children missing from the list become roots. What a moved
+ * branch inherits it now inherits from its new parent, and its overrides stay; a branch that
+ * becomes a root keeps the values it had in force as its own.
  */
 export async function updateBranchRelationships(input: BranchRelationshipInput): Promise<Branch> {
-  return db.transaction(async (trx) => {
+  return Branch.whileLocked(async (trx) => {
     const branch = await lockedBranch(input.id, trx);
     const parentBranchId =
       input.parentBranchId === undefined ? branch.parentBranchId : input.parentBranchId;
-    const childBranchIds =
-      input.childBranchIds ??
-      (await Branch.query({ client: trx }).where("parent_branch_id", input.id)).map(
-        (child) => child.id,
-      );
+    const currentChildIds = (
+      await trx.from("branches").where("parent_branch_id", input.id).select("id")
+    ).map((child: { id: string }) => child.id);
+    const childBranchIds = input.childBranchIds ?? currentChildIds;
     await assertNoCycle(input.id, parentBranchId, childBranchIds, trx);
+    await keepValuesInForce(trx, [
+      ...(parentBranchId === null && branch.parentBranchId !== null ? [input.id] : []),
+      ...(input.childBranchIds === undefined
+        ? []
+        : currentChildIds.filter((id) => !input.childBranchIds?.includes(id))),
+    ]);
 
     branch.merge(
       definedEntries({
@@ -112,7 +151,7 @@ export async function updateBranchRelationships(input: BranchRelationshipInput):
           .update({ parent_branch_id: input.id });
       }
     }
-    return branch;
+    return lockedBranch(input.id, trx);
   });
 }
 
@@ -153,6 +192,10 @@ async function assertNoCycle(
     }
     currentId = current.parentBranchId;
   }
+}
+
+function isInheritedField(key: string): key is InheritedBranchField {
+  return INHERITED_BRANCH_FIELDS.some((field) => field === key);
 }
 
 /** `merge` would store `undefined` for keys that were simply not sent, so they are dropped first. */

@@ -39,6 +39,7 @@ export interface ApiDefinition {
     show: typeof routes['branches.show']
     store: typeof routes['branches.store']
     update: typeof routes['branches.update']
+    inheritBelow: typeof routes['branches.inherit_below']
   }
   branchCatalog: {
     show: typeof routes['branch_catalog.show']

@@ -514,7 +514,7 @@ test.group("StandCartLineResolver.resolve", (group) => {
   test("a scanned ISBN nobody ordered becomes a sticker-less copy line, sold to the stand by default", async ({
     assert,
   }) => {
-    await BranchModel.query().where("id", BRANCH_ID).update({ sell_percentage: 0.33 });
+    await BranchModel.query().where("id", BRANCH_ID).update({ sell_percentage_override: 0.33 });
     const resolved = line(await resolve({ kind: "isbn", isbn: String(OTHER_ISBN) }));
     assert.deepEqual(resolved.source, { kind: "item", itemId: OTHER_ITEM_ID, blid: null });
     assert.equal(resolved.key, `item:${OTHER_ITEM_ID}`);

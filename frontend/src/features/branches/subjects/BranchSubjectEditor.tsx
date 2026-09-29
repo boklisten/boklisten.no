@@ -2,22 +2,20 @@ import { Button, Divider, Group, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconTrash } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef } from "react";
 
 import SubjectFields, { subjectFieldsBody } from "@/features/branches/subjects/SubjectFields";
 import type { SubjectFieldValues } from "@/features/branches/subjects/SubjectFields";
 import { bookToFormValue } from "@/features/branches/subjects/subjectOptions";
 import type { BranchSubject } from "@/features/branches/subjects/subjectOptions";
 import { useAppForm } from "@/shared/hooks/form";
+import useAutoSave from "@/shared/hooks/useAutoSave";
 import { api } from "@/shared/utils/apiClient";
-import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
-import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 /**
  * The expanded subject: `subject` must stay the one it was opened with, so the refetch after each
- * save cannot reset what the user is editing. Every change is saved right away, the names on blur and the books on
- * change. Saves run one at a time, so a burst of chip clicks reaches the server in order.
+ * save cannot reset what the user is editing. Every change is saved right away, the names on blur
+ * and the books on change (see `useAutoSave`).
  */
 export default function BranchSubjectEditor({
   branchId,
@@ -47,38 +45,22 @@ export default function BranchSubjectEditor({
     externalName: subject.externalName ?? "",
     books: subject.books.map(bookToFormValue),
   };
-  const lastSavedBody = useRef(JSON.stringify(subjectFieldsBody(defaultValues)));
-  const saveQueue = useRef(Promise.resolve());
-
-  async function persist(body: ReturnType<typeof subjectFieldsBody>) {
-    try {
-      await updateMutation.mutateAsync({ params, body });
-      showSuccessNotification({
-        id: `branch-subject-saved-${subject.id}`,
-        message: "Faget ble lagret!",
-      });
-      void invalidateSubjects();
-    } catch (error) {
-      // Forget the failed body, so the next change or blur tries again.
-      lastSavedBody.current = "";
-      showErrorNotification({
-        title: "Klarte ikke lagre faget",
-        message: errorMessage(error, PLEASE_TRY_AGAIN_TEXT),
-      });
-    }
-  }
+  const autoSave = useAutoSave({
+    initialBody: subjectFieldsBody(defaultValues),
+    persist: (body) => updateMutation.mutateAsync({ params, body }),
+    notifications: {
+      id: `branch-subject-saved-${subject.id}`,
+      saved: "Faget ble lagret!",
+      failed: "Klarte ikke lagre faget",
+    },
+    onSaved: () => void invalidateSubjects(),
+  });
 
   function save(values: SubjectFieldValues) {
     if (values.name.trim().length === 0) {
       return;
     }
-    const body = subjectFieldsBody(values);
-    const serializedBody = JSON.stringify(body);
-    if (serializedBody === lastSavedBody.current) {
-      return;
-    }
-    lastSavedBody.current = serializedBody;
-    saveQueue.current = saveQueue.current.then(() => persist(body));
+    autoSave.save(subjectFieldsBody(values));
   }
 
   const form = useAppForm({

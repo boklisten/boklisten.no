@@ -2,10 +2,16 @@ import type { HttpContext } from "@adonisjs/core/http";
 
 import Branch from "#models/branch";
 import type User from "#models/user";
+import { inheritBelow } from "#services/branch_inheritance_service";
 import { createBranch, updateBranch } from "#services/branch_service";
 import { canSeeBranch } from "#shared/branch-visibility";
 import { hasPermissionLevel } from "#shared/user-permission";
-import { branchCreateValidator, branchIndexValidator, branchValidator } from "#validators/branch";
+import {
+  branchCreateValidator,
+  branchIndexValidator,
+  branchInheritBelowValidator,
+  branchValidator,
+} from "#validators/branch";
 
 export default class BranchesController {
   /** The branches customers may order from online. */
@@ -43,6 +49,14 @@ export default class BranchesController {
   async update(ctx: HttpContext) {
     const input = await ctx.request.validateUsing(branchValidator);
     return (await updateBranch(String(ctx.request.param("branchId")), input)).toDto();
+  }
+
+  /** Every branch below inherits `field` again. */
+  async inheritBelow(ctx: HttpContext) {
+    const { field } = await ctx.request.validateUsing(branchInheritBelowValidator);
+    const branchId = String(ctx.request.param("branchId"));
+    await inheritBelow(branchId, field);
+    return (await Branch.findOrFail(branchId)).toDto();
   }
 }
 

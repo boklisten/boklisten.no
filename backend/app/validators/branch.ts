@@ -2,6 +2,7 @@ import vine from "@vinejs/vine";
 
 import { calendarDateField, objectIdField, percentageField } from "#validators/common/fields";
 import { BRANCH_TYPES } from "#shared/branch";
+import { INHERITED_BRANCH_FIELDS } from "#shared/branch-inheritance";
 import { BRANCH_VISIBILITIES } from "#shared/branch-visibility";
 import env from "#start/env";
 
@@ -55,10 +56,15 @@ export const branchCreateValidator = vine.create(
     region: regionField.clone(),
     address: vine.string().trim().nullable().optional(),
     type: vine.enum(BRANCH_TYPES).nullable(),
+    /** The branch to create under; `null` creates a root. Every inherited field starts as the parent's. */
+    parentBranchId: objectIdField.clone().nullable(),
   }),
 );
 
-/** PATCH: every field optional, period lists replace the stored list of that kind when present. */
+/**
+ * PATCH: every field optional, period lists replace the stored list of that kind when present. An
+ * inherited field set to a value overrides the parent's; `null` inherits from the parent.
+ */
 export const branchValidator = vine.create(
   vine.object({
     name: vine.string().trim().optional(),
@@ -66,13 +72,13 @@ export const branchValidator = vine.create(
     region: regionField.clone().optional(),
     address: vine.string().trim().nullable().optional(),
     type: vine.enum(BRANCH_TYPES).nullable().optional(),
-    visibility: vine.enum(BRANCH_VISIBILITIES).optional(),
-    paymentResponsible: vine.boolean().optional(),
-    responsibleForDelivery: vine.boolean().optional(),
-    buyoutPercentage: percentageField.optional(),
-    sellPercentage: percentageField.optional(),
-    deliveryAtBranch: vine.boolean().optional(),
-    deliveryByMail: vine.boolean().optional(),
+    visibility: vine.enum(BRANCH_VISIBILITIES).nullable().optional(),
+    paymentResponsible: vine.boolean().nullable().optional(),
+    responsibleForDelivery: vine.boolean().nullable().optional(),
+    buyoutPercentage: percentageField.nullable().optional(),
+    sellPercentage: percentageField.nullable().optional(),
+    deliveryAtBranch: vine.boolean().nullable().optional(),
+    deliveryByMail: vine.boolean().nullable().optional(),
     rentPeriods: vine.array(rentPeriodSchema).optional(),
     extendPeriods: vine.array(extendPeriodSchema).optional(),
     partlyPaymentPeriods: vine.array(partlyPaymentPeriodSchema).optional(),
@@ -90,5 +96,12 @@ export const branchRelationshipValidator = vine.create(
     parentBranchId: objectIdField.nullable().optional(),
     childBranchIds: vine.array(objectIdField).optional(),
     childLabel: vine.string().trim().nullable().optional(),
+  }),
+);
+
+/** Every descendant inherits `field` again ("Tilbakestill alle" in the descendant tree). */
+export const branchInheritBelowValidator = vine.create(
+  vine.object({
+    field: vine.enum(INHERITED_BRANCH_FIELDS),
   }),
 );

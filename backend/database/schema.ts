@@ -104,20 +104,20 @@ export class BranchSubjectSchema extends BaseModel {
 }
 
 export class BranchSchema extends BaseModel {
-  static $columns = ['address', 'buyoutPercentage', 'childLabel', 'createdAt', 'deliveryAtBranch', 'deliveryByMail', 'id', 'localName', 'logo', 'name', 'parentBranchId', 'paymentResponsible', 'region', 'responsibleForDelivery', 'sellPercentage', 'type', 'updatedAt', 'visibility'] as const
+  static $columns = ['address', 'buyoutPercentageOverride', 'childLabel', 'createdAt', 'deliveryAtBranchOverride', 'deliveryByMailOverride', 'id', 'localName', 'logo', 'name', 'parentBranchId', 'paymentResponsibleOverride', 'region', 'responsibleForDeliveryOverride', 'sellPercentageOverride', 'type', 'updatedAt', 'visibilityOverride'] as const
   $columns = BranchSchema.$columns
   @column()
   declare address: string | null
   @column()
-  declare buyoutPercentage: number
+  declare buyoutPercentageOverride: number | null
   @column()
   declare childLabel: string | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
-  declare deliveryAtBranch: boolean
+  declare deliveryAtBranchOverride: boolean | null
   @column()
-  declare deliveryByMail: boolean
+  declare deliveryByMailOverride: boolean | null
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -129,19 +129,19 @@ export class BranchSchema extends BaseModel {
   @column()
   declare parentBranchId: string | null
   @column()
-  declare paymentResponsible: boolean
+  declare paymentResponsibleOverride: boolean | null
   @column()
   declare region: string
   @column()
-  declare responsibleForDelivery: boolean
+  declare responsibleForDeliveryOverride: boolean | null
   @column()
-  declare sellPercentage: number
+  declare sellPercentageOverride: number | null
   @column()
   declare type: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
-  declare visibility: string
+  declare visibilityOverride: string | null
 }
 
 export class CompanySchema extends BaseModel {

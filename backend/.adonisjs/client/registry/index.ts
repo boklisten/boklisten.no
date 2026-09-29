@@ -288,6 +288,12 @@ const routes = {
     tokens: [{"old":"/branches/:branchId","type":0,"val":"branches","end":""},{"old":"/branches/:branchId","type":1,"val":"branchId","end":""}],
     types: placeholder as Registry['branches.update']['types'],
   },
+  'branches.inherit_below': {
+    methods: ["POST"],
+    pattern: '/branches/:branchId/inherit_below',
+    tokens: [{"old":"/branches/:branchId/inherit_below","type":0,"val":"branches","end":""},{"old":"/branches/:branchId/inherit_below","type":1,"val":"branchId","end":""},{"old":"/branches/:branchId/inherit_below","type":0,"val":"inherit_below","end":""}],
+    types: placeholder as Registry['branches.inherit_below']['types'],
+  },
   'opening_hours.store': {
     methods: ["POST"],
     pattern: '/opening_hours',

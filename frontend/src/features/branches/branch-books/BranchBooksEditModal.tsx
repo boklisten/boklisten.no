@@ -99,6 +99,7 @@ export default function BranchBooksEditModal({
         <SelectBranchTreeView
           label="Velg ny filial"
           branches={branches ?? []}
+          selectedBranchId={selectedBranchId}
           onSelect={setSelectedBranchId}
         />
       )}
