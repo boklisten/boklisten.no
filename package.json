@@ -10,29 +10,33 @@
   },
   "type": "module",
   "scripts": {
-    "ace": "bun --filter './backend' ace",
-    "format": "oxfmt",
-    "format:check": "oxfmt --check",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "typecheck": "bun --workspaces --parallel run typecheck",
-    "fix": "bun --parallel lint:fix typecheck && bun format",
-    "test": "bun --workspaces run test",
-    "dev": "bun --workspaces --parallel dev",
+    "ace": "vp run -F ./backend ace",
+    "typecheck": "vp run -F '@boklisten/*' --parallel typecheck",
+    "check": "vp check && vp run typecheck",
+    "fix": "vp check --fix && vp run typecheck",
+    "test": "vp run -F '@boklisten/*' test",
+    "dev": "vp run -F '@boklisten/*' --parallel dev",
+    "build": "vp run -F '@boklisten/*' --parallel build",
     "build:frontend": "bun --filter './frontend' build",
     "build:backend": "bun --filter './backend' build",
-    "build": "bun --workspaces --parallel run build",
     "migrate:backend": "bun --filter './backend' migrate",
     "start:frontend": "bun --filter './frontend' start",
     "start:backend": "bun --filter './backend' start",
-    "start": "bun --workspaces --parallel start"
+    "start": "bun --workspaces --parallel start",
+    "prepare": "vp config"
   },
   "devDependencies": {
     "@railway/cli": "^5.62.1",
-    "oxfmt": "^0.70.0",
-    "oxlint": "^1.85.0",
-    "oxlint-tsgolint": "^7.0.2003",
-    "railway": "^3.11.0"
+    "railway": "^3.11.0",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   },
-  "packageManager": "bun@1.4"
+  "overrides": {
+    "vite": "catalog:"
+  },
+  "packageManager": "bun@1.4.2",
+  "catalog": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
+    "vite-plus": "1.0.0"
+  }
 }

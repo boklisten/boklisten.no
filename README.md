@@ -14,33 +14,38 @@ The frontend only depends on the shared types located in backend/shared. Code st
 ## Setup and development
 
 ```bash
-# Install dependencies
-$ bun install
+# Install dependencies with Vite+ (Node 24 from .node-version, Bun from packageManager)
+$ vp install
 
 # Copy .env.example to .env.local for both packages and fill in the correct keys
 
 # Run the development server on http://localhost:3000 (frontend) and http://localhost:3333 (backend)
-$ bun dev dev
+$ vpr dev
 
 # For production
-$ bun build:backend
-$ bun start:backend
-$ bun build:frontend
-$ bun start:frontend
+$ vpr build:backend
+$ vpr start:backend
+$ vpr build:frontend
+$ vpr start:frontend
 ```
 
 ## Code style, linting and type checking
 
+Formatting, linting and type-aware checks are configured once in the root `vite.config.ts` and run through [Vite+](https://viteplus.dev).
+
 ```bash
-# All checks and fixes for both workspaces can be run with
-$ bun fix
+# Check both workspaces (what CI runs)
+$ vpr check
+
+# Apply all fixes
+$ vpr fix
 ```
 
 ## Testing
 
 ```bash
-# Run backend tests
-$ bun run test
+# Run backend tests (Japa; `vp test` is Vitest and has no suites yet)
+$ vpr test
 ```
 
 ## Branches

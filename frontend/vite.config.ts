@@ -1,7 +1,7 @@
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
-import { defineConfig } from "vite";
+import { defineConfig, lazyPlugins } from "vite-plus";
 import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 
 /**
@@ -26,7 +26,7 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
-  plugins: [
+  plugins: lazyPlugins(() => [
     tanstackStart(),
     nitro({
       preset: "bun",
@@ -46,5 +46,5 @@ export default defineConfig({
       project: "frontend",
       authToken: process.env["SENTRY_AUTH_TOKEN"],
     }),
-  ],
+  ]),
 });

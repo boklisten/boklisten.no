@@ -11,7 +11,7 @@ These rules override default agent behavior — follow them on every task:
 3. **Use the `frontend-design` skill whenever designing new UI or reshaping existing UI.**
 4. **Verify your changes with Playwright** (the MCP browser) whenever it makes sense. The browser is already logged in with an admin account on `localhost:3000`. You may create additional users through the UI and modify the database directly to set permission levels when a test needs a different role.
 5. **The staging databases are yours to modify.** `backend/.env.local` points at the Railway staging DBs; change whatever data you need — staging resets every night.
-6. **Finish every task by running `bun fix`** (lint:fix + typecheck + format) and resolving everything it reports before declaring the task done.
+6. **Finish every task by running `vpr fix`** (`vp check --fix` + typecheck) and resolving everything it reports before declaring the task done.
 7. **Never spawn sub-agents** (Agent tool, background forks, workflows, or skills that launch agents) without explicit consent from the user in the current session. Do all work inline by default.
 
 ## Project Overview
@@ -31,33 +31,39 @@ The frontend imports from `@boklisten/backend`: shared types (`./shared/*`), the
 Run from the repo root unless noted:
 
 ```bash
-bun install          # Install all workspace dependencies
-bun dev              # Start frontend (:3000) and backend (:3333) concurrently
-bun build            # Build all workspaces
-bun run test         # Run backend tests (the only workspace with tests; bare `bun test` invokes Bun's own runner and fails)
-bun lint             # oxlint across all workspaces
-bun lint:fix         # Auto-fix lint issues
-bun format           # oxfmt formatter
-bun format:check     # Check formatting
-bun typecheck        # TypeScript type checking for all workspaces
-bun fix              # Runs lint:fix + typecheck + format sequentially
-bun ace              # AdonisJS CLI (e.g. bun ace make:controller Foo)
-bun migrate:backend  # Run Lucid Postgres migrations (--force; also runs in Railway predeploy)
+vp install           # Install all workspace dependencies (Bun under the hood; runs `vp config` to wire git hooks)
+vp check             # Format check + lint + tsgolint type check (TS 7) of every linted file in both workspaces
+vp check --fix       # Same, auto-fixing format and lint issues
+vp lint / vp fmt     # Lint or format alone (`--fix` / `--check`); there are no wrapper scripts for these
+vpr dev              # Start frontend (:3000, `vp dev`) and backend (:3333) in parallel
+vpr build            # Build both workspaces (frontend builds with `vp build`)
+vpr test             # Run backend tests (Japa via `node ace test`; `vp test` is Vitest and has no suites)
+vpr typecheck        # Per-workspace `tsc --noEmit` (backend TS 6, frontend TS 7); also covers lint-ignored generated files
+vpr check            # `vp check && vpr typecheck` — what CI runs
+vpr fix              # `vp check --fix && vpr typecheck`
+vpr ace              # AdonisJS CLI (e.g. vpr ace make:controller Foo)
+vpr migrate:backend  # Run Lucid Postgres migrations (--force; also runs in Railway predeploy)
 ```
 
-Backend commands (tests, lint, `bun fix`) require **Node 24** (`backend/.nvmrc`), but non-interactive shells here default to v22 with cryptic `.ts`-extension errors — prefix with `fnm exec --using=24 <cmd>` if `node -v` disagrees.
+Rule of thumb: use a `vp` built-in whenever one exists; `package.json` scripts exist only for things Vite+ has no built-in for. Developer-facing root scripts fan out with `vp run -F '@boklisten/*'` (the name glob excludes the root package, so a root script never recurses into itself); the scripts Railway invokes (`build:*`, `migrate:backend`, `start*`) stay on `bun --filter` so the deploy path has no task-runner layer around long-running servers.
+
+`vp <name>` runs a Vite+ built-in, `vpr <name>` (= `vp run`) runs a `package.json` script; the two can differ (`vp test` is Vitest, `vpr test` is Japa).
+
+````
+
+Backend commands (tests, lint, `vpr fix`) require **Node 24** (root `.node-version`), but non-interactive shells here default to v22 with cryptic `.ts`-extension errors — prefix with `fnm exec --using=24 <cmd>` if `node -v` disagrees.
 
 **Run a single backend test file:**
 
 ```bash
-cd backend && bun run test --files tests/blid_service.spec.ts
-```
+cd backend && vpr test --files tests/blid_search_service.spec.ts
+````
 
 **Production start (backend requires custom ENV_PATH):**
 
 ```bash
-bun build:backend && ENV_PATH=../ bun start:backend
-bun build:frontend && bun start:frontend
+vpr build:backend && ENV_PATH=../ vpr start:backend
+vpr build:frontend && vpr start:frontend
 ```
 
 ## Environment Setup
@@ -65,6 +71,10 @@ bun build:frontend && bun start:frontend
 Copy `backend/.env.example` → `backend/.env.local` and fill in `POSTGRES_URL`, `APP_KEY` and the third-party keys. The frontend needs no `.env.local`. Which environment the code runs in, and the API's and frontend's origins, are never configured: locally they are `dev`, `http://localhost:3333` and `http://localhost:3000`; deployed they come from Railway's own `RAILWAY_ENVIRONMENT_NAME`, `RAILWAY_PUBLIC_DOMAIN` and `RAILWAY_SERVICE_*_URL` (`backend/config/app.ts`, `frontend/vite.config.ts`).
 
 `backend/start/env.ts` is the source of truth for required vars (validated at boot — boot fails if any are missing).
+
+### Toolchain (Vite+)
+
+Lint, format, staged-file and Vitest settings live in the root `vite.config.ts` (`lint`, `fmt`, `staged`, `test` blocks); `frontend/vite.config.ts` only configures the app build. There are no separate oxlint/oxfmt config files — `vp check` is the only reader of those blocks, and `vp test` (Vitest) is scoped to `frontend/**` so it never touches the backend's Japa specs. `vp check` really type-checks (verified 2026-09-30: it reports TS2322/TS6133 in app code, tests and `frontend/vite.config.ts` exactly like tsc), but only for files oxlint visits, so errors inside `lint.ignorePatterns` (`.adonisjs`, `**/database/schema.ts`, `openapi`) surface only through `tsc`. That is why `vpr check` (CI) and `vpr fix` run `vp check` and then `bun typecheck`; don't drop the second step. `vp check --no-lint` is not a typecheck-only mode (it still runs type-aware rules). `vite` resolves to `@voidzero-dev/vite-plus-core` through the root `catalog`/`overrides`; keep those entries and the `vite-plus` pin in sync. Pre-commit runs `vp staged` (`.vite-hooks/pre-commit` → `vp check --fix` on staged files).
 
 ## Architecture
 
@@ -83,7 +93,7 @@ AdonisJS follows a standard MVC layout:
 - `start/routes.ts` — All route definitions
 - `start/env.ts` — Validated environment variable declarations
 - `config/` — Per-concern config files (auth, cors, database, logger, etc.)
-- `database/schema.ts` — **Auto-generated** Lucid base classes; do not edit manually (regenerated by `bun ace migration:run`)
+- `database/schema.ts` — **Auto-generated** Lucid base classes; do not edit manually (regenerated by `vpr ace migration:run`)
 - `database/migrations/` — Lucid migration files
 - `shared/` — TypeScript types re-exported to the frontend via `package.json` `exports`
 - `tests/` — Japa unit tests (`*.spec.ts`); uses Chai assertions and Sinon mocking
@@ -126,7 +136,7 @@ Write Japa specs (`backend/tests/*.spec.ts`, Chai + Sinon) for new backend busin
 - `main` → auto-deploys to **staging**
 - `production` → auto-deploys to **live**
 
-GitHub Actions runs: format check → typecheck → lint → build backend → build frontend → backend tests.
+GitHub Actions (`.github/workflows/main.yml`) installs the toolchain with `voidzero-dev/setup-vp` (pinned to an exact release; Node from `.node-version`, Bun from `packageManager`, dependency cache on, `vp install --frozen-lockfile`) and runs four parallel jobs: Check (`vp run check` + `vp test`), Build Backend, Build Frontend, Test Backend (Postgres service + migrations + Japa). Vite Task's cross-run cache is not enabled (experimental; measure before adding).
 
 ## Deployment
 
@@ -134,7 +144,8 @@ Both environments deploy to **Railway**. The whole project (all services, databa
 
 - `railway config plan` / `railway config apply` act on the environment this directory is linked to (`railway environment link staging|production`). Never run `apply` without the user's explicit go-ahead.
 - Railway does not read `.railway/railway.ts` when a commit is pushed. `.github/workflows/railway.yml` runs `railway config apply` on pushes to `main` (staging) and `production`, using a per-environment project token from the GitHub environment of the same name. Destructive changes fail there on purpose and must be applied by hand.
-- Both services keep an empty root directory so Bun workspace deps resolve at build time, are pinned to `europe-west4-drams3a` (Amsterdam), and staging sleeps when idle while production stays warm. Backend runs `bun migrate:backend` as a pre-deploy command on every deploy in every environment.
+- Railway builds with Railpack, which has no global `vp`; the build/start commands in `railway.ts` stay `bun …` on purpose and the package.json scripts they run call `vp` from `node_modules/.bin` (the pattern the Vite+ local-CLI guide recommends for hosts without the global CLI). Node comes from `.node-version`, Bun from `packageManager`.
+- Both services keep an empty root directory so Bun workspace deps resolve at build time, are pinned to `europe-west4-drams3a` (Amsterdam), and staging sleeps when idle while production stays warm. Backend runs `bun migrate:backend` (`vpr migrate:backend`) as a pre-deploy command on every deploy in every environment.
 - Secret values are never written to the file (`preserve()`); change them in the Railway dashboard.
 
 ## Key External Integrations
@@ -146,3 +157,31 @@ Both environments deploy to **Railway**. The whole project (all services, databa
 | Twilio           | SMS notifications                                  |
 | Bring            | Shipping/logistics                                 |
 | Sentry           | Error tracking (both frontend and backend)         |
+
+<!--VITE PLUS START-->
+
+# Using Vite+, the Unified Toolchain for the Web
+
+This project is using Vite+, a unified toolchain built on top of Vite, Rolldown, Vitest, tsdown, Oxlint, Oxfmt, and Vite Task. Vite+ wraps runtime management, package management, and frontend tooling in a single global CLI called `vp`. Vite+ is distinct from Vite, and it invokes Vite through `vp dev` and `vp build`. Run `vp help` to print a list of commands and `vp <command> --help` for information about a specific command.
+
+Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.dev/guide/.
+
+## Built-in Commands vs Scripts
+
+`vp <name>` runs a built-in command. `vp run <name>` runs a `package.json` script or a `vite.config.ts` task. Scripts cannot overwrite built-ins, so `vp dev` and `vp run dev` may do different things. Check `package.json` and `vite.config.ts` first, and run `vp run <name>` when the project defines a script or task with that name.
+
+## Tool Versions
+
+Run `vp toolchain` to show versions and relationships in the active Vite+
+release. Add a tool name to select part of the graph. For example, run
+`vp toolchain vite`. Use `--global` to ignore the local `vite-plus` package. Use
+`vp why <package>` to show the package-manager dependency graph.
+
+## Review Checklist
+
+- [ ] Run `vp install` after pulling remote changes and before getting started.
+- [ ] Run `vp check` and `vp test` to format, lint, type check and test changes.
+- [ ] Check if there are `vite.config.ts` tasks or `package.json` scripts necessary for validation, run via `vp run <script>`.
+- [ ] If setup, runtime, or package-manager behavior looks wrong, run `vp env doctor` and include its output when asking for help.
+
+<!--VITE PLUS END-->
