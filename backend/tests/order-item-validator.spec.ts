@@ -79,7 +79,6 @@ test.group("OrderItemValidator", (group) => {
         },
       ],
       buyoutPercentage: 0.5,
-      region: "unknown",
     });
 
     await createItem({ id: "item1" });

@@ -1,0 +1,15 @@
+/* The wordmark is set in the front page's display face; where Fraunces is not loaded it falls to Georgia. */
+.wordmark {
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+  font-variation-settings: "SOFT" 50;
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #fff;
+  white-space: nowrap;
+
+  &[data-variant="blue"] {
+    color: var(--mantine-color-brand-9);
+  }
+}

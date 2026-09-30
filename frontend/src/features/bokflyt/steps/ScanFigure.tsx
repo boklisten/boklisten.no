@@ -1,10 +1,11 @@
 import { Stack, Title } from "@mantine/core";
 import { IconCircleCheck } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
 
-import { useBookCoverImage } from "@/features/book-cover/bookCoverQuery";
 import BlidLabel from "@/features/bokflyt/BlidLabel";
 import classes from "@/features/bokflyt/bokflyt.module.css";
+import { mockCoverSrc } from "@/features/bokflyt/mockBooks";
 import { emilReceiving, HANDOVER_BOOKS } from "@/features/bokflyt/mockMatches";
 import PhoneFrame from "@/features/bokflyt/PhoneFrame";
 import { BOKFLYT_COLORS } from "@/features/bokflyt/theme";
@@ -13,12 +14,12 @@ import MatchScannerContent from "@/shared/components/matches/MatchScannerContent
 const COVER_COLORS = [BOKFLYT_COLORS.deep, "#3f6f5a", "#8a4b3b"];
 
 /**
- * The book under the camera: its real cover when Nasjonalbiblioteket has one, otherwise a
- * plain coloured cover with the title. The sticker sits on top either way.
+ * The book under the camera: its cover, or a plain coloured cover with the title should the
+ * picture fail to load. The sticker sits on top either way.
  */
 function BookCover({ index }: { index: number }) {
   const copy = HANDOVER_BOOKS[index]!;
-  const { src, onError } = useBookCoverImage(copy.book.isbn);
+  const [broken, setBroken] = useState(false);
   return (
     <motion.div
       key={copy.id}
@@ -29,10 +30,15 @@ function BookCover({ index }: { index: number }) {
       exit={{ opacity: 0, y: -24, rotate: -4 }}
       transition={{ duration: 0.35 }}
     >
-      {src === null ? (
+      {broken ? (
         <span className={classes.bookCoverTitle}>{copy.book.title}</span>
       ) : (
-        <img src={src} alt="" className={classes.bookCoverImage} onError={onError} />
+        <img
+          src={mockCoverSrc(copy.book)}
+          alt=""
+          className={classes.bookCoverImage}
+          onError={() => setBroken(true)}
+        />
       )}
       <BlidLabel id={copy.blid} />
     </motion.div>

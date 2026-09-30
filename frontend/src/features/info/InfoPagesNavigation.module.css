@@ -1,0 +1,39 @@
+/* The info pages' own navigation: every page as a chip, wrapping so all of them stay in view. */
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.45rem 0.9rem;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--mantine-color-text);
+  text-decoration: none;
+  background: var(--mantine-color-gray-0);
+  border: 1px solid var(--mantine-color-gray-3);
+  border-radius: 999px;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--mantine-color-text);
+    text-decoration: none;
+    border-color: var(--mantine-color-brand-9);
+  }
+
+  &[data-active] {
+    color: #fff;
+    background: var(--mantine-color-brand-9);
+    border-color: var(--mantine-color-brand-9);
+  }
+}

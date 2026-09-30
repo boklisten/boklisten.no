@@ -32,6 +32,7 @@ export default class BranchCatalogController {
         cartItems.push({
           id: book.item.id,
           title: book.item.title,
+          isbn: book.item.isbn,
           branchId,
           subject: subject.name,
           options,

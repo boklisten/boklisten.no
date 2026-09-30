@@ -1,65 +1,44 @@
-import { Center, Tabs, TabsList, TabsTab, Select, Box } from "@mantine/core";
+import { useLocation } from "@tanstack/react-router";
 
+import classes from "@/features/info/InfoPagesNavigation.module.css";
+import { isActive } from "@/features/layout/public-nav/publicNavigation";
+import type { PublicNavLink } from "@/features/layout/public-nav/publicNavigation";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
-import { useLocation, useNavigate } from "@tanstack/react-router";
 
-const tabs = [
-  { label: "Generell informasjon", value: "/info/general" },
-  { label: "Spørsmål og svar", value: "/info/faq" },
-  { label: "For VGS-elever", value: "/info/pupils" },
-  { label: "Skoler og åpningstider", value: "/info/branch" },
-  {
-    label: "Avtaler og betingelser",
-    value: "/info/policies/conditions",
-  },
-  { label: "Om oss", value: "/info/about" },
-  { label: "For skolekunder", value: "/info/companies" },
-  { label: "Innkjøpsliste", value: "/info/buyback" },
-  { label: "Kontakt oss", value: "/info/contact" },
-] as const satisfies {
-  label: string;
-  value: `/info/${string}`;
-}[];
+const PAGES: Pick<PublicNavLink, "label" | "to" | "activeOn">[] = [
+  { label: "Generell informasjon", to: "/info/general" },
+  { label: "Spørsmål og svar", to: "/info/faq" },
+  { label: "For VGS-elever", to: "/info/pupils" },
+  { label: "Skoler og åpningstider", to: "/info/branch" },
+  { label: "Avtaler og betingelser", to: "/info/policies/conditions", activeOn: "/info/policies" },
+  { label: "Om oss", to: "/info/about" },
+  { label: "For skolekunder", to: "/info/companies" },
+  { label: "Innkjøpsliste", to: "/info/buyback" },
+  { label: "Kontakt oss", to: "/info/contact" },
+];
 
-function InfoPagesNavigation() {
-  const navigate = useNavigate();
-  const pathname = useLocation({
-    select: (location) => location.pathname,
-  });
-
+export default function InfoPagesNavigation() {
+  const pathname = useLocation({ select: (location) => location.pathname });
   return (
-    <Center>
-      <Box visibleFrom="sm">
-        <Tabs value={tabs.find((tab) => pathname.includes(tab.value))?.value ?? pathname}>
-          <TabsList justify="center">
-            {tabs.map((tab) => (
+    <nav aria-label="Informasjonssider">
+      <ul className={classes.list}>
+        {PAGES.map((page) => {
+          const active = isActive(page, pathname);
+          return (
+            <li key={page.to}>
               <TanStackAnchor
+                to={page.to}
+                className={classes.chip}
                 underline="never"
-                c="var(--mantine-color-text)"
-                key={tab.value}
-                to={tab.value}
+                data-active={active || undefined}
+                aria-current={active ? "page" : undefined}
               >
-                <TabsTab value={tab.value}>{tab.label}</TabsTab>
+                {page.label}
               </TanStackAnchor>
-            ))}
-          </TabsList>
-        </Tabs>
-      </Box>
-      <Box hiddenFrom="sm">
-        <Select
-          data={tabs}
-          label="Velg side"
-          value={pathname}
-          onChange={(value) => {
-            if (!value) {
-              return;
-            }
-            void navigate({ to: value });
-          }}
-        />
-      </Box>
-    </Center>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
-
-export default InfoPagesNavigation;

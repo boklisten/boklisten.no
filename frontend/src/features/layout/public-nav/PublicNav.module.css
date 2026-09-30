@@ -1,0 +1,425 @@
+/*
+ * The public navigation borrows the front page's one decoration: the yellow highlighter. The
+ * current page is the one somebody has marked, on the desktop bar as a stroke under the word and
+ * in the phone tab bar as a swipe behind the icon. Everything else is the brand teal the site has
+ * always opened with, and white type on it.
+ *
+ * Tokens
+ *   teal    brand-9   the bar
+ *   marker  #ffe27a   the highlighter, only ever on the active item
+ *   paper   #f8f7f3   the phone tab bar and the menu sheet
+ *   ink     #1f2d33   type on paper
+ *   body    #45565e   secondary type on paper
+ *   rule    #d9e2e6   hairlines on paper
+ */
+/* The sheet renders in a portal outside the shell, so it carries the tokens as well. */
+.shell,
+.sheetContent {
+  --nav-marker: #ffe27a;
+  --nav-paper: #f8f7f3;
+  --nav-ink: #1f2d33;
+  --nav-body: #45565e;
+  --nav-rule: #d9e2e6;
+  --nav-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --nav-marker-swipe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M1 3.2C18 1.4 38 4.6 58 2.4S90 3.8 99 2.2v5.6C80 9.6 52 6.2 30 8.8S8 8.4 1 8.6z' fill='%23ffe27a'/%3E%3C/svg%3E");
+}
+
+.shell {
+  /* Read by the page and by the fixed elements above the tab bar; zero where the bar is absent. */
+  --public-tabbar-height: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    --public-tabbar-height: 0px;
+  }
+}
+
+/* ---------- Top bar ---------- */
+
+.bar {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  height: 100%;
+  padding-inline: 1rem;
+
+  @media (min-width: $mantine-breakpoint-md) {
+    padding-inline: 1.5rem;
+  }
+}
+
+.links {
+  display: none;
+  gap: 0.25rem;
+  align-items: center;
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    display: flex;
+  }
+}
+
+/*
+ * The one highlighter stroke in the top bar. It is positioned from the measured item
+ * (--marker-x / --marker-w / --marker-bottom are the item's box) and inset to the item's text,
+ * and it glides between items (the cart pill included) rather than being redrawn under each.
+ */
+.marker {
+  position: absolute;
+  top: calc(var(--marker-bottom) - 0.5rem);
+  left: calc(var(--marker-x) + 0.7rem);
+  width: calc(var(--marker-w) - 1.4rem);
+  height: 3px;
+  background: var(--nav-marker);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  pointer-events: none;
+
+  &[data-visible] {
+    opacity: 1;
+  }
+
+  &[data-animate] {
+    transition:
+      top 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      left 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 160ms ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &,
+    &[data-animate] {
+      transition: none;
+    }
+  }
+}
+
+.link {
+  display: inline-block;
+  padding: 0.55rem 0.7rem;
+  font-size: var(--mantine-font-size-md);
+  font-weight: 500;
+  color: #fff;
+  text-decoration: none;
+  border-radius: var(--mantine-radius-md);
+
+  &:hover,
+  &:focus-visible {
+    color: #fff;
+    text-decoration: none;
+    background: rgb(255 255 255 / 10%);
+  }
+}
+
+.actions {
+  position: relative;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* The menu button in the desktop bar: a link with the icon in front of the word. */
+.menuLink {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-left: 0.25rem;
+  cursor: pointer;
+
+  &[aria-expanded="true"] {
+    background: rgb(255 255 255 / 16%);
+  }
+}
+
+.menuIcon {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.cart {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  height: 2.25rem;
+  padding: 0 0.75rem 0 0.6rem;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  background: rgb(255 255 255 / 14%);
+  border: 1px solid rgb(255 255 255 / 45%);
+  border-radius: 999px;
+
+  &:hover,
+  &:focus-visible {
+    color: #fff;
+    text-decoration: none;
+    background: rgb(255 255 255 / 24%);
+  }
+}
+
+/* ---------- Phone tab bar ---------- */
+
+.tabBar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /* Under the app's overlays (the sheet, modals), above the page. */
+  z-index: var(--mantine-z-index-app);
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  height: var(--public-tabbar-height);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--nav-paper);
+  border-top: 1px solid var(--nav-rule);
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    display: none;
+  }
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0.5rem 0.25rem 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--nav-body);
+  text-decoration: none;
+  transition: color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--nav-ink);
+    text-decoration: none;
+  }
+
+  &[data-active] {
+    color: var(--mantine-color-brand-9);
+  }
+}
+
+/* The icon's box; the swipe behind it is drawn by .tabMarker in the same place. */
+.tabIcon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 1.75rem;
+}
+
+/*
+ * The one highlighter swipe of the tab bar. It spans one column and is moved by whole columns,
+ * so it needs no measuring, and it glides when the current page changes.
+ */
+.tabMarker {
+  position: absolute;
+  top: 0.5rem;
+  left: 0;
+  width: calc(100% / var(--tab-count));
+  height: 1.75rem;
+  opacity: 0;
+  transform: translateX(calc(var(--tab-index) * 100%));
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 160ms ease;
+  pointer-events: none;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2.25rem;
+    height: 100%;
+    background-image: var(--nav-marker-swipe);
+    background-repeat: no-repeat;
+    background-position: 0 80%;
+    background-size: 100% 0.55rem;
+    transform: translateX(-50%);
+  }
+
+  &[data-visible] {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.tabBadge {
+  position: absolute;
+  top: -0.1rem;
+  right: -0.15rem;
+}
+
+/* ---------- Menu sheet ---------- */
+
+.sheetContent {
+  background: var(--nav-paper);
+}
+
+/* The phone sheet: sized to its content, a sliver of the page kept above it; a long list scrolls inside. */
+.bottom {
+  height: auto;
+  max-height: calc(100dvh - 2.5rem);
+  border-radius: 20px 20px 0 0;
+}
+
+.sheetBody {
+  padding: 0 0 calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.sheetHandle {
+  width: 2.5rem;
+  height: 0.3rem;
+  margin: 0.6rem auto 0;
+  background: var(--nav-rule);
+  border-radius: 999px;
+}
+
+.sheetHead {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 1rem 1rem 1.25rem 1.25rem;
+}
+
+.sheetClose {
+  margin-left: auto;
+}
+
+.identity {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.identityText {
+  min-width: 0;
+}
+
+.identityName {
+  font-family: var(--nav-display);
+  font-variation-settings: "SOFT" 50;
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--nav-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identityMeta {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.2rem;
+  font-size: var(--mantine-font-size-sm);
+  color: var(--nav-body);
+}
+
+.identityAction {
+  color: var(--mantine-color-brand-9);
+  text-underline-offset: 0.2em;
+}
+
+.guest {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  padding: 0 1.25rem 1.25rem;
+}
+
+.group {
+  padding: 0.5rem 0.75rem 0.25rem;
+}
+
+.groupTitle {
+  margin: 0 0 0.25rem 0.5rem;
+  font-family: var(--nav-display);
+  font-variation-settings: "SOFT" 50;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--nav-ink);
+}
+
+.row {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+  min-height: 3rem;
+  padding: 0.5rem 0.5rem;
+  color: var(--nav-ink);
+  text-decoration: none;
+  border-radius: var(--mantine-radius-md);
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--nav-ink);
+    text-decoration: none;
+    background: rgb(38 118 143 / 8%);
+  }
+
+  &[data-active] {
+    color: var(--mantine-color-brand-9);
+    background: rgb(38 118 143 / 10%);
+  }
+}
+
+.rowIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  color: var(--nav-body);
+
+  .row[data-active] & {
+    color: var(--mantine-color-brand-9);
+  }
+}
+
+.rowText {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.rowLabel {
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.rowDescription {
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.35;
+  color: var(--nav-body);
+}
+
+.tasks {
+  margin: 0 1.25rem 0.75rem;
+}
+
+.sheetFoot {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 0;
+
+  &:empty {
+    display: none;
+  }
+}

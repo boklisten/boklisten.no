@@ -76,9 +76,29 @@ export interface Branch extends BranchPeriods {
   deliveryByMail: boolean;
   /** What the branch sets itself per inherited field; `null` where it inherits from its parent. */
   overrides: InheritedOverrides;
-  /** Free text, e.g. "Oslo"; groups branches in the order flow's branch picker. */
-  region: string;
   address: string | null;
+}
+
+/**
+ * One step of the order flow's tree: a public branch whose subtree holds subject books. Hidden
+ * levels are skipped, so `parentBranchId` names the nearest public ancestor, `null` at the top.
+ */
+export interface PublicBranchNode {
+  id: string;
+  name: string;
+  localName: string | null;
+  parentBranchId: string | null;
+  /** What this branch's children represent, e.g. "klasse"; titles the step that lists them. */
+  childLabel: string | null;
+  /** The walk ends here: the branch offers subjects to order from. */
+  hasBooks: boolean;
+}
+
+export interface PublicBranchTree {
+  /** What the hidden root calls its children, titling the first step; `null` when unset. */
+  topLabel: string | null;
+  /** Sorted by name. */
+  nodes: PublicBranchNode[];
 }
 
 /** The values in force of the inherited fields. */

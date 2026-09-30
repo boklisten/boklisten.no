@@ -23,7 +23,7 @@ export default function WaitingListTable({
 }: {
   loading: boolean;
   items: Item[];
-  branches: Branch[];
+  branches: Pick<Branch, "id" | "name">[];
   waitingList: Route.Response<"waiting_list_customers.index">;
 }) {
   const queryClient = useQueryClient();

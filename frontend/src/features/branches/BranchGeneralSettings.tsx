@@ -18,7 +18,6 @@ const BRANCHES_QUERY_KEY = api.branches.index.pathKey();
 /** The fields a branch has at creation; the inherited ones come after it is placed in the tree. */
 interface GeneralFieldValues {
   name: string;
-  region: string;
   address: string;
 }
 
@@ -28,25 +27,18 @@ interface GeneralValues extends GeneralFieldValues {
 }
 
 /** The request body: empty optional text fields mean "not set". */
-function generalBody<Values extends GeneralFieldValues>({
-  name,
-  region,
-  address,
-  ...rest
-}: Values) {
-  return { ...rest, name, region, address: address || null };
+function generalBody<Values extends GeneralFieldValues>({ name, address, ...rest }: Values) {
+  return { ...rest, name, address: address || null };
 }
 
 const EMPTY_FIELDS: GeneralFieldValues = {
   name: "",
-  region: "",
   address: "",
 };
 
 function valuesOf(branch: Branch): GeneralValues {
   return {
     name: branch.name,
-    region: branch.region,
     address: branch.address ?? "",
     visibility: branch.overrides.visibility,
   };
@@ -62,9 +54,6 @@ const BranchGeneralFields = withFieldGroup({
           <field.TextField required label="Navn" placeholder="Flåklypa videregående skole" />
         )}
       </group.AppField>
-      <group.AppField name="region">
-        {(field) => <field.TextField required label="Region" placeholder="Oslo, Trondheim, Ski" />}
-      </group.AppField>
       <group.AppField name="address">
         {(field) => <field.TextField label="Adresse" placeholder="Postboks 8, 1316 Eiksmarka" />}
       </group.AppField>
@@ -74,7 +63,6 @@ const BranchGeneralFields = withFieldGroup({
 
 const GENERAL_FIELDS = {
   name: "name",
-  region: "region",
   address: "address",
 } as const;
 

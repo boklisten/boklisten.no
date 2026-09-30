@@ -11,6 +11,8 @@
   --footer-rule: rgb(255 255 255 / 14%);
 
   color: var(--footer-text);
+  /* Runs on under the phone tab bar, so the page ends in the footer's colour, not a white strip. */
+  padding-bottom: var(--public-tabbar-height, 0px);
   background: var(--footer-bg);
   border-top: 4px solid var(--mantine-color-brand-9);
 }

@@ -1,44 +1,24 @@
-import { Affix, Box, Card, Group, NavLink, Stack, Text } from "@mantine/core";
+import { Button } from "@mantine/core";
 import { IconBasket } from "@tabler/icons-react";
 import { useLocation } from "@tanstack/react-router";
-import { Activity } from "react";
 
-import useCart from "@/shared/hooks/useCart";
+import FloatingActionBar from "@/shared/components/FloatingActionBar";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import useCart from "@/shared/hooks/useCart";
 
 export default function AffixCartIndicator() {
   const cart = useCart();
   const pathname = useLocation({ select: (location) => location.pathname });
+  const size = cart.size();
   return (
-    <Activity mode={!cart.isEmpty() && pathname.includes("items") ? "visible" : "hidden"}>
-      <Affix w="100%">
-        <Card withBorder shadow="md">
-          <Stack align="center" gap="xs">
-            <Stack gap={5} align="center">
-              <Text fs="italic">
-                {cart.size()} {cart.size() > 1 ? "bøker" : "bok"}
-              </Text>
-              <Group gap={5}>
-                Totalt
-                <Text fw="bold">{cart.calculateTotal()} kr</Text>
-              </Group>
-            </Stack>
-            <Box>
-              <NavLink
-                component={TanStackAnchor}
-                to="/handlekurv"
-                leftSection={<IconBasket />}
-                active
-                bdrs={5}
-                bg="green"
-                c="white"
-                fw="bolder"
-                label="Gå til handlekurv"
-              />
-            </Box>
-          </Stack>
-        </Card>
-      </Affix>
-    </Activity>
+    <FloatingActionBar
+      visible={!cart.isEmpty() && pathname.includes("items")}
+      summary={`${size} ${size === 1 ? "bok" : "bøker"} valgt`}
+      detail={`Totalt ${cart.calculateTotal()} kr`}
+    >
+      <Button component={TanStackAnchor} to="/handlekurv" radius="xl" leftSection={<IconBasket />}>
+        Gå til handlekurv
+      </Button>
+    </FloatingActionBar>
   );
 }

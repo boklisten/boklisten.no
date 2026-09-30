@@ -1,9 +1,10 @@
-import { Container, Stack, Title } from "@mantine/core";
-import SelectOrderBranch from "@/features/order/SelectOrderBranch";
-import { createFileRoute } from "@tanstack/react-router";
+import { Container } from "@mantine/core";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+
+import BranchStep from "@/features/order/BranchStep";
+import { childrenOf, orderTreeOptions } from "@/features/order/orderTree";
 import { seo } from "@/shared/utils/seo";
-import { queryOptions } from "@tanstack/react-query";
-import { api } from "@/shared/utils/apiClient";
 
 export const Route = createFileRoute("/(offentlig)/bestilling/")({
   head: () =>
@@ -13,21 +14,25 @@ export const Route = createFileRoute("/(offentlig)/bestilling/")({
         "Velg hvilken skole og hvilke fag du tar, så finner vi bøkene du trenger for deg!",
     }),
   loader: async ({ context }) => {
-    await context.queryClient.query({
-      ...queryOptions(api.branches.indexPublic.queryOptions()),
-      staleTime: "static",
-    });
+    const tree = await context.queryClient.query(orderTreeOptions());
+    const top = childrenOf(tree, null);
+    // A single way in is no choice; go straight to it.
+    if (top.length === 1 && top[0]) {
+      throw redirect({
+        to: "/bestilling/$branchId",
+        params: { branchId: top[0].id },
+        replace: true,
+      });
+    }
   },
   component: OrderPage,
 });
 
 function OrderPage() {
+  const { data: tree } = useSuspenseQuery(orderTreeOptions());
   return (
     <Container size="md">
-      <Stack gap="xs">
-        <Title>Hvor går du på skole?</Title>
-        <SelectOrderBranch />
-      </Stack>
+      <BranchStep tree={tree} parent={null} />
     </Container>
   );
 }

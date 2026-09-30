@@ -69,7 +69,6 @@ test.group("OrderItemExtendValidator", (group) => {
         },
       ],
       buyoutPercentage: 0.5,
-      region: "unknown",
     });
   });
   group.each.teardown(() => {

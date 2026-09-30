@@ -113,7 +113,6 @@ test.group("OrderValidator", (group) => {
         },
       ],
       buyoutPercentage: 0.5,
-      region: "unknown",
     });
     await createBranch(testBranch);
   });

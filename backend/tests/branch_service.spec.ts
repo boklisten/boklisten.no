@@ -27,7 +27,6 @@ test.group("branch_service", (group) => {
   }) => {
     const branch = await createBranchThroughService({
       name: "Flåklypa vgs",
-      region: "Flåklypa",
       parentBranchId: null,
     });
     assert.equal(branch.name, "Flåklypa vgs");
@@ -282,7 +281,6 @@ test.group("branch_service inheritance", (group) => {
     });
     const created = await createBranchThroughService({
       name: "Sonans Ski",
-      region: "Ski",
       parentBranchId: sonans.id,
     });
     assert.equal(created.parentBranchId, sonans.id);
@@ -295,7 +293,6 @@ test.group("branch_service inheritance", (group) => {
   test("a branch created as a root holds the root values", async ({ assert }) => {
     const created = await createBranchThroughService({
       name: "Bokflyt.no AS",
-      region: "Norge",
       parentBranchId: null,
     });
     assert.isNull(created.parentBranchId);

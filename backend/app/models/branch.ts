@@ -27,6 +27,8 @@ import type {
   InheritedOverrides,
   InheritedValues,
   PartlyPaymentPeriod,
+  PublicBranchNode,
+  PublicBranchTree,
   RentPeriod,
 } from "#shared/branch";
 
@@ -198,7 +200,6 @@ export default class Branch extends BranchSchema {
       childLabel: this.childLabel,
       ...this.inherited(),
       overrides: this.overrides,
-      region: this.region,
       address: this.address,
       rentPeriods: this.rentPeriods,
       extendPeriods: this.extendPeriods,
@@ -244,19 +245,72 @@ export default class Branch extends BranchSchema {
     return byName((await this.query()).filter((branch) => visible.has(branch.visibility)));
   }
 
-  /** What customers may order from online: public branches with at least one subject book. */
-  static async orderableByName(): Promise<Branch[]> {
-    const withBooks = await this.query().whereExists((subjects) =>
-      subjects
+  /**
+   * The tree customers walk down when ordering: every public branch that offers subject books or
+   * has such a branch below it, attached to its nearest public ancestor so hidden levels are
+   * skipped. A branch below a hidden one is reached through the hidden one's parent.
+   */
+  static async publicTree(): Promise<PublicBranchTree> {
+    const [branches, bookRows] = await Promise.all([
+      this.query(),
+      db
         .from("branch_subjects")
         .join(
           "branch_subject_books",
           "branch_subject_books.branch_subject_id",
           "branch_subjects.id",
         )
-        .whereColumn("branch_subjects.branch_id", "branches.id"),
-    );
-    return byName(withBooks.filter((branch) => branch.visibility === "public"));
+        .distinct("branch_subjects.branch_id as branchId") as Promise<{ branchId: string }[]>,
+    ]);
+    const withBooks = new Set(bookRows.map((row) => row.branchId));
+    const byId = new Map(branches.map((branch) => [branch.id, branch]));
+    const childrenOf = Map.groupBy(branches, (branch) => branch.parentBranchId ?? "");
+    const isPublic = (branch: Branch) => branch.visibility === "public";
+
+    /** The public branches reached from `branch` through hidden ones only. */
+    const publicChildren = (branch: Branch): Branch[] =>
+      (childrenOf.get(branch.id) ?? []).flatMap((child) =>
+        isPublic(child) ? [child] : publicChildren(child),
+      );
+    const holdsBooks = new Map<string, boolean>();
+    const holds = (branch: Branch): boolean => {
+      const known = holdsBooks.get(branch.id);
+      if (known !== undefined) {
+        return known;
+      }
+      const value = withBooks.has(branch.id) || publicChildren(branch).some(holds);
+      holdsBooks.set(branch.id, value);
+      return value;
+    };
+    const ancestors = function* ancestors(branch: Branch) {
+      let parent = branch.parentBranchId === null ? null : byId.get(branch.parentBranchId);
+      while (parent) {
+        yield parent;
+        parent = parent.parentBranchId === null ? null : byId.get(parent.parentBranchId);
+      }
+    };
+
+    const nodes: PublicBranchNode[] = [];
+    let topLabel: string | null = null;
+    for (const branch of byName(branches)) {
+      if (!isPublic(branch) || !holds(branch)) {
+        continue;
+      }
+      const publicAncestor = ancestors(branch).find(isPublic) ?? null;
+      if (publicAncestor === null) {
+        topLabel ??=
+          ancestors(branch).find((ancestor) => ancestor.childLabel !== null)?.childLabel ?? null;
+      }
+      nodes.push({
+        id: branch.id,
+        name: branch.name,
+        localName: branch.localName,
+        parentBranchId: publicAncestor?.id ?? null,
+        childLabel: branch.childLabel,
+        hasBooks: withBooks.has(branch.id),
+      });
+    }
+    return { topLabel, nodes };
   }
 
   /** `find` for references that may be absent. */

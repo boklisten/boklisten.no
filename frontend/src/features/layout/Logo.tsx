@@ -1,6 +1,7 @@
-import { Group, Title } from "@mantine/core";
+import { Group } from "@mantine/core";
 import { Image } from "@unpic/react";
 
+import classes from "@/features/layout/Logo.module.css";
 import TestVersionChip from "@/features/layout/TestVersionChip";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 
@@ -14,14 +15,9 @@ export default function Logo({ variant, admin }: { variant: "white" | "blue"; ad
           height={40}
           alt="Boklisten.no"
         />
-        <Title
-          style={{ fontFamily: "serif" }}
-          order={2}
-          c={variant === "white" ? "#fff" : "#26768f"}
-          textWrap="nowrap"
-        >
+        <span className={classes.wordmark} data-variant={variant}>
           {admin ? "bl-admin" : "Boklisten.no"}
-        </Title>
+        </span>
         <TestVersionChip />
       </Group>
     </TanStackAnchor>

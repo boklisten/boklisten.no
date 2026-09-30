@@ -13,7 +13,7 @@ export default function WaitingList() {
   } = useQuery(api.items.index.queryOptions());
 
   const {
-    data: branches,
+    data: tree,
     isLoading: isLoadingBranches,
     error: branchesError,
   } = useQuery(api.branches.indexPublic.queryOptions());
@@ -33,7 +33,7 @@ export default function WaitingList() {
   return (
     <WaitingListTable
       items={items ?? []}
-      branches={branches ?? []}
+      branches={tree?.nodes ?? []}
       waitingList={waitingList ?? []}
       loading={isLoadingItems || isLoadingBranches || isLoadingWaitingList}
     />

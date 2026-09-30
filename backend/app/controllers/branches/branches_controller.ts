@@ -14,9 +14,9 @@ import {
 } from "#validators/branch";
 
 export default class BranchesController {
-  /** The branches customers may order from online. */
-  async indexPublic() {
-    return (await Branch.orderableByName()).map((branch) => branch.toDto());
+  /** The tree customers walk down when ordering online; see `Branch.publicTree`. */
+  indexPublic() {
+    return Branch.publicTree();
   }
 
   /** The branches the caller may see, plus the one named by `include` (see the validator). */

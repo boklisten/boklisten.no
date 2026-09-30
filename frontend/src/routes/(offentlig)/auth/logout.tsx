@@ -1,26 +1,29 @@
-import { Container, Stack, Title } from "@mantine/core";
+import { IconLogout } from "@tabler/icons-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useEffectEvent } from "react";
 
-import AuthLogoutComponent from "@/features/auth/AuthLogoutComponent";
-import CountdownToRedirect from "@/shared/components/CountdownToRedirect";
-import { createFileRoute } from "@tanstack/react-router";
-import { seo } from "@/shared/utils/seo";
+import useAuth from "@/shared/hooks/useAuth";
+import { showSuccessNotification } from "@/shared/utils/notifications";
 
+/** Not a page: logs the visitor out and sends them straight to the front page with a word that it happened. */
 export const Route = createFileRoute("/(offentlig)/auth/logout")({
-  head: () =>
-    seo({
-      title: "Du er nå logget ut | Boklisten.no",
-    }),
-  component: LogoutPage,
+  component: Logout,
 });
 
-function LogoutPage() {
-  return (
-    <Container size="md">
-      <Stack>
-        <Title ta="center">Du er nå logget ut</Title>
-        <CountdownToRedirect seconds={5} path="/" shouldReplaceInHistory />
-        <AuthLogoutComponent />
-      </Stack>
-    </Container>
-  );
+function Logout() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const onMount = useEffectEvent(() => {
+    void logout();
+    showSuccessNotification({
+      id: "logged-out",
+      message: "Du er nå logget ut.",
+      icon: <IconLogout size={18} />,
+    });
+    void navigate({ to: "/", replace: true });
+  });
+  useEffect(() => {
+    onMount();
+  }, []);
+  return null;
 }

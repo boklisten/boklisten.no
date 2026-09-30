@@ -19,7 +19,7 @@ type BranchColumns = Omit<
   "id" | "parentBranchId" | "overrides" | InheritedBranchField | keyof BranchPeriods
 >;
 
-type BranchCreateInput = Pick<BranchColumns, "name" | "region"> &
+type BranchCreateInput = Pick<BranchColumns, "name"> &
   Partial<Pick<BranchColumns, "address">> & {
     /** `null` creates a root with `ROOT_VALUES`; under a parent every inherited field inherits. */
     parentBranchId: string | null;
@@ -58,7 +58,6 @@ export async function createBranch(input: BranchCreateInput): Promise<Branch> {
     const branch = await Branch.create(
       {
         name: input.name,
-        region: input.region,
         address: input.address ?? null,
         parentBranchId: input.parentBranchId,
         ...(parent ? {} : overrideColumns(ROOT_VALUES)),

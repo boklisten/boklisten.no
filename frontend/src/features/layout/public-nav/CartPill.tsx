@@ -1,0 +1,27 @@
+import { IconBasket } from "@tabler/icons-react";
+
+import { CART_PATH } from "@/features/layout/public-nav/publicNavigation";
+import classes from "@/features/layout/public-nav/PublicNav.module.css";
+import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import useCart from "@/shared/hooks/useCart";
+
+/** The way to the cart, shown only while there is something in it. */
+export default function CartPill() {
+  const cart = useCart();
+  if (cart.isEmpty()) {
+    return null;
+  }
+  const size = cart.size();
+  return (
+    <TanStackAnchor
+      to={CART_PATH}
+      className={classes.cart}
+      underline="never"
+      data-key={CART_PATH}
+      aria-label={`Handlekurv, ${size} ${size === 1 ? "bok" : "bøker"}`}
+    >
+      <IconBasket size={18} aria-hidden />
+      {size}
+    </TanStackAnchor>
+  );
+}

@@ -1,8 +1,9 @@
 /**
  * The books the figures hand around: the titles Ullern's students actually pass on most often
- * at each level (staging, transfers since 2025), limited to those whose covers Nasjonalbiblioteket
- * serves today (checked 2026-09-15), so the covers load through the same lookup the product uses.
- * When the lookup fails the figures draw a plain cover with the title.
+ * at each level (staging, transfers since 2025). Their covers are Nasjonalbiblioteket's public
+ * thumbnails, saved under `public/images/covers/<isbn>.jpg` (2026-09-30) so the figures paint
+ * complete on first render instead of filling in after a lookup. When a picture fails to load
+ * the figures draw a plain cover with the title.
  */
 export interface MockBook {
   title: string;
@@ -27,3 +28,8 @@ export const MOCK_BOOKS = {
   pareto2: { title: "Pareto 2 2023", isbn: "9788202740191" },
   ergo2: { title: "Ergo 2 2022", isbn: "9788203319396" },
 } as const satisfies Record<string, MockBook>;
+
+/** The cover picture served with the site, see the note above. */
+export function mockCoverSrc(book: MockBook): string {
+  return `/images/covers/${book.isbn}.jpg`;
+}

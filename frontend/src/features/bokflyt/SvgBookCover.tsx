@@ -1,6 +1,6 @@
-import { useId } from "react";
+import { useId, useState } from "react";
 
-import { useBookCoverImage } from "@/features/book-cover/bookCoverQuery";
+import { mockCoverSrc } from "@/features/bokflyt/mockBooks";
 import type { MockBook } from "@/features/bokflyt/mockBooks";
 import { BOKFLYT_COLORS } from "@/features/bokflyt/theme";
 
@@ -11,9 +11,8 @@ const CHARS_PER_LINE = 6;
 const MAX_LINES = 5;
 
 /**
- * A small book cover for the SVG figures, centred on the origin. The real cover comes through
- * the product's own lookup; until it lands, and whenever it does not, a plain cover with the
- * title fills the same frame so nothing moves when the picture arrives.
+ * A small book cover for the SVG figures, centred on the origin. The picture is served with the
+ * site; should it fail to load, a plain cover with the title fills the same frame so nothing moves.
  */
 export default function SvgBookCover({
   book,
@@ -24,7 +23,8 @@ export default function SvgBookCover({
   width: number;
   height: number;
 }) {
-  const { src, onError } = useBookCoverImage(book.isbn);
+  const [broken, setBroken] = useState(false);
+  const src = broken ? null : mockCoverSrc(book);
   const clipId = useId();
   const x = -width / 2;
   const y = -height / 2;
@@ -48,7 +48,7 @@ export default function SvgBookCover({
           height={height}
           preserveAspectRatio="xMidYMid slice"
           clipPath={`url(#${clipId})`}
-          onError={onError}
+          onError={() => setBroken(true)}
         />
       )}
       <rect

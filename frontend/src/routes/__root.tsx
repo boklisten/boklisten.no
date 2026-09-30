@@ -9,6 +9,7 @@ import "@/styles/view-transitions.css";
 import "@/shared/utils/dayjs";
 
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
@@ -45,7 +46,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { title: "Boklisten.no" },
         ...meta,
       ],
-      links,
+      links: [
+        ...links,
+        // The wordmark and the front page's headlines are set in Fraunces.
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,600..700,50&display=swap",
+        },
+      ],
       scripts: [jsonLdScript(organizationSchema()), jsonLdScript(websiteSchema())],
     };
   },
@@ -53,6 +63,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootLayout() {
+  // The devtools button would cover the phone tab bar; the tools are only offered on wider screens.
+  const wide = useMediaQuery("(min-width: 48em)");
   return (
     <html lang="no" {...mantineHtmlProps}>
       <head>
@@ -67,7 +79,7 @@ function RootLayout() {
               <Outlet />
               <Scripts />
             </ModalsProvider>
-            <ReactQueryDevtools />
+            {wide && <ReactQueryDevtools />}
           </DatesProvider>
         </MantineProvider>
       </body>

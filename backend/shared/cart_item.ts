@@ -17,6 +17,8 @@ export interface CartItemOption {
 export interface CartItem {
   id: string;
   title: string;
+  /** For the cover; absent on cart lines built before the catalog carried it. */
+  isbn?: number | null;
   branchId: string;
   subject?: string;
   options: CartItemOption[];

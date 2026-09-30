@@ -104,7 +104,7 @@ export class BranchSubjectSchema extends BaseModel {
 }
 
 export class BranchSchema extends BaseModel {
-  static $columns = ['address', 'buyoutPercentageOverride', 'childLabel', 'createdAt', 'deliveryAtBranchOverride', 'deliveryByMailOverride', 'id', 'localName', 'name', 'parentBranchId', 'paymentResponsibleOverride', 'region', 'responsibleForDeliveryOverride', 'sellPercentageOverride', 'updatedAt', 'visibilityOverride'] as const
+  static $columns = ['address', 'buyoutPercentageOverride', 'childLabel', 'createdAt', 'deliveryAtBranchOverride', 'deliveryByMailOverride', 'id', 'localName', 'name', 'parentBranchId', 'paymentResponsibleOverride', 'responsibleForDeliveryOverride', 'sellPercentageOverride', 'updatedAt', 'visibilityOverride'] as const
   $columns = BranchSchema.$columns
   @column()
   declare address: string | null
@@ -128,8 +128,6 @@ export class BranchSchema extends BaseModel {
   declare parentBranchId: string | null
   @column()
   declare paymentResponsibleOverride: boolean | null
-  @column()
-  declare region: string
   @column()
   declare responsibleForDeliveryOverride: boolean | null
   @column()

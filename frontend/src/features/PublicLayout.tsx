@@ -1,12 +1,13 @@
-import { AppShell, AppShellHeader, AppShellMain, Group } from "@mantine/core";
+import { AppShell, AppShellHeader, AppShellMain } from "@mantine/core";
 import type { MantineSpacing, StyleProp } from "@mantine/core";
-
-import CartNavbarIndicator from "@/features/cart/CartNavbarIndicator";
-import Logo from "@/features/layout/Logo";
-import PublicNavigationDrawer from "@/features/layout/PublicNavigationDrawer";
-import PublicPageFooter from "@/features/layout/PublicPageFooter";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import { useDisclosure } from "@mantine/hooks";
 import type { ReactNode } from "react";
+
+import PublicPageFooter from "@/features/layout/PublicPageFooter";
+import classes from "@/features/layout/public-nav/PublicNav.module.css";
+import PublicMenuSheet from "@/features/layout/public-nav/PublicMenuSheet";
+import PublicTabBar from "@/features/layout/public-nav/PublicTabBar";
+import PublicTopBar from "@/features/layout/public-nav/PublicTopBar";
 
 export default function PublicLayout({
   children,
@@ -20,25 +21,14 @@ export default function PublicLayout({
   /** Space between the page and the footer; a page that paints its own background runs it to 0. */
   footerSpacing?: StyleProp<MantineSpacing>;
 }) {
+  const [menuOpened, { open: openMenu, close: closeMenu }] = useDisclosure();
+
   return (
-    <>
-      <AppShell header={{ height: 65 }} p={padding}>
+    // The shell sets --public-tabbar-height for the footer and the fixed elements above the bar.
+    <div className={classes.shell}>
+      <AppShell header={{ height: 60 }} p={padding}>
         <AppShellHeader bg="brand" withBorder={withBorder}>
-          <Group h="100%" justify="space-between" align="center" px="md">
-            <Logo variant="white" />
-            <Group>
-              <CartNavbarIndicator />
-              <Group gap="xl" visibleFrom="sm">
-                <TanStackAnchor c="#fff" to="/info/general">
-                  Info
-                </TanStackAnchor>
-                <TanStackAnchor c="#fff" to="/bestilling">
-                  Bestill bøker
-                </TanStackAnchor>
-              </Group>
-              <PublicNavigationDrawer />
-            </Group>
-          </Group>
+          <PublicTopBar onOpenMenu={openMenu} menuOpened={menuOpened} />
         </AppShellHeader>
 
         <AppShellMain
@@ -49,6 +39,8 @@ export default function PublicLayout({
         </AppShellMain>
       </AppShell>
       <PublicPageFooter mt={footerSpacing} />
-    </>
+      <PublicTabBar onOpenMenu={openMenu} menuOpened={menuOpened} />
+      <PublicMenuSheet opened={menuOpened} onClose={closeMenu} />
+    </div>
   );
 }

@@ -88,7 +88,6 @@ test.group("Branch model", (group) => {
   test("a branch created without loading its periods refuses to guess them", async ({ assert }) => {
     const branch = await Branch.create({
       name: "Ny",
-      region: "Oslo",
       ...overrideColumns(ROOT_VALUES),
     });
     assert.throws(() => branch.rentPeriods, /periods were not loaded/);
@@ -126,30 +125,82 @@ test.group("Branch model", (group) => {
     assert.deepEqual(await visibleNames("admin"), ["Akademiet", "Bjørknes", "Wang", "Østfold"]);
   });
 
-  test("orderableByName lists the public branches that have subject books", async ({ assert }) => {
+  test("publicTree keeps the public branches that lead to books, hidden levels skipped", async ({
+    assert,
+  }) => {
     const item = await createItem();
-    const withBooks = await createBranch({ name: "Ullern" });
-    const hidden = await createBranch({ name: "Wang", visibility: "employee" });
-    const emptySubject = await createBranch({ name: "Oslo innsamling" });
-    await createBranch({ name: "Bjørknes" });
     const book = { itemId: item.id, rent: true, partlyPayment: false, buy: false };
     const atBranch = { rentAtBranch: true, partlyPaymentAtBranch: false, buyAtBranch: false };
-    for (const branch of [withBooks, hidden]) {
-      await BranchSubjectsService.create(branch.id, {
+    const withBooks = async (branch: Branch) =>
+      BranchSubjectsService.create(branch.id, {
         name: "Kjemi 2",
         externalName: null,
         books: [{ ...book, ...atBranch }],
       });
-    }
-    await BranchSubjectsService.create(emptySubject.id, {
-      name: "Gym",
-      externalName: null,
-      books: [],
-    });
 
+    const root = await createBranch({
+      name: "Boklisten.no AS",
+      visibility: "admin",
+      childLabel: "skoletype",
+    });
+    const vgs = await createBranch({ name: "VGS", parentBranchId: root.id, visibility: "public" });
+    const ullern = await createBranch({
+      name: "Ullern",
+      parentBranchId: vgs.id,
+      childLabel: "årskull",
+      localName: "Ullern",
+    });
+    const vg1 = await createBranch({
+      name: "Ullern VG1",
+      parentBranchId: ullern.id,
+      localName: "VG1",
+    });
+    await withBooks(vg1);
+    // Books below a hidden level are reached through the hidden level's parent.
+    const staff = await createBranch({
+      name: "Ullern Ansatte",
+      parentBranchId: ullern.id,
+      visibility: "admin",
+    });
+    const teachers = await createBranch({
+      name: "Ullern Lærer",
+      parentBranchId: staff.id,
+      visibility: "public",
+    });
+    await withBooks(teachers);
+    // No books anywhere below: pruned, together with its empty subject.
+    const empty = await createBranch({ name: "Oslo innsamling", parentBranchId: vgs.id });
+    await BranchSubjectsService.create(empty.id, { name: "Gym", externalName: null, books: [] });
+    // Books, but not public: pruned, and so is its parent, which then leads nowhere.
+    const metis = await createBranch({ name: "Metis", parentBranchId: vgs.id });
+    const metisOslo = await createBranch({
+      name: "Metis Oslo",
+      parentBranchId: metis.id,
+      visibility: "employee",
+    });
+    await withBooks(metisOslo);
+
+    const tree = await Branch.publicTree();
+    assert.equal(tree.topLabel, "skoletype");
     assert.deepEqual(
-      (await Branch.orderableByName()).map((branch) => branch.name),
-      ["Ullern"],
+      tree.nodes.map(({ name, parentBranchId, hasBooks }) => ({ name, parentBranchId, hasBooks })),
+      [
+        { name: "Ullern", parentBranchId: vgs.id, hasBooks: false },
+        { name: "Ullern Lærer", parentBranchId: ullern.id, hasBooks: true },
+        { name: "Ullern VG1", parentBranchId: ullern.id, hasBooks: true },
+        { name: "VGS", parentBranchId: null, hasBooks: false },
+      ],
+    );
+    assert.deepEqual(
+      tree.nodes.find((node) => node.name === "Ullern"),
+      {
+        id: ullern.id,
+        name: "Ullern",
+        localName: "Ullern",
+        parentBranchId: vgs.id,
+        childLabel: "årskull",
+        hasBooks: false,
+      },
     );
   });
 

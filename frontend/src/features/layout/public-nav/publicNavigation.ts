@@ -1,0 +1,105 @@
+import type { Icon } from "@tabler/icons-react";
+import {
+  IconBook,
+  IconClock,
+  IconHeartHandshake,
+  IconHelpCircle,
+  IconHome,
+  IconInfoCircle,
+  IconMail,
+  IconReceipt,
+  IconSearch,
+  IconShoppingCart,
+  IconUserEdit,
+} from "@tabler/icons-react";
+
+import type { FileRouteTypes } from "@/routeTree.gen";
+
+export interface PublicNavLink {
+  label: string;
+  to: FileRouteTypes["to"];
+  icon: Icon;
+  loggedInOnly?: true;
+  /** One line under the label in the menu, for links whose name alone does not say what they do. */
+  description?: string;
+  /** Marks the link active on this prefix; the route itself when unset. `/` matches only itself. */
+  activeOn?: string;
+}
+
+/*
+ * Every public destination in one place, so the tab bar, the desktop bar and the menu sheet agree
+ * on names, icons and who sees what. The pages under /info are one entry in the bars; the info
+ * section has its own sub-navigation on the page.
+ */
+const HOME: PublicNavLink = { label: "Hjem", to: "/", icon: IconHome };
+const ORDER: PublicNavLink = { label: "Bestill bøker", to: "/bestilling", icon: IconShoppingCart };
+const MY_BOOKS: PublicNavLink = {
+  label: "Dine bøker",
+  to: "/items",
+  icon: IconBook,
+  loggedInOnly: true,
+};
+const INFO: PublicNavLink = {
+  label: "Informasjon",
+  to: "/info/general",
+  icon: IconInfoCircle,
+  activeOn: "/info",
+};
+
+export const USER_SETTINGS: PublicNavLink = {
+  label: "Brukerinnstillinger",
+  to: "/user-settings",
+  icon: IconUserEdit,
+  loggedInOnly: true,
+};
+
+/** What the visitor does with books: the first group in the menu. */
+export const BOOK_LINKS: PublicNavLink[] = [
+  ORDER,
+  MY_BOOKS,
+  { label: "Ordrehistorikk", to: "/order-history", icon: IconReceipt, loggedInOnly: true },
+  { label: "Overleveringer", to: "/overleveringer", icon: IconHeartHandshake, loggedInOnly: true },
+  {
+    label: "Boksøk",
+    to: "/sjekk",
+    icon: IconSearch,
+    loggedInOnly: true,
+    description: "Finn ut hvem som er ansvarlig for en bok.",
+  },
+];
+
+/** The information pages, as the menu lists them. */
+export const INFO_LINKS: PublicNavLink[] = [
+  { label: "Generell informasjon", to: "/info/general", icon: IconInfoCircle },
+  { label: "Spørsmål og svar", to: "/info/faq", icon: IconHelpCircle },
+  { label: "Skoler og åpningstider", to: "/info/branch", icon: IconClock },
+  { label: "Kontakt oss", to: "/info/contact", icon: IconMail },
+];
+
+/** The cart, reached from the pill in the top bar while there is something in it. */
+export const CART_PATH = "/handlekurv";
+
+/**
+ * The three destinations that are always one tap away, on the phone tab bar and top right on
+ * desktop; the menu holds the rest. The third is the visitor's books once logged in.
+ */
+export function primaryLinks(isLoggedIn: boolean): PublicNavLink[] {
+  return [HOME, ORDER, isLoggedIn ? MY_BOOKS : INFO];
+}
+
+export function isActive(link: Pick<PublicNavLink, "to" | "activeOn">, pathname: string): boolean {
+  const prefix = link.activeOn ?? link.to;
+  if (prefix === "/") {
+    return pathname === "/";
+  }
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+/** The visitor's first name as the menu greets them; the email's local part before that is known. */
+export function firstName(user: { name: string | null; email: string }): string {
+  const [first] = (user.name ?? "").trim().split(/\s+/);
+  if (first) {
+    return first;
+  }
+  return user.email.split("@")[0] ?? user.email;
+}

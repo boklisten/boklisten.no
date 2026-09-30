@@ -283,7 +283,6 @@ test.group("invoice export: Tripletex", () => {
         mock<Branch>({
           id: BRANCH_ID,
           name: "Ullern VG3 ST",
-          region: "Oslo",
           address: "Ullernchausséen 60",
         }),
       ],

@@ -144,9 +144,15 @@
 
 .heroNote {
   color: rgb(255 255 255 / 84%);
+  /* Under full-width buttons the note reads as their caption, so it is centred like them. */
+  text-align: center;
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    text-align: left;
+  }
 }
 
-/* The same block as in the navigation drawer, only with corners since it stands alone here. */
+/* The employee's way into bl-admin. */
 .employee {
   border-radius: var(--mantine-radius-md);
   background: var(--mantine-color-orange-1);
@@ -254,6 +260,7 @@
   @media (min-width: $mantine-breakpoint-xs) {
     grid-template-columns: repeat(2, minmax(0, 22rem));
     gap: 1rem;
+    justify-content: center;
   }
 }
 

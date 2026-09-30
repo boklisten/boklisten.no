@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as offentligRouteRouteImport } from './routes/(offentlig)/route'
 import { Route as BokflytRouteImport } from './routes/bokflyt'
 import { Route as HealthRouteImport } from './routes/health'
@@ -17,6 +16,7 @@ import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as administrasjonAdminRouteRouteImport } from './routes/(administrasjon)/admin/route'
+import { Route as offentligIndexRouteImport } from './routes/(offentlig)/index'
 import { Route as offentligHandlekurvRouteImport } from './routes/(offentlig)/handlekurv'
 import { Route as offentligInfoRouteRouteImport } from './routes/(offentlig)/info/route'
 import { Route as offentligItemsRouteImport } from './routes/(offentlig)/items'
@@ -76,11 +76,6 @@ import { Route as offentligKasseBetalingIndexRouteImport } from './routes/(offen
 import { Route as offentligKasseBetalingStatusRouteImport } from './routes/(offentlig)/kasse/betaling/status'
 import { Route as offentligAuthEmailVerifyVerificationIdRouteImport } from './routes/(offentlig)/auth/email.verify.$verificationId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const offentligRouteRoute = offentligRouteRouteImport.update({
   id: '/(offentlig)',
   getParentRoute: () => rootRouteImport,
@@ -116,6 +111,11 @@ const administrasjonAdminRouteRoute =
     path: '/admin',
     getParentRoute: () => rootRouteImport,
   } as any)
+const offentligIndexRoute = offentligIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => offentligRouteRoute,
+} as any)
 const offentligHandlekurvRoute = offentligHandlekurvRouteImport.update({
   id: '/handlekurv',
   path: '/handlekurv',
@@ -442,7 +442,6 @@ const offentligAuthEmailVerifyVerificationIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/bokflyt': typeof BokflytRoute
   '/health': typeof HealthRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -457,6 +456,7 @@ export interface FileRoutesByFullPath {
   '/order-history': typeof offentligOrderHistoryRoute
   '/sjekk': typeof offentligSjekkRoute
   '/user-settings': typeof offentligUserSettingsRoute
+  '/': typeof offentligIndexRoute
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
@@ -509,7 +509,6 @@ export interface FileRoutesByFullPath {
   '/auth/email/verify/$verificationId': typeof offentligAuthEmailVerifyVerificationIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/bokflyt': typeof BokflytRoute
   '/health': typeof HealthRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -522,6 +521,7 @@ export interface FileRoutesByTo {
   '/order-history': typeof offentligOrderHistoryRoute
   '/sjekk': typeof offentligSjekkRoute
   '/user-settings': typeof offentligUserSettingsRoute
+  '/': typeof offentligIndexRoute
   '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
@@ -575,7 +575,6 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/(offentlig)': typeof offentligRouteRouteWithChildren
   '/bokflyt': typeof BokflytRoute
   '/health': typeof HealthRoute
@@ -591,6 +590,7 @@ export interface FileRoutesById {
   '/(offentlig)/order-history': typeof offentligOrderHistoryRoute
   '/(offentlig)/sjekk': typeof offentligSjekkRoute
   '/(offentlig)/user-settings': typeof offentligUserSettingsRoute
+  '/(offentlig)/': typeof offentligIndexRoute
   '/(offentlig)/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/(offentlig)/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/(administrasjon)/admin/faktura': typeof administrasjonAdminFakturaRoute
@@ -645,7 +645,6 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/bokflyt'
     | '/health'
     | '/llms.txt'
@@ -660,6 +659,7 @@ export interface FileRouteTypes {
     | '/order-history'
     | '/sjekk'
     | '/user-settings'
+    | '/'
     | '/info/branch'
     | '/info/policies'
     | '/admin/faktura'
@@ -712,7 +712,6 @@ export interface FileRouteTypes {
     | '/auth/email/verify/$verificationId'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/bokflyt'
     | '/health'
     | '/llms.txt'
@@ -725,6 +724,7 @@ export interface FileRouteTypes {
     | '/order-history'
     | '/sjekk'
     | '/user-settings'
+    | '/'
     | '/info/branch'
     | '/info/policies'
     | '/admin/faktura'
@@ -777,7 +777,6 @@ export interface FileRouteTypes {
     | '/auth/email/verify/$verificationId'
   id:
     | '__root__'
-    | '/'
     | '/(offentlig)'
     | '/bokflyt'
     | '/health'
@@ -793,6 +792,7 @@ export interface FileRouteTypes {
     | '/(offentlig)/order-history'
     | '/(offentlig)/sjekk'
     | '/(offentlig)/user-settings'
+    | '/(offentlig)/'
     | '/(offentlig)/info/branch'
     | '/(offentlig)/info/policies'
     | '/(administrasjon)/admin/faktura'
@@ -846,7 +846,6 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   offentligRouteRoute: typeof offentligRouteRouteWithChildren
   BokflytRoute: typeof BokflytRoute
   HealthRoute: typeof HealthRoute
@@ -858,13 +857,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/(offentlig)': {
       id: '/(offentlig)'
       path: ''
@@ -913,6 +905,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof administrasjonAdminRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/(offentlig)/': {
+      id: '/(offentlig)/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof offentligIndexRouteImport
+      parentRoute: typeof offentligRouteRoute
     }
     '/(offentlig)/handlekurv': {
       id: '/(offentlig)/handlekurv'
@@ -1407,6 +1406,7 @@ interface offentligRouteRouteChildren {
   offentligOrderHistoryRoute: typeof offentligOrderHistoryRoute
   offentligSjekkRoute: typeof offentligSjekkRoute
   offentligUserSettingsRoute: typeof offentligUserSettingsRoute
+  offentligIndexRoute: typeof offentligIndexRoute
   offentligAuthCallbackRoute: typeof offentligAuthCallbackRoute
   offentligAuthFailureRoute: typeof offentligAuthFailureRoute
   offentligAuthForgotRoute: typeof offentligAuthForgotRoute
@@ -1436,6 +1436,7 @@ const offentligRouteRouteChildren: offentligRouteRouteChildren = {
   offentligOrderHistoryRoute: offentligOrderHistoryRoute,
   offentligSjekkRoute: offentligSjekkRoute,
   offentligUserSettingsRoute: offentligUserSettingsRoute,
+  offentligIndexRoute: offentligIndexRoute,
   offentligAuthCallbackRoute: offentligAuthCallbackRoute,
   offentligAuthFailureRoute: offentligAuthFailureRoute,
   offentligAuthForgotRoute: offentligAuthForgotRoute,
@@ -1521,7 +1522,6 @@ const administrasjonAdminRouteRouteWithChildren =
   )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   offentligRouteRoute: offentligRouteRouteWithChildren,
   BokflytRoute: BokflytRoute,
   HealthRoute: HealthRoute,

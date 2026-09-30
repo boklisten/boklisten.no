@@ -1,10 +1,9 @@
-import { Button, Container, Stack, Text, Title } from "@mantine/core";
-import { IconBook } from "@tabler/icons-react";
+import { Button, Container, NavLink, Stack, Text, Title } from "@mantine/core";
+import { IconBook, IconExternalLink } from "@tabler/icons-react";
 import { Activity } from "react";
 
 import BookFan from "@/features/frontpage/BookFan";
 import classes from "@/features/frontpage/frontpage.module.css";
-import BlAdminNavLink from "@/features/layout/BlAdminNavLink";
 import ShowCustomerIdButton from "@/shared/components/ShowCustomerIdButton";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import useAuth from "@/shared/hooks/useAuth";
@@ -76,7 +75,17 @@ export default function Hero() {
             </Text>
 
             <Activity mode={isEmployee ? "visible" : "hidden"}>
-              <BlAdminNavLink className={classes.employee} />
+              <NavLink
+                component={TanStackAnchor}
+                to="/admin"
+                className={classes.employee}
+                label="Gå til bl-admin"
+                description="Her kan du søke opp kunder, samle inn og dele ut bøker."
+                leftSection={<IconExternalLink />}
+                active
+                color="orange"
+                underline="never"
+              />
             </Activity>
           </Stack>
 

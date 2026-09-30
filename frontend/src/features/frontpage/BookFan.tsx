@@ -16,7 +16,7 @@ const COVER = { width: 150, height: 210 };
 
 /**
  * Five covers laid out like books dropped on a desk, back to front. The titles are ones
- * privatister sit exams in, and the covers come through the same lookup the shop uses.
+ * privatister sit exams in.
  */
 const FAN: Placement[] = [
   { book: MOCK_BOOKS.kraft1, x: 96, y: 214, rotate: -16 },
@@ -25,6 +25,9 @@ const FAN: Placement[] = [
   { book: MOCK_BOOKS.religionOgEtikk, x: 350, y: 196, rotate: 8 },
   { book: MOCK_BOOKS.matematikkR2, x: 432, y: 214, rotate: 16 },
 ];
+
+/** The books in the fan, for the front page route to preload their covers. */
+export const FAN_BOOKS: MockBook[] = FAN.map((placement) => placement.book);
 
 export default function BookFan() {
   const id = useId();
