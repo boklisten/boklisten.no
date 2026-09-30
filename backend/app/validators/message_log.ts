@@ -9,6 +9,14 @@ export const messageLogFeedValidator = vine.create(
     sendoutId: vine.number().optional(),
     onlyFailures: vine.boolean().optional(),
     search: vine.string().trim().maxLength(100).optional(),
+    /** Continues from the previous page's last row; empty or missing means the first page. */
+    cursor: vine.string().optional(),
+  }),
+);
+
+export const messageLogSendoutsValidator = vine.create(
+  vine.object({
+    limit: vine.number().min(1).max(100).optional(),
   }),
 );
 

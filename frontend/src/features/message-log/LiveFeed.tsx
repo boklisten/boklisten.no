@@ -1,53 +1,135 @@
 import type { MessageChannel } from "@boklisten/backend/shared/message-log";
 import {
-  Badge,
-  CloseButton,
+  Box,
+  Center,
   Group,
   Loader,
   SegmentedControl,
+  Select,
   Stack,
   Switch,
   Text,
   TextInput,
 } from "@mantine/core";
-import { useDebouncedValue } from "@mantine/hooks";
+import { useDebouncedValue, useIntersection } from "@mantine/hooks";
 import { IconSearch } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 import MessageEntryList from "@/features/message-log/MessageEntryList";
+import type { MessageLogSearchParams } from "@/features/message-log/messageLogParams";
+import { TYPE_LABELS } from "@/features/message-log/meta";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { api } from "@/shared/utils/apiClient";
+import { norwegianTime } from "@/shared/utils/dayjs";
 
 const POLL_INTERVAL_MS = 5000;
-const FEED_LIMIT = 50;
+const PAGE_SIZE = 50;
+/** How many sendouts the filter offers; older ones are still reachable through a link. */
+const SENDOUT_OPTIONS = 100;
+/** The next page starts loading this far above the end, so scrolling rarely meets a spinner. */
+const PREFETCH_MARGIN = "1500px";
 
-export default function LiveFeed({
-  sendoutFilter,
-  onClearSendoutFilter,
+type FeedFilters = Omit<MessageLogSearchParams, "loggFane">;
+
+/** Picks the sendout the feed is narrowed to; the newest come first, searchable by name. */
+function SendoutSelect({
+  value,
+  onChange,
 }: {
-  sendoutFilter: { id: number; name: string } | null;
-  onClearSendoutFilter: () => void;
+  value: number | undefined;
+  onChange: (sendoutId: number | undefined) => void;
 }) {
-  const [channel, setChannel] = useState<"alle" | MessageChannel>("alle");
-  const [onlyFailures, setOnlyFailures] = useState(false);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch] = useDebouncedValue(search.trim(), 300);
+  const { data } = useQuery(
+    api.messageLogs.sendouts.queryOptions({ query: { limit: SENDOUT_OPTIONS } }),
+  );
+  const options = (data ?? []).map((sendout) => ({
+    value: String(sendout.id),
+    label: `${sendout.name ?? TYPE_LABELS[sendout.kind]} · ${norwegianTime(sendout.createdAt).format("DD.MM.YYYY")}`,
+  }));
+  // A linked sendout may be older than the options offered; it still needs a name in the box.
+  if (value !== undefined && !options.some((option) => option.value === String(value))) {
+    options.push({ value: String(value), label: `Utsendelse #${value}` });
+  }
+  return (
+    <Select
+      size="xs"
+      w={{ base: "100%", sm: 260 }}
+      aria-label="Utsendelse"
+      placeholder="Alle utsendelser"
+      data={options}
+      value={value === undefined ? null : String(value)}
+      onChange={(selected) => onChange(selected === null ? undefined : Number(selected))}
+      searchable
+      clearable
+      clearButtonProps={{ "aria-label": "Vis alle utsendelser" }}
+      nothingFoundMessage="Ingen utsendelser passer"
+    />
+  );
+}
 
-  const { data, isPending, error, errorUpdateCount } = useQuery(
-    api.messageLogs.feed.queryOptions(
+/**
+ * The global log, newest first, kept fresh by polling every loaded page. Older pages load as
+ * the employee scrolls towards the end. The filters live in the URL, owned by the page.
+ */
+export default function LiveFeed({
+  filters,
+  onChange,
+}: {
+  filters: FeedFilters;
+  onChange: (patch: Partial<FeedFilters>) => void;
+}) {
+  const [searchText, setSearchText] = useState(filters.loggSok ?? "");
+  const [debouncedSearch] = useDebouncedValue(searchText.trim(), 300);
+  useEffect(() => {
+    if (debouncedSearch !== (filters.loggSok ?? "")) {
+      onChange({ loggSok: debouncedSearch === "" ? undefined : debouncedSearch });
+    }
+  }, [debouncedSearch, filters.loggSok, onChange]);
+
+  const {
+    data,
+    isPending,
+    error,
+    errorUpdateCount,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    ...api.messageLogs.feed.infiniteQueryOptions(
       {
         query: {
-          limit: FEED_LIMIT,
-          channel: channel === "alle" ? undefined : channel,
-          sendoutId: sendoutFilter?.id,
-          onlyFailures: onlyFailures || undefined,
-          search: debouncedSearch === "" ? undefined : debouncedSearch,
+          limit: PAGE_SIZE,
+          channel: filters.kanal,
+          sendoutId: filters.utsendelse,
+          onlyFailures: filters.bareFeil,
+          search: filters.loggSok,
         },
       },
-      { refetchInterval: POLL_INTERVAL_MS, placeholderData: (previous) => previous },
+      {
+        pageParamKey: "cursor",
+        initialPageParam: "",
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+      },
     ),
-  );
+    refetchInterval: POLL_INTERVAL_MS,
+    placeholderData: keepPreviousData,
+  });
+
+  const { ref: sentinelRef, entry } = useIntersection({ rootMargin: PREFETCH_MARGIN });
+  const nearingEnd = entry?.isIntersecting ?? false;
+  useEffect(() => {
+    if (nearingEnd && hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [nearingEnd, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const entries = data?.pages.flatMap((page) => page.entries) ?? [];
+  const channel: "alle" | MessageChannel = filters.kanal ?? "alle";
+  const narrowed =
+    filters.kanal !== undefined ||
+    filters.utsendelse !== undefined ||
+    filters.loggSok !== undefined;
 
   return (
     <Stack gap="sm">
@@ -55,18 +137,24 @@ export default function LiveFeed({
         <SegmentedControl
           size="xs"
           value={channel}
-          onChange={(value) => setChannel(value === "sms" || value === "email" ? value : "alle")}
+          onChange={(value) =>
+            onChange({ kanal: value === "sms" || value === "email" ? value : undefined })
+          }
           data={[
             { value: "alle", label: "Alle" },
             { value: "sms", label: "SMS" },
             { value: "email", label: "E-post" },
           ]}
         />
+        <SendoutSelect
+          value={filters.utsendelse}
+          onChange={(sendoutId) => onChange({ utsendelse: sendoutId })}
+        />
         <Switch
           size="sm"
           label="Bare feil"
-          checked={onlyFailures}
-          onChange={(event) => setOnlyFailures(event.currentTarget.checked)}
+          checked={filters.bareFeil ?? false}
+          onChange={(event) => onChange({ bareFeil: event.currentTarget.checked || undefined })}
         />
         <TextInput
           size="xs"
@@ -74,26 +162,10 @@ export default function LiveFeed({
           miw={160}
           leftSection={<IconSearch size={14} />}
           placeholder="Søk på telefonnummer eller e-post"
-          value={search}
-          onChange={(event) => setSearch(event.currentTarget.value)}
+          value={searchText}
+          onChange={(event) => setSearchText(event.currentTarget.value)}
         />
       </Group>
-      {sendoutFilter && (
-        <Group gap={4}>
-          <Badge
-            variant="light"
-            rightSection={
-              <CloseButton
-                size="xs"
-                aria-label="Fjern utsendelsesfilter"
-                onClick={onClearSendoutFilter}
-              />
-            }
-          >
-            Utsendelse: {sendoutFilter.name}
-          </Badge>
-        </Group>
-      )}
       {error && errorUpdateCount > 0 ? (
         <ErrorAlert>Kunne ikke hente meldingsloggen. Prøv igjen senere.</ErrorAlert>
       ) : isPending || !data ? (
@@ -101,15 +173,25 @@ export default function LiveFeed({
       ) : (
         <>
           <MessageEntryList
-            entries={data}
+            entries={entries}
             withCustomerLink
             emptyText={
-              onlyFailures ? "Ingen feilede meldinger. Alt ser bra ut!" : "Ingen meldinger ennå."
+              filters.bareFeil
+                ? "Ingen feilede meldinger. Alt ser bra ut!"
+                : narrowed
+                  ? "Ingen meldinger passer filtrene."
+                  : "Ingen meldinger ennå."
             }
           />
-          {data.length === FEED_LIMIT && (
-            <Text size="xs" c="dimmed" ta="center">
-              Viser de {FEED_LIMIT} nyeste meldingene. Bruk filtrene for å finne eldre.
+          <Box ref={sentinelRef} />
+          {isFetchingNextPage && (
+            <Center py="sm">
+              <Loader size="sm" />
+            </Center>
+          )}
+          {!hasNextPage && entries.length > 0 && (
+            <Text size="xs" c="dimmed" ta="center" py="sm">
+              Ingen flere meldinger
             </Text>
           )}
         </>

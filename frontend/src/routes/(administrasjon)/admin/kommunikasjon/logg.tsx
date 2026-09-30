@@ -1,14 +1,14 @@
-import type { SendoutStatsDto } from "@boklisten/backend/shared/message-log";
 import { Container, Stack, Tabs, Title } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 
 import LiveFeed from "@/features/message-log/LiveFeed";
+import { validateMessageLogSearch } from "@/features/message-log/messageLogParams";
+import type { MessageLogSearchParams } from "@/features/message-log/messageLogParams";
 import MessageLogStatistics from "@/features/message-log/MessageLogStatistics";
-import { TYPE_LABELS } from "@/features/message-log/meta";
 import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/logg")({
+  validateSearch: validateMessageLogSearch,
   head: () =>
     seo({
       title: "Meldingslogg | bl-admin",
@@ -17,12 +17,16 @@ export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/logg
 });
 
 function MessageLogPage() {
-  const [activeTab, setActiveTab] = useState<"logg" | "statistikk">("logg");
-  const [sendoutFilter, setSendoutFilter] = useState<{ id: number; name: string } | null>(null);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const activeTab = search.loggFane ?? "logg";
 
-  function showSendoutInLog(sendout: SendoutStatsDto) {
-    setSendoutFilter({ id: sendout.id, name: sendout.name ?? TYPE_LABELS[sendout.kind] });
-    setActiveTab("logg");
+  /** Filter changes replace the history entry, so the back button leaves the page, not a filter. */
+  function updateFilters(patch: Partial<MessageLogSearchParams>) {
+    void navigate({
+      search: (previous) => validateMessageLogSearch({ ...previous, ...patch }),
+      replace: true,
+    });
   }
 
   return (
@@ -31,7 +35,15 @@ function MessageLogPage() {
         <Title>Meldingslogg</Title>
         <Tabs
           value={activeTab}
-          onChange={(value) => setActiveTab(value === "statistikk" ? "statistikk" : "logg")}
+          onChange={(value) =>
+            void navigate({
+              search: (previous) =>
+                validateMessageLogSearch({
+                  ...previous,
+                  loggFane: value === "statistikk" ? "statistikk" : "logg",
+                }),
+            })
+          }
           keepMounted={false}
         >
           <Tabs.List mb="md">
@@ -39,13 +51,14 @@ function MessageLogPage() {
             <Tabs.Tab value="statistikk">Statistikk</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="logg">
-            <LiveFeed
-              sendoutFilter={sendoutFilter}
-              onClearSendoutFilter={() => setSendoutFilter(null)}
-            />
+            <LiveFeed filters={search} onChange={updateFilters} />
           </Tabs.Panel>
           <Tabs.Panel value="statistikk">
-            <MessageLogStatistics onShowSendoutInLog={showSendoutInLog} />
+            <MessageLogStatistics
+              onShowSendoutInLog={(sendout) =>
+                void navigate({ search: { loggFane: "logg", utsendelse: sendout.id } })
+              }
+            />
           </Tabs.Panel>
         </Tabs>
       </Stack>

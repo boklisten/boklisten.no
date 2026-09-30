@@ -502,7 +502,7 @@ export class MatchRoundStandCustomerSchema extends BaseModel {
 }
 
 export class MatchRoundSchema extends BaseModel {
-  static $columns = ['branchId', 'createdAt', 'deadline', 'generatedAt', 'id', 'includeCustomerItemsFromOtherBranches', 'meetingDate', 'name', 'standFrom', 'standLocation', 'standTo', 'status', 'updatedAt', 'userMatchLocations', 'userMeetingFrom', 'userMeetingTo'] as const
+  static $columns = ['branchId', 'createdAt', 'deadline', 'generatedAt', 'id', 'meetingDate', 'name', 'standFrom', 'standLocation', 'standTo', 'status', 'updatedAt', 'userMatchLocations', 'userMeetingFrom', 'userMeetingTo'] as const
   $columns = MatchRoundSchema.$columns
   @column()
   declare branchId: string
@@ -514,8 +514,6 @@ export class MatchRoundSchema extends BaseModel {
   declare generatedAt: DateTime | null
   @column({ isPrimary: true })
   declare id: number
-  @column()
-  declare includeCustomerItemsFromOtherBranches: boolean
   @column.date()
   declare meetingDate: DateTime
   @column()

@@ -259,9 +259,54 @@ test.group("MessageLogService", (group) => {
     assert.equal(stats[0]?.statusCounts["sent"], 1);
     assert.equal(stats[0]?.statusCounts["created"], 1);
 
-    const entries = await MessageLogService.feed({ limit: 10, sendoutId: sendout?.id });
+    const { entries, nextCursor } = await MessageLogService.feed({
+      limit: 10,
+      sendoutId: sendout?.id,
+    });
     assert.lengthOf(entries, 2);
     assert.equal(entries[0]?.sendoutName, "Test");
+    assert.isNull(nextCursor);
+  });
+
+  test("feed pages newest first without gaps or repeats, even within one batch", async ({
+    assert,
+  }) => {
+    // One multi-insert gives every row the same `now()`, so paging must fall back to the id.
+    await MessageLogService.logOutgoingMessages(
+      Array.from({ length: 7 }, (_, index) => ({
+        channel: "sms" as const,
+        recipient: `9000000${index}`,
+        context: { messageType: "reminder" as const },
+        smsBody: "Husk boka!",
+      })),
+    );
+    await logSms("91234567");
+
+    const seen: string[] = [];
+    let cursor: string | undefined;
+    let pages = 0;
+    do {
+      const page = await MessageLogService.feed({ limit: 3, cursor });
+      seen.push(...page.entries.map((entry) => entry.id));
+      cursor = page.nextCursor ?? undefined;
+      pages += 1;
+    } while (cursor);
+
+    assert.equal(pages, 3);
+    assert.lengthOf(seen, 8);
+    assert.lengthOf(new Set(seen), 8);
+    assert.equal(
+      (await MessageLogService.feed({ limit: 1 })).entries[0]?.recipient,
+      "91234567",
+      "the later insert comes first",
+    );
+  });
+
+  test("feed rejects a malformed cursor", async ({ assert }) => {
+    await assert.rejects(
+      () => MessageLogService.feed({ limit: 3, cursor: "not-a-cursor" }),
+      "Ugyldig posisjon i loggen",
+    );
   });
 });
 

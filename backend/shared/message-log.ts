@@ -79,6 +79,12 @@ export interface MessageLogEntryDto {
   events: MessageEventDto[];
 }
 
+/** One page of the global log, newest first; `nextCursor` is null on the last page. */
+export interface MessageLogFeedPage {
+  entries: MessageLogEntryDto[];
+  nextCursor: string | null;
+}
+
 export interface SendoutStatsDto {
   id: number;
   kind: SendoutKind;

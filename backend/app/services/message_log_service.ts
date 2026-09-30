@@ -4,6 +4,7 @@ import logger from "@adonisjs/core/services/logger";
 import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
 
+import BadRequestException from "#exceptions/bad_request_exception";
 import Message from "#models/message";
 import type MessageEvent from "#models/message_event";
 import Sendout from "#models/sendout";
@@ -12,6 +13,7 @@ import type {
   MessageChannel,
   MessageEventDto,
   MessageLogEntryDto,
+  MessageLogFeedPage,
   MessageLogMetricsDto,
   MessageStatus,
   MessageType,
@@ -357,19 +359,47 @@ async function customerLog(userId: string): Promise<{
   };
 }
 
-/** Newest-first page of the global log for the live feed. */
+/**
+ * The feed walks `(created_at, id)` newest first. The cursor carries the timestamp as Postgres
+ * prints it, so the microseconds `now()` stores survive the round trip; a millisecond ISO string
+ * would skip or repeat rows written in the same millisecond, which a batch send always is.
+ */
+const CURSOR_SEPARATOR = "_";
+const CURSOR_TIMESTAMP_PATTERN =
+  /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?[+-]\d{2}(?::\d{2})?$/;
+const UUID_PATTERN = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
+
+function encodeFeedCursor(message: Message): string {
+  return `${String(message.$extras["created_at_text"])}${CURSOR_SEPARATOR}${message.id}`;
+}
+
+function decodeFeedCursor(cursor: string): { createdAt: string; id: string } {
+  const separator = cursor.lastIndexOf(CURSOR_SEPARATOR);
+  const createdAt = cursor.slice(0, separator);
+  const id = cursor.slice(separator + 1);
+  if (separator === -1 || !CURSOR_TIMESTAMP_PATTERN.test(createdAt) || !UUID_PATTERN.test(id)) {
+    throw new BadRequestException("Ugyldig posisjon i loggen");
+  }
+  return { createdAt, id };
+}
+
+/** One page of the global log for the live feed, newest first, strictly older than the cursor. */
 async function feed(input: {
   limit: number;
   channel?: MessageChannel;
   sendoutId?: number;
   onlyFailures?: boolean;
   search?: string;
-}): Promise<MessageLogEntryDto[]> {
+  cursor?: string;
+}): Promise<MessageLogFeedPage> {
   const query = Message.query()
+    .select("messages.*", db.raw("created_at::text as created_at_text"))
     .preload("events")
     .preload("sendout")
     .orderBy("createdAt", "desc")
-    .limit(input.limit);
+    .orderBy("id", "desc")
+    // One row more than the page, to know whether there is a next page
+    .limit(input.limit + 1);
   if (input.channel) {
     void query.where("channel", input.channel);
   }
@@ -384,8 +414,20 @@ async function feed(input: {
     const escaped = input.search.replaceAll(/[\\%_]/g, String.raw`\$&`);
     void query.whereILike("recipient", `%${escaped}%`);
   }
+  if (input.cursor) {
+    const cursor = decodeFeedCursor(input.cursor);
+    void query.whereRaw("(created_at, id) < (?::timestamptz, ?::uuid)", [
+      cursor.createdAt,
+      cursor.id,
+    ]);
+  }
   const messages = await query;
-  return messages.map(toEntryDto);
+  const page = messages.slice(0, input.limit);
+  const last = page.at(-1);
+  return {
+    entries: page.map(toEntryDto),
+    nextCursor: messages.length > input.limit && last !== undefined ? encodeFeedCursor(last) : null,
+  };
 }
 
 async function metrics(days: number): Promise<MessageLogMetricsDto> {

@@ -1982,9 +1982,9 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/message_log').messageLogSendoutsValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['sendouts']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['sendouts']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['sendouts']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
 }
