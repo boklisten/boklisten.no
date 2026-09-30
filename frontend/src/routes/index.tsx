@@ -1,76 +1,43 @@
-import { Box, Container, Divider, Stack, Title } from "@mantine/core";
-
-import Dots from "@/features/frontpage/Dots";
-import EmployeeAdminEntry from "@/features/frontpage/EmployeeAdminEntry";
-import EndButtons from "@/features/frontpage/EndButtons";
-import { HeroImageBackground } from "@/features/frontpage/HeroImageBackground";
-import HowToCard from "@/features/frontpage/HowToCard";
-import QuickButtons from "@/features/frontpage/QuickButtons";
-import PublicLayout from "@/features/PublicLayout";
-
 import { createFileRoute } from "@tanstack/react-router";
+
+import ClosingCta from "@/features/frontpage/ClosingCta";
+import classes from "@/features/frontpage/frontpage.module.css";
+import Hero from "@/features/frontpage/Hero";
+import PracticalLinks from "@/features/frontpage/PracticalLinks";
+import SchoolNote from "@/features/frontpage/SchoolNote";
+import Steps from "@/features/frontpage/Steps";
+import PublicLayout from "@/features/PublicLayout";
 import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/")({
-  head: () =>
-    seo({
+  head: () => ({
+    ...seo({
       title: "Boklisten.no – pensumbøker til videregående og privatister",
       description:
         "Bestill pensumbøkene du trenger: velg skolen din og fagene du tar, så finner vi bøkene. Hent dem på stand ved skolen eller i posten, og lever eller få dem kjøpt tilbake når du er ferdig.",
     }),
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,600..700,50&display=swap",
+      },
+    ],
+  }),
   component: Frontpage,
 });
 
 function Frontpage() {
   return (
-    <PublicLayout padding={0} withBorder={false}>
-      <Stack>
-        <HeroImageBackground />
-        <Container>
-          <Stack align="center">
-            <QuickButtons />
-            <EmployeeAdminEntry />
-            <Divider w="100%" />
-            <Stack gap={0} align="center">
-              <Box p="xl" bd="10px solid brand" bdrs={50} w="100%">
-                <Title ta="center" order={2}>
-                  Slik funker det
-                </Title>
-              </Box>
-              <HowToCard
-                image="/images/select_items.webp"
-                title="Velg"
-                description="Lag deg en bruker og velg den skolen du går på. Deretter er det bare å velge de bøkene du trenger til de fagene du tar."
-              />
-
-              <HowToCard
-                image="/images/get_items.webp"
-                title="Hent"
-                description="Etter at du har bestilt så er det bare å hente bøkene. Dette kan du gjøre når vi har stand på din skole."
-              />
-
-              <HowToCard
-                image="/images/read_items.webp"
-                title="Les"
-                description="Nå er det bare å sette seg ned for å studere."
-              />
-
-              <HowToCard
-                image="/images/deliver_items.webp"
-                title="LEVER"
-                description="Når du har lest deg ferdig og fristen begynner å nærme seg må elever levere tilbake bøkene. Vi har stands på slutten av semesteret på de fleste skoler. Vi vil kunne kjøpe tilbake de fleste bøkene dine hvis du er privatist. Hvis vi kjøper boken din slipper du å betale siste avdrag. Levering og salg av bøker med post er mulig om det ikke passer å møte opp."
-              />
-              <Dots />
-              <Stack gap="xs" p="xl" bd="10px solid brand" bdrs={50} w="100%">
-                <Title ta="center" order={2}>
-                  Hva venter du på?
-                </Title>
-                <EndButtons />
-              </Stack>
-            </Stack>
-          </Stack>
-        </Container>
-      </Stack>
+    <PublicLayout padding={0} withBorder={false} footerSpacing={0}>
+      <div className={classes.page}>
+        <Hero />
+        <Steps />
+        <PracticalLinks />
+        <ClosingCta />
+        <SchoolNote />
+      </div>
     </PublicLayout>
   );
 }

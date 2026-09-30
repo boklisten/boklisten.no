@@ -12,10 +12,13 @@ export default function PublicLayout({
   children,
   padding,
   withBorder,
+  footerSpacing = "xl",
 }: {
   children: ReactNode;
   padding: StyleProp<MantineSpacing>;
   withBorder: boolean;
+  /** Space between the page and the footer; a page that paints its own background runs it to 0. */
+  footerSpacing?: StyleProp<MantineSpacing>;
 }) {
   return (
     <>
@@ -45,7 +48,7 @@ export default function PublicLayout({
           {children}
         </AppShellMain>
       </AppShell>
-      <PublicPageFooter mt="xl" />
+      <PublicPageFooter mt={footerSpacing} />
     </>
   );
 }

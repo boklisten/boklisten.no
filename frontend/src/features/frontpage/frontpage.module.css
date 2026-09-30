@@ -1,0 +1,348 @@
+/*
+ * The front page is written for privatister: people buying their own exam books. It reads like
+ * a textbook page rather than a product site, so the decoration is a highlighter swipe under the
+ * headline and a fan of real covers, and nothing else. Paper is kept nearly white and slightly
+ * cool so the brand teal stays the strongest colour on the page.
+ *
+ * Tokens
+ *   paper   #f8f7f3  page background under the teal header
+ *   ink     #1f2d33  headlines
+ *   body    #45565e  running text
+ *   teal    brand-9  buttons and links (Mantine's primary)
+ *   wash    #e6f0f3  the closing band
+ *   marker  #ffe27a  the highlighter, used once
+ */
+.page {
+  --fp-paper: #f8f7f3;
+  --fp-ink: #1f2d33;
+  --fp-body: #45565e;
+  --fp-wash: #e6f0f3;
+  --fp-rule: #d9e2e6;
+  --fp-marker: #ffe27a;
+  --fp-display: "Fraunces", Georgia, "Times New Roman", serif;
+
+  /* SvgBookCover draws its fallback title in the Bokflyt display face; here it is this page's. */
+  --bf-display: var(--fp-display);
+
+  color: var(--fp-body);
+  background: var(--fp-paper);
+  overflow-x: clip;
+}
+
+.display {
+  font-family: var(--fp-display);
+  font-variation-settings: "SOFT" 50;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.08;
+  color: var(--fp-ink);
+  text-wrap: balance;
+}
+
+.heroTitle {
+  font-size: clamp(2.6rem, 9vw, 4.6rem);
+  font-weight: 700;
+  color: #fff;
+}
+
+.sectionTitle {
+  font-size: clamp(1.9rem, 5.5vw, 2.7rem);
+}
+
+.stepTitle {
+  font-size: clamp(1.35rem, 4vw, 1.6rem);
+}
+
+.smallTitle {
+  font-size: clamp(1.2rem, 3.6vw, 1.4rem);
+}
+
+.lead {
+  font-size: clamp(1.05rem, 2.6vw, 1.2rem);
+  line-height: 1.55;
+  max-width: 32em;
+  color: var(--fp-body);
+}
+
+.body {
+  line-height: 1.55;
+  max-width: 34em;
+}
+
+/* One marker stroke under the headline, drawn once as the page opens. */
+.mark {
+  padding: 0 0.08em;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M1 3.2C18 1.4 38 4.6 58 2.4S90 3.8 99 2.2v5.6C80 9.6 52 6.2 30 8.8S8 8.4 1 8.6z' fill='%23ffe27a'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 100% 0.22em;
+  background-position: 0 100%;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mark {
+    animation: swipe 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+  }
+}
+
+@keyframes swipe {
+  from {
+    background-size: 0% 0.22em;
+  }
+
+  to {
+    background-size: 100% 0.22em;
+  }
+}
+
+/* The hero keeps the teal the site has always opened with; the header runs straight into it. */
+.hero {
+  padding: clamp(2rem, 6vw, 4.5rem) 0 clamp(2.5rem, 6vw, 4.5rem);
+  color: #fff;
+  background: var(--mantine-color-brand-9);
+}
+
+.heroLead {
+  color: #fff;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  align-items: center;
+
+  @media (min-width: $mantine-breakpoint-md) {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 3rem;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  /* Phones get full-width buttons, thumbs land on them. */
+  & > * {
+    flex: 1 1 100%;
+  }
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    & > * {
+      flex: 0 0 auto;
+    }
+  }
+}
+
+.note {
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.5;
+  color: var(--fp-body);
+}
+
+.heroNote {
+  color: rgb(255 255 255 / 84%);
+}
+
+.employee {
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--mantine-color-orange-2);
+  background: var(--mantine-color-orange-0);
+}
+
+/* Phones get straight to the buttons; the fan of covers is a desktop companion to the headline. */
+.fan {
+  display: none;
+
+  @media (min-width: $mantine-breakpoint-md) {
+    display: block;
+    width: 100%;
+    max-width: 30rem;
+    height: auto;
+    margin: 0 auto;
+  }
+}
+
+.section {
+  padding: clamp(2.5rem, 7vw, 5rem) 0;
+}
+
+.steps {
+  position: relative;
+  display: grid;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (min-width: $mantine-breakpoint-md) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2rem;
+  }
+}
+
+.step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  column-gap: 1rem;
+  align-items: start;
+
+  @media (min-width: $mantine-breakpoint-md) {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 1rem;
+    /* The four columns share a height; keep each step's rows at the top rather than spread out. */
+    align-content: start;
+  }
+}
+
+/* The rail that strings the four steps together: down the left on phones, along the top on desktop. */
+.step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: calc(2.25rem - 1px);
+  top: 4.5rem;
+  bottom: -2rem;
+  width: 2px;
+  background: var(--fp-rule);
+
+  @media (min-width: $mantine-breakpoint-md) {
+    left: 4.5rem;
+    right: -2rem;
+    top: calc(2.25rem - 1px);
+    bottom: auto;
+    width: auto;
+    height: 2px;
+  }
+}
+
+.stepFigure {
+  position: relative;
+  display: block;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background: var(--fp-paper);
+}
+
+.stepText {
+  display: grid;
+  gap: 0.35rem;
+  padding-top: 0.35rem;
+
+  @media (min-width: $mantine-breakpoint-md) {
+    padding-top: 0;
+  }
+}
+
+/*
+ * The two practical links are index tabs: the yellow flags students stick in a textbook to find
+ * a page again. They hang from a rule that reads as the page edge, and each tab is the link.
+ */
+.tabsSection {
+  padding: clamp(1rem, 3vw, 2rem) 0 clamp(2.5rem, 7vw, 5rem);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  border-top: 2px solid var(--fp-rule);
+
+  @media (min-width: $mantine-breakpoint-xs) {
+    grid-template-columns: repeat(2, minmax(0, 22rem));
+    gap: 1rem;
+  }
+}
+
+.tab {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.25rem 1.25rem 1.5rem;
+  color: var(--fp-ink);
+  /* A faint tint of the marker yellow: these tabs are wayfinding, not the point of the page. */
+  background: rgb(255 226 122 / 30%);
+  border-radius: 0 0 16px 16px;
+  text-decoration: none;
+  transition: background-color 120ms ease;
+
+  &:hover,
+  &:focus-visible {
+    background: rgb(255 226 122 / 55%);
+    text-decoration: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mantine-color-brand-9);
+    outline-offset: 2px;
+  }
+}
+
+.tabTitle {
+  font-family: var(--fp-display);
+  font-variation-settings: "SOFT" 50;
+  font-weight: 600;
+  font-size: clamp(1.2rem, 3.6vw, 1.4rem);
+  line-height: 1.15;
+  color: var(--fp-ink);
+  text-wrap: balance;
+}
+
+.tabText {
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.5;
+  color: rgb(31 45 51 / 78%);
+}
+
+.tabAction {
+  margin-top: 0.35rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.closing {
+  background: var(--fp-wash);
+}
+
+.closingInner {
+  display: grid;
+  gap: 1.25rem;
+  justify-items: center;
+  text-align: center;
+}
+
+/* The note to schools sits beside Bokflyt's own figure, the books passing from pupil to pupil. */
+.schools {
+  padding: clamp(2rem, 5vw, 3.5rem) 0;
+  border-top: 1px solid var(--fp-rule);
+}
+
+.schoolsGrid {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+
+  @media (min-width: $mantine-breakpoint-md) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 3rem;
+  }
+}
+
+.schoolsText {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.schoolsFigure {
+  display: none;
+
+  @media (min-width: $mantine-breakpoint-md) {
+    display: block;
+    /* The figure's top is thin arcs; lifting it puts the row of faces level with the text. */
+    transform: translateY(-7%);
+  }
+}
