@@ -17,7 +17,6 @@ declare const classes: {
   readonly sheetContent: string;
   readonly bottom: string;
   readonly sheetBody: string;
-  readonly sheetHandle: string;
   readonly sheetHead: string;
   readonly sheetClose: string;
   readonly identity: string;

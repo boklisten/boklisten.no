@@ -78,13 +78,22 @@ export default function Hero() {
               <NavLink
                 component={TanStackAnchor}
                 to="/admin"
-                className={classes.employee}
+                classNames={{ root: classes.employee, label: classes.employeeLabel }}
                 label="Gå til bl-admin"
                 description="Her kan du søke opp kunder, samle inn og dele ut bøker."
                 leftSection={<IconExternalLink />}
                 active
-                color="orange"
                 underline="never"
+                // The one orange thing on the teal hero, so an employee spots it at once. The
+                // hero is the same in both schemes, so the pane is too: solid orange, white type.
+                vars={() => ({
+                  root: {
+                    "--nl-bg": "var(--fp-signal)",
+                    "--nl-hover": "var(--fp-signal-hover)",
+                    "--nl-color": "#fff",
+                  },
+                  children: {},
+                })}
               />
             </Activity>
           </Stack>

@@ -75,6 +75,7 @@ router.post("/bokflyt/contact", [controllers.Bokflyt, "contact"]).use(throttle);
 
 router.get("/branches", [controllers.branches.Branches, "index"]);
 router.get("/branches/public", [controllers.branches.Branches, "indexPublic"]);
+router.get("/branches/opening_hours", [controllers.branches.Branches, "indexOpeningHours"]);
 router.get("/branches/:branchId", [controllers.branches.Branches, "show"]);
 router.get("/branches/:branchId/catalog", [controllers.branches.BranchCatalog, "show"]);
 router.get("/branches/:branchId/opening_hours", [controllers.OpeningHours, "index"]);

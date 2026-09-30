@@ -23,10 +23,10 @@
   justify-content: space-between;
   padding: 0.75rem 0.75rem 0.75rem 1.25rem;
   color: var(--nav-ink);
-  background: #fff;
+  background: var(--nav-card);
   border: 1px solid var(--nav-rule);
   border-radius: var(--mantine-radius-lg);
-  box-shadow: 0 12px 32px rgb(31 45 51 / 18%);
+  box-shadow: 0 12px 32px light-dark(rgb(31 45 51 / 18%), rgb(0 0 0 / 55%));
 }
 
 .text {
@@ -36,16 +36,16 @@
   line-height: 1.25;
 }
 
-/* The count sits on one highlighter swipe, drawn behind the lower half of the word. */
+/* The count sits over one highlighter swipe, drawn under the word so the word stays legible. */
 .summary {
   justify-self: start;
-  padding: 0 0.15em;
+  padding: 0 0.15em 0.3em;
   font-weight: 600;
   white-space: nowrap;
   background-image: var(--nav-marker-swipe);
   background-repeat: no-repeat;
-  background-position: 0 90%;
-  background-size: 100% 0.5em;
+  background-position: 0 100%;
+  background-size: 100% 0.3em;
 }
 
 /* The step never shrinks or wraps; the words beside it give way first. */

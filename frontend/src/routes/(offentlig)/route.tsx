@@ -12,11 +12,11 @@ export const Route = createFileRoute("/(offentlig)")({
 function PublicPageLayout() {
   const frontpage = useLocation({ select: (location) => location.pathname === "/" });
   return frontpage ? (
-    <PublicLayout padding={0} withBorder={false} footerSpacing={0}>
+    <PublicLayout padding={0} footerSpacing={0}>
       <Outlet />
     </PublicLayout>
   ) : (
-    <PublicLayout padding="md" withBorder>
+    <PublicLayout padding="md">
       <Outlet />
     </PublicLayout>
   );

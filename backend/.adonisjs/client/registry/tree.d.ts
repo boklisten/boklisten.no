@@ -36,6 +36,7 @@ export interface ApiDefinition {
   branches: {
     index: typeof routes['branches.index']
     indexPublic: typeof routes['branches.index_public']
+    indexOpeningHours: typeof routes['branches.index_opening_hours']
     show: typeof routes['branches.show']
     store: typeof routes['branches.store']
     update: typeof routes['branches.update']

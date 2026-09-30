@@ -16,6 +16,7 @@ declare const classes: {
   readonly actions: string;
   readonly note: string;
   readonly employee: string;
+  readonly employeeLabel: string;
   readonly fan: string;
   readonly section: string;
   readonly steps: string;

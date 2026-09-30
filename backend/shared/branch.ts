@@ -90,8 +90,8 @@ export interface PublicBranchNode {
   parentBranchId: string | null;
   /** What this branch's children represent, e.g. "klasse"; titles the step that lists them. */
   childLabel: string | null;
-  /** The walk ends here: the branch offers subjects to order from. */
-  hasBooks: boolean;
+  /** The walk ends here: the branch holds what the walk is for (subject books, opening hours). */
+  isLeaf: boolean;
 }
 
 export interface PublicBranchTree {

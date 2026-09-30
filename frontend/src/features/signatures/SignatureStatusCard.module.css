@@ -1,0 +1,63 @@
+/*
+ * The three tones of the signature card: a calm green card, an orange one, and a solid red one
+ * that shouts. The two tinted tones are Mantine's palest shade on paper and a thin wash of the
+ * same hue in the dark, so the card never sits as a pale slab on a dark page; the red one is the
+ * same in both schemes.
+ */
+.card {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+
+  &[data-tone="valid"] {
+    --card-bg: light-dark(var(--mantine-color-green-0), rgb(64 192 87 / 12%));
+    --card-border: light-dark(var(--mantine-color-green-3), rgb(64 192 87 / 40%));
+    --card-icon: light-dark(var(--mantine-color-green-8), var(--mantine-color-green-5));
+    --card-title: light-dark(var(--mantine-color-green-9), var(--mantine-color-green-3));
+    --card-description: var(--mantine-color-dimmed);
+    --card-chevron: light-dark(var(--mantine-color-green-9), var(--mantine-color-green-4));
+  }
+
+  &[data-tone="warning"] {
+    --card-bg: light-dark(var(--mantine-color-orange-0), rgb(253 126 20 / 12%));
+    --card-border: light-dark(var(--mantine-color-orange-3), rgb(253 126 20 / 40%));
+    --card-icon: light-dark(var(--mantine-color-orange-8), var(--mantine-color-orange-5));
+    --card-title: light-dark(var(--mantine-color-orange-9), var(--mantine-color-orange-3));
+    --card-description: var(--mantine-color-dimmed);
+    --card-chevron: light-dark(var(--mantine-color-orange-9), var(--mantine-color-orange-4));
+  }
+
+  &[data-tone="missing"] {
+    --card-bg: var(--mantine-color-red-7);
+    --card-border: var(--mantine-color-red-7);
+    --card-icon: #fff;
+    --card-title: #fff;
+    --card-description: var(--mantine-color-red-0);
+    --card-chevron: #fff;
+  }
+}
+
+.icon {
+  color: var(--card-icon);
+}
+
+.title {
+  color: var(--card-title);
+}
+
+.description {
+  color: var(--card-description);
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--card-chevron);
+  transition: transform 150ms ease;
+
+  &[data-expanded="true"] {
+    transform: rotate(90deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

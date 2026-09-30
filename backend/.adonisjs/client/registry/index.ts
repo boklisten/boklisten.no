@@ -102,6 +102,12 @@ const routes = {
     tokens: [{"old":"/branches/public","type":0,"val":"branches","end":""},{"old":"/branches/public","type":0,"val":"public","end":""}],
     types: placeholder as Registry['branches.index_public']['types'],
   },
+  'branches.index_opening_hours': {
+    methods: ["GET","HEAD"],
+    pattern: '/branches/opening_hours',
+    tokens: [{"old":"/branches/opening_hours","type":0,"val":"branches","end":""},{"old":"/branches/opening_hours","type":0,"val":"opening_hours","end":""}],
+    types: placeholder as Registry['branches.index_opening_hours']['types'],
+  },
   'branches.show': {
     methods: ["GET","HEAD"],
     pattern: '/branches/:branchId',

@@ -12,12 +12,10 @@ import PublicTopBar from "@/features/layout/public-nav/PublicTopBar";
 export default function PublicLayout({
   children,
   padding,
-  withBorder,
   footerSpacing = "xl",
 }: {
   children: ReactNode;
   padding: StyleProp<MantineSpacing>;
-  withBorder: boolean;
   /** Space between the page and the footer; a page that paints its own background runs it to 0. */
   footerSpacing?: StyleProp<MantineSpacing>;
 }) {
@@ -27,7 +25,8 @@ export default function PublicLayout({
     // The shell sets --public-tabbar-height for the footer and the fixed elements above the bar.
     <div className={classes.shell}>
       <AppShell header={{ height: 60 }} p={padding}>
-        <AppShellHeader bg="brand" withBorder={withBorder}>
+        {/* The bar is solid teal; a hairline under it would read as a stray light line. */}
+        <AppShellHeader bg="brand" withBorder={false}>
           <PublicTopBar onOpenMenu={openMenu} menuOpened={menuOpened} />
         </AppShellHeader>
 

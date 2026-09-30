@@ -199,6 +199,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['indexPublic']>>>
     }
   }
+  'branches.index_opening_hours': {
+    methods: ["GET","HEAD"]
+    pattern: '/branches/opening_hours'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['indexOpeningHours']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['indexOpeningHours']>>>
+    }
+  }
   'branches.show': {
     methods: ["GET","HEAD"]
     pattern: '/branches/:branchId'

@@ -4,25 +4,31 @@
  * headline and a fan of real covers, and nothing else. Paper is kept nearly white and slightly
  * cool so the brand teal stays the strongest colour on the page.
  *
- * Tokens
- *   paper   #f8f7f3  page background under the teal header
- *   ink     #1f2d33  headlines
- *   body    #45565e  running text
- *   teal    brand-9  buttons and links (Mantine's primary)
- *   wash    #e6f0f3  the closing band
- *   marker  #ffe27a  the highlighter, used once
+ * Tokens (light / dark; the dark values are Mantine's own dark scale)
+ *   paper   #f8f7f3 / dark-7  page background under the teal header
+ *   ink     #1f2d33 / gray-0  headlines
+ *   body    #45565e / dark-1  running text
+ *   teal    brand-9           buttons and links (Mantine's primary)
+ *   wash    #e6f0f3 / dark-6  the closing band
+ *   marker  #ffe27a           the highlighter, used once
+ *   signal  #c9470d           the employee's pane on the hero; deep enough for white type
  */
 .page {
-  --fp-paper: #f8f7f3;
-  --fp-ink: #1f2d33;
-  --fp-body: #45565e;
-  --fp-wash: #e6f0f3;
-  --fp-rule: #d9e2e6;
+  --fp-paper: light-dark(#f8f7f3, var(--mantine-color-dark-7));
+  --fp-ink: light-dark(#1f2d33, var(--mantine-color-gray-0));
+  --fp-body: light-dark(#45565e, var(--mantine-color-dark-1));
+  --fp-wash: light-dark(#e6f0f3, var(--mantine-color-dark-6));
+  --fp-rule: light-dark(#d9e2e6, var(--mantine-color-dark-4));
   --fp-marker: #ffe27a;
+  --fp-signal: #c9470d;
+  --fp-signal-hover: #b8400c;
   --fp-display: "Fraunces", Georgia, "Times New Roman", serif;
 
-  /* SvgBookCover draws its fallback title in the Bokflyt display face; here it is this page's. */
+  /* SvgBookCover draws its fallback title in the Bokflyt display face, and BookFlowDiagram
+     names its pupils in Bokflyt's ink; here both are this page's, so they follow its scheme. */
   --bf-display: var(--fp-display);
+  --bf-ink: var(--fp-ink);
+  --bf-figure-detail: var(--fp-body);
 
   color: var(--fp-body);
   background: var(--fp-paper);
@@ -152,10 +158,14 @@
   }
 }
 
-/* The employee's way into bl-admin. */
+/* The employee's way into bl-admin: the one orange pane on the teal, lifted a little off it. */
 .employee {
   border-radius: var(--mantine-radius-md);
-  background: var(--mantine-color-orange-1);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 18%);
+}
+
+.employeeLabel {
+  font-weight: 600;
 }
 
 /* Phones get straight to the buttons; the fan of covers is a desktop companion to the headline. */
@@ -270,19 +280,19 @@
   padding: 1.25rem 1.25rem 1.5rem;
   color: var(--fp-ink);
   /* A faint tint of the marker yellow: these tabs are wayfinding, not the point of the page. */
-  background: rgb(255 226 122 / 30%);
+  background: light-dark(rgb(255 226 122 / 30%), rgb(255 226 122 / 12%));
   border-radius: 0 0 16px 16px;
   text-decoration: none;
   transition: background-color 120ms ease;
 
   &:hover,
   &:focus-visible {
-    background: rgb(255 226 122 / 55%);
+    background: light-dark(rgb(255 226 122 / 55%), rgb(255 226 122 / 20%));
     text-decoration: none;
   }
 
   &:focus-visible {
-    outline: 2px solid var(--mantine-color-brand-9);
+    outline: 2px solid var(--mantine-color-brand-text);
     outline-offset: 2px;
   }
 }
@@ -300,7 +310,7 @@
 .tabText {
   font-size: var(--mantine-font-size-sm);
   line-height: 1.5;
-  color: rgb(31 45 51 / 78%);
+  color: var(--fp-body);
 }
 
 .tabAction {

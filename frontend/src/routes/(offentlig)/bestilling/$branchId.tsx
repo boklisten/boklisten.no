@@ -2,8 +2,9 @@ import { Container } from "@mantine/core";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import BranchStep from "@/features/order/BranchStep";
-import { childrenOf, nodeById, orderTreeOptions } from "@/features/order/orderTree";
+import { childrenOf, nodeById } from "@/features/branch-walk/branchTree";
+import BranchWalkStep from "@/features/branch-walk/BranchWalkStep";
+import { ORDER_WALK, orderTreeOptions } from "@/features/order/orderTree";
 import SubjectStep from "@/features/order/SubjectStep";
 import { api } from "@/shared/utils/apiClient";
 import { seo } from "@/shared/utils/seo";
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/(offentlig)/bestilling/$branchId")({
     if (!branch) {
       throw redirect({ to: "/bestilling", replace: true });
     }
-    if (branch.hasBooks) {
+    if (branch.isLeaf) {
       await context.queryClient.query(
         api.branchCatalog.show.queryOptions({ params: { branchId: branch.id } }),
       );
@@ -54,10 +55,10 @@ function OrderStepPage() {
   }
   return (
     <Container size="md">
-      {branch.hasBooks ? (
+      {branch.isLeaf ? (
         <SubjectStep tree={tree} branch={branch} />
       ) : (
-        <BranchStep tree={tree} parent={branch} />
+        <BranchWalkStep walk={ORDER_WALK} tree={tree} parent={branch} />
       )}
     </Container>
   );

@@ -20,6 +20,7 @@ export type ScannedRoutes = {
     'bokflyt.contact': { paramsTuple?: []; params?: {} }
     'branches.index': { paramsTuple?: []; params?: {} }
     'branches.index_public': { paramsTuple?: []; params?: {} }
+    'branches.index_opening_hours': { paramsTuple?: []; params?: {} }
     'branches.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_catalog.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'opening_hours.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -180,6 +181,7 @@ export type ScannedRoutes = {
     'postal_codes.show': { paramsTuple: [ParamValue]; params: {'postalCode': ParamValue} }
     'branches.index': { paramsTuple?: []; params?: {} }
     'branches.index_public': { paramsTuple?: []; params?: {} }
+    'branches.index_opening_hours': { paramsTuple?: []; params?: {} }
     'branches.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_catalog.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'opening_hours.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -261,6 +263,7 @@ export type ScannedRoutes = {
     'postal_codes.show': { paramsTuple: [ParamValue]; params: {'postalCode': ParamValue} }
     'branches.index': { paramsTuple?: []; params?: {} }
     'branches.index_public': { paramsTuple?: []; params?: {} }
+    'branches.index_opening_hours': { paramsTuple?: []; params?: {} }
     'branches.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_catalog.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'opening_hours.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }

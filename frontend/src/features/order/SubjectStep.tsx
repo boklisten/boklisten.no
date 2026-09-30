@@ -5,9 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { pathTo } from "@/features/branch-walk/branchTree";
+import BranchWalkHeader from "@/features/branch-walk/BranchWalkHeader";
+import walk from "@/features/branch-walk/walk.module.css";
 import classes from "@/features/order/order.module.css";
-import OrderStepHeader from "@/features/order/OrderStepHeader";
-import { pathTo } from "@/features/order/orderTree";
+import { ORDER_WALK } from "@/features/order/orderTree";
 import SubjectBookFan from "@/features/order/SubjectBookFan";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import FloatingActionBar from "@/shared/components/FloatingActionBar";
@@ -58,12 +60,12 @@ export default function SubjectStep({
 
   return (
     <>
-      <OrderStepHeader path={path} title="Velg fag">
-        <p className={classes.lead}>Velg fagene du tar, så finner vi bøkene som hører til.</p>
-      </OrderStepHeader>
+      <BranchWalkHeader walk={ORDER_WALK} path={path} title="Velg fag">
+        <p className={walk.lead}>Velg fagene du tar, så finner vi bøkene som hører til.</p>
+      </BranchWalkHeader>
 
       {subjects === null && (
-        <div className={classes.grid} aria-busy>
+        <div className={walk.grid} aria-busy>
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} h={72} radius="lg" />
           ))}
@@ -71,7 +73,7 @@ export default function SubjectStep({
       )}
 
       {subjects?.length === 0 && (
-        <div className={classes.empty}>
+        <div className={walk.empty}>
           <InfoAlert title="Ingen fag tilgjengelig">
             {branch.name} har ikke lagt ut noen bøker enda. Ta kontakt på info@boklisten.no om du
             har spørsmål.
@@ -88,21 +90,21 @@ export default function SubjectStep({
       )}
 
       {subjects && subjects.length > 0 && (
-        <ul className={classes.grid}>
+        <ul className={walk.grid}>
           {subjects.map(([subject, books]) => {
             const pressed = selected.has(subject);
             return (
               <li key={subject}>
                 <button
                   type="button"
-                  className={`${classes.card} ${classes.subject}`}
+                  className={`${walk.card} ${classes.subject}`}
                   aria-pressed={pressed}
                   onClick={() => toggle(subject)}
                 >
                   <SubjectBookFan books={books} />
-                  <span className={classes.cardText}>
-                    <span className={classes.cardName}>{subject}</span>
-                    <span className={classes.cardMeta}>{bookCountLabel(books.length)}</span>
+                  <span className={walk.cardText}>
+                    <span className={walk.cardName}>{subject}</span>
+                    <span className={walk.cardMeta}>{bookCountLabel(books.length)}</span>
                   </span>
                   {pressed ? (
                     <IconCircleCheckFilled className={classes.check} size={24} aria-hidden />

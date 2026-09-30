@@ -12,8 +12,9 @@ import CartLine from "@/features/cart/CartLine";
 import PartlyPaymentNote from "@/features/cart/PartlyPaymentNote";
 import useCartConflicts from "@/features/cart/useCartConflicts";
 import type { CartConflict } from "@/features/cart/useCartConflicts";
-import OrderStepHeader from "@/features/order/OrderStepHeader";
-import { nodeById, orderTreeOptions } from "@/features/order/orderTree";
+import { nodeById } from "@/features/branch-walk/branchTree";
+import BranchWalkHeader from "@/features/branch-walk/BranchWalkHeader";
+import { ORDER_WALK, orderTreeOptions } from "@/features/order/orderTree";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import useAuth from "@/shared/hooks/useAuth";
 import useCart from "@/shared/hooks/useCart";
@@ -43,7 +44,7 @@ export function CartPending() {
 
 /** The last step of the order flow keeps the flow's header. */
 function CartHeader() {
-  return <OrderStepHeader path={[]} title="Handlekurv" />;
+  return <BranchWalkHeader walk={ORDER_WALK} path={[]} title="Handlekurv" />;
 }
 
 /** The cart lives in the browser, so the page renders there and shows its skeleton on the server. */

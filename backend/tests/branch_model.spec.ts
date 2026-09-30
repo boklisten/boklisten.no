@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import BranchPeriod from "#models/branch_period";
+import OpeningHour from "#models/opening_hour";
 import { isObjectIdHex } from "#models/helpers/object_id";
 import { ROOT_VALUES, overrideColumns } from "#services/branch_inheritance_service";
 import { BranchSubjectsService } from "#services/branch_subjects_service";
@@ -183,12 +184,12 @@ test.group("Branch model", (group) => {
     const tree = await Branch.publicTree();
     assert.equal(tree.topLabel, "skoletype");
     assert.deepEqual(
-      tree.nodes.map(({ name, parentBranchId, hasBooks }) => ({ name, parentBranchId, hasBooks })),
+      tree.nodes.map(({ name, parentBranchId, isLeaf }) => ({ name, parentBranchId, isLeaf })),
       [
-        { name: "Ullern", parentBranchId: vgs.id, hasBooks: false },
-        { name: "Ullern Lærer", parentBranchId: ullern.id, hasBooks: true },
-        { name: "Ullern VG1", parentBranchId: ullern.id, hasBooks: true },
-        { name: "VGS", parentBranchId: null, hasBooks: false },
+        { name: "Ullern", parentBranchId: vgs.id, isLeaf: false },
+        { name: "Ullern Lærer", parentBranchId: ullern.id, isLeaf: true },
+        { name: "Ullern VG1", parentBranchId: ullern.id, isLeaf: true },
+        { name: "VGS", parentBranchId: null, isLeaf: false },
       ],
     );
     assert.deepEqual(
@@ -199,8 +200,64 @@ test.group("Branch model", (group) => {
         localName: "Ullern",
         parentBranchId: vgs.id,
         childLabel: "årskull",
-        hasBooks: false,
+        isLeaf: false,
       },
+    );
+  });
+
+  test("openingHoursTree keeps the public branches that lead to hours still ahead", async ({
+    assert,
+  }) => {
+    const ahead = {
+      opensAt: DateTime.now().plus({ days: 3 }),
+      closesAt: DateTime.now().plus({ days: 3, hours: 6 }),
+    };
+    const root = await createBranch({
+      name: "Boklisten.no AS",
+      visibility: "admin",
+      childLabel: "skoletype",
+    });
+    const privatist = await createBranch({
+      name: "Privatist",
+      parentBranchId: root.id,
+      visibility: "public",
+    });
+    const akademiet = await createBranch({
+      name: "Akademiet",
+      parentBranchId: privatist.id,
+      childLabel: "sted",
+    });
+    const bergen = await createBranch({
+      name: "Akademiet Bergen",
+      parentBranchId: akademiet.id,
+      localName: "Bergen",
+    });
+    await OpeningHour.create({ branchId: bergen.id, ...ahead });
+    // Hours that have passed lead nowhere.
+    const oslo = await createBranch({ name: "Akademiet Oslo", parentBranchId: akademiet.id });
+    await OpeningHour.create({
+      branchId: oslo.id,
+      opensAt: DateTime.now().minus({ days: 3 }),
+      closesAt: DateTime.now().minus({ days: 2 }),
+    });
+    // Hours at a branch the public may not see: pruned, and so is the level above it.
+    const vgs = await createBranch({
+      name: "VGS",
+      parentBranchId: root.id,
+      visibility: "employee",
+    });
+    const ullern = await createBranch({ name: "Ullern", parentBranchId: vgs.id });
+    await OpeningHour.create({ branchId: ullern.id, ...ahead });
+
+    const tree = await Branch.openingHoursTree();
+    assert.equal(tree.topLabel, "skoletype");
+    assert.deepEqual(
+      tree.nodes.map(({ name, parentBranchId, isLeaf }) => ({ name, parentBranchId, isLeaf })),
+      [
+        { name: "Akademiet", parentBranchId: privatist.id, isLeaf: false },
+        { name: "Akademiet Bergen", parentBranchId: akademiet.id, isLeaf: true },
+        { name: "Privatist", parentBranchId: null, isLeaf: false },
+      ],
     );
   });
 

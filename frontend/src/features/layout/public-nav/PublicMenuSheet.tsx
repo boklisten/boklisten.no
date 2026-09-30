@@ -9,7 +9,7 @@ import {
   DrawerRoot,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { IconAlertCircle, IconExternalLink, IconLogout } from "@tabler/icons-react";
+import { IconAlertCircle, IconLogout } from "@tabler/icons-react";
 import { useLocation } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
@@ -41,7 +41,7 @@ export default function PublicMenuSheet({
   onClose: () => void;
 }) {
   const pathname = useLocation({ select: (location) => location.pathname });
-  const { user, isLoggedIn, isEmployee } = useAuth();
+  const { user, isLoggedIn } = useAuth();
   const taskCount = countPendingTasks(user);
   // The drawer only ever opens after hydration, so the first (phone) value never paints.
   const wide = useMediaQuery("(min-width: 48em)");
@@ -60,7 +60,6 @@ export default function PublicMenuSheet({
           content: wide ? classes.sheetContent : `${classes.sheetContent} ${classes.bottom}`,
         }}
       >
-        {!wide && <div className={classes.sheetHandle} aria-hidden />}
         <DrawerBody className={classes.sheetBody}>
           <div className={classes.sheetHead}>
             {user ? (
@@ -145,19 +144,6 @@ export default function PublicMenuSheet({
           </div>
 
           <div className={classes.sheetFoot}>
-            {isEmployee && (
-              <Button
-                component={TanStackAnchor}
-                to="/admin"
-                variant="light"
-                color="orange"
-                fullWidth
-                leftSection={<IconExternalLink size={18} />}
-                onClick={onClose}
-              >
-                Gå til bl-admin
-              </Button>
-            )}
             {isLoggedIn && (
               <Button
                 component={TanStackAnchor}

@@ -31,7 +31,7 @@ export default function CreateWaitingListEntry({
   const queryClient = useQueryClient();
 
   const { data: tree } = useQuery(api.branches.indexPublic.queryOptions());
-  const branches = tree?.nodes.filter((node) => node.hasBooks);
+  const branches = tree?.nodes.filter((node) => node.isLeaf);
 
   const addWaitingListCustomer = useMutation({
     mutationFn: async (data: WaitingListEntryForm) => {

@@ -6,48 +6,18 @@ import {
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
+import classes from "@/features/signatures/SignatureStatusCard.module.css";
+
 export type SignatureStatusTone = "valid" | "warning" | "missing";
 
-/** The colours of each state: a calm green card, an orange one, and a solid red one that shouts. */
+/** The glyph and weight of each state; the colours live in the stylesheet, per scheme. */
 const TONES: Record<
   SignatureStatusTone,
-  {
-    icon: typeof IconCircleCheckFilled;
-    iconColor: string;
-    title: string;
-    titleWeight: number;
-    description: string;
-    chevron: string;
-    paper: { withBorder: boolean; bg: string; borderColor?: string };
-  }
+  { icon: typeof IconCircleCheckFilled; withBorder: boolean; titleWeight: number }
 > = {
-  valid: {
-    icon: IconCircleCheckFilled,
-    iconColor: "var(--mantine-color-green-8)",
-    title: "green.9",
-    titleWeight: 600,
-    description: "dimmed",
-    chevron: "var(--mantine-color-green-9)",
-    paper: { withBorder: true, bg: "green.0", borderColor: "var(--mantine-color-green-3)" },
-  },
-  warning: {
-    icon: IconAlertTriangleFilled,
-    iconColor: "var(--mantine-color-orange-8)",
-    title: "orange.9",
-    titleWeight: 600,
-    description: "dimmed",
-    chevron: "var(--mantine-color-orange-9)",
-    paper: { withBorder: true, bg: "orange.0", borderColor: "var(--mantine-color-orange-3)" },
-  },
-  missing: {
-    icon: IconAlertTriangleFilled,
-    iconColor: "white",
-    title: "white",
-    titleWeight: 700,
-    description: "red.0",
-    chevron: "white",
-    paper: { withBorder: false, bg: "red.7" },
-  },
+  valid: { icon: IconCircleCheckFilled, withBorder: true, titleWeight: 600 },
+  warning: { icon: IconAlertTriangleFilled, withBorder: true, titleWeight: 600 },
+  missing: { icon: IconAlertTriangleFilled, withBorder: false, titleWeight: 700 },
 };
 
 /**
@@ -70,38 +40,33 @@ export default function SignatureStatusCard({
   expanded?: boolean;
   onClick: () => void;
 }) {
-  const colors = TONES[tone];
-  const Icon = colors.icon;
+  const { icon: Icon, withBorder, titleWeight } = TONES[tone];
   return (
     <UnstyledButton onClick={onClick} aria-label={ariaLabel} aria-expanded={expanded} w="100%">
       <Paper
         radius="md"
         px="md"
         py="xs"
-        withBorder={colors.paper.withBorder}
-        bg={colors.paper.bg}
-        style={{ borderColor: colors.paper.borderColor }}
+        withBorder={withBorder}
+        className={classes.card}
+        data-tone={tone}
       >
         <Group justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap" miw={0}>
-            <Icon color={colors.iconColor} />
+            <Icon className={classes.icon} />
             <Stack gap={0}>
-              <Text fw={colors.titleWeight} c={colors.title} size="sm">
+              <Text fw={titleWeight} size="sm" className={classes.title}>
                 {title}
               </Text>
-              <Text size="xs" c={colors.description}>
+              <Text size="xs" className={classes.description}>
                 {description}
               </Text>
             </Stack>
           </Group>
           <IconChevronRight
             size={20}
-            color={colors.chevron}
-            style={{
-              flexShrink: 0,
-              transition: "transform 150ms ease",
-              transform: expanded ? "rotate(90deg)" : undefined,
-            }}
+            className={classes.chevron}
+            data-expanded={expanded ? "true" : undefined}
             aria-hidden
           />
         </Group>

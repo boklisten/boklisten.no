@@ -19,6 +19,11 @@ export default class BranchesController {
     return Branch.publicTree();
   }
 
+  /** The tree customers walk down to find a stand's hours; see `Branch.openingHoursTree`. */
+  indexOpeningHours() {
+    return Branch.openingHoursTree();
+  }
+
   /** The branches the caller may see, plus the one named by `include` (see the validator). */
   async index(ctx: HttpContext) {
     const { include } = await ctx.request.validateUsing(branchIndexValidator);

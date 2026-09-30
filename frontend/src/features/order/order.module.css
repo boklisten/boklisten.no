@@ -1,151 +1,12 @@
 /*
- * The order flow is a walk down the branch tree, one question per step, then the subjects. Every
- * step is the same page: the way back, a question in the display face, and a grid of cards on
- * white. The cards are the only furniture; the highlighter appears once, under "Din skole".
- * Colour and type tokens (--nav-*) come from the public shell the flow lives in.
+ * The subject step, the end of the order walk: the shared walk furniture (walk.module.css) with a
+ * pressed card per subject and a fan of its covers.
  */
-.head {
-  display: grid;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-}
-
-.crumbs {
-  flex-wrap: wrap;
-  row-gap: 0.25rem;
-  font-size: var(--mantine-font-size-sm);
-}
-
-.crumb {
-  color: var(--nav-body);
-}
-
-.crumbSep {
-  margin-inline: 0.5rem;
-  color: var(--nav-rule);
-}
-
-.crumbCurrent {
-  font-weight: 600;
-  color: var(--nav-ink);
-}
-
-.title {
-  margin: 0;
-  font-family: var(--nav-display);
-  font-variation-settings: "SOFT" 50;
-  font-size: clamp(1.75rem, 5vw, 2.25rem);
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.015em;
-  color: var(--nav-ink);
-}
-
-.lead {
-  max-width: 34em;
-  margin: 0;
-  line-height: 1.5;
-  color: var(--nav-body);
-}
-
-.sectionLabel {
-  margin: 1.5rem 0 0.75rem;
-  font-size: var(--mantine-font-size-sm);
-  font-weight: 600;
-  color: var(--nav-body);
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* One card for every choice: a link down the tree, or a toggle for a subject. */
-.card {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  width: 100%;
-  min-height: 4.5rem;
-  padding: 0.9rem 1rem 0.9rem 1.25rem;
-  font: inherit;
-  color: var(--nav-ink);
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-  background: #fff;
-  border: 1px solid var(--nav-rule);
-  border-radius: var(--mantine-radius-lg);
-  transition:
-    border-color 120ms ease,
-    background-color 120ms ease,
-    box-shadow 120ms ease;
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover,
-  &:focus-visible {
-    color: var(--nav-ink);
-    text-decoration: none;
-    border-color: var(--mantine-color-brand-9);
-    box-shadow: 0 6px 18px rgb(31 45 51 / 8%);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--mantine-color-brand-9);
-    outline-offset: 2px;
-  }
-}
-
-.cardText {
-  display: grid;
-  flex: 1;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.cardName {
-  font-weight: 600;
-  line-height: 1.25;
-}
-
-.cardMeta {
-  overflow: hidden;
-  font-size: var(--mantine-font-size-sm);
-  line-height: 1.35;
-  color: var(--nav-body);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cardChevron {
-  flex: none;
-  color: var(--nav-body);
-}
-
-/* The member's own school: the one card marked with the highlighter. */
-.ownCard {
-  margin-bottom: 0;
-}
-
-.ownLabel {
-  justify-self: start;
-  padding: 0 0.15em;
-  font-size: var(--mantine-font-size-sm);
-  font-weight: 600;
-  background-image: var(--nav-marker-swipe);
-  background-repeat: no-repeat;
-  background-position: 0 90%;
-  background-size: 100% 0.5em;
-}
 
 /* A subject card is pressed rather than followed. */
 .subject[aria-pressed="true"] {
-  background: rgb(38 118 143 / 6%);
-  border-color: var(--mantine-color-brand-9);
+  background: var(--nav-tint);
+  border-color: var(--mantine-color-brand-text);
 }
 
 .check {
@@ -153,14 +14,8 @@
   color: var(--nav-rule);
 
   .subject[aria-pressed="true"] & {
-    color: var(--mantine-color-brand-9);
+    color: var(--mantine-color-brand-text);
   }
-}
-
-.empty {
-  display: grid;
-  gap: 1rem;
-  justify-items: start;
 }
 
 /* ---------- Book fan ---------- */

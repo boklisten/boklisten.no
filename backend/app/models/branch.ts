@@ -11,6 +11,7 @@ import {
 import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 import type { ModelQueryBuilderContract } from "@adonisjs/lucid/types/model";
 import type { HasMany } from "@adonisjs/lucid/types/relations";
+import { DateTime } from "luxon";
 
 import BranchPeriod from "#models/branch_period";
 import type { PeriodKind } from "#models/branch_period";
@@ -245,24 +246,36 @@ export default class Branch extends BranchSchema {
     return byName((await this.query()).filter((branch) => visible.has(branch.visibility)));
   }
 
-  /**
-   * The tree customers walk down when ordering: every public branch that offers subject books or
-   * has such a branch below it, attached to its nearest public ancestor so hidden levels are
-   * skipped. A branch below a hidden one is reached through the hidden one's parent.
-   */
+  /** The tree customers walk down when ordering: the walk ends at branches that offer subject books. */
   static async publicTree(): Promise<PublicBranchTree> {
-    const [branches, bookRows] = await Promise.all([
-      this.query(),
-      db
-        .from("branch_subjects")
-        .join(
-          "branch_subject_books",
-          "branch_subject_books.branch_subject_id",
-          "branch_subjects.id",
-        )
-        .distinct("branch_subjects.branch_id as branchId") as Promise<{ branchId: string }[]>,
-    ]);
-    const withBooks = new Set(bookRows.map((row) => row.branchId));
+    const rows = await db
+      .query<{ branchId: string }>()
+      .from("branch_subjects")
+      .join("branch_subject_books", "branch_subject_books.branch_subject_id", "branch_subjects.id")
+      .distinct("branch_subjects.branch_id as branchId");
+    return this.publicTreeTo(new Set(rows.map((row) => row.branchId)));
+  }
+
+  /**
+   * The tree customers walk down to find a stand: the walk ends at branches with opening hours
+   * still ahead, so the tree follows what is posted and empties when the season is over.
+   */
+  static async openingHoursTree(): Promise<PublicBranchTree> {
+    const rows = await db
+      .query<{ branchId: string }>()
+      .from("opening_hours")
+      .where("closes_at", ">", DateTime.now().toSQL())
+      .distinct("branch_id as branchId");
+    return this.publicTreeTo(new Set(rows.map((row) => row.branchId)));
+  }
+
+  /**
+   * The public branches that are among `ends` or have such a branch below them, attached to
+   * their nearest public ancestor so hidden levels are skipped. A branch below a hidden one is
+   * reached through the hidden one's parent.
+   */
+  private static async publicTreeTo(ends: ReadonlySet<string>): Promise<PublicBranchTree> {
+    const branches = await this.query();
     const byId = new Map(branches.map((branch) => [branch.id, branch]));
     const childrenOf = Map.groupBy(branches, (branch) => branch.parentBranchId ?? "");
     const isPublic = (branch: Branch) => branch.visibility === "public";
@@ -278,7 +291,7 @@ export default class Branch extends BranchSchema {
       if (known !== undefined) {
         return known;
       }
-      const value = withBooks.has(branch.id) || publicChildren(branch).some(holds);
+      const value = ends.has(branch.id) || publicChildren(branch).some(holds);
       holdsBooks.set(branch.id, value);
       return value;
     };
@@ -307,7 +320,7 @@ export default class Branch extends BranchSchema {
         localName: branch.localName,
         parentBranchId: publicAncestor?.id ?? null,
         childLabel: branch.childLabel,
-        hasBooks: withBooks.has(branch.id),
+        isLeaf: ends.has(branch.id),
       });
     }
     return { topLabel, nodes };

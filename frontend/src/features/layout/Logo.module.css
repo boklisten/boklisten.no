@@ -10,6 +10,6 @@
   white-space: nowrap;
 
   &[data-variant="blue"] {
-    color: var(--mantine-color-brand-9);
+    color: var(--mantine-color-brand-text);
   }
 }

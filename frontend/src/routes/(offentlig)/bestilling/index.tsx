@@ -2,8 +2,9 @@ import { Container } from "@mantine/core";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import BranchStep from "@/features/order/BranchStep";
-import { childrenOf, orderTreeOptions } from "@/features/order/orderTree";
+import { childrenOf } from "@/features/branch-walk/branchTree";
+import BranchWalkStep from "@/features/branch-walk/BranchWalkStep";
+import { ORDER_WALK, orderTreeOptions } from "@/features/order/orderTree";
 import { seo } from "@/shared/utils/seo";
 
 export const Route = createFileRoute("/(offentlig)/bestilling/")({
@@ -31,7 +32,7 @@ function OrderPage() {
   const { data: tree } = useSuspenseQuery(orderTreeOptions());
   return (
     <Container size="md">
-      <BranchStep tree={tree} parent={null} />
+      <BranchWalkStep walk={ORDER_WALK} tree={tree} parent={null} />
     </Container>
   );
 }

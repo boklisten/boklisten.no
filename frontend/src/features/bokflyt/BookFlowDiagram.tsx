@@ -84,12 +84,18 @@ function PersonNode({ person }: { person: Person }) {
         textAnchor="middle"
         fontSize={17}
         fontWeight={600}
-        fill={INK}
+        fill={`var(--bf-ink, ${INK})`}
         fontFamily="var(--bf-display)"
       >
         {person.name}
       </text>
-      <text x={person.x} y={276} textAnchor="middle" fontSize={13} fill="#5b6e79">
+      <text
+        x={person.x}
+        y={276}
+        textAnchor="middle"
+        fontSize={13}
+        fill="var(--bf-figure-detail, #5b6e79)"
+      >
         {person.detail}
       </text>
     </g>

@@ -41,7 +41,6 @@ import { Route as offentligAuthRegisterRouteImport } from './routes/(offentlig)/
 import { Route as offentligBestillingIndexRouteImport } from './routes/(offentlig)/bestilling/index'
 import { Route as offentligBestillingBranchIdRouteImport } from './routes/(offentlig)/bestilling/$branchId'
 import { Route as offentligInfoAboutRouteImport } from './routes/(offentlig)/info/about'
-import { Route as offentligInfoBranchRouteRouteImport } from './routes/(offentlig)/info/branch/route'
 import { Route as offentligInfoBuybackRouteImport } from './routes/(offentlig)/info/buyback'
 import { Route as offentligInfoCompaniesRouteImport } from './routes/(offentlig)/info/companies'
 import { Route as offentligInfoContactRouteImport } from './routes/(offentlig)/info/contact'
@@ -67,6 +66,7 @@ import { Route as administrasjonAdminKommunikasjonPaminnelserRouteImport } from 
 import { Route as administrasjonAdminKommunikasjonUtsendelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/utsendelser'
 import { Route as offentligAuthPermissionDeniedRouteImport } from './routes/(offentlig)/auth/permission.denied'
 import { Route as offentligAuthResetIdRouteImport } from './routes/(offentlig)/auth/reset.$id'
+import { Route as offentligInfoBranchIndexRouteImport } from './routes/(offentlig)/info/branch/index'
 import { Route as offentligInfoBranchBranchIdRouteImport } from './routes/(offentlig)/info/branch/$branchId'
 import { Route as offentligInfoPoliciesConditionsRouteImport } from './routes/(offentlig)/info/policies/conditions'
 import { Route as offentligInfoPoliciesPrivacyRouteImport } from './routes/(offentlig)/info/policies/privacy'
@@ -245,12 +245,6 @@ const offentligInfoAboutRoute = offentligInfoAboutRouteImport.update({
   path: '/about',
   getParentRoute: () => offentligInfoRouteRoute,
 } as any)
-const offentligInfoBranchRouteRoute =
-  offentligInfoBranchRouteRouteImport.update({
-    id: '/branch',
-    path: '/branch',
-    getParentRoute: () => offentligInfoRouteRoute,
-  } as any)
 const offentligInfoBuybackRoute = offentligInfoBuybackRouteImport.update({
   id: '/buyback',
   path: '/buyback',
@@ -392,11 +386,17 @@ const offentligAuthResetIdRoute = offentligAuthResetIdRouteImport.update({
   path: '/auth/reset/$id',
   getParentRoute: () => offentligRouteRoute,
 } as any)
+const offentligInfoBranchIndexRoute =
+  offentligInfoBranchIndexRouteImport.update({
+    id: '/branch/',
+    path: '/branch/',
+    getParentRoute: () => offentligInfoRouteRoute,
+  } as any)
 const offentligInfoBranchBranchIdRoute =
   offentligInfoBranchBranchIdRouteImport.update({
-    id: '/$branchId',
-    path: '/$branchId',
-    getParentRoute: () => offentligInfoBranchRouteRoute,
+    id: '/branch/$branchId',
+    path: '/branch/$branchId',
+    getParentRoute: () => offentligInfoRouteRoute,
   } as any)
 const offentligInfoPoliciesConditionsRoute =
   offentligInfoPoliciesConditionsRouteImport.update({
@@ -451,7 +451,6 @@ export interface FileRoutesByFullPath {
   '/sjekk': typeof offentligSjekkRoute
   '/user-settings': typeof offentligUserSettingsRoute
   '/': typeof offentligIndexRoute
-  '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
   '/admin/kasse': typeof administrasjonAdminKasseRoute
@@ -498,6 +497,7 @@ export interface FileRoutesByFullPath {
   '/info/policies/privacy': typeof offentligInfoPoliciesPrivacyRoute
   '/info/policies/terms': typeof offentligInfoPoliciesTermsRoute
   '/kasse/betaling/status': typeof offentligKasseBetalingStatusRoute
+  '/info/branch/': typeof offentligInfoBranchIndexRoute
   '/kasse/betaling/': typeof offentligKasseBetalingIndexRoute
   '/auth/email/verify/$verificationId': typeof offentligAuthEmailVerifyVerificationIdRoute
 }
@@ -515,7 +515,6 @@ export interface FileRoutesByTo {
   '/sjekk': typeof offentligSjekkRoute
   '/user-settings': typeof offentligUserSettingsRoute
   '/': typeof offentligIndexRoute
-  '/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/admin/faktura': typeof administrasjonAdminFakturaRoute
   '/admin/kasse': typeof administrasjonAdminKasseRoute
@@ -562,6 +561,7 @@ export interface FileRoutesByTo {
   '/info/policies/privacy': typeof offentligInfoPoliciesPrivacyRoute
   '/info/policies/terms': typeof offentligInfoPoliciesTermsRoute
   '/kasse/betaling/status': typeof offentligKasseBetalingStatusRoute
+  '/info/branch': typeof offentligInfoBranchIndexRoute
   '/kasse/betaling': typeof offentligKasseBetalingIndexRoute
   '/auth/email/verify/$verificationId': typeof offentligAuthEmailVerifyVerificationIdRoute
 }
@@ -583,7 +583,6 @@ export interface FileRoutesById {
   '/(offentlig)/sjekk': typeof offentligSjekkRoute
   '/(offentlig)/user-settings': typeof offentligUserSettingsRoute
   '/(offentlig)/': typeof offentligIndexRoute
-  '/(offentlig)/info/branch': typeof offentligInfoBranchRouteRouteWithChildren
   '/(offentlig)/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
   '/(administrasjon)/admin/faktura': typeof administrasjonAdminFakturaRoute
   '/(administrasjon)/admin/kasse': typeof administrasjonAdminKasseRoute
@@ -630,6 +629,7 @@ export interface FileRoutesById {
   '/(offentlig)/info/policies/privacy': typeof offentligInfoPoliciesPrivacyRoute
   '/(offentlig)/info/policies/terms': typeof offentligInfoPoliciesTermsRoute
   '/(offentlig)/kasse/betaling/status': typeof offentligKasseBetalingStatusRoute
+  '/(offentlig)/info/branch/': typeof offentligInfoBranchIndexRoute
   '/(offentlig)/kasse/betaling/': typeof offentligKasseBetalingIndexRoute
   '/(offentlig)/auth/email/verify/$verificationId': typeof offentligAuthEmailVerifyVerificationIdRoute
 }
@@ -651,7 +651,6 @@ export interface FileRouteTypes {
     | '/sjekk'
     | '/user-settings'
     | '/'
-    | '/info/branch'
     | '/info/policies'
     | '/admin/faktura'
     | '/admin/kasse'
@@ -698,6 +697,7 @@ export interface FileRouteTypes {
     | '/info/policies/privacy'
     | '/info/policies/terms'
     | '/kasse/betaling/status'
+    | '/info/branch/'
     | '/kasse/betaling/'
     | '/auth/email/verify/$verificationId'
   fileRoutesByTo: FileRoutesByTo
@@ -715,7 +715,6 @@ export interface FileRouteTypes {
     | '/sjekk'
     | '/user-settings'
     | '/'
-    | '/info/branch'
     | '/info/policies'
     | '/admin/faktura'
     | '/admin/kasse'
@@ -762,6 +761,7 @@ export interface FileRouteTypes {
     | '/info/policies/privacy'
     | '/info/policies/terms'
     | '/kasse/betaling/status'
+    | '/info/branch'
     | '/kasse/betaling'
     | '/auth/email/verify/$verificationId'
   id:
@@ -782,7 +782,6 @@ export interface FileRouteTypes {
     | '/(offentlig)/sjekk'
     | '/(offentlig)/user-settings'
     | '/(offentlig)/'
-    | '/(offentlig)/info/branch'
     | '/(offentlig)/info/policies'
     | '/(administrasjon)/admin/faktura'
     | '/(administrasjon)/admin/kasse'
@@ -829,6 +828,7 @@ export interface FileRouteTypes {
     | '/(offentlig)/info/policies/privacy'
     | '/(offentlig)/info/policies/terms'
     | '/(offentlig)/kasse/betaling/status'
+    | '/(offentlig)/info/branch/'
     | '/(offentlig)/kasse/betaling/'
     | '/(offentlig)/auth/email/verify/$verificationId'
   fileRoutesById: FileRoutesById
@@ -1069,13 +1069,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligInfoAboutRouteImport
       parentRoute: typeof offentligInfoRouteRoute
     }
-    '/(offentlig)/info/branch': {
-      id: '/(offentlig)/info/branch'
-      path: '/branch'
-      fullPath: '/info/branch'
-      preLoaderRoute: typeof offentligInfoBranchRouteRouteImport
-      parentRoute: typeof offentligInfoRouteRoute
-    }
     '/(offentlig)/info/buyback': {
       id: '/(offentlig)/info/buyback'
       path: '/buyback'
@@ -1251,12 +1244,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligAuthResetIdRouteImport
       parentRoute: typeof offentligRouteRoute
     }
+    '/(offentlig)/info/branch/': {
+      id: '/(offentlig)/info/branch/'
+      path: '/branch'
+      fullPath: '/info/branch/'
+      preLoaderRoute: typeof offentligInfoBranchIndexRouteImport
+      parentRoute: typeof offentligInfoRouteRoute
+    }
     '/(offentlig)/info/branch/$branchId': {
       id: '/(offentlig)/info/branch/$branchId'
-      path: '/$branchId'
+      path: '/branch/$branchId'
       fullPath: '/info/branch/$branchId'
       preLoaderRoute: typeof offentligInfoBranchBranchIdRouteImport
-      parentRoute: typeof offentligInfoBranchRouteRoute
+      parentRoute: typeof offentligInfoRouteRoute
     }
     '/(offentlig)/info/policies/conditions': {
       id: '/(offentlig)/info/policies/conditions'
@@ -1303,20 +1303,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface offentligInfoBranchRouteRouteChildren {
-  offentligInfoBranchBranchIdRoute: typeof offentligInfoBranchBranchIdRoute
-}
-
-const offentligInfoBranchRouteRouteChildren: offentligInfoBranchRouteRouteChildren =
-  {
-    offentligInfoBranchBranchIdRoute: offentligInfoBranchBranchIdRoute,
-  }
-
-const offentligInfoBranchRouteRouteWithChildren =
-  offentligInfoBranchRouteRoute._addFileChildren(
-    offentligInfoBranchRouteRouteChildren,
-  )
-
 interface offentligInfoPoliciesRouteRouteChildren {
   offentligInfoPoliciesConditionsRoute: typeof offentligInfoPoliciesConditionsRoute
   offentligInfoPoliciesPrivacyRoute: typeof offentligInfoPoliciesPrivacyRoute
@@ -1336,7 +1322,6 @@ const offentligInfoPoliciesRouteRouteWithChildren =
   )
 
 interface offentligInfoRouteRouteChildren {
-  offentligInfoBranchRouteRoute: typeof offentligInfoBranchRouteRouteWithChildren
   offentligInfoPoliciesRouteRoute: typeof offentligInfoPoliciesRouteRouteWithChildren
   offentligInfoAboutRoute: typeof offentligInfoAboutRoute
   offentligInfoBuybackRoute: typeof offentligInfoBuybackRoute
@@ -1345,10 +1330,11 @@ interface offentligInfoRouteRouteChildren {
   offentligInfoFaqRoute: typeof offentligInfoFaqRoute
   offentligInfoGeneralRoute: typeof offentligInfoGeneralRoute
   offentligInfoPupilsRoute: typeof offentligInfoPupilsRoute
+  offentligInfoBranchBranchIdRoute: typeof offentligInfoBranchBranchIdRoute
+  offentligInfoBranchIndexRoute: typeof offentligInfoBranchIndexRoute
 }
 
 const offentligInfoRouteRouteChildren: offentligInfoRouteRouteChildren = {
-  offentligInfoBranchRouteRoute: offentligInfoBranchRouteRouteWithChildren,
   offentligInfoPoliciesRouteRoute: offentligInfoPoliciesRouteRouteWithChildren,
   offentligInfoAboutRoute: offentligInfoAboutRoute,
   offentligInfoBuybackRoute: offentligInfoBuybackRoute,
@@ -1357,6 +1343,8 @@ const offentligInfoRouteRouteChildren: offentligInfoRouteRouteChildren = {
   offentligInfoFaqRoute: offentligInfoFaqRoute,
   offentligInfoGeneralRoute: offentligInfoGeneralRoute,
   offentligInfoPupilsRoute: offentligInfoPupilsRoute,
+  offentligInfoBranchBranchIdRoute: offentligInfoBranchBranchIdRoute,
+  offentligInfoBranchIndexRoute: offentligInfoBranchIndexRoute,
 }
 
 const offentligInfoRouteRouteWithChildren =

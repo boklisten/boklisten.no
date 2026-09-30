@@ -1,25 +1,31 @@
 /*
  * The public navigation borrows the front page's one decoration: the yellow highlighter. The
- * current page is the one somebody has marked, on the desktop bar as a stroke under the word and
- * in the phone tab bar as a swipe behind the icon. Everything else is the brand teal the site has
+ * current page is the one somebody has marked: teal type with a swipe under the word, the same in
+ * the phone tab bar and the menu sheet, and a stroke under the word on the teal desktop bar. Everything else is the brand teal the site has
  * always opened with, and white type on it.
  *
- * Tokens
- *   teal    brand-9   the bar
- *   marker  #ffe27a   the highlighter, only ever on the active item
- *   paper   #f8f7f3   the phone tab bar and the menu sheet
- *   ink     #1f2d33   type on paper
- *   body    #45565e   secondary type on paper
- *   rule    #d9e2e6   hairlines on paper
+ * Tokens (light / dark; the dark values are Mantine's own dark scale so the pages sit on the
+ * same body colour as the rest of the app)
+ *   teal    brand-9              the bar
+ *   accent  brand-text           teal as type and outlines; Mantine lightens it in the dark
+ *   marker  #ffe27a              the highlighter, only ever on the active item
+ *   paper   #f8f7f3 / dark-8     the phone tab bar and the menu sheet
+ *   card    #fff    / dark-6     a card on the page
+ *   ink     #1f2d33 / gray-0     type on paper
+ *   body    #45565e / dark-1     secondary type on paper
+ *   rule    #d9e2e6 / dark-4     hairlines on paper
+ *   tint    teal at low alpha    a pressed or hovered row
  */
 /* The sheet renders in a portal outside the shell, so it carries the tokens as well. */
 .shell,
 .sheetContent {
   --nav-marker: #ffe27a;
-  --nav-paper: #f8f7f3;
-  --nav-ink: #1f2d33;
-  --nav-body: #45565e;
-  --nav-rule: #d9e2e6;
+  --nav-paper: light-dark(#f8f7f3, var(--mantine-color-dark-8));
+  --nav-card: light-dark(#fff, var(--mantine-color-dark-6));
+  --nav-ink: light-dark(#1f2d33, var(--mantine-color-gray-0));
+  --nav-body: light-dark(#45565e, var(--mantine-color-dark-1));
+  --nav-rule: light-dark(#d9e2e6, var(--mantine-color-dark-4));
+  --nav-tint: light-dark(rgb(38 118 143 / 6%), rgb(117 183 205 / 10%));
   --nav-display: "Fraunces", Georgia, "Times New Roman", serif;
   --nav-marker-swipe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M1 3.2C18 1.4 38 4.6 58 2.4S90 3.8 99 2.2v5.6C80 9.6 52 6.2 30 8.8S8 8.4 1 8.6z' fill='%23ffe27a'/%3E%3C/svg%3E");
 }
@@ -206,11 +212,11 @@
   }
 
   &[data-active] {
-    color: var(--mantine-color-brand-9);
+    color: var(--mantine-color-brand-text);
   }
 }
 
-/* The icon's box; the swipe behind it is drawn by .tabMarker in the same place. */
+/* The icon's box. */
 .tabIcon {
   position: relative;
   display: grid;
@@ -220,15 +226,16 @@
 }
 
 /*
- * The one highlighter swipe of the tab bar. It spans one column and is moved by whole columns,
- * so it needs no measuring, and it glides when the current page changes.
+ * The one highlighter swipe of the tab bar, under the current page's word. It spans one column
+ * and is moved by whole columns, so it needs no measuring, and it glides when the current page
+ * changes.
  */
 .tabMarker {
   position: absolute;
-  top: 0.5rem;
+  top: 0;
+  bottom: env(safe-area-inset-bottom, 0px);
   left: 0;
   width: calc(100% / var(--tab-count));
-  height: 1.75rem;
   opacity: 0;
   transform: translateX(calc(var(--tab-index) * 100%));
   transition:
@@ -236,17 +243,17 @@
     opacity 160ms ease;
   pointer-events: none;
 
+  /* Just under the word, in the space the bar leaves beneath it, so nothing is drawn over. */
   &::before {
     content: "";
     position: absolute;
-    top: 0;
+    bottom: 0.2rem;
     left: 50%;
-    width: 2.25rem;
-    height: 100%;
+    width: 2.75rem;
+    height: 0.25rem;
     background-image: var(--nav-marker-swipe);
     background-repeat: no-repeat;
-    background-position: 0 80%;
-    background-size: 100% 0.55rem;
+    background-size: 100% 100%;
     transform: translateX(-50%);
   }
 
@@ -280,14 +287,6 @@
 
 .sheetBody {
   padding: 0 0 calc(1.5rem + env(safe-area-inset-bottom, 0px));
-}
-
-.sheetHandle {
-  width: 2.5rem;
-  height: 0.3rem;
-  margin: 0.6rem auto 0;
-  background: var(--nav-rule);
-  border-radius: 999px;
 }
 
 .sheetHead {
@@ -333,7 +332,7 @@
 }
 
 .identityAction {
-  color: var(--mantine-color-brand-9);
+  color: var(--mantine-color-brand-text);
   text-underline-offset: 0.2em;
 }
 
@@ -372,12 +371,11 @@
   &:focus-visible {
     color: var(--nav-ink);
     text-decoration: none;
-    background: rgb(38 118 143 / 8%);
+    background: var(--nav-tint);
   }
 
   &[data-active] {
-    color: var(--mantine-color-brand-9);
-    background: rgb(38 118 143 / 10%);
+    color: var(--mantine-color-brand-text);
   }
 }
 
@@ -389,7 +387,7 @@
   color: var(--nav-body);
 
   .row[data-active] & {
-    color: var(--mantine-color-brand-9);
+    color: var(--mantine-color-brand-text);
   }
 }
 
@@ -400,8 +398,21 @@
 }
 
 .rowLabel {
+  justify-self: start;
   font-weight: 500;
   line-height: 1.25;
+
+  /* The current page's word carries the swipe, in the same place as in the tab bar; the padding
+     is given back below so the row keeps its height. */
+  .row[data-active] & {
+    margin-bottom: -0.3em;
+    padding: 0 0.15em 0.3em;
+    font-weight: 600;
+    background-image: var(--nav-marker-swipe);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 0.3em;
+  }
 }
 
 .rowDescription {
