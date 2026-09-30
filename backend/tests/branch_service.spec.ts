@@ -28,12 +28,9 @@ test.group("branch_service", (group) => {
     const branch = await createBranchThroughService({
       name: "Flåklypa vgs",
       region: "Flåklypa",
-      type: "vgs",
       parentBranchId: null,
     });
     assert.equal(branch.name, "Flåklypa vgs");
-    assert.equal(branch.type, "vgs");
-    assert.isNull(branch.logo);
     assert.isNull(branch.address);
     assert.equal(branch.visibility, "employee");
     assert.deepEqual(branch.rentPeriods, []);
@@ -286,7 +283,6 @@ test.group("branch_service inheritance", (group) => {
     const created = await createBranchThroughService({
       name: "Sonans Ski",
       region: "Ski",
-      type: "privatist",
       parentBranchId: sonans.id,
     });
     assert.equal(created.parentBranchId, sonans.id);
@@ -300,7 +296,6 @@ test.group("branch_service inheritance", (group) => {
     const created = await createBranchThroughService({
       name: "Bokflyt.no AS",
       region: "Norge",
-      type: null,
       parentBranchId: null,
     });
     assert.isNull(created.parentBranchId);

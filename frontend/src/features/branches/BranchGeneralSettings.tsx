@@ -8,7 +8,6 @@ import { useState } from "react";
 import { VISIBILITY_SEGMENTS, visibilityDescription } from "@/features/branches/branchVisibility";
 import InheritedFieldCard from "@/features/branches/inheritance/InheritedFieldCard";
 import { toneColor } from "@/features/branches/inheritance/tone";
-import { imageFieldValidator } from "@/shared/components/form/fields/complex/ImageField";
 import { useAppForm, withFieldGroup } from "@/shared/hooks/form";
 import useAutoSave from "@/shared/hooks/useAutoSave";
 import { api } from "@/shared/utils/apiClient";
@@ -19,10 +18,8 @@ const BRANCHES_QUERY_KEY = api.branches.index.pathKey();
 /** The fields a branch has at creation; the inherited ones come after it is placed in the tree. */
 interface GeneralFieldValues {
   name: string;
-  logo: string;
   region: string;
   address: string;
-  type: Branch["type"];
 }
 
 interface GeneralValues extends GeneralFieldValues {
@@ -33,35 +30,29 @@ interface GeneralValues extends GeneralFieldValues {
 /** The request body: empty optional text fields mean "not set". */
 function generalBody<Values extends GeneralFieldValues>({
   name,
-  logo,
   region,
   address,
-  type,
   ...rest
 }: Values) {
-  return { ...rest, name, logo: logo || null, region, address: address || null, type };
+  return { ...rest, name, region, address: address || null };
 }
 
 const EMPTY_FIELDS: GeneralFieldValues = {
   name: "",
-  logo: "",
   region: "",
   address: "",
-  type: null,
 };
 
 function valuesOf(branch: Branch): GeneralValues {
   return {
     name: branch.name,
-    logo: branch.logo ?? "",
     region: branch.region,
     address: branch.address ?? "",
-    type: branch.type,
     visibility: branch.overrides.visibility,
   };
 }
 
-/** The text fields and the type select, shared by the editor and the create form. */
+/** The text fields, shared by the editor and the create form. */
 const BranchGeneralFields = withFieldGroup({
   defaultValues: EMPTY_FIELDS,
   render: ({ group }) => (
@@ -71,27 +62,11 @@ const BranchGeneralFields = withFieldGroup({
           <field.TextField required label="Navn" placeholder="Flåklypa videregående skole" />
         )}
       </group.AppField>
-      <group.AppField
-        name="logo"
-        validators={{ onChange: ({ value }) => imageFieldValidator(value) }}
-      >
-        {(field) => <field.ImageField label="Logo" />}
-      </group.AppField>
       <group.AppField name="region">
         {(field) => <field.TextField required label="Region" placeholder="Oslo, Trondheim, Ski" />}
       </group.AppField>
       <group.AppField name="address">
         {(field) => <field.TextField label="Adresse" placeholder="Postboks 8, 1316 Eiksmarka" />}
-      </group.AppField>
-      <group.AppField name="type">
-        {(field) => (
-          <field.SelectField
-            data={TYPE_OPTIONS}
-            label="Type"
-            placeholder="privatist eller VGS"
-            clearable
-          />
-        )}
       </group.AppField>
     </>
   ),
@@ -99,10 +74,8 @@ const BranchGeneralFields = withFieldGroup({
 
 const GENERAL_FIELDS = {
   name: "name",
-  logo: "logo",
   region: "region",
   address: "address",
-  type: "type",
 } as const;
 
 /**
@@ -146,20 +119,20 @@ function EditBranch({ branch }: { branch: Branch }) {
     defaultValues: initialValues,
     listeners: {
       onBlur: ({ fieldApi, formApi }) => {
-        if (fieldApi.name !== "visibility" && fieldApi.name !== "type") {
-          saveIfValid(formApi.state.values, formApi.getFieldMeta("logo")?.errors ?? []);
+        if (fieldApi.name !== "visibility") {
+          saveIfValid(formApi.state.values);
         }
       },
       onChange: ({ fieldApi, formApi }) => {
-        if (fieldApi.name === "visibility" || fieldApi.name === "type") {
-          saveIfValid(formApi.state.values, formApi.getFieldMeta("logo")?.errors ?? []);
+        if (fieldApi.name === "visibility") {
+          saveIfValid(formApi.state.values);
         }
       },
     },
   });
 
-  function saveIfValid(values: GeneralValues, logoErrors: unknown[]) {
-    if (values.name.trim().length === 0 || logoErrors.length > 0) {
+  function saveIfValid(values: GeneralValues) {
+    if (values.name.trim().length === 0) {
       return;
     }
     save(generalBody(values));
@@ -226,11 +199,6 @@ function CreateBranch({ onSuccess }: { onSuccess?: (newBranch?: Branch) => void 
     </Stack>
   );
 }
-
-const TYPE_OPTIONS = [
-  { value: "privatist", label: "privatist" },
-  { value: "vgs", label: "VGS" },
-];
 
 function parseVisibility(value: string): BranchVisibility {
   const visibility = BRANCH_VISIBILITIES.find((candidate) => candidate === value);

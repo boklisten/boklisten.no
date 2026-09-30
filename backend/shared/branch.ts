@@ -2,10 +2,6 @@ import type { InheritedBranchField } from "#shared/branch-inheritance";
 import type { BranchVisibility } from "#shared/branch-visibility";
 import type { Period } from "#shared/period";
 
-export const BRANCH_TYPES = ["vgs", "privatist"] as const;
-/** Which set of payment periods applies: VGS branches rent books, privatist branches sell them in instalments. */
-export type BranchType = (typeof BRANCH_TYPES)[number];
-
 /** A deadline a VGS branch's books may be rented until. */
 export interface RentPeriod {
   type: Period;
@@ -56,9 +52,6 @@ export interface Branch extends BranchPeriods {
   id: string;
   /** The fully qualified name, e.g. "Ullern videregående skole VG1". */
   name: string;
-  /** URL of the logo. */
-  logo: string | null;
-  type: BranchType | null;
   /** The branch this one belongs to in the tree, e.g. the school of a year group. */
   parentBranchId: string | null;
   /** The name relative to the parent, e.g. "VG1". */

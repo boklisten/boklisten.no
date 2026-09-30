@@ -104,7 +104,7 @@ export class BranchSubjectSchema extends BaseModel {
 }
 
 export class BranchSchema extends BaseModel {
-  static $columns = ['address', 'buyoutPercentageOverride', 'childLabel', 'createdAt', 'deliveryAtBranchOverride', 'deliveryByMailOverride', 'id', 'localName', 'logo', 'name', 'parentBranchId', 'paymentResponsibleOverride', 'region', 'responsibleForDeliveryOverride', 'sellPercentageOverride', 'type', 'updatedAt', 'visibilityOverride'] as const
+  static $columns = ['address', 'buyoutPercentageOverride', 'childLabel', 'createdAt', 'deliveryAtBranchOverride', 'deliveryByMailOverride', 'id', 'localName', 'name', 'parentBranchId', 'paymentResponsibleOverride', 'region', 'responsibleForDeliveryOverride', 'sellPercentageOverride', 'updatedAt', 'visibilityOverride'] as const
   $columns = BranchSchema.$columns
   @column()
   declare address: string | null
@@ -123,8 +123,6 @@ export class BranchSchema extends BaseModel {
   @column()
   declare localName: string | null
   @column()
-  declare logo: string | null
-  @column()
   declare name: string
   @column()
   declare parentBranchId: string | null
@@ -136,8 +134,6 @@ export class BranchSchema extends BaseModel {
   declare responsibleForDeliveryOverride: boolean | null
   @column()
   declare sellPercentageOverride: number | null
-  @column()
-  declare type: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
@@ -506,7 +502,7 @@ export class MatchRoundStandCustomerSchema extends BaseModel {
 }
 
 export class MatchRoundSchema extends BaseModel {
-  static $columns = ['branchId', 'createdAt', 'deadline', 'generatedAt', 'id', 'meetingDate', 'name', 'standFrom', 'standLocation', 'standTo', 'status', 'updatedAt', 'userMatchLocations', 'userMeetingFrom', 'userMeetingTo'] as const
+  static $columns = ['branchId', 'createdAt', 'deadline', 'generatedAt', 'id', 'includeCustomerItemsFromOtherBranches', 'meetingDate', 'name', 'standFrom', 'standLocation', 'standTo', 'status', 'updatedAt', 'userMatchLocations', 'userMeetingFrom', 'userMeetingTo'] as const
   $columns = MatchRoundSchema.$columns
   @column()
   declare branchId: string
@@ -518,6 +514,8 @@ export class MatchRoundSchema extends BaseModel {
   declare generatedAt: DateTime | null
   @column({ isPrimary: true })
   declare id: number
+  @column()
+  declare includeCustomerItemsFromOtherBranches: boolean
   @column.date()
   declare meetingDate: DateTime
   @column()

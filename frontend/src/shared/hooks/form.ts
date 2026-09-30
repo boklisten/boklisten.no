@@ -32,7 +32,6 @@ import SelectBranchesField from "@/shared/components/form/fields/complex/SelectB
 import SelectEmailTemplateField from "@/shared/components/form/fields/complex/SelectEmailTemplateField";
 import SelectItemsField from "@/shared/components/form/fields/complex/SelectItemsField";
 import SignatureCanvasField from "@/shared/components/form/fields/complex/SignatureCanvasField";
-import ImageField from "@/shared/components/form/fields/complex/ImageField";
 
 const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 
@@ -72,7 +71,6 @@ const { useAppForm, withFieldGroup } = createFormHook({
     CurrencyField,
     SelectItemsField,
     SelectEmailTemplateField,
-    ImageField,
   },
   formComponents: {
     ErrorSummary,

@@ -41,8 +41,6 @@ export async function createBranch(overrides: Partial<BranchDto> = {}): Promise<
   const branch = await Branch.create({
     id: fixtureId(`b${sequence.toString(16)}`),
     name: `Filial ${sequence}`,
-    logo: null,
-    type: null,
     parentBranchId: null,
     localName: null,
     childLabel: null,
@@ -63,8 +61,6 @@ export function branchDto(overrides: Partial<BranchDto> = {}): BranchDto {
   return {
     id: "branch1",
     name: "Testskolen",
-    logo: null,
-    type: null,
     parentBranchId: null,
     localName: null,
     childLabel: null,

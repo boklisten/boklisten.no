@@ -73,10 +73,13 @@ every confirm button = "Bekreft"; hoist = "Flytt til X".
 - Inherited scalars: `visibility`, `deliveryAtBranch`, `deliveryByMail`, `paymentResponsible`,
   `responsibleForDelivery`, `buyoutPercentage`, `sellPercentage`, and the three period lists as
   one unit. Percentages inherit separately from the periods (Sonans Drammen has 0.33 with the
-  same periods as its siblings). `name`, `localName`, `childLabel`, `logo`, `region`, `address`
-  are never inherited.
-- `branches.type` (vgs/privatist) is dropped. The `Privatist` and `VGS` layers replace it; the
-  payment form shows all three period lists for every branch (an empty list means "not offered").
+  same periods as its siblings). `name`, `localName`, `childLabel`, `region`, `address` are
+  never inherited.
+- `branches.type` (vgs/privatist) and `branches.logo` were dropped on 2026-09-30, in a change set
+  outside these steps (migration `1792300000000_drop_branch_logo_and_type`). What a branch offers
+  says what it is: rent periods make it a school, partly-payment periods a privatist branch
+  (`/info/branch` filters on `partlyPaymentPeriods.length > 0`). The payment form shows all three
+  period lists for every branch (an empty list means "not offered").
 - Creating a branch (revised 2026-09-29): the create form has no parent picker; a new branch is a
   root with the column defaults as own values and is placed under a parent on the Relasjoner tab
   afterwards (it keeps its own values when moved). The API still accepts `parentBranchId` on
@@ -115,10 +118,15 @@ filter in JS for the same reason.
 
 ## Staging facts (verified 2026-09-28; do not re-query, update this list if they change)
 
-- 115 branches, 16 roots, max depth 3. Roots with children: Akademiet (11), Sonans (12), Ullern
-  videregående skole (5 → 21 → 34 classes), Wang (3), Wang Romerike (6), Wang Ringerike (1),
-  Otto Treider (3), Metis (3).
-- Container roots have `type = null`, no periods, and column defaults (`deliveryAtBranch` on,
+- Until 2026-09-30: 115 branches, 16 roots, max depth 3. Roots with children: Akademiet (11),
+  Sonans (12), Ullern videregående skole (5 → 21 → 34 classes), Wang (3), Wang Romerike (6), Wang
+  Ringerike (1), Otto Treider (3), Metis (3).
+- Since 2026-09-30 (built by hand by Adrian, verified the same day): two roots. `Boklisten.no AS`
+  (`6abc32e4d2ebe9e1bc774fa6`, `admin`) holds the layers `Privatist` (`6abc3315d2ebe9e1bc774fa7`,
+  8 children) and `VGS` (`6abc3320d2ebe9e1bc774fa8`, 5 children), and directly under it Flåklypa
+  VGS, Oslo innsamling and Restesalg. `Bokflyt.no AS` (`6abc33ead2ebe9e1bc774fa9`, `admin`) is a
+  second root with no children. The layers have no periods yet.
+- Container roots have no periods and column defaults (`deliveryAtBranch` on,
   `deliveryByMail` on, both percentages 1.00) that differ from every child. Nothing inherits
   until Step 6 consolidates.
 - Sonans: 9 campuses with 40–42 offerings each, 32 of 44 subject names identical across all 9;
@@ -131,8 +139,6 @@ filter in JS for the same reason.
   from consolidation.
 - Subjects: 1236 offering rows, 152 distinct normalised names, 65 singletons, 0 external names.
   "Historie" has 11 distinct book sets across 32 branches; "Psykologi 1" has 2 across 31.
-- Readers of `type`: `BranchPaymentSettings.tsx` (which lists to show), `info/branch/route.tsx`
-  (privatist filter), validators, fixtures, four spec files. Nothing in the backend branches on it.
 - `Fri privatist` is hard-linked by id in `SelectOrderBranch.tsx`.
 
 ## Global constraints
@@ -141,7 +147,8 @@ filter in JS for the same reason.
 - Imports via `#services/*`, `#models/*`, `#shared/*`; never relative `../../app`.
 - Migrations: `cd backend && fnm exec --using=24 node ace migration:run` against staging
   regenerates `database/schema.ts`; the test DB needs `NODE_ENV=test node ace migration:run`
-  as well. Next free timestamps: `1792200000000` and up, one per step below.
+  as well. Next free timestamps: `1792400000000` and up, one per step below (`1792300000000` is the
+  logo/type drop).
 - `backend/.adonisjs/client/` is generated and committed; regenerate after route/response changes
   by booting the backend dev server once (`generateRegistry` hook in `adonisrc.ts`).
 - Every branch write runs inside `Branch.whileLocked(work)`: a transaction holding
@@ -489,7 +496,7 @@ source: { id, name }, deviating: { id, name }[] }`)
   vil arve Synlighet fra Sonans." Confirm label "Bruk for alle under". Confirm calls
   `inherit_below`.
 - Create mode: a "Under" tree picker (default: the branch the modal was opened from, clearable
-  for a new root), name, logo, region, address, "Opprett".
+  for a new root), name, region, address, "Opprett".
 
 **Verify in the browser:** on `/admin/database/filialer?filial=<Sonans>&filialFane=general`
 confirm the deviation line lists the three admin-only campuses; run "Bruk for alle under" and
@@ -529,8 +536,7 @@ postlevering" switch still only shows when `deliveryByMail` is on.
 
 ## Step 5: The period lists as one inherited unit
 
-**Goal:** Inherit the three period lists together without copying rows, and stop gating the form
-on `type`.
+**Goal:** Inherit the three period lists together without copying rows.
 
 **Design (revised 2026-09-29 for the override model):** the three lists are one inherited unit
 whose "override" is the branch's own rows. One column, `branches.periods_override boolean NOT
@@ -563,7 +569,7 @@ tab gets one `InheritedFieldCard` around the whole "Perioder" fieldset ("Arvet f
 "Overstyrt ↺" in its header like any card; the ↺ confirms here because rows are deleted). In the
 descendant tree the row control is a summary ("3 låne, 2 forlenging") with the ↺, not an editor;
 an inheriting branch gets a "Velg egne perioder" button in the card that copies the source's rows
-(the first edit does the same implicitly). `type` gating goes: all three lists always show.
+(the first edit does the same implicitly).
 
 **Files:**
 
@@ -584,34 +590,30 @@ an inheriting branch gets a "Velg egne perioder" button in the card that copies 
 shows the same partly-payment options; editing one Oslo period turns the whole unit own.
 
 - [ ] Migration (`periods_override` + root check) + relation via `localKey`
-- [ ] Payment tab caption, auto-save, type gating removed
+- [ ] Payment tab caption, auto-save
 - [ ] Pricing test at an inheriting child
 - [ ] `bun fix` clean
 
-## Step 6: Layers, drop `type`, consolidate scalars (reviewed data change)
+## Step 6: Layers and consolidated scalars (reviewed data change)
 
-**Goal:** Give the tree its single root and two layers, remove `type`, and make inheritance
-actually carry values by moving shared scalars up to containers, with a report to read first.
+**Goal:** Give the tree its single root and two layers, and make inheritance actually carry
+values by moving shared scalars up to containers, with a report to read first.
 
 **Part A, migration `1792500000000_branch_layers.ts` (runs in predeploy on every environment):**
 
 - Inserts `Boklisten.no AS` (root, `admin`, region "Norge"), `Privatist` and `VGS` (children,
-  `admin`) with fixed ids exported as `BRANCH_LAYER_IDS` from `backend/shared/branch.ts`
-  (generate three with `newObjectId()` once and paste them). Skips rows that already exist.
+  `admin`) with fixed ids exported as `BRANCH_LAYER_IDS` from `backend/shared/branch.ts`: the
+  ids the rows already have on staging (see Staging facts). Skips rows that already exist.
 - Re-parents every existing root by name: privatist → ASK Undervisning, Bjørknes privatskole, Fri
   privatist, K2 Undervisning, Metis, NKI Nettstudier, Oslo innsamling (confirm with Adrian),
   Restesalg, Sonans, Akademiet; vgs → Flåklypa VGS, Otto Treider, Ullern videregående skole,
   Wang, Wang Ringerike, Wang Romerike. Throws on a root not in the table (production must be
   checked against this list before deploy).
-- Drops `branches.type`. The moved roots keep their overrides (a root always holds every
-  field), so no value in force changes; they simply stop being roots.
+- The moved roots keep their overrides (a root always holds every field), so no value in force
+  changes; they simply stop being roots.
 - After this, `Boklisten.no AS` is the only root: `updateBranchRelationships` refuses
   `parentBranchId: null` for any other branch, and `keepValuesInForce` becomes dead code and is
   removed together with its test.
-- Code in the same change: `BRANCH_TYPES`/`BranchType` removed from `shared/branch.ts`, validators,
-  fixtures and the four spec files; `info/branch/route.tsx` filters `descendantsOf(branches,
-BRANCH_LAYER_IDS.privatist)` instead of `type === "privatist"`; the Type select leaves the
-  General tab.
 
 **Part B, command `backend/commands/branches_consolidate.ts` (`node ace branches:consolidate
 [--apply] [--reset-unconfigured]`), run by hand after Part A:**
@@ -634,10 +636,9 @@ staging, spot-check Sonans Oslo (all scalars "Arvet fra Sonans") and Akademiet N
 "Overstyrt"), then production after Adrian's go.
 
 **Files:** migration above; `backend/commands/branches_consolidate.ts`;
-`backend/tests/branches_consolidate.spec.ts`; `backend/shared/branch.ts`; the readers of `type`
-listed in Staging facts.
+`backend/tests/branches_consolidate.spec.ts`; `backend/shared/branch.ts` (`BRANCH_LAYER_IDS`).
 
-- [ ] Layer migration + `type` removal, readers switched
+- [ ] Layer migration
 - [ ] Consolidate command + planning test
 - [ ] Staging dry run reviewed, applied
 - [ ] Production run agreed and done
@@ -856,7 +857,6 @@ override that equalled the parent's value is indistinguishable from an inherited
 which is what the columns meant before. Step 5 adds `periods_override`, dropped on rollback
 (inherited branches must get their source's rows copied first). Step 6 Part A is reversible by
 deleting the three layer rows and setting the moved roots' `parent_branch_id` back to null (the
-migration's name table is the record); `type` can be restored from the layer a branch sits
-under. Step 6 Part B and Step 10 move data; their reports
+migration's name table is the record). Step 6 Part B and Step 10 move data; their reports
 are the record, and "Velg egne bøker" restores any single hoisted case. Step 7 is the one change
 that is not mechanically reversible (names are merged); its merge table is the record.

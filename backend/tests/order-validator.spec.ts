@@ -99,7 +99,6 @@ test.group("OrderValidator", (group) => {
 
     testBranch = branchDto({
       id: "branch1",
-      type: "privatist",
       name: "Sonans",
       rentPeriods: [
         { type: "semester", date: "2027-07-01", maxNumberOfPeriods: 2, percentage: 0.5 },

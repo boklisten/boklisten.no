@@ -23,7 +23,6 @@ import { visibilitiesFor } from "#shared/branch-visibility";
 import type { UserPermission } from "#shared/user-permission";
 import type {
   Branch as BranchDto,
-  BranchType,
   ExtendPeriod,
   InheritedOverrides,
   InheritedValues,
@@ -48,8 +47,6 @@ import type {
  */
 export default class Branch extends BranchSchema {
   static override selfAssignPrimaryKey = true;
-
-  declare type: BranchType | null;
 
   declare visibilityOverride: BranchVisibility | null;
 
@@ -196,8 +193,6 @@ export default class Branch extends BranchSchema {
     return {
       id: this.id,
       name: this.name,
-      logo: this.logo,
-      type: this.type,
       parentBranchId: this.parentBranchId,
       localName: this.localName,
       childLabel: this.childLabel,

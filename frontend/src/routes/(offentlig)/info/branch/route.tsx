@@ -55,10 +55,10 @@ function BranchInfoPageLayout() {
       <TreeSelect
         label="Valgt skole"
         placeholder="Din skole"
-        // Privatist branches can sit under an untyped grouping branch ("Akademiet"), which must
-        // stay in so they nest under it.
+        // A privatist branch is one that sells books in instalments. It can sit under a grouping
+        // branch ("Akademiet") with no periods of its own, which must stay in so it nests under it.
         data={toBranchTreeNodeData(
-          withAncestors(branches ?? [], (branch) => branch.type === "privatist"),
+          withAncestors(branches ?? [], (branch) => branch.partlyPaymentPeriods.length > 0),
         )}
         renderNode={({ node, hasChildren }) => (hasChildren ? null : getBranchNodeShortLabel(node))}
         expandOnClick

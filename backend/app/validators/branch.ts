@@ -1,14 +1,9 @@
 import vine from "@vinejs/vine";
 
 import { calendarDateField, objectIdField, percentageField } from "#validators/common/fields";
-import { BRANCH_TYPES } from "#shared/branch";
 import { INHERITED_BRANCH_FIELDS } from "#shared/branch-inheritance";
 import { BRANCH_VISIBILITIES } from "#shared/branch-visibility";
-import env from "#start/env";
 
-const logoField = vine
-  .string()
-  .url({ require_tld: env.get("API_ENV") !== "dev", require_protocol: true });
 const periodTypeField = vine.enum(["semester", "year"]);
 
 const rentPeriodSchema = vine.object({
@@ -52,10 +47,8 @@ const regionField = vine
 export const branchCreateValidator = vine.create(
   vine.object({
     name: vine.string().trim(),
-    logo: logoField.nullable().optional(),
     region: regionField.clone(),
     address: vine.string().trim().nullable().optional(),
-    type: vine.enum(BRANCH_TYPES).nullable(),
     /** The branch to create under; `null` creates a root. Every inherited field starts as the parent's. */
     parentBranchId: objectIdField.clone().nullable(),
   }),
@@ -68,10 +61,8 @@ export const branchCreateValidator = vine.create(
 export const branchValidator = vine.create(
   vine.object({
     name: vine.string().trim().optional(),
-    logo: logoField.nullable().optional(),
     region: regionField.clone().optional(),
     address: vine.string().trim().nullable().optional(),
-    type: vine.enum(BRANCH_TYPES).nullable().optional(),
     visibility: vine.enum(BRANCH_VISIBILITIES).nullable().optional(),
     paymentResponsible: vine.boolean().nullable().optional(),
     responsibleForDelivery: vine.boolean().nullable().optional(),
