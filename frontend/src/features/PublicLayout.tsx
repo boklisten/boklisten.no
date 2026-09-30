@@ -45,7 +45,7 @@ export default function PublicLayout({
           {children}
         </AppShellMain>
       </AppShell>
-      <PublicPageFooter />
+      <PublicPageFooter mt="xl" />
     </>
   );
 }

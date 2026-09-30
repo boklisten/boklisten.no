@@ -1,0 +1,141 @@
+/*
+ * The footer is the darkest step of the brand teal: the header sits on brand-9, the footer one
+ * shade below it, so both ends of the page belong to the same family. Text lives on three
+ * opacities of white so hierarchy comes from tone rather than from extra colours.
+ */
+.footer {
+  --footer-bg: #163f4c;
+  --footer-text: #fff;
+  --footer-muted: rgb(255 255 255 / 74%);
+  --footer-faint: rgb(255 255 255 / 56%);
+  --footer-rule: rgb(255 255 255 / 14%);
+
+  color: var(--footer-text);
+  background: var(--footer-bg);
+  border-top: 4px solid var(--mantine-color-brand-9);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  padding: 3rem 0 2.5rem;
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (min-width: $mantine-breakpoint-md) {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 3rem;
+  }
+}
+
+.brand {
+  @media (min-width: $mantine-breakpoint-sm) and (max-width: $mantine-breakpoint-md) {
+    grid-column: 1 / -1;
+  }
+}
+
+.wordmark {
+  font-family: serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--footer-text);
+}
+
+.tagline {
+  max-width: 26em;
+  color: var(--footer-muted);
+}
+
+.heading {
+  margin: 0 0 0.9rem;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+  color: var(--footer-text);
+}
+
+.list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  color: var(--footer-muted);
+  text-decoration-color: transparent;
+  text-underline-offset: 0.2em;
+  transition: color 120ms ease;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--footer-text);
+  }
+}
+
+.contactRow {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  color: var(--footer-muted);
+}
+
+.contactIcon {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+  color: var(--mantine-color-brand-3);
+}
+
+.contactValue {
+  color: var(--footer-text);
+}
+
+.legal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.25rem 0 1.5rem;
+  font-size: var(--mantine-font-size-sm);
+  color: var(--footer-faint);
+  text-align: center;
+  border-top: 1px solid var(--footer-rule);
+
+  @media (min-width: $mantine-breakpoint-md) {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+  }
+}
+
+.legalLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  justify-content: center;
+}
+
+.legalLink {
+  color: var(--footer-faint);
+}
+
+.supporter {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.supporterBadge {
+  display: block;
+  padding: 0.2rem 0.35rem;
+  background: #fff;
+  border-radius: var(--mantine-radius-sm);
+}
+
+.supporterLogo {
+  display: block;
+}
