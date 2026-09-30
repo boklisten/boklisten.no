@@ -9,7 +9,6 @@ export const Route = createFileRoute("/(offentlig)/handlekurv")({
   head: () =>
     seo({
       title: "Handlekurv | Boklisten.no",
-      description: "Se hvilke bøker du har lagt til i handlekurven din",
     }),
   component: CartPage,
 });

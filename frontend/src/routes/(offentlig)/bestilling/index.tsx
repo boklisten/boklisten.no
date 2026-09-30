@@ -10,8 +10,7 @@ export const Route = createFileRoute("/(offentlig)/bestilling/")({
   head: () =>
     seo({
       title: "Bestill bøker | Boklisten.no",
-      description:
-        "Velg hvilken skole og hvilke fag du tar, så finner vi bøkene du trenger for deg!",
+      description: "Velg skolen din og fagene du tar, så finner vi bøkene du trenger.",
     }),
   loader: async ({ context }) => {
     const tree = await context.queryClient.query(orderTreeOptions());

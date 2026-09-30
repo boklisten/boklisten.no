@@ -12,7 +12,6 @@ import CartLine from "@/features/cart/CartLine";
 import PartlyPaymentNote from "@/features/cart/PartlyPaymentNote";
 import useCartConflicts from "@/features/cart/useCartConflicts";
 import type { CartConflict } from "@/features/cart/useCartConflicts";
-import orderClasses from "@/features/order/order.module.css";
 import OrderStepHeader from "@/features/order/OrderStepHeader";
 import { nodeById, orderTreeOptions } from "@/features/order/orderTree";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
@@ -42,13 +41,9 @@ export function CartPending() {
   );
 }
 
-/** The last step of the order flow keeps the flow's header; the lead names the cart's one school. */
-function CartHeader({ branchName }: { branchName?: string }) {
-  return (
-    <OrderStepHeader path={[]} title="Handlekurv">
-      {branchName && <p className={orderClasses.lead}>Bøker fra {branchName}</p>}
-    </OrderStepHeader>
-  );
+/** The last step of the order flow keeps the flow's header. */
+function CartHeader() {
+  return <OrderStepHeader path={[]} title="Handlekurv" />;
 }
 
 /** The cart lives in the browser, so the page renders there and shows its skeleton on the server. */
@@ -83,7 +78,7 @@ export default function CartContent() {
 
   return (
     <div className={classes.root}>
-      <CartHeader branchName={branch?.name} />
+      <CartHeader />
       <div className={classes.sections}>
         {sections.map(([section, sectionLines]) => (
           <section key={section} className={classes.section}>
