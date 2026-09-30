@@ -146,10 +146,10 @@
   color: rgb(255 255 255 / 84%);
 }
 
+/* The same block as in the navigation drawer, only with corners since it stands alone here. */
 .employee {
   border-radius: var(--mantine-radius-md);
-  border: 1px solid var(--mantine-color-orange-2);
-  background: var(--mantine-color-orange-0);
+  background: var(--mantine-color-orange-1);
 }
 
 /* Phones get straight to the buttons; the fan of covers is a desktop companion to the headline. */
