@@ -31,10 +31,14 @@ function CallbackPage() {
   const [attempt, setAttempt] = useState(0);
   const [hasFailed, setHasFailed] = useState(false);
 
-  const onArrive = useEffectEvent(async () => {
+  const onArrive = useEffectEvent(async (isCurrent: () => boolean) => {
     const user = await queryClient
       .query({ ...authQueryOptions(), staleTime: 0 })
       .catch(() => undefined);
+    if (!isCurrent()) {
+      // A superseded run must not consume the stored redirect target
+      return;
+    }
     if (user === undefined) {
       // Typically a dropped connection; leave the user a way out instead of spinning forever
       setHasFailed(true);
@@ -51,8 +55,12 @@ function CallbackPage() {
     }
   });
   useEffect(() => {
+    let current = true;
     // oxlint-disable-next-line react/set-state-in-effect -- setHasFailed only runs after an awaited network call, never synchronously during the effect
-    void onArrive();
+    void onArrive(() => current);
+    return () => {
+      current = false;
+    };
     // oxlint-disable-next-line react/exhaustive-effect-dependencies -- `attempt` deliberately re-runs the lookup when the user retries
   }, [attempt]);
 
