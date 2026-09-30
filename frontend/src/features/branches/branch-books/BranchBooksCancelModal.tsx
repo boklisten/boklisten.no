@@ -2,7 +2,7 @@ import { Alert, Button, Checkbox, Group, Stack, Switch, Text } from "@mantine/co
 import { IconInfoCircle } from "@tabler/icons-react";
 import { useState } from "react";
 
-import { bookCountLabel } from "@/features/branches/branch-books/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import type { BranchBooksEditTarget } from "@/features/branches/branch-books/types";
 
 export default function BranchBooksCancelModal({

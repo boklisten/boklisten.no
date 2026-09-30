@@ -1,6 +1,6 @@
 import { Text } from "@mantine/core";
 
-import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import asyncConfirmModal, { CONFIRM_OVER_SCANNER_Z_INDEX } from "@/shared/utils/asyncConfirmModal";
 
 /**

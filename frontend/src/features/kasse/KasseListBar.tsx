@@ -1,4 +1,4 @@
-import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import { useCollectionState } from "@/features/bulk-collection/collectionStore";
 import { InnsamlingIcon } from "@/features/bulk-collection/innsamlingIcon";
 import type { KasseView } from "@/features/kasse/kasseViews";

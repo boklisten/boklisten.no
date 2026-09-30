@@ -3,7 +3,7 @@ import { modals } from "@mantine/modals";
 import { IconSum } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { bookCountLabel } from "@/features/branches/branch-books/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import BranchBooksCancelModal from "@/features/branches/branch-books/BranchBooksCancelModal";
 import BranchBooksDetailsTable from "@/features/branches/branch-books/BranchBooksDetailsTable";
 import BranchBooksEditModal from "@/features/branches/branch-books/BranchBooksEditModal";

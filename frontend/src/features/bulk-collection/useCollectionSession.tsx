@@ -3,7 +3,7 @@ import { Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import {
   getCollection,
   updateCollection,

@@ -1,244 +1,143 @@
-import { ACQUISITION_CART_ITEM_TYPES } from "@boklisten/backend/shared/cart_item";
-import type { CartItem } from "@boklisten/backend/shared/cart_item";
-import {
-  ActionIcon,
-  Box,
-  Button,
-  Card,
-  Grid,
-  Group,
-  Select,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
-import { IconBook, IconCashRegister, IconShoppingCart, IconX } from "@tabler/icons-react";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import type { CartItem, CartItemOption } from "@boklisten/backend/shared/cart_item";
+import { Skeleton } from "@mantine/core";
+import { IconPlus } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity } from "react";
+import { use } from "react";
+import { browser } from "react-dom";
 
-import InfoAlert from "@/shared/components/alerts/InfoAlert";
-import WarningAlert from "@/shared/components/alerts/WarningAlert";
-import { api } from "@/shared/utils/apiClient";
-import useCart from "@/shared/hooks/useCart";
+import classes from "@/features/cart/cart.module.css";
+import CartBar from "@/features/cart/CartBar";
+import CartEmpty from "@/features/cart/CartEmpty";
+import CartLine from "@/features/cart/CartLine";
+import PartlyPaymentNote from "@/features/cart/PartlyPaymentNote";
+import useCartConflicts from "@/features/cart/useCartConflicts";
+import type { CartConflict } from "@/features/cart/useCartConflicts";
+import orderClasses from "@/features/order/order.module.css";
+import OrderStepHeader from "@/features/order/OrderStepHeader";
+import { nodeById, orderTreeOptions } from "@/features/order/orderTree";
+import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import useAuth from "@/shared/hooks/useAuth";
-import SegmentedControlWithLabel from "@/shared/components/SegmentedControlWithLabel";
+import useCart from "@/shared/hooks/useCart";
 
-function CheckoutButton({ to, label, blocked }: { to: string; label: string; blocked: boolean }) {
-  if (blocked) {
-    return (
-      <Button leftSection={<IconCashRegister />} size="md" disabled>
-        {label}
-      </Button>
-    );
-  }
+/** Lines that came from Dine bøker carry no subject; they sit together after the subjects. */
+const OWN_BOOKS = "Dine bøker";
+
+interface Line {
+  cartItem: CartItem;
+  selected: CartItemOption;
+  conflict: CartConflict | null;
+}
+
+/** The page's header and lines while the cart is still only in the browser's storage. */
+export function CartPending() {
   return (
-    <Button
-      component={TanStackAnchor}
-      to={to}
-      leftSection={<IconCashRegister />}
-      size="md"
-      bg="green"
-      underline="never"
-    >
-      {label}
-    </Button>
+    <>
+      <CartHeader />
+      <div className={classes.skeletons} aria-busy>
+        {Array.from({ length: 3 }, (_, index) => (
+          <Skeleton key={index} h={104} radius="lg" />
+        ))}
+      </div>
+    </>
   );
 }
 
-export default function CartContent() {
-  const cart = useCart();
-  const { isLoggedIn } = useAuth();
-  // The conflict flags must reflect orders placed seconds ago, so bypass the global staleTime
-  const { data: openOrderItems } = useQuery({
-    ...api.orders.openItemsMe.queryOptions(),
-    enabled: isLoggedIn,
-    staleTime: 0,
-  });
-  const { data: customerItems } = useQuery({
-    ...api.customerItems.me.queryOptions(),
-    enabled: isLoggedIn,
-    staleTime: 0,
-  });
-
-  const ownedItemIds = new Set(
-    customerItems
-      ?.filter((customerItem) => ["active", "overdue"].includes(customerItem.status.type))
-      .map((customerItem) => customerItem.item.id),
-  );
-  const orderedItemIds = new Set(openOrderItems?.map((orderItem) => orderItem.itemId));
-
-  function getConflict(cartItem: CartItem): "owned" | "ordered" | null {
-    if (!ACQUISITION_CART_ITEM_TYPES.includes(cart.getSelectedOption(cartItem).type)) {
-      return null;
-    }
-    if (ownedItemIds.has(cartItem.id)) {
-      return "owned";
-    }
-    if (orderedItemIds.has(cartItem.id)) {
-      return "ordered";
-    }
-    return null;
-  }
-  const hasConflicts = cart.get().some((cartItem) => getConflict(cartItem) !== null);
-  if (cart.isEmpty()) {
-    return (
-      <>
-        <InfoAlert title="Handlekurven er tom">
-          Du kan finne nye bøker ved å trykke på 'bestill bøker' eller administrere dine nåværende
-          bøker på 'dine bøker'.
-        </InfoAlert>
-        <Group>
-          <Button component={TanStackAnchor} to="/bestilling" leftSection={<IconShoppingCart />}>
-            Bestill bøker
-          </Button>
-          <Button component={TanStackAnchor} to="/items" leftSection={<IconBook />}>
-            Dine bøker
-          </Button>
-        </Group>
-      </>
-    );
-  }
+/** The last step of the order flow keeps the flow's header; the lead names the cart's one school. */
+function CartHeader({ branchName }: { branchName?: string }) {
   return (
-    <Stack gap="xl">
-      <Stack>
-        {cart.get().map((cartItem) => {
-          const selectedOption = cart.getSelectedOption(cartItem);
-          const conflict = getConflict(cartItem);
-          return (
-            <Card withBorder shadow="md" key={cartItem.id}>
-              <Stack>
-                <Card.Section bg="brand" p="xs">
-                  <Grid>
-                    <Grid.Col span={10}>
-                      <Text fw="bolder" c="white">
-                        {cartItem.title}
-                      </Text>
-                    </Grid.Col>
-                    <Grid.Col span={2}>
-                      <Stack align="end">
-                        <ActionIcon
-                          aria-label="Fjern fra handlekurv"
-                          color="red"
-                          onClick={() => cart.remove(cartItem.id)}
-                        >
-                          <IconX />
-                        </ActionIcon>
-                      </Stack>
-                    </Grid.Col>
-                  </Grid>
-                </Card.Section>
-                <Group justify="space-between">
-                  <Group gap={5}>
-                    <Activity mode={cartItem.options.length > 1 ? "visible" : "hidden"}>
-                      <SegmentedControlWithLabel
-                        label="Handling"
-                        visibleFrom="sm"
-                        value={cartItem.selectedOptionIndex.toString()}
-                        data={cartItem.options.map((option, index) => ({
-                          label: cart.getOptionLabel(option),
-                          value: index.toString(),
-                        }))}
-                        onChange={(value) => {
-                          cart.add({
-                            ...cartItem,
-                            selectedOptionIndex: Number(value),
-                          });
-                        }}
-                      />
-                      <Select
-                        hiddenFrom="sm"
-                        value={cartItem.selectedOptionIndex.toString()}
-                        data={cartItem.options.map((option, index) => ({
-                          label: cart.getOptionLabel(option),
-                          value: index.toString(),
-                        }))}
-                        onChange={(value) => {
-                          cart.add({
-                            ...cartItem,
-                            selectedOptionIndex: Number(value),
-                          });
-                        }}
-                      />
-                    </Activity>
-                    <Activity mode={cartItem.options.length === 1 ? "visible" : "hidden"}>
-                      <Text>{cart.getOptionLabel(cartItem.options[0])}</Text>
-                    </Activity>
-                  </Group>
-                  <Group>
-                    <Text fw="bold">{selectedOption.price} kr</Text>
-                    <Activity mode={selectedOption.payLater ? "visible" : "hidden"}>
-                      <Text fs="italic" c="dimmed" size="sm">
-                        betal senere: {selectedOption.payLater} kr
-                      </Text>
-                    </Activity>
-                  </Group>
-                </Group>
-                <Activity mode={conflict ? "visible" : "hidden"}>
-                  <WarningAlert
-                    title={
-                      conflict === "owned"
-                        ? "Du har allerede denne boken"
-                        : "Du har allerede bestilt denne boken"
-                    }
-                  >
-                    <Text size="sm">
-                      {conflict === "owned"
-                        ? "Boken er registrert på deg og ligger under «Dine bøker»."
-                        : "Bestillingen din ligger under «Dine bøker»."}{" "}
-                      Fjern boken fra handlekurven for å gå videre.
-                    </Text>
-                  </WarningAlert>
-                </Activity>
-              </Stack>
-            </Card>
-          );
-        })}
-      </Stack>
-      <Stack align="center">
-        <Stack gap={5}>
-          <Group gap={5}>
-            <Text>Betal nå</Text>
-            <Text fw="bold">{cart.calculateTotal()}</Text>
-            <Text>kr</Text>
-          </Group>
-          <Activity mode={cart.calculatePayLater() > 0 ? "visible" : "hidden"}>
-            <Text fs="italic" c="dimmed" size="sm">
-              betal senere: {cart.calculatePayLater()} kr
-            </Text>
-          </Activity>
-        </Stack>
-        <Activity mode={hasConflicts ? "visible" : "hidden"}>
-          <Box maw={400}>
-            <Text size="sm" c="dimmed" ta="center">
-              Du kan ikke bestille flere av samme bok. Fjern bøkene du allerede har for å gå til
-              kassen.
-            </Text>
-          </Box>
-        </Activity>
-        <CheckoutButton to="/kasse" label="Gå til kassen" blocked={hasConflicts} />
-      </Stack>
-      <Activity
-        mode={
-          cart.get().some((cartItem) => cart.getSelectedOption(cartItem).type === "partly-payment")
-            ? "visible"
-            : "hidden"
-        }
-      >
-        <Stack>
-          <Title>Om delbetaling</Title>
-          <Text>
-            Du betaler restbeløpet på det oppgitte tidspunktet. Restbeløpet betales ved vår
-            bokinnkjøpsstand på din skole på slutten av semesteret eller på nett. Mange privatister
-            ønsker å selge bøkene sine på slutten av semesteret og Boklisten kjøper inn bøker fra
-            privatister.
-          </Text>
-          <Text>
-            Hvis du selger boken din til Boklisten vil vi vanligvis betale det samme som restbeløpet
-            eller mer.
-          </Text>
-        </Stack>
-      </Activity>
-    </Stack>
+    <OrderStepHeader path={[]} title="Handlekurv">
+      {branchName && <p className={orderClasses.lead}>Bøker fra {branchName}</p>}
+    </OrderStepHeader>
   );
+}
+
+/** The cart lives in the browser, so the page renders there and shows its skeleton on the server. */
+export default function CartContent() {
+  use(browser());
+  const cart = useCart({ immediately: true });
+  const { isLoggedIn } = useAuth();
+  const conflictOf = useCartConflicts();
+  const branchId = cart.get()[0]?.branchId;
+  const { data: tree } = useQuery({ ...orderTreeOptions(), enabled: branchId !== undefined });
+  const branch = tree && branchId ? nodeById(tree, branchId) : undefined;
+
+  if (cart.isEmpty()) {
+    return <CartEmpty />;
+  }
+
+  // Titles are already in order within the cart, so grouping keeps them in order within a section
+  const lines: Line[] = cart.get().map((cartItem) => {
+    const selected = cart.getSelectedOption(cartItem);
+    return { cartItem, selected, conflict: conflictOf(cartItem, selected) };
+  });
+  const sections = [...Map.groupBy(lines, (line) => line.cartItem.subject ?? OWN_BOOKS)].toSorted(
+    ([a], [b]) => sectionOrder(a, b),
+  );
+  const conflicting = lines.filter((line) => line.conflict !== null);
+  const hasPartlyPayment = lines.some((line) => line.selected.type === "partly-payment");
+  // Nothing to pay at all: no prices anywhere, and the order is placed straight from the cart. A
+  // cart that mixes a free loan with a paid line still prices every line, the loan at 0 kr.
+  const total = cart.calculateTotal();
+  const payLater = cart.calculatePayLater();
+  const free = total === 0 && payLater === 0;
+
+  return (
+    <div className={classes.root}>
+      <CartHeader branchName={branch?.name} />
+      <div className={classes.sections}>
+        {sections.map(([section, sectionLines]) => (
+          <section key={section} className={classes.section}>
+            {sections.length > 1 && <h2 className={classes.sectionLabel}>{section}</h2>}
+            <ul className={classes.lines}>
+              {sectionLines.map(({ cartItem, selected, conflict }) => (
+                <CartLine
+                  key={cartItem.id}
+                  cartItem={cartItem}
+                  selected={selected}
+                  conflict={conflict}
+                  showPrice={!free}
+                  onSelect={(selectedOptionIndex) => cart.add({ ...cartItem, selectedOptionIndex })}
+                  onRemove={() => cart.remove(cartItem.id)}
+                />
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+      <div className={classes.after}>
+        {branch && (
+          <TanStackAnchor
+            to="/bestilling/$branchId"
+            params={{ branchId: branch.id }}
+            className={classes.addMore}
+            underline="hover"
+          >
+            <IconPlus size={18} aria-hidden />
+            Legg til flere bøker
+          </TanStackAnchor>
+        )}
+        {hasPartlyPayment && <PartlyPaymentNote />}
+      </div>
+      <CartBar
+        count={lines.length}
+        total={total}
+        payLater={payLater}
+        conflictCount={conflicting.length}
+        isLoggedIn={isLoggedIn}
+        onRemoveConflicts={() => {
+          for (const line of conflicting) {
+            cart.remove(line.cartItem.id);
+          }
+        }}
+      />
+    </div>
+  );
+}
+
+/** Subjects alphabetically, the pupil's own books last. */
+function sectionOrder(a: string, b: string): number {
+  if (a === OWN_BOOKS || b === OWN_BOOKS) {
+    return a === b ? 0 : a === OWN_BOOKS ? 1 : -1;
+  }
+  return a.localeCompare(b, "nb");
 }

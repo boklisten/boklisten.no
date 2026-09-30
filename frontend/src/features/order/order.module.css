@@ -180,59 +180,9 @@
   width: 2.25rem;
   height: 3rem;
   overflow: hidden;
-  background: #e6f0f3;
   border: 1px solid var(--nav-rule);
   border-radius: 2px;
   box-shadow: 0 1px 3px rgb(31 45 51 / 22%);
   transform: rotate(var(--fan-tilt));
   transform-origin: 50% 100%;
-
-  & img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-/* A book without a picture: a coloured cover with a spine, its title, and a band at the foot. */
-.fanPlaceholder {
-  position: absolute;
-  inset: 0;
-  display: block;
-  padding: 0.3rem 0.2rem 0.45rem 0.45rem;
-  color: #fff;
-  background: var(--cover-color);
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 3px;
-    background: rgb(0 0 0 / 28%);
-  }
-
-  &::after {
-    content: "";
-    position: absolute;
-    right: 0.2rem;
-    bottom: 0.25rem;
-    left: 0.45rem;
-    height: 2px;
-    background: rgb(255 255 255 / 55%);
-  }
-}
-
-.fanTitle {
-  display: -webkit-box;
-  overflow: hidden;
-  font-family: var(--nav-display);
-  font-variation-settings: "SOFT" 50;
-  font-size: 0.42rem;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  overflow-wrap: break-word;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
 }

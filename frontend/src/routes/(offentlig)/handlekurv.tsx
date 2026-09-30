@@ -1,5 +1,7 @@
-import { Container, Stack, Title } from "@mantine/core";
-import CartContent from "@/features/cart/CartContent";
+import { Container } from "@mantine/core";
+import { Suspense } from "react";
+
+import CartContent, { CartPending } from "@/features/cart/CartContent";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 
@@ -15,10 +17,9 @@ export const Route = createFileRoute("/(offentlig)/handlekurv")({
 function CartPage() {
   return (
     <Container size="md">
-      <Stack>
-        <Title>Handlekurv</Title>
+      <Suspense fallback={<CartPending />}>
         <CartContent />
-      </Stack>
+      </Suspense>
     </Container>
   );
 }

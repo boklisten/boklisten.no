@@ -4,7 +4,7 @@ import type { MantineColor } from "@mantine/core";
 import type { Icon } from "@tabler/icons-react";
 import { IconAlertTriangle, IconBook2, IconCalendar, IconCheck } from "@tabler/icons-react";
 
-import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import { InnsamlingIcon } from "@/features/bulk-collection/innsamlingIcon";
 import { formatDeadline, isOverdue } from "@/shared/utils/deadline";
 import useDisplayName from "@/features/customer-search/useDisplayName";

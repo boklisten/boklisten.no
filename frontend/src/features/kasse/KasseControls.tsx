@@ -3,7 +3,7 @@ import { IconScan, IconSearch } from "@tabler/icons-react";
 import { ViewTransition } from "react";
 import type { ReactNode } from "react";
 
-import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import { useCollectionState } from "@/features/bulk-collection/collectionStore";
 import type { StoredCollection } from "@/features/bulk-collection/collectionStore";
 import { InnsamlingIcon } from "@/features/bulk-collection/innsamlingIcon";

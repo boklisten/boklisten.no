@@ -3,10 +3,10 @@ import { IconBasket, IconBook, IconRefresh } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, useEffect, useEffectEvent, useState } from "react";
 
+import { PlacedOrderNotice } from "@/features/checkout/OrderPlacedAlert";
 import OrderReceipt from "@/features/payment/OrderReceipt";
 import MySignatureStatusCard from "@/features/signatures/MySignatureStatusCard";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 import { api } from "@/shared/utils/apiClient";
 import useCart from "@/shared/hooks/useCart";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
@@ -152,10 +152,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
     return (
       <>
         <Title order={2}>Kvittering</Title>
-        <SuccessAlert title="Din ordre er bekreftet!">
-          Kvittering har blitt sendt på e-post. Du kan se dine nåværende bøker ved å trykke på "Dine
-          bøker"
-        </SuccessAlert>
+        <PlacedOrderNotice orderId={orderId} />
         <MySignatureStatusCard />
         <OrderReceipt orderId={orderId} />
         <NavLink

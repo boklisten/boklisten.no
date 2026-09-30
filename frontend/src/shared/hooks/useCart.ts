@@ -1,30 +1,18 @@
 import { SIGNATURE_REQUIRING_CART_ITEM_TYPES } from "@boklisten/backend/shared/cart_item";
-import type { CartItem, CartItemOption } from "@boklisten/backend/shared/cart_item";
-import type { OrderItemType } from "@boklisten/backend/shared/order/order-item/order-item-type";
+import type { CartItem } from "@boklisten/backend/shared/cart_item";
 import { useSessionStorage } from "@mantine/hooks";
 
-import { formatDeadline } from "@/shared/utils/deadline";
+/**
+ * An order is placed with one branch, so the cart holds one branch: a book from another branch
+ * replaces everything in it. Generating a book list for a new school therefore starts over, while
+ * more subjects from the same school merge in.
+ */
+function sameBranch(cart: CartItem[], branchId: string): CartItem[] {
+  return cart.filter((cartItem) => cartItem.branchId === branchId);
+}
 
-const translations = {
-  rent: "lån til",
-  return: "returner",
-  extend: "forleng til",
-  cancel: "kanseller",
-  buy: "kjøp",
-  "partly-payment": "delbetaling til",
-  buyback: "tilbakekjøp",
-  buyout: "kjøp ut",
-  sell: "selg",
-  "invoice-paid": "betale faktura",
-  "match-receive": "motta fra elev",
-  "match-deliver": "overlevere til elev",
-} satisfies Record<OrderItemType, string>;
-
-function getOptionLabel(option?: CartItemOption) {
-  if (!option) {
-    throw new Error("Invalid cart item option!");
-  }
-  return `${translations[option.type]} ${option.to ? formatDeadline(option.to) : ""}`;
+function byTitle(cart: CartItem[]): CartItem[] {
+  return cart.toSorted((a, b) => a.title.localeCompare(b.title));
 }
 
 /**
@@ -40,9 +28,33 @@ export default function useCart({ immediately = false }: { immediately?: boolean
   function remove(itemId: string) {
     setCart((prev) => prev.filter((cartItem) => cartItem.id !== itemId));
   }
+  /** Puts the book in the cart, replacing the line it already has there (see sameBranch). */
   function add(cartItem: CartItem) {
-    remove(cartItem.id);
-    setCart((prev) => [...prev, cartItem].toSorted((a, b) => a.title.localeCompare(b.title)));
+    setCart((prev) =>
+      byTitle([
+        ...sameBranch(prev, cartItem.branchId).filter((existing) => existing.id !== cartItem.id),
+        cartItem,
+      ]),
+    );
+  }
+  /**
+   * Puts the books that are not in the cart yet into it; a book already there keeps the way the
+   * pupil chose to get it. The books are expected to come from one branch (see sameBranch).
+   */
+  function merge(cartItems: CartItem[]) {
+    const branchId = cartItems[0]?.branchId;
+    if (branchId === undefined) {
+      return;
+    }
+    setCart((prev) => {
+      const lines = new Map(sameBranch(prev, branchId).map((cartItem) => [cartItem.id, cartItem]));
+      for (const cartItem of cartItems) {
+        if (!lines.has(cartItem.id)) {
+          lines.set(cartItem.id, cartItem);
+        }
+      }
+      return byTitle([...lines.values()]);
+    });
   }
   function getSelectedOption(cartItem: CartItem) {
     const selectedOption = cartItem.options[cartItem.selectedOptionIndex];
@@ -74,10 +86,10 @@ export default function useCart({ immediately = false }: { immediately?: boolean
     size: () => cart.length,
     isEmpty: () => cart.length === 0,
     add,
+    merge,
     remove,
     clear,
     getSelectedOption,
-    getOptionLabel,
     calculateTotal,
     calculatePayLater,
     requiresSignature,

@@ -14,6 +14,7 @@ import FloatingActionBar from "@/shared/components/FloatingActionBar";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import useCart from "@/shared/hooks/useCart";
 import { api } from "@/shared/utils/apiClient";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 
 /** The end of the walk: the subjects a branch offers, picked as cards, then turned into a cart. */
 export default function SubjectStep({
@@ -46,12 +47,7 @@ export default function SubjectStep({
     if (!catalog) {
       return;
     }
-    cart.clear();
-    for (const subject of selected) {
-      for (const cartItem of catalog[subject] ?? []) {
-        cart.add(cartItem);
-      }
-    }
+    cart.merge([...selected].flatMap((subject) => catalog[subject] ?? []));
     setSelected(new Set());
     void navigate({ to: "/handlekurv" });
   }
@@ -80,25 +76,14 @@ export default function SubjectStep({
             {branch.name} har ikke lagt ut noen bøker enda. Ta kontakt på info@boklisten.no om du
             har spørsmål.
           </InfoAlert>
-          {parent ? (
-            <Button
-              component={TanStackAnchor}
-              to={`/bestilling/${parent.id}`}
-              variant="light"
-              leftSection={<IconArrowBack size={18} />}
-            >
-              Velg en annen skole
-            </Button>
-          ) : (
-            <Button
-              component={TanStackAnchor}
-              to="/bestilling"
-              variant="light"
-              leftSection={<IconArrowBack size={18} />}
-            >
-              Velg en annen skole
-            </Button>
-          )}
+          <Button
+            component={TanStackAnchor}
+            to={parent ? `/bestilling/${parent.id}` : "/bestilling"}
+            variant="light"
+            leftSection={<IconArrowBack size={18} />}
+          >
+            Velg en annen skole
+          </Button>
         </div>
       )}
 
@@ -117,9 +102,7 @@ export default function SubjectStep({
                   <SubjectBookFan books={books} />
                   <span className={classes.cardText}>
                     <span className={classes.cardName}>{subject}</span>
-                    <span className={classes.cardMeta}>
-                      {books.length} {books.length === 1 ? "bok" : "bøker"}
-                    </span>
+                    <span className={classes.cardMeta}>{bookCountLabel(books.length)}</span>
                   </span>
                   {pressed ? (
                     <IconCircleCheckFilled className={classes.check} size={24} aria-hidden />

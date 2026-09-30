@@ -4,7 +4,7 @@ import { IconCheck } from "@tabler/icons-react";
 import { Fragment } from "react";
 
 import CustomerReceiptItem from "@/features/bulk-collection/CustomerReceiptItem";
-import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 
 /**
  * What the last delivery did, per customer: a card of its own inside the Innsamling card, where

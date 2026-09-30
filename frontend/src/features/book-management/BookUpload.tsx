@@ -9,12 +9,9 @@ import { useState } from "react";
 import { BOOK_IMPORT_COLUMNS, toBookRows } from "@/features/book-management/bookSpreadsheet";
 import type { BookRow } from "@/features/book-management/bookSpreadsheet";
 import { api, apiClient } from "@/shared/utils/apiClient";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-
-function bookCount(count: number) {
-  return `${count} ${count === 1 ? "bok" : "bøker"}`;
-}
 
 function duplicates<T>(values: T[]): T[] {
   const seen = new Set<T>();
@@ -55,7 +52,7 @@ function UploadErrorsDialog({
 }) {
   return (
     <Stack>
-      <Text>{`${bookCount(errors.length)} kunne ikke lagres:`}</Text>
+      <Text>{`${bookCountLabel(errors.length)} kunne ikke lagres:`}</Text>
       <List>
         {errors.map((error, index) => (
           <List.Item
@@ -78,7 +75,7 @@ export default function BookUpload({ items }: { items: Item[] }) {
     onSuccess: (summary) => {
       setRows(null);
       showSuccessNotification(
-        `${bookCount(summary.updatedCount)} oppdatert og ${summary.createdCount} ${summary.createdCount === 1 ? "ny" : "nye"} opprettet`,
+        `${bookCountLabel(summary.updatedCount)} oppdatert og ${summary.createdCount} ${summary.createdCount === 1 ? "ny" : "nye"} opprettet`,
       );
       if (summary.errors.length > 0) {
         modals.open({
@@ -140,7 +137,7 @@ export default function BookUpload({ items }: { items: Item[] }) {
         {rows && (
           <Stack>
             <Text>
-              {`${bookCount(preview.updateCount)} som finnes fra før overskrives med innholdet i filen, og ${bookCount(preview.newBooks.length)} opprettes.`}
+              {`${bookCountLabel(preview.updateCount)} som finnes fra før overskrives med innholdet i filen, og ${bookCountLabel(preview.newBooks.length)} opprettes.`}
             </Text>
             {preview.newBooks.length > 0 && (
               <Stack gap={4}>

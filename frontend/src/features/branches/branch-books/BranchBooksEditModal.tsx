@@ -3,7 +3,7 @@ import { IconInfoCircle } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { bookCountLabel } from "@/features/branches/branch-books/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import type {
   BranchBooksEditKind,
   BranchBooksEditTarget,

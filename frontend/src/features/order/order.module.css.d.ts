@@ -21,8 +21,6 @@ declare const classes: {
   readonly empty: string;
   readonly fan: string;
   readonly fanCover: string;
-  readonly fanPlaceholder: string;
-  readonly fanTitle: string;
 };
 
 export default classes;

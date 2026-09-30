@@ -12,7 +12,7 @@ import {
 import CollectionReceipt from "@/features/bulk-collection/CollectionReceipt";
 import ScannedBooksList from "@/features/bulk-collection/ScannedBooksList";
 import type { CollectionSession } from "@/features/bulk-collection/useCollectionSession";
-import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import { InnsamlingIcon } from "@/features/bulk-collection/innsamlingIcon";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import ScanPrompt from "@/shared/components/scanner/ScanPrompt";

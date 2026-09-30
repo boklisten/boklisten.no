@@ -1,6 +1,6 @@
 import { Text } from "@mantine/core";
 
-import bookCountLabel from "@/features/bulk-collection/bookCountLabel";
+import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 
 /** The Innsamling is about to end (its cross, or the start screen) with undelivered books. */

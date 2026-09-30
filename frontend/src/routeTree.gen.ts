@@ -50,7 +50,6 @@ import { Route as offentligInfoGeneralRouteImport } from './routes/(offentlig)/i
 import { Route as offentligInfoPoliciesRouteRouteImport } from './routes/(offentlig)/info/policies/route'
 import { Route as offentligInfoPupilsRouteImport } from './routes/(offentlig)/info/pupils'
 import { Route as offentligKasseIndexRouteImport } from './routes/(offentlig)/kasse/index'
-import { Route as offentligKasseBekreftRouteImport } from './routes/(offentlig)/kasse/bekreft'
 import { Route as offentligKasseSigneringRouteImport } from './routes/(offentlig)/kasse/signering'
 import { Route as offentligOverleveringerIndexRouteImport } from './routes/(offentlig)/overleveringer/index'
 import { Route as offentligOverleveringerMatchIdRouteImport } from './routes/(offentlig)/overleveringer/$matchId'
@@ -293,11 +292,6 @@ const offentligKasseIndexRoute = offentligKasseIndexRouteImport.update({
   path: '/kasse/',
   getParentRoute: () => offentligRouteRoute,
 } as any)
-const offentligKasseBekreftRoute = offentligKasseBekreftRouteImport.update({
-  id: '/kasse/bekreft',
-  path: '/kasse/bekreft',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
 const offentligKasseSigneringRoute = offentligKasseSigneringRouteImport.update({
   id: '/kasse/signering',
   path: '/kasse/signering',
@@ -479,7 +473,6 @@ export interface FileRoutesByFullPath {
   '/info/faq': typeof offentligInfoFaqRoute
   '/info/general': typeof offentligInfoGeneralRoute
   '/info/pupils': typeof offentligInfoPupilsRoute
-  '/kasse/bekreft': typeof offentligKasseBekreftRoute
   '/kasse/signering': typeof offentligKasseSigneringRoute
   '/overleveringer/$matchId': typeof offentligOverleveringerMatchIdRoute
   '/signering/$userId': typeof offentligSigneringUserIdRoute
@@ -544,7 +537,6 @@ export interface FileRoutesByTo {
   '/info/faq': typeof offentligInfoFaqRoute
   '/info/general': typeof offentligInfoGeneralRoute
   '/info/pupils': typeof offentligInfoPupilsRoute
-  '/kasse/bekreft': typeof offentligKasseBekreftRoute
   '/kasse/signering': typeof offentligKasseSigneringRoute
   '/overleveringer/$matchId': typeof offentligOverleveringerMatchIdRoute
   '/signering/$userId': typeof offentligSigneringUserIdRoute
@@ -613,7 +605,6 @@ export interface FileRoutesById {
   '/(offentlig)/info/faq': typeof offentligInfoFaqRoute
   '/(offentlig)/info/general': typeof offentligInfoGeneralRoute
   '/(offentlig)/info/pupils': typeof offentligInfoPupilsRoute
-  '/(offentlig)/kasse/bekreft': typeof offentligKasseBekreftRoute
   '/(offentlig)/kasse/signering': typeof offentligKasseSigneringRoute
   '/(offentlig)/overleveringer/$matchId': typeof offentligOverleveringerMatchIdRoute
   '/(offentlig)/signering/$userId': typeof offentligSigneringUserIdRoute
@@ -682,7 +673,6 @@ export interface FileRouteTypes {
     | '/info/faq'
     | '/info/general'
     | '/info/pupils'
-    | '/kasse/bekreft'
     | '/kasse/signering'
     | '/overleveringer/$matchId'
     | '/signering/$userId'
@@ -747,7 +737,6 @@ export interface FileRouteTypes {
     | '/info/faq'
     | '/info/general'
     | '/info/pupils'
-    | '/kasse/bekreft'
     | '/kasse/signering'
     | '/overleveringer/$matchId'
     | '/signering/$userId'
@@ -815,7 +804,6 @@ export interface FileRouteTypes {
     | '/(offentlig)/info/faq'
     | '/(offentlig)/info/general'
     | '/(offentlig)/info/pupils'
-    | '/(offentlig)/kasse/bekreft'
     | '/(offentlig)/kasse/signering'
     | '/(offentlig)/overleveringer/$matchId'
     | '/(offentlig)/signering/$userId'
@@ -1144,13 +1132,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligKasseIndexRouteImport
       parentRoute: typeof offentligRouteRoute
     }
-    '/(offentlig)/kasse/bekreft': {
-      id: '/(offentlig)/kasse/bekreft'
-      path: '/kasse/bekreft'
-      fullPath: '/kasse/bekreft'
-      preLoaderRoute: typeof offentligKasseBekreftRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
     '/(offentlig)/kasse/signering': {
       id: '/(offentlig)/kasse/signering'
       path: '/kasse/signering'
@@ -1414,7 +1395,6 @@ interface offentligRouteRouteChildren {
   offentligAuthLogoutRoute: typeof offentligAuthLogoutRoute
   offentligAuthRegisterRoute: typeof offentligAuthRegisterRoute
   offentligBestillingBranchIdRoute: typeof offentligBestillingBranchIdRoute
-  offentligKasseBekreftRoute: typeof offentligKasseBekreftRoute
   offentligKasseSigneringRoute: typeof offentligKasseSigneringRoute
   offentligSigneringUserIdRoute: typeof offentligSigneringUserIdRoute
   offentligBestillingIndexRoute: typeof offentligBestillingIndexRoute
@@ -1444,7 +1424,6 @@ const offentligRouteRouteChildren: offentligRouteRouteChildren = {
   offentligAuthLogoutRoute: offentligAuthLogoutRoute,
   offentligAuthRegisterRoute: offentligAuthRegisterRoute,
   offentligBestillingBranchIdRoute: offentligBestillingBranchIdRoute,
-  offentligKasseBekreftRoute: offentligKasseBekreftRoute,
   offentligKasseSigneringRoute: offentligKasseSigneringRoute,
   offentligSigneringUserIdRoute: offentligSigneringUserIdRoute,
   offentligBestillingIndexRoute: offentligBestillingIndexRoute,
