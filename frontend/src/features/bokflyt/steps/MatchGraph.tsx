@@ -87,7 +87,7 @@ const STEPS: PlaybackStep<number>[] = TRANSFERS.map((_, index) => ({
 }));
 
 const STUDENT_ARROW = BOKFLYT_COLORS.deep;
-const STAND_ARROW = "#8a4b3b";
+const STAND_ARROW = BOKFLYT_COLORS.stand;
 
 const WIDTH = 480;
 const HEIGHT = 340;
@@ -258,7 +258,7 @@ function StudentNode({ student, active }: { student: Student; active: boolean })
       <clipPath id={clipId}>
         <circle cx={round(x)} cy={round(y)} r={NODE_R} />
       </clipPath>
-      <circle cx={round(x)} cy={round(y)} r={NODE_R} fill="#ffffff" />
+      <circle cx={round(x)} cy={round(y)} r={NODE_R} fill="var(--bf-card)" />
       <image
         href={personaAvatar(student)}
         x={round(x - NODE_R)}
@@ -294,31 +294,28 @@ function StudentNode({ student, active }: { student: Student; active: boolean })
 function StandNode({ active }: { active: boolean }) {
   return (
     <g>
-      <motion.rect
+      <rect
         x={STAND_CENTER.x - STAND_HALF.x}
         y={STAND_CENTER.y - STAND_HALF.y}
         width={STAND_HALF.x * 2}
         height={STAND_HALF.y * 2}
         rx={10}
-        stroke={STAND_ARROW}
         strokeWidth={2}
-        initial={false}
-        animate={{ fill: active ? STAND_ARROW : "#ffffff" }}
-        transition={{ duration: 0.25 }}
+        className={classes.standBox}
+        data-active={active || undefined}
       />
-      <motion.text
+      <text
         x={STAND_CENTER.x}
         y={STAND_CENTER.y}
         dy="0.36em"
         textAnchor="middle"
         fontSize={16}
         fontWeight={700}
-        initial={false}
-        animate={{ fill: active ? "#ffffff" : STAND_ARROW }}
-        transition={{ duration: 0.25 }}
+        className={classes.standLabel}
+        data-active={active || undefined}
       >
         Stand
-      </motion.text>
+      </text>
     </g>
   );
 }

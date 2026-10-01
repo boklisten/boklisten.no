@@ -26,7 +26,7 @@ export default function Hero() {
                 onClick={(event) => scrollToSection(event, "kontakt")}
                 size="lg"
                 radius="xl"
-                color={BOKFLYT_COLORS.deep}
+                color={BOKFLYT_COLORS.deepFill}
               >
                 Avtal en uforpliktende prat
               </Button>

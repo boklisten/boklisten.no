@@ -1,11 +1,37 @@
+/*
+ * Tokens (light / dark). The dark values sit on Mantine's dark scale, which the theme tints
+ * night blue, so the page shares its canvas with the rest of the site.
+ *   deep         #1b5a7a / #8ec1e3   accent as type, icons and outlines
+ *   deep-fill    #1b5a7a             accent as a surface: the proof band, buttons, active markers
+ *   hero-top     #fff    / #12293a   the hero gradient's start, and the sticky top bar above it
+ *   hero-end     #eaf2f8 / #173b52   the hero gradient's end; in dark a night blue bluer than the
+ *                                    canvas, so the page still opens on colour
+ *   ink          #15303f / gray-0    headings in figures, type on cards
+ *   body         #3d5260 / dark-1    running text (Mantine's dimmed follows it)
+ *   light        #6fa3cf             rails, arrows, checkmarks; reads on both
+ *   paper        #fff    / dark-7    the canvas
+ *   wash         #eaf2f8 / dark-8    alternate sections, a step deeper than the canvas in dark
+ *   wash-strong  #d6e6f2 / dark-5    rails, hairlines, paper lines
+ *   tint         #eaf2f8 / deep 12%  badges and tags on any section
+ *   card         #fff    / dark-6    the form, the mock documents, the proof card
+ *   screen       #fff    / dark-9    a phone's screen in its own dark mode: darker than the canvas
+ *   stand        #8a4b3b / #dc947b   the stand's arrows in the matching graph
+ */
 .page {
-  --bf-deep: #1b5a7a;
-  --bf-ink: #15303f;
+  --bf-deep: light-dark(#1b5a7a, #8ec1e3);
+  --bf-deep-fill: #1b5a7a;
+  --bf-ink: light-dark(#15303f, var(--mantine-color-gray-0));
   --bf-light: #6fa3cf;
-  --bf-wash: #eaf2f8;
-  --bf-wash-strong: #d6e6f2;
-  --bf-body: #3d5260;
-  --bf-paper: #fff;
+  --bf-wash: light-dark(#eaf2f8, var(--mantine-color-dark-8));
+  --bf-wash-strong: light-dark(#d6e6f2, var(--mantine-color-dark-5));
+  --bf-tint: light-dark(#eaf2f8, rgb(142 193 227 / 12%));
+  --bf-body: light-dark(#3d5260, var(--mantine-color-dark-1));
+  --bf-paper: light-dark(#fff, var(--mantine-color-dark-7));
+  --bf-card: light-dark(#fff, var(--mantine-color-dark-6));
+  --bf-screen: light-dark(#fff, var(--mantine-color-dark-9));
+  --bf-stand: light-dark(#8a4b3b, #dc947b);
+  --bf-hero-top: light-dark(#fff, #12293a);
+  --bf-hero-end: light-dark(#eaf2f8, #173b52);
   --bf-display: "Sora", "Segoe UI", system-ui, sans-serif;
 
   --mantine-color-dimmed: var(--bf-body);
@@ -46,9 +72,9 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgb(255 255 255 / 86%);
+  background: color-mix(in srgb, var(--bf-hero-top) 86%, transparent);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--bf-wash-strong);
+  border-bottom: 1px solid light-dark(var(--bf-wash-strong), rgb(255 255 255 / 8%));
 }
 
 .topBarInner {
@@ -81,7 +107,7 @@
 
 .hero {
   padding: clamp(2.5rem, 6vw, 5rem) 0 clamp(3rem, 7vw, 6rem);
-  background: linear-gradient(180deg, var(--bf-paper) 0%, var(--bf-wash) 100%);
+  background: linear-gradient(180deg, var(--bf-hero-top) 0%, var(--bf-hero-end) 100%);
 }
 
 .heroGrid {
@@ -169,7 +195,7 @@
 
 .stepMarkerActive {
   border-color: var(--bf-light);
-  background: var(--bf-deep);
+  background: var(--bf-deep-fill);
   color: #fff;
 }
 
@@ -183,12 +209,14 @@
   border-radius: 2.4rem;
   background: #0f1f2a;
   padding: 10px;
-  box-shadow: 0 34px 60px -32px rgb(21 48 63 / 55%);
+  box-shadow:
+    0 0 0 1px light-dark(transparent, rgb(255 255 255 / 12%)),
+    0 34px 60px -32px rgb(21 48 63 / 55%);
 }
 
 .phoneScreen {
   position: relative;
-  background: #fff;
+  background: var(--bf-screen);
   border-radius: 1.9rem;
   overflow: hidden;
   height: 560px;
@@ -226,7 +254,7 @@
   right: 0;
   bottom: 0;
   height: 70px;
-  background: linear-gradient(180deg, rgb(255 255 255 / 0%), #fff);
+  background: linear-gradient(180deg, transparent, var(--bf-screen));
   pointer-events: none;
 }
 
@@ -244,13 +272,18 @@
 .smsBubble {
   align-self: flex-start;
   max-width: 92%;
-  background: #e9e9eb;
-  color: #111;
+  /* A received message in iOS Messages, in the shade it uses for each scheme. */
+  background: light-dark(#e9e9eb, #262628);
+  color: light-dark(#000, #fff);
   border-radius: 1.1rem;
-  border-bottom-left-radius: 0.3rem;
   padding: 0.6rem 0.8rem;
   font-size: 0.9rem;
   line-height: 1.4;
+}
+
+/* Like iOS, only the last bubble in a run carries the tail. */
+.smsBubble:last-child {
+  border-bottom-left-radius: 0.3rem;
 }
 
 /* Fills the real signature box, whose style is shared with the signing form. */
@@ -350,7 +383,7 @@
   font-weight: 600;
   line-height: 1.4;
   color: var(--bf-deep);
-  background: var(--bf-wash);
+  background: var(--bf-tint);
   border-radius: 999px;
   padding: 0.1rem 0.6rem;
 }
@@ -400,19 +433,19 @@
   border-radius: 1rem;
   display: grid;
   place-items: center;
-  background: var(--bf-wash);
+  background: var(--bf-tint);
   color: var(--bf-deep);
 }
 
 .formCard {
-  background: #fff;
+  background: var(--bf-card);
   border-radius: 1.25rem;
   padding: clamp(1.25rem, 3vw, 2rem);
   box-shadow: 0 30px 60px -36px rgb(21 48 63 / 45%);
 }
 
 .paperMock {
-  background: #fff;
+  background: var(--bf-card);
   border-radius: 0.75rem;
   padding: 1.5rem;
   box-shadow: 0 24px 50px -30px rgb(21 48 63 / 40%);
@@ -432,7 +465,7 @@
   grid-template-columns: 2fr 1.4fr 1fr;
   gap: 0.75rem;
   padding: 0.45rem 0;
-  border-bottom: 1px solid var(--bf-wash);
+  border-bottom: 1px solid light-dark(var(--bf-wash), var(--mantine-color-dark-4));
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
 }
@@ -549,7 +582,7 @@
 }
 
 .proof {
-  background: var(--bf-deep);
+  background: var(--bf-deep-fill);
   color: #fff;
 }
 
@@ -597,7 +630,7 @@
 }
 
 .proofCard {
-  background: #fff;
+  background: var(--bf-card);
   color: var(--bf-ink);
   border-radius: 1.25rem;
   padding: clamp(1.25rem, 3vw, 2rem);
@@ -676,4 +709,27 @@
 .graphCaption {
   min-height: 2.6em;
   color: var(--bf-ink);
+}
+
+/* The stand fills with its colour while a book passes through it. */
+.standBox,
+.standLabel {
+  transition: fill 0.25s;
+}
+
+.standBox {
+  fill: var(--bf-card);
+  stroke: var(--bf-stand);
+}
+
+.standBox[data-active] {
+  fill: var(--bf-stand);
+}
+
+.standLabel {
+  fill: var(--bf-stand);
+}
+
+.standLabel[data-active] {
+  fill: var(--bf-card);
 }

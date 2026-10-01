@@ -27,6 +27,23 @@ const theme = createTheme({
       "#3a829b",
       "#26768f",
     ],
+    /*
+     * Mantine's dark scale with the footer's blue-teal hue (202°) mixed in: each step keeps the
+     * default's lightness, so contrast is unchanged, and the deep steps carry the most colour so
+     * the dark canvas reads as night blue rather than black.
+     */
+    dark: [
+      "#c2cbd1",
+      "#aebac2",
+      "#738691",
+      "#5b6c76",
+      "#344651",
+      "#2c3f49",
+      "#21313b",
+      "#18272f",
+      "#142129",
+      "#0d161c",
+    ],
   },
   primaryColor: "brand",
   primaryShade: 9,

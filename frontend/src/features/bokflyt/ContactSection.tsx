@@ -82,7 +82,7 @@ function ContactForm({ onSent }: { onSent: () => void }) {
           type="submit"
           size="md"
           radius="xl"
-          color={BOKFLYT_COLORS.deep}
+          color={BOKFLYT_COLORS.deepFill}
           leftSection={<IconSend size={18} />}
           loading={sendMutation.isPending}
         >

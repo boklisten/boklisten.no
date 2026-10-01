@@ -2,9 +2,9 @@ import { useId, useState } from "react";
 
 import { mockCoverSrc } from "@/features/bokflyt/mockBooks";
 import type { MockBook } from "@/features/bokflyt/mockBooks";
-import { BOKFLYT_COLORS } from "@/features/bokflyt/theme";
+import { BOOK_COLORS } from "@/features/bokflyt/theme";
 
-const { deep: DEEP, light: LIGHT } = BOKFLYT_COLORS;
+const { deep: DEEP, light: LIGHT } = BOOK_COLORS;
 
 /** The drawn fallback's proportions; the frames on the page are all roughly 3:4. */
 const CHARS_PER_LINE = 6;

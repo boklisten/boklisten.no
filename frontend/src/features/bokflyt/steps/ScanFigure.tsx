@@ -8,10 +8,10 @@ import classes from "@/features/bokflyt/bokflyt.module.css";
 import { mockCoverSrc } from "@/features/bokflyt/mockBooks";
 import { emilReceiving, HANDOVER_BOOKS } from "@/features/bokflyt/mockMatches";
 import PhoneFrame from "@/features/bokflyt/PhoneFrame";
-import { BOKFLYT_COLORS } from "@/features/bokflyt/theme";
+import { BOOK_COLORS } from "@/features/bokflyt/theme";
 import MatchScannerContent from "@/shared/components/matches/MatchScannerContent";
 
-const COVER_COLORS = [BOKFLYT_COLORS.deep, "#3f6f5a", "#8a4b3b"];
+const COVER_COLORS = [BOOK_COLORS.deep, "#3f6f5a", "#8a4b3b"];
 
 /**
  * The book under the camera: its cover, or a plain coloured cover with the title should the

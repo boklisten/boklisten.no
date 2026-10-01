@@ -66,6 +66,8 @@ declare const classes: {
   readonly scanFlash: string;
   readonly scanDone: string;
   readonly scanToast: string;
+  readonly standBox: string;
+  readonly standLabel: string;
 };
 
 export default classes;

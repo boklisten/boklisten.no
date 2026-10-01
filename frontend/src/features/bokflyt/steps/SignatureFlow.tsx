@@ -6,6 +6,7 @@ import { useRef } from "react";
 import classes from "@/features/bokflyt/bokflyt.module.css";
 import { handoverDateText, signatureExpiryText } from "@/features/bokflyt/mockDates";
 import PhoneFrame from "@/features/bokflyt/PhoneFrame";
+import { BOKFLYT_COLORS } from "@/features/bokflyt/theme";
 import { useTimedPlayback } from "@/features/bokflyt/useTimedPlayback";
 import type { PlaybackStep } from "@/features/bokflyt/useTimedPlayback";
 import { signaturePrompt } from "@/features/signatures/signaturePrompt";
@@ -73,7 +74,7 @@ function SignStage({ reduceMotion }: { reduceMotion: boolean }) {
           <motion.path
             d={SIGNATURE_PATH}
             fill="none"
-            stroke="#111"
+            stroke={BOKFLYT_COLORS.ink}
             strokeWidth={2.2}
             strokeLinecap="round"
             strokeLinejoin="round"
