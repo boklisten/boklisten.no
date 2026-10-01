@@ -27,7 +27,7 @@ export default function FloatingActionBar({
           <div className={classes.spacer} aria-hidden />
           <Affix
             position={{
-              bottom: "calc(var(--public-tabbar-height, 0px) + 1rem)",
+              bottom: "calc(var(--tabbar-height, 0px) + 1rem)",
               left: 0,
               right: 0,
             }}

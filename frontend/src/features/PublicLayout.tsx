@@ -4,7 +4,7 @@ import { useDisclosure } from "@mantine/hooks";
 import type { ReactNode } from "react";
 
 import PublicPageFooter from "@/features/layout/PublicPageFooter";
-import classes from "@/features/layout/public-nav/PublicNav.module.css";
+import classes from "@/features/layout/nav/Nav.module.css";
 import PublicMenuSheet from "@/features/layout/public-nav/PublicMenuSheet";
 import PublicTabBar from "@/features/layout/public-nav/PublicTabBar";
 import PublicTopBar from "@/features/layout/public-nav/PublicTopBar";
@@ -22,7 +22,7 @@ export default function PublicLayout({
   const [menuOpened, { open: openMenu, close: closeMenu }] = useDisclosure();
 
   return (
-    // The shell sets --public-tabbar-height for the footer and the fixed elements above the bar.
+    // The shell sets --tabbar-height for the footer and the fixed elements above the bar.
     <div className={classes.shell}>
       <AppShell header={{ height: 60 }} p={padding}>
         {/* The bar is solid teal; a hairline under it would read as a stray light line. */}

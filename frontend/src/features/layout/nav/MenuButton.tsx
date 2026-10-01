@@ -1,7 +1,7 @@
 import { Badge, UnstyledButton } from "@mantine/core";
 import { IconMenu2 } from "@tabler/icons-react";
 
-import classes from "@/features/layout/public-nav/PublicNav.module.css";
+import classes from "@/features/layout/nav/Nav.module.css";
 import useAuth from "@/shared/hooks/useAuth";
 import { countPendingTasks } from "@/shared/utils/tasks";
 

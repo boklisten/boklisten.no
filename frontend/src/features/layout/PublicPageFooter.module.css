@@ -12,7 +12,7 @@
 
   color: var(--footer-text);
   /* Runs on under the phone tab bar, so the page ends in the footer's colour, not a white strip. */
-  padding-bottom: var(--public-tabbar-height, 0px);
+  padding-bottom: var(--tabbar-height, 0px);
   background: var(--footer-bg);
   border-top: 4px solid var(--mantine-color-brand-9);
 }

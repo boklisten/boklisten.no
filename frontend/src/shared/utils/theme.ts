@@ -1,5 +1,7 @@
-import { createTheme } from "@mantine/core";
+import { createTheme, Tabs } from "@mantine/core";
 import type { CSSVariablesResolver } from "@mantine/core";
+
+import tabsClasses from "@/styles/Tabs.module.css";
 
 const theme = createTheme({
   colors: {
@@ -18,6 +20,10 @@ const theme = createTheme({
   },
   primaryColor: "brand",
   primaryShade: 9,
+  components: {
+    // The current tab is marked like the current page in the navigation: the yellow highlighter.
+    Tabs: Tabs.extend({ classNames: tabsClasses }),
+  },
 });
 
 export const cssVariablesResolver: CSSVariablesResolver = (mantineTheme) => ({

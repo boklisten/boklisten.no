@@ -17,10 +17,11 @@ import {
   IconSignature,
   IconTag,
   IconTimeline,
+  IconUserEdit,
   IconUsers,
 } from "@tabler/icons-react";
-import type { LinkProps } from "@tanstack/react-router";
 
+import type { FileRouteTypes } from "@/routeTree.gen";
 import { KASSE_DESCRIPTION, KASSE_TITLE } from "@/features/kasse/kasseDescription";
 import {
   ORDER_MANAGER_DESCRIPTION,
@@ -31,9 +32,30 @@ import { MERKING_DESCRIPTION, MERKING_TITLE } from "@/features/merking/merkingDe
 export interface AdminNavLink {
   label: string;
   description: string;
-  to: LinkProps["to"];
+  to: FileRouteTypes["to"];
   icon: Icon;
 }
+
+const KASSE: AdminNavLink = {
+  label: KASSE_TITLE,
+  description: KASSE_DESCRIPTION,
+  to: "/admin/kasse",
+  icon: IconCashRegister,
+};
+
+const ORDER_MANAGER: AdminNavLink = {
+  label: ORDER_MANAGER_TITLE,
+  description: ORDER_MANAGER_DESCRIPTION,
+  to: "/admin/ordreoversikt",
+  icon: IconReceipt,
+};
+
+const WAITING_LIST: AdminNavLink = {
+  label: "Venteliste",
+  description: "Se hvem som venter på en bok",
+  to: "/admin/venteliste",
+  icon: IconHourglassLow,
+};
 
 interface AdminNavSection {
   label: string;
@@ -50,24 +72,9 @@ const ADMIN_NAV_SECTIONS = [
   {
     label: "Verktøy",
     links: [
-      {
-        label: KASSE_TITLE,
-        description: KASSE_DESCRIPTION,
-        to: "/admin/kasse",
-        icon: IconCashRegister,
-      },
-      {
-        label: ORDER_MANAGER_TITLE,
-        description: ORDER_MANAGER_DESCRIPTION,
-        to: "/admin/ordreoversikt",
-        icon: IconReceipt,
-      },
-      {
-        label: "Venteliste",
-        description: "Se hvem som venter på en bok",
-        to: "/admin/venteliste",
-        icon: IconHourglassLow,
-      },
+      KASSE,
+      ORDER_MANAGER,
+      WAITING_LIST,
       {
         label: MERKING_TITLE,
         description: MERKING_DESCRIPTION,
@@ -173,6 +180,20 @@ const ADMIN_NAV_SECTIONS = [
 export function isAdminNavLinkActive(link: AdminNavLink, pathname: string) {
   return pathname === link.to || pathname.startsWith(`${link.to}/`);
 }
+
+/** The employee's own settings, from the account block in the menu and the foot of the sidebar. */
+export const ADMIN_USER_SETTINGS: AdminNavLink = {
+  label: "Brukerinnstillinger",
+  description: "Endre navn, e-post og passord",
+  to: "/admin/user-settings",
+  icon: IconUserEdit,
+};
+
+/**
+ * The three tools always one tap away on the phone tab bar; the menu holds the rest, and the
+ * dashboard is one wordmark tap away, so it needs no tab of its own.
+ */
+export const ADMIN_PRIMARY_LINKS: AdminNavLink[] = [KASSE, ORDER_MANAGER, WAITING_LIST];
 
 export function visibleAdminNavSections(isAdmin: boolean) {
   return ADMIN_NAV_SECTIONS.filter((section) => !section.adminOnly || isAdmin);

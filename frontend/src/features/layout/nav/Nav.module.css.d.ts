@@ -1,6 +1,7 @@
-// Typed by hand so class names are checked at the call sites; keep in sync with PublicNav.module.css.
+// Typed by hand so class names are checked at the call sites; keep in sync with Nav.module.css.
 declare const classes: {
   readonly shell: string;
+  readonly adminMain: string;
   readonly bar: string;
   readonly links: string;
   readonly link: string;
@@ -18,12 +19,11 @@ declare const classes: {
   readonly bottom: string;
   readonly sheetBody: string;
   readonly sheetHead: string;
-  readonly sheetClose: string;
-  readonly identity: string;
+  readonly identityLink: string;
+  readonly identityEdit: string;
   readonly identityText: string;
+  readonly identityBadges: string;
   readonly identityName: string;
-  readonly identityMeta: string;
-  readonly identityAction: string;
   readonly guest: string;
   readonly group: string;
   readonly groupTitle: string;
@@ -34,6 +34,12 @@ declare const classes: {
   readonly rowDescription: string;
   readonly tasks: string;
   readonly sheetFoot: string;
+  readonly sidebar: string;
+  readonly sidebarScroll: string;
+  readonly groupRow: string;
+  readonly groupChevron: string;
+  readonly groupChildren: string;
+  readonly menuFoot: string;
 };
 
 export default classes;

@@ -1,8 +1,9 @@
 /*
- * The public navigation borrows the front page's one decoration: the yellow highlighter. The
- * current page is the one somebody has marked: teal type with a swipe under the word, the same in
- * the phone tab bar and the menu sheet, and a stroke under the word on the teal desktop bar. Everything else is the brand teal the site has
- * always opened with, and white type on it.
+ * The navigation borrows the front page's one decoration: the yellow highlighter. The current
+ * page is the one somebody has marked: teal type with a swipe under the word, the same in the
+ * phone tab bar, the menu sheet, bl-admin's sidebar and the tabs on a page, and a stroke under
+ * the word on the teal desktop bar. Everything else is the brand teal the site has always opened
+ * with, and white type on it.
  *
  * Tokens (light / dark; the dark values are Mantine's own dark scale so the pages sit on the
  * same body colour as the rest of the app)
@@ -15,10 +16,12 @@
  *   body    #45565e / dark-1     secondary type on paper
  *   rule    #d9e2e6 / dark-4     hairlines on paper
  *   tint    teal at low alpha    a pressed or hovered row
+ *
+ * They live on the body so that portalled content (the sheet, dropdowns) and the page tabs read
+ * the same values as the shells. Not on :root: the Mantine PostCSS preset turns light-dark()
+ * into a `[data-mantine-color-scheme="dark"] <selector>` rule, which needs an ancestor to match.
  */
-/* The sheet renders in a portal outside the shell, so it carries the tokens as well. */
-.shell,
-.sheetContent {
+:global(body) {
   --nav-marker: #ffe27a;
   --nav-paper: light-dark(#f8f7f3, var(--mantine-color-dark-8));
   --nav-card: light-dark(#fff, var(--mantine-color-dark-6));
@@ -30,13 +33,19 @@
   --nav-marker-swipe: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M1 3.2C18 1.4 38 4.6 58 2.4S90 3.8 99 2.2v5.6C80 9.6 52 6.2 30 8.8S8 8.4 1 8.6z' fill='%23ffe27a'/%3E%3C/svg%3E");
 }
 
+/* Wraps a whole site (public or bl-admin); the shells switch from tab bar to top bar or sidebar at `sm`. */
 .shell {
   /* Read by the page and by the fixed elements above the tab bar; zero where the bar is absent. */
-  --public-tabbar-height: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+  --tabbar-height: calc(3.75rem + env(safe-area-inset-bottom, 0px));
 
   @media (min-width: $mantine-breakpoint-sm) {
-    --public-tabbar-height: 0px;
+    --tabbar-height: 0px;
   }
+}
+
+/* bl-admin's page area ends above the tab bar, so the last row of a page is reachable. */
+.adminMain {
+  --app-shell-footer-offset: var(--tabbar-height);
 }
 
 /* ---------- Top bar ---------- */
@@ -179,7 +188,7 @@
   display: grid;
   grid-auto-columns: 1fr;
   grid-auto-flow: column;
-  height: var(--public-tabbar-height);
+  height: var(--tabbar-height);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--nav-paper);
   border-top: 1px solid var(--nav-rule);
@@ -291,24 +300,68 @@
 
 .sheetHead {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   align-items: center;
   padding: 1rem 1rem 1.25rem 1.25rem;
 }
 
-.sheetClose {
-  margin-left: auto;
-}
-
-.identity {
+/* The whole row up to the close button is the way to the user's settings. */
+.identityLink {
   display: flex;
+  flex: 1;
   gap: 0.75rem;
   align-items: center;
   min-width: 0;
+  margin: -0.5rem;
+  padding: 0.5rem;
+  color: var(--nav-ink);
+  text-decoration: none;
+  border-radius: var(--mantine-radius-md);
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--nav-ink);
+    text-decoration: none;
+    background: var(--nav-tint);
+  }
+
+  &[data-active] {
+    color: var(--mantine-color-brand-text);
+  }
+}
+
+/* The pen says what the row does; it sits at the row's end. */
+.identityEdit {
+  flex: none;
+  margin-left: auto;
+  color: var(--nav-body);
+
+  .identityLink[data-active] & {
+    color: var(--mantine-color-brand-text);
+  }
 }
 
 .identityText {
+  display: grid;
+  gap: 0.3rem;
   min-width: 0;
+  /* Where the badges go when they step down for the swipe; reserved, so nothing below moves. */
+  padding-bottom: 0.25rem;
+}
+
+/* The badges glide down to clear the swipe: a transform, so the layout around them is untouched. */
+.identityBadges {
+  row-gap: 0.25rem;
+  transition: transform 200ms ease;
+
+  .identityLink[data-active] & {
+    transform: translateY(0.25rem);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .identityName {
@@ -321,19 +374,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
+  justify-self: start;
+  /* The swipe's room is always there and given back below, so the head never changes height. */
+  margin-bottom: -0.25rem;
+  padding: 0 0.15em 0.25rem;
 
-.identityMeta {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 0.2rem;
-  font-size: var(--mantine-font-size-sm);
-  color: var(--nav-body);
-}
-
-.identityAction {
-  color: var(--mantine-color-brand-text);
-  text-underline-offset: 0.2em;
+  /* On the settings page the name carries the swipe, like the current page's word in a row. */
+  .identityLink[data-active] & {
+    color: var(--mantine-color-brand-text);
+    background-image: var(--nav-marker-swipe);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 0.25em;
+  }
 }
 
 .guest {
@@ -377,6 +430,10 @@
   &[data-active] {
     color: var(--mantine-color-brand-text);
   }
+
+  &[data-tone="danger"] {
+    color: var(--mantine-color-red-text);
+  }
 }
 
 .rowIcon {
@@ -399,14 +456,15 @@
 
 .rowLabel {
   justify-self: start;
+  /* Room for the swipe is always there, given back below so the row keeps its height and
+     nothing moves when the swipe appears. */
+  margin-bottom: -0.3em;
+  padding: 0 0.15em 0.3em;
   font-weight: 500;
   line-height: 1.25;
 
-  /* The current page's word carries the swipe, in the same place as in the tab bar; the padding
-     is given back below so the row keeps its height. */
+  /* The current page's word carries the swipe, in the same place as in the tab bar. */
   .row[data-active] & {
-    margin-bottom: -0.3em;
-    padding: 0 0.15em 0.3em;
     font-weight: 600;
     background-image: var(--nav-marker-swipe);
     background-repeat: no-repeat;
@@ -432,5 +490,100 @@
 
   &:empty {
     display: none;
+  }
+}
+
+/* ---------- bl-admin sidebar and menu ---------- */
+
+/*
+ * The desktop sidebar is the menu sheet laid on its side: the same rows, titles, folded groups and
+ * highlighter, only tighter.
+ */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0.25rem 0.5rem 0;
+
+  & .group {
+    padding: 0.5rem 0 0.25rem;
+  }
+
+  & .groupTitle {
+    margin-left: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  & .row {
+    gap: 0.6rem;
+    min-height: 2.25rem;
+    padding: 0.3rem 0.5rem;
+    font-size: var(--mantine-font-size-sm);
+  }
+
+  & .rowIcon {
+    width: 1.25rem;
+  }
+
+  & .sheetHead {
+    flex: none;
+    padding: 0.75rem 0.5rem 0.5rem;
+    border-bottom: 1px solid var(--nav-rule);
+  }
+
+  & .identityName {
+    font-size: 1.15rem;
+  }
+}
+
+.sidebarScroll {
+  flex: 1;
+  min-height: 0;
+}
+
+/* A folded group, in the sidebar and the sheet: a row that opens, with the arrow turning to say so. */
+.groupRow {
+  width: 100%;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  font: inherit;
+
+  &[data-current] {
+    color: var(--mantine-color-brand-text);
+  }
+}
+
+.groupChevron {
+  flex: none;
+  margin-left: auto;
+  color: var(--nav-body);
+  transition: transform 200ms ease;
+
+  .groupRow[aria-expanded="true"] & {
+    transform: rotate(90deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+/* The group's pages, one step in, hung from a hairline under the arrow. */
+.groupChildren {
+  margin-left: 1.05rem;
+  padding-left: 0.35rem;
+  border-left: 1px solid var(--nav-rule);
+}
+
+/* The employee's own links, set off from the page list by a hairline, in the sidebar and the sheet. */
+.menuFoot {
+  flex: none;
+  margin-top: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-top: 1px solid var(--nav-rule);
+
+  .sidebar & {
+    margin-top: 0;
   }
 }

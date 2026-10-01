@@ -1,11 +1,10 @@
 import { useLocation } from "@tanstack/react-router";
 
+import { ADMIN_PRIMARY_LINKS, isAdminNavLinkActive } from "@/features/layout/adminNavigation";
 import TabBar from "@/features/layout/nav/TabBar";
-import { isActive, primaryLinks } from "@/features/layout/public-nav/publicNavigation";
-import useAuth from "@/shared/hooks/useAuth";
 
-/** The public site's tab bar: the three primary destinations and the menu. */
-export default function PublicTabBar({
+/** bl-admin's tab bar: the three everyday tools and the menu. */
+export default function AdminTabBar({
   menuOpened,
   onOpenMenu,
 }: {
@@ -13,12 +12,11 @@ export default function PublicTabBar({
   onOpenMenu: () => void;
 }) {
   const pathname = useLocation({ select: (location) => location.pathname });
-  const { isLoggedIn } = useAuth();
-  const tabs = primaryLinks(isLoggedIn).map((link) => ({
+  const tabs = ADMIN_PRIMARY_LINKS.map((link) => ({
     label: link.label,
     to: link.to,
     icon: link.icon,
-    active: isActive(link, pathname),
+    active: isAdminNavLinkActive(link, pathname),
   }));
 
   return <TabBar tabs={tabs} menuOpened={menuOpened} onOpenMenu={onOpenMenu} />;

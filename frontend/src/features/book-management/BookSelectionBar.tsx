@@ -21,6 +21,9 @@ export default function BookSelectionBar({
       opened={selected.length > 0}
       onClose={onClear}
       closeOnEscape
+      // In place, not in a portal, so it can read the shell's tab bar height on phones.
+      position={{ bottom: "calc(var(--tabbar-height, 0px) + 30px)" }}
+      withinPortal={false}
       shadow="lg"
       radius="lg"
       aria-label="Valgte bøker"

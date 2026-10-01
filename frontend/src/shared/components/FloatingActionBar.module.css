@@ -1,7 +1,7 @@
 /*
  * The bar is a slip of paper laid over the page, and the count on it is what the visitor has
  * marked so far: the same highlighter swipe the navigation puts under the current page. It reads
- * the public shell's tokens (--nav-*), so it only lives on public pages.
+ * the navigation's tokens (--nav-*) and the shell's tab bar height.
  */
 
 /* Keeps the end of the page clear of the bar. */

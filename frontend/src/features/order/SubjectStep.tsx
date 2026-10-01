@@ -60,9 +60,7 @@ export default function SubjectStep({
 
   return (
     <>
-      <BranchWalkHeader walk={ORDER_WALK} path={path} title="Velg fag">
-        <p className={walk.lead}>Velg fagene du tar, så finner vi bøkene som hører til.</p>
-      </BranchWalkHeader>
+      <BranchWalkHeader walk={ORDER_WALK} path={path} title="Velg fag" />
 
       {subjects === null && (
         <div className={walk.grid} aria-busy>

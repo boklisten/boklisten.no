@@ -4,9 +4,9 @@ import { useLayoutEffect, useRef, useState } from "react";
 
 import Logo from "@/features/layout/Logo";
 import CartPill from "@/features/layout/public-nav/CartPill";
-import MenuButton from "@/features/layout/public-nav/MenuButton";
+import MenuButton from "@/features/layout/nav/MenuButton";
 import { CART_PATH, isActive, primaryLinks } from "@/features/layout/public-nav/publicNavigation";
-import classes from "@/features/layout/public-nav/PublicNav.module.css";
+import classes from "@/features/layout/nav/Nav.module.css";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import useAuth from "@/shared/hooks/useAuth";
 

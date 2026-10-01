@@ -10,7 +10,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useFocusWithin, useHover, useMergedRef, useReducedMotion } from "@mantine/hooks";
-import { IconArrowRight } from "@tabler/icons-react";
+import { IconArrowRight, IconExternalLink } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
 
@@ -106,6 +106,23 @@ export default function AdminDashboard() {
             Her er verktøyene du trenger for å dele ut, samle inn og holde orden på bøkene.
           </Text>
           <ColorSchemeSelector />
+          {/* The way back to the customer site, as the front page points employees here: one
+              pane, only in the calm brand tint so it never competes with the tools. */}
+          <NavLink
+            component={TanStackAnchor}
+            to="/"
+            label="Gå til kundeside"
+            description="Se offentlig informasjon og egne bøker."
+            leftSection={<IconExternalLink />}
+            active
+            underline="never"
+            mt="xl"
+            maw={420}
+            styles={{
+              root: { borderRadius: "var(--mantine-radius-md)" },
+              label: { fontWeight: 600 },
+            }}
+          />
         </Stack>
 
         {visibleAdminNavSections(isAdmin).map((section) => (

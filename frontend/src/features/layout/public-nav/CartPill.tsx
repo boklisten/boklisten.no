@@ -1,7 +1,7 @@
 import { IconBasket } from "@tabler/icons-react";
 
 import { CART_PATH } from "@/features/layout/public-nav/publicNavigation";
-import classes from "@/features/layout/public-nav/PublicNav.module.css";
+import classes from "@/features/layout/nav/Nav.module.css";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import useCart from "@/shared/hooks/useCart";
 import { bookCountLabel } from "@/shared/utils/bookCountLabel";

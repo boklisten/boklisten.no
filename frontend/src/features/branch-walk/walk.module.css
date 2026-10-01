@@ -10,9 +10,11 @@
   margin-bottom: 1.25rem;
 }
 
+/* The way back sits a little apart from the question, so the two read as separate lines. */
 .crumbs {
   flex-wrap: wrap;
   row-gap: 0.25rem;
+  margin-bottom: 1rem;
   font-size: var(--mantine-font-size-sm);
 }
 

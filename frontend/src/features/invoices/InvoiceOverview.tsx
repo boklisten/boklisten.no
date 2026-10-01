@@ -179,7 +179,12 @@ export default function InvoiceOverview() {
         Klikk på en faktura for å se detaljer, huk av for å endre eller eksportere flere samtidig.
       </Text>
 
-      <Affix position={{ bottom: 16, left: 0, right: 0 }} zIndex={150}>
+      {/* In place, not in a portal, so it can read the shell's tab bar height on phones. */}
+      <Affix
+        position={{ bottom: "calc(var(--tabbar-height, 0px) + 16px)", left: 0, right: 0 }}
+        zIndex={150}
+        withinPortal={false}
+      >
         <Transition transition="slide-up" mounted={selectedRows.length > 0}>
           {(style) => (
             <Group justify="center" style={style} px="md">

@@ -1,121 +1,26 @@
-import { Divider, NavLink, ScrollArea, Stack } from "@mantine/core";
-import { IconExternalLink, IconLogout, IconUserEdit } from "@tabler/icons-react";
-import { useLocation } from "@tanstack/react-router";
-import { Fragment } from "react";
+import { ScrollArea } from "@mantine/core";
 
-import { isAdminNavLinkActive, visibleAdminNavSections } from "@/features/layout/adminNavigation";
-import type { AdminNavLink } from "@/features/layout/adminNavigation";
-import useAuth from "@/shared/hooks/useAuth";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import AdminMenuFoot from "@/features/layout/admin-nav/AdminMenuFoot";
+import AdminMenuLinks from "@/features/layout/admin-nav/AdminMenuLinks";
+import { ADMIN_USER_SETTINGS } from "@/features/layout/adminNavigation";
+import IdentityHead from "@/features/layout/nav/IdentityHead";
+import classes from "@/features/layout/nav/Nav.module.css";
 
-function AdminNavItem({
-  link,
-  pathname,
-  onNavigate,
-}: {
-  link: AdminNavLink;
-  pathname: string;
-  onNavigate: () => void;
-}) {
-  const LinkIcon = link.icon;
+/** The desktop sidebar: the phone menu sheet, standing. */
+export default function AdminPageNavigation() {
   return (
-    <NavLink
-      label={link.label}
-      to={link.to}
-      active={isAdminNavLinkActive(link, pathname)}
-      leftSection={<LinkIcon />}
-      underline="never"
-      c="var(--mantine-color-text)"
-      component={TanStackAnchor}
-      onClick={onNavigate}
-    />
+    <div className={classes.sidebar}>
+      <div className={classes.sheetHead}>
+        <IdentityHead settingsTo={ADMIN_USER_SETTINGS.to} badgeSize="xs" onNavigate={noop} />
+      </div>
+      <ScrollArea className={classes.sidebarScroll} type="auto">
+        <AdminMenuLinks onNavigate={noop} />
+      </ScrollArea>
+      <AdminMenuFoot onNavigate={noop} />
+    </div>
   );
 }
 
 function noop() {
-  // intentionally empty
-}
-
-export default function AdminPageNavigation({ onNavigate = noop }: { onNavigate?: () => void }) {
-  const pathname = useLocation({ select: (location) => location.pathname });
-  const { isAdmin } = useAuth();
-  return (
-    <Stack justify="space-between" h="100%">
-      <ScrollArea>
-        <Stack gap={5}>
-          {visibleAdminNavSections(isAdmin).map((section) => (
-            <Fragment key={section.label}>
-              <Divider label={section.label} />
-              {section.links.map((link) => (
-                <AdminNavItem
-                  key={link.label}
-                  link={link}
-                  pathname={pathname}
-                  onNavigate={onNavigate}
-                />
-              ))}
-              {section.groups?.map((group) => {
-                const GroupIcon = group.icon;
-                return (
-                  <NavLink
-                    key={group.label}
-                    label={group.label}
-                    leftSection={<GroupIcon />}
-                    active={group.links.some((link) => isAdminNavLinkActive(link, pathname))}
-                    c="var(--mantine-color-text)"
-                    component="button"
-                  >
-                    {group.links.map((link) => (
-                      <AdminNavItem
-                        key={link.label}
-                        link={link}
-                        pathname={pathname}
-                        onNavigate={onNavigate}
-                      />
-                    ))}
-                  </NavLink>
-                );
-              })}
-            </Fragment>
-          ))}
-        </Stack>
-      </ScrollArea>
-
-      <Stack gap={5} mb="md">
-        <Divider label="Bruker" />
-        <NavLink
-          label="Brukerinnstillinger"
-          to="/admin/user-settings"
-          active={pathname.includes("/user-settings")}
-          leftSection={<IconUserEdit />}
-          variant="subtle"
-          underline="never"
-          c="var(--mantine-color-text)"
-          component={TanStackAnchor}
-          onClick={onNavigate}
-        />
-        <NavLink
-          label="Gå til kundeside"
-          description="Se offentlig informasjon og egne bøker"
-          to="/"
-          leftSection={<IconExternalLink />}
-          component={TanStackAnchor}
-          active
-          underline="never"
-          onClick={onNavigate}
-        />
-        <NavLink
-          label="Logg ut"
-          to="/auth/logout"
-          leftSection={<IconLogout />}
-          variant="subtle"
-          component={TanStackAnchor}
-          active
-          underline="never"
-          color="red"
-          onClick={onNavigate}
-        />
-      </Stack>
-    </Stack>
-  );
+  // The sidebar stays open; nothing to close on navigation.
 }
