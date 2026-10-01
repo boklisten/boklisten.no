@@ -8,8 +8,11 @@ const NO_SERVER_ERRORS: string[] = [];
 
 export default function ErrorSummary({
   serverErrors = NO_SERVER_ERRORS,
+  title = "Du må rette opp følgende før du kan gå videre",
 }: {
   serverErrors?: string[];
+  /** Auto-saved forms say that nothing is saved until the errors are fixed. */
+  title?: string | undefined;
 }) {
   const form = useFormContext();
   return (
@@ -25,7 +28,7 @@ export default function ErrorSummary({
 
         return (
           <Activity mode={errors.size > 0 ? "visible" : "hidden"}>
-            <ErrorAlert title="Du må rette opp følgende før du kan gå videre">
+            <ErrorAlert title={title}>
               <List size="sm">
                 {[...errors].map((error) => (
                   <List.Item key={error}>{error}</List.Item>

@@ -51,7 +51,7 @@ export default function Tasks() {
       <Stepper active={0}>
         {data.taskConfirmDetails && (
           <Stepper.Step label="Bekreft din informasjon">
-            <UserSettingsForm user={data} />
+            <UserSettingsForm user={data} confirmDetails />
           </Stepper.Step>
         )}
         {data.taskSignAgreement && (

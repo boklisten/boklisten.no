@@ -41,7 +41,13 @@ export const userSearchValidator = vine.create(
   }),
 );
 
-export const updateMeValidator = vine.withMetaData<{ userId: string }>().create(userFieldsSchema);
+/** The user's own details; a changed email starts unconfirmed (see `UserService.updateOwnDetails`). */
+export const updateMeValidator = vine.withMetaData<{ userId: string }>().create(
+  vine.object({
+    ...userFieldsSchema.getProperties(),
+    email: emailField.clone().use(uniqueEmail()),
+  }),
+);
 
 /** Employees may also change the email and vouch for it. */
 export const updateUserValidator = vine.withMetaData<{ userId: string }>().create(

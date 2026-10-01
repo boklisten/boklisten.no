@@ -10,10 +10,10 @@ import { mergeUsersValidator, setPermissionValidator } from "#validators/user_ma
 import { updateMeValidator, updateUserValidator, userSearchValidator } from "#validators/users";
 
 export default class UsersController {
-  /** Customers confirm their own details; saving clears the confirm-details task. */
+  /** Customers keep their own details, email included; saving clears the confirm-details task. */
   async updateMe(ctx: HttpContext) {
     const user = ctx.auth.getUserOrFail();
-    const details = await ctx.request.validateUsing(updateMeValidator, {
+    const { email, ...details } = await ctx.request.validateUsing(updateMeValidator, {
       meta: { userId: user.id },
     });
     const fields = userFieldsFrom(details);
@@ -22,8 +22,7 @@ export default class UsersController {
       user.branchMembershipId,
       fields.branchMembershipId,
     );
-    user.merge({ ...fields, taskConfirmDetails: false });
-    await user.save();
+    await UserService.updateOwnDetails(user, { ...fields, email });
   }
 
   async search(ctx: HttpContext) {

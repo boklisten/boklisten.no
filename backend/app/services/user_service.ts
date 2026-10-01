@@ -23,6 +23,26 @@ export function dobFrom(date: Date | null | undefined): DateTime | null {
 }
 
 /**
+ * Sets a new email and voids the verification links sent so far: a link proves the address it
+ * was sent to, but confirming only flips `emailConfirmed`, so an old link would otherwise confirm
+ * the new address. Returns whether the email changed (case aside).
+ */
+async function replaceEmail(user: User, email: string): Promise<boolean> {
+  // Older rows may hold mixed case; the validator lowercases, and that alone is not a new address.
+  if (email.toLowerCase() === user.email.toLowerCase()) {
+    return false;
+  }
+  await EmailVerification.query().where("userId", user.id).delete();
+  user.email = email;
+  return true;
+}
+
+async function sendEmailVerification(user: User): Promise<void> {
+  const emailVerification = await EmailVerification.create({ userId: user.id });
+  await DispatchService.sendEmailVerification(user.email, emailVerification.id);
+}
+
+/**
  * A validated `userFieldsSchema` payload as the columns it sets: the request names match the
  * model's, so only the date and the optional-to-nullable fields need translating.
  */
@@ -82,6 +102,27 @@ export const UserService = {
    * Employees may save details that are incomplete, typically an underage customer whose guardian
    * they know nothing about. The customer is then asked to complete them on their next login.
    */
+  /**
+   * The user's own details, from their settings or the confirm-details task. A new email is
+   * unproven, so it starts unconfirmed with a fresh link (see `replaceEmail`).
+   */
+  async updateOwnDetails(
+    user: User,
+    changes: ReturnType<typeof userFieldsFrom> & Pick<User, "email">,
+  ): Promise<User> {
+    const { email, ...details } = changes;
+    const emailChanged = await replaceEmail(user, email);
+    user.merge({ ...details, taskConfirmDetails: false });
+    if (emailChanged) {
+      user.emailConfirmed = false;
+    }
+    await user.save();
+    if (emailChanged) {
+      await sendEmailVerification(user);
+    }
+    return user;
+  },
+
   async updateAsEmployee(
     user: User,
     changes: Partial<
@@ -102,9 +143,15 @@ export const UserService = {
       >
     >,
   ): Promise<User> {
-    user.merge(changes);
+    const { email, ...details } = changes;
+    const emailChanged = email !== undefined && (await replaceEmail(user, email));
+    user.merge(details);
     user.taskConfirmDetails = invalidUserFields(user).length > 0;
     await user.save();
+    // An employee may vouch for the new address; otherwise the customer proves it like anyone.
+    if (emailChanged && !user.emailConfirmed) {
+      await sendEmailVerification(user);
+    }
     return user;
   },
 
@@ -137,8 +184,7 @@ export const UserService = {
       permission: "customer",
       localHashedPassword: await PasswordService.hash(password),
     });
-    const emailVerification = await EmailVerification.create({ userId: user.id });
-    await DispatchService.sendEmailVerification(email, emailVerification.id);
+    await sendEmailVerification(user);
     return user;
   },
 

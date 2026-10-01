@@ -197,7 +197,7 @@ export function isAdminNavLinkActive(link: AdminNavLink, pathname: string) {
 /** The employee's own settings, from the account block in the menu and the foot of the sidebar. */
 export const ADMIN_USER_SETTINGS: AdminNavLink = {
   label: "Brukerinnstillinger",
-  description: "Endre navn, e-post og passord",
+  description: "Endre opplysningene dine og utseendet",
   to: "/admin/user-settings",
   icon: IconUserEdit,
 };

@@ -1,4 +1,4 @@
-import { Container, Stack, Title } from "@mantine/core";
+import { Container } from "@mantine/core";
 import AuthGuard from "@/features/auth/AuthGuard";
 import UserSettings from "@/features/user/UserSettings";
 import { createFileRoute } from "@tanstack/react-router";
@@ -16,12 +16,9 @@ export const Route = createFileRoute("/(offentlig)/user-settings")({
 function SettingsPage() {
   return (
     <Container size="xs">
-      <Stack>
-        <Title ta="center">Brukerinnstillinger</Title>
-        <AuthGuard>
-          <UserSettings />
-        </AuthGuard>
-      </Stack>
+      <AuthGuard>
+        <UserSettings />
+      </AuthGuard>
     </Container>
   );
 }

@@ -19,10 +19,8 @@ declare const classes: {
   readonly bottom: string;
   readonly sheetBackdrop: string;
   readonly sheetBody: string;
-  readonly sheetHead: string;
   readonly sheetViewport: string;
   readonly identityLink: string;
-  readonly identityEdit: string;
   readonly identityText: string;
   readonly identityBadges: string;
   readonly identityName: string;
@@ -36,16 +34,12 @@ declare const classes: {
   readonly rowLabel: string;
   readonly rowDescription: string;
   readonly tasks: string;
-  readonly sheetFoot: string;
   readonly sidebar: string;
   readonly sidebarScroll: string;
   readonly groupRow: string;
   readonly groupChevron: string;
   readonly groupChildren: string;
-  readonly menuFoot: string;
   readonly menuHead: string;
-  readonly menuTheme: string;
-  readonly menuThemeLabel: string;
 };
 
 export default classes;

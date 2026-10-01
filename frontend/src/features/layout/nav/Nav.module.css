@@ -355,9 +355,9 @@
     -webkit-user-drag: none;
   }
 
-  /* The grabber takes the top of the head's padding, so the name sits where it did without it. */
-  & .sheetHead {
-    padding-top: 0.6875rem;
+  /* The grabber stands in for most of the space above the first section. */
+  & .sheetBody {
+    padding-top: 0.25rem;
   }
 }
 
@@ -371,7 +371,7 @@
 }
 
 .sheetBody {
-  padding: 0 0 calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  padding: 0.5rem 0 calc(1.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* The grabber: the short bar native sheets carry on top, saying the sheet can be swiped down. */
@@ -384,22 +384,13 @@
   cursor: grab;
 }
 
-.sheetHead {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  padding: 1rem 1rem 1.25rem 1.25rem;
-}
-
-/* The whole row up to the close button is the way to the user's settings. */
+/* The "Din bruker" section's row: a menu row with the avatar for its icon, the one way to the settings. */
 .identityLink {
   display: flex;
-  flex: 1;
   gap: 0.75rem;
   align-items: center;
   min-width: 0;
-  margin: -0.5rem;
-  padding: 0.5rem;
+  padding: 0.5rem var(--nav-inset);
   color: var(--nav-ink);
   text-decoration: none;
   border-radius: var(--mantine-radius-md);
@@ -417,36 +408,18 @@
   }
 }
 
-/* The pen says what the row does; it sits at the row's end. */
-.identityEdit {
-  flex: none;
-  margin-left: auto;
-  color: var(--nav-body);
-
-  .identityLink[data-active] & {
-    color: var(--mantine-color-brand-text);
-  }
-}
-
 .identityText {
   display: grid;
   gap: 0.3rem;
   min-width: 0;
-  /* Where the badges go when they step down for the swipe; reserved, so nothing below moves. */
-  padding-bottom: 0.25rem;
 }
 
-/* The badges glide down to clear the swipe: a transform, so the layout around them is untouched. */
 .identityBadges {
   row-gap: 0.25rem;
-  transition: transform 200ms ease;
 
-  .identityLink[data-active] & {
-    transform: translateY(0.25rem);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
+  /* No chip for this user (a customer in bl-admin, no school): no empty row either. */
+  &:empty {
+    display: none;
   }
 
   /* A Mantine Badge sets the default cursor; here the chip is part of the link and points like it. */
@@ -466,33 +439,34 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   justify-self: start;
-  /* The swipe's room is always there and given back below, so the head never changes height. */
-  margin-bottom: -0.25rem;
-  padding: 0 0.15em 0.25rem;
 
-  /* On the settings page the name carries the swipe, like the current page's word in a row. */
+  /* On the settings page the name turns the brand colour, without the swipe the rows carry. */
   .identityLink[data-active] & {
     color: var(--mantine-color-brand-text);
-    background-image: var(--nav-marker-swipe);
-    background-repeat: no-repeat;
-    background-position: 0 100%;
-    background-size: 100% 0.25em;
   }
 }
 
+/* A guest's two ways in, standing where the identity row stands for someone logged in. */
 .guest {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
-  padding: 0 1.25rem 1.25rem;
+  padding: 0.25rem var(--nav-inset) 0.5rem;
 }
 
+/*
+ * Every block of every menu is one of these sections, so the sheet and the sidebar share one
+ * rhythm: the same space between sections, the title the same distance above its content, and
+ * everything inside (rows, the identity row, buttons, alerts) inset by --nav-inset, so icons,
+ * avatar and titles share one left edge. No rules between sections; the titles separate them.
+ */
 .group {
+  --nav-inset: 0.5rem;
   padding: 0.5rem 0.75rem 0.25rem;
 }
 
 .groupTitle {
-  margin: 0 0 0.25rem 0.5rem;
+  margin: 0 0 0.25rem var(--nav-inset);
   font-family: var(--nav-display);
   font-variation-settings: "SOFT" 50;
   font-size: 1.05rem;
@@ -505,7 +479,7 @@
   gap: 0.85rem;
   align-items: center;
   min-height: 3rem;
-  padding: 0.5rem 0.5rem;
+  padding: 0.5rem var(--nav-inset);
   color: var(--nav-ink);
   text-decoration: none;
   border-radius: var(--mantine-radius-md);
@@ -567,17 +541,7 @@
 }
 
 .tasks {
-  margin: 0 1.25rem 0.75rem;
-}
-
-.sheetFoot {
-  display: grid;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem 0;
-
-  &:empty {
-    display: none;
-  }
+  margin: 0.25rem var(--nav-inset) 0.5rem;
 }
 
 /* ---------- bl-admin sidebar and menu ---------- */
@@ -597,24 +561,23 @@
   }
 
   & .groupTitle {
-    margin-left: 0.5rem;
     font-size: 0.95rem;
   }
 
   & .row {
     gap: 0.6rem;
     min-height: 2.25rem;
-    padding: 0.3rem 0.5rem;
+    padding: 0.3rem var(--nav-inset);
     font-size: var(--mantine-font-size-sm);
+  }
+
+  & .identityLink {
+    gap: 0.6rem;
+    padding: 0.3rem var(--nav-inset);
   }
 
   & .rowIcon {
     width: 1.25rem;
-  }
-
-  & .sheetHead {
-    flex: none;
-    padding: 0.75rem 0.5rem 0.5rem;
   }
 
   & .identityName {
@@ -662,49 +625,7 @@
   border-left: 1px solid var(--nav-rule);
 }
 
-/* The employee's own links, set off from the page list by a hairline, in the sidebar and the sheet. */
-.menuFoot {
-  flex: none;
-  margin-top: 0.5rem;
-  padding-bottom: 0.75rem;
-  border-top: 1px solid var(--nav-rule);
-
-  .sidebar & {
-    margin-top: 0;
-  }
-}
-
-/* bl-admin's head: the identity row with the theme pill under it, one block in the sidebar and the sheet. */
+/* bl-admin's "Din bruker" section, held above the sidebar's scrolling list. */
 .menuHead {
   flex: none;
-
-  .sidebar & {
-    border-bottom: 1px solid var(--nav-rule);
-  }
-}
-
-/*
- * The theme pill, right under the identity row, with its label. The label sits close to the pill
- * (a third of the gap above it) so the two read as one setting, apart from the identity row.
- */
-.menuTheme {
-  padding: 0 1rem 1.25rem 1.25rem;
-
-  .sidebar & {
-    padding: 0.25rem 0.5rem 0.75rem;
-  }
-}
-
-/* Secondary type, the size of a row's description: it names the setting without competing with it. */
-.menuThemeLabel {
-  margin: 0 0 0.375rem 0.125rem;
-  font-size: var(--mantine-font-size-sm);
-  font-weight: 500;
-  line-height: 1.25;
-  color: var(--nav-body);
-
-  .sidebar & {
-    margin-bottom: 0.25rem;
-    font-size: var(--mantine-font-size-xs);
-  }
 }

@@ -1,77 +1,67 @@
-import { Badge, Group } from "@mantine/core";
+import { Group } from "@mantine/core";
 import type { BadgeProps } from "@mantine/core";
-import { IconPencil } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
-import CustomerAvatar from "@/features/customer-search/CustomerAvatar";
-import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import classes from "@/features/layout/nav/Nav.module.css";
 import { firstName, isActive } from "@/features/layout/public-nav/publicNavigation";
 import type { FileRouteTypes } from "@/routeTree.gen";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import IdentityBadge from "@/features/user/IdentityBadge";
+import type { IdentitySite } from "@/features/user/IdentityBadge";
+import IdentityAvatar from "@/features/user/IdentityAvatar";
 import useAuth from "@/shared/hooks/useAuth";
-import { api } from "@/shared/utils/apiClient";
 
 /**
  * Who is logged in, as bl-admin shows a customer: avatar, first name, then one chip for what
- * matters on that site: the school on the public site, the permission in bl-admin. The whole row
- * leads to the user's own settings and is marked like any other row while that page is open. The
- * head of both menu sheets and of the admin sidebar.
+ * matters on that site (see `IdentityAvatar`, `IdentityBadge`). It is the menu's first section, "Din bruker", laid out
+ * like the sections below it: the identity row stands where their rows stand and is the one way to
+ * the user's own settings, marked by colour while that page is open. Anything else about the
+ * account (the public site's pending tasks) follows the row inside the section. Nothing for a
+ * guest; the site shows its ways in instead.
  */
 export default function IdentityHead({
   settingsTo,
-  badge,
+  site,
   badgeSize = "sm",
   onNavigate,
+  children,
 }: {
   settingsTo: FileRouteTypes["to"];
-  /** Which chip follows the name: the branch membership on the public site, the role in bl-admin. */
-  badge: "branch" | "permission";
-  /** Smaller in the narrow sidebar, so the chip still fits beside the avatar and the pen. */
+  site: IdentitySite;
+  /** Smaller in the narrow sidebar, so the chip still fits beside the avatar. */
   badgeSize?: BadgeProps["size"];
   onNavigate: () => void;
+  children?: ReactNode;
 }) {
   const { user } = useAuth();
   const pathname = useLocation({ select: (location) => location.pathname });
-  const { data: branch } = useQuery(
-    api.branches.show.queryOptions(
-      { params: { branchId: user?.branchMembershipId ?? "" } },
-      { enabled: badge === "branch" && Boolean(user?.branchMembershipId) },
-    ),
-  );
   if (!user) {
-    return <div className={classes.identityName}>Meny</div>;
+    return null;
   }
   const name = firstName(user);
-  const withBadge = badge === "branch" ? Boolean(branch) : user.permission !== "customer";
   const active = isActive({ to: settingsTo }, pathname);
   return (
-    <TanStackAnchor
-      to={settingsTo}
-      className={classes.identityLink}
-      underline="never"
-      aria-label={`${name}: brukerinnstillinger`}
-      data-active={active || undefined}
-      aria-current={active ? "page" : undefined}
-      onClick={onNavigate}
-    >
-      <CustomerAvatar userId={user.id} />
-      <span className={classes.identityText}>
-        <span className={classes.identityName}>{name}</span>
-        {withBadge && (
+    <div className={classes.group}>
+      <p className={classes.groupTitle}>Din bruker</p>
+      <TanStackAnchor
+        to={settingsTo}
+        className={classes.identityLink}
+        underline="never"
+        aria-label={`${name}: brukerinnstillinger`}
+        data-active={active || undefined}
+        aria-current={active ? "page" : undefined}
+        onClick={onNavigate}
+      >
+        <IdentityAvatar user={user} name={user.name ?? name} site={site} />
+        <span className={classes.identityText}>
+          <span className={classes.identityName}>{name}</span>
           <Group gap={6} className={classes.identityBadges}>
-            {badge === "permission" ? (
-              <PermissionBadge permission={user.permission} size={badgeSize} />
-            ) : (
-              <Badge variant="light" size={badgeSize}>
-                {branch?.name}
-              </Badge>
-            )}
+            <IdentityBadge user={user} site={site} size={badgeSize} />
           </Group>
-        )}
-      </span>
-      <IconPencil className={classes.identityEdit} size={20} aria-hidden />
-    </TanStackAnchor>
+        </span>
+      </TanStackAnchor>
+      {children}
+    </div>
   );
 }

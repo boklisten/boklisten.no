@@ -1,32 +1,53 @@
-import { Skeleton, Stack } from "@mantine/core";
+import { Skeleton, Stack, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-
-import UserSettingsForm from "@/features/user/UserSettingsForm";
 import { useNavigate } from "@tanstack/react-router";
+import { useId } from "react";
+
 import { authQueryOptions } from "@/features/auth/authQuery";
+import ColorSchemeSelector from "@/features/user/ColorSchemeSelector";
+import FormSectionTitle from "@/features/user/FormSectionTitle";
+import LogoutButton from "@/features/user/LogoutButton";
+import UserSettingsForm from "@/features/user/UserSettingsForm";
 
-function UserSettings() {
+/**
+ * The user's own settings, the same on both sites: the details, the theme, and the way out last.
+ * Who is logged in is already in the menu's "Din bruker" row, so the page does not repeat it.
+ */
+export default function UserSettings() {
   const navigate = useNavigate();
-
-  const { data, isLoading, isError } = useQuery(authQueryOptions());
+  const { data: user, isLoading, isError } = useQuery(authQueryOptions());
 
   if (isLoading) {
     return (
-      <Stack>
-        <Skeleton height={60} />
-        {Array.from({ length: 6 }).map((_, index) => (
+      <Stack gap="xs" py="lg">
+        {Array.from({ length: 7 }).map((_, index) => (
           <Skeleton height={40} key={`s-${index}`} />
         ))}
       </Stack>
     );
   }
 
-  if (isError || !data) {
+  if (isError || !user) {
     void navigate({ to: "/auth/login", search: { redirect: "user-settings" } });
     return null;
   }
 
-  return <UserSettingsForm user={data} />;
+  return (
+    <Stack gap="xl" py="lg">
+      <Title>Brukerinnstillinger</Title>
+      <UserSettingsForm user={user} />
+      <AppearanceSection />
+      <LogoutButton />
+    </Stack>
+  );
 }
 
-export default UserSettings;
+function AppearanceSection() {
+  const titleId = useId();
+  return (
+    <Stack gap="xs">
+      <FormSectionTitle id={titleId}>Utseende</FormSectionTitle>
+      <ColorSchemeSelector fullWidth labelledBy={titleId} />
+    </Stack>
+  );
+}

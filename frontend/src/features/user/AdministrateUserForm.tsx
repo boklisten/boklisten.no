@@ -1,61 +1,35 @@
 import type { User } from "@boklisten/backend/shared/user";
-import { Button, Group, Modal, Space, Stack, Text, Tooltip } from "@mantine/core";
-import { IconCheck, IconInfoCircleFilled } from "@tabler/icons-react";
+import { Space, Stack } from "@mantine/core";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
+import EmailConfirmedMark from "@/features/user/EmailConfirmedMark";
 import UserDangerZone from "@/features/user/UserDangerZone";
-import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
-import UserInfoFields, { userFieldsBody } from "@/features/user/UserInfoFields";
+import type { AutoSavedForm, UserInfoFieldValues } from "@/features/user/UserInfoFields";
+import UserInfoFields, {
+  isUnderageWithoutGuardian,
+  isWholeFormValid,
+  savesOnChange,
+  userFieldsBody,
+} from "@/features/user/UserInfoFields";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import { useAppForm } from "@/shared/hooks/form";
+import useAutoSave from "@/shared/hooks/useAutoSave";
 import { api } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { isUnder18 } from "@/shared/utils/dates";
-import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-
-/**
- * Above the manager modal this form usually lives in (Mantine's default 200); both render into the
- * same portal, so equal z-indexes would leave the confirm hidden behind the form.
- */
-const CONFIRM_Z_INDEX = 250;
 
 type AdministrateUserFormValues = {
   email: string;
   emailConfirmed: boolean;
 } & UserInfoFieldValues;
 
-/**
- * Employees correcting a date of birth rarely know the customer's guardian. With nothing at all
- * filled in they may save anyway (after confirming); anything typed in must still be valid.
- */
-function isSavingUnderageWithoutGuardian(values: UserInfoFieldValues): boolean {
-  return (
-    isUnder18(new Date(values.birthday)) &&
-    [values.guardianName, values.guardianEmail, values.guardianPhoneNumber].every(
-      (value) => value.trim().length === 0,
-    )
-  );
-}
-
-export default function AdministrateUserForm({
-  user,
-  onSaved,
-  onDeleted,
-  onMerged,
-}: {
-  user: User;
-  onSaved?: (() => void) | undefined;
-  onDeleted?: (() => void) | undefined;
-  onMerged?: ((toUserId: string) => void) | undefined;
-}) {
-  const { isAdmin } = useAuth();
-  const queryClient = useQueryClient();
-  const defaultValues: AdministrateUserFormValues = {
+function valuesOf(user: User): AdministrateUserFormValues {
+  return {
     email: user.email,
     emailConfirmed: user.emailConfirmed,
     name: user.name ?? "",
@@ -71,58 +45,72 @@ export default function AdministrateUserForm({
     guardianPhoneNumber: user.guardianPhone ?? "",
     branchMembership: user.branchMembershipId ?? "",
   };
-  const [confirmingWithoutGuardian, setConfirmingWithoutGuardian] = useState(false);
+}
+
+function bodyOf(values: AdministrateUserFormValues) {
+  return {
+    ...userFieldsBody(values),
+    email: values.email,
+    emailConfirmed: values.emailConfirmed,
+  };
+}
+
+/**
+ * An employee editing a customer, with auto-save (see `useAutoSave`): text fields and the date on
+ * blur, the switch and school on change, and only once the whole form is valid. An underage customer
+ * without any guardian details saves anyway, with a warning that they must add them themselves.
+ */
+export default function AdministrateUserForm({
+  user,
+  onDeleted,
+  onMerged,
+}: {
+  user: User;
+  onDeleted?: (() => void) | undefined;
+  onMerged?: ((toUserId: string) => void) | undefined;
+}) {
+  const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
+  // The form starts from the customer as they were when the editor opened; the refetch after each
+  // save must not reset what the employee is typing.
+  // oxlint-disable-next-line react/hook-use-state -- never set again, so no setter
+  const [defaultValues] = useState(() => valuesOf(user));
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const updateUserMutation = useMutation(
     api.users.update.mutationOptions({
-      onSuccess: () => {
-        setServerErrors([]);
-        showSuccessNotification("Brukerdetaljene ble oppdatert!");
-        onSaved?.();
-      },
+      onSuccess: () => setServerErrors([]),
       onError: (error) => {
         if (error.isValidationError()) {
           setServerErrors(error.response.errors.map((issue) => issue.message));
-          return;
         }
-        showErrorNotification("Noe gikk galt under registreringen!");
-      },
-      // The signature status depends on the date of birth (a guardian's signature stops counting
-      // at 18), so it is refetched along with the details.
-      onSettled: () => {
-        setConfirmingWithoutGuardian(false);
-        return Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: api.users.show.queryKey({ params: { userId: user.id } }),
-          }),
-          queryClient.invalidateQueries({
-            queryKey: api.signatures.show.queryKey({ params: { userId: user.id } }),
-          }),
-        ]);
       },
     }),
   );
-  const save = (values: AdministrateUserFormValues) =>
-    updateUserMutation.mutate({
-      params: { userId: user.id },
-      body: {
-        ...userFieldsBody(values),
-        email: values.email,
-        emailConfirmed: values.emailConfirmed,
-      },
-    });
+  const { save } = useAutoSave({
+    initialBody: bodyOf(defaultValues),
+    persist: (body) => updateUserMutation.mutateAsync({ params: { userId: user.id }, body }),
+    notifications: {
+      id: `user-saved-${user.id}`,
+      saved: "Brukerdetaljene ble lagret!",
+      failed: "Klarte ikke lagre brukerdetaljene",
+    },
+    // The signature status depends on the date of birth (a guardian's signature stops counting at
+    // 18), so it is refetched along with the details.
+    onSaved: () =>
+      void Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: api.users.show.queryKey({ params: { userId: user.id } }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: api.signatures.show.queryKey({ params: { userId: user.id } }),
+        }),
+      ]),
+  });
   const form = useAppForm({
     defaultValues,
-    onSubmit: ({ value }) => {
-      if (isSavingUnderageWithoutGuardian(value)) {
-        setConfirmingWithoutGuardian(true);
-        return;
-      }
-      save(value);
-    },
     validators: {
       onSubmit: ({ value }) => {
-        if (isUnder18(new Date(value.birthday)) && !isSavingUnderageWithoutGuardian(value)) {
+        if (isUnder18(new Date(value.birthday)) && !isUnderageWithoutGuardian(value)) {
           return {
             fields: {
               guardianName: nameFieldValidator(value.guardianName, "guardian"),
@@ -138,7 +126,26 @@ export default function AdministrateUserForm({
         return null;
       },
     },
+    listeners: {
+      onBlur: ({ formApi }) => {
+        void saveIfValid(formApi);
+      },
+      onChange: ({ fieldApi, formApi }) => {
+        if (
+          fieldApi.name === "emailConfirmed" ||
+          savesOnChange(fieldApi.name, formApi.state.values)
+        ) {
+          void saveIfValid(formApi);
+        }
+      },
+    },
   });
+
+  async function saveIfValid(formApi: AutoSavedForm<AdministrateUserFormValues>) {
+    if (await isWholeFormValid(formApi)) {
+      save(bodyOf(formApi.state.values));
+    }
+  }
 
   return (
     <Stack gap="xs">
@@ -153,15 +160,7 @@ export default function AdministrateUserForm({
             {(field) => (
               <field.EmailField
                 deliverabilityFeedback={{ source: "administrate", perspective: "administrate" }}
-                rightSection={
-                  <Tooltip label={emailConfirmed ? "Bekreftet" : "Ikke bekreftet"}>
-                    {emailConfirmed ? (
-                      <IconCheck color="green" />
-                    ) : (
-                      <IconInfoCircleFilled color="orange" />
-                    )}
-                  </Tooltip>
-                }
+                rightSection={<EmailConfirmedMark confirmed={emailConfirmed} />}
               />
             )}
           </form.AppField>
@@ -177,46 +176,14 @@ export default function AdministrateUserForm({
         perspective="administrate"
         fields={createFieldMap(defaultValues)}
         form={form}
+        leading={null}
       />
       <form.AppForm>
-        <form.ErrorSummary serverErrors={serverErrors} />
+        <form.ErrorSummary
+          serverErrors={serverErrors}
+          title="Endringene lagres når du har rettet opp dette"
+        />
       </form.AppForm>
-      <Space />
-      <Button
-        loading={form.state.isValidating || updateUserMutation.isPending}
-        onClick={async () => {
-          // handleSubmit only runs field-level validators before giving up on an invalid form, so
-          // guardian errors a previous attempt left on untouched fields would keep blocking even
-          // after the fields were cleared. Recompute the form-level errors first.
-          await form.validate("submit");
-          await form.handleSubmit();
-        }}
-      >
-        Lagre
-      </Button>
-      {/* A plain Modal rather than the modals manager: this form usually lives inside a manager
-          modal, and stacking another manager modal on top would unmount it and reset the form. */}
-      <Modal
-        opened={confirmingWithoutGuardian}
-        onClose={() => setConfirmingWithoutGuardian(false)}
-        title="Lagre uten foresatt?"
-        zIndex={CONFIRM_Z_INDEX}
-      >
-        <Stack>
-          <Text size="sm">
-            Kunden er under 18, men informasjon om foresatt er ikke fylt ut. Kunden må selv fylle ut
-            dette neste gang de logger inn.
-          </Text>
-          <Group justify="flex-end">
-            <Button variant="default" onClick={() => setConfirmingWithoutGuardian(false)}>
-              Avbryt
-            </Button>
-            <Button loading={updateUserMutation.isPending} onClick={() => save(form.state.values)}>
-              Lagre uten foresatt
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
       {isAdmin && (
         <>
           <Space />

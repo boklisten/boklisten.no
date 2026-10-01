@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
-import { Container, Stack, Title } from "@mantine/core";
+import { Container } from "@mantine/core";
 import UserSettings from "@/features/user/UserSettings";
 
 export const Route = createFileRoute("/(administrasjon)/admin/user-settings")({
@@ -14,10 +14,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/user-settings")({
 function SettingsPage() {
   return (
     <Container size="xs">
-      <Stack>
-        <Title ta="center">Brukerinnstillinger</Title>
-        <UserSettings />
-      </Stack>
+      <UserSettings />
     </Container>
   );
 }

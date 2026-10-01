@@ -1,7 +1,10 @@
-import { Divider, Fieldset, Stack, Title } from "@mantine/core";
+import { Fieldset, Stack } from "@mantine/core";
 import dayjs from "dayjs";
 import { Activity } from "react";
+import type { ReactNode } from "react";
 
+import FormSectionTitle from "@/features/user/FormSectionTitle";
+import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { addressFieldValidator } from "@/shared/components/form/fields/complex/AddressField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
@@ -55,17 +58,62 @@ export function userFieldsBody(values: UserInfoFieldValues) {
   };
 }
 
+/**
+ * Employees correcting a date of birth rarely know the customer's guardian. With nothing at all
+ * filled in they may save anyway; anything typed in must still be valid.
+ */
+export function isUnderageWithoutGuardian(values: UserInfoFieldValues): boolean {
+  return (
+    isUnder18(new Date(values.birthday)) &&
+    [values.guardianName, values.guardianEmail, values.guardianPhoneNumber].every(
+      (value) => value.trim().length === 0,
+    )
+  );
+}
+
+/**
+ * The fields auto-save listens to on change; the rest save on blur. The date of birth is one of
+ * the rest: it changes on every keystroke that parses, so a half-typed year would be saved.
+ */
+export function savesOnChange(fieldName: string, values: UserInfoFieldValues): boolean {
+  // The postal code saves once the lookup has filled in the city, not on every keystroke.
+  if (fieldName === "postal") {
+    return values.postal.city.length > 0;
+  }
+  return fieldName === "branchMembership";
+}
+
+/** The parts of a user form's api that auto-save uses, without TanStack Form's many generics. */
+export interface AutoSavedForm<Values> {
+  validateAllFields: (cause: "blur") => Promise<unknown>;
+  validate: (cause: "submit") => unknown;
+  state: { isValid: boolean; values: Values };
+}
+
+/**
+ * Runs every check a save must pass: each field's own validators (they run on blur, so this also
+ * covers fields the user has not visited) and then the form-level guardian rules. The explicit
+ * form-level run also clears guardian errors a rule that no longer applies left on untouched fields.
+ */
+export async function isWholeFormValid(form: AutoSavedForm<unknown>): Promise<boolean> {
+  await form.validateAllFields("blur");
+  await form.validate("submit");
+  return form.state.isValid;
+}
+
 const UserInfoFields = withFieldGroup({
   defaultValues: userInfoFieldDefaultValues,
   props: {
     perspective: "personal" as "personal" | "administrate",
+    /** Fields of the host form that belong in this section, right under its title (the email). */
+    leading: null as ReactNode,
   },
-  render: ({ group, perspective }) => (
+  render: ({ group, perspective, leading }) => (
     <>
-      <Stack gap={3}>
-        <Title order={4}>{perspective === "personal" ? "Din" : "Kundens"} informasjon</Title>
-        <Divider />
-      </Stack>
+      <FormSectionTitle>
+        {perspective === "personal" ? "Din" : "Kundens"} informasjon
+      </FormSectionTitle>
+      {leading}
       <group.AppField
         name="name"
         validators={{
@@ -160,6 +208,17 @@ const UserInfoFields = withFieldGroup({
                     />
                   )}
                 </group.AppField>
+                {perspective === "administrate" && (
+                  <group.Subscribe selector={(state) => isUnderageWithoutGuardian(state.values)}>
+                    {(withoutGuardian) =>
+                      withoutGuardian && (
+                        <WarningAlert title="Foresatt mangler">
+                          Kunden må selv fylle ut informasjon om foresatt neste gang de logger inn.
+                        </WarningAlert>
+                      )
+                    }
+                  </group.Subscribe>
+                )}
               </Stack>
             </Fieldset>
           </Activity>

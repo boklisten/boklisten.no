@@ -103,7 +103,6 @@ export default function CustomerHeader({
                   children: (
                     <AdministrateUserForm
                       user={customer}
-                      onSaved={() => modals.close(ADMINISTRATE_USER_MODAL_ID)}
                       onDeleted={() => {
                         modals.close(ADMINISTRATE_USER_MODAL_ID);
                         onDeselect();

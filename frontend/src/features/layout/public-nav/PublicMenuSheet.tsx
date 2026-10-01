@@ -3,7 +3,6 @@ import { IconAlertCircle } from "@tabler/icons-react";
 import { useLocation } from "@tanstack/react-router";
 
 import IdentityHead from "@/features/layout/nav/IdentityHead";
-import LogoutButton from "@/features/layout/nav/LogoutButton";
 import MenuSheet, { MenuRow } from "@/features/layout/nav/MenuSheet";
 import classes from "@/features/layout/nav/Nav.module.css";
 import {
@@ -19,8 +18,9 @@ import useAuth from "@/shared/hooks/useAuth";
 import { countPendingTasks } from "@/shared/utils/tasks";
 
 /**
- * The public menu. It opens on who is logged in, then lists the pages in two groups. A guest gets
- * the two ways in instead of the account block.
+ * The public menu: three sections of one shape. "Din bruker" holds who is logged in and their
+ * pending tasks, or a guest's two ways in; then the pages in two groups. Logging out lives on the
+ * settings page.
  */
 export default function PublicMenuSheet({
   opened,
@@ -35,33 +35,34 @@ export default function PublicMenuSheet({
 
   return (
     <MenuSheet opened={opened} onClose={onClose}>
-      <div className={classes.sheetHead}>
-        <IdentityHead settingsTo={USER_SETTINGS.to} badge="branch" onNavigate={onClose} />
-      </div>
+      <IdentityHead settingsTo={USER_SETTINGS.to} site="public" onNavigate={onClose}>
+        {taskCount > 0 && (
+          <Alert
+            className={classes.tasks}
+            color="red"
+            variant="light"
+            icon={<IconAlertCircle />}
+            title={taskCount === 1 ? "Du har en oppgave" : `Du har ${taskCount} oppgaver`}
+          >
+            <TanStackAnchor to="/oppgaver" c="red" fw={600} onClick={onClose}>
+              Fullfør oppgavene dine
+            </TanStackAnchor>
+          </Alert>
+        )}
+      </IdentityHead>
 
       {!isLoggedIn && (
-        <div className={classes.guest}>
-          <TanStackButton to="/auth/login" onClick={onClose}>
-            Logg inn
-          </TanStackButton>
-          <TanStackButton to="/auth/register" variant="outline" onClick={onClose}>
-            Registrer
-          </TanStackButton>
+        <div className={classes.group}>
+          <p className={classes.groupTitle}>Din bruker</p>
+          <div className={classes.guest}>
+            <TanStackButton to="/auth/login" onClick={onClose}>
+              Logg inn
+            </TanStackButton>
+            <TanStackButton to="/auth/register" variant="outline" onClick={onClose}>
+              Registrer
+            </TanStackButton>
+          </div>
         </div>
-      )}
-
-      {taskCount > 0 && (
-        <Alert
-          className={classes.tasks}
-          color="red"
-          variant="light"
-          icon={<IconAlertCircle />}
-          title={taskCount === 1 ? "Du har en oppgave" : `Du har ${taskCount} oppgaver`}
-        >
-          <TanStackAnchor to="/oppgaver" c="red" fw={600} onClick={onClose}>
-            Fullfør oppgavene dine
-          </TanStackAnchor>
-        </Alert>
       )}
 
       <div className={classes.group}>
@@ -77,8 +78,6 @@ export default function PublicMenuSheet({
           <Row key={link.to} link={link} pathname={pathname} onClose={onClose} />
         ))}
       </div>
-
-      <div className={classes.sheetFoot}>{isLoggedIn && <LogoutButton onNavigate={onClose} />}</div>
     </MenuSheet>
   );
 }

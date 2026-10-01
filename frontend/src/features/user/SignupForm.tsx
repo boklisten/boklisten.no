@@ -123,7 +123,12 @@ export default function SignupForm() {
       >
         {(field) => <field.NewPasswordField />}
       </form.AppField>
-      <UserInfoFields perspective="personal" fields={createFieldMap(defaultValues)} form={form} />
+      <UserInfoFields
+        perspective="personal"
+        fields={createFieldMap(defaultValues)}
+        form={form}
+        leading={null}
+      />
       <Space />
       <form.AppField
         name="agreeToTermsAndConditions"

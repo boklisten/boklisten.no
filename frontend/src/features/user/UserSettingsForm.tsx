@@ -1,27 +1,34 @@
 import type { User } from "@boklisten/backend/shared/user";
-import { Button, Group, Space, Stack, Text, TextInput, Tooltip } from "@mantine/core";
-import { IconCheck, IconInfoCircleFilled, IconMailFast } from "@tabler/icons-react";
+import { Button, Space, Stack } from "@mantine/core";
+import { IconMailFast } from "@tabler/icons-react";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Activity, useState } from "react";
 
-import PermissionBadge from "@/features/customer-search/PermissionBadge";
-import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
-import UserInfoFields, { userFieldsBody } from "@/features/user/UserInfoFields";
+import type { AutoSavedForm, UserInfoFieldValues } from "@/features/user/UserInfoFields";
+import EmailConfirmedMark from "@/features/user/EmailConfirmedMark";
+import UserInfoFields, {
+  isWholeFormValid,
+  savesOnChange,
+  userFieldsBody,
+} from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import { useAppForm } from "@/shared/hooks/form";
+import useAutoSave from "@/shared/hooks/useAutoSave";
 import { api } from "@/shared/utils/apiClient";
 import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 import { authQueryKey } from "@/features/auth/authQuery";
 
-export default function UserSettingsForm({ user }: { user: User }) {
-  const queryClient = useQueryClient();
-  const defaultValues: UserInfoFieldValues = {
+type UserSettingsValues = { email: string } & UserInfoFieldValues;
+
+function valuesOf(user: User): UserSettingsValues {
+  return {
+    email: user.email,
     name: user.name ?? "",
     phoneNumber: user.phone ?? "",
     address: user.address ?? "",
@@ -35,33 +42,71 @@ export default function UserSettingsForm({ user }: { user: User }) {
     guardianPhoneNumber: user.guardianPhone ?? "",
     branchMembership: user.branchMembershipId ?? "",
   };
+}
+
+function bodyOf(values: UserSettingsValues) {
+  return { ...userFieldsBody(values), email: values.email };
+}
+
+/**
+ * The user's own details, email included. On the settings page they auto-save (see
+ * `useAutoSave`): text fields and the date on blur, the school on change, and only once the whole
+ * form is valid. In the confirm-details task the user instead confirms everything at once with
+ * "Lagre". A new email starts unconfirmed; the backend sends a link to it.
+ */
+export default function UserSettingsForm({
+  user,
+  confirmDetails = false,
+}: {
+  user: User;
+  /** In the confirm-details task: one "Lagre" that confirms the details, instead of auto-save. */
+  confirmDetails?: boolean;
+}) {
+  const queryClient = useQueryClient();
+  // The form starts from the user as they were when the page opened; the refetch after each save
+  // must not reset what they are typing.
+  // oxlint-disable-next-line react/hook-use-state -- never set again, so no setter
+  const [defaultValues] = useState(() => valuesOf(user));
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const updateUserMutation = useMutation(
     api.users.updateMe.mutationOptions({
       onSuccess: () => {
         setServerErrors([]);
-        showSuccessNotification("Brukerdetaljene ble oppdatert!");
+        if (confirmDetails) {
+          showSuccessNotification("Brukerdetaljene ble oppdatert!");
+        }
       },
       onError: (error) => {
         if (error.isValidationError()) {
           setServerErrors(error.response.errors.map((issue) => issue.message));
           return;
         }
-        showErrorNotification("Noe gikk galt under registreringen!");
+        if (confirmDetails) {
+          showErrorNotification("Noe gikk galt under registreringen!");
+        }
       },
       onSettled: () => queryClient.invalidateQueries({ queryKey: authQueryKey() }),
     }),
   );
+  const { save } = useAutoSave({
+    initialBody: bodyOf(defaultValues),
+    persist: (body) => updateUserMutation.mutateAsync({ body }),
+    notifications: {
+      id: "user-settings-saved",
+      saved: "Brukerdetaljene ble lagret!",
+      failed: "Klarte ikke lagre brukerdetaljene",
+    },
+  });
   const form = useAppForm({
     defaultValues,
-    onSubmit: ({ value }) => updateUserMutation.mutate({ body: userFieldsBody(value) }),
+    onSubmit: ({ value }) => updateUserMutation.mutate({ body: bodyOf(value) }),
     validators: {
       onSubmit: ({ value }) => {
         if (isUnder18(new Date(value.birthday))) {
           return {
             fields: {
               guardianName: nameFieldValidator(value.guardianName, "guardian"),
-              guardianEmail: emailFieldValidator(value.guardianEmail, "guardian", user.email),
+              guardianEmail: emailFieldValidator(value.guardianEmail, "guardian", value.email),
               guardianPhoneNumber: phoneNumberFieldValidator(
                 value.guardianPhoneNumber,
                 "guardian",
@@ -73,68 +118,116 @@ export default function UserSettingsForm({ user }: { user: User }) {
         return null;
       },
     },
+    listeners: {
+      onBlur: ({ formApi }) => {
+        void saveIfValid(formApi);
+      },
+      onChange: ({ fieldApi, formApi }) => {
+        if (savesOnChange(fieldApi.name, formApi.state.values)) {
+          void saveIfValid(formApi);
+        }
+      },
+    },
   });
+
+  async function saveIfValid(formApi: AutoSavedForm<UserSettingsValues>) {
+    if (confirmDetails || !(await isWholeFormValid(formApi))) {
+      return;
+    }
+    save(bodyOf(formApi.state.values));
+  }
+
+  return (
+    <Stack gap="xs">
+      <UserInfoFields
+        perspective="personal"
+        fields={createFieldMap(defaultValues)}
+        form={form}
+        leading={
+          <>
+            <form.AppField
+              name="email"
+              validators={{
+                onBlur: ({ value }) => emailFieldValidator(value, "personal"),
+              }}
+            >
+              {(field) => (
+                <field.EmailField
+                  deliverabilityFeedback={{ source: "settings", perspective: "personal" }}
+                  rightSection={
+                    // The mark is about the saved address; a new one is unconfirmed until saved.
+                    <EmailConfirmedMark
+                      confirmed={
+                        user.emailConfirmed &&
+                        field.state.value.trim().toLowerCase() === user.email.toLowerCase()
+                      }
+                    />
+                  }
+                />
+              )}
+            </form.AppField>
+            <Activity mode={user.emailConfirmed ? "hidden" : "visible"}>
+              <EmailUnconfirmed key={user.email} email={user.email} />
+            </Activity>
+          </>
+        }
+      />
+      <form.AppForm>
+        <form.ErrorSummary
+          serverErrors={serverErrors}
+          title={confirmDetails ? undefined : "Endringene lagres når du har rettet opp dette"}
+        />
+      </form.AppForm>
+      {confirmDetails && (
+        <>
+          <Space />
+          <Button
+            loading={form.state.isValidating || updateUserMutation.isPending}
+            onClick={async () => {
+              // See isWholeFormValid: recompute the form-level guardian errors before submitting.
+              await form.validate("submit");
+              await form.handleSubmit();
+            }}
+          >
+            Lagre
+          </Button>
+        </>
+      )}
+    </Stack>
+  );
+}
+
+/**
+ * Under an unconfirmed email: where the link went and a way to send another. Keyed by the address
+ * where it is used, so "sent" is never left over from an earlier one.
+ */
+function EmailUnconfirmed({ email }: { email: string }) {
   const sendEmailVerification = useMutation(
     api.emailVerification.send.mutationOptions({
       onError: () => showErrorNotification("Klarte ikke sende ny bekreftelseslenke"),
     }),
   );
-
+  if (sendEmailVerification.isSuccess) {
+    return (
+      <InfoAlert icon={<IconMailFast />}>
+        Ny bekreftelseslenke er sendt til {email}. Sjekk søppelpost om den ikke dukker opp i
+        innboksen.
+      </InfoAlert>
+    );
+  }
   return (
     <Stack gap="xs">
-      <TextInput
-        disabled
-        label="E-post"
-        description="Ta kontakt dersom du ønsker å endre e-postadresse"
-        value={user.email}
-        rightSection={
-          <Tooltip label={user.emailConfirmed ? "Bekreftet" : "Ikke bekreftet"}>
-            {user.emailConfirmed ? (
-              <IconCheck color="green" />
-            ) : (
-              <IconInfoCircleFilled color="orange" />
-            )}
-          </Tooltip>
-        }
-      />
-      <Activity mode={!user.emailConfirmed ? "visible" : "hidden"}>
-        <Stack>
-          <Activity mode={sendEmailVerification.isSuccess ? "visible" : "hidden"}>
-            <InfoAlert icon={<IconMailFast />}>
-              Bekreftelseslenke er sendt til din e-postadresse! Sjekk søppelpost om den ikke dukker
-              opp i inbox.
-            </InfoAlert>
-          </Activity>
-          <Activity mode={!sendEmailVerification.isSuccess ? "visible" : "hidden"}>
-            <WarningAlert title="E-postadressen er ikke bekreftet">
-              En bekreftelseslenke har blitt sendt til {user.email}. Trykk på knappen nedenfor for å
-              sende en ny lenke.
-            </WarningAlert>
-            <Button leftSection={<IconMailFast />} onClick={() => sendEmailVerification.mutate({})}>
-              Send bekreftelseslenke på nytt
-            </Button>
-          </Activity>
-        </Stack>
-      </Activity>
-      {user.permission !== "customer" && (
-        <Group gap="xs">
-          <Text size="sm" c="dimmed">
-            Tilgangsnivå:
-          </Text>
-          <PermissionBadge permission={user.permission} />
-        </Group>
-      )}
-      <Space />
-      <UserInfoFields perspective="personal" fields={createFieldMap(defaultValues)} form={form} />
-      <form.AppForm>
-        <form.ErrorSummary serverErrors={serverErrors} />
-      </form.AppForm>
-      <Space />
+      <WarningAlert title="E-postadressen er ikke bekreftet">
+        Vi har sendt en bekreftelseslenke til {email}. Trykk på lenken i e-posten, eller be om en
+        ny.
+      </WarningAlert>
       <Button
-        loading={form.state.isValidating || updateUserMutation.isPending}
-        onClick={form.handleSubmit}
+        variant="light"
+        leftSection={<IconMailFast />}
+        loading={sendEmailVerification.isPending}
+        onClick={() => sendEmailVerification.mutate({})}
       >
-        Lagre
+        Send ny bekreftelseslenke
       </Button>
     </Stack>
   );

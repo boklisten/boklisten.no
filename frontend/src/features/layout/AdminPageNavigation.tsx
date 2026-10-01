@@ -1,6 +1,5 @@
 import { ScrollArea } from "@mantine/core";
 
-import AdminMenuFoot from "@/features/layout/admin-nav/AdminMenuFoot";
 import AdminMenuHead from "@/features/layout/admin-nav/AdminMenuHead";
 import AdminMenuLinks from "@/features/layout/admin-nav/AdminMenuLinks";
 import classes from "@/features/layout/nav/Nav.module.css";
@@ -13,7 +12,6 @@ export default function AdminPageNavigation() {
       <ScrollArea className={classes.sidebarScroll} type="auto">
         <AdminMenuLinks onNavigate={noop} />
       </ScrollArea>
-      <AdminMenuFoot onNavigate={noop} />
     </div>
   );
 }

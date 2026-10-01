@@ -1,5 +1,5 @@
 /** Where an address validation was requested from; forwarded to SendGrid as `source` for their stats. */
-export const EMAIL_VALIDATION_SOURCES = ["signup", "guardian", "administrate"] as const;
+export const EMAIL_VALIDATION_SOURCES = ["signup", "settings", "guardian", "administrate"] as const;
 export type EmailValidationSource = (typeof EMAIL_VALIDATION_SOURCES)[number];
 
 type EmailValidationVerdict = "Valid" | "Risky" | "Invalid";
