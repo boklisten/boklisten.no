@@ -1,17 +1,15 @@
 import { Alert } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
-import { useLocation } from "@tanstack/react-router";
 
 import IdentityHead from "@/features/layout/nav/IdentityHead";
-import MenuSheet, { MenuRow } from "@/features/layout/nav/MenuSheet";
+import { MenuRow, MenuSection } from "@/features/layout/nav/Menu";
+import MenuSheet from "@/features/layout/nav/MenuSheet";
 import classes from "@/features/layout/nav/Nav.module.css";
 import {
   BOOK_LINKS,
   INFO_LINKS,
-  isActive,
   USER_SETTINGS,
 } from "@/features/layout/public-nav/publicNavigation";
-import type { PublicNavLink } from "@/features/layout/public-nav/publicNavigation";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import TanStackButton from "@/shared/components/TanStackButton";
 import useAuth from "@/shared/hooks/useAuth";
@@ -29,13 +27,26 @@ export default function PublicMenuSheet({
   opened: boolean;
   onClose: () => void;
 }) {
-  const pathname = useLocation({ select: (location) => location.pathname });
   const { user, isLoggedIn } = useAuth();
   const taskCount = countPendingTasks(user);
 
   return (
     <MenuSheet opened={opened} onClose={onClose}>
-      <IdentityHead settingsTo={USER_SETTINGS.to} site="public" onNavigate={onClose}>
+      <IdentityHead
+        settingsTo={USER_SETTINGS.to}
+        site="public"
+        onNavigate={onClose}
+        guest={
+          <div className={classes.guest}>
+            <TanStackButton to="/auth/login" onClick={onClose}>
+              Logg inn
+            </TanStackButton>
+            <TanStackButton to="/auth/register" variant="outline" onClick={onClose}>
+              Registrer
+            </TanStackButton>
+          </div>
+        }
+      >
         {taskCount > 0 && (
           <Alert
             className={classes.tasks}
@@ -51,54 +62,17 @@ export default function PublicMenuSheet({
         )}
       </IdentityHead>
 
-      {!isLoggedIn && (
-        <div className={classes.group}>
-          <p className={classes.groupTitle}>Din bruker</p>
-          <div className={classes.guest}>
-            <TanStackButton to="/auth/login" onClick={onClose}>
-              Logg inn
-            </TanStackButton>
-            <TanStackButton to="/auth/register" variant="outline" onClick={onClose}>
-              Registrer
-            </TanStackButton>
-          </div>
-        </div>
-      )}
-
-      <div className={classes.group}>
-        <p className={classes.groupTitle}>{isLoggedIn ? "Bøkene dine" : "Bøker"}</p>
+      <MenuSection title={isLoggedIn ? "Bøkene dine" : "Bøker"}>
         {BOOK_LINKS.filter((link) => isLoggedIn || !link.loggedInOnly).map((link) => (
-          <Row key={link.to} link={link} pathname={pathname} onClose={onClose} />
+          <MenuRow key={link.to} link={link} onNavigate={onClose} />
         ))}
-      </div>
+      </MenuSection>
 
-      <div className={classes.group}>
-        <p className={classes.groupTitle}>Informasjon</p>
+      <MenuSection title="Informasjon">
         {INFO_LINKS.map((link) => (
-          <Row key={link.to} link={link} pathname={pathname} onClose={onClose} />
+          <MenuRow key={link.to} link={link} onNavigate={onClose} />
         ))}
-      </div>
+      </MenuSection>
     </MenuSheet>
-  );
-}
-
-function Row({
-  link,
-  pathname,
-  onClose,
-}: {
-  link: PublicNavLink;
-  pathname: string;
-  onClose: () => void;
-}) {
-  return (
-    <MenuRow
-      label={link.label}
-      to={link.to}
-      icon={link.icon}
-      description={link.description}
-      active={isActive(link, pathname)}
-      onNavigate={onClose}
-    />
   );
 }

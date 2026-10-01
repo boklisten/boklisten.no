@@ -1,4 +1,4 @@
-import type { AdminPage } from "@/features/layout/adminNavigation";
+import type { AdminPage } from "@/features/layout/admin-nav/adminNavigation";
 
 /** Lowercase without diacritics, so "pamin" finds "Påminnelser" and "boker" finds "Bøker". */
 const normalize = (text: string) =>

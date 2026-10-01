@@ -1,13 +1,13 @@
 import { Box } from "@mantine/core";
-import { useLocation } from "@tanstack/react-router";
 import { useLayoutEffect, useRef, useState } from "react";
 
 import Logo from "@/features/layout/Logo";
 import CartPill from "@/features/layout/public-nav/CartPill";
 import MenuButton from "@/features/layout/nav/MenuButton";
-import { CART_PATH, isActive, primaryLinks } from "@/features/layout/public-nav/publicNavigation";
+import NavAnchor from "@/features/layout/nav/NavAnchor";
 import classes from "@/features/layout/nav/Nav.module.css";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import { isNavLinkActive, usePathname } from "@/features/layout/nav/navigation";
+import { CART_PATH, primaryLinks } from "@/features/layout/public-nav/publicNavigation";
 import useAuth from "@/shared/hooks/useAuth";
 
 /**
@@ -23,12 +23,12 @@ export default function PublicTopBar({
   menuOpened: boolean;
   onOpenMenu: () => void;
 }) {
-  const pathname = useLocation({ select: (location) => location.pathname });
+  const pathname = usePathname();
   const { isLoggedIn } = useAuth();
   const links = primaryLinks(isLoggedIn);
   const activeKey =
-    links.find((link) => isActive(link, pathname))?.to ??
-    (isActive({ to: CART_PATH }, pathname) ? CART_PATH : null);
+    links.find((link) => isNavLinkActive(link, pathname))?.to ??
+    (isNavLinkActive({ to: CART_PATH }, pathname) ? CART_PATH : null);
   const { navRef, marker, settled } = useMarker(activeKey);
 
   return (
@@ -49,22 +49,17 @@ export default function PublicTopBar({
         />
         <CartPill />
         <nav className={classes.links} aria-label="Hovedmeny">
-          {links.map((link) => {
-            const active = link.to === activeKey;
-            return (
-              <TanStackAnchor
-                key={link.to}
-                to={link.to}
-                className={classes.link}
-                underline="never"
-                data-key={link.to}
-                data-active={active || undefined}
-                aria-current={active ? "page" : undefined}
-              >
-                {link.label}
-              </TanStackAnchor>
-            );
-          })}
+          {links.map((link) => (
+            <NavAnchor
+              key={link.to}
+              to={link.to}
+              active={link.to === activeKey}
+              className={classes.link}
+              data-key={link.to}
+            >
+              {link.label}
+            </NavAnchor>
+          ))}
           <MenuButton
             className={`${classes.link} ${classes.menuLink}`}
             iconClassName={classes.menuIcon}

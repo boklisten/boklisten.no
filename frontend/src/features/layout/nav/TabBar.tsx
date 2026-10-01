@@ -1,22 +1,10 @@
-import type { Icon } from "@tabler/icons-react";
 import { Box } from "@mantine/core";
 
 import MenuButton from "@/features/layout/nav/MenuButton";
+import NavAnchor from "@/features/layout/nav/NavAnchor";
 import classes from "@/features/layout/nav/Nav.module.css";
-import type { FileRouteTypes } from "@/routeTree.gen";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
-
-export interface Tab {
-  label: string;
-  to: FileRouteTypes["to"];
-  icon: Icon;
-  active: boolean;
-  /**
-   * Tells the router's own active state to match the route alone, not everything under it; for a
-   * home tab whose route is the parent of all the others (the router already treats `/` so).
-   */
-  exact?: boolean;
-}
+import { isNavLinkActive, usePathname } from "@/features/layout/nav/navigation";
+import type { NavLink } from "@/features/layout/nav/navigation";
 
 /**
  * The phone navigation, shared by the public site and bl-admin: a few destinations within thumb
@@ -25,15 +13,16 @@ export interface Tab {
  * is the tab's index. Hidden from `sm` up, where the top bar or the sidebar carries the same items.
  */
 export default function TabBar({
-  tabs,
+  links,
   menuOpened,
   onOpenMenu,
 }: {
-  tabs: Tab[];
+  links: NavLink[];
   menuOpened: boolean;
   onOpenMenu: () => void;
 }) {
-  const activeIndex = tabs.findIndex((tab) => tab.active);
+  const pathname = usePathname();
+  const activeIndex = links.findIndex((link) => isNavLinkActive(link, pathname));
 
   return (
     <nav className={classes.tabBar} aria-label="Hovedmeny">
@@ -41,25 +30,20 @@ export default function TabBar({
         component="span"
         className={classes.tabMarker}
         data-visible={activeIndex === -1 ? undefined : ""}
-        style={{ "--tab-index": Math.max(activeIndex, 0), "--tab-count": tabs.length + 1 }}
+        style={{ "--tab-index": Math.max(activeIndex, 0), "--tab-count": links.length + 1 }}
         aria-hidden
       />
-      {tabs.map((tab) => (
-        <TanStackAnchor
-          key={tab.to}
-          to={tab.to}
-          activeOptions={tab.exact ? { exact: true } : undefined}
-          className={classes.tab}
-          underline="never"
-          data-active={tab.active || undefined}
-          aria-current={tab.active ? "page" : undefined}
-        >
-          <span className={classes.tabIcon}>
-            <tab.icon size={24} stroke={tab.active ? 2 : 1.6} aria-hidden />
-          </span>
-          {tab.label}
-        </TanStackAnchor>
-      ))}
+      {links.map((link, index) => {
+        const active = index === activeIndex;
+        return (
+          <NavAnchor key={link.to} to={link.to} active={active} className={classes.tab}>
+            <span className={classes.tabIcon}>
+              <link.icon size={24} stroke={active ? 2 : 1.6} aria-hidden />
+            </span>
+            {link.label}
+          </NavAnchor>
+        );
+      })}
       <MenuButton
         className={classes.tab}
         iconClassName={classes.tabIcon}

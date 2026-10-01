@@ -1,9 +1,10 @@
 /*
  * The navigation borrows the front page's one decoration: the yellow highlighter. The current
  * page is the one somebody has marked: teal type with a swipe under the word, the same in the
- * phone tab bar, the menu sheet, bl-admin's sidebar and the tabs on a page, and a stroke under
- * the word on the teal desktop bar. Everything else is the brand teal the site has always opened
- * with, and white type on it.
+ * phone tab bar, the menu sheet and bl-admin's sidebar, and a stroke under the word on the teal
+ * desktop bar. Only the site navigation carries it; a page's own sub-navigation (the info chips,
+ * tabs) stays stock. Everything else is the brand teal the site has always opened with, and
+ * white type on it.
  *
  * Tokens (light / dark; the dark values are Mantine's own dark scale so the pages sit on the
  * same body colour as the rest of the app)
@@ -11,19 +12,21 @@
  *   accent  brand-text           teal as type and outlines; Mantine lightens it in the dark
  *   marker  #ffe27a              the highlighter, only ever on the active item
  *   paper   #f8f7f3 / dark-8     the phone tab bar and the menu sheet
+ *   page    #f8f7f3 / dark-7     the public site's canvas, the front page's paper on every page
  *   card    #fff    / dark-6     a card on the page
  *   ink     #1f2d33 / gray-0     type on paper
  *   body    #45565e / dark-1     secondary type on paper
  *   rule    #d9e2e6 / dark-4     hairlines on paper
  *   tint    teal at low alpha    a pressed or hovered row
  *
- * They live on the body so that portalled content (the sheet, dropdowns) and the page tabs read
- * the same values as the shells. Not on :root: the Mantine PostCSS preset turns light-dark()
+ * They live on the body so that portalled content (the sheet, dropdowns) reads the same values
+ * as the shells. Not on :root: the Mantine PostCSS preset turns light-dark()
  * into a `[data-mantine-color-scheme="dark"] <selector>` rule, which needs an ancestor to match.
  */
 :global(body) {
   --nav-marker: #ffe27a;
   --nav-paper: light-dark(#f8f7f3, var(--mantine-color-dark-8));
+  --page-paper: light-dark(#f8f7f3, var(--mantine-color-dark-7));
   --nav-card: light-dark(#fff, var(--mantine-color-dark-6));
   --nav-ink: light-dark(#1f2d33, var(--mantine-color-gray-0));
   --nav-body: light-dark(#45565e, var(--mantine-color-dark-1));
@@ -43,9 +46,25 @@
   }
 }
 
+/*
+ * The public site sits on the front page's paper throughout, so moving on from the front page
+ * never switches the canvas; cards and fields stay white (--nav-card) on it. On the body, not the
+ * shell, so an overscroll bounce shows paper too. bl-admin keeps a white work surface, set apart
+ * from its paper sidebar.
+ */
+:global(body):has(.publicShell) {
+  background: var(--page-paper);
+}
+
 /* bl-admin's page area ends above the tab bar, so the last row of a page is reachable. */
 .adminMain {
   --app-shell-footer-offset: var(--tabbar-height);
+}
+
+/* bl-admin's sidebar frame: the paper and hairline of the tab bar and the sheet. */
+.adminNavbar {
+  --app-shell-border-color: var(--nav-rule);
+  background: var(--nav-paper);
 }
 
 /* ---------- Top bar ---------- */
@@ -534,7 +553,7 @@
   }
 }
 
-.rowDescription {
+.rowHint {
   font-size: var(--mantine-font-size-sm);
   line-height: 1.35;
   color: var(--nav-body);
@@ -626,6 +645,6 @@
 }
 
 /* bl-admin's "Din bruker" section, held above the sidebar's scrolling list. */
-.menuHead {
+.sidebarHead {
   flex: none;
 }

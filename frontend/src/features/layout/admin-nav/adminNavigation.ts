@@ -1,4 +1,3 @@
-import type { Icon } from "@tabler/icons-react";
 import {
   IconBell,
   IconBooks,
@@ -22,7 +21,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 
-import type { FileRouteTypes } from "@/routeTree.gen";
+import type { NavLink } from "@/features/layout/nav/navigation";
 import { KASSE_DESCRIPTION, KASSE_TITLE } from "@/features/kasse/kasseDescription";
 import {
   ORDER_MANAGER_DESCRIPTION,
@@ -30,19 +29,18 @@ import {
 } from "@/features/order-manager/orderManagerDescription";
 import { MERKING_DESCRIPTION, MERKING_TITLE } from "@/features/merking/merkingDescription";
 
-export interface AdminNavLink {
-  label: string;
+/** The description says what the page does in search; the menu shows the label alone. */
+export interface AdminNavLink extends NavLink {
   description: string;
-  to: FileRouteTypes["to"];
-  icon: Icon;
 }
 
-/** The dashboard: the welcome, the theme and the way to the customer site. */
+/** The dashboard: the welcome, the everyday tools and the way to the customer site. */
 export const ADMIN_HOME: AdminNavLink = {
   label: "Hjem",
   description: "Velkommen til bl-admin",
   to: "/admin",
   icon: IconHome,
+  exact: true,
 };
 
 const KASSE: AdminNavLink = {
@@ -66,15 +64,18 @@ const WAITING_LIST: AdminNavLink = {
   icon: IconHourglassLow,
 };
 
+/** Pages folded behind one row in the menu. */
+export interface AdminNavGroup {
+  label: string;
+  icon: NavLink["icon"];
+  links: AdminNavLink[];
+}
+
 interface AdminNavSection {
   label: string;
   adminOnly?: boolean;
   links: AdminNavLink[];
-  groups?: {
-    label: string;
-    icon: Icon;
-    links: AdminNavLink[];
-  }[];
+  groups?: AdminNavGroup[];
 }
 
 const ADMIN_NAV_SECTIONS = [
@@ -186,15 +187,7 @@ const ADMIN_NAV_SECTIONS = [
   },
 ] satisfies AdminNavSection[];
 
-/** Marks the link active on its route and below it; the dashboard matches only itself. */
-export function isAdminNavLinkActive(link: AdminNavLink, pathname: string) {
-  if (link.to === ADMIN_HOME.to) {
-    return pathname === ADMIN_HOME.to;
-  }
-  return pathname === link.to || pathname.startsWith(`${link.to}/`);
-}
-
-/** The employee's own settings, from the account block in the menu and the foot of the sidebar. */
+/** The employee's own settings, reached from "Din bruker" on top of the menu and the sidebar. */
 export const ADMIN_USER_SETTINGS: AdminNavLink = {
   label: "Brukerinnstillinger",
   description: "Endre opplysningene dine og utseendet",

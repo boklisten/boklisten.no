@@ -1,12 +1,9 @@
-import type { Icon } from "@tabler/icons-react";
 import { Drawer } from "@base-ui/react/drawer";
 import { DrawerBody, DrawerContent, DrawerOverlay, DrawerRoot } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import type { ReactNode } from "react";
 
 import classes from "@/features/layout/nav/Nav.module.css";
-import type { FileRouteTypes } from "@/routeTree.gen";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
 
 /**
  * The menu's frame: on phones a sheet that rises from the tab bar and is swiped down to close (the
@@ -80,41 +77,5 @@ function PhoneSheet({
         </Drawer.Viewport>
       </Drawer.Portal>
     </Drawer.Root>
-  );
-}
-
-/** One page in the menu: icon, name and, for a name that does not say what the page does, one line more. */
-export function MenuRow({
-  label,
-  to,
-  icon: RowIcon,
-  description,
-  active,
-  onNavigate,
-}: {
-  label: string;
-  to: FileRouteTypes["to"];
-  icon: Icon;
-  description?: string;
-  active: boolean;
-  onNavigate: () => void;
-}) {
-  return (
-    <TanStackAnchor
-      to={to}
-      className={classes.row}
-      underline="never"
-      data-active={active || undefined}
-      aria-current={active ? "page" : undefined}
-      onClick={onNavigate}
-    >
-      <span className={classes.rowIcon}>
-        <RowIcon size={22} stroke={1.7} aria-hidden />
-      </span>
-      <span className={classes.rowText}>
-        <span className={classes.rowLabel}>{label}</span>
-        {description && <span className={classes.rowDescription}>{description}</span>}
-      </span>
-    </TanStackAnchor>
   );
 }

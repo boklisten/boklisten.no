@@ -1,3 +1,11 @@
+/* The welcome, set like the menu's names and the front page's headline, in the display face. */
+.title {
+  font-family: var(--nav-display);
+  font-variation-settings: "SOFT" 50;
+  color: var(--mantine-color-brand-text);
+  text-wrap: balance;
+}
+
 /* The everyday tools, laid out like the front page hero's buttons: full width for thumbs on a phone, side by side from `sm`. */
 .actions {
   display: flex;

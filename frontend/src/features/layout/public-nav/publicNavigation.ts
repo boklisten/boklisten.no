@@ -1,4 +1,3 @@
-import type { Icon } from "@tabler/icons-react";
 import {
   IconBook,
   IconClock,
@@ -13,17 +12,10 @@ import {
   IconUserEdit,
 } from "@tabler/icons-react";
 
-import type { FileRouteTypes } from "@/routeTree.gen";
+import type { NavLink } from "@/features/layout/nav/navigation";
 
-export interface PublicNavLink {
-  label: string;
-  to: FileRouteTypes["to"];
-  icon: Icon;
+export interface PublicNavLink extends NavLink {
   loggedInOnly?: true;
-  /** One line under the label in the menu, for links whose name alone does not say what they do. */
-  description?: string;
-  /** Marks the link active on this prefix; the route itself when unset. `/` matches only itself. */
-  activeOn?: string;
 }
 
 /*
@@ -31,7 +23,7 @@ export interface PublicNavLink {
  * on names, icons and who sees what. The pages under /info are one entry in the bars; the info
  * section has its own sub-navigation on the page.
  */
-const HOME: PublicNavLink = { label: "Hjem", to: "/", icon: IconHome };
+const HOME: PublicNavLink = { label: "Hjem", to: "/", icon: IconHome, exact: true };
 const ORDER: PublicNavLink = { label: "Bestill bøker", to: "/bestilling", icon: IconShoppingCart };
 const MY_BOOKS: PublicNavLink = {
   label: "Dine bøker",
@@ -64,7 +56,7 @@ export const BOOK_LINKS: PublicNavLink[] = [
     to: "/sjekk",
     icon: IconSearch,
     loggedInOnly: true,
-    description: "Finn ut hvem som er ansvarlig for en bok.",
+    hint: "Finn ut hvem som er ansvarlig for en bok.",
   },
 ];
 
@@ -85,21 +77,4 @@ export const CART_PATH = "/handlekurv";
  */
 export function primaryLinks(isLoggedIn: boolean): PublicNavLink[] {
   return [HOME, ORDER, isLoggedIn ? MY_BOOKS : INFO];
-}
-
-export function isActive(link: Pick<PublicNavLink, "to" | "activeOn">, pathname: string): boolean {
-  const prefix = link.activeOn ?? link.to;
-  if (prefix === "/") {
-    return pathname === "/";
-  }
-  return pathname === prefix || pathname.startsWith(`${prefix}/`);
-}
-
-/** The visitor's first name as the menu greets them; the email's local part before that is known. */
-export function firstName(user: { name: string | null; email: string }): string {
-  const [first] = (user.name ?? "").trim().split(/\s+/);
-  if (first) {
-    return first;
-  }
-  return user.email.split("@")[0] ?? user.email;
 }

@@ -5,9 +5,12 @@ import type { ReactNode } from "react";
 
 import PublicPageFooter from "@/features/layout/PublicPageFooter";
 import classes from "@/features/layout/nav/Nav.module.css";
+import { TOP_BAR_HEIGHT } from "@/features/layout/nav/navigation";
+import TabBar from "@/features/layout/nav/TabBar";
 import PublicMenuSheet from "@/features/layout/public-nav/PublicMenuSheet";
-import PublicTabBar from "@/features/layout/public-nav/PublicTabBar";
 import PublicTopBar from "@/features/layout/public-nav/PublicTopBar";
+import { primaryLinks } from "@/features/layout/public-nav/publicNavigation";
+import useAuth from "@/shared/hooks/useAuth";
 
 export default function PublicLayout({
   children,
@@ -20,11 +23,12 @@ export default function PublicLayout({
   footerSpacing?: StyleProp<MantineSpacing>;
 }) {
   const [menuOpened, { open: openMenu, close: closeMenu }] = useDisclosure();
+  const { isLoggedIn } = useAuth();
 
   return (
     // The shell sets --tabbar-height for the footer and the fixed elements above the bar.
-    <div className={classes.shell}>
-      <AppShell header={{ height: 60 }} p={padding}>
+    <div className={`${classes.shell} ${classes.publicShell}`}>
+      <AppShell header={{ height: TOP_BAR_HEIGHT }} p={padding}>
         {/* The bar is solid teal; a hairline under it would read as a stray light line. */}
         <AppShellHeader bg="brand" withBorder={false}>
           <PublicTopBar onOpenMenu={openMenu} menuOpened={menuOpened} />
@@ -38,7 +42,7 @@ export default function PublicLayout({
         </AppShellMain>
       </AppShell>
       <PublicPageFooter mt={footerSpacing} />
-      <PublicTabBar onOpenMenu={openMenu} menuOpened={menuOpened} />
+      <TabBar links={primaryLinks(isLoggedIn)} menuOpened={menuOpened} onOpenMenu={openMenu} />
       <PublicMenuSheet opened={menuOpened} onClose={closeMenu} />
     </div>
   );

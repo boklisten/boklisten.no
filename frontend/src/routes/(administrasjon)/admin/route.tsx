@@ -8,10 +8,12 @@ import { AgGridProvider } from "ag-grid-react";
 import AgGridColorSchemeSync from "@/shared/components/AgGridColorSchemeSync";
 import AuthGuard from "@/features/auth/AuthGuard";
 import AdminMenuSheet from "@/features/layout/admin-nav/AdminMenuSheet";
-import AdminTabBar from "@/features/layout/admin-nav/AdminTabBar";
-import AdminPageHeader from "@/features/layout/AdminPageHeader";
-import AdminPageNavigation from "@/features/layout/AdminPageNavigation";
+import AdminSidebar from "@/features/layout/admin-nav/AdminSidebar";
+import AdminTopBar from "@/features/layout/admin-nav/AdminTopBar";
+import { ADMIN_PRIMARY_LINKS } from "@/features/layout/admin-nav/adminNavigation";
 import classes from "@/features/layout/nav/Nav.module.css";
+import { TOP_BAR_HEIGHT } from "@/features/layout/nav/navigation";
+import TabBar from "@/features/layout/nav/TabBar";
 import GlobalSearch from "@/features/search/GlobalSearch";
 
 export const Route = createFileRoute("/(administrasjon)/admin")({
@@ -33,15 +35,15 @@ function AdminPageLayout() {
     // The shell sets --tabbar-height for the page and the fixed elements above the bar.
     <div className={classes.shell}>
       <AppShell
-        header={{ height: 65 }}
+        header={{ height: TOP_BAR_HEIGHT }}
         navbar={{ breakpoint: "sm", width: 220, collapsed: { mobile: true } }}
         padding="md"
       >
-        <AppShellHeader bg="brand">
-          <AdminPageHeader />
+        <AppShellHeader bg="brand" withBorder={false}>
+          <AdminTopBar />
         </AppShellHeader>
-        <AppShellNavbar>
-          <AdminPageNavigation />
+        <AppShellNavbar className={classes.adminNavbar}>
+          <AdminSidebar />
         </AppShellNavbar>
         <AppShellMain className={classes.adminMain}>
           <AuthGuard requiredPermission={USER_PERMISSION.EMPLOYEE}>
@@ -53,7 +55,7 @@ function AdminPageLayout() {
           </AuthGuard>
         </AppShellMain>
       </AppShell>
-      <AdminTabBar onOpenMenu={openMenu} menuOpened={menuOpened} />
+      <TabBar links={ADMIN_PRIMARY_LINKS} menuOpened={menuOpened} onOpenMenu={openMenu} />
       <AdminMenuSheet opened={menuOpened} onClose={closeMenu} />
     </div>
   );

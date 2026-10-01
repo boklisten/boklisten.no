@@ -1,7 +1,9 @@
 // Typed by hand so class names are checked at the call sites; keep in sync with Nav.module.css.
 declare const classes: {
   readonly shell: string;
+  readonly publicShell: string;
   readonly adminMain: string;
+  readonly adminNavbar: string;
   readonly bar: string;
   readonly links: string;
   readonly link: string;
@@ -32,14 +34,14 @@ declare const classes: {
   readonly rowIcon: string;
   readonly rowText: string;
   readonly rowLabel: string;
-  readonly rowDescription: string;
+  readonly rowHint: string;
   readonly tasks: string;
   readonly sidebar: string;
   readonly sidebarScroll: string;
   readonly groupRow: string;
   readonly groupChevron: string;
   readonly groupChildren: string;
-  readonly menuHead: string;
+  readonly sidebarHead: string;
 };
 
 export default classes;

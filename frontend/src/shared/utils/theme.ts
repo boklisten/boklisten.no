@@ -1,7 +1,5 @@
-import { createTheme, defaultVariantColorsResolver, Tabs } from "@mantine/core";
+import { createTheme, defaultVariantColorsResolver } from "@mantine/core";
 import type { CSSVariablesResolver, VariantColorsResolver } from "@mantine/core";
-
-import tabsClasses from "@/styles/Tabs.module.css";
 
 /**
  * Mantine keeps the white variant white on hover, so without an underline it gives no hint at all.
@@ -33,10 +31,6 @@ const theme = createTheme({
   primaryColor: "brand",
   primaryShade: 9,
   variantColorResolver,
-  components: {
-    // The current tab is marked like the current page in the navigation: the yellow highlighter.
-    Tabs: Tabs.extend({ classNames: tabsClasses }),
-  },
 });
 
 export const cssVariablesResolver: CSSVariablesResolver = (mantineTheme) => ({

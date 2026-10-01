@@ -1,11 +1,9 @@
-import { useLocation } from "@tanstack/react-router";
-
 import classes from "@/features/info/InfoPagesNavigation.module.css";
-import { isActive } from "@/features/layout/public-nav/publicNavigation";
-import type { PublicNavLink } from "@/features/layout/public-nav/publicNavigation";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import NavAnchor from "@/features/layout/nav/NavAnchor";
+import { isNavLinkActive, usePathname } from "@/features/layout/nav/navigation";
+import type { NavLink } from "@/features/layout/nav/navigation";
 
-const PAGES: Pick<PublicNavLink, "label" | "to" | "activeOn">[] = [
+const PAGES: Pick<NavLink, "label" | "to" | "activeOn">[] = [
   { label: "Generell informasjon", to: "/info/general" },
   { label: "Spørsmål og svar", to: "/info/faq" },
   { label: "For VGS-elever", to: "/info/pupils" },
@@ -18,26 +16,21 @@ const PAGES: Pick<PublicNavLink, "label" | "to" | "activeOn">[] = [
 ];
 
 export default function InfoPagesNavigation() {
-  const pathname = useLocation({ select: (location) => location.pathname });
+  const pathname = usePathname();
   return (
     <nav aria-label="Informasjonssider">
       <ul className={classes.list}>
-        {PAGES.map((page) => {
-          const active = isActive(page, pathname);
-          return (
-            <li key={page.to}>
-              <TanStackAnchor
-                to={page.to}
-                className={classes.chip}
-                underline="never"
-                data-active={active || undefined}
-                aria-current={active ? "page" : undefined}
-              >
-                {page.label}
-              </TanStackAnchor>
-            </li>
-          );
-        })}
+        {PAGES.map((page) => (
+          <li key={page.to}>
+            <NavAnchor
+              to={page.to}
+              active={isNavLinkActive(page, pathname)}
+              className={classes.chip}
+            >
+              {page.label}
+            </NavAnchor>
+          </li>
+        ))}
       </ul>
     </nav>
   );

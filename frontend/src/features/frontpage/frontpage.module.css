@@ -14,7 +14,7 @@
  *   signal  #c9470d           the employee's pane on the hero; deep enough for white type
  */
 .page {
-  --fp-paper: light-dark(#f8f7f3, var(--mantine-color-dark-7));
+  --fp-paper: var(--page-paper);
   --fp-ink: light-dark(#1f2d33, var(--mantine-color-gray-0));
   --fp-body: light-dark(#45565e, var(--mantine-color-dark-1));
   --fp-wash: light-dark(#e6f0f3, var(--mantine-color-dark-6));

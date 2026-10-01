@@ -7,7 +7,8 @@ import TanStackAnchor from "@/shared/components/TanStackAnchor";
 
 export default function Logo({ variant, admin }: { variant: "white" | "blue"; admin?: boolean }) {
   return (
-    <TanStackAnchor to={admin ? "/admin" : "/"} underline="never">
+    // Exact, or the router marks the logo as the current page everywhere below the home.
+    <TanStackAnchor to={admin ? "/admin" : "/"} activeOptions={{ exact: true }} underline="never">
       <Group gap="xs" wrap="nowrap">
         <Image
           src={`/images/boklisten_logo_${variant}.webp`}
