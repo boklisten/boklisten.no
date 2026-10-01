@@ -1,158 +1,60 @@
-import {
-  Container,
-  Divider,
-  Group,
-  NavLink,
-  SimpleGrid,
-  Stack,
-  Text,
-  ThemeIcon,
-  Title,
-} from "@mantine/core";
-import { useFocusWithin, useHover, useMergedRef, useReducedMotion } from "@mantine/hooks";
-import { IconArrowRight, IconExternalLink } from "@tabler/icons-react";
+import { Box, Container, NavLink, Stack, Text, Title } from "@mantine/core";
+import { IconExternalLink } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
 
-import { visibleAdminNavSections } from "@/features/layout/adminNavigation";
-import type { AdminNavLink } from "@/features/layout/adminNavigation";
 import SearchShortcutHint from "@/features/search/SearchShortcutHint";
-import ColorSchemeSelector from "@/features/user/ColorSchemeSelector";
-import useAuth from "@/shared/hooks/useAuth";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { authQueryOptions } from "@/features/auth/authQuery";
 
 const BOOK_SERIF =
   '"Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif';
 
-function AdminNavCard({ link }: { link: AdminNavLink }) {
-  const LinkIcon = link.icon;
-  const { hovered, ref: hoverRef } = useHover<HTMLAnchorElement>();
-  const { focused, ref: focusRef } = useFocusWithin<HTMLAnchorElement>();
-  const still = useReducedMotion();
-  const ease = still ? undefined : "200ms ease";
-  const active = hovered || focused;
-  const ref = useMergedRef(hoverRef, focusRef);
-
-  return (
-    <NavLink
-      ref={ref}
-      to={link.to}
-      label={link.label}
-      description={link.description}
-      leftSection={
-        <ThemeIcon variant="light" size={38} radius="md">
-          <LinkIcon size={20} aria-hidden />
-        </ThemeIcon>
-      }
-      rightSection={
-        <IconArrowRight
-          size={16}
-          aria-hidden
-          style={{
-            opacity: active ? 1 : 0,
-            transition: ease && `opacity ${ease}`,
-          }}
-        />
-      }
-      component={TanStackAnchor}
-      underline="never"
-      c="var(--mantine-color-text)"
-      styles={{
-        root: {
-          border: `1px solid var(--mantine-color-${active ? "brand-text" : "default-border"})`,
-          borderRadius: "var(--mantine-radius-md)",
-          backgroundColor: "var(--mantine-color-body)",
-          boxShadow: active ? "var(--mantine-shadow-xs)" : "none",
-          transition: ease && `box-shadow ${ease}, border-color ${ease}`,
-        },
-        label: { fontWeight: 600, color: active ? "var(--mantine-color-brand-text)" : undefined },
-        description: { color: "var(--mantine-color-dimmed)" },
-      }}
-    />
-  );
-}
-
-function AdminNavGrid({ links }: { links: AdminNavLink[] }) {
-  return (
-    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-      {links.map((link) => (
-        <AdminNavCard key={link.label} link={link} />
-      ))}
-    </SimpleGrid>
-  );
-}
-
+/**
+ * The dashboard: one centred column with the welcome, the way back to the customer site and, on a
+ * desktop keyboard, a line on the search shortcuts. The tools live in the tab bar, the sidebar and
+ * the menu, so the page lists none of them; the theme sits at the foot of the menu.
+ */
 export default function AdminDashboard() {
-  const { isAdmin } = useAuth();
   const { data: user } = useQuery(authQueryOptions());
   const firstName = user?.name?.trim().split(" ")[0];
 
   return (
     <Container size="lg" py="xl">
-      <Stack gap={50}>
-        <Stack align="center" gap={0}>
-          <Image src="/images/boklisten_logo_blue.webp" width={64} height={64} alt="Boklisten.no" />
-          <Title
-            order={1}
-            mt="xs"
-            ta="center"
-            style={{ fontFamily: BOOK_SERIF }}
-            c="var(--mantine-color-brand-text)"
-          >
-            Velkommen{firstName ? `, ${firstName}` : ""}
-          </Title>
-          <Text mt="sm" c="dimmed" ta="center" maw="46ch">
-            Her er verktøyene du trenger for å dele ut, samle inn og holde orden på bøkene.
-          </Text>
-          <ColorSchemeSelector />
-          {/* The way back to the customer site, as the front page points employees here: one
-              pane, only in the calm brand tint so it never competes with the tools. */}
-          <NavLink
-            component={TanStackAnchor}
-            to="/"
-            label="Gå til kundeside"
-            description="Se offentlig informasjon og egne bøker."
-            leftSection={<IconExternalLink />}
-            active
-            underline="never"
-            mt="xl"
-            maw={420}
-            styles={{
-              root: { borderRadius: "var(--mantine-radius-md)" },
-              label: { fontWeight: 600 },
-            }}
-          />
-        </Stack>
-
-        {visibleAdminNavSections(isAdmin).map((section) => (
-          <Stack key={section.label} gap="lg">
-            <Divider
-              label={
-                <Title order={2} size="xs" tt="uppercase" lts="0.08em" c="dimmed">
-                  {section.label}
-                </Title>
-              }
-              labelPosition="left"
-            />
-            <AdminNavGrid links={section.links} />
-            {section.groups?.map((group) => {
-              const GroupIcon = group.icon;
-              return (
-                <Stack key={group.label} gap="sm">
-                  <Group gap={6} c="var(--mantine-color-brand-text)">
-                    <GroupIcon size={18} aria-hidden />
-                    <Title order={3} size="sm">
-                      {group.label}
-                    </Title>
-                  </Group>
-                  <AdminNavGrid links={group.links} />
-                </Stack>
-              );
-            })}
-          </Stack>
-        ))}
-        <SearchShortcutHint />
+      <Stack align="center" gap={0}>
+        <Image src="/images/boklisten_logo_blue.webp" width={64} height={64} alt="Boklisten.no" />
+        <Title
+          order={1}
+          mt="xs"
+          ta="center"
+          style={{ fontFamily: BOOK_SERIF }}
+          c="var(--mantine-color-brand-text)"
+        >
+          Velkommen{firstName ? `, ${firstName}` : ""}
+        </Title>
+        <Text mt="sm" c="dimmed" ta="center" maw="46ch">
+          Her er verktøyene du trenger for å dele ut, samle inn og holde orden på bøkene.
+        </Text>
+        {/* The way back to the customer site, as the front page points employees here: one
+              pane in the calm brand tint, the mirror of the front page's orange one. */}
+        <NavLink
+          component={TanStackAnchor}
+          to="/"
+          label="Gå til kundeside"
+          description="Se offentlig informasjon og egne bøker."
+          leftSection={<IconExternalLink />}
+          active
+          underline="never"
+          mt="xl"
+          maw={420}
+          styles={{
+            root: { borderRadius: "var(--mantine-radius-md)" },
+            label: { fontWeight: 600 },
+          }}
+        />
+        <Box mt="xl">
+          <SearchShortcutHint />
+        </Box>
       </Stack>
     </Container>
   );

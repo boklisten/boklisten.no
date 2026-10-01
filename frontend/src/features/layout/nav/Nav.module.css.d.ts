@@ -17,13 +17,16 @@ declare const classes: {
   readonly tabBadge: string;
   readonly sheetContent: string;
   readonly bottom: string;
+  readonly sheetBackdrop: string;
   readonly sheetBody: string;
   readonly sheetHead: string;
+  readonly sheetViewport: string;
   readonly identityLink: string;
   readonly identityEdit: string;
   readonly identityText: string;
   readonly identityBadges: string;
   readonly identityName: string;
+  readonly grabber: string;
   readonly guest: string;
   readonly group: string;
   readonly groupTitle: string;
@@ -40,6 +43,9 @@ declare const classes: {
   readonly groupChevron: string;
   readonly groupChildren: string;
   readonly menuFoot: string;
+  readonly menuHead: string;
+  readonly menuTheme: string;
+  readonly menuThemeLabel: string;
 };
 
 export default classes;

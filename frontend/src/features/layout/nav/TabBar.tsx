@@ -11,6 +11,11 @@ export interface Tab {
   to: FileRouteTypes["to"];
   icon: Icon;
   active: boolean;
+  /**
+   * Tells the router's own active state to match the route alone, not everything under it; for a
+   * home tab whose route is the parent of all the others (the router already treats `/` so).
+   */
+  exact?: boolean;
 }
 
 /**
@@ -43,6 +48,7 @@ export default function TabBar({
         <TanStackAnchor
           key={tab.to}
           to={tab.to}
+          activeOptions={tab.exact ? { exact: true } : undefined}
           className={classes.tab}
           underline="never"
           data-active={tab.active || undefined}

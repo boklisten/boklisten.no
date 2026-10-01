@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ag-grid-community/locale": "^36.2.0",
+    "@base-ui/react": "^1.8.0",
     "@boklisten/backend": "workspace:*",
     "@dicebear/core": "^10.7.0",
     "@dicebear/styles": "^10.6.0",

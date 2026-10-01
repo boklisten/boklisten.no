@@ -1,7 +1,11 @@
-import { Divider, Group, Kbd, Stack, Text, Title } from "@mantine/core";
+import { Kbd, Text } from "@mantine/core";
 import { useOs } from "@mantine/hooks";
 
-/** The shortcuts only exist on a desktop keyboard, so the line is not rendered anywhere else. */
+/**
+ * One quiet line on how to open search from the keyboard. The shortcuts only exist on a desktop
+ * keyboard, so the line is for desktop operating systems and, like the sidebar, for windows from
+ * `sm` up; narrower than that the page is the phone layout, whichever device shows it.
+ */
 export default function SearchShortcutHint() {
   const os = useOs();
   const desktop = os === "macos" || os === "windows" || os === "linux";
@@ -9,27 +13,9 @@ export default function SearchShortcutHint() {
     return null;
   }
   return (
-    <Stack gap="lg">
-      <Divider
-        label={
-          <Title order={2} size="xs" tt="uppercase" lts="0.08em" c="dimmed">
-            Hurtigtaster
-          </Title>
-        }
-        labelPosition="left"
-      />
-      <Group gap={6} wrap="wrap" c="dimmed">
-        <Group gap={4} wrap="nowrap">
-          <Kbd size="sm">{os === "macos" ? "⌘" : "Ctrl"}</Kbd>
-          <Kbd size="sm">K</Kbd>
-        </Group>
-        <Text size="sm">eller</Text>
-        <Group gap={4} wrap="nowrap">
-          <Kbd size="sm">Shift</Kbd>
-          <Kbd size="sm">Shift</Kbd>
-        </Group>
-        <Text size="sm">åpner søk etter kunder og bøker fra alle sider.</Text>
-      </Group>
-    </Stack>
+    <Text size="sm" c="dimmed" ta="center" maw="46ch" lh={2} visibleFrom="sm">
+      <Kbd size="sm">{os === "macos" ? "⌘" : "Ctrl"}</Kbd> <Kbd size="sm">K</Kbd> eller{" "}
+      <Kbd size="sm">Shift</Kbd> <Kbd size="sm">Shift</Kbd> åpner søket fra alle sider.
+    </Text>
   );
 }

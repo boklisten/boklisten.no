@@ -34,7 +34,7 @@ export default function PublicMenuSheet({
   return (
     <MenuSheet opened={opened} onClose={onClose}>
       <div className={classes.sheetHead}>
-        <IdentityHead settingsTo={USER_SETTINGS.to} onNavigate={onClose} />
+        <IdentityHead settingsTo={USER_SETTINGS.to} badge="branch" onNavigate={onClose} />
       </div>
 
       {!isLoggedIn && (

@@ -8,6 +8,7 @@ import {
   IconDatabase,
   IconEdit,
   IconFileDollar,
+  IconHome,
   IconHourglassLow,
   IconMailFast,
   IconQrcode,
@@ -35,6 +36,14 @@ export interface AdminNavLink {
   to: FileRouteTypes["to"];
   icon: Icon;
 }
+
+/** The dashboard: the welcome, the theme and the way to the customer site. */
+export const ADMIN_HOME: AdminNavLink = {
+  label: "Hjem",
+  description: "Velkommen til bl-admin",
+  to: "/admin",
+  icon: IconHome,
+};
 
 const KASSE: AdminNavLink = {
   label: KASSE_TITLE,
@@ -177,7 +186,11 @@ const ADMIN_NAV_SECTIONS = [
   },
 ] satisfies AdminNavSection[];
 
+/** Marks the link active on its route and below it; the dashboard matches only itself. */
 export function isAdminNavLinkActive(link: AdminNavLink, pathname: string) {
+  if (link.to === ADMIN_HOME.to) {
+    return pathname === ADMIN_HOME.to;
+  }
   return pathname === link.to || pathname.startsWith(`${link.to}/`);
 }
 
@@ -190,10 +203,10 @@ export const ADMIN_USER_SETTINGS: AdminNavLink = {
 };
 
 /**
- * The three tools always one tap away on the phone tab bar; the menu holds the rest, and the
- * dashboard is one wordmark tap away, so it needs no tab of its own.
+ * The phone tab bar, on the public site's model: home first, then the two everyday tools; the
+ * menu holds the rest.
  */
-export const ADMIN_PRIMARY_LINKS: AdminNavLink[] = [KASSE, ORDER_MANAGER, WAITING_LIST];
+export const ADMIN_PRIMARY_LINKS: AdminNavLink[] = [ADMIN_HOME, KASSE, WAITING_LIST];
 
 export function visibleAdminNavSections(isAdmin: boolean) {
   return ADMIN_NAV_SECTIONS.filter((section) => !section.adminOnly || isAdmin);

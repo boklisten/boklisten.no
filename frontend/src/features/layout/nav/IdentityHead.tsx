@@ -14,17 +14,21 @@ import useAuth from "@/shared/hooks/useAuth";
 import { api } from "@/shared/utils/apiClient";
 
 /**
- * Who is logged in, as bl-admin shows a customer: avatar, first name, then their permission and
- * school. The whole row leads to the user's own settings and is marked like any other row while
- * that page is open. The head of both menu sheets and of the admin sidebar.
+ * Who is logged in, as bl-admin shows a customer: avatar, first name, then one chip for what
+ * matters on that site: the school on the public site, the permission in bl-admin. The whole row
+ * leads to the user's own settings and is marked like any other row while that page is open. The
+ * head of both menu sheets and of the admin sidebar.
  */
 export default function IdentityHead({
   settingsTo,
+  badge,
   badgeSize = "sm",
   onNavigate,
 }: {
   settingsTo: FileRouteTypes["to"];
-  /** Smaller in the narrow sidebar, so the permission still fits beside the avatar and the pen. */
+  /** Which chip follows the name: the branch membership on the public site, the role in bl-admin. */
+  badge: "branch" | "permission";
+  /** Smaller in the narrow sidebar, so the chip still fits beside the avatar and the pen. */
   badgeSize?: BadgeProps["size"];
   onNavigate: () => void;
 }) {
@@ -33,14 +37,14 @@ export default function IdentityHead({
   const { data: branch } = useQuery(
     api.branches.show.queryOptions(
       { params: { branchId: user?.branchMembershipId ?? "" } },
-      { enabled: Boolean(user?.branchMembershipId) },
+      { enabled: badge === "branch" && Boolean(user?.branchMembershipId) },
     ),
   );
   if (!user) {
     return <div className={classes.identityName}>Meny</div>;
   }
   const name = firstName(user);
-  const withBadges = Boolean(branch) || user.permission !== "customer";
+  const withBadge = badge === "branch" ? Boolean(branch) : user.permission !== "customer";
   const active = isActive({ to: settingsTo }, pathname);
   return (
     <TanStackAnchor
@@ -55,12 +59,13 @@ export default function IdentityHead({
       <CustomerAvatar userId={user.id} />
       <span className={classes.identityText}>
         <span className={classes.identityName}>{name}</span>
-        {withBadges && (
+        {withBadge && (
           <Group gap={6} className={classes.identityBadges}>
-            <PermissionBadge permission={user.permission} size={badgeSize} />
-            {branch && (
+            {badge === "permission" ? (
+              <PermissionBadge permission={user.permission} size={badgeSize} />
+            ) : (
               <Badge variant="light" size={badgeSize}>
-                {branch.name}
+                {branch?.name}
               </Badge>
             )}
           </Group>

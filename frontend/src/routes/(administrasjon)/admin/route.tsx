@@ -24,7 +24,7 @@ export const Route = createFileRoute("/(administrasjon)/admin")({
 
 /**
  * bl-admin's frame: the sidebar from `sm` up, and below that the same tab bar and menu sheet as
- * the public site, with Hjem, Kasse and Meny.
+ * the public site, with Hjem, Kasse, Venteliste and Meny.
  */
 function AdminPageLayout() {
   const [menuOpened, { open: openMenu, close: closeMenu }] = useDisclosure();

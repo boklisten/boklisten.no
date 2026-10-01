@@ -1,9 +1,13 @@
 import { useLocation } from "@tanstack/react-router";
 
-import { ADMIN_PRIMARY_LINKS, isAdminNavLinkActive } from "@/features/layout/adminNavigation";
+import {
+  ADMIN_HOME,
+  ADMIN_PRIMARY_LINKS,
+  isAdminNavLinkActive,
+} from "@/features/layout/adminNavigation";
 import TabBar from "@/features/layout/nav/TabBar";
 
-/** bl-admin's tab bar: the three everyday tools and the menu. */
+/** bl-admin's tab bar: home, the two everyday tools and the menu. */
 export default function AdminTabBar({
   menuOpened,
   onOpenMenu,
@@ -17,6 +21,7 @@ export default function AdminTabBar({
     to: link.to,
     icon: link.icon,
     active: isAdminNavLinkActive(link, pathname),
+    exact: link === ADMIN_HOME,
   }));
 
   return <TabBar tabs={tabs} menuOpened={menuOpened} onOpenMenu={onOpenMenu} />;

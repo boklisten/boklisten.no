@@ -287,15 +287,101 @@
   background: var(--nav-paper);
 }
 
-/* The phone sheet: sized to its content, a sliver of the page kept above it; a long list scrolls inside. */
+/*
+ * The phone sheet (Base UI's Drawer): sized to its content, a sliver of the page kept above it; a
+ * long list scrolls inside. Base UI sets the swipe's distance and progress as variables; the sheet
+ * and the backdrop follow them, and the release animates from wherever the finger let go. The
+ * bleed is sheet below the screen's edge, so an upward tug never shows a gap.
+ */
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--mantine-z-index-modal);
+  background: rgb(0 0 0 / 35%);
+  backdrop-filter: blur(2px);
+  opacity: calc(1 - var(--drawer-swipe-progress));
+  transition: opacity 450ms cubic-bezier(0.32, 0.72, 0, 1);
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+  }
+
+  &[data-swiping] {
+    transition-duration: 0ms;
+  }
+
+  &[data-ending-style] {
+    transition-duration: calc(var(--drawer-swipe-strength) * 400ms);
+  }
+}
+
+.sheetViewport {
+  position: fixed;
+  inset: 0;
+  z-index: var(--mantine-z-index-modal);
+  display: flex;
+  align-items: flex-end;
+}
+
 .bottom {
-  height: auto;
-  max-height: calc(100dvh - 2.5rem);
+  --bleed: 3rem;
+  width: 100%;
+  max-height: calc(100dvh - 2.5rem + var(--bleed));
+  margin-bottom: calc(-1 * var(--bleed));
+  padding-bottom: var(--bleed);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 20px 20px 0 0;
+  outline: 0;
+  transform: translateY(var(--drawer-swipe-movement-y));
+  transition: transform 450ms cubic-bezier(0.32, 0.72, 0, 1);
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    transform: translateY(calc(100% - var(--bleed) + 2px));
+  }
+
+  &[data-ending-style] {
+    transition-duration: calc(var(--drawer-swipe-strength) * 400ms);
+  }
+
+  &[data-swiping] {
+    user-select: none;
+  }
+
+  /* Pressed and moved with a mouse, a link would start the browser's drag and drop instead. */
+  & a {
+    -webkit-user-drag: none;
+  }
+
+  /* The grabber takes the top of the head's padding, so the name sits where it did without it. */
+  & .sheetHead {
+    padding-top: 0.6875rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheetBackdrop,
+  .sheetBackdrop[data-ending-style],
+  .bottom,
+  .bottom[data-ending-style] {
+    transition-duration: 0ms;
+  }
 }
 
 .sheetBody {
   padding: 0 0 calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* The grabber: the short bar native sheets carry on top, saying the sheet can be swiped down. */
+.grabber {
+  width: 2.25rem;
+  height: 0.3125rem;
+  margin: 0.5rem auto 0;
+  background: var(--nav-rule);
+  border-radius: 999px;
+  cursor: grab;
 }
 
 .sheetHead {
@@ -528,7 +614,6 @@
   & .sheetHead {
     flex: none;
     padding: 0.75rem 0.5rem 0.5rem;
-    border-bottom: 1px solid var(--nav-rule);
   }
 
   & .identityName {
@@ -585,5 +670,40 @@
 
   .sidebar & {
     margin-top: 0;
+  }
+}
+
+/* bl-admin's head: the identity row with the theme pill under it, one block in the sidebar and the sheet. */
+.menuHead {
+  flex: none;
+
+  .sidebar & {
+    border-bottom: 1px solid var(--nav-rule);
+  }
+}
+
+/*
+ * The theme pill, right under the identity row, with its label. The label sits close to the pill
+ * (a third of the gap above it) so the two read as one setting, apart from the identity row.
+ */
+.menuTheme {
+  padding: 0 1rem 1.25rem 1.25rem;
+
+  .sidebar & {
+    padding: 0.25rem 0.5rem 0.75rem;
+  }
+}
+
+/* Secondary type, the size of a row's description: it names the setting without competing with it. */
+.menuThemeLabel {
+  margin: 0 0 0.375rem 0.125rem;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--nav-body);
+
+  .sidebar & {
+    margin-bottom: 0.25rem;
+    font-size: var(--mantine-font-size-xs);
   }
 }
