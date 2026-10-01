@@ -115,20 +115,20 @@ const UserInfoFields = withFieldGroup({
       </FormSectionTitle>
       {leading}
       <group.AppField
-        name="name"
-        validators={{
-          onBlur: ({ value }) => nameFieldValidator(value, perspective),
-        }}
-      >
-        {(field) => <field.NameField />}
-      </group.AppField>
-      <group.AppField
         name="phoneNumber"
         validators={{
           onBlur: ({ value }) => phoneNumberFieldValidator(value, perspective),
         }}
       >
         {(field) => <field.PhoneNumberField />}
+      </group.AppField>
+      <group.AppField
+        name="name"
+        validators={{
+          onBlur: ({ value }) => nameFieldValidator(value, perspective),
+        }}
+      >
+        {(field) => <field.NameField />}
       </group.AppField>
       <group.AppField
         name="address"
