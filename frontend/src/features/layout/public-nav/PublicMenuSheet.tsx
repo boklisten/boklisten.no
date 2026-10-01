@@ -1,8 +1,9 @@
-import { Alert, Button } from "@mantine/core";
-import { IconAlertCircle, IconLogout } from "@tabler/icons-react";
+import { Alert } from "@mantine/core";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useLocation } from "@tanstack/react-router";
 
 import IdentityHead from "@/features/layout/nav/IdentityHead";
+import LogoutButton from "@/features/layout/nav/LogoutButton";
 import MenuSheet, { MenuRow } from "@/features/layout/nav/MenuSheet";
 import classes from "@/features/layout/nav/Nav.module.css";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/features/layout/public-nav/publicNavigation";
 import type { PublicNavLink } from "@/features/layout/public-nav/publicNavigation";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 import useAuth from "@/shared/hooks/useAuth";
 import { countPendingTasks } from "@/shared/utils/tasks";
 
@@ -39,17 +41,12 @@ export default function PublicMenuSheet({
 
       {!isLoggedIn && (
         <div className={classes.guest}>
-          <Button component={TanStackAnchor} to="/auth/login" onClick={onClose}>
+          <TanStackButton to="/auth/login" onClick={onClose}>
             Logg inn
-          </Button>
-          <Button
-            component={TanStackAnchor}
-            to="/auth/register"
-            variant="outline"
-            onClick={onClose}
-          >
+          </TanStackButton>
+          <TanStackButton to="/auth/register" variant="outline" onClick={onClose}>
             Registrer
-          </Button>
+          </TanStackButton>
         </div>
       )}
 
@@ -81,21 +78,7 @@ export default function PublicMenuSheet({
         ))}
       </div>
 
-      <div className={classes.sheetFoot}>
-        {isLoggedIn && (
-          <Button
-            component={TanStackAnchor}
-            to="/auth/logout"
-            variant="subtle"
-            color="red"
-            fullWidth
-            leftSection={<IconLogout size={18} />}
-            onClick={onClose}
-          >
-            Logg ut
-          </Button>
-        )}
-      </div>
+      <div className={classes.sheetFoot}>{isLoggedIn && <LogoutButton onNavigate={onClose} />}</div>
     </MenuSheet>
   );
 }

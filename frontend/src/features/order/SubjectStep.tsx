@@ -13,7 +13,7 @@ import { ORDER_WALK } from "@/features/order/orderTree";
 import SubjectBookFan from "@/features/order/SubjectBookFan";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import FloatingActionBar from "@/shared/components/FloatingActionBar";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 import useCart from "@/shared/hooks/useCart";
 import { api } from "@/shared/utils/apiClient";
 import { bookCountLabel } from "@/shared/utils/bookCountLabel";
@@ -76,14 +76,14 @@ export default function SubjectStep({
             {branch.name} har ikke lagt ut noen bøker enda. Ta kontakt på info@boklisten.no om du
             har spørsmål.
           </InfoAlert>
-          <Button
-            component={TanStackAnchor}
-            to={parent ? `/bestilling/${parent.id}` : "/bestilling"}
+          <TanStackButton
+            to={parent ? "/bestilling/$branchId" : "/bestilling"}
+            params={parent ? { branchId: parent.id } : undefined}
             variant="light"
             leftSection={<IconArrowBack size={18} />}
           >
             Velg en annen skole
-          </Button>
+          </TanStackButton>
         </div>
       )}
 

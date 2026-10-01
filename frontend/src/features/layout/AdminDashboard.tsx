@@ -5,15 +5,22 @@ import { Image } from "@unpic/react";
 
 import SearchShortcutHint from "@/features/search/SearchShortcutHint";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 import { authQueryOptions } from "@/features/auth/authQuery";
+import classes from "@/features/layout/AdminDashboard.module.css";
+import { ADMIN_HOME, ADMIN_PRIMARY_LINKS } from "@/features/layout/adminNavigation";
 
 const BOOK_SERIF =
   '"Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif';
 
+/** The everyday tools, the same ones and in the same order as the phone tab bar after Hjem. */
+const PRIMARY_TOOLS = ADMIN_PRIMARY_LINKS.filter((link) => link !== ADMIN_HOME);
+
 /**
- * The dashboard: one centred column with the welcome, the way back to the customer site and, on a
- * desktop keyboard, a line on the search shortcuts. The tools live in the tab bar, the sidebar and
- * the menu, so the page lists none of them; the theme sits at the foot of the menu.
+ * The dashboard: one centred column with the welcome, the everyday tools as its buttons (as the
+ * front page's hero carries the public tab bar's), the way back to the customer site and, on a
+ * desktop keyboard, a line on the search shortcuts. Every other tool lives in the sidebar and the
+ * menu; the theme sits at the foot of the menu.
  */
 export default function AdminDashboard() {
   const { data: user } = useQuery(authQueryOptions());
@@ -32,9 +39,23 @@ export default function AdminDashboard() {
         >
           Velkommen{firstName ? `, ${firstName}` : ""}
         </Title>
-        <Text mt="sm" c="dimmed" ta="center" maw="46ch">
+        <Text mt="sm" c="dimmed" ta="center" maw="46ch" style={{ textWrap: "balance" }}>
           Her er verktøyene du trenger for å dele ut, samle inn og holde orden på bøkene.
         </Text>
+        <div className={classes.actions}>
+          {PRIMARY_TOOLS.map((tool, index) => (
+            <TanStackButton
+              key={tool.to}
+              to={tool.to}
+              size="lg"
+              radius="xl"
+              variant={index === 0 ? "filled" : "outline"}
+              leftSection={<tool.icon />}
+            >
+              {tool.label}
+            </TanStackButton>
+          ))}
+        </div>
         {/* The way back to the customer site, as the front page points employees here: one
               pane in the calm brand tint, the mirror of the front page's orange one. */}
         <NavLink

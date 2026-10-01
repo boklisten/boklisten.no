@@ -1,7 +1,7 @@
-import { Box, Button } from "@mantine/core";
+import { Box } from "@mantine/core";
 
 import classes from "@/features/cart/cart.module.css";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 
 /** Nothing in the cart yet: say so, and point to the two places books come from. */
 export default function CartEmpty() {
@@ -23,12 +23,12 @@ export default function CartEmpty() {
         har under Dine bøker.
       </p>
       <div className={classes.emptyActions}>
-        <Button component={TanStackAnchor} to="/bestilling" size="md" radius="xl">
+        <TanStackButton to="/bestilling" size="md" radius="xl">
           Bestill bøker
-        </Button>
-        <Button component={TanStackAnchor} to="/items" size="md" radius="xl" variant="outline">
+        </TanStackButton>
+        <TanStackButton to="/items" size="md" radius="xl" variant="outline">
           Dine bøker
-        </Button>
+        </TanStackButton>
       </div>
     </div>
   );

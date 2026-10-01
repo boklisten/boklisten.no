@@ -1,5 +1,5 @@
 import type { Branch, PublicBranchNode } from "@boklisten/backend/shared/branch";
-import { Button, Table } from "@mantine/core";
+import { Table } from "@mantine/core";
 import { IconArrowBack, IconMapPin } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Route } from "@tuyau/core/types";
@@ -9,7 +9,7 @@ import classes from "@/features/branch-walk/walk.module.css";
 import { OPENING_HOURS_WALK } from "@/features/info/openingHoursWalk";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import ContactInfo from "@/shared/components/ContactInfo";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 import { api } from "@/shared/utils/apiClient";
 import { formatOpeningHour } from "@/shared/utils/dates";
 
@@ -79,14 +79,13 @@ export default function BranchOpeningHours({
             Du kan bestille bøker i Posten, eller kontakte oss for spørsmål.
           </InfoAlert>
           <ContactInfo />
-          <Button
-            component={TanStackAnchor}
+          <TanStackButton
             to={OPENING_HOURS_WALK.top.to}
             variant="light"
             leftSection={<IconArrowBack size={18} />}
           >
             Se andre skoler
-          </Button>
+          </TanStackButton>
         </div>
       )}
     </>

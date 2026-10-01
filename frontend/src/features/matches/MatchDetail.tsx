@@ -1,11 +1,11 @@
-import { Box, Button, Skeleton } from "@mantine/core";
+import { Box, Skeleton } from "@mantine/core";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { forViewer } from "@/features/matches/forViewer";
 import MatchDetailView from "@/features/matches/MatchDetailView";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 import { api } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
@@ -33,11 +33,9 @@ function MatchDetail({ matchId }: { matchId: string }) {
   return (
     <>
       <Box>
-        <TanStackAnchor to="/overleveringer">
-          <Button variant="subtle" leftSection={<IconArrowLeft />}>
-            Alle overleveringer
-          </Button>
-        </TanStackAnchor>
+        <TanStackButton to="/overleveringer" variant="subtle" leftSection={<IconArrowLeft />}>
+          Alle overleveringer
+        </TanStackButton>
       </Box>
 
       <MatchDetailView viewerMatch={forViewer(match, userId)} viewerCustomerId={userId} />

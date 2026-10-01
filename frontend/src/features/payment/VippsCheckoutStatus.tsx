@@ -18,6 +18,7 @@ function BackToCartButton() {
     <NavLink
       component={TanStackAnchor}
       to="/handlekurv"
+      underline="never"
       leftSection={<IconBasket />}
       active
       bdrs={5}
@@ -158,6 +159,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
         <NavLink
           component={TanStackAnchor}
           to="/items"
+          underline="never"
           leftSection={<IconBook />}
           active
           variant="filled"

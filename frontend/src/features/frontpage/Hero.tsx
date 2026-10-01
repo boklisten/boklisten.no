@@ -1,4 +1,4 @@
-import { Button, Container, NavLink, Stack, Text, Title } from "@mantine/core";
+import { Container, NavLink, Stack, Text, Title } from "@mantine/core";
 import { IconBook, IconExternalLink } from "@tabler/icons-react";
 import { Activity } from "react";
 
@@ -6,6 +6,7 @@ import BookFan from "@/features/frontpage/BookFan";
 import classes from "@/features/frontpage/frontpage.module.css";
 import ShowCustomerIdButton from "@/shared/components/ShowCustomerIdButton";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 import useAuth from "@/shared/hooks/useAuth";
 
 export default function Hero() {
@@ -25,18 +26,11 @@ export default function Hero() {
             </Text>
 
             <div className={classes.actions}>
-              <Button
-                component={TanStackAnchor}
-                to="/bestilling"
-                size="lg"
-                radius="xl"
-                variant="white"
-              >
+              <TanStackButton to="/bestilling" size="lg" radius="xl" variant="white">
                 Bestill bøker
-              </Button>
+              </TanStackButton>
               <Activity mode={isLoggedIn ? "visible" : "hidden"}>
-                <Button
-                  component={TanStackAnchor}
+                <TanStackButton
                   to="/items"
                   size="lg"
                   radius="xl"
@@ -45,7 +39,7 @@ export default function Hero() {
                   leftSection={<IconBook />}
                 >
                   Dine bøker
-                </Button>
+                </TanStackButton>
                 {userId && (
                   <ShowCustomerIdButton
                     customerId={userId}
@@ -57,8 +51,7 @@ export default function Hero() {
                 )}
               </Activity>
               <Activity mode={!isLoggedIn ? "visible" : "hidden"}>
-                <Button
-                  component={TanStackAnchor}
+                <TanStackButton
                   to="/auth/login"
                   size="lg"
                   radius="xl"
@@ -66,7 +59,7 @@ export default function Hero() {
                   color="white"
                 >
                   Logg inn
-                </Button>
+                </TanStackButton>
               </Activity>
             </div>
 

@@ -3,7 +3,7 @@ import { IconBasket, IconCheck, IconLogin2, IconTrash } from "@tabler/icons-reac
 
 import { kroner } from "@/features/cart/cartLabels";
 import FloatingActionBar from "@/shared/components/FloatingActionBar";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 
 /**
@@ -50,24 +50,23 @@ export default function CartBar({
   if (!isLoggedIn) {
     return (
       <FloatingActionBar visible summary={summary} detail="Logg inn for å fullføre bestillingen.">
-        <Button
-          renderRoot={(props) => (
-            <TanStackAnchor to="/auth/login" search={{ redirect: "handlekurv" }} {...props} />
-          )}
+        <TanStackButton
+          to="/auth/login"
+          search={{ redirect: "handlekurv" }}
           radius="xl"
           leftSection={<IconLogin2 />}
         >
           {free ? "Logg inn og bekreft" : "Logg inn og gå til kassen"}
-        </Button>
+        </TanStackButton>
       </FloatingActionBar>
     );
   }
   if (free) {
     return (
       <FloatingActionBar visible summary={summary}>
-        <Button component={TanStackAnchor} to="/kasse" radius="xl" leftSection={<IconCheck />}>
+        <TanStackButton to="/kasse" radius="xl" leftSection={<IconCheck />}>
           Bekreft bestillingen
-        </Button>
+        </TanStackButton>
       </FloatingActionBar>
     );
   }
@@ -77,9 +76,9 @@ export default function CartBar({
       summary={summary}
       detail={payLater > 0 ? `${books}, ${kroner(payLater)} betales senere` : books}
     >
-      <Button component={TanStackAnchor} to="/kasse" radius="xl" leftSection={<IconBasket />}>
+      <TanStackButton to="/kasse" radius="xl" leftSection={<IconBasket />}>
         Gå til kassen
-      </Button>
+      </TanStackButton>
     </FloatingActionBar>
   );
 }

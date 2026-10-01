@@ -90,7 +90,6 @@ export function MenuRow({
   icon: RowIcon,
   description,
   active,
-  tone,
   onNavigate,
 }: {
   label: string;
@@ -98,8 +97,6 @@ export function MenuRow({
   icon: Icon;
   description?: string;
   active: boolean;
-  /** Red, for the one row that ends the session. */
-  tone?: "danger";
   onNavigate: () => void;
 }) {
   return (
@@ -108,7 +105,6 @@ export function MenuRow({
       className={classes.row}
       underline="never"
       data-active={active || undefined}
-      data-tone={tone}
       aria-current={active ? "page" : undefined}
       onClick={onNavigate}
     >

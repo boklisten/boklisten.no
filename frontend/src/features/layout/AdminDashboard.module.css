@@ -1,0 +1,22 @@
+/* The everyday tools, laid out like the front page hero's buttons: full width for thumbs on a phone, side by side from `sm`. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 420px;
+  margin-top: var(--mantine-spacing-xl);
+
+  & > * {
+    flex: 1 1 100%;
+  }
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    max-width: none;
+
+    & > * {
+      flex: 0 0 auto;
+    }
+  }
+}

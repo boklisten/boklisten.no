@@ -6,6 +6,7 @@ import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 import { newPasswordFieldValidator } from "@/shared/components/form/fields/complex/NewPasswordField";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 import { useAppForm } from "@/shared/hooks/form";
 import { GENERIC_ERROR_TEXT, PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { useLocation } from "@tanstack/react-router";
@@ -86,9 +87,7 @@ export default function PasswordReset({ id }: { id: string }) {
         mode={!isExpired && resetPasswordMutation.isSuccess && !apiError ? "visible" : "hidden"}
       >
         <SuccessAlert>Passordet ble oppdatert! Du kan nå logge inn.</SuccessAlert>
-        <TanStackAnchor to="/auth/login">
-          <Button>Logg inn</Button>
-        </TanStackAnchor>
+        <TanStackButton to="/auth/login">Logg inn</TanStackButton>
       </Activity>
     </>
   );

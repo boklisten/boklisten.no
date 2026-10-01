@@ -448,6 +448,11 @@
   @media (prefers-reduced-motion: reduce) {
     transition: none;
   }
+
+  /* A Mantine Badge sets the default cursor; here the chip is part of the link and points like it. */
+  .identityLink & > * {
+    cursor: inherit;
+  }
 }
 
 .identityName {
@@ -515,10 +520,6 @@
 
   &[data-active] {
     color: var(--mantine-color-brand-text);
-  }
-
-  &[data-tone="danger"] {
-    color: var(--mantine-color-red-text);
   }
 }
 

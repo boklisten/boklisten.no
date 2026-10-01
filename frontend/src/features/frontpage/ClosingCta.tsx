@@ -1,8 +1,8 @@
-import { Button, Container, Title } from "@mantine/core";
+import { Container, Title } from "@mantine/core";
 import { Activity } from "react";
 
 import classes from "@/features/frontpage/frontpage.module.css";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 import useAuth from "@/shared/hooks/useAuth";
 
 export default function ClosingCta() {
@@ -17,32 +17,20 @@ export default function ClosingCta() {
           </Title>
           <div className={classes.actions}>
             <Activity mode={isLoggedIn ? "visible" : "hidden"}>
-              <Button component={TanStackAnchor} to="/bestilling" size="lg" radius="xl">
+              <TanStackButton to="/bestilling" size="lg" radius="xl">
                 Bestill bøker
-              </Button>
-              <Button
-                component={TanStackAnchor}
-                to="/items"
-                size="lg"
-                radius="xl"
-                variant="outline"
-              >
+              </TanStackButton>
+              <TanStackButton to="/items" size="lg" radius="xl" variant="outline">
                 Se mine bøker
-              </Button>
+              </TanStackButton>
             </Activity>
             <Activity mode={!isLoggedIn ? "visible" : "hidden"}>
-              <Button component={TanStackAnchor} to="/auth/register" size="lg" radius="xl">
+              <TanStackButton to="/auth/register" size="lg" radius="xl">
                 Registrer deg
-              </Button>
-              <Button
-                component={TanStackAnchor}
-                to="/auth/login"
-                size="lg"
-                radius="xl"
-                variant="outline"
-              >
+              </TanStackButton>
+              <TanStackButton to="/auth/login" size="lg" radius="xl" variant="outline">
                 Logg inn
-              </Button>
+              </TanStackButton>
             </Activity>
           </div>
         </div>
