@@ -26,8 +26,8 @@
     "prepare": "vp config"
   },
   "devDependencies": {
-    "@railway/cli": "^5.62.1",
-    "railway": "^3.11.0",
+    "@railway/cli": "^5.63.1",
+    "railway": "^3.12.0",
     "vite": "catalog:",
     "vite-plus": "catalog:"
   },
