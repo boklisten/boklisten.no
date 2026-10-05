@@ -2,18 +2,17 @@ import type { Branch, BranchPeriods } from "@boklisten/backend/shared/branch";
 import type { InheritedBranchField } from "@boklisten/backend/shared/branch-inheritance";
 import { Button, Card, Fieldset, Group, Stack } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import type { ReactNode } from "react";
-import { Activity, useState } from "react";
+import { Activity } from "react";
 
 import InheritedFieldCard from "@/features/branches/inheritance/InheritedFieldCard";
 import { INHERITED_FIELDS, onOffLabel } from "@/features/branches/inheritance/inheritedFields";
 import { ToneSwitch } from "@/features/branches/inheritance/tone";
 import useInheritedField from "@/features/branches/inheritance/useInheritedField";
-import { useAppForm } from "@/shared/hooks/form";
+import { commitValue, useAppForm } from "@/shared/hooks/form";
 import useAutoSave from "@/shared/hooks/useAutoSave";
-import { api } from "@/shared/utils/apiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 
 type SwitchName = Extract<
   InheritedBranchField,
@@ -41,16 +40,6 @@ function valuesOf(branch: Branch): PaymentValues {
   };
 }
 
-/**
- * Switches, sliders, the period lists and period choices save on change; the typed period fields
- * (limits, prices) save on blur.
- */
-function savesOnChange(fieldName: string): boolean {
-  return !/\.(?:maxNumberOfPeriods|percentage|price|percentageUpFront|percentageBuyout)$/.test(
-    fieldName,
-  );
-}
-
 const PERIOD_TYPE_OPTIONS = [
   { label: "semester", value: "semester" },
   { label: "år", value: "year" },
@@ -59,43 +48,22 @@ const PERIOD_TYPE_OPTIONS = [
 /** Every control auto-saves; the six inherited settings sit in the shared inheritance card. */
 export default function BranchPaymentSettings({ existingBranch }: { existingBranch: Branch }) {
   const branch = existingBranch;
-  const queryClient = useQueryClient();
-  // The form starts from the branch as it was when the tab opened; the refetch after each save
-  // must not reset what the admin is editing.
-  // oxlint-disable-next-line react/hook-use-state -- never set again, so no setter
-  const [initialValues] = useState(() => valuesOf(branch));
-
-  const updateMutation = useMutation(api.branches.update.mutationOptions());
-  const { save } = useAutoSave({
-    initialBody: initialValues,
-    persist: (body) => updateMutation.mutateAsync({ params: { branchId: branch.id }, body }),
-    notifications: {
-      id: `branch-payment-saved-${branch.id}`,
-      saved: "Filialen ble lagret!",
-      failed: "Klarte ikke lagre filialen",
-    },
-    onSaved: () => void queryClient.invalidateQueries({ queryKey: api.branches.index.pathKey() }),
-  });
-
-  const form = useAppForm({
-    defaultValues: initialValues,
-    listeners: {
-      onChange: ({ fieldApi, formApi }) => {
-        if (savesOnChange(fieldApi.name) && formApi.state.isValid) {
-          save(formApi.state.values);
-        }
-      },
-      onBlur: ({ fieldApi, formApi }) => {
-        if (!savesOnChange(fieldApi.name) && formApi.state.isValid) {
-          save(formApi.state.values);
-        }
-      },
-    },
-  });
+  const form = useAppForm(
+    useAutoSave({
+      defaultValues: valuesOf(branch),
+      persist: (values) =>
+        apiClient.api.branches.update({ params: { branchId: branch.id }, body: values }),
+      invalidates: [api.branches.index.pathKey()],
+    }),
+  );
 
   function switchCard(
     name: SwitchName,
-    field: { state: { value: boolean | null }; handleChange: (value: boolean | null) => void },
+    field: {
+      state: { value: boolean | null };
+      handleChange: (value: boolean | null) => void;
+      handleBlur: () => void;
+    },
   ) {
     return (
       <InheritedFieldCard
@@ -103,7 +71,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
         field={name}
         tab="payment"
         value={field.state.value}
-        onChange={field.handleChange}
+        onChange={(value) => commitValue(field, value)}
       >
         {(value, setValue, tone) => (
           <ToneSwitch
@@ -120,7 +88,11 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
 
   function percentageCard(
     name: PercentageName,
-    field: { state: { value: number | null }; handleChange: (value: number | null) => void },
+    field: {
+      state: { value: number | null };
+      handleChange: (value: number | null) => void;
+      handleBlur: () => void;
+    },
   ) {
     return (
       <InheritedFieldCard
@@ -128,7 +100,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
         field={name}
         tab="payment"
         value={field.state.value}
-        onChange={field.handleChange}
+        onChange={(value) => commitValue(field, value)}
       >
         {(value, setValue, tone) =>
           // The same whole-percent field as in the descendant tree, one size up.
@@ -176,7 +148,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                 {field.state.value.map((_, i) => (
                   <PeriodCard
                     key={`rent-${i}`}
-                    onRemove={() => field.setValue(field.state.value.toSpliced(i, 1))}
+                    onRemove={() => commitValue(field, field.state.value.toSpliced(i, 1))}
                   >
                     <form.AppField name={`rentPeriods[${i}].type`}>
                       {(subField) => (
@@ -204,7 +176,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                 ))}
                 <Button
                   onClick={() =>
-                    field.setValue([
+                    commitValue(field, [
                       ...field.state.value,
                       {
                         type: "semester",
@@ -230,7 +202,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                 {field.state.value.map((_, i) => (
                   <PeriodCard
                     key={`partlyPayment-${i}`}
-                    onRemove={() => field.setValue(field.state.value.toSpliced(i, 1))}
+                    onRemove={() => commitValue(field, field.state.value.toSpliced(i, 1))}
                   >
                     <Group w="100%">
                       <form.AppField name={`partlyPaymentPeriods[${i}].type`}>
@@ -256,7 +228,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                 ))}
                 <Button
                   onClick={() =>
-                    field.setValue([
+                    commitValue(field, [
                       ...field.state.value,
                       {
                         type: "semester",
@@ -282,7 +254,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                 {field.state.value.map((_, i) => (
                   <PeriodCard
                     key={`extend-${i}`}
-                    onRemove={() => field.setValue(field.state.value.toSpliced(i, 1))}
+                    onRemove={() => commitValue(field, field.state.value.toSpliced(i, 1))}
                   >
                     <form.AppField name={`extendPeriods[${i}].type`}>
                       {(subField) => (
@@ -310,7 +282,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
                 ))}
                 <Button
                   onClick={() =>
-                    field.setValue([
+                    commitValue(field, [
                       ...field.state.value,
                       {
                         type: "semester",
@@ -330,7 +302,7 @@ export default function BranchPaymentSettings({ existingBranch }: { existingBran
         </Stack>
       </Fieldset>
       <form.AppForm>
-        <form.ErrorSummary />
+        <form.ErrorSummary autoSave />
       </form.AppForm>
     </Stack>
   );

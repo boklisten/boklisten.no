@@ -2,7 +2,7 @@ import { Select } from "@mantine/core";
 import type { SelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
-import { useFieldContext } from "@/shared/hooks/form";
+import { commitValue, useFieldContext } from "@/shared/hooks/form";
 import { api } from "@/shared/utils/apiClient";
 
 export default function SelectEmailTemplateField(props: SelectProps) {
@@ -21,7 +21,7 @@ export default function SelectEmailTemplateField(props: SelectProps) {
       }
       {...props}
       value={field.state.value}
-      onChange={field.handleChange}
+      onChange={(value) => commitValue(field, value)}
       onBlur={field.handleBlur}
       error={field.state.meta.errors.join(", ")}
     />

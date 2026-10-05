@@ -8,12 +8,15 @@ const NO_SERVER_ERRORS: string[] = [];
 
 export default function ErrorSummary({
   serverErrors = NO_SERVER_ERRORS,
-  title = "Du må rette opp følgende før du kan gå videre",
+  autoSave = false,
 }: {
   serverErrors?: string[];
-  /** Auto-saved forms say that nothing is saved until the errors are fixed. */
-  title?: string | undefined;
+  /** On an auto-saved form, which saves nothing until the errors are fixed (see `useAutoSave`). */
+  autoSave?: boolean;
 }) {
+  const title = autoSave
+    ? "Endringene lagres når du har rettet opp dette"
+    : "Du må rette opp følgende før du kan gå videre";
   const form = useFormContext();
   return (
     <form.Subscribe selector={(state) => state.fieldMeta}>

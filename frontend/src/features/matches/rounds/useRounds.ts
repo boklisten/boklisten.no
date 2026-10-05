@@ -20,7 +20,7 @@ export function useRefreshRounds() {
   const queryClient = useQueryClient();
 
   return () => {
-    void queryClient.invalidateQueries({ queryKey: api.matchRounds.index.queryKey() });
-    void queryClient.invalidateQueries({ queryKey: api.matchRounds.planMetrics.queryKey() });
+    void queryClient.invalidateQueries({ queryKey: api.matchRounds.index.pathKey() });
+    void queryClient.invalidateQueries({ queryKey: api.matchRounds.planMetrics.pathKey() });
   };
 }

@@ -80,3 +80,16 @@ const { useAppForm, withFieldGroup } = createFormHook({
 });
 
 export { useAppForm, withFieldGroup, useFieldContext, useFormContext };
+
+/**
+ * Sets a field's value and marks the field as done, for controls where every change is a final
+ * choice (a switch, a picked option, a removed row). A text field is done on blur; auto-saved forms
+ * save a field once it is done (see `useAutoSave`).
+ */
+export function commitValue<Value>(
+  field: { handleChange: (value: Value) => void; handleBlur: () => void },
+  value: Value,
+) {
+  field.handleChange(value);
+  field.handleBlur();
+}

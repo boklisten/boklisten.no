@@ -2,7 +2,7 @@ import { TreeSelect } from "@mantine/core";
 import type { TreeSelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
-import { useFieldContext } from "@/shared/hooks/form";
+import { commitValue, useFieldContext } from "@/shared/hooks/form";
 import { api } from "@/shared/utils/apiClient";
 import { toBranchTreeNodeData } from "@/shared/utils/branchTree";
 
@@ -26,7 +26,7 @@ export default function SelectBranchesField(
       {...props}
       data={toBranchTreeNodeData(branches ?? [])}
       value={field.state.value}
-      onChange={field.handleChange}
+      onChange={(value) => commitValue(field, value)}
       onBlur={field.handleBlur}
       error={field.state.meta.errors.join(", ")}
     />

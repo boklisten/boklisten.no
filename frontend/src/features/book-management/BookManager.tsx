@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AgGridReact } from "ag-grid-react";
 import { useRef, useState } from "react";
 
-import BookFormModal from "@/features/book-management/BookFormModal";
+import { CreateBook, EditBook } from "@/features/book-management/BookFormModal";
 import type { BookSuggestions } from "@/features/book-management/BookFormModal";
 import BookGrid from "@/features/book-management/BookGrid";
 import type { BookPatchRequest } from "@/features/book-management/BookGrid";
@@ -74,12 +74,10 @@ export default function BookManager() {
     const modalId = modals.open({
       title: item === undefined ? "Legg til bok" : "Endre bok",
       size: "lg",
-      children: (
-        <BookFormModal
-          item={item}
-          suggestions={suggestions}
-          onClose={() => modals.close(modalId)}
-        />
+      children: item ? (
+        <EditBook item={item} suggestions={suggestions} />
+      ) : (
+        <CreateBook suggestions={suggestions} onClose={() => modals.close(modalId)} />
       ),
     });
   }

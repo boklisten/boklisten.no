@@ -2,7 +2,7 @@ import { DatePickerInput } from "@mantine/dates";
 import type { DatePickerInputProps } from "@mantine/dates";
 import dayjs from "dayjs";
 
-import { useFieldContext } from "@/shared/hooks/form";
+import { commitValue, useFieldContext } from "@/shared/hooks/form";
 
 const COMMON_DEADLINES = [
   { month: 1, day: 1 }, // February 1st
@@ -46,7 +46,7 @@ export default function DeadlinePickerField(props: DatePickerInputProps) {
       maxDate={dayjs().add(5, "years").toDate()}
       {...props}
       value={field.state.value}
-      onChange={field.handleChange}
+      onChange={(value) => commitValue(field, value)}
       onBlur={field.handleBlur}
       error={field.state.meta.errors.join(", ")}
     />

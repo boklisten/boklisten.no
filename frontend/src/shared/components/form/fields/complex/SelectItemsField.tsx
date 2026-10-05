@@ -2,7 +2,7 @@ import { MultiSelect } from "@mantine/core";
 import type { MultiSelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 
-import { useFieldContext } from "@/shared/hooks/form";
+import { commitValue, useFieldContext } from "@/shared/hooks/form";
 import { api } from "@/shared/utils/apiClient";
 import { itemSelectFilter, toItemSelectData } from "@/shared/utils/itemSelectFilter";
 
@@ -22,7 +22,8 @@ export default function SelectItemsField(props: MultiSelectProps) {
       {...props}
       value={field.state.value.map((v) => v.id)}
       onChange={(values) =>
-        field.handleChange(
+        commitValue(
+          field,
           values.map((itemId) => ({
             id: itemId,
             title: items?.find((item) => item.id === itemId)?.title ?? "",

@@ -25,6 +25,8 @@ export default function PercentageField(props: { slider?: SliderProps; label: st
         {...props.slider}
         value={field.state.value}
         onChange={field.handleChange}
+        // Dragging changes the value on every step; the choice is made on release.
+        onChangeEnd={field.handleBlur}
         onBlur={field.handleBlur}
       />
     </Stack>

@@ -1,36 +1,45 @@
-import { Button, Group, Stack } from "@mantine/core";
+import { Button, Group, Stack, TextInput } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAppForm } from "@/shared/hooks/form";
-import { api } from "@/shared/utils/apiClient";
+import useAutoSave from "@/shared/hooks/useAutoSave";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 import type { Route } from "@tuyau/core/types";
 
-export default function EditableTextEditor({
-  editableText,
-  onClose,
-}: {
-  editableText?: Route.Response<"editable_texts.index">[number] | undefined;
-  onClose: () => void;
-}) {
-  const form = useAppForm({
-    defaultValues: {
-      id: editableText?.id ?? "",
-      text: editableText?.text ?? "",
-    },
-    onSubmit: ({ value }) => {
-      upsertEditableTextMutation.mutate({
-        params: { id: editableText?.id ?? value.id },
-        body: {
-          text: value.text,
-        },
-      });
-    },
-  });
+export type EditableText = Route.Response<"editable_texts.index">[number];
 
+const KEY_DESCRIPTION = "Unik nøkkel kan ikke endres etter opprettelse";
+
+/** An existing text, auto-saved (see `useAutoSave`); its key cannot change. */
+export function EditEditableText({ editableText }: { editableText: EditableText }) {
+  const form = useAppForm(
+    useAutoSave({
+      defaultValues: { text: editableText.text ?? "" },
+      persist: (values) =>
+        apiClient.api.editableTexts.upsert({ params: { id: editableText.id }, body: values }),
+      invalidates: [api.editableTexts.index.pathKey()],
+    }),
+  );
+
+  return (
+    <Stack>
+      <TextInput
+        label="Unik nøkkel"
+        description={KEY_DESCRIPTION}
+        value={editableText.id}
+        disabled
+      />
+      <form.AppField name="text">
+        {(field) => <field.RichTextEditorField label="Tekst" />}
+      </form.AppField>
+    </Stack>
+  );
+}
+
+export function CreateEditableText({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
-
-  const upsertEditableTextMutation = useMutation(
+  const upsertMutation = useMutation(
     api.editableTexts.upsert.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
@@ -48,6 +57,11 @@ export default function EditableTextEditor({
         }),
     }),
   );
+  const form = useAppForm({
+    defaultValues: { id: "", text: "" },
+    onSubmit: ({ value }) =>
+      upsertMutation.mutate({ params: { id: value.id }, body: { text: value.text } }),
+  });
 
   return (
     <Stack>
@@ -60,9 +74,8 @@ export default function EditableTextEditor({
         {(field) => (
           <field.TextField
             label="Unik nøkkel"
-            description="Unik nøkkel kan ikke endres etter opprettelse"
+            description={KEY_DESCRIPTION}
             placeholder="min_nye_nokkel"
-            disabled={editableText !== undefined}
           />
         )}
       </form.AppField>
@@ -73,8 +86,8 @@ export default function EditableTextEditor({
         <Button variant="subtle" onClick={() => onClose()}>
           Avbryt
         </Button>
-        <Button loading={upsertEditableTextMutation.isPending} onClick={form.handleSubmit}>
-          {editableText === undefined ? "Opprett" : "Lagre"}
+        <Button loading={upsertMutation.isPending} onClick={form.handleSubmit}>
+          Opprett
         </Button>
       </Group>
     </Stack>

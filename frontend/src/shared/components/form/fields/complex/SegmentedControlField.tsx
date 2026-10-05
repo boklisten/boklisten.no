@@ -2,7 +2,7 @@ import type { SegmentedControlProps } from "@mantine/core";
 import type { ReactNode } from "react";
 
 import SegmentedControlWithLabel from "@/shared/components/SegmentedControlWithLabel";
-import { useFieldContext } from "@/shared/hooks/form";
+import { commitValue, useFieldContext } from "@/shared/hooks/form";
 
 export default function SegmentedControlField(
   props: SegmentedControlProps & { label: string; description?: ReactNode },
@@ -12,7 +12,7 @@ export default function SegmentedControlField(
     <SegmentedControlWithLabel
       {...props}
       value={field.state.value}
-      onChange={field.handleChange}
+      onChange={(value) => commitValue(field, value)}
       onBlur={field.handleBlur}
     />
   );

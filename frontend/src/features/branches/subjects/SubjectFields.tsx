@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { formValueToBook, PAYMENT_OPTIONS } from "@/features/branches/subjects/subjectOptions";
 import type { SubjectBookFormValue } from "@/features/branches/subjects/subjectOptions";
-import { withFieldGroup } from "@/shared/hooks/form";
+import { commitValue, withFieldGroup } from "@/shared/hooks/form";
 import { api } from "@/shared/utils/apiClient";
 
 export interface SubjectFieldValues {
@@ -97,7 +97,12 @@ const SubjectFields = withFieldGroup({
         )}
       </group.AppField>
       <group.AppField name="books">
-        {(field) => <SubjectBookSelect value={field.state.value} onChange={field.handleChange} />}
+        {(field) => (
+          <SubjectBookSelect
+            value={field.state.value}
+            onChange={(books) => commitValue(field, books)}
+          />
+        )}
       </group.AppField>
       <group.AppField name="books" mode="array">
         {(field) =>
@@ -110,7 +115,10 @@ const SubjectFields = withFieldGroup({
                   </Text>
                   <CloseButton
                     aria-label={`Fjern «${book.item.title}»`}
-                    onClick={() => field.removeValue(i)}
+                    onClick={() => {
+                      field.removeValue(i);
+                      field.handleBlur();
+                    }}
                   />
                 </Group>
                 <group.AppField name={`books[${i}].ordering`}>

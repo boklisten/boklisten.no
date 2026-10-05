@@ -3,14 +3,13 @@ import { BRANCH_VISIBILITIES } from "@boklisten/backend/shared/branch-visibility
 import type { BranchVisibility } from "@boklisten/backend/shared/branch-visibility";
 import { Button, SegmentedControl, Stack } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 
 import { VISIBILITY_SEGMENTS, visibilityDescription } from "@/features/branches/branchVisibility";
 import InheritedFieldCard from "@/features/branches/inheritance/InheritedFieldCard";
 import { toneColor } from "@/features/branches/inheritance/tone";
-import { useAppForm, withFieldGroup } from "@/shared/hooks/form";
+import { commitValue, useAppForm, withFieldGroup } from "@/shared/hooks/form";
 import useAutoSave from "@/shared/hooks/useAutoSave";
-import { api } from "@/shared/utils/apiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 const BRANCHES_QUERY_KEY = api.branches.index.pathKey();
@@ -49,7 +48,12 @@ const BranchGeneralFields = withFieldGroup({
   defaultValues: EMPTY_FIELDS,
   render: ({ group }) => (
     <>
-      <group.AppField name="name">
+      <group.AppField
+        name="name"
+        validators={{
+          onChange: ({ value }) => (value.trim().length === 0 ? "Fyll inn et navn" : undefined),
+        }}
+      >
         {(field) => (
           <field.TextField required label="Navn" placeholder="Flåklypa videregående skole" />
         )}
@@ -86,45 +90,17 @@ export default function BranchGeneralSettings({
 }
 
 function EditBranch({ branch }: { branch: Branch }) {
-  const queryClient = useQueryClient();
-  // The form starts from the branch as it was when the tab opened; the refetch after each save
-  // must not reset what the admin is typing.
-  // oxlint-disable-next-line react/hook-use-state -- never set again, so no setter
-  const [initialValues] = useState(() => valuesOf(branch));
-
-  const updateMutation = useMutation(api.branches.update.mutationOptions());
-  const { save } = useAutoSave({
-    initialBody: generalBody(initialValues),
-    persist: (body) => updateMutation.mutateAsync({ params: { branchId: branch.id }, body }),
-    notifications: {
-      id: `branch-general-saved-${branch.id}`,
-      saved: "Filialen ble lagret!",
-      failed: "Klarte ikke lagre filialen",
-    },
-    onSaved: () => void queryClient.invalidateQueries({ queryKey: BRANCHES_QUERY_KEY }),
-  });
-  const form = useAppForm({
-    defaultValues: initialValues,
-    listeners: {
-      onBlur: ({ fieldApi, formApi }) => {
-        if (fieldApi.name !== "visibility") {
-          saveIfValid(formApi.state.values);
-        }
-      },
-      onChange: ({ fieldApi, formApi }) => {
-        if (fieldApi.name === "visibility") {
-          saveIfValid(formApi.state.values);
-        }
-      },
-    },
-  });
-
-  function saveIfValid(values: GeneralValues) {
-    if (values.name.trim().length === 0) {
-      return;
-    }
-    save(generalBody(values));
-  }
+  const form = useAppForm(
+    useAutoSave({
+      defaultValues: valuesOf(branch),
+      persist: (values) =>
+        apiClient.api.branches.update({
+          params: { branchId: branch.id },
+          body: generalBody(values),
+        }),
+      invalidates: [BRANCHES_QUERY_KEY],
+    }),
+  );
 
   return (
     <Stack>
@@ -136,7 +112,7 @@ function EditBranch({ branch }: { branch: Branch }) {
             field="visibility"
             tab="general"
             value={field.state.value}
-            onChange={field.handleChange}
+            onChange={(value) => commitValue(field, value)}
             description={visibilityDescription}
           >
             {(value, setValue, tone) => (
@@ -150,6 +126,9 @@ function EditBranch({ branch }: { branch: Branch }) {
           </InheritedFieldCard>
         )}
       </form.AppField>
+      <form.AppForm>
+        <form.ErrorSummary autoSave />
+      </form.AppForm>
     </Stack>
   );
 }

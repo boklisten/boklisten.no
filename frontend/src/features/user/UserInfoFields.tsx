@@ -71,36 +71,6 @@ export function isUnderageWithoutGuardian(values: UserInfoFieldValues): boolean 
   );
 }
 
-/**
- * The fields auto-save listens to on change; the rest save on blur. The date of birth is one of
- * the rest: it changes on every keystroke that parses, so a half-typed year would be saved.
- */
-export function savesOnChange(fieldName: string, values: UserInfoFieldValues): boolean {
-  // The postal code saves once the lookup has filled in the city, not on every keystroke.
-  if (fieldName === "postal") {
-    return values.postal.city.length > 0;
-  }
-  return fieldName === "branchMembership";
-}
-
-/** The parts of a user form's api that auto-save uses, without TanStack Form's many generics. */
-export interface AutoSavedForm<Values> {
-  validateAllFields: (cause: "blur") => Promise<unknown>;
-  validate: (cause: "submit") => unknown;
-  state: { isValid: boolean; values: Values };
-}
-
-/**
- * Runs every check a save must pass: each field's own validators (they run on blur, so this also
- * covers fields the user has not visited) and then the form-level guardian rules. The explicit
- * form-level run also clears guardian errors a rule that no longer applies left on untouched fields.
- */
-export async function isWholeFormValid(form: AutoSavedForm<unknown>): Promise<boolean> {
-  await form.validateAllFields("blur");
-  await form.validate("submit");
-  return form.state.isValid;
-}
-
 const UserInfoFields = withFieldGroup({
   defaultValues: userInfoFieldDefaultValues,
   props: {

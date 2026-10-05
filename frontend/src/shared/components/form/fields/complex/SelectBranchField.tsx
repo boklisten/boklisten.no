@@ -3,7 +3,7 @@ import type { TreeSelectProps } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { useFieldContext } from "@/shared/hooks/form";
+import { commitValue, useFieldContext } from "@/shared/hooks/form";
 import { getBranchNodeShortLabel, toBranchTreeNodeData } from "@/shared/utils/branchTree";
 import { api } from "@/shared/utils/apiClient";
 
@@ -46,12 +46,12 @@ export default function SelectBranchField({
         {...props}
         // Wait for the branch data to be present so we can render its name
         value={branches ? field.state.value : null}
-        onChange={field.handleChange}
+        onChange={(value) => commitValue(field, value)}
         onBlur={field.handleBlur}
         error={field.state.meta.errors.join(", ")}
       />
       <Group>
-        <Button variant="subtle" size="compact-sm" onClick={() => field.handleChange(null)}>
+        <Button variant="subtle" size="compact-sm" onClick={() => commitValue(field, null)}>
           {perspective === "personal" ? "Jeg skal ikke ha bøker" : "Kunden skal ikke ha bøker"}
         </Button>
       </Group>

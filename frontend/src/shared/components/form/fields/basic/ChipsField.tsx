@@ -1,7 +1,7 @@
 import { Chip, Group, Input } from "@mantine/core";
 import type { MantineSize } from "@mantine/core";
 
-import { useFieldContext } from "@/shared/hooks/form";
+import { commitValue, useFieldContext } from "@/shared/hooks/form";
 
 export default function ChipsField({
   label,
@@ -19,7 +19,11 @@ export default function ChipsField({
       <Input.Label w={70} mb={0} fw="normal" c="dimmed" fz="sm">
         {label}
       </Input.Label>
-      <Chip.Group multiple value={field.state.value} onChange={field.handleChange}>
+      <Chip.Group
+        multiple
+        value={field.state.value}
+        onChange={(value) => commitValue(field, value)}
+      >
         <Group gap="xs">
           {data.map((option) => (
             <Chip key={option.value} value={option.value} size={size}>

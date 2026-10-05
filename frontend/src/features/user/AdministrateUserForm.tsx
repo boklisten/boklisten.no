@@ -1,17 +1,15 @@
 import type { User } from "@boklisten/backend/shared/user";
 import { Space, Stack } from "@mantine/core";
 import { createFieldMap } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
 import SignatureStatusBanner from "@/features/signatures/SignatureStatusBanner";
 import EmailConfirmedMark from "@/features/user/EmailConfirmedMark";
 import UserDangerZone from "@/features/user/UserDangerZone";
-import type { AutoSavedForm, UserInfoFieldValues } from "@/features/user/UserInfoFields";
+import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
 import UserInfoFields, {
   isUnderageWithoutGuardian,
-  isWholeFormValid,
-  savesOnChange,
   userFieldsBody,
 } from "@/features/user/UserInfoFields";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
@@ -56,9 +54,8 @@ function bodyOf(values: AdministrateUserFormValues) {
 }
 
 /**
- * An employee editing a customer, with auto-save (see `useAutoSave`): text fields and the date on
- * blur, the switch and school on change, and only once the whole form is valid. An underage customer
- * without any guardian details saves anyway, with a warning that they must add them themselves.
+ * An employee editing a customer, auto-saved (see `useAutoSave`). An underage customer without any
+ * guardian details saves anyway, with a warning that they must add them themselves.
  */
 export default function AdministrateUserForm({
   user,
@@ -70,11 +67,6 @@ export default function AdministrateUserForm({
   onMerged?: ((toUserId: string) => void) | undefined;
 }) {
   const { isAdmin } = useAuth();
-  const queryClient = useQueryClient();
-  // The form starts from the customer as they were when the editor opened; the refetch after each
-  // save must not reset what the employee is typing.
-  // oxlint-disable-next-line react/hook-use-state -- never set again, so no setter
-  const [defaultValues] = useState(() => valuesOf(user));
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const updateUserMutation = useMutation(
     api.users.update.mutationOptions({
@@ -86,28 +78,19 @@ export default function AdministrateUserForm({
       },
     }),
   );
-  const { save } = useAutoSave({
-    initialBody: bodyOf(defaultValues),
-    persist: (body) => updateUserMutation.mutateAsync({ params: { userId: user.id }, body }),
-    notifications: {
-      id: `user-saved-${user.id}`,
-      saved: "Brukerdetaljene ble lagret!",
-      failed: "Klarte ikke lagre brukerdetaljene",
-    },
-    // The signature status depends on the date of birth (a guardian's signature stops counting at
-    // 18), so it is refetched along with the details.
-    onSaved: () =>
-      void Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: api.users.show.queryKey({ params: { userId: user.id } }),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: api.signatures.show.queryKey({ params: { userId: user.id } }),
-        }),
-      ]),
+  const autoSave = useAutoSave({
+    defaultValues: valuesOf(user),
+    persist: (values) =>
+      updateUserMutation.mutateAsync({ params: { userId: user.id }, body: bodyOf(values) }),
+    invalidates: [
+      api.users.show.queryKey({ params: { userId: user.id } }),
+      // The signature status depends on the date of birth (a guardian's signature stops counting
+      // at 18), so it is refetched along with the details.
+      api.signatures.show.queryKey({ params: { userId: user.id } }),
+    ],
   });
   const form = useAppForm({
-    defaultValues,
+    ...autoSave,
     validators: {
       onSubmit: ({ value }) => {
         if (isUnder18(new Date(value.birthday)) && !isUnderageWithoutGuardian(value)) {
@@ -126,26 +109,7 @@ export default function AdministrateUserForm({
         return null;
       },
     },
-    listeners: {
-      onBlur: ({ formApi }) => {
-        void saveIfValid(formApi);
-      },
-      onChange: ({ fieldApi, formApi }) => {
-        if (
-          fieldApi.name === "emailConfirmed" ||
-          savesOnChange(fieldApi.name, formApi.state.values)
-        ) {
-          void saveIfValid(formApi);
-        }
-      },
-    },
   });
-
-  async function saveIfValid(formApi: AutoSavedForm<AdministrateUserFormValues>) {
-    if (await isWholeFormValid(formApi)) {
-      save(bodyOf(formApi.state.values));
-    }
-  }
 
   return (
     <Stack gap="xs">
@@ -174,15 +138,12 @@ export default function AdministrateUserForm({
       <SignatureStatusBanner user={user} inForm />
       <UserInfoFields
         perspective="administrate"
-        fields={createFieldMap(defaultValues)}
+        fields={createFieldMap(autoSave.defaultValues)}
         form={form}
         leading={null}
       />
       <form.AppForm>
-        <form.ErrorSummary
-          serverErrors={serverErrors}
-          title="Endringene lagres når du har rettet opp dette"
-        />
+        <form.ErrorSummary serverErrors={serverErrors} autoSave />
       </form.AppForm>
       {isAdmin && (
         <>

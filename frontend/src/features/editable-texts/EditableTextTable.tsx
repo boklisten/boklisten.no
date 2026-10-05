@@ -5,22 +5,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
 import type { ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import type { Route } from "@tuyau/core/types";
 
-import EditableTextEditor from "@/features/editable-texts/EditableTextEditor";
+import { CreateEditableText, EditEditableText } from "@/features/editable-texts/EditableTextEditor";
+import type { EditableText } from "@/features/editable-texts/EditableTextEditor";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-type EditableText = Route.Response<"editable_texts.index">[number];
-
 function openEditorModal(editableText?: EditableText) {
   const modalId = modals.open({
     title: editableText === undefined ? "Legg til dynamisk innhold" : "Endre dynamisk innhold",
     size: "xl",
-    children: (
-      <EditableTextEditor editableText={editableText} onClose={() => modals.close(modalId)} />
+    children: editableText ? (
+      <EditEditableText editableText={editableText} />
+    ) : (
+      <CreateEditableText onClose={() => modals.close(modalId)} />
     ),
   });
 }

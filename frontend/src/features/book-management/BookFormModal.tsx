@@ -1,8 +1,10 @@
 import type { Item } from "@boklisten/backend/shared/item";
 import { Button, Group, NumberInput, SimpleGrid, Stack, Table, Text } from "@mantine/core";
+import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { useAppForm } from "@/shared/hooks/form";
+import { useAppForm, withFieldGroup } from "@/shared/hooks/form";
+import useAutoSave from "@/shared/hooks/useAutoSave";
 import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -67,48 +69,22 @@ function requiredText(value: string, label: string) {
   return value.trim().length === 0 ? `${label} mangler` : null;
 }
 
-export default function BookFormModal({
-  item,
-  suggestions,
-  onClose,
-}: {
-  item?: Item;
-  suggestions: BookSuggestions;
-  onClose: () => void;
-}) {
-  const queryClient = useQueryClient();
-  const saveBook = useMutation({
-    mutationFn: (body: BookPayload) =>
-      item === undefined
-        ? apiClient.api.items.store({ body })
-        : apiClient.api.items.update({ params: { id: item.id }, body }),
-    onSuccess: () => {
-      showSuccessNotification(item === undefined ? "Boka ble lagt til" : "Boka ble lagret");
-      onClose();
-    },
-    onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke lagre boka")),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: api.items.all.pathKey() }),
-  });
+const NO_SUGGESTIONS: BookSuggestions = { subjects: [], distributors: [], publishers: [] };
 
-  const form = useAppForm({
-    defaultValues: initialValues(item),
-    onSubmit: ({ value }) => saveBook.mutate(toPayload(value)),
-  });
-
-  const history = Object.entries(item?.priceHistory ?? {}).toSorted(([a], [b]) =>
-    b.localeCompare(a),
-  );
-
-  return (
-    <Stack gap="lg">
+/** Every field of a book, shared by the editor and the create form. */
+const BookFields = withFieldGroup({
+  defaultValues: initialValues(undefined),
+  props: { suggestions: NO_SUGGESTIONS },
+  render: ({ group, suggestions }) => (
+    <>
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
-        <form.AppField
+        <group.AppField
           name="title"
           validators={{ onSubmit: ({ value }) => requiredText(value, "Tittel") }}
         >
           {(field) => <field.TextField label="Tittel" required data-autofocus />}
-        </form.AppField>
-        <form.AppField
+        </group.AppField>
+        <group.AppField
           name="isbn"
           validators={{
             onSubmit: ({ value }) =>
@@ -132,14 +108,14 @@ export default function BookFormModal({
               onBlur={field.handleBlur}
             />
           )}
-        </form.AppField>
-        <form.AppField
+        </group.AppField>
+        <group.AppField
           name="subject"
           validators={{ onSubmit: ({ value }) => requiredText(value, "Fag") }}
         >
           {(field) => <field.AutocompleteField label="Fag" required data={suggestions.subjects} />}
-        </form.AppField>
-        <form.AppField
+        </group.AppField>
+        <group.AppField
           name="year"
           validators={{
             onSubmit: ({ value }) =>
@@ -155,8 +131,8 @@ export default function BookFormModal({
               thousandSeparator=""
             />
           )}
-        </form.AppField>
-        <form.AppField
+        </group.AppField>
+        <group.AppField
           name="price"
           validators={{
             onSubmit: ({ value }) => (value >= 0 ? null : "Pris kan ikke være negativ"),
@@ -172,8 +148,8 @@ export default function BookFormModal({
               suffix=" kr"
             />
           )}
-        </form.AppField>
-        <form.AppField
+        </group.AppField>
+        <group.AppField
           name="weight"
           validators={{
             onSubmit: ({ value }) =>
@@ -197,16 +173,16 @@ export default function BookFormModal({
               onBlur={field.handleBlur}
             />
           )}
-        </form.AppField>
-        <form.AppField
+        </group.AppField>
+        <group.AppField
           name="distributor"
           validators={{ onSubmit: ({ value }) => requiredText(value, "Distributør") }}
         >
           {(field) => (
             <field.AutocompleteField label="Distributør" required data={suggestions.distributors} />
           )}
-        </form.AppField>
-        <form.AppField
+        </group.AppField>
+        <group.AppField
           name="discountPercent"
           validators={{
             onSubmit: ({ value }) =>
@@ -223,24 +199,46 @@ export default function BookFormModal({
               suffix=" %"
             />
           )}
-        </form.AppField>
-        <form.AppField
+        </group.AppField>
+        <group.AppField
           name="publisher"
           validators={{ onSubmit: ({ value }) => requiredText(value, "Forlag") }}
         >
           {(field) => (
             <field.AutocompleteField label="Forlag" required data={suggestions.publishers} />
           )}
-        </form.AppField>
+        </group.AppField>
       </SimpleGrid>
       <Group gap="xl">
-        <form.AppField name="active">
+        <group.AppField name="active">
           {(field) => <field.SwitchField label="Aktiv" />}
-        </form.AppField>
-        <form.AppField name="buyback">
+        </group.AppField>
+        <group.AppField name="buyback">
           {(field) => <field.SwitchField label="Kjøpes inn" />}
-        </form.AppField>
+        </group.AppField>
       </Group>
+    </>
+  ),
+});
+
+const BOOK_FIELDS = createFieldMap(initialValues(undefined));
+
+/** An existing book, auto-saved (see `useAutoSave`). */
+export function EditBook({ item, suggestions }: { item: Item; suggestions: BookSuggestions }) {
+  const form = useAppForm(
+    useAutoSave({
+      defaultValues: initialValues(item),
+      persist: (values) =>
+        apiClient.api.items.update({ params: { id: item.id }, body: toPayload(values) }),
+      invalidates: [api.items.all.pathKey()],
+    }),
+  );
+
+  const history = Object.entries(item.priceHistory).toSorted(([a], [b]) => b.localeCompare(a));
+
+  return (
+    <Stack gap="lg">
+      <BookFields form={form} fields={BOOK_FIELDS} suggestions={suggestions} />
       {history.length > 0 && (
         <Stack gap={4}>
           <Text size="sm" fw={500}>
@@ -262,14 +260,46 @@ export default function BookFormModal({
         </Stack>
       )}
       <form.AppForm>
+        <form.ErrorSummary autoSave />
+      </form.AppForm>
+    </Stack>
+  );
+}
+
+export function CreateBook({
+  suggestions,
+  onClose,
+}: {
+  suggestions: BookSuggestions;
+  onClose: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const addBook = useMutation({
+    mutationFn: (body: BookPayload) => apiClient.api.items.store({ body }),
+    onSuccess: () => {
+      showSuccessNotification("Boka ble lagt til");
+      onClose();
+    },
+    onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke lagre boka")),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: api.items.all.pathKey() }),
+  });
+  const form = useAppForm({
+    defaultValues: initialValues(undefined),
+    onSubmit: ({ value }) => addBook.mutate(toPayload(value)),
+  });
+
+  return (
+    <Stack gap="lg">
+      <BookFields form={form} fields={BOOK_FIELDS} suggestions={suggestions} />
+      <form.AppForm>
         <form.ErrorSummary />
       </form.AppForm>
       <Group justify="flex-end">
         <Button variant="subtle" onClick={onClose}>
           Avbryt
         </Button>
-        <Button loading={saveBook.isPending} onClick={form.handleSubmit}>
-          {item === undefined ? "Legg til bok" : "Lagre"}
+        <Button loading={addBook.isPending} onClick={form.handleSubmit}>
+          Legg til bok
         </Button>
       </Group>
     </Stack>

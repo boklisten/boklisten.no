@@ -1,7 +1,7 @@
 import { MultiSelect } from "@mantine/core";
 import type { MultiSelectProps } from "@mantine/core";
 
-import { useFieldContext } from "@/shared/hooks/form";
+import { commitValue, useFieldContext } from "@/shared/hooks/form";
 
 export default function MultiSelectField(props: MultiSelectProps) {
   const field = useFieldContext<string[]>();
@@ -10,7 +10,7 @@ export default function MultiSelectField(props: MultiSelectProps) {
     <MultiSelect
       {...props}
       value={field.state.value}
-      onChange={field.handleChange}
+      onChange={(value) => commitValue(field, value)}
       onBlur={field.handleBlur}
       error={field.state.meta.errors.join(", ")}
     />

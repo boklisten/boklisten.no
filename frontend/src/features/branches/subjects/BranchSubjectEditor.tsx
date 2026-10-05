@@ -4,19 +4,14 @@ import { IconTrash } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import SubjectFields, { subjectFieldsBody } from "@/features/branches/subjects/SubjectFields";
-import type { SubjectFieldValues } from "@/features/branches/subjects/SubjectFields";
 import { bookToFormValue } from "@/features/branches/subjects/subjectOptions";
 import type { BranchSubject } from "@/features/branches/subjects/subjectOptions";
 import { useAppForm } from "@/shared/hooks/form";
 import useAutoSave from "@/shared/hooks/useAutoSave";
-import { api } from "@/shared/utils/apiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-/**
- * The expanded subject: `subject` must stay the one it was opened with, so the refetch after each
- * save cannot reset what the user is editing. Every change is saved right away, the names on blur
- * and the books on change (see `useAutoSave`).
- */
+/** The expanded subject, auto-saved (see `useAutoSave`). */
 export default function BranchSubjectEditor({
   branchId,
   subject,
@@ -31,7 +26,6 @@ export default function BranchSubjectEditor({
       queryKey: api.branchSubjects.index.pathKey(),
     });
 
-  const updateMutation = useMutation(api.branchSubjects.update.mutationOptions());
   const deleteMutation = useMutation(
     api.branchSubjects.destroy.mutationOptions({
       onSuccess: () => showSuccessNotification("Faget ble slettet!"),
@@ -40,44 +34,18 @@ export default function BranchSubjectEditor({
     }),
   );
 
-  const defaultValues: SubjectFieldValues = {
-    name: subject.name,
-    externalName: subject.externalName ?? "",
-    books: subject.books.map(bookToFormValue),
-  };
-  const autoSave = useAutoSave({
-    initialBody: subjectFieldsBody(defaultValues),
-    persist: (body) => updateMutation.mutateAsync({ params, body }),
-    notifications: {
-      id: `branch-subject-saved-${subject.id}`,
-      saved: "Faget ble lagret!",
-      failed: "Klarte ikke lagre faget",
-    },
-    onSaved: () => void invalidateSubjects(),
-  });
-
-  function save(values: SubjectFieldValues) {
-    if (values.name.trim().length === 0) {
-      return;
-    }
-    autoSave.save(subjectFieldsBody(values));
-  }
-
-  const form = useAppForm({
-    defaultValues,
-    listeners: {
-      onBlur: ({ fieldApi, formApi }) => {
-        if (fieldApi.name === "name" || fieldApi.name === "externalName") {
-          save(formApi.state.values);
-        }
+  const form = useAppForm(
+    useAutoSave({
+      defaultValues: {
+        name: subject.name,
+        externalName: subject.externalName ?? "",
+        books: subject.books.map(bookToFormValue),
       },
-      onChange: ({ fieldApi, formApi }) => {
-        if (fieldApi.name.startsWith("books")) {
-          save(formApi.state.values);
-        }
-      },
-    },
-  });
+      persist: (values) =>
+        apiClient.api.branchSubjects.update({ params, body: subjectFieldsBody(values) }),
+      invalidates: [api.branchSubjects.index.pathKey()],
+    }),
+  );
 
   function confirmDelete() {
     modals.openConfirmModal({

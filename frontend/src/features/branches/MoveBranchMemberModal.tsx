@@ -1,10 +1,8 @@
-import { Button, Group, Stack } from "@mantine/core";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-
 import { useAppForm } from "@/shared/hooks/form";
-import { api } from "@/shared/utils/apiClient";
-import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
+import useAutoSave from "@/shared/hooks/useAutoSave";
+import { api, apiClient } from "@/shared/utils/apiClient";
 
+/** Picking a branch moves the member at once (see `useAutoSave`); they leave the list, so it closes. */
 export default function MoveBranchMemberModal({
   branchId,
   memberId,
@@ -14,48 +12,19 @@ export default function MoveBranchMemberModal({
   memberId: string;
   onClose: () => void;
 }) {
-  const queryClient = useQueryClient();
-
-  const updateBranchMembershipMutation = useMutation(
-    api.branchMembers.update.mutationOptions({
-      onSuccess: () => {
-        showSuccessNotification("Medlemsskapet ble endret!");
-        onClose();
-      },
-      onError: () => showErrorNotification("Klarte ikke endre medlemsskap!"),
-      onSettled: () =>
-        queryClient.invalidateQueries({
-          queryKey: api.branchMembers.index.queryKey({ params: { branchId } }),
-        }),
+  const form = useAppForm(
+    useAutoSave({
+      defaultValues: { branchMembership: branchId },
+      persist: ({ branchMembership }) =>
+        apiClient.api.branchMembers.update({ body: { userId: memberId, branchMembership } }),
+      invalidates: [api.branchMembers.index.queryKey({ params: { branchId } })],
+      onSaved: onClose,
     }),
   );
 
-  const form = useAppForm({
-    defaultValues: {
-      branchMembership: branchId,
-    },
-    onSubmit: ({ value }) =>
-      updateBranchMembershipMutation.mutate({
-        body: {
-          userId: memberId,
-          branchMembership: value.branchMembership,
-        },
-      }),
-  });
-
   return (
-    <Stack>
-      <form.AppField name="branchMembership">
-        {(field) => <field.SelectBranchField perspective="administrate" />}
-      </form.AppField>
-      <Group>
-        <Button variant="subtle" onClick={() => onClose()}>
-          Avbryt
-        </Button>
-        <Button loading={updateBranchMembershipMutation.isPending} onClick={form.handleSubmit}>
-          Lagre
-        </Button>
-      </Group>
-    </Stack>
+    <form.AppField name="branchMembership">
+      {(field) => <field.SelectBranchField perspective="administrate" />}
+    </form.AppField>
   );
 }

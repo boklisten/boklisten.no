@@ -37,7 +37,13 @@ export default function PostalCodeField() {
         },
       });
     },
-    onSettled: (result) => field.setValue({ code, city: result ?? "" }),
+    onSettled: (result) => {
+      field.setValue({ code, city: result ?? "" });
+      // A code with a known city is complete, so the field is done without waiting for a blur.
+      if (result) {
+        field.handleBlur();
+      }
+    },
     onError: () => showErrorNotification("Klarte ikke laste inn poststed"),
   });
 

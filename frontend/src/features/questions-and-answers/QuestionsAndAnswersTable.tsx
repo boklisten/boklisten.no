@@ -7,7 +7,10 @@ import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
 import type { ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
-import QuestionAndAnswerEditor from "@/features/questions-and-answers/QuestionAndAnswerEditor";
+import {
+  CreateQuestionAndAnswer,
+  EditQuestionAndAnswer,
+} from "@/features/questions-and-answers/QuestionAndAnswerEditor";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
@@ -17,11 +20,10 @@ function openEditorModal(questionAndAnswer?: QuestionAndAnswer) {
   const modalId = modals.open({
     title: questionAndAnswer === undefined ? "Legg til spørsmål og svar" : "Endre spørsmål og svar",
     size: "xl",
-    children: (
-      <QuestionAndAnswerEditor
-        questionAndAnswer={questionAndAnswer}
-        onClose={() => modals.close(modalId)}
-      />
+    children: questionAndAnswer ? (
+      <EditQuestionAndAnswer questionAndAnswer={questionAndAnswer} />
+    ) : (
+      <CreateQuestionAndAnswer onClose={() => modals.close(modalId)} />
     ),
   });
 }

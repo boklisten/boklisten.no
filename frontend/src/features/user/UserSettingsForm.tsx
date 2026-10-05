@@ -5,13 +5,9 @@ import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Activity, useState } from "react";
 
-import type { AutoSavedForm, UserInfoFieldValues } from "@/features/user/UserInfoFields";
+import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
 import EmailConfirmedMark from "@/features/user/EmailConfirmedMark";
-import UserInfoFields, {
-  isWholeFormValid,
-  savesOnChange,
-  userFieldsBody,
-} from "@/features/user/UserInfoFields";
+import UserInfoFields, { userFieldsBody } from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
@@ -49,10 +45,9 @@ function bodyOf(values: UserSettingsValues) {
 }
 
 /**
- * The user's own details, email included. On the settings page they auto-save (see
- * `useAutoSave`): text fields and the date on blur, the school on change, and only once the whole
- * form is valid. In the confirm-details task the user instead confirms everything at once with
- * "Lagre". A new email starts unconfirmed; the backend sends a link to it.
+ * The user's own details, email included. On the settings page they auto-save (see `useAutoSave`);
+ * in the confirm-details task the user instead confirms everything at once with "Lagre". A new
+ * email starts unconfirmed; the backend sends a link to it.
  */
 export default function UserSettingsForm({
   user,
@@ -63,10 +58,6 @@ export default function UserSettingsForm({
   confirmDetails?: boolean;
 }) {
   const queryClient = useQueryClient();
-  // The form starts from the user as they were when the page opened; the refetch after each save
-  // must not reset what they are typing.
-  // oxlint-disable-next-line react/hook-use-state -- never set again, so no setter
-  const [defaultValues] = useState(() => valuesOf(user));
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const updateUserMutation = useMutation(
     api.users.updateMe.mutationOptions({
@@ -88,18 +79,17 @@ export default function UserSettingsForm({
       onSettled: () => queryClient.invalidateQueries({ queryKey: authQueryKey() }),
     }),
   );
-  const { save } = useAutoSave({
-    initialBody: bodyOf(defaultValues),
-    persist: (body) => updateUserMutation.mutateAsync({ body }),
-    notifications: {
-      id: "user-settings-saved",
-      saved: "Brukerdetaljene ble lagret!",
-      failed: "Klarte ikke lagre brukerdetaljene",
-    },
-  });
   const form = useAppForm({
-    defaultValues,
-    onSubmit: ({ value }) => updateUserMutation.mutate({ body: bodyOf(value) }),
+    ...useAutoSave({
+      defaultValues: valuesOf(user),
+      persist: (values) => updateUserMutation.mutateAsync({ body: bodyOf(values) }),
+    }),
+    // The confirm-details task confirms everything at once with its button instead.
+    ...(confirmDetails && {
+      listeners: {},
+      onSubmit: ({ value }: { value: UserSettingsValues }) =>
+        updateUserMutation.mutate({ body: bodyOf(value) }),
+    }),
     validators: {
       onSubmit: ({ value }) => {
         if (isUnder18(new Date(value.birthday))) {
@@ -118,30 +108,13 @@ export default function UserSettingsForm({
         return null;
       },
     },
-    listeners: {
-      onBlur: ({ formApi }) => {
-        void saveIfValid(formApi);
-      },
-      onChange: ({ fieldApi, formApi }) => {
-        if (savesOnChange(fieldApi.name, formApi.state.values)) {
-          void saveIfValid(formApi);
-        }
-      },
-    },
   });
-
-  async function saveIfValid(formApi: AutoSavedForm<UserSettingsValues>) {
-    if (confirmDetails || !(await isWholeFormValid(formApi))) {
-      return;
-    }
-    save(bodyOf(formApi.state.values));
-  }
 
   return (
     <Stack gap="xs">
       <UserInfoFields
         perspective="personal"
-        fields={createFieldMap(defaultValues)}
+        fields={createFieldMap(valuesOf(user))}
         form={form}
         leading={
           <>
@@ -173,10 +146,7 @@ export default function UserSettingsForm({
         }
       />
       <form.AppForm>
-        <form.ErrorSummary
-          serverErrors={serverErrors}
-          title={confirmDetails ? undefined : "Endringene lagres når du har rettet opp dette"}
-        />
+        <form.ErrorSummary serverErrors={serverErrors} autoSave={!confirmDetails} />
       </form.AppForm>
       {confirmDetails && (
         <>
@@ -184,7 +154,7 @@ export default function UserSettingsForm({
           <Button
             loading={form.state.isValidating || updateUserMutation.isPending}
             onClick={async () => {
-              // See isWholeFormValid: recompute the form-level guardian errors before submitting.
+              // Recompute the form-level guardian errors first; handleSubmit stops at stale ones.
               await form.validate("submit");
               await form.handleSubmit();
             }}

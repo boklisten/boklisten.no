@@ -1,9 +1,8 @@
-import { ActionIcon, Button, Card, Group, Menu, Switch, TextInput, Tooltip } from "@mantine/core";
+import { ActionIcon, Button, Card, Group, Menu, Switch, Tooltip } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { IconDotsVertical, IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
 
 import DeleteMatchesModal from "@/features/matches/rounds/DeleteMatchesModal";
 import DeleteRoundModal from "@/features/matches/rounds/DeleteRoundModal";
@@ -11,30 +10,32 @@ import NotifyRoundButton from "@/features/matches/rounds/NotifyRoundButton";
 import RoundSelector from "@/features/matches/rounds/RoundSelector";
 import { isPlanned, useRefreshRounds } from "@/features/matches/rounds/useRounds";
 import type { Round } from "@/features/matches/rounds/useRounds";
-import { apiClient } from "@/shared/utils/apiClient";
+import { api, apiClient } from "@/shared/utils/apiClient";
+import { useAppForm } from "@/shared/hooks/form";
 import useAuth from "@/shared/hooks/useAuth";
+import useAutoSave from "@/shared/hooks/useAutoSave";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-function RenameForm({ round, onRename }: { round: Round; onRename: (name: string) => void }) {
-  const [name, setName] = useState(round.name);
+/** The round's name, auto-saved on blur (see `useAutoSave`). */
+function RenameForm({ round }: { round: Round }) {
+  const form = useAppForm(
+    useAutoSave({
+      defaultValues: { name: round.name },
+      persist: ({ name }) =>
+        apiClient.api.matchRounds.update({ params: { id: round.id }, body: { name: name.trim() } }),
+      invalidates: [api.matchRounds.index.pathKey()],
+    }),
+  );
+
   return (
-    <Group align="flex-end">
-      <TextInput
-        style={{ flex: 1 }}
-        label="Navn på runden"
-        value={name}
-        onChange={(event) => setName(event.currentTarget.value)}
-      />
-      <Button
-        disabled={name.trim().length === 0}
-        onClick={() => {
-          onRename(name.trim());
-          modals.closeAll();
-        }}
-      >
-        Lagre
-      </Button>
-    </Group>
+    <form.AppField
+      name="name"
+      validators={{
+        onChange: ({ value }) => (value.trim().length === 0 ? "Fyll inn et navn" : undefined),
+      }}
+    >
+      {(field) => <field.TextField label="Navn på runden" data-autofocus />}
+    </form.AppField>
   );
 }
 
@@ -61,13 +62,10 @@ export default function RoundToolbar({
   const planned = selected !== undefined && isPlanned(selected);
 
   const patchMutation = useMutation({
-    mutationFn: async (patch: { id: string; name?: string; status?: "draft" | "active" }) =>
+    mutationFn: async (patch: { id: string; status: "draft" | "active" }) =>
       apiClient.api.matchRounds.update({
         params: { id: patch.id },
-        body: {
-          ...(patch.name !== undefined && { name: patch.name }),
-          ...(patch.status !== undefined && { status: patch.status }),
-        },
+        body: { status: patch.status },
       }),
     onSuccess: () => {
       showSuccessNotification("Runden ble oppdatert");
@@ -126,12 +124,7 @@ export default function RoundToolbar({
                       onClick={() =>
                         modals.open({
                           title: "Gi runden nytt navn",
-                          children: (
-                            <RenameForm
-                              round={selected}
-                              onRename={(name) => patchMutation.mutate({ id: selected.id, name })}
-                            />
-                          ),
+                          children: <RenameForm round={selected} />,
                         })
                       }
                     >

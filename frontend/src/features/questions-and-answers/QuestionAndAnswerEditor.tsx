@@ -3,36 +3,43 @@ import { Button, Group, Stack } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAppForm } from "@/shared/hooks/form";
-import { api } from "@/shared/utils/apiClient";
+import useAutoSave from "@/shared/hooks/useAutoSave";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-export default function QuestionAndAnswerEditor({
+/** An existing question, auto-saved (see `useAutoSave`). */
+export function EditQuestionAndAnswer({
   questionAndAnswer,
-  onClose,
 }: {
-  questionAndAnswer?: QuestionAndAnswer | undefined;
-  onClose: () => void;
+  questionAndAnswer: QuestionAndAnswer;
 }) {
-  const form = useAppForm({
-    defaultValues: {
-      question: questionAndAnswer?.question ?? "",
-      answer: questionAndAnswer?.answer ?? "",
-    },
-    onSubmit: ({ value }) => {
-      if (questionAndAnswer === undefined) {
-        addQuestionAndAnswerMutation.mutate({ body: value });
-      } else {
-        updateQuestionAndAnswerMutation.mutate({
+  const form = useAppForm(
+    useAutoSave({
+      defaultValues: { question: questionAndAnswer.question, answer: questionAndAnswer.answer },
+      persist: (values) =>
+        apiClient.api.questionsAndAnswers.update({
           params: { id: questionAndAnswer.id },
-          body: value,
-        });
-      }
-    },
-  });
+          body: values,
+        }),
+      invalidates: [api.questionsAndAnswers.index.pathKey()],
+    }),
+  );
 
+  return (
+    <Stack>
+      <form.AppField name="question">
+        {(field) => <field.RichTextEditorField label="Spørsmål" />}
+      </form.AppField>
+      <form.AppField name="answer">
+        {(field) => <field.RichTextEditorField label="Svar" />}
+      </form.AppField>
+    </Stack>
+  );
+}
+
+export function CreateQuestionAndAnswer({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
-
-  const addQuestionAndAnswerMutation = useMutation(
+  const addMutation = useMutation(
     api.questionsAndAnswers.store.mutationOptions({
       onSettled: () =>
         queryClient.invalidateQueries({
@@ -45,20 +52,10 @@ export default function QuestionAndAnswerEditor({
       onError: () => showErrorNotification("Klarte ikke lagre spørsmål og svar!"),
     }),
   );
-
-  const updateQuestionAndAnswerMutation = useMutation(
-    api.questionsAndAnswers.update.mutationOptions({
-      onSettled: () =>
-        queryClient.invalidateQueries({
-          queryKey: api.questionsAndAnswers.index.pathKey(),
-        }),
-      onSuccess: () => {
-        showSuccessNotification("Dynamisk innhold ble oppdatert!");
-        onClose();
-      },
-      onError: () => showErrorNotification("Klarte ikke oppdatere dynamisk innhold!"),
-    }),
-  );
+  const form = useAppForm({
+    defaultValues: { question: "", answer: "" },
+    onSubmit: ({ value }) => addMutation.mutate({ body: value }),
+  });
 
   return (
     <Stack>
@@ -72,13 +69,8 @@ export default function QuestionAndAnswerEditor({
         <Button variant="subtle" onClick={() => onClose()}>
           Avbryt
         </Button>
-        <Button
-          loading={
-            addQuestionAndAnswerMutation.isPending || updateQuestionAndAnswerMutation.isPending
-          }
-          onClick={form.handleSubmit}
-        >
-          {questionAndAnswer === undefined ? "Opprett" : "Lagre"}
+        <Button loading={addMutation.isPending} onClick={form.handleSubmit}>
+          Opprett
         </Button>
       </Group>
     </Stack>

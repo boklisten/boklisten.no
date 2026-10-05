@@ -1,55 +1,46 @@
 import type { Branch } from "@boklisten/backend/shared/branch";
-import { Button, Stack } from "@mantine/core";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader, Stack } from "@mantine/core";
+import { useQuery } from "@tanstack/react-query";
 
 import { useAppForm } from "@/shared/hooks/form";
-import { api } from "@/shared/utils/apiClient";
-import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
+import useAutoSave from "@/shared/hooks/useAutoSave";
+import { api, apiClient } from "@/shared/utils/apiClient";
 
+function valuesOf(branch: Branch, branches: Branch[]) {
+  return {
+    localName: branch.localName ?? "",
+    parentBranchId: branch.parentBranchId ?? "",
+    childBranchIds: branches.filter((b) => b.parentBranchId === branch.id).map((b) => b.id),
+    childLabel: branch.childLabel ?? "",
+  };
+}
+
+/** The children come from the other branches' parent references, so the form waits for them. */
 export default function BranchRelationshipSettings({ branch }: { branch: Branch }) {
-  const queryClient = useQueryClient();
-
   const { data: branches } = useQuery(api.branches.index.queryOptions());
+  return branches ? <RelationshipEditor branch={branch} branches={branches} /> : <Loader />;
+}
 
-  const branchOptions =
-    branches
-      ?.filter((b) => b.id !== branch.id)
-      .map((b) => ({
-        value: b.id,
-        label: b.name,
-      })) ?? [];
-
-  const updateRelationshipsMutation = useMutation(
-    api.branchRelationships.update.mutationOptions({
-      onSettled: () =>
-        queryClient.invalidateQueries({
-          queryKey: api.branches.index.pathKey(),
+function RelationshipEditor({ branch, branches }: { branch: Branch; branches: Branch[] }) {
+  const branchOptions = branches
+    .filter((b) => b.id !== branch.id)
+    .map((b) => ({ value: b.id, label: b.name }));
+  const form = useAppForm(
+    useAutoSave({
+      defaultValues: valuesOf(branch, branches),
+      persist: (values) =>
+        apiClient.api.branchRelationships.update({
+          body: {
+            id: branch.id,
+            localName: values.localName || null,
+            childLabel: values.childLabel || null,
+            parentBranchId: values.parentBranchId || null,
+            childBranchIds: values.childBranchIds,
+          },
         }),
-      onSuccess: () => showSuccessNotification("Filial ble oppdatert!"),
-      onError: () => showErrorNotification("Klarte ikke oppdatere filial!"),
+      invalidates: [api.branches.index.pathKey()],
     }),
   );
-
-  const form = useAppForm({
-    defaultValues: {
-      localName: branch.localName ?? "",
-      parentBranchId: branch.parentBranchId ?? "",
-      // Children are derived from the other branches' parent references.
-      childBranchIds:
-        branches?.filter((b) => b.parentBranchId === branch.id).map((b) => b.id) ?? [],
-      childLabel: branch.childLabel ?? "",
-    },
-    onSubmit: ({ value }) =>
-      updateRelationshipsMutation.mutate({
-        body: {
-          id: branch.id,
-          localName: value.localName || null,
-          childLabel: value.childLabel || null,
-          parentBranchId: value.parentBranchId || null,
-          childBranchIds: value.childBranchIds,
-        },
-      }),
-  });
 
   return (
     <Stack>
@@ -82,15 +73,8 @@ export default function BranchRelationshipSettings({ branch }: { branch: Branch 
         )}
       </form.AppField>
       <form.AppForm>
-        <form.ErrorSummary />
+        <form.ErrorSummary autoSave />
       </form.AppForm>
-      <Button
-        color="green"
-        onClick={form.handleSubmit}
-        loading={updateRelationshipsMutation.isPending}
-      >
-        {!branch ? "Opprett" : "Lagre"}
-      </Button>
     </Stack>
   );
 }
