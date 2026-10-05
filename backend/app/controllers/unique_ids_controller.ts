@@ -1,19 +1,11 @@
-import string from "@adonisjs/core/helpers/string";
 import type { HttpContext } from "@adonisjs/core/http";
-import encryption from "@adonisjs/core/services/encryption";
 
 import BadRequestException from "#exceptions/bad_request_exception";
-import UnauthorizedException from "#exceptions/unauthorized_exception";
 import BlidService from "#services/blid_service";
 import { exportFilename } from "#services/export_filename";
 import UniqueIdGeneratorService from "#services/unique_id_generator_service";
 
-const tokenPurpose = "unique_id_generation";
 export default class UniqueIdsController {
-  async token() {
-    return encryption.encrypt(string.random(32), "1 day", tokenPurpose);
-  }
-
   /** The sticker for one blid as an SVG, drawn from the same layout as the printed labels. */
   async label(ctx: HttpContext) {
     const blid = ctx.request.param("blid");
@@ -23,11 +15,8 @@ export default class UniqueIdsController {
     return { svg: UniqueIdGeneratorService.labelSvg(blid) };
   }
 
+  /** A sheet of fresh stickers; admin-only, opened as a plain link so the session cookie rides along. */
   async pdf(ctx: HttpContext) {
-    if (!encryption.decrypt(ctx.request.param("token"), tokenPurpose)) {
-      throw new UnauthorizedException("Invalid token");
-    }
-
     const pdf = await UniqueIdGeneratorService.generateUniqueIdPdf();
     ctx.response
       .header("Content-Type", "application/pdf")

@@ -156,12 +156,6 @@ const routes = {
     tokens: [{"old":"/signatures/:userId/sign","type":0,"val":"signatures","end":""},{"old":"/signatures/:userId/sign","type":1,"val":"userId","end":""},{"old":"/signatures/:userId/sign","type":0,"val":"sign","end":""}],
     types: placeholder as Registry['signatures.sign']['types'],
   },
-  'unique_ids.pdf': {
-    methods: ["GET","HEAD"],
-    pattern: '/unique_ids/pdf/:token',
-    tokens: [{"old":"/unique_ids/pdf/:token","type":0,"val":"unique_ids","end":""},{"old":"/unique_ids/pdf/:token","type":0,"val":"pdf","end":""},{"old":"/unique_ids/pdf/:token","type":1,"val":"token","end":""}],
-    types: placeholder as Registry['unique_ids.pdf']['types'],
-  },
   'checkout.vipps_callback': {
     methods: ["POST"],
     pattern: '/checkout/vipps/callback',
@@ -744,11 +738,11 @@ const routes = {
     tokens: [{"old":"/reports/users","type":0,"val":"reports","end":""},{"old":"/reports/users","type":0,"val":"users","end":""}],
     types: placeholder as Registry['reports.users']['types'],
   },
-  'unique_ids.token': {
+  'unique_ids.pdf': {
     methods: ["GET","HEAD"],
-    pattern: '/unique_ids/token',
-    tokens: [{"old":"/unique_ids/token","type":0,"val":"unique_ids","end":""},{"old":"/unique_ids/token","type":0,"val":"token","end":""}],
-    types: placeholder as Registry['unique_ids.token']['types'],
+    pattern: '/unique_ids/pdf',
+    tokens: [{"old":"/unique_ids/pdf","type":0,"val":"unique_ids","end":""},{"old":"/unique_ids/pdf","type":0,"val":"pdf","end":""}],
+    types: placeholder as Registry['unique_ids.pdf']['types'],
   },
   'users.search': {
     methods: ["GET","HEAD"],

@@ -29,7 +29,6 @@ export type ScannedRoutes = {
     'questions_and_answers.index': { paramsTuple?: []; params?: {} }
     'signatures.valid': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'signatures.sign': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
-    'unique_ids.pdf': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'checkout.vipps_callback': { paramsTuple?: []; params?: {} }
     'webhooks.sendgrid_events': { paramsTuple?: []; params?: {} }
     'webhooks.twilio_sms_event': { paramsTuple: [ParamValue]; params: {'messageId': ParamValue} }
@@ -127,7 +126,7 @@ export type ScannedRoutes = {
     'reports.orders': { paramsTuple?: []; params?: {} }
     'reports.payments': { paramsTuple?: []; params?: {} }
     'reports.users': { paramsTuple?: []; params?: {} }
-    'unique_ids.token': { paramsTuple?: []; params?: {} }
+    'unique_ids.pdf': { paramsTuple?: []; params?: {} }
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'users.update': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -189,7 +188,6 @@ export type ScannedRoutes = {
     'editable_texts.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'questions_and_answers.index': { paramsTuple?: []; params?: {} }
     'signatures.valid': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
-    'unique_ids.pdf': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'public_blid_lookup.show': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'customer_items.me': { paramsTuple?: []; params?: {} }
     'signatures.me': { paramsTuple?: []; params?: {} }
@@ -227,7 +225,7 @@ export type ScannedRoutes = {
     'reports.orders': { paramsTuple?: []; params?: {} }
     'reports.payments': { paramsTuple?: []; params?: {} }
     'reports.users': { paramsTuple?: []; params?: {} }
-    'unique_ids.token': { paramsTuple?: []; params?: {} }
+    'unique_ids.pdf': { paramsTuple?: []; params?: {} }
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'customer_items.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -271,7 +269,6 @@ export type ScannedRoutes = {
     'editable_texts.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'questions_and_answers.index': { paramsTuple?: []; params?: {} }
     'signatures.valid': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
-    'unique_ids.pdf': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'public_blid_lookup.show': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'customer_items.me': { paramsTuple?: []; params?: {} }
     'signatures.me': { paramsTuple?: []; params?: {} }
@@ -309,7 +306,7 @@ export type ScannedRoutes = {
     'reports.orders': { paramsTuple?: []; params?: {} }
     'reports.payments': { paramsTuple?: []; params?: {} }
     'reports.users': { paramsTuple?: []; params?: {} }
-    'unique_ids.token': { paramsTuple?: []; params?: {} }
+    'unique_ids.pdf': { paramsTuple?: []; params?: {} }
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'customer_items.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }

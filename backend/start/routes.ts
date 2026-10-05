@@ -87,8 +87,6 @@ router.get("/questions_and_answers", [controllers.QuestionsAndAnswers, "index"])
 router.get("/signatures/:userId/valid", [controllers.Signatures, "valid"]);
 router.post("/signatures/:userId/sign", [controllers.Signatures, "sign"]);
 
-router.get("/unique_ids/pdf/:token", [controllers.UniqueIds, "pdf"]);
-
 /** Called by Vipps with the per-payment token issued when the session was created. */
 router.post("/checkout/vipps/callback", [controllers.Checkout, "vippsCallback"]);
 
@@ -283,7 +281,7 @@ router
     router.get("/reports/orders", [controllers.Reports, "orders"]);
     router.get("/reports/payments", [controllers.Reports, "payments"]);
     router.get("/reports/users", [controllers.Reports, "users"]);
-    router.get("/unique_ids/token", [controllers.UniqueIds, "token"]);
+    router.get("/unique_ids/pdf", [controllers.UniqueIds, "pdf"]);
   })
   .use([middleware.auth(), middleware.can({ permission: "admin" })]);
 

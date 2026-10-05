@@ -81,11 +81,6 @@ export interface ApiDefinition {
     show: typeof routes['signatures.show']
     sendLink: typeof routes['signatures.send_link']
   }
-  uniqueIds: {
-    pdf: typeof routes['unique_ids.pdf']
-    token: typeof routes['unique_ids.token']
-    label: typeof routes['unique_ids.label']
-  }
   checkout: {
     vippsCallback: typeof routes['checkout.vipps_callback']
     initialize: typeof routes['checkout.initialize']
@@ -219,6 +214,10 @@ export interface ApiDefinition {
     orders: typeof routes['reports.orders']
     payments: typeof routes['reports.payments']
     users: typeof routes['reports.users']
+  }
+  uniqueIds: {
+    pdf: typeof routes['unique_ids.pdf']
+    label: typeof routes['unique_ids.label']
   }
   messageLogs: {
     forCustomer: typeof routes['message_logs.for_customer']

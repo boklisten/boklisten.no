@@ -307,18 +307,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['sign']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'unique_ids.pdf': {
-    methods: ["GET","HEAD"]
-    pattern: '/unique_ids/pdf/:token'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { token: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['pdf']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['pdf']>>>
-    }
-  }
   'checkout.vipps_callback': {
     methods: ["POST"]
     pattern: '/checkout/vipps/callback'
@@ -1483,16 +1471,16 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['users']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'unique_ids.token': {
+  'unique_ids.pdf': {
     methods: ["GET","HEAD"]
-    pattern: '/unique_ids/token'
+    pattern: '/unique_ids/pdf'
     types: {
       body: {}
       paramsTuple: []
       params: {}
       query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['token']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['token']>>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['pdf']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['pdf']>>>
     }
   }
   'users.search': {
