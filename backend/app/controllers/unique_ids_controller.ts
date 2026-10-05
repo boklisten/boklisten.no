@@ -5,6 +5,7 @@ import encryption from "@adonisjs/core/services/encryption";
 import BadRequestException from "#exceptions/bad_request_exception";
 import UnauthorizedException from "#exceptions/unauthorized_exception";
 import BlidService from "#services/blid_service";
+import { exportFilename } from "#services/export_filename";
 import UniqueIdGeneratorService from "#services/unique_id_generator_service";
 
 const tokenPurpose = "unique_id_generation";
@@ -31,7 +32,10 @@ export default class UniqueIdsController {
     ctx.response
       .header("Content-Type", "application/pdf")
       .header("Content-Length", String(pdf.length))
-      .header("Content-Disposition", 'attachment; filename="unique-ids.pdf"')
+      .header(
+        "Content-Disposition",
+        `attachment; filename="${exportFilename("unike-id-er", "pdf")}"`,
+      )
       .send(pdf);
   }
 }

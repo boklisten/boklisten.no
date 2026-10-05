@@ -5,14 +5,14 @@ import { showErrorNotification } from "@/shared/utils/notifications";
 
 interface UseReportDownloadOptions {
   fetchRows: () => Promise<unknown[]>;
-  /** Ends with .xlsx; the rows are always handed out as an Excel workbook. */
-  filename: string;
+  /** Base name in kebab-case; the rows are handed out as `<name>-<timestamp>.xlsx`. */
+  name: string;
   errorMessage?: string;
 }
 
 export default function useReportDownload({
   fetchRows,
-  filename,
+  name,
   errorMessage = "Klarte ikke laste ned rapport",
 }: UseReportDownloadOptions) {
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +20,7 @@ export default function useReportDownload({
   async function download() {
     setIsLoading(true);
     try {
-      downloadXlsx(filename, await fetchRows());
+      downloadXlsx(name, await fetchRows());
     } catch {
       showErrorNotification(errorMessage);
     }

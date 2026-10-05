@@ -43,7 +43,7 @@ export default function CustomerItemsReport() {
       const rows = await apiClient.api.reports.customerItems({ query });
       return rows ?? [];
     },
-    filename: `customer_items-${dayjs().format("YYYY-MM-DD")}.xlsx`,
+    name: "kundeboker",
   });
 
   return (

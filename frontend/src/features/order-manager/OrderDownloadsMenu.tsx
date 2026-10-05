@@ -2,7 +2,6 @@ import type { OrderManagerFilter } from "@boklisten/backend/shared/order_manager
 import { BRING_PARCEL_LABELS } from "@boklisten/backend/shared/order_manager";
 import { Button, Menu } from "@mantine/core";
 import { IconChevronDown, IconFileDownload } from "@tabler/icons-react";
-import dayjs from "dayjs";
 
 import useReportDownload from "@/features/reports/useReportDownload";
 import { apiClient } from "@/shared/utils/apiClient";
@@ -13,20 +12,19 @@ import { apiClient } from "@/shared/utils/apiClient";
  * to block a second one.
  */
 export default function OrderDownloadsMenu({ filter }: { filter: OrderManagerFilter }) {
-  const stamp = dayjs().format("YYYY-MM-DD");
   const overview = useReportDownload({
     fetchRows: () => apiClient.api.orders.export({ query: filter }),
-    filename: `bestillinger-${stamp}.xlsx`,
+    name: "bestillinger",
   });
   const mailbox = useReportDownload({
     fetchRows: () =>
       apiClient.api.orders.exportBring({ query: { ...filter, parcelType: "postkasse" } }),
-    filename: `bring-postkasse-${stamp}.xlsx`,
+    name: "bring-postkasse",
   });
   const pickup = useReportDownload({
     fetchRows: () =>
       apiClient.api.orders.exportBring({ query: { ...filter, parcelType: "hentested" } }),
-    filename: `bring-hentested-${stamp}.xlsx`,
+    name: "bring-hentested",
   });
   const busy = overview.isLoading || mailbox.isLoading || pickup.isLoading;
 

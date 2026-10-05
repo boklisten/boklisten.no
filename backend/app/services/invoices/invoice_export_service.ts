@@ -1,10 +1,9 @@
-import { DateTime } from "luxon";
-
 import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
 import Invoice from "#models/invoice";
 import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
+import { exportFilename } from "#services/export_filename";
 import { toSemicolonCsv } from "#services/invoices/csv";
 import { tripletexRows, vismaRows } from "#services/invoices/invoice_export_rows";
 import type { TripletexLookups } from "#services/invoices/invoice_export_rows";
@@ -60,10 +59,8 @@ async function tripletexLookups(invoices: InvoiceDto[]): Promise<TripletexLookup
   };
 }
 
-/** Legacy bl-admin named the files after the year and the hour of the export, e.g. 202614_visma_invoice.csv. */
 function filename(system: "visma" | "tripletex"): string {
-  const now = DateTime.now();
-  return `${now.year}${now.hour}_${system}_invoice.csv`;
+  return exportFilename(`faktura-${system}`, "csv");
 }
 
 export async function exportInvoices(

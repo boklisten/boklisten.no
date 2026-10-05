@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import { useState } from "react";
 
 import BranchMultiSelect from "@/features/reports/BranchMultiSelect";
@@ -30,7 +29,7 @@ export default function OrdersReport() {
       const rows = await apiClient.api.reports.orders({ query });
       return rows ?? [];
     },
-    filename: `orders-${dayjs().format("YYYY-MM-DD")}.xlsx`,
+    name: "bestillinger",
   });
 
   return (

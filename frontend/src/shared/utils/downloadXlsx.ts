@@ -1,14 +1,13 @@
 import { utils, writeFile } from "xlsx";
 import type { WorkSheet } from "xlsx";
 
+import { exportFilename } from "@/shared/utils/exportFilename";
+
 type Cell = string | number | boolean | Date;
 
 /** Excel refuses sheet names longer than 31 characters or containing []:*?/\ */
-function sheetName(filename: string): string {
-  const base = filename
-    .replace(/\.xlsx$/i, "")
-    .replaceAll(/[[\]:*?/\\]/g, " ")
-    .trim();
+function sheetName(name: string): string {
+  const base = name.replaceAll(/[[\]:*?/\\]/g, " ").trim();
   return base.slice(0, 31) || "Ark1";
 }
 
@@ -44,8 +43,9 @@ function formatDates(sheet: WorkSheet) {
 /**
  * Hands rows to the browser as an Excel workbook with one sheet. The columns are the union of
  * every row's keys, in the order they first appear, so rows with missing fields still line up.
+ * `name` is the file's base name; the export timestamp and extension are appended.
  */
-export function downloadXlsx(filename: string, rawRows: readonly unknown[]) {
+export function downloadXlsx(name: string, rawRows: readonly unknown[]) {
   const rows = rawRows
     .filter((row): row is object => typeof row === "object" && row !== null)
     .map((row) =>
@@ -60,6 +60,6 @@ export function downloadXlsx(filename: string, rawRows: readonly unknown[]) {
   const sheet = utils.json_to_sheet(rows, { header, cellDates: true });
   formatDates(sheet);
   const workbook = utils.book_new();
-  utils.book_append_sheet(workbook, sheet, sheetName(filename));
-  writeFile(workbook, filename);
+  utils.book_append_sheet(workbook, sheet, sheetName(name));
+  writeFile(workbook, exportFilename(name, "xlsx"));
 }

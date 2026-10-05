@@ -67,7 +67,7 @@ export default function MatchStatistics({ roundId }: { roundId: string }) {
             Gjenstår: Math.max(0, book.expectedOut - book.actualOut),
           })),
       ),
-    filename: "plukkliste-stand.xlsx",
+    name: "plukkliste-stand",
     errorMessage: "Klarte ikke å laste ned plukklisten",
   });
 

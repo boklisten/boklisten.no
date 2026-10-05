@@ -1,9 +1,9 @@
 import type { Item } from "@boklisten/backend/shared/item";
 import type { Column, ImportResult, Validator } from "@importcsv/react";
-import dayjs from "dayjs";
 import { utils, writeFile } from "xlsx";
 
 import { cellToString } from "@/shared/utils/csvNormalizers";
+import { exportFilename } from "@/shared/utils/exportFilename";
 
 /** One spreadsheet row, the same flat shape the bulk endpoint validates. */
 export interface BookRow {
@@ -246,5 +246,5 @@ export function downloadBooksXlsx(items: Item[]) {
   const sheet = utils.json_to_sheet(rows, { header });
   const workbook = utils.book_new();
   utils.book_append_sheet(workbook, sheet, "items");
-  writeFile(workbook, `items_${dayjs().format("DD_MM_YY")}.xlsx`);
+  writeFile(workbook, exportFilename("boker", "xlsx"));
 }
