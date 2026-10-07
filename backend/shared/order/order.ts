@@ -33,6 +33,7 @@ export interface OrderItem {
   itemId: string;
   /** The book's current catalogue title. */
   title: string;
+  isbn: string | null;
   blid: string | null;
   /** What the customer pays for this line, in NOK. */
   amount: number;

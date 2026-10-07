@@ -112,7 +112,7 @@ function KasseContent() {
   const openEmpty = () => void navigate({ search: {} });
   const selectTab = (tab: CustomerSearchTab) =>
     void navigate({
-      search: (previous) => ({ ...previous, visning: tab === "bestillinger" ? undefined : tab }),
+      search: (previous) => ({ ...previous, visning: tab === "boker" ? undefined : tab }),
       replace: true,
     });
 
@@ -228,7 +228,7 @@ function KasseContent() {
           <CustomerResult
             userId={kunde}
             cart={cart}
-            tab={visning ?? "bestillinger"}
+            tab={visning ?? "boker"}
             onTabChange={selectTab}
             onDeselect={() => void leaveToStart()}
             // The merged-away customer is gone, so their cart goes with them without a question

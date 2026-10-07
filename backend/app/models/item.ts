@@ -14,6 +14,11 @@ export default class Item extends ItemSchema {
   @column({ consume: (isbn: string | null) => (isbn === null ? null : Number(isbn)) })
   declare isbn: number | null;
 
+  /** The ISBN as the API sends it, as text. */
+  get isbnText(): string | null {
+    return this.isbn === null ? null : String(this.isbn);
+  }
+
   /** The price each calendar year, keyed by the year. */
   declare priceHistory: Record<string, number>;
 

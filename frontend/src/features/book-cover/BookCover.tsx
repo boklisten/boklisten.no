@@ -3,6 +3,7 @@ import { IconBook2 } from "@tabler/icons-react";
 import { useState } from "react";
 
 import classes from "@/features/book-cover/BookCover.module.css";
+import { BookCoverPlaceholder } from "@/features/book-cover/BookCoverArt";
 import { useBookCoverImage } from "@/features/book-cover/bookCoverQuery";
 import type { Isbn } from "@/features/book-cover/bookCoverQuery";
 
@@ -14,9 +15,9 @@ const ICON_SIZE = { sm: 18, md: 24, lg: 32, xl: 40 } as const;
 type BookCoverSize = keyof typeof ICON_SIZE;
 
 /**
- * The front cover of a book in a fixed portrait frame. The frame shows a book icon from the first
- * render and keeps it whenever there is no cover to show, so nothing waits on the lookup and
- * nothing shifts when it lands. A shown cover opens larger on click unless `enlargeable` is off.
+ * The front cover of a book in a fixed portrait frame. The frame shows the titled placeholder cover
+ * from the first render and keeps it whenever there is no picture to show, so nothing waits on the
+ * lookup and nothing shifts when it lands. A shown cover opens larger on click unless `enlargeable` is off.
  */
 export default function BookCover({
   isbn,
@@ -34,9 +35,15 @@ export default function BookCover({
   const { src, onError } = useBookCoverImage(isbn);
   const [enlarged, setEnlarged] = useState(false);
 
+  // Without a picture the book gets the same titled cover as in the subject fans; a book with
+  // no title to show keeps the icon.
   const content =
     src === null ? (
-      <IconBook2 size={ICON_SIZE[size]} />
+      title ? (
+        <BookCoverPlaceholder title={title} />
+      ) : (
+        <IconBook2 size={ICON_SIZE[size]} />
+      )
     ) : (
       <img src={src} alt="" className={classes.image} onError={onError} />
     );

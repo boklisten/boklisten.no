@@ -37,6 +37,7 @@ function useActiveBookUpdate(successMessage: string, onSaved: () => void) {
             queryKey: api.customerItems.forCustomer.pathKey(),
           }),
           queryClient.invalidateQueries({ queryKey: api.blids.show.pathKey() }),
+          queryClient.invalidateQueries({ queryKey: api.customerItems.details.pathKey() }),
           queryClient.invalidateQueries({ queryKey: api.branchBooks.getActiveBooks.pathKey() }),
           queryClient.invalidateQueries({
             queryKey: api.branchBooks.getActiveBookDetails.pathKey(),

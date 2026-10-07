@@ -1,4 +1,4 @@
-import { createTheme, defaultVariantColorsResolver } from "@mantine/core";
+import { createTheme, defaultVariantColorsResolver, Portal } from "@mantine/core";
 import type { CSSVariablesResolver, VariantColorsResolver } from "@mantine/core";
 
 /**
@@ -48,6 +48,14 @@ const theme = createTheme({
   primaryColor: "brand",
   primaryShade: 9,
   variantColorResolver,
+  components: {
+    /*
+     * Every portal gets a node of its own, added when it opens. The phone sheets (Base UI) hide
+     * the rest of the page from assistive tech while open; a shared node made earlier would be
+     * hidden with it, and so would a dialog or dropdown opened from inside the sheet.
+     */
+    Portal: Portal.extend({ defaultProps: { reuseTargetNode: false } }),
+  },
 });
 
 export const cssVariablesResolver: CSSVariablesResolver = (mantineTheme) => ({

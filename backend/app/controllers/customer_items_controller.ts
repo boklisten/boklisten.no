@@ -2,6 +2,7 @@ import type { HttpContext } from "@adonisjs/core/http";
 
 import CustomerItem from "#models/customer_item";
 import { isObjectIdHex } from "#models/helpers/object_id";
+import BookDetailsService from "#services/book_details_service";
 import { buildCustomerItemActions, calculateStatus } from "#services/customer_item_actions_service";
 import type { ActiveCustomerItem } from "#shared/customer-item/active-customer-item";
 
@@ -14,7 +15,11 @@ export default class CustomerItemsController {
       .preload("item")
       .preload("handoutBranch")
       .orderBy("updated_at", "desc");
-    const periodLines = await CustomerItem.lastPeriodLinesOf(customerItems.map(({ id }) => id));
+    const ids = customerItems.map(({ id }) => id);
+    const [periodLines, invoices] = await Promise.all([
+      CustomerItem.lastPeriodLinesOf(ids),
+      BookDetailsService.invoiceSummariesOf(ids),
+    ]);
 
     return customerItems.map((customerItem) => {
       const { item, handoutBranch: branch } = customerItem;
@@ -23,9 +28,10 @@ export default class CustomerItemsController {
         item: {
           id: item.id,
           title: item.title,
-          isbn: item.isbn === null ? null : String(item.isbn),
+          isbn: item.isbnText,
         },
         blid: customerItem.blid,
+        type: customerItem.type,
         deadline: customerItem.deadline.toISODate()!,
         handoutAt: customerItem.handedOutAt.toJSDate(),
         branch: {
@@ -33,6 +39,7 @@ export default class CustomerItemsController {
           name: branch.name,
         },
         status: calculateStatus(customerItem),
+        invoice: invoices.get(customerItem.id) ?? null,
         actions: buildCustomerItemActions(
           customerItem,
           branch,
@@ -58,17 +65,23 @@ export default class CustomerItemsController {
     )
       .preload("item")
       .preload("handoutBranch");
-    const periodLines = await CustomerItem.lastPeriodLinesOf(customerItems.map(({ id }) => id));
+    const ids = customerItems.map(({ id }) => id);
+    const [periodLines, invoices] = await Promise.all([
+      CustomerItem.lastPeriodLinesOf(ids),
+      BookDetailsService.invoiceSummariesOf(ids),
+    ]);
     const listed = customerItems.map((customerItem): ActiveCustomerItem => {
       const { item, handoutBranch: branch } = customerItem;
       return {
         id: customerItem.id,
         item: item.id,
         title: item.title,
+        isbn: item.isbnText,
         blid: customerItem.blid,
         type: customerItem.type,
         deadline: customerItem.deadline.toISODate()!,
         handoutBranch: { id: branch.id, name: branch.name },
+        invoice: invoices.get(customerItem.id) ?? null,
         actions: buildCustomerItemActions(
           customerItem,
           branch,
@@ -79,5 +92,23 @@ export default class CustomerItemsController {
     return listed.toSorted(
       (a, b) => a.deadline.localeCompare(b.deadline) || a.title.localeCompare(b.title, "nb"),
     );
+  }
+
+  /** One of the caller's own books, opened from their book list. */
+  async detailsMe(ctx: HttpContext) {
+    const details = await BookDetailsService.forCustomerItem(
+      String(ctx.request.param("customerItemId")),
+      { role: "customer", userId: ctx.auth.getUserOrFail().id },
+    );
+    return details ?? ctx.response.notFound();
+  }
+
+  /** Any customer's book, opened at the stand. */
+  async details(ctx: HttpContext) {
+    const details = await BookDetailsService.forCustomerItem(
+      String(ctx.request.param("customerItemId")),
+      { role: "employee" },
+    );
+    return details ?? ctx.response.notFound();
   }
 }

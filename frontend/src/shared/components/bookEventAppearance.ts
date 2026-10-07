@@ -28,7 +28,8 @@ interface BookEventAppearance {
 export const BOOK_EVENT_APPEARANCE: Record<BlidHistoryAction, BookEventAppearance> = {
   handout: { icon: IconBookUpload, color: "green" },
   return: { icon: IconBookDownload, color: "blue" },
-  "match-transfer": { icon: IconHeartHandshake, color: "violet" },
+  // Grape like overleveringer everywhere else; violet means a written-off invoice
+  "match-transfer": { icon: IconHeartHandshake, color: "grape" },
   extend: { icon: IconCalendarPlus, color: "orange" },
   buyout: { icon: IconShoppingCart, color: "teal" },
   "invoice-paid": { icon: IconFileInvoice, color: "teal" },

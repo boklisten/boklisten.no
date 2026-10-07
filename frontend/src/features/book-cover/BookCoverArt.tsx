@@ -16,24 +16,35 @@ function coverColor(title: string): string {
 }
 
 /**
+ * The plain cover with the title that stands in for a missing picture. Fills its positioned
+ * parent; the parent sets --cover-title-size.
+ */
+export function BookCoverPlaceholder({ title }: { title: string }) {
+  return (
+    <span className={classes.art}>
+      <Box
+        component="span"
+        className={classes.placeholder}
+        style={{ "--cover-color": coverColor(title) }}
+      >
+        <span className={classes.title}>{title}</span>
+      </Box>
+    </span>
+  );
+}
+
+/**
  * The book's picture, or a small plain cover with its title while there is none. Fills its
  * positioned parent, which decides the size and any tilt.
  */
 export default function BookCoverArt({ title, isbn }: { title: string; isbn: Isbn }) {
   const { src, onError } = useBookCoverImage(isbn);
+  if (src === null) {
+    return <BookCoverPlaceholder title={title} />;
+  }
   return (
     <span className={classes.art}>
-      {src === null ? (
-        <Box
-          component="span"
-          className={classes.placeholder}
-          style={{ "--cover-color": coverColor(title) }}
-        >
-          <span className={classes.title}>{title}</span>
-        </Box>
-      ) : (
-        <img src={src} alt="" onError={onError} />
-      )}
+      <img src={src} alt="" onError={onError} />
     </span>
   );
 }

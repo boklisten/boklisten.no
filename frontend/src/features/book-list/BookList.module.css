@@ -1,0 +1,144 @@
+/* One panel per deadline: the header names what the books share, the rows only what is their
+   own, so nothing is repeated down the list. */
+.group {
+  overflow: hidden;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  background-color: var(--mantine-color-body);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--mantine-spacing-sm);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background-color: var(--mantine-color-default-hover);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  gap: var(--mantine-spacing-sm);
+  align-items: center;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+
+  & + & {
+    border-top: 1px solid var(--mantine-color-default-border);
+  }
+
+  &:has(.open:hover) {
+    background-color: var(--mantine-color-default-hover);
+  }
+
+  &[data-muted] .cover {
+    opacity: 0.6;
+  }
+
+  /* Part of an overlevering, coming from or going to another student: tinted, with a bar down
+     its edge in the overlevering colour. */
+  &[data-tone="peer"] {
+    background-color: var(--mantine-color-grape-light);
+    box-shadow: inset 4px 0 0 var(--mantine-color-grape-filled);
+  }
+
+  &[data-tone="peer"]:has(.open:hover) {
+    background-color: var(--mantine-color-grape-light-hover);
+  }
+}
+
+.cover {
+  flex: 0 0 auto;
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 6px var(--mantine-spacing-sm);
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.text {
+  display: flex;
+  flex: 1 1 8rem;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* On a phone a title keeps to one line, so rows stay one height; the details show it in full. */
+.title {
+  @media (max-width: $mantine-breakpoint-sm) {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* The title opens the details; its hit area stretches over the whole row, under the links and
+   buttons that sit on top of it. */
+.open {
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  overflow-wrap: anywhere;
+
+  &::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+
+  &:focus-visible::after {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: -2px;
+  }
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+
+  &:empty {
+    display: none;
+  }
+}
+
+/* Links and buttons inside the row stay clickable above the stretched title. */
+.meta a,
+.meta button,
+.action {
+  position: relative;
+  z-index: 1;
+}
+
+.action {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* The customer's ordered and held books side by side on a wide screen, one after the other on a
+   narrow one. Each column keeps its own height. */
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--mantine-spacing-xl) var(--mantine-spacing-lg);
+  align-items: start;
+
+  @media (min-width: $mantine-breakpoint-md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

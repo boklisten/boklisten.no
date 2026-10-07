@@ -51,13 +51,22 @@ export default class OrderItem extends OrderItemSchema {
       .orderBy("order_items.position");
   }
 
-  /** The book's current catalogue title; the line must have been read through `Order`. */
-  get title(): string {
+  /** The catalogue item; the line must have been read through `Order`. */
+  private get loadedItem(): Item {
     const item: unknown = this.$preloaded["item"];
     if (!(item instanceof Item)) {
       throw new TypeError(`OrderItem ${this.id}: item was not loaded`);
     }
-    return item.title;
+    return item;
+  }
+
+  /** The book's current catalogue title. */
+  get title(): string {
+    return this.loadedItem.title;
+  }
+
+  get isbn(): string | null {
+    return this.loadedItem.isbnText;
   }
 
   toDto(): OrderItemDto {
@@ -66,6 +75,7 @@ export default class OrderItem extends OrderItemSchema {
       type: this.type,
       itemId: this.itemId,
       title: this.title,
+      isbn: this.isbn,
       blid: this.blid,
       amount: this.amount,
       unitPrice: this.unitPrice,

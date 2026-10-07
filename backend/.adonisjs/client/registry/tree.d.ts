@@ -110,13 +110,17 @@ export interface ApiDefinition {
   }
   customerItems: {
     me: typeof routes['customer_items.me']
+    detailsMe: typeof routes['customer_items.details_me']
     forCustomer: typeof routes['customer_items.for_customer']
+    details: typeof routes['customer_items.details']
   }
   orders: {
     indexMe: typeof routes['orders.index_me']
     openItemsMe: typeof routes['orders.open_items_me']
     cancelItemMe: typeof routes['orders.cancel_item_me']
     showMe: typeof routes['orders.show_me']
+    itemDetailsMe: typeof routes['orders.item_details_me']
+    itemDetails: typeof routes['orders.item_details']
     forCustomer: typeof routes['orders.for_customer']
     placedForCustomer: typeof routes['orders.placed_for_customer']
     index: typeof routes['orders.index']

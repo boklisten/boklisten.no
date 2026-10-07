@@ -106,6 +106,7 @@ router
 
     router.patch("/users/me", [controllers.Users, "updateMe"]);
     router.get("/customer_items/me", [controllers.CustomerItems, "me"]);
+    router.get("/customer_items/me/:customerItemId", [controllers.CustomerItems, "detailsMe"]);
 
     router.get("/signatures/me", [controllers.Signatures, "me"]);
     router.post("/signatures/me/send", [controllers.Signatures, "sendLinkMe"]);
@@ -114,6 +115,7 @@ router
     router.get("/orders/me/open_items", [controllers.Orders, "openItemsMe"]);
     router.post("/orders/me/cancel_item", [controllers.Orders, "cancelItemMe"]);
     router.get("/orders/me/:orderId", [controllers.Orders, "showMe"]);
+    router.get("/orders/me/:orderId/items/:itemId", [controllers.Orders, "itemDetailsMe"]);
 
     router.post("/checkout", [controllers.Checkout, "initialize"]);
     router.post("/checkout/:orderId/confirm", [controllers.Checkout, "confirm"]);
@@ -296,6 +298,8 @@ router
     router.patch("/users/:userId", [controllers.Users, "update"]);
     router.post("/users/:userId/confirm_email", [controllers.Users, "confirmEmail"]);
     router.get("/users/:userId/customer_items", [controllers.CustomerItems, "forCustomer"]);
+    router.get("/customer_items/:customerItemId", [controllers.CustomerItems, "details"]);
+    router.get("/orders/:orderId/items/:itemId", [controllers.Orders, "itemDetails"]);
     router.get("/users/:userId/orders", [controllers.Orders, "forCustomer"]);
     router.get("/users/:userId/placed_orders", [controllers.Orders, "placedForCustomer"]);
     router.get("/users/:userId/matches", [controllers.Matches, "forCustomer"]);

@@ -32,11 +32,11 @@ function calculateUnfulfilledOrderItems(orders: Order[]): OrderItem[] {
 interface OpenOrderInfo {
   orderId: string;
   title: string;
+  isbn: string | null;
   type: OrderItem["type"];
   /** The order's branch, shared by every book in it. */
   branchId: string;
-  /** The period end the order was placed with; legacy items may lack one. */
-  /** `YYYY-MM-DD`. */
+  /** `YYYY-MM-DD`: the period end the order was placed with; legacy items may lack one. */
   deadline: string | undefined;
 }
 
@@ -48,6 +48,7 @@ export function buildOpenOrderInfo(orders: Order[]): Map<string, OpenOrderInfo> 
       openOrderInfo.set(orderItem.itemId, {
         orderId: order.id,
         title: orderItem.title,
+        isbn: orderItem.isbn,
         type: orderItem.type,
         branchId: order.branchId,
         deadline: orderItem.periodTo ?? undefined,
@@ -81,8 +82,53 @@ export function buildPeerBooks(matches: MatchDto[], customerId: string) {
 }
 
 /**
+ * Pairs each book with the pending peer obligation for its title, keyed by the book's own key.
+ * Matching is edition-tolerant, and each obligation is taken by at most one book, so two copies
+ * of a title go to (or come from) their respective students.
+ */
+function pairWithPeers<Book>(
+  books: Book[],
+  peerBooks: PeerBook[],
+  keyOf: (book: Book) => { key: string; itemId: string },
+): Map<string, PeerBook> {
+  const pending = peerBooks.filter((book) => !book.fulfilled);
+  const peers = new Map<string, PeerBook>();
+  for (const book of books) {
+    const { key, itemId } = keyOf(book);
+    const index = pending.findIndex((peerBook) => itemsAreEquivalent(peerBook.id, itemId));
+    const [peerBook] = index === -1 ? [] : pending.splice(index, 1);
+    if (peerBook) {
+      peers.set(key, peerBook);
+    }
+  }
+  return peers;
+}
+
+/** The student each ordered book is to come from, for books that come through an overlevering. */
+export function buildReceiveFromPeers<Book>(
+  books: Book[],
+  matches: MatchDto[],
+  customerId: string,
+  keyOf: (book: Book) => { key: string; itemId: string },
+): Map<string, PeerBook> {
+  return pairWithPeers(books, buildPeerBooks(matches, customerId).receiveBooks, keyOf);
+}
+
+/** The student each held book is due to be given to, keyed by the book's own id. */
+export function buildDeliverToPeers(
+  books: { id: string; itemId: string }[],
+  matches: MatchDto[],
+  customerId: string,
+): Map<string, PeerBook> {
+  return pairWithPeers(books, buildPeerBooks(matches, customerId).giveBooks, (book) => ({
+    key: book.id,
+    itemId: book.itemId,
+  }));
+}
+
+/**
  * How many ordered books are still waiting to be handed out over the counter. Books the customer
- * receives from a peer are excluded, since those never pass through the stand.
+ * receives from a peer are excluded, since those should not pass through the stand.
  */
 export function countStandBooksToHandOut(
   orders: Order[] | undefined,
@@ -92,8 +138,10 @@ export function countStandBooksToHandOut(
   if (!orders) {
     return 0;
   }
-  const { receiveBooks } = buildPeerBooks(matches ?? [], customerId);
-  return calculateUnfulfilledOrderItems(orders).filter(
-    (orderItem) => !receiveBooks.some((book) => itemsAreEquivalent(book.id, orderItem.itemId)),
-  ).length;
+  const orderItems = calculateUnfulfilledOrderItems(orders);
+  const fromPeers = buildReceiveFromPeers(orderItems, matches ?? [], customerId, (orderItem) => ({
+    key: String(orderItem.id),
+    itemId: orderItem.itemId,
+  }));
+  return orderItems.length - fromPeers.size;
 }

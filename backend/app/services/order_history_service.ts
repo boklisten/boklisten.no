@@ -218,6 +218,7 @@ function presentItem(
     typeLabel: TranslationService.translateOrderItemTypePastTense(orderItem.type),
     itemId: orderItem.itemId,
     title: orderItem.title,
+    isbn: orderItem.isbn,
     blid: orderItem.blid,
     amount: orderItem.amount,
     unitPrice: orderItem.unitPrice,

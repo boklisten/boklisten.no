@@ -1,5 +1,8 @@
 /* One portrait frame for every state, so nothing shifts when the picture arrives or fails to. */
 .frame {
+  /* Positions the placeholder cover, which fills the frame. */
+  position: relative;
+  --cover-title-size: 0.36rem;
   display: flex;
   flex: 0 0 auto;
   align-items: center;
@@ -13,16 +16,19 @@
   background-color: var(--mantine-primary-color-light);
 
   &[data-size="sm"] {
+    --cover-title-size: 0.3rem;
     width: 34px;
     height: 46px;
   }
 
   &[data-size="lg"] {
+    --cover-title-size: 0.55rem;
     width: 66px;
     height: 90px;
   }
 
   &[data-size="xl"] {
+    --cover-title-size: 0.72rem;
     width: 88px;
     height: 120px;
   }

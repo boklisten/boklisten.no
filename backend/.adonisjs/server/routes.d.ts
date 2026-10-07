@@ -36,12 +36,14 @@ export type ScannedRoutes = {
     'public_blid_lookup.show': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'users.update_me': { paramsTuple?: []; params?: {} }
     'customer_items.me': { paramsTuple?: []; params?: {} }
+    'customer_items.details_me': { paramsTuple: [ParamValue]; params: {'customerItemId': ParamValue} }
     'signatures.me': { paramsTuple?: []; params?: {} }
     'signatures.send_link_me': { paramsTuple?: []; params?: {} }
     'orders.index_me': { paramsTuple?: []; params?: {} }
     'orders.open_items_me': { paramsTuple?: []; params?: {} }
     'orders.cancel_item_me': { paramsTuple?: []; params?: {} }
     'orders.show_me': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'orders.item_details_me': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'itemId': ParamValue} }
     'checkout.initialize': { paramsTuple?: []; params?: {} }
     'checkout.confirm': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
@@ -132,6 +134,8 @@ export type ScannedRoutes = {
     'users.update': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'users.confirm_email': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'customer_items.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
+    'customer_items.details': { paramsTuple: [ParamValue]; params: {'customerItemId': ParamValue} }
+    'orders.item_details': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'itemId': ParamValue} }
     'orders.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'orders.placed_for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'matches.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -190,10 +194,12 @@ export type ScannedRoutes = {
     'signatures.valid': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'public_blid_lookup.show': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'customer_items.me': { paramsTuple?: []; params?: {} }
+    'customer_items.details_me': { paramsTuple: [ParamValue]; params: {'customerItemId': ParamValue} }
     'signatures.me': { paramsTuple?: []; params?: {} }
     'orders.index_me': { paramsTuple?: []; params?: {} }
     'orders.open_items_me': { paramsTuple?: []; params?: {} }
     'orders.show_me': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'orders.item_details_me': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'itemId': ParamValue} }
     'checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'matches.me': { paramsTuple?: []; params?: {} }
     'branch_members.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -229,6 +235,8 @@ export type ScannedRoutes = {
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'customer_items.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
+    'customer_items.details': { paramsTuple: [ParamValue]; params: {'customerItemId': ParamValue} }
+    'orders.item_details': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'itemId': ParamValue} }
     'orders.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'orders.placed_for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'matches.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -271,10 +279,12 @@ export type ScannedRoutes = {
     'signatures.valid': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'public_blid_lookup.show': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'customer_items.me': { paramsTuple?: []; params?: {} }
+    'customer_items.details_me': { paramsTuple: [ParamValue]; params: {'customerItemId': ParamValue} }
     'signatures.me': { paramsTuple?: []; params?: {} }
     'orders.index_me': { paramsTuple?: []; params?: {} }
     'orders.open_items_me': { paramsTuple?: []; params?: {} }
     'orders.show_me': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
+    'orders.item_details_me': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'itemId': ParamValue} }
     'checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'matches.me': { paramsTuple?: []; params?: {} }
     'branch_members.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -310,6 +320,8 @@ export type ScannedRoutes = {
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'customer_items.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
+    'customer_items.details': { paramsTuple: [ParamValue]; params: {'customerItemId': ParamValue} }
+    'orders.item_details': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'itemId': ParamValue} }
     'orders.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'orders.placed_for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'matches.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }

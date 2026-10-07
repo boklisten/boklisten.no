@@ -11,7 +11,8 @@ export function PeerBadge({ children }: { children: ReactNode }) {
   return (
     <Badge
       variant="light"
-      color="blue"
+      // The overlevering colour of the match pages and the book lists' rows
+      color="grape"
       tt="none"
       leftSection={<IconUsers size={12} />}
       // Student names must survive 375px, so the label wraps instead of truncating

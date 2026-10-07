@@ -165,9 +165,19 @@ function calculateBuyoutStatus(
   } as const;
 }
 
+/**
+ * Where the loan stands. A cancelled or bought-back book is also marked returned, so those two
+ * are told apart before a plain return.
+ */
 export function calculateStatus(customerItem: CustomerItem): CustomerItemStatus {
   if (customerItem.buyout) {
     return { type: "buyout", text: "Kjøpt ut" };
+  }
+  if (customerItem.cancel) {
+    return { type: "cancel", text: "Kansellert" };
+  }
+  if (customerItem.buyback) {
+    return { type: "buyback", text: "Solgt tilbake" };
   }
   if (customerItem.returned) {
     return { type: "returned", text: "Returnert" };

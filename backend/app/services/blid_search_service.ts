@@ -886,7 +886,7 @@ export const BlidSearchService = {
           : {
               id: item.id,
               title: item.title,
-              isbn: item.isbn === null ? null : String(item.isbn),
+              isbn: item.isbnText,
             },
       registered: uniqueItem !== null,
       registration:

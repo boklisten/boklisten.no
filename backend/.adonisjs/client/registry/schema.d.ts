@@ -391,6 +391,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['me']>>>
     }
   }
+  'customer_items.details_me': {
+    methods: ["GET","HEAD"]
+    pattern: '/customer_items/me/:customerItemId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { customerItemId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['detailsMe']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['detailsMe']>>>
+    }
+  }
   'signatures.me': {
     methods: ["GET","HEAD"]
     pattern: '/signatures/me'
@@ -461,6 +473,18 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['showMe']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['showMe']>>>
+    }
+  }
+  'orders.item_details_me': {
+    methods: ["GET","HEAD"]
+    pattern: '/orders/me/:orderId/items/:itemId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { orderId: ParamValue; itemId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['itemDetailsMe']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['itemDetailsMe']>>>
     }
   }
   'checkout.initialize': {
@@ -1541,6 +1565,30 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['forCustomer']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['forCustomer']>>>
+    }
+  }
+  'customer_items.details': {
+    methods: ["GET","HEAD"]
+    pattern: '/customer_items/:customerItemId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { customerItemId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['details']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/customer_items_controller').default['details']>>>
+    }
+  }
+  'orders.item_details': {
+    methods: ["GET","HEAD"]
+    pattern: '/orders/:orderId/items/:itemId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { orderId: ParamValue; itemId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['itemDetails']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/orders_controller').default['itemDetails']>>>
     }
   }
   'orders.for_customer': {

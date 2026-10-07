@@ -3,7 +3,7 @@ import type { OrderHistoryEntry } from "@boklisten/backend/shared/order/order-hi
 import { lineKey } from "@boklisten/backend/shared/stand_cart";
 import type { StandCartSource } from "@boklisten/backend/shared/stand_cart";
 
-import type { HandoutRow } from "@/features/customer-search/HandoutBooksTable";
+import type { HandoutRow } from "@/features/customer-search/HandoutBooksList";
 
 /** The books on this order the stand still owes, as rows of the same table the Bestillinger tab uses. */
 export function openOrderRows(order: OrderHistoryEntry): HandoutRow[] {
@@ -15,6 +15,7 @@ export function openOrderRows(order: OrderHistoryEntry): HandoutRow[] {
       itemId: item.itemId,
       orderId: order.id,
       title: item.title,
+      isbn: item.isbn,
       type: item.type,
       branchId: order.branch.id,
       branchName: order.branch.name,

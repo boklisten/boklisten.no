@@ -28,6 +28,7 @@ export interface OrderHistoryItem {
   typeLabel: string;
   itemId: string;
   title: string;
+  isbn: string | null;
   blid: string | null;
   amount: number;
   unitPrice: number;

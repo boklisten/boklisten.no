@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import CustomerHeader from "@/features/customer-search/CustomerHeader";
 import EmailConfirmationWarning from "@/features/customer-search/EmailConfirmationWarning";
-import HandoutBooksTable from "@/features/customer-search/HandoutBooksTable";
+import HandoutBooksList from "@/features/customer-search/HandoutBooksList";
 import { openOrderRows } from "@/features/order-manager/openOrderRows";
 import { describeOrderTime } from "@/features/order-manager/orderTime";
 import { DeliverySection, PaymentsSection } from "@/features/order-history/OrderHistoryCard";
@@ -191,12 +191,10 @@ export default function OrderDetail({
           {rows.length === 0 ? (
             <InfoAlert>Alle bøkene på bestillingen er delt ut.</InfoAlert>
           ) : (
-            // Beside the queue the table only fits on a wide desk; cards until then
-            <HandoutBooksTable
+            <HandoutBooksList
               customerId={customer.id}
               rows={rows}
               onChanged={() => void onRefresh()}
-              tableFrom="xl"
             />
           )}
         </Stack>

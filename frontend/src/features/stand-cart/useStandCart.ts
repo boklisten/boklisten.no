@@ -29,6 +29,7 @@ import type {
 } from "@/features/stand-cart/standCartStore";
 import { useStandCartGuard } from "@/features/stand-cart/StandCartGuard";
 import confirmDropCart from "@/features/stand-cart/confirmDropCart";
+import confirmPeerHandout from "@/features/stand-cart/confirmPeerHandout";
 import {
   EMPTY_CART,
   forget,
@@ -36,6 +37,7 @@ import {
   updateStandCart,
   useStandCartState,
 } from "@/features/stand-cart/standCartStore";
+import { buildPeerBooks } from "@/features/customer-search/handoutBooks";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import { api, apiClient } from "@/shared/utils/apiClient";
 import { today } from "@/shared/utils/deadline";
@@ -165,6 +167,34 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     ),
   );
 
+  const { data: matches } = useQuery(
+    api.matches.forCustomer.queryOptions(
+      { params: { userId: customerId ?? "" } },
+      { enabled: customerId !== null },
+    ),
+  );
+  const matchesRef = useRef(matches);
+  useEffect(() => {
+    matchesRef.current = matches;
+  }, [matches]);
+
+  /**
+   * Whether a book another student is to hand over may go out from the stand anyway: asked for
+   * every new copy of a title the customer is due from a peer, by scan or by click, so it never
+   * happens by mistake. Returning, extending or buying out a held book is not a handout.
+   */
+  async function mayHandOut(line: StandCartLine): Promise<boolean> {
+    if (customerId === null || line.source.kind === "customerItem") {
+      return true;
+    }
+    const peerBook = buildPeerBooks(matchesRef.current ?? [], customerId).receiveBooks.find(
+      (book) => !book.fulfilled && itemsAreEquivalent(book.id, line.itemId),
+    );
+    return peerBook === undefined
+      ? true
+      : confirmPeerHandout({ title: line.title, peerName: peerBook.personName });
+  }
+
   function update(change: (cart: StoredCart) => StoredCart): StoredCart {
     if (customerId === null) {
       return cartRef.current;
@@ -288,6 +318,9 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     if (result.kind === "unlinked") {
       return { message: unlinkedBlidMessage(result.blid) };
     }
+    if (!(await mayHandOut(result.line))) {
+      return undefined;
+    }
     return accept(result.line, branchId, { notify: false });
   }
 
@@ -324,7 +357,7 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
       update((current) => ({ ...current, linking: { blid, via, candidate: null } }));
       return undefined;
     }
-    return scopeNotice(result.line) ?? accept(result.line, branchId, { notify: true });
+    return scopeNotice(result.line) ?? acceptScanned(result.line, branchId);
   }
 
   /**
@@ -349,7 +382,18 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
         message: `«${result.line.title}» ligger allerede i handlekurven. Skann bokas unike ID for å legge til et eksemplar til.`,
       };
     }
-    return scopeNotice(result.line) ?? accept(result.line, branchId, { notify: true });
+    return scopeNotice(result.line) ?? acceptScanned(result.line, branchId);
+  }
+
+  /** A scanned copy goes in once a peer handover, if any, has been knowingly overridden. */
+  async function acceptScanned(
+    line: StandCartLine,
+    branchId: string,
+  ): Promise<ScanNotice | undefined> {
+    if (!(await mayHandOut(line))) {
+      return undefined;
+    }
+    return accept(line, branchId, { notify: true });
   }
 
   /** The lines a scan may not join: those that already identify their copy. */

@@ -1,5 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import BookDetailsService from "#services/book_details_service";
 import { assertNotBlockedByUserMatch } from "#services/matches/cancellation_block";
 import { OrderCancellationService } from "#services/order_cancellation_service";
 import { OrderHistoryService } from "#services/order_history_service";
@@ -110,6 +111,26 @@ export default class OrdersController {
   /** Order items the customer has ordered but not yet received. */
   async openItemsMe(ctx: HttpContext) {
     return OrderService.getOpenOrderItems(ctx.auth.getUserOrFail().id);
+  }
+
+  /** One of the caller's ordered books, opened from their book list. */
+  async itemDetailsMe(ctx: HttpContext) {
+    const details = await BookDetailsService.forOrderedItem(
+      String(ctx.request.param("orderId")),
+      String(ctx.request.param("itemId")),
+      { role: "customer", userId: ctx.auth.getUserOrFail().id },
+    );
+    return details ?? ctx.response.notFound();
+  }
+
+  /** Any customer's ordered book, opened at the stand. */
+  async itemDetails(ctx: HttpContext) {
+    const details = await BookDetailsService.forOrderedItem(
+      String(ctx.request.param("orderId")),
+      String(ctx.request.param("itemId")),
+      { role: "employee" },
+    );
+    return details ?? ctx.response.notFound();
   }
 
   async cancelItemMe(ctx: HttpContext) {

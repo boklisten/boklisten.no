@@ -189,9 +189,12 @@ test.group("OrderService.getOpenOrderItems", (group) => {
       {
         orderId: order.id,
         itemId: open.id,
+        type: "rent",
         deadline: "2027-06-30",
         cancelable: true,
         title: "Åpen",
+        isbn: String(open.isbn),
+        branch: { id: branch.id, name: branch.name },
       },
     ]);
   });

@@ -1,4 +1,5 @@
 import { Exception } from "@adonisjs/core/exceptions";
+import db from "@adonisjs/lucid/services/db";
 
 import Branch from "#models/branch";
 import Item from "#models/item";
@@ -20,27 +21,39 @@ export const OrderService = {
     const lines: {
       orderId: string;
       itemId: string;
+      type: CartItemType;
       periodTo: string | null;
       orderAmount: number;
       title: string;
+      isbn: string | null;
+      branchId: string;
+      branchName: string;
     }[] = await OrderItem.openLinesOf(
       customerId,
       OPEN_ORDER_ITEM_TYPES.filter((type) => types.some((wanted) => wanted === type)),
     )
       .join("items", "items.id", "order_items.item_id")
+      .join("branches", "branches.id", "orders.branch_id")
       .select(
         "orders.id as orderId",
         "order_items.item_id as itemId",
+        "order_items.type",
         "order_items.period_to as periodTo",
         "orders.amount as orderAmount",
         "items.title",
+        db.raw("items.isbn::text as isbn"),
+        "orders.branch_id as branchId",
+        "branches.name as branchName",
       );
     const openOrderItems = lines.map((line) => ({
       orderId: line.orderId,
       itemId: line.itemId,
+      type: line.type,
       deadline: line.periodTo ?? "",
       cancelable: line.orderAmount === 0,
       title: line.title,
+      isbn: line.isbn,
+      branch: { id: line.branchId, name: line.branchName },
     }));
 
     // An item a user match depends on is never cancelable, regardless of match lock

@@ -15,7 +15,7 @@ import { IconCheck } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
 import CustomerMessagesView from "@/features/message-log/CustomerMessagesView";
-import ActiveBooksView from "@/features/customer-search/ActiveBooksView";
+import CustomerBooksView from "@/features/customer-search/CustomerBooksView";
 import CustomerMatchesView, { peerMatches } from "@/features/customer-search/CustomerMatchesView";
 import {
   CUSTOMER_SEARCH_TAB_META,
@@ -25,7 +25,6 @@ import type { CustomerSearchTab } from "@/features/customer-search/customerSearc
 import CustomerOrderHistoryView from "@/features/customer-search/CustomerOrderHistoryView";
 import { countStandBooksToHandOut } from "@/features/customer-search/handoutBooks";
 import { isOverdue } from "@/shared/utils/deadline";
-import HandoutView from "@/features/customer-search/HandoutView";
 import { api } from "@/shared/utils/apiClient";
 
 const POLL_INTERVAL_MS = 5000;
@@ -35,16 +34,26 @@ interface TabEntry {
   count: number;
   /** Something in the tab needs attention (an overdue book, a failed message). */
   alert: boolean;
+  /** The count is work to do now (books to hand out), so it takes the primary colour. */
+  task?: boolean;
 }
 
-/** The count stays gray — it is a total, not a problem count. Problems get a red dot on it. */
-function CountBadge({ count, alert }: { count: number; alert: boolean }) {
+/**
+ * The count stays gray — it is a total, not a problem count — unless it is work to do now.
+ * Problems get a red dot on it.
+ */
+function CountBadge({ count, alert, task }: { count: number; alert: boolean; task?: boolean }) {
   if (count === 0) {
     return null;
   }
   return (
     <Indicator color="red" size={7} offset={1} disabled={!alert}>
-      <Badge size="sm" variant="light" color="gray" circle={count < 10}>
+      <Badge
+        size="sm"
+        variant={task ? "filled" : "light"}
+        color={task ? undefined : "gray"}
+        circle={count < 10}
+      >
         {count}
       </Badge>
     </Indicator>
@@ -57,7 +66,7 @@ function TabLabel({ entry }: { entry: TabEntry }) {
       <Text span fz="inherit" fw="inherit">
         {CUSTOMER_SEARCH_TAB_META[entry.tab].label}
       </Text>
-      <CountBadge count={entry.count} alert={entry.alert} />
+      <CountBadge count={entry.count} alert={entry.alert} task={entry.task} />
     </Group>
   );
 }
@@ -103,7 +112,7 @@ function TabSelect({
       <Combobox
         store={combobox}
         onOptionSubmit={(value) => {
-          onChange(CUSTOMER_SEARCH_TABS.find((tab) => tab === value) ?? "bestillinger");
+          onChange(CUSTOMER_SEARCH_TABS.find((tab) => tab === value) ?? "boker");
           combobox.closeDropdown();
         }}
       >
@@ -194,11 +203,13 @@ export default function CustomerSearchTabs({
 
   // Most customers have no peer exchanges at all; an empty tab is just noise for them.
   const showMatches = matchCount > 0;
-  const currentTab = activeTab === "overleveringer" && !showMatches ? "bestillinger" : activeTab;
+  const currentTab = activeTab === "overleveringer" && !showMatches ? "boker" : activeTab;
 
   const entries: TabEntry[] = [
-    { tab: "bestillinger", count: toHandOut, alert: false },
-    { tab: "boker", count: bookCount, alert: hasOverdue },
+    // Books to hand out are the task at the stand; without any, the count is the books held.
+    toHandOut > 0
+      ? { tab: "boker", count: toHandOut, alert: hasOverdue, task: true }
+      : { tab: "boker", count: bookCount, alert: hasOverdue },
     ...(showMatches ? [{ tab: "overleveringer" as const, count: matchCount, alert: false }] : []),
     { tab: "meldinger", count: failedMessages, alert: failedMessages > 0 },
     // No count: a history total is neither a task nor a problem.
@@ -206,7 +217,7 @@ export default function CustomerSearchTabs({
   ];
 
   const changeTab = (value: string | null) =>
-    onTabChange(CUSTOMER_SEARCH_TABS.find((tab) => tab === value) ?? "bestillinger");
+    onTabChange(CUSTOMER_SEARCH_TABS.find((tab) => tab === value) ?? "boker");
 
   return (
     <Tabs value={currentTab} keepMounted={false} onChange={changeTab}>
@@ -214,11 +225,8 @@ export default function CustomerSearchTabs({
       <TabSelect entries={entries} current={currentTab} onChange={changeTab} />
 
       {/* Kept mounted so the scan-progress ticks survive a visit to another tab. */}
-      <Tabs.Panel value="bestillinger" keepMounted>
-        <HandoutView customer={customer} />
-      </Tabs.Panel>
-      <Tabs.Panel value="boker">
-        <ActiveBooksView customer={customer} />
+      <Tabs.Panel value="boker" keepMounted>
+        <CustomerBooksView customer={customer} />
       </Tabs.Panel>
       <Tabs.Panel value="overleveringer">
         <CustomerMatchesView customerId={customer.id} />

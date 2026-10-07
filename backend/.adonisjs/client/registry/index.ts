@@ -198,6 +198,12 @@ const routes = {
     tokens: [{"old":"/customer_items/me","type":0,"val":"customer_items","end":""},{"old":"/customer_items/me","type":0,"val":"me","end":""}],
     types: placeholder as Registry['customer_items.me']['types'],
   },
+  'customer_items.details_me': {
+    methods: ["GET","HEAD"],
+    pattern: '/customer_items/me/:customerItemId',
+    tokens: [{"old":"/customer_items/me/:customerItemId","type":0,"val":"customer_items","end":""},{"old":"/customer_items/me/:customerItemId","type":0,"val":"me","end":""},{"old":"/customer_items/me/:customerItemId","type":1,"val":"customerItemId","end":""}],
+    types: placeholder as Registry['customer_items.details_me']['types'],
+  },
   'signatures.me': {
     methods: ["GET","HEAD"],
     pattern: '/signatures/me',
@@ -233,6 +239,12 @@ const routes = {
     pattern: '/orders/me/:orderId',
     tokens: [{"old":"/orders/me/:orderId","type":0,"val":"orders","end":""},{"old":"/orders/me/:orderId","type":0,"val":"me","end":""},{"old":"/orders/me/:orderId","type":1,"val":"orderId","end":""}],
     types: placeholder as Registry['orders.show_me']['types'],
+  },
+  'orders.item_details_me': {
+    methods: ["GET","HEAD"],
+    pattern: '/orders/me/:orderId/items/:itemId',
+    tokens: [{"old":"/orders/me/:orderId/items/:itemId","type":0,"val":"orders","end":""},{"old":"/orders/me/:orderId/items/:itemId","type":0,"val":"me","end":""},{"old":"/orders/me/:orderId/items/:itemId","type":1,"val":"orderId","end":""},{"old":"/orders/me/:orderId/items/:itemId","type":0,"val":"items","end":""},{"old":"/orders/me/:orderId/items/:itemId","type":1,"val":"itemId","end":""}],
+    types: placeholder as Registry['orders.item_details_me']['types'],
   },
   'checkout.initialize': {
     methods: ["POST"],
@@ -773,6 +785,18 @@ const routes = {
     pattern: '/users/:userId/customer_items',
     tokens: [{"old":"/users/:userId/customer_items","type":0,"val":"users","end":""},{"old":"/users/:userId/customer_items","type":1,"val":"userId","end":""},{"old":"/users/:userId/customer_items","type":0,"val":"customer_items","end":""}],
     types: placeholder as Registry['customer_items.for_customer']['types'],
+  },
+  'customer_items.details': {
+    methods: ["GET","HEAD"],
+    pattern: '/customer_items/:customerItemId',
+    tokens: [{"old":"/customer_items/:customerItemId","type":0,"val":"customer_items","end":""},{"old":"/customer_items/:customerItemId","type":1,"val":"customerItemId","end":""}],
+    types: placeholder as Registry['customer_items.details']['types'],
+  },
+  'orders.item_details': {
+    methods: ["GET","HEAD"],
+    pattern: '/orders/:orderId/items/:itemId',
+    tokens: [{"old":"/orders/:orderId/items/:itemId","type":0,"val":"orders","end":""},{"old":"/orders/:orderId/items/:itemId","type":1,"val":"orderId","end":""},{"old":"/orders/:orderId/items/:itemId","type":0,"val":"items","end":""},{"old":"/orders/:orderId/items/:itemId","type":1,"val":"itemId","end":""}],
+    types: placeholder as Registry['orders.item_details']['types'],
   },
   'orders.for_customer': {
     methods: ["GET","HEAD"],
