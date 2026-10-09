@@ -136,7 +136,7 @@ export default function SignIn() {
         <Stack gap={4}>
           <Title ta="center">Logg inn</Title>
           <Text ta="center" size="sm" c="dimmed" style={{ textWrap: "balance" }}>
-            Har du ikke konto, oppretter vi en når du logger inn.
+            Hvis du ikke har konto, opprettes en ny når du logger inn.
           </Text>
         </Stack>
         <VippsButton />

@@ -1,5 +1,5 @@
 import { Anchor, Button, Center, Group, PinInput, Stack, Text } from "@mantine/core";
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
@@ -94,6 +94,13 @@ export default function SmsCodeEntry({
 
   useCodeFromSms((value) => void submit(value));
 
+  // The login page has no focus trap to read data-autofocus (a modal does). If the keyboard is
+  // still up from the phone field, iOS keeps it open as focus moves here.
+  const firstBox = useRef<HTMLInputElement>(null);
+  // Without an id, PinInput keys its boxes by one it makes after mount, remounting them unfocused.
+  const id = useId();
+  useEffect(() => firstBox.current?.focus(), []);
+
   return (
     <Stack>
       <Text ta="center">
@@ -106,11 +113,14 @@ export default function SmsCodeEntry({
       {notice}
       <Center>
         <PinInput
+          id={id}
           length={CODE_LENGTH}
           type="number"
           size="md"
           gap="xs"
           placeholder=""
+          // PinInput hands its ref to the first box.
+          ref={firstBox}
           getInputProps={(index) => ({ "data-autofocus": index === 0 || undefined })}
           ariaLabel="Kode fra SMS"
           value={code}
