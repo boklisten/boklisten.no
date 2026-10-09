@@ -1,6 +1,6 @@
 import type { InvoiceListRow, InvoiceStatus } from "@boklisten/backend/shared/invoice";
 import { invoiceBatchPrefix } from "@boklisten/backend/shared/invoice";
-import { Badge, Box } from "@mantine/core";
+import { Badge, Box, Flex } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
 import type {
@@ -41,7 +41,7 @@ function StatusCell({ value, data, compact, busy, onStatusChange }: StatusCellPa
     return null;
   }
   return (
-    <Box h="100%" display="flex" style={{ alignItems: "center" }}>
+    <Flex h="100%" align="center">
       {onStatusChange ? (
         <InvoiceStatusControl
           value={value}
@@ -55,7 +55,7 @@ function StatusCell({ value, data, compact, busy, onStatusChange }: StatusCellPa
           {INVOICE_STATUS_LABELS[value]}
         </Badge>
       )}
-    </Box>
+    </Flex>
   );
 }
 

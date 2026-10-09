@@ -1,8 +1,7 @@
-import { Accordion, Badge, Box, Button, Stack, Text } from "@mantine/core";
+import { Accordion, Badge, Box, Stack, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconBasketCheck, IconClockPlus, IconShoppingCart, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import type { ReactNode } from "react";
 
@@ -23,6 +22,7 @@ import {
 import type { PeerBook } from "@/features/customer-search/handoutBooks";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
+import TanStackButton from "@/shared/components/TanStackButton";
 import useAuth from "@/shared/hooks/useAuth";
 import useCart from "@/shared/hooks/useCart";
 import { api } from "@/shared/utils/apiClient";
@@ -287,7 +287,6 @@ function EarlierBooks({
 }
 
 export default function CustomerItemsOverview() {
-  const navigate = useNavigate();
   const [opened, setOpened] = useState<OpenedBook | null>(null);
   const customerItems = useQuery(api.customerItems.me.queryOptions());
   const orderedItems = useQuery(api.orders.openItemsMe.queryOptions());
@@ -317,12 +316,9 @@ export default function CustomerItemsOverview() {
         }}
         orderedFooter={
           <Box>
-            <Button
-              leftSection={<IconShoppingCart aria-hidden />}
-              onClick={() => void navigate({ to: "/bestilling" })}
-            >
+            <TanStackButton to="/bestilling" leftSection={<IconShoppingCart aria-hidden />}>
               {(ordered?.length ?? 0) > 0 ? "Bestill flere bøker" : "Bestill bøker"}
-            </Button>
+            </TanStackButton>
           </Box>
         }
         held={{

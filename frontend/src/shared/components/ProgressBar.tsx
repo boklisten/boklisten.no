@@ -14,7 +14,7 @@ export default function ProgressBar({
   if (finished) {
     return (
       <Group gap={5}>
-        <IconCircleCheckFilled color="green" />
+        <IconCircleCheckFilled color="var(--mantine-color-green-filled)" />
         {subtitle}
       </Group>
     );

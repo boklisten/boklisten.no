@@ -250,7 +250,7 @@ export default function SearchSpotlight({
           <ThemeIcon variant="light" radius="xl" size="lg">
             <PageIcon size={18} aria-hidden />
           </ThemeIcon>
-          <Stack gap={2} miw={0} style={{ flex: 1 }}>
+          <Stack gap={2} miw={0} flex={1}>
             <Text fw={600} lineClamp={1}>
               {page.label}
             </Text>
@@ -300,7 +300,7 @@ export default function SearchSpotlight({
     <Spotlight.Action key={book.blid} onClick={() => pickBook(book.blid)}>
       <Group gap="sm" wrap="nowrap" w="100%">
         <BookCover isbn={book.isbn} title={book.title} size="sm" enlargeable={false} />
-        <Stack gap={2} miw={0} style={{ flex: 1 }}>
+        <Stack gap={2} miw={0} flex={1}>
           <Text fw={600} lineClamp={1}>
             {book.title}
           </Text>

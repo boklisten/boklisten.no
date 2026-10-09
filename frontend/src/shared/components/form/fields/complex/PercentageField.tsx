@@ -1,16 +1,18 @@
-import { Slider, Stack, Text } from "@mantine/core";
+import { Input, Slider } from "@mantine/core";
 import type { SliderProps } from "@mantine/core";
+import { useId } from "@mantine/hooks";
 
 import { useFieldContext } from "@/shared/hooks/form";
 
 export default function PercentageField(props: { slider?: SliderProps; label: string }) {
   const field = useFieldContext<number>();
+  const id = useId();
 
   return (
-    <Stack gap={5} mb="md">
-      <Text size="sm">{props.label}</Text>
+    <Input.Wrapper id={id} label={props.label} labelElement="div" mb="md">
       <Slider
         miw={200}
+        thumbProps={{ "aria-labelledby": `${id}-label` }}
         label={`${Math.round(field.state.value * 100)}%`}
         min={0}
         max={1}
@@ -29,6 +31,6 @@ export default function PercentageField(props: { slider?: SliderProps; label: st
         onChangeEnd={field.handleBlur}
         onBlur={field.handleBlur}
       />
-    </Stack>
+    </Input.Wrapper>
   );
 }

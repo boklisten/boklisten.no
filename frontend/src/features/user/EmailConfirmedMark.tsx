@@ -5,7 +5,11 @@ import { IconCheck, IconInfoCircleFilled } from "@tabler/icons-react";
 export default function EmailConfirmedMark({ confirmed }: { confirmed: boolean }) {
   return (
     <Tooltip label={confirmed ? "Bekreftet" : "Ikke bekreftet"}>
-      {confirmed ? <IconCheck color="green" /> : <IconInfoCircleFilled color="orange" />}
+      {confirmed ? (
+        <IconCheck color="var(--mantine-color-green-filled)" />
+      ) : (
+        <IconInfoCircleFilled color="var(--mantine-color-orange-filled)" />
+      )}
     </Tooltip>
   );
 }

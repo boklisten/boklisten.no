@@ -1,4 +1,4 @@
-import { Button, Card, Loader, NavLink, Skeleton, Stack, Text, Title } from "@mantine/core";
+import { Button, Card, Loader, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { IconBasket, IconBook, IconRefresh } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, useEffect, useEffectEvent, useState } from "react";
@@ -10,23 +10,14 @@ import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import { api } from "@/shared/utils/apiClient";
 import useCart from "@/shared/hooks/useCart";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
+import TanStackButton from "@/shared/components/TanStackButton";
 import { authQueryKey } from "@/features/auth/authQuery";
 
 function BackToCartButton() {
   return (
-    <NavLink
-      component={TanStackAnchor}
-      to="/handlekurv"
-      underline="never"
-      leftSection={<IconBasket />}
-      active
-      bdrs={5}
-      bg="green"
-      c="white"
-      fw="bolder"
-      label="Gå til handlekurv"
-    />
+    <TanStackButton to="/handlekurv" leftSection={<IconBasket />} color="green" fullWidth>
+      Gå til handlekurv
+    </TanStackButton>
   );
 }
 
@@ -131,7 +122,7 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
         </Activity>
 
         <Activity mode={attempt > MAX_ATTEMPTS ? "visible" : "hidden"}>
-          <ErrorAlert title="Vipps bruke for lang tid på å svare">
+          <ErrorAlert title="Vipps brukte for lang tid på å svare">
             Vi mottok ikke oppdatert betalingsinformasjon etter å ha ventet i{" "}
             {calculateTotalWait(attempt)} sekunder. Du kan prøve igjen eller ta kontakt hvis
             problemet vedvarer.
@@ -156,16 +147,9 @@ export default function VippsCheckoutStatus({ orderId }: { orderId: string }) {
         <PlacedOrderNotice orderId={orderId} />
         <MySignatureStatusCard />
         <OrderReceipt orderId={orderId} />
-        <NavLink
-          component={TanStackAnchor}
-          to="/items"
-          underline="never"
-          leftSection={<IconBook />}
-          active
-          variant="filled"
-          fw="bolder"
-          label="Dine bøker"
-        />
+        <TanStackButton to="/items" leftSection={<IconBook />} fullWidth>
+          Dine bøker
+        </TanStackButton>
       </>
     );
   }

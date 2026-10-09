@@ -1,5 +1,5 @@
 import type { User } from "@boklisten/backend/shared/user";
-import { Box, Button, CopyButton, Group, Skeleton, Stack, Text } from "@mantine/core";
+import { Button, CopyButton, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { IconCopy, IconSend } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
@@ -61,14 +61,15 @@ export default function AdministrateUserSignatures({ user }: { user: User }) {
   if (outgrown) {
     return (
       <Stack align="center">
-        <Box style={{ border: "1px solid #ccc", borderRadius: 2, padding: 1 }}>
+        {/* Ink is drawn for paper, so the frame stays white in dark mode too */}
+        <Paper withBorder radius="xs" p={1} bg="white">
           <Image
             src={`data:image/webp;base64,${outgrown.image}`}
             alt="Foresatt sin signatur"
             width={300}
             height={100}
           />
-        </Box>
+        </Paper>
         <WarningAlert title="Foresatt sin signatur gjelder ikke lenger">
           <Stack gap="xs">
             <Text>

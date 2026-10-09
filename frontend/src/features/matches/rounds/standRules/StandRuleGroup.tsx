@@ -23,9 +23,9 @@ export function StandRuleRow({
   return (
     <Paper withBorder radius="sm" px="sm" py={8}>
       <Group justify="space-between" wrap="nowrap" gap="sm">
-        <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
+        <Group gap="sm" wrap="nowrap" miw={0}>
           {leading}
-          <Stack gap={0} style={{ minWidth: 0 }}>
+          <Stack gap={0} miw={0}>
             <Text fw={500} size="sm" truncate>
               {title}
             </Text>

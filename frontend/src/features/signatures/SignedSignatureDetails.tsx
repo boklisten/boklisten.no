@@ -1,4 +1,4 @@
-import { Box, Stack } from "@mantine/core";
+import { Paper, Stack } from "@mantine/core";
 import { Image } from "@unpic/react";
 
 import SignedContractDetails from "@/features/signatures/SignedContractDetails";
@@ -20,14 +20,15 @@ export default function SignedSignatureDetails({
 }) {
   return (
     <Stack align="center">
-      <Box style={{ border: "1px solid #ccc", borderRadius: 2, padding: 1 }}>
+      {/* Ink is drawn for paper, so the frame stays white in dark mode too */}
+      <Paper withBorder radius="xs" p={1} bg="white">
         <Image
           src={`data:image/webp;base64,${signature.image ?? ""}`}
           alt="Signatur"
           width={300}
           height={100}
         />
-      </Box>
+      </Paper>
       <SignedContractDetails
         signedByGuardian={signature.signedByGuardian ?? false}
         signingName={signature.signingName ?? ""}

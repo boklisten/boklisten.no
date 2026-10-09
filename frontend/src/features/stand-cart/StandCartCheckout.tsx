@@ -3,7 +3,6 @@ import type { User } from "@boklisten/backend/shared/user";
 import {
   Anchor,
   Button,
-  Center,
   Collapse,
   Divider,
   Group,
@@ -176,10 +175,10 @@ function DeliveryStep({
           return {
             value: option,
             label: (
-              <Center style={{ gap: 6 }}>
+              <Group gap={6} justify="center" wrap="nowrap">
                 <IconComponent size={16} aria-hidden />
                 <span>{label}</span>
-              </Center>
+              </Group>
             ),
           };
         })}

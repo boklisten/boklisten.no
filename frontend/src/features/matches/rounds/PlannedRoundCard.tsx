@@ -89,7 +89,7 @@ function DayTimeline({ round }: { round: Round }) {
 
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Stack gap={4} style={{ minWidth: 0 }}>
+    <Stack gap={4} miw={0}>
       <Text size="xs" c="dimmed" tt="uppercase" fw={600} lh={1.4}>
         {label}
       </Text>

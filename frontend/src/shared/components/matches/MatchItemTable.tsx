@@ -10,9 +10,9 @@ function StatusIcon({ fulfilled, label }: { fulfilled: boolean; label: string })
     <Tooltip label={label}>
       <Table.Td>
         {fulfilled ? (
-          <IconSquareCheckFilled color="green" />
+          <IconSquareCheckFilled color="var(--mantine-color-green-filled)" />
         ) : (
-          <IconAlertSquareFilled color="orange" />
+          <IconAlertSquareFilled color="var(--mantine-color-orange-filled)" />
         )}
       </Table.Td>
     </Tooltip>

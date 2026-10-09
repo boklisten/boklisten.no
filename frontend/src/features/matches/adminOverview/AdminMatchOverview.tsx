@@ -29,7 +29,7 @@ function OverviewSkeleton() {
   return (
     <Stack gap="lg">
       <Group align="center" gap="md" wrap="wrap">
-        <Skeleton height={36} style={{ flex: 1, minWidth: 220 }} />
+        <Skeleton height={36} flex={1} miw={220} />
         <Skeleton height={36} width={232} />
       </Group>
       <Stack>
@@ -104,7 +104,8 @@ export default function AdminMatchOverview({ roundId }: { roundId: string }) {
     <Stack gap="lg">
       <Group align="center" gap="md" wrap="wrap">
         <TextInput
-          style={{ flex: 1, minWidth: 220 }}
+          flex={1}
+          miw={220}
           leftSection={<IconSearch size={18} />}
           placeholder="Søk etter navn, telefon eller e-post"
           value={search}

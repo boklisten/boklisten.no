@@ -32,7 +32,6 @@ export default function NewPasswordField(props: PasswordInputProps) {
       <PasswordInput
         required
         label="Passord"
-        type="password"
         autoComplete="new-password"
         placeholder="correct horse battery staple"
         {...props}
@@ -45,7 +44,7 @@ export default function NewPasswordField(props: PasswordInputProps) {
         password={field.state.value}
         minLength={10}
         shortScoreWord="for kort"
-        scoreWords={["svakt", "svakt", "ok", "stekt", "veldig sterkt"]}
+        scoreWords={["svakt", "svakt", "ok", "sterkt", "veldig sterkt"]}
       />
     </Stack>
   );
