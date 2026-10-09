@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "mantine": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@mantine/mcp-server"],
+      "env": {}
+    }
+  }
+}

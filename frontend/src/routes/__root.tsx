@@ -1,18 +1,19 @@
-import "@mantine/core/styles.css";
-import "@mantine/dates/styles.css";
-import "@mantine/schedule/styles.css";
-import "@mantine/notifications/styles.css";
-import "@mantine/spotlight/styles.css";
-import "@mantine/tiptap/styles.css";
-import "@mantine/charts/styles.css";
-import "@/styles/view-transitions.css";
+// Mantine's stylesheets go first in `links` so the app's own styles override them.
+import mantineCoreStyles from "@mantine/core/styles.css?url";
+import mantineDatesStyles from "@mantine/dates/styles.css?url";
+import mantineScheduleStyles from "@mantine/schedule/styles.css?url";
+import mantineNotificationsStyles from "@mantine/notifications/styles.css?url";
+import mantineSpotlightStyles from "@mantine/spotlight/styles.css?url";
+import mantineTiptapStyles from "@mantine/tiptap/styles.css?url";
+import mantineChartsStyles from "@mantine/charts/styles.css?url";
+import viewTransitionStyles from "@/styles/view-transitions.css?url";
 import "@/shared/utils/dayjs";
 
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
-import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 
 import { authQueryOptions } from "@/features/auth/authQuery";
 import theme, { cssVariablesResolver } from "@/shared/utils/theme";
@@ -20,6 +21,7 @@ import { jsonLdScript, urlDependentHead } from "@/shared/utils/seo";
 import { organizationSchema, websiteSchema } from "@/shared/utils/structuredData";
 import { DatesProvider } from "@mantine/dates";
 import type { QueryClient } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -47,6 +49,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         ...meta,
       ],
       links: [
+        ...[
+          mantineCoreStyles,
+          mantineDatesStyles,
+          mantineScheduleStyles,
+          mantineNotificationsStyles,
+          mantineSpotlightStyles,
+          mantineTiptapStyles,
+          mantineChartsStyles,
+          viewTransitionStyles,
+        ].map((href) => ({ rel: "stylesheet", href })),
         ...links,
         // The wordmark and the front page's headlines are set in Fraunces.
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -59,10 +71,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       scripts: [jsonLdScript(organizationSchema()), jsonLdScript(websiteSchema())],
     };
   },
-  component: RootLayout,
+  shellComponent: RootDocument,
 });
 
-function RootLayout() {
+function RootDocument({ children }: { children: ReactNode }) {
   // The devtools button would cover the phone tab bar; the tools are only offered on wider screens.
   const wide = useMediaQuery("(min-width: 48em)");
   return (
@@ -75,13 +87,11 @@ function RootLayout() {
         <MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver}>
           <Notifications />
           <DatesProvider settings={{ locale: "nb" }}>
-            <ModalsProvider>
-              <Outlet />
-              <Scripts />
-            </ModalsProvider>
+            <ModalsProvider>{children}</ModalsProvider>
             {wide && <ReactQueryDevtools />}
           </DatesProvider>
         </MantineProvider>
+        <Scripts />
       </body>
     </html>
   );
