@@ -4,8 +4,9 @@ export const SITE_URL = "https://boklisten.no";
 export const SITE_NAME = "Boklisten.no";
 const OG_IMAGE_PATH = "/images/og-image.png";
 
-const INDEXABLE_PATHS = new Set(["/", "/auth/login", "/bestilling", "/bokflyt"]);
-const INDEXABLE_PATH_PREFIXES = ["/info"];
+const INDEXABLE_PATHS = new Set(["/", "/auth/login", "/bokflyt"]);
+/** `/bestilling` includes the order flow's branch steps, each a page for its school or class. */
+const INDEXABLE_PATH_PREFIXES = ["/info", "/bestilling"];
 
 const LAYOUT_ONLY_PATHS = new Set(["/info", "/info/policies"]);
 

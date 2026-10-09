@@ -132,6 +132,7 @@ export default function SignupForm({
         fields={createFieldMap(defaultValues)}
         form={form}
         leading={null}
+        only={null}
         phoneAction={
           <Button variant="subtle" size="compact-sm" mr={4} onClick={onChangePhone}>
             Endre

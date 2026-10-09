@@ -8,7 +8,9 @@ import { bookCountLabel } from "@/shared/utils/bookCountLabel";
 
 /**
  * The floating bar under the cart: what is due now, and the one next step. While a book cannot be
- * ordered the step is to remove it; while logged out the step is to log in; otherwise the checkout,
+ * ordered the step is to remove it; while logged out the step is to log in and go straight on to
+ * the checkout (which sends the customer back here if a book turns out to be one they already
+ * have); otherwise the checkout,
  * which for a cart with nothing to pay is simply confirming the order.
  */
 export default function CartBar({
@@ -52,7 +54,7 @@ export default function CartBar({
       <FloatingActionBar visible summary={summary} detail="Logg inn for å fullføre bestillingen.">
         <TanStackButton
           to="/auth/login"
-          search={{ redirect: "handlekurv" }}
+          search={{ redirect: "kasse" }}
           radius="xl"
           leftSection={free ? <IconCheck /> : <IconBasket />}
         >

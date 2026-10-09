@@ -1,6 +1,7 @@
 import { SITE_URL, isIndexable, normalizePathname } from "@/shared/utils/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { apiClient } from "@/shared/utils/apiClient";
+import { childrenOf } from "@/features/branch-walk/branchTree";
 
 /**
  * Indexable, but not content pages worth submitting: both redirect to a
@@ -36,6 +37,21 @@ async function branchPaths(): Promise<string[]> {
   }
 }
 
+/**
+ * One page per step of the order flow: a school's subjects, or a choice between its places or
+ * classes. A level with a single choice only redirects past itself, so it is left out.
+ */
+async function orderPaths(): Promise<string[]> {
+  try {
+    const tree = await apiClient.api.branches.indexPublic({});
+    return tree.nodes
+      .filter((node) => node.isLeaf || childrenOf(tree, node.id).length > 1)
+      .map((node) => `/bestilling/${node.id}`);
+  } catch {
+    return [];
+  }
+}
+
 function escapeXml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -49,8 +65,12 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const [staticUrls, branchUrls] = await Promise.all([staticPaths(), branchPaths()]);
-        const urls = [...staticUrls, ...branchUrls]
+        const [staticUrls, branchUrls, orderUrls] = await Promise.all([
+          staticPaths(),
+          branchPaths(),
+          orderPaths(),
+        ]);
+        const urls = [...staticUrls, ...branchUrls, ...orderUrls]
           .map((path) => `  <url><loc>${escapeXml(`${SITE_URL}${path}`)}</loc></url>`)
           .join("\n");
 

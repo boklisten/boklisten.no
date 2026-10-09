@@ -8,7 +8,7 @@ import { Activity, useState } from "react";
 import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
 import ChangePhoneModal from "@/features/user/ChangePhoneModal";
 import EmailConfirmedMark from "@/features/user/EmailConfirmedMark";
-import UserInfoFields, { userFieldsBody } from "@/features/user/UserInfoFields";
+import UserInfoFields, { missingUserInfo, userFieldsBody } from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
@@ -47,7 +47,9 @@ function bodyOf(values: UserSettingsValues) {
 
 /**
  * The user's own details, email included. On the settings page they auto-save (see `useAutoSave`);
- * in the confirm-details task the user instead confirms everything at once with "Lagre". A new
+ * in the confirm-details task the user instead confirms everything at once with "Lagre", shown only
+ * the details still missing (often just the date of birth after a Vipps login); the rest are on
+ * the settings page. A new
  * email starts unconfirmed; the backend sends a link to it. The phone is what they log in with,
  * so it changes only through `ChangePhoneModal`, which saves it by itself.
  */
@@ -62,6 +64,11 @@ export default function UserSettingsForm({
   const queryClient = useQueryClient();
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const [changingPhone, setChangingPhone] = useState(false);
+  // Fixed when the task opens, so a field does not vanish once it is filled in.
+  const [only] = useState(() => {
+    const missing = missingUserInfo(valuesOf(user));
+    return confirmDetails && missing.size > 0 ? missing : null;
+  });
   const updateUserMutation = useMutation(
     api.users.updateMe.mutationOptions({
       onSuccess: () => {
@@ -119,38 +126,41 @@ export default function UserSettingsForm({
         perspective="personal"
         fields={createFieldMap(valuesOf(user))}
         form={form}
+        only={only}
         phoneAction={
           <Button variant="subtle" size="compact-sm" mr={4} onClick={() => setChangingPhone(true)}>
             {user.phone ? "Endre" : "Legg til"}
           </Button>
         }
         leading={
-          <>
-            <form.AppField
-              name="email"
-              validators={{
-                onBlur: ({ value }) => emailFieldValidator(value, "personal"),
-              }}
-            >
-              {(field) => (
-                <field.EmailField
-                  deliverabilityFeedback={{ source: "settings", perspective: "personal" }}
-                  rightSection={
-                    // The mark is about the saved address; a new one is unconfirmed until saved.
-                    <EmailConfirmedMark
-                      confirmed={
-                        user.emailConfirmed &&
-                        field.state.value.trim().toLowerCase() === user.email.toLowerCase()
-                      }
-                    />
-                  }
-                />
-              )}
-            </form.AppField>
-            <Activity mode={user.emailConfirmed ? "hidden" : "visible"}>
-              <EmailUnconfirmed key={user.email} email={user.email} />
-            </Activity>
-          </>
+          only === null && (
+            <>
+              <form.AppField
+                name="email"
+                validators={{
+                  onBlur: ({ value }) => emailFieldValidator(value, "personal"),
+                }}
+              >
+                {(field) => (
+                  <field.EmailField
+                    deliverabilityFeedback={{ source: "settings", perspective: "personal" }}
+                    rightSection={
+                      // The mark is about the saved address; a new one is unconfirmed until saved.
+                      <EmailConfirmedMark
+                        confirmed={
+                          user.emailConfirmed &&
+                          field.state.value.trim().toLowerCase() === user.email.toLowerCase()
+                        }
+                      />
+                    }
+                  />
+                )}
+              </form.AppField>
+              <Activity mode={user.emailConfirmed ? "hidden" : "visible"}>
+                <EmailUnconfirmed key={user.email} email={user.email} />
+              </Activity>
+            </>
+          )
         }
       />
       <ChangePhoneModal

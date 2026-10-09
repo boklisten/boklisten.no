@@ -26,7 +26,8 @@ export function invalidUserFields(user: UserFields): string[] {
       invalidFields.push(field);
     }
   }
-  if (user.dob === null) {
+  // Not `=== null`: a user just created without one (Vipps never sends it) holds `undefined`
+  if (!user.dob) {
     invalidFields.push("dob");
   } else if (isUnderage(user)) {
     for (const field of ["guardianName", "guardianEmail", "guardianPhone"] as const) {

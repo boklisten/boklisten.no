@@ -142,6 +142,7 @@ export default function AdministrateUserForm({
         fields={createFieldMap(autoSave.defaultValues)}
         form={form}
         leading={null}
+        only={null}
         phoneAction={null}
       />
       <form.AppForm>

@@ -1,13 +1,13 @@
 import { Skeleton, Stack, Stepper, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { Activity } from "react";
+import { Activity, useEffect, useEffectEvent, useRef } from "react";
 
 import GuardianSignatureRequest from "@/features/signatures/GuardianSignatureRequest";
 import SignAgreement from "@/features/signatures/SignAgreement";
 import UserSettingsForm from "@/features/user/UserSettingsForm";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
-import CountdownToRedirect from "@/shared/components/CountdownToRedirect";
+import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { isUnder18 } from "@/shared/utils/dates";
 import { hasPendingTasks } from "@/shared/utils/tasks";
@@ -36,12 +36,7 @@ export default function Tasks() {
     );
   }
   if (!hasPendingTasks(data)) {
-    return (
-      <Stack>
-        <SuccessAlert>Du har fullført alle utestående oppgaver</SuccessAlert>
-        <CountdownToRedirect shouldRedirectToLoginTarget seconds={5} />
-      </Stack>
-    );
+    return <TasksDone />;
   }
   return (
     <>
@@ -67,4 +62,21 @@ export default function Tasks() {
       </Stepper>
     </>
   );
+}
+
+/**
+ * Nothing left to do: on to where the customer was heading (the checkout, typically) at once. Once
+ * only, since AuthGuard's `Activity` re-runs effects whenever it reveals the page again.
+ */
+function TasksDone() {
+  const { redirectToTarget } = useLoginRedirect();
+  const redirected = useRef(false);
+  const onDone = useEffectEvent(() => {
+    if (!redirected.current) {
+      redirected.current = true;
+      redirectToTarget();
+    }
+  });
+  useEffect(() => onDone(), []);
+  return <SuccessAlert>Du har fullført alle utestående oppgaver</SuccessAlert>;
 }

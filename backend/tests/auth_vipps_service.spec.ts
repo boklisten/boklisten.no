@@ -208,6 +208,20 @@ test.group("AuthVippsService.handleCallback() destination", (group) => {
     assert.equal(redirect.lastCall.args[0], `${clientOrigin}/oppgaver?redirect=handlekurv`);
   });
 
+  test("sends a new account to the pending tasks, since Vipps gives no date of birth", async ({
+    assert,
+  }) => {
+    const { ctx, redirect } = callbackFor(
+      sandbox,
+      vippsUser({ address: "Gata 1", postalCode: "0150", postalCity: "Oslo" }),
+    );
+
+    await AuthVippsService.handleCallback(ctx);
+
+    assert.equal(redirect.lastCall.args[0], `${clientOrigin}/oppgaver`);
+    assert.isTrue((await User.findByOrFail("vippsUserId", "vipps-kari")).taskConfirmDetails);
+  });
+
   test("sends a failed Vipps exchange to the failure page", async ({ assert }) => {
     const { ctx, redirect } = callbackFor(sandbox, new Error("token exchange failed"));
 

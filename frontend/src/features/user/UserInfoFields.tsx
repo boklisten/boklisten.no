@@ -73,6 +73,41 @@ export function isUnderageWithoutGuardian(values: UserInfoFieldValues): boolean 
   );
 }
 
+/** The parts of the section that can be shown on their own; the guardian's fields go together. */
+export type UserInfoPart =
+  | "phoneNumber"
+  | "name"
+  | "address"
+  | "postal"
+  | "birthday"
+  | "guardian"
+  | "branchMembership";
+
+/**
+ * The parts a customer has yet to fill in: the details the backend requires (`invalidUserFields`)
+ * and, while none is chosen, the optional school.
+ */
+export function missingUserInfo(values: UserInfoFieldValues): Set<UserInfoPart> {
+  const missing = new Set<UserInfoPart>();
+  for (const part of ["phoneNumber", "name", "address", "birthday", "branchMembership"] as const) {
+    if (!values[part].trim()) {
+      missing.add(part);
+    }
+  }
+  if (!values.postal.code || !values.postal.city) {
+    missing.add("postal");
+  }
+  if (
+    isUnder18(new Date(values.birthday)) &&
+    [values.guardianName, values.guardianEmail, values.guardianPhoneNumber].some(
+      (value) => !value.trim(),
+    )
+  ) {
+    missing.add("guardian");
+  }
+  return missing;
+}
+
 const UserInfoFields = withFieldGroup({
   defaultValues: userInfoFieldDefaultValues,
   props: {
@@ -81,136 +116,160 @@ const UserInfoFields = withFieldGroup({
     leading: null as ReactNode,
     /** The personal forms' button for changing the read-only phone. */
     phoneAction: null as ReactNode,
+    /** Only these parts, or all of them. A date of birth typed in here brings the guardian along. */
+    only: null as ReadonlySet<UserInfoPart> | null,
   },
-  render: ({ group, perspective, leading, phoneAction }) => (
-    <>
-      <FormSectionTitle>
-        {perspective === "personal" ? "Din" : "Kundens"} informasjon
-      </FormSectionTitle>
-      {leading}
-      <group.AppField
-        name="phoneNumber"
-        // Read-only for the customer, so a missing phone must not block saving the rest.
-        validators={
-          perspective === "administrate"
-            ? { onBlur: ({ value }) => phoneNumberFieldValidator(value, perspective) }
-            : undefined
-        }
-      >
-        {(field) => (
-          <field.PhoneNumberField
-            readOnly={perspective === "personal"}
-            rightSection={phoneAction}
-            rightSectionWidth="auto"
-          />
+  render: ({ group, perspective, leading, phoneAction, only }) => {
+    const shows = (part: UserInfoPart) => only === null || only.has(part);
+    return (
+      <>
+        <FormSectionTitle>
+          {perspective === "personal" ? "Din" : "Kundens"} informasjon
+        </FormSectionTitle>
+        {leading}
+        {shows("phoneNumber") && (
+          <group.AppField
+            name="phoneNumber"
+            // Read-only for the customer, so a missing phone must not block saving the rest.
+            validators={
+              perspective === "administrate"
+                ? { onBlur: ({ value }) => phoneNumberFieldValidator(value, perspective) }
+                : undefined
+            }
+          >
+            {(field) => (
+              <field.PhoneNumberField
+                readOnly={perspective === "personal"}
+                rightSection={phoneAction}
+                rightSectionWidth="auto"
+              />
+            )}
+          </group.AppField>
         )}
-      </group.AppField>
-      <group.AppField
-        name="name"
-        validators={{
-          onBlur: ({ value }) => nameFieldValidator(value, perspective),
-        }}
-      >
-        {(field) => <field.NameField />}
-      </group.AppField>
-      <group.AppField
-        name="address"
-        validators={{
-          onBlur: ({ value }) => addressFieldValidator(value),
-        }}
-      >
-        {(field) => <field.AddressField />}
-      </group.AppField>
-      <group.AppField
-        name="postal"
-        validators={{
-          onBlurAsync: ({ value }) => postalCodeFieldValidator(value.code),
-        }}
-      >
-        {(field) => <field.PostalCodeField />}
-      </group.AppField>
-      <group.AppField
-        name="birthday"
-        validators={{
-          onBlur: ({ value }) => {
-            if (!value) {
-              return "Du må fylle inn fødselsdato";
-            }
-            if (dayjs(value, "YYYY-MM-DD").isBefore(dayjs().subtract(99, "years"))) {
-              return "Du må fylle inn en gyldig fødselsdato";
-            }
+        {shows("name") && (
+          <group.AppField
+            name="name"
+            validators={{
+              onBlur: ({ value }) => nameFieldValidator(value, perspective),
+            }}
+          >
+            {(field) => <field.NameField />}
+          </group.AppField>
+        )}
+        {shows("address") && (
+          <group.AppField
+            name="address"
+            validators={{
+              onBlur: ({ value }) => addressFieldValidator(value),
+            }}
+          >
+            {(field) => <field.AddressField />}
+          </group.AppField>
+        )}
+        {shows("postal") && (
+          <group.AppField
+            name="postal"
+            validators={{
+              onBlurAsync: ({ value }) => postalCodeFieldValidator(value.code),
+            }}
+          >
+            {(field) => <field.PostalCodeField />}
+          </group.AppField>
+        )}
+        {shows("birthday") && (
+          <group.AppField
+            name="birthday"
+            validators={{
+              onBlur: ({ value }) => {
+                if (!value) {
+                  return "Du må fylle inn fødselsdato";
+                }
+                if (dayjs(value, "YYYY-MM-DD").isBefore(dayjs().subtract(99, "years"))) {
+                  return "Du må fylle inn en gyldig fødselsdato";
+                }
 
-            return null;
-          },
-        }}
-      >
-        {(field) => (
-          <field.DateField
-            required
-            clearable
-            label="Fødselsdato"
-            autoComplete="bday"
-            minDate={dayjs().subtract(100, "years").toDate()}
-            maxDate={dayjs().subtract(10, "years").toDate()}
-            defaultDate={dayjs().subtract(18, "years").toDate()}
-            defaultLevel="decade"
-          />
+                return null;
+              },
+            }}
+          >
+            {(field) => (
+              <field.DateField
+                required
+                clearable
+                label="Fødselsdato"
+                autoComplete="bday"
+                minDate={dayjs().subtract(100, "years").toDate()}
+                maxDate={dayjs().subtract(10, "years").toDate()}
+                defaultDate={dayjs().subtract(18, "years").toDate()}
+                defaultLevel="decade"
+              />
+            )}
+          </group.AppField>
         )}
-      </group.AppField>
-      <group.Subscribe selector={(state) => state.values.birthday}>
-        {(birthday) => (
-          <Activity mode={isUnder18(new Date(birthday)) ? "visible" : "hidden"}>
-            <Fieldset
-              legend={`Siden ${perspective === "personal" ? "du" : "kunden"} er under 18, trenger vi informasjon om en av ${perspective === "personal" ? "dine" : "kundens"} foresatte.`}
+        <group.Subscribe selector={(state) => state.values.birthday}>
+          {(birthday) => (
+            <Activity
+              mode={
+                isUnder18(new Date(birthday)) && (shows("guardian") || shows("birthday"))
+                  ? "visible"
+                  : "hidden"
+              }
             >
-              <Stack gap="xs">
-                <group.AppField name="guardianName">
-                  {(field) => (
-                    <field.NameField
-                      label="Foresatt sitt fulle navn"
-                      placeholder="Reodor Felgen"
-                      autoComplete="section-guardian name"
-                    />
+              <Fieldset
+                legend={`Siden ${perspective === "personal" ? "du" : "kunden"} er under 18, trenger vi informasjon om en av ${perspective === "personal" ? "dine" : "kundens"} foresatte.`}
+              >
+                <Stack gap="xs">
+                  <group.AppField name="guardianName">
+                    {(field) => (
+                      <field.NameField
+                        label="Foresatt sitt fulle navn"
+                        placeholder="Reodor Felgen"
+                        autoComplete="section-guardian name"
+                      />
+                    )}
+                  </group.AppField>
+                  <group.AppField name="guardianEmail">
+                    {(field) => (
+                      <field.EmailField
+                        label="Foresatt sin e-post"
+                        placeholder="reodor.felgen@gmail.com"
+                        autoComplete="section-guardian email"
+                        deliverabilityFeedback={{ source: "guardian", perspective }}
+                      />
+                    )}
+                  </group.AppField>
+                  <group.AppField name="guardianPhoneNumber">
+                    {(field) => (
+                      <field.PhoneNumberField
+                        label="Foresatt sitt telefonnummer"
+                        autoComplete="section-guardian tel-national"
+                      />
+                    )}
+                  </group.AppField>
+                  {perspective === "administrate" && (
+                    <group.Subscribe selector={(state) => isUnderageWithoutGuardian(state.values)}>
+                      {(withoutGuardian) =>
+                        withoutGuardian && (
+                          <WarningAlert title="Foresatt mangler">
+                            Kunden må selv fylle ut informasjon om foresatt neste gang de logger
+                            inn.
+                          </WarningAlert>
+                        )
+                      }
+                    </group.Subscribe>
                   )}
-                </group.AppField>
-                <group.AppField name="guardianEmail">
-                  {(field) => (
-                    <field.EmailField
-                      label="Foresatt sin e-post"
-                      placeholder="reodor.felgen@gmail.com"
-                      autoComplete="section-guardian email"
-                      deliverabilityFeedback={{ source: "guardian", perspective }}
-                    />
-                  )}
-                </group.AppField>
-                <group.AppField name="guardianPhoneNumber">
-                  {(field) => (
-                    <field.PhoneNumberField
-                      label="Foresatt sitt telefonnummer"
-                      autoComplete="section-guardian tel-national"
-                    />
-                  )}
-                </group.AppField>
-                {perspective === "administrate" && (
-                  <group.Subscribe selector={(state) => isUnderageWithoutGuardian(state.values)}>
-                    {(withoutGuardian) =>
-                      withoutGuardian && (
-                        <WarningAlert title="Foresatt mangler">
-                          Kunden må selv fylle ut informasjon om foresatt neste gang de logger inn.
-                        </WarningAlert>
-                      )
-                    }
-                  </group.Subscribe>
-                )}
-              </Stack>
-            </Fieldset>
-          </Activity>
+                </Stack>
+              </Fieldset>
+            </Activity>
+          )}
+        </group.Subscribe>
+        {shows("branchMembership") && (
+          <group.AppField name="branchMembership">
+            {(field) => <field.SelectBranchField perspective={perspective} />}
+          </group.AppField>
         )}
-      </group.Subscribe>
-      <group.AppField name="branchMembership">
-        {(field) => <field.SelectBranchField perspective={perspective} />}
-      </group.AppField>
-    </>
-  ),
+      </>
+    );
+  },
 });
 export default UserInfoFields;
