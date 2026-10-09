@@ -10,6 +10,14 @@ const REASONS: Record<AuthVippsError, { title: string; text: string }> = {
     title: "E-postadressen er allerede i bruk",
     text: "En annen konto bruker e-postadressen fra Vipps, og Vipps har ikke bekreftet at den er din. Bekreft e-postadressen i Vipps-appen, eller logg inn med SMS.",
   },
+  outdated_app_version: {
+    title: "Vipps-appen må oppdateres",
+    text: "Oppdater Vipps-appen og prøv igjen.",
+  },
+  wrong_challenge: {
+    title: "Feil tall ble valgt",
+    text: "Tallet du valgte i Vipps-appen var ikke det samme som tallet i nettleseren. Prøv igjen.",
+  },
   error: { title: "Det skjedde en ukjent feil", text: PLEASE_TRY_AGAIN_TEXT },
 };
 

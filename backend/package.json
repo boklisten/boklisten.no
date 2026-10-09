@@ -40,7 +40,6 @@
     "start": "ENV_PATH=../ node build/bin/server.js"
   },
   "dependencies": {
-    "@adonisjs/ally": "^6.3.2",
     "@adonisjs/auth": "^10.1.0",
     "@adonisjs/bouncer": "^4.0.1",
     "@adonisjs/core": "^7.6.0",
@@ -64,6 +63,7 @@
     "jsbarcode": "^3.12.3",
     "luxon": "^3.7.2",
     "openapi-fetch": "^0.17.0",
+    "openid-client": "^6.8.8",
     "pdfkit": "^0.20.2",
     "pg": "^8.23.1",
     "qrcode": "^1.5.4",

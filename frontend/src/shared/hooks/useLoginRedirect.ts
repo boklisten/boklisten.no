@@ -2,12 +2,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
 import { authQueryOptions } from "@/features/auth/authQuery";
-import BL_CONFIG from "@/shared/utils/bl-config";
 import { hasPendingTasks } from "@/shared/utils/tasks";
 
 /**
- * Where a user goes after logging in: the `redirect` search param, or the front page. The target
- * survives the detour through Vipps and the pending-tasks page in localStorage.
+ * Where a user goes after logging in: the `redirect` search param (a path without its leading
+ * slash), or the front page. The pending-tasks page carries the param along.
  */
 export default function useLoginRedirect() {
   const { search } = useLocation();
@@ -15,14 +14,8 @@ export default function useLoginRedirect() {
   const queryClient = useQueryClient();
 
   function redirectToTarget() {
-    const { localStorageKeys } = BL_CONFIG.login;
-
-    const redirect = search.redirect ?? localStorage.getItem(localStorageKeys.redirect) ?? "";
-
-    localStorage.removeItem(localStorageKeys.redirect);
-
     // The login page is a waypoint, not a destination: Back must skip it.
-    void navigate({ to: `/${redirect}`, replace: true });
+    void navigate({ to: `/${search.redirect ?? ""}`, replace: true });
   }
 
   async function redirectAfterLogin() {
@@ -34,11 +27,7 @@ export default function useLoginRedirect() {
       return;
     }
     if (hasPendingTasks(user)) {
-      // Persist the target so the redirect survives the detour to /oppgaver
-      if (search.redirect) {
-        localStorage.setItem(BL_CONFIG.login.localStorageKeys.redirect, search.redirect);
-      }
-      void navigate({ to: "/oppgaver" });
+      void navigate({ to: "/oppgaver", search: { redirect: search.redirect } });
     } else {
       redirectToTarget();
     }

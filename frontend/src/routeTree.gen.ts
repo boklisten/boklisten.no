@@ -32,7 +32,6 @@ import { Route as administrasjonAdminMerkingRouteImport } from './routes/(admini
 import { Route as administrasjonAdminOrdreoversiktRouteImport } from './routes/(administrasjon)/admin/ordreoversikt'
 import { Route as administrasjonAdminUserSettingsRouteImport } from './routes/(administrasjon)/admin/user-settings'
 import { Route as administrasjonAdminVentelisteRouteImport } from './routes/(administrasjon)/admin/venteliste'
-import { Route as offentligAuthCallbackRouteImport } from './routes/(offentlig)/auth/callback'
 import { Route as offentligAuthFailureRouteImport } from './routes/(offentlig)/auth/failure'
 import { Route as offentligAuthLoginRouteImport } from './routes/(offentlig)/auth/login'
 import { Route as offentligAuthLogoutRouteImport } from './routes/(offentlig)/auth/logout'
@@ -195,11 +194,6 @@ const administrasjonAdminVentelisteRoute =
     path: '/venteliste',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const offentligAuthCallbackRoute = offentligAuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
 const offentligAuthFailureRoute = offentligAuthFailureRouteImport.update({
   id: '/auth/failure',
   path: '/auth/failure',
@@ -439,7 +433,6 @@ export interface FileRoutesByFullPath {
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/admin/venteliste': typeof administrasjonAdminVentelisteRoute
-  '/auth/callback': typeof offentligAuthCallbackRoute
   '/auth/failure': typeof offentligAuthFailureRoute
   '/auth/login': typeof offentligAuthLoginRoute
   '/auth/logout': typeof offentligAuthLogoutRoute
@@ -500,7 +493,6 @@ export interface FileRoutesByTo {
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/admin/venteliste': typeof administrasjonAdminVentelisteRoute
-  '/auth/callback': typeof offentligAuthCallbackRoute
   '/auth/failure': typeof offentligAuthFailureRoute
   '/auth/login': typeof offentligAuthLoginRoute
   '/auth/logout': typeof offentligAuthLogoutRoute
@@ -565,7 +557,6 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
   '/(administrasjon)/admin/user-settings': typeof administrasjonAdminUserSettingsRoute
   '/(administrasjon)/admin/venteliste': typeof administrasjonAdminVentelisteRoute
-  '/(offentlig)/auth/callback': typeof offentligAuthCallbackRoute
   '/(offentlig)/auth/failure': typeof offentligAuthFailureRoute
   '/(offentlig)/auth/login': typeof offentligAuthLoginRoute
   '/(offentlig)/auth/logout': typeof offentligAuthLogoutRoute
@@ -630,7 +621,6 @@ export interface FileRouteTypes {
     | '/admin/ordreoversikt'
     | '/admin/user-settings'
     | '/admin/venteliste'
-    | '/auth/callback'
     | '/auth/failure'
     | '/auth/login'
     | '/auth/logout'
@@ -691,7 +681,6 @@ export interface FileRouteTypes {
     | '/admin/ordreoversikt'
     | '/admin/user-settings'
     | '/admin/venteliste'
-    | '/auth/callback'
     | '/auth/failure'
     | '/auth/login'
     | '/auth/logout'
@@ -755,7 +744,6 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/ordreoversikt'
     | '/(administrasjon)/admin/user-settings'
     | '/(administrasjon)/admin/venteliste'
-    | '/(offentlig)/auth/callback'
     | '/(offentlig)/auth/failure'
     | '/(offentlig)/auth/login'
     | '/(offentlig)/auth/logout'
@@ -968,13 +956,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/venteliste'
       preLoaderRoute: typeof administrasjonAdminVentelisteRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(offentlig)/auth/callback': {
-      id: '/(offentlig)/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof offentligAuthCallbackRouteImport
-      parentRoute: typeof offentligRouteRoute
     }
     '/(offentlig)/auth/failure': {
       id: '/(offentlig)/auth/failure'
@@ -1318,7 +1299,6 @@ interface offentligRouteRouteChildren {
   offentligSjekkRoute: typeof offentligSjekkRoute
   offentligUserSettingsRoute: typeof offentligUserSettingsRoute
   offentligIndexRoute: typeof offentligIndexRoute
-  offentligAuthCallbackRoute: typeof offentligAuthCallbackRoute
   offentligAuthFailureRoute: typeof offentligAuthFailureRoute
   offentligAuthLoginRoute: typeof offentligAuthLoginRoute
   offentligAuthLogoutRoute: typeof offentligAuthLogoutRoute
@@ -1344,7 +1324,6 @@ const offentligRouteRouteChildren: offentligRouteRouteChildren = {
   offentligSjekkRoute: offentligSjekkRoute,
   offentligUserSettingsRoute: offentligUserSettingsRoute,
   offentligIndexRoute: offentligIndexRoute,
-  offentligAuthCallbackRoute: offentligAuthCallbackRoute,
   offentligAuthFailureRoute: offentligAuthFailureRoute,
   offentligAuthLoginRoute: offentligAuthLoginRoute,
   offentligAuthLogoutRoute: offentligAuthLogoutRoute,
