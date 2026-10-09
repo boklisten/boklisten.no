@@ -9,6 +9,7 @@ import type Order from "#models/order";
 import User from "#models/user";
 import { OrderEmailHandler } from "#services/orders/order_email_handler";
 import { isUnderage } from "#models/signature";
+import { SignatureLinkService } from "#services/signature_link_service";
 import { userHasValidSignature } from "#services/signature_helper";
 import type { MessageLogContext } from "#services/message_log_service";
 import { MessageLogService } from "#services/message_log_service";
@@ -317,6 +318,27 @@ const EmailService = {
 };
 
 /** The first word of the name, or "" when the customer has not given one. */
+const GUARDIAN_MESSAGE_NAME_MAX_LENGTH = 40;
+
+/**
+ * The pupil's name as a message to their guardian may carry it. The name is the customer's own free
+ * text, sent to a number and address they typed in themselves, so anything that reads as a link or
+ * a domain is dropped and the length capped: our sender must not relay someone else's message.
+ */
+export function nameForGuardianMessage(name: string | null): string | null {
+  const cleaned = (name ?? "")
+    .replaceAll(/(?:https?:\/\/|www\.)\S*/giu, " ")
+    .replaceAll(/\S*\.\p{L}{2,}\S*/gu, " ")
+    .replaceAll(/\s+/gu, " ")
+    .trim();
+  if (!cleaned) {
+    return null;
+  }
+  return cleaned.length > GUARDIAN_MESSAGE_NAME_MAX_LENGTH
+    ? `${cleaned.slice(0, GUARDIAN_MESSAGE_NAME_MAX_LENGTH - 1).trimEnd()}…`
+    : cleaned;
+}
+
 function firstName(name: string | null): string {
   return name?.split(" ")[0] ?? "";
 }
@@ -370,6 +392,7 @@ const DispatchService = {
     }
     customer.taskSignAgreement = true;
     await customer.save();
+    const signingUrl = await SignatureLinkService.urlFor(customer);
 
     const context: MessageLogContext = {
       messageType: "signature",
@@ -383,8 +406,8 @@ const DispatchService = {
         recipients: {
           to: customer.guardianEmail,
           dynamicTemplateData: {
-            guardianSignatureUri: `${clientOrigin}/signering/${customer.id}`,
-            customerName: customer.name ?? "",
+            guardianSignatureUri: signingUrl,
+            customerName: nameForGuardianMessage(customer.name) ?? "",
             guardianName: customer.guardianName ?? "",
             branchName,
           },
@@ -392,10 +415,11 @@ const DispatchService = {
       });
 
       if (customer.guardianPhone) {
+        const pupilName = nameForGuardianMessage(customer.name);
         await SmsService.sendOne(
           {
             to: customer.guardianPhone,
-            body: `Hei. ${customer.name ?? "Eleven"} skal snart motta bøker fra ${branchName} via Boklisten.no. Siden ${customer.name ?? "eleven"} er under 18 år, krever vi at du som foresatt signerer låneavtalen. Vi har derfor sendt en e-post til ${customer.guardianEmail} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
+            body: `Hei. ${pupilName ?? "Eleven"} skal snart motta bøker fra ${branchName} via Boklisten.no. Siden ${pupilName ?? "eleven"} er under 18 år, krever vi at du som foresatt signerer låneavtalen. Vi har derfor sendt en e-post til ${customer.guardianEmail} med lenke til signering. Ta kontakt på info@boklisten.no om du har spørsmål. Mvh. Boklisten`,
           },
           context,
         );
@@ -407,7 +431,7 @@ const DispatchService = {
         recipients: {
           to: customer.email,
           dynamicTemplateData: {
-            signatureUri: `${clientOrigin}/signering/${customer.id}`,
+            signatureUri: signingUrl,
             name: customer.name,
             branchName,
           },

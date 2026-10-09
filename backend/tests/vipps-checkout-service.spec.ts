@@ -13,10 +13,11 @@ import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import type { VippsCheckoutSession } from "#validators/checkout_validators";
 import { createBranch } from "#tests/branch_fixtures";
 import { createOrder } from "#tests/order_fixtures";
-import { createUser, userDouble } from "#tests/user_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 test.group("VippsCheckoutService.update", (group) => {
   let testOrder: Order;
+  let customer: User;
   let captureStub: sinon.SinonStub;
   let placeOrderStub: sinon.SinonStub;
   let sandbox: sinon.SinonSandbox;
@@ -25,7 +26,8 @@ test.group("VippsCheckoutService.update", (group) => {
 
   group.each.setup(async () => {
     const truncate = await testUtils.db().truncate();
-    const [branch, customer] = await Promise.all([createBranch(), createUser()]);
+    const [branch, createdCustomer] = await Promise.all([createBranch(), createUser()]);
+    customer = createdCustomer;
     testOrder = await createOrder({
       amount: 400,
       branchId: branch.id,
@@ -36,10 +38,6 @@ test.group("VippsCheckoutService.update", (group) => {
     successfulSession = { reference: testOrder.id, sessionState: "PaymentSuccessful" };
 
     sandbox = createSandbox();
-    sandbox
-      .stub(User, "findOrFail")
-      .resolves(userDouble({ id: customer.id, name: "Ola Nordmann" }));
-    sandbox.stub(User.prototype, "save").resolvesThis();
     placeOrderStub = sandbox
       .stub(OrderPlacedHandler.prototype, "placeOrder")
       .callsFake(() => Promise.resolve(testOrder));
@@ -103,5 +101,35 @@ test.group("VippsCheckoutService.update", (group) => {
     await VippsCheckoutService.update(successfulSession);
 
     assert.equal(captureStub.callCount, 0);
+  });
+
+  test("should address the shipment from the billing details without editing the account", async ({
+    assert,
+  }) => {
+    const before = await User.findOrFail(customer.id);
+
+    await VippsCheckoutService.update({
+      ...successfulSession,
+      billingDetails: {
+        firstName: "Kari",
+        lastName: "Angriper",
+        email: "angriper@example.com",
+        phoneNumber: "4799999999",
+        streetAddress: "Storgata 1",
+        postalCode: "0155",
+        city: "OSLO",
+      },
+      shippingDetails: { shippingMethodId: "mailbox", amount: { value: 7500 } },
+    });
+
+    const after = await User.findOrFail(customer.id);
+    assert.deepEqual(
+      [after.name, after.email, after.phone, after.address, after.postCode, after.postCity],
+      [before.name, before.email, before.phone, before.address, before.postCode, before.postCity],
+    );
+    const delivery = await Delivery.ofOrder(testOrder.id);
+    assert.equal(delivery?.shipmentName, "Kari Angriper");
+    assert.equal(delivery?.shipmentAddress, "Storgata 1");
+    assert.equal(delivery?.toPostalCode, "0155");
   });
 });

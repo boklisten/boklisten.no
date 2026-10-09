@@ -1,5 +1,5 @@
 import type { User } from "@boklisten/backend/shared/user";
-import { Button, CopyButton, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
+import { Button, Group, Paper, Skeleton, Stack, Text } from "@mantine/core";
 import { IconCopy, IconSend } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
@@ -15,6 +15,7 @@ export default function AdministrateUserSignatures({ user }: { user: User }) {
   const { data, isLoading, isError } = useQuery(
     api.signatures.show.queryOptions({ params: { userId: user.id } }),
   );
+  const linkMutation = useMutation(api.signatures.link.mutationOptions());
   const requestSignatureMutation = useMutation(
     api.signatures.sendLink.mutationOptions({
       onSuccess: () => showSuccessNotification("Signaturforespørsel har blitt sendt!"),
@@ -34,19 +35,23 @@ export default function AdministrateUserSignatures({ user }: { user: User }) {
 
   const signingLinkActions = (
     <Group>
-      <CopyButton value={`${window.location.origin}/signering/${user.id}`}>
-        {({ copy }) => (
-          <Button
-            leftSection={<IconCopy />}
-            onClick={() => {
-              copy();
-              showSuccessNotification("Signeringslenke ble kopiert!");
-            }}
-          >
-            Kopier signeringslenke
-          </Button>
-        )}
-      </CopyButton>
+      <Button
+        leftSection={<IconCopy />}
+        loading={linkMutation.isPending}
+        onClick={() => {
+          // The link is fetched first (the customer's live one, or a fresh one); handing the
+          // clipboard a promise keeps the click's permission across the request in Safari.
+          const text = linkMutation
+            .mutateAsync({ params: { userId: user.id } })
+            .then(({ url }) => new Blob([url], { type: "text/plain" }));
+          navigator.clipboard
+            .write([new ClipboardItem({ "text/plain": text })])
+            .then(() => showSuccessNotification("Signeringslenke ble kopiert!"))
+            .catch(() => showErrorNotification("Klarte ikke kopiere signeringslenken"));
+        }}
+      >
+        Kopier signeringslenke
+      </Button>
       <Button
         leftSection={<IconSend />}
         loading={requestSignatureMutation.isPending}

@@ -5,6 +5,8 @@ import { middleware } from "#start/kernel";
 import {
   emailValidationThrottle,
   publicBlidLookupThrottle,
+  signatureLinkThrottle,
+  signatureSendThrottle,
   smsClientThrottle,
   smsCodeThrottle,
   throttle,
@@ -74,8 +76,13 @@ router.get("/items/buyback", [controllers.Items, "buyback"]);
 router.get("/editable_texts/:id", [controllers.EditableTexts, "show"]);
 router.get("/questions_and_answers", [controllers.QuestionsAndAnswers, "index"]);
 
-router.get("/signatures/:userId/valid", [controllers.Signatures, "valid"]);
-router.post("/signatures/:userId/sign", [controllers.Signatures, "sign"]);
+/** Emailed signing links; the token is the credential (`SignatureLinkService`). */
+router
+  .get("/signatures/links/:token", [controllers.Signatures, "linkStatus"])
+  .use(signatureLinkThrottle);
+router
+  .post("/signatures/links/:token/sign", [controllers.Signatures, "signViaLink"])
+  .use(signatureLinkThrottle);
 
 /** Called by Vipps with the per-payment token issued when the session was created. */
 router.post("/checkout/vipps/callback", [controllers.Checkout, "vippsCallback"]);
@@ -103,7 +110,11 @@ router
     router.get("/customer_items/me/:customerItemId", [controllers.CustomerItems, "detailsMe"]);
 
     router.get("/signatures/me", [controllers.Signatures, "me"]);
-    router.post("/signatures/me/send", [controllers.Signatures, "sendLinkMe"]);
+    router.get("/signatures/me/agreement", [controllers.Signatures, "agreementMe"]);
+    router.post("/signatures/me/sign", [controllers.Signatures, "signMe"]);
+    router
+      .post("/signatures/me/send", [controllers.Signatures, "sendLinkMe"])
+      .use(signatureSendThrottle);
 
     router.get("/orders/me", [controllers.Orders, "indexMe"]);
     router.get("/orders/me/open_items", [controllers.Orders, "openItemsMe"]);
@@ -301,6 +312,7 @@ router
 
     router.get("/signatures/:userId", [controllers.Signatures, "show"]);
     router.post("/signatures/:userId/send", [controllers.Signatures, "sendLink"]);
+    router.post("/signatures/:userId/link", [controllers.Signatures, "link"]);
 
     // orders
     router.get("/orders", [controllers.Orders, "index"]);

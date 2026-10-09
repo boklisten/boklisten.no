@@ -4,6 +4,7 @@ import Branch from "#models/branch";
 import type User from "#models/user";
 import { inheritBelow } from "#services/branch_inheritance_service";
 import { createBranch, updateBranch } from "#services/branch_service";
+import { LoginService } from "#services/login_service";
 import { canSeeBranch } from "#shared/branch-visibility";
 import { hasPermissionLevel } from "#shared/user-permission";
 import {
@@ -65,9 +66,16 @@ export default class BranchesController {
   }
 }
 
-/** The logged-in user on a route guests may also call. */
+/**
+ * The logged-in user on a route guests may also call. Tracked like any authenticated request, so a
+ * session the remember-me cookie restores here is tagged and `SessionRevocationService` finds it.
+ */
 async function optionalViewer(ctx: HttpContext): Promise<User | null> {
-  return (await ctx.auth.check()) ? ctx.auth.getUserOrFail() : null;
+  if (!(await ctx.auth.check())) {
+    return null;
+  }
+  await LoginService.trackActivity(ctx);
+  return ctx.auth.getUserOrFail();
 }
 
 /**

@@ -126,17 +126,17 @@ const routes = {
     tokens: [{"old":"/questions_and_answers","type":0,"val":"questions_and_answers","end":""}],
     types: placeholder as Registry['questions_and_answers.index']['types'],
   },
-  'signatures.valid': {
+  'signatures.link_status': {
     methods: ["GET","HEAD"],
-    pattern: '/signatures/:userId/valid',
-    tokens: [{"old":"/signatures/:userId/valid","type":0,"val":"signatures","end":""},{"old":"/signatures/:userId/valid","type":1,"val":"userId","end":""},{"old":"/signatures/:userId/valid","type":0,"val":"valid","end":""}],
-    types: placeholder as Registry['signatures.valid']['types'],
+    pattern: '/signatures/links/:token',
+    tokens: [{"old":"/signatures/links/:token","type":0,"val":"signatures","end":""},{"old":"/signatures/links/:token","type":0,"val":"links","end":""},{"old":"/signatures/links/:token","type":1,"val":"token","end":""}],
+    types: placeholder as Registry['signatures.link_status']['types'],
   },
-  'signatures.sign': {
+  'signatures.sign_via_link': {
     methods: ["POST"],
-    pattern: '/signatures/:userId/sign',
-    tokens: [{"old":"/signatures/:userId/sign","type":0,"val":"signatures","end":""},{"old":"/signatures/:userId/sign","type":1,"val":"userId","end":""},{"old":"/signatures/:userId/sign","type":0,"val":"sign","end":""}],
-    types: placeholder as Registry['signatures.sign']['types'],
+    pattern: '/signatures/links/:token/sign',
+    tokens: [{"old":"/signatures/links/:token/sign","type":0,"val":"signatures","end":""},{"old":"/signatures/links/:token/sign","type":0,"val":"links","end":""},{"old":"/signatures/links/:token/sign","type":1,"val":"token","end":""},{"old":"/signatures/links/:token/sign","type":0,"val":"sign","end":""}],
+    types: placeholder as Registry['signatures.sign_via_link']['types'],
   },
   'checkout.vipps_callback': {
     methods: ["POST"],
@@ -203,6 +203,18 @@ const routes = {
     pattern: '/signatures/me',
     tokens: [{"old":"/signatures/me","type":0,"val":"signatures","end":""},{"old":"/signatures/me","type":0,"val":"me","end":""}],
     types: placeholder as Registry['signatures.me']['types'],
+  },
+  'signatures.agreement_me': {
+    methods: ["GET","HEAD"],
+    pattern: '/signatures/me/agreement',
+    tokens: [{"old":"/signatures/me/agreement","type":0,"val":"signatures","end":""},{"old":"/signatures/me/agreement","type":0,"val":"me","end":""},{"old":"/signatures/me/agreement","type":0,"val":"agreement","end":""}],
+    types: placeholder as Registry['signatures.agreement_me']['types'],
+  },
+  'signatures.sign_me': {
+    methods: ["POST"],
+    pattern: '/signatures/me/sign',
+    tokens: [{"old":"/signatures/me/sign","type":0,"val":"signatures","end":""},{"old":"/signatures/me/sign","type":0,"val":"me","end":""},{"old":"/signatures/me/sign","type":0,"val":"sign","end":""}],
+    types: placeholder as Registry['signatures.sign_me']['types'],
   },
   'signatures.send_link_me': {
     methods: ["POST"],
@@ -827,6 +839,12 @@ const routes = {
     pattern: '/signatures/:userId/send',
     tokens: [{"old":"/signatures/:userId/send","type":0,"val":"signatures","end":""},{"old":"/signatures/:userId/send","type":1,"val":"userId","end":""},{"old":"/signatures/:userId/send","type":0,"val":"send","end":""}],
     types: placeholder as Registry['signatures.send_link']['types'],
+  },
+  'signatures.link': {
+    methods: ["POST"],
+    pattern: '/signatures/:userId/link',
+    tokens: [{"old":"/signatures/:userId/link","type":0,"val":"signatures","end":""},{"old":"/signatures/:userId/link","type":1,"val":"userId","end":""},{"old":"/signatures/:userId/link","type":0,"val":"link","end":""}],
+    types: placeholder as Registry['signatures.link']['types'],
   },
   'orders.index': {
     methods: ["GET","HEAD"],

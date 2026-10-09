@@ -68,13 +68,16 @@ export interface ApiDefinition {
     destroy: typeof routes['questions_and_answers.destroy']
   }
   signatures: {
-    valid: typeof routes['signatures.valid']
-    sign: typeof routes['signatures.sign']
+    linkStatus: typeof routes['signatures.link_status']
+    signViaLink: typeof routes['signatures.sign_via_link']
     me: typeof routes['signatures.me']
+    agreementMe: typeof routes['signatures.agreement_me']
+    signMe: typeof routes['signatures.sign_me']
     sendLinkMe: typeof routes['signatures.send_link_me']
     gallery: typeof routes['signatures.gallery']
     show: typeof routes['signatures.show']
     sendLink: typeof routes['signatures.send_link']
+    link: typeof routes['signatures.link']
   }
   checkout: {
     vippsCallback: typeof routes['checkout.vipps_callback']

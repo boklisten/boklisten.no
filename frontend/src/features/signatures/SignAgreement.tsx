@@ -17,35 +17,43 @@ import { showErrorNotification } from "@/shared/utils/notifications";
 import { authQueryKey } from "@/features/auth/authQuery";
 import { api } from "@/shared/utils/apiClient";
 
-export default function SignAgreement({ userId }: { userId: string }) {
+/**
+ * The loan agreement and its signing form. With a token it serves an emailed signing link, which
+ * is how a guardian signs; without one it is the logged-in adult customer signing for themselves.
+ */
+export default function SignAgreement({ token }: { token?: string }) {
   const queryClient = useQueryClient();
-  const { data, isLoading, isError } = useQuery(
-    api.signatures.valid.queryOptions({ params: { userId } }),
+  const linkQuery = useQuery({
+    ...api.signatures.linkStatus.queryOptions({ params: { token: token ?? "" } }),
+    enabled: token !== undefined,
+  });
+  const meQuery = useQuery({
+    ...api.signatures.agreementMe.queryOptions(),
+    enabled: token === undefined,
+  });
+  const { data, isLoading, isError } = token === undefined ? meQuery : linkQuery;
+  const mutationCallbacks = {
+    onError: () => showErrorNotification("Noe gikk galt under signering"),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: api.signatures.linkStatus.pathKey() });
+      void queryClient.invalidateQueries({ queryKey: api.signatures.agreementMe.pathKey() });
+      void queryClient.invalidateQueries({ queryKey: api.signatures.me.pathKey() });
+      void queryClient.invalidateQueries({ queryKey: authQueryKey() });
+    },
+  };
+  const signViaLinkMutation = useMutation(
+    api.signatures.signViaLink.mutationOptions(mutationCallbacks),
   );
-  const signMutation = useMutation(
-    api.signatures.sign.mutationOptions({
-      onError: () => showErrorNotification("Noe gikk galt under signering"),
-      onSettled: () => {
-        void queryClient.invalidateQueries({
-          queryKey: api.signatures.valid.queryKey({
-            params: { userId },
-          }),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: api.signatures.me.pathKey(),
-        });
-        void queryClient.invalidateQueries({
-          queryKey: authQueryKey(),
-        });
-      },
-    }),
-  );
+  const signMeMutation = useMutation(api.signatures.signMe.mutationOptions(mutationCallbacks));
   const form = useAppForm({
     defaultValues: {
-      signingName: data && !data.isUnderage && "name" in data ? (data.name ?? "") : "",
+      signingName: data && "name" in data && !data.isUnderage ? (data.name ?? "") : "",
       base64EncodedImage: "",
     },
-    onSubmit: ({ value }) => signMutation.mutate({ params: { userId }, body: value }),
+    onSubmit: ({ value }) =>
+      token === undefined
+        ? signMeMutation.mutate({ body: value })
+        : signViaLinkMutation.mutate({ params: { token }, body: value }),
   });
 
   if (isLoading) {
@@ -65,6 +73,10 @@ export default function SignAgreement({ userId }: { userId: string }) {
         {PLEASE_TRY_AGAIN_TEXT}
       </ErrorAlert>
     );
+  }
+
+  if ("invalidLink" in data) {
+    return <ErrorAlert title="Ugyldig signeringslenke">{data.message}</ErrorAlert>;
   }
 
   if (data.isSignatureValid) {
@@ -137,7 +149,7 @@ export default function SignAgreement({ userId }: { userId: string }) {
         </form.AppField>
         <Button
           onClick={form.handleSubmit}
-          loading={signMutation.isPending}
+          loading={signViaLinkMutation.isPending || signMeMutation.isPending}
           leftSection={<IconChecks />}
           color="green"
         >

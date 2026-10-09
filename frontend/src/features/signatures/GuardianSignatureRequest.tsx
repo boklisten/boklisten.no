@@ -2,6 +2,7 @@ import type { User } from "@boklisten/backend/shared/user";
 import { Button, Group, Stack, Text, Title } from "@mantine/core";
 import { IconSend } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
+import { TuyauHTTPError } from "@tuyau/core/client";
 
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import { api } from "@/shared/utils/apiClient";
@@ -15,7 +16,15 @@ export default function GuardianSignatureRequest({ user }: { user: User }) {
   const requestSignatureMutation = useMutation(
     api.signatures.sendLinkMe.mutationOptions({
       onSuccess: () => showSuccessNotification("Signaturforespørsel har blitt sendt!"),
-      onError: () => showErrorNotification("Klarte ikke sende signaturforespørsel"),
+      onError: (error) =>
+        showErrorNotification(
+          error instanceof TuyauHTTPError && error.status === 429
+            ? {
+                title: "For mange signaturforespørsler",
+                message: "Du kan sende tre forespørsler per døgn. Prøv igjen i morgen.",
+              }
+            : "Klarte ikke sende signaturforespørsel",
+        ),
     }),
   );
   const guardianName = user.guardianName;

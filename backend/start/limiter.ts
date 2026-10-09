@@ -34,6 +34,22 @@ export const smsCodeThrottle = limiter.define("sms_code", (ctx) =>
     : null,
 );
 
+/**
+ * Per client, for the public signing-link routes. Tokens are far too long to guess, so this only
+ * keeps anyone from hammering the routes; a guardian opens their link a handful of times.
+ */
+export const signatureLinkThrottle = limiter.define("signature_link", (ctx) =>
+  limiter.allowRequests(30).every("1 minute").usingKey(ctx.request.ip()),
+);
+
+/**
+ * Per account, for customers sending their own signing request: it goes by SMS and email to a
+ * guardian number and address the customer typed in. Runs after the group's auth middleware.
+ */
+export const signatureSendThrottle = limiter.define("signature_send", (ctx) =>
+  isDeployed ? limiter.allowRequests(3).every("1 day").usingKey(ctx.auth.getUserOrFail().id) : null,
+);
+
 export const emailValidationThrottle = limiter.define("email_validation", () =>
   limiter.allowRequests(20).every("1 minute"),
 );

@@ -1,4 +1,3 @@
-import logger from "@adonisjs/core/services/logger";
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
 
@@ -15,26 +14,6 @@ import { VippsPaymentService } from "#services/vipps/vipps_payment_service";
 import { clientOrigin } from "#config/app";
 import env from "#start/env";
 import type { VippsCheckoutSession } from "#validators/checkout_validators";
-
-async function updateCustomerWithBillingDetails(session: VippsCheckoutSession, customerId: string) {
-  try {
-    if (session.billingDetails) {
-      const user = await User.findOrFail(customerId);
-      user.merge({
-        name: `${session.billingDetails.firstName} ${session.billingDetails.lastName}`,
-        phone: session.billingDetails.phoneNumber.slice(-8),
-        email: session.billingDetails.email.trim().toLowerCase(),
-        address: session.billingDetails.streetAddress ?? user.address,
-        postCode: session.billingDetails.postalCode ?? user.postCode,
-        postCity: session.billingDetails.city ?? user.postCity,
-      });
-      await user.save();
-    }
-  } catch (error) {
-    logger.error(error);
-  }
-  return User.findOrFail(customerId);
-}
 
 async function createLogistics(order: Order, isDeliveryFree: boolean) {
   const needLogistics = order.orderItems.some(
@@ -169,7 +148,10 @@ export const VippsCheckoutService = {
       if (order.customerId === null) {
         throw new Error(`order "${order.id}" has no customer`);
       }
-      const customer = await updateCustomerWithBillingDetails(session, order.customerId);
+      // Vipps' billing details only address this shipment. They are never written to the account:
+      // its email and phone are login identifiers, proven only through their own verification flows.
+      const customer = await User.findOrFail(order.customerId);
+      const billing = session.billingDetails;
 
       let deliveryPrice = 0;
       if (session.shippingDetails?.shippingMethodId?.includes("mail")) {
@@ -186,12 +168,17 @@ export const VippsCheckoutService = {
           shipmentName:
             session.shippingDetails.firstName && session.shippingDetails.lastName
               ? `${session.shippingDetails.firstName} ${session.shippingDetails.lastName}`
-              : customer.name,
-          shipmentAddress: session.shippingDetails.streetAddress ?? customer.address,
-          shipmentPostalCode: session.shippingDetails.postalCode ?? customer.postCode,
-          shipmentPostalCity: session.shippingDetails.city ?? customer.postCity,
+              : billing
+                ? `${billing.firstName} ${billing.lastName}`
+                : customer.name,
+          shipmentAddress:
+            session.shippingDetails.streetAddress ?? billing?.streetAddress ?? customer.address,
+          shipmentPostalCode:
+            session.shippingDetails.postalCode ?? billing?.postalCode ?? customer.postCode,
+          shipmentPostalCity: session.shippingDetails.city ?? billing?.city ?? customer.postCity,
           fromPostalCode: "1364",
-          toPostalCode: session.shippingDetails.postalCode ?? customer.postCode,
+          toPostalCode:
+            session.shippingDetails.postalCode ?? billing?.postalCode ?? customer.postCode,
           product: session.shippingDetails.shippingMethodId === "mailbox" ? "3584" : "SERVICEPAKKE",
         });
       }

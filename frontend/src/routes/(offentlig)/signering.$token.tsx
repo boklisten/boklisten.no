@@ -3,7 +3,7 @@ import SignAgreement from "@/features/signatures/SignAgreement";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 
-export const Route = createFileRoute("/(offentlig)/signering/$userId")({
+export const Route = createFileRoute("/(offentlig)/signering/$token")({
   head: () =>
     seo({
       title: "Signering | Boklisten.no",
@@ -13,12 +13,12 @@ export const Route = createFileRoute("/(offentlig)/signering/$userId")({
 });
 
 function SignaturePage() {
-  const { userId } = Route.useParams();
+  const { token } = Route.useParams();
   return (
     <Container size="sm">
       <Stack>
         <Title>Signering</Title>
-        <SignAgreement userId={userId} />
+        <SignAgreement token={token} />
       </Stack>
     </Container>
   );

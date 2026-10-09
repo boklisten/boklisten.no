@@ -60,7 +60,7 @@ export default function Tasks() {
               <GuardianSignatureRequest user={data} />
             </Activity>
             <Activity mode={!isUnder18(data.dob) ? "visible" : "hidden"}>
-              <SignAgreement userId={data.id} />
+              <SignAgreement />
             </Activity>
           </Stepper.Step>
         )}

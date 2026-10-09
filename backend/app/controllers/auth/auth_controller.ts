@@ -18,7 +18,13 @@ export default class AuthController {
     return { user: await UserService.withTasksReconciled(ctx.auth.getUserOrFail()) };
   }
 
+  /**
+   * Ends this login, its remember-me token included. The route is public, so the guard is
+   * authenticated first: `logout()` deletes the token only for a user the guard knows, and the
+   * cookie alone would otherwise stay usable for its year.
+   */
   async logout(ctx: HttpContext) {
+    await ctx.auth.check();
     await ctx.auth.use().logout();
     return {};
   }

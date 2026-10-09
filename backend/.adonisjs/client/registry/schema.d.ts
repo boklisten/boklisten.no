@@ -247,28 +247,28 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/questions_and_answers_controller').default['index']>>>
     }
   }
-  'signatures.valid': {
+  'signatures.link_status': {
     methods: ["GET","HEAD"]
-    pattern: '/signatures/:userId/valid'
+    pattern: '/signatures/links/:token'
     types: {
       body: {}
       paramsTuple: [ParamValue]
-      params: { userId: ParamValue }
+      params: { token: ParamValue }
       query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['valid']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['valid']>>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['linkStatus']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['linkStatus']>>>
     }
   }
-  'signatures.sign': {
+  'signatures.sign_via_link': {
     methods: ["POST"]
-    pattern: '/signatures/:userId/sign'
+    pattern: '/signatures/links/:token/sign'
     types: {
       body: ExtractBody<InferInput<(typeof import('#validators/signature').signValidator)>>
       paramsTuple: [ParamValue]
-      params: { userId: ParamValue }
+      params: { token: ParamValue }
       query: ExtractQuery<InferInput<(typeof import('#validators/signature').signValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['sign']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['sign']>>> | { status: 422; response: { errors: SimpleError[] } }
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['signViaLink']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['signViaLink']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'checkout.vipps_callback': {
@@ -401,6 +401,30 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['me']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['me']>>>
+    }
+  }
+  'signatures.agreement_me': {
+    methods: ["GET","HEAD"]
+    pattern: '/signatures/me/agreement'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['agreementMe']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['agreementMe']>>>
+    }
+  }
+  'signatures.sign_me': {
+    methods: ["POST"]
+    pattern: '/signatures/me/sign'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/signature').signValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/signature').signValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['signMe']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['signMe']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'signatures.send_link_me': {
@@ -1649,6 +1673,18 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['sendLink']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['sendLink']>>>
+    }
+  }
+  'signatures.link': {
+    methods: ["POST"]
+    pattern: '/signatures/:userId/link'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { userId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['link']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['link']>>>
     }
   }
   'orders.index': {

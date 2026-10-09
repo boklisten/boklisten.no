@@ -83,7 +83,7 @@ export default function CheckoutSignature() {
           </Group>
         </Stack>
       ) : (
-        <SignAgreement userId={user.id} />
+        <SignAgreement />
       )}
       <TanStackButton
         to="/handlekurv"

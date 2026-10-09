@@ -794,6 +794,23 @@ export class SessionSchema extends BaseModel {
   declare userId: string | null
 }
 
+export class SignatureLinkSchema extends BaseModel {
+  static $columns = ['createdAt', 'expiresAt', 'id', 'tokenEncrypted', 'tokenHash', 'userId'] as const
+  $columns = SignatureLinkSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare tokenEncrypted: string
+  @column()
+  declare tokenHash: string
+  @column()
+  declare userId: string
+}
+
 export class SignatureSchema extends BaseModel {
   static $columns = ['createdAt', 'customerId', 'id', 'image', 'signedByGuardian', 'signingName', 'updatedAt'] as const
   $columns = SignatureSchema.$columns
