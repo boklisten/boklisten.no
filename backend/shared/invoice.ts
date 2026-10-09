@@ -64,7 +64,6 @@ export interface Invoice {
   customerOrganizationNumber: string | null;
   customerAddress: string | null;
   customerPostCode: string | null;
-  customerPostCity: string | null;
   /** Only company invoices carry a country. */
   customerCountry: string | null;
   /** Sums of the lines and the fee. */

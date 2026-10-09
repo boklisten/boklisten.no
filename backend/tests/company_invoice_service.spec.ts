@@ -105,7 +105,6 @@ test.group("company invoice creation", (group) => {
         phone: "99240588",
         address: "Jacob Naadlands veg 2",
         postCode: "3850",
-        postCity: "Kviteseid",
       })
     ).id;
   });
@@ -136,7 +135,6 @@ test.group("company invoice creation", (group) => {
       customerOrganizationNumber: "988982857",
       customerNumber: "988982857",
       customerAddress: "Jacob Naadlands veg 2",
-      customerPostCity: "Kviteseid",
       customerPostCode: "3850",
       customerCountry: "norway",
       customerDob: null,

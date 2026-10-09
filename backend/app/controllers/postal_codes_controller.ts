@@ -4,6 +4,7 @@ import { BringService } from "#services/bring/bring_service";
 
 export default class PostalCodesController {
   async show(ctx: HttpContext) {
-    return BringService.lookupPostalCode(ctx.request.param("postalCode"));
+    const cityOf = await BringService.postalCities();
+    return cityOf(ctx.request.param("postalCode"));
   }
 }

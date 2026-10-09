@@ -7,6 +7,7 @@ import Order from "#models/order";
 import Payment from "#models/payment";
 import User from "#models/user";
 import { deliveryDays } from "#services/application_config";
+import { BringService } from "#services/bring/bring_service";
 import { DeliveryService } from "#services/delivery_service";
 import { OrderPlacedHandler } from "#services/orders/order_placed_handler";
 import { TranslationService } from "#services/translation_service";
@@ -73,6 +74,11 @@ async function createLogistics(order: Order, isDeliveryFree: boolean) {
 export const VippsCheckoutService = {
   async create(order: Order, isDeliveryFree: boolean) {
     const customer = await User.findOrFail(order.customerId);
+    // Only a prefill, so a Bring outage must not stop the payment.
+    const city = await BringService.postalCities().then(
+      (cityOf) => cityOf(customer.postCode),
+      () => null,
+    );
     const [firstName, ...lastNames] = customer.name?.split(" ") ?? [];
     const { token, checkoutFrontendUrl } = await VippsPaymentService.checkout.create({
       type: "PAYMENT",
@@ -82,7 +88,7 @@ export const VippsCheckoutService = {
         email: customer.email,
         phoneNumber: customer.phone === null ? null : `47${customer.phone}`,
         streetAddress: customer.address ?? null,
-        city: customer.postCity ?? null,
+        city,
         postalCode: customer.postCode ?? null,
         country: "NO",
       },
@@ -164,7 +170,6 @@ export const VippsCheckoutService = {
           estimatedDelivery: DateTime.now().plus({ days: deliveryDays() + 2 }),
           facilityAddress: "Martin Lingesvei 25",
           facilityPostalCode: "1364",
-          facilityPostalCity: "FORNEBU",
           shipmentName:
             session.shippingDetails.firstName && session.shippingDetails.lastName
               ? `${session.shippingDetails.firstName} ${session.shippingDetails.lastName}`
@@ -175,7 +180,6 @@ export const VippsCheckoutService = {
             session.shippingDetails.streetAddress ?? billing?.streetAddress ?? customer.address,
           shipmentPostalCode:
             session.shippingDetails.postalCode ?? billing?.postalCode ?? customer.postCode,
-          shipmentPostalCity: session.shippingDetails.city ?? billing?.city ?? customer.postCity,
           fromPostalCode: "1364",
           toPostalCode:
             session.shippingDetails.postalCode ?? billing?.postalCode ?? customer.postCode,

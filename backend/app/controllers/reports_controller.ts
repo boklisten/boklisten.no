@@ -2,6 +2,7 @@ import type { HttpContext } from "@adonisjs/core/http";
 
 import db from "@adonisjs/lucid/services/db";
 
+import { BringService } from "#services/bring/bring_service";
 import {
   customerItemsReportValidator,
   ordersReportValidator,
@@ -10,7 +11,7 @@ import {
 } from "#validators/report";
 
 /**
- * Every report is one query; the columns are selected in the order the spreadsheet lists them,
+ * Every report is one query (the users report adds the postal city from Posten's register); the columns are selected in the order the spreadsheet lists them,
  * since the frontend turns each row's keys into the header row.
  */
 export default class ReportsController {
@@ -216,7 +217,7 @@ export default class ReportsController {
       name: string;
       phone: string | null;
       address: string;
-      postCity: string;
+      postCity: string | null;
       postCode: string;
       dob: string | null;
       permission: string;
@@ -230,7 +231,7 @@ export default class ReportsController {
         "users.name",
         "users.phone",
         "users.address",
-        "users.post_city as postCity",
+        db.raw(`NULL as "postCity"`),
         "users.post_code as postCode",
         db.raw(`to_char(users.dob, 'YYYY-MM-DD') as dob`),
         "users.permission",
@@ -240,6 +241,10 @@ export default class ReportsController {
       )
       .orderBy("users.created_at")
       .orderBy("users.id");
+    const cityOf = await BringService.postalCities();
+    for (const row of rows) {
+      row.postCity = cityOf(row.postCode);
+    }
     return rows;
   }
 }

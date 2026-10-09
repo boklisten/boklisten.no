@@ -449,7 +449,6 @@ test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
       shipmentName: "Ida",
       shipmentAddress: "Gata 1",
       shipmentPostalCode: "0370",
-      shipmentPostalCity: "Oslo",
       estimatedDelivery: estimated,
       trackingNumber: "TRACK123",
       product: "3584",
@@ -464,7 +463,7 @@ test.group("OrderHistoryService.presentOrderHistory() – delivery", () => {
       method: "bring",
       trackingNumber: "TRACK123",
       estimatedDelivery: estimated.toISOString(),
-      shipmentAddress: { name: "Ida", address: "Gata 1", postalCode: "0370", postalCity: "Oslo" },
+      shipmentAddress: { name: "Ida", address: "Gata 1", postalCode: "0370" },
       productLabel: "pakke i postkassen",
       amount: 79,
     });

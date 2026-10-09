@@ -28,7 +28,6 @@ test.group("assertMembershipAllowed", (group) => {
             name: "Ny Kunde",
             address: "Gata 1",
             postCode: "0001",
-            postCity: "Oslo",
             dob: new Date("2005-01-01"),
             branchMembershipId: wang.id,
             guardianName: null,

@@ -14,7 +14,6 @@ export interface User {
   phone: string | null;
   address: string | null;
   postCode: string | null;
-  postCity: string | null;
   emailConfirmed: boolean;
   /** Calendar date, `yyyy-MM-dd`. */
   dob: string | null;

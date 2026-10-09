@@ -100,14 +100,7 @@ export default class User extends UserSchema {
     }
     const pattern = `%${normalized.replaceAll(/[\\%_]/g, String.raw`\$&`)}%`;
     const ownFields = ["name", "phone", "email"];
-    const otherFields = [
-      "address",
-      "postCode",
-      "postCity",
-      "guardianName",
-      "guardianEmail",
-      "guardianPhone",
-    ];
+    const otherFields = ["address", "postCode", "guardianName", "guardianEmail", "guardianPhone"];
     return this.query()
       .where((query) => {
         for (const field of [...ownFields, ...otherFields]) {
@@ -129,7 +122,6 @@ export default class User extends UserSchema {
       phone: this.phone,
       address: this.address,
       postCode: this.postCode,
-      postCity: this.postCity,
       emailConfirmed: this.emailConfirmed,
       dob: this.dob?.toISODate() ?? null,
       guardianName: this.guardianName,

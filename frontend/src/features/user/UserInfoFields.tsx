@@ -16,10 +16,7 @@ export interface UserInfoFieldValues {
   name: string;
   phoneNumber: string;
   address: string;
-  postal: {
-    code: string;
-    city: string;
-  };
+  postCode: string;
   branchMembership: string;
   birthday: string;
   guardianName: string;
@@ -31,10 +28,7 @@ export const userInfoFieldDefaultValues: UserInfoFieldValues = {
   name: "",
   phoneNumber: "",
   address: "",
-  postal: {
-    code: "",
-    city: "",
-  },
+  postCode: "",
   branchMembership: "",
   birthday: "",
   guardianName: "",
@@ -50,8 +44,7 @@ export function userFieldsBody(values: UserInfoFieldValues) {
   return {
     name: values.name,
     address: values.address,
-    postCode: values.postal.code,
-    postCity: values.postal.city,
+    postCode: values.postCode,
     dob: values.birthday,
     branchMembershipId: values.branchMembership || null,
     guardianName: values.guardianName || null,
@@ -78,7 +71,7 @@ export type UserInfoPart =
   | "phoneNumber"
   | "name"
   | "address"
-  | "postal"
+  | "postCode"
   | "birthday"
   | "guardian"
   | "branchMembership";
@@ -89,13 +82,17 @@ export type UserInfoPart =
  */
 export function missingUserInfo(values: UserInfoFieldValues): Set<UserInfoPart> {
   const missing = new Set<UserInfoPart>();
-  for (const part of ["phoneNumber", "name", "address", "birthday", "branchMembership"] as const) {
+  for (const part of [
+    "phoneNumber",
+    "name",
+    "address",
+    "postCode",
+    "birthday",
+    "branchMembership",
+  ] as const) {
     if (!values[part].trim()) {
       missing.add(part);
     }
-  }
-  if (!values.postal.code || !values.postal.city) {
-    missing.add("postal");
   }
   if (
     isUnder18(new Date(values.birthday)) &&
@@ -166,11 +163,11 @@ const UserInfoFields = withFieldGroup({
             {(field) => <field.AddressField />}
           </group.AppField>
         )}
-        {shows("postal") && (
+        {shows("postCode") && (
           <group.AppField
-            name="postal"
+            name="postCode"
             validators={{
-              onBlurAsync: ({ value }) => postalCodeFieldValidator(value.code),
+              onBlurAsync: ({ value }) => postalCodeFieldValidator(value),
             }}
           >
             {(field) => <field.PostalCodeField />}

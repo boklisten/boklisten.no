@@ -3,6 +3,7 @@ import CustomerItem from "#models/customer_item";
 import Invoice from "#models/invoice";
 import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
+import { BringService } from "#services/bring/bring_service";
 import { exportFilename } from "#services/export_filename";
 import { toSemicolonCsv } from "#services/invoices/csv";
 import { tripletexRows, vismaRows } from "#services/invoices/invoice_export_rows";
@@ -56,6 +57,7 @@ async function tripletexLookups(invoices: InvoiceDto[]): Promise<TripletexLookup
     ),
     items: byId(items),
     branches: byId(branches),
+    postalCity: await BringService.postalCities(),
   };
 }
 
@@ -75,6 +77,7 @@ export async function exportInvoices(
   const rows = vismaRows(invoices, {
     ehf: format === "visma-ehf",
     creditOfInvoice: format === "visma-credit",
+    postalCity: await BringService.postalCities(),
   });
   return { filename: filename("visma"), csv: toSemicolonCsv(rows) };
 }

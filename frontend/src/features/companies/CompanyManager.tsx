@@ -83,15 +83,9 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
       phone: "",
       email: "",
       address: "",
-      postal: {
-        code: "",
-        city: "",
-      },
+      postCode: "",
     },
-    onSubmit: ({ value: { postal, ...company } }) =>
-      addCompanyMutation.mutate({
-        body: { ...company, postCode: postal.code, postCity: postal.city },
-      }),
+    onSubmit: ({ value }) => addCompanyMutation.mutate({ body: value }),
   });
   return (
     <Stack>
@@ -147,9 +141,9 @@ function CreateCompanyForm({ onSuccess }: { onSuccess: () => void }) {
         {(field) => <field.AddressField />}
       </form.AppField>
       <form.AppField
-        name="postal"
+        name="postCode"
         validators={{
-          onBlurAsync: ({ value }) => postalCodeFieldValidator(value.code),
+          onBlurAsync: ({ value }) => postalCodeFieldValidator(value),
         }}
       >
         {(field) => <field.PostalCodeField />}

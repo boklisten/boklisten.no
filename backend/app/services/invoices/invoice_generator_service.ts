@@ -212,7 +212,6 @@ function buildInvoice(
     customerOrganizationNumber: null,
     customerAddress: customer.address,
     customerPostCode: customer.postCode,
-    customerPostCity: customer.postCity,
     customerCountry: null,
     totalGross,
     totalNet: lines.reduce((sum, line) => sum + line.net, 0) + fee.net,

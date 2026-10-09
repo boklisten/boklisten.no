@@ -159,7 +159,6 @@ export default class Invoice extends InvoiceSchema {
       customerOrganizationNumber: this.customerOrganizationNumber,
       customerAddress: this.customerAddress,
       customerPostCode: this.customerPostCode,
-      customerPostCity: this.customerPostCity,
       customerCountry: this.customerCountry,
       totalGross: this.totalGross,
       totalNet: this.totalNet,

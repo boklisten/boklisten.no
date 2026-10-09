@@ -24,7 +24,6 @@ function vippsUser(overrides: Partial<VippsUser> = {}): VippsUser {
     phoneNumberVerified: true,
     address: "",
     postalCode: "",
-    postalCity: "",
     ...overrides,
   };
 }
@@ -213,7 +212,7 @@ test.group("AuthVippsService.handleCallback() destination", (group) => {
   }) => {
     const { ctx, redirect } = callbackFor(
       sandbox,
-      vippsUser({ address: "Gata 1", postalCode: "0150", postalCity: "Oslo" }),
+      vippsUser({ address: "Gata 1", postalCode: "0150" }),
     );
 
     await AuthVippsService.handleCallback(ctx);

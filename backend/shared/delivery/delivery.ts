@@ -19,11 +19,9 @@ export interface Delivery {
   estimatedDelivery: Date | null;
   facilityAddress: string | null;
   facilityPostalCode: string | null;
-  facilityPostalCity: string | null;
   shipmentName: string | null;
   shipmentAddress: string | null;
   shipmentPostalCode: string | null;
-  shipmentPostalCity: string | null;
   fromPostalCode: string | null;
   toPostalCode: string | null;
   product: BringProduct | null;

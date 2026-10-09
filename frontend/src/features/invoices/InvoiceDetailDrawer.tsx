@@ -24,6 +24,7 @@ import { confirmPaymentChange } from "@/features/invoices/useInvoiceStatusChange
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import EntityLink from "@/shared/components/EntityLink";
+import PostalCity from "@/shared/components/PostalCity";
 import { api, apiClient } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { errorMessage } from "@/shared/utils/errorMessage";
@@ -110,7 +111,8 @@ function InvoiceDocument({
         </Text>
         {invoice.branchName && <Text size="sm">{invoice.branchName}</Text>}
         <Text size="sm">
-          {invoice.customerAddress}, {invoice.customerPostCode} {invoice.customerPostCity}
+          {invoice.customerAddress}, {invoice.customerPostCode}{" "}
+          <PostalCity postalCode={invoice.customerPostCode} />
         </Text>
         <Text size="sm">
           {invoice.customerPhone}

@@ -124,8 +124,8 @@ test.group("VippsCheckoutService.update", (group) => {
 
     const after = await User.findOrFail(customer.id);
     assert.deepEqual(
-      [after.name, after.email, after.phone, after.address, after.postCode, after.postCity],
-      [before.name, before.email, before.phone, before.address, before.postCode, before.postCity],
+      [after.name, after.email, after.phone, after.address, after.postCode],
+      [before.name, before.email, before.phone, before.address, before.postCode],
     );
     const delivery = await Delivery.ofOrder(testOrder.id);
     assert.equal(delivery?.shipmentName, "Kari Angriper");

@@ -13,7 +13,6 @@ export const userProvisioningValidator = vine.create(
 
         address: vine.string().optional(),
         postalCode: postalCodeField.clone().optional(),
-        postalCity: vine.string().optional(),
         dob: vine.date().optional(),
       }),
     ),

@@ -68,7 +68,6 @@ export type OrderHistoryDelivery =
         name: string;
         address: string;
         postalCode: string;
-        postalCity: string;
       } | null;
       /** "pakke i postkassen" vs "pakke til hentested"; null when the product is unknown. */
       productLabel: string | null;

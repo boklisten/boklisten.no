@@ -2,8 +2,11 @@ import type { HttpContext } from "@adonisjs/core/http";
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
+import type sinon from "sinon";
+import { createSandbox } from "sinon";
 
 import ReportsController from "#controllers/reports_controller";
+import { BringService } from "#services/bring/bring_service";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
@@ -255,7 +258,18 @@ test.group("ReportsController.customerItems", (group) => {
 });
 
 test.group("ReportsController.users", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  let sandbox: sinon.SinonSandbox;
+
+  group.each.setup(() => {
+    sandbox = createSandbox();
+    sandbox
+      .stub(BringService, "postalCities")
+      .resolves((postalCode) => (postalCode === "0150" ? "Oslo" : null));
+    return testUtils.db().truncate();
+  });
+  group.each.teardown(() => {
+    sandbox.restore();
+  });
 
   test("lists the members of the branches with the branch name", async ({ assert }) => {
     const [branch, otherBranch] = await Promise.all([
@@ -291,6 +305,8 @@ test.group("ReportsController.users", (group) => {
       name: "Kari",
       dob: "2008-03-04",
       branchMembership: "Ullern VGS",
+      postCode: "0150",
+      postCity: "Oslo",
     });
   });
 });

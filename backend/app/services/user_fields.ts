@@ -7,7 +7,6 @@ export interface UserFields {
   name: string | null;
   address: string | null;
   postCode: string | null;
-  postCity: string | null;
   phone: string | null;
   dob: DateTime | null;
   guardianName: string | null;
@@ -21,7 +20,7 @@ export interface UserFields {
  */
 export function invalidUserFields(user: UserFields): string[] {
   const invalidFields: string[] = [];
-  for (const field of ["name", "address", "postCode", "postCity", "phone"] as const) {
+  for (const field of ["name", "address", "postCode", "phone"] as const) {
     if (!user[field]) {
       invalidFields.push(field);
     }

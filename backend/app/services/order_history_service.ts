@@ -130,13 +130,11 @@ function presentDelivery(
     shipmentAddress:
       delivery.shipmentName !== null &&
       delivery.shipmentAddress !== null &&
-      delivery.shipmentPostalCode !== null &&
-      delivery.shipmentPostalCity !== null
+      delivery.shipmentPostalCode !== null
         ? {
             name: delivery.shipmentName,
             address: delivery.shipmentAddress,
             postalCode: delivery.shipmentPostalCode,
-            postalCity: delivery.shipmentPostalCity,
           }
         : null,
     productLabel:

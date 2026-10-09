@@ -47,7 +47,6 @@ function vippsUserOf(profile: oidc.UserInfoResponse): VippsUser {
     // Vipps sends empty strings, or leaves `address` out, for a user who has not registered one.
     address: profile.address?.street_address ?? "",
     postalCode: profile.address?.postal_code ?? "",
-    postalCity: profile.address?.region ?? "",
   };
 }
 

@@ -33,7 +33,6 @@ interface UserCandidate {
   localName?: string;
   address?: string;
   postalCode?: string;
-  postalCity?: string;
   dob?: string;
 }
 
@@ -87,12 +86,6 @@ const IMPORT_COLUMNS: Column[] = [
     transformations: [{ type: "trim" }],
   },
   {
-    id: "postalCity",
-    label: "Poststed",
-    description: "Valgfri. F.eks. Oslo",
-    transformations: [{ type: "trim" }],
-  },
-  {
     id: "dob",
     label: "Fødselsdato",
     description: "Valgfri. Format åååå-mm-dd, f.eks. 2008-01-31",
@@ -119,7 +112,6 @@ function toUserCandidates(result: ImportResult): UserCandidate[] {
     localName: cell(row, "localName") || undefined,
     address: cell(row, "address") || undefined,
     postalCode: cell(row, "postalCode") || undefined,
-    postalCity: cell(row, "postalCity") || undefined,
     dob: cell(row, "dob") || undefined,
   }));
 }

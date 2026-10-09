@@ -16,6 +16,14 @@ const USER_ID = "65041cc7afe72e00496e2640";
 const ITEM_ID = "6294d66878497a0046f9b3e6";
 const CUSTOMER_ITEM_ID = "68a725b6dae0db228265cfd2";
 const BRANCH_ID = "5b6442ecd2e733002fae8a44";
+const POSTAL_CITIES = new Map([
+  ["0664", "Oslo"],
+  ["3850", "Kviteseid"],
+]);
+
+function postalCity(postalCode: string | null): string | null {
+  return POSTAL_CITIES.get(postalCode ?? "") ?? null;
+}
 
 /** A rent invoice as legacy bl-admin generated it in July 2026 (staging data, anonymised). */
 function rentInvoice(overrides: Partial<Invoice> = {}): Invoice {
@@ -49,7 +57,6 @@ function rentInvoice(overrides: Partial<Invoice> = {}): Invoice {
     customerPhone: "48190306",
     customerDob: "2007-06-07",
     customerAddress: "Agmund Bolts Vei 11",
-    customerPostCity: "Oslo",
     customerPostCode: "0664",
     totalGross: 1274,
     totalNet: 1250,
@@ -95,7 +102,6 @@ function companyInvoice(): Invoice {
     customerPhone: "99240588",
     customerDob: null,
     customerAddress: "Jacob Naadlands veg 2",
-    customerPostCity: "Kviteseid",
     customerPostCode: "3850",
     customerCountry: "norway",
     totalGross: 17_365.7,
@@ -116,7 +122,7 @@ test.group("invoice export: Visma", () => {
   test("a rent invoice becomes a header, a book line, a fee line and four text lines", ({
     assert,
   }) => {
-    const rows = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: false });
+    const rows = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: false, postalCity });
 
     assert.deepEqual(
       rows.map((row) => [row[0], row[1], row[3], row[6]]),
@@ -140,7 +146,7 @@ test.group("invoice export: Visma", () => {
   test("the header carries dates in Oslo time, amounts in øre and the branch as our reference", ({
     assert,
   }) => {
-    const [header] = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: false });
+    const [header] = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: false, postalCity });
 
     assert.equal(header?.length, 71);
     assert.equal(header?.[2], "93996");
@@ -156,7 +162,7 @@ test.group("invoice export: Visma", () => {
   test("a book line uses the item's ObjectId counter as article number and FRI as VAT type", ({
     assert,
   }) => {
-    const [, line] = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: false });
+    const [, line] = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: false, postalCity });
 
     assert.equal(line?.length, 39);
     assert.deepEqual(line?.slice(0, 14), [
@@ -178,7 +184,7 @@ test.group("invoice export: Visma", () => {
   });
 
   test("the fee line is article 1000 with PLH VAT, one unit per book", ({ assert }) => {
-    const fee = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: false })[2];
+    const fee = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: false, postalCity })[2];
 
     assert.deepEqual(fee?.slice(3, 14), [
       "V",
@@ -198,7 +204,7 @@ test.group("invoice export: Visma", () => {
   test("a company invoice has no fee, uses its comment as a text line and the org number in the header", ({
     assert,
   }) => {
-    const rows = vismaRows([companyInvoice()], { ehf: false, creditOfInvoice: false });
+    const rows = vismaRows([companyInvoice()], { ehf: false, creditOfInvoice: false, postalCity });
 
     assert.equal(rows.length, 3);
     assert.equal(rows[0]?.[2], "988982857");
@@ -217,7 +223,11 @@ test.group("invoice export: Visma", () => {
   test("EHF exports distribute by H and carry the org number as eInvoice reference", ({
     assert,
   }) => {
-    const [header] = vismaRows([companyInvoice()], { ehf: true, creditOfInvoice: false });
+    const [header] = vismaRows([companyInvoice()], {
+      ehf: true,
+      creditOfInvoice: false,
+      postalCity,
+    });
 
     assert.equal(header?.[34], "H");
     assert.equal(header?.[61], "EHF");
@@ -225,7 +235,11 @@ test.group("invoice export: Visma", () => {
   });
 
   test("a credit note export replaces the header with a four-field H3 record", ({ assert }) => {
-    const [header, line] = vismaRows([rentInvoice()], { ehf: false, creditOfInvoice: true });
+    const [header, line] = vismaRows([rentInvoice()], {
+      ehf: false,
+      creditOfInvoice: true,
+      postalCity,
+    });
 
     assert.deepEqual(header, ["H3", 0, "93996", "20263071"]);
     assert.equal(line?.[0], "L1");
@@ -242,6 +256,7 @@ test.group("invoice export: customer numbers", () => {
     const [header] = vismaRows([rentInvoice({ customerId: null })], {
       ehf: false,
       creditOfInvoice: false,
+      postalCity,
     });
     assert.equal(header?.[2], "93996");
   });
@@ -250,6 +265,7 @@ test.group("invoice export: customer numbers", () => {
     const rows = vismaRows([rentInvoice({ customerDob: null })], {
       ehf: false,
       creditOfInvoice: false,
+      postalCity,
     });
     assert.equal(rows[4]?.[6], `Kundens fødselsdato: ${DateTime.now().toFormat("dd.MM.yyyy")}`);
   });
@@ -287,6 +303,7 @@ test.group("invoice export: Tripletex", () => {
         }),
       ],
     ]),
+    postalCity,
   };
 
   test("each invoice gets one row per book plus a fee row, under the header row", ({ assert }) => {

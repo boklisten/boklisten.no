@@ -151,7 +151,6 @@ export const UserService = {
         | "name"
         | "address"
         | "postCode"
-        | "postCity"
         | "dob"
         | "branchMembershipId"
         | "guardianName"
@@ -181,7 +180,6 @@ export const UserService = {
       name: vippsUser.name || null,
       address: vippsUser.address || null,
       postCode: vippsUser.postalCode || null,
-      postCity: vippsUser.postalCity || null,
       permission: "customer",
       vippsUserId: vippsUser.id,
     });
@@ -212,7 +210,6 @@ export const UserService = {
       phone,
       email,
       address,
-      postalCity,
       postalCode,
       dob,
     }: Infer<typeof userProvisioningValidator>["userCandidates"][number],
@@ -225,7 +222,6 @@ export const UserService = {
       address: address ?? null,
       dob: dobFrom(dob),
       postCode: postalCode ?? null,
-      postCity: postalCity ?? null,
       emailConfirmed: true,
       branchMembershipId: branchMembershipId ?? null,
       taskConfirmDetails: true,

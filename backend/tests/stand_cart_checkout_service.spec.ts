@@ -672,11 +672,9 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       toPostalCode: "0151",
       facilityAddress: "Gata 1",
       facilityPostalCode: "0150",
-      facilityPostalCity: "Oslo",
       shipmentName: "Ola",
       shipmentAddress: "Veien 2",
       shipmentPostalCode: "0151",
-      shipmentPostalCity: "Oslo",
       product: "SERVICEPAKKE",
     });
     resolve.resolves({
@@ -706,11 +704,9 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       estimatedDelivery: null,
       facilityAddress: "Gata 1",
       facilityPostalCode: "0150",
-      facilityPostalCity: "Oslo",
       shipmentName: "Ola",
       shipmentAddress: "Veien 2",
       shipmentPostalCode: "0151",
-      shipmentPostalCity: "Oslo",
       fromPostalCode: "0150",
       toPostalCode: "0151",
       product: "SERVICEPAKKE",

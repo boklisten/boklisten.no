@@ -27,6 +27,7 @@ import { DeliveryBadge, PaymentStatusBadge } from "@/features/order-history/Orde
 import { capitalize, formatAmount, pluralBooks } from "@/features/order-history/orderHistoryGroups";
 import EntityLink from "@/shared/components/EntityLink";
 import OrderItemTypeIcon from "@/shared/components/OrderItemTypeIcon";
+import PostalCity from "@/shared/components/PostalCity";
 import { norwegianTime } from "@/shared/utils/dayjs";
 import { formatDeadline } from "@/shared/utils/deadline";
 
@@ -338,7 +339,8 @@ export function DeliverySection({ order }: { order: OrderHistoryEntry }) {
           {delivery.shipmentAddress && (
             <Text size="sm" c="dimmed">
               {delivery.shipmentAddress.name}, {delivery.shipmentAddress.address},{" "}
-              {delivery.shipmentAddress.postalCode} {delivery.shipmentAddress.postalCity}
+              {delivery.shipmentAddress.postalCode}{" "}
+              <PostalCity postalCode={delivery.shipmentAddress.postalCode} />
             </Text>
           )}
         </Stack>

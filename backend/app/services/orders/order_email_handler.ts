@@ -4,6 +4,7 @@ import type Order from "#models/order";
 import type OrderItem from "#models/order_item";
 import Payment from "#models/payment";
 import type User from "#models/user";
+import { BringService } from "#services/bring/bring_service";
 import DispatchService from "#services/dispatch_service";
 import { TranslationService } from "#services/translation_service";
 import { BlError } from "#shared/bl-error";
@@ -105,7 +106,10 @@ export const OrderEmailHandler = {
     const delivery = await Delivery.ofOrder(order.id);
     return delivery?.method === "bring"
       ? {
-          delivery: this.deliveryToEmailDelivery(delivery),
+          delivery: this.deliveryToEmailDelivery(
+            delivery,
+            (await BringService.postalCities())(delivery.shipmentPostalCode),
+          ),
           showDelivery: true,
         }
       : { delivery: null, showDelivery: false };
@@ -122,12 +126,13 @@ export const OrderEmailHandler = {
     };
   },
 
-  deliveryToEmailDelivery(delivery: Delivery) {
+  deliveryToEmailDelivery(delivery: Delivery, postalCity: string | null) {
     return {
       method: delivery.method,
       currency: "NOK",
       amount: delivery.amount,
-      address: `${delivery.shipmentName}, ${delivery.shipmentAddress}, ${delivery.shipmentPostalCode} ${delivery.shipmentPostalCity}`,
+      address:
+        `${delivery.shipmentName}, ${delivery.shipmentAddress}, ${delivery.shipmentPostalCode} ${postalCity ?? ""}`.trimEnd(),
       trackingNumber: delivery.trackingNumber ?? undefined,
       estimatedDeliveryDate: delivery.estimatedDelivery?.toFormat("dd.MM.yy") ?? "",
     };

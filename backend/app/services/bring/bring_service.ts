@@ -17,15 +17,55 @@ const shippingGuideClient = createClient<shippingGuidePaths>({
   headers: bringHeaders,
 });
 
+/** Posten changes the register a few times a year; a day-old copy is fresh enough. */
+const POSTAL_REGISTER_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+let postalRegister: { cities: ReadonlyMap<string, string>; fetchedAt: number } | null = null;
+let postalRegisterRequest: Promise<ReadonlyMap<string, string>> | null = null;
+
+/** The whole Norwegian postal register in one call (about 5,000 codes), city by postal code. */
+async function fetchPostalRegister(): Promise<ReadonlyMap<string, string>> {
+  const response = await fetch("https://api.bring.com/address/api/NO/postal-codes", {
+    headers: bringHeaders,
+  });
+  if (!response.ok) {
+    throw new Error(`Bring answered ${response.status} for the postal register`);
+  }
+  const { postal_codes } = await bringPostalCodeResponseValidator.validate(await response.json());
+  const cities = new Map(postal_codes.map(({ postal_code, city }) => [postal_code, city]));
+  postalRegister = { cities, fetchedAt: Date.now() };
+  return cities;
+}
+
+async function postalRegisterCities(): Promise<ReadonlyMap<string, string>> {
+  if (postalRegister && Date.now() - postalRegister.fetchedAt < POSTAL_REGISTER_MAX_AGE_MS) {
+    return postalRegister.cities;
+  }
+  postalRegisterRequest ??= fetchPostalRegister().finally(() => {
+    postalRegisterRequest = null;
+  });
+  try {
+    return await postalRegisterRequest;
+  } catch (error) {
+    // A stale register beats none; the next call tries Bring again.
+    if (postalRegister) {
+      return postalRegister.cities;
+    }
+    throw error;
+  }
+}
+
 export const BringService = {
-  async lookupPostalCode(postalCode: string) {
-    const bringResponse = await (
-      await fetch(`https://api.bring.com/address/api/NO/postal-codes/${postalCode}`, {
-        headers: bringHeaders,
-      })
-    ).json();
-    const [, data] = await bringPostalCodeResponseValidator.tryValidate(bringResponse);
-    return data?.postal_codes[0]?.city ?? null;
+  /**
+   * Looks postal codes up in Posten's register, which is how every postal city is found: none is
+   * stored. A code missing from the register (a typo, or one Posten has retired) has no city.
+   */
+  async postalCities(): Promise<(postalCode: string | null) => string | null> {
+    const cities = await postalRegisterCities();
+    function cityOf(postalCode: string | null): string | null {
+      return cities.get(postalCode?.trim() ?? "") ?? null;
+    }
+    return cityOf;
   },
   async getShippingInfo({
     toPostalCode,

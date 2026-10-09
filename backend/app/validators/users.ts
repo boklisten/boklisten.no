@@ -29,7 +29,6 @@ export const ownUserFieldsSchema = vine.object({
     .regex(HAS_LETTER_OR_DIGIT)
     .transform((value) => cleanUserInput(value)),
   postCode: postalCodeField.clone(),
-  postCity: vine.string(),
   dob: vine.date().before("today"),
   branchMembershipId: objectIdField.clone().nullable().optional(),
   guardianName: vine

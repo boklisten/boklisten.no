@@ -51,10 +51,14 @@ function inOre(amount: number): number {
   return amount * 100;
 }
 
+/** The city of a postal code, from Posten's register (`BringService.postalCities`). */
+type PostalCity = (postalCode: string | null) => string | null;
+
 interface VismaExportOptions {
   ehf: boolean;
   /** Export as credit notes (H3 header) of already sent invoices. */
   creditOfInvoice: boolean;
+  postalCity: PostalCity;
 }
 
 export function vismaRows(invoices: Invoice[], options: VismaExportOptions): CsvCell[][] {
@@ -65,9 +69,7 @@ function vismaRowsForInvoice(invoice: Invoice, options: VismaExportOptions): Csv
   const rows: CsvCell[][] = [];
   let lineNumber = 0;
   rows.push(
-    options.creditOfInvoice
-      ? vismaH3(lineNumber, invoice)
-      : vismaH1(lineNumber, invoice, options.ehf),
+    options.creditOfInvoice ? vismaH3(lineNumber, invoice) : vismaH1(lineNumber, invoice, options),
   );
   lineNumber++;
 
@@ -118,7 +120,12 @@ function vismaH3(lineNumber: number, invoice: Invoice): CsvCell[] {
   ];
 }
 
-function vismaH1(lineNumber: number, invoice: Invoice, ehf: boolean): CsvCell[] {
+function vismaH1(
+  lineNumber: number,
+  invoice: Invoice,
+  { ehf, postalCity }: VismaExportOptions,
+): CsvCell[] {
+  const city = postalCity(invoice.customerPostCode);
   const dobOrOrganizationNumber =
     nonEmpty(invoice.customerOrganizationNumber) ?? formatDob(invoice.customerDob, "ddMMyyyy");
   return [
@@ -129,7 +136,7 @@ function vismaH1(lineNumber: number, invoice: Invoice, ehf: boolean): CsvCell[] 
     invoice.customerAddress, // 5 Address 1
     "", // 6 Address 2
     invoice.customerPostCode, // 7 Postal code (M)
-    invoice.customerPostCity, // 8 City (M)
+    city, // 8 City (M)
     invoice.customerCountry, // 9 Country
     invoice.customerPhone, // 10 Customer phone (M)
     "", // 11 Customer Fax
@@ -164,7 +171,7 @@ function vismaH1(lineNumber: number, invoice: Invoice, ehf: boolean): CsvCell[] 
     invoice.customerAddress, // 40 Delivery address 1
     "", // 41 Delivery address 2
     invoice.customerPostCode, // 42 Delivery address Postal code
-    invoice.customerPostCity, // 43 Delivery address city
+    city, // 43 Delivery address city
     invoice.customerCountry, // 44 Delivery address country
     "", // 45 Rating Date
     "", // 46 Rating poeng
@@ -330,6 +337,7 @@ export interface TripletexLookups {
   lastOrderIds: Map<string, string>;
   items: Map<string, Item>;
   branches: Map<string, Branch>;
+  postalCity: PostalCity;
 }
 
 function required<T>(map: Map<string, T>, id: string | null | undefined, what: string): T {
@@ -355,7 +363,7 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
       invoice.customerAddress,
       "",
       invoice.customerPostCode,
-      invoice.customerPostCity,
+      lookups.postalCity(invoice.customerPostCode),
       "NO",
       ...TRIPLETEX_EMPTY_CATEGORY_FIELDS,
       invoice.reference,

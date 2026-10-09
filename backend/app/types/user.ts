@@ -8,5 +8,4 @@ export interface VippsUser {
   phoneNumberVerified: boolean;
   address: string;
   postalCode: string;
-  postalCity: string;
 }

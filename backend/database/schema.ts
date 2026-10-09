@@ -139,7 +139,7 @@ export class BranchSchema extends BaseModel {
 }
 
 export class CompanySchema extends BaseModel {
-  static $columns = ['address', 'createdAt', 'customerNumber', 'email', 'id', 'name', 'organizationNumber', 'phone', 'postCity', 'postCode', 'updatedAt'] as const
+  static $columns = ['address', 'createdAt', 'customerNumber', 'email', 'id', 'name', 'organizationNumber', 'phone', 'postCode', 'updatedAt'] as const
   $columns = CompanySchema.$columns
   @column()
   declare address: string
@@ -157,8 +157,6 @@ export class CompanySchema extends BaseModel {
   declare organizationNumber: string
   @column()
   declare phone: string | null
-  @column()
-  declare postCity: string
   @column()
   declare postCode: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
@@ -238,7 +236,7 @@ export class CustomerItemSchema extends BaseModel {
 }
 
 export class DeliverySchema extends BaseModel {
-  static $columns = ['amount', 'branchId', 'bringAmount', 'createdAt', 'estimatedDelivery', 'facilityAddress', 'facilityPostalCity', 'facilityPostalCode', 'fromPostalCode', 'id', 'method', 'orderId', 'product', 'shipmentAddress', 'shipmentName', 'shipmentPostalCity', 'shipmentPostalCode', 'toPostalCode', 'trackingNumber', 'updatedAt'] as const
+  static $columns = ['amount', 'branchId', 'bringAmount', 'createdAt', 'estimatedDelivery', 'facilityAddress', 'facilityPostalCode', 'fromPostalCode', 'id', 'method', 'orderId', 'product', 'shipmentAddress', 'shipmentName', 'shipmentPostalCode', 'toPostalCode', 'trackingNumber', 'updatedAt'] as const
   $columns = DeliverySchema.$columns
   @column()
   declare amount: number
@@ -252,8 +250,6 @@ export class DeliverySchema extends BaseModel {
   declare estimatedDelivery: DateTime | null
   @column()
   declare facilityAddress: string | null
-  @column()
-  declare facilityPostalCity: string | null
   @column()
   declare facilityPostalCode: string | null
   @column()
@@ -270,8 +266,6 @@ export class DeliverySchema extends BaseModel {
   declare shipmentAddress: string | null
   @column()
   declare shipmentName: string | null
-  @column()
-  declare shipmentPostalCity: string | null
   @column()
   declare shipmentPostalCode: string | null
   @column()
@@ -344,7 +338,7 @@ export class InvoiceLineSchema extends BaseModel {
 }
 
 export class InvoiceSchema extends BaseModel {
-  static $columns = ['branchId', 'comment', 'createdAt', 'customerAddress', 'customerCountry', 'customerDob', 'customerEmail', 'customerId', 'customerName', 'customerNumber', 'customerOrganizationNumber', 'customerPhone', 'customerPostCity', 'customerPostCode', 'dueDate', 'feeDiscount', 'feeGross', 'feeNet', 'feeUnit', 'feeVat', 'id', 'invoiceNumber', 'ourReference', 'reference', 'status', 'totalDiscount', 'totalGross', 'totalIncludingFee', 'totalNet', 'totalVat', 'type', 'updatedAt'] as const
+  static $columns = ['branchId', 'comment', 'createdAt', 'customerAddress', 'customerCountry', 'customerDob', 'customerEmail', 'customerId', 'customerName', 'customerNumber', 'customerOrganizationNumber', 'customerPhone', 'customerPostCode', 'dueDate', 'feeDiscount', 'feeGross', 'feeNet', 'feeUnit', 'feeVat', 'id', 'invoiceNumber', 'ourReference', 'reference', 'status', 'totalDiscount', 'totalGross', 'totalIncludingFee', 'totalNet', 'totalVat', 'type', 'updatedAt'] as const
   $columns = InvoiceSchema.$columns
   @column()
   declare branchId: string | null
@@ -370,8 +364,6 @@ export class InvoiceSchema extends BaseModel {
   declare customerOrganizationNumber: string | null
   @column()
   declare customerPhone: string | null
-  @column()
-  declare customerPostCity: string | null
   @column()
   declare customerPostCode: string | null
   @column.date()
@@ -867,7 +859,7 @@ export class UniqueItemSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['address', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastActiveAt', 'name', 'permission', 'phone', 'postCity', 'postCode', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsUserId'] as const
+  static $columns = ['address', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastActiveAt', 'name', 'permission', 'phone', 'postCode', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsUserId'] as const
   $columns = UserSchema.$columns
   @column()
   declare address: string | null
@@ -897,8 +889,6 @@ export class UserSchema extends BaseModel {
   declare permission: string
   @column()
   declare phone: string | null
-  @column()
-  declare postCity: string | null
   @column()
   declare postCode: string | null
   @column()

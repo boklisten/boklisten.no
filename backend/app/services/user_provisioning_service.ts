@@ -83,7 +83,7 @@ export function applyBranchResolutions(
 /** The columns a class list may overwrite on an existing customer; blanks keep what is there. */
 export function mergeCandidateIntoUser(
   candidate: UserCandidate,
-  existingUser: Pick<User, "address" | "postCode" | "postCity" | "dob">,
+  existingUser: Pick<User, "address" | "postCode" | "dob">,
   branchId: string | undefined,
 ) {
   return {
@@ -92,7 +92,6 @@ export function mergeCandidateIntoUser(
     email: candidate.email,
     address: candidate.address ?? existingUser.address,
     postCode: candidate.postalCode ?? existingUser.postCode,
-    postCity: candidate.postalCity ?? existingUser.postCity,
     dob: candidate.dob ? dobFrom(candidate.dob) : existingUser.dob,
     ...(branchId ? { branchMembershipId: branchId } : {}),
   };

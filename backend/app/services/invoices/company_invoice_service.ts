@@ -54,7 +54,6 @@ async function buildCompanyInvoice(input: CompanyInvoiceInput): Promise<NewInvoi
     customerOrganizationNumber: company.organizationNumber,
     customerAddress: company.address,
     customerPostCode: company.postCode,
-    customerPostCity: company.postCity,
     customerCountry: "norway",
     totalGross: total.gross,
     totalNet: total.net,

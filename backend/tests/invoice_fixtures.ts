@@ -21,7 +21,6 @@ const PUPIL: Omit<NewInvoice, "lines"> = {
   customerOrganizationNumber: null,
   customerAddress: "Testveien 1",
   customerPostCode: "0150",
-  customerPostCity: "Oslo",
   customerCountry: null,
   totalGross: 0,
   totalNet: 0,
