@@ -13,15 +13,12 @@ interface AutoSavedForm<Values> {
   handleSubmit: () => Promise<void>;
 }
 
-/**
- * The toast every auto-saved change shows, also for controls that save on their own (a switch
- * outside a form). `id` replaces the previous toast instead of stacking another.
- */
-export function notifySaved(id: string) {
+/** The toast every auto-saved change shows. `id` replaces the previous toast instead of stacking another. */
+function notifySaved(id: string) {
   showSuccessNotification({ id, message: "Endringene er lagret" });
 }
 
-export function notifySaveFailed(error: unknown) {
+function notifySaveFailed(error: unknown) {
   showErrorNotification({
     title: "Klarte ikke lagre endringene",
     message: errorMessage(error, PLEASE_TRY_AGAIN_TEXT),

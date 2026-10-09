@@ -1,6 +1,5 @@
 import { Anchor, Button, Center, Group, PinInput, Stack, Text } from "@mantine/core";
 import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
-import type { ReactNode } from "react";
 
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 
@@ -61,7 +60,6 @@ export default function SmsCodeEntry({
   onResend,
   resendPending,
   onChangeNumber,
-  notice,
 }: {
   phone: string;
   /** Answers whether the code was accepted; a refused or failed one is cleared for the next try. */
@@ -71,8 +69,6 @@ export default function SmsCodeEntry({
   onResend: () => void;
   resendPending: boolean;
   onChangeNumber: () => void;
-  /** Shown between the instruction and the boxes. */
-  notice?: ReactNode;
 }) {
   const [code, setCode] = useState("");
   // The host keys this component by the code sent, so it mounts when one goes out.
@@ -114,7 +110,6 @@ export default function SmsCodeEntry({
         </Text>
         .
       </Text>
-      {notice}
       <Center>
         <PinInput
           id={id}

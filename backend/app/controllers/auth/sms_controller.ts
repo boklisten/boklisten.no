@@ -15,9 +15,6 @@ import {
 const VERIFIED_PHONE_KEY = "verifiedPhone";
 const VERIFIED_PHONE_MS = 30 * 60 * 1000;
 
-const SMS_LOGIN_DISABLED_MESSAGE =
-  "Denne kontoen har slått av innlogging med SMS. Logg inn med Vipps i stedet.";
-
 interface VerifiedPhone {
   phone: string;
   expiresAt: number;
@@ -32,27 +29,18 @@ export default class SmsController {
   async send(ctx: HttpContext) {
     const { phone } = await ctx.request.validateUsing(sendLoginCodeValidator);
     const user = await User.byPhone(phone);
-    if (user?.smsLoginEnabled === false) {
-      return { message: SMS_LOGIN_DISABLED_MESSAGE };
-    }
     const refusal = await SmsCodeService.issue(
       { phone, purpose: "login", userId: null },
       user?.id ?? null,
     );
-    if (refusal) {
-      return { message: refusal };
-    }
-    return { accountExists: user !== null };
+    // Says nothing about whether the number has an account: a code goes out either way.
+    return refusal ? { message: refusal } : {};
   }
 
   /** Logs in the account with the number, or, when there is none, lets the sign-up go ahead. */
   async verify(ctx: HttpContext) {
     const { phone, code } = await ctx.request.validateUsing(verifyLoginCodeValidator);
     const user = await User.byPhone(phone);
-    // Also refuses a code sent before the owner turned SMS login off.
-    if (user?.smsLoginEnabled === false) {
-      return { message: SMS_LOGIN_DISABLED_MESSAGE };
-    }
     const check = await SmsCodeService.check({ phone, purpose: "login", userId: null }, code);
     if (check !== "valid") {
       return { message: SMS_CODE_MESSAGES[check] };

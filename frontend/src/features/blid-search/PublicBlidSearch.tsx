@@ -14,11 +14,12 @@ import {
   ThemeIcon,
   Title,
 } from "@mantine/core";
-import { IconClock, IconMail, IconPhone } from "@tabler/icons-react";
+import { IconId, IconMail, IconPhone } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { ReactNode } from "react";
 
+import VippsButton from "@/features/auth/VippsButton";
 import BlidSearchControls from "@/features/blid-search/BlidSearchControls";
 import BookCover from "@/features/book-cover/BookCover";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
@@ -29,9 +30,6 @@ import { norwegianTime } from "@/shared/utils/dayjs";
 import { formatDeadline } from "@/shared/utils/deadline";
 import { authQueryOptions } from "@/features/auth/authQuery";
 
-/** Mirrors the backend's waiting period for new accounts, so the page can say so before a search. */
-const LOOKUP_WAITING_PERIOD_HOURS = 24;
-
 function formatMoment(date: Date | string): string {
   return norwegianTime(date).format("DD.MM.YYYY [kl.] HH:mm");
 }
@@ -41,11 +39,9 @@ export default function PublicBlidSearch() {
   const [blid, setBlid] = useState<string | null>(null);
   const { data: user } = useQuery(authQueryOptions());
 
-  const opensAt = user
-    ? norwegianTime(user.createdAt).add(LOOKUP_WAITING_PERIOD_HOURS, "hour")
-    : null;
-  if (opensAt !== null && opensAt.isAfter(norwegianTime())) {
-    return <LookupOpensLater opensAt={opensAt.toDate()} />;
+  // Says so before a search; the backend refuses one anyway.
+  if (user && !user.vippsLinked) {
+    return <VippsRequired />;
   }
 
   return (
@@ -56,27 +52,30 @@ export default function PublicBlidSearch() {
   );
 }
 
-/** Shown in place of the search while a new account waits out its first 24 hours. */
-function LookupOpensLater({ opensAt }: { opensAt: Date }) {
+/**
+ * Shown in place of the search to someone who has never logged in with Vipps. The button is a
+ * plain Vipps login: it lands in whichever account that Vipps identity belongs to.
+ */
+function VippsRequired() {
   return (
     <Paper withBorder radius="md" p="md">
-      <Group gap="sm" align="flex-start" wrap="nowrap">
-        <ThemeIcon variant="light" color="gray" size="xl" radius="xl">
-          <IconClock aria-hidden />
-        </ThemeIcon>
-        <Stack gap={4} miw={0}>
-          <Title order={2} size="h4" lh={1.2}>
-            Kontoen din må være eldre enn {LOOKUP_WAITING_PERIOD_HOURS} timer
-          </Title>
-          <Text size="sm">
-            Boksøk lar deg finne ut hvem en bok tilhører. Kontoen din må ha eksistert i over{" "}
-            {LOOKUP_WAITING_PERIOD_HOURS} timer for at du skal få lov til å søke.
-          </Text>
-          <Text size="sm" fw={600}>
-            Du får tilgang {formatMoment(opensAt)}.
-          </Text>
-        </Stack>
-      </Group>
+      <Stack gap="md">
+        <Group gap="sm" align="flex-start" wrap="nowrap">
+          <ThemeIcon variant="light" color="gray" size="xl" radius="xl">
+            <IconId aria-hidden />
+          </ThemeIcon>
+          <Stack gap={4} miw={0}>
+            <Title order={2} size="h4" lh={1.2}>
+              Logg inn med Vipps for å søke
+            </Title>
+            <Text size="sm">
+              Boksøk viser navn og kontaktinformasjon til den som har boka. For å beskytte kundene
+              våre kan du bare søke når du har logget inn med Vipps.
+            </Text>
+          </Stack>
+        </Group>
+        <VippsButton redirect="sjekk" />
+      </Stack>
     </Paper>
   );
 }
@@ -108,8 +107,8 @@ function PublicBlidResult({ blid, onClear }: { blid: string; onClear: () => void
   }
 
   switch (data.status) {
-    case "notOpenYet": {
-      return <LookupOpensLater opensAt={new Date(data.opensAt)} />;
+    case "vippsRequired": {
+      return <VippsRequired />;
     }
     case "suspended": {
       return (

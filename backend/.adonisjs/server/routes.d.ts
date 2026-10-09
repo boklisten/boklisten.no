@@ -34,7 +34,6 @@ export type ScannedRoutes = {
     'users.update_me': { paramsTuple?: []; params?: {} }
     'users.send_phone_change_code': { paramsTuple?: []; params?: {} }
     'users.change_my_phone': { paramsTuple?: []; params?: {} }
-    'users.set_sms_login': { paramsTuple?: []; params?: {} }
     'customer_items.me': { paramsTuple?: []; params?: {} }
     'customer_items.details_me': { paramsTuple: [ParamValue]; params: {'customerItemId': ParamValue} }
     'signatures.me': { paramsTuple?: []; params?: {} }
@@ -414,12 +413,6 @@ export type ScannedRoutes = {
     'blids.update_active_item': { paramsTuple?: []; params?: {} }
     'blids.relink': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
   }
-  PUT: {
-    'users.set_sms_login': { paramsTuple?: []; params?: {} }
-    'branch_subjects.update': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
-    'users.set_permission': { paramsTuple?: []; params?: {} }
-    'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-  }
   DELETE: {
     'opening_hours.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'branch_members.destroy_direct': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -435,6 +428,11 @@ export type ScannedRoutes = {
     'orders.destroy': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'blids.destroy': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'waiting_list_customers.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+  }
+  PUT: {
+    'branch_subjects.update': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
+    'users.set_permission': { paramsTuple?: []; params?: {} }
+    'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

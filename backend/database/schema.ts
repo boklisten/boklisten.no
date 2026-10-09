@@ -850,7 +850,7 @@ export class UniqueItemSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['address', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastActiveAt', 'name', 'permission', 'phone', 'postCity', 'postCode', 'smsLoginEnabled', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsUserId'] as const
+  static $columns = ['address', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastActiveAt', 'name', 'permission', 'phone', 'postCity', 'postCode', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsUserId'] as const
   $columns = UserSchema.$columns
   @column()
   declare address: string | null
@@ -884,8 +884,6 @@ export class UserSchema extends BaseModel {
   declare postCity: string | null
   @column()
   declare postCode: string | null
-  @column()
-  declare smsLoginEnabled: boolean
   @column()
   declare taskConfirmDetails: boolean
   @column()

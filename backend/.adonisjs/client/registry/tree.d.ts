@@ -93,7 +93,6 @@ export interface ApiDefinition {
     updateMe: typeof routes['users.update_me']
     sendPhoneChangeCode: typeof routes['users.send_phone_change_code']
     changeMyPhone: typeof routes['users.change_my_phone']
-    setSmsLogin: typeof routes['users.set_sms_login']
     metrics: typeof routes['users.metrics']
     duplicates: typeof routes['users.duplicates']
     employees: typeof routes['users.employees']

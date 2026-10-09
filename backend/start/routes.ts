@@ -99,7 +99,6 @@ router
       .post("/users/me/phone/send", [controllers.Users, "sendPhoneChangeCode"])
       .use([smsClientThrottle, smsCodeThrottle]);
     router.post("/users/me/phone", [controllers.Users, "changeMyPhone"]).use(smsClientThrottle);
-    router.put("/users/me/sms_login", [controllers.Users, "setSmsLogin"]);
     router.get("/customer_items/me", [controllers.CustomerItems, "me"]);
     router.get("/customer_items/me/:customerItemId", [controllers.CustomerItems, "detailsMe"]);
 

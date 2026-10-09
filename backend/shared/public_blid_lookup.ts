@@ -29,11 +29,9 @@ export type PublicBlidLookupResult =
   | PublicBlidNotHandedOut
   | PublicBlidUnregistered;
 
-/** The caller registered less than 24 hours ago and may not look up books yet. */
-interface PublicBlidLookupNotOpenYet {
-  status: "notOpenYet";
-  /** ISO timestamp for when the user may start looking up books. */
-  opensAt: string;
+/** The caller has never logged in with Vipps, which looking up books requires. */
+interface PublicBlidLookupVippsRequired {
+  status: "vippsRequired";
 }
 
 /** The caller asked about too many IDs Boklisten has never seen and is shut out for a while. */
@@ -45,5 +43,5 @@ export interface PublicBlidLookupSuspended {
 
 export type PublicBlidLookupResponse =
   | PublicBlidLookupResult
-  | PublicBlidLookupNotOpenYet
+  | PublicBlidLookupVippsRequired
   | PublicBlidLookupSuspended;

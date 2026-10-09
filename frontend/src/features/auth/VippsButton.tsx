@@ -12,10 +12,12 @@ const VIPPS_BUTTON_HEIGHT = 46;
 
 /**
  * Vipps logs in, or creates the account on a first visit; the page says so beside the button.
- * The page's `redirect` (a path without its leading slash) survives the detour in localStorage.
+ * The page's `redirect` (a path without its leading slash), or the one passed in, survives the
+ * detour in localStorage.
  */
-export default function VippsButton() {
+export default function VippsButton({ redirect }: { redirect?: string }) {
   const search = useLocation({ select: (location) => location.search });
+  const target = redirect ?? search.redirect;
 
   useEffect(() => {
     loadScriptOnce("https://cdn.vippsmobilepay.com/js/button/button.js").catch(console.error);
@@ -26,8 +28,8 @@ export default function VippsButton() {
       // Holds the place until Vipps' script has drawn the button.
       mih={VIPPS_BUTTON_HEIGHT}
       onClick={() => {
-        if (search.redirect) {
-          localStorage.setItem(BL_CONFIG.login.localStorageKeys.redirect, search.redirect);
+        if (target) {
+          localStorage.setItem(BL_CONFIG.login.localStorageKeys.redirect, target);
         }
         window.location.assign(API_URL + apiClient.urlFor("vipps.redirect"));
       }}

@@ -10,7 +10,6 @@ import SmsCodeEntry from "@/features/auth/SmsCodeEntry";
 import SmsPhoneForm from "@/features/auth/SmsPhoneForm";
 import VippsButton from "@/features/auth/VippsButton";
 import SignupForm from "@/features/user/SignupForm";
-import InfoAlert from "@/shared/components/alerts/InfoAlert";
 import useAuth from "@/shared/hooks/useAuth";
 import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
 import { api } from "@/shared/utils/apiClient";
@@ -25,7 +24,7 @@ type Step =
   | { kind: "choose" }
   | { kind: "phone" }
   /** `sends` counts the codes sent to the number, so a new one restarts the code entry. */
-  | { kind: "code"; phone: string; accountExists: boolean; sends: number }
+  | { kind: "code"; phone: string; sends: number }
   | { kind: "signup"; phone: string };
 
 /**
@@ -52,7 +51,7 @@ export default function SignIn() {
         setStep((previous) =>
           previous.kind === "code" && previous.phone === phone
             ? { ...previous, sends: previous.sends + 1 }
-            : { kind: "code", phone, accountExists: response.accountExists ?? false, sends: 1 },
+            : { kind: "code", phone, sends: 1 },
         );
       },
       onError: (sendError) => setError(codeRequestErrorText(sendError)),
@@ -102,14 +101,6 @@ export default function SignIn() {
           resendPending={sendMutation.isPending}
           onResend={() => sendMutation.mutate({ body: { phone } })}
           onChangeNumber={startOver}
-          notice={
-            !step.accountExists && (
-              <InfoAlert>
-                Dette nummeret er ikke registrert hos oss. Når koden er bekreftet, kan du registrere
-                deg.
-              </InfoAlert>
-            )
-          }
           onCode={async (code) => {
             const response = await verifyMutation.mutateAsync({ body: { phone, code } });
             if (response.message) {

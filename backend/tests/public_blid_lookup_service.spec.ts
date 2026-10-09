@@ -86,17 +86,3 @@ test.group("PublicBlidLookupService.lookup()", (group) => {
     assert.deepEqual(result, { status: "unregistered" });
   });
 });
-
-test.group("PublicBlidLookupService.opensAt()", () => {
-  const now = new Date("2026-09-13T12:00:00.000Z");
-
-  test("a user registered less than 24 hours ago is told when lookups open", ({ assert }) => {
-    const opensAt = PublicBlidLookupService.opensAt(new Date("2026-09-13T08:30:00.000Z"), now);
-
-    assert.deepEqual(opensAt, new Date("2026-09-14T08:30:00.000Z"));
-  });
-
-  test("a user registered more than 24 hours ago may look up books", ({ assert }) => {
-    assert.isNull(PublicBlidLookupService.opensAt(new Date("2026-09-12T11:59:00.000Z"), now));
-  });
-});

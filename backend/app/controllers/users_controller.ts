@@ -19,7 +19,6 @@ import { mergeUsersValidator, setPermissionValidator } from "#validators/user_ma
 import {
   phoneChangeCodeValidator,
   phoneChangeValidator,
-  smsLoginValidator,
   updateMeValidator,
   updateUserValidator,
   userSearchValidator,
@@ -77,19 +76,6 @@ export default class UsersController {
     await SessionRevocationService.revokeAll(user.id);
     await LoginService.login(ctx, user);
     return {};
-  }
-
-  /** Turns SMS login on or off; off needs Vipps linked, or the user could never log in again. */
-  async setSmsLogin(ctx: HttpContext) {
-    const user = ctx.auth.getUserOrFail();
-    const { enabled } = await ctx.request.validateUsing(smsLoginValidator);
-    if (!enabled && user.vippsUserId === null) {
-      throw new BadRequestException(
-        "Logg inn med Vipps én gang før du slår av innlogging med SMS.",
-      );
-    }
-    user.smsLoginEnabled = enabled;
-    await user.save();
   }
 
   async search(ctx: HttpContext) {

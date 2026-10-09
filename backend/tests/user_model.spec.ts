@@ -96,12 +96,10 @@ test.group("User.search", (group) => {
 test.group("User.toDto", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
-  test("a user fresh from create carries the database defaults", async ({ assert }) => {
+  test("a user fresh from create without Vipps is not Vipps-linked", async ({ assert }) => {
     const user = await User.create({ email: "ny@example.com", permission: "customer" });
 
-    const dto = user.toDto();
-    assert.isFalse(dto.vippsLinked);
-    assert.isTrue(dto.smsLoginEnabled);
+    assert.isFalse(user.toDto().vippsLinked);
   });
 
   test("presents the date of birth as a calendar date and leaves the credentials out", async ({

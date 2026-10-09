@@ -186,12 +186,6 @@ const routes = {
     tokens: [{"old":"/users/me/phone","type":0,"val":"users","end":""},{"old":"/users/me/phone","type":0,"val":"me","end":""},{"old":"/users/me/phone","type":0,"val":"phone","end":""}],
     types: placeholder as Registry['users.change_my_phone']['types'],
   },
-  'users.set_sms_login': {
-    methods: ["PUT"],
-    pattern: '/users/me/sms_login',
-    tokens: [{"old":"/users/me/sms_login","type":0,"val":"users","end":""},{"old":"/users/me/sms_login","type":0,"val":"me","end":""},{"old":"/users/me/sms_login","type":0,"val":"sms_login","end":""}],
-    types: placeholder as Registry['users.set_sms_login']['types'],
-  },
   'customer_items.me': {
     methods: ["GET","HEAD"],
     pattern: '/customer_items/me',

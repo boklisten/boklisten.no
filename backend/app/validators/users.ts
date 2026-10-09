@@ -81,9 +81,3 @@ export const phoneChangeValidator = vine.withMetaData<{ userId: string }>().crea
     code: smsCodeField.clone(),
   }),
 );
-
-export const smsLoginValidator = vine.create(
-  vine.object({
-    enabled: vine.boolean(),
-  }),
-);

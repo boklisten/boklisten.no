@@ -1,6 +1,6 @@
 import db from "@adonisjs/lucid/services/db";
 import { DbRememberMeTokensProvider } from "@adonisjs/auth/session";
-import { afterCreate, beforeCreate, belongsTo } from "@adonisjs/lucid/orm";
+import { beforeCreate, belongsTo } from "@adonisjs/lucid/orm";
 import type { BelongsTo } from "@adonisjs/lucid/types/relations";
 import type { DateTime } from "luxon";
 
@@ -31,12 +31,6 @@ export default class User extends UserSchema {
   @beforeCreate()
   static assignId(user: User) {
     assignObjectId(user);
-  }
-
-  /** Loads the columns the database filled in, which `toDto()` reads (`smsLoginEnabled`, a null `vippsUserId`). */
-  @afterCreate()
-  static async loadDefaults(user: User) {
-    await user.refresh();
   }
 
   static async findOptional(id: string | null | undefined): Promise<User | null> {
@@ -145,8 +139,8 @@ export default class User extends UserSchema {
       taskConfirmDetails: this.taskConfirmDetails,
       taskSignAgreement: this.taskSignAgreement,
       permission: this.permission,
-      smsLoginEnabled: this.smsLoginEnabled,
-      vippsLinked: this.vippsUserId !== null,
+      // Unset rather than null on a model fresh from create without Vipps.
+      vippsLinked: Boolean(this.vippsUserId),
       createdAt: toDate(this.createdAt),
     };
   }

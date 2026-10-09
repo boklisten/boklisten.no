@@ -367,18 +367,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['changeMyPhone']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'users.set_sms_login': {
-    methods: ["PUT"]
-    pattern: '/users/me/sms_login'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/users').smsLoginValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/users').smsLoginValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['setSmsLogin']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['setSmsLogin']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
   'customer_items.me': {
     methods: ["GET","HEAD"]
     pattern: '/customer_items/me'
