@@ -19,10 +19,6 @@ export const EMAIL_TEMPLATES = {
     sender: EMAIL_SENDER.NO_REPLY,
     templateId: "d-8734d0fdf5fc4d99bf22553c3a0c724a",
   },
-  passwordReset: {
-    sender: EMAIL_SENDER.NO_REPLY,
-    templateId: "d-66e886995d4e46a0adfb133a163952d9",
-  },
   guardianSignature: {
     sender: EMAIL_SENDER.NO_REPLY,
     templateId: "d-e0eaab765bae483c95f76a178853de74",

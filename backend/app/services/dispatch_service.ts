@@ -71,6 +71,8 @@ interface SmsMessage {
   to: string;
   body: string;
   customerId?: string | null;
+  /** What the message log keeps instead of `body`, for a body carrying a secret. */
+  loggedBody?: string;
 }
 
 /**
@@ -99,7 +101,7 @@ const SmsService = {
         ...context,
         customerId: message.customerId ?? context.customerId,
       },
-      smsBody: message.body,
+      smsBody: message.loggedBody ?? message.body,
     });
 
     if (env.get("API_ENV") !== "production") {
@@ -447,19 +449,32 @@ const DispatchService = {
     });
   },
 
-  async sendPasswordReset({ id, email, token }: { id: number; email: string; token: string }) {
-    return EmailService.sendEmail({
-      template: EMAIL_TEMPLATES.passwordReset,
-      context: { messageType: "password-reset" },
-      recipients: [
-        {
-          to: email,
-          dynamicTemplateData: {
-            passwordResetUri: `${clientOrigin}/auth/reset/${id}?token=${token}`,
-          },
-        },
-      ],
-    });
+  /** The message log keeps `loggedBody`, so employees reading it never see the code. */
+  async sendSmsCode({
+    phone,
+    body,
+    loggedBody,
+    customerId,
+    messageType,
+  }: {
+    phone: string;
+    body: string;
+    loggedBody: string;
+    customerId: string | null;
+    messageType: "login-code" | "phone-verification";
+  }) {
+    return SmsService.sendOne({ to: phone, body, loggedBody, customerId }, { messageType });
+  },
+
+  async sendPhoneChangedNotice(oldPhone: string, customerId: string) {
+    return SmsService.sendOne(
+      {
+        to: oldPhone,
+        body: `Mobilnummeret på kontoen din hos Boklisten er endret. Var det ikke deg, kontakt oss på ${EMAIL_SENDER.INFO}.`,
+        customerId,
+      },
+      { messageType: "phone-changed" },
+    );
   },
 
   async sendEmailVerification(email: string, verificationId: string) {
@@ -558,7 +573,7 @@ const DispatchService = {
     const smsStatus = await SmsService.sendOne(
       {
         to: user.phone,
-        body: `Hei ${userFirstName}, velkommen til ${branchName}! Vi i Boklisten administrerer utlån av bøkene du skal bruke, og før du kan få dem trenger vi at du bekrefter informasjonen din og signerer vår låneavtale på Boklisten.no. Er du under 18 år, må en foresatt signere. Vi har opprettet en konto til deg, og du kan logge inn med Vipps eller opprette et passord for å komme i gang. Mvh. Boklisten.no`,
+        body: `Hei ${userFirstName}, velkommen til ${branchName}! Vi i Boklisten administrerer utlån av bøkene du skal bruke, og før du kan få dem trenger vi at du bekrefter informasjonen din og signerer vår låneavtale på Boklisten.no. Er du under 18 år, må en foresatt signere. Vi har opprettet en konto til deg, og du kan logge inn med Vipps eller med en engangskode på SMS for å komme i gang. Mvh. Boklisten.no`,
       },
       context,
     );

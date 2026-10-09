@@ -20,8 +20,7 @@ import { norwegianTime } from "@/shared/utils/dayjs";
 
 const METHOD_META = {
   vipps: { label: "Vipps", color: "orange.6" },
-  local: { label: "Passord", color: "blue.6" },
-  both: { label: "Vipps og passord", color: "teal.6" },
+  sms: { label: "SMS", color: "blue.6" },
 } as const;
 
 const NEW_CUSTOMERS_MONTHS = 24;
@@ -60,8 +59,7 @@ export default function CustomersTab() {
     month: monthLabel(row.month),
     "Nye kunder": row.newUsers,
   }));
-  const loggedInCount =
-    metrics.loginMethods.vipps + metrics.loginMethods.local + metrics.loginMethods.both;
+  const loggedInCount = metrics.loginMethods.vipps + metrics.loginMethods.sms;
 
   return (
     <Stack gap="lg">
@@ -132,12 +130,12 @@ export default function CustomersTab() {
         </ChartCard>
         <ChartCard
           title="Innloggingsmetode"
-          description={`Hvordan kundene logger inn. ${metrics.loginMethods.none.toLocaleString("nb-NO")} kunder har aldri logget inn.`}
+          description={`Kunder som har koblet til Vipps, og kunder som bare har brukt SMS. ${metrics.loginMethods.none.toLocaleString("nb-NO")} kunder har aldri logget inn.`}
           isEmpty={loggedInCount === 0}
         >
           <DonutWithLegend
             centerLabel={loggedInCount.toLocaleString("nb-NO")}
-            data={(["vipps", "local", "both"] as const).map((method) => ({
+            data={(["vipps", "sms"] as const).map((method) => ({
               name: METHOD_META[method].label,
               value: metrics.loginMethods[method],
               color: METHOD_META[method].color,

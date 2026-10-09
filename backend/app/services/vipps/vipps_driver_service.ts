@@ -7,6 +7,7 @@ import type {
 } from "@adonisjs/ally/types";
 import type { HttpContext } from "@adonisjs/core/http";
 
+import { phoneDigits } from "#shared/phone_number";
 import type { VippsUser } from "#types/user";
 
 interface VippsDriverAccessToken {
@@ -102,7 +103,8 @@ class VippsDriver extends Oauth2Driver<VippsDriverAccessToken, VippsDriverScopes
       name: body.name,
       email: body.email,
       emailVerified: body.email_verified,
-      phoneNumber: body.phone_number.slice(-8),
+      // Vipps sends "4791234567"; a foreign number keeps its country code.
+      phoneNumber: phoneDigits(`+${body.phone_number}`),
       phoneNumberVerified: body.phone_number_verified,
       address: body.address.street_address,
       postalCode: body.address.postal_code,

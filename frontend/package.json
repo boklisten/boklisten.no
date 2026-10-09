@@ -48,7 +48,6 @@
     "qrcode.react": "^4.2.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-password-strength-bar": "^0.4.1",
     "recharts": "^3.10.1",
     "signature_pad": "5.1.4",
     "validator": "^13.15.35",

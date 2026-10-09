@@ -1,34 +1,26 @@
 import vine from "@vinejs/vine";
 
-import { emailField, passwordField } from "#validators/common/fields";
+import { emailField, phoneField, smsCodeField } from "#validators/common/fields";
 import { uniqueEmail } from "#validators/common/rules";
-import { userFieldsSchema } from "#validators/users";
+import { ownUserFieldsSchema } from "#validators/users";
 
-export const forgotPasswordValidator = vine.create(
+export const sendLoginCodeValidator = vine.create(
   vine.object({
-    email: emailField.clone(),
+    phone: phoneField.clone(),
   }),
 );
 
-export const passwordResetValidator = vine.create({
-  params: vine.object({
-    id: vine.string(),
+export const verifyLoginCodeValidator = vine.create(
+  vine.object({
+    phone: phoneField.clone(),
+    code: smsCodeField.clone(),
   }),
-  token: vine.string(),
-  newPassword: passwordField.clone(),
-});
+);
 
+/** A sign-up after a login code proved a number no account has; the phone comes from the session. */
 export const registerSchema = vine.object({
   email: emailField.clone().use(uniqueEmail()),
-  password: passwordField.clone(),
-  ...userFieldsSchema.getProperties(),
+  ...ownUserFieldsSchema.getProperties(),
 });
 
 export const registerValidator = vine.create(registerSchema);
-
-export const localAuthValidator = vine.create(
-  vine.object({
-    username: vine.string(),
-    password: vine.string(),
-  }),
-);

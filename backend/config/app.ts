@@ -11,8 +11,8 @@ export const isDeployed = API_ENV === "production" || API_ENV === "staging";
 
 /**
  * The origin the API itself answers on, for URLs it hands to other servers (the Vipps callback,
- * Twilio's status callback) and to the local test login link. Railway tells every service its
- * public domain, which is the custom domain when one is attached; locally it is the dev server.
+ * Twilio's status callback). Railway tells every service its public domain, which is the custom
+ * domain when one is attached; locally it is the dev server.
  */
 export const apiOrigin = isDeployed
   ? `https://${deployedDomain("RAILWAY_PUBLIC_DOMAIN")}`

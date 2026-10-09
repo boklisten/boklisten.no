@@ -20,8 +20,6 @@ import CurrencyField from "@/shared/components/form/fields/complex/CurrencyField
 import DeadlinePickerField from "@/shared/components/form/fields/complex/DeadlinePickerField";
 import EmailField from "@/shared/components/form/fields/complex/EmailField";
 import NameField from "@/shared/components/form/fields/complex/NameField";
-import NewPasswordField from "@/shared/components/form/fields/complex/NewPasswordField";
-import PasswordField from "@/shared/components/form/fields/complex/PasswordField";
 import PercentageField from "@/shared/components/form/fields/complex/PercentageField";
 import PhoneNumberField from "@/shared/components/form/fields/complex/PhoneNumberField";
 import PostalCodeField from "@/shared/components/form/fields/complex/PostalCodeField";
@@ -59,8 +57,6 @@ const { useAppForm, withFieldGroup } = createFormHook({
     AddressField,
     BankAccountField,
     PostalCodeField,
-    PasswordField,
-    NewPasswordField,
     SelectBranchField,
     SelectBranchesField,
     SegmentedControlField,

@@ -34,10 +34,8 @@ import { Route as administrasjonAdminUserSettingsRouteImport } from './routes/(a
 import { Route as administrasjonAdminVentelisteRouteImport } from './routes/(administrasjon)/admin/venteliste'
 import { Route as offentligAuthCallbackRouteImport } from './routes/(offentlig)/auth/callback'
 import { Route as offentligAuthFailureRouteImport } from './routes/(offentlig)/auth/failure'
-import { Route as offentligAuthForgotRouteImport } from './routes/(offentlig)/auth/forgot'
 import { Route as offentligAuthLoginRouteImport } from './routes/(offentlig)/auth/login'
 import { Route as offentligAuthLogoutRouteImport } from './routes/(offentlig)/auth/logout'
-import { Route as offentligAuthRegisterRouteImport } from './routes/(offentlig)/auth/register'
 import { Route as offentligBestillingIndexRouteImport } from './routes/(offentlig)/bestilling/index'
 import { Route as offentligBestillingBranchIdRouteImport } from './routes/(offentlig)/bestilling/$branchId'
 import { Route as offentligInfoAboutRouteImport } from './routes/(offentlig)/info/about'
@@ -65,7 +63,6 @@ import { Route as administrasjonAdminKommunikasjonLoggRouteImport } from './rout
 import { Route as administrasjonAdminKommunikasjonPaminnelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/paminnelser'
 import { Route as administrasjonAdminKommunikasjonUtsendelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/utsendelser'
 import { Route as offentligAuthPermissionDeniedRouteImport } from './routes/(offentlig)/auth/permission.denied'
-import { Route as offentligAuthResetIdRouteImport } from './routes/(offentlig)/auth/reset.$id'
 import { Route as offentligInfoBranchIndexRouteImport } from './routes/(offentlig)/info/branch/index'
 import { Route as offentligInfoBranchBranchIdRouteImport } from './routes/(offentlig)/info/branch/$branchId'
 import { Route as offentligInfoPoliciesConditionsRouteImport } from './routes/(offentlig)/info/policies/conditions'
@@ -208,11 +205,6 @@ const offentligAuthFailureRoute = offentligAuthFailureRouteImport.update({
   path: '/auth/failure',
   getParentRoute: () => offentligRouteRoute,
 } as any)
-const offentligAuthForgotRoute = offentligAuthForgotRouteImport.update({
-  id: '/auth/forgot',
-  path: '/auth/forgot',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
 const offentligAuthLoginRoute = offentligAuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
@@ -221,11 +213,6 @@ const offentligAuthLoginRoute = offentligAuthLoginRouteImport.update({
 const offentligAuthLogoutRoute = offentligAuthLogoutRouteImport.update({
   id: '/auth/logout',
   path: '/auth/logout',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
-const offentligAuthRegisterRoute = offentligAuthRegisterRouteImport.update({
-  id: '/auth/register',
-  path: '/auth/register',
   getParentRoute: () => offentligRouteRoute,
 } as any)
 const offentligBestillingIndexRoute =
@@ -381,11 +368,6 @@ const offentligAuthPermissionDeniedRoute =
     path: '/auth/permission/denied',
     getParentRoute: () => offentligRouteRoute,
   } as any)
-const offentligAuthResetIdRoute = offentligAuthResetIdRouteImport.update({
-  id: '/auth/reset/$id',
-  path: '/auth/reset/$id',
-  getParentRoute: () => offentligRouteRoute,
-} as any)
 const offentligInfoBranchIndexRoute =
   offentligInfoBranchIndexRouteImport.update({
     id: '/branch/',
@@ -460,10 +442,8 @@ export interface FileRoutesByFullPath {
   '/admin/venteliste': typeof administrasjonAdminVentelisteRoute
   '/auth/callback': typeof offentligAuthCallbackRoute
   '/auth/failure': typeof offentligAuthFailureRoute
-  '/auth/forgot': typeof offentligAuthForgotRoute
   '/auth/login': typeof offentligAuthLoginRoute
   '/auth/logout': typeof offentligAuthLogoutRoute
-  '/auth/register': typeof offentligAuthRegisterRoute
   '/bestilling/$branchId': typeof offentligBestillingBranchIdRoute
   '/info/about': typeof offentligInfoAboutRoute
   '/info/buyback': typeof offentligInfoBuybackRoute
@@ -491,7 +471,6 @@ export interface FileRoutesByFullPath {
   '/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
   '/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
   '/auth/permission/denied': typeof offentligAuthPermissionDeniedRoute
-  '/auth/reset/$id': typeof offentligAuthResetIdRoute
   '/info/branch/$branchId': typeof offentligInfoBranchBranchIdRoute
   '/info/policies/conditions': typeof offentligInfoPoliciesConditionsRoute
   '/info/policies/privacy': typeof offentligInfoPoliciesPrivacyRoute
@@ -524,10 +503,8 @@ export interface FileRoutesByTo {
   '/admin/venteliste': typeof administrasjonAdminVentelisteRoute
   '/auth/callback': typeof offentligAuthCallbackRoute
   '/auth/failure': typeof offentligAuthFailureRoute
-  '/auth/forgot': typeof offentligAuthForgotRoute
   '/auth/login': typeof offentligAuthLoginRoute
   '/auth/logout': typeof offentligAuthLogoutRoute
-  '/auth/register': typeof offentligAuthRegisterRoute
   '/bestilling/$branchId': typeof offentligBestillingBranchIdRoute
   '/info/about': typeof offentligInfoAboutRoute
   '/info/buyback': typeof offentligInfoBuybackRoute
@@ -555,7 +532,6 @@ export interface FileRoutesByTo {
   '/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
   '/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
   '/auth/permission/denied': typeof offentligAuthPermissionDeniedRoute
-  '/auth/reset/$id': typeof offentligAuthResetIdRoute
   '/info/branch/$branchId': typeof offentligInfoBranchBranchIdRoute
   '/info/policies/conditions': typeof offentligInfoPoliciesConditionsRoute
   '/info/policies/privacy': typeof offentligInfoPoliciesPrivacyRoute
@@ -592,10 +568,8 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/venteliste': typeof administrasjonAdminVentelisteRoute
   '/(offentlig)/auth/callback': typeof offentligAuthCallbackRoute
   '/(offentlig)/auth/failure': typeof offentligAuthFailureRoute
-  '/(offentlig)/auth/forgot': typeof offentligAuthForgotRoute
   '/(offentlig)/auth/login': typeof offentligAuthLoginRoute
   '/(offentlig)/auth/logout': typeof offentligAuthLogoutRoute
-  '/(offentlig)/auth/register': typeof offentligAuthRegisterRoute
   '/(offentlig)/bestilling/$branchId': typeof offentligBestillingBranchIdRoute
   '/(offentlig)/info/about': typeof offentligInfoAboutRoute
   '/(offentlig)/info/buyback': typeof offentligInfoBuybackRoute
@@ -623,7 +597,6 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
   '/(administrasjon)/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
   '/(offentlig)/auth/permission/denied': typeof offentligAuthPermissionDeniedRoute
-  '/(offentlig)/auth/reset/$id': typeof offentligAuthResetIdRoute
   '/(offentlig)/info/branch/$branchId': typeof offentligInfoBranchBranchIdRoute
   '/(offentlig)/info/policies/conditions': typeof offentligInfoPoliciesConditionsRoute
   '/(offentlig)/info/policies/privacy': typeof offentligInfoPoliciesPrivacyRoute
@@ -660,10 +633,8 @@ export interface FileRouteTypes {
     | '/admin/venteliste'
     | '/auth/callback'
     | '/auth/failure'
-    | '/auth/forgot'
     | '/auth/login'
     | '/auth/logout'
-    | '/auth/register'
     | '/bestilling/$branchId'
     | '/info/about'
     | '/info/buyback'
@@ -691,7 +662,6 @@ export interface FileRouteTypes {
     | '/admin/kommunikasjon/paminnelser'
     | '/admin/kommunikasjon/utsendelser'
     | '/auth/permission/denied'
-    | '/auth/reset/$id'
     | '/info/branch/$branchId'
     | '/info/policies/conditions'
     | '/info/policies/privacy'
@@ -724,10 +694,8 @@ export interface FileRouteTypes {
     | '/admin/venteliste'
     | '/auth/callback'
     | '/auth/failure'
-    | '/auth/forgot'
     | '/auth/login'
     | '/auth/logout'
-    | '/auth/register'
     | '/bestilling/$branchId'
     | '/info/about'
     | '/info/buyback'
@@ -755,7 +723,6 @@ export interface FileRouteTypes {
     | '/admin/kommunikasjon/paminnelser'
     | '/admin/kommunikasjon/utsendelser'
     | '/auth/permission/denied'
-    | '/auth/reset/$id'
     | '/info/branch/$branchId'
     | '/info/policies/conditions'
     | '/info/policies/privacy'
@@ -791,10 +758,8 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/venteliste'
     | '/(offentlig)/auth/callback'
     | '/(offentlig)/auth/failure'
-    | '/(offentlig)/auth/forgot'
     | '/(offentlig)/auth/login'
     | '/(offentlig)/auth/logout'
-    | '/(offentlig)/auth/register'
     | '/(offentlig)/bestilling/$branchId'
     | '/(offentlig)/info/about'
     | '/(offentlig)/info/buyback'
@@ -822,7 +787,6 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/kommunikasjon/paminnelser'
     | '/(administrasjon)/admin/kommunikasjon/utsendelser'
     | '/(offentlig)/auth/permission/denied'
-    | '/(offentlig)/auth/reset/$id'
     | '/(offentlig)/info/branch/$branchId'
     | '/(offentlig)/info/policies/conditions'
     | '/(offentlig)/info/policies/privacy'
@@ -1020,13 +984,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligAuthFailureRouteImport
       parentRoute: typeof offentligRouteRoute
     }
-    '/(offentlig)/auth/forgot': {
-      id: '/(offentlig)/auth/forgot'
-      path: '/auth/forgot'
-      fullPath: '/auth/forgot'
-      preLoaderRoute: typeof offentligAuthForgotRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
     '/(offentlig)/auth/login': {
       id: '/(offentlig)/auth/login'
       path: '/auth/login'
@@ -1039,13 +996,6 @@ declare module '@tanstack/react-router' {
       path: '/auth/logout'
       fullPath: '/auth/logout'
       preLoaderRoute: typeof offentligAuthLogoutRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
-    '/(offentlig)/auth/register': {
-      id: '/(offentlig)/auth/register'
-      path: '/auth/register'
-      fullPath: '/auth/register'
-      preLoaderRoute: typeof offentligAuthRegisterRouteImport
       parentRoute: typeof offentligRouteRoute
     }
     '/(offentlig)/bestilling/': {
@@ -1237,13 +1187,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligAuthPermissionDeniedRouteImport
       parentRoute: typeof offentligRouteRoute
     }
-    '/(offentlig)/auth/reset/$id': {
-      id: '/(offentlig)/auth/reset/$id'
-      path: '/auth/reset/$id'
-      fullPath: '/auth/reset/$id'
-      preLoaderRoute: typeof offentligAuthResetIdRouteImport
-      parentRoute: typeof offentligRouteRoute
-    }
     '/(offentlig)/info/branch/': {
       id: '/(offentlig)/info/branch/'
       path: '/branch'
@@ -1378,17 +1321,14 @@ interface offentligRouteRouteChildren {
   offentligIndexRoute: typeof offentligIndexRoute
   offentligAuthCallbackRoute: typeof offentligAuthCallbackRoute
   offentligAuthFailureRoute: typeof offentligAuthFailureRoute
-  offentligAuthForgotRoute: typeof offentligAuthForgotRoute
   offentligAuthLoginRoute: typeof offentligAuthLoginRoute
   offentligAuthLogoutRoute: typeof offentligAuthLogoutRoute
-  offentligAuthRegisterRoute: typeof offentligAuthRegisterRoute
   offentligBestillingBranchIdRoute: typeof offentligBestillingBranchIdRoute
   offentligKasseSigneringRoute: typeof offentligKasseSigneringRoute
   offentligSigneringUserIdRoute: typeof offentligSigneringUserIdRoute
   offentligBestillingIndexRoute: typeof offentligBestillingIndexRoute
   offentligKasseIndexRoute: typeof offentligKasseIndexRoute
   offentligAuthPermissionDeniedRoute: typeof offentligAuthPermissionDeniedRoute
-  offentligAuthResetIdRoute: typeof offentligAuthResetIdRoute
   offentligKasseBetalingStatusRoute: typeof offentligKasseBetalingStatusRoute
   offentligKasseBetalingIndexRoute: typeof offentligKasseBetalingIndexRoute
   offentligAuthEmailVerifyVerificationIdRoute: typeof offentligAuthEmailVerifyVerificationIdRoute
@@ -1407,17 +1347,14 @@ const offentligRouteRouteChildren: offentligRouteRouteChildren = {
   offentligIndexRoute: offentligIndexRoute,
   offentligAuthCallbackRoute: offentligAuthCallbackRoute,
   offentligAuthFailureRoute: offentligAuthFailureRoute,
-  offentligAuthForgotRoute: offentligAuthForgotRoute,
   offentligAuthLoginRoute: offentligAuthLoginRoute,
   offentligAuthLogoutRoute: offentligAuthLogoutRoute,
-  offentligAuthRegisterRoute: offentligAuthRegisterRoute,
   offentligBestillingBranchIdRoute: offentligBestillingBranchIdRoute,
   offentligKasseSigneringRoute: offentligKasseSigneringRoute,
   offentligSigneringUserIdRoute: offentligSigneringUserIdRoute,
   offentligBestillingIndexRoute: offentligBestillingIndexRoute,
   offentligKasseIndexRoute: offentligKasseIndexRoute,
   offentligAuthPermissionDeniedRoute: offentligAuthPermissionDeniedRoute,
-  offentligAuthResetIdRoute: offentligAuthResetIdRoute,
   offentligKasseBetalingStatusRoute: offentligKasseBetalingStatusRoute,
   offentligKasseBetalingIndexRoute: offentligKasseBetalingIndexRoute,
   offentligAuthEmailVerifyVerificationIdRoute:

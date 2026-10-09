@@ -17,7 +17,7 @@ import { countPendingTasks } from "@/shared/utils/tasks";
 
 /**
  * The public menu: three sections of one shape. "Din bruker" holds who is logged in and their
- * pending tasks, or a guest's two ways in; then the pages in two groups. Logging out lives on the
+ * pending tasks, or a guest's way in; then the pages in two groups. Logging out lives on the
  * settings page.
  */
 export default function PublicMenuSheet({
@@ -40,9 +40,6 @@ export default function PublicMenuSheet({
           <div className={classes.guest}>
             <TanStackButton to="/auth/login" onClick={onClose}>
               Logg inn
-            </TanStackButton>
-            <TanStackButton to="/auth/register" variant="outline" onClick={onClose}>
-              Registrer
             </TanStackButton>
           </div>
         }

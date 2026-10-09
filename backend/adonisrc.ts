@@ -31,7 +31,6 @@ export default defineConfig({
     () => import("#start/kernel"),
     () => import("#start/profiler"),
     () => import("#start/sendgrid"),
-    () => import("#start/validator"),
   ],
 
   tests: {

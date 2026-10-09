@@ -6,3 +6,8 @@
 export function phoneDigits(value: string): string {
   return value.replaceAll(/\s/g, "").replace(/^(?<countryCode>\+47|0047)/, "");
 }
+
+/** Eight digits starting with 4 or 9, as `phoneDigits` leaves a Norwegian mobile number. */
+export function isNorwegianMobile(digits: string): boolean {
+  return /^[49]\d{7}$/.test(digits);
+}

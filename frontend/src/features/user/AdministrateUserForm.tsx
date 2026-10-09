@@ -48,6 +48,7 @@ function valuesOf(user: User): AdministrateUserFormValues {
 function bodyOf(values: AdministrateUserFormValues) {
   return {
     ...userFieldsBody(values),
+    phone: values.phoneNumber,
     email: values.email,
     emailConfirmed: values.emailConfirmed,
   };
@@ -141,6 +142,7 @@ export default function AdministrateUserForm({
         fields={createFieldMap(autoSave.defaultValues)}
         form={form}
         leading={null}
+        phoneAction={null}
       />
       <form.AppForm>
         <form.ErrorSummary serverErrors={serverErrors} autoSave />

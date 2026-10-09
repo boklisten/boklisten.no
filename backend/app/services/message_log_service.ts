@@ -44,7 +44,6 @@ const STATUS_RANK: Record<MessageStatus, number> = {
  * every employee, so these must never be stored.
  */
 const REDACTED_TEMPLATE_KEYS = new Set([
-  "passwordResetUri",
   "emailVerificationUri",
   "signatureUri",
   "guardianSignatureUri",

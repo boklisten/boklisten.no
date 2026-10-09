@@ -11,7 +11,6 @@ import UserInfoFields, {
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
-import { newPasswordFieldValidator } from "@/shared/components/form/fields/complex/NewPasswordField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
 import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { useAppForm } from "@/shared/hooks/form";
@@ -34,26 +33,39 @@ function isSchoolEmail(email: string) {
 
 type SignupFormValues = {
   email: string;
-  password: string;
   agreeToTermsAndConditions: boolean;
 } & UserInfoFieldValues;
 
 const defaultValues: SignupFormValues = {
   email: "",
-  password: "",
   ...userInfoFieldDefaultValues,
   agreeToTermsAndConditions: false,
 };
 
-export default function SignupForm() {
+/**
+ * The details of a new account, after a login code proved `phone`. The backend takes the number
+ * from the session, so it is only shown here.
+ */
+export default function SignupForm({
+  phone,
+  onChangePhone,
+}: {
+  phone: string;
+  /** Back to typing another number. */
+  onChangePhone: () => void;
+}) {
   const queryClient = useQueryClient();
   const { redirectAfterLogin } = useLoginRedirect();
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const registerMutation = useMutation(
-    api.local.register.mutationOptions({
-      onSuccess: (user) => {
+    api.sms.register.mutationOptions({
+      onSuccess: (response) => {
+        if (response.message) {
+          setServerErrors([response.message]);
+          return;
+        }
         setServerErrors([]);
-        queryClient.setQueryData(authQueryOptions().queryKey, user);
+        queryClient.setQueryData(authQueryOptions().queryKey, response.user);
         void redirectAfterLogin();
       },
       onError: (error) => {
@@ -66,10 +78,10 @@ export default function SignupForm() {
     }),
   );
   const form = useAppForm({
-    defaultValues,
+    defaultValues: { ...defaultValues, phoneNumber: phone },
     onSubmit: ({ value }) =>
       registerMutation.mutate({
-        body: { email: value.email, password: value.password, ...userFieldsBody(value) },
+        body: { email: value.email, ...userFieldsBody(value) },
       }),
     validators: {
       onSubmit: ({ value }) => {
@@ -115,19 +127,16 @@ export default function SignupForm() {
           </Activity>
         )}
       </form.Subscribe>
-      <form.AppField
-        name="password"
-        validators={{
-          onBlur: ({ value }) => newPasswordFieldValidator(value),
-        }}
-      >
-        {(field) => <field.NewPasswordField />}
-      </form.AppField>
       <UserInfoFields
         perspective="personal"
         fields={createFieldMap(defaultValues)}
         form={form}
         leading={null}
+        phoneAction={
+          <Button variant="subtle" size="compact-sm" mr={4} onClick={onChangePhone}>
+            Endre
+          </Button>
+        }
       />
       <Space />
       <form.AppField

@@ -22,18 +22,19 @@ test.group("assertMembershipAllowed", (group) => {
 
     await assert.rejects(
       () =>
-        UserService.createLocalUser({
-          email: "ny@example.com",
-          password: "hemmelig-passord-123",
-          name: "Ny Kunde",
-          phone: "91234567",
-          address: "Gata 1",
-          postCode: "0001",
-          postCity: "Oslo",
-          dob: new Date("2005-01-01"),
-          branchMembershipId: wang.id,
-          guardianName: null,
-        }),
+        UserService.createSmsUser(
+          {
+            email: "ny@example.com",
+            name: "Ny Kunde",
+            address: "Gata 1",
+            postCode: "0001",
+            postCity: "Oslo",
+            dob: new Date("2005-01-01"),
+            branchMembershipId: wang.id,
+            guardianName: null,
+          },
+          "91234567",
+        ),
       /Du kan ikke velge denne skolen/,
     );
     assert.lengthOf(await User.all(), 0);

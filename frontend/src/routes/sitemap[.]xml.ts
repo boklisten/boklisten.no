@@ -7,7 +7,7 @@ import { apiClient } from "@/shared/utils/apiClient";
  * query-parameter variant of themselves, which Search Console reports as
  * "page with redirect" when it comes from a sitemap.
  */
-const UTILITY_PATHS = new Set(["/auth/login", "/auth/register"]);
+const UTILITY_PATHS = new Set(["/auth/login"]);
 
 /**
  * Every public page the router knows about, so a new page is listed the moment

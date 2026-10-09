@@ -8,8 +8,12 @@ const MESSAGE_TYPES = [
   "receipt",
   "signature",
   "delivery-info",
+  // Passwords are gone; the type stays for the messages already logged.
   "password-reset",
   "email-verification",
+  "login-code",
+  "phone-verification",
+  "phone-changed",
   "onboarding",
   "employee-monitoring",
   "refund-request",

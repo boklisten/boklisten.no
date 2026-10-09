@@ -1,6 +1,6 @@
 import db from "@adonisjs/lucid/services/db";
 import { DbRememberMeTokensProvider } from "@adonisjs/auth/session";
-import { beforeCreate, belongsTo, column } from "@adonisjs/lucid/orm";
+import { afterCreate, beforeCreate, belongsTo } from "@adonisjs/lucid/orm";
 import type { BelongsTo } from "@adonisjs/lucid/types/relations";
 import type { DateTime } from "luxon";
 
@@ -16,9 +16,6 @@ import { USER_PERMISSION } from "#shared/user-permission";
  * A customer or employee: contact details, tasks, branch membership, permission and login
  * credentials in one row (see `shared/user.ts` for the field semantics). The id is the former
  * user-details id; sessions are tagged with it and remember-me tokens reference it.
- *
- * The password hash never leaves the backend: it is excluded from serialisation and from
- * `toDto()`, which is what controllers return.
  */
 export default class User extends UserSchema {
   static override selfAssignPrimaryKey = true;
@@ -28,15 +25,18 @@ export default class User extends UserSchema {
 
   declare permission: UserPermission;
 
-  @column({ serializeAs: null })
-  declare localHashedPassword: string | null;
-
   @belongsTo(() => Branch, { foreignKey: "branchMembershipId" })
   declare branchMembership: BelongsTo<typeof Branch>;
 
   @beforeCreate()
   static assignId(user: User) {
     assignObjectId(user);
+  }
+
+  /** Loads the columns the database filled in, which `toDto()` reads (`smsLoginEnabled`, a null `vippsUserId`). */
+  @afterCreate()
+  static async loadDefaults(user: User) {
+    await user.refresh();
   }
 
   static async findOptional(id: string | null | undefined): Promise<User | null> {
@@ -72,11 +72,6 @@ export default class User extends UserSchema {
   /** Phones are stored as eight digits; the lookup accepts the `+47`/spaced spellings too. */
   static async byPhone(phone: string): Promise<User | null> {
     return this.query().where("phone", phoneDigits(phone)).first();
-  }
-
-  /** Login by whichever of email or phone the customer typed. */
-  static async byUsername(username: string): Promise<User | null> {
-    return username.includes("@") ? this.byEmail(username) : this.byPhone(username);
   }
 
   /** Direct members of the given branches; callers expand a branch to its descendants first. */
@@ -150,6 +145,8 @@ export default class User extends UserSchema {
       taskConfirmDetails: this.taskConfirmDetails,
       taskSignAgreement: this.taskSignAgreement,
       permission: this.permission,
+      smsLoginEnabled: this.smsLoginEnabled,
+      vippsLinked: this.vippsUserId !== null,
       createdAt: toDate(this.createdAt),
     };
   }

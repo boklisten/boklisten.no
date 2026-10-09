@@ -700,21 +700,6 @@ export class OrderSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
-export class PasswordResetSchema extends BaseModel {
-  static $columns = ['createdAt', 'id', 'tokenHash', 'updatedAt', 'userId'] as const
-  $columns = PasswordResetSchema.$columns
-  @column.dateTime({ autoCreate: true })
-  declare createdAt: DateTime
-  @column({ isPrimary: true })
-  declare id: number
-  @column()
-  declare tokenHash: string
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime
-  @column()
-  declare userId: string
-}
-
 export class PaymentSchema extends BaseModel {
   static $columns = ['amount', 'confirmed', 'createdAt', 'id', 'method', 'orderId', 'updatedAt'] as const
   $columns = PaymentSchema.$columns
@@ -828,6 +813,27 @@ export class SignatureSchema extends BaseModel {
   declare updatedAt: DateTime
 }
 
+export class SmsCodeSchema extends BaseModel {
+  static $columns = ['attempts', 'codeHash', 'createdAt', 'expiresAt', 'id', 'phone', 'purpose', 'userId'] as const
+  $columns = SmsCodeSchema.$columns
+  @column()
+  declare attempts: number
+  @column()
+  declare codeHash: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare phone: string
+  @column()
+  declare purpose: string
+  @column()
+  declare userId: string | null
+}
+
 export class UniqueItemSchema extends BaseModel {
   static $columns = ['blid', 'createdAt', 'id', 'itemId', 'updatedAt'] as const
   $columns = UniqueItemSchema.$columns
@@ -844,7 +850,7 @@ export class UniqueItemSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['address', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastActiveAt', 'localHashedPassword', 'name', 'permission', 'phone', 'postCity', 'postCode', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsUserId'] as const
+  static $columns = ['address', 'branchMembershipId', 'createdAt', 'dob', 'email', 'emailConfirmed', 'guardianEmail', 'guardianName', 'guardianPhone', 'id', 'lastActiveAt', 'name', 'permission', 'phone', 'postCity', 'postCode', 'smsLoginEnabled', 'taskConfirmDetails', 'taskSignAgreement', 'updatedAt', 'vippsUserId'] as const
   $columns = UserSchema.$columns
   @column()
   declare address: string | null
@@ -869,8 +875,6 @@ export class UserSchema extends BaseModel {
   @column.dateTime()
   declare lastActiveAt: DateTime | null
   @column()
-  declare localHashedPassword: string | null
-  @column()
   declare name: string | null
   @column()
   declare permission: string
@@ -880,6 +884,8 @@ export class UserSchema extends BaseModel {
   declare postCity: string | null
   @column()
   declare postCode: string | null
+  @column()
+  declare smsLoginEnabled: boolean
   @column()
   declare taskConfirmDetails: boolean
   @column()

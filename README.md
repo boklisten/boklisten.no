@@ -29,6 +29,10 @@ $ vpr build:frontend
 $ vpr start:frontend
 ```
 
+### Logging in locally
+
+When the backend is not deployed (`vpr dev`), no login SMS is sent and every SMS code is `000000`. Choose "Logg inn med SMS" on `/auth/login`, enter the phone number of any user in the database, and type `000000`. Accounts that have turned SMS login off still need Vipps.
+
 ## Code style, linting and type checking
 
 Formatting, linting and type-aware checks are configured once in the root `vite.config.ts` and run through [Vite+](https://viteplus.dev).

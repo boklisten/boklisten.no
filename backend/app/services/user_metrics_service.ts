@@ -2,7 +2,8 @@ import db from "@adonisjs/lucid/services/db";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-type LoginMethod = "vipps" | "local" | "both" | "none";
+/** `sms`: active without ever linking Vipps; `none`: never active. */
+type LoginMethod = "vipps" | "sms" | "none";
 
 const ACTIVITY_BUCKETS = [
   "last24Hours",
@@ -54,9 +55,8 @@ async function aggregateActivity(now: number): Promise<ActivityRow[]> {
   }>(
     `SELECT
        CASE
-         WHEN vipps_user_id IS NOT NULL AND local_hashed_password IS NOT NULL THEN 'both'
          WHEN vipps_user_id IS NOT NULL THEN 'vipps'
-         WHEN local_hashed_password IS NOT NULL THEN 'local'
+         WHEN last_active_at IS NOT NULL THEN 'sms'
          ELSE 'none'
        END AS method,
        CASE
@@ -111,8 +111,7 @@ async function getMetrics(): Promise<UserMetrics> {
 
   const loginMethods = {
     vipps: sumCounts(activityRows, (r) => r.method === "vipps"),
-    local: sumCounts(activityRows, (r) => r.method === "local"),
-    both: sumCounts(activityRows, (r) => r.method === "both"),
+    sms: sumCounts(activityRows, (r) => r.method === "sms"),
     none: sumCounts(activityRows, (r) => r.method === "none"),
   };
 

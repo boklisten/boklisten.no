@@ -55,76 +55,40 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/vipps_controller').default['callback']>>>
     }
   }
-  'local.login': {
+  'sms.send': {
     methods: ["POST"]
-    pattern: '/auth/local/login'
+    pattern: '/auth/sms/send'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/auth_validators').localAuthValidator)>>
+      body: ExtractBody<InferInput<(typeof import('#validators/auth_validators').sendLoginCodeValidator)>>
       paramsTuple: []
       params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/auth_validators').localAuthValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/local_controller').default['login']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/local_controller').default['login']>>> | { status: 422; response: { errors: SimpleError[] } }
+      query: ExtractQuery<InferInput<(typeof import('#validators/auth_validators').sendLoginCodeValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/sms_controller').default['send']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/sms_controller').default['send']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'local.register': {
+  'sms.verify': {
     methods: ["POST"]
-    pattern: '/auth/local/register'
+    pattern: '/auth/sms/verify'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/auth_validators').verifyLoginCodeValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/auth_validators').verifyLoginCodeValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/sms_controller').default['verify']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/sms_controller').default['verify']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'sms.register': {
+    methods: ["POST"]
+    pattern: '/auth/sms/register'
     types: {
       body: ExtractBody<InferInput<(typeof import('#validators/auth_validators').registerValidator)>>
       paramsTuple: []
       params: {}
       query: ExtractQuery<InferInput<(typeof import('#validators/auth_validators').registerValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/local_controller').default['register']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/local_controller').default['register']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'password_reset.request': {
-    methods: ["POST"]
-    pattern: '/auth/password_reset'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/auth_validators').forgotPasswordValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/auth_validators').forgotPasswordValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/password_reset_controller').default['request']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/password_reset_controller').default['request']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'password_reset.validate': {
-    methods: ["GET","HEAD"]
-    pattern: '/auth/password_reset/:id/:token'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue, ParamValue]
-      params: { id: ParamValue; token: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/password_reset_controller').default['validate']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/password_reset_controller').default['validate']>>>
-    }
-  }
-  'password_reset.reset': {
-    methods: ["POST"]
-    pattern: '/auth/password_reset/:id'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/auth_validators').passwordResetValidator)>>
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: ExtractQuery<InferInput<(typeof import('#validators/auth_validators').passwordResetValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/password_reset_controller').default['reset']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/password_reset_controller').default['reset']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'auth.dev_login': {
-    methods: ["GET","HEAD"]
-    pattern: '/auth/dev_login/:token'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { token: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/auth_controller').default['devLogin']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/auth_controller').default['devLogin']>>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/auth/sms_controller').default['register']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/auth/sms_controller').default['register']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'email_verification.verify': {
@@ -377,6 +341,42 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/users').updateMeValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['updateMe']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['updateMe']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'users.send_phone_change_code': {
+    methods: ["POST"]
+    pattern: '/users/me/phone/send'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/users').phoneChangeCodeValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/users').phoneChangeCodeValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['sendPhoneChangeCode']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['sendPhoneChangeCode']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'users.change_my_phone': {
+    methods: ["POST"]
+    pattern: '/users/me/phone'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/users').phoneChangeValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/users').phoneChangeValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['changeMyPhone']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['changeMyPhone']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'users.set_sms_login': {
+    methods: ["PUT"]
+    pattern: '/users/me/sms_login'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/users').smsLoginValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/users').smsLoginValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['setSmsLogin']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['setSmsLogin']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'customer_items.me': {

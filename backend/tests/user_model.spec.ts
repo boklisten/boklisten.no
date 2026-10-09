@@ -18,15 +18,6 @@ test.group("User lookups", (group) => {
     assert.isNull(await User.byEmail("ola@example.com"));
   });
 
-  test("byUsername picks email or phone by the shape of the input", async ({ assert }) => {
-    const user = await createUser({ email: "kari@example.com", phone: "91234567" });
-
-    assert.equal((await User.byUsername("kari@example.com"))?.id, user.id);
-    assert.equal((await User.byUsername("91234567"))?.id, user.id);
-    assert.equal((await User.byUsername(" +47 912 34 567 "))?.id, user.id);
-    assert.isNull(await User.byUsername("91234568"));
-  });
-
   test("counts direct members of the given branches", async ({ assert }) => {
     const branch = await createBranch();
     const other = await createBranch();
@@ -105,22 +96,26 @@ test.group("User.search", (group) => {
 test.group("User.toDto", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
+  test("a user fresh from create carries the database defaults", async ({ assert }) => {
+    const user = await User.create({ email: "ny@example.com", permission: "customer" });
+
+    const dto = user.toDto();
+    assert.isFalse(dto.vippsLinked);
+    assert.isTrue(dto.smsLoginEnabled);
+  });
+
   test("presents the date of birth as a calendar date and leaves the credentials out", async ({
     assert,
   }) => {
     const user = await createUser({
       dob: DateTime.fromISO("2008-02-29"),
-      localHashedPassword:
-        "$argon2id$v=19$m=65536,t=3,p=4$c2FsdHNhbHRzYWx0c2FsdA$aGFzaGhhc2hoYXNoaGFzaGhhc2hoYXNoaGFzaGhhc2g",
       vippsUserId: "vipps-1",
     });
 
     const dto = (await User.findOrFail(user.id)).toDto();
 
     assert.equal(dto.dob, "2008-02-29");
-    assert.notProperty(dto, "localHashedPassword");
     assert.notProperty(dto, "vippsUserId");
-    assert.notProperty(user.serialize(), "localHashedPassword");
     assert.instanceOf(dto.createdAt, Date);
   });
 });

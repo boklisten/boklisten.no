@@ -30,41 +30,23 @@ const routes = {
     tokens: [{"old":"/auth/vipps/callback","type":0,"val":"auth","end":""},{"old":"/auth/vipps/callback","type":0,"val":"vipps","end":""},{"old":"/auth/vipps/callback","type":0,"val":"callback","end":""}],
     types: placeholder as Registry['vipps.callback']['types'],
   },
-  'local.login': {
+  'sms.send': {
     methods: ["POST"],
-    pattern: '/auth/local/login',
-    tokens: [{"old":"/auth/local/login","type":0,"val":"auth","end":""},{"old":"/auth/local/login","type":0,"val":"local","end":""},{"old":"/auth/local/login","type":0,"val":"login","end":""}],
-    types: placeholder as Registry['local.login']['types'],
+    pattern: '/auth/sms/send',
+    tokens: [{"old":"/auth/sms/send","type":0,"val":"auth","end":""},{"old":"/auth/sms/send","type":0,"val":"sms","end":""},{"old":"/auth/sms/send","type":0,"val":"send","end":""}],
+    types: placeholder as Registry['sms.send']['types'],
   },
-  'local.register': {
+  'sms.verify': {
     methods: ["POST"],
-    pattern: '/auth/local/register',
-    tokens: [{"old":"/auth/local/register","type":0,"val":"auth","end":""},{"old":"/auth/local/register","type":0,"val":"local","end":""},{"old":"/auth/local/register","type":0,"val":"register","end":""}],
-    types: placeholder as Registry['local.register']['types'],
+    pattern: '/auth/sms/verify',
+    tokens: [{"old":"/auth/sms/verify","type":0,"val":"auth","end":""},{"old":"/auth/sms/verify","type":0,"val":"sms","end":""},{"old":"/auth/sms/verify","type":0,"val":"verify","end":""}],
+    types: placeholder as Registry['sms.verify']['types'],
   },
-  'password_reset.request': {
+  'sms.register': {
     methods: ["POST"],
-    pattern: '/auth/password_reset',
-    tokens: [{"old":"/auth/password_reset","type":0,"val":"auth","end":""},{"old":"/auth/password_reset","type":0,"val":"password_reset","end":""}],
-    types: placeholder as Registry['password_reset.request']['types'],
-  },
-  'password_reset.validate': {
-    methods: ["GET","HEAD"],
-    pattern: '/auth/password_reset/:id/:token',
-    tokens: [{"old":"/auth/password_reset/:id/:token","type":0,"val":"auth","end":""},{"old":"/auth/password_reset/:id/:token","type":0,"val":"password_reset","end":""},{"old":"/auth/password_reset/:id/:token","type":1,"val":"id","end":""},{"old":"/auth/password_reset/:id/:token","type":1,"val":"token","end":""}],
-    types: placeholder as Registry['password_reset.validate']['types'],
-  },
-  'password_reset.reset': {
-    methods: ["POST"],
-    pattern: '/auth/password_reset/:id',
-    tokens: [{"old":"/auth/password_reset/:id","type":0,"val":"auth","end":""},{"old":"/auth/password_reset/:id","type":0,"val":"password_reset","end":""},{"old":"/auth/password_reset/:id","type":1,"val":"id","end":""}],
-    types: placeholder as Registry['password_reset.reset']['types'],
-  },
-  'auth.dev_login': {
-    methods: ["GET","HEAD"],
-    pattern: '/auth/dev_login/:token',
-    tokens: [{"old":"/auth/dev_login/:token","type":0,"val":"auth","end":""},{"old":"/auth/dev_login/:token","type":0,"val":"dev_login","end":""},{"old":"/auth/dev_login/:token","type":1,"val":"token","end":""}],
-    types: placeholder as Registry['auth.dev_login']['types'],
+    pattern: '/auth/sms/register',
+    tokens: [{"old":"/auth/sms/register","type":0,"val":"auth","end":""},{"old":"/auth/sms/register","type":0,"val":"sms","end":""},{"old":"/auth/sms/register","type":0,"val":"register","end":""}],
+    types: placeholder as Registry['sms.register']['types'],
   },
   'email_verification.verify': {
     methods: ["GET","HEAD"],
@@ -191,6 +173,24 @@ const routes = {
     pattern: '/users/me',
     tokens: [{"old":"/users/me","type":0,"val":"users","end":""},{"old":"/users/me","type":0,"val":"me","end":""}],
     types: placeholder as Registry['users.update_me']['types'],
+  },
+  'users.send_phone_change_code': {
+    methods: ["POST"],
+    pattern: '/users/me/phone/send',
+    tokens: [{"old":"/users/me/phone/send","type":0,"val":"users","end":""},{"old":"/users/me/phone/send","type":0,"val":"me","end":""},{"old":"/users/me/phone/send","type":0,"val":"phone","end":""},{"old":"/users/me/phone/send","type":0,"val":"send","end":""}],
+    types: placeholder as Registry['users.send_phone_change_code']['types'],
+  },
+  'users.change_my_phone': {
+    methods: ["POST"],
+    pattern: '/users/me/phone',
+    tokens: [{"old":"/users/me/phone","type":0,"val":"users","end":""},{"old":"/users/me/phone","type":0,"val":"me","end":""},{"old":"/users/me/phone","type":0,"val":"phone","end":""}],
+    types: placeholder as Registry['users.change_my_phone']['types'],
+  },
+  'users.set_sms_login': {
+    methods: ["PUT"],
+    pattern: '/users/me/sms_login',
+    tokens: [{"old":"/users/me/sms_login","type":0,"val":"users","end":""},{"old":"/users/me/sms_login","type":0,"val":"me","end":""},{"old":"/users/me/sms_login","type":0,"val":"sms_login","end":""}],
+    types: placeholder as Registry['users.set_sms_login']['types'],
   },
   'customer_items.me': {
     methods: ["GET","HEAD"],

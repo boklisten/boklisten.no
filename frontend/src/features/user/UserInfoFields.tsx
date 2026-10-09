@@ -42,11 +42,13 @@ export const userInfoFieldDefaultValues: UserInfoFieldValues = {
   guardianPhoneNumber: "",
 };
 
-/** The field values as the `users` endpoints take them; blank optional fields are sent as null. */
+/**
+ * The field values as the `users` endpoints take them; blank optional fields are sent as null.
+ * Without the phone, which only the employee form sends.
+ */
 export function userFieldsBody(values: UserInfoFieldValues) {
   return {
     name: values.name,
-    phone: values.phoneNumber,
     address: values.address,
     postCode: values.postal.code,
     postCity: values.postal.city,
@@ -77,8 +79,10 @@ const UserInfoFields = withFieldGroup({
     perspective: "personal" as "personal" | "administrate",
     /** Fields of the host form that belong in this section, right under its title (the email). */
     leading: null as ReactNode,
+    /** The personal forms' button for changing the read-only phone. */
+    phoneAction: null as ReactNode,
   },
-  render: ({ group, perspective, leading }) => (
+  render: ({ group, perspective, leading, phoneAction }) => (
     <>
       <FormSectionTitle>
         {perspective === "personal" ? "Din" : "Kundens"} informasjon
@@ -86,11 +90,20 @@ const UserInfoFields = withFieldGroup({
       {leading}
       <group.AppField
         name="phoneNumber"
-        validators={{
-          onBlur: ({ value }) => phoneNumberFieldValidator(value, perspective),
-        }}
+        // Read-only for the customer, so a missing phone must not block saving the rest.
+        validators={
+          perspective === "administrate"
+            ? { onBlur: ({ value }) => phoneNumberFieldValidator(value, perspective) }
+            : undefined
+        }
       >
-        {(field) => <field.PhoneNumberField />}
+        {(field) => (
+          <field.PhoneNumberField
+            readOnly={perspective === "personal"}
+            rightSection={phoneAction}
+            rightSectionWidth="auto"
+          />
+        )}
       </group.AppField>
       <group.AppField
         name="name"

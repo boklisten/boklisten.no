@@ -52,15 +52,15 @@ test.group("MessageLogService", (group) => {
     const message = await MessageLogService.logOutgoingMessage({
       channel: "email",
       recipient: "kunde@example.com",
-      context: { messageType: "password-reset" },
+      context: { messageType: "email-verification" },
       templateId: "d-123",
       templateData: {
-        passwordResetUri: "https://boklisten.no/auth/reset/1?token=secret",
+        emailVerificationUri: "https://boklisten.no/auth/email/verify/secret",
         name: "Ola",
       },
     });
     assert.deepEqual(message?.templateData, {
-      passwordResetUri: "[skjult]",
+      emailVerificationUri: "[skjult]",
       name: "Ola",
     });
   });

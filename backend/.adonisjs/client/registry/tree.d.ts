@@ -5,20 +5,15 @@ export interface ApiDefinition {
   auth: {
     me: typeof routes['auth.me']
     logout: typeof routes['auth.logout']
-    devLogin: typeof routes['auth.dev_login']
   }
   vipps: {
     redirect: typeof routes['vipps.redirect']
     callback: typeof routes['vipps.callback']
   }
-  local: {
-    login: typeof routes['local.login']
-    register: typeof routes['local.register']
-  }
-  passwordReset: {
-    request: typeof routes['password_reset.request']
-    validate: typeof routes['password_reset.validate']
-    reset: typeof routes['password_reset.reset']
+  sms: {
+    send: typeof routes['sms.send']
+    verify: typeof routes['sms.verify']
+    register: typeof routes['sms.register']
   }
   emailVerification: {
     verify: typeof routes['email_verification.verify']
@@ -96,6 +91,9 @@ export interface ApiDefinition {
   }
   users: {
     updateMe: typeof routes['users.update_me']
+    sendPhoneChangeCode: typeof routes['users.send_phone_change_code']
+    changeMyPhone: typeof routes['users.change_my_phone']
+    setSmsLogin: typeof routes['users.set_sms_login']
     metrics: typeof routes['users.metrics']
     duplicates: typeof routes['users.duplicates']
     employees: typeof routes['users.employees']

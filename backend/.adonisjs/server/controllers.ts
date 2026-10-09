@@ -6,8 +6,7 @@
 export const controllers = {
   auth: {
     Auth: () => import('#controllers/auth/auth_controller'),
-    Local: () => import('#controllers/auth/local_controller'),
-    PasswordReset: () => import('#controllers/auth/password_reset_controller'),
+    Sms: () => import('#controllers/auth/sms_controller'),
     Vipps: () => import('#controllers/auth/vipps_controller'),
   },
   Blids: () => import('#controllers/blids_controller'),

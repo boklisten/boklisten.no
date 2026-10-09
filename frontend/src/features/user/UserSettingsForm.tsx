@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Activity, useState } from "react";
 
 import type { UserInfoFieldValues } from "@/features/user/UserInfoFields";
+import ChangePhoneModal from "@/features/user/ChangePhoneModal";
 import EmailConfirmedMark from "@/features/user/EmailConfirmedMark";
 import UserInfoFields, { userFieldsBody } from "@/features/user/UserInfoFields";
 import InfoAlert from "@/shared/components/alerts/InfoAlert";
@@ -47,7 +48,8 @@ function bodyOf(values: UserSettingsValues) {
 /**
  * The user's own details, email included. On the settings page they auto-save (see `useAutoSave`);
  * in the confirm-details task the user instead confirms everything at once with "Lagre". A new
- * email starts unconfirmed; the backend sends a link to it.
+ * email starts unconfirmed; the backend sends a link to it. The phone is what they log in with,
+ * so it changes only through `ChangePhoneModal`, which saves it by itself.
  */
 export default function UserSettingsForm({
   user,
@@ -59,6 +61,7 @@ export default function UserSettingsForm({
 }) {
   const queryClient = useQueryClient();
   const [serverErrors, setServerErrors] = useState<string[]>([]);
+  const [changingPhone, setChangingPhone] = useState(false);
   const updateUserMutation = useMutation(
     api.users.updateMe.mutationOptions({
       onSuccess: () => {
@@ -116,6 +119,11 @@ export default function UserSettingsForm({
         perspective="personal"
         fields={createFieldMap(valuesOf(user))}
         form={form}
+        phoneAction={
+          <Button variant="subtle" size="compact-sm" mr={4} onClick={() => setChangingPhone(true)}>
+            {user.phone ? "Endre" : "Legg til"}
+          </Button>
+        }
         leading={
           <>
             <form.AppField
@@ -144,6 +152,15 @@ export default function UserSettingsForm({
             </Activity>
           </>
         }
+      />
+      <ChangePhoneModal
+        opened={changingPhone}
+        onClose={() => setChangingPhone(false)}
+        onChanged={(phone) => {
+          // Saved already; the field only shows it.
+          form.setFieldValue("phoneNumber", phone, { dontUpdateMeta: true });
+          void queryClient.invalidateQueries({ queryKey: authQueryKey() });
+        }}
       />
       <form.AppForm>
         <form.ErrorSummary serverErrors={serverErrors} autoSave={!confirmDetails} />

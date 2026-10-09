@@ -6,9 +6,8 @@ import { fixtureId } from "#tests/fixtures";
 
 let sequence = 0;
 
-type UserColumns = Omit<UserDto, "dob" | "createdAt"> & {
+type UserColumns = Omit<UserDto, "dob" | "createdAt" | "vippsLinked"> & {
   dob: DateTime | null;
-  localHashedPassword: string | null;
   vippsUserId: string | null;
 };
 
@@ -35,7 +34,7 @@ export async function createUser(overrides: Partial<UserColumns> = {}): Promise<
     taskConfirmDetails: false,
     taskSignAgreement: false,
     permission: "customer",
-    localHashedPassword: null,
+    smsLoginEnabled: true,
     vippsUserId: null,
     ...overrides,
   });
@@ -65,7 +64,7 @@ export function userDouble(overrides: Partial<UserColumns> & { id?: string } = {
     taskConfirmDetails: false,
     taskSignAgreement: false,
     permission: "customer",
-    localHashedPassword: null,
+    smsLoginEnabled: true,
     vippsUserId: null,
     ...overrides,
   });
@@ -91,6 +90,8 @@ export function userDto(overrides: Partial<UserDto> = {}): UserDto {
     taskConfirmDetails: false,
     taskSignAgreement: false,
     permission: "customer",
+    smsLoginEnabled: true,
+    vippsLinked: false,
     createdAt: new Date("2024-01-01T00:00:00Z"),
     ...overrides,
   };

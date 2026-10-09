@@ -28,5 +28,9 @@ export interface User {
   /** The customer (or their guardian) must sign the loan agreement before using the site. */
   taskSignAgreement: boolean;
   permission: UserPermission;
+  /** Whether a code by SMS may log in to the account; the user turns it off in their settings. */
+  smsLoginEnabled: boolean;
+  /** Whether the user has logged in with Vipps, which they need before turning SMS login off. */
+  vippsLinked: boolean;
   createdAt: Date;
 }

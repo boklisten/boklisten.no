@@ -14,6 +14,21 @@ interface AutoSavedForm<Values> {
 }
 
 /**
+ * The toast every auto-saved change shows, also for controls that save on their own (a switch
+ * outside a form). `id` replaces the previous toast instead of stacking another.
+ */
+export function notifySaved(id: string) {
+  showSuccessNotification({ id, message: "Endringene er lagret" });
+}
+
+export function notifySaveFailed(error: unknown) {
+  showErrorNotification({
+    title: "Klarte ikke lagre endringene",
+    message: errorMessage(error, PLEASE_TRY_AGAIN_TEXT),
+  });
+}
+
+/**
  * Form options that make an edit form save itself, with no "Lagre" button:
  *
  * ```tsx
@@ -91,15 +106,12 @@ export default function useAutoSave<Values>({
   async function run(values: Values) {
     try {
       await persist(values);
-      showSuccessNotification({ id: toastId, message: "Endringene er lagret" });
+      notifySaved(toastId);
       onSaved?.();
     } catch (error) {
       // Forget the failed values, so the next change tries again.
       lastSaved.current = "";
-      showErrorNotification({
-        title: "Klarte ikke lagre endringene",
-        message: errorMessage(error, PLEASE_TRY_AGAIN_TEXT),
-      });
+      notifySaveFailed(error);
     } finally {
       savesInFlight.current -= 1;
       if (savesInFlight.current === 0) {

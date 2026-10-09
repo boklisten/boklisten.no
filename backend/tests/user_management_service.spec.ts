@@ -12,7 +12,6 @@ import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
 import MatchParticipant from "#models/match_participant";
 import Order from "#models/order";
-import PasswordReset from "#models/password_reset";
 import Signature from "#models/signature";
 import User from "#models/user";
 import { UserManagementService } from "#services/user_management_service";
@@ -168,16 +167,14 @@ test.group("UserManagementService.mergeUsers", (group) => {
     assert.isNotNull(await User.find(FROM));
   });
 
-  test("removes the source user's verification and password reset rows", async ({ assert }) => {
+  test("removes the source user's verification rows", async ({ assert }) => {
     await EmailVerification.create({ userId: FROM });
     await EmailVerification.create({ userId: TO });
-    await PasswordReset.create({ userId: FROM, tokenHash: "hash" });
 
     await UserManagementService.mergeUsers(FROM, TO);
 
     assert.lengthOf(await EmailVerification.query().where("userId", FROM), 0);
     assert.lengthOf(await EmailVerification.query().where("userId", TO), 1);
-    assert.lengthOf(await PasswordReset.query().where("userId", FROM), 0);
   });
 
   test("refuses to merge a user with itself", async ({ assert }) => {
@@ -210,7 +207,6 @@ test.group("UserManagementService.deleteUser", (group) => {
 
   test("deletes the user with their auth artifacts and signatures", async ({ assert }) => {
     await EmailVerification.create({ userId: FROM });
-    await PasswordReset.create({ userId: FROM, tokenHash: "hash" });
     await Signature.create({
       customerId: FROM,
       signingName: "Test Testersen",
@@ -222,7 +218,6 @@ test.group("UserManagementService.deleteUser", (group) => {
 
     assert.isNull(await User.find(FROM));
     assert.lengthOf(await EmailVerification.query().where("userId", FROM), 0);
-    assert.lengthOf(await PasswordReset.query().where("userId", FROM), 0);
     assert.lengthOf(await Signature.query().where("customerId", FROM), 0);
   });
 

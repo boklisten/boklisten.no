@@ -1,12 +1,12 @@
 import router from "@adonisjs/core/services/router";
 
-import { isDeployed } from "#config/app";
 import { controllers } from "#generated/controllers";
 import { middleware } from "#start/kernel";
 import {
   emailValidationThrottle,
-  loginThrottle,
   publicBlidLookupThrottle,
+  smsClientThrottle,
+  smsCodeThrottle,
   throttle,
 } from "#start/limiter";
 
@@ -45,23 +45,13 @@ router
     router.get("/vipps/redirect", [controllers.auth.Vipps, "redirect"]);
     router.get("/vipps/callback", [controllers.auth.Vipps, "callback"]);
 
-    router.post("/local/login", [controllers.auth.Local, "login"]).use([throttle, loginThrottle]);
-    router.post("/local/register", [controllers.auth.Local, "register"]).use(throttle);
-
-    router.post("/password_reset", [controllers.auth.PasswordReset, "request"]).use(throttle);
-    router.get("/password_reset/:id/:token", [controllers.auth.PasswordReset, "validate"]);
-    router.post("/password_reset/:id", [controllers.auth.PasswordReset, "reset"]);
+    router
+      .post("/sms/send", [controllers.auth.Sms, "send"])
+      .use([smsClientThrottle, smsCodeThrottle]);
+    router.post("/sms/verify", [controllers.auth.Sms, "verify"]).use(smsClientThrottle);
+    router.post("/sms/register", [controllers.auth.Sms, "register"]).use(smsClientThrottle);
   })
   .prefix("/auth");
-
-/**
- * Local testing: `mint:login-url` prints a link here that logs the browser in as any user. Only
- * ever registered in the non-deployed `dev` and `test` environments, never on the public staging
- * or production hosts, so the login-as-anyone route is not reachable from the internet.
- */
-if (!isDeployed) {
-  router.get("/auth/dev_login/:token", [controllers.auth.Auth, "devLogin"]);
-}
 
 /**
  * Public
@@ -105,6 +95,11 @@ router
       .use(publicBlidLookupThrottle);
 
     router.patch("/users/me", [controllers.Users, "updateMe"]);
+    router
+      .post("/users/me/phone/send", [controllers.Users, "sendPhoneChangeCode"])
+      .use([smsClientThrottle, smsCodeThrottle]);
+    router.post("/users/me/phone", [controllers.Users, "changeMyPhone"]).use(smsClientThrottle);
+    router.put("/users/me/sms_login", [controllers.Users, "setSmsLogin"]);
     router.get("/customer_items/me", [controllers.CustomerItems, "me"]);
     router.get("/customer_items/me/:customerItemId", [controllers.CustomerItems, "detailsMe"]);
 

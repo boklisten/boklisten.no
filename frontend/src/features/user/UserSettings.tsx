@@ -7,10 +7,12 @@ import { authQueryOptions } from "@/features/auth/authQuery";
 import ColorSchemeSelector from "@/features/user/ColorSchemeSelector";
 import FormSectionTitle from "@/features/user/FormSectionTitle";
 import LogoutButton from "@/features/user/LogoutButton";
+import SecuritySection from "@/features/user/SecuritySection";
 import UserSettingsForm from "@/features/user/UserSettingsForm";
 
 /**
- * The user's own settings, the same on both sites: the details, the theme, and the way out last.
+ * The user's own settings, the same on both sites: the details, how they may log in, the theme,
+ * and the way out last.
  * Who is logged in is already in the menu's "Din bruker" row, so the page does not repeat it.
  */
 export default function UserSettings() {
@@ -36,6 +38,7 @@ export default function UserSettings() {
     <Stack gap="xl" py="lg">
       <Title>Brukerinnstillinger</Title>
       <UserSettingsForm user={user} />
+      <SecuritySection user={user} />
       <AppearanceSection />
       <LogoutButton />
     </Stack>

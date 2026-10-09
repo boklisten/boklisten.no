@@ -57,4 +57,7 @@
   overflow-wrap: break-word;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+  /* Room inside the clip for descenders and marks (g, j, Å), given back so the layout keeps its size. */
+  padding-block: 0.12em;
+  margin-block: -0.12em;
 }

@@ -1,7 +1,7 @@
 import vine from "@vinejs/vine";
 import { DateTime } from "luxon";
 
-import { phoneDigits } from "#shared/phone_number";
+import { isNorwegianMobile, phoneDigits } from "#shared/phone_number";
 
 /**
  * Kept here rather than in `common/rules`: that module pulls in services which pull in validators
@@ -39,7 +39,7 @@ const norwegianMobile = vine.createRule((value, _options, field) => {
     return;
   }
   const digits = phoneDigits(value);
-  if (!/^[49]\d{7}$/.test(digits)) {
+  if (!isNorwegianMobile(digits)) {
     field.report("{{ field }} må være et norsk mobilnummer på åtte siffer", "mobile", field);
     return;
   }
@@ -55,6 +55,10 @@ export const calendarDateField = vine
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .use(realCalendarDate());
 export const phoneField = vine.string().trim().use(norwegianMobile());
-export const passwordField = vine.string().minLength(10).maxLength(256);
+/** A one-time code from an SMS (`SmsCodeService`). */
+export const smsCodeField = vine
+  .string()
+  .trim()
+  .regex(/^\d{6}$/);
 export const postalCodeField = vine.string().postalCode({ countryCode: ["NO"] });
 export const percentageField = vine.number().min(0).max(1);

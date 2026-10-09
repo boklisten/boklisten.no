@@ -25,8 +25,8 @@ export default function ClosingCta() {
               </TanStackButton>
             </Activity>
             <Activity mode={!isLoggedIn ? "visible" : "hidden"}>
-              <TanStackButton to="/auth/register" size="lg" radius="xl">
-                Registrer deg
+              <TanStackButton to="/bestilling" size="lg" radius="xl">
+                Bestill bøker
               </TanStackButton>
               <TanStackButton to="/auth/login" size="lg" radius="xl" variant="outline">
                 Logg inn

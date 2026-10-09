@@ -455,6 +455,9 @@
   line-height: 1.1;
   color: var(--nav-ink);
   overflow: hidden;
+  /* Room inside the clip for descenders and marks (g, j, Å), given back so the row keeps its size. */
+  padding-block: 0.15em;
+  margin-block: -0.15em;
   text-overflow: ellipsis;
   white-space: nowrap;
   justify-self: start;
@@ -465,11 +468,9 @@
   }
 }
 
-/* A guest's two ways in, standing where the identity row stands for someone logged in. */
+/* A guest's way in, standing where the identity row stands for someone logged in. */
 .guest {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
   padding: 0.25rem var(--nav-inset) 0.5rem;
 }
 

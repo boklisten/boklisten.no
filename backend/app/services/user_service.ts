@@ -6,7 +6,6 @@ import Branch from "#models/branch";
 import EmailVerification from "#models/email_verification";
 import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
-import { PasswordService } from "#services/password_service";
 import { reconcileSignatureTask } from "#services/signature_helper";
 import { invalidUserFields } from "#services/user_fields";
 import { canSeeBranch } from "#shared/branch-visibility";
@@ -15,7 +14,7 @@ import type { UserPermission } from "#shared/user-permission";
 import type { VippsUser } from "#types/user";
 import type { registerSchema } from "#validators/auth_validators";
 import type { userProvisioningValidator } from "#validators/user_provisioning";
-import type { userFieldsSchema } from "#validators/users";
+import type { ownUserFieldsSchema } from "#validators/users";
 
 /** A `vine.date()` value (midnight of the chosen day) as the calendar date it names. */
 export function dobFrom(date: Date | null | undefined): DateTime | null {
@@ -43,17 +42,17 @@ async function sendEmailVerification(user: User): Promise<void> {
 }
 
 /**
- * A validated `userFieldsSchema` payload as the columns it sets: the request names match the
- * model's, so only the date and the optional-to-nullable fields need translating.
+ * A validated `ownUserFieldsSchema` payload (or a superset) as the columns it sets: the request
+ * names match the model's, so only the date and the optional-to-nullable fields need translating.
  */
-export function userFieldsFrom({
+export function userFieldsFrom<Fields extends Infer<typeof ownUserFieldsSchema>>({
   dob,
   branchMembershipId,
   guardianName,
   guardianEmail,
   guardianPhone,
   ...details
-}: Infer<typeof userFieldsSchema>) {
+}: Fields) {
   return {
     ...details,
     dob: dobFrom(dob),
@@ -82,6 +81,23 @@ export async function assertMembershipAllowed(
   }
 }
 
+/** Phone and email log in (SMS, Vipps), so only admins may change them on staff accounts. */
+export function assertLoginDetailsEditable(
+  actorPermission: UserPermission,
+  user: User,
+  next: { phone: string; email: string },
+): void {
+  if (
+    user.permission !== "customer" &&
+    actorPermission !== "admin" &&
+    (next.phone !== user.phone || next.email !== user.email.toLowerCase())
+  ) {
+    throw new BadRequestException(
+      "Bare administratorer kan endre mobilnummer og e-post for ansatte",
+    );
+  }
+}
+
 export const UserService = {
   /** The user with both task flags brought up to date, as the API returns them. */
   async withTasksReconciled(user: User): Promise<UserDto> {
@@ -99,16 +115,13 @@ export const UserService = {
   },
 
   /**
-   * Employees may save details that are incomplete, typically an underage customer whose guardian
-   * they know nothing about. The customer is then asked to complete them on their next login.
-   */
-  /**
    * The user's own details, from their settings or the confirm-details task. A new email is
    * unproven, so it starts unconfirmed with a fresh link (see `replaceEmail`).
    */
   async updateOwnDetails(
     user: User,
-    changes: ReturnType<typeof userFieldsFrom> & Pick<User, "email">,
+    changes: ReturnType<typeof userFieldsFrom<Infer<typeof ownUserFieldsSchema>>> &
+      Pick<User, "email">,
   ): Promise<User> {
     const { email, ...details } = changes;
     const emailChanged = await replaceEmail(user, email);
@@ -123,6 +136,10 @@ export const UserService = {
     return user;
   },
 
+  /**
+   * Employees may save details that are incomplete, typically an underage customer whose guardian
+   * they know nothing about. The customer is then asked to complete them on their next login.
+   */
   async updateAsEmployee(
     user: User,
     changes: Partial<
@@ -170,19 +187,19 @@ export const UserService = {
     });
   },
 
-  async createLocalUser({
-    email,
-    password,
-    ...details
-  }: Infer<typeof registerSchema>): Promise<User> {
+  /** A sign-up whose phone a login code has just proven; the email still needs its link. */
+  async createSmsUser(
+    { email, ...details }: Infer<typeof registerSchema>,
+    phone: string,
+  ): Promise<User> {
     const fields = userFieldsFrom(details);
     await assertMembershipAllowed("customer", null, fields.branchMembershipId);
     const user = await User.create({
       ...fields,
+      phone,
       email,
       emailConfirmed: false,
       permission: "customer",
-      localHashedPassword: await PasswordService.hash(password),
     });
     await sendEmailVerification(user);
     return user;

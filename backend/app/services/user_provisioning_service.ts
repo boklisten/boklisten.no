@@ -2,6 +2,7 @@ import { Exception } from "@adonisjs/core/exceptions";
 import * as Sentry from "@sentry/node";
 import type { Infer } from "@vinejs/vine/types";
 
+import { violatedUniqueIndex } from "#models/helpers/unique_violation";
 import Branch from "#models/branch";
 import Signature from "#models/signature";
 import User from "#models/user";
@@ -193,15 +194,6 @@ async function evaluateCandidates(branchId: string, userCandidates: UserCandidat
     existingUsers,
     duplicateRows: findDuplicateRows(userCandidates, existingUsers),
   };
-}
-
-/** The unique index a failed write collided on, or null when it failed for another reason. */
-function violatedUniqueIndex(error: unknown): string | null {
-  if (typeof error !== "object" || error === null) {
-    return null;
-  }
-  const { code, constraint } = error as { code?: unknown; constraint?: unknown };
-  return code === "23505" && typeof constraint === "string" ? constraint : null;
 }
 
 /**

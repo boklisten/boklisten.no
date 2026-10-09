@@ -1,15 +1,8 @@
 import type { HttpContext } from "@adonisjs/core/http";
-import encryption from "@adonisjs/core/services/encryption";
 
-import UnauthorizedException from "#exceptions/unauthorized_exception";
-import User from "#models/user";
 import { LoginService } from "#services/login_service";
 import { UserService } from "#services/user_service";
 import type { User as UserDto } from "#shared/user";
-import { clientOrigin } from "#config/app";
-
-/** Purpose bound into the one-time links `mint:login-url` prints; never registered in production. */
-export const DEV_LOGIN_TOKEN_PURPOSE = "dev_login";
 
 export default class AuthController {
   /**
@@ -28,19 +21,5 @@ export default class AuthController {
   async logout(ctx: HttpContext) {
     await ctx.auth.use().logout();
     return {};
-  }
-
-  /** Local testing only: logs in the user named by a fresh `mint:login-url` token. */
-  async devLogin(ctx: HttpContext) {
-    const payload = encryption.decrypt<{ userId: string }>(
-      String(ctx.request.param("token")),
-      DEV_LOGIN_TOKEN_PURPOSE,
-    );
-    if (!payload) {
-      throw new UnauthorizedException("Innloggingslenken er ugyldig eller utløpt");
-    }
-    const user = await User.findOrFail(payload.userId);
-    await LoginService.login(ctx, user);
-    ctx.response.redirect(`${clientOrigin}/auth/callback`);
   }
 }
