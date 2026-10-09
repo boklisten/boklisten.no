@@ -104,7 +104,7 @@ test.group("company invoice creation", (group) => {
         email: "bibliotek@kvitsund.vgs.no",
         phone: "99240588",
         address: "Jacob Naadlands veg 2",
-        postCode: "3850",
+        postalCode: "3850",
       })
     ).id;
   });
@@ -135,7 +135,7 @@ test.group("company invoice creation", (group) => {
       customerOrganizationNumber: "988982857",
       customerNumber: "988982857",
       customerAddress: "Jacob Naadlands veg 2",
-      customerPostCode: "3850",
+      customerPostalCode: "3850",
       customerCountry: "norway",
       customerDob: null,
     });

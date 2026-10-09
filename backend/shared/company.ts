@@ -6,7 +6,7 @@ export interface Company {
   phone: string | null;
   email: string | null;
   address: string;
-  postCode: string;
+  postalCode: string;
   /** The customer number in our accounting system; today always the organization number. */
   customerNumber: string;
   organizationNumber: string;

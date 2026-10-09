@@ -18,7 +18,7 @@ function ownDetails(user: User, email = user.email) {
       name: user.name ?? "",
       phone: user.phone ?? "",
       address: user.address ?? "",
-      postCode: user.postCode ?? "",
+      postalCode: user.postalCode ?? "",
       dob: user.dob?.toJSDate() ?? new Date(),
       branchMembershipId: user.branchMembershipId,
       guardianName: user.guardianName,

@@ -17,7 +17,7 @@ function user(overrides: Partial<DuplicateCandidateSource> & { id: string }) {
     email: "",
     phone: "",
     address: "",
-    postCode: "",
+    postalCode: "",
     guardianEmail: "",
     guardianPhone: "",
     ...overrides,
@@ -53,7 +53,7 @@ test.group("findDuplicateCandidatePairs", () => {
         name: "Ola Nordmann",
         dob: "2008-05-17",
         address: "Storgata 1",
-        postCode: "0181",
+        postalCode: "0181",
         guardianEmail: "mor@example.com",
       }),
       user({
@@ -61,7 +61,7 @@ test.group("findDuplicateCandidatePairs", () => {
         name: "Kari Nordmann",
         dob: "2010-01-02",
         address: "Storgata 1",
-        postCode: "0181",
+        postalCode: "0181",
         guardianEmail: "mor@example.com",
       }),
     ]);
@@ -86,14 +86,14 @@ test.group("findDuplicateCandidatePairs", () => {
         name: "Kari Hansen",
         dob: "2008-01-01",
         address: "Storgata 1",
-        postCode: "0181",
+        postalCode: "0181",
       }),
       user({
         id: "d",
         name: "Kari Hansen",
         dob: "2008-01-01",
         address: "Storgata 1",
-        postCode: "0181",
+        postalCode: "0181",
       }),
     ]);
     assert.lengthOf(pairs, 2);

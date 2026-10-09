@@ -125,7 +125,7 @@ function vismaH1(
   invoice: Invoice,
   { ehf, postalCity }: VismaExportOptions,
 ): CsvCell[] {
-  const city = postalCity(invoice.customerPostCode);
+  const city = postalCity(invoice.customerPostalCode);
   const dobOrOrganizationNumber =
     nonEmpty(invoice.customerOrganizationNumber) ?? formatDob(invoice.customerDob, "ddMMyyyy");
   return [
@@ -135,7 +135,7 @@ function vismaH1(
     invoice.customerName, // 4 Customer name (M)
     invoice.customerAddress, // 5 Address 1
     "", // 6 Address 2
-    invoice.customerPostCode, // 7 Postal code (M)
+    invoice.customerPostalCode, // 7 Postal code (M)
     city, // 8 City (M)
     invoice.customerCountry, // 9 Country
     invoice.customerPhone, // 10 Customer phone (M)
@@ -170,7 +170,7 @@ function vismaH1(
     invoice.customerName, // 39 Delivery address name
     invoice.customerAddress, // 40 Delivery address 1
     "", // 41 Delivery address 2
-    invoice.customerPostCode, // 42 Delivery address Postal code
+    invoice.customerPostalCode, // 42 Delivery address Postal code
     city, // 43 Delivery address city
     invoice.customerCountry, // 44 Delivery address country
     "", // 45 Rating Date
@@ -362,8 +362,8 @@ export function tripletexRows(invoices: Invoice[], lookups: TripletexLookups): C
       "",
       invoice.customerAddress,
       "",
-      invoice.customerPostCode,
-      lookups.postalCity(invoice.customerPostCode),
+      invoice.customerPostalCode,
+      lookups.postalCity(invoice.customerPostalCode),
       "NO",
       ...TRIPLETEX_EMPTY_CATEGORY_FIELDS,
       invoice.reference,

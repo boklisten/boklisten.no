@@ -19,7 +19,7 @@ export interface DuplicateCandidateSource {
   email?: string;
   phone?: string | null;
   address?: string | null;
-  postCode?: string | null;
+  postalCode?: string | null;
   /** Calendar date `yyyy-MM-dd`, or a legacy Date. */
   dob?: Date | string | null;
   guardianEmail?: string | null;
@@ -87,8 +87,8 @@ function normalizeCandidate(source: DuplicateCandidateSource): NormalizedCandida
     name: normalizeText(source.name),
     dob: normalizeDob(source.dob),
     address:
-      normalizeText(source.address) && normalizeText(source.postCode)
-        ? `${normalizeText(source.address)}|${normalizeText(source.postCode)}`
+      normalizeText(source.address) && normalizeText(source.postalCode)
+        ? `${normalizeText(source.address)}|${normalizeText(source.postalCode)}`
         : "",
     guardianPhone: normalizePhone(source.guardianPhone),
     guardianEmail: normalizeText(source.guardianEmail),
@@ -244,7 +244,7 @@ async function findDuplicateCustomers(): Promise<DuplicateCustomersResult> {
       "email",
       "phone",
       "address",
-      "postCode",
+      "postalCode",
       "dob",
       "branchMembershipId",
       "guardianEmail",
@@ -274,7 +274,7 @@ function toCandidateSource(user: User): DuplicateCandidateSource {
     email: user.email,
     phone: user.phone,
     address: user.address,
-    postCode: user.postCode,
+    postalCode: user.postalCode,
     dob: user.dob?.toISODate() ?? null,
     guardianEmail: user.guardianEmail,
     guardianPhone: user.guardianPhone,

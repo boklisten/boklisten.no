@@ -2,7 +2,7 @@ import { BaseSchema } from "@adonisjs/lucid/schema";
 
 /**
  * A postal city follows from its postal code, so it is looked up in Posten's register (see
- * `PostalCodeService`) instead of stored. The stored copies were typed by hand and disagreed with
+ * `BringService.postalCities`) instead of stored. The stored copies were typed by hand and disagreed with
  * the register and each other ("Olso", "Oalo", a district instead of the post town).
  */
 export default class extends BaseSchema {

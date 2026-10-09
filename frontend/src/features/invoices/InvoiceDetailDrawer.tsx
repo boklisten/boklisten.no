@@ -111,8 +111,8 @@ function InvoiceDocument({
         </Text>
         {invoice.branchName && <Text size="sm">{invoice.branchName}</Text>}
         <Text size="sm">
-          {invoice.customerAddress}, {invoice.customerPostCode}{" "}
-          <PostalCity postalCode={invoice.customerPostCode} />
+          {invoice.customerAddress}, {invoice.customerPostalCode}{" "}
+          <PostalCity postalCode={invoice.customerPostalCode} />
         </Text>
         <Text size="sm">
           {invoice.customerPhone}

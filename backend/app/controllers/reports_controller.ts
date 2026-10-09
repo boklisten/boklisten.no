@@ -217,8 +217,8 @@ export default class ReportsController {
       name: string;
       phone: string | null;
       address: string;
-      postCity: string | null;
-      postCode: string;
+      postalCity: string | null;
+      postalCode: string;
       dob: string | null;
       permission: string;
       branchMembership: string | null;
@@ -231,8 +231,8 @@ export default class ReportsController {
         "users.name",
         "users.phone",
         "users.address",
-        db.raw(`NULL as "postCity"`),
-        "users.post_code as postCode",
+        db.raw(`NULL as "postalCity"`),
+        "users.postal_code as postalCode",
         db.raw(`to_char(users.dob, 'YYYY-MM-DD') as dob`),
         "users.permission",
         "branches.name as branchMembership",
@@ -243,7 +243,7 @@ export default class ReportsController {
       .orderBy("users.id");
     const cityOf = await BringService.postalCities();
     for (const row of rows) {
-      row.postCity = cityOf(row.postCode);
+      row.postalCity = cityOf(row.postalCode);
     }
     return rows;
   }

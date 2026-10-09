@@ -158,7 +158,7 @@ export default class Invoice extends InvoiceSchema {
       customerDob: this.customerDob?.toISODate() ?? null,
       customerOrganizationNumber: this.customerOrganizationNumber,
       customerAddress: this.customerAddress,
-      customerPostCode: this.customerPostCode,
+      customerPostalCode: this.customerPostalCode,
       customerCountry: this.customerCountry,
       totalGross: this.totalGross,
       totalNet: this.totalNet,

@@ -150,7 +150,7 @@ export const UserService = {
         | "phone"
         | "name"
         | "address"
-        | "postCode"
+        | "postalCode"
         | "dob"
         | "branchMembershipId"
         | "guardianName"
@@ -179,7 +179,7 @@ export const UserService = {
       // Vipps sends "" for a detail the user has not shared.
       name: vippsUser.name || null,
       address: vippsUser.address || null,
-      postCode: vippsUser.postalCode || null,
+      postalCode: vippsUser.postalCode || null,
       permission: "customer",
       vippsUserId: vippsUser.id,
     });
@@ -221,7 +221,7 @@ export const UserService = {
       email,
       address: address ?? null,
       dob: dobFrom(dob),
-      postCode: postalCode ?? null,
+      postalCode: postalCode ?? null,
       emailConfirmed: true,
       branchMembershipId: branchMembershipId ?? null,
       taskConfirmDetails: true,

@@ -27,7 +27,7 @@ test.group("assertMembershipAllowed", (group) => {
             email: "ny@example.com",
             name: "Ny Kunde",
             address: "Gata 1",
-            postCode: "0001",
+            postalCode: "0001",
             dob: new Date("2005-01-01"),
             branchMembershipId: wang.id,
             guardianName: null,

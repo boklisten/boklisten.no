@@ -49,7 +49,7 @@ const customers = [
     phone: "40000001",
     dob: KARI_DOB,
     address: "Veien 1",
-    postCode: "0001",
+    postalCode: "0001",
   },
   { id: "c2", name: "Ola Nordmann", email: "ola@example.com", phone: "40000002" },
 ];
@@ -155,7 +155,7 @@ test.group("invoice generation", (group) => {
       customerPhone: "40000001",
       customerDob: KARI_DOB.toISODate(),
       customerAddress: "Veien 1",
-      customerPostCode: "0001",
+      customerPostalCode: "0001",
       customerCountry: null,
       customerOrganizationNumber: null,
     });

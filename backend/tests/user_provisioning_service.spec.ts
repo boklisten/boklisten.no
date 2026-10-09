@@ -125,7 +125,7 @@ const EXISTING_USER = userDouble({
   email: "ola@example.com",
   phone: "12345678",
   address: "Gamleveien 1",
-  postCode: "0501",
+  postalCode: "0501",
   dob: UNDERAGE_DOB,
   guardianName: "Kari Nordmann",
   guardianEmail: "kari@example.com",
@@ -164,7 +164,7 @@ test.group("UserProvisioningService.mergeCandidateIntoUser()", () => {
       "sta",
     );
     assert.equal(update.address, "Gamleveien 1");
-    assert.equal(update.postCode, "0501");
+    assert.equal(update.postalCode, "0501");
     assert.equal(update.dob?.toISODate(), UNDERAGE_DOB.toISODate());
   });
 

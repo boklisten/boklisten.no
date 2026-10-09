@@ -29,7 +29,7 @@ function valuesOf(user: User): UserSettingsValues {
     name: user.name ?? "",
     phoneNumber: user.phone ?? "",
     address: user.address ?? "",
-    postCode: user.postCode ?? "",
+    postalCode: user.postalCode ?? "",
     birthday: user.dob ?? "",
     guardianName: user.guardianName ?? "",
     guardianEmail: user.guardianEmail ?? "",

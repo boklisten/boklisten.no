@@ -6,7 +6,7 @@ import { isUnderage } from "#models/signature";
 export interface UserFields {
   name: string | null;
   address: string | null;
-  postCode: string | null;
+  postalCode: string | null;
   phone: string | null;
   dob: DateTime | null;
   guardianName: string | null;
@@ -20,7 +20,7 @@ export interface UserFields {
  */
 export function invalidUserFields(user: UserFields): string[] {
   const invalidFields: string[] = [];
-  for (const field of ["name", "address", "postCode", "phone"] as const) {
+  for (const field of ["name", "address", "postalCode", "phone"] as const) {
     if (!user[field]) {
       invalidFields.push(field);
     }

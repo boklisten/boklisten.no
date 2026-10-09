@@ -13,7 +13,7 @@ export interface User {
   /** Eight digits, or null when the user has not given one. */
   phone: string | null;
   address: string | null;
-  postCode: string | null;
+  postalCode: string | null;
   emailConfirmed: boolean;
   /** Calendar date, `yyyy-MM-dd`. */
   dob: string | null;

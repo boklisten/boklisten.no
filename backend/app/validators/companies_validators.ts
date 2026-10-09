@@ -10,6 +10,6 @@ export const companyValidator = vine.create(
     phone: phoneField.clone(),
     email: emailField.clone(),
     address: vine.string().trim(),
-    postCode: postalCodeField.clone(),
+    postalCode: postalCodeField.clone(),
   }),
 );

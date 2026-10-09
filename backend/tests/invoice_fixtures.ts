@@ -20,7 +20,7 @@ const PUPIL: Omit<NewInvoice, "lines"> = {
   customerDob: DateTime.fromISO("2008-04-28"),
   customerOrganizationNumber: null,
   customerAddress: "Testveien 1",
-  customerPostCode: "0150",
+  customerPostalCode: "0150",
   customerCountry: null,
   totalGross: 0,
   totalNet: 0,

@@ -292,8 +292,8 @@ test.group("ReportsController.users", (group) => {
       "name",
       "phone",
       "address",
-      "postCity",
-      "postCode",
+      "postalCity",
+      "postalCode",
       "dob",
       "permission",
       "branchMembership",
@@ -305,8 +305,8 @@ test.group("ReportsController.users", (group) => {
       name: "Kari",
       dob: "2008-03-04",
       branchMembership: "Ullern VGS",
-      postCode: "0150",
-      postCity: "Oslo",
+      postalCode: "0150",
+      postalCity: "Oslo",
     });
   });
 });

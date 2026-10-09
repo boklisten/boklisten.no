@@ -13,7 +13,7 @@ export async function createCompany(overrides: Partial<CompanyDto> = {}): Promis
     phone: "99240588",
     email: `selskap${sequence}@example.com`,
     address: "Storgata 1",
-    postCode: "0155",
+    postalCode: "0155",
     customerNumber: `${900_000_000 + sequence}`,
     organizationNumber: `${900_000_000 + sequence}`,
     ...overrides,

@@ -76,7 +76,7 @@ export const VippsCheckoutService = {
     const customer = await User.findOrFail(order.customerId);
     // Only a prefill, so a Bring outage must not stop the payment.
     const city = await BringService.postalCities().then(
-      (cityOf) => cityOf(customer.postCode),
+      (cityOf) => cityOf(customer.postalCode),
       () => null,
     );
     const [firstName, ...lastNames] = customer.name?.split(" ") ?? [];
@@ -89,7 +89,7 @@ export const VippsCheckoutService = {
         phoneNumber: customer.phone === null ? null : `47${customer.phone}`,
         streetAddress: customer.address ?? null,
         city,
-        postalCode: customer.postCode ?? null,
+        postalCode: customer.postalCode ?? null,
         country: "NO",
       },
       merchantInfo: {
@@ -179,10 +179,10 @@ export const VippsCheckoutService = {
           shipmentAddress:
             session.shippingDetails.streetAddress ?? billing?.streetAddress ?? customer.address,
           shipmentPostalCode:
-            session.shippingDetails.postalCode ?? billing?.postalCode ?? customer.postCode,
+            session.shippingDetails.postalCode ?? billing?.postalCode ?? customer.postalCode,
           fromPostalCode: "1364",
           toPostalCode:
-            session.shippingDetails.postalCode ?? billing?.postalCode ?? customer.postCode,
+            session.shippingDetails.postalCode ?? billing?.postalCode ?? customer.postalCode,
           product: session.shippingDetails.shippingMethodId === "mailbox" ? "3584" : "SERVICEPAKKE",
         });
       }

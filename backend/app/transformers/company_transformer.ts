@@ -11,7 +11,7 @@ export default class CompanyTransformer extends BaseTransformer<Company> {
       "phone",
       "email",
       "address",
-      "postCode",
+      "postalCode",
       "customerNumber",
       "organizationNumber",
     ]);

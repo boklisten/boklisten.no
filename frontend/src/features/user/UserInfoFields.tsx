@@ -16,7 +16,7 @@ export interface UserInfoFieldValues {
   name: string;
   phoneNumber: string;
   address: string;
-  postCode: string;
+  postalCode: string;
   branchMembership: string;
   birthday: string;
   guardianName: string;
@@ -28,7 +28,7 @@ export const userInfoFieldDefaultValues: UserInfoFieldValues = {
   name: "",
   phoneNumber: "",
   address: "",
-  postCode: "",
+  postalCode: "",
   branchMembership: "",
   birthday: "",
   guardianName: "",
@@ -44,7 +44,7 @@ export function userFieldsBody(values: UserInfoFieldValues) {
   return {
     name: values.name,
     address: values.address,
-    postCode: values.postCode,
+    postalCode: values.postalCode,
     dob: values.birthday,
     branchMembershipId: values.branchMembership || null,
     guardianName: values.guardianName || null,
@@ -71,7 +71,7 @@ export type UserInfoPart =
   | "phoneNumber"
   | "name"
   | "address"
-  | "postCode"
+  | "postalCode"
   | "birthday"
   | "guardian"
   | "branchMembership";
@@ -86,7 +86,7 @@ export function missingUserInfo(values: UserInfoFieldValues): Set<UserInfoPart> 
     "phoneNumber",
     "name",
     "address",
-    "postCode",
+    "postalCode",
     "birthday",
     "branchMembership",
   ] as const) {
@@ -163,9 +163,9 @@ const UserInfoFields = withFieldGroup({
             {(field) => <field.AddressField />}
           </group.AppField>
         )}
-        {shows("postCode") && (
+        {shows("postalCode") && (
           <group.AppField
-            name="postCode"
+            name="postalCode"
             validators={{
               onBlurAsync: ({ value }) => postalCodeFieldValidator(value),
             }}
