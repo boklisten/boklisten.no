@@ -1,4 +1,4 @@
-import { Button, Group, Space, Stack, Text } from "@mantine/core";
+import { Button, Space, Stack } from "@mantine/core";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Activity, useState } from "react";
@@ -12,7 +12,6 @@ import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
 import { phoneNumberFieldValidator } from "@/shared/components/form/fields/complex/PhoneNumberField";
-import TanStackAnchor from "@/shared/components/TanStackAnchor";
 import { useAppForm } from "@/shared/hooks/form";
 import { authQueryOptions } from "@/features/auth/authQuery";
 import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
@@ -33,13 +32,11 @@ function isSchoolEmail(email: string) {
 
 type SignupFormValues = {
   email: string;
-  agreeToTermsAndConditions: boolean;
 } & UserInfoFieldValues;
 
 const defaultValues: SignupFormValues = {
   email: "",
   ...userInfoFieldDefaultValues,
-  agreeToTermsAndConditions: false,
 };
 
 /**
@@ -139,36 +136,6 @@ export default function SignupForm({
           </Button>
         }
       />
-      <Space />
-      <form.AppField
-        name="agreeToTermsAndConditions"
-        validators={{
-          onChange: ({ value }) => (!value ? "Du må godta våre betingelser og vilkår" : ""),
-        }}
-      >
-        {(field) => (
-          <field.CheckboxField
-            required
-            label={
-              <Group gap={3}>
-                <Text size="sm">
-                  {"Jeg godtar Boklistens "}
-                  <TanStackAnchor to="/info/policies/conditions" target="_blank">
-                    betingelser
-                  </TanStackAnchor>
-                  {" og "}
-                  <TanStackAnchor to="/info/policies/terms" target="_blank">
-                    vilkår
-                  </TanStackAnchor>
-                </Text>
-                <Text size="sm" c="var(--mantine-color-error)">
-                  *
-                </Text>
-              </Group>
-            }
-          />
-        )}
-      </form.AppField>
       <Space />
       <form.AppForm>
         <form.ErrorSummary serverErrors={serverErrors} />
