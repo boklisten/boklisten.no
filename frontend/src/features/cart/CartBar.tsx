@@ -1,5 +1,5 @@
 import { Button } from "@mantine/core";
-import { IconBasket, IconCheck, IconLogin2, IconTrash } from "@tabler/icons-react";
+import { IconBasket, IconCheck, IconTrash } from "@tabler/icons-react";
 
 import { kroner } from "@/features/cart/cartLabels";
 import FloatingActionBar from "@/shared/components/FloatingActionBar";
@@ -54,9 +54,9 @@ export default function CartBar({
           to="/auth/login"
           search={{ redirect: "handlekurv" }}
           radius="xl"
-          leftSection={<IconLogin2 />}
+          leftSection={free ? <IconCheck /> : <IconBasket />}
         >
-          {free ? "Logg inn og bekreft" : "Logg inn og gå til kassen"}
+          {free ? "Bekreft bestillingen" : "Gå til kassen"}
         </TanStackButton>
       </FloatingActionBar>
     );

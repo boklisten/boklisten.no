@@ -302,19 +302,24 @@
 
 .emptyFan {
   position: relative;
-  width: 6.5rem;
-  height: 4.75rem;
+  width: 9rem;
+  height: 6.5rem;
   margin-bottom: 0.5rem;
 }
 
+/* Blank covers: card-filled so they overlap like a real hand, outlined in quiet ink so the title leads. */
 .emptyCover {
+  --empty-cover-line: light-dark(rgb(31 45 51 / 30%), rgb(255 255 255 / 25%));
+
   position: absolute;
   bottom: 0;
-  left: calc(1.25rem + var(--fan-index) * 1rem);
-  width: 2.75rem;
-  height: 3.75rem;
-  border: 1.5px dashed var(--nav-rule);
-  border-radius: 3px;
+  left: calc(1.125rem + var(--fan-index) * 1.5rem);
+  width: 3.75rem;
+  height: 5.25rem;
+  border: 2px dashed var(--empty-cover-line);
+  border-radius: 4px;
+  background: var(--nav-card);
+  box-shadow: 0 2px 6px light-dark(rgb(31 45 51 / 8%), rgb(0 0 0 / 30%));
   transform: rotate(var(--fan-tilt));
   transform-origin: 50% 100%;
 }
