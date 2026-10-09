@@ -3,7 +3,7 @@ import { ActionIcon, Badge, Group, Loader, Stack, Text, ThemeIcon } from "@manti
 import { useDebouncedValue } from "@mantine/hooks";
 import { Spotlight } from "@mantine/spotlight";
 import type { createSpotlight } from "@mantine/spotlight";
-import { IconAbc, IconNumber123, IconSearch } from "@tabler/icons-react";
+import { IconAbc, IconNumber123, IconSchool, IconSearch } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -16,6 +16,7 @@ import useDisplayName from "@/features/customer-search/useDisplayName";
 import { visibleAdminPages } from "@/features/layout/admin-nav/adminNavigation";
 import type { AdminPage } from "@/features/layout/admin-nav/adminNavigation";
 import { createKeyboardDecoy, requestedSearchKeyboard } from "@/features/search/openSearch";
+import { searchBranches } from "@/features/search/searchBranches";
 import { searchPages } from "@/features/search/searchPages";
 import { api, apiClient } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
@@ -129,6 +130,7 @@ const PLACEHOLDERS = {
   books: "Bokas unike ID",
   all: "Kunde eller bokas unike ID",
   withPages: "Side, kunde eller bokas unike ID",
+  withPagesAndBranches: "Side, filial, kunde eller bokas unike ID",
 } as const;
 
 /**
@@ -136,7 +138,8 @@ const PLACEHOLDERS = {
  * of their unique ID. Searches one kind or both, and hands a pick's code (the customer's id or the
  * book's unique ID) to the caller. With pages on, it also finds the admin pages the user may open,
  * by the same names as the sidebar, on title and description from the first character, listed
- * above everything else; a pick opens the page. Keyboard shortcuts are bound elsewhere, so that a
+ * above everything else; a pick opens the page. Admins then also find branches by name, right
+ * after the pages; a pick opens the branch in Filialer. Keyboard shortcuts are bound elsewhere, so that a
  * page can put its own instance in front of the global one.
  */
 export default function SearchSpotlight({
@@ -189,9 +192,11 @@ export default function SearchSpotlight({
   });
   const isFetching = fetchingCustomers || fetchingBooks;
 
+  // Branches come with pages, but only admins manage them, so employees never see the group at all.
+  const branchSearchOn = kinds.pages && isAdmin;
   const { data: branches } = useQuery({
     ...api.branches.index.queryOptions(),
-    enabled: kinds.customers,
+    enabled: kinds.customers || branchSearchOn,
   });
   const branchNames = new Map((branches ?? []).map((branch) => [branch.id, branch.name]));
 
@@ -200,6 +205,11 @@ export default function SearchSpotlight({
     () => (kinds.pages ? searchPages(visibleAdminPages(isAdmin), trimmedSearch) : []),
     [kinds.pages, isAdmin, trimmedSearch],
   );
+  // Branches are already loaded for the customer badges, so they match like pages do.
+  const branchHits = useMemo(
+    () => (branchSearchOn ? searchBranches(branches ?? [], trimmedSearch) : []),
+    [branchSearchOn, branches, trimmedSearch],
+  );
   const customerHits = customerSearchActive ? (customers ?? []) : [];
   const bookHits = blidSearchActive ? (bookSearch?.hits ?? []) : [];
   const moreBooks = blidSearchActive && bookSearch?.hasMore === true;
@@ -207,10 +217,12 @@ export default function SearchSpotlight({
     searchActive &&
     !isFetching &&
     pageHits.length === 0 &&
+    branchHits.length === 0 &&
     customerHits.length === 0 &&
     bookHits.length === 0;
   const searchedForKinds = [
     ...(kinds.pages ? ["sider"] : []),
+    ...(branchSearchOn ? ["filialer"] : []),
     ...(kinds.customers ? ["kunder"] : []),
     ...(kinds.books ? ["bøker"] : []),
   ];
@@ -220,10 +232,15 @@ export default function SearchSpotlight({
       : searchedForKinds[0];
 
   useEffect(() => {
-    if (pageHits.length > 0 || (customers?.length ?? 0) > 0 || (bookSearch?.hits.length ?? 0) > 0) {
+    if (
+      pageHits.length > 0 ||
+      branchHits.length > 0 ||
+      (customers?.length ?? 0) > 0 ||
+      (bookSearch?.hits.length ?? 0) > 0
+    ) {
       selectFirstResult(store);
     }
-  }, [pageHits, customers, bookSearch, store]);
+  }, [pageHits, branchHits, customers, bookSearch, store]);
 
   // The modal's exit transition is interrupted by the navigation a pick triggers, so Mantine's
   // clearQueryOnClose (which runs onExited) never fires — clear ourselves.
@@ -238,6 +255,10 @@ export default function SearchSpotlight({
   const pickPage = (page: AdminPage) => {
     setSearchValue("");
     void navigate({ to: page.to });
+  };
+  const pickBranch = (branchId: string) => {
+    setSearchValue("");
+    void navigate({ to: "/admin/database/filialer", search: { filial: branchId } });
   };
 
   const displayName = useDisplayName();
@@ -267,6 +288,26 @@ export default function SearchSpotlight({
       </Spotlight.Action>
     );
   });
+
+  const branchActions = branchHits.map(({ branch, path }) => (
+    <Spotlight.Action key={branch.id} onClick={() => pickBranch(branch.id)}>
+      <Group gap="sm" wrap="nowrap" w="100%">
+        <ThemeIcon variant="light" color="gray" radius="xl" size="lg">
+          <IconSchool size={18} aria-hidden />
+        </ThemeIcon>
+        <Stack gap={2} miw={0} flex={1}>
+          <Text fw={600} lineClamp={1}>
+            {branch.name}
+          </Text>
+          {path.length > 0 && (
+            <Text size="sm" opacity={0.7} lineClamp={1}>
+              {path.join(" › ")}
+            </Text>
+          )}
+        </Stack>
+      </Group>
+    </Spotlight.Action>
+  ));
 
   const customerActions = customerHits.map((user) => (
     <Spotlight.Action key={user.id} onClick={() => pickCustomer(user.id)}>
@@ -317,7 +358,9 @@ export default function SearchSpotlight({
   // Group labels only earn their place when the list can mix kinds.
   const grouped = kinds.pages || (kinds.customers && kinds.books);
   const placeholder = kinds.pages
-    ? PLACEHOLDERS.withPages
+    ? branchSearchOn
+      ? PLACEHOLDERS.withPagesAndBranches
+      : PLACEHOLDERS.withPages
     : grouped
       ? PLACEHOLDERS.all
       : kinds.customers
@@ -335,9 +378,11 @@ export default function SearchSpotlight({
     >
       <SearchField placeholder={placeholder} isFetching={isFetching} />
       <Spotlight.ActionsList>
-        {trimmedSearch.length < MIN_SEARCH_LENGTH && pageHits.length === 0 && (
-          <Spotlight.Empty>Skriv minst {MIN_SEARCH_LENGTH} tegn for å søke.</Spotlight.Empty>
-        )}
+        {trimmedSearch.length < MIN_SEARCH_LENGTH &&
+          pageHits.length === 0 &&
+          branchHits.length === 0 && (
+            <Spotlight.Empty>Skriv minst {MIN_SEARCH_LENGTH} tegn for å søke.</Spotlight.Empty>
+          )}
         {nothingFound && (
           <Spotlight.Empty>
             Fant ingen {searchedFor} for «{debouncedSearch}».
@@ -347,6 +392,9 @@ export default function SearchSpotlight({
           <>
             {pageActions.length > 0 && (
               <Spotlight.ActionsGroup label="Sider">{pageActions}</Spotlight.ActionsGroup>
+            )}
+            {branchActions.length > 0 && (
+              <Spotlight.ActionsGroup label="Filialer">{branchActions}</Spotlight.ActionsGroup>
             )}
             {customerActions.length > 0 && (
               <Spotlight.ActionsGroup label="Kunder">{customerActions}</Spotlight.ActionsGroup>

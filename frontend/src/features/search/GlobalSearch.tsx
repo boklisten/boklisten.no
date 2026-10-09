@@ -9,9 +9,9 @@ const KASSE_PATH = "/admin/kasse";
 
 /**
  * The search that is one shortcut away on every admin page. It also finds the admin pages the user
- * may open, by the same names as the sidebar. A customer or book pick opens it in the Kasse; from
- * the Kasse itself the page's own search takes over (see KasseSearch), so a pick there follows the
- * open view instead of navigating.
+ * may open, by the same names as the sidebar, and (for admins) branches. A customer or book pick
+ * opens it in the Kasse; from the Kasse itself the page's own search takes over (see KasseSearch),
+ * so a pick there follows the open view instead of navigating.
  */
 export default function GlobalSearch() {
   const navigate = useNavigate();

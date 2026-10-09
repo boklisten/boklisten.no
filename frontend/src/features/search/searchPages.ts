@@ -1,7 +1,7 @@
 import type { AdminPage } from "@/features/layout/admin-nav/adminNavigation";
 
 /** Lowercase without diacritics, so "pamin" finds "Påminnelser" and "boker" finds "Bøker". */
-const normalize = (text: string) =>
+export const normalize = (text: string) =>
   text
     .normalize("NFD")
     .replaceAll(/\p{Diacritic}/gu, "")
