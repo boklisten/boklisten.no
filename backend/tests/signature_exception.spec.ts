@@ -24,7 +24,9 @@ function userWith(overrides: { dob?: DateTime; taskSignAgreement?: boolean } = {
   });
 }
 
-function createSignature(overrides: Partial<Parameters<typeof Signature.create>[0]> = {}) {
+function createSignature(
+  overrides: Partial<Pick<Signature, "createdAt" | "signedByGuardian">> = {},
+) {
   return Signature.create({
     customerId: CUSTOMER_ID,
     signingName: "Test Kunde",

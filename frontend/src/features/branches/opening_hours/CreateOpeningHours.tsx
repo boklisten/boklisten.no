@@ -1,6 +1,7 @@
 import { Button, Group, Stack } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import { useState } from "react";
 
 import { useAppForm } from "@/shared/hooks/form";
 import { api } from "@/shared/utils/apiClient";
@@ -13,6 +14,10 @@ function combineDateAndTime(date: string, time: string) {
 
 export default function CreateOpeningHours({ branchId }: { branchId: string }) {
   const queryClient = useQueryClient();
+  const [dateRange] = useState(() => ({
+    min: new Date(),
+    max: dayjs().add(1, "year").toDate(),
+  }));
   const createOpeningHourMutation = useMutation(
     api.openingHours.store.mutationOptions({
       onError: () => showErrorNotification("Klarte ikke legg til åpningstid"),
@@ -54,8 +59,8 @@ export default function CreateOpeningHours({ branchId }: { branchId: string }) {
           {(field) => (
             <field.DateField
               required
-              minDate={new Date()}
-              maxDate={dayjs().add(1, "year").toDate()}
+              minDate={dateRange.min}
+              maxDate={dateRange.max}
               label="Dato"
               placeholder="Velg dato"
             />

@@ -2,6 +2,7 @@ import type { Item } from "@boklisten/backend/shared/item";
 import { Button, Group, NumberInput, SimpleGrid, Stack, Table, Text } from "@mantine/core";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { useAppForm, withFieldGroup } from "@/shared/hooks/form";
 import useAutoSave from "@/shared/hooks/useAutoSave";
@@ -234,6 +235,7 @@ export function EditBook({ item, suggestions }: { item: Item; suggestions: BookS
     }),
   );
 
+  const [currentYear] = useState(() => new Date().getFullYear());
   const history = Object.entries(item.priceHistory).toSorted(([a], [b]) => b.localeCompare(a));
 
   return (
@@ -245,7 +247,7 @@ export function EditBook({ item, suggestions }: { item: Item; suggestions: BookS
             Prishistorikk
           </Text>
           <Text size="xs" c="dimmed">
-            Endrer du prisen, oppdateres raden for {new Date().getFullYear()}.
+            Endrer du prisen, oppdateres raden for {currentYear}.
           </Text>
           <Table withRowBorders={false} verticalSpacing={2} maw={200}>
             <Table.Tbody>

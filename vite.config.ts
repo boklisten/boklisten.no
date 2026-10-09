@@ -181,6 +181,9 @@ export default defineConfig({
       // Render callbacks passed as props (ag-grid cellRenderer etc.) are not mounted as
       // component types, so recreating them per render is fine
       "react/no-unstable-nested-components": ["error", { allowAsProps: true }],
+      // Value-only lazy state (`const [now] = useState(() => new Date())`) is how React says to read
+      // impure values once per mount (react/purity); this rule demands an unused setter
+      "react/hook-use-state": "off",
       // Legitimate side-effect imports: stylesheets, dayjs locale, TS/DI runtime hooks
       "import/no-unassigned-import": [
         "error",

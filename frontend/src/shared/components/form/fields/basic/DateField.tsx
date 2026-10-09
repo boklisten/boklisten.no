@@ -9,7 +9,7 @@ export default function DateField(props: DateInputProps) {
 
   const defaultLevel = props.defaultLevel ?? "month";
   const [level, setLevel] = useState<CalendarLevel>(defaultLevel);
-  const [date, setDate] = useState(props.defaultDate ?? new Date());
+  const [date, setDate] = useState(() => props.defaultDate ?? new Date());
 
   return (
     <DateInput
