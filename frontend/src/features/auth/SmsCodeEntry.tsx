@@ -99,7 +99,11 @@ export default function SmsCodeEntry({
   const firstBox = useRef<HTMLInputElement>(null);
   // Without an id, PinInput keys its boxes by one it makes after mount, remounting them unfocused.
   const id = useId();
-  useEffect(() => firstBox.current?.focus(), []);
+  // The phone form may have been far down the page; the code step starts at the top.
+  useEffect(() => {
+    firstBox.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0 });
+  }, []);
 
   return (
     <Stack>
