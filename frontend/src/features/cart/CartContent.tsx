@@ -70,7 +70,9 @@ export default function CartContent() {
     ([a], [b]) => sectionOrder(a, b),
   );
   const conflicting = lines.filter((line) => line.conflict !== null);
-  const hasPartlyPayment = lines.some((line) => line.selected.type === "partly-payment");
+  const partlyPayments = lines
+    .map((line) => line.selected)
+    .filter((option) => option.type === "partly-payment");
   // Nothing to pay at all: no prices anywhere, and the order is placed straight from the cart. A
   // cart that mixes a free loan with a paid line still prices every line, the loan at 0 kr.
   const total = cart.calculateTotal();
@@ -112,7 +114,7 @@ export default function CartContent() {
             Legg til flere bøker
           </TanStackAnchor>
         )}
-        {hasPartlyPayment && <PartlyPaymentNote />}
+        {partlyPayments.length > 0 && <PartlyPaymentNote options={partlyPayments} />}
       </div>
       <CartBar
         count={lines.length}

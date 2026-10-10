@@ -250,45 +250,211 @@
   color: var(--mantine-color-brand-text);
 }
 
+/*
+ * Delbetaling taught with the pupil's own cart: two stops on a rail, now and the deadline, each
+ * with its amount. At the deadline the rest can be settled two ways, and selling the books back
+ * leads: it comes first, sits on its own card in the brand colour, and carries the one highlighter
+ * swipe. Keeping them and paying the rest stays quiet beside it, its amount still spelled out.
+ */
 .note {
+  --note-rail: var(--mantine-color-brand-text);
+  --note-dot: 0.875rem;
+  --note-indent: 2rem;
+
   display: grid;
-  gap: 0.5rem;
-  justify-items: start;
+  gap: 1rem;
   width: 100%;
-  max-width: 40rem;
+  padding: clamp(1rem, 4vw, 1.75rem);
+  background: var(--nav-tint);
+  border-radius: var(--mantine-radius-lg);
 }
 
-.noteToggle {
-  display: inline-flex;
-  gap: 0.4rem;
-  align-items: center;
-  padding: 0;
-  font: inherit;
+.noteTitle {
+  margin: 0;
+  font-family: var(--nav-display);
+  font-variation-settings: "SOFT" 50;
+  font-size: clamp(1.35rem, 4vw, 1.6rem);
   font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   color: var(--nav-ink);
-  cursor: pointer;
-  background: none;
-  border: 0;
-
-  & svg {
-    transition: transform 160ms ease;
-  }
-
-  &[aria-expanded="true"] svg {
-    transform: rotate(180deg);
-  }
 }
 
-.noteBody {
-  display: grid;
-  gap: 0.75rem;
-  padding-top: 0.25rem;
+.noteLead {
+  margin: -0.5rem 0 0;
   line-height: 1.55;
   color: var(--nav-body);
+  text-wrap: pretty;
+}
 
-  & p {
-    margin: 0;
+.noteSteps {
+  display: grid;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A stop: its dot on the rail, when, and what happens then. */
+.noteStep {
+  position: relative;
+  display: grid;
+  gap: 0.1rem;
+  padding: 0 0 1.5rem var(--note-indent);
+
+  /* The rail runs from this dot down to the next. */
+  &::after {
+    position: absolute;
+    top: calc(var(--note-dot) + 0.35rem);
+    bottom: 0.15rem;
+    left: calc(var(--note-dot) / 2 - 1px);
+    width: 2px;
+    content: "";
+    background: var(--note-rail);
   }
+
+  &::before {
+    position: absolute;
+    top: 0.2rem;
+    left: 0;
+    width: var(--note-dot);
+    height: var(--note-dot);
+    content: "";
+    background: var(--note-rail);
+    border: 2px solid var(--note-rail);
+    border-radius: 50%;
+  }
+
+  /* The deadline is still to come: a hollow dot, and the rail ends here. */
+  &[data-later] {
+    padding-bottom: 0;
+
+    &::before {
+      background: transparent;
+    }
+
+    &::after {
+      content: none;
+    }
+  }
+}
+
+.noteWhen {
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+  color: var(--mantine-color-brand-text);
+}
+
+.noteAmount {
+  font-family: var(--nav-display);
+  font-variation-settings: "SOFT" 50;
+  font-size: 1.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--nav-ink);
+}
+
+.noteText {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--nav-body);
+  text-wrap: pretty;
+}
+
+.noteNoWrap {
+  white-space: nowrap;
+}
+
+/*
+ * What comes before the two ways to settle the rest. On a phone it and the cards step out of the
+ * rail's indent to the note's full width, so the cards' titles and promises keep to one line.
+ */
+.noteChoice {
+  margin: 0.9rem 0 0 calc(-1 * var(--note-indent));
+  font-weight: 600;
+  color: var(--nav-ink);
+  text-wrap: balance;
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    margin-left: 0;
+  }
+}
+
+/*
+ * The two ways to settle the rest, side by side from sm and equally tall, with the same rows in
+ * each: title, promise, explanation. The sale leads with the wider column, a card in the brand
+ * colour and the highlighter; keeping the books stays flat on the tint, its promise in body ink.
+ */
+.notePaths {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0 calc(-1 * var(--note-indent));
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    grid-template-columns: 1.35fr 1fr;
+    margin-left: 0;
+  }
+}
+
+/* Both cards draw a 2px edge so their rows line up; the quiet one's is the page rule colour. */
+.notePath {
+  display: grid;
+  gap: 0.25rem;
+  align-content: start;
+  padding: 0.9rem 1rem 1rem;
+  border: 2px solid var(--nav-rule);
+  border-radius: var(--mantine-radius-md);
+
+  &[data-featured] {
+    background: var(--nav-card);
+    border-color: var(--mantine-color-brand-text);
+    box-shadow: 0 4px 14px light-dark(rgb(31 45 51 / 10%), rgb(0 0 0 / 35%));
+  }
+}
+
+.notePathTitle {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin: 0;
+  font-weight: 600;
+  color: var(--nav-ink);
+  text-wrap: balance;
+
+  & svg {
+    flex: none;
+    color: var(--mantine-color-brand-text);
+  }
+}
+
+/* Each way's promise in the display face; the quiet one's in body ink. */
+.notePathPromise {
+  margin: 0.15rem 0 0;
+  font-family: var(--nav-display);
+  font-variation-settings: "SOFT" 50;
+  font-size: clamp(1.1rem, 5.4vw, 1.3rem);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--nav-ink);
+
+  .notePath:not([data-featured]) & {
+    color: var(--nav-body);
+  }
+
+  /* The highlighter reaches below the line, so the explanation keeps clear of it. */
+  .notePath[data-featured] & {
+    margin-bottom: 0.35rem;
+  }
+}
+
+/* The one highlighter swipe in the note, under the sale's promise. */
+.noteMarked {
+  padding: 0 0.1em 0.2em;
+  box-decoration-break: clone;
+  background-image: var(--nav-marker-swipe);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 0.35em;
 }
 
 /* An empty cart: an empty hand of covers, the fact, and the two places books come from. */

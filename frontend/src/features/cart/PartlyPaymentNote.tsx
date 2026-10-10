@@ -1,40 +1,69 @@
-import { Collapse } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { IconChevronDown } from "@tabler/icons-react";
+import type { CartItemOption } from "@boklisten/backend/shared/cart_item";
+import { IconCoins } from "@tabler/icons-react";
 import { useId } from "react";
 
 import classes from "@/features/cart/cart.module.css";
+import { kroner } from "@/features/cart/cartLabels";
+import { formatDeadline } from "@/shared/utils/deadline";
 
-/** What delbetaling means, folded away until the pupil asks. */
-export default function PartlyPaymentNote() {
-  const [opened, { toggle }] = useDisclosure(false);
+/**
+ * What delbetaling means, told with the pupil's own cart: what they pay now, what is left by the
+ * deadline, and the two ways to settle it. Selling the books back to us leads; keeping them and
+ * paying the rest stays quiet beside it.
+ */
+export default function PartlyPaymentNote({ options }: { options: CartItemOption[] }) {
   const id = useId();
+  const now = options.reduce((sum, option) => sum + option.price, 0);
+  const later = options.reduce((sum, option) => sum + (option.payLater ?? 0), 0);
+  // Lines with different deadlines have no one date to show
+  const [deadline, ...otherDeadlines] = new Set(options.flatMap((option) => option.to ?? []));
+  const deadlineLabel =
+    deadline && otherDeadlines.length === 0
+      ? formatDeadline(deadline, "D. MMMM YYYY")
+      : "Ved fristen";
+
   return (
-    <div className={classes.note}>
-      <button
-        type="button"
-        className={classes.noteToggle}
-        aria-expanded={opened}
-        aria-controls={id}
-        onClick={toggle}
-      >
+    <section className={classes.note} aria-labelledby={id}>
+      <h2 className={classes.noteTitle} id={id}>
         Hva er delbetaling?
-        <IconChevronDown size={18} aria-hidden />
-      </button>
-      <Collapse expanded={opened} id={id}>
-        <div className={classes.noteBody}>
-          <p>
-            Du betaler restbeløpet på det oppgitte tidspunktet. Restbeløpet betales ved vår
-            bokinnkjøpsstand på din skole på slutten av semesteret eller på nett. Mange privatister
-            ønsker å selge bøkene sine på slutten av semesteret og Boklisten kjøper inn bøker fra
-            privatister.
-          </p>
-          <p>
-            Hvis du selger boken din til Boklisten vil vi vanligvis betale det samme som restbeløpet
-            eller mer.
-          </p>
-        </div>
-      </Collapse>
-    </div>
+      </h2>
+      <p className={classes.noteLead}>
+        Du betaler bare en del av prisen nå, og restbeløpet innen fristen.
+      </p>
+      <ol className={classes.noteSteps}>
+        <li className={classes.noteStep}>
+          <span className={classes.noteWhen}>Nå</span>
+          <span className={classes.noteAmount}>{kroner(now)}</span>
+        </li>
+        <li className={classes.noteStep} data-later>
+          <span className={classes.noteWhen}>{deadlineLabel}</span>
+          <span className={classes.noteAmount}>{kroner(later)}</span>
+          <p className={classes.noteChoice}>Restbeløpet kan du gjøre opp på to måter:</p>
+          <div className={classes.notePaths}>
+            <div className={classes.notePath} data-featured>
+              <p className={classes.notePathTitle}>
+                <IconCoins size={20} aria-hidden />
+                Selg bøkene tilbake til oss
+              </p>
+              <p className={classes.notePathPromise}>
+                <span className={classes.noteMarked}>Vi dekker restbeløpet</span>
+              </p>
+              <p className={classes.noteText}>
+                Vi kjøper vanligvis bøkene for like mye som restbeløpet eller mer, så du har
+                ingenting igjen å betale.
+              </p>
+            </div>
+            <div className={classes.notePath}>
+              <p className={classes.notePathTitle}>Eller behold bøkene</p>
+              <p className={classes.notePathPromise}>Du betaler selv</p>
+              <p className={classes.noteText}>
+                Da må du betale hele restbeløpet på{" "}
+                <span className={classes.noteNoWrap}>{kroner(later)}</span>, på stand eller på nett.
+              </p>
+            </div>
+          </div>
+        </li>
+      </ol>
+    </section>
   );
 }
