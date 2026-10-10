@@ -6,20 +6,11 @@ import type { StandCart } from "@/features/stand-cart/useStandCart";
 /** Digits of equal width, so amounts stacked in a column line up like a handwritten sum. */
 const TABULAR_NUMBERS = { fontVariantNumeric: "tabular-nums" } as const;
 
-/** One amount the way every amount in the cart is written: bold, red with a minus for refunds. */
-export function Amount({ amount }: { amount: number }) {
-  return (
-    <Text fw={700} lh={1.2} c={amount < 0 ? "red" : undefined} style={TABULAR_NUMBERS}>
-      {formatAmount(amount)}
-    </Text>
-  );
-}
-
 /**
  * The grand total: the number one size up, the "kr" at the lines' own size, so the unit sits
  * level with the amounts above it however big the number is.
  */
-export function TotalAmount({ cart }: { cart: StandCart }) {
+function TotalAmount({ cart }: { cart: StandCart }) {
   const color = cart.total < 0 ? "red" : undefined;
   return (
     <Stack gap={0} align="flex-end">

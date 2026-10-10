@@ -1,0 +1,286 @@
+/*
+ * One book in a cart, the same in the public cart and in Kasse: the cover beside the title, the
+ * way it goes under the title when there is only one, and the price always last, on the right
+ * edge. More ways become pills, each with its way's icon from the book's history. The card lays
+ * itself out by its own width, so it reads the same in the cart's column and in Kasse's drawer.
+ * Amber is reserved for what stops the line.
+ * Colour tokens (--nav-*) live on the body, so they reach both sites and portalled drawers.
+ */
+.line {
+  --line-padding: 0.875rem;
+  /* The one space between the card's parts: what the book is, the notice, the choices. */
+  --line-space: 1rem;
+  --line-warn: light-dark(#9a5b00, var(--mantine-color-orange-3));
+  --line-warn-wash: light-dark(#fff4e0, rgb(255 192 120 / 10%));
+  --line-warn-rule: light-dark(#e6b96a, rgb(255 192 120 / 45%));
+
+  container-type: inline-size;
+  padding: var(--line-padding);
+  background: var(--nav-card);
+  border: 1px solid var(--nav-rule);
+  border-radius: var(--mantine-radius-lg);
+
+  &[data-warn] {
+    background: var(--line-warn-wash);
+    border-color: var(--line-warn-rule);
+  }
+}
+
+/*
+ * With one way, the cover spans what the book is and the price, so the price sits level with the
+ * cover's foot (the 1fr row takes up the cover's height). With pills, the price closes their last
+ * row instead, on the card's right edge, so a short row like "Kjøp · Avbestill" carries it and
+ * nothing is left hanging. Two short pills sit beside the cover, under the title; others span
+ * the card under the cover on a narrow card, and line up with the title on a wide one.
+ * No row gap: an absent part leaves an empty track, so the parts space themselves with margins.
+ */
+.grid {
+  display: grid;
+  grid-template-areas:
+    "cover info"
+    "cover price"
+    "notice notice";
+  grid-template-rows: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 1rem;
+
+  /* Longer or more pills on a narrow card: the card's full width, under the cover. */
+  &[data-choices="under"] {
+    grid-template-areas:
+      "cover info"
+      "notice notice"
+      "choices choices";
+    grid-template-rows: auto;
+  }
+
+  /* Two short ways: beside the cover, under the title, even on a phone. */
+  &[data-choices="beside"] {
+    grid-template-areas:
+      "cover info"
+      "cover notice"
+      "cover choices";
+    grid-template-rows: auto auto 1fr;
+  }
+
+  @container (min-width: 32rem) {
+    grid-template-areas:
+      "cover info"
+      "cover price"
+      ". notice";
+
+    &[data-choices="under"] {
+      grid-template-areas:
+        "cover info"
+        "cover notice"
+        "cover choices";
+      grid-template-rows: auto auto 1fr;
+    }
+  }
+}
+
+.cover {
+  grid-area: cover;
+  position: relative;
+  width: 3.25rem;
+  height: 4.5rem;
+  overflow: hidden;
+  border: 1px solid var(--nav-rule);
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgb(31 45 51 / 18%);
+  --cover-title-size: 0.58rem;
+}
+
+/* The title, then the way and the copy under it, each a quarter rem apart. */
+.info {
+  grid-area: info;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mantine-font-size-md);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--nav-ink);
+}
+
+/* The way out sits in the card's corner, and is never taller than a line of the title, so what
+   follows the title keeps the same distance from it whether the title wraps or not. */
+.remove {
+  flex: none;
+  margin: -0.25rem -0.25rem -0.25rem 0;
+}
+
+/* The one way the book goes, and whatever the employee needs to know about the copy. */
+.subtitle {
+  margin: 0;
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.4;
+  color: var(--nav-body);
+}
+
+.details {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
+}
+
+.price {
+  grid-area: price;
+  display: grid;
+  align-self: end;
+  justify-items: end;
+  padding-top: 0.35rem;
+  line-height: 1.25;
+  text-align: right;
+
+  /* Closing the pills' last row: on the card's right edge, level with the pills. */
+  .choiceRow > & {
+    align-self: center;
+    margin-left: auto;
+    padding: 0 0 0 0.5rem;
+  }
+}
+
+.priceNow {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--nav-ink);
+
+  &[data-refund] {
+    color: var(--mantine-color-red-text);
+  }
+}
+
+.priceLater {
+  font-size: var(--mantine-font-size-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--nav-body);
+}
+
+/* What stops the line as it stands, with the way past it. */
+.notice {
+  grid-area: notice;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin: var(--line-space) 0 0;
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.4;
+  color: var(--line-warn);
+
+  & svg {
+    flex: none;
+    margin-top: 0.1em;
+  }
+}
+
+/*
+ * The ways to get the book, as one row of pills that wraps, and why a blocked way cannot be
+ * picked. Packed to the top: beside a tall cover the row is stretched, and the pills must not.
+ */
+.choices {
+  grid-area: choices;
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+  min-width: 0;
+  margin: var(--line-space) 0 0;
+  padding: 0;
+  border: 0;
+}
+
+/* As wide as the card's column, so the price closing the last row reaches its right edge. */
+.choiceRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+
+/* Tight, so two short ways and the price share one row beside the cover on a phone. */
+.choice {
+  position: relative;
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.45rem 0.75rem 0.45rem 0.55rem;
+  cursor: pointer;
+  background: var(--nav-card);
+  border: 1px solid var(--nav-rule);
+  border-radius: var(--mantine-radius-xl);
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    border-color: var(--mantine-color-brand-text);
+  }
+
+  &:has(input:checked) {
+    background: var(--nav-tint);
+    border-color: var(--mantine-color-brand-text);
+  }
+
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--mantine-color-brand-text);
+    outline-offset: 2px;
+  }
+
+  /* A way a rule blocks: still listed, so the employee sees it exists, but not pressable. */
+  &:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.5;
+
+    &:hover {
+      border-color: var(--nav-rule);
+    }
+  }
+}
+
+/* The radio itself is hidden; the icon beside the words is what is seen pressed. */
+.choiceInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* The way's icon, which must not shrink when the row is tight. */
+.mark {
+  flex: none;
+}
+
+/* One weight whether chosen or not, so pressing a pill never reflows the row. */
+.choiceText {
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.35;
+  color: var(--nav-ink);
+}
+
+/* Why a listed way cannot be picked, under the pills, since a phone has no hover to ask. */
+.blocked {
+  margin: 0;
+  padding: 0;
+  font-size: var(--mantine-font-size-xs);
+  line-height: 1.4;
+  color: var(--nav-body);
+  list-style: none;
+}

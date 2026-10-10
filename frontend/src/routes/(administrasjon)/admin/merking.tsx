@@ -32,7 +32,7 @@ function MerkingPage() {
   useWedgeScanner({ accepts: ["isbn", "blid"], onScan: (code) => void scan(code) });
 
   return (
-    <Container>
+    <Container px={0}>
       <Stack>
         <Stack gap={4}>
           <Title>{MERKING_TITLE}</Title>

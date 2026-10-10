@@ -204,7 +204,7 @@ function KasseContent() {
   }, [cameraLinking, openScanner]);
 
   return (
-    <Container>
+    <Container px={0}>
       <Stack>
         <Stack gap={4}>
           <Title>{KASSE_TITLE}</Title>

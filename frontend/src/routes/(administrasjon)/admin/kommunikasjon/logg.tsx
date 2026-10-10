@@ -30,7 +30,7 @@ function MessageLogPage() {
   }
 
   return (
-    <Container size="md">
+    <Container px={0} size="md">
       <Stack>
         <Title>Meldingslogg</Title>
         <Tabs

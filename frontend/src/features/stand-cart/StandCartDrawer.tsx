@@ -378,8 +378,8 @@ export default function StandCartDrawer({
         />
       }
       position={narrow ? "bottom" : "right"}
-      // Wide enough on a desk for the table to keep a title on one line beside the actions
-      size={narrow ? "92%" : "xl"}
+      // On a desk, wide enough for the cart lines' wide layout (pills beside the cover) and no wider
+      size={narrow ? "92%" : "lg"}
       zIndex={DRAWER_Z_INDEX}
       closeOnClickOutside={!waiting}
       closeOnEscape={!waiting}

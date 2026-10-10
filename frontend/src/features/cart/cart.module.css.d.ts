@@ -1,27 +1,9 @@
 // Typed by hand so class names are checked at the call sites; keep in sync with cart.module.css.
 declare const classes: {
-  readonly root: string;
   readonly sections: string;
   readonly section: string;
   readonly sectionLabel: string;
   readonly lines: string;
-  readonly line: string;
-  readonly cover: string;
-  readonly body: string;
-  readonly top: string;
-  readonly title: string;
-  readonly price: string;
-  readonly priceNow: string;
-  readonly priceLater: string;
-  readonly single: string;
-  readonly choices: string;
-  readonly choice: string;
-  readonly choiceInput: string;
-  readonly dot: string;
-  readonly choiceText: string;
-  readonly reason: string;
-  readonly remove: string;
-  readonly foot: string;
   readonly after: string;
   readonly addMore: string;
   readonly note: string;

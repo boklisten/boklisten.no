@@ -25,7 +25,8 @@ export function CheckoutPending() {
  * The cart lives in the browser, so the checkout can only start there. Books to borrow need a
  * signed agreement first, so the customer is sent to the signing step before any order exists.
  * An order with nothing to pay is placed at once, since the cart was its summary; the rest go on
- * to payment.
+ * to payment. This page is only a waypoint, so every step out of it replaces it in the history:
+ * Back from payment returns to the cart.
  */
 export default function CheckoutHandler() {
   use(browser());
@@ -49,11 +50,15 @@ export default function CheckoutHandler() {
         await queryClient.invalidateQueries({ queryKey: authQueryKey() });
         void queryClient.invalidateQueries({ queryKey: api.orders.openItemsMe.pathKey() });
         void queryClient.invalidateQueries({ queryKey: api.customerItems.me.pathKey() });
-        void navigate({ to: "/order-history", search: { bestilt: String(orderId) } });
+        void navigate({
+          to: "/order-history",
+          search: { bestilt: String(orderId) },
+          replace: true,
+        });
       },
       onError: () => {
         showErrorNotification("Klarte ikke bekrefte bestillingen!");
-        void navigate({ to: "/handlekurv" });
+        void navigate({ to: "/handlekurv", replace: true });
       },
     }),
   );
@@ -84,6 +89,7 @@ export default function CheckoutHandler() {
           void navigate({
             to: "/kasse/betaling",
             search: { token, checkoutFrontendUrl },
+            replace: true,
           });
           break;
         }
@@ -94,7 +100,7 @@ export default function CheckoutHandler() {
     },
     onError: (error) => {
       showErrorNotification(errorMessage(error, "Noe gikk galt under genererering av betaling!"));
-      void navigate({ to: "/handlekurv" });
+      void navigate({ to: "/handlekurv", replace: true });
     },
   });
 
@@ -105,7 +111,7 @@ export default function CheckoutHandler() {
     }
     started.current = true;
     if (cart.isEmpty()) {
-      void navigate({ to: "/handlekurv" });
+      void navigate({ to: "/handlekurv", replace: true });
       return;
     }
     // A failed status lookup also lands on the signing step, which shows the error and retries

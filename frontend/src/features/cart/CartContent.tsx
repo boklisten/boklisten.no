@@ -80,7 +80,7 @@ export default function CartContent() {
   const free = total === 0 && payLater === 0;
 
   return (
-    <div className={classes.root}>
+    <div>
       <CartHeader />
       <div className={classes.sections}>
         {sections.map(([section, sectionLines]) => (
@@ -114,12 +114,14 @@ export default function CartContent() {
             Legg til flere bøker
           </TanStackAnchor>
         )}
-        {partlyPayments.length > 0 && <PartlyPaymentNote options={partlyPayments} />}
+        {partlyPayments.length > 0 && (
+          <PartlyPaymentNote now={total} later={payLater} options={partlyPayments} />
+        )}
       </div>
       <CartBar
         count={lines.length}
         total={total}
-        payLater={payLater}
+        free={free}
         conflictCount={conflicting.length}
         isLoggedIn={isLoggedIn}
         onRemoveConflicts={() => {

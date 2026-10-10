@@ -112,6 +112,8 @@ export interface StandCartLine {
   source: StandCartSource;
   itemId: string;
   title: string;
+  /** For the cover. */
+  isbn: number | null;
   blid: string | null;
   options: StandCartOption[];
   defaultOptionIndex: number;

@@ -23,7 +23,7 @@ export default function AdminDashboard() {
   const { user } = useAuth();
 
   return (
-    <Container size="lg" py="xl">
+    <Container px={0} size="lg" py="xl">
       <Stack align="center" gap={0}>
         <Image src="/images/boklisten_logo_blue.webp" width={64} height={64} alt="Boklisten.no" />
         <Title order={1} mt="xs" ta="center" className={classes.title}>

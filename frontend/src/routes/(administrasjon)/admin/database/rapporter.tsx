@@ -12,7 +12,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/database/rapporter
 
 function DatabaseReportsPage() {
   return (
-    <Container size="md" py="lg">
+    <Container px={0} size="md" py="lg">
       <Stack gap="lg">
         <Title order={1}>Rapporter</Title>
         <CustomerItemsReport />

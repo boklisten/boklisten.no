@@ -4,7 +4,7 @@ import type {
   StandCartLine,
   StandCartSource,
 } from "@boklisten/backend/shared/stand_cart";
-import { formatDeadline } from "@/shared/utils/deadline";
+import { lineDate } from "@/features/cart-line/cartLineLabels";
 
 const ACTION_LABELS: Record<StandCartActionType, string> = {
   rent: "Lån",
@@ -19,26 +19,21 @@ const ACTION_LABELS: Record<StandCartActionType, string> = {
 };
 
 /** "Avbestill" unmakes an order; undoing a handout the customer already got is "Kanseller". */
-export function actionLabel(
-  type: StandCartActionType,
-  sourceKind: StandCartSource["kind"],
-): string {
+function actionLabel(type: StandCartActionType, sourceKind: StandCartSource["kind"]): string {
   return type === "cancel" && sourceKind === "customerItem" ? "Kanseller" : ACTION_LABELS[type];
 }
 
-export function formatAmount(amount: number): string {
-  return amount < 0 ? `−${Math.abs(amount)} kr` : `${amount} kr`;
-}
+/** The cart line's own way of writing an amount, so the lines and the total read alike. */
+export { signedKroner as formatAmount } from "@/features/cart-line/cartLineLabels";
 
-/** "Lån til 20.12.2026", "Kjøp ut". */
+/** "Lån til 20. desember 2026", "Kjøp ut": the words the cart line shows. */
 export function describeChoice(
   choice: StandCartChoice,
   sourceKind: StandCartSource["kind"],
 ): string {
   const label = actionLabel(choice.type, sourceKind);
-  return choice.to === undefined
-    ? label
-    : `${label} til ${formatDeadline(choice.to, "DD.MM.YYYY")}`;
+  const date = lineDate(choice.to);
+  return date ? `${label} til ${date}` : label;
 }
 
 export function defaultChoice(line: StandCartLine): StandCartChoice {

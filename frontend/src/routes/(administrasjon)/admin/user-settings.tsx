@@ -13,7 +13,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/user-settings")({
 
 function SettingsPage() {
   return (
-    <Container size="xs">
+    <Container px={0} size="xs">
       <UserSettings />
     </Container>
   );

@@ -13,7 +13,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/utse
 
 function DispatchPage() {
   return (
-    <Container size="sm">
+    <Container px={0} size="sm">
       <Stack>
         <Stack gap={2}>
           <Title>Utsendelser</Title>

@@ -102,7 +102,7 @@ function OrderManagerPage() {
   }
 
   return (
-    <Container size="xl">
+    <Container px={0} size="xl">
       <Stack>
         <Stack gap={4}>
           <Title>{ORDER_MANAGER_TITLE}</Title>

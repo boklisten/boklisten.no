@@ -7,14 +7,21 @@ import { kroner } from "@/features/cart/cartLabels";
 import { formatDeadline } from "@/shared/utils/deadline";
 
 /**
- * What delbetaling means, told with the pupil's own cart: what they pay now, what is left by the
- * deadline, and the two ways to settle it. Selling the books back to us leads; keeping them and
- * paying the rest stays quiet beside it.
+ * What delbetaling means, told with the pupil's own cart: what they pay now (the whole cart, as in
+ * the cart bar), what is left by the deadline, and the two ways to settle it. Selling the books
+ * back to us leads; keeping them and paying the rest stays quiet beside it.
  */
-export default function PartlyPaymentNote({ options }: { options: CartItemOption[] }) {
+export default function PartlyPaymentNote({
+  now,
+  later,
+  options,
+}: {
+  now: number;
+  later: number;
+  /** The selected delbetaling options, for their deadlines. */
+  options: CartItemOption[];
+}) {
   const id = useId();
-  const now = options.reduce((sum, option) => sum + option.price, 0);
-  const later = options.reduce((sum, option) => sum + (option.payLater ?? 0), 0);
   // Lines with different deadlines have no one date to show
   const [deadline, ...otherDeadlines] = new Set(options.flatMap((option) => option.to ?? []));
   const deadlineLabel =

@@ -18,6 +18,7 @@ export default function PublicLayout({
   footerSpacing = "xl",
 }: {
   children: ReactNode;
+  /** Above and below the page; the side gutter is the page's own Container. */
   padding: StyleProp<MantineSpacing>;
   /** Space between the page and the footer; a page that paints its own background runs it to 0. */
   footerSpacing?: StyleProp<MantineSpacing>;
@@ -28,7 +29,7 @@ export default function PublicLayout({
   return (
     // The shell sets --tabbar-height for the footer and the fixed elements above the bar.
     <div className={`${classes.shell} ${classes.publicShell}`}>
-      <AppShell header={{ height: TOP_BAR_HEIGHT }} p={padding}>
+      <AppShell header={{ height: TOP_BAR_HEIGHT }} py={padding}>
         {/* The bar is solid teal; a hairline under it would read as a stray light line. */}
         <AppShellHeader bg="brand" withBorder={false}>
           <PublicTopBar onOpenMenu={openMenu} menuOpened={menuOpened} />

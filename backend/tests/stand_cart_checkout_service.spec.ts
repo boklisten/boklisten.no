@@ -157,6 +157,7 @@ function resolution(
       source,
       itemId: item.id,
       title: item.title,
+      isbn: null,
       blid: source.kind === "customerItem" ? BLID : null,
       options,
       defaultOptionIndex: 0,

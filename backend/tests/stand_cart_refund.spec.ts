@@ -55,6 +55,7 @@ function checkoutLine(context: StandCartLineContext, chosen: StandCartOption): C
       source: { kind: "item", itemId: book.id, blid: "1" },
       itemId: book.id,
       title: book.title,
+      isbn: null,
       blid: null,
       options: [chosen],
       defaultOptionIndex: 0,

@@ -1,27 +1,22 @@
 import type {
-  StandCartActionType,
   StandCartChoice,
   StandCartLine as CartLine,
   StandCartNote,
 } from "@boklisten/backend/shared/stand_cart";
 import { findOption, needsBlid } from "@boklisten/backend/shared/stand_cart";
-import { ActionIcon, Card, Group, Select, Stack, Table, Text, ThemeIcon } from "@mantine/core";
-import { IconAlertTriangle, IconX } from "@tabler/icons-react";
+import { Group, Text } from "@mantine/core";
+import { IconAlertTriangle } from "@tabler/icons-react";
 
+import CartLineCard from "@/features/cart-line/CartLineCard";
+import type { CartLineChoice } from "@/features/cart-line/CartLineCard";
 import CustomerLink from "@/features/kasse/CustomerLink";
 import { showBlid } from "@/features/kasse/kasseParams";
-import { Amount } from "@/features/stand-cart/StandCartAmounts";
-import { actionLabel, formatAmount } from "@/features/stand-cart/standCartLabels";
-import { formatDeadline } from "@/shared/utils/deadline";
-import WarningAlert from "@/shared/components/alerts/WarningAlert";
+import { describeChoice } from "@/features/stand-cart/standCartLabels";
 import { cartActionAppearance } from "@/shared/components/bookEventAppearance";
 import EntityLink from "@/shared/components/EntityLink";
 import { PeerBadge } from "@/shared/components/matches/matches-helper";
 
-/** Wide enough for "Forleng til 01.07.2027" with its icon, and still leaves a phone room for the price. */
-const ACTION_SELECT_WIDTH = 240;
-
-/** What the drawer knows about one line, handed to both the card and the table row. */
+/** What the drawer knows about one line. */
 interface StandCartLineProps {
   line: CartLine;
   choice: StandCartChoice;
@@ -33,14 +28,9 @@ interface StandCartLineProps {
   onRemove: () => void;
 }
 
-/** One thing that can happen to the book, period included: "Forleng til 01.07.2027". */
-interface ActionEntry {
-  key: string;
+/** One thing that can happen to the book, period included: "Forleng til 1. juli 2027". */
+interface ActionEntry extends CartLineChoice {
   choice: StandCartChoice;
-  type: StandCartActionType;
-  label: string;
-  available: boolean;
-  reason: string | undefined;
 }
 
 function choiceKey(choice: StandCartChoice): string {
@@ -59,15 +49,13 @@ function actionEntries(line: CartLine): ActionEntry[] {
     if (entries.has(key)) {
       continue;
     }
-    const label = actionLabel(option.type, line.source.kind);
     entries.set(key, {
       key,
       choice,
-      type: option.type,
-      label:
-        option.to === undefined ? label : `${label} til ${formatDeadline(option.to, "DD.MM.YYYY")}`,
-      available: option.available,
-      reason: option.reason,
+      label: describeChoice(choice, line.source.kind),
+      blockedReason: option.available ? undefined : (option.reason ?? "Ikke tilgjengelig nå"),
+      // The same icon and colour the action has in the book's history in Boksøk
+      appearance: cartActionAppearance(option.type),
     });
   }
   return [...entries.values()];
@@ -106,161 +94,10 @@ function LineCopy({ line, choice }: { line: CartLine; choice: StandCartChoice })
 }
 
 /**
- * What will happen to the book, as a select even when there is only one entry, so every line
- * reads the same. The chosen action keeps its icon and colour in front of the value, every
- * entry carries its own in the list, and an action the customer cannot take says why under
- * its name.
- */
-function ActionControl({
-  line,
-  choice,
-  onChoose,
-}: {
-  line: CartLine;
-  choice: StandCartChoice;
-  onChoose: (choice: StandCartChoice) => void;
-}) {
-  const entries = actionEntries(line);
-  if (entries.length === 0) {
-    return null;
-  }
-  // A choice the line no longer offers, after a branch switch or a refresh, leaves the select
-  // empty rather than still naming it, so the line visibly asks to be chosen again
-  const offered = entries.some((entry) => entry.key === choiceKey(choice));
-  const { icon: ChosenIcon, color } = cartActionAppearance(choice.type);
-  return (
-    <Select
-      aria-label="Handling"
-      // One width for every line, so the selects stack evenly whatever the price beside them
-      w={ACTION_SELECT_WIDTH}
-      size="md"
-      flex="0 0 auto"
-      allowDeselect={false}
-      value={offered ? choiceKey(choice) : null}
-      placeholder="Velg handling"
-      leftSection={
-        offered ? (
-          <ThemeIcon variant="light" color={color} size={20} radius="xl">
-            <ChosenIcon size={12} aria-hidden />
-          </ThemeIcon>
-        ) : undefined
-      }
-      // Mantine drawers sit at z-index 260 here, so the dropdown must be lifted with it
-      comboboxProps={{ zIndex: 300 }}
-      data={entries.map((entry) => ({
-        value: entry.key,
-        label: entry.label,
-        disabled: !entry.available,
-      }))}
-      renderOption={({ option }) => {
-        const entry = entries.find((candidate) => candidate.key === option.value);
-        if (entry === undefined) {
-          return option.label;
-        }
-        // The same icon and colour the action has in the book's history in Boksøk
-        const { icon: OptionIcon, color: optionColor } = cartActionAppearance(entry.type);
-        return (
-          <Group gap={8} wrap="nowrap" align="flex-start">
-            <ThemeIcon variant="light" color={optionColor} size={20} radius="xl" mt={1}>
-              <OptionIcon size={12} aria-hidden />
-            </ThemeIcon>
-            <Stack gap={0}>
-              <Text size="sm">{entry.label}</Text>
-              {!entry.available && entry.reason !== undefined && (
-                <Text size="xs" c="dimmed">
-                  {entry.reason}
-                </Text>
-              )}
-            </Stack>
-          </Group>
-        );
-      }}
-      onChange={(value) => {
-        const entry = entries.find((candidate) => candidate.key === value);
-        if (entry) {
-          onChoose(entry.choice);
-        }
-      }}
-    />
-  );
-}
-
-/**
- * Why the line cannot be submitted as it stands. The missing-copy problem is left out, since the
- * copy slot already says "scan the book"; a monitored choice is summed up under the lines.
- */
-function LineProblem({
-  line,
-  choice,
-  problem,
-}: {
-  line: CartLine;
-  choice: StandCartChoice;
-  problem: string | null;
-}) {
-  if (problem === null || line.options.length === 0 || needsBlid(line.blid, choice.type)) {
-    return null;
-  }
-  return (
-    <Text size="sm" c="orange">
-      {problem}
-    </Text>
-  );
-}
-
-function LinePrice({ line, choice }: { line: CartLine; choice: StandCartChoice }) {
-  const option = findOption(line, choice);
-  if (option === null) {
-    return null;
-  }
-  return (
-    <Stack gap={0} align="flex-end" flex="0 0 auto" style={{ whiteSpace: "nowrap" }}>
-      <Amount amount={option.price} />
-      {option.payLater !== undefined && option.payLater > 0 && (
-        <Text size="xs" c="dimmed">
-          betal senere {formatAmount(option.payLater)}
-        </Text>
-      )}
-    </Stack>
-  );
-}
-
-function RemoveLineButton({ line, onRemove }: { line: CartLine; onRemove: () => void }) {
-  return (
-    <ActionIcon
-      variant="subtle"
-      color="gray"
-      aria-label={`Fjern «${line.title}» fra handlekurven`}
-      onClick={onRemove}
-    >
-      <IconX size={18} aria-hidden />
-    </ActionIcon>
-  );
-}
-
-/** The name of the book, with the one note the checkout will stop and ask about. */
-function LineTitle({ line }: { line: CartLine }) {
-  const peer = peerNote(line.notes);
-  return (
-    <Stack gap={4} align="flex-start" miw={0}>
-      <Text fw={600} lh={1.3}>
-        {line.title}
-      </Text>
-      {peer !== null && (
-        <PeerBadge>
-          Mottas fra{" "}
-          <CustomerLink userId={peer.deliverFromId} inherit>
-            {peer.deliverFromName}
-          </CustomerLink>
-        </PeerBadge>
-      )}
-    </Stack>
-  );
-}
-
-/**
- * One book in the cart on a phone, as a card: what it is and which copy, then what will happen
- * to it and what it costs on one row. The action control is the line's one strong element.
+ * One book in Kasse's cart: the shared cart line, with the copy in hand (or the warning that a
+ * handout needs one) and the peer handout under the title. The missing-copy problem is left out
+ * of the notice, since the copy slot already says "scan the book"; a monitored choice is summed
+ * up under the lines.
  */
 export default function StandCartLine({
   line,
@@ -270,77 +107,48 @@ export default function StandCartLine({
   onChoose,
   onRemove,
 }: StandCartLineProps) {
+  const entries = actionEntries(line);
+  // A choice the line no longer offers, after a branch switch or a refresh, selects nothing, so
+  // the line visibly asks to be chosen again
+  const offered = entries.some((entry) => entry.key === choiceKey(choice));
+  const option = findOption(line, choice);
+  const peer = peerNote(line.notes);
+  const notice =
+    problem !== null && (line.options.length === 0 || !needsBlid(line.blid, choice.type))
+      ? problem
+      : null;
   return (
-    <Card withBorder radius="md" padding="sm">
-      <Stack gap="sm">
-        <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
-          <Stack gap={4} miw={0}>
-            <LineTitle line={line} />
+    <CartLineCard
+      title={line.title}
+      isbn={line.isbn}
+      details={
+        (line.blid !== null || needsBlid(line.blid, choice.type) || peer !== null) && (
+          <>
             {/* The copy in hand belongs with the title: a sticker and a book are one thing */}
             <LineCopy line={line} choice={choice} />
-          </Stack>
-          <RemoveLineButton line={line} onRemove={onRemove} />
-        </Group>
-
-        {problem !== null && line.options.length === 0 && <WarningAlert>{problem}</WarningAlert>}
-
-        <LineProblem line={line} choice={choice} problem={problem} />
-
-        {/* What happens to the book and what it costs, read together on one row */}
-        <Group justify="space-between" align="center" gap="xs" wrap="nowrap">
-          <ActionControl line={line} choice={choice} onChoose={onChoose} />
-          {withPrice && <LinePrice line={line} choice={choice} />}
-        </Group>
-      </Stack>
-    </Card>
-  );
-}
-
-/**
- * The same line as a table row on wider screens: one book per row so a full cart is read at a
- * glance. The copy column is only there when some line has a copy; a problem with no action to
- * choose from replaces the action.
- */
-export function StandCartLineRow({
-  line,
-  choice,
-  problem,
-  withCopy,
-  withPrice,
-  onChoose,
-  onRemove,
-}: StandCartLineProps & { withCopy: boolean }) {
-  return (
-    <Table.Tr>
-      <Table.Td>
-        <LineTitle line={line} />
-      </Table.Td>
-      {withCopy && (
-        <Table.Td>
-          <LineCopy line={line} choice={choice} />
-        </Table.Td>
-      )}
-      <Table.Td>
-        <Stack gap="xs" align="flex-start">
-          <LineProblem line={line} choice={choice} problem={problem} />
-          {problem !== null && line.options.length === 0 ? (
-            <Text size="sm" c="orange">
-              {problem}
-            </Text>
-          ) : (
-            <ActionControl line={line} choice={choice} onChoose={onChoose} />
-          )}
-        </Stack>
-      </Table.Td>
-      {withPrice && (
-        // Amounts keep their right edges in line, the way a sum is written out by hand
-        <Table.Td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
-          <LinePrice line={line} choice={choice} />
-        </Table.Td>
-      )}
-      <Table.Td style={{ textAlign: "right" }}>
-        <RemoveLineButton line={line} onRemove={onRemove} />
-      </Table.Td>
-    </Table.Tr>
+            {peer !== null && (
+              <PeerBadge>
+                Mottas fra{" "}
+                <CustomerLink userId={peer.deliverFromId} inherit>
+                  {peer.deliverFromName}
+                </CustomerLink>
+              </PeerBadge>
+            )}
+          </>
+        )
+      }
+      choices={entries}
+      selectedKey={offered ? choiceKey(choice) : null}
+      onSelect={(key) => {
+        const entry = entries.find((candidate) => candidate.key === key);
+        if (entry) {
+          onChoose(entry.choice);
+        }
+      }}
+      price={withPrice && option ? { now: option.price, later: option.payLater } : null}
+      notice={notice}
+      warn={notice !== null}
+      onRemove={onRemove}
+    />
   );
 }

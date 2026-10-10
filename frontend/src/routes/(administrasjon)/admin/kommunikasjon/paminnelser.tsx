@@ -13,7 +13,7 @@ export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/pami
 
 function RemindersPage() {
   return (
-    <Container size="xs">
+    <Container px={0} size="xs">
       <Stack>
         <Stack gap={2}>
           <Title>Påminnelser</Title>
