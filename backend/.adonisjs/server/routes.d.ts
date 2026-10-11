@@ -129,7 +129,6 @@ export type ScannedRoutes = {
     'reports.orders': { paramsTuple?: []; params?: {} }
     'reports.payments': { paramsTuple?: []; params?: {} }
     'reports.users': { paramsTuple?: []; params?: {} }
-    'unique_ids.pdf': { paramsTuple?: []; params?: {} }
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'users.update': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -166,6 +165,7 @@ export type ScannedRoutes = {
     'blids.show_link': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'blids.relink': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'blids.destroy': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'unique_ids.pdf': { paramsTuple?: []; params?: {} }
     'unique_ids.label': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'items.index': { paramsTuple?: []; params?: {} }
     'items.show_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
@@ -232,7 +232,6 @@ export type ScannedRoutes = {
     'reports.orders': { paramsTuple?: []; params?: {} }
     'reports.payments': { paramsTuple?: []; params?: {} }
     'reports.users': { paramsTuple?: []; params?: {} }
-    'unique_ids.pdf': { paramsTuple?: []; params?: {} }
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'customer_items.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -252,6 +251,7 @@ export type ScannedRoutes = {
     'blids.index': { paramsTuple?: []; params?: {} }
     'blids.show': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'blids.show_link': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'unique_ids.pdf': { paramsTuple?: []; params?: {} }
     'unique_ids.label': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'items.index': { paramsTuple?: []; params?: {} }
     'items.show_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }
@@ -316,7 +316,6 @@ export type ScannedRoutes = {
     'reports.orders': { paramsTuple?: []; params?: {} }
     'reports.payments': { paramsTuple?: []; params?: {} }
     'reports.users': { paramsTuple?: []; params?: {} }
-    'unique_ids.pdf': { paramsTuple?: []; params?: {} }
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'customer_items.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -336,6 +335,7 @@ export type ScannedRoutes = {
     'blids.index': { paramsTuple?: []; params?: {} }
     'blids.show': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'blids.show_link': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
+    'unique_ids.pdf': { paramsTuple?: []; params?: {} }
     'unique_ids.label': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'items.index': { paramsTuple?: []; params?: {} }
     'items.show_by_isbn': { paramsTuple: [ParamValue]; params: {'isbn': ParamValue} }

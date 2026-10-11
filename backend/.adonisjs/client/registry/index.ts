@@ -756,12 +756,6 @@ const routes = {
     tokens: [{"old":"/reports/users","type":0,"val":"reports","end":""},{"old":"/reports/users","type":0,"val":"users","end":""}],
     types: placeholder as Registry['reports.users']['types'],
   },
-  'unique_ids.pdf': {
-    methods: ["GET","HEAD"],
-    pattern: '/unique_ids/pdf',
-    tokens: [{"old":"/unique_ids/pdf","type":0,"val":"unique_ids","end":""},{"old":"/unique_ids/pdf","type":0,"val":"pdf","end":""}],
-    types: placeholder as Registry['unique_ids.pdf']['types'],
-  },
   'users.search': {
     methods: ["GET","HEAD"],
     pattern: '/users/search',
@@ -977,6 +971,12 @@ const routes = {
     pattern: '/blids/:blid',
     tokens: [{"old":"/blids/:blid","type":0,"val":"blids","end":""},{"old":"/blids/:blid","type":1,"val":"blid","end":""}],
     types: placeholder as Registry['blids.destroy']['types'],
+  },
+  'unique_ids.pdf': {
+    methods: ["GET","HEAD"],
+    pattern: '/unique_ids/pdf',
+    tokens: [{"old":"/unique_ids/pdf","type":0,"val":"unique_ids","end":""},{"old":"/unique_ids/pdf","type":0,"val":"pdf","end":""}],
+    types: placeholder as Registry['unique_ids.pdf']['types'],
   },
   'unique_ids.label': {
     methods: ["GET","HEAD"],

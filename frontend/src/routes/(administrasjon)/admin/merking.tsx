@@ -1,7 +1,8 @@
-import { Container, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import { Container, Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
 
 import BookCard from "@/features/merking/BookCard";
+import PrintStickersButton from "@/features/merking/PrintStickersButton";
 import RegistrationConfirm from "@/features/merking/RegistrationConfirm";
 import ScannedBlidList from "@/features/merking/ScannedBlidList";
 import { MERKING_DESCRIPTION, MERKING_TITLE } from "@/features/merking/merkingDescription";
@@ -34,10 +35,13 @@ function MerkingPage() {
   return (
     <Container px={0}>
       <Stack>
-        <Stack gap={4}>
-          <Title>{MERKING_TITLE}</Title>
-          <Text c="dimmed">{MERKING_DESCRIPTION}</Text>
-        </Stack>
+        <Group justify="space-between" align="flex-start" gap="md">
+          <Stack gap={4}>
+            <Title>{MERKING_TITLE}</Title>
+            <Text c="dimmed">{MERKING_DESCRIPTION}</Text>
+          </Stack>
+          <PrintStickersButton />
+        </Group>
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <BookCard book={session.book} onClear={session.clearBook} />
           <ScannedBlidList

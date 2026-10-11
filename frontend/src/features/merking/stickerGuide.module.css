@@ -1,0 +1,274 @@
+/*
+ * The guide behind «Skriv ut nye unike IDer». Its one scene, a book getting its two stickers,
+ * plays on a stage with the same border and radius as the page's cards. It loops; with
+ * reduced motion it holds the finished frame, which is the state every rule below describes
+ * before its animation takes over.
+ */
+
+.stage {
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+}
+
+.bookScene {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  perspective: 900px;
+}
+
+.book {
+  /*
+   * The cover picture's own proportions, at 0.6 px per mm of a 200 x 265 mm textbook; the sticker
+   * and the barcode below are scaled by the same rule.
+   */
+  --book-width: 120px;
+  --book-height: 159px;
+  --book-depth: 12px;
+  --cover: var(--mantine-color-brand-7);
+  --inside: light-dark(var(--mantine-color-gray-1), var(--mantine-color-gray-2));
+  position: relative;
+  width: var(--book-width);
+  height: var(--book-height);
+  transform-style: preserve-3d;
+  transform: translateX(0) rotateY(180deg);
+  animation: turn-book 10s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.page,
+.coverPivot,
+.coverFront,
+.coverInside,
+.back,
+.spine,
+.edge {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+/* First page, the right side of the spread: faint lines of text. Sits just behind the cover. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 18px 13px;
+  border: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-2));
+  border-radius: 2px 3px 3px 2px;
+  background-color: #ffffff;
+  transform: translateZ(calc(var(--book-depth) / 2 - 1px));
+}
+
+.pageLine {
+  height: 3px;
+  border-radius: 2px;
+  background-color: var(--mantine-color-gray-2);
+}
+
+/* The cover swings flat round its spine; its two faces hide each other's back. */
+.coverPivot {
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transform: translateZ(calc(var(--book-depth) / 2)) rotateY(0deg);
+  animation: open-cover 10s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.coverFront {
+  overflow: hidden;
+  border-radius: 2px 4px 4px 2px;
+  background-color: var(--cover);
+}
+
+.coverImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Inside of the cover, the left page of the first spread once open: the first sticker goes here. */
+.coverInside {
+  border-radius: 4px 2px 2px 4px;
+  background-color: var(--inside);
+  transform: rotateY(180deg);
+}
+
+/* Back cover: the ISBN barcode bottom right, the second sticker on the same line to its left. */
+.back {
+  border-radius: 4px 2px 2px 4px;
+  background-color: var(--cover);
+  transform: rotateY(180deg) translateZ(calc(var(--book-depth) / 2));
+}
+
+/*
+ * The barcode printed in white on the cover: inverting the illustration makes its box black and
+ * its bars white, and screen blending then drops the black box into the cover colour.
+ */
+.isbn {
+  position: absolute;
+  right: 9px;
+  bottom: 9px;
+  display: flex;
+  filter: invert(1);
+  mix-blend-mode: screen;
+}
+
+.spine {
+  width: var(--book-depth);
+  border-radius: 2px 0 0 2px;
+  background-color: var(--mantine-color-brand-8);
+  transform-origin: left center;
+  transform: translateZ(calc(var(--book-depth) / -2)) rotateY(-90deg);
+}
+
+/* The fore edge: page stripes so the block reads as paper when the book turns. */
+.edge {
+  left: 100%;
+  width: var(--book-depth);
+  background: repeating-linear-gradient(
+    to right,
+    #ffffff 0,
+    #ffffff 1px,
+    var(--mantine-color-gray-3) 1px,
+    var(--mantine-color-gray-3) 2px
+  );
+  transform-origin: left center;
+  transform: translateZ(calc(var(--book-depth) / 2)) rotateY(90deg);
+}
+
+/*
+ * The real sticker scaled to the book: the picture is the label's printable area, so the white
+ * margins and rounded corners of the 62 x 29 mm die-cut label are added around it in proportion.
+ */
+.insideSticker,
+.backSticker {
+  position: absolute;
+  right: 9px;
+  display: block;
+  box-sizing: border-box;
+  /* 62 x 29 mm */
+  width: 37px;
+  height: auto;
+  aspect-ratio: 62 / 29;
+  padding: 2px 1px;
+  border-radius: 1.5px;
+  background-color: #ffffff;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.3));
+  opacity: 1;
+  transform: none;
+}
+
+.insideSticker {
+  bottom: 9px;
+  animation: land-inside 10s ease-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* To the left of the barcode (64 x 0.35 = 22 px wide), with a small gap. */
+.backSticker {
+  right: 34px;
+  bottom: 9px;
+  animation: land-on-back 10s ease-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/*
+ * Closed; slides right while the cover opens so the spread stays centred; holds while the first
+ * sticker lands; closes and slides back; turns round for the second; turns on round to the front.
+ */
+@keyframes turn-book {
+  0%,
+  8% {
+    transform: translateX(0) rotateY(0deg);
+  }
+
+  18%,
+  33% {
+    transform: translateX(calc(var(--book-width) / 2)) rotateY(0deg);
+  }
+
+  43% {
+    transform: translateX(0) rotateY(0deg);
+  }
+
+  55%,
+  85% {
+    transform: translateX(0) rotateY(180deg);
+  }
+
+  97%,
+  100% {
+    transform: translateX(0) rotateY(360deg);
+  }
+}
+
+@keyframes open-cover {
+  0%,
+  8% {
+    transform: translateZ(calc(var(--book-depth) / 2)) rotateY(0deg);
+  }
+
+  18%,
+  33% {
+    transform: translateZ(calc(var(--book-depth) / 2)) rotateY(-180deg);
+  }
+
+  43%,
+  100% {
+    transform: translateZ(calc(var(--book-depth) / 2)) rotateY(0deg);
+  }
+}
+
+@keyframes land-inside {
+  0%,
+  19% {
+    opacity: 0;
+    transform: translateY(-24px) scale(1.3);
+  }
+
+  27%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes land-on-back {
+  0%,
+  57% {
+    opacity: 0;
+    transform: translateY(-24px) scale(1.3);
+  }
+
+  65%,
+  88% {
+    opacity: 1;
+    transform: none;
+  }
+
+  92%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}

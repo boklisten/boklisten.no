@@ -26,15 +26,18 @@ const GUARD_BOTTOM = 49;
 const BASE_HEIGHT = 34;
 
 /**
- * The exact artwork the stand prints (rendered by the backend's unique-ID generator with an example
- * ID), so the employee sees the sticker itself rather than a generic barcode.
+ * The exact artwork the stand prints, rendered by the backend's unique-ID generator with an example
+ * id; every picture of a sticker uses this one file.
  */
+export const BLID_LABEL_IMAGE = "/images/blid-label.png";
+
+/** The sticker itself rather than a generic barcode, so the employee sees what to hunt for. */
 function BlidLabelIllustration({ scale }: { scale: number }) {
   const width = 88 * scale;
   const height = BASE_HEIGHT * scale;
   return (
     <img
-      src="/images/blid-label.png"
+      src={BLID_LABEL_IMAGE}
       alt=""
       aria-hidden="true"
       width={width}

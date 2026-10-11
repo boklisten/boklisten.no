@@ -1507,18 +1507,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/reports_controller').default['users']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'unique_ids.pdf': {
-    methods: ["GET","HEAD"]
-    pattern: '/unique_ids/pdf'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['pdf']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['pdf']>>>
-    }
-  }
   'users.search': {
     methods: ["GET","HEAD"]
     pattern: '/users/search'
@@ -1949,6 +1937,18 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/blids_controller').default['destroy']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/blids_controller').default['destroy']>>>
+    }
+  }
+  'unique_ids.pdf': {
+    methods: ["GET","HEAD"]
+    pattern: '/unique_ids/pdf'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['pdf']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/unique_ids_controller').default['pdf']>>>
     }
   }
   'unique_ids.label': {

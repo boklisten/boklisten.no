@@ -219,10 +219,6 @@ export interface ApiDefinition {
     payments: typeof routes['reports.payments']
     users: typeof routes['reports.users']
   }
-  uniqueIds: {
-    pdf: typeof routes['unique_ids.pdf']
-    label: typeof routes['unique_ids.label']
-  }
   messageLogs: {
     forCustomer: typeof routes['message_logs.for_customer']
     feed: typeof routes['message_logs.feed']
@@ -249,6 +245,10 @@ export interface ApiDefinition {
     showLink: typeof routes['blids.show_link']
     relink: typeof routes['blids.relink']
     destroy: typeof routes['blids.destroy']
+  }
+  uniqueIds: {
+    pdf: typeof routes['unique_ids.pdf']
+    label: typeof routes['unique_ids.label']
   }
   waitingListCustomers: {
     index: typeof routes['waiting_list_customers.index']

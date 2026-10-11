@@ -15,7 +15,7 @@ export default class UniqueIdsController {
     return { svg: UniqueIdGeneratorService.labelSvg(blid) };
   }
 
-  /** A sheet of fresh stickers; admin-only, opened as a plain link so the session cookie rides along. */
+  /** A sheet of fresh stickers for any employee; Merking fetches it and prints it from a hidden iframe. */
   async pdf(ctx: HttpContext) {
     const pdf = await UniqueIdGeneratorService.generateUniqueIdPdf();
     ctx.response

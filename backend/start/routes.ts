@@ -283,12 +283,11 @@ router
     router.get("/dispatch/email_templates", [controllers.Dispatch, "emailTemplates"]);
     router.post("/dispatch", [controllers.Dispatch, "store"]);
 
-    // reports and stickers
+    // reports
     router.get("/reports/customer_items", [controllers.Reports, "customerItems"]);
     router.get("/reports/orders", [controllers.Reports, "orders"]);
     router.get("/reports/payments", [controllers.Reports, "payments"]);
     router.get("/reports/users", [controllers.Reports, "users"]);
-    router.get("/unique_ids/pdf", [controllers.UniqueIds, "pdf"]);
   })
   .use([middleware.auth(), middleware.can({ permission: "admin" })]);
 
@@ -341,6 +340,7 @@ router
     router.get("/blids/:blid/link", [controllers.Blids, "showLink"]);
     router.patch("/blids/:blid/item", [controllers.Blids, "relink"]);
     router.delete("/blids/:blid", [controllers.Blids, "destroy"]);
+    router.get("/unique_ids/pdf", [controllers.UniqueIds, "pdf"]);
     router.get("/unique_ids/:blid/label", [controllers.UniqueIds, "label"]);
 
     // items and misc
