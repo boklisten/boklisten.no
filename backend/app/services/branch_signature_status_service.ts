@@ -2,7 +2,7 @@ import type { DateTime } from "luxon";
 
 import Signature from "#models/signature";
 import User from "#models/user";
-import { BranchRelationshipService } from "#services/branch_relationship_service";
+import { BranchScope } from "#services/branch_scope";
 
 export interface MemberSignatureRow {
   dob: DateTime | null;
@@ -33,9 +33,10 @@ export const BranchSignatureStatusService = {
   },
 
   async getStatus(branchId: string): Promise<BranchSignatureStatus> {
-    const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
-    const scopeIds = [branchId, ...descendantIds];
-    const members = await User.membersOf(scopeIds).select("id", "dob");
+    const members = await User.membersOf(await BranchScope.subtreeIds(branchId)).select(
+      "id",
+      "dob",
+    );
     const newestSignatures = await Signature.newestPerCustomer(members.map((member) => member.id));
     const signatureByCustomer = new Map(
       newestSignatures.map((signature) => [signature.customerId, signature]),

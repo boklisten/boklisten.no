@@ -1,4 +1,5 @@
 import { scope } from "@adonisjs/lucid/orm";
+import type { ChainableContract } from "@adonisjs/lucid/types/querybuilder";
 import { DateTime } from "luxon";
 
 import { SignatureSchema } from "#database/schema";
@@ -52,14 +53,17 @@ export default class Signature extends SignatureSchema {
   }
 
   /**
-   * A keyset page of the newest signature per customer, ordered newest first. The cursor points at
-   * the last row of the previous page; rows at or before it are excluded.
+   * A keyset page of the newest signature per customer among `customers` (a subquery of customer
+   * ids), ordered newest first. The cursor points at the last row of the previous page; rows at or
+   * before it are excluded.
    */
   static async newestPerCustomerPage(
     cursor: { createdAt: Date; id: number } | null,
     limit: number,
+    customers: ChainableContract,
   ): Promise<Signature[]> {
     const query = this.query()
+      .whereIn("customerId", customers)
       .whereNotExists((newer) => {
         void newer
           .from("signatures as newer")

@@ -80,7 +80,8 @@ Implemented once, in `backend/app/services/branch_scope.ts` (new):
   the root.
 - `assertSelectable(viewer, nodeId)`: throws (403 on a URL param, 400 on a body value) unless the
   node is in `selectableIds`.
-- `customersInScope(nodeId)`: a query fragment on `users` that is true when
+- `customersInScope(subtreeIds)`: a subquery of `users` ids (synchronous, over the ids from
+  `subtreeIds`, because a Lucid builder is a thenable) that holds a user when
   - the user's `branch_membership_id` is in the subtree, **or**
   - the user has an order whose `branch_id` is in the subtree, **or**
   - the user has a customer item whose `handout_branch_id` is in the subtree.
@@ -94,7 +95,9 @@ Implemented once, in `backend/app/services/branch_scope.ts` (new):
 Scope is **not a partition**. A Nydalen pupil who ordered at Ullern is in scope of both schools,
 and the customer counts of sibling nodes do not sum to their parent's. Every list and metric in
 the admin uses this one population, so the numbers on one page always agree with each other.
-Head office on the root gets everything either way.
+Head office on the root gets everything either way. One exception: the Signering tab lists direct
+and indirect **members** only, because its status summary counts members and the two sections of
+one tab must agree (Adrian, 2026-10-12, step 4).
 
 ### 1.5 Enforcement
 
@@ -174,7 +177,7 @@ Head office on the root gets everything either way.
 | Visibility levels         | One boolean `visibleToCustomers`; `admin` and `employee` both became `false`     | Home nodes already hide everything above a school employee; a third level was a second boundary with its own guard |
 | "No school" for customers | Root membership shown as a named, unremovable option                             | Empty required field reads as a mistake; privatists are the main funnel                                            |
 | Employee scope storage    | Separate `scope_branch_id`, one node per user                                    | Membership (teacher at a class) and scope (works for the school) are different things                              |
-| Scope rule                | Membership or activity, activity unbounded                                       | Stand staff must see privatists who ordered at their school, including old history                                 |
+| Scope rule                | Membership or activity, activity unbounded; Signering tab = members only         | Stand staff must see privatists who ordered at their school, including old history; Signering matches its summary  |
 | Brukere population        | Customers in scope, paged, direct members as a filter                            | One "who is here" per node; root must not render 11k rows                                                          |
 | Connectors                | Ancestors of the home node, staff only                                           | Explains inherited values; customers must not see the companies                                                    |
 | Move rule                 | Target must be selectable; current value unchecked                               | Stand staff fix the common "picked the wrong school" case; root is head office only                                |
@@ -409,7 +412,7 @@ fails instead of an endless skeleton.
 
 Not in this step: scope, Signaturer, Brukere.
 
-### Step 4. Signaturer becomes the Signering tab
+### Step 4. Signaturer becomes the Signering tab (done 2026-10-12)
 
 **Value**: the first scoped list. Signatures are looked at per node, and the standalone page is
 gone. This is the change that started the whole plan.
@@ -435,7 +438,23 @@ Frontend
 - Delete `routes/(administrasjon)/admin/database/signaturer.tsx` and its nav entry. No redirect.
 
 Verify: root → Signering shows the same cards the old page showed; Ullern → Signering shows only
-Ullern's subtree; a privatist who ordered at Ullern appears under Ullern.
+Ullern's subtree. (A privatist who ordered at Ullern was to appear under Ullern; dropped, see
+"As built".)
+
+Verified: root → Signering shows the status summary (16 757 members) and the same newest-first
+cards the old page showed; Ullern → Signering shows only Ullern members (every membership badge
+an Ullern class); `/admin/database/signaturer` is a 404 and the nav entry is gone.
+
+As built: the gallery lists the **members** of the subtree, not `customersInScope` (Adrian,
+2026-10-12): the signature status above it counts members, and the two sections of one tab must
+agree; the activity rule is for finding and serving customers (steps 6 and 9), not for this
+overview. `BranchScope.customersInScope(subtreeIds)` is still introduced here, tested, and first
+used by the Brukere tab in step 6. It is synchronous and takes the ids from `subtreeIds(nodeId)`
+(a Lucid builder is a thenable, so an async function returning one would run it instead of
+returning it); callers write `customersInScope(await subtreeIds(id))`. The route is
+`GET /branches/:branchId/signatures` on `SignaturesController.gallery` (Tuyau name unchanged,
+`api.signatures.gallery`), declared next to `signature_status`. The tab stacks the status summary
+over the gallery under the heading "Signaturer", with no intro text.
 
 Not in this step: home nodes, enforcement, Brukere.
 

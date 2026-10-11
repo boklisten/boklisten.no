@@ -20,9 +20,8 @@ import {
 | Routes are grouped by the permission they require, and the groups are declared from the least
 | to the most privileged, except that admin routes come before employee routes. That order keeps
 | static paths ahead of the dynamic ones that would otherwise shadow them: `/orders/me` (customer)
-| is declared before `/orders/:orderId` (employee), and `/signatures/gallery` and `/users/metrics`
-| (admin) before `/signatures/:userId` and `/users/:userId` (employee). Within a group, keep
-| static paths above dynamic ones too.
+| is declared before `/orders/:orderId` (employee), and `/users/metrics` (admin) before
+| `/users/:userId` (employee). Within a group, keep static paths above dynamic ones too.
 |
 | Route names are derived from `<controller>.<method>`; the frontend addresses endpoints by that
 | name through Tuyau, never by path.
@@ -182,6 +181,7 @@ router
       controllers.branches.BranchSignatureStatus,
       "show",
     ]);
+    router.get("/branches/:branchId/signatures", [controllers.Signatures, "gallery"]);
     router.get("/branches/:branchId/insights/book_movements", [
       controllers.branches.BranchInsights,
       "getBookMovements",
@@ -227,8 +227,6 @@ router
     router.post("/users/merge", [controllers.Users, "merge"]);
     router.put("/users/permission", [controllers.Users, "setPermission"]);
     router.delete("/users/:userId", [controllers.Users, "destroy"]);
-
-    router.get("/signatures/gallery", [controllers.Signatures, "gallery"]);
 
     // matches
     router.get("/matches/:matchId", [controllers.Matches, "show"]);

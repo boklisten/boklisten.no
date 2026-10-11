@@ -67,6 +67,7 @@ export type ScannedRoutes = {
     'branch_subject_choices.evaluate': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subject_choices.upload': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_signature_status.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'signatures.gallery': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_insights.get_book_movements': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -84,7 +85,6 @@ export type ScannedRoutes = {
     'users.merge': { paramsTuple?: []; params?: {} }
     'users.set_permission': { paramsTuple?: []; params?: {} }
     'users.destroy': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
-    'signatures.gallery': { paramsTuple?: []; params?: {} }
     'matches.show': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'match_rounds.index': { paramsTuple?: []; params?: {} }
     'match_rounds.matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -206,6 +206,7 @@ export type ScannedRoutes = {
     'branch_members.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_signature_status.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'signatures.gallery': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_insights.get_book_movements': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -215,7 +216,6 @@ export type ScannedRoutes = {
     'users.duplicates': { paramsTuple?: []; params?: {} }
     'users.employees': { paramsTuple?: []; params?: {} }
     'users.merge_preview': { paramsTuple: [ParamValue,ParamValue]; params: {'fromUserId': ParamValue,'toUserId': ParamValue} }
-    'signatures.gallery': { paramsTuple?: []; params?: {} }
     'matches.show': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'match_rounds.index': { paramsTuple?: []; params?: {} }
     'match_rounds.matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -290,6 +290,7 @@ export type ScannedRoutes = {
     'branch_members.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_signature_status.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'signatures.gallery': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_insights.get_book_movements': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_books.get_active_book_details': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -299,7 +300,6 @@ export type ScannedRoutes = {
     'users.duplicates': { paramsTuple?: []; params?: {} }
     'users.employees': { paramsTuple?: []; params?: {} }
     'users.merge_preview': { paramsTuple: [ParamValue,ParamValue]; params: {'fromUserId': ParamValue,'toUserId': ParamValue} }
-    'signatures.gallery': { paramsTuple?: []; params?: {} }
     'matches.show': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'match_rounds.index': { paramsTuple?: []; params?: {} }
     'match_rounds.matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

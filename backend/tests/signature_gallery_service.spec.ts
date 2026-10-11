@@ -11,6 +11,8 @@ import type { GalleryContext, GalleryCustomer } from "#services/signature_galler
 import { SignatureGalleryService } from "#services/signature_gallery_service";
 import type { UserPermission } from "#shared/user-permission";
 import { createBranch, TEST_ROOT_BRANCH_ID } from "#tests/branch_fixtures";
+import { createOrder } from "#tests/order_fixtures";
+import { createUser } from "#tests/user_fixtures";
 
 const adultDob = DateTime.now().minus({ years: 30 }).startOf("year");
 const childDob = DateTime.now().minus({ years: 10 }).startOf("year");
@@ -174,7 +176,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
 
   test("returns an empty final page when there are no rows", async ({ assert }) => {
     pageStub.resolves([]);
-    const page = await SignatureGalleryService.getPage(null);
+    const page = await SignatureGalleryService.getPage(null, TEST_ROOT_BRANCH_ID);
     assert.deepEqual(page, { signatures: [], nextCursor: null });
   });
 
@@ -185,7 +187,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
     pageStub.resolves([valid, expired, orphaned]);
     customersStub.resolves(customersById([customerFor(valid), customerFor(expired)]));
 
-    const page = await SignatureGalleryService.getPage(null);
+    const page = await SignatureGalleryService.getPage(null, TEST_ROOT_BRANCH_ID);
 
     assert.deepEqual(
       page.signatures.map((signature) => signature.id),
@@ -199,7 +201,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
     pageStub.resolves(rows);
     customersStub.resolves(customersById(rows.map((row) => customerFor(row))));
 
-    const page = await SignatureGalleryService.getPage(null);
+    const page = await SignatureGalleryService.getPage(null, TEST_ROOT_BRANCH_ID);
 
     assert.lengthOf(page.signatures, 30);
     const lastJudged = rows[29];
@@ -224,7 +226,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
       .onSecondCall()
       .resolves(customersById(secondBatch.map((row) => customerFor(row))));
 
-    const page = await SignatureGalleryService.getPage(null);
+    const page = await SignatureGalleryService.getPage(null, TEST_ROOT_BRANCH_ID);
 
     assert.deepEqual(
       page.signatures.map((signature) => signature.id),
@@ -245,7 +247,7 @@ test.group("SignatureGalleryService.getPage", (group) => {
     customersStub.resolves(customersById([customer]));
     await createBranch({ id: branchId, name: "Ullern VGS" });
 
-    const page = await SignatureGalleryService.getPage(null);
+    const page = await SignatureGalleryService.getPage(null, TEST_ROOT_BRANCH_ID);
 
     assert.equal(page.signatures[0]?.branchName, "Ullern VGS");
     assert.equal(page.signatures[0]?.permission, "admin");
@@ -256,9 +258,57 @@ test.group("SignatureGalleryService.getPage", (group) => {
     pageStub.resolves([signature]);
     customersStub.resolves(customersById([customerFor(signature)]));
 
-    const page = await SignatureGalleryService.getPage(null);
+    const page = await SignatureGalleryService.getPage(null, TEST_ROOT_BRANCH_ID);
 
     assert.isNull(page.signatures[0]?.branchName);
     assert.isFalse(branchNamesSpy.called);
+  });
+});
+
+async function sign(customerId: string, signingName: string): Promise<Signature> {
+  return Signature.create({
+    customerId,
+    signingName,
+    signedByGuardian: false,
+    image: Buffer.from("webp"),
+  });
+}
+
+test.group("SignatureGalleryService.getPage scope", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("holds only the members of the node and the branches below it", async ({ assert }) => {
+    const school = await createBranch({ name: "Ullern VGS" });
+    const klass = await createBranch({ parentBranchId: school.id, name: "VG1 ST A" });
+    const sibling = await createBranch({ name: "Nydalen VGS" });
+    const pupil = await createUser({ branchMembershipId: klass.id, dob: adultDob });
+    // Ordered here without picking the school: counted by the scope rule, not by this tab.
+    const privatist = await createUser({ dob: adultDob });
+    const elsewhere = await createUser({ branchMembershipId: sibling.id, dob: adultDob });
+    await createOrder({ branchId: school.id, customerId: privatist.id });
+    await sign(pupil.id, "Elev Elevsen");
+    await sign(privatist.id, "Privatist Privatistsen");
+    await sign(elsewhere.id, "Nabo Nabosen");
+
+    const page = await SignatureGalleryService.getPage(null, school.id);
+
+    assert.deepEqual(
+      page.signatures.map((signature) => signature.customerId),
+      [pupil.id],
+    );
+    assert.equal(page.signatures[0]?.branchName, "VG1 ST A");
+    assert.isNull(page.nextCursor);
+  });
+
+  test("holds everyone on the root", async ({ assert }) => {
+    const school = await createBranch();
+    const pupil = await createUser({ branchMembershipId: school.id, dob: adultDob });
+    const privatist = await createUser({ dob: adultDob });
+    await sign(pupil.id, "Elev Elevsen");
+    await sign(privatist.id, "Privatist Privatistsen");
+
+    const page = await SignatureGalleryService.getPage(null, TEST_ROOT_BRANCH_ID);
+
+    assert.lengthOf(page.signatures, 2);
   });
 });

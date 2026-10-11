@@ -32,6 +32,7 @@ import BranchRounds from "@/features/matches/rounds/BranchRounds";
 import UploadBranchUsers from "@/features/branches/UploadBranchUsers";
 import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
 import { parseBranchManagerTab } from "@/features/branches/branchManagerTabs";
+import SignatureGallery from "@/features/signatures/SignatureGallery";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import { api } from "@/shared/utils/apiClient";
 import { isRootBranch } from "@/shared/utils/branchTree";
@@ -194,7 +195,10 @@ export default function BranchManager() {
                   </Stack>
                 </Tabs.Panel>
                 <Tabs.Panel value="signatures">
-                  <BranchSignatureStatus key={selectedBranch.id} branchId={selectedBranch.id} />
+                  <Stack key={selectedBranch.id} gap="xl">
+                    <BranchSignatureStatus branchId={selectedBranch.id} />
+                    <SignatureGallery branchId={selectedBranch.id} />
+                  </Stack>
                 </Tabs.Panel>
                 <Tabs.Panel value="active-books">
                   <ActiveBooksTab key={selectedBranch.id} branchId={selectedBranch.id} />

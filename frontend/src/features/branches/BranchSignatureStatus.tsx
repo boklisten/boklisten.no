@@ -68,7 +68,7 @@ export default function BranchSignatureStatus({ branchId }: { branchId: string }
   if (data.totalMembers === 0) {
     return (
       <Text c="dimmed">
-        Ingen elever har medlemskap i denne filialen eller underliggende filialer.
+        Ingen brukere har medlemskap i denne filialen eller underliggende filialer.
       </Text>
     );
   }
@@ -80,7 +80,7 @@ export default function BranchSignatureStatus({ branchId }: { branchId: string }
         <Text span fw="bold">
           {data.totalMembers}
         </Text>{" "}
-        {data.totalMembers === 1 ? "elev" : "elever"} i denne filialen og underliggende filialer
+        {data.totalMembers === 1 ? "bruker" : "brukere"} i denne filialen og underliggende filialer
       </Text>
       <Progress.Root size="xl">
         {STATUS_SEGMENTS.filter((segment) => data[segment.key] > 0).map((segment) => {

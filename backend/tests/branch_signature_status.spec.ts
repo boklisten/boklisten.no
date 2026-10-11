@@ -1,10 +1,8 @@
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
-import { createSandbox } from "sinon";
 
 import Signature from "#models/signature";
-import { BranchRelationshipService } from "#services/branch_relationship_service";
 import type { MemberSignatureRow } from "#services/branch_signature_status_service";
 import { BranchSignatureStatusService } from "#services/branch_signature_status_service";
 import { createBranch } from "#tests/branch_fixtures";
@@ -117,9 +115,7 @@ test.group("BranchSignatureStatusService.summarize", () => {
 });
 
 test.group("BranchSignatureStatusService.getStatus", (group) => {
-  const sandbox = createSandbox();
   group.each.setup(() => testUtils.db().truncate());
-  group.each.teardown(() => sandbox.restore());
 
   test("joins members of the branch and its descendants with their newest signature", async ({
     assert,
@@ -128,12 +124,8 @@ test.group("BranchSignatureStatusService.getStatus", (group) => {
     const childId = "6a7f7f7f7f7f7f7f7f7f7f7f";
     const signedMemberId = "aaaaaaaaaaaaaaaaaaaaaaaa";
     const unsignedMemberId = "bbbbbbbbbbbbbbbbbbbbbbbb";
-    sandbox
-      .stub(BranchRelationshipService, "getNestedChildBranchIds")
-      .withArgs(branchId)
-      .resolves([childId]);
     await createBranch({ id: branchId });
-    await createBranch({ id: childId });
+    await createBranch({ id: childId, parentBranchId: branchId });
     await createUser({ id: signedMemberId, dob: yearsAgo(30), branchMembershipId: branchId });
     await createUser({ id: unsignedMemberId, dob: yearsAgo(30), branchMembershipId: childId });
     // A member of an unrelated branch is not counted.

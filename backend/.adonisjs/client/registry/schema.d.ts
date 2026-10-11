@@ -763,6 +763,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_signature_status_controller').default['show']>>>
     }
   }
+  'signatures.gallery': {
+    methods: ["GET","HEAD"]
+    pattern: '/branches/:branchId/signatures'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['gallery']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['gallery']>>>
+    }
+  }
   'branch_insights.get_book_movements': {
     methods: ["GET","HEAD"]
     pattern: '/branches/:branchId/insights/book_movements'
@@ -965,18 +977,6 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['destroy']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['destroy']>>>
-    }
-  }
-  'signatures.gallery': {
-    methods: ["GET","HEAD"]
-    pattern: '/signatures/gallery'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['gallery']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/signatures_controller').default['gallery']>>>
     }
   }
   'matches.show': {

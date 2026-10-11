@@ -3,6 +3,7 @@ import type { DateTime } from "luxon";
 import Branch from "#models/branch";
 import Signature from "#models/signature";
 import User from "#models/user";
+import { BranchScope } from "#services/branch_scope";
 import type { UserPermission } from "#shared/user-permission";
 
 const PAGE_SIZE = 30;
@@ -83,16 +84,18 @@ export const SignatureGalleryService = {
   },
 
   /**
-   * One gallery page: the newest valid signature per customer, newest first, resuming after the
-   * given cursor. The cursor always points at the last row judged (included or skipped), so pages
-   * never overlap and never leave gaps.
+   * One gallery page for the members of `branchId` and the branches below it (the population of
+   * the signature status shown above the gallery; Adrian, 2026-10-12): the newest valid signature
+   * per member, newest first, resuming after the given cursor. The cursor always points at the
+   * last row judged (included or skipped), so pages never overlap and never leave gaps.
    */
-  async getPage(cursor: GalleryCursor | null): Promise<GalleryPage> {
+  async getPage(cursor: GalleryCursor | null, branchId: string): Promise<GalleryPage> {
     const signatures: GallerySignature[] = [];
     const branchNames = new Map<string, string>();
+    const customers = User.membersOf(await BranchScope.subtreeIds(branchId)).select("id");
     let currentCursor = cursor;
     for (let batch = 0; batch < MAX_BATCHES; batch++) {
-      const rows = await Signature.newestPerCustomerPage(currentCursor, BATCH_SIZE);
+      const rows = await Signature.newestPerCustomerPage(currentCursor, BATCH_SIZE, customers);
       if (rows.length === 0) {
         return { signatures, nextCursor: null };
       }

@@ -384,6 +384,12 @@ const routes = {
     tokens: [{"old":"/branches/:branchId/signature_status","type":0,"val":"branches","end":""},{"old":"/branches/:branchId/signature_status","type":1,"val":"branchId","end":""},{"old":"/branches/:branchId/signature_status","type":0,"val":"signature_status","end":""}],
     types: placeholder as Registry['branch_signature_status.show']['types'],
   },
+  'signatures.gallery': {
+    methods: ["GET","HEAD"],
+    pattern: '/branches/:branchId/signatures',
+    tokens: [{"old":"/branches/:branchId/signatures","type":0,"val":"branches","end":""},{"old":"/branches/:branchId/signatures","type":1,"val":"branchId","end":""},{"old":"/branches/:branchId/signatures","type":0,"val":"signatures","end":""}],
+    types: placeholder as Registry['signatures.gallery']['types'],
+  },
   'branch_insights.get_book_movements': {
     methods: ["GET","HEAD"],
     pattern: '/branches/:branchId/insights/book_movements',
@@ -485,12 +491,6 @@ const routes = {
     pattern: '/users/:userId',
     tokens: [{"old":"/users/:userId","type":0,"val":"users","end":""},{"old":"/users/:userId","type":1,"val":"userId","end":""}],
     types: placeholder as Registry['users.destroy']['types'],
-  },
-  'signatures.gallery': {
-    methods: ["GET","HEAD"],
-    pattern: '/signatures/gallery',
-    tokens: [{"old":"/signatures/gallery","type":0,"val":"signatures","end":""},{"old":"/signatures/gallery","type":0,"val":"gallery","end":""}],
-    types: placeholder as Registry['signatures.gallery']['types'],
   },
   'matches.show': {
     methods: ["GET","HEAD"],

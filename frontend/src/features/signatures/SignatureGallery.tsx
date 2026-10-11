@@ -142,11 +142,12 @@ function GallerySkeleton() {
   );
 }
 
-export default function SignatureGallery() {
+/** The newest valid signatures of the members of a branch and the branches below it, as an infinite grid. */
+export default function SignatureGallery({ branchId }: { branchId: string }) {
   const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetching, isFetchingNextPage } =
     useInfiniteQuery(
       api.signatures.gallery.infiniteQueryOptions(
-        {},
+        { params: { branchId } },
         {
           pageParamKey: "cursor",
           initialPageParam: "",
@@ -169,13 +170,7 @@ export default function SignatureGallery() {
 
   return (
     <Stack>
-      <Stack gap={4}>
-        <Title>Signaturer</Title>
-        <Text c="dimmed">
-          De nyeste gyldige signaturene, nyest først. Trykk på en signatur for å åpne kunden i
-          kundesøk.
-        </Text>
-      </Stack>
+      <Title order={3}>Signaturer</Title>
       {isLoading && <GallerySkeleton />}
       {isError && (
         <ErrorAlert title="Klarte ikke laste signaturer">{PLEASE_TRY_AGAIN_TEXT}</ErrorAlert>

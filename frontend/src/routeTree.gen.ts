@@ -56,7 +56,6 @@ import { Route as administrasjonAdminDatabaseDynamisk_innholdRouteImport } from 
 import { Route as administrasjonAdminDatabaseFilialerRouteImport } from './routes/(administrasjon)/admin/database/filialer'
 import { Route as administrasjonAdminDatabaseRapporterRouteImport } from './routes/(administrasjon)/admin/database/rapporter'
 import { Route as administrasjonAdminDatabaseSelskapRouteImport } from './routes/(administrasjon)/admin/database/selskap'
-import { Route as administrasjonAdminDatabaseSignaturerRouteImport } from './routes/(administrasjon)/admin/database/signaturer'
 import { Route as administrasjonAdminKommunikasjonLoggRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/logg'
 import { Route as administrasjonAdminKommunikasjonPaminnelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/paminnelser'
 import { Route as administrasjonAdminKommunikasjonUtsendelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/utsendelser'
@@ -324,12 +323,6 @@ const administrasjonAdminDatabaseSelskapRoute =
     path: '/database/selskap',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminDatabaseSignaturerRoute =
-  administrasjonAdminDatabaseSignaturerRouteImport.update({
-    id: '/database/signaturer',
-    path: '/database/signaturer',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
 const administrasjonAdminKommunikasjonLoggRoute =
   administrasjonAdminKommunikasjonLoggRouteImport.update({
     id: '/kommunikasjon/logg',
@@ -450,7 +443,6 @@ export interface FileRoutesByFullPath {
   '/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
   '/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
   '/admin/database/selskap': typeof administrasjonAdminDatabaseSelskapRoute
-  '/admin/database/signaturer': typeof administrasjonAdminDatabaseSignaturerRoute
   '/admin/kommunikasjon/logg': typeof administrasjonAdminKommunikasjonLoggRoute
   '/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
   '/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
@@ -509,7 +501,6 @@ export interface FileRoutesByTo {
   '/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
   '/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
   '/admin/database/selskap': typeof administrasjonAdminDatabaseSelskapRoute
-  '/admin/database/signaturer': typeof administrasjonAdminDatabaseSignaturerRoute
   '/admin/kommunikasjon/logg': typeof administrasjonAdminKommunikasjonLoggRoute
   '/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
   '/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
@@ -572,7 +563,6 @@ export interface FileRoutesById {
   '/(administrasjon)/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
   '/(administrasjon)/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
   '/(administrasjon)/admin/database/selskap': typeof administrasjonAdminDatabaseSelskapRoute
-  '/(administrasjon)/admin/database/signaturer': typeof administrasjonAdminDatabaseSignaturerRoute
   '/(administrasjon)/admin/kommunikasjon/logg': typeof administrasjonAdminKommunikasjonLoggRoute
   '/(administrasjon)/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
   '/(administrasjon)/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
@@ -635,7 +625,6 @@ export interface FileRouteTypes {
     | '/admin/database/filialer'
     | '/admin/database/rapporter'
     | '/admin/database/selskap'
-    | '/admin/database/signaturer'
     | '/admin/kommunikasjon/logg'
     | '/admin/kommunikasjon/paminnelser'
     | '/admin/kommunikasjon/utsendelser'
@@ -694,7 +683,6 @@ export interface FileRouteTypes {
     | '/admin/database/filialer'
     | '/admin/database/rapporter'
     | '/admin/database/selskap'
-    | '/admin/database/signaturer'
     | '/admin/kommunikasjon/logg'
     | '/admin/kommunikasjon/paminnelser'
     | '/admin/kommunikasjon/utsendelser'
@@ -756,7 +744,6 @@ export interface FileRouteTypes {
     | '/(administrasjon)/admin/database/filialer'
     | '/(administrasjon)/admin/database/rapporter'
     | '/(administrasjon)/admin/database/selskap'
-    | '/(administrasjon)/admin/database/signaturer'
     | '/(administrasjon)/admin/kommunikasjon/logg'
     | '/(administrasjon)/admin/kommunikasjon/paminnelser'
     | '/(administrasjon)/admin/kommunikasjon/utsendelser'
@@ -1112,13 +1099,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminDatabaseSelskapRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(administrasjon)/admin/database/signaturer': {
-      id: '/(administrasjon)/admin/database/signaturer'
-      path: '/database/signaturer'
-      fullPath: '/admin/database/signaturer'
-      preLoaderRoute: typeof administrasjonAdminDatabaseSignaturerRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
     '/(administrasjon)/admin/kommunikasjon/logg': {
       id: '/(administrasjon)/admin/kommunikasjon/logg'
       path: '/kommunikasjon/logg'
@@ -1337,7 +1317,6 @@ interface administrasjonAdminRouteRouteChildren {
   administrasjonAdminDatabaseFilialerRoute: typeof administrasjonAdminDatabaseFilialerRoute
   administrasjonAdminDatabaseRapporterRoute: typeof administrasjonAdminDatabaseRapporterRoute
   administrasjonAdminDatabaseSelskapRoute: typeof administrasjonAdminDatabaseSelskapRoute
-  administrasjonAdminDatabaseSignaturerRoute: typeof administrasjonAdminDatabaseSignaturerRoute
   administrasjonAdminKommunikasjonLoggRoute: typeof administrasjonAdminKommunikasjonLoggRoute
   administrasjonAdminKommunikasjonPaminnelserRoute: typeof administrasjonAdminKommunikasjonPaminnelserRoute
   administrasjonAdminKommunikasjonUtsendelserRoute: typeof administrasjonAdminKommunikasjonUtsendelserRoute
@@ -1365,8 +1344,6 @@ const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildr
       administrasjonAdminDatabaseRapporterRoute,
     administrasjonAdminDatabaseSelskapRoute:
       administrasjonAdminDatabaseSelskapRoute,
-    administrasjonAdminDatabaseSignaturerRoute:
-      administrasjonAdminDatabaseSignaturerRoute,
     administrasjonAdminKommunikasjonLoggRoute:
       administrasjonAdminKommunikasjonLoggRoute,
     administrasjonAdminKommunikasjonPaminnelserRoute:

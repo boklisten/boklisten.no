@@ -107,9 +107,10 @@ async function signAgreement(
 }
 
 export default class SignaturesController {
+  /** The newest valid signatures of the members of a branch and the branches below it. */
   async gallery(ctx: HttpContext) {
     const cursor = SignatureGalleryService.decodeCursor(ctx.request.input("cursor"));
-    return SignatureGalleryService.getPage(cursor);
+    return SignatureGalleryService.getPage(cursor, ctx.request.param("branchId"));
   }
   async show(ctx: HttpContext) {
     return getSignatureStatus(ctx.request.param("userId"));
