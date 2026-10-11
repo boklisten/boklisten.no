@@ -8,6 +8,7 @@ import Item from "#models/item";
 import Order from "#models/order";
 import OrderItem from "#models/order_item";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
+import { assertNotRoot } from "#services/branch_service";
 import { OrderCancellationService } from "#services/order_cancellation_service";
 import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
 
@@ -130,7 +131,7 @@ async function withCustomerColumns<Row extends { customerId: string | null }>(
 async function withMembershipBranchNames<Row extends { membershipBranchId: string | null }>(
   rows: Row[],
 ): Promise<(Omit<Row, "membershipBranchId"> & { membershipBranchName: string | null })[]> {
-  const names = await Branch.namesByIds(rows.map((row) => row.membershipBranchId));
+  const names = await Branch.schoolNamesByIds(rows.map((row) => row.membershipBranchId));
   return rows.map(({ membershipBranchId, ...row }) => ({
     ...row,
     membershipBranchName:
@@ -254,6 +255,7 @@ export const BranchBooksService = {
       set["deadline"] = update.deadline;
     }
     if (update.branchId) {
+      await assertNotRoot(update.branchId);
       set["handout_branch_id"] = update.branchId;
     }
     const updated = Number(await query.update(set));
@@ -317,6 +319,9 @@ export const BranchBooksService = {
     filter: BranchBooksFilter & { orderItemIds?: number[] };
     update: BranchBooksUpdate;
   }) {
+    if (update.branchId) {
+      await assertNotRoot(update.branchId);
+    }
     const { scopeIds } = await resolveScope(branchId);
     const lines: { id: number; orderId: string }[] = await orderedBooksQuery(
       filter.includeDescendants ? scopeIds : [branchId],

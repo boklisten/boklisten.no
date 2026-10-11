@@ -137,7 +137,7 @@ test.group("BranchSignatureStatusService.getStatus", (group) => {
     await createUser({ id: signedMemberId, dob: yearsAgo(30), branchMembershipId: branchId });
     await createUser({ id: unsignedMemberId, dob: yearsAgo(30), branchMembershipId: childId });
     // A member of an unrelated branch is not counted.
-    await createUser({ dob: yearsAgo(30), branchMembershipId: null });
+    await createUser({ dob: yearsAgo(30) });
     // An old guardian-signed signature that the newer valid one must shadow.
     await Signature.create({
       customerId: signedMemberId,

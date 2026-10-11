@@ -205,9 +205,14 @@ export default class ReportsController {
   async users(ctx: HttpContext) {
     const { branchFilter } = await ctx.request.validateUsing(usersReportValidator);
 
+    // A root member has no school, so the join leaves the root out and the column stays empty.
     const query = db
       .from("users")
-      .leftJoin("branches", "branches.id", "users.branch_membership_id");
+      .leftJoin("branches", (join) =>
+        join
+          .on("branches.id", "users.branch_membership_id")
+          .andOnNotNull("branches.parent_branch_id"),
+      );
     if (branchFilter && branchFilter.length > 0) {
       void query.whereIn("users.branch_membership_id", branchFilter);
     }

@@ -1,20 +1,41 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
+import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import BranchPeriod from "#models/branch_period";
 import OpeningHour from "#models/opening_hour";
 import { isObjectIdHex } from "#models/helpers/object_id";
-import { ROOT_VALUES, overrideColumns } from "#services/branch_inheritance_service";
+import { overrideColumns } from "#services/branch_inheritance_service";
 import { BranchSubjectsService } from "#services/branch_subjects_service";
 import type { UserPermission } from "#shared/user-permission";
-import { createBranch } from "#tests/branch_fixtures";
+import { ROOT_VALUES, createBranch, rootBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { fixtureId } from "#tests/fixtures";
 
 const SEMESTER_END = "2026-12-20";
 const YEAR_END = "2027-07-01";
+
+/** Gives `branch` one subject with one rentable book, so the public walk leads to it. */
+async function withBooks(branch: Branch) {
+  const item = await createItem();
+  await BranchSubjectsService.create(branch.id, {
+    name: "Kjemi 2",
+    externalName: null,
+    books: [
+      {
+        itemId: item.id,
+        rent: true,
+        partlyPayment: false,
+        buy: false,
+        rentAtBranch: true,
+        partlyPaymentAtBranch: false,
+        buyAtBranch: false,
+      },
+    ],
+  });
+}
 
 async function visibleNames(permission: UserPermission | null) {
   return (await Branch.visibleByName(permission)).map((branch) => branch.name);
@@ -59,7 +80,7 @@ test.group("Branch model", (group) => {
     for (const branch of [
       await Branch.findOrFail(created.id),
       ...(await Branch.findMany([created.id])),
-      ...(await Branch.all()),
+      ...(await Branch.all()).filter((candidate) => candidate.id === created.id),
       ...(await Branch.query().where("id", created.id)),
     ]) {
       assert.deepEqual(branch.rentPeriods, [
@@ -119,33 +140,61 @@ test.group("Branch model", (group) => {
     await createBranch({ name: "Akademiet", visibleToCustomers: false });
     await createBranch({ name: "Bjørknes" });
 
-    assert.deepEqual(await visibleNames(null), ["Bjørknes", "Østfold"]);
-    assert.deepEqual(await visibleNames("customer"), ["Bjørknes", "Østfold"]);
-    assert.deepEqual(await visibleNames("employee"), ["Akademiet", "Bjørknes", "Østfold"]);
-    assert.deepEqual(await visibleNames("admin"), ["Akademiet", "Bjørknes", "Østfold"]);
+    // The root is hidden from customers like Akademiet, but every viewer gets it anyway: it is
+    // the "no school" option.
+    assert.deepEqual(await visibleNames(null), ["Alle filialer", "Bjørknes", "Østfold"]);
+    assert.deepEqual(await visibleNames("customer"), ["Alle filialer", "Bjørknes", "Østfold"]);
+    assert.deepEqual(await visibleNames("employee"), [
+      "Akademiet",
+      "Alle filialer",
+      "Bjørknes",
+      "Østfold",
+    ]);
+    assert.deepEqual(await visibleNames("admin"), [
+      "Akademiet",
+      "Alle filialer",
+      "Bjørknes",
+      "Østfold",
+    ]);
+  });
+
+  test("root is the one branch without a parent", async ({ assert }) => {
+    const root = await rootBranch();
+    await createBranch({ name: "Ullern" });
+    assert.equal((await Branch.root()).id, root.id);
+    assert.isNull((await Branch.root()).parentBranchId);
+  });
+
+  test("the tree holds exactly one root", async ({ assert }) => {
+    await rootBranch();
+    await assert.rejects(
+      () =>
+        Branch.create({
+          id: fixtureId("b0b"),
+          name: "Bokflyt.no AS",
+          parentBranchId: null,
+          localName: null,
+          childLabel: null,
+          address: null,
+          ...overrideColumns(ROOT_VALUES),
+        }),
+      /branches_single_root/,
+    );
   });
 
   test("publicTree keeps the public branches that lead to books, hidden levels skipped", async ({
     assert,
   }) => {
-    const item = await createItem();
-    const book = { itemId: item.id, rent: true, partlyPayment: false, buy: false };
-    const atBranch = { rentAtBranch: true, partlyPaymentAtBranch: false, buyAtBranch: false };
-    const withBooks = async (branch: Branch) =>
-      BranchSubjectsService.create(branch.id, {
-        name: "Kjemi 2",
-        externalName: null,
-        books: [{ ...book, ...atBranch }],
-      });
-
-    const root = await createBranch({
+    // The company sits under the root ("Alle filialer", hidden, divided into companies); neither appears
+    // in the tree, and the top label comes from the nearest hidden ancestor, the company.
+    const company = await createBranch({
       name: "Boklisten.no AS",
       visibleToCustomers: false,
       childLabel: "skoletype",
     });
     const vgs = await createBranch({
       name: "VGS",
-      parentBranchId: root.id,
+      parentBranchId: company.id,
       visibleToCustomers: true,
     });
     const ullern = await createBranch({
@@ -186,6 +235,10 @@ test.group("Branch model", (group) => {
 
     const tree = await Branch.publicTree();
     assert.equal(tree.topLabel, "skoletype");
+    assert.notInclude(
+      tree.nodes.map((node) => node.id),
+      (await rootBranch()).id,
+    );
     assert.deepEqual(
       tree.nodes.map(({ name, parentBranchId, isLeaf }) => ({ name, parentBranchId, isLeaf })),
       [
@@ -205,6 +258,44 @@ test.group("Branch model", (group) => {
         childLabel: "årskull",
         isLeaf: false,
       },
+    );
+  });
+
+  test("the root never lends the public tree its top label", async ({ assert }) => {
+    // A company without a child label of its own: the walk up must stop below the root
+    // ("Alle filialer", divided into companies), which is never a step in the public order walk.
+    const company = await createBranch({ name: "Boklisten.no AS", visibleToCustomers: false });
+    const vgs = await createBranch({
+      name: "VGS",
+      parentBranchId: company.id,
+      visibleToCustomers: true,
+    });
+    await withBooks(vgs);
+
+    const tree = await Branch.publicTree();
+    assert.isNull(tree.topLabel);
+    assert.deepEqual(
+      tree.nodes.map((node) => node.name),
+      ["VGS"],
+    );
+  });
+
+  test("a root marked visible by hand still never enters the public tree", async ({ assert }) => {
+    const root = await rootBranch();
+    await db.from("branches").where("id", root.id).update({ visible_to_customers_override: true });
+    const company = await createBranch({ name: "Boklisten.no AS", visibleToCustomers: false });
+    const vgs = await createBranch({
+      name: "VGS",
+      parentBranchId: company.id,
+      visibleToCustomers: true,
+    });
+    await withBooks(vgs);
+
+    const tree = await Branch.publicTree();
+    assert.isNull(tree.topLabel);
+    assert.deepEqual(
+      tree.nodes.map(({ name, parentBranchId }) => ({ name, parentBranchId })),
+      [{ name: "VGS", parentBranchId: null }],
     );
   });
 

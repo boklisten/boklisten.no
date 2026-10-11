@@ -12,6 +12,7 @@ import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import { useAppForm } from "@/shared/hooks/form";
 import { api } from "@/shared/utils/apiClient";
 import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
+import { withoutRoot } from "@/shared/utils/branchTree";
 import { formatDeadline } from "@/shared/utils/deadline";
 
 /**
@@ -37,7 +38,10 @@ export default function BranchBooksEditModal({
   ) => Promise<unknown>;
   onClose: () => void;
 }) {
-  const { data: branches } = useQuery(api.branches.index.queryOptions());
+  const { data: branches } = useQuery({
+    ...api.branches.index.queryOptions(),
+    select: withoutRoot,
+  });
 
   const form = useAppForm({
     defaultValues: { deadline: null as string | null },

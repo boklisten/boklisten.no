@@ -223,9 +223,9 @@ export default class Branch extends BranchSchema {
 
   /**
    * Runs `work` in a transaction holding the tree lock; every branch write goes through here, so
-   * what a write resolves over the tree (`keepValuesInForce`, the read-back of the values in
-   * force) is computed on the tree as it is, not on a snapshot another write is changing. Never
-   * nest: the lock is per transaction.
+   * what a write resolves over the tree (the read-back of the values in force, the cycle and
+   * detach checks) is computed on the tree as it is, not on a snapshot
+   * another write is changing. Never nest: the lock is per transaction.
    */
   static whileLocked<T>(work: (trx: TransactionClientContract) => Promise<T>): Promise<T> {
     return db.transaction(async (trx) => {
@@ -236,12 +236,25 @@ export default class Branch extends BranchSchema {
 
   /**
    * The branches a viewer with `permission` (`null` for a guest) may see, sorted the way Norwegians
-   * read names (Æ, Ø and Å after Z).
+   * read names (Æ, Ø and Å after Z). The root is hidden from customers but returned to every
+   * viewer anyway: it is the "no school" option.
    */
   static async visibleByName(permission: UserPermission | null): Promise<Branch[]> {
     return byName(
-      (await this.query()).filter((branch) => canSeeBranch(permission, branch.visibleToCustomers)),
+      (await this.query()).filter(
+        (branch) => branch.isRoot || canSeeBranch(permission, branch.visibleToCustomers),
+      ),
     );
+  }
+
+  /** The one branch without a parent, "Alle filialer"; every other branch sits below it. */
+  static root(): Promise<Branch> {
+    return this.query().whereNull("parent_branch_id").firstOrFail();
+  }
+
+  /** Whether this is the root: derived from the tree, never a flag. */
+  get isRoot(): boolean {
+    return this.parentBranchId === null;
   }
 
   /** The tree customers walk down when ordering: the walk ends at branches that offer subject books. */
@@ -276,7 +289,8 @@ export default class Branch extends BranchSchema {
     const branches = await this.query();
     const byId = new Map(branches.map((branch) => [branch.id, branch]));
     const childrenOf = Map.groupBy(branches, (branch) => branch.parentBranchId ?? "");
-    const isPublic = (branch: Branch) => branch.visibleToCustomers;
+    // The root is a scope, never a step in the walk, whatever its column says.
+    const isPublic = (branch: Branch) => !branch.isRoot && branch.visibleToCustomers;
 
     /** The public branches reached from `branch` through hidden ones only. */
     const publicChildren = (branch: Branch): Branch[] =>
@@ -309,8 +323,10 @@ export default class Branch extends BranchSchema {
       }
       const publicAncestor = ancestors(branch).find(isPublic) ?? null;
       if (publicAncestor === null) {
+        // Nor does the root name the top level.
         topLabel ??=
-          ancestors(branch).find((ancestor) => ancestor.childLabel !== null)?.childLabel ?? null;
+          ancestors(branch).find((ancestor) => !ancestor.isRoot && ancestor.childLabel !== null)
+            ?.childLabel ?? null;
       }
       nodes.push({
         id: branch.id,
@@ -355,6 +371,21 @@ export default class Branch extends BranchSchema {
     const rows: { id: string; name: string }[] = await db
       .from("branches")
       .whereIn("id", distinctIds(ids))
+      .select("id", "name");
+    return new Map(rows.map(({ id, name }) => [id, name]));
+  }
+
+  /**
+   * `namesByIds` for memberships: the root is "no school", so a root member gets no name here,
+   * exactly as a customer without a membership got none before the root existed.
+   */
+  static async schoolNamesByIds(
+    ids: Iterable<string | null | undefined>,
+  ): Promise<Map<string, string>> {
+    const rows: { id: string; name: string }[] = await db
+      .from("branches")
+      .whereIn("id", distinctIds(ids))
+      .whereNotNull("parent_branch_id")
       .select("id", "name");
     return new Map(rows.map(({ id, name }) => [id, name]));
   }

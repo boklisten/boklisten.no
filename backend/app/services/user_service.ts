@@ -47,7 +47,6 @@ async function sendEmailVerification(user: User): Promise<void> {
  */
 export function userFieldsFrom<Fields extends Infer<typeof ownUserFieldsSchema>>({
   dob,
-  branchMembershipId,
   guardianName,
   guardianEmail,
   guardianPhone,
@@ -56,7 +55,6 @@ export function userFieldsFrom<Fields extends Infer<typeof ownUserFieldsSchema>>
   return {
     ...details,
     dob: dobFrom(dob),
-    branchMembershipId: branchMembershipId ?? null,
     guardianName: guardianName ?? null,
     guardianEmail: guardianEmail ?? null,
     guardianPhone: guardianPhone ?? null,
@@ -65,18 +63,23 @@ export function userFieldsFrom<Fields extends Infer<typeof ownUserFieldsSchema>>
 
 /**
  * A user may be moved only into a branch the person moving them may see. Keeping the current
- * membership, or clearing it, is always allowed, even when the current branch is hidden from them.
+ * membership is always allowed, even when the current branch is hidden from them, and so is the
+ * root: it is "no school", the one option every customer has. `currentBranchId` is null for a
+ * user who does not exist yet.
  */
 export async function assertMembershipAllowed(
   actorPermission: UserPermission,
   currentBranchId: string | null,
-  nextBranchId: string | null,
+  nextBranchId: string,
 ): Promise<void> {
-  if (nextBranchId === null || nextBranchId === currentBranchId) {
+  if (nextBranchId === currentBranchId) {
     return;
   }
   const branch = await Branch.find(nextBranchId);
-  if (branch === null || !canSeeBranch(actorPermission, branch.visibleToCustomers)) {
+  if (
+    branch === null ||
+    (!branch.isRoot && !canSeeBranch(actorPermission, branch.visibleToCustomers))
+  ) {
     throw new BadRequestException("Du kan ikke velge denne skolen");
   }
 }
@@ -121,7 +124,7 @@ export const UserService = {
   async updateOwnDetails(
     user: User,
     changes: ReturnType<typeof userFieldsFrom<Infer<typeof ownUserFieldsSchema>>> &
-      Pick<User, "email">,
+      Pick<User, "email" | "branchMembershipId">,
   ): Promise<User> {
     const { email, ...details } = changes;
     const emailChanged = await replaceEmail(user, email);
@@ -171,6 +174,7 @@ export const UserService = {
     return user;
   },
 
+  /** Vipps knows nothing about schools, so the customer starts on the root. */
   async createVippsUser(vippsUser: VippsUser): Promise<User> {
     return User.create({
       email: vippsUser.email.trim().toLowerCase(),
@@ -180,6 +184,7 @@ export const UserService = {
       name: vippsUser.name || null,
       address: vippsUser.address || null,
       postalCode: vippsUser.postalCode || null,
+      branchMembershipId: (await Branch.root()).id,
       permission: "customer",
       vippsUserId: vippsUser.id,
     });
@@ -187,13 +192,15 @@ export const UserService = {
 
   /** A sign-up whose phone a login code has just proven; the email still needs its link. */
   async createSmsUser(
-    { email, ...details }: Infer<typeof registerSchema>,
+    { email, branchMembershipId, ...details }: Infer<typeof registerSchema>,
     phone: string,
   ): Promise<User> {
-    const fields = userFieldsFrom(details);
-    await assertMembershipAllowed("customer", null, fields.branchMembershipId);
+    if (branchMembershipId !== undefined) {
+      await assertMembershipAllowed("customer", null, branchMembershipId);
+    }
     const user = await User.create({
-      ...fields,
+      ...userFieldsFrom(details),
+      branchMembershipId: branchMembershipId ?? (await Branch.root()).id,
       phone,
       email,
       emailConfirmed: false,
@@ -203,7 +210,10 @@ export const UserService = {
     return user;
   },
 
-  /** A customer created from a school's class list: no login yet, both tasks pending. */
+  /**
+   * A customer created from a school's class list: no login yet, both tasks pending. A list that
+   * names no class puts them on the root.
+   */
   async createProvisionedUser(
     {
       name,
@@ -223,7 +233,7 @@ export const UserService = {
       dob: dobFrom(dob),
       postalCode: postalCode ?? null,
       emailConfirmed: true,
-      branchMembershipId: branchMembershipId ?? null,
+      branchMembershipId: branchMembershipId ?? (await Branch.root()).id,
       taskConfirmDetails: true,
       taskSignAgreement: true,
       permission: "customer",

@@ -864,7 +864,7 @@ export class UserSchema extends BaseModel {
   @column()
   declare address: string | null
   @column()
-  declare branchMembershipId: string | null
+  declare branchMembershipId: string
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column.date()

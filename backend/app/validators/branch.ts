@@ -41,8 +41,8 @@ export const branchCreateValidator = vine.create(
   vine.object({
     name: vine.string().trim(),
     address: vine.string().trim().nullable().optional(),
-    /** The branch to create under; `null` creates a root. Every inherited field starts as the parent's. */
-    parentBranchId: objectIdField.clone().nullable(),
+    /** The branch to create under. Every inherited field starts as the parent's. */
+    parentBranchId: objectIdField.clone(),
   }),
 );
 
@@ -68,14 +68,14 @@ export const branchValidator = vine.create(
 );
 
 /**
- * `childBranchIds` is a command, not a stored list: the branches named become children of `id`
- * and its previous children that are missing from the list stop being children.
+ * `childBranchIds` is a command, not a stored list: the branches named become children of `id`.
+ * Its previous children must all be in the list; a branch cannot be left without a parent.
  */
 export const branchRelationshipValidator = vine.create(
   vine.object({
     id: objectIdField,
     localName: vine.string().trim().nullable().optional(),
-    parentBranchId: objectIdField.nullable().optional(),
+    parentBranchId: objectIdField.optional(),
     childBranchIds: vine.array(objectIdField).optional(),
     childLabel: vine.string().trim().nullable().optional(),
   }),

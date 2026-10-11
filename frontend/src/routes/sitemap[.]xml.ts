@@ -2,6 +2,7 @@ import { SITE_URL, isIndexable, normalizePathname } from "@/shared/utils/seo";
 import { createFileRoute } from "@tanstack/react-router";
 import { apiClient } from "@/shared/utils/apiClient";
 import { childrenOf } from "@/features/branch-walk/branchTree";
+import { withoutRoot } from "@/shared/utils/branchTree";
 
 /**
  * Indexable, but not content pages worth submitting: both redirect to a
@@ -30,7 +31,7 @@ async function staticPaths(): Promise<string[]> {
 async function branchPaths(): Promise<string[]> {
   try {
     const branches = await apiClient.api.branches.index({});
-    return branches.map((branch) => `/info/branch/${branch.id}`);
+    return withoutRoot(branches).map((branch) => `/info/branch/${branch.id}`);
   } catch {
     // A sitemap missing the school pages is far better than no sitemap at all
     return [];

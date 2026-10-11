@@ -40,6 +40,7 @@ import {
 import { buildPeerBooks } from "@/features/customer-search/handoutBooks";
 import type { ScanNotice } from "@/shared/components/scanner/ScannerPanel";
 import { api, apiClient } from "@/shared/utils/apiClient";
+import { withoutRoot } from "@/shared/utils/branchTree";
 import { today } from "@/shared/utils/deadline";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showSuccessNotification } from "@/shared/utils/notifications";
@@ -159,7 +160,10 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     cartRef.current = cart;
   }, [cart]);
 
-  const { data: branches } = useQuery(api.branches.index.queryOptions());
+  const { data: branches } = useQuery({
+    ...api.branches.index.queryOptions(),
+    select: withoutRoot,
+  });
   const { data: customer } = useQuery(
     api.users.show.queryOptions(
       { params: { userId: customerId ?? "" } },

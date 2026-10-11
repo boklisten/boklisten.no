@@ -2,7 +2,7 @@ import vine from "@vinejs/vine";
 
 import { emailField, phoneField, smsCodeField } from "#validators/common/fields";
 import { uniqueEmail } from "#validators/common/rules";
-import { ownUserFieldsSchema } from "#validators/users";
+import { branchMembershipField, ownUserFieldsSchema } from "#validators/users";
 
 export const sendLoginCodeValidator = vine.create(
   vine.object({
@@ -18,9 +18,11 @@ export const verifyLoginCodeValidator = vine.create(
 );
 
 /** A sign-up after a login code proved a number no account has; the phone comes from the session. */
+/** A sign-up may leave the school out; the service then makes the customer a member of the root. */
 export const registerSchema = vine.object({
   email: emailField.clone().use(uniqueEmail()),
   ...ownUserFieldsSchema.getProperties(),
+  branchMembershipId: branchMembershipField.clone().optional(),
 });
 
 export const registerValidator = vine.create(registerSchema);

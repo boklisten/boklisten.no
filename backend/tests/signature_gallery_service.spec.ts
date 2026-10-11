@@ -10,7 +10,7 @@ import User from "#models/user";
 import type { GalleryContext, GalleryCustomer } from "#services/signature_gallery_service";
 import { SignatureGalleryService } from "#services/signature_gallery_service";
 import type { UserPermission } from "#shared/user-permission";
-import { createBranch } from "#tests/branch_fixtures";
+import { createBranch, TEST_ROOT_BRANCH_ID } from "#tests/branch_fixtures";
 
 const adultDob = DateTime.now().minus({ years: 30 }).startOf("year");
 const childDob = DateTime.now().minus({ years: 10 }).startOf("year");
@@ -41,7 +41,7 @@ function makeSignature(overrides: {
 function customerFor(
   signature: Signature,
   dob: DateTime = adultDob,
-  branchMembershipId: string | null = null,
+  branchMembershipId: string = TEST_ROOT_BRANCH_ID,
   permission: UserPermission = "customer",
 ): GalleryCustomer {
   return {

@@ -8,6 +8,7 @@ import type { NewOrderItem } from "#models/order";
 import OrderItem from "#models/order_item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import CustomerItem from "#models/customer_item";
+import { assertNotRoot } from "#services/branch_service";
 import { itemIdsInActiveUserMatches } from "#services/matches/cancellation_block";
 import { OrderItemService } from "#services/order_item_service";
 import type { CartItemType, CheckoutCartItem } from "#shared/cart_item";
@@ -78,6 +79,12 @@ export const OrderService = {
     if (new Set(cartItems.map((cartItem) => cartItem.id)).size !== cartItems.length) {
       throw new BadRequestException("Du kan ikke bestille flere av samme bok");
     }
+    const branchId = cartItems[0]?.branchId;
+    if (!branchId) {
+      throw new Error("No branchId for checkout order");
+    }
+    // The order's branch is a place; the root is a scope, whatever lines the cart holds.
+    await assertNotRoot(branchId);
 
     // Only public branches are orderable online. Extending or buying out a book the customer
     // already has is not ordering from the branch, so those lines are not checked.
@@ -184,10 +191,6 @@ export const OrderService = {
       }
       total += orderItem.amount;
       orderItems.push(orderItem);
-    }
-    const branchId = cartItems[0]?.branchId;
-    if (!branchId) {
-      throw new Error("No branchId for checkout order");
     }
 
     return Order.createWithItems({

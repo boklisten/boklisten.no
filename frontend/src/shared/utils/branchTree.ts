@@ -28,6 +28,25 @@ export function toBranchTreeNodeData(branches: Branch[]) {
     .toSorted(byShortLabel);
 }
 
+/** Whether the branch is the root ("Alle filialer"): the one without a parent. */
+export function isRootBranch(branch: Pick<Branch, "parentBranchId">): boolean {
+  return branch.parentBranchId === null;
+}
+
+/** The root among the branches, when the list holds it. */
+export function rootOf(branches: Branch[]): Branch | undefined {
+  return branches.find((branch) => isRootBranch(branch));
+}
+
+/**
+ * The branches that are a place: every branch but the root. The root ("Alle filialer") is a scope, so a
+ * picker for where something happens (a stand, an order's branch, a reminder) leaves it out, while
+ * a picker for what to look at keeps it.
+ */
+export function withoutRoot(branches: Branch[]): Branch[] {
+  return branches.filter((branch) => !isRootBranch(branch));
+}
+
 /** Every branch below `rootId`, the root itself left out. */
 export function descendantsOf(branches: Branch[], rootId: string): Branch[] {
   const childrenOf = Map.groupBy(branches, (branch) => branch.parentBranchId);

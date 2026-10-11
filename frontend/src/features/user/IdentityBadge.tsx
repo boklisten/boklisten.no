@@ -5,14 +5,16 @@ import { useQuery } from "@tanstack/react-query";
 
 import PermissionBadge from "@/features/customer-search/PermissionBadge";
 import { api } from "@/shared/utils/apiClient";
+import { isRootBranch } from "@/shared/utils/branchTree";
 
 /** Which site the user is on; it picks how they are shown (see `IdentityBadge`, `IdentityAvatar`). */
 export type IdentitySite = "public" | "admin";
 
 /**
  * The one chip that says who the user is on this site: their school on the public site, their
- * role in bl-admin. Nothing for a customer in bl-admin or a user without a school. Shared by the
- * menu's identity row and the settings page's header, so the two always agree.
+ * role in bl-admin. Nothing for a customer in bl-admin or a user without a school (a member of
+ * the root). Shared by the menu's identity row and the settings page's header, so the two always
+ * agree.
  */
 export default function IdentityBadge({
   user,
@@ -25,14 +27,14 @@ export default function IdentityBadge({
 }) {
   const { data: branch } = useQuery(
     api.branches.show.queryOptions(
-      { params: { branchId: user.branchMembershipId ?? "" } },
-      { enabled: site === "public" && Boolean(user.branchMembershipId) },
+      { params: { branchId: user.branchMembershipId } },
+      { enabled: site === "public" },
     ),
   );
   if (site === "admin") {
     return <PermissionBadge permission={user.permission} size={size} />;
   }
-  return branch ? (
+  return branch && !isRootBranch(branch) ? (
     <Badge variant="light" size={size}>
       {branch.name}
     </Badge>

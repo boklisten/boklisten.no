@@ -12,6 +12,7 @@ import AdministrateUserForm from "@/features/user/AdministrateUserForm";
 import EntityLink from "@/shared/components/EntityLink";
 import { openCustomerIdModal } from "@/shared/components/ShowCustomerIdButton";
 import { api } from "@/shared/utils/apiClient";
+import { isRootBranch } from "@/shared/utils/branchTree";
 
 const ADMINISTRATE_USER_MODAL_ID = "administrate-user";
 
@@ -35,12 +36,11 @@ export default function CustomerHeader({
   withCustomerId?: boolean;
   onMerged: (toUserId: string) => void;
 }) {
-  const { data: branch } = useQuery(
-    api.branches.show.queryOptions(
-      { params: { branchId: customer.branchMembershipId ?? "" } },
-      { enabled: Boolean(customer.branchMembershipId) },
-    ),
-  );
+  // The school chip; a member of the root has no school and gets none.
+  const { data: branch } = useQuery({
+    ...api.branches.show.queryOptions({ params: { branchId: customer.branchMembershipId } }),
+    select: (membership) => (membership && !isRootBranch(membership) ? membership : null),
+  });
   const displayName = useDisplayName();
   const shownName = displayName(customer.name);
   const name = (text: string) => {

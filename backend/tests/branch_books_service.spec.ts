@@ -7,7 +7,7 @@ import Order from "#models/order";
 import type { SummaryRow } from "#services/branch_books_service";
 import { BranchBooksService, buildSummary } from "#services/branch_books_service";
 import { OrderCancellationService } from "#services/order_cancellation_service";
-import { createBranch } from "#tests/branch_fixtures";
+import { createBranch, rootBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { createUser } from "#tests/user_fixtures";
@@ -65,6 +65,29 @@ async function seedOrderedBooks() {
 
 test.group("BranchBooksService: ordered books", (group) => {
   group.each.setup(() => testUtils.db().truncate());
+
+  test("books are never moved to the root", async ({ assert }) => {
+    const root = await rootBranch();
+    const { parent } = await seedOrderedBooks();
+    await assert.rejects(
+      () =>
+        BranchBooksService.bulkUpdateOrderedBooks({
+          branchId: parent.id,
+          filter: { includeDescendants: false },
+          update: { branchId: root.id },
+        }),
+      /Velg en filial under/,
+    );
+    await assert.rejects(
+      () =>
+        BranchBooksService.bulkUpdateActiveBooks({
+          branchId: parent.id,
+          filter: { includeDescendants: false },
+          update: { branchId: root.id },
+        }),
+      /Velg en filial under/,
+    );
+  });
 
   test("the summary counts open rent lines with a deadline, direct and via children", async ({
     assert,

@@ -1,5 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import { assertNotRoot } from "#services/branch_service";
 import { waitingListCustomerValidator } from "#validators/waiting_list_customer";
 import WaitingListCustomer from "#models/waiting_list_customer";
 import WaitingListCustomerTransformer from "#transformers/waiting_list_customer_transformer";
@@ -13,6 +14,7 @@ export default class WaitingListCustomersController {
     const { name, phone, itemId, branchId } = await ctx.request.validateUsing(
       waitingListCustomerValidator,
     );
+    await assertNotRoot(branchId);
     await WaitingListCustomer.create({ name, phone, itemId, branchId });
   }
 

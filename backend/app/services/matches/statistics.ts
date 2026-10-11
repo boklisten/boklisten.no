@@ -426,7 +426,7 @@ async function computeStandBranchHierarchy(
 
   const branchById = new Map(branches.map((branch) => [branch.id, branch]));
   const customerBranchId = new Map(
-    [...users.values()].map((user) => [user.id, user.branchMembershipId ?? undefined]),
+    [...users.values()].map((user) => [user.id, user.branchMembershipId]),
   );
 
   const roots = new Map<string, MutableBranchNode>();
@@ -447,24 +447,28 @@ async function computeStandBranchHierarchy(
   return toBranchNodes(roots);
 }
 
-/** The branches from root to leaf for a student's branch membership. */
+/**
+ * The branches from the top down to a student's branch membership, the root ("Alle filialer")
+ * left out; a root member has no school and counts as unknown.
+ */
 function ancestorChain(
   leafId: string | undefined,
   branchById: Map<string, Branch>,
 ): { id: string; name: string }[] {
-  if (!leafId || !branchById.has(leafId)) {
+  const leaf = leafId === undefined ? undefined : branchById.get(leafId);
+  if (!leaf || leaf.parentBranchId === null) {
     return [{ id: UNKNOWN_BRANCH, name: UNKNOWN_BRANCH }];
   }
   const chain: { id: string; name: string }[] = [];
   const visited = new Set<string>();
-  let currentId: string | null = leafId;
+  let currentId: string | null = leaf.id;
   while (currentId !== null && !visited.has(currentId)) {
     visited.add(currentId);
     const branch = branchById.get(currentId);
-    if (!branch) {
+    if (!branch || (branch.parentBranchId === null && chain.length > 0)) {
       break;
     }
-    // Use localName at deeper levels; the root usually only has a full name.
+    // Use localName at deeper levels; a top-level branch usually only has a full name.
     // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- legacy data can hold "" localName, which must fall through to name
     chain.push({ id: currentId, name: branch.localName || branch.name });
     currentId = branch.parentBranchId;

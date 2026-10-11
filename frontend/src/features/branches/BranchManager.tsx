@@ -1,4 +1,5 @@
-import { Box, Button, Divider, Grid, Stack, Tabs, Title } from "@mantine/core";
+import type { Branch } from "@boklisten/backend/shared/branch";
+import { Button, Grid, Group, Stack, Tabs, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import {
   IconBook2,
@@ -33,8 +34,36 @@ import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
 import { parseBranchManagerTab } from "@/features/branches/branchManagerTabs";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import { api } from "@/shared/utils/apiClient";
+import { isRootBranch } from "@/shared/utils/branchTree";
 
 const route = getRouteApi("/(administrasjon)/admin/database/filialer");
+
+/**
+ * Neuter nouns a branch may be divided into, matched as the last part of the label so compounds
+ * ("studiested", "klassetrinn", "utdanningsprogram") take "nytt" too; everything else is "ny".
+ */
+const NEUTER_CHILD_LABELS = [
+  "selskap",
+  "årskull",
+  "kull",
+  "sted",
+  "trinn",
+  "nivå",
+  "program",
+  "kurs",
+  "område",
+  "fag",
+];
+
+/** What the create action is called on a node: "Ny skole", "Nytt selskap", else "Ny filial". */
+function newChildLabel(childLabel: string | null): string {
+  const noun = childLabel?.trim().toLowerCase();
+  if (!noun) {
+    return "Ny filial";
+  }
+  const neuter = NEUTER_CHILD_LABELS.some((ending) => noun.endsWith(ending));
+  return `${neuter ? "Nytt" : "Ny"} ${noun}`;
+}
 
 export default function BranchManager() {
   const { data: branches } = useQuery(api.branches.index.queryOptions());
@@ -49,32 +78,24 @@ export default function BranchManager() {
   const selectedBranch = branches?.find((branch) => branch.id === selectedBranchId);
 
   const createBranchModalId = "create-branch-modal";
+  const openCreateModal = (parent: Branch) =>
+    modals.open({
+      modalId: createBranchModalId,
+      title: newChildLabel(parent.childLabel),
+      children: (
+        <BranchGeneralSettings
+          parentBranch={parent}
+          onSuccess={(newBranch) => {
+            if (newBranch) {
+              setSelectedBranchId(newBranch.id);
+            }
+            modals.close(createBranchModalId);
+          }}
+        />
+      ),
+    });
   return (
     <Stack>
-      <Box>
-        <Button
-          leftSection={<IconPlus />}
-          onClick={() =>
-            modals.open({
-              modalId: createBranchModalId,
-              title: "Opprett filial",
-              children: (
-                <BranchGeneralSettings
-                  onSuccess={(newBranch) => {
-                    if (newBranch) {
-                      setSelectedBranchId(newBranch?.id ?? null);
-                    }
-                    modals.close(createBranchModalId);
-                  }}
-                />
-              ),
-            })
-          }
-        >
-          Opprett filial
-        </Button>
-      </Box>
-      <Divider />
       <Grid>
         <Grid.Col span={{ base: 12, md: 3 }}>
           <SelectBranchTreeView
@@ -89,7 +110,16 @@ export default function BranchManager() {
         <Grid.Col span={{ base: 12, md: 9 }}>
           {selectedBranch && (
             <Stack>
-              <Title>{selectedBranch.name}</Title>
+              <Group justify="space-between" align="center" wrap="wrap">
+                <Title>{selectedBranch.name}</Title>
+                <Button
+                  variant="light"
+                  leftSection={<IconPlus size={18} />}
+                  onClick={() => openCreateModal(selectedBranch)}
+                >
+                  {newChildLabel(selectedBranch.childLabel)}
+                </Button>
+              </Group>
               <Tabs
                 value={filialFane ?? "general"}
                 onChange={(value) =>
@@ -155,7 +185,11 @@ export default function BranchManager() {
                 </Tabs.Panel>
                 <Tabs.Panel value="members">
                   <Stack>
-                    <BranchMembers key={selectedBranch.id} branchId={selectedBranch.id} />
+                    <BranchMembers
+                      key={selectedBranch.id}
+                      branchId={selectedBranch.id}
+                      isRoot={isRootBranch(selectedBranch)}
+                    />
                     <UploadBranchUsers branchId={selectedBranch.id} />
                   </Stack>
                 </Tabs.Panel>

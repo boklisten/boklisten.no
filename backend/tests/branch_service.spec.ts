@@ -6,11 +6,12 @@ import BranchPeriod from "#models/branch_period";
 import { inheritBelow } from "#services/branch_inheritance_service";
 import {
   BranchCycleError,
+  assertNotRoot,
   createBranch as createBranchThroughService,
   updateBranch,
   updateBranchRelationships,
 } from "#services/branch_service";
-import { createBranch } from "#tests/branch_fixtures";
+import { createBranch, rootBranch } from "#tests/branch_fixtures";
 
 const visibleOf = async (id: string) => (await Branch.findOrFail(id)).visibleToCustomers;
 
@@ -27,7 +28,7 @@ test.group("branch_service", (group) => {
   }) => {
     const branch = await createBranchThroughService({
       name: "Flåklypa vgs",
-      parentBranchId: null,
+      parentBranchId: (await rootBranch()).id,
     });
     assert.equal(branch.name, "Flåklypa vgs");
     assert.isNull(branch.address);
@@ -99,16 +100,15 @@ test.group("branch_service", (group) => {
       id: school.id,
       localName: "Ullern",
       childLabel: "årskull",
-      parentBranchId: null,
-      childBranchIds: [vg1.id, stray.id],
+      childBranchIds: [vg1.id, vg2.id, stray.id],
     });
     assert.equal(updated.localName, "Ullern");
     assert.equal(updated.childLabel, "årskull");
-    assert.isNull(updated.parentBranchId);
+    assert.equal(updated.parentBranchId, (await rootBranch()).id);
 
     assert.equal(await parentOf(vg1.id), school.id);
+    assert.equal(await parentOf(vg2.id), school.id);
     assert.equal(await parentOf(stray.id), school.id);
-    assert.isNull(await parentOf(vg2.id));
 
     // Absent lists leave the tree alone.
     await updateBranchRelationships({ id: school.id, parentBranchId: otherSchool.id });
@@ -138,7 +138,7 @@ test.group("branch_service", (group) => {
       BranchCycleError,
     );
     // Nothing was written by the refused updates.
-    assert.isNull((await Branch.findOrFail(school.id)).parentBranchId);
+    assert.equal((await Branch.findOrFail(school.id)).parentBranchId, (await rootBranch()).id);
     assert.equal((await Branch.findOrFail(vg1st.id)).parentBranchId, vg1.id);
   });
 });
@@ -212,9 +212,17 @@ test.group("branch_service inheritance", (group) => {
     assert.isTrue(await visibleOf(oslo.id));
   });
 
-  test("a root cannot inherit", async ({ assert }) => {
-    const { sonans } = await sonansTree();
-    await assert.rejects(() => updateBranch(sonans.id, { visibleToCustomers: null }), /arve/);
+  test("the root cannot inherit", async ({ assert }) => {
+    const root = await rootBranch();
+    await assert.rejects(() => updateBranch(root.id, { visibleToCustomers: null }), /arve/);
+  });
+
+  test("the root cannot be made visible to customers", async ({ assert }) => {
+    const root = await rootBranch();
+    await assert.rejects(() => updateBranch(root.id, { visibleToCustomers: true }), /synlig/);
+    assert.isFalse((await Branch.findOrFail(root.id)).visibleToCustomers);
+    // Its other fields can still be set.
+    assert.equal((await updateBranch(root.id, { buyoutPercentage: 0.5 })).buyoutPercentage, 0.5);
   });
 
   test("every inherited field resolves the same way", async ({ assert }) => {
@@ -262,19 +270,34 @@ test.group("branch_service inheritance", (group) => {
     assert.equal(moved.overrides.buyoutPercentage, 0.5);
   });
 
-  test("a branch that becomes a root keeps the values it had as its own", async ({ assert }) => {
+  test("the root stays where it is and no branch can be detached from the tree", async ({
+    assert,
+  }) => {
+    const root = await rootBranch();
     const { sonans, oslo, kveld } = await sonansTree();
-    await updateBranch(sonans.id, { buyoutPercentage: 0.33 });
 
-    await updateBranchRelationships({ id: oslo.id, parentBranchId: null });
-    const root = await Branch.findOrFail(oslo.id);
-    assert.isFalse(root.overrides.visibleToCustomers);
-    assert.equal(root.overrides.buyoutPercentage, 0.33);
-    assert.isNull(await overrideOf(kveld.id));
+    await assert.rejects(
+      () => updateBranchRelationships({ id: root.id, parentBranchId: sonans.id }),
+      /øverst/,
+    );
+    // Dropping a child from the list would leave it without a parent.
+    await assert.rejects(
+      () => updateBranchRelationships({ id: oslo.id, childBranchIds: [] }),
+      /løsrives/,
+    );
+    assert.isNull(await parentOf(root.id));
+    assert.equal(await parentOf(kveld.id), oslo.id);
+    // The root's own columns can still be edited.
+    const renamed = await updateBranchRelationships({ id: root.id, childLabel: "selskap" });
+    assert.equal(renamed.childLabel, "selskap");
+    assert.isNull(renamed.parentBranchId);
+  });
 
-    // Children dropped from the list become roots the same way.
-    await updateBranchRelationships({ id: oslo.id, childBranchIds: [] });
-    assert.isFalse(await overrideOf(kveld.id));
+  test("assertNotRoot refuses the root and accepts any other branch", async ({ assert }) => {
+    const root = await rootBranch();
+    const { oslo } = await sonansTree();
+    await assert.rejects(() => assertNotRoot(root.id), /Alle filialer/);
+    await assertNotRoot(oslo.id);
   });
 
   test("a branch created under a parent inherits everything", async ({ assert }) => {
@@ -293,16 +316,6 @@ test.group("branch_service inheritance", (group) => {
     assert.isFalse(created.deliveryByMail);
     assert.equal(created.buyoutPercentage, 0.33);
     assert.isTrue(Object.values(created.overrides).every((value) => value === null));
-  });
-
-  test("a branch created as a root holds the root values", async ({ assert }) => {
-    const created = await createBranchThroughService({
-      name: "Bokflyt.no AS",
-      parentBranchId: null,
-    });
-    assert.isNull(created.parentBranchId);
-    assert.isFalse(created.overrides.visibleToCustomers);
-    assert.isTrue(created.overrides.deliveryAtBranch);
   });
 
   test("inheritBelow clears every override below, and nothing else changes", async ({ assert }) => {

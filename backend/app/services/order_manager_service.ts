@@ -221,7 +221,12 @@ export const OrderManagerService = {
           .join("items", "items.id", "order_items.item_id")
           .join("branches as schools", "schools.id", "orders.branch_id")
           .leftJoin("users as customers", "customers.id", "orders.customer_id")
-          .leftJoin("branches as memberships", "memberships.id", "customers.branch_membership_id"),
+          // A root member has no school, so the membership column stays empty for them.
+          .leftJoin("branches as memberships", (join) =>
+            join
+              .on("memberships.id", "customers.branch_membership_id")
+              .andOnNotNull("memberships.parent_branch_id"),
+          ),
       ),
       filter,
     );

@@ -30,7 +30,6 @@ export const ownUserFieldsSchema = vine.object({
     .transform((value) => cleanUserInput(value)),
   postalCode: postalCodeField.clone(),
   dob: vine.date().before("today"),
-  branchMembershipId: objectIdField.clone().nullable().optional(),
   guardianName: vine
     .string()
     .nullable()
@@ -39,6 +38,9 @@ export const ownUserFieldsSchema = vine.object({
   guardianEmail: emailField.clone().nullable().optional(),
   guardianPhone: phoneField.clone().nullable().optional(),
 });
+
+/** The school the customer belongs to; the root ("no school") is a branch like any other. */
+export const branchMembershipField = objectIdField.clone();
 
 export const userFieldsSchema = vine.object({
   ...ownUserFieldsSchema.getProperties(),
@@ -55,6 +57,7 @@ export const userSearchValidator = vine.create(
 export const updateMeValidator = vine.withMetaData<{ userId: string }>().create(
   vine.object({
     ...ownUserFieldsSchema.getProperties(),
+    branchMembershipId: branchMembershipField.clone(),
     email: emailField.clone().use(uniqueEmail()),
   }),
 );
@@ -63,6 +66,7 @@ export const updateMeValidator = vine.withMetaData<{ userId: string }>().create(
 export const updateUserValidator = vine.withMetaData<{ userId: string }>().create(
   vine.object({
     ...userFieldsSchema.getProperties(),
+    branchMembershipId: branchMembershipField.clone(),
     email: emailField.clone().use(uniqueEmail()),
     emailConfirmed: vine.boolean(),
   }),

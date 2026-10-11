@@ -1,4 +1,5 @@
-import { Skeleton, Stack, Stepper, Text } from "@mantine/core";
+import { Button, Skeleton, Stack, Stepper, Text } from "@mantine/core";
+import { IconRefresh } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, useEffect, useEffectEvent, useRef } from "react";
 
@@ -8,6 +9,7 @@ import UserSettingsForm from "@/features/user/UserSettingsForm";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import SuccessAlert from "@/shared/components/alerts/SuccessAlert";
 import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
+import useRootBranchId from "@/shared/hooks/useRootBranchId";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { isUnder18 } from "@/shared/utils/dates";
 import { hasPendingTasks } from "@/shared/utils/tasks";
@@ -18,8 +20,12 @@ export default function Tasks() {
     ...authQueryOptions(),
     refetchInterval: 5000,
   });
+  // The details form decides what to ask for by the root, "no school", so it waits for it.
+  const branches = useRootBranchId();
+  const needsBranches = data?.taskConfirmDetails === true;
+  const rootBranchId = branches.rootBranchId;
 
-  if (isLoading) {
+  if (isLoading || (needsBranches && !branches.isError && rootBranchId === undefined)) {
     return (
       <Stack>
         <Skeleton height={150} />
@@ -35,6 +41,23 @@ export default function Tasks() {
       </ErrorAlert>
     );
   }
+  if (needsBranches && branches.isError) {
+    return (
+      <ErrorAlert title="Klarte ikke hente skolene">
+        <Stack gap="xs" align="flex-start">
+          Oppgavene trenger listen over skoler. Prøv igjen om et øyeblikk.
+          <Button
+            variant="light"
+            size="compact-sm"
+            leftSection={<IconRefresh />}
+            onClick={branches.retry}
+          >
+            Prøv igjen
+          </Button>
+        </Stack>
+      </ErrorAlert>
+    );
+  }
   if (!hasPendingTasks(data)) {
     return <TasksDone />;
   }
@@ -44,9 +67,9 @@ export default function Tasks() {
         Vi mangler noen opplysninger fra deg – fullfør oppgavene nedenfor for å fortsette.
       </Text>
       <Stepper active={0}>
-        {data.taskConfirmDetails && (
+        {data.taskConfirmDetails && rootBranchId !== undefined && (
           <Stepper.Step label="Bekreft din informasjon">
-            <UserSettingsForm user={data} confirmDetails />
+            <UserSettingsForm user={data} confirmDetails={{ rootBranchId }} />
           </Stepper.Step>
         )}
         {data.taskSignAgreement && (

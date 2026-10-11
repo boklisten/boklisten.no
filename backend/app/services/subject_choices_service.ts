@@ -25,7 +25,7 @@ interface SubjectChoiceRow {
 interface MemberSummary {
   id: string;
   name: string;
-  branchMembership: string | null;
+  branchMembership: string;
 }
 
 interface SubjectChoiceGroup {
@@ -250,7 +250,7 @@ export function planSubjectChoices({
     let skippedForStudent = 0;
     for (const choice of choices) {
       const resolved = resolveSubjectItems({
-        startBranchId: member.branchMembership ?? uploadBranchId,
+        startBranchId: member.branchMembership,
         uploadBranchId,
         subject: choice.subject,
         parentByBranchId,

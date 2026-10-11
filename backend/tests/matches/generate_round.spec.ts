@@ -72,16 +72,17 @@ test.group("generateRound", (group) => {
         orderItems: wantedItems.map((itemId) => ({ itemId })),
       });
     }
-    sandbox
-      .stub(User, "byIds")
-      .resolves(
-        new Map(
-          users.map((user) => [
-            user.id,
-            userDouble({ id: user.id, branchMembershipId: user.branchMembership ?? null }),
-          ]),
-        ),
-      );
+    sandbox.stub(User, "byIds").resolves(
+      new Map(
+        users.map((user) => [
+          user.id,
+          userDouble({
+            id: user.id,
+            ...(user.branchMembership && { branchMembershipId: user.branchMembership }),
+          }),
+        ]),
+      ),
+    );
   }
 
   test("creates an obligation per matched title, with both parties named", async ({ assert }) => {

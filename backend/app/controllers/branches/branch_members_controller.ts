@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import User from "#models/user";
+import { BranchMembershipService } from "#services/branch_membership_service";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
 import { assertMembershipAllowed } from "#services/user_service";
 import { updateBranchMembershipValidator } from "#validators/branch_membership";
@@ -38,14 +39,9 @@ export default class BranchMembersController {
     await user.save();
   }
   async destroyDirect(ctx: HttpContext) {
-    const branchId = ctx.request.param("branchId");
-    await User.membersOf([branchId]).update({ branchMembershipId: null });
+    await BranchMembershipService.moveMembersToRoot(ctx.request.param("branchId"), "direct");
   }
   async destroyIndirect(ctx: HttpContext) {
-    const branchId = ctx.request.param("branchId");
-    const childBranchIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
-    if (childBranchIds.length > 0) {
-      await User.membersOf(childBranchIds).update({ branchMembershipId: null });
-    }
+    await BranchMembershipService.moveMembersToRoot(ctx.request.param("branchId"), "indirect");
   }
 }

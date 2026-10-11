@@ -34,7 +34,7 @@ function valuesOf(user: User): UserSettingsValues {
     guardianName: user.guardianName ?? "",
     guardianEmail: user.guardianEmail ?? "",
     guardianPhoneNumber: user.guardianPhone ?? "",
-    branchMembership: user.branchMembershipId ?? "",
+    branchMembership: user.branchMembershipId,
   };
 }
 
@@ -52,19 +52,25 @@ function bodyOf(values: UserSettingsValues) {
  */
 export default function UserSettingsForm({
   user,
-  confirmDetails = false,
+  confirmDetails,
 }: {
   user: User;
-  /** In the confirm-details task: one "Lagre" that confirms the details, instead of auto-save. */
-  confirmDetails?: boolean;
+  /**
+   * In the confirm-details task: one "Lagre" that confirms the details, instead of auto-save. The
+   * task shows only what is missing, and a root member is still asked about their school.
+   */
+  confirmDetails?: { rootBranchId: string };
 }) {
   const queryClient = useQueryClient();
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const [changingPhone, setChangingPhone] = useState(false);
   // Fixed when the task opens, so a field does not vanish once it is filled in.
   const [only] = useState(() => {
-    const missing = missingUserInfo(valuesOf(user));
-    return confirmDetails && missing.size > 0 ? missing : null;
+    if (confirmDetails === undefined) {
+      return null;
+    }
+    const missing = missingUserInfo(valuesOf(user), confirmDetails.rootBranchId);
+    return missing.size > 0 ? missing : null;
   });
   const updateUserMutation = useMutation(
     api.users.updateMe.mutationOptions({

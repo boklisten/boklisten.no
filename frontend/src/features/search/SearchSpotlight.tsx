@@ -19,6 +19,7 @@ import { createKeyboardDecoy, requestedSearchKeyboard } from "@/features/search/
 import { searchBranches } from "@/features/search/searchBranches";
 import { searchPages } from "@/features/search/searchPages";
 import { api, apiClient } from "@/shared/utils/apiClient";
+import { withoutRoot } from "@/shared/utils/branchTree";
 import useAuth from "@/shared/hooks/useAuth";
 
 const MIN_SEARCH_LENGTH = 3;
@@ -198,7 +199,10 @@ export default function SearchSpotlight({
     ...api.branches.index.queryOptions(),
     enabled: kinds.customers || branchSearchOn,
   });
-  const branchNames = new Map((branches ?? []).map((branch) => [branch.id, branch.name]));
+  // For the customers' school chips; a member of the root has no school and gets no chip.
+  const branchNames = new Map(
+    withoutRoot(branches ?? []).map((branch) => [branch.id, branch.name]),
+  );
 
   // Pages are local data, so they match on every keystroke without the debounce or the length gate.
   const pageHits = useMemo(
@@ -319,7 +323,7 @@ export default function SearchSpotlight({
             <Text fw={600}>{displayName(user.name)}</Text>
             <Group gap={6}>
               <PermissionBadge permission={user.permission} size="sm" />
-              {user.branchMembershipId && branchNames.has(user.branchMembershipId) && (
+              {branchNames.has(user.branchMembershipId) && (
                 <Badge variant="light" size="sm">
                   {branchNames.get(user.branchMembershipId)}
                 </Badge>

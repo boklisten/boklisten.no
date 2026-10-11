@@ -3,6 +3,7 @@ import db from "@adonisjs/lucid/services/db";
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import { assertNotRoot } from "#services/branch_service";
 import MatchRound from "#models/match_round";
 import { generateRound } from "#services/matches/generate_round";
 import { getMatchesForRound } from "#services/matches/read_matches";
@@ -60,6 +61,7 @@ export default class MatchRoundsController {
     const { standBranchIds, standCustomerIds, ...plan } =
       await ctx.request.validateUsing(matchRoundCreateValidator);
     await Branch.findOrFail(plan.branchId);
+    await assertNotRoot(plan.branchId);
     await assertStandRules(plan.branchId, { standBranchIds, standCustomerIds });
 
     const round = await db.transaction(async (trx) => {

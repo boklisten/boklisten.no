@@ -79,12 +79,14 @@ async function optionalViewer(ctx: HttpContext): Promise<User | null> {
 }
 
 /**
- * Whether `viewer` may be shown a branch they asked for by id: what its visibility allows, plus
- * the membership they hold, and for employees any branch at all, since they look up the
- * memberships of the customers they serve. Visibility governs the lists a branch is picked from.
+ * Whether `viewer` may be shown a branch they asked for by id: the root always, otherwise what
+ * its visibility allows, plus the membership they hold, and for employees any branch at all, since
+ * they look up the memberships of the customers they serve. Visibility governs the lists a branch
+ * is picked from.
  */
 function mayBeShown(viewer: User | null, branch: Branch): boolean {
   return (
+    branch.isRoot ||
     canSeeBranch(viewer?.permission ?? null, branch.visibleToCustomers) ||
     (viewer !== null &&
       (hasPermissionLevel(viewer.permission, "employee") ||

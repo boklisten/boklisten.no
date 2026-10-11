@@ -1,4 +1,5 @@
 import Branch from "#models/branch";
+import { assertNotRoot } from "#services/branch_service";
 import BadRequestException from "#exceptions/bad_request_exception";
 import Delivery from "#models/delivery";
 import Order from "#models/order";
@@ -378,6 +379,7 @@ export const StandCartCheckoutService = {
     if (!branch) {
       throw new BadRequestException("Fant ikke filialen");
     }
+    await assertNotRoot(branch.id);
 
     const lines = await resolveLines(request, now);
     assertLinesAreSound(lines);

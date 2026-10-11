@@ -79,6 +79,12 @@ async function getAgreementStatus(user: User) {
   };
 }
 
+/** Where the signing message says the books come from: the customer's school, or "en filial" for a customer without one. */
+async function senderNameFor(user: User): Promise<string> {
+  const branch = await Branch.findOrFail(user.branchMembershipId);
+  return branch.isRoot ? "en filial" : branch.name;
+}
+
 /** Stores the signature, or answers false when the user may not sign (again) like this. */
 async function signAgreement(
   user: User,
@@ -112,18 +118,14 @@ export default class SignaturesController {
     return getSignatureStatus(ctx.auth.getUserOrFail().id);
   }
   async sendLink(ctx: HttpContext) {
-    const targetUserId = ctx.request.param("userId");
-
-    const user = await User.find(targetUserId);
-    const branch = await Branch.findOptional(user?.branchMembershipId);
+    const user = await User.find(ctx.request.param("userId"));
     if (user) {
-      await DispatchService.sendSignatureLink(user, branch?.name ?? "en filial");
+      await DispatchService.sendSignatureLink(user, await senderNameFor(user));
     }
   }
   async sendLinkMe(ctx: HttpContext) {
     const user = ctx.auth.getUserOrFail();
-    const branch = await Branch.findOptional(user.branchMembershipId);
-    await DispatchService.sendSignatureLink(user, branch?.name ?? "en filial");
+    await DispatchService.sendSignatureLink(user, await senderNameFor(user));
   }
   /** Status of the agreement behind an emailed signing link. */
   async linkStatus(ctx: HttpContext) {

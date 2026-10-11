@@ -1,5 +1,5 @@
 import type { Branch } from "@boklisten/backend/shared/branch";
-import { Button, Stack } from "@mantine/core";
+import { Button, Stack, TextInput } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import InheritedFieldCard from "@/features/branches/inheritance/InheritedFieldCard";
@@ -69,21 +69,19 @@ const GENERAL_FIELDS = {
 } as const;
 
 /**
- * Edits an existing branch with auto-save (no "Lagre" button), or creates one at the top of the
- * tree with the column defaults; the admin places it under a parent on the Relasjoner tab
+ * Edits an existing branch with auto-save (no "Lagre" button), or creates one under
+ * `parentBranch`, inheriting everything from it; the admin can move it on the Relasjoner tab
  * afterwards.
  */
-export default function BranchGeneralSettings({
-  existingBranch,
-  onSuccess,
-}: {
-  existingBranch?: Branch;
-  onSuccess?: (newBranch?: Branch) => void;
-}) {
-  return existingBranch ? (
-    <EditBranch branch={existingBranch} />
+export default function BranchGeneralSettings(
+  props:
+    | { existingBranch: Branch; parentBranch?: never; onSuccess?: never }
+    | { existingBranch?: never; parentBranch: Branch; onSuccess?: (newBranch?: Branch) => void },
+) {
+  return props.existingBranch ? (
+    <EditBranch branch={props.existingBranch} />
   ) : (
-    <CreateBranch onSuccess={onSuccess} />
+    <CreateBranch parentBranch={props.parentBranch} onSuccess={props.onSuccess} />
   );
 }
 
@@ -100,30 +98,34 @@ function EditBranch({ branch }: { branch: Branch }) {
     }),
   );
 
+  // The root is a scope, never a school customers order from: it is never visible to them, and
+  // the backend refuses to make it so, so the switch is not offered there.
   return (
     <Stack>
       <BranchGeneralFields form={form} fields={GENERAL_FIELDS} />
-      <form.AppField name="visibleToCustomers">
-        {(field) => (
-          <InheritedFieldCard
-            branchId={branch.id}
-            field="visibleToCustomers"
-            tab="general"
-            value={field.state.value}
-            onChange={(value) => commitValue(field, value)}
-          >
-            {(value, setValue, tone) => (
-              <ToneSwitch
-                checked={value}
-                onChange={setValue}
-                tone={tone}
-                label={onOffLabel(value)}
-                ariaLabel={INHERITED_FIELDS.visibleToCustomers.label}
-              />
-            )}
-          </InheritedFieldCard>
-        )}
-      </form.AppField>
+      {branch.parentBranchId !== null && (
+        <form.AppField name="visibleToCustomers">
+          {(field) => (
+            <InheritedFieldCard
+              branchId={branch.id}
+              field="visibleToCustomers"
+              tab="general"
+              value={field.state.value}
+              onChange={(value) => commitValue(field, value)}
+            >
+              {(value, setValue, tone) => (
+                <ToneSwitch
+                  checked={value}
+                  onChange={setValue}
+                  tone={tone}
+                  label={onOffLabel(value)}
+                  ariaLabel={INHERITED_FIELDS.visibleToCustomers.label}
+                />
+              )}
+            </InheritedFieldCard>
+          )}
+        </form.AppField>
+      )}
       <form.AppForm>
         <form.ErrorSummary autoSave />
       </form.AppForm>
@@ -131,7 +133,13 @@ function EditBranch({ branch }: { branch: Branch }) {
   );
 }
 
-function CreateBranch({ onSuccess }: { onSuccess?: (newBranch?: Branch) => void }) {
+function CreateBranch({
+  parentBranch,
+  onSuccess,
+}: {
+  parentBranch: Branch;
+  onSuccess?: (newBranch?: Branch) => void;
+}) {
   const queryClient = useQueryClient();
 
   const addBranchMutation = useMutation(
@@ -149,11 +157,14 @@ function CreateBranch({ onSuccess }: { onSuccess?: (newBranch?: Branch) => void 
   const form = useAppForm({
     defaultValues: EMPTY_FIELDS,
     onSubmit: ({ value }) =>
-      addBranchMutation.mutate({ body: { ...generalBody(value), parentBranchId: null } }),
+      addBranchMutation.mutate({
+        body: { ...generalBody(value), parentBranchId: parentBranch.id },
+      }),
   });
 
   return (
     <Stack>
+      <TextInput label="Tilhører" value={parentBranch.name} readOnly />
       <BranchGeneralFields form={form} fields={GENERAL_FIELDS} />
       <form.AppForm>
         <form.ErrorSummary />

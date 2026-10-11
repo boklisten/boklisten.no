@@ -9,14 +9,15 @@ import { apiClient } from "@/shared/utils/apiClient";
 /**
  * Where a logged-in member's own school sits in the walk's tree: the membership itself when it is
  * a step, otherwise the nearest ancestor that is (a class belongs under the year group that holds
- * the books). Walks up through the API one parent at a time; nearly always one request.
+ * the books). Walks up through the API one parent at a time; nearly always one request. A
+ * member of the root ("no school") walks straight off the top and gets null.
  */
 export default function useMembershipBranch(
   walk: BranchWalk,
   tree: PublicBranchTree,
 ): PublicBranchNode | null {
   const { user } = useAuth();
-  const membershipId = user?.branchMembershipId ?? null;
+  const membershipId = user ? user.branchMembershipId : null;
   const { data } = useQuery({
     queryKey: ["branch-walk", walk.key, "membership-branch", membershipId],
     queryFn: async () => {

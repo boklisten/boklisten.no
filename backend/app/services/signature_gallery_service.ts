@@ -31,7 +31,7 @@ export interface GalleryCustomer {
   id: string;
   name: string | null;
   dob: DateTime | null;
-  branchMembershipId: string | null;
+  branchMembershipId: string;
   permission: UserPermission;
 }
 
@@ -77,9 +77,7 @@ export const SignatureGalleryService = {
       signedByGuardian: signature.signedByGuardian,
       signedAtText: formatSignedDate(signature.createdAt),
       image: signature.image.toString("base64"),
-      branchName: customer.branchMembershipId
-        ? (context.branchNames.get(customer.branchMembershipId) ?? null)
-        : null,
+      branchName: context.branchNames.get(customer.branchMembershipId) ?? null,
       permission: customer.permission,
     };
   },
@@ -131,8 +129,9 @@ function formatSignedDate(dateTime: DateTime | null): string {
 }
 
 /**
- * Resolves the branch names for the customers' memberships, skipping ids already in the map so
- * each branch is fetched at most once per page.
+ * Resolves the school names for the customers' memberships, skipping ids already in the map so
+ * each branch is fetched at most once per page. The root has no name (a root member has no
+ * school), so it is looked up again on every batch; that is one cheap query per batch.
  */
 async function addMissingBranchNames(
   branchNames: Map<string, string>,
@@ -140,15 +139,13 @@ async function addMissingBranchNames(
 ): Promise<void> {
   const missing = [
     ...new Set(
-      customers
-        .map((customer) => customer.branchMembershipId)
-        .filter((id): id is string => typeof id === "string" && !branchNames.has(id)),
+      customers.map((customer) => customer.branchMembershipId).filter((id) => !branchNames.has(id)),
     ),
   ];
   if (missing.length === 0) {
     return;
   }
-  for (const [id, name] of await Branch.namesByIds(missing)) {
+  for (const [id, name] of await Branch.schoolNamesByIds(missing)) {
     branchNames.set(id, name);
   }
 }

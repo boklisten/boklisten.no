@@ -8,7 +8,14 @@ import BranchScopeMetrics from "@/shared/components/BranchScopeMetrics";
 import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-export default function BranchMembers({ branchId }: { branchId: string }) {
+export default function BranchMembers({
+  branchId,
+  isRoot,
+}: {
+  branchId: string;
+  /** The root has nothing above it to move members to, so it offers no removal. */
+  isRoot: boolean;
+}) {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery(
     api.branchMembers.index.queryOptions({ params: { branchId } }),
@@ -45,8 +52,8 @@ export default function BranchMembers({ branchId }: { branchId: string }) {
         loading={removeMembersMutation.isPending}
         onClick={() =>
           modals.openConfirmModal({
-            title: "Bekreft sletting av medlemsskap",
-            children: `Du er i ferd med å slette medlemsskapene til ${subject}. Dette kan ikke angres.`,
+            title: "Bekreft fjerning av medlemmer",
+            children: `Du er i ferd med å fjerne medlemmene av ${subject}. De blir stående uten skole. Dette kan ikke angres.`,
             labels: { cancel: "Avbryt", confirm: "Bekreft" },
             onConfirm: () => removeMembersMutation.mutate({ branchId, scope }),
           })
@@ -65,12 +72,12 @@ export default function BranchMembers({ branchId }: { branchId: string }) {
         direct={data?.directMembers.length}
         indirect={data?.indirectMembers.count}
         directExtra={
-          <Activity mode={(data?.directMembers.length ?? 0) > 0 ? "visible" : "hidden"}>
+          <Activity mode={!isRoot && (data?.directMembers.length ?? 0) > 0 ? "visible" : "hidden"}>
             {removeMembersButton("direct", "denne filialen")}
           </Activity>
         }
         indirectExtra={
-          <Activity mode={(data?.indirectMembers.count ?? 0) > 0 ? "visible" : "hidden"}>
+          <Activity mode={!isRoot && (data?.indirectMembers.count ?? 0) > 0 ? "visible" : "hidden"}>
             {removeMembersButton("indirect", "denne filialens underfilialer")}
           </Activity>
         }

@@ -1,4 +1,5 @@
-import { Button, Space, Stack } from "@mantine/core";
+import { Button, Skeleton, Space, Stack } from "@mantine/core";
+import { IconRefresh } from "@tabler/icons-react";
 import { createFieldMap } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Activity, useState } from "react";
@@ -8,6 +9,7 @@ import UserInfoFields, {
   userFieldsBody,
   userInfoFieldDefaultValues,
 } from "@/features/user/UserInfoFields";
+import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import WarningAlert from "@/shared/components/alerts/WarningAlert";
 import { emailFieldValidator } from "@/shared/components/form/fields/complex/EmailField";
 import { nameFieldValidator } from "@/shared/components/form/fields/complex/NameField";
@@ -15,6 +17,7 @@ import { phoneNumberFieldValidator } from "@/shared/components/form/fields/compl
 import { useAppForm } from "@/shared/hooks/form";
 import { authQueryOptions } from "@/features/auth/authQuery";
 import useLoginRedirect from "@/shared/hooks/useLoginRedirect";
+import useRootBranchId from "@/shared/hooks/useRootBranchId";
 import { isUnder18 } from "@/shared/utils/dates";
 import { showErrorNotification } from "@/shared/utils/notifications";
 import { api } from "@/shared/utils/apiClient";
@@ -34,23 +37,54 @@ type SignupFormValues = {
   email: string;
 } & UserInfoFieldValues;
 
-const defaultValues: SignupFormValues = {
-  email: "",
-  ...userInfoFieldDefaultValues,
-};
-
-/**
- * The details of a new account, after a login code proved `phone`. The backend takes the number
- * from the session, so it is only shown here.
- */
-export default function SignupForm({
-  phone,
-  onChangePhone,
-}: {
+interface SignupFormProps {
   phone: string;
   /** Back to typing another number. */
   onChangePhone: () => void;
-}) {
+}
+
+/**
+ * The details of a new account, after a login code proved `phone`. The backend takes the number
+ * from the session, so it is only shown here. A new customer starts without a school, which is a
+ * membership of the root, so the form waits for the branches before it opens.
+ */
+export default function SignupForm(props: SignupFormProps) {
+  const { rootBranchId, isError, retry } = useRootBranchId();
+  if (isError) {
+    return (
+      <ErrorAlert title="Klarte ikke hente skolene">
+        <Stack gap="xs" align="flex-start">
+          Registreringen trenger listen over skoler. Prøv igjen om et øyeblikk.
+          <Button variant="light" size="compact-sm" leftSection={<IconRefresh />} onClick={retry}>
+            Prøv igjen
+          </Button>
+        </Stack>
+      </ErrorAlert>
+    );
+  }
+  if (rootBranchId === undefined) {
+    return (
+      <Stack>
+        <Skeleton height={60} />
+        <Skeleton height={60} />
+        <Skeleton height={60} />
+      </Stack>
+    );
+  }
+  return <SignupFields {...props} rootBranchId={rootBranchId} />;
+}
+
+function SignupFields({
+  phone,
+  onChangePhone,
+  rootBranchId,
+}: SignupFormProps & { rootBranchId: string }) {
+  const defaultValues: SignupFormValues = {
+    email: "",
+    ...userInfoFieldDefaultValues,
+    phoneNumber: phone,
+    branchMembership: rootBranchId,
+  };
   const queryClient = useQueryClient();
   const { redirectAfterLogin } = useLoginRedirect();
   const [serverErrors, setServerErrors] = useState<string[]>([]);
@@ -75,7 +109,7 @@ export default function SignupForm({
     }),
   );
   const form = useAppForm({
-    defaultValues: { ...defaultValues, phoneNumber: phone },
+    defaultValues,
     onSubmit: ({ value }) =>
       registerMutation.mutate({
         body: { email: value.email, ...userFieldsBody(value) },

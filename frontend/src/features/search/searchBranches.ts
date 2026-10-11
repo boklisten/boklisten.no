@@ -15,7 +15,8 @@ function pathOf(branch: Branch, byId: Map<string, Branch>): string[] {
   const path: string[] = [];
   const seen = new Set([branch.id]);
   let parent = branch.parentBranchId === null ? undefined : byId.get(branch.parentBranchId);
-  while (parent && !seen.has(parent.id)) {
+  // The root ("Alle filialer") is above everything and says nothing about where a branch is.
+  while (parent && parent.parentBranchId !== null && !seen.has(parent.id)) {
     seen.add(parent.id);
     path.unshift(parent.localName ?? parent.name);
     parent = parent.parentBranchId === null ? undefined : byId.get(parent.parentBranchId);

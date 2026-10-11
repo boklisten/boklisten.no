@@ -20,8 +20,8 @@ export interface User {
   guardianName: string | null;
   guardianEmail: string | null;
   guardianPhone: string | null;
-  /** The branch (class, year group or school) the customer belongs to. */
-  branchMembershipId: string | null;
+  /** The branch (class, year group or school) the customer belongs to; the root when they have no school. */
+  branchMembershipId: string;
   /** The customer must confirm or complete their contact details before using the site. */
   taskConfirmDetails: boolean;
   /** The customer (or their guardian) must sign the loan agreement before using the site. */

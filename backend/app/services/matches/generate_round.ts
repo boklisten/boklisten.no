@@ -1,5 +1,6 @@
 import { DateTime } from "luxon";
 
+import Branch from "#models/branch";
 import type MatchRound from "#models/match_round";
 import User from "#models/user";
 import { MatchFinder } from "#services/match_helpers/match-finder/match-finder";
@@ -18,14 +19,15 @@ import type { BooksByCustomer } from "#services/matches/round_scope";
 import { BlError } from "#shared/bl-error";
 import { canonicalItemId } from "#shared/item-equivalence";
 
+/** Each customer's class, for the cohort tiebreak; a root member ("no school") has none. */
 async function getGroupMemberships(customerIds: string[]): Promise<Map<string, string>> {
   if (customerIds.length === 0) {
     return new Map();
   }
-  const users = await User.byIds(customerIds);
+  const [users, root] = await Promise.all([User.byIds(customerIds), Branch.root()]);
   return new Map(
     [...users.values()].flatMap((user) =>
-      user.branchMembershipId ? [[user.id, user.branchMembershipId] as const] : [],
+      user.branchMembershipId === root.id ? [] : [[user.id, user.branchMembershipId] as const],
     ),
   );
 }

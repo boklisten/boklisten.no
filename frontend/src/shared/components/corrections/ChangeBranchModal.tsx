@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 
 import MonitoringNotice from "@/shared/components/MonitoringNotice";
-import { toBranchTreeNodeData } from "@/shared/utils/branchTree";
+import { toBranchTreeNodeData, withoutRoot } from "@/shared/utils/branchTree";
 import { api } from "@/shared/utils/apiClient";
 
 /**
@@ -29,7 +29,10 @@ export default function ChangeBranchModal({
   onClose: () => void;
   onSubmit: (branchId: string) => void;
 }) {
-  const { data: branches } = useQuery(api.branches.index.queryOptions());
+  const { data: branches } = useQuery({
+    ...api.branches.index.queryOptions(),
+    select: withoutRoot,
+  });
   const [branchId, setBranchId] = useState(currentBranchId);
   return (
     <Modal opened onClose={onClose} title="Endre filial">

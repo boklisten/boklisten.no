@@ -3,7 +3,7 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 
 import User from "#models/user";
-import { createBranch } from "#tests/branch_fixtures";
+import { createBranch, rootBranch } from "#tests/branch_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 test.group("User lookups", (group) => {
@@ -24,7 +24,7 @@ test.group("User lookups", (group) => {
     await createUser({ branchMembershipId: branch.id });
     await createUser({ branchMembershipId: branch.id });
     await createUser({ branchMembershipId: other.id });
-    await createUser({ branchMembershipId: null });
+    await createUser();
 
     assert.equal(await User.countMembersOf([branch.id]), 2);
     assert.equal(await User.countMembersOf([branch.id, other.id]), 3);
@@ -97,7 +97,11 @@ test.group("User.toDto", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
   test("a user fresh from create without Vipps is not Vipps-linked", async ({ assert }) => {
-    const user = await User.create({ email: "ny@example.com", permission: "customer" });
+    const user = await User.create({
+      email: "ny@example.com",
+      permission: "customer",
+      branchMembershipId: (await rootBranch()).id,
+    });
 
     assert.isFalse(user.toDto().vippsLinked);
   });

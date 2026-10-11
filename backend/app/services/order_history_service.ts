@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import { assertNotRoot } from "#services/branch_service";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
 import Delivery from "#models/delivery";
@@ -433,6 +434,7 @@ export const OrderHistoryService = {
     if (!branch) {
       throw new BadRequestException("Filialen finnes ikke");
     }
+    await assertNotRoot(branch.id);
     const order = await Order.findOptional(orderId);
     if (!order) {
       throw new BadRequestException("Ordren finnes ikke");

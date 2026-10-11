@@ -3,12 +3,7 @@ import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 
 import Branch from "#models/branch";
 import BranchPeriod, { PERIOD_KINDS, PERIOD_LIST_BY_KIND } from "#models/branch_period";
-import {
-  ROOT_VALUES,
-  applyOverrides,
-  keepValuesInForce,
-  overrideColumns,
-} from "#services/branch_inheritance_service";
+import { applyOverrides } from "#services/branch_inheritance_service";
 import type { Branch as BranchDto, BranchPeriods, InheritedOverrides } from "#shared/branch";
 import { INHERITED_BRANCH_FIELDS } from "#shared/branch-inheritance";
 import type { InheritedBranchField } from "#shared/branch-inheritance";
@@ -21,8 +16,8 @@ type BranchColumns = Omit<
 
 type BranchCreateInput = Pick<BranchColumns, "name"> &
   Partial<Pick<BranchColumns, "address">> & {
-    /** `null` creates a root with `ROOT_VALUES`; under a parent every inherited field inherits. */
-    parentBranchId: string | null;
+    /** The branch to create under; every inherited field inherits from it. The root came from a migration. */
+    parentBranchId: string;
   };
 
 /** An inherited field set to a value overrides the parent's, even an equal one; `null` inherits again. */
@@ -34,9 +29,12 @@ interface BranchRelationshipInput {
   id: string;
   localName?: string | null;
   childLabel?: string | null;
-  /** `null` makes the branch a root; absent leaves the parent unchanged. */
-  parentBranchId?: string | null;
-  /** The complete list of children; absent leaves the children unchanged. */
+  /** The new parent; absent leaves the parent unchanged. The root has none and gets none. */
+  parentBranchId?: string;
+  /**
+   * The complete list of children; absent leaves the children unchanged. A current child missing
+   * from the list is refused: no branch can be left without a parent.
+   */
   childBranchIds?: string[];
 }
 
@@ -51,16 +49,12 @@ export class BranchCycleError extends Error {
 
 export async function createBranch(input: BranchCreateInput): Promise<Branch> {
   return Branch.whileLocked(async (trx) => {
-    const parent =
-      input.parentBranchId === null
-        ? null
-        : await Branch.query({ client: trx }).where("id", input.parentBranchId).firstOrFail();
+    await Branch.query({ client: trx }).where("id", input.parentBranchId).firstOrFail();
     const branch = await Branch.create(
       {
         name: input.name,
         address: input.address ?? null,
         parentBranchId: input.parentBranchId,
-        ...(parent ? {} : overrideColumns(ROOT_VALUES)),
       },
       { client: trx },
     );
@@ -107,26 +101,33 @@ export async function updateBranch(branchId: string, input: BranchUpdateInput): 
 
 /**
  * Moves a branch in the tree. `childBranchIds` is a command: the branches listed get this branch
- * as parent, and the branch's current children missing from the list become roots. What a moved
- * branch inherits it now inherits from its new parent, and its overrides stay; a branch that
- * becomes a root keeps the values it had in force as its own.
+ * as parent. What a moved branch inherits it now inherits from its new parent, and its overrides
+ * stay. The tree keeps its single root: the root cannot be given a parent, and a child cannot be
+ * dropped from the list, since that would leave it without one.
  */
 export async function updateBranchRelationships(input: BranchRelationshipInput): Promise<Branch> {
   return Branch.whileLocked(async (trx) => {
     const branch = await lockedBranch(input.id, trx);
-    const parentBranchId =
-      input.parentBranchId === undefined ? branch.parentBranchId : input.parentBranchId;
+    if (branch.isRoot && input.parentBranchId !== undefined) {
+      throw new Exception(`${branch.name} er øverst i treet og kan ikke flyttes`, {
+        status: 422,
+        code: "E_ROOT_CANNOT_MOVE",
+      });
+    }
+    const parentBranchId = input.parentBranchId ?? branch.parentBranchId;
     const currentChildIds = (
       await trx.from("branches").where("parent_branch_id", input.id).select("id")
     ).map((child: { id: string }) => child.id);
     const childBranchIds = input.childBranchIds ?? currentChildIds;
     await assertNoCycle(input.id, parentBranchId, childBranchIds, trx);
-    await keepValuesInForce(trx, [
-      ...(parentBranchId === null && branch.parentBranchId !== null ? [input.id] : []),
-      ...(input.childBranchIds === undefined
-        ? []
-        : currentChildIds.filter((id) => !input.childBranchIds?.includes(id))),
-    ]);
+    const detached = currentChildIds.filter((id) => !childBranchIds.includes(id));
+    if (detached.length > 0) {
+      const names = await Branch.namesByIds(detached);
+      throw new Exception(
+        `${[...names.values()].join(", ")} kan ikke løsrives fra treet; flytt heller til en annen filial`,
+        { status: 422, code: "E_BRANCH_CANNOT_BE_DETACHED" },
+      );
+    }
 
     branch.merge(
       definedEntries({
@@ -137,19 +138,27 @@ export async function updateBranchRelationships(input: BranchRelationshipInput):
     );
     await branch.save();
 
-    if (input.childBranchIds !== undefined) {
+    if (input.childBranchIds !== undefined && input.childBranchIds.length > 0) {
       await Branch.query({ client: trx })
-        .where("parent_branch_id", input.id)
-        .whereNotIn("id", input.childBranchIds)
-        .update({ parent_branch_id: null });
-      if (input.childBranchIds.length > 0) {
-        await Branch.query({ client: trx })
-          .whereIn("id", input.childBranchIds)
-          .update({ parent_branch_id: input.id });
-      }
+        .whereIn("id", input.childBranchIds)
+        .update({ parent_branch_id: input.id });
     }
     return lockedBranch(input.id, trx);
   });
+}
+
+/**
+ * The root is a scope, never a place: nothing is ordered from, handed out at, delivered to, put on
+ * a waiting list at or matched at "Alle filialer". Called wherever a request sets a place-anchored branch.
+ */
+export async function assertNotRoot(branchId: string): Promise<void> {
+  const root = await Branch.root();
+  if (branchId === root.id) {
+    throw new Exception(`Velg en filial under ${root.name}`, {
+      status: 400,
+      code: "E_ROOT_IS_NOT_A_PLACE",
+    });
+  }
 }
 
 async function lockedBranch(branchId: string, trx: TransactionClientContract): Promise<Branch> {

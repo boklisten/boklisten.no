@@ -2,6 +2,7 @@ import { DateTime } from "luxon";
 
 import User from "#models/user";
 import type { User as UserDto } from "#shared/user";
+import { rootBranch, TEST_ROOT_BRANCH_ID } from "#tests/branch_fixtures";
 import { fixtureId } from "#tests/fixtures";
 
 let sequence = 0;
@@ -13,15 +14,20 @@ type UserColumns = Omit<UserDto, "dob" | "createdAt" | "vippsLinked"> & {
 
 /**
  * Inserts a user into the test Postgres with every required column filled and a unique email and
- * phone. Pass only what the test cares about.
+ * phone. Pass only what the test cares about. A user given no membership belongs to the root
+ * (`rootBranch`), "no school", as every customer without one does.
  */
 export async function createUser(overrides: Partial<UserColumns> = {}): Promise<User> {
-  sequence++;
+  // Taken before the first await: fixtures are often created in parallel.
+  const number = ++sequence;
+  if (overrides.branchMembershipId === undefined) {
+    await rootBranch();
+  }
   return User.create({
-    id: fixtureId(`c${sequence.toString(16)}`),
-    name: `Kunde ${sequence}`,
-    email: `kunde${sequence}@example.com`,
-    phone: String(90_000_000 + sequence),
+    id: fixtureId(`c${number.toString(16)}`),
+    name: `Kunde ${number}`,
+    email: `kunde${number}@example.com`,
+    phone: String(90_000_000 + number),
     address: "Testveien 1",
     postalCode: "0150",
     emailConfirmed: true,
@@ -29,7 +35,7 @@ export async function createUser(overrides: Partial<UserColumns> = {}): Promise<
     guardianName: null,
     guardianEmail: null,
     guardianPhone: null,
-    branchMembershipId: null,
+    branchMembershipId: TEST_ROOT_BRANCH_ID,
     taskConfirmDetails: false,
     taskSignAgreement: false,
     permission: "customer",
@@ -57,7 +63,7 @@ export function userDouble(overrides: Partial<UserColumns> & { id?: string } = {
     guardianName: null,
     guardianEmail: null,
     guardianPhone: null,
-    branchMembershipId: null,
+    branchMembershipId: TEST_ROOT_BRANCH_ID,
     taskConfirmDetails: false,
     taskSignAgreement: false,
     permission: "customer",
@@ -81,7 +87,7 @@ export function userDto(overrides: Partial<UserDto> = {}): UserDto {
     guardianName: null,
     guardianEmail: null,
     guardianPhone: null,
-    branchMembershipId: null,
+    branchMembershipId: TEST_ROOT_BRANCH_ID,
     taskConfirmDetails: false,
     taskSignAgreement: false,
     permission: "customer",

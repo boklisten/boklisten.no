@@ -4,13 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 
 import { commitValue, useFieldContext } from "@/shared/hooks/form";
 import { api } from "@/shared/utils/apiClient";
-import { toBranchTreeNodeData } from "@/shared/utils/branchTree";
+import { toBranchTreeNodeData, withoutRoot } from "@/shared/utils/branchTree";
 
 export default function SelectBranchesField(
   props: Omit<TreeSelectProps<"checkbox">, "data" | "mode" | "value" | "onChange">,
 ) {
   const field = useFieldContext<string[]>();
-  const { data: branches } = useQuery(api.branches.index.queryOptions());
+  const { data: branches } = useQuery({
+    ...api.branches.index.queryOptions(),
+    select: withoutRoot,
+  });
 
   return (
     <TreeSelect

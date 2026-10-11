@@ -8,7 +8,7 @@ import Branch from "#models/branch";
 import Order from "#models/order";
 import { OrderItemService } from "#services/order_item_service";
 import { OrderService } from "#services/order_service";
-import { createBranch } from "#tests/branch_fixtures";
+import { createBranch, rootBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { fixtureId } from "#tests/fixtures";
 import { createItem } from "#tests/item_fixtures";
@@ -86,6 +86,19 @@ test.group("OrderService.createFromCart", (group) => {
       stored.orderItems.map((orderItem) => [orderItem.type, orderItem.itemId, orderItem.title]),
       [["rent", ITEM_ID, TITLE]],
     );
+  });
+
+  test("rejects an order at the root, even for lines the visibility check skips", async ({
+    assert,
+  }) => {
+    const root = await rootBranch();
+    const buyoutAtRoot = { id: ITEM_ID, branchId: root.id, type: "buyout" } as const;
+
+    await assert.rejects(
+      () => OrderService.createFromCart(CUSTOMER_ID, [buyoutAtRoot]),
+      /Velg en filial under Alle filialer/,
+    );
+    assert.equal(await unplacedOrderCount(), 0);
   });
 
   test("rejects ordering from a branch that is not public", async ({ assert }) => {

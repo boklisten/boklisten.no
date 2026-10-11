@@ -38,7 +38,7 @@ function valuesOf(user: User): AdministrateUserFormValues {
     guardianName: user.guardianName ?? "",
     guardianEmail: user.guardianEmail ?? "",
     guardianPhoneNumber: user.guardianPhone ?? "",
-    branchMembership: user.branchMembershipId ?? "",
+    branchMembership: user.branchMembershipId,
   };
 }
 

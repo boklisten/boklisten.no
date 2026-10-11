@@ -46,7 +46,7 @@ export function userFieldsBody(values: UserInfoFieldValues) {
     address: values.address,
     postalCode: values.postalCode,
     dob: values.birthday,
-    branchMembershipId: values.branchMembership || null,
+    branchMembershipId: values.branchMembership,
     guardianName: values.guardianName || null,
     guardianEmail: values.guardianEmail || null,
     guardianPhone: values.guardianPhoneNumber || null,
@@ -78,21 +78,21 @@ export type UserInfoPart =
 
 /**
  * The parts a customer has yet to fill in: the details the backend requires (`invalidUserFields`)
- * and, while none is chosen, the optional school.
+ * and, while none is chosen, the optional school. A member of the root (`rootBranchId`) has no
+ * school, so they are asked about it like a customer who never chose one.
  */
-export function missingUserInfo(values: UserInfoFieldValues): Set<UserInfoPart> {
+export function missingUserInfo(
+  values: UserInfoFieldValues,
+  rootBranchId: string,
+): Set<UserInfoPart> {
   const missing = new Set<UserInfoPart>();
-  for (const part of [
-    "phoneNumber",
-    "name",
-    "address",
-    "postalCode",
-    "birthday",
-    "branchMembership",
-  ] as const) {
+  for (const part of ["phoneNumber", "name", "address", "postalCode", "birthday"] as const) {
     if (!values[part].trim()) {
       missing.add(part);
     }
+  }
+  if (!values.branchMembership.trim() || values.branchMembership === rootBranchId) {
+    missing.add("branchMembership");
   }
   if (
     isUnder18(new Date(values.birthday)) &&

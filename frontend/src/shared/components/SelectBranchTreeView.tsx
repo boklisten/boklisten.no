@@ -1,9 +1,11 @@
 import type { Branch } from "@boklisten/backend/shared/branch";
 import { NavLink, Stack, Title, Tree, useTree } from "@mantine/core";
 import { IconChevronRight } from "@tabler/icons-react";
-import { Activity, useState } from "react";
+import { Activity, useMemo, useState } from "react";
 
 import { getBranchNodeShortLabel, toBranchTreeNodeData } from "@/shared/utils/branchTree";
+
+const NO_BRANCHES: Branch[] = [];
 
 /**
  * The branch tree as a picker. `selectedBranchId` is the highlighted branch; when it changes from
@@ -23,19 +25,28 @@ export default function SelectBranchTreeView({
 }) {
   const [expandedState, setExpandedState] = useState<Record<string, boolean>>({});
   const tree = useTree({ expandedState, onExpandedStateChange: setExpandedState });
+  // Memoised by hand: `Tree` re-initialises its expanded state whenever `data` is a new array,
+  // which undoes every click if the nodes are rebuilt on each render, and the React Compiler
+  // leaves this call alone (checked in the compiled output) because its result feeds the
+  // render-phase state adjustment below. One shared empty list while the branches load, for the
+  // same reason.
+  const stableBranches = branches.length === 0 ? NO_BRANCHES : branches;
+  const data = useMemo(() => toBranchTreeNodeData(stableBranches), [stableBranches]);
 
-  // When the selected branch changes from outside, open the path down to it. Done during render
-  // (the "adjust state when a prop changes" pattern), keyed on the ancestor list so it runs once
-  // per change and also once the branches have loaded.
+  // Open the top node ("Alle filialer") once the branches arrive, so the page does not start on a single
+  // collapsed row, and whenever the selected branch changes from outside (a link, the URL) open
+  // the path down to it. Both are done during render (the "adjust state when a prop changes"
+  // pattern), keyed so each runs once per change, and as one state update.
   const ancestors = selectedBranchId === null ? [] : ancestorIds(branches, selectedBranchId);
-  const ancestorKey = ancestors.join(",");
-  const [appliedAncestorKey, setAppliedAncestorKey] = useState("");
-  if (ancestorKey !== appliedAncestorKey) {
-    setAppliedAncestorKey(ancestorKey);
-    if (!ancestors.every((id) => expandedState[id])) {
+  const toOpen = [...data.map((node) => node.value), ...ancestors];
+  const openKey = toOpen.join(",");
+  const [appliedOpenKey, setAppliedOpenKey] = useState("");
+  if (openKey !== appliedOpenKey) {
+    setAppliedOpenKey(openKey);
+    if (!toOpen.every((id) => expandedState[id])) {
       setExpandedState({
         ...expandedState,
-        ...Object.fromEntries(ancestors.map((id) => [id, true])),
+        ...Object.fromEntries(toOpen.map((id) => [id, true])),
       });
     }
   }
@@ -45,7 +56,7 @@ export default function SelectBranchTreeView({
       <Title order={3}>{label}</Title>
       <Tree
         tree={tree}
-        data={toBranchTreeNodeData(branches)}
+        data={data}
         renderNode={({ node, expanded, hasChildren, elementProps }) => (
           <NavLink
             {...elementProps}

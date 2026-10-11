@@ -11,6 +11,7 @@ import { VippsLoginClient } from "#services/vipps/vipps_login_client";
 import { clientOrigin } from "#config/app";
 import { LoginService } from "#services/login_service";
 import type { VippsUser } from "#types/user";
+import { rootBranch } from "#tests/branch_fixtures";
 import { mock, unchecked } from "#tests/test-doubles";
 import { createUser } from "#tests/user_fixtures";
 
@@ -178,6 +179,10 @@ test.group("AuthVippsService.handleCallback()", (group) => {
 test.group("AuthVippsService.handleCallback() destination", (group) => {
   let sandbox: sinon.SinonSandbox;
   group.each.setup(() => testUtils.db().truncate());
+  // A new account becomes a member of the root, so the tree needs one.
+  group.each.setup(async () => {
+    await rootBranch();
+  });
   group.each.setup(() => {
     sandbox = createSandbox();
     sandbox.stub(LoginService, "login").resolves();

@@ -21,7 +21,7 @@ lives there. Pages that used to be flat lists (Signaturer, Brukere) become tabs 
 
 - **Root**: the one branch with `parent_branch_id IS NULL`. There is never more than one. It is a
   real row so no query has a null special case; "root" is derived (no parent), never a flag or a
-  hard-coded id. Its name is "Alle", its `childLabel` "selskap".
+  hard-coded id. Its name is "Alle filialer" (Adrian, 2026-10-12; "Alle" was the first choice), its `childLabel` "selskap".
 - **Node**: any branch, root included.
 - **Subtree of X**: X and every descendant of X.
 - **Visibility**: one boolean, `visibleToCustomers` (column `visible_to_customers_override`):
@@ -154,9 +154,10 @@ Head office on the root gets everything either way.
 ### 1.7 The customer's school field
 
 - The tree data (`api.branches.index`) now contains the root for every viewer. `SelectBranchField`
-  renders it as the first option, labelled "Jeg går ikke på noen skole", and `clearable` is off.
+  renders it as the first option, labelled "Ingen skole" (Adrian, 2026-10-12; "Jeg går ikke på noen
+  skole" was the first choice, too long), and `clearable` is off.
   New customers start on it. The customer can always switch school, never clear.
-- The label is field copy, not the root's name. Admins see the root as "Alle".
+- The label is field copy, not the root's name. Admins see the root as "Alle filialer".
 - Customers never see a company: their result has no connectors, and `toBranchTreeNodeData`
   already promotes a node whose parent is absent to a top-level node under its full name.
 - The public order walk is unchanged: `Branch.publicTree` already skips non-public nodes (the root
@@ -169,7 +170,7 @@ Head office on the root gets everything either way.
 | Question                  | Decision                                                                         | Why                                                                                                                |
 | ------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Virtual or real root      | Real row                                                                         | No null special case in any query; membership can be NOT NULL                                                      |
-| Root name                 | "Alle", children "selskap"                                                       | Reads as "everyone" in Filialer, not as a company                                                                  |
+| Root name                 | "Alle filialer", children "selskap"                                              | Reads as "everything" in Filialer, not as a company                                                                |
 | Visibility levels         | One boolean `visibleToCustomers`; `admin` and `employee` both became `false`     | Home nodes already hide everything above a school employee; a third level was a second boundary with its own guard |
 | "No school" for customers | Root membership shown as a named, unremovable option                             | Empty required field reads as a mistake; privatists are the main funnel                                            |
 | Employee scope storage    | Separate `scope_branch_id`, one node per user                                    | Membership (teacher at a class) and scope (works for the school) are different things                              |
@@ -287,7 +288,7 @@ including the eight former admin nodes; a guest gets 101, none hidden; `/branche
 
 Not in this step: the root, users.
 
-### Step 2. One root
+### Step 2. One root (done 2026-10-11)
 
 **Value**: the tree has a single top node, so "everything" is a node you can select in Filialer,
 and new branches are always created under a parent.
@@ -295,7 +296,7 @@ and new branches are always created under a parent.
 Backend
 
 - Migration `create_root_branch`:
-  - Insert the root (`newObjectId()`, name "Alle", `local_name NULL`, `child_label 'selskap'`,
+  - Insert the root (`newObjectId()`, name "Alle filialer", `local_name NULL`, `child_label 'selskap'`,
     `visible_to_customers_override false`, every other `*_override` set to today's Boklisten.no AS
     values so the `branches_*_override_at_root` checks hold; the companies keep their own
     overrides, so nothing they inherit changes).
@@ -328,13 +329,22 @@ Frontend
   parent field in that modal is read-only.
 - `BranchRelationshipSettings`: the root shows no parent picker.
 
-Verify: Filialer shows "Alle" with both companies under it; creating a branch under Ullern gives
-it Ullern as parent; the public order flow at `/bestilling` is unchanged; `GET /branches` as a
-customer includes the root and the public branches and no company.
+Verified: Filialer shows "Alle filialer" (button "Nytt selskap") with both companies under it; "Nytt
+årskull" on Ullern created a child with Ullern as parent and every field inherited; `/bestilling`
+unchanged (Privatist and VGS at the top, `topLabel` null); a guest's `GET /branches` has 102
+branches: the root, the public ones and no company. Detaching a child, moving the root and
+creating without a parent are refused (422); a waiting-list entry at the root is refused (400).
+
+As built: `publicTreeTo` skips the root when deriving `topLabel` (Boklisten.no AS has no child
+label, so the walk would otherwise reach the root's "selskap"); `keepValuesInForce` is gone
+(nothing can become a root); test fixtures put every parentless fixture under one test root
+(`rootBranch()` in `tests/branch_fixtures.ts`); the migration hard-codes the root's override
+values, not ids; `assertNotRoot` also guards opening hours. The staging branch "Steg 2
+testklasse" under Ullern is left over from the check (staging resets nightly).
 
 Not in this step: anything about users.
 
-### Step 3. Membership is never empty
+### Step 3. Membership is never empty (done 2026-10-12)
 
 **Value**: null membership disappears from the codebase; privatists are an explicit, visible state
 instead of a missing one.
@@ -353,13 +363,14 @@ Backend
 - `BranchMembersController.destroyDirect` / `destroyIndirect`: set the root instead of null, and
   refuse on the root (there is nothing above it to move people to).
 - `SignaturesController.sendLink`: `branch?.name ?? "en filial"` becomes the branch name; on the
-  root use the copy "Boklisten" (confirm the DispatchService template reads well).
+  root keep the copy "en filial" (Adrian, 2026-10-12; "Boklisten" read as "fra Boklisten via
+  Boklisten.no").
 
 Frontend
 
-- `SelectBranchField`: `clearable` off; render the root node first with the label "Jeg går ikke på
-  noen skole" (override the label where `parentBranchId === null`, in `renderNode`); the hint
-  text stays. Default value for new forms is the root id (take it from the loaded branches).
+- `SelectBranchField`: `clearable` off; render the root node first with the label "Ingen skole"
+  (as a leaf of its own, since a parent node in `TreeSelect` only expands); the hint text stays.
+  Default value for new forms is the root id (take it from the loaded branches).
 - Remove `branchMembership: user.branchMembershipId ?? ""` fallbacks in `UserSettingsForm`,
   `AdministrateUserForm`, and `values.branchMembership || null` in `UserInfoFields`.
 - `IdentityBadge`, `CustomerHeader`, `SearchSpotlight`, `useStandCart`: wherever "no branch" is
@@ -371,9 +382,30 @@ Frontend
   step 6; until then the root's direct-member list is long, which is acceptable for an admin-only
   page for a few days.
 
-Verify: a new SMS sign-up without choosing a school lands on the root; the tasks page shows "Jeg
-går ikke på noen skole" selected and offers no clear button; switching to Ullern VG1 and back
-works; "fjern direkte medlemmer" on Ullern VG1 moves the pupils to the root.
+Verify: a new SMS sign-up without choosing a school lands on the root; the tasks page shows "Ingen
+skole" selected and offers no clear button; switching to Ullern VG1 and back works; "fjern direkte
+medlemmer" on Ullern VG1 moves the pupils to the root.
+
+Verified: an SMS sign-up with the school left as is lands on the root; the sign-up form and the
+tasks page show "Ingen skole" selected with no clear button (the task asks a root member about
+their school, as it asked a customer without one); switching to Ullern VG1 ST A and back
+auto-saves both ways; "Fjern medlemmer" on Ullern VG1 ST H moved its pupil to the root (restored
+by SQL); the root's Elever tab shows no removal buttons and the endpoint answers 400 on the root.
+
+As built: the root is offered as a leaf of its own above the companies and schools (a parent node
+in `TreeSelect` only expands), labelled "Ingen skole" for both perspectives; the migration skips
+an empty tree (a truncated test database has no root); `BranchMembershipService.moveMembersToRoot`
+holds the two removal actions; `Branch.schoolNamesByIds` (root left out) names memberships in the
+signature gallery and the active-books rows, the users and order-manager reports join the
+membership name with `parent_branch_id IS NOT NULL`, `useBranchNames` and the spotlight leave the
+root out, and the match cohort tiebreak and the stand statistics treat a root member as having no
+class; `userFieldsFrom` no longer touches the membership (the two update validators require it,
+registration takes it optionally); test fixtures default every user to the test root. After the
+fresh review (2026-10-12): `OrderService.createFromCart` calls `assertNotRoot` on the order's branch
+(the visibility loop skips extend/buyout lines, so a crafted cart could otherwise land at the root);
+the membership foreign key is `ON DELETE RESTRICT` (it was `SET NULL`, which a NOT NULL column cannot
+honour); the sign-up form and the tasks page show an error with "Prøv igjen" when the branch list
+fails instead of an endless skeleton.
 
 Not in this step: scope, Signaturer, Brukere.
 
@@ -425,7 +457,7 @@ Backend
 Frontend
 
 - `EmployeesTab`: a "Filial" column with the home node's name (`useBranchNames`), and a picker in
-  the row (the existing `SelectBranchField` pattern, root selectable, labelled "Alle" here)
+  the row (the existing `SelectBranchField` pattern, root selectable, labelled "Alle filialer" here)
   that calls `setPermission` with the node. Admin rows show the root, disabled.
 - `AddEmployeesModal`: optional home node, default root.
 
@@ -529,7 +561,7 @@ Frontend
   route if present.
 - "Ny <childLabel>" shows only for admins (writes stay admin).
 
-Verify: employee persona homed at Ullern sees "Alle", the company and VGS greyed, Ullern selected,
+Verify: employee persona homed at Ullern sees "Alle filialer", the company and VGS greyed, Ullern selected,
 classes below; cannot click the company; sees Brukere, Signering, Aktive bøker; sees no Betaling
 tab. Admin persona is unchanged.
 
@@ -594,7 +626,7 @@ as a school with empty settings.
 Frontend only, with the `frontend-design` skill:
 
 - Two tab groups, Innhold and Innstillinger, per 1.6. Mobile layout checked at phone width.
-- Root: title "Alle" and child-creation action read as the company level ("Nytt selskap"); the
+- Root: title "Alle filialer" and child-creation action read as the company level ("Nytt selskap"); the
   settings group shows Generelt only.
 - `childLabel`-driven naming everywhere a node's children are created or counted.
 
