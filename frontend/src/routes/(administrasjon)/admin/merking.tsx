@@ -1,7 +1,10 @@
 import { Container, Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 
 import BookCard from "@/features/merking/BookCard";
+import MerkingScannerModal from "@/features/merking/MerkingScannerModal";
+import type { MerkingScan } from "@/features/merking/MerkingScannerModal";
 import PrintStickersButton from "@/features/merking/PrintStickersButton";
 import RegistrationConfirm from "@/features/merking/RegistrationConfirm";
 import ScannedBlidList from "@/features/merking/ScannedBlidList";
@@ -19,9 +22,13 @@ export const Route = createFileRoute("/(administrasjon)/admin/merking")({
   component: MerkingPage,
 });
 
-/** Scan a book's ISBN, then every unique-ID sticker going onto copies of it, then confirm. */
+/**
+ * Scan a book's ISBN, then every unique-ID sticker going onto copies of it, then confirm. A barcode
+ * reader scans straight onto the page; a phone opens the camera from a step's button.
+ */
 function MerkingPage() {
   const session = useBlidRegistrationSession();
+  const [scanning, setScanning] = useState<MerkingScan | null>(null);
 
   /** The physical scanner has no notice UI of its own, so a code that led nowhere becomes a toast. */
   async function scan(code: string) {
@@ -43,13 +50,18 @@ function MerkingPage() {
           <PrintStickersButton />
         </Group>
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-          <BookCard book={session.book} onClear={session.clearBook} />
+          <BookCard
+            book={session.book}
+            onClear={session.clearBook}
+            onScan={() => setScanning("isbn")}
+          />
           <ScannedBlidList
             rows={session.rows}
             book={session.book}
             receipt={session.receipt}
             onRemove={session.removeRow}
             onDismissReceipt={session.dismissReceipt}
+            onScan={() => setScanning("blid")}
           />
         </SimpleGrid>
         <RegistrationConfirm
@@ -59,6 +71,14 @@ function MerkingPage() {
           onConfirm={session.register}
         />
       </Stack>
+      <MerkingScannerModal
+        scan={scanning}
+        book={session.book}
+        rows={session.rows}
+        onClose={() => setScanning(null)}
+        onScan={session.submitCode}
+        onRemove={session.removeRow}
+      />
     </Container>
   );
 }

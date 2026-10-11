@@ -49,7 +49,7 @@ export default function StickerGuide() {
             klistremerker.
           </GuideStep>
           <GuideStep step={2} title="Klistre på">
-            Sett det ene klistremerket på første side i boka og det andre på baksiden.
+            Sett det ene klistremerket på baksiden av boka og det andre på første side i omslaget.
           </GuideStep>
           <GuideStep step={3} title="Koble til bøker">
             Skann bokas ISBN og IDene her på Merking, slik at bøkene blir klare til utlevering.
