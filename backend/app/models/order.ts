@@ -3,6 +3,7 @@ import db from "@adonisjs/lucid/services/db";
 import { beforeCreate, beforeFetch, beforeFind, hasMany, hasOne } from "@adonisjs/lucid/orm";
 import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 import type { ModelQueryBuilderContract } from "@adonisjs/lucid/types/model";
+import type { ChainableContract } from "@adonisjs/lucid/types/querybuilder";
 import type { HasMany, HasOne } from "@adonisjs/lucid/types/relations";
 
 import Delivery from "#models/delivery";
@@ -107,6 +108,40 @@ export default class Order extends OrderSchema {
       void query.whereIn("order_items.type", [...types]);
     }
     return (await query.select("order_items.id").first()) !== null;
+  }
+
+  /**
+   * Narrows a query on `orders` to the open ones: placed, with a line the stand still owes (see
+   * `OrderItem.whereOpen`). The order manager lists exactly these.
+   */
+  static whereOpen<Query extends ChainableContract>(query: Query): Query {
+    return query.where("orders.placed", true).whereExists((lines) => {
+      void OrderItem.whereOpen(
+        lines.from("order_items").whereColumn("order_items.order_id", "orders.id"),
+      );
+    });
+  }
+
+  /**
+   * The ids of the customer's open orders, split by whether a payment is recorded on them. A free
+   * order counts as unpaid: there is nothing to refund.
+   */
+  static async openOrdersOf(
+    customerId: string,
+    trx?: TransactionClientContract,
+  ): Promise<{ paid: string[]; unpaid: string[] }> {
+    const rows: { id: string; paid: boolean }[] = await Order.whereOpen(
+      (trx ?? db).from("orders").where("orders.customer_id", customerId),
+    ).select(
+      "orders.id",
+      db.raw("EXISTS (SELECT 1 FROM payments WHERE payments.order_id = orders.id) AS paid"),
+    );
+    const paid: string[] = [];
+    const unpaid: string[] = [];
+    for (const row of rows) {
+      (row.paid ? paid : unpaid).push(row.id);
+    }
+    return { paid, unpaid };
   }
 
   /** The orders with the given ids, keyed by id; ids that do not exist are absent. */

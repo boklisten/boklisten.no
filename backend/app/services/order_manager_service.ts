@@ -24,18 +24,14 @@ import { isOpenOrderItem } from "#shared/order/open-order-item";
 const MAILBOX_PRODUCT = "3584";
 
 /**
- * Placed orders with a book still owed, on the wanted branches. Written against `orders` so it
+ * The open orders (`Order.whereOpen`) on the wanted branches. Written against `orders` so it
  * serves both the model query of the list and the joined queries of the exports.
  */
 function whereOpenOrder<Query extends ChainableContract>(
   query: Query,
   filter: OrderManagerFilter,
 ): Query {
-  void query.where("orders.placed", true).whereExists((lines) => {
-    void OrderItem.whereOpen(
-      lines.from("order_items").whereColumn("order_items.order_id", "orders.id"),
-    );
-  });
+  Order.whereOpen(query);
   if (filter.branchIds && filter.branchIds.length > 0) {
     void query.whereIn("orders.branch_id", filter.branchIds);
   }

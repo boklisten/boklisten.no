@@ -21,6 +21,7 @@ import { createInvoice } from "#tests/invoice_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createTestRound, seedTestCatalogue } from "#tests/matches/match-testing-utils";
 import { createOrder } from "#tests/order_fixtures";
+import { createPayment } from "#tests/payment_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 const FROM = "5d765db5fc8c47001c408d81";
@@ -190,7 +191,6 @@ test.group("UserManagementService.mergeUsers", (group) => {
 
 test.group("UserManagementService.deleteUser", (group) => {
   let sandbox: sinon.SinonSandbox;
-  let activeOrdersStub: sinon.SinonStub;
   let activeCustomerItemsStub: sinon.SinonStub;
 
   group.each.setup(() => testUtils.db().truncate());
@@ -200,7 +200,6 @@ test.group("UserManagementService.deleteUser", (group) => {
   });
   group.each.setup(() => {
     sandbox = createSandbox();
-    activeOrdersStub = sandbox.stub(Order, "hasOpenLines").resolves(false);
     activeCustomerItemsStub = sandbox.stub(CustomerItem, "hasActive").resolves(false);
   });
   group.each.teardown(() => sandbox.restore());
@@ -275,10 +274,57 @@ test.group("UserManagementService.deleteUser", (group) => {
     assert.isNull(handover.dischargesSenderObligationId);
   });
 
-  test("refuses when the customer has active orders", async ({ assert }) => {
-    activeOrdersStub.resolves(true);
-    await assert.rejects(() => UserManagementService.deleteUser(FROM));
+  test("deletes the customer's unpaid open orders and keeps the settled ones", async ({
+    assert,
+  }) => {
+    const [branch, item] = await Promise.all([createBranch(), createItem()]);
+    const open = await createOrder({
+      branchId: branch.id,
+      customerId: FROM,
+      orderItems: [{ itemId: item.id }],
+    });
+    const handedOut = await createOrder({
+      branchId: branch.id,
+      customerId: FROM,
+      orderItems: [{ itemId: item.id, handout: true }],
+    });
+    const unplaced = await createOrder({
+      branchId: branch.id,
+      customerId: FROM,
+      placed: false,
+      orderItems: [{ itemId: item.id }],
+    });
+
+    await UserManagementService.deleteUser(FROM);
+
+    assert.isNull(await User.find(FROM));
+    assert.isNull(await Order.find(open.id));
+    assert.isNull((await Order.getOrFail(handedOut.id)).customerId);
+    assert.isNull((await Order.getOrFail(unplaced.id)).customerId);
+  });
+
+  test("refuses while an open order of the customer has a payment", async ({ assert }) => {
+    const [branch, item] = await Promise.all([createBranch(), createItem()]);
+    const paid = await createOrder({
+      branchId: branch.id,
+      customerId: FROM,
+      amount: 100,
+      orderItems: [{ itemId: item.id, type: "partly-payment", amount: 100, unitPrice: 100 }],
+    });
+    await createPayment({ orderId: paid.id });
+    const unpaid = await createOrder({
+      branchId: branch.id,
+      customerId: FROM,
+      orderItems: [{ itemId: item.id }],
+    });
+
+    await assert.rejects(
+      () => UserManagementService.deleteUser(FROM),
+      "Kunden har betalte bestillinger som ikke er levert og kan ikke slettes. Refunder eller kanseller dem først.",
+    );
     assert.isNotNull(await User.find(FROM));
+    assert.equal((await Order.getOrFail(paid.id)).customerId, FROM);
+    assert.equal((await Order.getOrFail(unpaid.id)).customerId, FROM);
   });
 
   test("refuses when the customer has active customer items", async ({ assert }) => {

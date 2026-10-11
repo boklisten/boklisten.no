@@ -54,10 +54,13 @@ function assertIsCustomer(user: User, action: string) {
 }
 
 /**
- * Deletes a customer who has nothing open: no active order, book, invoice or undischarged match
- * obligation. The foreign keys cascade (signatures, login tokens, settled match participations) or
- * set the reference to null: orders, customer items and invoices are kept for the book history and
- * the accounts (invoices keep their copy of the customer), as are handovers, messages and sendouts.
+ * Deletes a customer who has no active book, invoice or undischarged match obligation. Orders the
+ * stand still owes books on go with the customer, since an open order of a customer who no longer
+ * exists can never be fulfilled; a paid one blocks the deletion until it is refunded or cancelled.
+ * The remaining foreign keys cascade (signatures, login tokens, settled match participations) or
+ * set the reference to null: settled orders, customer items and invoices are kept for the book
+ * history and the accounts (invoices keep their copy of the customer), as are handovers, messages
+ * and sendouts.
  */
 async function deleteUser(userId: string) {
   const user = await User.find(userId);
@@ -66,15 +69,11 @@ async function deleteUser(userId: string) {
   }
   assertIsCustomer(user, "slettes");
 
-  const [activeOrders, activeCustomerItems, activeInvoices, activeMatches] = await Promise.all([
-    Order.hasOpenLines(userId),
+  const [activeCustomerItems, activeInvoices, activeMatches] = await Promise.all([
     CustomerItem.hasActive(userId),
     Invoice.hasActive(userId),
     countActiveMatches([userId]),
   ]);
-  if (activeOrders) {
-    throw new BadRequestException("Kunden har aktive bestillinger og kan ikke slettes");
-  }
   if (activeCustomerItems) {
     throw new BadRequestException("Kunden har aktive bøker og kan ikke slettes");
   }
@@ -85,7 +84,18 @@ async function deleteUser(userId: string) {
     throw new BadRequestException("Kunden har aktive overleveringer og kan ikke slettes");
   }
 
-  await user.delete();
+  await db.transaction(async (trx) => {
+    const { paid, unpaid } = await Order.openOrdersOf(userId, trx);
+    if (paid.length > 0) {
+      throw new BadRequestException(
+        "Kunden har betalte bestillinger som ikke er levert og kan ikke slettes. Refunder eller kanseller dem først.",
+      );
+    }
+    if (unpaid.length > 0) {
+      await trx.from("orders").whereIn("id", unpaid).delete();
+    }
+    await user.useTransaction(trx).delete();
+  });
 }
 
 /** Moves every reference from the source user onto the target user, then deletes the source user. */
