@@ -12,7 +12,7 @@ import {
 } from "#services/branch_service";
 import { createBranch } from "#tests/branch_fixtures";
 
-const visibilityOf = async (id: string) => (await Branch.findOrFail(id)).visibility;
+const visibleOf = async (id: string) => (await Branch.findOrFail(id)).visibleToCustomers;
 
 const parentOf = async (id: string) => (await Branch.findOrFail(id)).parentBranchId;
 
@@ -31,7 +31,7 @@ test.group("branch_service", (group) => {
     });
     assert.equal(branch.name, "Flåklypa vgs");
     assert.isNull(branch.address);
-    assert.equal(branch.visibility, "employee");
+    assert.isFalse(branch.visibleToCustomers);
     assert.deepEqual(branch.rentPeriods, []);
   });
 
@@ -145,14 +145,14 @@ test.group("branch_service", (group) => {
 
 /** Sonans → Sonans Oslo → Sonans Oslo kveld, plus Sonans Bergen; every campus inherits from Sonans. */
 async function sonansTree() {
-  const sonans = await createBranch({ name: "Sonans", visibility: "employee" });
+  const sonans = await createBranch({ name: "Sonans", visibleToCustomers: false });
   const oslo = await createBranch({ name: "Sonans Oslo", parentBranchId: sonans.id });
   const kveld = await createBranch({ name: "Sonans Oslo kveld", parentBranchId: oslo.id });
   const bergen = await createBranch({ name: "Sonans Bergen", parentBranchId: sonans.id });
   return { sonans, oslo, kveld, bergen };
 }
 
-const overrideOf = async (id: string) => (await Branch.findOrFail(id)).overrides.visibility;
+const overrideOf = async (id: string) => (await Branch.findOrFail(id)).overrides.visibleToCustomers;
 
 test.group("branch_service inheritance", (group) => {
   group.each.setup(() => testUtils.db().truncate());
@@ -161,9 +161,9 @@ test.group("branch_service inheritance", (group) => {
     const { sonans, oslo, kveld } = await sonansTree();
     assert.isNull(await overrideOf(kveld.id));
 
-    await updateBranch(sonans.id, { visibility: "admin" });
-    assert.equal(await visibilityOf(oslo.id), "admin");
-    assert.equal(await visibilityOf(kveld.id), "admin");
+    await updateBranch(sonans.id, { visibleToCustomers: true });
+    assert.isTrue(await visibleOf(oslo.id));
+    assert.isTrue(await visibleOf(kveld.id));
     assert.isNull(await overrideOf(kveld.id));
   });
 
@@ -171,49 +171,50 @@ test.group("branch_service inheritance", (group) => {
     assert,
   }) => {
     const { sonans, oslo, kveld, bergen } = await sonansTree();
-    await updateBranch(oslo.id, { visibility: "public" });
-    assert.equal(await overrideOf(oslo.id), "public");
-    assert.equal(await visibilityOf(kveld.id), "public");
-    assert.equal(await visibilityOf(bergen.id), "employee");
+    await updateBranch(oslo.id, { visibleToCustomers: true });
+    assert.isTrue(await overrideOf(oslo.id));
+    assert.isTrue(await visibleOf(kveld.id));
+    assert.isFalse(await visibleOf(bergen.id));
 
-    await updateBranch(sonans.id, { visibility: "admin" });
-    assert.equal(await visibilityOf(oslo.id), "public");
-    assert.equal(await visibilityOf(kveld.id), "public");
-    assert.equal(await visibilityOf(bergen.id), "admin");
+    await updateBranch(sonans.id, { visibleToCustomers: true });
+    await updateBranch(oslo.id, { visibleToCustomers: false });
+    assert.isFalse(await visibleOf(oslo.id));
+    assert.isFalse(await visibleOf(kveld.id));
+    assert.isTrue(await visibleOf(bergen.id));
   });
 
   test("a value equal to the parent's is an override too, and null inherits again", async ({
     assert,
   }) => {
     const { sonans, oslo, kveld } = await sonansTree();
-    await updateBranch(oslo.id, { visibility: "employee" });
-    assert.equal(await overrideOf(oslo.id), "employee");
+    await updateBranch(oslo.id, { visibleToCustomers: false });
+    assert.isFalse(await overrideOf(oslo.id));
 
     // The override holds the value whatever changes above.
-    await updateBranch(sonans.id, { visibility: "admin" });
-    assert.equal(await visibilityOf(oslo.id), "employee");
-    assert.equal(await visibilityOf(kveld.id), "employee");
+    await updateBranch(sonans.id, { visibleToCustomers: true });
+    assert.isFalse(await visibleOf(oslo.id));
+    assert.isFalse(await visibleOf(kveld.id));
 
-    await updateBranch(oslo.id, { visibility: null });
+    await updateBranch(oslo.id, { visibleToCustomers: null });
     assert.isNull(await overrideOf(oslo.id));
-    assert.equal(await visibilityOf(kveld.id), "admin");
+    assert.isTrue(await visibleOf(kveld.id));
   });
 
   test("a change above never touches an override below, even one it comes to equal", async ({
     assert,
   }) => {
     const { sonans, oslo } = await sonansTree();
-    await updateBranch(oslo.id, { visibility: "public" });
+    await updateBranch(oslo.id, { visibleToCustomers: true });
 
-    await updateBranch(sonans.id, { visibility: "public" });
-    await updateBranch(sonans.id, { visibility: "admin" });
-    assert.equal(await overrideOf(oslo.id), "public");
-    assert.equal(await visibilityOf(oslo.id), "public");
+    await updateBranch(sonans.id, { visibleToCustomers: true });
+    await updateBranch(sonans.id, { visibleToCustomers: false });
+    assert.isTrue(await overrideOf(oslo.id));
+    assert.isTrue(await visibleOf(oslo.id));
   });
 
   test("a root cannot inherit", async ({ assert }) => {
     const { sonans } = await sonansTree();
-    await assert.rejects(() => updateBranch(sonans.id, { visibility: null }), /arve/);
+    await assert.rejects(() => updateBranch(sonans.id, { visibleToCustomers: null }), /arve/);
   });
 
   test("every inherited field resolves the same way", async ({ assert }) => {
@@ -226,10 +227,10 @@ test.group("branch_service inheritance", (group) => {
       ["sellPercentage", 0.5],
     ] as const;
     const { sonans, oslo, kveld, bergen } = await sonansTree();
-    await updateBranch(bergen.id, { visibility: "public" });
+    await updateBranch(bergen.id, { visibleToCustomers: true });
 
     for (const [field, value] of fields) {
-      await updateBranch(sonans.id, { [field]: value, visibility: "employee" });
+      await updateBranch(sonans.id, { [field]: value, visibleToCustomers: false });
       const [child, grandchild, sibling] = await Promise.all(
         [oslo.id, kveld.id, bergen.id].map((id) => Branch.findOrFail(id)),
       );
@@ -237,21 +238,25 @@ test.group("branch_service inheritance", (group) => {
       assert.equal(grandchild?.[field], value, field);
       assert.isNull(grandchild?.overrides[field], field);
       assert.equal(sibling?.[field], value, field);
-      assert.equal(sibling?.visibility, "public");
+      assert.isTrue(sibling?.visibleToCustomers);
     }
   });
 
   test("a moved branch inherits from its new parent and keeps its overrides", async ({
     assert,
   }) => {
-    const wang = await createBranch({ name: "Wang", visibility: "admin", deliveryByMail: false });
+    const wang = await createBranch({
+      name: "Wang",
+      visibleToCustomers: true,
+      deliveryByMail: false,
+    });
     const { oslo, kveld } = await sonansTree();
     await updateBranch(oslo.id, { deliveryByMail: false, buyoutPercentage: 0.5 });
 
     await updateBranchRelationships({ id: oslo.id, parentBranchId: wang.id });
     const moved = await Branch.findOrFail(oslo.id);
-    assert.equal(moved.visibility, "admin");
-    assert.equal(await visibilityOf(kveld.id), "admin");
+    assert.isTrue(moved.visibleToCustomers);
+    assert.isTrue(await visibleOf(kveld.id));
     // Equal to Wang's value, but still Oslo's own.
     assert.isFalse(moved.overrides.deliveryByMail);
     assert.equal(moved.overrides.buyoutPercentage, 0.5);
@@ -263,19 +268,19 @@ test.group("branch_service inheritance", (group) => {
 
     await updateBranchRelationships({ id: oslo.id, parentBranchId: null });
     const root = await Branch.findOrFail(oslo.id);
-    assert.equal(root.overrides.visibility, "employee");
+    assert.isFalse(root.overrides.visibleToCustomers);
     assert.equal(root.overrides.buyoutPercentage, 0.33);
     assert.isNull(await overrideOf(kveld.id));
 
     // Children dropped from the list become roots the same way.
     await updateBranchRelationships({ id: oslo.id, childBranchIds: [] });
-    assert.equal(await overrideOf(kveld.id), "employee");
+    assert.isFalse(await overrideOf(kveld.id));
   });
 
   test("a branch created under a parent inherits everything", async ({ assert }) => {
     const sonans = await createBranch({
       name: "Sonans",
-      visibility: "admin",
+      visibleToCustomers: false,
       deliveryByMail: false,
       buyoutPercentage: 0.33,
     });
@@ -284,7 +289,7 @@ test.group("branch_service inheritance", (group) => {
       parentBranchId: sonans.id,
     });
     assert.equal(created.parentBranchId, sonans.id);
-    assert.equal(created.visibility, "admin");
+    assert.isFalse(created.visibleToCustomers);
     assert.isFalse(created.deliveryByMail);
     assert.equal(created.buyoutPercentage, 0.33);
     assert.isTrue(Object.values(created.overrides).every((value) => value === null));
@@ -296,25 +301,25 @@ test.group("branch_service inheritance", (group) => {
       parentBranchId: null,
     });
     assert.isNull(created.parentBranchId);
-    assert.equal(created.overrides.visibility, "employee");
+    assert.isFalse(created.overrides.visibleToCustomers);
     assert.isTrue(created.overrides.deliveryAtBranch);
   });
 
   test("inheritBelow clears every override below, and nothing else changes", async ({ assert }) => {
-    const wang = await createBranch({ name: "Wang", visibility: "admin" });
+    const wang = await createBranch({ name: "Wang", visibleToCustomers: true });
     const { sonans, oslo, kveld, bergen } = await sonansTree();
-    await updateBranch(oslo.id, { visibility: "public" });
-    await updateBranch(kveld.id, { visibility: "admin" });
+    await updateBranch(oslo.id, { visibleToCustomers: true });
+    await updateBranch(kveld.id, { visibleToCustomers: false });
 
-    await inheritBelow(oslo.id, "visibility");
-    assert.equal(await overrideOf(oslo.id), "public");
+    await inheritBelow(oslo.id, "visibleToCustomers");
+    assert.isTrue(await overrideOf(oslo.id));
     assert.isNull(await overrideOf(kveld.id));
-    assert.equal(await visibilityOf(kveld.id), "public");
+    assert.isTrue(await visibleOf(kveld.id));
 
-    await inheritBelow(sonans.id, "visibility");
+    await inheritBelow(sonans.id, "visibleToCustomers");
     assert.isNull(await overrideOf(oslo.id));
-    assert.equal(await visibilityOf(kveld.id), "employee");
-    assert.equal(await visibilityOf(bergen.id), "employee");
-    assert.equal(await visibilityOf(wang.id), "admin");
+    assert.isFalse(await visibleOf(kveld.id));
+    assert.isFalse(await visibleOf(bergen.id));
+    assert.isTrue(await visibleOf(wang.id));
   });
 });

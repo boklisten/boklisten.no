@@ -15,7 +15,7 @@ export default class BranchCatalogController {
         .where("branchId", branchId)
         .preload("books", (books) => books.preload("item")),
     ]);
-    if (branch === null || branch.visibility !== "public") {
+    if (branch === null || !branch.visibleToCustomers) {
       // Only public branches are orderable online; the page shows its "no subjects yet" notice.
       return {};
     }

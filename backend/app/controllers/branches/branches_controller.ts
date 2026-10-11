@@ -85,7 +85,7 @@ async function optionalViewer(ctx: HttpContext): Promise<User | null> {
  */
 function mayBeShown(viewer: User | null, branch: Branch): boolean {
   return (
-    canSeeBranch(viewer?.permission ?? null, branch.visibility) ||
+    canSeeBranch(viewer?.permission ?? null, branch.visibleToCustomers) ||
     (viewer !== null &&
       (hasPermissionLevel(viewer.permission, "employee") ||
         viewer.branchMembershipId === branch.id))

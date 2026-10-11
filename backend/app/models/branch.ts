@@ -19,8 +19,7 @@ import { assignObjectId, distinctIds } from "#models/helpers/object_id";
 import { BranchSchema } from "#database/schema";
 import { INHERITED_BRANCH_FIELDS, resolveInherited } from "#shared/branch-inheritance";
 import type { InheritedBranchField } from "#shared/branch-inheritance";
-import type { BranchVisibility } from "#shared/branch-visibility";
-import { visibilitiesFor } from "#shared/branch-visibility";
+import { canSeeBranch } from "#shared/branch-visibility";
 import type { UserPermission } from "#shared/user-permission";
 import type {
   Branch as BranchDto,
@@ -44,14 +43,12 @@ import type {
  *
  * The inherited fields are stored as `<field>Override` columns, `null` where the branch inherits
  * (`shared/branch-inheritance.ts`). Every read through this model also resolves them against the
- * ancestors (hooks below), and the getters named after the fields (`visibility`,
+ * ancestors (hooks below), and the getters named after the fields (`visibleToCustomers`,
  * `paymentResponsible`, …) return the value in force; that is what every reader uses. Writes go
  * through `branch_service.ts`, which keeps the overrides in order.
  */
 export default class Branch extends BranchSchema {
   static override selfAssignPrimaryKey = true;
-
-  declare visibilityOverride: BranchVisibility | null;
 
   /** The values in force, set by the read hooks; see `resolveInheritedValues`. */
   private inheritedValues?: InheritedValues;
@@ -135,8 +132,8 @@ export default class Branch extends BranchSchema {
     void query.preload("periods", (periods) => void periods.orderBy("id"));
   }
 
-  get visibility(): BranchVisibility {
-    return this.inherited().visibility;
+  get visibleToCustomers(): boolean {
+    return this.inherited().visibleToCustomers;
   }
 
   get paymentResponsible(): boolean {
@@ -166,7 +163,7 @@ export default class Branch extends BranchSchema {
   /** What the branch stores per inherited field: its own value, or `null` where it inherits. */
   get overrides(): InheritedOverrides {
     return {
-      visibility: this.visibilityOverride,
+      visibleToCustomers: this.visibleToCustomersOverride,
       paymentResponsible: this.paymentResponsibleOverride,
       responsibleForDelivery: this.responsibleForDeliveryOverride,
       buyoutPercentage: this.buyoutPercentageOverride,
@@ -242,8 +239,9 @@ export default class Branch extends BranchSchema {
    * read names (Æ, Ø and Å after Z).
    */
   static async visibleByName(permission: UserPermission | null): Promise<Branch[]> {
-    const visible = new Set(visibilitiesFor(permission));
-    return byName((await this.query()).filter((branch) => visible.has(branch.visibility)));
+    return byName(
+      (await this.query()).filter((branch) => canSeeBranch(permission, branch.visibleToCustomers)),
+    );
   }
 
   /** The tree customers walk down when ordering: the walk ends at branches that offer subject books. */
@@ -278,7 +276,7 @@ export default class Branch extends BranchSchema {
     const branches = await this.query();
     const byId = new Map(branches.map((branch) => [branch.id, branch]));
     const childrenOf = Map.groupBy(branches, (branch) => branch.parentBranchId ?? "");
-    const isPublic = (branch: Branch) => branch.visibility === "public";
+    const isPublic = (branch: Branch) => branch.visibleToCustomers;
 
     /** The public branches reached from `branch` through hidden ones only. */
     const publicChildren = (branch: Branch): Branch[] =>

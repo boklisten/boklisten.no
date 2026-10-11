@@ -11,7 +11,7 @@
  */
 
 export const INHERITED_BRANCH_FIELDS = [
-  "visibility",
+  "visibleToCustomers",
   "deliveryAtBranch",
   "deliveryByMail",
   "paymentResponsible",

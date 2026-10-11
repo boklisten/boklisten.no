@@ -22,7 +22,7 @@ function sonans(overrides: Partial<Record<string, string>> = {}): InheritanceInp
 
 test.group("branch inheritance resolver", () => {
   test("the field list names the inherited scalars", ({ assert }) => {
-    assert.include(INHERITED_BRANCH_FIELDS, "visibility");
+    assert.include(INHERITED_BRANCH_FIELDS, "visibleToCustomers");
     assert.include(INHERITED_BRANCH_FIELDS, "buyoutPercentage");
     assert.lengthOf(INHERITED_BRANCH_FIELDS, 7);
   });

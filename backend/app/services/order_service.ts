@@ -87,7 +87,7 @@ export const OrderService = {
         .map((cartItem) => cartItem.branchId),
     );
     for (const branch of orderedFrom.values()) {
-      if (branch.visibility !== "public") {
+      if (!branch.visibleToCustomers) {
         throw new BadRequestException(`Det er ikke mulig å bestille fra ${branch.name}`);
       }
     }

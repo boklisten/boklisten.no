@@ -12,7 +12,7 @@ import type { InheritanceInput, InheritedBranchField } from "#shared/branch-inhe
 
 /** What a new root holds; a branch created under a parent inherits every field instead. */
 export const ROOT_VALUES: InheritedValues = {
-  visibility: "employee",
+  visibleToCustomers: false,
   deliveryAtBranch: true,
   deliveryByMail: true,
   paymentResponsible: false,
@@ -21,7 +21,7 @@ export const ROOT_VALUES: InheritedValues = {
   sellPercentage: 1,
 };
 
-/** `overrides` keyed by the model attributes that store them (`visibilityOverride`, …). */
+/** `overrides` keyed by the model attributes that store them (`visibleToCustomersOverride`, …). */
 export function overrideColumns(overrides: Partial<InheritedOverrides>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(overrides)

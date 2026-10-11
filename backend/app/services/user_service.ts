@@ -76,7 +76,7 @@ export async function assertMembershipAllowed(
     return;
   }
   const branch = await Branch.find(nextBranchId);
-  if (branch === null || !canSeeBranch(actorPermission, branch.visibility)) {
+  if (branch === null || !canSeeBranch(actorPermission, branch.visibleToCustomers)) {
     throw new BadRequestException("Du kan ikke velge denne skolen");
   }
 }

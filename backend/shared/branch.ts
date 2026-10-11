@@ -1,5 +1,4 @@
 import type { InheritedBranchField } from "#shared/branch-inheritance";
-import type { BranchVisibility } from "#shared/branch-visibility";
 import type { Period } from "#shared/period";
 
 /** A deadline a VGS branch's books may be rented until. */
@@ -59,11 +58,12 @@ export interface Branch extends BranchPeriods {
   /** What this branch's children represent, e.g. "klasse". */
   childLabel: string | null;
   /**
-   * Who sees the branch; only `public` branches are orderable online. Inherited, like the four
-   * flags and the two percentages below: each is the value in force, and `overrides` says which
-   * the branch sets itself (see `shared/branch-inheritance.ts`).
+   * Whether customers and guests see the branch; staff see every branch. Only visible branches
+   * are orderable online. Inherited, like the four flags and the two percentages below: each is
+   * the value in force, and `overrides` says which the branch sets itself (see
+   * `shared/branch-inheritance.ts`).
    */
-  visibility: BranchVisibility;
+  visibleToCustomers: boolean;
   /** The branch pays for the books instead of the customer. */
   paymentResponsible: boolean;
   /** The branch pays for postal delivery. */

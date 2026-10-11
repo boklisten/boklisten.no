@@ -2,7 +2,6 @@ import vine from "@vinejs/vine";
 
 import { calendarDateField, objectIdField, percentageField } from "#validators/common/fields";
 import { INHERITED_BRANCH_FIELDS } from "#shared/branch-inheritance";
-import { BRANCH_VISIBILITIES } from "#shared/branch-visibility";
 
 const periodTypeField = vine.enum(["semester", "year"]);
 
@@ -55,7 +54,7 @@ export const branchValidator = vine.create(
   vine.object({
     name: vine.string().trim().optional(),
     address: vine.string().trim().nullable().optional(),
-    visibility: vine.enum(BRANCH_VISIBILITIES).nullable().optional(),
+    visibleToCustomers: vine.boolean().nullable().optional(),
     paymentResponsible: vine.boolean().nullable().optional(),
     responsibleForDelivery: vine.boolean().nullable().optional(),
     buyoutPercentage: percentageField.nullable().optional(),

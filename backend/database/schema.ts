@@ -104,7 +104,7 @@ export class BranchSubjectSchema extends BaseModel {
 }
 
 export class BranchSchema extends BaseModel {
-  static $columns = ['address', 'buyoutPercentageOverride', 'childLabel', 'createdAt', 'deliveryAtBranchOverride', 'deliveryByMailOverride', 'id', 'localName', 'name', 'parentBranchId', 'paymentResponsibleOverride', 'responsibleForDeliveryOverride', 'sellPercentageOverride', 'updatedAt', 'visibilityOverride'] as const
+  static $columns = ['address', 'buyoutPercentageOverride', 'childLabel', 'createdAt', 'deliveryAtBranchOverride', 'deliveryByMailOverride', 'id', 'localName', 'name', 'parentBranchId', 'paymentResponsibleOverride', 'responsibleForDeliveryOverride', 'sellPercentageOverride', 'updatedAt', 'visibleToCustomersOverride'] as const
   $columns = BranchSchema.$columns
   @column()
   declare address: string | null
@@ -135,7 +135,7 @@ export class BranchSchema extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
-  declare visibilityOverride: string | null
+  declare visibleToCustomersOverride: boolean | null
 }
 
 export class CompanySchema extends BaseModel {

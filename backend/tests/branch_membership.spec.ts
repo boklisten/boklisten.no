@@ -18,7 +18,7 @@ test.group("assertMembershipAllowed", (group) => {
 
   test("registration refuses a membership in a hidden branch", async ({ assert }) => {
     sandbox.stub(DispatchService, "sendEmailVerification").resolves();
-    const wang = await createBranch({ visibility: "employee" });
+    const wang = await createBranch({ visibleToCustomers: false });
 
     await assert.rejects(
       () =>
@@ -40,8 +40,8 @@ test.group("assertMembershipAllowed", (group) => {
   });
 
   test("a customer may pick a public branch but not a hidden one", async ({ assert }) => {
-    const ullern = await createBranch({ visibility: "public" });
-    const wang = await createBranch({ visibility: "employee" });
+    const ullern = await createBranch({ visibleToCustomers: true });
+    const wang = await createBranch({ visibleToCustomers: false });
 
     await assertMembershipAllowed("customer", null, ullern.id);
     await assert.rejects(
@@ -51,19 +51,17 @@ test.group("assertMembershipAllowed", (group) => {
   });
 
   test("keeping or clearing a hidden membership is allowed", async ({ assert }) => {
-    const wang = await createBranch({ visibility: "admin" });
+    const wang = await createBranch({ visibleToCustomers: false });
 
     await assert.doesNotReject(() => assertMembershipAllowed("customer", wang.id, wang.id));
     await assert.doesNotReject(() => assertMembershipAllowed("employee", wang.id, null));
   });
 
-  test("employees may pick employee branches, only admins admin branches", async ({ assert }) => {
-    const employeeOnly = await createBranch({ visibility: "employee" });
-    const adminOnly = await createBranch({ visibility: "admin" });
+  test("staff may pick a branch customers do not see", async ({ assert }) => {
+    const staffOnly = await createBranch({ visibleToCustomers: false });
 
-    await assertMembershipAllowed("employee", null, employeeOnly.id);
-    await assert.rejects(() => assertMembershipAllowed("employee", null, adminOnly.id));
-    await assertMembershipAllowed("admin", null, adminOnly.id);
+    await assert.doesNotReject(() => assertMembershipAllowed("employee", null, staffOnly.id));
+    await assert.doesNotReject(() => assertMembershipAllowed("admin", null, staffOnly.id));
   });
 
   test("an unknown branch is refused", async ({ assert }) => {

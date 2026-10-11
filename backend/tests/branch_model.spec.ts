@@ -116,14 +116,13 @@ test.group("Branch model", (group) => {
     assert,
   }) => {
     await createBranch({ name: "Østfold" });
-    await createBranch({ name: "Wang", visibility: "admin" });
-    await createBranch({ name: "Akademiet", visibility: "employee" });
+    await createBranch({ name: "Akademiet", visibleToCustomers: false });
     await createBranch({ name: "Bjørknes" });
 
     assert.deepEqual(await visibleNames(null), ["Bjørknes", "Østfold"]);
     assert.deepEqual(await visibleNames("customer"), ["Bjørknes", "Østfold"]);
     assert.deepEqual(await visibleNames("employee"), ["Akademiet", "Bjørknes", "Østfold"]);
-    assert.deepEqual(await visibleNames("admin"), ["Akademiet", "Bjørknes", "Wang", "Østfold"]);
+    assert.deepEqual(await visibleNames("admin"), ["Akademiet", "Bjørknes", "Østfold"]);
   });
 
   test("publicTree keeps the public branches that lead to books, hidden levels skipped", async ({
@@ -141,10 +140,14 @@ test.group("Branch model", (group) => {
 
     const root = await createBranch({
       name: "Boklisten.no AS",
-      visibility: "admin",
+      visibleToCustomers: false,
       childLabel: "skoletype",
     });
-    const vgs = await createBranch({ name: "VGS", parentBranchId: root.id, visibility: "public" });
+    const vgs = await createBranch({
+      name: "VGS",
+      parentBranchId: root.id,
+      visibleToCustomers: true,
+    });
     const ullern = await createBranch({
       name: "Ullern",
       parentBranchId: vgs.id,
@@ -161,12 +164,12 @@ test.group("Branch model", (group) => {
     const staff = await createBranch({
       name: "Ullern Ansatte",
       parentBranchId: ullern.id,
-      visibility: "admin",
+      visibleToCustomers: false,
     });
     const teachers = await createBranch({
       name: "Ullern Lærer",
       parentBranchId: staff.id,
-      visibility: "public",
+      visibleToCustomers: true,
     });
     await withBooks(teachers);
     // No books anywhere below: pruned, together with its empty subject.
@@ -177,7 +180,7 @@ test.group("Branch model", (group) => {
     const metisOslo = await createBranch({
       name: "Metis Oslo",
       parentBranchId: metis.id,
-      visibility: "employee",
+      visibleToCustomers: false,
     });
     await withBooks(metisOslo);
 
@@ -214,13 +217,13 @@ test.group("Branch model", (group) => {
     };
     const root = await createBranch({
       name: "Boklisten.no AS",
-      visibility: "admin",
+      visibleToCustomers: false,
       childLabel: "skoletype",
     });
     const privatist = await createBranch({
       name: "Privatist",
       parentBranchId: root.id,
-      visibility: "public",
+      visibleToCustomers: true,
     });
     const akademiet = await createBranch({
       name: "Akademiet",
@@ -244,7 +247,7 @@ test.group("Branch model", (group) => {
     const vgs = await createBranch({
       name: "VGS",
       parentBranchId: root.id,
-      visibility: "employee",
+      visibleToCustomers: false,
     });
     const ullern = await createBranch({ name: "Ullern", parentBranchId: vgs.id });
     await OpeningHour.create({ branchId: ullern.id, ...ahead });

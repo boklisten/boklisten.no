@@ -4,12 +4,11 @@ import { NumberInput } from "@mantine/core";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
-import { VisibilitySelect, visibilityLabel } from "@/features/branches/branchVisibility";
 import { ToneSwitch, toneInputStyles } from "@/features/branches/inheritance/tone";
 import type { InheritanceTone } from "@/features/branches/inheritance/tone";
 
 export interface InheritedFieldPresentation<T> {
-  /** The field as the admin reads it, e.g. "Synlighet". */
+  /** The field as the admin reads it, e.g. "Synlig for kunder". */
   label: string;
   /** The value as text, e.g. "På", "33 %", "Offentlig", wherever a value is named rather than edited. */
   formatValue: (value: T) => string;
@@ -23,7 +22,7 @@ export interface InheritedFieldPresentation<T> {
 }
 
 export interface EditorOptions {
-  /** The accessible name, e.g. "Synlighet for Ullern VG1". */
+  /** The accessible name, e.g. "Synlig for kunder for Ullern VG1". */
   label: string;
   tone: InheritanceTone;
   /** `xs` in a tree row (the default), `sm` in the card. */
@@ -34,12 +33,10 @@ export interface EditorOptions {
 export const INHERITED_FIELDS: {
   [K in InheritedBranchField]: InheritedFieldPresentation<Branch[K]>;
 } = {
-  visibility: {
-    label: "Synlighet",
-    formatValue: visibilityLabel,
-    renderEditor: (value, onChange, options) => (
-      <VisibilitySelect value={value} onChange={onChange} {...options} />
-    ),
+  visibleToCustomers: {
+    label: "Synlig for kunder",
+    formatValue: onOffLabel,
+    renderEditor: onOffEditor,
   },
   deliveryAtBranch: {
     label: "Utlevering på filial",

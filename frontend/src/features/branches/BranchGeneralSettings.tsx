@@ -1,12 +1,10 @@
 import type { Branch } from "@boklisten/backend/shared/branch";
-import { BRANCH_VISIBILITIES } from "@boklisten/backend/shared/branch-visibility";
-import type { BranchVisibility } from "@boklisten/backend/shared/branch-visibility";
-import { Button, SegmentedControl, Stack } from "@mantine/core";
+import { Button, Stack } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { VISIBILITY_SEGMENTS, visibilityDescription } from "@/features/branches/branchVisibility";
 import InheritedFieldCard from "@/features/branches/inheritance/InheritedFieldCard";
-import { toneColor } from "@/features/branches/inheritance/tone";
+import { INHERITED_FIELDS, onOffLabel } from "@/features/branches/inheritance/inheritedFields";
+import { ToneSwitch } from "@/features/branches/inheritance/tone";
 import { commitValue, useAppForm, withFieldGroup } from "@/shared/hooks/form";
 import useAutoSave from "@/shared/hooks/useAutoSave";
 import { api, apiClient } from "@/shared/utils/apiClient";
@@ -21,8 +19,8 @@ interface GeneralFieldValues {
 }
 
 interface GeneralValues extends GeneralFieldValues {
-  /** The branch's own visibility, or `null` to inherit its parent's. */
-  visibility: BranchVisibility | null;
+  /** Whether the branch itself is visible to customers, or `null` to inherit its parent's. */
+  visibleToCustomers: boolean | null;
 }
 
 /** The request body: empty optional text fields mean "not set". */
@@ -39,7 +37,7 @@ function valuesOf(branch: Branch): GeneralValues {
   return {
     name: branch.name,
     address: branch.address ?? "",
-    visibility: branch.overrides.visibility,
+    visibleToCustomers: branch.overrides.visibleToCustomers,
   };
 }
 
@@ -105,22 +103,22 @@ function EditBranch({ branch }: { branch: Branch }) {
   return (
     <Stack>
       <BranchGeneralFields form={form} fields={GENERAL_FIELDS} />
-      <form.AppField name="visibility">
+      <form.AppField name="visibleToCustomers">
         {(field) => (
           <InheritedFieldCard
             branchId={branch.id}
-            field="visibility"
+            field="visibleToCustomers"
             tab="general"
             value={field.state.value}
             onChange={(value) => commitValue(field, value)}
-            description={visibilityDescription}
           >
             {(value, setValue, tone) => (
-              <SegmentedControl
-                data={VISIBILITY_SEGMENTS}
-                color={toneColor(tone)}
-                value={value}
-                onChange={(next) => setValue(parseVisibility(next))}
+              <ToneSwitch
+                checked={value}
+                onChange={setValue}
+                tone={tone}
+                label={onOffLabel(value)}
+                ariaLabel={INHERITED_FIELDS.visibleToCustomers.label}
               />
             )}
           </InheritedFieldCard>
@@ -165,12 +163,4 @@ function CreateBranch({ onSuccess }: { onSuccess?: (newBranch?: Branch) => void 
       </Button>
     </Stack>
   );
-}
-
-function parseVisibility(value: string): BranchVisibility {
-  const visibility = BRANCH_VISIBILITIES.find((candidate) => candidate === value);
-  if (!visibility) {
-    throw new TypeError(`Unknown visibility ${value}`);
-  }
-  return visibility;
 }

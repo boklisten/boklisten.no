@@ -7,8 +7,8 @@ import { fixtureId } from "#tests/fixtures";
 
 let sequence = 0;
 
-/** What a fixture root holds unless the test says otherwise: public, so every viewer sees it. */
-const FIXTURE_ROOT_VALUES = { ...ROOT_VALUES, visibility: "public" } as const;
+/** What a fixture root holds unless the test says otherwise: visible to customers, so every viewer sees it. */
+const FIXTURE_ROOT_VALUES = { ...ROOT_VALUES, visibleToCustomers: true } as const;
 
 /**
  * Inserts a branch (and its periods) into the test Postgres with every required column filled.
@@ -69,14 +69,14 @@ export function branchDto(overrides: Partial<BranchDto> = {}): BranchDto {
     sellPercentage: 1,
     deliveryAtBranch: true,
     deliveryByMail: true,
-    visibility: "public",
+    visibleToCustomers: true,
     address: null,
     rentPeriods: [],
     extendPeriods: [],
     partlyPaymentPeriods: [],
     ...overrides,
     overrides: {
-      visibility: dto.visibility,
+      visibleToCustomers: dto.visibleToCustomers,
       deliveryAtBranch: dto.deliveryAtBranch,
       deliveryByMail: dto.deliveryByMail,
       paymentResponsible: dto.paymentResponsible,

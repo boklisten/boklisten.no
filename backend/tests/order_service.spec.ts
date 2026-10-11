@@ -89,7 +89,7 @@ test.group("OrderService.createFromCart", (group) => {
   });
 
   test("rejects ordering from a branch that is not public", async ({ assert }) => {
-    await Branch.query().where("id", BRANCH_ID).update({ visibility_override: "employee" });
+    await Branch.query().where("id", BRANCH_ID).update({ visible_to_customers_override: false });
     await assert.rejects(
       () => OrderService.createFromCart(CUSTOMER_ID, [rentCartItem()]),
       /Det er ikke mulig å bestille fra/,
