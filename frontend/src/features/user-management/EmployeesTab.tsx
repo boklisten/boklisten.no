@@ -17,6 +17,7 @@ import { useState } from "react";
 
 import CustomerAvatar from "@/features/customer-search/CustomerAvatar";
 import AddEmployeesModal from "@/features/user-management/AddEmployeesModal";
+import EmployeeBranchPicker from "@/features/user-management/EmployeeBranchPicker";
 import { PERMISSION_LABELS } from "@/features/user-management/permissionLabels";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import EntityLink from "@/shared/components/EntityLink";
@@ -50,6 +51,21 @@ export default function EmployeesTab() {
     },
     onError: (error) =>
       showErrorNotification(errorMessage(error, "Klarte ikke å endre tilgangsnivået")),
+  });
+
+  const branchMutation = useMutation({
+    mutationFn: (input: {
+      userIds: string[];
+      permission: UserPermission;
+      employeeBranchId: string;
+    }) => apiClient.api.users.setPermission({ body: input }),
+    onSuccess: async () => {
+      showSuccessNotification("Filialen ble endret");
+      await queryClient.invalidateQueries({
+        queryKey: api.users.employees.queryKey(),
+      });
+    },
+    onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke å endre filialen")),
   });
 
   function confirmPermissionChange(
@@ -120,12 +136,13 @@ export default function EmployeesTab() {
           Legg til ansatte
         </Button>
       </Box>
-      <Table.ScrollContainer minWidth={560}>
+      <Table.ScrollContainer minWidth={760}>
         <Table verticalSpacing="sm" highlightOnHover>
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Navn</Table.Th>
               <Table.Th>Tilgangsnivå</Table.Th>
+              <Table.Th>Filial</Table.Th>
               <Table.Th>Sist aktiv</Table.Th>
             </Table.Tr>
           </Table.Thead>
@@ -163,6 +180,22 @@ export default function EmployeesTab() {
                         confirmPermissionChange(employee, value);
                       }
                     }}
+                  />
+                </Table.Td>
+                <Table.Td>
+                  {/* An admin works from the root; the node is theirs to see, not to change. */}
+                  <EmployeeBranchPicker
+                    aria-label={`Filial for ${employee.name || employee.email}`}
+                    w={220}
+                    value={employee.employeeBranchId}
+                    disabled={employee.permission === "admin"}
+                    onChange={(employeeBranchId) =>
+                      branchMutation.mutate({
+                        userIds: [employee.userId],
+                        permission: employee.permission,
+                        employeeBranchId,
+                      })
+                    }
                   />
                 </Table.Td>
                 <Table.Td>

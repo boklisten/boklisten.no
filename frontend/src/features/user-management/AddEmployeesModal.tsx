@@ -15,7 +15,9 @@ import { IconSearch } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import EmployeeBranchPicker from "@/features/user-management/EmployeeBranchPicker";
 import { PERMISSION_LABELS } from "@/features/user-management/permissionLabels";
+import { rootOf } from "@/shared/utils/branchTree";
 import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -46,6 +48,10 @@ export default function AddEmployeesModal({
   const [debouncedSearch] = useDebouncedValue(searchValue.trim(), 250);
   const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
   const [permission, setPermission] = useState<UserPermission>("employee");
+  // null until a node is picked: the root, "works everywhere", is the default.
+  const [employeeBranchId, setEmployeeBranchId] = useState<string | null>(null);
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
+  const rootId = rootOf(branches ?? [])?.id;
 
   const searchActive = debouncedSearch.length >= MIN_SEARCH_LENGTH;
   const { data: searchResults, isFetching } = useQuery({
@@ -56,8 +62,11 @@ export default function AddEmployeesModal({
   });
 
   const addMutation = useMutation({
-    mutationFn: (input: { userIds: string[]; permission: UserPermission }) =>
-      apiClient.api.users.setPermission({ body: input }),
+    mutationFn: (input: {
+      userIds: string[];
+      permission: UserPermission;
+      employeeBranchId?: string;
+    }) => apiClient.api.users.setPermission({ body: input }),
     onSuccess: async () => {
       showSuccessNotification(
         selectedUsers.length === 1
@@ -77,6 +86,7 @@ export default function AddEmployeesModal({
     setSearchValue("");
     setSelectedUsers([]);
     setPermission("employee");
+    setEmployeeBranchId(null);
   }
 
   function toggleUser(user: SelectedUser, checked: boolean) {
@@ -158,6 +168,14 @@ export default function AddEmployeesModal({
             setPermission(GRANTABLE_PERMISSIONS.find((p) => p.value === value)?.value ?? "employee")
           }
         />
+        {permission === "employee" && rootId !== undefined && (
+          <EmployeeBranchPicker
+            label="Filial"
+            description="Filialen den ansatte jobber fra"
+            value={employeeBranchId ?? rootId}
+            onChange={setEmployeeBranchId}
+          />
+        )}
         <Button
           disabled={selectedUsers.length === 0}
           loading={addMutation.isPending}
@@ -165,6 +183,9 @@ export default function AddEmployeesModal({
             addMutation.mutate({
               userIds: selectedUsers.map((user) => user.userId),
               permission,
+              ...(permission === "employee" && employeeBranchId !== null
+                ? { employeeBranchId }
+                : {}),
             })
           }
         >

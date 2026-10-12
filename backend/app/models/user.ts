@@ -28,6 +28,9 @@ export default class User extends UserSchema {
   @belongsTo(() => Branch, { foreignKey: "branchMembershipId" })
   declare branchMembership: BelongsTo<typeof Branch>;
 
+  @belongsTo(() => Branch, { foreignKey: "employeeBranchId" })
+  declare employeeBranch: BelongsTo<typeof Branch>;
+
   @beforeCreate()
   static assignId(user: User) {
     assignObjectId(user);
@@ -128,6 +131,7 @@ export default class User extends UserSchema {
       guardianEmail: this.guardianEmail,
       guardianPhone: this.guardianPhone,
       branchMembershipId: this.branchMembershipId,
+      employeeBranchId: this.employeeBranchId,
       taskConfirmDetails: this.taskConfirmDetails,
       taskSignAgreement: this.taskSignAgreement,
       permission: this.permission,

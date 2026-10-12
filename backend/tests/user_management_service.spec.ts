@@ -15,7 +15,7 @@ import Order from "#models/order";
 import Signature from "#models/signature";
 import User from "#models/user";
 import { UserManagementService } from "#services/user_management_service";
-import { createBranch } from "#tests/branch_fixtures";
+import { createBranch, rootBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createInvoice } from "#tests/invoice_fixtures";
 import { createItem } from "#tests/item_fixtures";
@@ -37,6 +37,53 @@ async function seedMatch(customerIds: string[]) {
   );
   return { match, participants };
 }
+
+test.group("UserManagementService.setPermission", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("homes an employee at the given branch and keeps it when none is given", async ({
+    assert,
+  }) => {
+    const ullern = await createBranch({ name: "Ullern" });
+    const user = await createUser();
+
+    await UserManagementService.setPermission([user.id], "employee", ullern.id);
+    assert.equal((await User.findOrFail(user.id)).employeeBranchId, ullern.id);
+
+    await UserManagementService.setPermission([user.id], "employee");
+    assert.equal((await User.findOrFail(user.id)).employeeBranchId, ullern.id);
+  });
+
+  test("an admin always works from the root, whatever branch is given", async ({ assert }) => {
+    const ullern = await createBranch({ name: "Ullern" });
+    const user = await createUser({ permission: "employee", employeeBranchId: ullern.id });
+
+    await UserManagementService.setPermission([user.id], "admin", ullern.id);
+
+    const admin = await User.findOrFail(user.id);
+    assert.equal(admin.permission, "admin");
+    assert.equal(admin.employeeBranchId, (await rootBranch()).id);
+  });
+
+  test("demoting to customer resets the home node to the root", async ({ assert }) => {
+    const ullern = await createBranch({ name: "Ullern" });
+    const user = await createUser({ permission: "employee", employeeBranchId: ullern.id });
+
+    await UserManagementService.setPermission([user.id], "customer");
+
+    assert.equal((await User.findOrFail(user.id)).employeeBranchId, (await rootBranch()).id);
+  });
+
+  test("refuses a branch that does not exist", async ({ assert }) => {
+    const user = await createUser();
+
+    await assert.rejects(
+      () => UserManagementService.setPermission([user.id], "employee", "000000000000000000000bad"),
+      /Fant ingen filial/,
+    );
+    assert.equal((await User.findOrFail(user.id)).permission, "customer");
+  });
+});
 
 test.group("UserManagementService.mergeUsers", (group) => {
   group.each.setup(() => testUtils.db().truncate());

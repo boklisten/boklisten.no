@@ -20,7 +20,7 @@ type UserColumns = Omit<UserDto, "dob" | "createdAt" | "vippsLinked"> & {
 export async function createUser(overrides: Partial<UserColumns> = {}): Promise<User> {
   // Taken before the first await: fixtures are often created in parallel.
   const number = ++sequence;
-  if (overrides.branchMembershipId === undefined) {
+  if (overrides.branchMembershipId === undefined || overrides.employeeBranchId === undefined) {
     await rootBranch();
   }
   return User.create({
@@ -36,6 +36,7 @@ export async function createUser(overrides: Partial<UserColumns> = {}): Promise<
     guardianEmail: null,
     guardianPhone: null,
     branchMembershipId: TEST_ROOT_BRANCH_ID,
+    employeeBranchId: TEST_ROOT_BRANCH_ID,
     taskConfirmDetails: false,
     taskSignAgreement: false,
     permission: "customer",
@@ -64,6 +65,7 @@ export function userDouble(overrides: Partial<UserColumns> & { id?: string } = {
     guardianEmail: null,
     guardianPhone: null,
     branchMembershipId: TEST_ROOT_BRANCH_ID,
+    employeeBranchId: TEST_ROOT_BRANCH_ID,
     taskConfirmDetails: false,
     taskSignAgreement: false,
     permission: "customer",
@@ -88,6 +90,7 @@ export function userDto(overrides: Partial<UserDto> = {}): UserDto {
     guardianEmail: null,
     guardianPhone: null,
     branchMembershipId: TEST_ROOT_BRANCH_ID,
+    employeeBranchId: TEST_ROOT_BRANCH_ID,
     taskConfirmDetails: false,
     taskSignAgreement: false,
     permission: "customer",

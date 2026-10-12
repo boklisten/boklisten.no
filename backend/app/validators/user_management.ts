@@ -10,4 +10,6 @@ export const mergeUsersValidator = vine.create({
 export const setPermissionValidator = vine.create({
   userIds: vine.array(vine.string()).minLength(1),
   permission: vine.enum(USER_PERMISSION),
+  /** The home node for employees; ignored for other levels, which always get the root. */
+  employeeBranchId: vine.string().optional(),
 });

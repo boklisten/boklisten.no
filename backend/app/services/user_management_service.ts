@@ -3,6 +3,7 @@ import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 import { DateTime } from "luxon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
+import Branch from "#models/branch";
 import User from "#models/user";
 import CustomerItem from "#models/customer_item";
 import Invoice from "#models/invoice";
@@ -18,6 +19,8 @@ interface EmployeeRow {
   email: string;
   phone: string;
   permission: UserPermission;
+  /** The home node (see `shared/user.ts`); the root for admins. */
+  employeeBranchId: string;
   lastActive: string | null;
 }
 
@@ -29,20 +32,50 @@ async function getEmployees(): Promise<EmployeeRow[]> {
     email: employee.email,
     phone: employee.phone ?? "",
     permission: employee.permission,
+    employeeBranchId: employee.employeeBranchId,
     lastActive: employee.lastActiveAt?.toISO() ?? null,
   }));
 }
 
-async function setPermission(userIds: string[], permission: UserPermission) {
+/**
+ * Sets the level and, for employees, the home node. Only employees hold a node of their own:
+ * an admin works from the root and a customer has no workplace, so either level snaps the node
+ * back to the root whatever was given. An employee given no node keeps the one they have.
+ */
+async function setPermission(
+  userIds: string[],
+  permission: UserPermission,
+  employeeBranchId?: string,
+) {
   const users = await User.findMany(userIds);
   const missing = userIds.find((userId) => !users.some((user) => user.id === userId));
   if (missing !== undefined) {
     throw new BadRequestException(`Fant ingen bruker for kunde ${missing}`);
   }
-  await User.query().whereIn("id", userIds).update({ permission, updatedAt: DateTime.now() });
+  const homeNode = await homeNodeFor(permission, employeeBranchId);
+  await User.query()
+    .whereIn("id", userIds)
+    .update({ permission, ...homeNode, updatedAt: DateTime.now() });
   // The new level applies from their next login, not from whenever their cookie would have expired.
   await Promise.all(userIds.map((userId) => SessionRevocationService.revokeAll(userId)));
   return { updated: userIds.length };
+}
+
+async function homeNodeFor(
+  permission: UserPermission,
+  employeeBranchId: string | undefined,
+): Promise<{ employeeBranchId?: string }> {
+  if (permission !== USER_PERMISSION.EMPLOYEE) {
+    return { employeeBranchId: (await Branch.root()).id };
+  }
+  if (employeeBranchId === undefined) {
+    return {};
+  }
+  const branch = await Branch.find(employeeBranchId);
+  if (branch === null) {
+    throw new BadRequestException("Fant ingen filial å knytte den ansatte til");
+  }
+  return { employeeBranchId: branch.id };
 }
 
 function assertIsCustomer(user: User, action: string) {

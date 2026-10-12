@@ -176,6 +176,7 @@ export const UserService = {
 
   /** Vipps knows nothing about schools, so the customer starts on the root. */
   async createVippsUser(vippsUser: VippsUser): Promise<User> {
+    const root = await Branch.root();
     return User.create({
       email: vippsUser.email.trim().toLowerCase(),
       emailConfirmed: vippsUser.emailVerified,
@@ -184,7 +185,8 @@ export const UserService = {
       name: vippsUser.name || null,
       address: vippsUser.address || null,
       postalCode: vippsUser.postalCode || null,
-      branchMembershipId: (await Branch.root()).id,
+      branchMembershipId: root.id,
+      employeeBranchId: root.id,
       permission: "customer",
       vippsUserId: vippsUser.id,
     });
@@ -198,9 +200,11 @@ export const UserService = {
     if (branchMembershipId !== undefined) {
       await assertMembershipAllowed("customer", null, branchMembershipId);
     }
+    const root = await Branch.root();
     const user = await User.create({
       ...userFieldsFrom(details),
-      branchMembershipId: branchMembershipId ?? (await Branch.root()).id,
+      branchMembershipId: branchMembershipId ?? root.id,
+      employeeBranchId: root.id,
       phone,
       email,
       emailConfirmed: false,
@@ -225,6 +229,7 @@ export const UserService = {
     }: Infer<typeof userProvisioningValidator>["userCandidates"][number],
     branchMembershipId: string | undefined,
   ): Promise<User> {
+    const root = await Branch.root();
     return User.create({
       name,
       phone,
@@ -233,7 +238,8 @@ export const UserService = {
       dob: dobFrom(dob),
       postalCode: postalCode ?? null,
       emailConfirmed: true,
-      branchMembershipId: branchMembershipId ?? (await Branch.root()).id,
+      branchMembershipId: branchMembershipId ?? root.id,
+      employeeBranchId: root.id,
       taskConfirmDetails: true,
       taskSignAgreement: true,
       permission: "customer",

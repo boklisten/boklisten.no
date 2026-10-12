@@ -30,9 +30,14 @@ lives there. Pages that used to be flat lists (Signaturer, Brukere) become tabs 
   is the "no school" option). Done in step 1 (2026-10-11).
 - **Membership** (`users.branch_membership_id`): the node a user belongs to. Never null. For a
   customer with no school it is the root.
-- **Home node** (`users.scope_branch_id`): the node a user works from. Never null and it means the
+- **Home node** (`users.employee_branch_id`): the node a user works from. Never null and it means the
   same thing for everyone: customers and guests have the root, admins have the root, employees
-  have whatever head office sets. Only employees ever hold anything but the root.
+  have whatever head office sets. Only employees ever hold anything but the root. The column and
+  the DTO field (`employeeBranchId`) are named after the one role that holds a value, so a reader
+  sees at once that it is a staff attribute and not a second membership (Adrian, 2026-10-12;
+  `scope_branch_id` was the first name). A future `manager` permission (someone who manages the
+  branches in their scope, where an employee only does the operational work) will reuse the same
+  column; "employee" is then read as the umbrella word for staff below admin.
 - **Selectable set of a viewer**: the subtree of their home node, filtered by what their
   permission may see, plus the root. This is the one formula behind both the tree and the guard:
   - guest or customer: root + every node visible to customers;
@@ -55,10 +60,10 @@ lives there. Pages that used to be flat lists (Signaturer, Brukere) become tabs 
 1. Exactly one root (partial unique index). The root cannot be re-parented or created twice.
 2. Visibility is the boolean `visibleToCustomers`. `admin` does not exist in the database, the DTO
    or the UI.
-3. `users.branch_membership_id` and `users.scope_branch_id` are NOT NULL foreign keys.
-4. The user DTO exposes `branchMembershipId: string` and `scopeBranchId: string`; null is gone
+3. `users.branch_membership_id` and `users.employee_branch_id` are NOT NULL foreign keys.
+4. The user DTO exposes `branchMembershipId: string` and `employeeBranchId: string`; null is gone
    from validators, DTOs and frontend forms.
-5. Admins have `scope_branch_id = root`; the service keeps it so on promotion.
+5. Admins have `employee_branch_id = root`; the service keeps it so on promotion.
 6. One function, `BranchScope.selectableIds(viewer)`, decides both what the tree endpoint returns
    as selectable and what the guard lets through. They can never disagree.
 7. Every scoped endpoint takes a node (`branchId`), requires it to be selectable for the caller,
@@ -75,7 +80,7 @@ Implemented once, in `backend/app/services/branch_scope.ts` (new):
 
 - `subtreeIds(nodeId)`: ids of the subtree (node included), via a recursive CTE like
   `Branch.walkDescendants` in `app/models/branch.ts`.
-- `selectableIds(viewer)`: `subtreeIds(viewer.scopeBranchId)` filtered by
+- `selectableIds(viewer)`: `subtreeIds(viewer.employeeBranchId)` filtered by
   `canSeeBranch(viewer.permission, visibleToCustomers)`, plus the root. Guests count as a customer homed at
   the root.
 - `assertSelectable(viewer, nodeId)`: throws (403 on a URL param, 400 on a body value) unless the
@@ -170,22 +175,22 @@ one tab must agree (Adrian, 2026-10-12, step 4).
 
 ### 1.8 Decisions already made (do not reopen)
 
-| Question                  | Decision                                                                         | Why                                                                                                                |
-| ------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Virtual or real root      | Real row                                                                         | No null special case in any query; membership can be NOT NULL                                                      |
-| Root name                 | "Alle filialer", children "selskap"                                              | Reads as "everything" in Filialer, not as a company                                                                |
-| Visibility levels         | One boolean `visibleToCustomers`; `admin` and `employee` both became `false`     | Home nodes already hide everything above a school employee; a third level was a second boundary with its own guard |
-| "No school" for customers | Root membership shown as a named, unremovable option                             | Empty required field reads as a mistake; privatists are the main funnel                                            |
-| Employee scope storage    | Separate `scope_branch_id`, one node per user                                    | Membership (teacher at a class) and scope (works for the school) are different things                              |
-| Scope rule                | Membership or activity, activity unbounded; Signering tab = members only         | Stand staff must see privatists who ordered at their school, including old history; Signering matches its summary  |
-| Brukere population        | Customers in scope, paged, direct members as a filter                            | One "who is here" per node; root must not render 11k rows                                                          |
-| Connectors                | Ancestors of the home node, staff only                                           | Explains inherited values; customers must not see the companies                                                    |
-| Move rule                 | Target must be selectable; current value unchecked                               | Stand staff fix the common "picked the wrong school" case; root is head office only                                |
-| Message log               | Feed, metrics and sendouts page admin-only; per-customer tab stays for employees | The page is a head-office view; a customer in scope is fully visible                                               |
-| Where to pick a node      | Filialer only; operational pages use the home node implicitly                    | One workspace, no hidden global state                                                                              |
-| Old routes                | Deleted, no redirects                                                            | Adrian                                                                                                             |
-| Members tab name          | "Brukere" at every level                                                         | Adrian                                                                                                             |
-| Create button             | On the selected node only                                                        | Adrian                                                                                                             |
+| Question                  | Decision                                                                          | Why                                                                                                                       |
+| ------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Virtual or real root      | Real row                                                                          | No null special case in any query; membership can be NOT NULL                                                             |
+| Root name                 | "Alle filialer", children "selskap"                                               | Reads as "everything" in Filialer, not as a company                                                                       |
+| Visibility levels         | One boolean `visibleToCustomers`; `admin` and `employee` both became `false`      | Home nodes already hide everything above a school employee; a third level was a second boundary with its own guard        |
+| "No school" for customers | Root membership shown as a named, unremovable option                              | Empty required field reads as a mistake; privatists are the main funnel                                                   |
+| Employee scope storage    | Separate `employee_branch_id`, one node per user; named for the role, not "scope" | Membership (teacher at a class) and scope (works for the school) are different things; the name must say it is staff-only |
+| Scope rule                | Membership or activity, activity unbounded; Signering tab = members only          | Stand staff must see privatists who ordered at their school, including old history; Signering matches its summary         |
+| Brukere population        | Customers in scope, paged, direct members as a filter                             | One "who is here" per node; root must not render 11k rows                                                                 |
+| Connectors                | Ancestors of the home node, staff only                                            | Explains inherited values; customers must not see the companies                                                           |
+| Move rule                 | Target must be selectable; current value unchecked                                | Stand staff fix the common "picked the wrong school" case; root is head office only                                       |
+| Message log               | Feed, metrics and sendouts page admin-only; per-customer tab stays for employees  | The page is a head-office view; a customer in scope is fully visible                                                      |
+| Where to pick a node      | Filialer only; operational pages use the home node implicitly                     | One workspace, no hidden global state                                                                                     |
+| Old routes                | Deleted, no redirects                                                             | Adrian                                                                                                                    |
+| Members tab name          | "Brukere" at every level                                                          | Adrian                                                                                                                    |
+| Create button             | On the selected node only                                                         | Adrian                                                                                                                    |
 
 ## 2. Current state (verified 2026-10-11 on staging)
 
@@ -465,12 +470,12 @@ list. Nothing is enforced yet, so nobody's access changes.
 
 Backend
 
-- Migration `user_scope_branch`: `scope_branch_id string(24) NOT NULL` FK to branches, filled with
+- Migration `user_employee_branch`: `employee_branch_id string(24) NOT NULL` FK to branches, filled with
   the root for every row, indexed. `down()` drops it.
-- `shared/user.ts`: `scopeBranchId: string`; `User.toDto` follows.
-- `PUT /users/permission` (`setPermission`) takes an optional `scopeBranchId`; promoting to `admin`
+- `shared/user.ts`: `employeeBranchId: string`; `User.toDto` follows.
+- `PUT /users/permission` (`setPermission`) takes an optional `employeeBranchId`; promoting to `admin`
   forces the root; demoting to `customer` resets to the root. New endpoint not needed.
-- `/users/employees` returns `scopeBranchId`.
+- `/users/employees` returns `employeeBranchId`.
 - Japa: admin always root; employee keeps a set node; customer reset.
 
 Frontend
@@ -499,7 +504,7 @@ Backend
   count becomes the page's total.
 - `GET /users/metrics` and `GET /users/duplicates` take a required `branchId` and scope to
   `customersInScope`. `GET /users/employees` takes a required `branchId` and returns employees
-  whose `scope_branch_id` is in `subtreeIds`.
+  whose `employee_branch_id` is in `subtreeIds`.
 
 Frontend
 
@@ -570,7 +575,7 @@ Frontend
 
 - `SelectBranchTreeView` renders nodes with `selectable: false` as the breadcrumb path: no
   chevron, muted text, not clickable, always expanded. Nothing is computed client-side.
-- Default `filial` to `user.scopeBranchId`; clamp a `filial` that is not selectable to the home
+- Default `filial` to `user.employeeBranchId`; clamp a `filial` that is not selectable to the home
   node.
 - Tabs: settings tabs (`general`, `relationships`, `payment`, `subjects`, `hours`) render only for
   admins; content tabs for employees too. On the root, settings show only `general`.
@@ -656,7 +661,7 @@ employee.
 
 Not a code step. After step 10 is deployed to production:
 
-1. Set `scope_branch_id` for the employees who work for one school, via the Ansatte tab.
+1. Set `employee_branch_id` for the employees who work for one school, via the Ansatte tab.
 2. Leave head office on the root.
 3. Watch Sentry for 403/404 spikes on `/users/*` and `/branches/*` for a week.
 
@@ -664,5 +669,5 @@ Not a code step. After step 10 is deployed to production:
 
 - Backend: Japa (`cd backend && vpr test --files tests/<file>.spec.ts`), Node 24.
 - Frontend: Playwright per the `CLAUDE.md` playbook. Three personas: admin (`adrian@boklisten.no`),
-  an employee homed at Ullern (set `scope_branch_id` by SQL from step 5 on), a privatist customer.
+  an employee homed at Ullern (set `employee_branch_id` by SQL from step 5 on), a privatist customer.
 - Finish with `vpr fix`.

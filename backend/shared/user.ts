@@ -22,6 +22,11 @@ export interface User {
   guardianPhone: string | null;
   /** The branch (class, year group or school) the customer belongs to; the root when they have no school. */
   branchMembershipId: string;
+  /**
+   * The branch the user works from, their home node: the root for customers, guests and admins,
+   * and for an employee whatever head office set. Named for the one role that ever holds a value.
+   */
+  employeeBranchId: string;
   /** The customer must confirm or complete their contact details before using the site. */
   taskConfirmDetails: boolean;
   /** The customer (or their guardian) must sign the loan agreement before using the site. */

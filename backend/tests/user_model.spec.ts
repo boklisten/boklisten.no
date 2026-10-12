@@ -97,10 +97,12 @@ test.group("User.toDto", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 
   test("a user fresh from create without Vipps is not Vipps-linked", async ({ assert }) => {
+    const root = await rootBranch();
     const user = await User.create({
       email: "ny@example.com",
       permission: "customer",
-      branchMembershipId: (await rootBranch()).id,
+      branchMembershipId: root.id,
+      employeeBranchId: root.id,
     });
 
     assert.isFalse(user.toDto().vippsLinked);
