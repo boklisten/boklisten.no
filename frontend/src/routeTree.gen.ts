@@ -26,7 +26,8 @@ import { Route as offentligOverleveringerRouteRouteImport } from './routes/(offe
 import { Route as offentligSjekkRouteImport } from './routes/(offentlig)/sjekk'
 import { Route as offentligUserSettingsRouteImport } from './routes/(offentlig)/user-settings'
 import { Route as administrasjonAdminIndexRouteImport } from './routes/(administrasjon)/admin/index'
-import { Route as administrasjonAdminFakturaRouteImport } from './routes/(administrasjon)/admin/faktura'
+import { Route as administrasjonAdminadministratorRouteRouteImport } from './routes/(administrasjon)/admin/(administrator)/route'
+import { Route as administrasjonAdminFilialerRouteImport } from './routes/(administrasjon)/admin/filialer'
 import { Route as administrasjonAdminKasseRouteImport } from './routes/(administrasjon)/admin/kasse'
 import { Route as administrasjonAdminMerkingRouteImport } from './routes/(administrasjon)/admin/merking'
 import { Route as administrasjonAdminOrdreoversiktRouteImport } from './routes/(administrasjon)/admin/ordreoversikt'
@@ -50,14 +51,7 @@ import { Route as offentligKasseSigneringRouteImport } from './routes/(offentlig
 import { Route as offentligOverleveringerIndexRouteImport } from './routes/(offentlig)/overleveringer/index'
 import { Route as offentligOverleveringerMatchIdRouteImport } from './routes/(offentlig)/overleveringer/$matchId'
 import { Route as offentligSigneringTokenRouteImport } from './routes/(offentlig)/signering.$token'
-import { Route as administrasjonAdminDatabaseBokerRouteImport } from './routes/(administrasjon)/admin/database/boker'
-import { Route as administrasjonAdminDatabaseDynamisk_innholdRouteImport } from './routes/(administrasjon)/admin/database/dynamisk_innhold'
-import { Route as administrasjonAdminDatabaseFilialerRouteImport } from './routes/(administrasjon)/admin/database/filialer'
-import { Route as administrasjonAdminDatabaseRapporterRouteImport } from './routes/(administrasjon)/admin/database/rapporter'
-import { Route as administrasjonAdminDatabaseSelskapRouteImport } from './routes/(administrasjon)/admin/database/selskap'
-import { Route as administrasjonAdminKommunikasjonLoggRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/logg'
-import { Route as administrasjonAdminKommunikasjonPaminnelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/paminnelser'
-import { Route as administrasjonAdminKommunikasjonUtsendelserRouteImport } from './routes/(administrasjon)/admin/kommunikasjon/utsendelser'
+import { Route as administrasjonAdminadministratorFakturaRouteImport } from './routes/(administrasjon)/admin/(administrator)/faktura'
 import { Route as offentligAuthPermissionDeniedRouteImport } from './routes/(offentlig)/auth/permission.denied'
 import { Route as offentligInfoBranchIndexRouteImport } from './routes/(offentlig)/info/branch/index'
 import { Route as offentligInfoBranchBranchIdRouteImport } from './routes/(offentlig)/info/branch/$branchId'
@@ -66,6 +60,13 @@ import { Route as offentligInfoPoliciesPrivacyRouteImport } from './routes/(offe
 import { Route as offentligInfoPoliciesTermsRouteImport } from './routes/(offentlig)/info/policies/terms'
 import { Route as offentligKasseBetalingIndexRouteImport } from './routes/(offentlig)/kasse/betaling/index'
 import { Route as offentligKasseBetalingStatusRouteImport } from './routes/(offentlig)/kasse/betaling/status'
+import { Route as administrasjonAdminadministratorDatabaseBokerRouteImport } from './routes/(administrasjon)/admin/(administrator)/database/boker'
+import { Route as administrasjonAdminadministratorDatabaseDynamisk_innholdRouteImport } from './routes/(administrasjon)/admin/(administrator)/database/dynamisk_innhold'
+import { Route as administrasjonAdminadministratorDatabaseRapporterRouteImport } from './routes/(administrasjon)/admin/(administrator)/database/rapporter'
+import { Route as administrasjonAdminadministratorDatabaseSelskapRouteImport } from './routes/(administrasjon)/admin/(administrator)/database/selskap'
+import { Route as administrasjonAdminadministratorKommunikasjonLoggRouteImport } from './routes/(administrasjon)/admin/(administrator)/kommunikasjon/logg'
+import { Route as administrasjonAdminadministratorKommunikasjonPaminnelserRouteImport } from './routes/(administrasjon)/admin/(administrator)/kommunikasjon/paminnelser'
+import { Route as administrasjonAdminadministratorKommunikasjonUtsendelserRouteImport } from './routes/(administrasjon)/admin/(administrator)/kommunikasjon/utsendelser'
 import { Route as offentligAuthEmailVerifyVerificationIdRouteImport } from './routes/(offentlig)/auth/email.verify.$verificationId'
 
 const offentligRouteRoute = offentligRouteRouteImport.update({
@@ -155,10 +156,15 @@ const administrasjonAdminIndexRoute =
     path: '/',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
-const administrasjonAdminFakturaRoute =
-  administrasjonAdminFakturaRouteImport.update({
-    id: '/faktura',
-    path: '/faktura',
+const administrasjonAdminadministratorRouteRoute =
+  administrasjonAdminadministratorRouteRouteImport.update({
+    id: '/(administrator)',
+    getParentRoute: () => administrasjonAdminRouteRoute,
+  } as any)
+const administrasjonAdminFilialerRoute =
+  administrasjonAdminFilialerRouteImport.update({
+    id: '/filialer',
+    path: '/filialer',
     getParentRoute: () => administrasjonAdminRouteRoute,
   } as any)
 const administrasjonAdminKasseRoute =
@@ -286,53 +292,11 @@ const offentligSigneringTokenRoute = offentligSigneringTokenRouteImport.update({
   path: '/signering/$token',
   getParentRoute: () => offentligRouteRoute,
 } as any)
-const administrasjonAdminDatabaseBokerRoute =
-  administrasjonAdminDatabaseBokerRouteImport.update({
-    id: '/database/boker',
-    path: '/database/boker',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminDatabaseDynamisk_innholdRoute =
-  administrasjonAdminDatabaseDynamisk_innholdRouteImport.update({
-    id: '/database/dynamisk_innhold',
-    path: '/database/dynamisk_innhold',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminDatabaseFilialerRoute =
-  administrasjonAdminDatabaseFilialerRouteImport.update({
-    id: '/database/filialer',
-    path: '/database/filialer',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminDatabaseRapporterRoute =
-  administrasjonAdminDatabaseRapporterRouteImport.update({
-    id: '/database/rapporter',
-    path: '/database/rapporter',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminDatabaseSelskapRoute =
-  administrasjonAdminDatabaseSelskapRouteImport.update({
-    id: '/database/selskap',
-    path: '/database/selskap',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminKommunikasjonLoggRoute =
-  administrasjonAdminKommunikasjonLoggRouteImport.update({
-    id: '/kommunikasjon/logg',
-    path: '/kommunikasjon/logg',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminKommunikasjonPaminnelserRoute =
-  administrasjonAdminKommunikasjonPaminnelserRouteImport.update({
-    id: '/kommunikasjon/paminnelser',
-    path: '/kommunikasjon/paminnelser',
-    getParentRoute: () => administrasjonAdminRouteRoute,
-  } as any)
-const administrasjonAdminKommunikasjonUtsendelserRoute =
-  administrasjonAdminKommunikasjonUtsendelserRouteImport.update({
-    id: '/kommunikasjon/utsendelser',
-    path: '/kommunikasjon/utsendelser',
-    getParentRoute: () => administrasjonAdminRouteRoute,
+const administrasjonAdminadministratorFakturaRoute =
+  administrasjonAdminadministratorFakturaRouteImport.update({
+    id: '/faktura',
+    path: '/faktura',
+    getParentRoute: () => administrasjonAdminadministratorRouteRoute,
   } as any)
 const offentligAuthPermissionDeniedRoute =
   offentligAuthPermissionDeniedRouteImport.update({
@@ -382,6 +346,48 @@ const offentligKasseBetalingStatusRoute =
     path: '/kasse/betaling/status',
     getParentRoute: () => offentligRouteRoute,
   } as any)
+const administrasjonAdminadministratorDatabaseBokerRoute =
+  administrasjonAdminadministratorDatabaseBokerRouteImport.update({
+    id: '/database/boker',
+    path: '/database/boker',
+    getParentRoute: () => administrasjonAdminadministratorRouteRoute,
+  } as any)
+const administrasjonAdminadministratorDatabaseDynamisk_innholdRoute =
+  administrasjonAdminadministratorDatabaseDynamisk_innholdRouteImport.update({
+    id: '/database/dynamisk_innhold',
+    path: '/database/dynamisk_innhold',
+    getParentRoute: () => administrasjonAdminadministratorRouteRoute,
+  } as any)
+const administrasjonAdminadministratorDatabaseRapporterRoute =
+  administrasjonAdminadministratorDatabaseRapporterRouteImport.update({
+    id: '/database/rapporter',
+    path: '/database/rapporter',
+    getParentRoute: () => administrasjonAdminadministratorRouteRoute,
+  } as any)
+const administrasjonAdminadministratorDatabaseSelskapRoute =
+  administrasjonAdminadministratorDatabaseSelskapRouteImport.update({
+    id: '/database/selskap',
+    path: '/database/selskap',
+    getParentRoute: () => administrasjonAdminadministratorRouteRoute,
+  } as any)
+const administrasjonAdminadministratorKommunikasjonLoggRoute =
+  administrasjonAdminadministratorKommunikasjonLoggRouteImport.update({
+    id: '/kommunikasjon/logg',
+    path: '/kommunikasjon/logg',
+    getParentRoute: () => administrasjonAdminadministratorRouteRoute,
+  } as any)
+const administrasjonAdminadministratorKommunikasjonPaminnelserRoute =
+  administrasjonAdminadministratorKommunikasjonPaminnelserRouteImport.update({
+    id: '/kommunikasjon/paminnelser',
+    path: '/kommunikasjon/paminnelser',
+    getParentRoute: () => administrasjonAdminadministratorRouteRoute,
+  } as any)
+const administrasjonAdminadministratorKommunikasjonUtsendelserRoute =
+  administrasjonAdminadministratorKommunikasjonUtsendelserRouteImport.update({
+    id: '/kommunikasjon/utsendelser',
+    path: '/kommunikasjon/utsendelser',
+    getParentRoute: () => administrasjonAdminadministratorRouteRoute,
+  } as any)
 const offentligAuthEmailVerifyVerificationIdRoute =
   offentligAuthEmailVerifyVerificationIdRouteImport.update({
     id: '/auth/email/verify/$verificationId',
@@ -395,7 +401,7 @@ export interface FileRoutesByFullPath {
   '/llms.txt': typeof LlmsDottxtRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/admin': typeof administrasjonAdminRouteRouteWithChildren
+  '/admin': typeof administrasjonAdminadministratorRouteRouteWithChildren
   '/info': typeof offentligInfoRouteRouteWithChildren
   '/overleveringer': typeof offentligOverleveringerRouteRouteWithChildren
   '/handlekurv': typeof offentligHandlekurvRoute
@@ -406,7 +412,7 @@ export interface FileRoutesByFullPath {
   '/user-settings': typeof offentligUserSettingsRoute
   '/': typeof offentligIndexRoute
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
-  '/admin/faktura': typeof administrasjonAdminFakturaRoute
+  '/admin/filialer': typeof administrasjonAdminFilialerRoute
   '/admin/kasse': typeof administrasjonAdminKasseRoute
   '/admin/merking': typeof administrasjonAdminMerkingRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
@@ -430,14 +436,7 @@ export interface FileRoutesByFullPath {
   '/bestilling/': typeof offentligBestillingIndexRoute
   '/kasse/': typeof offentligKasseIndexRoute
   '/overleveringer/': typeof offentligOverleveringerIndexRoute
-  '/admin/database/boker': typeof administrasjonAdminDatabaseBokerRoute
-  '/admin/database/dynamisk_innhold': typeof administrasjonAdminDatabaseDynamisk_innholdRoute
-  '/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
-  '/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
-  '/admin/database/selskap': typeof administrasjonAdminDatabaseSelskapRoute
-  '/admin/kommunikasjon/logg': typeof administrasjonAdminKommunikasjonLoggRoute
-  '/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
-  '/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
+  '/admin/faktura': typeof administrasjonAdminadministratorFakturaRoute
   '/auth/permission/denied': typeof offentligAuthPermissionDeniedRoute
   '/info/branch/$branchId': typeof offentligInfoBranchBranchIdRoute
   '/info/policies/conditions': typeof offentligInfoPoliciesConditionsRoute
@@ -446,6 +445,13 @@ export interface FileRoutesByFullPath {
   '/kasse/betaling/status': typeof offentligKasseBetalingStatusRoute
   '/info/branch/': typeof offentligInfoBranchIndexRoute
   '/kasse/betaling/': typeof offentligKasseBetalingIndexRoute
+  '/admin/database/boker': typeof administrasjonAdminadministratorDatabaseBokerRoute
+  '/admin/database/dynamisk_innhold': typeof administrasjonAdminadministratorDatabaseDynamisk_innholdRoute
+  '/admin/database/rapporter': typeof administrasjonAdminadministratorDatabaseRapporterRoute
+  '/admin/database/selskap': typeof administrasjonAdminadministratorDatabaseSelskapRoute
+  '/admin/kommunikasjon/logg': typeof administrasjonAdminadministratorKommunikasjonLoggRoute
+  '/admin/kommunikasjon/paminnelser': typeof administrasjonAdminadministratorKommunikasjonPaminnelserRoute
+  '/admin/kommunikasjon/utsendelser': typeof administrasjonAdminadministratorKommunikasjonUtsendelserRoute
   '/auth/email/verify/$verificationId': typeof offentligAuthEmailVerifyVerificationIdRoute
 }
 export interface FileRoutesByTo {
@@ -462,8 +468,9 @@ export interface FileRoutesByTo {
   '/sjekk': typeof offentligSjekkRoute
   '/user-settings': typeof offentligUserSettingsRoute
   '/': typeof offentligIndexRoute
+  '/admin': typeof administrasjonAdminIndexRoute
   '/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
-  '/admin/faktura': typeof administrasjonAdminFakturaRoute
+  '/admin/filialer': typeof administrasjonAdminFilialerRoute
   '/admin/kasse': typeof administrasjonAdminKasseRoute
   '/admin/merking': typeof administrasjonAdminMerkingRoute
   '/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
@@ -483,18 +490,10 @@ export interface FileRoutesByTo {
   '/kasse/signering': typeof offentligKasseSigneringRoute
   '/overleveringer/$matchId': typeof offentligOverleveringerMatchIdRoute
   '/signering/$token': typeof offentligSigneringTokenRoute
-  '/admin': typeof administrasjonAdminIndexRoute
   '/bestilling': typeof offentligBestillingIndexRoute
   '/kasse': typeof offentligKasseIndexRoute
   '/overleveringer': typeof offentligOverleveringerIndexRoute
-  '/admin/database/boker': typeof administrasjonAdminDatabaseBokerRoute
-  '/admin/database/dynamisk_innhold': typeof administrasjonAdminDatabaseDynamisk_innholdRoute
-  '/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
-  '/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
-  '/admin/database/selskap': typeof administrasjonAdminDatabaseSelskapRoute
-  '/admin/kommunikasjon/logg': typeof administrasjonAdminKommunikasjonLoggRoute
-  '/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
-  '/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
+  '/admin/faktura': typeof administrasjonAdminadministratorFakturaRoute
   '/auth/permission/denied': typeof offentligAuthPermissionDeniedRoute
   '/info/branch/$branchId': typeof offentligInfoBranchBranchIdRoute
   '/info/policies/conditions': typeof offentligInfoPoliciesConditionsRoute
@@ -503,6 +502,13 @@ export interface FileRoutesByTo {
   '/kasse/betaling/status': typeof offentligKasseBetalingStatusRoute
   '/info/branch': typeof offentligInfoBranchIndexRoute
   '/kasse/betaling': typeof offentligKasseBetalingIndexRoute
+  '/admin/database/boker': typeof administrasjonAdminadministratorDatabaseBokerRoute
+  '/admin/database/dynamisk_innhold': typeof administrasjonAdminadministratorDatabaseDynamisk_innholdRoute
+  '/admin/database/rapporter': typeof administrasjonAdminadministratorDatabaseRapporterRoute
+  '/admin/database/selskap': typeof administrasjonAdminadministratorDatabaseSelskapRoute
+  '/admin/kommunikasjon/logg': typeof administrasjonAdminadministratorKommunikasjonLoggRoute
+  '/admin/kommunikasjon/paminnelser': typeof administrasjonAdminadministratorKommunikasjonPaminnelserRoute
+  '/admin/kommunikasjon/utsendelser': typeof administrasjonAdminadministratorKommunikasjonUtsendelserRoute
   '/auth/email/verify/$verificationId': typeof offentligAuthEmailVerifyVerificationIdRoute
 }
 export interface FileRoutesById {
@@ -523,8 +529,9 @@ export interface FileRoutesById {
   '/(offentlig)/sjekk': typeof offentligSjekkRoute
   '/(offentlig)/user-settings': typeof offentligUserSettingsRoute
   '/(offentlig)/': typeof offentligIndexRoute
+  '/(administrasjon)/admin/(administrator)': typeof administrasjonAdminadministratorRouteRouteWithChildren
   '/(offentlig)/info/policies': typeof offentligInfoPoliciesRouteRouteWithChildren
-  '/(administrasjon)/admin/faktura': typeof administrasjonAdminFakturaRoute
+  '/(administrasjon)/admin/filialer': typeof administrasjonAdminFilialerRoute
   '/(administrasjon)/admin/kasse': typeof administrasjonAdminKasseRoute
   '/(administrasjon)/admin/merking': typeof administrasjonAdminMerkingRoute
   '/(administrasjon)/admin/ordreoversikt': typeof administrasjonAdminOrdreoversiktRoute
@@ -548,14 +555,7 @@ export interface FileRoutesById {
   '/(offentlig)/bestilling/': typeof offentligBestillingIndexRoute
   '/(offentlig)/kasse/': typeof offentligKasseIndexRoute
   '/(offentlig)/overleveringer/': typeof offentligOverleveringerIndexRoute
-  '/(administrasjon)/admin/database/boker': typeof administrasjonAdminDatabaseBokerRoute
-  '/(administrasjon)/admin/database/dynamisk_innhold': typeof administrasjonAdminDatabaseDynamisk_innholdRoute
-  '/(administrasjon)/admin/database/filialer': typeof administrasjonAdminDatabaseFilialerRoute
-  '/(administrasjon)/admin/database/rapporter': typeof administrasjonAdminDatabaseRapporterRoute
-  '/(administrasjon)/admin/database/selskap': typeof administrasjonAdminDatabaseSelskapRoute
-  '/(administrasjon)/admin/kommunikasjon/logg': typeof administrasjonAdminKommunikasjonLoggRoute
-  '/(administrasjon)/admin/kommunikasjon/paminnelser': typeof administrasjonAdminKommunikasjonPaminnelserRoute
-  '/(administrasjon)/admin/kommunikasjon/utsendelser': typeof administrasjonAdminKommunikasjonUtsendelserRoute
+  '/(administrasjon)/admin/(administrator)/faktura': typeof administrasjonAdminadministratorFakturaRoute
   '/(offentlig)/auth/permission/denied': typeof offentligAuthPermissionDeniedRoute
   '/(offentlig)/info/branch/$branchId': typeof offentligInfoBranchBranchIdRoute
   '/(offentlig)/info/policies/conditions': typeof offentligInfoPoliciesConditionsRoute
@@ -564,6 +564,13 @@ export interface FileRoutesById {
   '/(offentlig)/kasse/betaling/status': typeof offentligKasseBetalingStatusRoute
   '/(offentlig)/info/branch/': typeof offentligInfoBranchIndexRoute
   '/(offentlig)/kasse/betaling/': typeof offentligKasseBetalingIndexRoute
+  '/(administrasjon)/admin/(administrator)/database/boker': typeof administrasjonAdminadministratorDatabaseBokerRoute
+  '/(administrasjon)/admin/(administrator)/database/dynamisk_innhold': typeof administrasjonAdminadministratorDatabaseDynamisk_innholdRoute
+  '/(administrasjon)/admin/(administrator)/database/rapporter': typeof administrasjonAdminadministratorDatabaseRapporterRoute
+  '/(administrasjon)/admin/(administrator)/database/selskap': typeof administrasjonAdminadministratorDatabaseSelskapRoute
+  '/(administrasjon)/admin/(administrator)/kommunikasjon/logg': typeof administrasjonAdminadministratorKommunikasjonLoggRoute
+  '/(administrasjon)/admin/(administrator)/kommunikasjon/paminnelser': typeof administrasjonAdminadministratorKommunikasjonPaminnelserRoute
+  '/(administrasjon)/admin/(administrator)/kommunikasjon/utsendelser': typeof administrasjonAdminadministratorKommunikasjonUtsendelserRoute
   '/(offentlig)/auth/email/verify/$verificationId': typeof offentligAuthEmailVerifyVerificationIdRoute
 }
 export interface FileRouteTypes {
@@ -585,7 +592,7 @@ export interface FileRouteTypes {
     | '/user-settings'
     | '/'
     | '/info/policies'
-    | '/admin/faktura'
+    | '/admin/filialer'
     | '/admin/kasse'
     | '/admin/merking'
     | '/admin/ordreoversikt'
@@ -609,14 +616,7 @@ export interface FileRouteTypes {
     | '/bestilling/'
     | '/kasse/'
     | '/overleveringer/'
-    | '/admin/database/boker'
-    | '/admin/database/dynamisk_innhold'
-    | '/admin/database/filialer'
-    | '/admin/database/rapporter'
-    | '/admin/database/selskap'
-    | '/admin/kommunikasjon/logg'
-    | '/admin/kommunikasjon/paminnelser'
-    | '/admin/kommunikasjon/utsendelser'
+    | '/admin/faktura'
     | '/auth/permission/denied'
     | '/info/branch/$branchId'
     | '/info/policies/conditions'
@@ -625,6 +625,13 @@ export interface FileRouteTypes {
     | '/kasse/betaling/status'
     | '/info/branch/'
     | '/kasse/betaling/'
+    | '/admin/database/boker'
+    | '/admin/database/dynamisk_innhold'
+    | '/admin/database/rapporter'
+    | '/admin/database/selskap'
+    | '/admin/kommunikasjon/logg'
+    | '/admin/kommunikasjon/paminnelser'
+    | '/admin/kommunikasjon/utsendelser'
     | '/auth/email/verify/$verificationId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -641,8 +648,9 @@ export interface FileRouteTypes {
     | '/sjekk'
     | '/user-settings'
     | '/'
+    | '/admin'
     | '/info/policies'
-    | '/admin/faktura'
+    | '/admin/filialer'
     | '/admin/kasse'
     | '/admin/merking'
     | '/admin/ordreoversikt'
@@ -662,18 +670,10 @@ export interface FileRouteTypes {
     | '/kasse/signering'
     | '/overleveringer/$matchId'
     | '/signering/$token'
-    | '/admin'
     | '/bestilling'
     | '/kasse'
     | '/overleveringer'
-    | '/admin/database/boker'
-    | '/admin/database/dynamisk_innhold'
-    | '/admin/database/filialer'
-    | '/admin/database/rapporter'
-    | '/admin/database/selskap'
-    | '/admin/kommunikasjon/logg'
-    | '/admin/kommunikasjon/paminnelser'
-    | '/admin/kommunikasjon/utsendelser'
+    | '/admin/faktura'
     | '/auth/permission/denied'
     | '/info/branch/$branchId'
     | '/info/policies/conditions'
@@ -682,6 +682,13 @@ export interface FileRouteTypes {
     | '/kasse/betaling/status'
     | '/info/branch'
     | '/kasse/betaling'
+    | '/admin/database/boker'
+    | '/admin/database/dynamisk_innhold'
+    | '/admin/database/rapporter'
+    | '/admin/database/selskap'
+    | '/admin/kommunikasjon/logg'
+    | '/admin/kommunikasjon/paminnelser'
+    | '/admin/kommunikasjon/utsendelser'
     | '/auth/email/verify/$verificationId'
   id:
     | '__root__'
@@ -701,8 +708,9 @@ export interface FileRouteTypes {
     | '/(offentlig)/sjekk'
     | '/(offentlig)/user-settings'
     | '/(offentlig)/'
+    | '/(administrasjon)/admin/(administrator)'
     | '/(offentlig)/info/policies'
-    | '/(administrasjon)/admin/faktura'
+    | '/(administrasjon)/admin/filialer'
     | '/(administrasjon)/admin/kasse'
     | '/(administrasjon)/admin/merking'
     | '/(administrasjon)/admin/ordreoversikt'
@@ -726,14 +734,7 @@ export interface FileRouteTypes {
     | '/(offentlig)/bestilling/'
     | '/(offentlig)/kasse/'
     | '/(offentlig)/overleveringer/'
-    | '/(administrasjon)/admin/database/boker'
-    | '/(administrasjon)/admin/database/dynamisk_innhold'
-    | '/(administrasjon)/admin/database/filialer'
-    | '/(administrasjon)/admin/database/rapporter'
-    | '/(administrasjon)/admin/database/selskap'
-    | '/(administrasjon)/admin/kommunikasjon/logg'
-    | '/(administrasjon)/admin/kommunikasjon/paminnelser'
-    | '/(administrasjon)/admin/kommunikasjon/utsendelser'
+    | '/(administrasjon)/admin/(administrator)/faktura'
     | '/(offentlig)/auth/permission/denied'
     | '/(offentlig)/info/branch/$branchId'
     | '/(offentlig)/info/policies/conditions'
@@ -742,6 +743,13 @@ export interface FileRouteTypes {
     | '/(offentlig)/kasse/betaling/status'
     | '/(offentlig)/info/branch/'
     | '/(offentlig)/kasse/betaling/'
+    | '/(administrasjon)/admin/(administrator)/database/boker'
+    | '/(administrasjon)/admin/(administrator)/database/dynamisk_innhold'
+    | '/(administrasjon)/admin/(administrator)/database/rapporter'
+    | '/(administrasjon)/admin/(administrator)/database/selskap'
+    | '/(administrasjon)/admin/(administrator)/kommunikasjon/logg'
+    | '/(administrasjon)/admin/(administrator)/kommunikasjon/paminnelser'
+    | '/(administrasjon)/admin/(administrator)/kommunikasjon/utsendelser'
     | '/(offentlig)/auth/email/verify/$verificationId'
   fileRoutesById: FileRoutesById
 }
@@ -876,11 +884,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof administrasjonAdminIndexRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
-    '/(administrasjon)/admin/faktura': {
-      id: '/(administrasjon)/admin/faktura'
-      path: '/faktura'
-      fullPath: '/admin/faktura'
-      preLoaderRoute: typeof administrasjonAdminFakturaRouteImport
+    '/(administrasjon)/admin/(administrator)': {
+      id: '/(administrasjon)/admin/(administrator)'
+      path: ''
+      fullPath: '/admin'
+      preLoaderRoute: typeof administrasjonAdminadministratorRouteRouteImport
+      parentRoute: typeof administrasjonAdminRouteRoute
+    }
+    '/(administrasjon)/admin/filialer': {
+      id: '/(administrasjon)/admin/filialer'
+      path: '/filialer'
+      fullPath: '/admin/filialer'
+      preLoaderRoute: typeof administrasjonAdminFilialerRouteImport
       parentRoute: typeof administrasjonAdminRouteRoute
     }
     '/(administrasjon)/admin/kasse': {
@@ -1044,61 +1059,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof offentligSigneringTokenRouteImport
       parentRoute: typeof offentligRouteRoute
     }
-    '/(administrasjon)/admin/database/boker': {
-      id: '/(administrasjon)/admin/database/boker'
-      path: '/database/boker'
-      fullPath: '/admin/database/boker'
-      preLoaderRoute: typeof administrasjonAdminDatabaseBokerRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/database/dynamisk_innhold': {
-      id: '/(administrasjon)/admin/database/dynamisk_innhold'
-      path: '/database/dynamisk_innhold'
-      fullPath: '/admin/database/dynamisk_innhold'
-      preLoaderRoute: typeof administrasjonAdminDatabaseDynamisk_innholdRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/database/filialer': {
-      id: '/(administrasjon)/admin/database/filialer'
-      path: '/database/filialer'
-      fullPath: '/admin/database/filialer'
-      preLoaderRoute: typeof administrasjonAdminDatabaseFilialerRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/database/rapporter': {
-      id: '/(administrasjon)/admin/database/rapporter'
-      path: '/database/rapporter'
-      fullPath: '/admin/database/rapporter'
-      preLoaderRoute: typeof administrasjonAdminDatabaseRapporterRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/database/selskap': {
-      id: '/(administrasjon)/admin/database/selskap'
-      path: '/database/selskap'
-      fullPath: '/admin/database/selskap'
-      preLoaderRoute: typeof administrasjonAdminDatabaseSelskapRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/kommunikasjon/logg': {
-      id: '/(administrasjon)/admin/kommunikasjon/logg'
-      path: '/kommunikasjon/logg'
-      fullPath: '/admin/kommunikasjon/logg'
-      preLoaderRoute: typeof administrasjonAdminKommunikasjonLoggRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/kommunikasjon/paminnelser': {
-      id: '/(administrasjon)/admin/kommunikasjon/paminnelser'
-      path: '/kommunikasjon/paminnelser'
-      fullPath: '/admin/kommunikasjon/paminnelser'
-      preLoaderRoute: typeof administrasjonAdminKommunikasjonPaminnelserRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
-    }
-    '/(administrasjon)/admin/kommunikasjon/utsendelser': {
-      id: '/(administrasjon)/admin/kommunikasjon/utsendelser'
-      path: '/kommunikasjon/utsendelser'
-      fullPath: '/admin/kommunikasjon/utsendelser'
-      preLoaderRoute: typeof administrasjonAdminKommunikasjonUtsendelserRouteImport
-      parentRoute: typeof administrasjonAdminRouteRoute
+    '/(administrasjon)/admin/(administrator)/faktura': {
+      id: '/(administrasjon)/admin/(administrator)/faktura'
+      path: '/faktura'
+      fullPath: '/admin/faktura'
+      preLoaderRoute: typeof administrasjonAdminadministratorFakturaRouteImport
+      parentRoute: typeof administrasjonAdminadministratorRouteRoute
     }
     '/(offentlig)/auth/permission/denied': {
       id: '/(offentlig)/auth/permission/denied'
@@ -1155,6 +1121,55 @@ declare module '@tanstack/react-router' {
       fullPath: '/kasse/betaling/status'
       preLoaderRoute: typeof offentligKasseBetalingStatusRouteImport
       parentRoute: typeof offentligRouteRoute
+    }
+    '/(administrasjon)/admin/(administrator)/database/boker': {
+      id: '/(administrasjon)/admin/(administrator)/database/boker'
+      path: '/database/boker'
+      fullPath: '/admin/database/boker'
+      preLoaderRoute: typeof administrasjonAdminadministratorDatabaseBokerRouteImport
+      parentRoute: typeof administrasjonAdminadministratorRouteRoute
+    }
+    '/(administrasjon)/admin/(administrator)/database/dynamisk_innhold': {
+      id: '/(administrasjon)/admin/(administrator)/database/dynamisk_innhold'
+      path: '/database/dynamisk_innhold'
+      fullPath: '/admin/database/dynamisk_innhold'
+      preLoaderRoute: typeof administrasjonAdminadministratorDatabaseDynamisk_innholdRouteImport
+      parentRoute: typeof administrasjonAdminadministratorRouteRoute
+    }
+    '/(administrasjon)/admin/(administrator)/database/rapporter': {
+      id: '/(administrasjon)/admin/(administrator)/database/rapporter'
+      path: '/database/rapporter'
+      fullPath: '/admin/database/rapporter'
+      preLoaderRoute: typeof administrasjonAdminadministratorDatabaseRapporterRouteImport
+      parentRoute: typeof administrasjonAdminadministratorRouteRoute
+    }
+    '/(administrasjon)/admin/(administrator)/database/selskap': {
+      id: '/(administrasjon)/admin/(administrator)/database/selskap'
+      path: '/database/selskap'
+      fullPath: '/admin/database/selskap'
+      preLoaderRoute: typeof administrasjonAdminadministratorDatabaseSelskapRouteImport
+      parentRoute: typeof administrasjonAdminadministratorRouteRoute
+    }
+    '/(administrasjon)/admin/(administrator)/kommunikasjon/logg': {
+      id: '/(administrasjon)/admin/(administrator)/kommunikasjon/logg'
+      path: '/kommunikasjon/logg'
+      fullPath: '/admin/kommunikasjon/logg'
+      preLoaderRoute: typeof administrasjonAdminadministratorKommunikasjonLoggRouteImport
+      parentRoute: typeof administrasjonAdminadministratorRouteRoute
+    }
+    '/(administrasjon)/admin/(administrator)/kommunikasjon/paminnelser': {
+      id: '/(administrasjon)/admin/(administrator)/kommunikasjon/paminnelser'
+      path: '/kommunikasjon/paminnelser'
+      fullPath: '/admin/kommunikasjon/paminnelser'
+      preLoaderRoute: typeof administrasjonAdminadministratorKommunikasjonPaminnelserRouteImport
+      parentRoute: typeof administrasjonAdminadministratorRouteRoute
+    }
+    '/(administrasjon)/admin/(administrator)/kommunikasjon/utsendelser': {
+      id: '/(administrasjon)/admin/(administrator)/kommunikasjon/utsendelser'
+      path: '/kommunikasjon/utsendelser'
+      fullPath: '/admin/kommunikasjon/utsendelser'
+      preLoaderRoute: typeof administrasjonAdminadministratorKommunikasjonUtsendelserRouteImport
+      parentRoute: typeof administrasjonAdminadministratorRouteRoute
     }
     '/(offentlig)/auth/email/verify/$verificationId': {
       id: '/(offentlig)/auth/email/verify/$verificationId'
@@ -1283,27 +1298,58 @@ const offentligRouteRouteWithChildren = offentligRouteRoute._addFileChildren(
   offentligRouteRouteChildren,
 )
 
+interface administrasjonAdminadministratorRouteRouteChildren {
+  administrasjonAdminadministratorFakturaRoute: typeof administrasjonAdminadministratorFakturaRoute
+  administrasjonAdminadministratorDatabaseBokerRoute: typeof administrasjonAdminadministratorDatabaseBokerRoute
+  administrasjonAdminadministratorDatabaseDynamisk_innholdRoute: typeof administrasjonAdminadministratorDatabaseDynamisk_innholdRoute
+  administrasjonAdminadministratorDatabaseRapporterRoute: typeof administrasjonAdminadministratorDatabaseRapporterRoute
+  administrasjonAdminadministratorDatabaseSelskapRoute: typeof administrasjonAdminadministratorDatabaseSelskapRoute
+  administrasjonAdminadministratorKommunikasjonLoggRoute: typeof administrasjonAdminadministratorKommunikasjonLoggRoute
+  administrasjonAdminadministratorKommunikasjonPaminnelserRoute: typeof administrasjonAdminadministratorKommunikasjonPaminnelserRoute
+  administrasjonAdminadministratorKommunikasjonUtsendelserRoute: typeof administrasjonAdminadministratorKommunikasjonUtsendelserRoute
+}
+
+const administrasjonAdminadministratorRouteRouteChildren: administrasjonAdminadministratorRouteRouteChildren =
+  {
+    administrasjonAdminadministratorFakturaRoute:
+      administrasjonAdminadministratorFakturaRoute,
+    administrasjonAdminadministratorDatabaseBokerRoute:
+      administrasjonAdminadministratorDatabaseBokerRoute,
+    administrasjonAdminadministratorDatabaseDynamisk_innholdRoute:
+      administrasjonAdminadministratorDatabaseDynamisk_innholdRoute,
+    administrasjonAdminadministratorDatabaseRapporterRoute:
+      administrasjonAdminadministratorDatabaseRapporterRoute,
+    administrasjonAdminadministratorDatabaseSelskapRoute:
+      administrasjonAdminadministratorDatabaseSelskapRoute,
+    administrasjonAdminadministratorKommunikasjonLoggRoute:
+      administrasjonAdminadministratorKommunikasjonLoggRoute,
+    administrasjonAdminadministratorKommunikasjonPaminnelserRoute:
+      administrasjonAdminadministratorKommunikasjonPaminnelserRoute,
+    administrasjonAdminadministratorKommunikasjonUtsendelserRoute:
+      administrasjonAdminadministratorKommunikasjonUtsendelserRoute,
+  }
+
+const administrasjonAdminadministratorRouteRouteWithChildren =
+  administrasjonAdminadministratorRouteRoute._addFileChildren(
+    administrasjonAdminadministratorRouteRouteChildren,
+  )
+
 interface administrasjonAdminRouteRouteChildren {
-  administrasjonAdminFakturaRoute: typeof administrasjonAdminFakturaRoute
+  administrasjonAdminadministratorRouteRoute: typeof administrasjonAdminadministratorRouteRouteWithChildren
+  administrasjonAdminFilialerRoute: typeof administrasjonAdminFilialerRoute
   administrasjonAdminKasseRoute: typeof administrasjonAdminKasseRoute
   administrasjonAdminMerkingRoute: typeof administrasjonAdminMerkingRoute
   administrasjonAdminOrdreoversiktRoute: typeof administrasjonAdminOrdreoversiktRoute
   administrasjonAdminUserSettingsRoute: typeof administrasjonAdminUserSettingsRoute
   administrasjonAdminVentelisteRoute: typeof administrasjonAdminVentelisteRoute
   administrasjonAdminIndexRoute: typeof administrasjonAdminIndexRoute
-  administrasjonAdminDatabaseBokerRoute: typeof administrasjonAdminDatabaseBokerRoute
-  administrasjonAdminDatabaseDynamisk_innholdRoute: typeof administrasjonAdminDatabaseDynamisk_innholdRoute
-  administrasjonAdminDatabaseFilialerRoute: typeof administrasjonAdminDatabaseFilialerRoute
-  administrasjonAdminDatabaseRapporterRoute: typeof administrasjonAdminDatabaseRapporterRoute
-  administrasjonAdminDatabaseSelskapRoute: typeof administrasjonAdminDatabaseSelskapRoute
-  administrasjonAdminKommunikasjonLoggRoute: typeof administrasjonAdminKommunikasjonLoggRoute
-  administrasjonAdminKommunikasjonPaminnelserRoute: typeof administrasjonAdminKommunikasjonPaminnelserRoute
-  administrasjonAdminKommunikasjonUtsendelserRoute: typeof administrasjonAdminKommunikasjonUtsendelserRoute
 }
 
 const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildren =
   {
-    administrasjonAdminFakturaRoute: administrasjonAdminFakturaRoute,
+    administrasjonAdminadministratorRouteRoute:
+      administrasjonAdminadministratorRouteRouteWithChildren,
+    administrasjonAdminFilialerRoute: administrasjonAdminFilialerRoute,
     administrasjonAdminKasseRoute: administrasjonAdminKasseRoute,
     administrasjonAdminMerkingRoute: administrasjonAdminMerkingRoute,
     administrasjonAdminOrdreoversiktRoute:
@@ -1311,22 +1357,6 @@ const administrasjonAdminRouteRouteChildren: administrasjonAdminRouteRouteChildr
     administrasjonAdminUserSettingsRoute: administrasjonAdminUserSettingsRoute,
     administrasjonAdminVentelisteRoute: administrasjonAdminVentelisteRoute,
     administrasjonAdminIndexRoute: administrasjonAdminIndexRoute,
-    administrasjonAdminDatabaseBokerRoute:
-      administrasjonAdminDatabaseBokerRoute,
-    administrasjonAdminDatabaseDynamisk_innholdRoute:
-      administrasjonAdminDatabaseDynamisk_innholdRoute,
-    administrasjonAdminDatabaseFilialerRoute:
-      administrasjonAdminDatabaseFilialerRoute,
-    administrasjonAdminDatabaseRapporterRoute:
-      administrasjonAdminDatabaseRapporterRoute,
-    administrasjonAdminDatabaseSelskapRoute:
-      administrasjonAdminDatabaseSelskapRoute,
-    administrasjonAdminKommunikasjonLoggRoute:
-      administrasjonAdminKommunikasjonLoggRoute,
-    administrasjonAdminKommunikasjonPaminnelserRoute:
-      administrasjonAdminKommunikasjonPaminnelserRoute,
-    administrasjonAdminKommunikasjonUtsendelserRoute:
-      administrasjonAdminKommunikasjonUtsendelserRoute,
   }
 
 const administrasjonAdminRouteRouteWithChildren =

@@ -16,7 +16,7 @@ export default function SendMatchToStandButton({
   match: MatchDto;
   onSent?: () => void;
 }) {
-  const { isAdmin } = useAuth();
+  const { isManager } = useAuth();
   const queryClient = useQueryClient();
   const [opened, setOpened] = useState(false);
 
@@ -37,7 +37,7 @@ export default function SendMatchToStandButton({
     }),
   );
 
-  if (!isAdmin || match.isStandMatch || isMatchFinished(match)) {
+  if (!isManager || match.isStandMatch || isMatchFinished(match)) {
     return null;
   }
 

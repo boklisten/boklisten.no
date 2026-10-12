@@ -32,6 +32,9 @@ async function runMiddleware(ctx: HttpContext, permission: UserPermission): Prom
 test.group("CanMiddleware", () => {
   test("lets the exact level and every higher level through", async ({ assert }) => {
     assert.isTrue(await runMiddleware(contextFor("employee"), "employee"));
+    assert.isTrue(await runMiddleware(contextFor("manager"), "manager"));
+    assert.isTrue(await runMiddleware(contextFor("manager"), "employee"));
+    assert.isTrue(await runMiddleware(contextFor("admin"), "manager"));
     assert.isTrue(await runMiddleware(contextFor("admin"), "employee"));
     assert.isTrue(await runMiddleware(contextFor("admin"), "customer"));
   });
@@ -45,6 +48,14 @@ test.group("CanMiddleware", () => {
       throw new Error("expected an authorization failure");
     }
     assert.equal(failure.status, 403);
+    await assert.rejects(
+      () => runMiddleware(contextFor("employee"), "manager"),
+      errors.E_AUTHORIZATION_FAILURE,
+    );
+    await assert.rejects(
+      () => runMiddleware(contextFor("manager"), "admin"),
+      errors.E_AUTHORIZATION_FAILURE,
+    );
   });
 
   test("stops a guest without consulting the ability", async ({ assert }) => {
@@ -56,9 +67,14 @@ test.group("CanMiddleware", () => {
 });
 
 test.group("hasPermissionLevel()", () => {
-  test("orders customer < employee < admin", ({ assert }) => {
+  test("orders customer < employee < manager < admin", ({ assert }) => {
     assert.isTrue(hasPermissionLevel("admin", "employee"));
+    assert.isTrue(hasPermissionLevel("admin", "manager"));
+    assert.isTrue(hasPermissionLevel("manager", "employee"));
+    assert.isTrue(hasPermissionLevel("manager", "manager"));
     assert.isTrue(hasPermissionLevel("employee", "employee"));
+    assert.isFalse(hasPermissionLevel("employee", "manager"));
+    assert.isFalse(hasPermissionLevel("manager", "admin"));
     assert.isFalse(hasPermissionLevel("employee", "admin"));
     assert.isFalse(hasPermissionLevel("customer", "employee"));
   });

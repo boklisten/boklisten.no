@@ -18,10 +18,11 @@ import {
 |--------------------------------------------------------------------------
 |
 | Routes are grouped by the permission they require, and the groups are declared from the least
-| to the most privileged, except that admin routes come before employee routes. That order keeps
-| static paths ahead of the dynamic ones that would otherwise shadow them: `/orders/me` (customer)
-| is declared before `/orders/:orderId` (employee), and `/users/metrics` (admin) before
-| `/users/:userId` (employee). Within a group, keep static paths above dynamic ones too.
+| to the most privileged, except that the staff groups come in the order admin, manager,
+| employee. That order keeps static paths ahead of the dynamic ones that would otherwise shadow
+| them: `/orders/me` (customer) is declared before `/orders/:orderId` (employee), and
+| `/users/metrics` (manager) before `/users/:userId` (employee). Within a group, keep static
+| paths above dynamic ones too.
 |
 | Route names are derived from `<controller>.<method>`; the frontend addresses endpoints by that
 | name through Tuyau, never by path.
@@ -135,6 +136,62 @@ router
  */
 router
   .group(() => {
+    router.delete("/users/:userId", [controllers.Users, "destroy"]);
+
+    // items
+    router.get("/items/all", [controllers.Items, "all"]);
+    router.post("/items", [controllers.Items, "store"]);
+    router.post("/items/bulk", [controllers.Items, "bulkUpsert"]);
+    router.patch("/items/:id", [controllers.Items, "update"]);
+
+    // invoices
+    router.get("/invoices", [controllers.Invoices, "index"]);
+    router.get("/invoices/generation_defaults", [controllers.Invoices, "generationDefaults"]);
+    router.post("/invoices/generate", [controllers.Invoices, "generate"]);
+    router.post("/invoices/company", [controllers.Invoices, "createCompanyInvoice"]);
+    router.post("/invoices/export", [controllers.Invoices, "export"]);
+    router.patch("/invoices/status", [controllers.Invoices, "setStatuses"]);
+    router.get("/invoices/:invoiceId", [controllers.Invoices, "show"]);
+    router.delete("/invoices/:invoiceId", [controllers.Invoices, "destroy"]);
+    router.patch("/invoices/:invoiceId/status", [controllers.Invoices, "setStatus"]);
+    router.patch("/invoices/:invoiceId/lines/:lineIndex", [
+      controllers.Invoices,
+      "setLineCancelled",
+    ]);
+
+    // site content
+    router.get("/editable_texts", [controllers.EditableTexts, "index"]);
+    router.put("/editable_texts/:id", [controllers.EditableTexts, "upsert"]);
+    router.delete("/editable_texts/:id", [controllers.EditableTexts, "destroy"]);
+    router.post("/questions_and_answers", [controllers.QuestionsAndAnswers, "store"]);
+    router.patch("/questions_and_answers/order", [controllers.QuestionsAndAnswers, "updateOrder"]);
+    router.patch("/questions_and_answers/:id", [controllers.QuestionsAndAnswers, "update"]);
+    router.delete("/questions_and_answers/:id", [controllers.QuestionsAndAnswers, "destroy"]);
+    router.get("/companies", [controllers.Companies, "index"]);
+    router.post("/companies", [controllers.Companies, "store"]);
+    router.delete("/companies/:companyId", [controllers.Companies, "destroy"]);
+
+    // messaging
+    router.post("/reminders/count_recipients", [controllers.Reminders, "countRecipients"]);
+    router.post("/reminders/send", [controllers.Reminders, "send"]);
+    router.get("/dispatch/email_templates", [controllers.Dispatch, "emailTemplates"]);
+    router.post("/dispatch", [controllers.Dispatch, "store"]);
+
+    // reports
+    router.get("/reports/customer_items", [controllers.Reports, "customerItems"]);
+    router.get("/reports/orders", [controllers.Reports, "orders"]);
+    router.get("/reports/payments", [controllers.Reports, "payments"]);
+    router.get("/reports/users", [controllers.Reports, "users"]);
+  })
+  .use([middleware.auth(), middleware.can({ permission: "admin" })]);
+
+/**
+ * Managers (Filialsjef): everything the Filialer workspace does on a node and its people, and
+ * the levels below admin. Scope (the home node) is not enforced yet; see
+ * docs/branch-scope-migration-plan.md.
+ */
+router
+  .group(() => {
     // branches
     router.post("/branches", [controllers.branches.Branches, "store"]);
     router.patch("/branches/relationships", [controllers.branches.BranchRelationships, "update"]);
@@ -226,7 +283,6 @@ router
     router.get("/users/merge_preview/:fromUserId/:toUserId", [controllers.Users, "mergePreview"]);
     router.post("/users/merge", [controllers.Users, "merge"]);
     router.put("/users/permission", [controllers.Users, "setPermission"]);
-    router.delete("/users/:userId", [controllers.Users, "destroy"]);
 
     // matches
     router.get("/matches/:matchId", [controllers.Matches, "show"]);
@@ -241,53 +297,8 @@ router
     router.post("/match_rounds/:id/generate", [controllers.MatchRounds, "generate"]);
     router.delete("/match_rounds/:id/matches", [controllers.MatchRounds, "destroyMatches"]);
     router.delete("/match_rounds/:id", [controllers.MatchRounds, "destroy"]);
-
-    // items
-    router.get("/items/all", [controllers.Items, "all"]);
-    router.post("/items", [controllers.Items, "store"]);
-    router.post("/items/bulk", [controllers.Items, "bulkUpsert"]);
-    router.patch("/items/:id", [controllers.Items, "update"]);
-
-    // invoices
-    router.get("/invoices", [controllers.Invoices, "index"]);
-    router.get("/invoices/generation_defaults", [controllers.Invoices, "generationDefaults"]);
-    router.post("/invoices/generate", [controllers.Invoices, "generate"]);
-    router.post("/invoices/company", [controllers.Invoices, "createCompanyInvoice"]);
-    router.post("/invoices/export", [controllers.Invoices, "export"]);
-    router.patch("/invoices/status", [controllers.Invoices, "setStatuses"]);
-    router.get("/invoices/:invoiceId", [controllers.Invoices, "show"]);
-    router.delete("/invoices/:invoiceId", [controllers.Invoices, "destroy"]);
-    router.patch("/invoices/:invoiceId/status", [controllers.Invoices, "setStatus"]);
-    router.patch("/invoices/:invoiceId/lines/:lineIndex", [
-      controllers.Invoices,
-      "setLineCancelled",
-    ]);
-
-    // site content
-    router.get("/editable_texts", [controllers.EditableTexts, "index"]);
-    router.put("/editable_texts/:id", [controllers.EditableTexts, "upsert"]);
-    router.delete("/editable_texts/:id", [controllers.EditableTexts, "destroy"]);
-    router.post("/questions_and_answers", [controllers.QuestionsAndAnswers, "store"]);
-    router.patch("/questions_and_answers/order", [controllers.QuestionsAndAnswers, "updateOrder"]);
-    router.patch("/questions_and_answers/:id", [controllers.QuestionsAndAnswers, "update"]);
-    router.delete("/questions_and_answers/:id", [controllers.QuestionsAndAnswers, "destroy"]);
-    router.get("/companies", [controllers.Companies, "index"]);
-    router.post("/companies", [controllers.Companies, "store"]);
-    router.delete("/companies/:companyId", [controllers.Companies, "destroy"]);
-
-    // messaging
-    router.post("/reminders/count_recipients", [controllers.Reminders, "countRecipients"]);
-    router.post("/reminders/send", [controllers.Reminders, "send"]);
-    router.get("/dispatch/email_templates", [controllers.Dispatch, "emailTemplates"]);
-    router.post("/dispatch", [controllers.Dispatch, "store"]);
-
-    // reports
-    router.get("/reports/customer_items", [controllers.Reports, "customerItems"]);
-    router.get("/reports/orders", [controllers.Reports, "orders"]);
-    router.get("/reports/payments", [controllers.Reports, "payments"]);
-    router.get("/reports/users", [controllers.Reports, "users"]);
   })
-  .use([middleware.auth(), middleware.can({ permission: "admin" })]);
+  .use([middleware.auth(), middleware.can({ permission: "manager" })]);
 
 /**
  * Employees

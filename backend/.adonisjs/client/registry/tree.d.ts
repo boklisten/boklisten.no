@@ -96,13 +96,13 @@ export interface ApiDefinition {
     updateMe: typeof routes['users.update_me']
     sendPhoneChangeCode: typeof routes['users.send_phone_change_code']
     changeMyPhone: typeof routes['users.change_my_phone']
+    destroy: typeof routes['users.destroy']
     metrics: typeof routes['users.metrics']
     duplicates: typeof routes['users.duplicates']
     employees: typeof routes['users.employees']
     mergePreview: typeof routes['users.merge_preview']
     merge: typeof routes['users.merge']
     setPermission: typeof routes['users.set_permission']
-    destroy: typeof routes['users.destroy']
     search: typeof routes['users.search']
     show: typeof routes['users.show']
     update: typeof routes['users.update']
@@ -138,6 +138,37 @@ export interface ApiDefinition {
     notify: typeof routes['matches.notify']
     sendToStand: typeof routes['matches.send_to_stand']
     forCustomer: typeof routes['matches.for_customer']
+  }
+  invoices: {
+    index: typeof routes['invoices.index']
+    generationDefaults: typeof routes['invoices.generation_defaults']
+    generate: typeof routes['invoices.generate']
+    createCompanyInvoice: typeof routes['invoices.create_company_invoice']
+    export: typeof routes['invoices.export']
+    setStatuses: typeof routes['invoices.set_statuses']
+    show: typeof routes['invoices.show']
+    destroy: typeof routes['invoices.destroy']
+    setStatus: typeof routes['invoices.set_status']
+    setLineCancelled: typeof routes['invoices.set_line_cancelled']
+  }
+  companies: {
+    index: typeof routes['companies.index']
+    store: typeof routes['companies.store']
+    destroy: typeof routes['companies.destroy']
+  }
+  reminders: {
+    countRecipients: typeof routes['reminders.count_recipients']
+    send: typeof routes['reminders.send']
+  }
+  dispatch: {
+    emailTemplates: typeof routes['dispatch.email_templates']
+    store: typeof routes['dispatch.store']
+  }
+  reports: {
+    customerItems: typeof routes['reports.customer_items']
+    orders: typeof routes['reports.orders']
+    payments: typeof routes['reports.payments']
+    users: typeof routes['reports.users']
   }
   branchRelationships: {
     update: typeof routes['branch_relationships.update']
@@ -187,37 +218,6 @@ export interface ApiDefinition {
     generate: typeof routes['match_rounds.generate']
     destroyMatches: typeof routes['match_rounds.destroy_matches']
     destroy: typeof routes['match_rounds.destroy']
-  }
-  invoices: {
-    index: typeof routes['invoices.index']
-    generationDefaults: typeof routes['invoices.generation_defaults']
-    generate: typeof routes['invoices.generate']
-    createCompanyInvoice: typeof routes['invoices.create_company_invoice']
-    export: typeof routes['invoices.export']
-    setStatuses: typeof routes['invoices.set_statuses']
-    show: typeof routes['invoices.show']
-    destroy: typeof routes['invoices.destroy']
-    setStatus: typeof routes['invoices.set_status']
-    setLineCancelled: typeof routes['invoices.set_line_cancelled']
-  }
-  companies: {
-    index: typeof routes['companies.index']
-    store: typeof routes['companies.store']
-    destroy: typeof routes['companies.destroy']
-  }
-  reminders: {
-    countRecipients: typeof routes['reminders.count_recipients']
-    send: typeof routes['reminders.send']
-  }
-  dispatch: {
-    emailTemplates: typeof routes['dispatch.email_templates']
-    store: typeof routes['dispatch.store']
-  }
-  reports: {
-    customerItems: typeof routes['reports.customer_items']
-    orders: typeof routes['reports.orders']
-    payments: typeof routes['reports.payments']
-    users: typeof routes['reports.users']
   }
   messageLogs: {
     forCustomer: typeof routes['message_logs.for_customer']

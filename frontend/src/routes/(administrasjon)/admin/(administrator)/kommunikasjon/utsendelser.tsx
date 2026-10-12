@@ -3,7 +3,9 @@ import DispatchManager from "@/features/dispatches/DispatchManager";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 
-export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/utsendelser")({
+export const Route = createFileRoute(
+  "/(administrasjon)/admin/(administrator)/kommunikasjon/utsendelser",
+)({
   head: () =>
     seo({
       title: "Utsendelser | bl-admin",

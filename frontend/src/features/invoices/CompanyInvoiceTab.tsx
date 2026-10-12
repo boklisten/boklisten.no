@@ -28,7 +28,7 @@ import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-const route = getRouteApi("/(administrasjon)/admin/faktura");
+const route = getRouteApi("/(administrasjon)/admin/(administrator)/faktura");
 const amountStyle = { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } as const;
 
 interface Draft {

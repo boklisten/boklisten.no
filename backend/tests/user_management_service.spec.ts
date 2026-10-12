@@ -100,7 +100,12 @@ test.group("UserManagementService.setPermission", (group) => {
     const promoted = await createUser();
     const moved = await createUser({ permission: "employee" });
 
-    await UserManagementService.setPermission([promoted.id, moved.id], "employee", ullern.id);
+    await UserManagementService.setPermission(
+      "admin",
+      [promoted.id, moved.id],
+      "employee",
+      ullern.id,
+    );
 
     assert.deepEqual(
       revoke.getCalls().map((call) => call.args[0]),
@@ -115,10 +120,10 @@ test.group("UserManagementService.setPermission", (group) => {
     const ullern = await createBranch({ name: "Ullern" });
     const user = await createUser();
 
-    await UserManagementService.setPermission([user.id], "employee", ullern.id);
+    await UserManagementService.setPermission("admin", [user.id], "employee", ullern.id);
     assert.equal((await User.findOrFail(user.id)).employeeBranchId, ullern.id);
 
-    await UserManagementService.setPermission([user.id], "employee");
+    await UserManagementService.setPermission("admin", [user.id], "employee");
     assert.equal((await User.findOrFail(user.id)).employeeBranchId, ullern.id);
   });
 
@@ -126,7 +131,7 @@ test.group("UserManagementService.setPermission", (group) => {
     const ullern = await createBranch({ name: "Ullern" });
     const user = await createUser({ permission: "employee", employeeBranchId: ullern.id });
 
-    await UserManagementService.setPermission([user.id], "admin", ullern.id);
+    await UserManagementService.setPermission("admin", [user.id], "admin", ullern.id);
 
     const admin = await User.findOrFail(user.id);
     assert.equal(admin.permission, "admin");
@@ -137,7 +142,7 @@ test.group("UserManagementService.setPermission", (group) => {
     const ullern = await createBranch({ name: "Ullern" });
     const user = await createUser({ permission: "employee", employeeBranchId: ullern.id });
 
-    await UserManagementService.setPermission([user.id], "customer");
+    await UserManagementService.setPermission("admin", [user.id], "customer");
 
     assert.equal((await User.findOrFail(user.id)).employeeBranchId, (await rootBranch()).id);
   });
@@ -146,10 +151,62 @@ test.group("UserManagementService.setPermission", (group) => {
     const user = await createUser();
 
     await assert.rejects(
-      () => UserManagementService.setPermission([user.id], "employee", "000000000000000000000bad"),
+      () =>
+        UserManagementService.setPermission(
+          "admin",
+          [user.id],
+          "employee",
+          "000000000000000000000bad",
+        ),
       /Fant ingen filial/,
     );
     assert.equal((await User.findOrFail(user.id)).permission, "customer");
+  });
+
+  test("a manager keeps a home node of their own like an employee", async ({ assert }) => {
+    const ullern = await createBranch({ name: "Ullern" });
+    const user = await createUser({ permission: "employee", employeeBranchId: ullern.id });
+
+    await UserManagementService.setPermission("admin", [user.id], "manager");
+
+    const manager = await User.findOrFail(user.id);
+    assert.equal(manager.permission, "manager");
+    assert.equal(manager.employeeBranchId, ullern.id);
+  });
+
+  test("a manager may hand out every level below admin", async ({ assert }) => {
+    const ullern = await createBranch({ name: "Ullern" });
+    const user = await createUser();
+
+    await UserManagementService.setPermission("manager", [user.id], "manager", ullern.id);
+    assert.equal((await User.findOrFail(user.id)).permission, "manager");
+
+    await UserManagementService.setPermission("manager", [user.id], "employee");
+    assert.equal((await User.findOrFail(user.id)).permission, "employee");
+
+    await UserManagementService.setPermission("manager", [user.id], "customer");
+    assert.equal((await User.findOrFail(user.id)).permission, "customer");
+  });
+
+  test("a manager may not grant admin", async ({ assert }) => {
+    const user = await createUser({ permission: "employee" });
+
+    await assert.rejects(
+      () => UserManagementService.setPermission("manager", [user.id], "admin"),
+      /Bare administratorer/,
+    );
+    assert.equal((await User.findOrFail(user.id)).permission, "employee");
+  });
+
+  test("a manager may not change an admin, even among other users", async ({ assert }) => {
+    const admin = await createUser({ permission: "admin" });
+    const employee = await createUser({ permission: "employee" });
+
+    await assert.rejects(
+      () => UserManagementService.setPermission("manager", [employee.id, admin.id], "employee"),
+      /administrator/,
+    );
+    assert.equal((await User.findOrFail(admin.id)).permission, "admin");
   });
 });
 

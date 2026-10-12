@@ -30,7 +30,7 @@ import asyncConfirmModal from "@/shared/utils/asyncConfirmModal";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-const route = getRouteApi("/(administrasjon)/admin/faktura");
+const route = getRouteApi("/(administrasjon)/admin/(administrator)/faktura");
 
 type DateRange = [Date | null, Date | null];
 

@@ -24,7 +24,8 @@ export interface User {
   branchMembershipId: string;
   /**
    * The branch the user works from, their home node: the root for customers, guests and admins,
-   * and for an employee whatever head office set. Named for the one role that ever holds a value.
+   * and for employees and managers whatever head office set. Named for the umbrella role of the
+   * staff below admin, the ones who ever hold a value.
    */
   employeeBranchId: string;
   /** The customer must confirm or complete their contact details before using the site. */

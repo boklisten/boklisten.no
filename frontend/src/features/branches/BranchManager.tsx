@@ -38,7 +38,7 @@ import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
 import { api } from "@/shared/utils/apiClient";
 import { isRootBranch } from "@/shared/utils/branchTree";
 
-const route = getRouteApi("/(administrasjon)/admin/database/filialer");
+const route = getRouteApi("/(administrasjon)/admin/filialer");
 
 /**
  * Neuter nouns a branch may be divided into, matched as the last part of the label so compounds

@@ -15,8 +15,8 @@ import useAuth from "@/shared/hooks/useAuth";
  * marked the way the navigation marks it everywhere: teal, with the highlighter under the word.
  */
 export default function AdminMenuLinks({ onNavigate }: { onNavigate?: () => void }) {
-  const { isAdmin } = useAuth();
-  return visibleAdminNavSections(isAdmin).map((section) => (
+  const { user } = useAuth();
+  return visibleAdminNavSections(user?.permission ?? "customer").map((section) => (
     <MenuSection key={section.label} title={section.label}>
       {section.links.map((link) => (
         <MenuRow key={link.to} link={link} onNavigate={onNavigate} />

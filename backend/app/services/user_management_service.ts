@@ -3,6 +3,7 @@ import type { TransactionClientContract } from "@adonisjs/lucid/types/database";
 import { DateTime } from "luxon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
+import ForbiddenException from "#exceptions/forbidden_exception";
 import Branch from "#models/branch";
 import User from "#models/user";
 import CustomerItem from "#models/customer_item";
@@ -12,7 +13,7 @@ import { BranchScope } from "#services/branch_scope";
 import { countActiveMatches } from "#services/matches/active_matches";
 import { SessionRevocationService } from "#services/session_revocation_service";
 import type { UserPermission } from "#shared/user-permission";
-import { USER_PERMISSION } from "#shared/user-permission";
+import { USER_PERMISSION, hasPermissionLevel } from "#shared/user-permission";
 
 /**
  * Where a staff member's home node sits relative to the node asked about: above it (they see
@@ -61,12 +62,16 @@ async function getEmployees(branchId: string): Promise<EmployeeRow[]> {
 }
 
 /**
- * Sets the level and, for employees, the home node. Only employees hold a node of their own:
- * an admin works from the root and a customer has no workplace, so either level snaps the node
- * back to the root whatever was given. An employee given no node keeps the one they have. A
- * change of level ends the user's sessions; a change of node alone does not.
+ * Sets the level and, for employees and managers, the home node. Only those two levels hold a
+ * node of their own: an admin works from the root and a customer has no workplace, so either
+ * level snaps the node back to the root whatever was given. A user given no node keeps the one
+ * they have. A change of level ends the user's sessions; a change of node alone does not.
+ *
+ * A manager (Filialsjef) may hand out every level below admin and may not touch an admin; an
+ * admin may do anything.
  */
 async function setPermission(
+  actorPermission: UserPermission,
   userIds: string[],
   permission: UserPermission,
   employeeBranchId?: string,
@@ -76,6 +81,7 @@ async function setPermission(
   if (missing !== undefined) {
     throw new BadRequestException(`Fant ingen bruker for kunde ${missing}`);
   }
+  assertMayGrant(actorPermission, users, permission);
   const homeNode = await homeNodeFor(permission, employeeBranchId);
   await User.query()
     .whereIn("id", userIds)
@@ -86,11 +92,35 @@ async function setPermission(
   return { updated: userIds.length };
 }
 
+function assertMayGrant(
+  actorPermission: UserPermission,
+  users: User[],
+  permission: UserPermission,
+) {
+  if (hasPermissionLevel(actorPermission, USER_PERMISSION.ADMIN)) {
+    return;
+  }
+  if (permission === USER_PERMISSION.ADMIN) {
+    throw new ForbiddenException("Bare administratorer kan gi noen tilgangsnivået Administrator");
+  }
+  const admin = users.find((user) => user.permission === USER_PERMISSION.ADMIN);
+  if (admin !== undefined) {
+    throw new ForbiddenException(
+      `${admin.name} er administrator, og bare administratorer kan endre tilgangsnivået deres`,
+    );
+  }
+}
+
+const LEVELS_WITH_A_HOME_NODE: ReadonlySet<UserPermission> = new Set([
+  USER_PERMISSION.EMPLOYEE,
+  USER_PERMISSION.MANAGER,
+]);
+
 async function homeNodeFor(
   permission: UserPermission,
   employeeBranchId: string | undefined,
 ): Promise<{ employeeBranchId?: string }> {
-  if (permission !== USER_PERMISSION.EMPLOYEE) {
+  if (!LEVELS_WITH_A_HOME_NODE.has(permission)) {
     return { employeeBranchId: (await Branch.root()).id };
   }
   if (employeeBranchId === undefined) {

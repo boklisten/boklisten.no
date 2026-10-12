@@ -6,7 +6,7 @@ import OrdersReport from "@/features/reports/OrdersReport";
 import PaymentsReport from "@/features/reports/PaymentsReport";
 import UsersReport from "@/features/reports/UsersReport";
 
-export const Route = createFileRoute("/(administrasjon)/admin/database/rapporter")({
+export const Route = createFileRoute("/(administrasjon)/admin/(administrator)/database/rapporter")({
   component: DatabaseReportsPage,
 });
 

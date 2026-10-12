@@ -38,7 +38,7 @@ export default function AdminMatchDetail({ match }: { match: MatchDto }) {
         match={match}
         onSent={() =>
           void navigate({
-            to: "/admin/database/filialer",
+            to: "/admin/filialer",
             search: (previous) => ({ ...previous, overlevering: undefined }),
           })
         }

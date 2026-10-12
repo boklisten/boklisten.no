@@ -13,10 +13,11 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 const MIN_SEARCH_LENGTH = 3;
 const MAX_RESULTS = 8;
 
-const GRANTABLE_PERMISSIONS = (["employee", "admin"] as const).map((permission) => ({
+const GRANTABLE_PERMISSIONS = (["employee", "manager", "admin"] as const).map((permission) => ({
   value: permission,
   label: PERMISSION_LABELS[permission],
 }));
+const BELOW_ADMIN_PERMISSIONS = GRANTABLE_PERMISSIONS.filter((option) => option.value !== "admin");
 
 interface UserOption {
   value: string;
@@ -35,7 +36,7 @@ export default function AddEmployeesModal({
   onClose: () => void;
   /** The node the list is on, which is where a new employee works from. To home someone elsewhere, add them from that node. */
   branchId: string;
-  /** Admins work from the root, so only the root's list offers that level. */
+  /** Admins work from the root, so only the root's list offers that level, and only to an admin. */
   canGrantAdmin: boolean;
 }) {
   const queryClient = useQueryClient();
@@ -145,7 +146,7 @@ export default function AddEmployeesModal({
         />
         <Select
           label="Tilgangsnivå"
-          data={canGrantAdmin ? GRANTABLE_PERMISSIONS : GRANTABLE_PERMISSIONS.slice(0, 1)}
+          data={canGrantAdmin ? GRANTABLE_PERMISSIONS : BELOW_ADMIN_PERMISSIONS}
           value={permission}
           allowDeselect={false}
           onChange={(value) =>
@@ -159,7 +160,8 @@ export default function AddEmployeesModal({
             addMutation.mutate({
               userIds: selected.map((user) => user.value),
               permission,
-              ...(permission === "employee" ? { employeeBranchId: branchId } : {}),
+              // Employees and managers work from this node; an admin works from the root.
+              ...(permission === "admin" ? {} : { employeeBranchId: branchId }),
             })
           }
         >

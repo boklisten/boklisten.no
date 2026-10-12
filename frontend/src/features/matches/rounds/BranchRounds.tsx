@@ -18,7 +18,7 @@ import EntityLink from "@/shared/components/EntityLink";
 import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
-const route = getRouteApi("/(administrasjon)/admin/database/filialer");
+const route = getRouteApi("/(administrasjon)/admin/filialer");
 
 function TabSkeleton() {
   return (
@@ -41,7 +41,7 @@ function MatchDetailPanel({ matchId }: { matchId: string }) {
   return (
     <Stack gap="lg">
       <EntityLink
-        to="/admin/database/filialer"
+        to="/admin/filialer"
         search={(previous) => ({ ...previous, overlevering: undefined })}
       >
         ← Alle overleveringer

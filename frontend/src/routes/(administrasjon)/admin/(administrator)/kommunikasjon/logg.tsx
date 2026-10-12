@@ -7,7 +7,7 @@ import type { MessageLogSearchParams } from "@/features/message-log/messageLogPa
 import MessageLogStatistics from "@/features/message-log/MessageLogStatistics";
 import { seo } from "@/shared/utils/seo";
 
-export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/logg")({
+export const Route = createFileRoute("/(administrasjon)/admin/(administrator)/kommunikasjon/logg")({
   validateSearch: validateMessageLogSearch,
   head: () =>
     seo({

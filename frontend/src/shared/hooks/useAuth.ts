@@ -36,6 +36,7 @@ export default function useAuth() {
     userId: user?.id ?? null,
     isLoggedIn: user !== null,
     isEmployee: user !== null && hasPermissionLevel(user.permission, "employee"),
+    isManager: user !== null && hasPermissionLevel(user.permission, "manager"),
     isAdmin: user !== null && hasPermissionLevel(user.permission, "admin"),
     canAccess: (requiredPermission: UserPermission) =>
       user !== null && hasPermissionLevel(user.permission, requiredPermission),

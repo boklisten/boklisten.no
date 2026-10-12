@@ -7,6 +7,7 @@ const PERMISSION_BADGES: Record<
   { label: string; color: string }
 > = {
   employee: { label: "Ansatt", color: "blue" },
+  manager: { label: "Filialsjef", color: "grape" },
   admin: { label: "Administrator", color: "red" },
 };
 

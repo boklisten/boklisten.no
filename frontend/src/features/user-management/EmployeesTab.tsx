@@ -22,12 +22,19 @@ import { showErrorNotification, showSuccessNotification } from "@/shared/utils/n
 
 type EmployeeRow = Route.Response<"users.employees">[number];
 
-const PERMISSION_OPTIONS = (["customer", "employee", "admin"] as const).map((permission) => ({
-  value: permission,
-  label: PERMISSION_LABELS[permission],
-}));
-/** Admins work from the root, so only its Ansatte tab offers the level; elsewhere a promotion would move the row away. */
-const NON_ROOT_PERMISSION_OPTIONS = PERMISSION_OPTIONS.filter((option) => option.value !== "admin");
+const PERMISSION_OPTIONS = (["customer", "employee", "manager", "admin"] as const).map(
+  (permission) => ({
+    value: permission,
+    label: PERMISSION_LABELS[permission],
+  }),
+);
+/**
+ * Admins work from the root, so only its Ansatte tab offers the level (elsewhere a promotion
+ * would move the row away), and only an admin may hand it out.
+ */
+const BELOW_ADMIN_PERMISSION_OPTIONS = PERMISSION_OPTIONS.filter(
+  (option) => option.value !== "admin",
+);
 
 /**
  * The Ansatte tab of a node, read as an audit: everyone who can see the node's data, grouped by
@@ -37,7 +44,8 @@ const NON_ROOT_PERMISSION_OPTIONS = PERMISSION_OPTIONS.filter((option) => option
  * start closed and their rows are read-only, each node a link to the tab where it is managed.
  */
 export default function EmployeesTab({ branchId, isRoot }: { branchId: string; isRoot: boolean }) {
-  const { userId: myUserId } = useAuth();
+  const { userId: myUserId, isAdmin } = useAuth();
+  const canGrantAdmin = isRoot && isAdmin;
   const queryClient = useQueryClient();
   const [addModalOpen, setAddModalOpen] = useState(false);
   const {
@@ -115,6 +123,11 @@ export default function EmployeesTab({ branchId, isRoot }: { branchId: string; i
   const rowsOf = (relation: EmployeeRow["relation"]) =>
     employees.filter((employee) => employee.relation === relation);
 
+  /** A manager (Filialsjef) manages the levels below admin; an admin's row is theirs to read only. */
+  function mayEdit(employee: EmployeeRow) {
+    return isAdmin || employee.permission !== "admin";
+  }
+
   function employeeTable(rows: EmployeeRow[], editable: boolean) {
     if (rows.length === 0) {
       return (
@@ -157,10 +170,10 @@ export default function EmployeesTab({ branchId, isRoot }: { branchId: string; i
                   </Group>
                 </Table.Td>
                 <Table.Td>
-                  {editable ? (
+                  {editable && mayEdit(employee) ? (
                     <Select
                       aria-label={`Tilgangsnivå for ${employee.name || employee.email}`}
-                      data={isRoot ? PERMISSION_OPTIONS : NON_ROOT_PERMISSION_OPTIONS}
+                      data={canGrantAdmin ? PERMISSION_OPTIONS : BELOW_ADMIN_PERMISSION_OPTIONS}
                       value={employee.permission}
                       allowDeselect={false}
                       w={160}
@@ -175,7 +188,7 @@ export default function EmployeesTab({ branchId, isRoot }: { branchId: string; i
                   )}
                 </Table.Td>
                 <Table.Td>
-                  {editable ? (
+                  {editable && mayEdit(employee) ? (
                     // An admin works from the root; the node is theirs to see, not to change.
                     <EmployeeBranchPicker
                       aria-label={`Filial for ${employee.name || employee.email}`}
@@ -193,7 +206,7 @@ export default function EmployeesTab({ branchId, isRoot }: { branchId: string; i
                   ) : (
                     <Text size="sm">
                       <EntityLink
-                        to="/admin/database/filialer"
+                        to="/admin/filialer"
                         search={(previous) => ({
                           ...previous,
                           filial: employee.employeeBranchId,
@@ -257,7 +270,7 @@ export default function EmployeesTab({ branchId, isRoot }: { branchId: string; i
         opened={addModalOpen}
         onClose={() => setAddModalOpen(false)}
         branchId={branchId}
-        canGrantAdmin={isRoot}
+        canGrantAdmin={canGrantAdmin}
       />
     </Stack>
   );

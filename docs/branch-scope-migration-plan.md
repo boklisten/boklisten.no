@@ -1,7 +1,8 @@
 # Branch scope: one tree for everything
 
-Status: plan, agreed with Adrian on 2026-10-11 and hole-checked the same day. Nothing below is
-implemented yet. Read the whole document before starting a step; the steps only make sense against
+Status: plan, agreed with Adrian on 2026-10-11 and hole-checked the same day. Steps 1 to 7 are
+done (2026-10-11/12); step 7, the Filialsjef level, was inserted on 2026-10-12 and the later steps
+renumbered. Read the whole document before starting a step; the steps only make sense against
 the target architecture in part 1. Each step is meant to be one reviewable change that leaves the
 product better on its own, in the order given. Do not combine steps.
 
@@ -32,18 +33,21 @@ lives there. Pages that used to be flat lists (Signaturer, Brukere) become tabs 
   customer with no school it is the root.
 - **Home node** (`users.employee_branch_id`): the node a user works from. Never null and it means the
   same thing for everyone: customers and guests have the root, admins have the root, employees
-  have whatever head office sets. Only employees ever hold anything but the root. The column and
+  and managers have whatever head office sets. Only those two levels ever hold anything but the
+  root. The column and
   the DTO field (`employeeBranchId`) are named after the one role that holds a value, so a reader
   sees at once that it is a staff attribute and not a second membership (Adrian, 2026-10-12;
-  `scope_branch_id` was the first name). A future `manager` permission (someone who manages the
-  branches in their scope, where an employee only does the operational work) will reuse the same
-  column; "employee" is then read as the umbrella word for staff below admin.
+  `scope_branch_id` was the first name). The `manager` permission (Filialsjef, step 7: someone who
+  runs the Filialer workspace for the branches in their scope, where an employee only does the
+  operational work in Kasse, Ordreoversikt, Venteliste and Merking) holds a node in the same
+  column; "employee" is read as the umbrella word for staff below admin wherever this document
+  says "employee homed at X".
 - **Selectable set of a viewer**: the subtree of their home node, filtered by what their
   permission may see, plus the root. This is the one formula behind both the tree and the guard:
   - guest or customer: root + every node visible to customers;
-  - employee homed at Ullern: Ullern and everything below it (staff see both visibilities, so
-    nothing inside a staff subtree is ever hidden);
-  - admin or employee homed at the root: every node.
+  - employee or manager homed at Ullern: Ullern and everything below it (staff see both
+    visibilities, so nothing inside a staff subtree is ever hidden);
+  - admin, or employee or manager homed at the root: every node.
 - **Connectors**: the ancestors of a staff viewer's home node, shown greyed and not clickable so
   inherited values have a visible source. Customers get no connectors: a public school whose
   parent is staff-only is simply a top-level node under its full name, as today.
@@ -110,7 +114,8 @@ one tab must agree (Adrian, 2026-10-12, step 4).
   `BranchScope.assertSelectable`.
 - A route middleware `scope` (new, `app/middleware/scope_middleware.ts`) for authenticated routes
   with a `:branchId` param: authorizes `selectable(ctx.authUser, param)`, otherwise 403. Pattern
-  follows `can_middleware.ts`. It is registered inside the employee and admin route groups only.
+  follows `can_middleware.ts`. It is registered inside the three staff route groups (employee,
+  manager, admin) only.
   The public branch routes (`GET /branches/:branchId`, `/catalog`, `/opening_hours`) have no
   authenticated user and keep their visibility check.
 - Endpoints without a branch param (`/users/search`, `/orders`, `/blids`, Kasse lookups, …) take an
@@ -125,6 +130,9 @@ one tab must agree (Adrian, 2026-10-12, step 4).
   check that the entity is in scope of the caller's home node; a miss is a 404, so an out-of-scope
   blid looks exactly like an unknown one.
 - Writes follow the same rule as reads: an employee may edit a customer or a book that is in scope.
+- Levels gate _which_ endpoints (route groups: employee, manager, admin; `can` middleware), scope
+  gates _which rows_ (home node; `scope` middleware and `BranchScope`). The two are independent: a
+  manager homed at Ullern reaches every Filialer endpoint but only for Ullern's subtree.
 - `GET /branches?include=` keeps returning the named branch when the caller's permission may see
   it, even outside the slice, so a form can show the current membership of an activity-scoped
   customer by name. That shows a school's name, nothing else.
@@ -144,7 +152,7 @@ one tab must agree (Adrian, 2026-10-12, step 4).
   global create; the root comes from the migration.
 - Tabs on a node: **Innhold** (Brukere, Ansatte, Signering, Aktive bøker, Bestilte bøker,
   Overleveringer, Innsikt) and **Innstillinger** (Generelt, Relasjoner, Betaling, Fag,
-  Åpningstider). Content tabs are employee-level within scope; settings tabs stay admin. On the
+  Åpningstider). Every tab is manager-level within scope (step 7); employees never open the page. On the
   root the settings group shows only Generelt.
 - **Brukere** on a node lists the customers in scope of the node, paged, with a membership column,
   and the metrics and duplicate finder over the same population. A "Bare medlemmer her" filter
@@ -155,6 +163,8 @@ one tab must agree (Adrian, 2026-10-12, step 4).
   Brukere wherever their membership is; the two tabs answer different questions.
 - Signaturer and Brukere stop existing as routes. No redirects (Adrian: backwards compatibility is
   irrelevant). The members tab keeps one generic name, "Brukere", at every level.
+- Filialer is a manager's and admin's page (step 7): employees never open it, and nothing on it
+  is hidden from a manager except the admin level in the Ansatte tab.
 - Filialer is the only place to **choose a working node**. Other pages work from the home node
   implicitly; their branch filters (Ordreoversikt, reports, spotlight) only narrow within the
   slice and are fed by the same tree endpoint.
@@ -175,22 +185,23 @@ one tab must agree (Adrian, 2026-10-12, step 4).
 
 ### 1.8 Decisions already made (do not reopen)
 
-| Question                  | Decision                                                                          | Why                                                                                                                       |
-| ------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Virtual or real root      | Real row                                                                          | No null special case in any query; membership can be NOT NULL                                                             |
-| Root name                 | "Alle filialer", children "selskap"                                               | Reads as "everything" in Filialer, not as a company                                                                       |
-| Visibility levels         | One boolean `visibleToCustomers`; `admin` and `employee` both became `false`      | Home nodes already hide everything above a school employee; a third level was a second boundary with its own guard        |
-| "No school" for customers | Root membership shown as a named, unremovable option                              | Empty required field reads as a mistake; privatists are the main funnel                                                   |
-| Employee scope storage    | Separate `employee_branch_id`, one node per user; named for the role, not "scope" | Membership (teacher at a class) and scope (works for the school) are different things; the name must say it is staff-only |
-| Scope rule                | Membership or activity, activity unbounded; Signering tab = members only          | Stand staff must see privatists who ordered at their school, including old history; Signering matches its summary         |
-| Brukere population        | Customers in scope, paged, direct members as a filter                             | One "who is here" per node; root must not render 11k rows                                                                 |
-| Connectors                | Ancestors of the home node, staff only                                            | Explains inherited values; customers must not see the companies                                                           |
-| Move rule                 | Target must be selectable; current value unchecked                                | Stand staff fix the common "picked the wrong school" case; root is head office only                                       |
-| Message log               | Feed, metrics and sendouts page admin-only; per-customer tab stays for employees  | The page is a head-office view; a customer in scope is fully visible                                                      |
-| Where to pick a node      | Filialer only; operational pages use the home node implicitly                     | One workspace, no hidden global state                                                                                     |
-| Old routes                | Deleted, no redirects                                                             | Adrian                                                                                                                    |
-| Members tab name          | "Brukere" at every level                                                          | Adrian                                                                                                                    |
-| Create button             | On the selected node only                                                         | Adrian                                                                                                                    |
+| Question                  | Decision                                                                          | Why                                                                                                                                     |
+| ------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Virtual or real root      | Real row                                                                          | No null special case in any query; membership can be NOT NULL                                                                           |
+| Root name                 | "Alle filialer", children "selskap"                                               | Reads as "everything" in Filialer, not as a company                                                                                     |
+| Visibility levels         | One boolean `visibleToCustomers`; `admin` and `employee` both became `false`      | Home nodes already hide everything above a school employee; a third level was a second boundary with its own guard                      |
+| "No school" for customers | Root membership shown as a named, unremovable option                              | Empty required field reads as a mistake; privatists are the main funnel                                                                 |
+| Employee scope storage    | Separate `employee_branch_id`, one node per user; named for the role, not "scope" | Membership (teacher at a class) and scope (works for the school) are different things; the name must say it is staff-only               |
+| Staff levels              | `customer` < `employee` < `manager` (Filialsjef) < `admin`, strictly ordered      | Employees do the four Verktøy pages; managers also run Filialer, all of it, but may not grant admin; one new level, no non-linear roles |
+| Scope rule                | Membership or activity, activity unbounded; Signering tab = members only          | Stand staff must see privatists who ordered at their school, including old history; Signering matches its summary                       |
+| Brukere population        | Customers in scope, paged, direct members as a filter                             | One "who is here" per node; root must not render 11k rows                                                                               |
+| Connectors                | Ancestors of the home node, staff only                                            | Explains inherited values; customers must not see the companies                                                                         |
+| Move rule                 | Target must be selectable; current value unchecked                                | Stand staff fix the common "picked the wrong school" case; root is head office only                                                     |
+| Message log               | Feed, metrics and sendouts page admin-only; per-customer tab stays for employees  | The page is a head-office view; a customer in scope is fully visible                                                                    |
+| Where to pick a node      | Filialer only; operational pages use the home node implicitly                     | One workspace, no hidden global state                                                                                                   |
+| Old routes                | Deleted, no redirects                                                             | Adrian                                                                                                                                  |
+| Members tab name          | "Brukere" at every level                                                          | Adrian                                                                                                                                  |
+| Create button             | On the selected node only                                                         | Adrian                                                                                                                                  |
 
 ## 2. Current state (verified 2026-10-11 on staging)
 
@@ -206,7 +217,8 @@ one tab must agree (Adrian, 2026-10-12, step 4).
 - Users: 16 691 customers, 11 123 without membership. Staff: 3 admins (no membership), 63
   employees (43 without membership).
 - Permission is flat (`customer` < `employee` < `admin`, `shared/user-permission.ts`); nothing
-  scopes an employee today. An employee sees every customer.
+  scopes an employee today. An employee sees every customer. (Step 7 added `manager` between
+  employee and admin on 2026-10-12.)
 - Tables with a branch foreign key: `branch_periods`, `branch_subjects`, `branches.parent_branch_id`,
   `customer_items.handout_branch_id` and `return_branch_id` (handout 100 % filled),
   `deliveries`, `invoices`, `match_round_stand_branches`, `match_rounds`, `opening_hours`,
@@ -226,7 +238,8 @@ one tab must agree (Adrian, 2026-10-12, step 4).
 - Employee-level routes that are global today and touch people or places: `/users/search`,
   `/users/:userId*`, `/signatures/:userId*`, `/orders*`, `/stand_cart/*`, `/bulk_collection*`,
   `/blids*`, `/waiting_list_customers*`, `/message_logs/feed|metrics|sendouts`. Matches, match
-  rounds, invoices, reports and `/users/employees|metrics|duplicates` are admin-level.
+  rounds, invoices, reports and `/users/employees|metrics|duplicates` are admin-level (matches,
+  match rounds and the `/users/*` lists became manager-level in step 7).
 - `branchCreateValidator.parentBranchId` is nullable: null creates a root. `BranchManager` has a
   global "Opprett filial" button.
 - Consumers of `api.branches.index` in the frontend (each will now receive the root as the single
@@ -264,7 +277,7 @@ under "Verify". A step's "Not in this step" list is binding.
 ### Step 1. Visible to customers (done 2026-10-11)
 
 **Value**: one boundary fewer. Visibility only says whether customers see a node; who among the
-staff sees it is the home node's job (steps 4 to 7). Adrian chose a boolean over a two-value enum
+staff sees it is the home node's job (steps 4 to 8). Adrian chose a boolean over a two-value enum
 so the data model says exactly what the switch says.
 
 Backend
@@ -387,7 +400,7 @@ Frontend
 - `useMembershipBranch`: a root member walks up to `parentBranchId === null` and returns null; the
   walk then shows no shortcut, as for null today. Verify, no change expected.
 - `BranchMembers` on the root: hide the two removal actions. The list itself is replaced in
-  step 6; until then the root's direct-member list is long, which is acceptable for an admin-only
+  step 6; until then the root's direct-member list is long, which is acceptable for a staff-only
   page for a few days.
 
 Verify: a new SMS sign-up without choosing a school lands on the root; the tasks page shows "Ingen
@@ -425,11 +438,11 @@ gone. This is the change that started the whole plan.
 Backend
 
 - `GET /signatures/gallery` moves to `GET /branches/:branchId/signatures` (admin group for now;
-  step 7 opens it to employees). `SignatureGalleryService.getPage(cursor, branchId)` filters by
+  step 7 moved it to the manager group). `SignatureGalleryService.getPage(cursor, branchId)` filters by
   `customersInScope(branchId)`. Introduce `backend/app/services/branch_scope.ts` here with
-  `subtreeIds` and `customersInScope` only (the rest comes in step 7). Replace
+  `subtreeIds` and `customersInScope` only (the rest comes in step 8). Replace
   `getNestedChildBranchIds` with `subtreeIds` in `branch_signature_status_service.ts` as the first
-  user; leave the other five for step 7.
+  user; leave the other five for step 8.
 - Japa: `customersInScope` finds a member of a descendant, a root member with an order at a
   descendant, a root member with a customer item handed out at a descendant, a member of a
   sibling school with a cancelled order at a descendant, and nothing for a customer whose only
@@ -452,7 +465,7 @@ an Ullern class); `/admin/database/signaturer` is a 404 and the nav entry is gon
 
 As built: the gallery lists the **members** of the subtree, not `customersInScope` (Adrian,
 2026-10-12): the signature status above it counts members, and the two sections of one tab must
-agree; the activity rule is for finding and serving customers (steps 6 and 9), not for this
+agree; the activity rule is for finding and serving customers (steps 6 and 10), not for this
 overview. `BranchScope.customersInScope(subtreeIds)` is still introduced here, tested, and first
 used by the Brukere tab in step 6. It is synchronous and takes the ids from `subtreeIds(nodeId)`
 (a Lucid builder is a thenable, so an async function returning one would run it instead of
@@ -487,6 +500,9 @@ Frontend
 
 Verify: set an employee to Ullern, reload, the column shows Ullern; promote to admin, it snaps back
 to the root.
+
+Since step 7 a manager keeps a node exactly like an employee; only admin and customer snap to the
+root (`LEVELS_WITH_A_HOME_NODE` in `user_management_service.ts`).
 
 Not in this step: any read or write restriction.
 
@@ -567,7 +583,83 @@ list refreshes.
 
 Not in this step: enforcement.
 
-### Step 7. Scope guard and slice endpoint
+### Step 7. Filialsjef: the manager level (done 2026-10-12)
+
+**Value**: the levels say who may open what before scope says how much of it. Employees get the
+four operational pages only (Kasse, Ordreoversikt, Venteliste, Merking); a new level, `manager`
+(UI label "Filialsjef"), gets the whole Filialer workspace; admins keep everything else. Filialer
+leaves the admin section. Inserted into the plan on 2026-10-12 because steps 8 and 9 would
+otherwise have opened Filialer to every employee, which is not the product: a stand employee has
+no business in branch settings or class lists.
+
+Decisions (Adrian, 2026-10-12): code name `manager` (the plan already reserved it; the level was
+dropped on 2026-09-22 for lack of a job, migration `1790200000000`), label "Filialsjef" (over
+"Leder", "Filialleder", "Skoleansvarlig"); strictly ordered `customer` < `employee` < `manager` <
+`admin`; a manager may do everything on Filialer, including the Overleveringer tab (round
+generation, notification, deletion), uploading class lists, merging duplicates and adding staff,
+but may never grant admin or change an admin; nobody was promoted by the migration (head office
+sets managers by hand); Filialer lives at `/admin/filialer` in a nav section named after the
+role; every admin-only page is gated at the route level, not only hidden in the menu.
+
+Backend
+
+- `shared/user-permission.ts`: `MANAGER: "manager"`, levels 0/1/2/3. `hasPermissionLevel` and the
+  `can` middleware are unchanged, so "at least employee" keeps including managers and admins.
+- Migration `1793500000000_manager_permission`: re-adds `manager` to `users_permission_check`;
+  `down()` demotes managers to employee first.
+- `start/routes.ts`: a third group, `can({ permission: "manager" })`, declared between the admin
+  and employee groups (the ordering rule in the file header is updated). It holds everything the
+  Filialer page calls: branch writes and `inherit_below`, opening hours, every
+  `/branches/:branchId/*` read and write (members, subjects, subject choices, signature status,
+  signatures, insights, active and ordered books, provisioning), `/users/metrics`, `/duplicates`,
+  `/employees`, `/permission`, `/merge*`, and the match and match-round endpoints behind the
+  Overleveringer tab. Still admin: items writes, invoices, editable texts, Q&A, companies,
+  reminders, dispatch, reports, `DELETE /users/:userId`. (`GET /companies` was briefly moved
+  too, under the belief that the Betaling tab listed companies; it does not, so it stayed admin.)
+- `UserManagementService.setPermission(actorPermission, userIds, permission, employeeBranchId)`:
+  a non-admin actor may not set `admin` and may not touch a user who is an admin (403,
+  `ForbiddenException`, new in `app/exceptions`). `homeNodeFor` keeps a node for employees and
+  managers (`LEVELS_WITH_A_HOME_NODE`) and snaps admins and customers to the root.
+- Japa (`user_management_service.spec.ts`): manager keeps a node; a manager grants manager,
+  employee and customer; cannot grant admin; cannot change an admin even in a batch with others.
+
+Frontend
+
+- `useAuth().isManager`. `PERMISSION_LABELS.manager = "Filialsjef"`, `PermissionBadge` grape.
+- `adminNavigation.ts`: sections carry `minPermission` instead of `adminOnly`: Verktøy
+  (employee), **Filialsjef** (manager; holds Filialer) and Admin (admin).
+  `visibleAdminNavSections(permission)` / `visibleAdminPages(permission)` take the viewer's level;
+  the spotlight's page list and branch search follow (branches for managers and up).
+- Routes: `routes/(administrasjon)/admin/filialer.tsx` (`/admin/filialer`, `AuthGuard manager`)
+  replaces `admin/database/filialer.tsx`; no redirect. A route group
+  `admin/(administrator)/` with its own `route.tsx` (`AuthGuard admin` around an `Outlet`, the
+  `(offentlig)/route.tsx` pattern) now holds `faktura.tsx`, `database/` and `kommunikasjon/`;
+  URLs are unchanged, route ids gain the `(administrator)` segment (`getRouteApi` in the invoice
+  components), and the three per-page admin guards are gone. Employees render Hjem, the four
+  Verktøy pages and Brukerinnstillinger, nothing else; everything else lands on
+  `/auth/permission/denied` (which, as before, logs the user out).
+- Ansatte tab and "Legg til ansatte": Filialsjef is a pickable level; the admin option shows on
+  the root only _and_ only to an admin viewer; for a manager viewer an admin's row is read-only
+  (`mayEdit`). Employees and managers are homed at the node the list is on, admins at the root.
+- Gates that followed their endpoints into the manager group flip from `isAdmin` to `isManager`:
+  `SendMatchToStandButton`, `RoundToolbar`, `PlannedRoundCard`, the spotlight's branch group.
+  Still `isAdmin`: the extra-copy override in Kasse (a product rule, not a level), the monitoring
+  exemption, the Faktura link in the book details modal, and the danger zone in Kasse (delete is
+  admin; the manager's merge path is the duplicate finder on Filialer → Brukere).
+
+Verified (Playwright, personas by SQL: a manager and an employee both homed at Ullern VG1, and
+the admin): the manager's sidebar shows Verktøy and Filialsjef, opens `/admin/filialer` on Ullern
+VG1 with every tab, and the level picker offers Kunde/Ansatt/Filialsjef; `/admin/faktura`,
+`/admin/database/rapporter` and `/admin/kommunikasjon/logg` land on permission-denied; the API
+answers 200 on `/users/employees` and `/users/metrics`, 403 on `/invoices`, `/reports/orders`
+and `/companies`, 403 on granting admin and on demoting the admin, 200 on granting manager. The
+employee's sidebar shows Verktøy only; `/admin/filialer` and `/admin/database/rapporter` are
+denied, Kasse opens, `/users/employees` and `/branches/:id/members` are 403, `/orders` is 200. The
+admin sees all three sections and the admin option on the root's Ansatte tab.
+
+Not in this step: scope. A manager homed at Ullern still reaches every node until step 8.
+
+### Step 8. Scope guard and slice endpoint
 
 **Value**: the backend enforces the home node on everything addressed by a branch id, and the tree
 endpoint returns each viewer's slice. After this step an employee with a home node below the root
@@ -578,8 +670,8 @@ Backend
 - `BranchScope.selectableIds(viewer)` and `assertSelectable(viewer, nodeId)` per 1.4. Guests are
   treated as a customer homed at the root.
 - Ability `selectable` and middleware `scope` per 1.5. Register the middleware in
-  `start/kernel.ts` next to `can`; apply it to every route with `:branchId` inside the employee
-  and admin groups, and to `/match_rounds/:id*` by the round's branch (look it up in the
+  `start/kernel.ts` next to `can`; apply it to every route with `:branchId` inside the employee,
+  manager and admin groups, and to `/match_rounds/:id*` by the round's branch (look it up in the
   controller; rounds are place-anchored). The three public branch routes are untouched.
 - Replace the remaining `getNestedChildBranchIds` calls with `BranchScope.subtreeIds` and delete
   the wrapper.
@@ -588,32 +680,31 @@ Backend
   Customers and guests get root + public nodes, exactly as after step 2, all selectable.
 - Body branch ids: `assertSelectable` in `assertMembershipAllowed` (target only),
   `Orders.updateBranch`, stand-cart checkout, waiting-list store and provisioning.
-- Route groups: move the content endpoints (`members`, `signatures`, `signature_status`,
-  `active_books` read, `ordered_books` read, `insights`, `/users/employees` read, `/users/metrics`,
-  `/users/duplicates`) from the admin group to the employee group. Writes under `/branches` stay
-  admin. The three `/users/*` lists take the node as a query, not a route param, so the `scope`
-  middleware does not see it: put `assertSelectable` in `subtreeIdsFrom` (`users_controller.ts`,
-  metrics and duplicates) and in the `employees` handler, which resolves the node itself. Until
-  then the three are admin-only, so every caller is root-scoped. Move `/message_logs/feed`, `/metrics` and `/sendouts` the other way, into the admin
-  group, and gate the Meldinger page to admins. Keep the group-ordering rule in
+- Route groups: the Filialer content and write endpoints already sit in the manager group (step
+  7); nothing moves to the employee group. The three `/users/*` lists take the node as a query,
+  not a route param, so the `scope` middleware does not see it: put `assertSelectable` in
+  `subtreeIdsFrom` (`users_controller.ts`, metrics and duplicates) and in the `employees` handler,
+  which resolves the node itself. Move `/message_logs/feed`, `/metrics` and `/sendouts` into the
+  admin group and gate the Meldinger page to admins. Keep the group-ordering rule in
   `start/routes.ts` in mind (specific before parametric).
-- Japa: an employee homed at Ullern gets 403 on a sibling school's customers, 200 on an Ullern
+- Japa: a manager homed at Ullern gets 403 on a sibling school's customers, 200 on an Ullern
   class, 400 when moving a customer to a sibling school and 200 when moving a Nydalen pupil with
-  an Ullern order into Ullern VG1; the slice for that employee contains the root, the company and
-  VGS as non-selectable ancestors and no sibling schools; an admin's slice is everything,
-  selectable; a customer's slice has no company and no `selectable: false` row.
+  an Ullern order into Ullern VG1; the slice for that manager (and for an employee homed there)
+  contains the root, the company and VGS as non-selectable ancestors and no sibling schools; an
+  admin's slice is everything, selectable; a customer's slice has no company and no
+  `selectable: false` row.
 
 Frontend: types compile; `SelectBranchField` and the place pickers ignore the flag. The Filialer
-tree still assumes a full tree; step 8 fixes that.
+tree still assumes a full tree; step 9 fixes that.
 
-Verify: with an employee persona homed at Ullern (SQL), `GET /branches` returns the slice and
-`GET /branches/<other school>/customers` is 403.
+Verify: with a manager persona homed at Ullern (SQL), `GET /branches` returns the slice and
+`GET /branches/<other school>/members` is 403.
 
 Not in this step: endpoints without a branch id (`/users/search`, `/orders`, `/blids`, Kasse).
 
-### Step 8. Filialer shows the slice
+### Step 9. Filialer shows the slice
 
-**Value**: an employee opens Filialer, sees Ullern with the path above it greyed out, and works in
+**Value**: a manager opens Filialer, sees Ullern with the path above it greyed out, and works in
 their subtree with the same page head office uses.
 
 Frontend
@@ -622,21 +713,19 @@ Frontend
   chevron, muted text, not clickable, always expanded. Nothing is computed client-side.
 - Default `filial` to `user.employeeBranchId`; clamp a `filial` that is not selectable to the home
   node.
-- Tabs: settings tabs (`general`, `relationships`, `payment`, `subjects`, `hours`) render only for
-  admins; content tabs for employees too. On the root, settings show only `general`.
-- Navigation: Filialer moves out of the admin-only database group into the employee-level
-  navigation (check `routes/(administrasjon)/admin/route.tsx` and the nav config for the gating,
-  and the memory note on `features/nav`). Remove `AuthGuard requiredPermission="admin"` on the
-  route if present.
-- "Ny <childLabel>" shows only for admins (writes stay admin).
+- Tabs: every tab renders for managers and admins alike (step 7 made Filialer a manager's page;
+  employees never open it). On the root, settings show only `general`.
+- Navigation and the route gate were done in step 7 (`/admin/filialer`, Filialsjef section,
+  `AuthGuard manager`); nothing to do here.
+- "Ny <childLabel>" shows for managers and admins (writes are manager-level since step 7); on a
+  manager's slice it creates under a selectable node only, which the tree already guarantees.
 
-Verify: employee persona homed at Ullern sees "Alle filialer", the company and VGS greyed, Ullern selected,
-classes below; cannot click the company; sees Brukere, Signering, Aktive bøker; sees no Betaling
-tab. Admin persona is unchanged.
+Verify: manager persona homed at Ullern sees "Alle filialer", the company and VGS greyed, Ullern
+selected, classes below; cannot click the company; sees every tab. Admin persona is unchanged.
 
 Not in this step: scoping of search, orders, blids, Kasse.
 
-### Step 9. People-anchored endpoints respect the home node
+### Step 10. People-anchored endpoints respect the home node
 
 **Value**: an employee can only find, open and edit customers in their scope. This is the core
 promise of the model ("Ullern staff see Ullern").
@@ -665,7 +754,7 @@ opens that privatist's Meldinger tab.
 
 Not in this step: place-anchored lists.
 
-### Step 10. Place-anchored endpoints respect the home node
+### Step 11. Place-anchored endpoints respect the home node
 
 **Value**: orders, books, blids, waiting list and bulk collection are confined to the subtree.
 
@@ -687,7 +776,7 @@ blid in Kasse is a miss; scanning an unregistered blid still works.
 
 Not in this step: UI restyling.
 
-### Step 11. Tab grouping and root-specific layout
+### Step 12. Tab grouping and root-specific layout
 
 **Value**: the tab strip stops growing sideways and the root page reads as "everyone" rather than
 as a school with empty settings.
@@ -700,19 +789,22 @@ Frontend only, with the `frontend-design` skill:
 - `childLabel`-driven naming everywhere a node's children are created or counted.
 
 Verify: screenshots at desktop and phone width for root, a school and a class, as admin and as
-employee.
+manager.
 
-### Step 12. Rollout
+### Step 13. Rollout
 
-Not a code step. After step 10 is deployed to production:
+Not a code step. After step 11 is deployed to production:
 
-1. Set `employee_branch_id` for the employees who work for one school, via the Ansatte tab.
+1. Set `employee_branch_id` for the employees who work for one school, via the Ansatte tab, and
+   promote the school's contact person to Filialsjef there.
 2. Leave head office on the root.
 3. Watch Sentry for 403/404 spikes on `/users/*` and `/branches/*` for a week.
 
 ## 4. Testing notes for every step
 
 - Backend: Japa (`cd backend && vpr test --files tests/<file>.spec.ts`), Node 24.
-- Frontend: Playwright per the `CLAUDE.md` playbook. Three personas: admin (`adrian@boklisten.no`),
-  an employee homed at Ullern (set `employee_branch_id` by SQL from step 5 on), a privatist customer.
+- Frontend: Playwright per the `CLAUDE.md` playbook. Four personas: admin (`adrian@boklisten.no`),
+  a manager and an employee homed at Ullern (set `permission` and `employee_branch_id` by SQL from
+  step 7 on), a privatist customer. Note that `/auth/permission/denied` logs the user out, so log
+  in again after every denied check.
 - Finish with `vpr fix`.

@@ -18,6 +18,9 @@ import {
   IconUserEdit,
 } from "@tabler/icons-react";
 
+import type { UserPermission } from "@boklisten/backend/shared/user-permission";
+import { hasPermissionLevel } from "@boklisten/backend/shared/user-permission";
+
 import type { NavLink } from "@/features/layout/nav/navigation";
 import { KASSE_DESCRIPTION, KASSE_TITLE } from "@/features/kasse/kasseDescription";
 import {
@@ -68,9 +71,10 @@ export interface AdminNavGroup {
   links: AdminNavLink[];
 }
 
+/** A section is for one level and up: Verktøy for every employee, Filialsjef for managers, Admin for admins. */
 interface AdminNavSection {
   label: string;
-  adminOnly?: boolean;
+  minPermission: UserPermission;
   links: AdminNavLink[];
   groups?: AdminNavGroup[];
 }
@@ -78,6 +82,7 @@ interface AdminNavSection {
 const ADMIN_NAV_SECTIONS = [
   {
     label: "Verktøy",
+    minPermission: "employee",
     links: [
       KASSE,
       ORDER_MANAGER,
@@ -91,8 +96,20 @@ const ADMIN_NAV_SECTIONS = [
     ],
   },
   {
+    label: "Filialsjef",
+    minPermission: "manager",
+    links: [
+      {
+        label: "Filialer",
+        description: "Rediger filialer, se brukerne deres og administrer ansatte",
+        to: "/admin/filialer",
+        icon: IconSchool,
+      },
+    ],
+  },
+  {
     label: "Admin",
-    adminOnly: true,
+    minPermission: "admin",
     links: [
       {
         label: "Faktura",
@@ -143,12 +160,6 @@ const ADMIN_NAV_SECTIONS = [
             icon: IconBooks,
           },
           {
-            label: "Filialer",
-            description: "Rediger filialer, se brukerne deres og administrer ansatte",
-            to: "/admin/database/filialer",
-            icon: IconSchool,
-          },
-          {
             label: "Selskap",
             description: "Legg til og rediger selskap",
             to: "/admin/database/selskap",
@@ -180,8 +191,10 @@ export const ADMIN_USER_SETTINGS: AdminNavLink = {
  */
 export const ADMIN_PRIMARY_LINKS: AdminNavLink[] = [ADMIN_HOME, KASSE, WAITING_LIST];
 
-export function visibleAdminNavSections(isAdmin: boolean) {
-  return ADMIN_NAV_SECTIONS.filter((section) => !section.adminOnly || isAdmin);
+export function visibleAdminNavSections(permission: UserPermission) {
+  return ADMIN_NAV_SECTIONS.filter((section) =>
+    hasPermissionLevel(permission, section.minPermission),
+  );
 }
 
 /** A page as one flat entry, with the group it sits in (if any) for context outside the sidebar. */
@@ -193,9 +206,9 @@ export interface AdminPage extends AdminNavLink {
  * Every page the user may open, in sidebar order, so that search and other lists never keep a
  * second copy of the page names.
  */
-export function visibleAdminPages(isAdmin: boolean): AdminPage[] {
+export function visibleAdminPages(permission: UserPermission): AdminPage[] {
   const pages: AdminPage[] = [];
-  for (const section of visibleAdminNavSections(isAdmin)) {
+  for (const section of visibleAdminNavSections(permission)) {
     pages.push(...section.links);
     for (const group of section.groups ?? []) {
       for (const link of group.links) {

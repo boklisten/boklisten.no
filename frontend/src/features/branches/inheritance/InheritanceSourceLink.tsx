@@ -30,7 +30,7 @@ export default function InheritanceSourceLink({
       lh="inherit"
       fw={fw}
       className={className}
-      to="/admin/database/filialer"
+      to="/admin/filialer"
       search={(previous) => ({ ...previous, filial: branch.id, filialFane: tab })}
       onClick={onClick}
     >

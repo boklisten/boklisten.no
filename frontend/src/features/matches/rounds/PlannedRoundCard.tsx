@@ -115,7 +115,7 @@ export default function PlannedRoundCard({
   onGenerate: () => void;
   generating: boolean;
 }) {
-  const { isAdmin } = useAuth();
+  const { isManager } = useAuth();
   const { data: branches } = useQuery(api.branches.index.queryOptions());
 
   const meetingDay = dayjs(round.meetingDate);
@@ -207,7 +207,7 @@ export default function PlannedRoundCard({
           )}
         </Group>
 
-        {isAdmin && (
+        {isManager && (
           <Group justify="flex-end" gap="sm">
             <Button
               variant="default"

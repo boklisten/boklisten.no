@@ -155,7 +155,8 @@ export default function SearchSpotlight({
   onSelectBook?: (blid: string) => void;
 }) {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { user: viewer, isManager } = useAuth();
+  const permission = viewer?.permission ?? "customer";
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearch] = useDebouncedValue(searchValue.trim(), 250);
   const trimmedSearch = searchValue.trim();
@@ -193,8 +194,8 @@ export default function SearchSpotlight({
   });
   const isFetching = fetchingCustomers || fetchingBooks;
 
-  // Branches come with pages, but only admins manage them, so employees never see the group at all.
-  const branchSearchOn = kinds.pages && isAdmin;
+  // Branches come with pages, but only managers and admins open them, so employees never see the group at all.
+  const branchSearchOn = kinds.pages && isManager;
   const { data: branches } = useQuery({
     ...api.branches.index.queryOptions(),
     enabled: kinds.customers || branchSearchOn,
@@ -206,8 +207,8 @@ export default function SearchSpotlight({
 
   // Pages are local data, so they match on every keystroke without the debounce or the length gate.
   const pageHits = useMemo(
-    () => (kinds.pages ? searchPages(visibleAdminPages(isAdmin), trimmedSearch) : []),
-    [kinds.pages, isAdmin, trimmedSearch],
+    () => (kinds.pages ? searchPages(visibleAdminPages(permission), trimmedSearch) : []),
+    [kinds.pages, permission, trimmedSearch],
   );
   // Branches are already loaded for the customer badges, so they match like pages do.
   const branchHits = useMemo(
@@ -262,7 +263,7 @@ export default function SearchSpotlight({
   };
   const pickBranch = (branchId: string) => {
     setSearchValue("");
-    void navigate({ to: "/admin/database/filialer", search: { filial: branchId } });
+    void navigate({ to: "/admin/filialer", search: { filial: branchId } });
   };
 
   const displayName = useDisplayName();

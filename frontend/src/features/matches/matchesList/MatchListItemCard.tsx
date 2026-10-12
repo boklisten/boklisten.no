@@ -35,7 +35,7 @@ export default function MatchListItemCard({
         {admin ? (
           <TanStackButton
             {...buttonProps}
-            to="/admin/database/filialer"
+            to="/admin/filialer"
             search={(previous) => ({ ...previous, overlevering: matchId })}
           />
         ) : (

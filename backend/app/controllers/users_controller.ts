@@ -179,6 +179,12 @@ export default class UsersController {
   async setPermission(ctx: HttpContext) {
     const { userIds, permission, employeeBranchId } =
       await ctx.request.validateUsing(setPermissionValidator);
-    return UserManagementService.setPermission(userIds, permission, employeeBranchId);
+    const actor = ctx.auth.getUserOrFail();
+    return UserManagementService.setPermission(
+      actor.permission,
+      userIds,
+      permission,
+      employeeBranchId,
+    );
   }
 }

@@ -4,7 +4,9 @@ import QuestionsAndAnswersTable from "@/features/questions-and-answers/Questions
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 
-export const Route = createFileRoute("/(administrasjon)/admin/database/dynamisk_innhold")({
+export const Route = createFileRoute(
+  "/(administrasjon)/admin/(administrator)/database/dynamisk_innhold",
+)({
   head: () =>
     seo({
       title: "Dynamisk innhold | bl-admin",

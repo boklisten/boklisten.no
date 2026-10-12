@@ -7,7 +7,7 @@ import GenerateInvoicesTab from "@/features/invoices/GenerateInvoicesTab";
 import InvoiceOverview from "@/features/invoices/InvoiceOverview";
 import { parseInvoiceTab } from "@/features/invoices/invoiceParams";
 
-const route = getRouteApi("/(administrasjon)/admin/faktura");
+const route = getRouteApi("/(administrasjon)/admin/(administrator)/faktura");
 
 export default function InvoiceManager() {
   const { fakturaFane } = route.useSearch();

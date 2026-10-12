@@ -52,7 +52,7 @@ export default function RoundToolbar({
   onNewRound: () => void;
   onEditPlan: () => void;
 }) {
-  const { isAdmin } = useAuth();
+  const { isManager } = useAuth();
   const refreshRounds = useRefreshRounds();
   const [deleteOpened, deleteModal] = useDisclosure(false);
   const [deleteMatchesOpened, deleteMatchesModal] = useDisclosure(false);
@@ -79,7 +79,7 @@ export default function RoundToolbar({
       <Group justify="space-between" gap="sm" wrap="wrap">
         <Group gap="md" wrap="wrap">
           <RoundSelector rounds={rounds} selectedRoundId={selectedRoundId} onSelect={onSelect} />
-          {isAdmin && selected && (
+          {isManager && selected && (
             <Tooltip
               label={
                 planned
@@ -104,7 +104,7 @@ export default function RoundToolbar({
             </Tooltip>
           )}
         </Group>
-        {isAdmin && (
+        {isManager && (
           <Group gap="xs" wrap="wrap">
             <NotifyRoundButton roundId={selectedRoundId} disabled={!active} />
             <Button variant="default" leftSection={<IconPlus size={16} />} onClick={onNewRound}>

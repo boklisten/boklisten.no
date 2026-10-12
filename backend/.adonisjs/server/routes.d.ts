@@ -50,6 +50,39 @@ export type ScannedRoutes = {
     'checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'matches.me': { paramsTuple?: []; params?: {} }
     'matches.transfer_item': { paramsTuple?: []; params?: {} }
+    'users.destroy': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
+    'items.all': { paramsTuple?: []; params?: {} }
+    'items.store': { paramsTuple?: []; params?: {} }
+    'items.bulk_upsert': { paramsTuple?: []; params?: {} }
+    'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'invoices.index': { paramsTuple?: []; params?: {} }
+    'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
+    'invoices.generate': { paramsTuple?: []; params?: {} }
+    'invoices.create_company_invoice': { paramsTuple?: []; params?: {} }
+    'invoices.export': { paramsTuple?: []; params?: {} }
+    'invoices.set_statuses': { paramsTuple?: []; params?: {} }
+    'invoices.show': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
+    'invoices.destroy': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
+    'invoices.set_status': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
+    'invoices.set_line_cancelled': { paramsTuple: [ParamValue,ParamValue]; params: {'invoiceId': ParamValue,'lineIndex': ParamValue} }
+    'editable_texts.index': { paramsTuple?: []; params?: {} }
+    'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'editable_texts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'questions_and_answers.store': { paramsTuple?: []; params?: {} }
+    'questions_and_answers.update_order': { paramsTuple?: []; params?: {} }
+    'questions_and_answers.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'questions_and_answers.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'companies.index': { paramsTuple?: []; params?: {} }
+    'companies.store': { paramsTuple?: []; params?: {} }
+    'companies.destroy': { paramsTuple: [ParamValue]; params: {'companyId': ParamValue} }
+    'reminders.count_recipients': { paramsTuple?: []; params?: {} }
+    'reminders.send': { paramsTuple?: []; params?: {} }
+    'dispatch.email_templates': { paramsTuple?: []; params?: {} }
+    'dispatch.store': { paramsTuple?: []; params?: {} }
+    'reports.customer_items': { paramsTuple?: []; params?: {} }
+    'reports.orders': { paramsTuple?: []; params?: {} }
+    'reports.payments': { paramsTuple?: []; params?: {} }
+    'reports.users': { paramsTuple?: []; params?: {} }
     'branches.store': { paramsTuple?: []; params?: {} }
     'branch_relationships.update': { paramsTuple?: []; params?: {} }
     'branch_members.update': { paramsTuple?: []; params?: {} }
@@ -84,7 +117,6 @@ export type ScannedRoutes = {
     'users.merge_preview': { paramsTuple: [ParamValue,ParamValue]; params: {'fromUserId': ParamValue,'toUserId': ParamValue} }
     'users.merge': { paramsTuple?: []; params?: {} }
     'users.set_permission': { paramsTuple?: []; params?: {} }
-    'users.destroy': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'matches.show': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'match_rounds.index': { paramsTuple?: []; params?: {} }
     'match_rounds.matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -97,38 +129,6 @@ export type ScannedRoutes = {
     'match_rounds.generate': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.destroy_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'items.all': { paramsTuple?: []; params?: {} }
-    'items.store': { paramsTuple?: []; params?: {} }
-    'items.bulk_upsert': { paramsTuple?: []; params?: {} }
-    'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'invoices.index': { paramsTuple?: []; params?: {} }
-    'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
-    'invoices.generate': { paramsTuple?: []; params?: {} }
-    'invoices.create_company_invoice': { paramsTuple?: []; params?: {} }
-    'invoices.export': { paramsTuple?: []; params?: {} }
-    'invoices.set_statuses': { paramsTuple?: []; params?: {} }
-    'invoices.show': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
-    'invoices.destroy': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
-    'invoices.set_status': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
-    'invoices.set_line_cancelled': { paramsTuple: [ParamValue,ParamValue]; params: {'invoiceId': ParamValue,'lineIndex': ParamValue} }
-    'editable_texts.index': { paramsTuple?: []; params?: {} }
-    'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'editable_texts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'questions_and_answers.store': { paramsTuple?: []; params?: {} }
-    'questions_and_answers.update_order': { paramsTuple?: []; params?: {} }
-    'questions_and_answers.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'questions_and_answers.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'companies.index': { paramsTuple?: []; params?: {} }
-    'companies.store': { paramsTuple?: []; params?: {} }
-    'companies.destroy': { paramsTuple: [ParamValue]; params: {'companyId': ParamValue} }
-    'reminders.count_recipients': { paramsTuple?: []; params?: {} }
-    'reminders.send': { paramsTuple?: []; params?: {} }
-    'dispatch.email_templates': { paramsTuple?: []; params?: {} }
-    'dispatch.store': { paramsTuple?: []; params?: {} }
-    'reports.customer_items': { paramsTuple?: []; params?: {} }
-    'reports.orders': { paramsTuple?: []; params?: {} }
-    'reports.payments': { paramsTuple?: []; params?: {} }
-    'reports.users': { paramsTuple?: []; params?: {} }
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'users.update': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -203,6 +203,17 @@ export type ScannedRoutes = {
     'orders.item_details_me': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'itemId': ParamValue} }
     'checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'matches.me': { paramsTuple?: []; params?: {} }
+    'items.all': { paramsTuple?: []; params?: {} }
+    'invoices.index': { paramsTuple?: []; params?: {} }
+    'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
+    'invoices.show': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
+    'editable_texts.index': { paramsTuple?: []; params?: {} }
+    'companies.index': { paramsTuple?: []; params?: {} }
+    'dispatch.email_templates': { paramsTuple?: []; params?: {} }
+    'reports.customer_items': { paramsTuple?: []; params?: {} }
+    'reports.orders': { paramsTuple?: []; params?: {} }
+    'reports.payments': { paramsTuple?: []; params?: {} }
+    'reports.users': { paramsTuple?: []; params?: {} }
     'branch_members.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_signature_status.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -221,17 +232,6 @@ export type ScannedRoutes = {
     'match_rounds.matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.statistics': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.plan_metrics': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'items.all': { paramsTuple?: []; params?: {} }
-    'invoices.index': { paramsTuple?: []; params?: {} }
-    'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
-    'invoices.show': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
-    'editable_texts.index': { paramsTuple?: []; params?: {} }
-    'companies.index': { paramsTuple?: []; params?: {} }
-    'dispatch.email_templates': { paramsTuple?: []; params?: {} }
-    'reports.customer_items': { paramsTuple?: []; params?: {} }
-    'reports.orders': { paramsTuple?: []; params?: {} }
-    'reports.payments': { paramsTuple?: []; params?: {} }
-    'reports.users': { paramsTuple?: []; params?: {} }
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'customer_items.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -287,6 +287,17 @@ export type ScannedRoutes = {
     'orders.item_details_me': { paramsTuple: [ParamValue,ParamValue]; params: {'orderId': ParamValue,'itemId': ParamValue} }
     'checkout.status': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'matches.me': { paramsTuple?: []; params?: {} }
+    'items.all': { paramsTuple?: []; params?: {} }
+    'invoices.index': { paramsTuple?: []; params?: {} }
+    'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
+    'invoices.show': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
+    'editable_texts.index': { paramsTuple?: []; params?: {} }
+    'companies.index': { paramsTuple?: []; params?: {} }
+    'dispatch.email_templates': { paramsTuple?: []; params?: {} }
+    'reports.customer_items': { paramsTuple?: []; params?: {} }
+    'reports.orders': { paramsTuple?: []; params?: {} }
+    'reports.payments': { paramsTuple?: []; params?: {} }
+    'reports.users': { paramsTuple?: []; params?: {} }
     'branch_members.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_subjects.index': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'branch_signature_status.show': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
@@ -305,17 +316,6 @@ export type ScannedRoutes = {
     'match_rounds.matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.statistics': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'match_rounds.plan_metrics': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'items.all': { paramsTuple?: []; params?: {} }
-    'invoices.index': { paramsTuple?: []; params?: {} }
-    'invoices.generation_defaults': { paramsTuple?: []; params?: {} }
-    'invoices.show': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
-    'editable_texts.index': { paramsTuple?: []; params?: {} }
-    'companies.index': { paramsTuple?: []; params?: {} }
-    'dispatch.email_templates': { paramsTuple?: []; params?: {} }
-    'reports.customer_items': { paramsTuple?: []; params?: {} }
-    'reports.orders': { paramsTuple?: []; params?: {} }
-    'reports.payments': { paramsTuple?: []; params?: {} }
-    'reports.users': { paramsTuple?: []; params?: {} }
     'users.search': { paramsTuple?: []; params?: {} }
     'users.show': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'customer_items.for_customer': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -364,6 +364,16 @@ export type ScannedRoutes = {
     'checkout.initialize': { paramsTuple?: []; params?: {} }
     'checkout.confirm': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'matches.transfer_item': { paramsTuple?: []; params?: {} }
+    'items.store': { paramsTuple?: []; params?: {} }
+    'items.bulk_upsert': { paramsTuple?: []; params?: {} }
+    'invoices.generate': { paramsTuple?: []; params?: {} }
+    'invoices.create_company_invoice': { paramsTuple?: []; params?: {} }
+    'invoices.export': { paramsTuple?: []; params?: {} }
+    'questions_and_answers.store': { paramsTuple?: []; params?: {} }
+    'companies.store': { paramsTuple?: []; params?: {} }
+    'reminders.count_recipients': { paramsTuple?: []; params?: {} }
+    'reminders.send': { paramsTuple?: []; params?: {} }
+    'dispatch.store': { paramsTuple?: []; params?: {} }
     'branches.store': { paramsTuple?: []; params?: {} }
     'branches.inherit_below': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
     'opening_hours.store': { paramsTuple?: []; params?: {} }
@@ -378,16 +388,6 @@ export type ScannedRoutes = {
     'matches.send_to_stand': { paramsTuple: [ParamValue]; params: {'matchId': ParamValue} }
     'match_rounds.store': { paramsTuple?: []; params?: {} }
     'match_rounds.generate': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'items.store': { paramsTuple?: []; params?: {} }
-    'items.bulk_upsert': { paramsTuple?: []; params?: {} }
-    'invoices.generate': { paramsTuple?: []; params?: {} }
-    'invoices.create_company_invoice': { paramsTuple?: []; params?: {} }
-    'invoices.export': { paramsTuple?: []; params?: {} }
-    'questions_and_answers.store': { paramsTuple?: []; params?: {} }
-    'companies.store': { paramsTuple?: []; params?: {} }
-    'reminders.count_recipients': { paramsTuple?: []; params?: {} }
-    'reminders.send': { paramsTuple?: []; params?: {} }
-    'dispatch.store': { paramsTuple?: []; params?: {} }
     'users.confirm_email': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'signatures.send_link': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'signatures.link': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
@@ -402,18 +402,18 @@ export type ScannedRoutes = {
   }
   PATCH: {
     'users.update_me': { paramsTuple?: []; params?: {} }
-    'branch_relationships.update': { paramsTuple?: []; params?: {} }
-    'branch_members.update': { paramsTuple?: []; params?: {} }
-    'branches.update': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
-    'branch_books.bulk_update_active_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
-    'branch_books.bulk_update_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
-    'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'items.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'invoices.set_statuses': { paramsTuple?: []; params?: {} }
     'invoices.set_status': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'invoices.set_line_cancelled': { paramsTuple: [ParamValue,ParamValue]; params: {'invoiceId': ParamValue,'lineIndex': ParamValue} }
     'questions_and_answers.update_order': { paramsTuple?: []; params?: {} }
     'questions_and_answers.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'branch_relationships.update': { paramsTuple?: []; params?: {} }
+    'branch_members.update': { paramsTuple?: []; params?: {} }
+    'branches.update': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_books.bulk_update_active_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_books.bulk_update_ordered_books': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'match_rounds.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'users.update': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
     'orders.update_branch': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'orders.update_item_deadline': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
@@ -421,25 +421,25 @@ export type ScannedRoutes = {
     'blids.relink': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
   }
   DELETE: {
-    'opening_hours.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'branch_members.destroy_direct': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
-    'branch_members.destroy_indirect': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
-    'branch_subjects.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
     'users.destroy': { paramsTuple: [ParamValue]; params: {'userId': ParamValue} }
-    'match_rounds.destroy_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'match_rounds.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'invoices.destroy': { paramsTuple: [ParamValue]; params: {'invoiceId': ParamValue} }
     'editable_texts.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'questions_and_answers.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'companies.destroy': { paramsTuple: [ParamValue]; params: {'companyId': ParamValue} }
+    'opening_hours.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'branch_members.destroy_direct': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_members.destroy_indirect': { paramsTuple: [ParamValue]; params: {'branchId': ParamValue} }
+    'branch_subjects.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
+    'match_rounds.destroy_matches': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'match_rounds.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'orders.destroy': { paramsTuple: [ParamValue]; params: {'orderId': ParamValue} }
     'blids.destroy': { paramsTuple: [ParamValue]; params: {'blid': ParamValue} }
     'waiting_list_customers.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   PUT: {
+    'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'branch_subjects.update': { paramsTuple: [ParamValue,ParamValue]; params: {'branchId': ParamValue,'subjectId': ParamValue} }
     'users.set_permission': { paramsTuple?: []; params?: {} }
-    'editable_texts.upsert': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

@@ -3,7 +3,9 @@ import Reminders from "@/features/reminders/Reminders";
 import { createFileRoute } from "@tanstack/react-router";
 import { seo } from "@/shared/utils/seo";
 
-export const Route = createFileRoute("/(administrasjon)/admin/kommunikasjon/paminnelser")({
+export const Route = createFileRoute(
+  "/(administrasjon)/admin/(administrator)/kommunikasjon/paminnelser",
+)({
   head: () =>
     seo({
       title: "Påminnelser | bl-admin",

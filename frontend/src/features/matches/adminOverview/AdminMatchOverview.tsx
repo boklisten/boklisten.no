@@ -15,7 +15,7 @@ type MatchTypeFilter = "both" | "user" | "stand";
 
 const ROW_CAP = 200;
 
-const listRoute = getRouteApi("/(administrasjon)/admin/database/filialer");
+const listRoute = getRouteApi("/(administrasjon)/admin/filialer");
 
 function rowMatchesSearch(match: MatchDto, needle: string): boolean {
   return match.participants

@@ -48,7 +48,7 @@ import { downloadTextFile } from "@/shared/utils/downloadTextFile";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification } from "@/shared/utils/notifications";
 
-const route = getRouteApi("/(administrasjon)/admin/faktura");
+const route = getRouteApi("/(administrasjon)/admin/(administrator)/faktura");
 
 /** Rounds shown as pills in the picker before the rest collapse into "+n til". */
 const MAX_BATCH_PILLS = { narrow: 2, wide: 3 };
