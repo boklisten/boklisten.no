@@ -1,3 +1,4 @@
+import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import * as Sentry from "@sentry/node";
 import { DateTime } from "luxon";
@@ -9,8 +10,11 @@ import {
   findDuplicateRows,
   mergeCandidateIntoUser,
   provisioningErrorMessage,
+  UserProvisioningService,
 } from "#services/user_provisioning_service";
-import { userDouble } from "#tests/user_fixtures";
+import User from "#models/user";
+import { createMiniatureTree } from "#tests/branch_fixtures";
+import { createUser, userDouble } from "#tests/user_fixtures";
 
 const BRANCHES = [
   { id: "sta", name: "Ullern Oslo VG1 STA" },
@@ -350,5 +354,49 @@ test.group("UserProvisioningService.provisioningErrorMessage()", (group) => {
     );
     await Sentry.flush(2000);
     assert.deepEqual(captured, [error.message]);
+  });
+});
+
+test.group("UserProvisioningService.provision() scope", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("refuses rows naming someone outside the uploader's scope or above their level", async ({
+    assert,
+  }) => {
+    const { ullern, ullernVg1, nydalen } = await createMiniatureTree();
+    const manager = userDouble({ permission: "manager", employeeBranchId: ullern.id });
+    const admin = await createUser({
+      permission: "admin",
+      email: "admin@example.com",
+      branchMembershipId: ullernVg1.id,
+    });
+    const elsewhere = await createUser({ branchMembershipId: nydalen.id });
+    const pupil = await createUser({ branchMembershipId: ullernVg1.id });
+    const pupilEmployee = await createUser({
+      permission: "employee",
+      branchMembershipId: ullernVg1.id,
+      employeeBranchId: ullernVg1.id,
+    });
+    const rows = [
+      // Someone else's email next to the uploader's own number: the takeover this guards against.
+      candidate({ name: "Admin", email: admin.email, phone: "99999991" }),
+      candidate({ name: "Elsewhere", email: elsewhere.email, phone: "99999992" }),
+      candidate({ name: "Pupil", email: pupil.email, phone: "99999993" }),
+      candidate({ name: "Pupil employee", email: pupilEmployee.email, phone: "99999994" }),
+    ];
+
+    const evaluation = await UserProvisioningService.evaluate(ullern.id, rows, manager);
+    const summary = await UserProvisioningService.provision(ullern.id, rows, manager);
+
+    assert.include(evaluation, { updateCount: 2, createCount: 0, refusedCount: 2 });
+    assert.equal(summary.updatedCount, 2);
+    assert.sameMembers(
+      summary.errors.map((error) => error.name),
+      ["Admin", "Elsewhere"],
+    );
+    assert.equal((await User.findOrFail(admin.id)).phone, admin.phone);
+    assert.equal((await User.findOrFail(elsewhere.id)).phone, elsewhere.phone);
+    assert.equal((await User.findOrFail(pupil.id)).phone, "99999993");
+    assert.equal((await User.findOrFail(pupilEmployee.id)).phone, "99999994");
   });
 });

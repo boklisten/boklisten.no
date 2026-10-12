@@ -8,7 +8,7 @@ export default class UserProvisioningController {
     const branchId = ctx.request.param("branchId");
     const { userCandidates } = await ctx.request.validateUsing(userProvisioningValidator);
 
-    return UserProvisioningService.evaluate(branchId, userCandidates);
+    return UserProvisioningService.evaluate(branchId, userCandidates, ctx.auth.getUserOrFail());
   }
 
   async provision(ctx: HttpContext) {
@@ -16,6 +16,11 @@ export default class UserProvisioningController {
     const { userCandidates, branchResolutions } =
       await ctx.request.validateUsing(userProvisioningValidator);
 
-    return UserProvisioningService.provision(branchId, userCandidates, branchResolutions);
+    return UserProvisioningService.provision(
+      branchId,
+      userCandidates,
+      ctx.auth.getUserOrFail(),
+      branchResolutions,
+    );
   }
 }

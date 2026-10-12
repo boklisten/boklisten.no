@@ -4,18 +4,20 @@ import { emailField, phoneField, postalCodeField } from "#validators/common/fiel
 
 export const userProvisioningValidator = vine.create(
   vine.object({
-    userCandidates: vine.array(
-      vine.object({
-        name: vine.string().trim().minLength(1),
-        phone: phoneField.clone(),
-        email: emailField.clone(),
-        localName: vine.string().trim().optional(),
+    userCandidates: vine
+      .array(
+        vine.object({
+          name: vine.string().trim().minLength(1),
+          phone: phoneField.clone(),
+          email: emailField.clone(),
+          localName: vine.string().trim().optional(),
 
-        address: vine.string().optional(),
-        postalCode: postalCodeField.clone().optional(),
-        dob: vine.date().optional(),
-      }),
-    ),
+          address: vine.string().optional(),
+          postalCode: postalCodeField.clone().optional(),
+          dob: vine.date().optional(),
+        }),
+      )
+      .maxLength(5000),
     branchResolutions: vine
       .array(
         vine.object({

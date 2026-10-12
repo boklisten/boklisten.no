@@ -298,6 +298,11 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
                 {`${evaluation.duplicateCount} ${evaluation.duplicateCount === 1 ? "rad står" : "rader står"} oppført tidligere i filen, med samme mobilnummer eller e-post, og hoppes over.`}
               </Text>
             )}
+            {evaluation.refusedCount > 0 && (
+              <Text size="sm" c="dimmed">
+                {`${evaluation.refusedCount} ${evaluation.refusedCount === 1 ? "rad har" : "rader har"} mobilnummer eller e-post som tilhører en bruker som ikke kan oppdateres fra en klasseliste her, og hoppes over. Ta kontakt med Boklisten.`}
+              </Text>
+            )}
             {evaluation.mappings.length > 0 && (
               <>
                 <Title order={5}>Klassene i filen blir til disse filialene</Title>

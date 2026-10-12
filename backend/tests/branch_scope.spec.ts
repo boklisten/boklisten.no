@@ -297,6 +297,29 @@ test.group("BranchScope.customerInScope", (group) => {
 
     assert.isTrue(await BranchScope.customerInScope(admin, elsewhere.id));
   });
+  test("staff count only where they are homed, whatever their membership or orders", async ({
+    assert,
+  }) => {
+    const { root, ullern, ullernVg1 } = await createMiniatureTree();
+    const manager = userDouble({ permission: "manager", employeeBranchId: ullern.id });
+    const headOffice = userDouble({ permission: "admin", employeeBranchId: root.id });
+    const admin = await createUser({ permission: "admin" });
+    const pupilEmployee = await createUser({
+      permission: "employee",
+      branchMembershipId: ullernVg1.id,
+      employeeBranchId: ullernVg1.id,
+    });
+    const headOfficeMember = await createUser({
+      permission: "employee",
+      branchMembershipId: ullernVg1.id,
+    });
+    await createOrder({ branchId: ullernVg1.id, customerId: admin.id });
+
+    assert.isFalse(await BranchScope.customerInScope(manager, admin.id));
+    assert.isFalse(await BranchScope.customerInScope(manager, headOfficeMember.id));
+    assert.isTrue(await BranchScope.customerInScope(manager, pupilEmployee.id));
+    assert.isTrue(await BranchScope.customerInScope(headOffice, admin.id));
+  });
 });
 
 test.group("BranchScope.placeInScope", (group) => {
@@ -397,5 +420,38 @@ test.group("BranchScope.customerItemInScope and orderInScope", (group) => {
     assert.isFalse(
       await BranchScope.orderInScope(manager, { customerId: stranger.id, branchId: nydalen.id }),
     );
+  });
+});
+
+test.group("BranchScope.manageableAmong", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("holds the people in scope whose level is not above the viewer's", async ({ assert }) => {
+    const { root, ullern, ullernVg1, nydalen } = await createMiniatureTree();
+    const employee = userDouble({ permission: "employee", employeeBranchId: ullern.id });
+    const manager = userDouble({ permission: "manager", employeeBranchId: ullern.id });
+    const admin = userDouble({ permission: "admin", employeeBranchId: root.id });
+    const pupil = await createUser({ branchMembershipId: ullernVg1.id });
+    const colleague = await createUser({
+      permission: "manager",
+      branchMembershipId: ullernVg1.id,
+      employeeBranchId: ullernVg1.id,
+    });
+    // Homed inside the subtree, so only the level keeps the manager away.
+    const memberAdmin = await createUser({
+      permission: "admin",
+      branchMembershipId: ullernVg1.id,
+      employeeBranchId: ullernVg1.id,
+    });
+    const elsewhere = await createUser({ branchMembershipId: nydalen.id });
+    const ids = [pupil.id, colleague.id, memberAdmin.id, elsewhere.id];
+
+    assert.sameMembers([...(await BranchScope.manageableAmong(employee, ids))], [pupil.id]);
+    assert.sameMembers(
+      [...(await BranchScope.manageableAmong(manager, ids))],
+      [pupil.id, colleague.id],
+    );
+    assert.sameMembers([...(await BranchScope.manageableAmong(admin, ids))], ids);
+    assert.equal((await BranchScope.manageableAmong(manager, [])).size, 0);
   });
 });

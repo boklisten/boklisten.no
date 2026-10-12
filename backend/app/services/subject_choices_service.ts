@@ -6,6 +6,7 @@ import Order from "#models/order";
 import OrderItem from "#models/order_item";
 import User from "#models/user";
 import { BranchScope } from "#services/branch_scope";
+import type { Viewer } from "#services/branch_scope";
 import type { SubjectForUpload } from "#services/branch_subjects_service";
 import { fetchSubjectsForUpload, normalizeSubjectName } from "#services/branch_subjects_service";
 import Branch from "#models/branch";
@@ -333,13 +334,23 @@ async function fetchScopeBranches(branchId: string) {
   return { scopeIds, branches };
 }
 
-async function fetchMembers(scopeIds: string[]): Promise<MemberSummary[]> {
+/**
+ * The members of the subtree the uploader may order books for (`BranchScope.manageableAmong`);
+ * anyone else reads as an unknown name, exactly like someone who is not a member.
+ */
+async function fetchMembers(scopeIds: string[], viewer: Viewer): Promise<MemberSummary[]> {
   const members = await User.membersOf(scopeIds).select("id", "name", "branchMembershipId");
-  return members.map((member) => ({
-    id: member.id,
-    name: member.name ?? "",
-    branchMembership: member.branchMembershipId,
-  }));
+  const manageable = await BranchScope.manageableAmong(
+    viewer,
+    members.map((member) => member.id),
+  );
+  return members
+    .filter((member) => manageable.has(member.id))
+    .map((member) => ({
+      id: member.id,
+      name: member.name ?? "",
+      branchMembership: member.branchMembershipId,
+    }));
 }
 
 async function fetchOwnedItemKeys(customerIds: string[]): Promise<Set<string>> {
@@ -366,10 +377,14 @@ async function fetchOwnedItemKeys(customerIds: string[]): Promise<Set<string>> {
   );
 }
 
-async function buildPlan(branchId: string, rows: SubjectChoiceRow[]): Promise<SubjectChoicesPlan> {
+async function buildPlan(
+  branchId: string,
+  rows: SubjectChoiceRow[],
+  viewer: Viewer,
+): Promise<SubjectChoicesPlan> {
   const { scopeIds, branches } = await fetchScopeBranches(branchId);
   const [members, subjectsByBranchId] = await Promise.all([
-    fetchMembers(scopeIds),
+    fetchMembers(scopeIds, viewer),
     fetchSubjectsForUpload(scopeIds),
   ]);
 
@@ -423,12 +438,12 @@ function summarizePlan(plan: SubjectChoicesPlan) {
 }
 
 export const SubjectChoicesService = {
-  async evaluate(branchId: string, rows: SubjectChoiceRow[]) {
-    return summarizePlan(await buildPlan(branchId, rows));
+  async evaluate(branchId: string, rows: SubjectChoiceRow[], viewer: Viewer) {
+    return summarizePlan(await buildPlan(branchId, rows, viewer));
   },
 
-  async upload(branchId: string, rows: SubjectChoiceRow[]) {
-    const plan = await buildPlan(branchId, rows);
+  async upload(branchId: string, rows: SubjectChoiceRow[], viewer: Viewer) {
+    const plan = await buildPlan(branchId, rows, viewer);
     const summary = {
       ...summarizePlan(plan),
       ordersCreated: 0,

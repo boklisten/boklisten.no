@@ -29,6 +29,16 @@ try {
       configure({
         ...app.rcFile.tests,
         plugins: [assert(), apiClient(), pluginAdonisJS(app), dbAssertions(app)],
+        // The groups truncate after each test, so the first test would otherwise meet whatever
+        // the migrations seeded: on a fresh database (CI), the real root branch, which the
+        // single-root index lets the fixture root (`rootBranch`) be silently ignored beside.
+        setup: [
+          async () => {
+            const { default: testUtils } = await import("@adonisjs/core/services/test_utils");
+            const truncate = await testUtils.db().truncate();
+            await truncate();
+          },
+        ],
         teardown: [
           async () => {
             const { default: db } = await import("@adonisjs/lucid/services/db");

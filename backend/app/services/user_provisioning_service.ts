@@ -7,6 +7,8 @@ import Branch from "#models/branch";
 import Signature from "#models/signature";
 import User from "#models/user";
 import { BranchRelationshipService } from "#services/branch_relationship_service";
+import { BranchScope } from "#services/branch_scope";
+import type { Viewer } from "#services/branch_scope";
 import DispatchService from "#services/dispatch_service";
 import { invalidUserFields } from "#services/user_fields";
 import { dobFrom, UserService } from "#services/user_service";
@@ -156,6 +158,19 @@ async function findExistingUsers(userCandidates: UserCandidate[]): Promise<(User
   );
 }
 
+/** For each row, whether it names an existing account the uploader may not change (`BranchScope.manageableAmong`). */
+async function findRefusedRows(existingUsers: (User | null)[], viewer: Viewer): Promise<boolean[]> {
+  const manageable = await BranchScope.manageableAmong(
+    viewer,
+    existingUsers.flatMap((user) => (user ? [user.id] : [])),
+  );
+  return existingUsers.map((user) => user !== null && !manageable.has(user.id));
+}
+
+/** One wording whatever the reason, so the row does not say whose account it was. */
+const REFUSED_ROW_MESSAGE =
+  "Mobilnummeret eller e-postadressen tilhører en bruker som ikke kan oppdateres fra en klasseliste her. Ta kontakt med Boklisten.";
+
 async function updateExistingUser(
   candidate: UserCandidate,
   existingUser: User,
@@ -181,17 +196,25 @@ async function createNewUser(
   });
 }
 
-async function evaluateCandidates(branchId: string, userCandidates: UserCandidate[]) {
+async function evaluateCandidates(
+  branchId: string,
+  userCandidates: UserCandidate[],
+  viewer: Viewer,
+) {
   const branches = await BranchRelationshipService.getLeafDescendants(branchId);
   const mappings = buildBranchMappings(
     userCandidates.map((candidate) => candidate.localName),
     branches,
   );
   const existingUsers = await findExistingUsers(userCandidates);
+  const duplicateRows = findDuplicateRows(userCandidates, existingUsers);
+  const refused = await findRefusedRows(existingUsers, viewer);
   return {
     mappings,
     existingUsers,
-    duplicateRows: findDuplicateRows(userCandidates, existingUsers),
+    duplicateRows,
+    // A duplicate is skipped as a duplicate; only the row that would be saved is refused.
+    refusedRows: refused.map((isRefused, index) => isRefused && duplicateRows[index] === null),
   };
 }
 
@@ -218,20 +241,23 @@ export function provisioningErrorMessage(error: unknown, candidate: UserCandidat
 }
 
 export const UserProvisioningService = {
-  async evaluate(branchId: string, userCandidates: UserCandidate[]) {
-    const { mappings, existingUsers, duplicateRows } = await evaluateCandidates(
+  async evaluate(branchId: string, userCandidates: UserCandidate[], viewer: Viewer) {
+    const { mappings, existingUsers, duplicateRows, refusedRows } = await evaluateCandidates(
       branchId,
       userCandidates,
+      viewer,
     );
     const duplicateCount = duplicateRows.filter((row) => row !== null).length;
+    const refusedCount = refusedRows.filter(Boolean).length;
     const updateCount = existingUsers.filter(
-      (user, index) => user !== null && duplicateRows[index] === null,
+      (user, index) => user !== null && duplicateRows[index] === null && !refusedRows[index],
     ).length;
     return {
       mappings,
       updateCount,
-      createCount: userCandidates.length - updateCount - duplicateCount,
+      createCount: userCandidates.length - updateCount - duplicateCount - refusedCount,
       duplicateCount,
+      refusedCount,
       // Counted here rather than in the browser so that it agrees with the other two: a skipped
       // duplicate is never uploaded, with or without a class.
       withoutClassCount: userCandidates.filter(
@@ -243,13 +269,15 @@ export const UserProvisioningService = {
   async provision(
     branchId: string,
     userCandidates: UserCandidate[],
+    viewer: Viewer,
     branchResolutions: BranchResolution[] = [],
   ) {
     const {
       mappings: unresolvedMappings,
       existingUsers,
       duplicateRows,
-    } = await evaluateCandidates(branchId, userCandidates);
+      refusedRows,
+    } = await evaluateCandidates(branchId, userCandidates, viewer);
     const mappings = applyBranchResolutions(unresolvedMappings, branchResolutions);
     const unmatchedLocalNames = mappings
       .filter((mapping) => mapping.status !== "matched")
@@ -288,6 +316,14 @@ export const UserProvisioningService = {
           name: candidate.name,
           email: candidate.email,
           duplicateOf: userCandidates[duplicateRow]?.name ?? "",
+        });
+        return;
+      }
+      if (refusedRows[index]) {
+        summary.errors.push({
+          name: candidate.name,
+          email: candidate.email,
+          message: REFUSED_ROW_MESSAGE,
         });
         return;
       }

@@ -7,7 +7,7 @@ import Branch from "#models/branch";
 import Order from "#models/order";
 import type User from "#models/user";
 import { canSeeBranch } from "#shared/branch-visibility";
-import { hasPermissionLevel } from "#shared/user-permission";
+import { USER_PERMISSION, hasPermissionLevel } from "#shared/user-permission";
 
 /**
  * Who is looking: their level and home node. The methods that guests may reach take
@@ -147,6 +147,30 @@ export const BranchScope = {
     return rows.length > 0;
   },
 
+  /**
+   * Which of the users a bulk upload (class list, fagvalg) may change for the viewer: those in
+   * scope (`customersInScope`, where staff count by their home node) whose level is not above the
+   * viewer's. An upload overwrites phone and email, the keys to an account, so anyone else would
+   * be handed to whoever wrote the file at the next SMS login.
+   */
+  async manageableAmong(viewer: Viewer, userIds: string[]): Promise<Set<string>> {
+    if (userIds.length === 0) {
+      return new Set();
+    }
+    const rows: { id: string }[] = await db
+      .from("users")
+      .whereIn("id", userIds)
+      .whereIn(
+        "permission",
+        Object.values(USER_PERMISSION).filter((level) =>
+          hasPermissionLevel(viewer.permission, level),
+        ),
+      )
+      .whereIn("id", this.customersInScope(await this.homeSubtreeIds(viewer)))
+      .select("id");
+    return new Set(rows.map((row) => row.id));
+  },
+
   /** A customer outside the scope is a 404, so an out-of-scope id looks exactly like an unknown one. */
   async assertCustomerInScope(viewer: Viewer, customerId: string): Promise<void> {
     if (!(await this.customerInScope(viewer, customerId))) {
@@ -229,13 +253,20 @@ export const BranchScope = {
    * every stand, so a privatist who walks up without an order is found anywhere), plus anyone who
    * ever ordered or was handed a book there. Activity is unbounded in time and state (a cancelled
    * order or a book returned years ago still counts), so stand staff can see and fix a pupil of
-   * another school who ordered at theirs. Synchronous on purpose: a query builder is a thenable, so an async function would
-   * run it instead of returning it.
+   * another school who ordered at theirs. Staff must on top of that be homed in the subtree: head
+   * office and admins are root members, and a school employee must not find, open or edit them.
+   * Synchronous on purpose: a query builder is a thenable, so an async function would run it
+   * instead of returning it.
    */
   customersInScope(subtreeIds: string[]): DatabaseQueryBuilderContract {
     return db
       .from("users")
       .select("id")
+      .where((users) => {
+        void users
+          .where("permission", USER_PERMISSION.CUSTOMER)
+          .orWhereIn("employee_branch_id", subtreeIds);
+      })
       .where((users) => {
         void users
           .whereIn("branch_membership_id", subtreeIds)

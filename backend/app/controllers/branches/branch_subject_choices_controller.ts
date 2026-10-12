@@ -24,13 +24,13 @@ export default class BranchSubjectChoicesController {
     const branchId = ctx.request.param("branchId");
     const { rows } = await ctx.request.validateUsing(subjectChoicesValidator);
     assertValidDeadlines(rows);
-    return SubjectChoicesService.evaluate(branchId, rows);
+    return SubjectChoicesService.evaluate(branchId, rows, ctx.auth.getUserOrFail());
   }
 
   async upload(ctx: HttpContext) {
     const branchId = ctx.request.param("branchId");
     const { rows } = await ctx.request.validateUsing(subjectChoicesValidator);
     assertValidDeadlines(rows);
-    return SubjectChoicesService.upload(branchId, rows);
+    return SubjectChoicesService.upload(branchId, rows, ctx.auth.getUserOrFail());
   }
 }
