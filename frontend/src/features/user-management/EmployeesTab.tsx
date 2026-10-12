@@ -1,53 +1,59 @@
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
-import {
-  Box,
-  Button,
-  Group,
-  Select,
-  SimpleGrid,
-  Skeleton,
-  Stack,
-  Table,
-  Text,
-} from "@mantine/core";
+import { Button, Group, Select, Skeleton, Stack, Table, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { IconShieldStar, IconUserCog, IconUserPlus } from "@tabler/icons-react";
+import { IconUserPlus } from "@tabler/icons-react";
+import type { Route } from "@tuyau/core/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import TreeScopeSection from "@/features/branches/TreeScopeSection";
 import CustomerAvatar from "@/features/customer-search/CustomerAvatar";
 import AddEmployeesModal from "@/features/user-management/AddEmployeesModal";
 import EmployeeBranchPicker from "@/features/user-management/EmployeeBranchPicker";
+import { lastActiveLabel } from "@/features/user-management/lastActive";
 import { PERMISSION_LABELS } from "@/features/user-management/permissionLabels";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import EntityLink from "@/shared/components/EntityLink";
-import StatTile from "@/shared/components/StatTile";
-import { api, apiClient } from "@/shared/utils/apiClient";
 import useAuth from "@/shared/hooks/useAuth";
+import { api, apiClient } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
-import { lastActiveLabel } from "@/features/user-management/lastActive";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
+
+type EmployeeRow = Route.Response<"users.employees">[number];
 
 const PERMISSION_OPTIONS = (["customer", "employee", "admin"] as const).map((permission) => ({
   value: permission,
   label: PERMISSION_LABELS[permission],
 }));
+/** Admins work from the root, so only its Ansatte tab offers the level; elsewhere a promotion would move the row away. */
+const NON_ROOT_PERMISSION_OPTIONS = PERMISSION_OPTIONS.filter((option) => option.value !== "admin");
 
-export default function EmployeesTab() {
+/**
+ * The Ansatte tab of a node, read as an audit: everyone who can see the node's data, grouped by
+ * how much of it. Staff homed above see all of it because they are employed at the parent or
+ * higher; staff homed here see all of it
+ * and are managed here; staff homed below see only their own part. The panels above and below
+ * start closed and their rows are read-only, each node a link to the tab where it is managed.
+ */
+export default function EmployeesTab({ branchId, isRoot }: { branchId: string; isRoot: boolean }) {
   const { userId: myUserId } = useAuth();
   const queryClient = useQueryClient();
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const { data: employees, isPending, isError } = useQuery(api.users.employees.queryOptions());
+  const {
+    data: employees,
+    isPending,
+    isError,
+  } = useQuery(api.users.employees.queryOptions({ query: { branchId } }));
+  const { data: branches } = useQuery(api.branches.index.queryOptions());
+  const branchNames = new Map((branches ?? []).map((branch) => [branch.id, branch.name]));
 
   const permissionMutation = useMutation({
     mutationFn: (input: { userIds: string[]; permission: UserPermission }) =>
       apiClient.api.users.setPermission({ body: input }),
     onSuccess: async () => {
       showSuccessNotification("Tilgangsnivået ble endret");
-      await queryClient.invalidateQueries({
-        queryKey: api.users.employees.queryKey(),
-      });
+      await queryClient.invalidateQueries({ queryKey: api.users.employees.pathKey() });
     },
     onError: (error) =>
       showErrorNotification(errorMessage(error, "Klarte ikke å endre tilgangsnivået")),
@@ -59,19 +65,16 @@ export default function EmployeesTab() {
       permission: UserPermission;
       employeeBranchId: string;
     }) => apiClient.api.users.setPermission({ body: input }),
-    onSuccess: async () => {
-      showSuccessNotification("Filialen ble endret");
-      await queryClient.invalidateQueries({
-        queryKey: api.users.employees.queryKey(),
-      });
+    onSuccess: async (_, input) => {
+      showSuccessNotification(
+        `Flyttet til ${branchNames.get(input.employeeBranchId) ?? "en annen filial"}`,
+      );
+      await queryClient.invalidateQueries({ queryKey: api.users.employees.pathKey() });
     },
     onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke å endre filialen")),
   });
 
-  function confirmPermissionChange(
-    employee: { userId: string; name: string },
-    permission: UserPermission,
-  ) {
+  function confirmPermissionChange(employee: EmployeeRow, permission: UserPermission) {
     const isSelf = employee.userId === myUserId;
     modals.openConfirmModal({
       title: "Endre tilgangsnivå",
@@ -102,40 +105,25 @@ export default function EmployeesTab() {
   if (isPending) {
     return (
       <Stack>
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          {Array.from({ length: 2 }, (_, index) => (
-            <Skeleton key={index} height={100} radius="md" />
-          ))}
-        </SimpleGrid>
-        <Skeleton height={300} radius="md" />
+        <Skeleton height={36} width={160} radius="md" />
+        <Skeleton height={200} radius="md" />
+        <Skeleton height={200} radius="md" />
       </Stack>
     );
   }
 
-  const countByPermission = (permission: UserPermission) =>
-    employees.filter((employee) => employee.permission === permission).length;
+  const rowsOf = (relation: EmployeeRow["relation"]) =>
+    employees.filter((employee) => employee.relation === relation);
 
-  return (
-    <Stack gap="lg">
-      <SimpleGrid cols={{ base: 1, sm: 2 }}>
-        <StatTile
-          label="Ansatte"
-          value={countByPermission("employee")}
-          icon={<IconUserCog />}
-          color="blue"
-        />
-        <StatTile
-          label="Administratorer"
-          value={countByPermission("admin")}
-          icon={<IconShieldStar />}
-          color="red"
-        />
-      </SimpleGrid>
-      <Box>
-        <Button leftSection={<IconUserPlus size={18} />} onClick={() => setAddModalOpen(true)}>
-          Legg til ansatte
-        </Button>
-      </Box>
+  function employeeTable(rows: EmployeeRow[], editable: boolean) {
+    if (rows.length === 0) {
+      return (
+        <Text size="sm" c="dimmed" fs="italic">
+          Ingen ansatte
+        </Text>
+      );
+    }
+    return (
       <Table.ScrollContainer minWidth={760}>
         <Table verticalSpacing="sm" highlightOnHover>
           <Table.Thead>
@@ -147,7 +135,7 @@ export default function EmployeesTab() {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {employees.map((employee) => (
+            {rows.map((employee) => (
               <Table.Tr key={employee.userId}>
                 <Table.Td>
                   <Group gap="sm" wrap="nowrap">
@@ -169,34 +157,53 @@ export default function EmployeesTab() {
                   </Group>
                 </Table.Td>
                 <Table.Td>
-                  <Select
-                    aria-label={`Tilgangsnivå for ${employee.name || employee.email}`}
-                    data={PERMISSION_OPTIONS}
-                    value={employee.permission}
-                    allowDeselect={false}
-                    w={160}
-                    onChange={(value) => {
-                      if (value && value !== employee.permission) {
-                        confirmPermissionChange(employee, value);
-                      }
-                    }}
-                  />
+                  {editable ? (
+                    <Select
+                      aria-label={`Tilgangsnivå for ${employee.name || employee.email}`}
+                      data={isRoot ? PERMISSION_OPTIONS : NON_ROOT_PERMISSION_OPTIONS}
+                      value={employee.permission}
+                      allowDeselect={false}
+                      w={160}
+                      onChange={(value) => {
+                        if (value && value !== employee.permission) {
+                          confirmPermissionChange(employee, value);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <Text size="sm">{PERMISSION_LABELS[employee.permission]}</Text>
+                  )}
                 </Table.Td>
                 <Table.Td>
-                  {/* An admin works from the root; the node is theirs to see, not to change. */}
-                  <EmployeeBranchPicker
-                    aria-label={`Filial for ${employee.name || employee.email}`}
-                    w={220}
-                    value={employee.employeeBranchId}
-                    disabled={employee.permission === "admin"}
-                    onChange={(employeeBranchId) =>
-                      branchMutation.mutate({
-                        userIds: [employee.userId],
-                        permission: employee.permission,
-                        employeeBranchId,
-                      })
-                    }
-                  />
+                  {editable ? (
+                    // An admin works from the root; the node is theirs to see, not to change.
+                    <EmployeeBranchPicker
+                      aria-label={`Filial for ${employee.name || employee.email}`}
+                      w={220}
+                      value={employee.employeeBranchId}
+                      disabled={employee.permission === "admin"}
+                      onChange={(employeeBranchId) =>
+                        branchMutation.mutate({
+                          userIds: [employee.userId],
+                          permission: employee.permission,
+                          employeeBranchId,
+                        })
+                      }
+                    />
+                  ) : (
+                    <Text size="sm">
+                      <EntityLink
+                        to="/admin/database/filialer"
+                        search={(previous) => ({
+                          ...previous,
+                          filial: employee.employeeBranchId,
+                          filialFane: "employees",
+                        })}
+                      >
+                        {branchNames.get(employee.employeeBranchId) ?? "Ukjent filial"}
+                      </EntityLink>
+                    </Text>
+                  )}
                 </Table.Td>
                 <Table.Td>
                   <Text size="sm">{lastActiveLabel(employee.lastActive)}</Text>
@@ -206,7 +213,52 @@ export default function EmployeesTab() {
           </Table.Tbody>
         </Table>
       </Table.ScrollContainer>
-      <AddEmployeesModal opened={addModalOpen} onClose={() => setAddModalOpen(false)} />
+    );
+  }
+
+  return (
+    <Stack gap="xl">
+      {!isRoot && (
+        <TreeScopeSection
+          direction="above"
+          title="Overordnede filialer"
+          count={rowsOf("above").length}
+          collapsible
+        >
+          {employeeTable(rowsOf("above"), false)}
+        </TreeScopeSection>
+      )}
+      <TreeScopeSection
+        direction="here"
+        title="Denne filialen"
+        count={rowsOf("here").length}
+        actions={
+          // Styled like "Nytt årskull" on the branch title: a light button at the right end of the heading.
+          <Button
+            variant="light"
+            leftSection={<IconUserPlus size={18} />}
+            onClick={() => setAddModalOpen(true)}
+          >
+            Legg til ansatte
+          </Button>
+        }
+      >
+        {employeeTable(rowsOf("here"), true)}
+      </TreeScopeSection>
+      <TreeScopeSection
+        direction="below"
+        title="Underordnede filialer"
+        count={rowsOf("below").length}
+        collapsible
+      >
+        {employeeTable(rowsOf("below"), false)}
+      </TreeScopeSection>
+      <AddEmployeesModal
+        opened={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        branchId={branchId}
+        canGrantAdmin={isRoot}
+      />
     </Stack>
   );
 }

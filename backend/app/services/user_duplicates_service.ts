@@ -236,9 +236,10 @@ async function summarizeUsers(userIds: string[]): Promise<DuplicateUserSummary[]
   return sources.map((source) => summarize(source));
 }
 
-async function findDuplicateCustomers(): Promise<DuplicateCustomersResult> {
+/** Likely duplicate accounts among the members of the given branches (a node and the branches below it). */
+async function findDuplicateCustomers(branchIds: string[]): Promise<DuplicateCustomersResult> {
   const sources = (
-    await User.query().select(
+    await User.membersOf(branchIds).select(
       "id",
       "name",
       "email",

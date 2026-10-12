@@ -1,19 +1,10 @@
 import { AreaChart, BarChart } from "@mantine/charts";
 import { SimpleGrid, Skeleton, Stack } from "@mantine/core";
-import {
-  IconCalendarMonth,
-  IconClock24,
-  IconClockHour4,
-  IconUserPlus,
-  IconUsers,
-} from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 
-import DuplicateCustomers from "@/features/user-management/DuplicateCustomers";
 import ErrorAlert from "@/shared/components/alerts/ErrorAlert";
 import ChartCard from "@/shared/components/charts/ChartCard";
 import DonutWithLegend from "@/shared/components/charts/DonutWithLegend";
-import StatTile from "@/shared/components/StatTile";
 import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { norwegianTime } from "@/shared/utils/dayjs";
@@ -29,8 +20,13 @@ function monthLabel(month: string) {
   return norwegianTime(`${month}-01`).format("MMM YYYY");
 }
 
-export default function CustomersTab() {
-  const { data: metrics, isPending, isError } = useQuery(api.users.metrics.queryOptions());
+/** The customer charts of a node and the branches below it: growth, new per month and login method. */
+export default function CustomerCharts({ branchId }: { branchId: string }) {
+  const {
+    data: metrics,
+    isPending,
+    isError,
+  } = useQuery(api.users.metrics.queryOptions({ query: { branchId } }));
 
   if (isError) {
     return (
@@ -40,11 +36,6 @@ export default function CustomersTab() {
   if (isPending) {
     return (
       <Stack>
-        <SimpleGrid cols={{ base: 2, sm: 3 }}>
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} height={100} radius="md" />
-          ))}
-        </SimpleGrid>
         <Skeleton height={280} radius="md" />
         <Skeleton height={280} radius="md" />
       </Stack>
@@ -63,44 +54,6 @@ export default function CustomersTab() {
 
   return (
     <Stack gap="lg">
-      <SimpleGrid cols={{ base: 2, sm: 3 }}>
-        <StatTile
-          label="Kunder totalt"
-          value={metrics.totalUsers}
-          icon={<IconUsers />}
-          color="blue"
-        />
-        <StatTile
-          label="Nye siste 30 dager"
-          value={metrics.newLast30Days}
-          icon={<IconUserPlus />}
-          color="teal"
-        />
-        <StatTile
-          label="Nye siste år"
-          value={metrics.newLastYear}
-          icon={<IconCalendarMonth />}
-          color="teal"
-        />
-        <StatTile
-          label="Aktive siste døgn"
-          value={metrics.activeLast24Hours}
-          icon={<IconClock24 />}
-          color="grape"
-        />
-        <StatTile
-          label="Aktive siste 30 dager"
-          value={metrics.activeLast30Days}
-          icon={<IconClockHour4 />}
-          color="grape"
-        />
-        <StatTile
-          label="Aktive siste år"
-          value={metrics.activeLastYear}
-          icon={<IconClockHour4 />}
-          color="grape"
-        />
-      </SimpleGrid>
       <ChartCard
         title="Kundevekst"
         description="Antall registrerte kunder over tid"
@@ -143,7 +96,6 @@ export default function CustomersTab() {
           />
         </ChartCard>
       </SimpleGrid>
-      <DuplicateCustomers />
     </Stack>
   );
 }

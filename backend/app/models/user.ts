@@ -87,8 +87,13 @@ export default class User extends UserSchema {
     return Number(row?.total ?? 0);
   }
 
-  static async employees(): Promise<User[]> {
-    return this.query().whereNot("permission", USER_PERMISSION.CUSTOMER).orderBy("name");
+  /** Staff by name; given branch ids, only those whose home node is one of them. */
+  static async employees(homeBranchIds?: string[]): Promise<User[]> {
+    const query = this.query().whereNot("permission", USER_PERMISSION.CUSTOMER).orderBy("name");
+    if (homeBranchIds) {
+      void query.whereIn("employeeBranchId", homeBranchIds);
+    }
+    return query;
   }
 
   /**

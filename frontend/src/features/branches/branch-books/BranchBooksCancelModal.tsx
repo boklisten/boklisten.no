@@ -43,7 +43,7 @@ export default function BranchBooksCancelModal({
       <Text>Gjelder {target.description}</Text>
       {target.allowDescendants && indirectCount > 0 && (
         <Checkbox
-          label={`Inkluder ${bookCountLabel(indirectCount)} fra underliggende filialer`}
+          label={`Inkluder ${bookCountLabel(indirectCount)} fra underordnede filialer`}
           checked={includeDescendants}
           onChange={(event) => setIncludeDescendants(event.currentTarget.checked)}
         />

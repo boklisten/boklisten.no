@@ -4,7 +4,8 @@ import { BaseSchema } from "@adonisjs/lucid/schema";
  * Every user gets a home node (step 5 of the branch scope plan, 2026-10-12): the branch they work
  * from, which from step 7 on bounds what staff can see and touch. It is named for the one role
  * that ever holds anything but the root; customers, guests and admins sit on the root ("Alle
- * filialer"), so the column is NOT NULL and no query needs a null case. Nothing reads it yet.
+ * filialer"), so the column is NOT NULL and no query needs a null case. Until step 7 only the
+ * Ansatte tab reads it.
  *
  * RESTRICT like the membership key: a branch that is still someone's home node cannot be deleted.
  */

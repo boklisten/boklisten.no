@@ -14,6 +14,7 @@ import MatchParticipant from "#models/match_participant";
 import Order from "#models/order";
 import Signature from "#models/signature";
 import User from "#models/user";
+import { SessionRevocationService } from "#services/session_revocation_service";
 import { UserManagementService } from "#services/user_management_service";
 import { createBranch, rootBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
@@ -38,8 +39,75 @@ async function seedMatch(customerIds: string[]) {
   return { match, participants };
 }
 
-test.group("UserManagementService.setPermission", (group) => {
+test.group("UserManagementService.getEmployees", (group) => {
   group.each.setup(() => testUtils.db().truncate());
+
+  test("lists the staff above, on and below the node by name, never customers or siblings", async ({
+    assert,
+  }) => {
+    const root = await rootBranch();
+    const school = await createBranch({ name: "Ullern" });
+    const klass = await createBranch({ parentBranchId: school.id });
+    const sibling = await createBranch({ name: "Nydalen" });
+    const atSchool = await createUser({
+      name: "Zara",
+      permission: "employee",
+      employeeBranchId: school.id,
+    });
+    const atClass = await createUser({
+      name: "Anne",
+      permission: "employee",
+      employeeBranchId: klass.id,
+    });
+    const admin = await createUser({ name: "Mona", permission: "admin" });
+    await createUser({ name: "Per", permission: "employee", employeeBranchId: sibling.id });
+    await createUser({ name: "Kunde", permission: "customer", branchMembershipId: klass.id });
+
+    const atUllern = await UserManagementService.getEmployees(school.id);
+    assert.deepEqual(
+      atUllern.map((row) => [row.userId, row.relation]),
+      [
+        [atClass.id, "below"],
+        [admin.id, "above"],
+        [atSchool.id, "here"],
+      ],
+    );
+    assert.equal(atUllern[0]?.employeeBranchId, klass.id);
+
+    const atRoot = await UserManagementService.getEmployees(root.id);
+    assert.lengthOf(atRoot, 4);
+    assert.equal(atRoot.find((row) => row.userId === admin.id)?.relation, "here");
+    assert.notInclude(
+      atRoot.map((row) => row.relation),
+      "above",
+    );
+  });
+});
+
+test.group("UserManagementService.setPermission", (group) => {
+  let sandbox: sinon.SinonSandbox;
+  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => {
+    sandbox = createSandbox();
+  });
+  group.each.teardown(() => sandbox.restore());
+
+  test("ends the sessions of users whose level changes, not of one who only moves node", async ({
+    assert,
+  }) => {
+    const revoke = sandbox.stub(SessionRevocationService, "revokeAll").resolves();
+    const ullern = await createBranch({ name: "Ullern" });
+    const promoted = await createUser();
+    const moved = await createUser({ permission: "employee" });
+
+    await UserManagementService.setPermission([promoted.id, moved.id], "employee", ullern.id);
+
+    assert.deepEqual(
+      revoke.getCalls().map((call) => call.args[0]),
+      [promoted.id],
+    );
+    assert.equal((await User.findOrFail(moved.id)).employeeBranchId, ullern.id);
+  });
 
   test("homes an employee at the given branch and keeps it when none is given", async ({
     assert,

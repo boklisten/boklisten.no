@@ -37,7 +37,7 @@ function MetricRow({
 
 /**
  * The three standard totals for anything counted per branch: everything in scope, this branch
- * only, and the descendants. Used by the Elever, Aktive bøker and Bestilte bøker tabs so the
+ * only, and the descendants. Used by the Signering, Aktive bøker and Bestilte bøker tabs so the
  * numbers read the same way everywhere. The colors match the per-row count badges in the
  * branch-books trees: blue for this branch, grape for descendants, gray for the total.
  */
@@ -48,7 +48,7 @@ export default function BranchScopeMetrics({
   indirect,
   totalLabel = "Totalt",
   directLabel = "Denne filialen",
-  indirectLabel = "Underliggende filialer",
+  indirectLabel = "Underordnede filialer",
   totalIcon,
   directExtra,
   indirectExtra,

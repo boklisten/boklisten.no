@@ -1,29 +1,25 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import Branch from "#models/branch";
 import User from "#models/user";
 import { BranchMembershipService } from "#services/branch_membership_service";
-import { BranchRelationshipService } from "#services/branch_relationship_service";
 import { assertMembershipAllowed } from "#services/user_service";
-import { updateBranchMembershipValidator } from "#validators/branch_membership";
+import {
+  branchMembersPageValidator,
+  updateBranchMembershipValidator,
+} from "#validators/branch_membership";
 
 export default class BranchMembersController {
+  /** One page of the members of a branch, or of the members of the branches below it. */
   async index(ctx: HttpContext) {
-    const branchId = ctx.request.param("branchId");
-    const childBranchIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
-    const [directMembers, indirectMemberCount] = await Promise.all([
-      User.membersOf([branchId]).orderBy("name"),
-      User.countMembersOf(childBranchIds),
-    ]);
-    return {
-      directMembers: directMembers.map((member) => ({
-        id: member.id,
-        name: member.name,
-        yearOfBirth: member.dob ? String(member.dob.year) : null,
-      })),
-      indirectMembers: {
-        count: indirectMemberCount,
-      },
-    };
+    const { scope, cursor, limit } = await ctx.request.validateUsing(branchMembersPageValidator);
+    const branch = await Branch.findOrFail(ctx.request.param("branchId"));
+    return BranchMembershipService.getPage(branch.id, {
+      scope,
+      // An infinite query sends an empty cursor for the first page
+      cursor: cursor === "" ? undefined : cursor,
+      limit,
+    });
   }
   async update(ctx: HttpContext) {
     const { branchMembership, userId } = await ctx.request.validateUsing(

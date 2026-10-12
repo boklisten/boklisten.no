@@ -126,6 +126,28 @@ test.group("findDuplicateCandidatePairs", () => {
   });
 });
 
+test.group("UserDuplicatesService.findDuplicateCustomers", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("compares only the members of the given branches", async ({ assert }) => {
+    const school = await createBranch();
+    const klass = await createBranch({ parentBranchId: school.id });
+    const sibling = await createBranch();
+    const atSchool = await createUser({ name: "Kari Nordmann", branchMembershipId: school.id });
+    const inClass = await createUser({ name: "Kari Nordmann", branchMembershipId: klass.id });
+    await createUser({ name: "Kari Nordmann", branchMembershipId: sibling.id });
+    await createUser({ name: "Kari Nordmann" });
+
+    const result = await UserDuplicatesService.findDuplicateCustomers([school.id, klass.id]);
+
+    assert.equal(result.totalPairCount, 1);
+    assert.sameMembers(result.pairs[0]?.users.map((candidate) => candidate.userId) ?? [], [
+      atSchool.id,
+      inClass.id,
+    ]);
+  });
+});
+
 test.group("UserDuplicatesService.summarizeUsers", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 

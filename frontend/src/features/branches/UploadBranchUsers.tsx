@@ -23,7 +23,8 @@ import {
   normalizeNorwegianDate,
   normalizeNorwegianPhone,
 } from "@/shared/utils/csvNormalizers";
-import { api, apiClient } from "@/shared/utils/apiClient";
+import { invalidateBranchMembership } from "@/features/branches/branchMembersQueries";
+import { apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
 interface UserCandidate {
@@ -209,10 +210,7 @@ export default function UploadBranchUsers({ branchId }: { branchId: string }) {
       }
     },
     onError: () => showErrorNotification("Klarte ikke å laste opp elevene!"),
-    onSettled: () =>
-      queryClient.invalidateQueries({
-        queryKey: api.branchMembers.index.queryKey(),
-      }),
+    onSettled: () => invalidateBranchMembership(queryClient),
   });
 
   function closeEvaluation() {

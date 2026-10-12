@@ -9,7 +9,8 @@ import type {
 } from "@/features/user-management/duplicateTypes";
 import MergeRoleCard from "@/features/user-management/MergeRoleCard";
 import useBranchNames from "@/features/user-management/useBranchNames";
-import { api, apiClient } from "@/shared/utils/apiClient";
+import { invalidateBranchMembership } from "@/features/branches/branchMembersQueries";
+import { apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
 
@@ -40,12 +41,7 @@ export default function MergeCustomersModal({
     onSuccess: async () => {
       showSuccessNotification("Kundene ble slått sammen");
       onClose();
-      await queryClient.invalidateQueries({
-        queryKey: api.users.duplicates.queryKey(),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: api.users.metrics.queryKey(),
-      });
+      await invalidateBranchMembership(queryClient);
     },
     onError: (error) =>
       showErrorNotification(errorMessage(error, "Klarte ikke å slå sammen kundene")),

@@ -1,23 +1,11 @@
 import type { UserPermission } from "@boklisten/backend/shared/user-permission";
-import {
-  Button,
-  Checkbox,
-  Loader,
-  Modal,
-  Pill,
-  Select,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
+import { Box, Button, Modal, MultiSelect, Select, Stack, Text } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { IconSearch } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
-import EmployeeBranchPicker from "@/features/user-management/EmployeeBranchPicker";
 import { PERMISSION_LABELS } from "@/features/user-management/permissionLabels";
-import { rootOf } from "@/shared/utils/branchTree";
 import { api, apiClient } from "@/shared/utils/apiClient";
 import { errorMessage } from "@/shared/utils/errorMessage";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
@@ -30,28 +18,34 @@ const GRANTABLE_PERMISSIONS = (["employee", "admin"] as const).map((permission) 
   label: PERMISSION_LABELS[permission],
 }));
 
-interface SelectedUser {
-  userId: string;
-  name: string;
+interface UserOption {
+  value: string;
+  label: string;
   email: string;
+  permission: UserPermission;
 }
 
 export default function AddEmployeesModal({
   opened,
   onClose,
+  branchId,
+  canGrantAdmin,
 }: {
   opened: boolean;
   onClose: () => void;
+  /** The node the list is on, which is where a new employee works from. To home someone elsewhere, add them from that node. */
+  branchId: string;
+  /** Admins work from the root, so only the root's list offers that level. */
+  canGrantAdmin: boolean;
 }) {
   const queryClient = useQueryClient();
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearch] = useDebouncedValue(searchValue.trim(), 250);
-  const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([]);
+  // The picked users keep their option so the pill still has a name once the search moves on.
+  const [selected, setSelected] = useState<UserOption[]>([]);
   const [permission, setPermission] = useState<UserPermission>("employee");
-  // null until a node is picked: the root, "works everywhere", is the default.
-  const [employeeBranchId, setEmployeeBranchId] = useState<string | null>(null);
   const { data: branches } = useQuery(api.branches.index.queryOptions());
-  const rootId = rootOf(branches ?? [])?.id;
+  const branchName = branches?.find((branch) => branch.id === branchId)?.name;
 
   const searchActive = debouncedSearch.length >= MIN_SEARCH_LENGTH;
   const { data: searchResults, isFetching } = useQuery({
@@ -60,6 +54,16 @@ export default function AddEmployeesModal({
       (await apiClient.api.users.search({ query: { q: debouncedSearch } })) ?? [],
     enabled: searchActive,
   });
+  const hits: UserOption[] = (searchResults ?? []).slice(0, MAX_RESULTS).map((user) => ({
+    value: user.id,
+    label: user.name === null || user.name === "" ? user.email : user.name,
+    email: user.email,
+    permission: user.permission,
+  }));
+  const options = [
+    ...selected,
+    ...hits.filter((hit) => !selected.some((s) => s.value === hit.value)),
+  ];
 
   const addMutation = useMutation({
     mutationFn: (input: {
@@ -69,14 +73,12 @@ export default function AddEmployeesModal({
     }) => apiClient.api.users.setPermission({ body: input }),
     onSuccess: async () => {
       showSuccessNotification(
-        selectedUsers.length === 1
-          ? `${selectedUsers[0]?.name} fikk tilgangsnivået ${PERMISSION_LABELS[permission]}`
-          : `${selectedUsers.length} brukere fikk tilgangsnivået ${PERMISSION_LABELS[permission]}`,
+        selected.length === 1
+          ? `${selected[0]?.label} fikk tilgangsnivået ${PERMISSION_LABELS[permission]}`
+          : `${selected.length} brukere fikk tilgangsnivået ${PERMISSION_LABELS[permission]}`,
       );
       closeAndReset();
-      await queryClient.invalidateQueries({
-        queryKey: api.users.employees.queryKey(),
-      });
+      await queryClient.invalidateQueries({ queryKey: api.users.employees.pathKey() });
     },
     onError: (error) => showErrorNotification(errorMessage(error, "Klarte ikke å gi tilgang")),
   });
@@ -84,114 +86,86 @@ export default function AddEmployeesModal({
   function closeAndReset() {
     onClose();
     setSearchValue("");
-    setSelectedUsers([]);
+    setSelected([]);
     setPermission("employee");
-    setEmployeeBranchId(null);
   }
-
-  function toggleUser(user: SelectedUser, checked: boolean) {
-    setSelectedUsers((previous) =>
-      checked
-        ? [...previous, user]
-        : previous.filter((selected) => selected.userId !== user.userId),
-    );
-  }
-
-  const isSelected = (userId: string) =>
-    selectedUsers.some((selected) => selected.userId === userId);
 
   return (
-    <Modal opened={opened} onClose={closeAndReset} title="Legg til ansatte" size="lg">
+    <Modal
+      opened={opened}
+      onClose={closeAndReset}
+      title={branchName ? `Legg til ansatte på ${branchName}` : "Legg til ansatte"}
+      size="lg"
+    >
       <Stack gap="sm">
-        <TextInput
-          label="Søk etter kunder"
-          placeholder="Navn, e-post eller telefon"
+        <MultiSelect
+          label="Brukere"
+          placeholder={selected.length === 0 ? "Navn, e-post eller telefon" : undefined}
           leftSection={<IconSearch size={16} />}
-          rightSection={isFetching ? <Loader size="xs" /> : undefined}
-          value={searchValue}
-          onChange={(event) => setSearchValue(event.currentTarget.value)}
+          data={options}
+          value={selected.map((user) => user.value)}
+          onChange={(ids) =>
+            setSelected(ids.flatMap((id) => options.find((option) => option.value === id) ?? []))
+          }
+          searchable
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          // The server does the matching; the options are the hits as they came.
+          filter={({ options: current }) => current}
+          hidePickedOptions
+          loading={isFetching}
+          nothingFoundMessage={
+            searchActive && !isFetching && hits.length === 0
+              ? "Ingen brukere matcher søket"
+              : undefined
+          }
+          renderOption={({ option }) => {
+            const user = options.find((candidate) => candidate.value === option.value);
+            if (!user) {
+              return option.label;
+            }
+            return (
+              <Box>
+                <Text size="sm" fw={600}>
+                  {user.label}
+                  {user.permission !== "customer" && (
+                    <Text span size="sm" c="dimmed" fw={400}>
+                      {" "}
+                      · er allerede {PERMISSION_LABELS[user.permission]}
+                    </Text>
+                  )}
+                </Text>
+                <Text size="xs" c="dimmed" style={{ overflowWrap: "anywhere" }}>
+                  {user.email}
+                </Text>
+              </Box>
+            );
+          }}
           data-autofocus
         />
-        {searchActive && searchResults && searchResults.length === 0 && (
-          <Text size="sm" c="dimmed" fs="italic">
-            Ingen kunder matcher søket.
-          </Text>
-        )}
-        {searchResults && searchResults.length > 0 && (
-          <Stack gap="xs">
-            {searchResults.slice(0, MAX_RESULTS).map((result) => (
-              <Checkbox
-                key={result.id}
-                checked={isSelected(result.id)}
-                onChange={(event) =>
-                  toggleUser(
-                    { userId: result.id, name: result.name ?? "", email: result.email },
-                    event.currentTarget.checked,
-                  )
-                }
-                label={
-                  <>
-                    <Text span size="sm" fw={600}>
-                      {result.name ?? result.email}
-                    </Text>
-                    {result.permission !== "customer" && (
-                      <Text span size="sm" c="dimmed">
-                        {" "}
-                        · er allerede {PERMISSION_LABELS[result.permission]}
-                      </Text>
-                    )}
-                    <Text size="xs" c="dimmed" style={{ overflowWrap: "anywhere" }}>
-                      {result.email}
-                    </Text>
-                  </>
-                }
-              />
-            ))}
-          </Stack>
-        )}
-        {selectedUsers.length > 0 && (
-          <Pill.Group>
-            {selectedUsers.map((user) => (
-              <Pill key={user.userId} withRemoveButton onRemove={() => toggleUser(user, false)}>
-                {user.name || user.email}
-              </Pill>
-            ))}
-          </Pill.Group>
-        )}
         <Select
           label="Tilgangsnivå"
-          description="Alle valgte brukere får samme tilgangsnivå"
-          data={GRANTABLE_PERMISSIONS}
+          data={canGrantAdmin ? GRANTABLE_PERMISSIONS : GRANTABLE_PERMISSIONS.slice(0, 1)}
           value={permission}
           allowDeselect={false}
           onChange={(value) =>
             setPermission(GRANTABLE_PERMISSIONS.find((p) => p.value === value)?.value ?? "employee")
           }
         />
-        {permission === "employee" && rootId !== undefined && (
-          <EmployeeBranchPicker
-            label="Filial"
-            description="Filialen den ansatte jobber fra"
-            value={employeeBranchId ?? rootId}
-            onChange={setEmployeeBranchId}
-          />
-        )}
         <Button
-          disabled={selectedUsers.length === 0}
+          disabled={selected.length === 0}
           loading={addMutation.isPending}
           onClick={() =>
             addMutation.mutate({
-              userIds: selectedUsers.map((user) => user.userId),
+              userIds: selected.map((user) => user.value),
               permission,
-              ...(permission === "employee" && employeeBranchId !== null
-                ? { employeeBranchId }
-                : {}),
+              ...(permission === "employee" ? { employeeBranchId: branchId } : {}),
             })
           }
         >
-          {selectedUsers.length === 1
+          {selected.length === 1
             ? "Gi tilgang til 1 bruker"
-            : `Gi tilgang til ${selectedUsers.length} brukere`}
+            : `Gi tilgang til ${selected.length} brukere`}
         </Button>
       </Stack>
     </Modal>

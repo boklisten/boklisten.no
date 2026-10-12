@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import BadRequestException from "#exceptions/bad_request_exception";
+import Branch from "#models/branch";
 import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { LoginService } from "#services/login_service";
@@ -15,7 +16,12 @@ import {
   userFieldsFrom,
   UserService,
 } from "#services/user_service";
-import { mergeUsersValidator, setPermissionValidator } from "#validators/user_management";
+import { BranchScope } from "#services/branch_scope";
+import {
+  branchScopedValidator,
+  mergeUsersValidator,
+  setPermissionValidator,
+} from "#validators/user_management";
 import {
   phoneChangeCodeValidator,
   phoneChangeValidator,
@@ -23,6 +29,15 @@ import {
   updateUserValidator,
   userSearchValidator,
 } from "#validators/users";
+
+/**
+ * The ids of a node and of the branches below it; 404 on an unknown node. The handlers validate
+ * the `branchId` query themselves so the generated client sees the validator and types it.
+ */
+async function subtreeIdsOf(branchId: string): Promise<string[]> {
+  const branch = await Branch.findOrFail(branchId);
+  return BranchScope.subtreeIds(branch.id);
+}
 
 export default class UsersController {
   /** Customers keep their own details, email included; saving clears the confirm-details task. */
@@ -119,12 +134,16 @@ export default class UsersController {
     return { emailConfirmed: true };
   }
 
-  async metrics() {
-    return UserMetricsService.getMetrics();
+  /** Metrics over the members of a node and the branches below it. */
+  async metrics(ctx: HttpContext) {
+    const { branchId } = await ctx.request.validateUsing(branchScopedValidator);
+    return UserMetricsService.getMetrics(await subtreeIdsOf(branchId));
   }
 
-  async duplicates() {
-    return UserDuplicatesService.findDuplicateCustomers();
+  /** Likely duplicate accounts among the members of a node and the branches below it. */
+  async duplicates(ctx: HttpContext) {
+    const { branchId } = await ctx.request.validateUsing(branchScopedValidator);
+    return UserDuplicatesService.findDuplicateCustomers(await subtreeIdsOf(branchId));
   }
 
   async mergePreview(ctx: HttpContext) {
@@ -150,8 +169,11 @@ export default class UsersController {
     return { deleted: true };
   }
 
-  async employees() {
-    return UserManagementService.getEmployees();
+  /** The staff homed above, on and below a node: everyone who can see some or all of it. */
+  async employees(ctx: HttpContext) {
+    const { branchId } = await ctx.request.validateUsing(branchScopedValidator);
+    const branch = await Branch.findOrFail(branchId);
+    return UserManagementService.getEmployees(branch.id);
   }
 
   async setPermission(ctx: HttpContext) {

@@ -10,8 +10,11 @@ import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 
 const IGNORED_PAIRS_STORAGE_KEY = "bl-ignored-duplicate-pairs";
 
-export default function DuplicateCustomers() {
-  const { data, isPending, isError } = useQuery(api.users.duplicates.queryOptions());
+/** Likely duplicate accounts among the members of a branch and the branches below it. */
+export default function DuplicateCustomers({ branchId }: { branchId: string }) {
+  const { data, isPending, isError } = useQuery(
+    api.users.duplicates.queryOptions({ query: { branchId } }),
+  );
   const [ignoredKeys, setIgnoredKeys] = useLocalStorage<string[]>({
     key: IGNORED_PAIRS_STORAGE_KEY,
     defaultValue: [],

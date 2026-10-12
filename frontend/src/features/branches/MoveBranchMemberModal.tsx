@@ -1,6 +1,7 @@
 import { useAppForm } from "@/shared/hooks/form";
 import useAutoSave from "@/shared/hooks/useAutoSave";
-import { api, apiClient } from "@/shared/utils/apiClient";
+import { branchMembershipQueryKeys } from "@/features/branches/branchMembersQueries";
+import { apiClient } from "@/shared/utils/apiClient";
 
 /** Picking a branch moves the member at once (see `useAutoSave`); they leave the list, so it closes. */
 export default function MoveBranchMemberModal({
@@ -17,7 +18,7 @@ export default function MoveBranchMemberModal({
       defaultValues: { branchMembership: branchId },
       persist: ({ branchMembership }) =>
         apiClient.api.branchMembers.update({ body: { userId: memberId, branchMembership } }),
-      invalidates: [api.branchMembers.index.queryKey({ params: { branchId } })],
+      invalidates: branchMembershipQueryKeys(),
       onSaved: onClose,
     }),
   );

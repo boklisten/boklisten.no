@@ -1,0 +1,60 @@
+/* One panel per direction in the tree, built like a deadline group in the book list: the header
+   strip names what the rows share (where they sit relative to this node), the body holds only
+   the rows. */
+.panel {
+  overflow: hidden;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  background-color: var(--mantine-color-body);
+}
+
+.header {
+  display: flex;
+  gap: var(--mantine-spacing-xs);
+  align-items: center;
+  width: 100%;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  background-color: var(--mantine-color-default-hover);
+  text-align: left;
+}
+
+/* A closed panel is just its header; the border between header and body only exists when there is a body. */
+.header[data-with-body] {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+/* A header that opens the panel says so on hover, one shade darker than at rest. */
+.header[data-collapsible] {
+  cursor: pointer;
+  transition: background-color 120ms ease;
+
+  &:hover {
+    background-color: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-4));
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: -2px;
+  }
+}
+
+.chevron {
+  margin-left: auto;
+  transition: transform 150ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.chevron[data-opened] {
+  transform: rotate(180deg);
+}
+
+.actions {
+  margin-left: auto;
+}
+
+.body {
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+}

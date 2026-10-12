@@ -13,24 +13,25 @@ import {
   IconSchool,
   IconShoppingCart,
   IconSignature,
+  IconUserCog,
   IconUsers,
 } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 
 import ActiveBooksTab from "@/features/branches/branch-books/ActiveBooksTab";
-import BranchBookMovements from "@/features/branches/insights/BranchBookMovements";
+import BranchInsightsTab from "@/features/branches/insights/BranchInsightsTab";
 import OrderedBooksTab from "@/features/branches/branch-books/OrderedBooksTab";
 import BranchGeneralSettings from "@/features/branches/BranchGeneralSettings";
-import BranchMembers from "@/features/branches/BranchMembers";
 import BranchPaymentSettings from "@/features/branches/BranchPaymentSettings";
 import BranchRelationshipSettings from "@/features/branches/BranchRelationshipSettings";
 import BranchSignatureStatus from "@/features/branches/BranchSignatureStatus";
 import OpeningHoursSettings from "@/features/branches/opening_hours/OpeningHoursSettings";
 import BranchSubjectSettings from "@/features/branches/subjects/BranchSubjectSettings";
 import BranchRounds from "@/features/matches/rounds/BranchRounds";
-import UploadBranchUsers from "@/features/branches/UploadBranchUsers";
+import BranchUsersTab from "@/features/branches/BranchUsersTab";
 import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
+import EmployeesTab from "@/features/user-management/EmployeesTab";
 import { parseBranchManagerTab } from "@/features/branches/branchManagerTabs";
 import SignatureGallery from "@/features/signatures/SignatureGallery";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
@@ -150,8 +151,11 @@ export default function BranchManager() {
                   <Tabs.Tab value="hours" leftSection={<IconClock />}>
                     Åpningstider
                   </Tabs.Tab>
-                  <Tabs.Tab value="members" leftSection={<IconUsers />}>
-                    Elever
+                  <Tabs.Tab value="users" leftSection={<IconUsers />}>
+                    Brukere
+                  </Tabs.Tab>
+                  <Tabs.Tab value="employees" leftSection={<IconUserCog />}>
+                    Ansatte
                   </Tabs.Tab>
                   <Tabs.Tab value="signatures" leftSection={<IconSignature />}>
                     Signering
@@ -184,15 +188,19 @@ export default function BranchManager() {
                 <Tabs.Panel value="hours">
                   <OpeningHoursSettings key={selectedBranchId} branchId={selectedBranch.id} />
                 </Tabs.Panel>
-                <Tabs.Panel value="members">
-                  <Stack>
-                    <BranchMembers
-                      key={selectedBranch.id}
-                      branchId={selectedBranch.id}
-                      isRoot={isRootBranch(selectedBranch)}
-                    />
-                    <UploadBranchUsers branchId={selectedBranch.id} />
-                  </Stack>
+                <Tabs.Panel value="users">
+                  <BranchUsersTab
+                    key={selectedBranch.id}
+                    branchId={selectedBranch.id}
+                    isRoot={isRootBranch(selectedBranch)}
+                  />
+                </Tabs.Panel>
+                <Tabs.Panel value="employees">
+                  <EmployeesTab
+                    key={selectedBranch.id}
+                    branchId={selectedBranch.id}
+                    isRoot={isRootBranch(selectedBranch)}
+                  />
                 </Tabs.Panel>
                 <Tabs.Panel value="signatures">
                   <Stack key={selectedBranch.id} gap="xl">
@@ -213,7 +221,7 @@ export default function BranchManager() {
                   </Stack>
                 </Tabs.Panel>
                 <Tabs.Panel value="insights">
-                  <BranchBookMovements key={selectedBranch.id} branchId={selectedBranch.id} />
+                  <BranchInsightsTab key={selectedBranch.id} branchId={selectedBranch.id} />
                 </Tabs.Panel>
                 <Tabs.Panel value="rounds">
                   <BranchRounds key={selectedBranch.id} branchId={selectedBranch.id} />

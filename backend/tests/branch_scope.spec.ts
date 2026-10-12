@@ -37,6 +37,21 @@ test.group("BranchScope.subtreeIds", (group) => {
   });
 });
 
+test.group("BranchScope.ancestorIds", (group) => {
+  group.each.setup(() => testUtils.db().truncate());
+
+  test("walks up to the root, nearest first, and is empty for the root", async ({ assert }) => {
+    const root = await rootBranch();
+    const school = await createBranch();
+    const year = await createBranch({ parentBranchId: school.id });
+    const klass = await createBranch({ parentBranchId: year.id });
+    await createBranch();
+
+    assert.deepEqual(await BranchScope.ancestorIds(klass.id), [year.id, school.id, root.id]);
+    assert.deepEqual(await BranchScope.ancestorIds(root.id), []);
+  });
+});
+
 test.group("BranchScope.customersInScope", (group) => {
   group.each.setup(() => testUtils.db().truncate());
 

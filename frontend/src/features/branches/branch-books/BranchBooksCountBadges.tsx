@@ -30,7 +30,7 @@ export default function BranchBooksCountBadges({
           {direct}
         </Badge>
       </Tooltip>
-      <Tooltip label="Underliggende filialer">
+      <Tooltip label="Underordnede filialer">
         <Badge variant="light" color="grape" leftSection={<IconHierarchy3 size={12} />}>
           {indirect}
         </Badge>

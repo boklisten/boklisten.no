@@ -8,10 +8,17 @@ import User from "#models/user";
 import CustomerItem from "#models/customer_item";
 import Invoice from "#models/invoice";
 import Order from "#models/order";
+import { BranchScope } from "#services/branch_scope";
 import { countActiveMatches } from "#services/matches/active_matches";
 import { SessionRevocationService } from "#services/session_revocation_service";
 import type { UserPermission } from "#shared/user-permission";
 import { USER_PERMISSION } from "#shared/user-permission";
+
+/**
+ * Where a staff member's home node sits relative to the node asked about: above it (they see
+ * this node through a node higher up), on it, or below it (they see only a part of it).
+ */
+export type EmployeeRelation = "above" | "here" | "below";
 
 interface EmployeeRow {
   userId: string;
@@ -21,11 +28,22 @@ interface EmployeeRow {
   permission: UserPermission;
   /** The home node (see `shared/user.ts`); the root for admins. */
   employeeBranchId: string;
+  relation: EmployeeRelation;
   lastActive: string | null;
 }
 
-async function getEmployees(): Promise<EmployeeRow[]> {
-  const employees = await User.employees();
+/**
+ * Everyone whose home node is on the path through the node: homed above it, on it, or below it.
+ * That is the audit answer to "who can see this node's data, and how much of it": staff above
+ * see all of it, staff on it see all of it and are managed here, staff below see their own part.
+ */
+async function getEmployees(branchId: string): Promise<EmployeeRow[]> {
+  const [above, subtree] = await Promise.all([
+    BranchScope.ancestorIds(branchId),
+    BranchScope.subtreeIds(branchId),
+  ]);
+  const aboveIds = new Set(above);
+  const employees = await User.employees([...above, ...subtree]);
   return employees.map((employee) => ({
     userId: employee.id,
     name: employee.name ?? "",
@@ -33,6 +51,11 @@ async function getEmployees(): Promise<EmployeeRow[]> {
     phone: employee.phone ?? "",
     permission: employee.permission,
     employeeBranchId: employee.employeeBranchId,
+    relation: aboveIds.has(employee.employeeBranchId)
+      ? "above"
+      : employee.employeeBranchId === branchId
+        ? "here"
+        : "below",
     lastActive: employee.lastActiveAt?.toISO() ?? null,
   }));
 }
@@ -40,7 +63,8 @@ async function getEmployees(): Promise<EmployeeRow[]> {
 /**
  * Sets the level and, for employees, the home node. Only employees hold a node of their own:
  * an admin works from the root and a customer has no workplace, so either level snaps the node
- * back to the root whatever was given. An employee given no node keeps the one they have.
+ * back to the root whatever was given. An employee given no node keeps the one they have. A
+ * change of level ends the user's sessions; a change of node alone does not.
  */
 async function setPermission(
   userIds: string[],
@@ -57,7 +81,8 @@ async function setPermission(
     .whereIn("id", userIds)
     .update({ permission, ...homeNode, updatedAt: DateTime.now() });
   // The new level applies from their next login, not from whenever their cookie would have expired.
-  await Promise.all(userIds.map((userId) => SessionRevocationService.revokeAll(userId)));
+  const demotedOrPromoted = users.filter((user) => user.permission !== permission);
+  await Promise.all(demotedOrPromoted.map((user) => SessionRevocationService.revokeAll(user.id)));
   return { updated: userIds.length };
 }
 

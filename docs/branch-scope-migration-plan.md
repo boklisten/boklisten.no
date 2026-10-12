@@ -463,7 +463,7 @@ over the gallery under the heading "Signaturer", with no intro text.
 
 Not in this step: home nodes, enforcement, Brukere.
 
-### Step 5. Home node column
+### Step 5. Home node column (done 2026-10-12)
 
 **Value**: head office can record which node each employee works from, visible on the employee
 list. Nothing is enforced yet, so nobody's access changes.
@@ -490,7 +490,7 @@ to the root.
 
 Not in this step: any read or write restriction.
 
-### Step 6. Brukere becomes Filialer tabs
+### Step 6. Brukere becomes Filialer tabs (done 2026-10-12)
 
 **Value**: the last flat user page is folded into the tree. "Brukere" on a node = the customers in
 scope of it and their metrics; "Ansatte" on a node = the staff whose home node is in the subtree.
@@ -523,6 +523,48 @@ Brukere lists a privatist who ordered at Ullern with membership "Ingen skole", a
 drops them; root → Ansatte shows the old Ansatte list; Ullern → Ansatte shows only employees homed
 at or below Ullern.
 
+Verified: root → Brukere shows the three member counts (16 757 / 11 169 / 5 588), pages 50 at a
+time with "Vis flere", and the old Kunder metrics and duplicate finder below; Ullern → Brukere
+lists 971 members with their class in a "Skole" column and the direct filter shows "Ingen
+medlemmer å vise" (the school itself has no direct members); root → Ansatte shows the old list
+(63 ansatte, 3 administratorer); homing an employee at Ullern from that list makes them the only
+row on Ullern → Ansatte; `/admin/database/brukere` is a 404 and the nav entry is gone.
+
+As built: both tabs scope by **membership only** (Adrian, 2026-10-12): Brukere lists the users whose
+`branch_membership_id` is in the subtree, Ansatte the staff whose `employee_branch_id` is, and orders
+and customer items play no part, so `customersInScope` is still unused and the endpoint keeps its
+name, `GET /branches/:branchId/members` (`api.branchMembers.index`), now paged. The page carries
+`counts: { direct, indirect }` for the metric rows; the cursor is the last row's own sort key (id
+and name as sorted), so it survives that member being renamed, moved or deleted, and the order is
+`(coalesce(name, ''), id)`, so nameless users come first and namesakes never repeat or skip. An
+unknown node is a 404 on all four endpoints. After the review (2026-10-12): a membership change
+anywhere refreshes the member list, metrics, duplicates and signature queries together
+(`branchMembersQueries.ts`); a change
+of home node alone no longer ends the employee's sessions (only a change of level does); the
+admin option, in "Legg til ansatte" and in the row's level picker, shows on the root only, since
+admins always work from the root (a promotion elsewhere would move the row to the root's tab). "Legg til ansatte på <node>" no longer has a node picker (Adrian,
+2026-10-12): a new employee works from the node the list is on, which the title and the tree
+already say, so the modal shows nothing about scope; to home someone elsewhere, add them from that
+node. The user search is a stock searchable `MultiSelect` fed by `/users/search`.
+
+Reshaped the same day (Adrian): both tabs read up and down the tree through one section primitive,
+`TreeScopeSection` (grey ↑ above, blue building here, grape hierarchy below, count badge, optional
+collapse). **Brukere** (`BranchUsersTab`): two collapsed member panels, the node's own members and
+the members below (`GET …/members?scope=direct|descendants`, counts on every page, shown as the
+panel badges; the metric rows and every count tile are gone), each with its own "Fjern medlemmer",
+then the upload and the duplicate finder. The direct panel has no "Skole" column, since every row
+there belongs to the node in its heading. The customer numbers moved to **Innsikt**
+(`BranchInsightsTab`): the new/active tiles, Kundevekst, Nye kunder per måned and
+Innloggingsmetode, above Bokbevegelser. **Ansatte** is an audit of who sees the node's data: `GET /users/employees?branchId=`
+returns the staff homed above, on and below the node with a `relation`, shown as three sections;
+only the node's own rows are editable, rows above and below show level and node as text with the
+node linked to its Ansatte tab. `BranchScope.ancestorIds` (recursive CTE up) backs it. `GET /users/metrics`, `/users/duplicates` and `/users/employees` take a required
+`branchId` query (`branchScopedValidator`), validated inline in each handler so the generated client
+types it. The list grows on a "Vis flere" button rather than on scroll so the upload and the
+duplicates below it stay reachable on the root. `CustomersTab` became `CustomerStatTiles` and
+`CustomerCharts`, both taking `branchId`; invalidations use Tuyau's `pathKey()` so every page of a
+list refreshes.
+
 Not in this step: enforcement.
 
 ### Step 7. Scope guard and slice endpoint
@@ -546,10 +588,13 @@ Backend
   Customers and guests get root + public nodes, exactly as after step 2, all selectable.
 - Body branch ids: `assertSelectable` in `assertMembershipAllowed` (target only),
   `Orders.updateBranch`, stand-cart checkout, waiting-list store and provisioning.
-- Route groups: move the content endpoints (`customers`, `signatures`, `signature_status`,
+- Route groups: move the content endpoints (`members`, `signatures`, `signature_status`,
   `active_books` read, `ordered_books` read, `insights`, `/users/employees` read, `/users/metrics`,
   `/users/duplicates`) from the admin group to the employee group. Writes under `/branches` stay
-  admin. Move `/message_logs/feed`, `/metrics` and `/sendouts` the other way, into the admin
+  admin. The three `/users/*` lists take the node as a query, not a route param, so the `scope`
+  middleware does not see it: put `assertSelectable` in `subtreeIdsFrom` (`users_controller.ts`,
+  metrics and duplicates) and in the `employees` handler, which resolves the node itself. Until
+  then the three are admin-only, so every caller is root-scoped. Move `/message_logs/feed`, `/metrics` and `/sendouts` the other way, into the admin
   group, and gate the Meldinger page to admins. Keep the group-ordering rule in
   `start/routes.ts` in mind (specific before parametric).
 - Japa: an employee homed at Ullern gets 403 on a sibling school's customers, 200 on an Ullern

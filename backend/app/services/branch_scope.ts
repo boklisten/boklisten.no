@@ -16,6 +16,11 @@ export const BranchScope = {
     return [nodeId, ...(await Branch.descendantIds(nodeId))];
   },
 
+  /** The ids of every branch above the node, nearest first: the ones whose staff see the node too. */
+  ancestorIds(nodeId: string): Promise<string[]> {
+    return Branch.ancestorIds(nodeId);
+  },
+
   /**
    * A subquery of the ids of the customers in scope of a subtree (`subtreeIds`), for
    * `whereIn("customer_id", …)`: its members, plus anyone who ever ordered or was handed a book

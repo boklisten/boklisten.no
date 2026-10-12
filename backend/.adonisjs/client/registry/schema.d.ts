@@ -650,9 +650,9 @@ export interface Registry {
       body: {}
       paramsTuple: [ParamValue]
       params: { branchId: ParamValue }
-      query: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/branch_membership').branchMembersPageValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branch_members_controller').default['index']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_members_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_members_controller').default['index']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'branch_members.destroy_direct': {
@@ -902,9 +902,9 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/user_management').branchScopedValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['metrics']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['metrics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['metrics']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'users.duplicates': {
@@ -914,9 +914,9 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/user_management').branchScopedValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['duplicates']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['duplicates']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['duplicates']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'users.employees': {
@@ -926,9 +926,9 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/user_management').branchScopedValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['employees']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['employees']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['employees']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'users.merge_preview': {

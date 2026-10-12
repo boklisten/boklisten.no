@@ -410,6 +410,23 @@ export default class Branch extends BranchSchema {
     );
   }
 
+  /** The ids of the branches above `branchId`, nearest first, the root last; the branch itself left out. */
+  static async ancestorIds(branchId: string): Promise<string[]> {
+    const { rows } = await db.rawQuery<{ rows: { id: string }[] }>(
+      `WITH RECURSIVE chain AS (
+         SELECT parent.id, parent.parent_branch_id, 1 AS depth
+         FROM branches child JOIN branches parent ON parent.id = child.parent_branch_id
+         WHERE child.id = :branchId
+         UNION ALL
+         SELECT parent.id, parent.parent_branch_id, chain.depth + 1
+         FROM branches parent JOIN chain ON parent.id = chain.parent_branch_id
+       )
+       SELECT id FROM chain ORDER BY depth`,
+      { branchId },
+    );
+    return rows.map((row) => row.id);
+  }
+
   private static async walkDescendants(branchId: string, filter: string): Promise<BranchRef[]> {
     const { rows } = await db.rawQuery<{ rows: BranchRef[] }>(
       `WITH RECURSIVE tree AS (

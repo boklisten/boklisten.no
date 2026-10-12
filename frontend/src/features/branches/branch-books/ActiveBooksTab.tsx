@@ -134,7 +134,7 @@ export default function ActiveBooksTab({ branchId }: { branchId: string }) {
         indirect={summaryQuery.data?.indirect}
         totalIcon={<IconSum size={18} />}
         directLabel="Utdelt på denne filialen"
-        indirectLabel="Utdelt på underliggende filialer"
+        indirectLabel="Utdelt på underordnede filialer"
       />
       <BranchBooksTree
         summary={summaryQuery.data}

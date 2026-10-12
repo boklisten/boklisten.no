@@ -16,7 +16,6 @@ import {
   IconTag,
   IconTimeline,
   IconUserEdit,
-  IconUsers,
 } from "@tabler/icons-react";
 
 import type { NavLink } from "@/features/layout/nav/navigation";
@@ -145,15 +144,9 @@ const ADMIN_NAV_SECTIONS = [
           },
           {
             label: "Filialer",
-            description: "Rediger filialer og åpningstider",
+            description: "Rediger filialer, se brukerne deres og administrer ansatte",
             to: "/admin/database/filialer",
             icon: IconSchool,
-          },
-          {
-            label: "Brukere",
-            description: "Se kundestatistikk, rydd i duplikater og administrer ansatte",
-            to: "/admin/database/brukere",
-            icon: IconUsers,
           },
           {
             label: "Selskap",

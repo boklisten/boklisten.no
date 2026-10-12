@@ -43,7 +43,7 @@ interface ActivityRow {
 }
 
 /** Users counted per login method and per how recently they were last active. */
-async function aggregateActivity(now: number): Promise<ActivityRow[]> {
+async function aggregateActivity(now: number, branchIds: string[]): Promise<ActivityRow[]> {
   const bucketCases = BUCKET_MAX_AGE_DAYS.map(
     ({ bucket }) => `WHEN last_active_at >= ? THEN '${bucket}'`,
   ).join(" ");
@@ -66,27 +66,31 @@ async function aggregateActivity(now: number): Promise<ActivityRow[]> {
        END AS bucket,
        count(*) AS count
      FROM users
+     WHERE branch_membership_id = ANY(?)
      GROUP BY 1, 2`,
-    bucketBindings,
+    [...bucketBindings, branchIds],
   );
   return result.rows.map(({ count, ...row }) => Object.assign(row, { count: Number(count) }));
 }
 
-async function aggregateRegistrations(now: number) {
+async function aggregateRegistrations(now: number, branchIds: string[]) {
   const [totals, byMonth] = await Promise.all([
     db.rawQuery<{ rows: { total: string; last30days: string; lastyear: string }[] }>(
       `SELECT
          count(*) AS total,
          count(*) FILTER (WHERE created_at >= ?) AS last30days,
          count(*) FILTER (WHERE created_at >= ?) AS lastyear
-       FROM users`,
-      [new Date(now - 30 * DAY_MS), new Date(now - 365 * DAY_MS)],
+       FROM users
+       WHERE branch_membership_id = ANY(?)`,
+      [new Date(now - 30 * DAY_MS), new Date(now - 365 * DAY_MS), branchIds],
     ),
     db.rawQuery<{ rows: { month: string; count: string }[] }>(
       `SELECT to_char(created_at AT TIME ZONE 'Europe/Oslo', 'YYYY-MM') AS month, count(*) AS count
        FROM users
+       WHERE branch_membership_id = ANY(?)
        GROUP BY 1
        ORDER BY 1`,
+      [branchIds],
     ),
   ]);
   const [facets] = totals.rows;
@@ -102,11 +106,12 @@ function sumCounts(rows: ActivityRow[], matches: (row: ActivityRow) => boolean) 
   return rows.filter(matches).reduce((sum, row) => sum + row.count, 0);
 }
 
-async function getMetrics(): Promise<UserMetrics> {
+/** The metrics over the members of the given branches (a node and the branches below it). */
+async function getMetrics(branchIds: string[]): Promise<UserMetrics> {
   const now = Date.now();
   const [activityRows, registrations] = await Promise.all([
-    aggregateActivity(now),
-    aggregateRegistrations(now),
+    aggregateActivity(now, branchIds),
+    aggregateRegistrations(now, branchIds),
   ]);
 
   const loginMethods = {
