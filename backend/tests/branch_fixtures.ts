@@ -133,3 +133,22 @@ export function branchDto(overrides: Partial<BranchDto> = {}): BranchDto {
     },
   };
 }
+
+/**
+ * The staging tree in miniature: root → company (staff-only) → VGS (public grouper) → two
+ * schools, Ullern with a class and Nydalen. Staff homed at Ullern must see down from Ullern and
+ * nothing beside it.
+ */
+export async function createMiniatureTree() {
+  const root = await rootBranch();
+  const company = await createBranch({ name: "Boklisten.no AS", visibleToCustomers: false });
+  const vgs = await createBranch({
+    name: "VGS",
+    parentBranchId: company.id,
+    visibleToCustomers: true,
+  });
+  const ullern = await createBranch({ name: "Ullern", parentBranchId: vgs.id });
+  const ullernVg1 = await createBranch({ name: "Ullern VG1", parentBranchId: ullern.id });
+  const nydalen = await createBranch({ name: "Nydalen", parentBranchId: vgs.id });
+  return { root, company, vgs, ullern, ullernVg1, nydalen };
+}

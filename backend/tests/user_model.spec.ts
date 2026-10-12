@@ -3,6 +3,7 @@ import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 
 import User from "#models/user";
+import { BranchScope } from "#services/branch_scope";
 import { createBranch, rootBranch } from "#tests/branch_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
@@ -78,6 +79,20 @@ test.group("User.search", (group) => {
     assert.deepEqual(
       hits.map((hit) => hit.id),
       [newerByName.id, olderByName.id, byAddress.id],
+    );
+  });
+
+  test("narrows to the customers of a scope when given one", async ({ assert }) => {
+    const school = await createBranch();
+    const inScope = await createUser({ name: "Kari Nordmann", branchMembershipId: school.id });
+    // A pupil of another school; a customer with no school would be in every scope.
+    await createUser({ name: "Kari Nordmann", branchMembershipId: (await createBranch()).id });
+
+    const hits = await User.search("nordmann", BranchScope.customersInScope([school.id]));
+
+    assert.deepEqual(
+      hits.map((hit) => hit.id),
+      [inScope.id],
     );
   });
 

@@ -172,6 +172,9 @@ router
     router.delete("/companies/:companyId", [controllers.Companies, "destroy"]);
 
     // messaging
+    router.get("/message_logs/feed", [controllers.MessageLogs, "feed"]);
+    router.get("/message_logs/metrics", [controllers.MessageLogs, "metrics"]);
+    router.get("/message_logs/sendouts", [controllers.MessageLogs, "sendouts"]);
     router.post("/reminders/count_recipients", [controllers.Reminders, "countRecipients"]);
     router.post("/reminders/send", [controllers.Reminders, "send"]);
     router.get("/dispatch/email_templates", [controllers.Dispatch, "emailTemplates"]);
@@ -187,8 +190,9 @@ router
 
 /**
  * Managers (Filialsjef): everything the Filialer workspace does on a node and its people, and
- * the levels below admin. Scope (the home node) is not enforced yet; see
- * docs/branch-scope-migration-plan.md.
+ * the levels below admin. Levels say which endpoints a user reaches; the home node says which
+ * rows: every route with a `:branchId` runs the `scope` middleware, and the handlers of the
+ * endpoints that take a node in the query or body check it through `BranchScope` themselves.
  */
 router
   .group(() => {
@@ -196,14 +200,45 @@ router
     router.post("/branches", [controllers.branches.Branches, "store"]);
     router.patch("/branches/relationships", [controllers.branches.BranchRelationships, "update"]);
     router.patch("/branches/members", [controllers.branches.BranchMembers, "update"]);
+
+    router.post("/opening_hours", [controllers.OpeningHours, "store"]);
+    router.delete("/opening_hours/:id", [controllers.OpeningHours, "destroy"]);
+
+    // users
+    router.get("/users/metrics", [controllers.Users, "metrics"]);
+    router.get("/users/duplicates", [controllers.Users, "duplicates"]);
+    router.get("/users/employees", [controllers.Users, "employees"]);
+    router.get("/users/merge_preview/:fromUserId/:toUserId", [controllers.Users, "mergePreview"]);
+    router.post("/users/merge", [controllers.Users, "merge"]);
+    router.put("/users/permission", [controllers.Users, "setPermission"]);
+
+    // matches: reached through the round's branch, checked in the controllers
+    router.get("/matches/:matchId", [controllers.Matches, "show"]);
+    router.get("/match_rounds", [controllers.MatchRounds, "index"]);
+    router.get("/match_rounds/:id/matches", [controllers.MatchRounds, "matches"]);
+    router.get("/match_rounds/:id/statistics", [controllers.MatchRounds, "statistics"]);
+    router.get("/match_rounds/:id/plan_metrics", [controllers.MatchRounds, "planMetrics"]);
+    router.post("/matches/notify", [controllers.Matches, "notify"]);
+    router.post("/matches/:matchId/send_to_stand", [controllers.Matches, "sendToStand"]);
+    router.post("/match_rounds", [controllers.MatchRounds, "store"]);
+    router.patch("/match_rounds/:id", [controllers.MatchRounds, "update"]);
+    router.post("/match_rounds/:id/generate", [controllers.MatchRounds, "generate"]);
+    router.delete("/match_rounds/:id/matches", [controllers.MatchRounds, "destroyMatches"]);
+    router.delete("/match_rounds/:id", [controllers.MatchRounds, "destroy"]);
+  })
+  .use([middleware.auth(), middleware.can({ permission: "manager" })]);
+
+/**
+ * Managers, on one node: everything addressed by a `:branchId`, which must be at or below the
+ * caller's home node (`scope` middleware, 404 otherwise, like an unknown node).
+ */
+router
+  .group(() => {
     router.patch("/branches/:branchId", [controllers.branches.Branches, "update"]);
     router.post("/branches/:branchId/inherit_below", [
       controllers.branches.Branches,
       "inheritBelow",
     ]);
-
-    router.post("/opening_hours", [controllers.OpeningHours, "store"]);
-    router.delete("/opening_hours/:id", [controllers.OpeningHours, "destroy"]);
 
     router.get("/branches/:branchId/members", [controllers.branches.BranchMembers, "index"]);
     router.delete("/branches/:branchId/members/direct", [
@@ -275,30 +310,8 @@ router
 
     router.post("/branches/:branchId/users/evaluate", [controllers.UserProvisioning, "evaluate"]);
     router.post("/branches/:branchId/users/provision", [controllers.UserProvisioning, "provision"]);
-
-    // users
-    router.get("/users/metrics", [controllers.Users, "metrics"]);
-    router.get("/users/duplicates", [controllers.Users, "duplicates"]);
-    router.get("/users/employees", [controllers.Users, "employees"]);
-    router.get("/users/merge_preview/:fromUserId/:toUserId", [controllers.Users, "mergePreview"]);
-    router.post("/users/merge", [controllers.Users, "merge"]);
-    router.put("/users/permission", [controllers.Users, "setPermission"]);
-
-    // matches
-    router.get("/matches/:matchId", [controllers.Matches, "show"]);
-    router.get("/match_rounds", [controllers.MatchRounds, "index"]);
-    router.get("/match_rounds/:id/matches", [controllers.MatchRounds, "matches"]);
-    router.get("/match_rounds/:id/statistics", [controllers.MatchRounds, "statistics"]);
-    router.get("/match_rounds/:id/plan_metrics", [controllers.MatchRounds, "planMetrics"]);
-    router.post("/matches/notify", [controllers.Matches, "notify"]);
-    router.post("/matches/:matchId/send_to_stand", [controllers.Matches, "sendToStand"]);
-    router.post("/match_rounds", [controllers.MatchRounds, "store"]);
-    router.patch("/match_rounds/:id", [controllers.MatchRounds, "update"]);
-    router.post("/match_rounds/:id/generate", [controllers.MatchRounds, "generate"]);
-    router.delete("/match_rounds/:id/matches", [controllers.MatchRounds, "destroyMatches"]);
-    router.delete("/match_rounds/:id", [controllers.MatchRounds, "destroy"]);
   })
-  .use([middleware.auth(), middleware.can({ permission: "manager" })]);
+  .use([middleware.auth(), middleware.can({ permission: "manager" }), middleware.scope()]);
 
 /**
  * Employees
@@ -358,8 +371,5 @@ router
     router.get("/waiting_list_customers", [controllers.WaitingListCustomers, "index"]);
     router.post("/waiting_list_customers", [controllers.WaitingListCustomers, "store"]);
     router.delete("/waiting_list_customers/:id", [controllers.WaitingListCustomers, "destroy"]);
-    router.get("/message_logs/feed", [controllers.MessageLogs, "feed"]);
-    router.get("/message_logs/metrics", [controllers.MessageLogs, "metrics"]);
-    router.get("/message_logs/sendouts", [controllers.MessageLogs, "sendouts"]);
   })
   .use([middleware.auth(), middleware.can({ permission: "employee" })]);

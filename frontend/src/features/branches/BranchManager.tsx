@@ -33,8 +33,10 @@ import BranchUsersTab from "@/features/branches/BranchUsersTab";
 import UploadSubjectChoices from "@/features/branches/UploadSubjectChoices";
 import EmployeesTab from "@/features/user-management/EmployeesTab";
 import { parseBranchManagerTab } from "@/features/branches/branchManagerTabs";
+import type { BranchManagerTab } from "@/features/branches/branchManagerTabs";
 import SignatureGallery from "@/features/signatures/SignatureGallery";
 import SelectBranchTreeView from "@/shared/components/SelectBranchTreeView";
+import useAuth from "@/shared/hooks/useAuth";
 import { api } from "@/shared/utils/apiClient";
 import { isRootBranch } from "@/shared/utils/branchTree";
 
@@ -57,6 +59,17 @@ const NEUTER_CHILD_LABELS = [
   "fag",
 ];
 
+/**
+ * The settings that only make sense on a place: the root is a scope, "everyone", and inherits
+ * nothing, so it keeps the general tab alone.
+ */
+const PLACE_SETTINGS_TABS: ReadonlySet<BranchManagerTab> = new Set([
+  "relationships",
+  "payment",
+  "subjects",
+  "hours",
+]);
+
 /** What the create action is called on a node: "Ny skole", "Nytt selskap", else "Ny filial". */
 function newChildLabel(childLabel: string | null): string {
   const noun = childLabel?.trim().toLowerCase();
@@ -69,15 +82,27 @@ function newChildLabel(childLabel: string | null): string {
 
 export default function BranchManager() {
   const { data: branches } = useQuery(api.branches.index.queryOptions());
+  const { user } = useAuth();
 
-  const { filial: selectedBranchId, filialFane } = route.useSearch();
+  const { filial, filialFane } = route.useSearch();
   const navigate = route.useNavigate();
   const setSelectedBranchId = (branchId: string | null) =>
     void navigate({
       search: (previous) => ({ ...previous, filial: branchId ?? undefined }),
       replace: true,
     });
-  const selectedBranch = branches?.find((branch) => branch.id === selectedBranchId);
+  // The page opens on the viewer's home node, and a `filial` the viewer may not work on (a link
+  // from someone with a wider slice, a stale bookmark) falls back to it.
+  const homeBranch = branches?.find((branch) => branch.id === user?.employeeBranchId);
+  const selectedBranch =
+    branches?.find((branch) => branch.id === filial && branch.selectable) ?? homeBranch;
+  const selectedBranchId = selectedBranch?.id ?? null;
+  const isRoot = selectedBranch !== undefined && isRootBranch(selectedBranch);
+  // A place-settings tab on the root falls back to the one settings tab the root has.
+  const activeTab =
+    filialFane === undefined || (isRoot && PLACE_SETTINGS_TABS.has(filialFane))
+      ? "general"
+      : filialFane;
 
   const createBranchModalId = "create-branch-modal";
   const openCreateModal = (parent: Branch) =>
@@ -103,7 +128,7 @@ export default function BranchManager() {
           <SelectBranchTreeView
             label="Velg filial"
             branches={branches ?? []}
-            selectedBranchId={selectedBranchId ?? null}
+            selectedBranchId={selectedBranchId}
             onSelect={(branchId) => {
               setSelectedBranchId(branchId);
             }}
@@ -123,7 +148,7 @@ export default function BranchManager() {
                 </Button>
               </Group>
               <Tabs
-                value={filialFane ?? "general"}
+                value={activeTab}
                 onChange={(value) =>
                   void navigate({
                     search: (previous) => ({
@@ -139,18 +164,22 @@ export default function BranchManager() {
                   <Tabs.Tab value="general" leftSection={<IconBuildingStore />}>
                     Generelt
                   </Tabs.Tab>
-                  <Tabs.Tab value="relationships" leftSection={<IconHierarchy3 />}>
-                    Relasjoner
-                  </Tabs.Tab>
-                  <Tabs.Tab value="payment" leftSection={<IconCashRegister />}>
-                    Betaling
-                  </Tabs.Tab>
-                  <Tabs.Tab value="subjects" leftSection={<IconSchool />}>
-                    Fag
-                  </Tabs.Tab>
-                  <Tabs.Tab value="hours" leftSection={<IconClock />}>
-                    Åpningstider
-                  </Tabs.Tab>
+                  {!isRoot && (
+                    <>
+                      <Tabs.Tab value="relationships" leftSection={<IconHierarchy3 />}>
+                        Relasjoner
+                      </Tabs.Tab>
+                      <Tabs.Tab value="payment" leftSection={<IconCashRegister />}>
+                        Betaling
+                      </Tabs.Tab>
+                      <Tabs.Tab value="subjects" leftSection={<IconSchool />}>
+                        Fag
+                      </Tabs.Tab>
+                      <Tabs.Tab value="hours" leftSection={<IconClock />}>
+                        Åpningstider
+                      </Tabs.Tab>
+                    </>
+                  )}
                   <Tabs.Tab value="users" leftSection={<IconUsers />}>
                     Brukere
                   </Tabs.Tab>
@@ -192,14 +221,14 @@ export default function BranchManager() {
                   <BranchUsersTab
                     key={selectedBranch.id}
                     branchId={selectedBranch.id}
-                    isRoot={isRootBranch(selectedBranch)}
+                    isRoot={isRoot}
                   />
                 </Tabs.Panel>
                 <Tabs.Panel value="employees">
                   <EmployeesTab
                     key={selectedBranch.id}
                     branchId={selectedBranch.id}
-                    isRoot={isRootBranch(selectedBranch)}
+                    isRoot={isRoot}
                   />
                 </Tabs.Panel>
                 <Tabs.Panel value="signatures">

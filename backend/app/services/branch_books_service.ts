@@ -7,7 +7,7 @@ import User from "#models/user";
 import Item from "#models/item";
 import Order from "#models/order";
 import OrderItem from "#models/order_item";
-import { BranchRelationshipService } from "#services/branch_relationship_service";
+import { BranchScope } from "#services/branch_scope";
 import { assertNotRoot } from "#services/branch_service";
 import { OrderCancellationService } from "#services/order_cancellation_service";
 import { LOAN_ORDER_ITEM_TYPES } from "#shared/order/open-order-item";
@@ -57,8 +57,7 @@ export interface SummaryRow {
 }
 
 async function resolveScope(branchId: string) {
-  const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
-  return { scopeIds: [branchId, ...descendantIds] };
+  return { scopeIds: await BranchScope.subtreeIds(branchId) };
 }
 
 /** Active customer items handed out from the given branches, as a query on `customer_items`. */

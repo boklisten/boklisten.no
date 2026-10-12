@@ -7,6 +7,7 @@ import ItemModel from "#models/item";
 import Order from "#models/order";
 import type { NewOrderItem } from "#models/order";
 import User from "#models/user";
+import { monitoredEmployee } from "#services/employee_monitoring_service";
 import BlidService from "#services/blid_service";
 import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
 import { OrderPlaceService } from "#services/orders/order_place_service";
@@ -33,6 +34,8 @@ export default class BulkCollectionController {
       return { success: false, feedback: "Denne bliden er ikke gyldig." };
     }
 
+    // Not scoped: a book in the employee's hands can be taken back whoever holds it and wherever
+    // it was handed out (`BranchScope` governs finding people, not taking back books).
     const [customerItem] = await CustomerItem.activeByBlid(blid);
     if (!customerItem?.customerId) {
       return { success: false, feedback: "Boken er ikke aktiv." };
@@ -116,7 +119,7 @@ export default class BulkCollectionController {
 
       await orderPlaceService.place(order.id, user);
       await BulkCollectionMonitoring.reportOverdueBooks({
-        employee: { userId, permission },
+        employee: monitoredEmployee(ctx.auth.getUserOrFail()),
         customerItems: items,
         titles: new Map([...itemsMap].map(([id, item]) => [id, item.title])),
         now: new Date(),

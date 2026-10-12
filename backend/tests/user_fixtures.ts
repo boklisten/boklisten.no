@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 
 import User from "#models/user";
+import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import type { User as UserDto } from "#shared/user";
 import { rootBranch, TEST_ROOT_BRANCH_ID } from "#tests/branch_fixtures";
 import { fixtureId } from "#tests/fixtures";
@@ -73,6 +74,18 @@ export function userDouble(overrides: Partial<UserColumns> & { id?: string } = {
     ...overrides,
   });
   return user;
+}
+
+/** The acting employee as the services see them (`monitoredEmployee`), homed at the root unless said otherwise. */
+export function monitoredEmployeeDouble(
+  overrides: Partial<MonitoredEmployee> = {},
+): MonitoredEmployee {
+  return {
+    userId: fixtureId("e0"),
+    permission: "employee",
+    employeeBranchId: TEST_ROOT_BRANCH_ID,
+    ...overrides,
+  };
 }
 
 /** A complete plain `User` for pure functions that never touch the database. */

@@ -1,4 +1,5 @@
 import db from "@adonisjs/lucid/services/db";
+import type { DatabaseQueryBuilderContract } from "@adonisjs/lucid/types/querybuilder";
 import { beforeCreate, belongsTo } from "@adonisjs/lucid/orm";
 import type { BelongsTo } from "@adonisjs/lucid/types/relations";
 
@@ -49,16 +50,32 @@ export default class UniqueItem extends UniqueItemSchema {
 
   /**
    * Every sticker whose blid contains the text, ignoring case, with the customer actively holding
-   * it, in no particular order. Ranking happens in code (`rankBlidMatches`).
+   * it, in no particular order. Ranking happens in code (`rankBlidMatches`). The `scope` (the
+   * caller's subtree and the customers in it) leaves out the stickers outside it, by the rule of
+   * `BranchScope.blidInScope`: a held sticker is out when its handout, its holder and its whole
+   * history are all outside.
    *
    * @param text Alphanumeric text (the validator guarantees no LIKE metacharacters).
    */
   static async matching(
     text: string,
+    scope: { ids: string[]; customers: DatabaseQueryBuilderContract },
   ): Promise<{ blid: string; itemId: string; holderId: string | null }[]> {
     return db
       .from("unique_items")
       .whereILike("blid", `%${text}%`)
+      .whereNotExists(
+        CustomerItem.whereActive(db.from("customer_items"))
+          .whereColumn("customer_items.blid", "unique_items.blid")
+          .whereNotIn("customer_items.handout_branch_id", scope.ids)
+          .whereNotIn("customer_items.customer_id", scope.customers)
+          .whereNotExists(
+            db
+              .from("customer_items as history")
+              .whereColumn("history.blid", "unique_items.blid")
+              .whereIn("history.handout_branch_id", scope.ids),
+          ),
+      )
       .select(
         "blid",
         "item_id as itemId",

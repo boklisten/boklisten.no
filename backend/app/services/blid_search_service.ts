@@ -1,5 +1,6 @@
 import { DateTime } from "luxon";
 
+import BadRequestException from "#exceptions/bad_request_exception";
 import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
 import Delivery from "#models/delivery";
@@ -10,6 +11,7 @@ import Order from "#models/order";
 import User from "#models/user";
 import { ActiveItemMonitoring, FALLBACK_BRANCH_NAME } from "#services/active_item_monitoring";
 import { ActiveItemCorrections } from "#services/active_item_corrections";
+import { BranchScope } from "#services/branch_scope";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { isMonitored } from "#services/employee_monitoring_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
@@ -772,6 +774,13 @@ export const BlidSearchService = {
     },
     employee: MonitoredEmployee,
   ): Promise<void> {
+    const customerItem = await CustomerItem.find(customerItemId);
+    if (!customerItem || !(await BranchScope.customerItemInScope(employee, customerItem))) {
+      throw new BadRequestException("Boka er ikke aktivt utdelt");
+    }
+    if (branchId) {
+      await BranchScope.assertSelectableTarget(employee, branchId);
+    }
     const previous = await ActiveItemCorrections.write({
       customerItemId,
       deadline,
@@ -815,8 +824,11 @@ export const BlidSearchService = {
    *
    * @param query Alphanumeric text (the validator guarantees no regex or LIKE metacharacters).
    */
-  async search(query: string): Promise<BlidSearchResponse> {
-    const matches = await UniqueItem.matching(query);
+  async search(query: string, scopeIds: string[]): Promise<BlidSearchResponse> {
+    const matches = await UniqueItem.matching(query, {
+      ids: scopeIds,
+      customers: BranchScope.customersInScope(scopeIds),
+    });
     const held = new Map(
       matches.flatMap((match) =>
         match.holderId === null ? [] : [[match.blid, match.holderId] as const],
@@ -851,6 +863,23 @@ export const BlidSearchService = {
       }),
       hasMore,
     };
+  },
+
+  /** What a lookup shows for a blid Boklisten knows nothing about, which an out-of-scope blid must look like too. */
+  unknown(blid: string): BlidSearchResult {
+    return assembleBlidSearch({
+      blid,
+      item: null,
+      registered: false,
+      registration: null,
+      customerItems: [],
+      orders: [],
+      handovers: [],
+      bringDeliveryOrderIds: new Set(),
+      userNames: new Map(),
+      branchNames: new Map(),
+      now: new Date(),
+    });
   },
 
   async lookup(blid: string): Promise<BlidSearchResult> {

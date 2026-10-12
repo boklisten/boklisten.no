@@ -5,6 +5,7 @@ import type { DateTime } from "luxon";
 import Branch from "#models/branch";
 import Signature, { isUnderage } from "#models/signature";
 import User from "#models/user";
+import { customerIdInScope } from "#controllers/helpers/scope";
 import DispatchService from "#services/dispatch_service";
 import { SignatureLinkService } from "#services/signature_link_service";
 import { reconcileSignatureTask, userHasValidSignature } from "#services/signature_helper";
@@ -113,13 +114,13 @@ export default class SignaturesController {
     return SignatureGalleryService.getPage(cursor, ctx.request.param("branchId"));
   }
   async show(ctx: HttpContext) {
-    return getSignatureStatus(ctx.request.param("userId"));
+    return getSignatureStatus(await customerIdInScope(ctx));
   }
   async me(ctx: HttpContext) {
     return getSignatureStatus(ctx.auth.getUserOrFail().id);
   }
   async sendLink(ctx: HttpContext) {
-    const user = await User.find(ctx.request.param("userId"));
+    const user = await User.find(await customerIdInScope(ctx));
     if (user) {
       await DispatchService.sendSignatureLink(user, await senderNameFor(user));
     }
@@ -162,7 +163,7 @@ export default class SignaturesController {
   }
   /** The customer's signing link for an employee to hand over, without sending anything. */
   async link(ctx: HttpContext) {
-    const user = await User.findOrFail(ctx.request.param("userId"));
+    const user = await User.findOrFail(await customerIdInScope(ctx));
     return { url: await SignatureLinkService.urlFor(user) };
   }
 }

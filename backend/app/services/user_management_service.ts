@@ -10,6 +10,7 @@ import CustomerItem from "#models/customer_item";
 import Invoice from "#models/invoice";
 import Order from "#models/order";
 import { BranchScope } from "#services/branch_scope";
+import type { Viewer } from "#services/branch_scope";
 import { countActiveMatches } from "#services/matches/active_matches";
 import { SessionRevocationService } from "#services/session_revocation_service";
 import type { UserPermission } from "#shared/user-permission";
@@ -71,18 +72,21 @@ async function getEmployees(branchId: string): Promise<EmployeeRow[]> {
  * admin may do anything.
  */
 async function setPermission(
-  actorPermission: UserPermission,
+  actor: Viewer,
   userIds: string[],
   permission: UserPermission,
   employeeBranchId?: string,
 ) {
   const users = await User.findMany(userIds);
-  const missing = userIds.find((userId) => !users.some((user) => user.id === userId));
-  if (missing !== undefined) {
-    throw new BadRequestException(`Fant ingen bruker for kunde ${missing}`);
+  for (const userId of userIds) {
+    const user = users.find((candidate) => candidate.id === userId);
+    // Someone outside the actor's scope is as unknown to them as a made-up id.
+    if (user === undefined || !(await personInScope(actor, user))) {
+      throw new BadRequestException(`Fant ingen bruker for kunde ${userId}`);
+    }
   }
-  assertMayGrant(actorPermission, users, permission);
-  const homeNode = await homeNodeFor(permission, employeeBranchId);
+  assertMayGrant(actor.permission, users, permission);
+  const homeNode = await homeNodeFor(actor, permission, employeeBranchId, users);
   await User.query()
     .whereIn("id", userIds)
     .update({ permission, ...homeNode, updatedAt: DateTime.now() });
@@ -116,20 +120,41 @@ const LEVELS_WITH_A_HOME_NODE: ReadonlySet<UserPermission> = new Set([
   USER_PERMISSION.MANAGER,
 ]);
 
+/**
+ * Staff are in the actor's scope when homed in their subtree, customers when `customerInScope`
+ * says so; an admin, homed at the root, reaches everyone.
+ */
+async function personInScope(actor: Viewer, user: User): Promise<boolean> {
+  return user.permission === USER_PERMISSION.CUSTOMER
+    ? BranchScope.customerInScope(actor, user.id)
+    : BranchScope.placeInScope(actor, user.employeeBranchId);
+}
+
+/**
+ * The node is one the actor may work on themselves: a manager homes staff inside their own
+ * subtree. A user given no node keeps the one they have, so that one is checked too: a customer
+ * is homed at the root, and promoting them "in place" would otherwise make head office.
+ */
 async function homeNodeFor(
+  actor: Viewer,
   permission: UserPermission,
   employeeBranchId: string | undefined,
+  users: User[],
 ): Promise<{ employeeBranchId?: string }> {
   if (!LEVELS_WITH_A_HOME_NODE.has(permission)) {
     return { employeeBranchId: (await Branch.root()).id };
   }
   if (employeeBranchId === undefined) {
+    for (const user of users) {
+      await BranchScope.assertSelectableTarget(actor, user.employeeBranchId);
+    }
     return {};
   }
   const branch = await Branch.find(employeeBranchId);
   if (branch === null) {
     throw new BadRequestException("Fant ingen filial å knytte den ansatte til");
   }
+  await BranchScope.assertSelectableTarget(actor, branch.id);
   return { employeeBranchId: branch.id };
 }
 

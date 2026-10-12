@@ -19,8 +19,6 @@ import { assignObjectId, distinctIds } from "#models/helpers/object_id";
 import { BranchSchema } from "#database/schema";
 import { INHERITED_BRANCH_FIELDS, resolveInherited } from "#shared/branch-inheritance";
 import type { InheritedBranchField } from "#shared/branch-inheritance";
-import { canSeeBranch } from "#shared/branch-visibility";
-import type { UserPermission } from "#shared/user-permission";
 import type {
   Branch as BranchDto,
   ExtendPeriod,
@@ -232,19 +230,6 @@ export default class Branch extends BranchSchema {
       await trx.rawQuery("SELECT pg_advisory_xact_lock(hashtext(?))", ["branches:tree"]);
       return work(trx);
     });
-  }
-
-  /**
-   * The branches a viewer with `permission` (`null` for a guest) may see, sorted the way Norwegians
-   * read names (Æ, Ø and Å after Z). The root is hidden from customers but returned to every
-   * viewer anyway: it is the "no school" option.
-   */
-  static async visibleByName(permission: UserPermission | null): Promise<Branch[]> {
-    return byName(
-      (await this.query()).filter(
-        (branch) => branch.isRoot || canSeeBranch(permission, branch.visibleToCustomers),
-      ),
-    );
   }
 
   /** The one branch without a parent, "Alle filialer"; every other branch sits below it. */

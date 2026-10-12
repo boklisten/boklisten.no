@@ -1,3 +1,4 @@
+import type { DatabaseQueryBuilderContract } from "@adonisjs/lucid/types/querybuilder";
 import db from "@adonisjs/lucid/services/db";
 import { DbRememberMeTokensProvider } from "@adonisjs/auth/session";
 import { beforeCreate, belongsTo } from "@adonisjs/lucid/orm";
@@ -101,7 +102,11 @@ export default class User extends UserSchema {
    * text. Matches on the customer's own name, phone or email rank first, newest customers first
    * within each group. Blids are random identifiers, so they are not searched.
    */
-  static async search(text: string): Promise<User[]> {
+  /**
+   * `customers` narrows the hits to a subquery of user ids (`BranchScope.customersInScope`): the
+   * people the searching employee is allowed to find.
+   */
+  static async search(text: string, customers?: DatabaseQueryBuilderContract): Promise<User[]> {
     const normalized = text.trim();
     if (normalized.length === 0) {
       return [];
@@ -109,16 +114,18 @@ export default class User extends UserSchema {
     const pattern = `%${normalized.replaceAll(/[\\%_]/g, String.raw`\$&`)}%`;
     const ownFields = ["name", "phone", "email"];
     const otherFields = ["address", "postalCode", "guardianName", "guardianEmail", "guardianPhone"];
-    return this.query()
-      .where((query) => {
-        for (const field of [...ownFields, ...otherFields]) {
-          void query.orWhereILike(field, pattern);
-        }
-      })
-      .orderByRaw(
-        `(${ownFields.map(() => "?? ILIKE ?").join(" OR ")}) DESC, created_at DESC`,
-        ownFields.flatMap((field) => [this.namingStrategy.columnName(this, field), pattern]),
-      );
+    const query = this.query().where((fields) => {
+      for (const field of [...ownFields, ...otherFields]) {
+        void fields.orWhereILike(field, pattern);
+      }
+    });
+    if (customers !== undefined) {
+      void query.whereIn("id", customers);
+    }
+    return query.orderByRaw(
+      `(${ownFields.map(() => "?? ILIKE ?").join(" OR ")}) DESC, created_at DESC`,
+      ownFields.flatMap((field) => [this.namingStrategy.columnName(this, field), pattern]),
+    );
   }
 
   /** The API shape; a plain object so Tuyau types the dates the way every other endpoint does. */

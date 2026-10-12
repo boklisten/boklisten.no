@@ -2,6 +2,7 @@ import type { HttpContext } from "@adonisjs/core/http";
 
 import CustomerItem from "#models/customer_item";
 import { isObjectIdHex } from "#models/helpers/object_id";
+import { customerIdInScope } from "#controllers/helpers/scope";
 import BookDetailsService from "#services/book_details_service";
 import { buildCustomerItemActions, calculateStatus } from "#services/customer_item_actions_service";
 import type { ActiveCustomerItem } from "#shared/customer-item/active-customer-item";
@@ -55,10 +56,10 @@ export default class CustomerItemsController {
    * rental type.
    */
   async forCustomer(ctx: HttpContext) {
-    const userId = String(ctx.request.param("userId"));
-    if (!isObjectIdHex(userId)) {
+    if (!isObjectIdHex(String(ctx.request.param("userId")))) {
       return [];
     }
+    const userId = await customerIdInScope(ctx);
 
     const customerItems = await CustomerItem.whereActive(
       CustomerItem.query().where("customer_id", userId),
@@ -103,11 +104,11 @@ export default class CustomerItemsController {
     return details ?? ctx.response.notFound();
   }
 
-  /** Any customer's book, opened at the stand. */
+  /** Any customer's book, opened at the stand; a book outside the caller's scope is unknown. */
   async details(ctx: HttpContext) {
     const details = await BookDetailsService.forCustomerItem(
       String(ctx.request.param("customerItemId")),
-      { role: "employee" },
+      { role: "employee", scope: ctx.auth.getUserOrFail() },
     );
     return details ?? ctx.response.notFound();
   }

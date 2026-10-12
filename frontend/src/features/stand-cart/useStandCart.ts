@@ -70,15 +70,21 @@ function branchWithPeriods(
 
 /**
  * A resolved line with the choice it should carry. A copy just scanned for a line that had none
- * opens the hand-out options, which is what the scan meant, so the line takes its new default.
- * Otherwise the previous choice is kept even when the line no longer offers it, so the line asks
- * to be chosen again instead of quietly turning, say, an extension into a return.
+ * opens the hand-out options, which is what the scan meant, so the line takes its new default; so
+ * does a line that had no options at all (the branch did not list the book), since nobody chose
+ * anything on it and its stored choice is only `defaultChoice`'s placeholder. Otherwise the
+ * previous choice is kept even when the line no longer offers it, so the line asks to be chosen
+ * again instead of quietly turning, say, an extension into a return.
  */
 function storedLine(line: StandCartLine, previous?: StoredLine): StoredLine {
   const gainedCopy = previous !== undefined && previous.line.blid === null && line.blid !== null;
+  const neverChoosable = previous !== undefined && previous.line.options.length === 0;
   return {
     line,
-    choice: gainedCopy || previous === undefined ? defaultChoice(line) : previous.choice,
+    choice:
+      gainedCopy || neverChoosable || previous === undefined
+        ? defaultChoice(line)
+        : previous.choice,
     problem: null,
   };
 }
@@ -160,9 +166,12 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     cartRef.current = cart;
   }, [cart]);
 
+  // The places a book can be handed out at: the branches the employee may work on, the root
+  // (a scope, never a place) left out. The path above a school manager's home node is in the
+  // response for the tree's sake and is no place for them either.
   const { data: branches } = useQuery({
     ...api.branches.index.queryOptions(),
-    select: withoutRoot,
+    select: (rows) => withoutRoot(rows).filter((branch) => branch.selectable),
   });
   const { data: customer } = useQuery(
     api.users.show.queryOptions(
@@ -231,12 +240,18 @@ export default function useStandCart(customerId: string | null, scope?: StandCar
     return confirmed;
   }
 
-  /** The branch a resolve is priced from: the cart's, else the customer's own with periods. */
+  /**
+   * The branch a resolve is priced from: the cart's, else the customer's own with periods, else
+   * the first branch the employee may work on that has periods (a privatist, or a pupil of
+   * another school, at an Ullern stand gets Ullern's loan terms), else any of theirs.
+   */
   function provisionalBranchId(): string | null {
+    const placeable = branches ?? [];
     return (
       cartRef.current.branchId ??
-      branchWithPeriods(branches ?? [], customer?.branchMembershipId) ??
-      branches?.[0]?.id ??
+      branchWithPeriods(placeable, customer?.branchMembershipId) ??
+      placeable.find((branch) => futureRentPeriods(branch, today()).length > 0)?.id ??
+      placeable[0]?.id ??
       null
     );
   }

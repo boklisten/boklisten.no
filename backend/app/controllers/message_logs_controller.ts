@@ -1,5 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import { customerIdInScope } from "#controllers/helpers/scope";
+
 import { MessageLogService } from "#services/message_log_service";
 import {
   messageLogFeedValidator,
@@ -10,7 +12,7 @@ import {
 export default class MessageLogsController {
   /** All messages sent to the customer's current contact info, guardians included. */
   async forCustomer(ctx: HttpContext) {
-    return MessageLogService.customerLog(ctx.request.param("userId"));
+    return MessageLogService.customerLog(await customerIdInScope(ctx));
   }
 
   /** One page of the global message log, newest first; the live feed polls and scrolls it. */

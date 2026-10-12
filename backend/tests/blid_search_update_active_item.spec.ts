@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import type sinon from "sinon";
 import { createSandbox } from "sinon";
 
+import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
 import { BlidSearchService } from "#services/blid_search_service";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
@@ -12,14 +13,14 @@ import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createUniqueItem } from "#tests/unique_item_fixtures";
-import { createUser } from "#tests/user_fixtures";
+import { createUser, monitoredEmployeeDouble } from "#tests/user_fixtures";
 
 const CUSTOMER_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f70";
 const OLD_BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f71";
 const NEW_BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f72";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
-const EMPLOYEE = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
-const ADMIN = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "admin" as const };
+const EMPLOYEE = monitoredEmployeeDouble({ userId: "5f7f7f7f7f7f7f7f7f7f7f7e" });
+const ADMIN = { ...EMPLOYEE, permission: "admin" as const };
 
 const ITEM_ID = fixtureId("1");
 
@@ -139,7 +140,10 @@ test.group("BlidSearchService.search()", (group) => {
       handoutBranchId: OLD_BRANCH_ID,
     });
 
-    const { hits } = await BlidSearchService.search("1234567");
+    const { hits } = await BlidSearchService.search(
+      "1234567",
+      (await Branch.query()).map((branch) => branch.id),
+    );
 
     assert.deepEqual(
       hits.map((hit) => [hit.blid, hit.holder?.name ?? null]),

@@ -11,15 +11,15 @@ import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createUniqueItem } from "#tests/unique_item_fixtures";
 import UniqueItem from "#models/unique_item";
-import { createUser } from "#tests/user_fixtures";
+import { createUser, monitoredEmployeeDouble } from "#tests/user_fixtures";
 
 const BLID = "12345678";
 const UNIQUE_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f70";
 const OLD_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f71";
 const NEW_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f72";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
-const EMPLOYEE = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
-const ADMIN = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "admin" as const };
+const EMPLOYEE = monitoredEmployeeDouble({ userId: "5f7f7f7f7f7f7f7f7f7f7f7e" });
+const ADMIN = { ...EMPLOYEE, permission: "admin" as const };
 
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f75";
 

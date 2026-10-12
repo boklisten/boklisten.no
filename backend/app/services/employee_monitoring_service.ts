@@ -40,11 +40,13 @@ export interface MonitoringDetail {
 export interface MonitoredEmployee {
   userId: string;
   permission: UserPermission;
+  /** The home node (see `shared/user.ts`): what the employee may write a branch id for. */
+  employeeBranchId: string;
 }
 
 /** The logged-in user (`ctx.auth.getUserOrFail()`) as the acting employee. */
 export function monitoredEmployee(user: User): MonitoredEmployee {
-  return { userId: user.id, permission: user.permission };
+  return { userId: user.id, permission: user.permission, employeeBranchId: user.employeeBranchId };
 }
 
 interface MonitoringReport {

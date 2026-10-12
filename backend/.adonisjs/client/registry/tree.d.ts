@@ -156,6 +156,12 @@ export interface ApiDefinition {
     store: typeof routes['companies.store']
     destroy: typeof routes['companies.destroy']
   }
+  messageLogs: {
+    feed: typeof routes['message_logs.feed']
+    metrics: typeof routes['message_logs.metrics']
+    sendouts: typeof routes['message_logs.sendouts']
+    forCustomer: typeof routes['message_logs.for_customer']
+  }
   reminders: {
     countRecipients: typeof routes['reminders.count_recipients']
     send: typeof routes['reminders.send']
@@ -178,6 +184,17 @@ export interface ApiDefinition {
     index: typeof routes['branch_members.index']
     destroyDirect: typeof routes['branch_members.destroy_direct']
     destroyIndirect: typeof routes['branch_members.destroy_indirect']
+  }
+  matchRounds: {
+    index: typeof routes['match_rounds.index']
+    matches: typeof routes['match_rounds.matches']
+    statistics: typeof routes['match_rounds.statistics']
+    planMetrics: typeof routes['match_rounds.plan_metrics']
+    store: typeof routes['match_rounds.store']
+    update: typeof routes['match_rounds.update']
+    generate: typeof routes['match_rounds.generate']
+    destroyMatches: typeof routes['match_rounds.destroy_matches']
+    destroy: typeof routes['match_rounds.destroy']
   }
   branchSubjects: {
     index: typeof routes['branch_subjects.index']
@@ -207,23 +224,6 @@ export interface ApiDefinition {
   userProvisioning: {
     evaluate: typeof routes['user_provisioning.evaluate']
     provision: typeof routes['user_provisioning.provision']
-  }
-  matchRounds: {
-    index: typeof routes['match_rounds.index']
-    matches: typeof routes['match_rounds.matches']
-    statistics: typeof routes['match_rounds.statistics']
-    planMetrics: typeof routes['match_rounds.plan_metrics']
-    store: typeof routes['match_rounds.store']
-    update: typeof routes['match_rounds.update']
-    generate: typeof routes['match_rounds.generate']
-    destroyMatches: typeof routes['match_rounds.destroy_matches']
-    destroy: typeof routes['match_rounds.destroy']
-  }
-  messageLogs: {
-    forCustomer: typeof routes['message_logs.for_customer']
-    feed: typeof routes['message_logs.feed']
-    metrics: typeof routes['message_logs.metrics']
-    sendouts: typeof routes['message_logs.sendouts']
   }
   standCart: {
     resolveLine: typeof routes['stand_cart.resolve_line']

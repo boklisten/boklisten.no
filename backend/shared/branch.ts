@@ -80,6 +80,15 @@ export interface Branch extends BranchPeriods {
 }
 
 /**
+ * A row of `GET /branches`: the branch, and whether the viewer may work on it. Rows with
+ * `selectable: false` are the path above a staff viewer's home node, returned so the tree can
+ * show where inherited values come from; nothing is listed or written through them.
+ */
+export interface BranchSliceNode extends Branch {
+  selectable: boolean;
+}
+
+/**
  * One step of the order flow's tree: a public branch whose subtree holds subject books. Hidden
  * levels are skipped, so `parentBranchId` names the nearest public ancestor, `null` at the top.
  */

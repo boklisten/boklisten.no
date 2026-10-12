@@ -3,7 +3,7 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
-import type Branch from "#models/branch";
+import Branch from "#models/branch";
 import type Item from "#models/item";
 import type User from "#models/user";
 import { OrderManagerService, toBringReportRow } from "#services/order_manager_service";
@@ -15,6 +15,11 @@ import { createPayment } from "#tests/payment_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 const T0 = DateTime.fromISO("2026-09-01T12:00:00.000Z");
+
+/** Head office's scope: every branch there is. */
+async function everywhere(): Promise<string[]> {
+  return (await Branch.query()).map((branch) => branch.id);
+}
 const at = (seconds: number) => T0.plus({ seconds });
 
 interface World {
@@ -74,7 +79,7 @@ test.group("OrderManagerService: listing", (group) => {
       ],
     });
 
-    const page = await OrderManagerService.listOpenOrders({}, undefined, 50);
+    const page = await OrderManagerService.listOpenOrders(await everywhere(), {}, undefined, 50);
 
     assert.deepEqual(
       page.rows.map((row) => row.id),
@@ -103,6 +108,7 @@ test.group("OrderManagerService: listing", (group) => {
     });
 
     const page = await OrderManagerService.listOpenOrders(
+      await everywhere(),
       { branchIds: [otherBranch.id] },
       undefined,
       50,
@@ -114,6 +120,36 @@ test.group("OrderManagerService: listing", (group) => {
     );
   });
 
+  test("the scope bounds the list and the branch filter can only narrow within it", async ({
+    assert,
+  }) => {
+    const { branch, otherBranch, customer, sinus } = await seedWorld();
+    const ours = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id }],
+    });
+    await createOrder({
+      branchId: otherBranch.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id }],
+    });
+
+    const scoped = await OrderManagerService.listOpenOrders([branch.id], {}, undefined, 50);
+    assert.deepEqual(
+      scoped.rows.map((row) => row.id),
+      [ours.id],
+    );
+    const widened = await OrderManagerService.listOpenOrders(
+      [branch.id],
+      { branchIds: [otherBranch.id] },
+      undefined,
+      50,
+    );
+    assert.deepEqual(widened.rows, []);
+    assert.lengthOf(await OrderManagerService.ordersReport([branch.id], {}), 1);
+  });
+
   test("an order whose customer is gone is listed without one", async ({ assert }) => {
     const { branch, sinus } = await seedWorld();
     await createOrder({
@@ -122,7 +158,7 @@ test.group("OrderManagerService: listing", (group) => {
       orderItems: [{ itemId: sinus.id }],
     });
 
-    const page = await OrderManagerService.listOpenOrders({}, undefined, 50);
+    const page = await OrderManagerService.listOpenOrders(await everywhere(), {}, undefined, 50);
 
     assert.isNull(page.rows[0]?.customer);
   });
@@ -145,7 +181,7 @@ test.group("OrderManagerService: listing", (group) => {
     let cursor: string | undefined;
     let pages = 0;
     do {
-      const page = await OrderManagerService.listOpenOrders({}, cursor, 2);
+      const page = await OrderManagerService.listOpenOrders(await everywhere(), {}, cursor, 2);
       seen.push(...page.rows.map((row) => row.id));
       cursor = page.nextCursor ?? undefined;
       pages++;
@@ -162,7 +198,7 @@ test.group("OrderManagerService: listing", (group) => {
 
   test("a mangled cursor is refused", async ({ assert }) => {
     await assert.rejects(
-      () => OrderManagerService.listOpenOrders({}, "not-a-cursor", 50),
+      async () => OrderManagerService.listOpenOrders(await everywhere(), {}, "not-a-cursor", 50),
       BadRequestException,
     );
   });
@@ -191,7 +227,7 @@ test.group("OrderManagerService: listing", (group) => {
     });
     await createPayment({ orderId: paid.id, confirmed: false });
 
-    const page = await OrderManagerService.listOpenOrders({}, undefined, 50);
+    const page = await OrderManagerService.listOpenOrders(await everywhere(), {}, undefined, 50);
 
     const unpaid = new Map(page.rows.map((row) => [row.id, row.unpaid]));
     assert.isFalse(unpaid.get(free.id));
@@ -222,13 +258,18 @@ test.group("OrderManagerService: listing", (group) => {
       }
     }
 
-    const all = await OrderManagerService.listOpenOrders({}, undefined, 50);
+    const all = await OrderManagerService.listOpenOrders(await everywhere(), {}, undefined, 50);
     assert.deepEqual(
       all.rows.filter((row) => row.bring).map((row) => row.id),
       [mailed.id],
     );
 
-    const bringOnly = await OrderManagerService.listOpenOrders({ bringOnly: true }, undefined, 1);
+    const bringOnly = await OrderManagerService.listOpenOrders(
+      await everywhere(),
+      { bringOnly: true },
+      undefined,
+      1,
+    );
     assert.deepEqual(
       bringOnly.rows.map((row) => row.id),
       [mailed.id],
@@ -255,7 +296,7 @@ test.group("OrderManagerService: reports", (group) => {
     });
     await createPayment({ orderId: order.id });
 
-    const report = await OrderManagerService.ordersReport({});
+    const report = await OrderManagerService.ordersReport(await everywhere(), {});
 
     assert.lengthOf(report, 1);
     assert.deepEqual(Object.keys(report[0] ?? {}), [
@@ -298,8 +339,8 @@ test.group("OrderManagerService: reports", (group) => {
       await createDelivery({ orderId: order.id, shipmentName: name, product });
     }
 
-    const mailbox = await OrderManagerService.bringReport({}, "postkasse");
-    const pickup = await OrderManagerService.bringReport({}, "hentested");
+    const mailbox = await OrderManagerService.bringReport(await everywhere(), {}, "postkasse");
+    const pickup = await OrderManagerService.bringReport(await everywhere(), {}, "hentested");
 
     assert.deepEqual(
       mailbox.map((row) => row["Name *"]),

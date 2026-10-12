@@ -1,5 +1,6 @@
 import Branch from "#models/branch";
 import { assertNotRoot } from "#services/branch_service";
+import { BranchScope } from "#services/branch_scope";
 import BadRequestException from "#exceptions/bad_request_exception";
 import Delivery from "#models/delivery";
 import Order from "#models/order";
@@ -290,13 +291,20 @@ async function present(
   };
 }
 
-/** The employee who started the checkout, as recorded on the order, with their permission. */
+/**
+ * The employee who started the checkout, as recorded on the order, with their permission and
+ * home node; one whose account is gone counts as an employee homed at the root.
+ */
 async function employeeOf(order: Order): Promise<MonitoredEmployee> {
   if (!order.employeeId) {
     throw new Error(`stand order ${order.id} has no employee`);
   }
   const user = await User.find(order.employeeId);
-  return { userId: order.employeeId, permission: user?.permission ?? USER_PERMISSION.EMPLOYEE };
+  return {
+    userId: order.employeeId,
+    permission: user?.permission ?? USER_PERMISSION.EMPLOYEE,
+    employeeBranchId: user?.employeeBranchId ?? (await Branch.root()).id,
+  };
 }
 
 async function settleAuthorizedVipps(order: Order): Promise<StandCartCheckoutState> {
@@ -380,6 +388,7 @@ export const StandCartCheckoutService = {
       throw new BadRequestException("Fant ikke filialen");
     }
     await assertNotRoot(branch.id);
+    await BranchScope.assertSelectableTarget(employee, branch.id);
 
     const lines = await resolveLines(request, now);
     assertLinesAreSound(lines);

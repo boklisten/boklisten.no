@@ -20,12 +20,12 @@ import { createOrder } from "#tests/order_fixtures";
 import { createPayment } from "#tests/payment_fixtures";
 import { createUniqueItem } from "#tests/unique_item_fixtures";
 import { asStub, unchecked } from "#tests/test-doubles";
-import { createUser, userDouble } from "#tests/user_fixtures";
+import { createUser, monitoredEmployeeDouble, userDouble } from "#tests/user_fixtures";
 
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f01";
 const BRANCH_ID = "5f7f7f7f7f7f7f7f7f7f7f11";
 const ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f31";
-const EMPLOYEE = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
+const EMPLOYEE = monitoredEmployeeDouble({ userId: "5f7f7f7f7f7f7f7f7f7f7f7e" });
 const SEMESTER_END = "2026-12-20";
 
 /**

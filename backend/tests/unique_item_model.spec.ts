@@ -3,11 +3,17 @@ import testUtils from "@adonisjs/core/services/test_utils";
 
 import { isObjectIdHex } from "#models/helpers/object_id";
 import UniqueItem from "#models/unique_item";
+import { BranchScope } from "#services/branch_scope";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createUniqueItem } from "#tests/unique_item_fixtures";
 import { createUser } from "#tests/user_fixtures";
+
+/** A scope over the branches, with the customers in it, as `BlidSearchService.search` builds it. */
+function scopeOf(ids: string[]) {
+  return { ids, customers: BranchScope.customersInScope(ids) };
+}
 
 test.group("UniqueItem model", (group) => {
   group.each.setup(() => testUtils.db().truncate());
@@ -47,12 +53,12 @@ test.group("UniqueItem model", (group) => {
   });
 
   test("matching finds blids containing the text in any casing", async ({ assert }) => {
-    const item = await createItem();
+    const [item, branch] = await Promise.all([createItem(), createBranch()]);
     await createUniqueItem({ itemId: item.id, blid: "zzABCDzzzzzz" });
     await createUniqueItem({ itemId: item.id, blid: "abcd12345678" });
     await createUniqueItem({ itemId: item.id, blid: "12345678" });
 
-    assert.sameDeepMembers(await UniqueItem.matching("abcd"), [
+    assert.sameDeepMembers(await UniqueItem.matching("abcd", scopeOf([branch.id])), [
       { blid: "abcd12345678", itemId: item.id, holderId: null },
       { blid: "zzABCDzzzzzz", itemId: item.id, holderId: null },
     ]);
@@ -69,8 +75,32 @@ test.group("UniqueItem model", (group) => {
     await createCustomerItem({ ...loan, customerId: (await createUser()).id, returned: true });
     await createCustomerItem({ ...loan, customerId: customer.id });
 
-    assert.deepEqual(await UniqueItem.matching("abcd"), [
+    assert.deepEqual(await UniqueItem.matching("abcd", scopeOf([branch.id])), [
       { blid: "abcd12345678", itemId: item.id, holderId: customer.id },
+    ]);
+  });
+
+  test("matching leaves out a sticker held by a book handed out outside the scope", async ({
+    assert,
+  }) => {
+    const [item, branch, elsewhere, customer] = await Promise.all([
+      createItem(),
+      createBranch(),
+      createBranch(),
+      createUser(),
+    ]);
+    // A pupil of the other school; a customer with no school is in every stand's scope.
+    await customer.merge({ branchMembershipId: elsewhere.id }).save();
+    await createUniqueItem({ itemId: item.id, blid: "abcd00000001" });
+    await createCustomerItem({
+      itemId: item.id,
+      handoutBranchId: elsewhere.id,
+      blid: "abcd00000002",
+      customerId: customer.id,
+    });
+
+    assert.deepEqual(await UniqueItem.matching("abcd", scopeOf([branch.id])), [
+      { blid: "abcd00000001", itemId: item.id, holderId: null },
     ]);
   });
 

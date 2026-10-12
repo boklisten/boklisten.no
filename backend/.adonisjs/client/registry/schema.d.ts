@@ -859,6 +859,42 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/companies_controller').default['destroy']>>>
     }
   }
+  'message_logs.feed': {
+    methods: ["GET","HEAD"]
+    pattern: '/message_logs/feed'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/message_log').messageLogFeedValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['feed']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['feed']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'message_logs.metrics': {
+    methods: ["GET","HEAD"]
+    pattern: '/message_logs/metrics'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/message_log').messageLogMetricsValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['metrics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['metrics']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'message_logs.sendouts': {
+    methods: ["GET","HEAD"]
+    pattern: '/message_logs/sendouts'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/message_log').messageLogSendoutsValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['sendouts']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['sendouts']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'reminders.count_recipients': {
     methods: ["POST"]
     pattern: '/reminders/count_recipients'
@@ -991,30 +1027,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branch_members_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'branches.update': {
-    methods: ["PATCH"]
-    pattern: '/branches/:branchId'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/branch').branchValidator)>>
-      paramsTuple: [ParamValue]
-      params: { branchId: ParamValue }
-      query: ExtractQuery<InferInput<(typeof import('#validators/branch').branchValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['update']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'branches.inherit_below': {
-    methods: ["POST"]
-    pattern: '/branches/:branchId/inherit_below'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/branch').branchInheritBelowValidator)>>
-      paramsTuple: [ParamValue]
-      params: { branchId: ParamValue }
-      query: ExtractQuery<InferInput<(typeof import('#validators/branch').branchInheritBelowValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['inheritBelow']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['inheritBelow']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
   'opening_hours.store': {
     methods: ["POST"]
     pattern: '/opening_hours'
@@ -1037,6 +1049,246 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/opening_hours_controller').default['destroy']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/opening_hours_controller').default['destroy']>>>
+    }
+  }
+  'users.metrics': {
+    methods: ["GET","HEAD"]
+    pattern: '/users/metrics'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/user_management').branchScopedValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['metrics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['metrics']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'users.duplicates': {
+    methods: ["GET","HEAD"]
+    pattern: '/users/duplicates'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/user_management').branchScopedValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['duplicates']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['duplicates']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'users.employees': {
+    methods: ["GET","HEAD"]
+    pattern: '/users/employees'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/user_management').branchScopedValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['employees']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['employees']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'users.merge_preview': {
+    methods: ["GET","HEAD"]
+    pattern: '/users/merge_preview/:fromUserId/:toUserId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { fromUserId: ParamValue; toUserId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['mergePreview']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['mergePreview']>>>
+    }
+  }
+  'users.merge': {
+    methods: ["POST"]
+    pattern: '/users/merge'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/user_management').mergeUsersValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/user_management').mergeUsersValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['merge']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['merge']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'users.set_permission': {
+    methods: ["PUT"]
+    pattern: '/users/permission'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/user_management').setPermissionValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/user_management').setPermissionValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['setPermission']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['setPermission']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'matches.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/matches/:matchId'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { matchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['show']>>>
+    }
+  }
+  'match_rounds.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/match_rounds'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/matches').matchRoundIndexValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'match_rounds.matches': {
+    methods: ["GET","HEAD"]
+    pattern: '/match_rounds/:id/matches'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['matches']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['matches']>>>
+    }
+  }
+  'match_rounds.statistics': {
+    methods: ["GET","HEAD"]
+    pattern: '/match_rounds/:id/statistics'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['statistics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['statistics']>>>
+    }
+  }
+  'match_rounds.plan_metrics': {
+    methods: ["GET","HEAD"]
+    pattern: '/match_rounds/:id/plan_metrics'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['planMetrics']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['planMetrics']>>>
+    }
+  }
+  'matches.notify': {
+    methods: ["POST"]
+    pattern: '/matches/notify'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/matches').matchNotifyValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchNotifyValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['notify']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['notify']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'matches.send_to_stand': {
+    methods: ["POST"]
+    pattern: '/matches/:matchId/send_to_stand'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { matchId: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['sendToStand']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['sendToStand']>>>
+    }
+  }
+  'match_rounds.store': {
+    methods: ["POST"]
+    pattern: '/match_rounds'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/matches').matchRoundCreateValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchRoundCreateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'match_rounds.update': {
+    methods: ["PATCH"]
+    pattern: '/match_rounds/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/matches').matchRoundPatchValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchRoundPatchValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'match_rounds.generate': {
+    methods: ["POST"]
+    pattern: '/match_rounds/:id/generate'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['generate']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['generate']>>>
+    }
+  }
+  'match_rounds.destroy_matches': {
+    methods: ["DELETE"]
+    pattern: '/match_rounds/:id/matches'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroyMatches']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroyMatches']>>>
+    }
+  }
+  'match_rounds.destroy': {
+    methods: ["DELETE"]
+    pattern: '/match_rounds/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroy']>>>
+    }
+  }
+  'branches.update': {
+    methods: ["PATCH"]
+    pattern: '/branches/:branchId'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/branch').branchValidator)>>
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/branch').branchValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'branches.inherit_below': {
+    methods: ["POST"]
+    pattern: '/branches/:branchId/inherit_below'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/branch').branchInheritBelowValidator)>>
+      paramsTuple: [ParamValue]
+      params: { branchId: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/branch').branchInheritBelowValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['inheritBelow']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/branches/branches_controller').default['inheritBelow']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'branch_members.index': {
@@ -1289,222 +1541,6 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/user_provisioning').userProvisioningValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/user_provisioning_controller').default['provision']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/user_provisioning_controller').default['provision']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'users.metrics': {
-    methods: ["GET","HEAD"]
-    pattern: '/users/metrics'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: ExtractQueryForGet<InferInput<(typeof import('#validators/user_management').branchScopedValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['metrics']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['metrics']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'users.duplicates': {
-    methods: ["GET","HEAD"]
-    pattern: '/users/duplicates'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: ExtractQueryForGet<InferInput<(typeof import('#validators/user_management').branchScopedValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['duplicates']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['duplicates']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'users.employees': {
-    methods: ["GET","HEAD"]
-    pattern: '/users/employees'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: ExtractQueryForGet<InferInput<(typeof import('#validators/user_management').branchScopedValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['employees']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['employees']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'users.merge_preview': {
-    methods: ["GET","HEAD"]
-    pattern: '/users/merge_preview/:fromUserId/:toUserId'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue, ParamValue]
-      params: { fromUserId: ParamValue; toUserId: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['mergePreview']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['mergePreview']>>>
-    }
-  }
-  'users.merge': {
-    methods: ["POST"]
-    pattern: '/users/merge'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/user_management').mergeUsersValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/user_management').mergeUsersValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['merge']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['merge']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'users.set_permission': {
-    methods: ["PUT"]
-    pattern: '/users/permission'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/user_management').setPermissionValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/user_management').setPermissionValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['setPermission']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['setPermission']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'matches.show': {
-    methods: ["GET","HEAD"]
-    pattern: '/matches/:matchId'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { matchId: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['show']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['show']>>>
-    }
-  }
-  'match_rounds.index': {
-    methods: ["GET","HEAD"]
-    pattern: '/match_rounds'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: ExtractQueryForGet<InferInput<(typeof import('#validators/matches').matchRoundIndexValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['index']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'match_rounds.matches': {
-    methods: ["GET","HEAD"]
-    pattern: '/match_rounds/:id/matches'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['matches']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['matches']>>>
-    }
-  }
-  'match_rounds.statistics': {
-    methods: ["GET","HEAD"]
-    pattern: '/match_rounds/:id/statistics'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['statistics']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['statistics']>>>
-    }
-  }
-  'match_rounds.plan_metrics': {
-    methods: ["GET","HEAD"]
-    pattern: '/match_rounds/:id/plan_metrics'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['planMetrics']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['planMetrics']>>>
-    }
-  }
-  'matches.notify': {
-    methods: ["POST"]
-    pattern: '/matches/notify'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/matches').matchNotifyValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchNotifyValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['notify']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['notify']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'matches.send_to_stand': {
-    methods: ["POST"]
-    pattern: '/matches/:matchId/send_to_stand'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { matchId: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['sendToStand']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/matches_controller').default['sendToStand']>>>
-    }
-  }
-  'match_rounds.store': {
-    methods: ["POST"]
-    pattern: '/match_rounds'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/matches').matchRoundCreateValidator)>>
-      paramsTuple: []
-      params: {}
-      query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchRoundCreateValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['store']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'match_rounds.update': {
-    methods: ["PATCH"]
-    pattern: '/match_rounds/:id'
-    types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/matches').matchRoundPatchValidator)>>
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: ExtractQuery<InferInput<(typeof import('#validators/matches').matchRoundPatchValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['update']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'match_rounds.generate': {
-    methods: ["POST"]
-    pattern: '/match_rounds/:id/generate'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['generate']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['generate']>>>
-    }
-  }
-  'match_rounds.destroy_matches': {
-    methods: ["DELETE"]
-    pattern: '/match_rounds/:id/matches'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroyMatches']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroyMatches']>>>
-    }
-  }
-  'match_rounds.destroy': {
-    methods: ["DELETE"]
-    pattern: '/match_rounds/:id'
-    types: {
-      body: {}
-      paramsTuple: [ParamValue]
-      params: { id: ParamValue }
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroy']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/match_rounds_controller').default['destroy']>>>
     }
   }
   'users.search': {
@@ -2021,42 +2057,6 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/waiting_list_customers_controller').default['destroy']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/waiting_list_customers_controller').default['destroy']>>>
-    }
-  }
-  'message_logs.feed': {
-    methods: ["GET","HEAD"]
-    pattern: '/message_logs/feed'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: ExtractQueryForGet<InferInput<(typeof import('#validators/message_log').messageLogFeedValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['feed']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['feed']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'message_logs.metrics': {
-    methods: ["GET","HEAD"]
-    pattern: '/message_logs/metrics'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: ExtractQueryForGet<InferInput<(typeof import('#validators/message_log').messageLogMetricsValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['metrics']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['metrics']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'message_logs.sendouts': {
-    methods: ["GET","HEAD"]
-    pattern: '/message_logs/sendouts'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: ExtractQueryForGet<InferInput<(typeof import('#validators/message_log').messageLogSendoutsValidator)>>
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['sendouts']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/message_logs_controller').default['sendouts']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
 }

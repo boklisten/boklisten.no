@@ -17,6 +17,8 @@ import {
   orderManagerReportValidator,
 } from "#validators/order_manager";
 import Order from "#models/order";
+import { customerIdInScope } from "#controllers/helpers/scope";
+import { BranchScope } from "#services/branch_scope";
 import { monitoredEmployee } from "#services/employee_monitoring_service";
 
 function findOpenOrderItem(order: Order, itemId: string) {
@@ -33,27 +35,42 @@ function findOpenOrderItem(order: Order, itemId: string) {
  * customer themselves (`/orders/me`).
  */
 export default class OrdersController {
-  /** Open orders across branches, for Ordreoversikt. */
+  /** Open orders across the caller's subtree, for Ordreoversikt; the branch filter narrows within it. */
   async index(ctx: HttpContext) {
     const { branchIds, bringOnly, cursor, limit } =
       await ctx.request.validateUsing(orderManagerListValidator);
-    return OrderManagerService.listOpenOrders({ branchIds, bringOnly }, cursor, limit);
+    return OrderManagerService.listOpenOrders(
+      await BranchScope.homeSubtreeIds(ctx.auth.getUserOrFail()),
+      { branchIds, bringOnly },
+      cursor,
+      limit,
+    );
   }
 
   async show(ctx: HttpContext) {
-    return OrderManagerService.getOrder(String(ctx.request.param("orderId")));
+    return OrderManagerService.getOrder(
+      String(ctx.request.param("orderId")),
+      ctx.auth.getUserOrFail(),
+    );
   }
 
   async export(ctx: HttpContext) {
     const { branchIds, bringOnly } = await ctx.request.validateUsing(orderManagerReportValidator);
-    return OrderManagerService.ordersReport({ branchIds, bringOnly });
+    return OrderManagerService.ordersReport(
+      await BranchScope.homeSubtreeIds(ctx.auth.getUserOrFail()),
+      { branchIds, bringOnly },
+    );
   }
 
   async exportBring(ctx: HttpContext) {
     const { branchIds, bringOnly, parcelType } = await ctx.request.validateUsing(
       orderManagerBringReportValidator,
     );
-    return OrderManagerService.bringReport({ branchIds, bringOnly }, parcelType);
+    return OrderManagerService.bringReport(
+      await BranchScope.homeSubtreeIds(ctx.auth.getUserOrFail()),
+      { branchIds, bringOnly },
+      parcelType,
+    );
   }
 
   async updateBranch(ctx: HttpContext) {
@@ -87,12 +104,12 @@ export default class OrdersController {
 
   /** The order history of a given customer, for the employee view. */
   async forCustomer(ctx: HttpContext) {
-    return OrderHistoryService.getForCustomer(ctx.request.param("userId"), "employee");
+    return OrderHistoryService.getForCustomer(await customerIdInScope(ctx), "employee");
   }
 
   /** Every placed order of a given customer, as stored. */
   async placedForCustomer(ctx: HttpContext) {
-    const orders = await Order.placedFor(ctx.request.param("userId"));
+    const orders = await Order.placedFor(await customerIdInScope(ctx));
     return orders.map((order) => order.toDto());
   }
 
@@ -123,12 +140,12 @@ export default class OrdersController {
     return details ?? ctx.response.notFound();
   }
 
-  /** Any customer's ordered book, opened at the stand. */
+  /** Any customer's ordered book, opened at the stand; an order outside the caller's scope is unknown. */
   async itemDetails(ctx: HttpContext) {
     const details = await BookDetailsService.forOrderedItem(
       String(ctx.request.param("orderId")),
       String(ctx.request.param("itemId")),
-      { role: "employee" },
+      { role: "employee", scope: ctx.auth.getUserOrFail() },
     );
     return details ?? ctx.response.notFound();
   }

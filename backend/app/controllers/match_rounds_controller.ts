@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import { assertNotRoot } from "#services/branch_service";
+import { BranchScope } from "#services/branch_scope";
 import MatchRound from "#models/match_round";
 import { generateRound } from "#services/matches/generate_round";
 import { getMatchesForRound } from "#services/matches/read_matches";
@@ -28,6 +29,13 @@ function roundIdParameter(ctx: HttpContext): number {
   return roundId;
 }
 
+/** Rounds are place-anchored: the round of the route is reached through its branch, which the caller must be allowed to work on. */
+async function roundInScope(ctx: HttpContext): Promise<MatchRound> {
+  const round = await MatchRound.findOrFail(roundIdParameter(ctx));
+  await BranchScope.assertSelectable(ctx.auth.getUserOrFail(), round.branchId);
+  return round;
+}
+
 function withStandRules() {
   return MatchRound.query()
     .preload("standBranches", (branches) => branches.orderBy("name"))
@@ -37,6 +45,7 @@ function withStandRules() {
 export default class MatchRoundsController {
   async index(ctx: HttpContext) {
     const { branchId } = await ctx.request.validateUsing(matchRoundIndexValidator);
+    await BranchScope.assertSelectable(ctx.auth.getUserOrFail(), branchId);
     const [rounds, counts] = await Promise.all([
       withStandRules().where("branchId", branchId).orderBy("id", "desc"),
       MatchRepository.roundCounts(),
@@ -62,6 +71,7 @@ export default class MatchRoundsController {
       await ctx.request.validateUsing(matchRoundCreateValidator);
     await Branch.findOrFail(plan.branchId);
     await assertNotRoot(plan.branchId);
+    await BranchScope.assertSelectableTarget(ctx.auth.getUserOrFail(), plan.branchId);
     await assertStandRules(plan.branchId, { standBranchIds, standCustomerIds });
 
     const round = await db.transaction(async (trx) => {
@@ -88,7 +98,7 @@ export default class MatchRoundsController {
       throw new BlError("No changes supplied").code(701);
     }
 
-    const round = await MatchRound.findOrFail(roundIdParameter(ctx));
+    const round = await roundInScope(ctx);
     const generated = round.generatedAt !== null;
 
     if (generated && PLAN_PATCH_KEYS.some((key) => patch[key] !== undefined)) {
@@ -121,29 +131,31 @@ export default class MatchRoundsController {
   }
 
   async matches(ctx: HttpContext) {
-    return ctx.serialize(await getMatchesForRound(roundIdParameter(ctx)));
+    const round = await roundInScope(ctx);
+    return ctx.serialize(await getMatchesForRound(round.id));
   }
 
   async statistics(ctx: HttpContext) {
-    return ctx.serialize(await computeMatchStatistics(roundIdParameter(ctx)));
+    const round = await roundInScope(ctx);
+    return ctx.serialize(await computeMatchStatistics(round.id));
   }
 
   async planMetrics(ctx: HttpContext) {
-    const round = await MatchRound.findOrFail(roundIdParameter(ctx));
+    const round = await roundInScope(ctx);
     return ctx.serialize(await roundPlanMetrics(round));
   }
 
   async generate(ctx: HttpContext) {
-    const round = await MatchRound.findOrFail(roundIdParameter(ctx));
+    const round = await roundInScope(ctx);
     return generateRound(round);
   }
 
   async destroyMatches(ctx: HttpContext) {
-    const round = await MatchRound.findOrFail(roundIdParameter(ctx));
+    const round = await roundInScope(ctx);
     await MatchRepository.deleteMatches(round.id);
   }
 
   async destroy(ctx: HttpContext) {
-    await (await MatchRound.findOrFail(roundIdParameter(ctx))).delete();
+    await (await roundInScope(ctx)).delete();
   }
 }

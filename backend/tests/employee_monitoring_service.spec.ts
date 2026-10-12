@@ -12,13 +12,13 @@ import {
   EmployeeMonitoringService,
 } from "#services/employee_monitoring_service";
 import { clientOrigin } from "#config/app";
-import { userDouble } from "#tests/user_fixtures";
+import { monitoredEmployeeDouble, userDouble } from "#tests/user_fixtures";
 
 const EMPLOYEE_ID = "5f7f7f7f7f7f7f7f7f7f7f7e";
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 
-const EMPLOYEE = { userId: EMPLOYEE_ID, permission: "employee" as const };
-const ADMIN = { userId: EMPLOYEE_ID, permission: "admin" as const };
+const EMPLOYEE = monitoredEmployeeDouble({ userId: EMPLOYEE_ID });
+const ADMIN = { ...EMPLOYEE, permission: "admin" as const };
 
 const employee = userDouble({
   id: EMPLOYEE_ID,

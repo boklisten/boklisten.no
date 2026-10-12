@@ -5,7 +5,7 @@ import CustomerItem from "#models/customer_item";
 import Order from "#models/order";
 import OrderItem from "#models/order_item";
 import User from "#models/user";
-import { BranchRelationshipService } from "#services/branch_relationship_service";
+import { BranchScope } from "#services/branch_scope";
 import type { SubjectForUpload } from "#services/branch_subjects_service";
 import { fetchSubjectsForUpload, normalizeSubjectName } from "#services/branch_subjects_service";
 import Branch from "#models/branch";
@@ -328,8 +328,7 @@ export function planSubjectChoices({
 }
 
 async function fetchScopeBranches(branchId: string) {
-  const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
-  const scopeIds = [branchId, ...descendantIds];
+  const scopeIds = await BranchScope.subtreeIds(branchId);
   const branches = await Branch.findMany(scopeIds);
   return { scopeIds, branches };
 }

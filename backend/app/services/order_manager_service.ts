@@ -7,6 +7,8 @@ import { isObjectIdHex } from "#models/helpers/object_id";
 import Order from "#models/order";
 import OrderItem from "#models/order_item";
 import User from "#models/user";
+import { BranchScope } from "#services/branch_scope";
+import type { Viewer } from "#services/branch_scope";
 import { OrderHistoryService } from "#services/order_history_service";
 import type {
   BringParcelType,
@@ -24,14 +26,17 @@ import { isOpenOrderItem } from "#shared/order/open-order-item";
 const MAILBOX_PRODUCT = "3584";
 
 /**
- * The open orders (`Order.whereOpen`) on the wanted branches. Written against `orders` so it
- * serves both the model query of the list and the joined queries of the exports.
+ * The open orders (`Order.whereOpen`) at the branches in scope (`scopeIds`, the caller's subtree
+ * from `BranchScope`), narrowed further by the branch filter, never widened. Written against
+ * `orders` so it serves both the model query of the list and the joined queries of the exports.
  */
 function whereOpenOrder<Query extends ChainableContract>(
   query: Query,
+  scopeIds: string[],
   filter: OrderManagerFilter,
 ): Query {
   Order.whereOpen(query);
+  void query.whereIn("orders.branch_id", scopeIds);
   if (filter.branchIds && filter.branchIds.length > 0) {
     void query.whereIn("orders.branch_id", filter.branchIds);
   }
@@ -107,11 +112,12 @@ function decodeCursor(cursor: string): Cursor {
  * `(created_at, id)`; one row more than the page, to know whether there is a next page.
  */
 async function findOpenOrdersPage(
+  scopeIds: string[],
   filter: OrderManagerFilter,
   limit: number,
   cursor?: Cursor,
 ): Promise<Order[]> {
-  const query = whereOpenOrder(Order.query(), filter)
+  const query = whereOpenOrder(Order.query(), scopeIds, filter)
     .withCount("payments")
     .withCount("delivery", (delivery) => {
       void delivery.where("method", "bring").as("bring_deliveries");
@@ -182,11 +188,13 @@ export function toBringReportRow(
 export const OrderManagerService = {
   /** One page of open orders, newest first; the cursor continues from the previous page's last row. */
   async listOpenOrders(
+    scopeIds: string[],
     filter: OrderManagerFilter,
     cursor?: string,
     limit = ORDER_MANAGER_PAGE_SIZE,
   ): Promise<OrderManagerPage> {
     const orders = await findOpenOrdersPage(
+      scopeIds,
       filter,
       limit,
       // An infinite query sends an empty cursor for the first page
@@ -200,9 +208,12 @@ export const OrderManagerService = {
     };
   },
 
-  /** The selected order as the order history shows it; null when there is no such order. */
-  async getOrder(orderId: string): Promise<OrderManagerDetail | null> {
-    const order = await Order.findOptional(orderId);
+  /**
+   * The selected order as the order history shows it; null when there is no such order, or when
+   * it is outside the caller's scope (`BranchScope.orderInScope`), which must look the same.
+   */
+  async getOrder(orderId: string, viewer: Viewer): Promise<OrderManagerDetail | null> {
+    const order = await BranchScope.findOrderInScope(viewer, orderId);
     if (!order) {
       return null;
     }
@@ -212,7 +223,10 @@ export const OrderManagerService = {
     };
   },
 
-  async ordersReport(filter: OrderManagerFilter): Promise<OrderManagerReportRow[]> {
+  async ordersReport(
+    scopeIds: string[],
+    filter: OrderManagerFilter,
+  ): Promise<OrderManagerReportRow[]> {
     const query = whereOpenOrder(
       OrderItem.whereOpen(
         db
@@ -228,6 +242,7 @@ export const OrderManagerService = {
               .andOnNotNull("memberships.parent_branch_id"),
           ),
       ),
+      scopeIds,
       filter,
     );
     if (filter.bringOnly) {
@@ -255,10 +270,11 @@ export const OrderManagerService = {
   },
 
   async bringReport(
+    scopeIds: string[],
     filter: OrderManagerFilter,
     parcelType: BringParcelType,
   ): Promise<BringReportRow[]> {
-    const query = whereOpenOrder(db.from("orders"), filter)
+    const query = whereOpenOrder(db.from("orders"), scopeIds, filter)
       .join("deliveries", "deliveries.order_id", "orders.id")
       .where("deliveries.method", "bring")
       .leftJoin("users as customers", "customers.id", "orders.customer_id");

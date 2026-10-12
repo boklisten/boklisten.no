@@ -5,6 +5,8 @@ import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
 import Order from "#models/order";
 import User from "#models/user";
+import { BranchScope } from "#services/branch_scope";
+import type { Viewer } from "#services/branch_scope";
 import { calculateStatus } from "#services/customer_item_actions_service";
 import type {
   BookGiver,
@@ -17,9 +19,12 @@ import { isOpenOrderItem } from "#shared/order/open-order-item";
 
 /**
  * Who is looking. Customers see only their own books, and never which employee served them; the
- * stand sees everything.
+ * stand sees the books in its scope (`BranchScope.customerItemInScope`, `orderInScope`): handed
+ * out or ordered in its subtree, or belonging to a customer it may see.
  */
-export type BookDetailsViewer = { role: "customer"; userId: string } | { role: "employee" };
+export type BookDetailsViewer =
+  | { role: "customer"; userId: string }
+  | { role: "employee"; scope: Viewer };
 
 const toIso = (time: DateTime): string => time.toISO({ suppressMilliseconds: true }) ?? "";
 const optionalIso = (time: DateTime | null) => (time ? toIso(time) : null);
@@ -151,7 +156,9 @@ const BookDetailsService = {
       .first();
     if (
       !customerItem ||
-      (viewer.role === "customer" && customerItem.customerId !== viewer.userId)
+      (viewer.role === "customer"
+        ? customerItem.customerId !== viewer.userId
+        : !(await BranchScope.customerItemInScope(viewer.scope, customerItem)))
     ) {
       return null;
     }
@@ -193,7 +200,12 @@ const BookDetailsService = {
     viewer: BookDetailsViewer,
   ): Promise<OrderedItemDetails | null> {
     const order = await Order.findOptional(orderId);
-    if (!order || (viewer.role === "customer" && order.customerId !== viewer.userId)) {
+    if (
+      !order ||
+      (viewer.role === "customer"
+        ? order.customerId !== viewer.userId
+        : !(await BranchScope.orderInScope(viewer.scope, order)))
+    ) {
       return null;
     }
     const orderItem = order.orderItems.find(

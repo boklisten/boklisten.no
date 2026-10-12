@@ -4,6 +4,7 @@ import CustomerItem from "#models/customer_item";
 import Item from "#models/item";
 import BadRequestException from "#exceptions/bad_request_exception";
 import type UniqueItem from "#models/unique_item";
+import { BranchScope } from "#services/branch_scope";
 import type { MonitoredEmployee } from "#services/employee_monitoring_service";
 import { isMonitored } from "#services/employee_monitoring_service";
 import { findUniqueItemByBlid } from "#services/item_lookup";
@@ -12,9 +13,10 @@ import { UniqueItemMonitoring } from "#services/unique_item_monitoring";
 const HELD_BOOK_MESSAGE = "Boka er utdelt og kan ikke slettes";
 const LENT_BOOK_MESSAGE = "Boka har vært utlånt og kan ikke slettes. Endre bok i stedet";
 
-async function uniqueItemOrFail(blid: string): Promise<UniqueItem> {
+/** The sticker, when it exists and is in the employee's scope (`BranchScope.blidInScope`); otherwise "no such book". */
+async function uniqueItemOrFail(blid: string, employee: MonitoredEmployee): Promise<UniqueItem> {
   const uniqueItem = await findUniqueItemByBlid(blid);
-  if (!uniqueItem) {
+  if (!uniqueItem || !(await BranchScope.blidInScope(employee, blid))) {
     throw new BadRequestException(`Fant ingen bok med unik ID ${blid}`);
   }
   return uniqueItem;
@@ -36,7 +38,7 @@ export const UniqueItemEditService = {
     { blid, itemId }: { blid: string; itemId: string },
     employee: MonitoredEmployee,
   ): Promise<void> {
-    const uniqueItem = await uniqueItemOrFail(blid);
+    const uniqueItem = await uniqueItemOrFail(blid, employee);
     if (uniqueItem.itemId === itemId) {
       throw new BadRequestException("Boka er allerede koblet til denne tittelen");
     }
@@ -73,7 +75,7 @@ export const UniqueItemEditService = {
    * it (their FK restricts the delete), so a book's history is never cut loose from its sticker.
    */
   async remove({ blid }: { blid: string }, employee: MonitoredEmployee): Promise<void> {
-    const uniqueItem = await uniqueItemOrFail(blid);
+    const uniqueItem = await uniqueItemOrFail(blid, employee);
     if (await findHeldCustomerItem(blid)) {
       throw new BadRequestException(HELD_BOOK_MESSAGE);
     }

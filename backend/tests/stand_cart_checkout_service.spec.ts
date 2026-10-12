@@ -35,10 +35,11 @@ import type {
 import { branchDto, createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem, customerItemDouble } from "#tests/customer_item_fixtures";
 import { createDelivery } from "#tests/delivery_fixtures";
+import { rejectionStatus } from "#tests/fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { asStub, mock, unchecked } from "#tests/test-doubles";
-import { createUser, userDouble } from "#tests/user_fixtures";
+import { createUser, monitoredEmployeeDouble, userDouble } from "#tests/user_fixtures";
 
 const NOW = new Date("2026-09-07T10:00:00.000Z");
 const SEMESTER_END = "2026-12-20";
@@ -48,7 +49,7 @@ const ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f31";
 const NEW_ORDER_ID = "5f7f7f7f7f7f7f7f7f7f7f39";
 const CUSTOMER_ITEM_ID = "5f7f7f7f7f7f7f7f7f7f7f41";
 const DELIVERY_ID = "5f7f7f7f7f7f7f7f7f7f7f51";
-const EMPLOYEE = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
+const EMPLOYEE = monitoredEmployeeDouble({ userId: "5f7f7f7f7f7f7f7f7f7f7f7e" });
 const BLID = "12345678";
 
 const item = mock<Item>({ id: "item1", title: "Sinus 1T", price: 500 });
@@ -270,6 +271,21 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     sandbox.stub(VippsPaymentService, "payment").value(vipps);
   });
   group.each.teardown(() => sandbox.restore());
+
+  test("refuses a branch outside the employee's scope before touching the cart", async ({
+    assert,
+  }) => {
+    const nydalen = await createBranch({ name: "Nydalen VGS" });
+    const atNydalen = { ...EMPLOYEE, employeeBranchId: nydalen.id };
+
+    assert.equal(
+      await rejectionStatus(StandCartCheckoutService.checkout(request(), atNydalen, NOW)),
+      400,
+    );
+
+    assert.lengthOf(await createdOrders(), 0);
+    assert.isFalse(resolve.called);
+  });
 
   test("re-resolves every line with the cart branch and the scanned blid", async ({ assert }) => {
     await checkout();

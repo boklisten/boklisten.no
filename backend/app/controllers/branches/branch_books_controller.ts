@@ -1,5 +1,6 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import { BranchScope } from "#services/branch_scope";
 import type { BranchBooksUpdate } from "#services/branch_books_service";
 import { BranchBooksService } from "#services/branch_books_service";
 import {
@@ -32,6 +33,9 @@ export default class BranchBooksController {
     if (!hasExactlyOneUpdate(update) || (!filter.deadline && !filter.customerItemIds)) {
       return ctx.response.badRequest();
     }
+    if (update.branchId) {
+      await BranchScope.assertSelectableTarget(ctx.auth.getUserOrFail(), update.branchId);
+    }
     return BranchBooksService.bulkUpdateActiveBooks({
       branchId: ctx.request.param("branchId"),
       filter,
@@ -56,6 +60,9 @@ export default class BranchBooksController {
     const { filter, update } = await ctx.request.validateUsing(orderedBooksBulkUpdateValidator);
     if (!hasExactlyOneUpdate(update) || (!filter.deadline && !filter.orderItemIds)) {
       return ctx.response.badRequest();
+    }
+    if (update.branchId) {
+      await BranchScope.assertSelectableTarget(ctx.auth.getUserOrFail(), update.branchId);
     }
     return BranchBooksService.bulkUpdateOrderedBooks({
       branchId: ctx.request.param("branchId"),

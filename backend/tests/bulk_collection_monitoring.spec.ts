@@ -7,8 +7,9 @@ import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
 import type CustomerItem from "#models/customer_item";
 import { customerItemDouble } from "#tests/customer_item_fixtures";
+import { monitoredEmployeeDouble } from "#tests/user_fixtures";
 
-const EMPLOYEE = { userId: "5f7f7f7f7f7f7f7f7f7f7f7e", permission: "employee" as const };
+const EMPLOYEE = monitoredEmployeeDouble({ userId: "5f7f7f7f7f7f7f7f7f7f7f7e" });
 const IDA = "ida-id";
 const PETRA = "petra-id";
 const NOW = new Date("2026-09-06T12:00:00.000Z");

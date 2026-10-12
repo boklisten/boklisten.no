@@ -1,7 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
+import { customerIdInScope } from "#controllers/helpers/scope";
 import BadRequestException from "#exceptions/bad_request_exception";
-import Branch from "#models/branch";
 import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
 import { LoginService } from "#services/login_service";
@@ -13,6 +13,7 @@ import { SMS_CODE_MESSAGES, SmsCodeService } from "#services/sms_code_service";
 import {
   assertLoginDetailsEditable,
   assertMembershipAllowed,
+  assertOwnMembershipAllowed,
   userFieldsFrom,
   UserService,
 } from "#services/user_service";
@@ -31,12 +32,13 @@ import {
 } from "#validators/users";
 
 /**
- * The ids of a node and of the branches below it; 404 on an unknown node. The handlers validate
- * the `branchId` query themselves so the generated client sees the validator and types it.
+ * The ids of a node and of the branches below it, once the node is one the caller may work on
+ * (404 otherwise, unknown nodes included). The handlers validate the `branchId` query themselves
+ * so the generated client sees the validator and types it.
  */
-async function subtreeIdsOf(branchId: string): Promise<string[]> {
-  const branch = await Branch.findOrFail(branchId);
-  return BranchScope.subtreeIds(branch.id);
+async function subtreeIdsOf(ctx: HttpContext, branchId: string): Promise<string[]> {
+  await BranchScope.assertSelectable(ctx.auth.getUserOrFail(), branchId);
+  return BranchScope.subtreeIds(branchId);
 }
 
 export default class UsersController {
@@ -47,11 +49,7 @@ export default class UsersController {
       meta: { userId: user.id },
     });
     const fields = userFieldsFrom(details);
-    await assertMembershipAllowed(
-      user.permission,
-      user.branchMembershipId,
-      fields.branchMembershipId,
-    );
+    await assertOwnMembershipAllowed(user, fields.branchMembershipId);
     await UserService.updateOwnDetails(user, { ...fields, email });
   }
 
@@ -93,19 +91,27 @@ export default class UsersController {
     return {};
   }
 
+  /** The customers in the caller's scope matching the text. */
   async search(ctx: HttpContext) {
     const { q } = await ctx.request.validateUsing(userSearchValidator);
-    return UserService.search(q);
+    return UserService.search(q, await BranchScope.homeSubtreeIds(ctx.auth.getUserOrFail()));
   }
 
-  /** The user with both task flags brought up to date, or null when there is no such user. */
+  /**
+   * The user with both task flags brought up to date, or null when there is no such user; a
+   * customer outside the caller's scope is "no such user" too.
+   */
   async show(ctx: HttpContext) {
-    const user = await User.find(ctx.request.param("userId"));
+    const userId = String(ctx.request.param("userId"));
+    if (!(await BranchScope.customerInScope(ctx.auth.getUserOrFail(), userId))) {
+      return null;
+    }
+    const user = await User.find(userId);
     return user === null ? null : UserService.withTasksReconciled(user);
   }
 
   async update(ctx: HttpContext) {
-    const userId = ctx.request.param("userId");
+    const userId = await customerIdInScope(ctx);
     const { email, emailConfirmed, ...details } = await ctx.request.validateUsing(
       updateUserValidator,
       { meta: { userId } },
@@ -114,11 +120,7 @@ export default class UsersController {
     const actor = ctx.auth.getUserOrFail();
     assertLoginDetailsEditable(actor.permission, user, { phone: details.phone, email });
     const fields = userFieldsFrom(details);
-    await assertMembershipAllowed(
-      actor.permission,
-      user.branchMembershipId,
-      fields.branchMembershipId,
-    );
+    await assertMembershipAllowed(actor, user.branchMembershipId, fields.branchMembershipId);
     await UserService.updateAsEmployee(user, {
       ...fields,
       email,
@@ -128,7 +130,7 @@ export default class UsersController {
 
   /** For when the customer has verbally confirmed their address to an employee at the stand. */
   async confirmEmail(ctx: HttpContext) {
-    const user = await User.findOrFail(ctx.request.param("userId"));
+    const user = await User.findOrFail(await customerIdInScope(ctx));
     user.emailConfirmed = true;
     await user.save();
     return { emailConfirmed: true };
@@ -137,18 +139,19 @@ export default class UsersController {
   /** Metrics over the members of a node and the branches below it. */
   async metrics(ctx: HttpContext) {
     const { branchId } = await ctx.request.validateUsing(branchScopedValidator);
-    return UserMetricsService.getMetrics(await subtreeIdsOf(branchId));
+    return UserMetricsService.getMetrics(await subtreeIdsOf(ctx, branchId));
   }
 
   /** Likely duplicate accounts among the members of a node and the branches below it. */
   async duplicates(ctx: HttpContext) {
     const { branchId } = await ctx.request.validateUsing(branchScopedValidator);
-    return UserDuplicatesService.findDuplicateCustomers(await subtreeIdsOf(branchId));
+    return UserDuplicatesService.findDuplicateCustomers(await subtreeIdsOf(ctx, branchId));
   }
 
   async mergePreview(ctx: HttpContext) {
-    const fromUserId = ctx.request.param("fromUserId");
-    const toUserId = ctx.request.param("toUserId");
+    const fromUserId = String(ctx.request.param("fromUserId"));
+    const toUserId = String(ctx.request.param("toUserId"));
+    await this.assertBothInScope(ctx, fromUserId, toUserId);
     const summaries = await UserDuplicatesService.summarizeUsers([fromUserId, toUserId]);
     const from = summaries.find((summary) => summary.userId === fromUserId);
     const to = summaries.find((summary) => summary.userId === toUserId);
@@ -160,8 +163,17 @@ export default class UsersController {
 
   async merge(ctx: HttpContext) {
     const { fromUserId, toUserId } = await ctx.request.validateUsing(mergeUsersValidator);
+    await this.assertBothInScope(ctx, fromUserId, toUserId);
     await UserManagementService.mergeUsers(fromUserId, toUserId);
     return { merged: true };
+  }
+
+  /** A merge touches two customers; both must be in the caller's scope, or the pair is unknown. */
+  private async assertBothInScope(ctx: HttpContext, ...userIds: string[]): Promise<void> {
+    const viewer = ctx.auth.getUserOrFail();
+    for (const userId of userIds) {
+      await BranchScope.assertCustomerInScope(viewer, userId);
+    }
   }
 
   async destroy(ctx: HttpContext) {
@@ -172,16 +184,15 @@ export default class UsersController {
   /** The staff homed above, on and below a node: everyone who can see some or all of it. */
   async employees(ctx: HttpContext) {
     const { branchId } = await ctx.request.validateUsing(branchScopedValidator);
-    const branch = await Branch.findOrFail(branchId);
-    return UserManagementService.getEmployees(branch.id);
+    await BranchScope.assertSelectable(ctx.auth.getUserOrFail(), branchId);
+    return UserManagementService.getEmployees(branchId);
   }
 
   async setPermission(ctx: HttpContext) {
     const { userIds, permission, employeeBranchId } =
       await ctx.request.validateUsing(setPermissionValidator);
-    const actor = ctx.auth.getUserOrFail();
     return UserManagementService.setPermission(
-      actor.permission,
+      ctx.auth.getUserOrFail(),
       userIds,
       permission,
       employeeBranchId,

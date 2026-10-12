@@ -3,8 +3,10 @@ import type { HttpContext } from "@adonisjs/core/http";
 import Branch from "#models/branch";
 import type User from "#models/user";
 import { inheritBelow } from "#services/branch_inheritance_service";
+import { BranchScope } from "#services/branch_scope";
 import { createBranch, updateBranch } from "#services/branch_service";
 import { LoginService } from "#services/login_service";
+import type { BranchSliceNode } from "#shared/branch";
 import { canSeeBranch } from "#shared/branch-visibility";
 import { hasPermissionLevel } from "#shared/user-permission";
 import {
@@ -25,18 +27,24 @@ export default class BranchesController {
     return Branch.openingHoursTree();
   }
 
-  /** The branches the caller may see, plus the one named by `include` (see the validator). */
-  async index(ctx: HttpContext) {
+  /**
+   * The caller's slice of the tree (`BranchScope.slice`), plus the one named by `include` (see
+   * the validator), which is never selectable unless it was in the slice already.
+   */
+  async index(ctx: HttpContext): Promise<BranchSliceNode[]> {
     const { include } = await ctx.request.validateUsing(branchIndexValidator);
     const viewer = await optionalViewer(ctx);
-    const branches = await Branch.visibleByName(viewer?.permission ?? null);
-    if (include !== undefined && !branches.some((branch) => branch.id === include)) {
+    const rows: BranchSliceNode[] = [];
+    for (const { branch, selectable } of await BranchScope.slice(viewer)) {
+      rows.push({ ...branch.toDto(), selectable });
+    }
+    if (include !== undefined && !rows.some((row) => row.id === include)) {
       const included = await Branch.find(include);
       if (included !== null && mayBeShown(viewer, included)) {
-        branches.push(included);
+        rows.push({ ...included.toDto(), selectable: false });
       }
     }
-    return branches.map((branch) => branch.toDto());
+    return rows;
   }
 
   async show(ctx: HttpContext) {
@@ -49,6 +57,7 @@ export default class BranchesController {
 
   async store(ctx: HttpContext) {
     const input = await ctx.request.validateUsing(branchCreateValidator);
+    await BranchScope.assertSelectableTarget(ctx.auth.getUserOrFail(), input.parentBranchId);
     return (await createBranch(input)).toDto();
   }
 

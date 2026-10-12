@@ -3,6 +3,7 @@ import db from "@adonisjs/lucid/services/db";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 
+import User from "#models/user";
 import BookDetailsService from "#services/book_details_service";
 import { createBranch } from "#tests/branch_fixtures";
 import { createCustomerItem } from "#tests/customer_item_fixtures";
@@ -19,6 +20,11 @@ const EMPLOYEE = fixtureId("c4");
 const ITEM = fixtureId("a1");
 const BRANCH = fixtureId("b1");
 const HANDED_OUT = DateTime.fromISO("2026-08-20T10:15:30");
+/** The stand at the book's own branch. */
+const STAND = {
+  role: "employee" as const,
+  scope: { permission: "employee" as const, employeeBranchId: BRANCH },
+};
 
 async function handedOutBook() {
   const customerItem = await createCustomerItem({
@@ -66,11 +72,45 @@ test.group("BookDetailsService.forCustomerItem", (group) => {
     );
   });
 
+  test("hides a book handed out outside the stand's subtree, like an unknown one", async ({
+    assert,
+  }) => {
+    const { customerItem, order } = await handedOutBook();
+    // A pupil of the book's school; a customer with no school would be in every stand's scope.
+    await (await User.findOrFail(CUSTOMER)).merge({ branchMembershipId: BRANCH }).save();
+    const elsewhere = {
+      role: "employee" as const,
+      scope: { permission: "employee" as const, employeeBranchId: fixtureId("b2") },
+    };
+
+    assert.isNull(await BookDetailsService.forCustomerItem(customerItem.id, elsewhere));
+    assert.isNull(await BookDetailsService.forOrderedItem(order.id, ITEM, elsewhere));
+  });
+
+  test("shows the stand a book of a customer in its scope though handed out elsewhere", async ({
+    assert,
+  }) => {
+    const { customerItem } = await handedOutBook();
+    const home = await createBranch({ id: fixtureId("b2"), name: "Nydalen VGS" });
+    await (await User.findOrFail(CUSTOMER)).merge({ branchMembershipId: home.id }).save();
+    const stand = {
+      role: "employee" as const,
+      scope: { permission: "employee" as const, employeeBranchId: home.id },
+    };
+
+    const stillOrdered = await createOrder({
+      branchId: BRANCH,
+      customerId: CUSTOMER,
+      orderItems: [{ itemId: ITEM, handout: false, periodTo: DateTime.fromISO("2026-12-20") }],
+    });
+
+    assert.isNotNull(await BookDetailsService.forCustomerItem(customerItem.id, stand));
+    assert.isNotNull(await BookDetailsService.forOrderedItem(stillOrdered.id, ITEM, stand));
+  });
+
   test("names the employee to the stand but not to the customer", async ({ assert }) => {
     const { customerItem } = await handedOutBook();
-    const employeeView = await BookDetailsService.forCustomerItem(customerItem.id, {
-      role: "employee",
-    });
+    const employeeView = await BookDetailsService.forCustomerItem(customerItem.id, STAND);
     const customerView = await BookDetailsService.forCustomerItem(customerItem.id, {
       role: "customer",
       userId: CUSTOMER,
@@ -118,7 +158,7 @@ test.group("BookDetailsService.forCustomerItem", (group) => {
         cancel: true,
         cancelled_at: HANDED_OUT.plus({ days: 1 }).toJSDate(),
       });
-    const details = await BookDetailsService.forCustomerItem(customerItem.id, { role: "employee" });
+    const details = await BookDetailsService.forCustomerItem(customerItem.id, STAND);
     assert.equal(details?.ended?.kind, "cancel");
     assert.deepEqual(details?.status, { type: "cancel", text: "Kansellert" });
   });
@@ -138,9 +178,7 @@ test.group("BookDetailsService.forCustomerItem", (group) => {
       status: "credit-note",
       lines: [{ customerItemId: customerItem.id }],
     });
-    const details = await BookDetailsService.forCustomerItem(customerItem.id, {
-      role: "employee",
-    });
+    const details = await BookDetailsService.forCustomerItem(customerItem.id, STAND);
     assert.deepEqual(
       details?.invoices.map(({ status, amount }) => ({ status, amount })),
       [{ status: "paid", amount: 400 }],
@@ -183,6 +221,6 @@ test.group("BookDetailsService.forOrderedItem", (group) => {
       customerId: CUSTOMER,
       orderItems: [{ itemId: ITEM, handout: true }],
     });
-    assert.isNull(await BookDetailsService.forOrderedItem(order.id, ITEM, { role: "employee" }));
+    assert.isNull(await BookDetailsService.forOrderedItem(order.id, ITEM, STAND));
   });
 });

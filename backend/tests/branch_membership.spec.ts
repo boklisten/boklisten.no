@@ -6,10 +6,21 @@ import { createSandbox } from "sinon";
 import User from "#models/user";
 import { BranchMembershipService } from "#services/branch_membership_service";
 import DispatchService from "#services/dispatch_service";
-import { assertMembershipAllowed, UserService } from "#services/user_service";
-import { createBranch, rootBranch } from "#tests/branch_fixtures";
+import {
+  assertMembershipAllowed,
+  assertOwnMembershipAllowed,
+  UserService,
+} from "#services/user_service";
+import { rejectionStatus } from "#tests/fixtures";
+import { createBranch, createMiniatureTree, rootBranch } from "#tests/branch_fixtures";
 import { createOrder } from "#tests/order_fixtures";
-import { createUser } from "#tests/user_fixtures";
+import { createUser, userDouble } from "#tests/user_fixtures";
+import type { UserPermission } from "#shared/user-permission";
+
+/** Someone of the level, homed at the root like every customer and admin. */
+function homedAtRoot(permission: UserPermission) {
+  return userDouble({ permission });
+}
 
 test.group("assertMembershipAllowed", (group) => {
   let sandbox: sinon.SinonSandbox;
@@ -46,9 +57,9 @@ test.group("assertMembershipAllowed", (group) => {
     const ullern = await createBranch({ visibleToCustomers: true });
     const wang = await createBranch({ visibleToCustomers: false });
 
-    await assertMembershipAllowed("customer", null, ullern.id);
+    await assertMembershipAllowed(homedAtRoot("customer"), null, ullern.id);
     await assert.rejects(
-      () => assertMembershipAllowed("customer", null, wang.id),
+      () => assertMembershipAllowed(homedAtRoot("customer"), null, wang.id),
       /Du kan ikke velge denne skolen/,
     );
   });
@@ -56,27 +67,81 @@ test.group("assertMembershipAllowed", (group) => {
   test("keeping a hidden membership is allowed", async ({ assert }) => {
     const wang = await createBranch({ visibleToCustomers: false });
 
-    await assert.doesNotReject(() => assertMembershipAllowed("customer", wang.id, wang.id));
+    await assert.doesNotReject(() =>
+      assertMembershipAllowed(homedAtRoot("customer"), wang.id, wang.id),
+    );
   });
 
   test("the root is always an allowed target, though hidden from customers", async ({ assert }) => {
     const root = await rootBranch();
     const wang = await createBranch({ visibleToCustomers: false });
 
-    await assert.doesNotReject(() => assertMembershipAllowed("customer", wang.id, root.id));
-    await assert.doesNotReject(() => assertMembershipAllowed("employee", null, root.id));
+    await assert.doesNotReject(() =>
+      assertMembershipAllowed(homedAtRoot("customer"), wang.id, root.id),
+    );
+    await assert.doesNotReject(() =>
+      assertMembershipAllowed(homedAtRoot("employee"), null, root.id),
+    );
   });
 
   test("staff may pick a branch customers do not see", async ({ assert }) => {
     const staffOnly = await createBranch({ visibleToCustomers: false });
 
-    await assert.doesNotReject(() => assertMembershipAllowed("employee", null, staffOnly.id));
-    await assert.doesNotReject(() => assertMembershipAllowed("admin", null, staffOnly.id));
+    await assert.doesNotReject(() =>
+      assertMembershipAllowed(homedAtRoot("employee"), null, staffOnly.id),
+    );
+    await assert.doesNotReject(() =>
+      assertMembershipAllowed(homedAtRoot("admin"), null, staffOnly.id),
+    );
+  });
+
+  test("a guest may pick a public branch", async ({ assert }) => {
+    const ullern = await createBranch({ visibleToCustomers: true });
+
+    await assert.doesNotReject(() => assertMembershipAllowed(null, null, ullern.id));
+  });
+
+  test("staff homed at a school cannot move anyone to a sibling school, nor to the root", async ({
+    assert,
+  }) => {
+    const root = await rootBranch();
+    const ullern = await createBranch({ name: "Ullern" });
+    const nydalen = await createBranch({ name: "Nydalen" });
+    const manager = userDouble({ permission: "manager", employeeBranchId: ullern.id });
+
+    for (const target of [nydalen.id, root.id]) {
+      assert.equal(await rejectionStatus(assertMembershipAllowed(manager, ullern.id, target)), 400);
+    }
+  });
+
+  test("staff homed at a school may pull a pupil from anywhere into their subtree", async ({
+    assert,
+  }) => {
+    const ullern = await createBranch({ name: "Ullern" });
+    const ullernVg1 = await createBranch({ parentBranchId: ullern.id });
+    const nydalen = await createBranch({ name: "Nydalen" });
+    const manager = userDouble({ permission: "manager", employeeBranchId: ullern.id });
+
+    await assert.doesNotReject(() => assertMembershipAllowed(manager, nydalen.id, ullernVg1.id));
+  });
+
+  test("staff may set their own membership to the root or a public school outside their subtree", async ({
+    assert,
+  }) => {
+    const { root, ullern, nydalen } = await createMiniatureTree();
+    const manager = await createUser({
+      permission: "manager",
+      employeeBranchId: ullern.id,
+      branchMembershipId: ullern.id,
+    });
+
+    await assert.doesNotReject(() => assertOwnMembershipAllowed(manager, root.id));
+    await assert.doesNotReject(() => assertOwnMembershipAllowed(manager, nydalen.id));
   });
 
   test("an unknown branch is refused", async ({ assert }) => {
     await assert.rejects(
-      () => assertMembershipAllowed("admin", null, "5d765db5fc8c47001c408dff"),
+      () => assertMembershipAllowed(homedAtRoot("admin"), null, "5d765db5fc8c47001c408dff"),
       /Du kan ikke velge denne skolen/,
     );
   });

@@ -12,11 +12,11 @@ import type { Order as OrderDto, OrderItem as OrderItemDto } from "#shared/order
 import type { Payment } from "#shared/payment/payment";
 import { createBranch } from "#tests/branch_fixtures";
 import { deliveryDto } from "#tests/delivery_fixtures";
-import { fixtureId } from "#tests/fixtures";
+import { fixtureId, rejectionStatus } from "#tests/fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { createOrder } from "#tests/order_fixtures";
 import { createPayment, paymentDto } from "#tests/payment_fixtures";
-import { createUser } from "#tests/user_fixtures";
+import { createUser, monitoredEmployeeDouble } from "#tests/user_fixtures";
 
 const IDA = "ida-id";
 const PETRA = "petra-id";
@@ -501,7 +501,7 @@ async function seedOrderWorld() {
 test.group("OrderHistoryService.deleteOrder()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
-  const employee = { userId: EMPLOYEE, permission: "employee" as const };
+  const employee = monitoredEmployeeDouble({ userId: EMPLOYEE });
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
@@ -546,7 +546,7 @@ test.group("OrderHistoryService.deleteOrder()", (group) => {
 test.group("OrderHistoryService.updateBranch()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
-  const employee = { userId: EMPLOYEE, permission: "employee" as const };
+  const employee = monitoredEmployeeDouble({ userId: EMPLOYEE });
 
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
@@ -578,6 +578,27 @@ test.group("OrderHistoryService.updateBranch()", (group) => {
         { label: "Ny filial", value: "Persbråten VGS" },
       ],
     });
+  });
+
+  test("refuses a branch outside the employee's scope with a 400, and reports nothing", async ({
+    assert,
+  }) => {
+    const { branch, customer, sinus } = await seedOrderWorld();
+    const nydalen = await createBranch({ name: "Nydalen VGS" });
+    const order = await createOrder({
+      branchId: branch.id,
+      customerId: customer.id,
+      orderItems: [{ itemId: sinus.id }],
+    });
+    const atNydalen = { ...employee, employeeBranchId: nydalen.id };
+
+    assert.equal(
+      await rejectionStatus(OrderHistoryService.updateBranch(order.id, branch.id, atNydalen)),
+      400,
+    );
+
+    assert.equal((await Order.getOrFail(order.id)).branchId, branch.id);
+    assert.isFalse(report.called);
   });
 
   test("refuses an unknown branch or order, and reports nothing", async ({ assert }) => {
@@ -620,7 +641,7 @@ async function orderWith(line: Partial<OrderItemDto> = {}) {
 test.group("OrderHistoryService.updateItemDeadline()", (group) => {
   let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
-  const employee = { userId: EMPLOYEE, permission: "employee" as const };
+  const employee = monitoredEmployeeDouble({ userId: EMPLOYEE });
   const NEW_DEADLINE = "2027-12-01";
 
   group.each.setup(() => testUtils.db().truncate());

@@ -2,6 +2,7 @@ import db from "@adonisjs/lucid/services/db";
 import type { DateTime } from "luxon";
 
 import Branch from "#models/branch";
+import { BranchScope } from "#services/branch_scope";
 import CustomerItem from "#models/customer_item";
 import type MatchRound from "#models/match_round";
 import User from "#models/user";
@@ -34,10 +35,6 @@ export interface RoundScope {
   standCustomerIds: Set<string>;
 }
 
-async function subtreeIds(branchId: string): Promise<string[]> {
-  return [branchId, ...(await Branch.descendantIds(branchId))];
-}
-
 /**
  * Refuses stand rules that point outside the round: a stand branch must be a descendant of the
  * round's branch (the branch itself would send every book to the stand), and a stand student
@@ -66,8 +63,8 @@ export async function resolveRoundScope(round: MatchRound): Promise<RoundScope> 
     loader.load("standBranches").load("standCustomers");
   });
   const [branchIds, standSubtrees] = await Promise.all([
-    subtreeIds(round.branchId),
-    Promise.all(round.standBranches.map((branch) => subtreeIds(branch.id))),
+    BranchScope.subtreeIds(round.branchId),
+    Promise.all(round.standBranches.map((branch) => BranchScope.subtreeIds(branch.id))),
   ]);
   return {
     branchIds,

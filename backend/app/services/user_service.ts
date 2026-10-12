@@ -6,9 +6,10 @@ import Branch from "#models/branch";
 import EmailVerification from "#models/email_verification";
 import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
+import { BranchScope } from "#services/branch_scope";
+import type { Viewer } from "#services/branch_scope";
 import { reconcileSignatureTask } from "#services/signature_helper";
 import { invalidUserFields } from "#services/user_fields";
-import { canSeeBranch } from "#shared/branch-visibility";
 import type { User as UserDto } from "#shared/user";
 import type { UserPermission } from "#shared/user-permission";
 import type { VippsUser } from "#types/user";
@@ -62,26 +63,37 @@ export function userFieldsFrom<Fields extends Infer<typeof ownUserFieldsSchema>>
 }
 
 /**
- * A user may be moved only into a branch the person moving them may see. Keeping the current
- * membership is always allowed, even when the current branch is hidden from them, and so is the
- * root: it is "no school", the one option every customer has. `currentBranchId` is null for a
- * user who does not exist yet.
+ * A user may be moved only into a branch the person moving them may work on: one in their slice
+ * of the tree (`BranchScope`), so a customer or guest picks among the public branches and the
+ * root ("no school"), and staff among the nodes at or below their home node. Keeping the current
+ * membership is always allowed, even when the current branch is outside that slice; only the
+ * target is checked. `currentBranchId` is null for a user who does not exist yet, `viewer` for
+ * a guest signing up.
  */
 export async function assertMembershipAllowed(
-  actorPermission: UserPermission,
+  viewer: Viewer | null,
   currentBranchId: string | null,
   nextBranchId: string,
 ): Promise<void> {
   if (nextBranchId === currentBranchId) {
     return;
   }
-  const branch = await Branch.find(nextBranchId);
-  if (
-    branch === null ||
-    (!branch.isRoot && !canSeeBranch(actorPermission, branch.visibleToCustomers))
-  ) {
+  if (!(await BranchScope.isSelectable(viewer, nextBranchId))) {
     throw new BadRequestException("Du kan ikke velge denne skolen");
   }
+}
+
+/**
+ * A user's own membership (settings, the confirm-details task) is judged as if they were homed at
+ * the root: a customer picks among the public branches and the root, and staff among every
+ * branch, whatever subtree they work in. Staff are customers too.
+ */
+export async function assertOwnMembershipAllowed(user: User, nextBranchId: string): Promise<void> {
+  await assertMembershipAllowed(
+    { permission: user.permission, employeeBranchId: (await Branch.root()).id },
+    user.branchMembershipId,
+    nextBranchId,
+  );
 }
 
 /** Phone and email log in (SMS, Vipps), so only admins may change them on staff accounts. */
@@ -112,8 +124,9 @@ export const UserService = {
     return user.toDto();
   },
 
-  async search(text: string): Promise<UserDto[]> {
-    const users = await User.search(text);
+  /** The customers matching `text` among those in scope of the subtree (`BranchScope`). */
+  async search(text: string, subtreeIds: string[]): Promise<UserDto[]> {
+    const users = await User.search(text, BranchScope.customersInScope(subtreeIds));
     return users.map((user) => user.toDto());
   },
 
@@ -198,7 +211,7 @@ export const UserService = {
     phone: string,
   ): Promise<User> {
     if (branchMembershipId !== undefined) {
-      await assertMembershipAllowed("customer", null, branchMembershipId);
+      await assertMembershipAllowed(null, null, branchMembershipId);
     }
     const root = await Branch.root();
     const user = await User.create({

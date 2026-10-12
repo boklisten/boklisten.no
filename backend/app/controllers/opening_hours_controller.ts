@@ -1,6 +1,7 @@
 import type { HttpContext } from "@adonisjs/core/http";
 
 import { assertNotRoot } from "#services/branch_service";
+import { BranchScope } from "#services/branch_scope";
 import { openingHoursValidator } from "#validators/opening_hours";
 import OpeningHour from "#models/opening_hour";
 import { DateTime } from "luxon";
@@ -20,6 +21,7 @@ export default class OpeningHoursController {
   async store(ctx: HttpContext) {
     const { branchId, opensAt, closesAt } = await ctx.request.validateUsing(openingHoursValidator);
     await assertNotRoot(branchId);
+    await BranchScope.assertSelectableTarget(ctx.auth.getUserOrFail(), branchId);
     await OpeningHour.create({
       branchId,
       opensAt: DateTime.fromJSDate(opensAt),
@@ -28,6 +30,7 @@ export default class OpeningHoursController {
   }
   async destroy(ctx: HttpContext) {
     const openingHour = await OpeningHour.findOrFail(ctx.request.param("id"));
+    await BranchScope.assertSelectable(ctx.auth.getUserOrFail(), openingHour.branchId);
     await openingHour.delete();
   }
 }

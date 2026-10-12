@@ -14,6 +14,7 @@ import {
 } from "#validators/blid_search";
 import { uniqueItemsValidator } from "#validators/unique_item";
 import { monitoredEmployee } from "#services/employee_monitoring_service";
+import { BranchScope } from "#services/branch_scope";
 
 function validBlidParameter(ctx: HttpContext): string {
   const blid = ctx.request.param("blid");
@@ -25,14 +26,18 @@ function validBlidParameter(ctx: HttpContext): string {
 
 /** Unique IDs (blids): the Boksøk lookups and edits, and the Merking registration flow. */
 export default class BlidsController {
-  /** Books whose blid contains the typed text, for the admin search field. */
+  /** Books whose blid contains the typed text, for the admin search field; held elsewhere means left out. */
   async index(ctx: HttpContext) {
     const { q } = await ctx.request.validateUsing(blidSearchQueryValidator);
-    return BlidSearchService.search(q);
+    return BlidSearchService.search(q, await BranchScope.homeSubtreeIds(ctx.auth.getUserOrFail()));
   }
 
+  /** A blid held outside the caller's scope looks exactly like one Boklisten never registered. */
   async show(ctx: HttpContext) {
-    return BlidSearchService.lookup(ctx.request.param("blid"));
+    const blid = String(ctx.request.param("blid"));
+    return (await BranchScope.blidInScope(ctx.auth.getUserOrFail(), blid))
+      ? BlidSearchService.lookup(blid)
+      : BlidSearchService.unknown(blid);
   }
 
   async updateActiveItem(ctx: HttpContext) {
@@ -68,9 +73,12 @@ export default class BlidsController {
     return ctx.response.noContent();
   }
 
-  /** Which book a blid is already linked to, or null. */
+  /** Which book a blid is already linked to, or null; a blid held outside the caller's scope is null too. */
   async showLink(ctx: HttpContext): Promise<LinkedBook | null> {
-    return BlidRegistrationService.lookupLink(validBlidParameter(ctx));
+    const blid = validBlidParameter(ctx);
+    return (await BranchScope.blidInScope(ctx.auth.getUserOrFail(), blid))
+      ? BlidRegistrationService.lookupLink(blid)
+      : null;
   }
 
   /** The Merking page: link a batch of unique IDs to a book by ISBN. */

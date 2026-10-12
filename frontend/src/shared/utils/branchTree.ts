@@ -34,7 +34,7 @@ export function isRootBranch(branch: Pick<Branch, "parentBranchId">): boolean {
 }
 
 /** The root among the branches, when the list holds it. */
-export function rootOf(branches: Branch[]): Branch | undefined {
+export function rootOf<T extends Branch>(branches: T[]): T | undefined {
   return branches.find((branch) => isRootBranch(branch));
 }
 
@@ -43,14 +43,14 @@ export function rootOf(branches: Branch[]): Branch | undefined {
  * picker for where something happens (a stand, an order's branch, a reminder) leaves it out, while
  * a picker for what to look at keeps it.
  */
-export function withoutRoot(branches: Branch[]): Branch[] {
+export function withoutRoot<T extends Branch>(branches: T[]): T[] {
   return branches.filter((branch) => !isRootBranch(branch));
 }
 
 /** Every branch below `rootId`, the root itself left out. */
-export function descendantsOf(branches: Branch[], rootId: string): Branch[] {
+export function descendantsOf<T extends Branch>(branches: T[], rootId: string): T[] {
   const childrenOf = Map.groupBy(branches, (branch) => branch.parentBranchId);
-  const below: Branch[] = [];
+  const below: T[] = [];
   const queue = [...(childrenOf.get(rootId) ?? [])];
   for (let branch = queue.shift(); branch; branch = queue.shift()) {
     below.push(branch);
@@ -60,12 +60,12 @@ export function descendantsOf(branches: Branch[], rootId: string): Branch[] {
 }
 
 /** The branches that pass `keep`, plus every ancestor of theirs, so the tree keeps its grouping. */
-export function withAncestors(branches: Branch[], keep: (branch: Branch) => boolean): Branch[] {
+export function withAncestors<T extends Branch>(branches: T[], keep: (branch: T) => boolean): T[] {
   const byId = new Map(branches.map((branch) => [branch.id, branch]));
   const kept = new Set<string>();
   for (const branch of branches.filter(keep)) {
     for (
-      let current: Branch | undefined = branch;
+      let current: T | undefined = branch;
       current && !kept.has(current.id);
       current = current.parentBranchId === null ? undefined : byId.get(current.parentBranchId)
     ) {

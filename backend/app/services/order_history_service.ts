@@ -2,6 +2,7 @@ import { DateTime } from "luxon";
 
 import Branch from "#models/branch";
 import { assertNotRoot } from "#services/branch_service";
+import { BranchScope } from "#services/branch_scope";
 import BadRequestException from "#exceptions/bad_request_exception";
 import BookHandover from "#models/book_handover";
 import Delivery from "#models/delivery";
@@ -380,6 +381,15 @@ function formatDeadline(deadline: DateTime): string {
   return deadline.toFormat("dd.MM.yyyy");
 }
 
+/** The order an employee may change: one in their scope; any other id "does not exist". */
+async function orderInScope(orderId: string, employee: MonitoredEmployee): Promise<Order> {
+  const order = await BranchScope.findOrderInScope(employee, orderId);
+  if (!order) {
+    throw new BadRequestException("Ordren finnes ikke");
+  }
+  return order;
+}
+
 export const OrderHistoryService = {
   /** Every placed order of the customer, newest first. */
   async getForCustomer(
@@ -435,10 +445,8 @@ export const OrderHistoryService = {
       throw new BadRequestException("Filialen finnes ikke");
     }
     await assertNotRoot(branch.id);
-    const order = await Order.findOptional(orderId);
-    if (!order) {
-      throw new BadRequestException("Ordren finnes ikke");
-    }
+    await BranchScope.assertSelectableTarget(employee, branch.id);
+    const order = await orderInScope(orderId, employee);
     const previousBranchId = order.branchId;
     await order.merge({ branchId }).save();
     const previousBranch = await Branch.find(previousBranchId);
@@ -472,10 +480,7 @@ export const OrderHistoryService = {
     },
     employee: MonitoredEmployee,
   ): Promise<void> {
-    const order = await Order.findOptional(orderId);
-    if (!order) {
-      throw new BadRequestException("Ordren finnes ikke");
-    }
+    const order = await orderInScope(orderId, employee);
     const orderItem = order.orderItems.find(
       (candidate) =>
         candidate.itemId === itemId &&
@@ -515,10 +520,7 @@ export const OrderHistoryService = {
    * admin is reported to the administrator.
    */
   async deleteOrder(orderId: string, employee: MonitoredEmployee): Promise<void> {
-    const order = await Order.findOptional(orderId);
-    if (!order) {
-      throw new BadRequestException("Ordren finnes ikke");
-    }
+    const order = await orderInScope(orderId, employee);
     const branch = await Branch.find(order.branchId);
     await order.delete();
     await EmployeeMonitoringService.report({

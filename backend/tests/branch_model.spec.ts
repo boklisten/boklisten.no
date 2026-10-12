@@ -9,7 +9,6 @@ import OpeningHour from "#models/opening_hour";
 import { isObjectIdHex } from "#models/helpers/object_id";
 import { overrideColumns } from "#services/branch_inheritance_service";
 import { BranchSubjectsService } from "#services/branch_subjects_service";
-import type { UserPermission } from "#shared/user-permission";
 import { ROOT_VALUES, createBranch, rootBranch } from "#tests/branch_fixtures";
 import { createItem } from "#tests/item_fixtures";
 import { fixtureId } from "#tests/fixtures";
@@ -35,10 +34,6 @@ async function withBooks(branch: Branch) {
       },
     ],
   });
-}
-
-async function visibleNames(permission: UserPermission | null) {
-  return (await Branch.visibleByName(permission)).map((branch) => branch.name);
 }
 
 test.group("Branch model", (group) => {
@@ -131,31 +126,6 @@ test.group("Branch model", (group) => {
     });
     const reloaded = await Branch.findOrFail(branch.id);
     assert.throws(() => reloaded.rentPeriods, /percentage is null/);
-  });
-
-  test("visibleByName shows each viewer what their permission allows, Norwegian letters after Z", async ({
-    assert,
-  }) => {
-    await createBranch({ name: "Østfold" });
-    await createBranch({ name: "Akademiet", visibleToCustomers: false });
-    await createBranch({ name: "Bjørknes" });
-
-    // The root is hidden from customers like Akademiet, but every viewer gets it anyway: it is
-    // the "no school" option.
-    assert.deepEqual(await visibleNames(null), ["Alle filialer", "Bjørknes", "Østfold"]);
-    assert.deepEqual(await visibleNames("customer"), ["Alle filialer", "Bjørknes", "Østfold"]);
-    assert.deepEqual(await visibleNames("employee"), [
-      "Akademiet",
-      "Alle filialer",
-      "Bjørknes",
-      "Østfold",
-    ]);
-    assert.deepEqual(await visibleNames("admin"), [
-      "Akademiet",
-      "Alle filialer",
-      "Bjørknes",
-      "Østfold",
-    ]);
   });
 
   test("root is the one branch without a parent", async ({ assert }) => {

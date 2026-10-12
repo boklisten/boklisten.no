@@ -6,8 +6,4 @@ export const BranchRelationshipService = {
   getLeafDescendants(branchId: string): Promise<{ id: string; name: string }[]> {
     return Branch.leafDescendants(branchId);
   },
-  /** Every branch below a branch in the tree, excluding the branch itself. */
-  getNestedChildBranchIds(branchId: string): Promise<string[]> {
-    return Branch.descendantIds(branchId);
-  },
 };

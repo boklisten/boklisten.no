@@ -1,6 +1,6 @@
 import db from "@adonisjs/lucid/services/db";
 
-import { BranchRelationshipService } from "#services/branch_relationship_service";
+import { BranchScope } from "#services/branch_scope";
 import type { BranchBookMovements, BranchBookMovementsYear } from "#shared/branch_insights";
 
 const OSLO = "Europe/Oslo";
@@ -237,8 +237,7 @@ export async function findMatchItemRows({
 
 export const BranchInsightsService = {
   async getBookMovements(branchId: string): Promise<BranchBookMovements> {
-    const descendantIds = await BranchRelationshipService.getNestedChildBranchIds(branchId);
-    const scopeIds = [branchId, ...descendantIds];
+    const scopeIds = await BranchScope.subtreeIds(branchId);
 
     const [rows, invoiceRows, scopedMatchItems] = await Promise.all([
       countMovementRows(scopeIds),
