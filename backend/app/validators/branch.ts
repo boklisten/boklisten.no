@@ -75,7 +75,6 @@ export const branchRelationshipValidator = vine.create(
   vine.object({
     id: objectIdField,
     localName: vine.string().trim().nullable().optional(),
-    parentBranchId: objectIdField.optional(),
     childBranchIds: vine.array(objectIdField).optional(),
     childLabel: vine.string().trim().nullable().optional(),
   }),

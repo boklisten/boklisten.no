@@ -8,7 +8,6 @@ import {
   IconChartAreaLine,
   IconClock,
   IconHeartHandshake,
-  IconHierarchy3,
   IconPlus,
   IconSchool,
   IconShoppingCart,
@@ -24,7 +23,6 @@ import BranchInsightsTab from "@/features/branches/insights/BranchInsightsTab";
 import OrderedBooksTab from "@/features/branches/branch-books/OrderedBooksTab";
 import BranchGeneralSettings from "@/features/branches/BranchGeneralSettings";
 import BranchPaymentSettings from "@/features/branches/BranchPaymentSettings";
-import BranchRelationshipSettings from "@/features/branches/BranchRelationshipSettings";
 import BranchSignatureStatus from "@/features/branches/BranchSignatureStatus";
 import OpeningHoursSettings from "@/features/branches/opening_hours/OpeningHoursSettings";
 import BranchSubjectSettings from "@/features/branches/subjects/BranchSubjectSettings";
@@ -64,7 +62,6 @@ const NEUTER_CHILD_LABELS = [
  * nothing, so it keeps the general tab alone.
  */
 const PLACE_SETTINGS_TABS: ReadonlySet<BranchManagerTab> = new Set([
-  "relationships",
   "payment",
   "subjects",
   "hours",
@@ -166,9 +163,6 @@ export default function BranchManager() {
                   </Tabs.Tab>
                   {!isRoot && (
                     <>
-                      <Tabs.Tab value="relationships" leftSection={<IconHierarchy3 />}>
-                        Relasjoner
-                      </Tabs.Tab>
                       <Tabs.Tab value="payment" leftSection={<IconCashRegister />}>
                         Betaling
                       </Tabs.Tab>
@@ -204,9 +198,6 @@ export default function BranchManager() {
                 </Tabs.List>
                 <Tabs.Panel value="general">
                   <BranchGeneralSettings key={selectedBranchId} existingBranch={selectedBranch} />
-                </Tabs.Panel>
-                <Tabs.Panel value="relationships">
-                  <BranchRelationshipSettings key={selectedBranchId} branch={selectedBranch} />
                 </Tabs.Panel>
                 <Tabs.Panel value="payment">
                   <BranchPaymentSettings key={selectedBranchId} existingBranch={selectedBranch} />

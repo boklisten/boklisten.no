@@ -90,10 +90,8 @@ test.group("Scope on the branch endpoints", (group) => {
     assert.isNull(await Branch.query().where("name", "Ny klasse").first());
   });
 
-  test("PATCH /branches/relationships passes an unchanged parent and the current children", async ({
-    assert,
-  }) => {
-    const { ullern, vgs, ullernVg1 } = await createMiniatureTree();
+  test("PATCH /branches/relationships passes the current children", async ({ assert }) => {
+    const { ullern, ullernVg1 } = await createMiniatureTree();
     const manager = userDouble({ permission: "manager", employeeBranchId: ullern.id });
 
     await assert.doesNotReject(() =>
@@ -102,7 +100,6 @@ test.group("Scope on the branch endpoints", (group) => {
           body: {
             id: ullern.id,
             localName: "Ullern vgs",
-            parentBranchId: vgs.id,
             childBranchIds: [ullernVg1.id],
           },
         }),
@@ -149,10 +146,10 @@ test.group("Scope on the branch endpoints", (group) => {
     );
   });
 
-  test("PATCH /branches/relationships refuses a branch or parent outside the slice", async ({
+  test("PATCH /branches/relationships refuses a branch or child outside the slice", async ({
     assert,
   }) => {
-    const { ullern, ullernVg1, nydalen } = await createMiniatureTree();
+    const { ullern, vgs, nydalen } = await createMiniatureTree();
     const manager = userDouble({ permission: "manager", employeeBranchId: ullern.id });
     const controller = new BranchRelationshipsController();
 
@@ -165,12 +162,12 @@ test.group("Scope on the branch endpoints", (group) => {
     assert.equal(
       await rejectionStatus(
         controller.update(
-          contextFor(manager, { body: { id: ullernVg1.id, parentBranchId: nydalen.id } }),
+          contextFor(manager, { body: { id: ullern.id, childBranchIds: [nydalen.id] } }),
         ),
       ),
       400,
     );
-    assert.equal((await Branch.findOrFail(ullernVg1.id)).parentBranchId, ullern.id);
+    assert.equal((await Branch.findOrFail(nydalen.id)).parentBranchId, vgs.id);
   });
 });
 

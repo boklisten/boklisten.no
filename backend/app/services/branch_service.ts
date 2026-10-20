@@ -29,8 +29,6 @@ interface BranchRelationshipInput {
   id: string;
   localName?: string | null;
   childLabel?: string | null;
-  /** The new parent; absent leaves the parent unchanged. The root has none and gets none. */
-  parentBranchId?: string;
   /**
    * The complete list of children; absent leaves the children unchanged. A current child missing
    * from the list is refused: no branch can be left without a parent.
@@ -100,26 +98,19 @@ export async function updateBranch(branchId: string, input: BranchUpdateInput): 
 }
 
 /**
- * Moves a branch in the tree. `childBranchIds` is a command: the branches listed get this branch
- * as parent. What a moved branch inherits it now inherits from its new parent, and its overrides
- * stay. The tree keeps its single root: the root cannot be given a parent, and a child cannot be
- * dropped from the list, since that would leave it without one.
+ * Moves branches in the tree. `childBranchIds` is a command: the branches listed get this branch
+ * as parent, leaving their old one. What a moved branch inherits it now inherits from its new
+ * parent, and its overrides stay. A child cannot be dropped from the list, since that would leave
+ * it without a parent; it leaves by being added to another branch.
  */
 export async function updateBranchRelationships(input: BranchRelationshipInput): Promise<Branch> {
   return Branch.whileLocked(async (trx) => {
     const branch = await lockedBranch(input.id, trx);
-    if (branch.isRoot && input.parentBranchId !== undefined) {
-      throw new Exception(`${branch.name} er øverst i treet og kan ikke flyttes`, {
-        status: 422,
-        code: "E_ROOT_CANNOT_MOVE",
-      });
-    }
-    const parentBranchId = input.parentBranchId ?? branch.parentBranchId;
     const currentChildIds = (
       await trx.from("branches").where("parent_branch_id", input.id).select("id")
     ).map((child: { id: string }) => child.id);
     const childBranchIds = input.childBranchIds ?? currentChildIds;
-    await assertNoCycle(input.id, parentBranchId, childBranchIds, trx);
+    await assertNoCycle(input.id, branch.parentBranchId, childBranchIds, trx);
     const detached = currentChildIds.filter((id) => !childBranchIds.includes(id));
     if (detached.length > 0) {
       const names = await Branch.namesByIds(detached);
@@ -133,7 +124,6 @@ export async function updateBranchRelationships(input: BranchRelationshipInput):
       definedEntries({
         localName: input.localName,
         childLabel: input.childLabel,
-        parentBranchId,
       }),
     );
     await branch.save();

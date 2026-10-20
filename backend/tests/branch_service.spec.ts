@@ -110,8 +110,8 @@ test.group("branch_service", (group) => {
     assert.equal(await parentOf(vg2.id), school.id);
     assert.equal(await parentOf(stray.id), school.id);
 
-    // Absent lists leave the tree alone.
-    await updateBranchRelationships({ id: school.id, parentBranchId: otherSchool.id });
+    // Absent lists leave the tree alone; a listed branch leaves its old parent.
+    await updateBranchRelationships({ id: otherSchool.id, childBranchIds: [school.id] });
     assert.equal(await parentOf(school.id), otherSchool.id);
     assert.equal(await parentOf(vg1.id), school.id);
   });
@@ -122,11 +122,7 @@ test.group("branch_service", (group) => {
     const vg1st = await createBranch({ name: "VG1 ST", parentBranchId: vg1.id });
 
     await assert.rejects(
-      () => updateBranchRelationships({ id: school.id, parentBranchId: school.id }),
-      BranchCycleError,
-    );
-    await assert.rejects(
-      () => updateBranchRelationships({ id: school.id, parentBranchId: vg1st.id }),
+      () => updateBranchRelationships({ id: vg1st.id, childBranchIds: [vg1st.id] }),
       BranchCycleError,
     );
     await assert.rejects(
@@ -261,7 +257,7 @@ test.group("branch_service inheritance", (group) => {
     const { oslo, kveld } = await sonansTree();
     await updateBranch(oslo.id, { deliveryByMail: false, buyoutPercentage: 0.5 });
 
-    await updateBranchRelationships({ id: oslo.id, parentBranchId: wang.id });
+    await updateBranchRelationships({ id: wang.id, childBranchIds: [oslo.id] });
     const moved = await Branch.findOrFail(oslo.id);
     assert.isTrue(moved.visibleToCustomers);
     assert.isTrue(await visibleOf(kveld.id));
@@ -277,8 +273,8 @@ test.group("branch_service inheritance", (group) => {
     const { sonans, oslo, kveld } = await sonansTree();
 
     await assert.rejects(
-      () => updateBranchRelationships({ id: root.id, parentBranchId: sonans.id }),
-      /øverst/,
+      () => updateBranchRelationships({ id: sonans.id, childBranchIds: [root.id] }),
+      BranchCycleError,
     );
     // Dropping a child from the list would leave it without a parent.
     await assert.rejects(
