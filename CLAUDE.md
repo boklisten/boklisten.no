@@ -135,7 +135,7 @@ Write Japa specs (`backend/tests/*.spec.ts`, Japa `assert` + Sinon) for new back
 - `main` → auto-deploys to **staging**
 - `production` → auto-deploys to **live**
 
-GitHub Actions (`.github/workflows/main.yml`) installs the toolchain with `voidzero-dev/setup-vp` (pinned to an exact release; Node from `.node-version`, Bun from `packageManager`, dependency cache on, `vp install --frozen-lockfile`) and runs four parallel jobs: Check (`vp run check` + `vp test`), Build Backend, Build Frontend, Test Backend (Postgres service + migrations + Japa). Vite Task's cross-run cache is not enabled (experimental; measure before adding).
+GitHub Actions (`.github/workflows/main.yml`) installs the toolchain with `voidzero-dev/setup-vp` (pinned to an exact release; Node from `.node-version`, Bun from `packageManager`, dependency cache on, `vp install --frozen-lockfile`) and runs four parallel jobs: Check (`vp run check` + `vp test`), Build Backend, Build Frontend, Test Backend (Japa on an embedded Postgres the runner starts itself). Vite Task's cross-run cache is not enabled (experimental; measure before adding).
 
 ## Deployment
 

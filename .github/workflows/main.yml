@@ -58,23 +58,6 @@ jobs:
   test_backend:
     name: Test Backend
     runs-on: ubuntu-latest
-    env:
-      # The service below; without it the test runner starts its own embedded Postgres
-      POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/boklisten_test
-    services:
-      postgres:
-        image: postgres:18
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: boklisten_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - uses: actions/checkout@v7
       - uses: voidzero-dev/setup-vp@v1.21.1
@@ -84,9 +67,5 @@ jobs:
           run-install: |
             - cwd: .
               args: ["--frozen-lockfile"]
-      - name: Run migrations
-        env:
-          NODE_ENV: test
-        run: vp run migrate:backend
       - name: Test Backend
         run: vp run test
