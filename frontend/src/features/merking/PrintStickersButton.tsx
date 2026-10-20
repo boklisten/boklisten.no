@@ -4,7 +4,7 @@ import { IconPrinter } from "@tabler/icons-react";
 
 import StickerGuide from "@/features/merking/StickerGuide";
 
-/** Opens the guide, whose own button prints the sheet. */
+/** Opens the guide, whose own button downloads the sheet. */
 export default function PrintStickersButton() {
   return (
     <Button
