@@ -1,5 +1,5 @@
 import { test } from "@japa/runner";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 
@@ -64,7 +64,7 @@ async function seedUserMatch() {
 }
 
 test.group("toMatchDtos", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
 
@@ -190,19 +190,13 @@ test.group("toMatchDtos", (group) => {
       itemId: ITEM_X,
     });
     const byIds = User.byIds.bind(User);
-    const sandbox = createSandbox();
-    sandbox.stub(User, "byIds").callsFake(async (ids) => {
+    stub(User, "byIds").callsFake(async (ids) => {
       const users = await byIds(ids);
       users.delete(UNKNOWN);
       return users;
     });
 
-    let dto: Awaited<ReturnType<typeof render>>[number] | undefined;
-    try {
-      [dto] = await render();
-    } finally {
-      sandbox.restore();
-    }
+    const [dto] = await render();
 
     assert.deepEqual(dto?.obligations[0]?.sender, {
       kind: "customer",

@@ -91,7 +91,7 @@ async function generateAndRead(settings: InvoiceGenerationSettings): Promise<Inv
 }
 
 test.group("invoice generation", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     for (const item of items) {
       await createItem({ id: item.id, title: item.title, price: item.price });

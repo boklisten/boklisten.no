@@ -1,7 +1,7 @@
 import limiter from "@adonisjs/limiter/services/main";
 import { test } from "@japa/runner";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import { PublicBlidLookupService } from "#services/public_blid_lookup_service";
 import type { PublicBlidLookupResult } from "#shared/public_blid_lookup";
@@ -15,7 +15,6 @@ const KNOWN: PublicBlidLookupResult = {
 const UNKNOWN: PublicBlidLookupResult = { status: "unregistered" };
 
 test.group("PublicBlidLookupService.guardedLookup()", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let lookup: sinon.SinonStub;
   let account = 0;
   let userId: string;
@@ -23,12 +22,10 @@ test.group("PublicBlidLookupService.guardedLookup()", (group) => {
   const misses = limiter.use("memory", { requests: 10, duration: "1 day", blockDuration: "1 day" });
 
   group.each.setup(() => {
-    sandbox = createSandbox();
-    lookup = sandbox.stub(PublicBlidLookupService, "lookup");
+    lookup = stub(PublicBlidLookupService, "lookup");
     account += 1;
     userId = `5f7f7f7f7f7f7f7f7f7f7f${String(account).padStart(2, "0")}`;
   });
-  group.each.teardown(() => sandbox.restore());
 
   async function lookUp(outcome: PublicBlidLookupResult) {
     lookup.resolves(outcome);

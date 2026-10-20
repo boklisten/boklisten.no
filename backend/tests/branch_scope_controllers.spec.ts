@@ -1,8 +1,7 @@
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import BlidsController from "#controllers/blids_controller";
 import BranchBooksController from "#controllers/branches/branch_books_controller";
@@ -37,13 +36,10 @@ import { createUniqueItem } from "#tests/unique_item_fixtures";
 import { createUser, userDouble } from "#tests/user_fixtures";
 
 test.group("Scope on the branch endpoints", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(() => {
-    sandbox = createSandbox();
-    sandbox.stub(LoginService, "trackActivity").resolves();
+    stub(LoginService, "trackActivity").resolves();
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("GET /branches returns the viewer's slice with the selectable flag", async ({ assert }) => {
     const { root, company, vgs, ullern, ullernVg1 } = await createMiniatureTree();
@@ -172,7 +168,7 @@ test.group("Scope on the branch endpoints", (group) => {
 });
 
 test.group("Scope on the user lists", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a node outside the slice is a 404 on metrics and employees, inside it answers", async ({
     assert,
@@ -200,7 +196,7 @@ test.group("Scope on the user lists", (group) => {
 });
 
 test.group("Scope on match rounds", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("rounds are reached by their branch: 404 outside the slice, 400 for a new one there", async ({
     assert,
@@ -243,7 +239,7 @@ test.group("Scope on match rounds", (group) => {
 });
 
 test.group("Scope on places", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a waiting-list entry at a branch outside the slice is a 400", async ({ assert }) => {
     const { ullern, nydalen } = await createMiniatureTree();
@@ -290,12 +286,7 @@ test.group("Scope on places", (group) => {
 });
 
 test.group("Scope on customers (people-anchored endpoints)", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a customer outside the scope is unknown: null on show, 404 on everything else", async ({
     assert,
@@ -413,7 +404,7 @@ test.group("Scope on customers (people-anchored endpoints)", (group) => {
     const { ullern, ullernVg1, nydalen } = await createMiniatureTree();
     const manager = userDouble({ permission: "manager", employeeBranchId: ullern.id });
     const elsewhere = await createUser({ branchMembershipId: nydalen.id });
-    const resolve = sandbox.stub(StandCartLineResolver, "resolve").resolves(unchecked({}));
+    const resolve = stub(StandCartLineResolver, "resolve").resolves(unchecked({}));
     const body = { customerId: elsewhere.id, branchId: ullernVg1.id, blid: "10000001" };
 
     assert.equal(
@@ -425,7 +416,7 @@ test.group("Scope on customers (people-anchored endpoints)", (group) => {
 });
 
 test.group("Scope on places (place-anchored endpoints)", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("the order list is bounded by the subtree and a filter never widens it", async ({
     assert,

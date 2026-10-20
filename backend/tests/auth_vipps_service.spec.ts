@@ -3,7 +3,7 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import db from "@adonisjs/lucid/services/db";
 import { test } from "@japa/runner";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import User from "#models/user";
 import { AuthVippsService, loginTargetOf } from "#services/auth_vipps_service";
@@ -33,8 +33,8 @@ function vippsUser(overrides: Partial<VippsUser> = {}): VippsUser {
  * A callback request from the browser that started the login, whose Vipps exchange yields
  * `person`, or fails with it when it is an error. `target` is the page the login started from.
  */
-function callbackFor(sandbox: sinon.SinonSandbox, person: VippsUser | Error, target = "") {
-  const finish = sandbox.stub(VippsLoginClient, "finish");
+function callbackFor(person: VippsUser | Error, target = "") {
+  const finish = stub(VippsLoginClient, "finish");
   if (person instanceof Error) {
     finish.rejects(person);
   } else {
@@ -45,7 +45,7 @@ function callbackFor(sandbox: sinon.SinonSandbox, person: VippsUser | Error, tar
 
 /** A callback request carrying `query`, from a browser whose login cookie holds `cookie`. */
 function requestTo(query: Record<string, string>, cookie?: object) {
-  const redirect = createSandbox().stub();
+  const redirect = stub();
   const ctx = mock<HttpContext>({
     request: {
       input: unchecked((name: string) => query[name]),
@@ -63,17 +63,14 @@ async function sessionsOf(userId: string): Promise<number> {
 }
 
 test.group("AuthVippsService.handleCallback()", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let login: sinon.SinonStub<
     Parameters<typeof LoginService.login>,
     ReturnType<typeof LoginService.login>
   >;
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(() => {
-    sandbox = createSandbox();
-    login = sandbox.stub(LoginService, "login").resolves();
+    login = stub(LoginService, "login").resolves();
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("takes back an account that only claimed the email, and ends its other logins", async ({
     assert,
@@ -90,7 +87,7 @@ test.group("AuthVippsService.handleCallback()", (group) => {
       expires_at: new Date(Date.now() + 3_600_000),
     });
 
-    await AuthVippsService.handleCallback(callbackFor(sandbox, vippsUser()).ctx);
+    await AuthVippsService.handleCallback(callbackFor(vippsUser()).ctx);
 
     const account = await User.findOrFail(claimed.id);
     assert.equal(account.phone, "41111111");
@@ -107,7 +104,7 @@ test.group("AuthVippsService.handleCallback()", (group) => {
       phone: "92222222",
     });
 
-    await AuthVippsService.handleCallback(callbackFor(sandbox, vippsUser()).ctx);
+    await AuthVippsService.handleCallback(callbackFor(vippsUser()).ctx);
 
     const account = await User.findOrFail(owner.id);
     assert.equal(account.phone, "92222222");
@@ -122,7 +119,7 @@ test.group("AuthVippsService.handleCallback()", (group) => {
         emailConfirmed,
         phone: "92222222",
       });
-      const { ctx, redirect } = callbackFor(sandbox, vippsUser({ emailVerified: false }));
+      const { ctx, redirect } = callbackFor(vippsUser({ emailVerified: false }));
 
       await AuthVippsService.handleCallback(ctx);
 
@@ -136,7 +133,7 @@ test.group("AuthVippsService.handleCallback()", (group) => {
 
   test("refuses a number from outside Norway", async ({ assert }) => {
     await createUser({ email: "annen@example.com", phone: "41111111" });
-    const { ctx, redirect } = callbackFor(sandbox, vippsUser({ phoneNumber: "+4541111111" }));
+    const { ctx, redirect } = callbackFor(vippsUser({ phoneNumber: "+4541111111" }));
 
     await AuthVippsService.handleCallback(ctx);
 
@@ -152,7 +149,7 @@ test.group("AuthVippsService.handleCallback()", (group) => {
       phone: "41111111",
       vippsUserId: "vipps-kari",
     });
-    const { ctx, redirect } = callbackFor(sandbox, vippsUser({ phoneNumber: "+4541111111" }));
+    const { ctx, redirect } = callbackFor(vippsUser({ phoneNumber: "+4541111111" }));
 
     await AuthVippsService.handleCallback(ctx);
 
@@ -169,7 +166,7 @@ test.group("AuthVippsService.handleCallback()", (group) => {
     });
     await createUser({ email: "kari@example.com", phone: "41111111" });
 
-    await AuthVippsService.handleCallback(callbackFor(sandbox, vippsUser()).ctx);
+    await AuthVippsService.handleCallback(callbackFor(vippsUser()).ctx);
 
     assert.equal(login.lastCall.args[1].id, me.id);
     assert.equal((await User.findOrFail(me.id)).vippsUserId, "vipps-kari");
@@ -177,21 +174,18 @@ test.group("AuthVippsService.handleCallback()", (group) => {
 });
 
 test.group("AuthVippsService.handleCallback() destination", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   // A new account becomes a member of the root, so the tree needs one.
   group.each.setup(async () => {
     await rootBranch();
   });
   group.each.setup(() => {
-    sandbox = createSandbox();
-    sandbox.stub(LoginService, "login").resolves();
+    stub(LoginService, "login").resolves();
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("lands on the page the login started from", async ({ assert }) => {
     await createUser({ email: "kari@example.com", phone: "41111111", vippsUserId: "vipps-kari" });
-    const { ctx, redirect } = callbackFor(sandbox, vippsUser(), "handlekurv");
+    const { ctx, redirect } = callbackFor(vippsUser(), "handlekurv");
 
     await AuthVippsService.handleCallback(ctx);
 
@@ -205,7 +199,7 @@ test.group("AuthVippsService.handleCallback() destination", (group) => {
       vippsUserId: "vipps-kari",
       taskConfirmDetails: true,
     });
-    const { ctx, redirect } = callbackFor(sandbox, vippsUser(), "handlekurv");
+    const { ctx, redirect } = callbackFor(vippsUser(), "handlekurv");
 
     await AuthVippsService.handleCallback(ctx);
 
@@ -215,10 +209,7 @@ test.group("AuthVippsService.handleCallback() destination", (group) => {
   test("sends a new account to the pending tasks, since Vipps gives no date of birth", async ({
     assert,
   }) => {
-    const { ctx, redirect } = callbackFor(
-      sandbox,
-      vippsUser({ address: "Gata 1", postalCode: "0150" }),
-    );
+    const { ctx, redirect } = callbackFor(vippsUser({ address: "Gata 1", postalCode: "0150" }));
 
     await AuthVippsService.handleCallback(ctx);
 
@@ -227,7 +218,7 @@ test.group("AuthVippsService.handleCallback() destination", (group) => {
   });
 
   test("sends a failed Vipps exchange to the failure page", async ({ assert }) => {
-    const { ctx, redirect } = callbackFor(sandbox, new Error("token exchange failed"));
+    const { ctx, redirect } = callbackFor(new Error("token exchange failed"));
 
     await AuthVippsService.handleCallback(ctx);
 
@@ -242,7 +233,7 @@ test.group("AuthVippsService.handleCallback() destination", (group) => {
       { error: "something_new", reason: "error" },
     ])
     .run(async ({ assert }, { error, reason }) => {
-      const finish = sandbox.stub(VippsLoginClient, "finish");
+      const finish = stub(VippsLoginClient, "finish");
       const { ctx, redirect } = requestTo(
         { error, state: "state" },
         { state: "state", codeVerifier: "verifier", target: "" },
@@ -255,7 +246,7 @@ test.group("AuthVippsService.handleCallback() destination", (group) => {
     });
 
   test("refuses a callback that is not for the login this browser started", async ({ assert }) => {
-    const finish = sandbox.stub(VippsLoginClient, "finish");
+    const finish = stub(VippsLoginClient, "finish");
     const cookie = { state: "state", codeVerifier: "verifier", target: "" };
 
     for (const { ctx, redirect } of [

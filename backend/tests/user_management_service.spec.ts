@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import CustomerItem from "#models/customer_item";
 import Invoice from "#models/invoice";
@@ -46,7 +46,7 @@ async function seedMatch(customerIds: string[]) {
 }
 
 test.group("UserManagementService.getEmployees", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("lists the staff above, on and below the node by name, never customers or siblings", async ({
     assert,
@@ -91,17 +91,12 @@ test.group("UserManagementService.getEmployees", (group) => {
 });
 
 test.group("UserManagementService.setPermission", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("ends the sessions of users whose level changes, not of one who only moves node", async ({
     assert,
   }) => {
-    const revoke = sandbox.stub(SessionRevocationService, "revokeAll").resolves();
+    const revoke = stub(SessionRevocationService, "revokeAll").resolves();
     const ullern = await createBranch({ name: "Ullern" });
     const promoted = await createUser();
     const moved = await createUser({ permission: "employee" });
@@ -278,7 +273,7 @@ test.group("UserManagementService.setPermission", (group) => {
 });
 
 test.group("UserManagementService.mergeUsers", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(async () => {
     await createUser({ id: FROM });
@@ -395,13 +390,8 @@ test.group("UserManagementService.mergeUsers", (group) => {
       customerId: FROM,
       orderItems: [{ itemId: item.id }],
     });
-    const sandbox = createSandbox();
-    sandbox.stub(User.prototype, "delete").rejects(new Error("boom"));
-    try {
-      await assert.rejects(() => UserManagementService.mergeUsers(FROM, TO), "boom");
-    } finally {
-      sandbox.restore();
-    }
+    stub(User.prototype, "delete").rejects(new Error("boom"));
+    await assert.rejects(() => UserManagementService.mergeUsers(FROM, TO), "boom");
 
     assert.equal((await Order.getOrFail(order.id)).customerId, FROM);
     assert.isNotNull(await User.find(FROM));
@@ -429,19 +419,19 @@ test.group("UserManagementService.mergeUsers", (group) => {
 });
 
 test.group("UserManagementService.deleteUser", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let activeCustomerItemsStub: sinon.SinonStub;
 
+  // Truncated, not rolled back: Postgres re-checks foreign keys on rows inserted earlier in the same
+  // transaction, so inside a shared one the cascade from deleting a user trips over the handovers
+  // the test just made. Separate commits, as in production, never hit that.
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
   group.each.setup(async () => {
     await createUser({ id: FROM });
   });
   group.each.setup(() => {
-    sandbox = createSandbox();
-    activeCustomerItemsStub = sandbox.stub(CustomerItem, "hasActive").resolves(false);
+    activeCustomerItemsStub = stub(CustomerItem, "hasActive").resolves(false);
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("deletes the user with their auth artifacts and signatures", async ({ assert }) => {
     await EmailVerification.create({ userId: FROM });

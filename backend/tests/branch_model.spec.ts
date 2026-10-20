@@ -37,7 +37,7 @@ async function withBooks(branch: Branch) {
 }
 
 test.group("Branch model", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a new branch gets an ObjectId-shaped primary key", async ({ assert }) => {
     const branch = await createBranch({ id: "" });

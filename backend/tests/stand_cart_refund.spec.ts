@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 import { DateTime } from "luxon";
 
 import type CustomerItem from "#models/customer_item";
@@ -148,18 +148,15 @@ test.group("allocateRefund", () => {
 });
 
 test.group("StandCartRefund.plan", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let paymentsOf: sinon.SinonStub;
   let info: sinon.SinonStub;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(() => {
-    sandbox = createSandbox();
-    paymentsOf = sandbox.stub(Payment, "ofOrder").resolves([]);
-    info = sandbox.stub().resolves(vippsInfo(250));
-    sandbox.stub(VippsPaymentService, "payment").value({ info });
+    paymentsOf = stub(Payment, "ofOrder").resolves([]);
+    info = stub().resolves(vippsInfo(250));
+    stub(VippsPaymentService, "payment").value({ info });
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("a cancelled order paid by a Vipps request is refunded on that request", async ({
     assert,

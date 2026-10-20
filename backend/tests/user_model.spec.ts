@@ -8,7 +8,7 @@ import { createBranch, rootBranch } from "#tests/branch_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 test.group("User lookups", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("finds a user by email regardless of case and surrounding whitespace", async ({
     assert,
@@ -47,7 +47,7 @@ test.group("User lookups", (group) => {
 });
 
 test.group("User.search", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("matches the customer's own details and their guardian's, case-insensitively", async ({
     assert,
@@ -109,7 +109,7 @@ test.group("User.search", (group) => {
 });
 
 test.group("User.toDto", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a user fresh from create without Vipps is not Vipps-linked", async ({ assert }) => {
     const root = await rootBranch();

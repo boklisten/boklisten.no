@@ -42,7 +42,7 @@ async function seedWorld(): Promise<World> {
 }
 
 test.group("OrderManagerService: listing", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("only placed orders with a book still owed, newest first", async ({ assert }) => {
     const { branch, customer, sinus, matte } = await seedWorld();
@@ -279,7 +279,7 @@ test.group("OrderManagerService: listing", (group) => {
 });
 
 test.group("OrderManagerService: reports", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("the orders report has one row per open book, in the CSV column order", async ({
     assert,

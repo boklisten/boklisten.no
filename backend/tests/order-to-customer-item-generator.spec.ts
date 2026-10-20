@@ -140,7 +140,7 @@ test.group("OrderToCustomerItemGenerator.generate", () => {
 });
 
 test.group("OrderToCustomerItemGenerator.createFor", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("creates the customer items and points each loan line at its own", async ({ assert }) => {
     const [branch, item, customer] = await Promise.all([

@@ -1,7 +1,6 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 import { DateTime } from "luxon";
 
 import type Order from "#models/order";
@@ -35,9 +34,8 @@ test.group("OrderItemValidator", (group) => {
 
   const legalDeadline = new Date();
   legalDeadline.setFullYear(legalDeadline.getFullYear() + 1);
-  let sandbox: sinon.SinonSandbox;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     testOrder = mock<Order>({
       id: "order1",
@@ -83,15 +81,11 @@ test.group("OrderItemValidator", (group) => {
 
     await createItem({ id: "item1" });
     await createItem({ id: "item2" });
-    sandbox = createSandbox();
-    sandbox.stub(orderItemRentValidator, "validate").callsFake(() => Promise.resolve(true));
+    stub(orderItemRentValidator, "validate").callsFake(() => Promise.resolve(true));
 
-    sandbox.stub(orderItemBuyValidator, "validate").callsFake(() => Promise.resolve(true));
+    stub(orderItemBuyValidator, "validate").callsFake(() => Promise.resolve(true));
 
-    sandbox.stub(orderItemExtendValidator, "validate").callsFake(() => Promise.resolve(true));
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
+    stub(orderItemExtendValidator, "validate").callsFake(() => Promise.resolve(true));
   });
 
   test("should reject with error when order.amount is 500 and total of orderItems is 250", async ({

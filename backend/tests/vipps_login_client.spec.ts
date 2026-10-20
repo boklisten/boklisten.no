@@ -1,8 +1,7 @@
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
 
 import { test } from "@japa/runner";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import { VippsLoginClient } from "#services/vipps/vipps_login_client";
 import env from "#start/env";
@@ -36,9 +35,9 @@ function json(body: object): Response {
  * Stands in for Vipps: its discovery document, keys, token endpoint (answering with `token`) and
  * userinfo. Records the token request.
  */
-function fakeVipps(sandbox: sinon.SinonSandbox, token: string) {
+function fakeVipps(token: string) {
   const tokenRequests: { headers: Headers; body: URLSearchParams }[] = [];
-  sandbox.stub(globalThis, "fetch").callsFake(async (input, init) => {
+  stub(globalThis, "fetch").callsFake(async (input, init) => {
     const url = input instanceof Request ? input.url : input.toString();
     if (url.endsWith("/.well-known/openid-configuration")) {
       return json({
@@ -81,15 +80,9 @@ function fakeVipps(sandbox: sinon.SinonSandbox, token: string) {
   return { tokenRequests };
 }
 
-test.group("VippsLoginClient", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
-
+test.group("VippsLoginClient", () => {
   test("asks Vipps for an S256 challenge of the verifier it hands back", async ({ assert }) => {
-    fakeVipps(sandbox, "");
+    fakeVipps("");
 
     const { url, pending } = await VippsLoginClient.start();
 
@@ -103,7 +96,7 @@ test.group("VippsLoginClient", (group) => {
   });
 
   test("reads the profile of the person a genuine id_token names", async ({ assert }) => {
-    const { tokenRequests } = fakeVipps(sandbox, idToken(vippsKey.privateKey));
+    const { tokenRequests } = fakeVipps(idToken(vippsKey.privateKey));
 
     const person = await VippsLoginClient.finish("code=code&state=state", {
       state: "state",
@@ -125,7 +118,7 @@ test.group("VippsLoginClient", (group) => {
   });
 
   test("rejects an id_token Vipps did not sign", async ({ assert }) => {
-    fakeVipps(sandbox, idToken(forgerKey.privateKey));
+    fakeVipps(idToken(forgerKey.privateKey));
 
     const rejection = await VippsLoginClient.finish("code=code&state=state", {
       state: "state",

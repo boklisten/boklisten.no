@@ -26,7 +26,7 @@ const copy = (returned: boolean) =>
   });
 
 test.group("PublicBlidLookupService.lookup()", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createItem({ id: ITEM_ID, title: "Sinus 1T", isbn: 9_788_202_418_304 });
     await createBranch({ id: BRANCH_ID, name: "Ullern VGS" });

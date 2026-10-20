@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Delivery from "#models/delivery";
 import Order from "#models/order";
@@ -20,12 +20,11 @@ test.group("VippsCheckoutService.update", (group) => {
   let customer: User;
   let captureStub: sinon.SinonStub;
   let placeOrderStub: sinon.SinonStub;
-  let sandbox: sinon.SinonSandbox;
 
   let successfulSession: VippsCheckoutSession;
 
   group.each.setup(async () => {
-    const truncate = await testUtils.db().truncate();
+    const rollback = await testUtils.db().wrapInGlobalTransaction();
     const [branch, createdCustomer] = await Promise.all([createBranch(), createUser()]);
     customer = createdCustomer;
     testOrder = await createOrder({
@@ -37,16 +36,11 @@ test.group("VippsCheckoutService.update", (group) => {
     });
     successfulSession = { reference: testOrder.id, sessionState: "PaymentSuccessful" };
 
-    sandbox = createSandbox();
-    placeOrderStub = sandbox
-      .stub(OrderPlacedHandler.prototype, "placeOrder")
-      .callsFake(() => Promise.resolve(testOrder));
-    captureStub = sandbox.stub(VippsPaymentService.payment, "capture").resolves();
-    return truncate;
-  });
-
-  group.each.teardown(() => {
-    sandbox.restore();
+    placeOrderStub = stub(OrderPlacedHandler.prototype, "placeOrder").callsFake(() =>
+      Promise.resolve(testOrder),
+    );
+    captureStub = stub(VippsPaymentService.payment, "capture").resolves();
+    return rollback;
   });
 
   test("should capture the order amount when the payment succeeds", async ({ assert }) => {

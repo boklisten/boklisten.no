@@ -32,7 +32,7 @@ async function loginsOf(userId: string) {
 }
 
 test.group("SessionRevocationService.revokeAll()", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("ends every session and remember-me token of the user, nobody else's", async ({
     assert,

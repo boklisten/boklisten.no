@@ -1,7 +1,6 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import User from "#models/user";
 import { roundPlanMetrics } from "#services/matches/round_plan_metrics";
@@ -34,34 +33,28 @@ const order = (itemIds: string[], overrides: Partial<Parameters<typeof createOrd
     ...overrides,
   });
 
-test.group("roundPlanMetrics", (group) => {
-  let sandbox: sinon.SinonSandbox;
+/** Stubs the member count and inserts the held books, handed out at the round's branch. */
+async function arrange({
+  members,
+  activeBooks,
+}: {
+  members?: { students: number };
+  activeBooks?: { id: string; items: string[] }[];
+}) {
+  await createHeldBooks(BRANCH, activeBooks ?? []);
+  return {
+    memberCount: stub(User, "countMembersOf").resolves(members?.students ?? 0),
+  };
+}
 
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
-  group.each.setup(() => testUtils.db().truncate());
+test.group("roundPlanMetrics", (group) => {
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([RECEIVER, SENDER, OTHER_SENDER]));
   group.each.setup(async () => {
     await createBranch({ id: BRANCH });
     await createBranch({ id: OTHER_BRANCH });
   });
-
-  /** Stubs the member count and inserts the held books, handed out at the round's branch. */
-  async function arrange({
-    members,
-    activeBooks,
-  }: {
-    members?: { students: number };
-    activeBooks?: { id: string; items: string[] }[];
-  }) {
-    await createHeldBooks(BRANCH, activeBooks ?? []);
-    return {
-      memberCount: sandbox.stub(User, "countMembersOf").resolves(members?.students ?? 0),
-    };
-  }
 
   test("reports the members, the books out and the books ordered", async ({ assert }) => {
     await arrange({

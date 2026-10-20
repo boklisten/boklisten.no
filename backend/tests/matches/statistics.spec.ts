@@ -1,8 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
@@ -48,15 +47,12 @@ function handover(input: {
 }
 
 test.group("computeMatchStatistics", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let round: MatchRound;
 
   group.each.setup(() => {
-    sandbox = createSandbox();
-    sandbox.stub(User, "byIds").resolves(new Map());
+    stub(User, "byIds").resolves(new Map());
   });
-  group.each.teardown(() => sandbox.restore());
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
   group.each.setup(async () => {

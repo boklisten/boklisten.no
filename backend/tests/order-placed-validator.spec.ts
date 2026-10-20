@@ -1,6 +1,5 @@
 import { test } from "@japa/runner";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Delivery from "#models/delivery";
 import type Order from "#models/order";
@@ -16,7 +15,6 @@ test.group("OrderPlacedValidator", (group) => {
   let testPayment: Payment;
   let testPayments: Payment[];
   let testDelivery: Delivery;
-  let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {
     testOrder = mock<Order>({
@@ -65,19 +63,13 @@ test.group("OrderPlacedValidator", (group) => {
 
     testPayments = [testPayment];
 
-    sandbox = createSandbox();
-    sandbox
-      .stub(Payment, "ofOrder")
-      .callsFake((orderId: string) =>
-        Promise.resolve(orderId === testOrder.id ? testPayments : []),
-      );
+    stub(Payment, "ofOrder").callsFake((orderId: string) =>
+      Promise.resolve(orderId === testOrder.id ? testPayments : []),
+    );
 
-    sandbox
-      .stub(Delivery, "ofOrder")
-      .callsFake((orderId) => Promise.resolve(orderId === testOrder.id ? testDelivery : null));
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
+    stub(Delivery, "ofOrder").callsFake((orderId) =>
+      Promise.resolve(orderId === testOrder.id ? testDelivery : null),
+    );
   });
 
   test("should resolve with true", async ({ assert }) => {

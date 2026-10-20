@@ -16,6 +16,8 @@ function scopeOf(ids: string[]) {
 }
 
 test.group("UniqueItem model", (group) => {
+  // Truncated, not rolled back: these tests make Postgres reject a write, which would abort a
+  // shared transaction and fail every later query in the test.
   group.each.setup(() => testUtils.db().truncate());
 
   test("a new sticker gets an ObjectId-shaped primary key", async ({ assert }) => {

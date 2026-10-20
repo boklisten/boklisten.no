@@ -1,8 +1,7 @@
 import * as Sentry from "@sentry/node";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import User from "#models/user";
 import DispatchService from "#services/dispatch_service";
@@ -63,14 +62,7 @@ const REPORT = {
   occurredAt: DateTime.fromISO("2026-09-04T08:05:00Z"),
 };
 
-test.group("EmployeeMonitoringService", (group) => {
-  let sandbox: sinon.SinonSandbox;
-
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
-
+test.group("EmployeeMonitoringService", () => {
   test("the mail names the action, the employee, the customer with a kasse link, and the details", ({
     assert,
   }) => {
@@ -100,12 +92,10 @@ test.group("EmployeeMonitoringService", (group) => {
   test("report() resolves the people and sends through the dispatch service with the customer as context", async ({
     assert,
   }) => {
-    sandbox
-      .stub(User, "findOrFail")
-      .callsFake((id) => Promise.resolve(id === EMPLOYEE_ID ? employee : customer));
-    const sendPlainEmail = sandbox
-      .stub(DispatchService, "sendPlainEmail")
-      .resolves({ success: true });
+    stub(User, "findOrFail").callsFake((id) =>
+      Promise.resolve(id === EMPLOYEE_ID ? employee : customer),
+    );
+    const sendPlainEmail = stub(DispatchService, "sendPlainEmail").resolves({ success: true });
 
     await EmployeeMonitoringService.report({
       action: "handout-without-signature",
@@ -126,8 +116,8 @@ test.group("EmployeeMonitoringService", (group) => {
   });
 
   test("report() does nothing when the employee is an admin", async ({ assert }) => {
-    const get = sandbox.stub(User, "findOrFail");
-    const sendPlainEmail = sandbox.stub(DispatchService, "sendPlainEmail");
+    const get = stub(User, "findOrFail");
+    const sendPlainEmail = stub(DispatchService, "sendPlainEmail");
 
     await EmployeeMonitoringService.report({
       action: "order-deleted",
@@ -143,8 +133,8 @@ test.group("EmployeeMonitoringService", (group) => {
   test("report() sends a failed report to Sentry instead of failing the caller", async ({
     assert,
   }) => {
-    sandbox.stub(User, "findOrFail").rejects(new Error("postgres down"));
-    const sendPlainEmail = sandbox.stub(DispatchService, "sendPlainEmail");
+    stub(User, "findOrFail").rejects(new Error("postgres down"));
+    const sendPlainEmail = stub(DispatchService, "sendPlainEmail");
     const captured = recordEventsSentToSentry();
 
     await EmployeeMonitoringService.report({

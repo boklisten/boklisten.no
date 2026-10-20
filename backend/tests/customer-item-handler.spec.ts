@@ -41,7 +41,7 @@ async function heldBook(overrides: Partial<Pick<CustomerItem, "returned">> = {})
 test.group("CustomerItemHandler", (group) => {
   const customerItemHandler = new CustomerItemHandler();
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("should reject if returned is true", async ({ assert }) => {
     const { branch, customerItem } = await heldBook({ returned: true });

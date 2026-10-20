@@ -20,7 +20,7 @@ async function world() {
 }
 
 test.group("Payment model", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("lists an order's payments in the order they were recorded", async ({ assert }) => {
     const order = await world();

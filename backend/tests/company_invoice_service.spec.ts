@@ -94,7 +94,7 @@ test.group("company invoice arithmetic", () => {
 test.group("company invoice creation", (group) => {
   let companyId: string;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     companyId = (
       await createCompany({

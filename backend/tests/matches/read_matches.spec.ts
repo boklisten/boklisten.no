@@ -1,8 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { spy } from "sinon";
 
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
@@ -41,25 +40,19 @@ async function seed() {
   return { round, match, obligation };
 }
 
-test.group("read matches", (group) => {
-  let sandbox: sinon.SinonSandbox;
+/** The people lookup is spied so the suite can assert how often Postgres is read. */
+function spyOnPeopleLookup() {
+  spy(User, "byIds");
+}
 
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
-  group.each.setup(() => testUtils.db().truncate());
+test.group("read matches", (group) => {
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(async () => {
     await createUser({ id: A, name: "Kari Hansen", phone: "90000001", email: "kari@x.no" });
     await createUser({ id: B, name: "Ola Nordmann", phone: "90000002", email: "ola@x.no" });
     await createUser({ id: OUTSIDER, name: "Per Berg", phone: "90000003", email: "per@x.no" });
   });
-
-  /** The people lookup is spied so the suite can assert how often Postgres is read. */
-  function spyOnPeopleLookup() {
-    sandbox.spy(User, "byIds");
-  }
 
   test("returns a customer's matches with names and titles filled in", async ({ assert }) => {
     spyOnPeopleLookup();

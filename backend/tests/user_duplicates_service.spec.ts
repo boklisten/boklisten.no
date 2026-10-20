@@ -127,7 +127,7 @@ test.group("findDuplicateCandidatePairs", () => {
 });
 
 test.group("UserDuplicatesService.findDuplicateCustomers", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("compares only the members of the given branches", async ({ assert }) => {
     const school = await createBranch();
@@ -149,7 +149,7 @@ test.group("UserDuplicatesService.findDuplicateCustomers", (group) => {
 });
 
 test.group("UserDuplicatesService.summarizeUsers", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("counts the open rent and partly-payment lines of placed orders", async ({ assert }) => {
     const [branch, customer, other, item] = await Promise.all([

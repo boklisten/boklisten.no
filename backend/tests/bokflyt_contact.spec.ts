@@ -1,7 +1,6 @@
 import { test } from "@japa/runner";
 import { errors } from "@vinejs/vine";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import DispatchService from "#services/dispatch_service";
 import {
@@ -19,14 +18,7 @@ const VALID_REQUEST = {
   message: "Vi vil gjerne høre mer.",
 };
 
-test.group("Bokflyt contact request", (group) => {
-  let sandbox: sinon.SinonSandbox;
-
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
-
+test.group("Bokflyt contact request", () => {
   test("validator trims text, lowercases the email and keeps the message optional", async ({
     assert,
   }) => {
@@ -70,9 +62,7 @@ test.group("Bokflyt contact request", (group) => {
   test("the mail is sent through the dispatch service under its own message type", async ({
     assert,
   }) => {
-    const sendPlainEmail = sandbox
-      .stub(DispatchService, "sendPlainEmail")
-      .resolves({ success: true });
+    const sendPlainEmail = stub(DispatchService, "sendPlainEmail").resolves({ success: true });
 
     await BokflytContactService.send(VALID_REQUEST);
 

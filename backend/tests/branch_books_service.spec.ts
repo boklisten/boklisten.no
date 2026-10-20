@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Order from "#models/order";
 import type { SummaryRow } from "#services/branch_books_service";
@@ -64,7 +64,7 @@ async function seedOrderedBooks() {
 }
 
 test.group("BranchBooksService: ordered books", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("books are never moved to the root", async ({ assert }) => {
     const root = await rootBranch();
@@ -246,23 +246,18 @@ test.group("BranchBooksService: ordered books", (group) => {
       amount: 100,
       orderItems: [{ itemId: sinus.id, periodTo: deadline }],
     });
-    const sandbox = createSandbox();
-    const cancel = sandbox.stub(OrderCancellationService, "cancelOrderItems").resolves();
-    try {
-      const result = await BranchBooksService.bulkCancelOrderedBooks({
-        branchId: parent.id,
-        filter: { deadline: JULY_1, includeDescendants: false },
-        notifyCustomers: false,
-        employeeId: customer.id,
-      });
+    const cancel = stub(OrderCancellationService, "cancelOrderItems").resolves();
+    const result = await BranchBooksService.bulkCancelOrderedBooks({
+      branchId: parent.id,
+      filter: { deadline: JULY_1, includeDescendants: false },
+      notifyCustomers: false,
+      employeeId: customer.id,
+    });
 
-      assert.deepEqual(result, { cancelledOrders: 1, cancelledBooks: 2, skippedBooks: 1 });
-      assert.isTrue(cancel.calledOnce);
-      const [call] = cancel.firstCall.args;
-      assert.equal(call.originalOrder.id, free.id);
-      assert.deepEqual(call.orderItems, [{ itemId: sinus.id }, { itemId: matte.id }]);
-    } finally {
-      sandbox.restore();
-    }
+    assert.deepEqual(result, { cancelledOrders: 1, cancelledBooks: 2, skippedBooks: 1 });
+    assert.isTrue(cancel.calledOnce);
+    const [call] = cancel.firstCall.args;
+    assert.equal(call.originalOrder.id, free.id);
+    assert.deepEqual(call.orderItems, [{ itemId: sinus.id }, { itemId: matte.id }]);
   });
 });

@@ -6,7 +6,7 @@ import { createItem } from "#tests/item_fixtures";
 import { createUniqueItem } from "#tests/unique_item_fixtures";
 
 test.group("item_lookup", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("findItemByIsbn returns the item carrying the isbn", async ({ assert }) => {
     const item = await createItem({ title: "Matematikk 1T", isbn: 9_788_203_208_119 });

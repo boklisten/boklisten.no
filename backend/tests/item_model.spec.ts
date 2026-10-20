@@ -7,7 +7,7 @@ import { fixtureId } from "#tests/fixtures";
 import { createItem } from "#tests/item_fixtures";
 
 test.group("Item model", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a new item gets an ObjectId-shaped primary key", async ({ assert }) => {
     const item = await createItem({ id: "" });

@@ -2,7 +2,7 @@ import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { spy } from "sinon";
 
 import Signature from "#models/signature";
 import User from "#models/user";
@@ -62,21 +62,14 @@ function makeCustomerItem(overrides: Partial<Parameters<typeof createCustomerIte
 }
 
 test.group("reconcileSignatureTask", (group) => {
-  let sandbox: sinon.SinonSandbox;
-
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createBranch({ id: "branch1" });
     await createItem({ id: "item1", title: "Some Book" });
   });
 
   group.each.setup(() => {
-    sandbox = createSandbox();
-    saveSpy = sandbox.spy(User.prototype, "save");
-  });
-
-  group.each.teardown(() => {
-    sandbox.restore();
+    saveSpy = spy(User.prototype, "save");
   });
 
   test("clears the task when the user has a valid signature", async ({ assert }) => {

@@ -46,7 +46,7 @@ function openOrderWith(type: OrderItemType) {
 }
 
 test.group("findSignatureException", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   group.each.setup(async () => {
     await createBranch({ id: "branch1" });

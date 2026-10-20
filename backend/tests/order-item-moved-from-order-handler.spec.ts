@@ -28,7 +28,7 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
   let customer: User;
 
   group.each.setup(async () => {
-    const truncate = await testUtils.db().truncate();
+    const rollback = await testUtils.db().wrapInGlobalTransaction();
     [branch, customer] = await Promise.all([
       createBranch(),
       createUser(),
@@ -36,7 +36,7 @@ test.group("OrderItemMovedFromOrderHandler", (group) => {
       createItem({ id: GYMNOS_2012 }),
       createItem({ id: OTHER_ITEM }),
     ]);
-    return truncate;
+    return rollback;
   });
 
   /** A placed order with one free rent line per item. */

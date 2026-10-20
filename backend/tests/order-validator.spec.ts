@@ -1,7 +1,6 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 import { DateTime } from "luxon";
 
 import type Order from "#models/order";
@@ -39,12 +38,9 @@ test.group("OrderValidator", (group) => {
 
   // @ts-expect-error fixme: auto ignored
   let orderUserValidatorShouldResolve;
-  let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
-    sandbox = createSandbox();
-
-    sandbox.stub(orderItemValidator, "validate").callsFake(() => {
+    stub(orderItemValidator, "validate").callsFake(() => {
       // @ts-expect-error fixme: auto ignored
       if (!orderItemShouldResolve) {
         return Promise.reject(new BlError("orderItems not valid"));
@@ -52,7 +48,7 @@ test.group("OrderValidator", (group) => {
       return Promise.resolve(true);
     });
 
-    sandbox.stub(orderPlacedValidator, "validate").callsFake(() => {
+    stub(orderPlacedValidator, "validate").callsFake(() => {
       // @ts-expect-error fixme: auto ignored
       if (!orderPlacedShouldResolve) {
         return Promise.reject(new BlError("validation of order.placed failed"));
@@ -60,7 +56,7 @@ test.group("OrderValidator", (group) => {
       return Promise.resolve(true);
     });
 
-    sandbox.stub(orderUserValidator, "validate").callsFake(() => {
+    stub(orderUserValidator, "validate").callsFake(() => {
       // @ts-expect-error fixme: auto ignored
       if (!orderUserValidatorShouldResolve) {
         return Promise.reject(new BlError("validation of user failed"));
@@ -115,9 +111,6 @@ test.group("OrderValidator", (group) => {
       buyoutPercentage: 0.5,
     });
     await createBranch(testBranch);
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
   });
 
   test("should reject if amount is null or undefined", async ({ assert }) => {

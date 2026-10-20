@@ -8,7 +8,7 @@ import { createBranch, rootBranch } from "#tests/branch_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 test.group("UserMetricsService.getMetrics", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("counts only the members of the given branches", async ({ assert }) => {
     const root = await rootBranch();

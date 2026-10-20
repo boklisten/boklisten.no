@@ -17,7 +17,7 @@ async function runMiddleware(ctx: HttpContext): Promise<boolean> {
 }
 
 test.group("ScopeMiddleware", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("lets a branch in the caller's subtree through", async ({ assert }) => {
     const school = await createBranch();

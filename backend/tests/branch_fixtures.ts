@@ -28,7 +28,7 @@ const FIXTURE_TOP_VALUES = { ...ROOT_VALUES, visibleToCustomers: true } as const
 
 /**
  * The one root of the test tree ("Alle filialer", hidden from customers like the real one), created on
- * first use after each truncate. Every branch a test creates without a parent sits directly under
+ * first use in each test. Every branch a test creates without a parent sits directly under
  * it, so the tree has a single root the way the `branches_single_root` index requires.
  */
 export async function rootBranch(): Promise<Branch> {

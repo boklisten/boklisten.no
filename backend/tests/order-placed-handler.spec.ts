@@ -1,7 +1,6 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 import { DateTime } from "luxon";
 
 import type Order from "#models/order";
@@ -31,24 +30,22 @@ test.group("OrderPlacedHandler", (group) => {
     orderItemMovedFromOrderHandler,
   );
 
-  let sandbox: sinon.SinonSandbox;
   group.each.setup(async () => {
-    const truncate = await testUtils.db().truncate();
-    sandbox = createSandbox();
+    const rollback = await testUtils.db().wrapInGlobalTransaction();
 
-    sandbox.stub(orderItemMovedFromOrderHandler, "updateOrderItems").resolves();
+    stub(orderItemMovedFromOrderHandler, "updateOrderItems").resolves();
 
-    sandbox
-      .stub(User, "find")
-      .callsFake((id: string) => Promise.resolve(id === testUser.id ? testUser : null));
-    sandbox.stub(User, "findOrFail").callsFake((id: string) => {
+    stub(User, "find").callsFake((id: string) =>
+      Promise.resolve(id === testUser.id ? testUser : null),
+    );
+    stub(User, "findOrFail").callsFake((id: string) => {
       if (id !== testUser.id) {
         return Promise.reject(new Error("user not found"));
       }
       return Promise.resolve(testUser);
     });
 
-    sandbox.stub(paymentHandler, "confirmPayments").callsFake(() => {
+    stub(paymentHandler, "confirmPayments").callsFake(() => {
       if (!paymentsConfirmed) {
         return Promise.reject(new BlError("could not confirm payments"));
       }
@@ -56,7 +53,7 @@ test.group("OrderPlacedHandler", (group) => {
       return Promise.resolve();
     });
 
-    sandbox.stub(OrderEmailHandler, "sendOrderReceipt").resolves();
+    stub(OrderEmailHandler, "sendOrderReceipt").resolves();
 
     paymentsConfirmed = true;
 
@@ -87,14 +84,11 @@ test.group("OrderPlacedHandler", (group) => {
       notifyByEmail: false,
     });
 
-    return truncate;
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
+    return rollback;
   });
 
   test("should reject if order could not be updated with confirm true", async ({ assert }) => {
-    sandbox.stub(testOrder, "save").rejects(new BlError("could not update order"));
+    stub(testOrder, "save").rejects(new BlError("could not update order"));
 
     const err = await orderPlacedHandler.placeOrder(testOrder, "user1").then(
       () => null,

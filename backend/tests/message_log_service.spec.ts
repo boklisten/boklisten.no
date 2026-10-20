@@ -3,8 +3,6 @@ import { generateKeyPairSync, randomUUID, sign as signCrypto } from "node:crypto
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
 
 import Message from "#models/message";
 import MessageEvent from "#models/message_event";
@@ -26,13 +24,9 @@ async function logSms(recipient: string, overrides: { sendoutId?: number | null 
 }
 
 test.group("MessageLogService", (group) => {
-  let sandbox: sinon.SinonSandbox;
-
+  // Truncated, not rolled back: rows take `created_at` from Postgres `now()`, which inside one shared
+  // transaction is the same instant for every insert, and the feed tests rely on insert order.
   group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
 
   test("normalizes recipients on write: phone stripped to national digits, email lowercased", async ({
     assert,

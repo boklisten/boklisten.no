@@ -1,8 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import BookHandover from "#models/book_handover";
 import CustomerItem from "#models/customer_item";
@@ -60,16 +59,48 @@ function activeCopy({
   };
 }
 
+/**
+ * Inserts the scanned copy and gives the receiver their open rent order; the order validator and
+ * the moved-order handler are stubbed.
+ */
+async function arrange(customerItem: CopySpec | null, options: { orderedItem?: string } = {}) {
+  if (customerItem) {
+    await createCustomerItem(customerItem);
+  }
+
+  await createOrder({
+    id: "receiver-rent-order",
+    branchId: BRANCH,
+    customerId: A,
+    byCustomer: true,
+    orderItems: [
+      {
+        type: "rent",
+        itemId: options.orderedItem ?? customerItem?.itemId ?? ITEM_X,
+        periodTo: inOneMonth(),
+      },
+    ],
+  });
+
+  // Names for the unexpected-sender feedback.
+  stub(User, "namesByIds").callsFake(
+    async (ids) =>
+      new Map(
+        [...ids].flatMap((id) => (id ? [[id, id === B ? "Bendik Buer" : "Cecilie Carlsen"]] : [])),
+      ),
+  );
+
+  stub(OrderValidator.prototype, "validate").resolves();
+  return {
+    movedHandlerStub: stub(OrderItemMovedFromOrderHandler.prototype, "updateOrderItems").resolves(),
+  };
+}
+
 test.group("recordTransfer", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let round: MatchRound;
 
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
-  // `truncate()` returns the cleanup hook, so this empties the tables after each test.
-  group.each.setup(() => testUtils.db().truncate());
+  // `wrapInGlobalTransaction()` returns the rollback hook, so nothing a test writes outlives it.
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
   group.each.setup(async () => {
@@ -102,49 +133,6 @@ test.group("recordTransfer", (group) => {
       receiverParticipantId: receiver!.id,
       itemId,
     });
-  }
-
-  /**
-   * Inserts the scanned copy and gives the receiver their open rent order; the order validator and
-   * the moved-order handler are stubbed.
-   */
-  async function arrange(customerItem: CopySpec | null, options: { orderedItem?: string } = {}) {
-    if (customerItem) {
-      await createCustomerItem(customerItem);
-    }
-
-    await createOrder({
-      id: "receiver-rent-order",
-      branchId: BRANCH,
-      customerId: A,
-      byCustomer: true,
-      orderItems: [
-        {
-          type: "rent",
-          itemId: options.orderedItem ?? customerItem?.itemId ?? ITEM_X,
-          periodTo: inOneMonth(),
-        },
-      ],
-    });
-
-    // Names for the unexpected-sender feedback.
-    sandbox
-      .stub(User, "namesByIds")
-      .callsFake(
-        async (ids) =>
-          new Map(
-            [...ids].flatMap((id) =>
-              id ? [[id, id === B ? "Bendik Buer" : "Cecilie Carlsen"]] : [],
-            ),
-          ),
-      );
-
-    sandbox.stub(OrderValidator.prototype, "validate").resolves();
-    return {
-      movedHandlerStub: sandbox
-        .stub(OrderItemMovedFromOrderHandler.prototype, "updateOrderItems")
-        .resolves(),
-    };
   }
 
   test("a peer's own copy discharges both halves with one handover", async ({ assert }) => {
@@ -247,9 +235,9 @@ test.group("recordTransfer", (group) => {
     await arrange(null);
     // Found by its blid, a copy always has one; the guard covers a lookup that ever returns
     // one without.
-    sandbox
-      .stub(CustomerItem, "activeByBlid")
-      .resolves([customerItemDouble({ customerId: B, itemId: ITEM_X, blid: null })]);
+    stub(CustomerItem, "activeByBlid").resolves([
+      customerItemDouble({ customerId: B, itemId: ITEM_X, blid: null }),
+    ]);
 
     await assert.rejects(
       () => recordTransfer(A, { blid: BLID }),
@@ -295,7 +283,7 @@ test.group("recordTransfer", (group) => {
   }) => {
     await seedObligation(B, A);
     await arrange(activeCopy({ customerId: B }));
-    sandbox.stub(CustomerItem.prototype, "save").rejects(new Error("postgres down"));
+    stub(CustomerItem.prototype, "save").rejects(new Error("postgres down"));
 
     await assert.rejects(() => recordTransfer(A, { blid: BLID }), /postgres down/);
 

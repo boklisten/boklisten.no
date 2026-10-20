@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Order from "#models/order";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
@@ -499,16 +499,13 @@ async function seedOrderWorld() {
 }
 
 test.group("OrderHistoryService.deleteOrder()", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
   const employee = monitoredEmployeeDouble({ userId: EMPLOYEE });
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(() => {
-    sandbox = createSandbox();
-    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
+    report = stub(EmployeeMonitoringService, "report").resolves();
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("deletes the order with its lines and reports what the order held", async ({ assert }) => {
     const { branch, customer, sinus, matte } = await seedOrderWorld();
@@ -544,16 +541,13 @@ test.group("OrderHistoryService.deleteOrder()", (group) => {
 });
 
 test.group("OrderHistoryService.updateBranch()", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
   const employee = monitoredEmployeeDouble({ userId: EMPLOYEE });
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(() => {
-    sandbox = createSandbox();
-    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
+    report = stub(EmployeeMonitoringService, "report").resolves();
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("moves the order and reports the change with both branch names", async ({ assert }) => {
     const { branch, customer, sinus } = await seedOrderWorld();
@@ -639,17 +633,14 @@ async function orderWith(line: Partial<OrderItemDto> = {}) {
 }
 
 test.group("OrderHistoryService.updateItemDeadline()", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
   const employee = monitoredEmployeeDouble({ userId: EMPLOYEE });
   const NEW_DEADLINE = "2027-12-01";
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(() => {
-    sandbox = createSandbox();
-    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
+    report = stub(EmployeeMonitoringService, "report").resolves();
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("moves the period end of the open item and reports both deadlines", async ({ assert }) => {
     const { order, customer, itemId } = await orderWith();
@@ -721,7 +712,7 @@ test.group("OrderHistoryService.updateItemDeadline()", (group) => {
 });
 
 test.group("OrderHistoryService.getForCustomer()", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("presents the customer's placed orders newest first, with the catalogue title", async ({
     assert,

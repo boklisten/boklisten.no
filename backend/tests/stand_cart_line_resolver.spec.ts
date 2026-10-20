@@ -1,7 +1,6 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 import { DateTime } from "luxon";
 
 import BranchModel from "#models/branch";
@@ -139,21 +138,19 @@ async function insertOrders(orders: OrderSpec[]): Promise<void> {
   }
 }
 
-async function stubWorld(sandbox: sinon.SinonSandbox, world: World) {
+async function stubWorld(world: World) {
   // Order lines may point at the customer items, so those go in first.
   for (const customerItem of world.customerItems) {
     await createCustomerItem(customerItem);
   }
   await insertOrders(world.orders);
   const paid = new Set(world.orders.filter((order) => order.paid).map((order) => order.id));
-  sandbox
-    .stub(Payment, "existFor")
-    .callsFake((orderId: string) => Promise.resolve(paid.has(orderId)));
+  stub(Payment, "existFor").callsFake((orderId: string) => Promise.resolve(paid.has(orderId)));
   for (const orderId of world.bringOrderIds) {
     await createDelivery({ orderId });
   }
-  sandbox.stub(User, "find").resolves(userDouble({ id: OTHER_CUSTOMER_ID, name: "Kari Nordmann" }));
-  sandbox.stub(PeerObligations, "findPeerSender").resolves(world.peerSender);
+  stub(User, "find").resolves(userDouble({ id: OTHER_CUSTOMER_ID, name: "Kari Nordmann" }));
+  stub(PeerObligations, "findPeerSender").resolves(world.peerSender);
 }
 
 function line(result: Awaited<ReturnType<typeof StandCartLineResolver.resolve>>): StandCartLine {
@@ -164,10 +161,9 @@ function line(result: Awaited<ReturnType<typeof StandCartLineResolver.resolve>>)
 }
 
 test.group("StandCartLineResolver.resolve", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let world: World;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     for (const item of CATALOGUE) {
       await createItem(item);
@@ -179,7 +175,6 @@ test.group("StandCartLineResolver.resolve", (group) => {
     await createUniqueItem({ itemId: OTHER_ITEM_ID, blid: OTHER_BLID });
     await createUser({ id: CUSTOMER_ID });
     await createUser({ id: OTHER_CUSTOMER_ID });
-    sandbox = createSandbox();
     world = {
       orders: [orderWith({})],
       customerItems: [],
@@ -187,13 +182,12 @@ test.group("StandCartLineResolver.resolve", (group) => {
       peerSender: null,
     };
   });
-  group.each.teardown(() => sandbox.restore());
 
   const resolve = async (
     source: Parameters<typeof StandCartLineResolver.resolve>[0]["source"],
     extra: Partial<Parameters<typeof StandCartLineResolver.resolve>[0]> = {},
   ) => {
-    await stubWorld(sandbox, world);
+    await stubWorld(world);
     return StandCartLineResolver.resolve(
       { customerId: CUSTOMER_ID, branchId: BRANCH_ID, source, ...extra },
       NOW,

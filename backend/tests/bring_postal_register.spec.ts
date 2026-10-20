@@ -1,6 +1,6 @@
 import { test } from "@japa/runner";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub, useFakeTimers } from "sinon";
 
 import { BringService } from "#services/bring/bring_service";
 
@@ -13,20 +13,15 @@ function registerResponse(cities: Record<string, string>): Response {
 }
 
 test.group("BringService.postalCities", (group) => {
-  let sandbox: sinon.SinonSandbox;
+  let clock: sinon.SinonFakeTimers;
   let fetchStub: sinon.SinonStub;
   // The register lives as long as the process, so each test starts days after the last one.
   let now = Date.now();
 
   group.each.setup(() => {
     now += 10 * DAY_MS;
-    sandbox = createSandbox();
-    sandbox.useFakeTimers({ now, toFake: ["Date"] });
-    fetchStub = sandbox.stub(globalThis, "fetch");
-  });
-
-  group.each.teardown(() => {
-    sandbox.restore();
+    clock = useFakeTimers({ now, toFake: ["Date"] });
+    fetchStub = stub(globalThis, "fetch");
   });
 
   test("looks codes up in a register fetched once", async ({ assert }) => {
@@ -46,7 +41,7 @@ test.group("BringService.postalCities", (group) => {
     fetchStub.onFirstCall().resolves(registerResponse({ "0150": "Oslo" }));
     fetchStub.onSecondCall().resolves(registerResponse({ "0150": "Oslo", "0151": "Oslo" }));
     await BringService.postalCities();
-    sandbox.clock.tick(DAY_MS + 1);
+    clock.tick(DAY_MS + 1);
 
     const cityOf = await BringService.postalCities();
 
@@ -58,7 +53,7 @@ test.group("BringService.postalCities", (group) => {
     fetchStub.onFirstCall().resolves(registerResponse({ "0150": "Oslo" }));
     fetchStub.onSecondCall().resolves(new Response("", { status: 503 }));
     await BringService.postalCities();
-    sandbox.clock.tick(DAY_MS + 1);
+    clock.tick(DAY_MS + 1);
 
     const cityOf = await BringService.postalCities();
 

@@ -3,7 +3,7 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import CustomerItem from "#models/customer_item";
 import Order from "#models/order";
@@ -79,12 +79,11 @@ async function handoutOrder(): Promise<Order> {
 }
 
 test.group("StandCartPlacement.place", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let placeOrder: sinon.SinonStub;
   let recordHandover: sinon.SinonStub;
   let report: sinon.SinonStub;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createBranch({ id: BRANCH_ID });
     await createUser({ id: CUSTOMER_ID });
@@ -94,22 +93,20 @@ test.group("StandCartPlacement.place", (group) => {
     // The stand hands out only registered stickers.
     await createUniqueItem({ blid: "12345678", itemId: "item1" });
     await createUniqueItem({ blid: "87654321", itemId: "item2" });
-    sandbox = createSandbox();
-    sandbox.stub(User, "findOrFail").resolves(userDouble({ id: CUSTOMER_ID, name: "Ola" }));
-    placeOrder = sandbox
-      .stub(OrderPlacedHandler.prototype, "placeOrder")
-      .callsFake(async (order: Order) => {
+    stub(User, "findOrFail").resolves(userDouble({ id: CUSTOMER_ID, name: "Ola" }));
+    placeOrder = stub(OrderPlacedHandler.prototype, "placeOrder").callsFake(
+      async (order: Order) => {
         order.placed = true;
         return order.save();
-      });
-    sandbox.stub(MatchRepository, "findReceiverObligation").resolves(null);
-    sandbox.stub(MatchRepository, "findSenderObligation").resolves(null);
-    recordHandover = sandbox.stub(MatchRepository, "recordHandover").resolves(unchecked({}));
-    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
-    sandbox.stub(Signature, "validForCustomer").resolves(unchecked({}));
-    sandbox.stub(Signature, "newestForCustomer").resolves(null);
+      },
+    );
+    stub(MatchRepository, "findReceiverObligation").resolves(null);
+    stub(MatchRepository, "findSenderObligation").resolves(null);
+    recordHandover = stub(MatchRepository, "recordHandover").resolves(unchecked({}));
+    report = stub(EmployeeMonitoringService, "report").resolves();
+    stub(Signature, "validForCustomer").resolves(unchecked({}));
+    stub(Signature, "newestForCustomer").resolves(null);
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("creates a customer item for each loan handed out and writes its id onto the order before placing", async ({
     assert,

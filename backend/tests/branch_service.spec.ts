@@ -21,7 +21,7 @@ const SEMESTER_END = "2026-12-20";
 const YEAR_END = "2027-07-01";
 
 test.group("branch_service", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("createBranch stores the general fields and returns a branch with empty period lists", async ({
     assert,
@@ -151,7 +151,7 @@ async function sonansTree() {
 const overrideOf = async (id: string) => (await Branch.findOrFail(id)).overrides.visibleToCustomers;
 
 test.group("branch_service inheritance", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a branch that inherits stores null and follows every change above", async ({ assert }) => {
     const { sonans, oslo, kveld } = await sonansTree();

@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Match from "#models/match";
 import MatchParticipant from "#models/match_participant";
@@ -29,23 +29,20 @@ async function seedRoundWithUserMatch(customerIds: string[], status = "active") 
 }
 
 test.group("notify", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let getManyStub: sinon.SinonStub;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C, D]));
   group.each.setup(() => {
-    sandbox = createSandbox();
-    sandbox.stub(DispatchService, "sendMatchInformation").resolves({
+    stub(DispatchService, "sendMatchInformation").resolves({
       mailStatus: { success: true },
       smsStatus: { successCount: 0, failed: [] },
     });
-    getManyStub = sandbox
-      .stub(User, "findMany")
-      .callsFake(async (ids) => ids.map((id) => userDouble({ id: String(id) })));
+    getManyStub = stub(User, "findMany").callsFake(async (ids) =>
+      ids.map((id) => userDouble({ id: String(id) })),
+    );
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("messages only the named round", async ({ assert }) => {
     const oldRound = await seedRoundWithUserMatch([A, B]);

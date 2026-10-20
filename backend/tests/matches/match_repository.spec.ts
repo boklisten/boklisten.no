@@ -29,7 +29,7 @@ async function createHandoverOrder(): Promise<string> {
 }
 
 test.group("match rounds", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
 
@@ -67,7 +67,7 @@ async function createRound() {
 }
 
 test.group("match participants", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
 
@@ -163,7 +163,7 @@ async function createUserMatch() {
 }
 
 test.group("match obligations", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
 
@@ -230,6 +230,8 @@ test.group("match obligations", (group) => {
 });
 
 test.group("book handovers", (group) => {
+  // Truncated, not rolled back: these tests make Postgres reject a write, which would abort a
+  // shared transaction and fail every later query in the test.
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
@@ -380,6 +382,8 @@ async function seedDraftUserMatch() {
 }
 
 test.group("MatchRepository", (group) => {
+  // Truncated, not rolled back: these tests make Postgres reject a write, which would abort a
+  // shared transaction and fail every later query in the test.
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));

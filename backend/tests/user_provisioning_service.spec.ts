@@ -358,7 +358,7 @@ test.group("UserProvisioningService.provisioningErrorMessage()", (group) => {
 });
 
 test.group("UserProvisioningService.provision() scope", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("refuses rows naming someone outside the uploader's scope or above their level", async ({
     assert,

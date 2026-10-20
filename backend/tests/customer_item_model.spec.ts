@@ -22,7 +22,7 @@ async function world() {
 }
 
 test.group("CustomerItem model", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("active means not returned, bought out, cancelled or bought back", async ({ assert }) => {
     const { customer, copy } = await world();

@@ -1,7 +1,7 @@
 import { Secret } from "@adonisjs/core/helpers";
 import { test } from "@japa/runner";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import {
   EmailValidationService,
@@ -36,30 +36,25 @@ function jsonResponse(status: number, body: unknown) {
   return Response.json(body, { status });
 }
 
+function withApiKey(apiKey: string | undefined) {
+  const originalGet = env.get.bind(env);
+  stub(env, "get").callsFake(
+    unchecked((key: string) =>
+      key === "SENDGRID_EMAIL_VALIDATION_API_KEY"
+        ? apiKey === undefined
+          ? undefined
+          : new Secret(apiKey)
+        : originalGet(unchecked(key)),
+    ),
+  );
+}
+
 test.group("EmailValidationService.check", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let fetchStub: sinon.SinonStub;
 
-  function withApiKey(apiKey: string | undefined) {
-    const originalGet = env.get.bind(env);
-    sandbox
-      .stub(env, "get")
-      .callsFake(
-        unchecked((key: string) =>
-          key === "SENDGRID_EMAIL_VALIDATION_API_KEY"
-            ? apiKey === undefined
-              ? undefined
-              : new Secret(apiKey)
-            : originalGet(unchecked(key)),
-        ),
-      );
-  }
-
   group.each.setup(() => {
-    sandbox = createSandbox();
-    fetchStub = sandbox.stub(globalThis, "fetch");
+    fetchStub = stub(globalThis, "fetch");
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("without a validation key it reports unavailable and never calls SendGrid", async ({
     assert,

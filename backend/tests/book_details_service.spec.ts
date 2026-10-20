@@ -52,7 +52,7 @@ async function handedOutBook() {
 }
 
 test.group("BookDetailsService.forCustomerItem", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createItem({ id: ITEM, title: "Mønster 1T", isbn: 9_788_202_696_153 });
     await createBranch({ id: BRANCH, name: "Ullern VGS" });
@@ -189,7 +189,7 @@ test.group("BookDetailsService.forCustomerItem", (group) => {
 });
 
 test.group("BookDetailsService.forOrderedItem", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createItem({ id: ITEM, title: "Mønster 1T" });
     await createBranch({ id: BRANCH, name: "Ullern VGS" });

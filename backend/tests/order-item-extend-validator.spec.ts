@@ -1,6 +1,5 @@
 import { test } from "@japa/runner";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 import { DateTime } from "luxon";
 
 import CustomerItem from "#models/customer_item";
@@ -19,11 +18,9 @@ test.group("OrderItemExtendValidator", (group) => {
 
   let testBranch: Branch;
   let testCustomerItem: CustomerItem;
-  let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {
-    sandbox = createSandbox();
-    sandbox.stub(CustomerItem, "findOrFail").callsFake((id: unknown) => {
+    stub(CustomerItem, "findOrFail").callsFake((id: unknown) => {
       if (id !== testCustomerItem.id) {
         return Promise.reject(new BlError("not found").code(702));
       }
@@ -70,9 +67,6 @@ test.group("OrderItemExtendValidator", (group) => {
       ],
       buyoutPercentage: 0.5,
     });
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
   });
 
   test('should reject if orderItem.type is not "extend"', async ({ assert }) => {

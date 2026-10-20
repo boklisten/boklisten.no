@@ -6,7 +6,7 @@ import { isObjectIdHex } from "#models/helpers/object_id";
 import { createCompany } from "#tests/company_fixtures";
 
 test.group("Company model", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a new company gets an ObjectId-shaped primary key", async ({ assert }) => {
     const company = await createCompany({ id: "" });

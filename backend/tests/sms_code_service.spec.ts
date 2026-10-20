@@ -1,7 +1,7 @@
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import SmsCode from "#models/sms_code";
 import DispatchService from "#services/dispatch_service";
@@ -19,18 +19,18 @@ async function backdate(minutes: number) {
 }
 
 test.group("SmsCodeService", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let sendSmsCode: sinon.SinonStub<
     Parameters<typeof DispatchService.sendSmsCode>,
     ReturnType<typeof DispatchService.sendSmsCode>
   >;
+  // Truncated, not rolled back: the parallel test needs separate connections to contend for the
+  // advisory lock; one shared transaction runs the calls one after another, so it would pass even
+  // without the lock.
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
-    sandbox = createSandbox();
-    sendSmsCode = sandbox.stub(DispatchService, "sendSmsCode").resolves();
-    sandbox.stub(SmsCodeService, "localCode").value(null);
+    sendSmsCode = stub(DispatchService, "sendSmsCode").resolves();
+    stub(SmsCodeService, "localCode").value(null);
   });
-  group.each.teardown(() => sandbox.restore());
 
   /** The code from the text of the SMS sent last. */
   function lastCode(): string {
@@ -135,7 +135,7 @@ test.group("SmsCodeService", (group) => {
   test("undeployed, every code is the fixed one and nothing is sent or awaited", async ({
     assert,
   }) => {
-    sandbox.stub(SmsCodeService, "localCode").value(LOCAL_CODE);
+    stub(SmsCodeService, "localCode").value(LOCAL_CODE);
 
     assert.isNull(await SmsCodeService.issue(LOGIN, null));
     assert.isNull(await SmsCodeService.issue(LOGIN, null));

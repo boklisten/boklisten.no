@@ -20,6 +20,8 @@ async function world() {
 }
 
 test.group("Delivery model", (group) => {
+  // Truncated, not rolled back: these tests make Postgres reject a write, which would abort a
+  // shared transaction and fail every later query in the test.
   group.each.setup(() => testUtils.db().truncate());
 
   test("finds the delivery of each order, and which orders went by Bring", async ({ assert }) => {

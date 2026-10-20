@@ -36,7 +36,7 @@ function createSignature(signingName: string, signedByGuardian: boolean) {
 }
 
 test.group("assertSignedForCheckout", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("lets a cart without books to borrow through without any signature", async () => {
     const customer = await adult();

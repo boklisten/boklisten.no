@@ -34,7 +34,7 @@ const book = (overrides: Partial<Parameters<typeof createCustomerItem>[0]> = {})
 test.group("CustomerItemsController.forCustomer", (group) => {
   const controller = new CustomerItemsController();
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createItem({ id: ITEM_ID, title: "Mønster 1T" });
     await createBranch({ id: BRANCH_ID, name: "Ullern VGS" });

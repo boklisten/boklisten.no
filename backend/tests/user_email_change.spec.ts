@@ -1,7 +1,7 @@
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import EmailVerification from "#models/email_verification";
 import User from "#models/user";
@@ -30,15 +30,11 @@ function ownDetails(user: User, email = user.email) {
 }
 
 test.group("Changing a user's email", (group) => {
-  const sandbox = createSandbox();
   let sendEmailVerification: sinon.SinonStub;
   group.each.setup(async () => {
-    const truncate = await testUtils.db().truncate();
-    sendEmailVerification = sandbox.stub(DispatchService, "sendEmailVerification").resolves();
-    return async () => {
-      sandbox.restore();
-      await truncate();
-    };
+    const rollback = await testUtils.db().wrapInGlobalTransaction();
+    sendEmailVerification = stub(DispatchService, "sendEmailVerification").resolves();
+    return rollback;
   });
 
   test("their own new email starts unconfirmed and gets a fresh link", async ({ assert }) => {

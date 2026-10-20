@@ -13,7 +13,7 @@ import { createItem } from "#tests/item_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 test.group("Invoice model", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("reads the lines back in print order with øre amounts as numbers", async ({ assert }) => {
     const { id } = await createInvoice({
@@ -116,7 +116,7 @@ test.group("Invoice model", (group) => {
 });
 
 test.group("branch insights: invoiced books", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("counts the book lines of the branches' invoices per year in Oslo time", async ({
     assert,

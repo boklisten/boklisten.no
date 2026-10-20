@@ -1,8 +1,7 @@
 import * as Sentry from "@sentry/node";
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import type Order from "#models/order";
 import User from "#models/user";
@@ -109,22 +108,16 @@ test.group("buildRefundRequestMail", () => {
 });
 
 test.group("RefundRequestService.send", (group) => {
-  let sandbox: sinon.SinonSandbox;
-
   group.each.setup(() => {
-    sandbox = createSandbox();
-    sandbox
-      .stub(User, "findOrFail")
-      .callsFake((id) => Promise.resolve(id === EMPLOYEE_ID ? employee : customer));
+    stub(User, "findOrFail").callsFake((id) =>
+      Promise.resolve(id === EMPLOYEE_ID ? employee : customer),
+    );
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("resolves the people and sends through the dispatch service for any role", async ({
     assert,
   }) => {
-    const sendPlainEmail = sandbox
-      .stub(DispatchService, "sendPlainEmail")
-      .resolves({ success: true });
+    const sendPlainEmail = stub(DispatchService, "sendPlainEmail").resolves({ success: true });
 
     await RefundRequestService.send({
       order,
@@ -150,7 +143,7 @@ test.group("RefundRequestService.send", (group) => {
     assert,
   }) => {
     const captured = recordEventsSentToSentry();
-    sandbox.stub(DispatchService, "sendPlainEmail").rejects(new Error("SendGrid down"));
+    stub(DispatchService, "sendPlainEmail").rejects(new Error("SendGrid down"));
 
     await RefundRequestService.send({
       order,

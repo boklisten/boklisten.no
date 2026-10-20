@@ -16,7 +16,7 @@ function rejection(run: () => Promise<void>): Promise<Error | null> {
 }
 
 test.group("assertStandRules", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(() => ensureUsers([STUDENT]));
 
   test("accepts descendants of the round's branch and students that exist", async ({ assert }) => {

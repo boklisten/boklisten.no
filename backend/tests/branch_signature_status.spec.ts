@@ -115,7 +115,7 @@ test.group("BranchSignatureStatusService.summarize", () => {
 });
 
 test.group("BranchSignatureStatusService.getStatus", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("joins members of the branch and its descendants with their newest signature", async ({
     assert,

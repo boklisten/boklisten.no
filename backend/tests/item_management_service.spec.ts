@@ -65,7 +65,7 @@ test.group("duplicates", () => {
 });
 
 test.group("ItemManagementService", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("create starts the price history with this year's price", async ({ assert }) => {
     const created = await ItemManagementService.create(SINUS);
@@ -117,6 +117,8 @@ test.group("ItemManagementService", (group) => {
 });
 
 test.group("ItemManagementService.bulkUpsert", (group) => {
+  // Truncated, not rolled back: these tests make Postgres reject a write, which would abort a
+  // shared transaction and fail every later query in the test.
   group.each.setup(() => testUtils.db().truncate());
 
   test("refuses the whole batch when the file repeats an isbn", async ({ assert }) => {

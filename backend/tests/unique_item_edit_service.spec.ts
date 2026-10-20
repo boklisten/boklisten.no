@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import CustomerItem from "#models/customer_item";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
@@ -41,21 +41,18 @@ async function customerItemTitles() {
 }
 
 test.group("UniqueItemEditService", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createItem({ id: OLD_ITEM_ID, title: "Sinus 1T" });
     await createItem({ id: NEW_ITEM_ID, title: "Sinus 1P" });
-    sandbox = createSandbox();
-    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
+    report = stub(EmployeeMonitoringService, "report").resolves();
     await createUniqueItem({ id: UNIQUE_ITEM_ID, blid: BLID, itemId: OLD_ITEM_ID });
     await createBranch({ id: BRANCH_ID });
     await createUser({ id: CUSTOMER_ID });
     await copy(true);
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("relink writes the new item to the unique item and every customer item with the blid", async ({
     assert,

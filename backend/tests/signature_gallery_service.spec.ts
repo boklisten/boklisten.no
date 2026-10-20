@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { spy, stub } from "sinon";
 
 import Branch from "#models/branch";
 import Signature from "#models/signature";
@@ -160,18 +160,15 @@ test.group("SignatureGalleryService.toGalleryItem", () => {
 });
 
 test.group("SignatureGalleryService.getPage", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let pageStub: sinon.SinonStub;
   let customersStub: sinon.SinonStub;
   let branchNamesSpy: sinon.SinonSpy;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(() => {
-    sandbox = createSandbox();
-    pageStub = sandbox.stub(Signature, "newestPerCustomerPage");
-    customersStub = sandbox.stub(User, "byIds");
-    branchNamesSpy = sandbox.spy(Branch, "namesByIds");
-    return () => sandbox.restore();
+    pageStub = stub(Signature, "newestPerCustomerPage");
+    customersStub = stub(User, "byIds");
+    branchNamesSpy = spy(Branch, "namesByIds");
   });
 
   test("returns an empty final page when there are no rows", async ({ assert }) => {
@@ -275,7 +272,7 @@ async function sign(customerId: string, signingName: string): Promise<Signature>
 }
 
 test.group("SignatureGalleryService.getPage scope", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("holds only the members of the node and the branches below it", async ({ assert }) => {
     const school = await createBranch({ name: "Ullern VGS" });

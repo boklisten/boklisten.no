@@ -1,8 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Match from "#models/match";
 import MatchObligation from "#models/match_obligation";
@@ -39,51 +38,45 @@ function heldBy(customerId: string, itemIds: string[]) {
   return { id: customerId, items: itemIds };
 }
 
-test.group("generateRound", (group) => {
-  let sandbox: sinon.SinonSandbox;
+/**
+ * Inserts the held books and the orders.
+ *
+ * @param wanted who ordered which items themselves at the branch
+ */
+async function arrange(
+  held: ReturnType<typeof heldBy>[],
+  wanted: { id: string; wantedItems: string[] }[],
+  users: { id: string; branchMembership?: string }[] = [],
+) {
+  await createHeldBooks(BRANCH, held);
+  for (const { id, wantedItems } of wanted) {
+    await createOrder({
+      branchId: BRANCH,
+      customerId: id,
+      byCustomer: true,
+      orderItems: wantedItems.map((itemId) => ({ itemId })),
+    });
+  }
+  stub(User, "byIds").resolves(
+    new Map(
+      users.map((user) => [
+        user.id,
+        userDouble({
+          id: user.id,
+          ...(user.branchMembership && { branchMembershipId: user.branchMembership }),
+        }),
+      ]),
+    ),
+  );
+}
 
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
-  group.each.setup(() => testUtils.db().truncate());
+test.group("generateRound", (group) => {
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B]));
   group.each.setup(async () => {
     await createBranch({ id: BRANCH });
   });
-
-  /**
-   * Inserts the held books and the orders.
-   *
-   * @param wanted who ordered which items themselves at the branch
-   */
-  async function arrange(
-    held: ReturnType<typeof heldBy>[],
-    wanted: { id: string; wantedItems: string[] }[],
-    users: { id: string; branchMembership?: string }[] = [],
-  ) {
-    await createHeldBooks(BRANCH, held);
-    for (const { id, wantedItems } of wanted) {
-      await createOrder({
-        branchId: BRANCH,
-        customerId: id,
-        byCustomer: true,
-        orderItems: wantedItems.map((itemId) => ({ itemId })),
-      });
-    }
-    sandbox.stub(User, "byIds").resolves(
-      new Map(
-        users.map((user) => [
-          user.id,
-          userDouble({
-            id: user.id,
-            ...(user.branchMembership && { branchMembershipId: user.branchMembership }),
-          }),
-        ]),
-      ),
-    );
-  }
 
   test("creates an obligation per matched title, with both parties named", async ({ assert }) => {
     // A holds X and wants Y; B holds Y and wants X — a clean two-way swap.

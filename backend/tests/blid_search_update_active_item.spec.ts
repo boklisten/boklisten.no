@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
@@ -25,10 +25,9 @@ const ADMIN = { ...EMPLOYEE, permission: "admin" as const };
 const ITEM_ID = fixtureId("1");
 
 test.group("BlidSearchService.updateActiveItem()", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createItem({ id: ITEM_ID, title: "Sinus 1T" });
     await createBranch({ id: OLD_BRANCH_ID, name: "Ullern VGS" });
@@ -42,10 +41,8 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
       deadline: DateTime.fromISO("2026-07-01"),
       handoutBranchId: OLD_BRANCH_ID,
     });
-    sandbox = createSandbox();
-    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
+    report = stub(EmployeeMonitoringService, "report").resolves();
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("a changed deadline is written and reported with the old and new date", async ({
     assert,
@@ -125,7 +122,7 @@ test.group("BlidSearchService.updateActiveItem()", (group) => {
 });
 
 test.group("BlidSearchService.search()", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("ranks held copies first and names their holder", async ({ assert }) => {
     await createItem({ id: ITEM_ID, title: "Sinus 1T" });

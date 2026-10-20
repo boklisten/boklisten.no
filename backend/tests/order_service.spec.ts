@@ -1,8 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Branch from "#models/branch";
 import Order from "#models/order";
@@ -39,17 +38,14 @@ function existingOpenOrder(type: "rent" | "buy") {
 }
 
 test.group("OrderService.createFromCart", (group) => {
-  let sandbox: sinon.SinonSandbox;
-
   group.each.setup(async () => {
-    const truncate = await testUtils.db().truncate();
-    sandbox = createSandbox();
+    const rollback = await testUtils.db().wrapInGlobalTransaction();
     await Promise.all([
       createItem({ id: ITEM_ID, title: TITLE, price: 500 }),
       createBranch({ id: BRANCH_ID }),
       createUser({ id: CUSTOMER_ID }),
     ]);
-    sandbox.stub(OrderItemService, "createRentOrderItem").resolves({
+    stub(OrderItemService, "createRentOrderItem").resolves({
       type: "rent",
       itemId: ITEM_ID,
       handout: false,
@@ -61,7 +57,7 @@ test.group("OrderService.createFromCart", (group) => {
       numberOfPeriods: 1,
       periodType: "year",
     });
-    sandbox.stub(OrderItemService, "createBuyoutOrderItem").resolves({
+    stub(OrderItemService, "createBuyoutOrderItem").resolves({
       type: "buyout",
       itemId: ITEM_ID,
       handout: false,
@@ -70,9 +66,8 @@ test.group("OrderService.createFromCart", (group) => {
       unitPrice: 250,
       customerItemId: "ci1",
     });
-    return truncate;
+    return rollback;
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("creates an order when there are no conflicts", async ({ assert }) => {
     const order = await OrderService.createFromCart(CUSTOMER_ID, [rentCartItem()]);
@@ -171,7 +166,7 @@ test.group("OrderService.createFromCart", (group) => {
 });
 
 test.group("OrderService.getOpenOrderItems", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("lists placed lines not yet handed out, delivered or moved on", async ({ assert }) => {
     const [branch, customer, open, handedOut, other] = await Promise.all([

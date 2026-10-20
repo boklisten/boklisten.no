@@ -1,8 +1,7 @@
 import { inflateSync } from "node:zlib";
 
 import { test } from "@japa/runner";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import UniqueItem from "#models/unique_item";
 import UniqueIdGeneratorService from "#services/unique_id_generator_service";
@@ -44,16 +43,9 @@ function rectangleExtent(pdf: Buffer): { left: number; right: number } {
   return { left, right };
 }
 
-test.group("UniqueIdGeneratorService", (group) => {
-  let sandbox: sinon.SinonSandbox;
-
-  group.each.setup(() => {
-    sandbox = createSandbox();
-    return () => sandbox.restore();
-  });
-
+test.group("UniqueIdGeneratorService", () => {
   test("generates distinct, well-formed ids", async ({ assert }) => {
-    sandbox.stub(UniqueItem, "takenBlids").resolves(new Set());
+    stub(UniqueItem, "takenBlids").resolves(new Set());
 
     const ids = await UniqueIdGeneratorService.generateUnusedUniqueIds(400);
 
@@ -66,7 +58,7 @@ test.group("UniqueIdGeneratorService", (group) => {
 
   test("replaces ids that already belong to a unique item", async ({ assert }) => {
     let taken = "";
-    const takenBlids = sandbox.stub(UniqueItem, "takenBlids");
+    const takenBlids = stub(UniqueItem, "takenBlids");
     takenBlids.callsFake((candidates) => {
       if (taken === "") {
         taken = candidatesOf(candidates)[0] ?? "";
@@ -86,9 +78,9 @@ test.group("UniqueIdGeneratorService", (group) => {
   });
 
   test("gives up when every round collides", async ({ assert }) => {
-    sandbox
-      .stub(UniqueItem, "takenBlids")
-      .callsFake((candidates) => Promise.resolve(new Set(candidatesOf(candidates))));
+    stub(UniqueItem, "takenBlids").callsFake((candidates) =>
+      Promise.resolve(new Set(candidatesOf(candidates))),
+    );
 
     await assert.rejects(
       () => UniqueIdGeneratorService.generateUnusedUniqueIds(3),
@@ -99,7 +91,7 @@ test.group("UniqueIdGeneratorService", (group) => {
   test("renders two vector pages per id with the embedded caption font, fast", async ({
     assert,
   }) => {
-    sandbox.stub(UniqueItem, "takenBlids").resolves(new Set());
+    stub(UniqueItem, "takenBlids").resolves(new Set());
 
     const started = performance.now();
     const pdf = await UniqueIdGeneratorService.generateUniqueIdPdf();
@@ -118,7 +110,7 @@ test.group("UniqueIdGeneratorService", (group) => {
   }).timeout(15_000);
 
   test("places the codes exactly where the raster labels had them", async ({ assert }) => {
-    sandbox.stub(UniqueItem, "takenBlids").resolves(new Set());
+    stub(UniqueItem, "takenBlids").resolves(new Set());
 
     const pdf = await UniqueIdGeneratorService.generateUniqueIdPdf();
     const { left, right } = rectangleExtent(pdf);

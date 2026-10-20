@@ -34,7 +34,7 @@ const copy = (
   });
 
 test.group("extendRemainingCopyDeadlines", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B]));
   group.each.setup(async () => {

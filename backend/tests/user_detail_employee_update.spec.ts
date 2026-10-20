@@ -13,7 +13,7 @@ function underageDob(): DateTime {
 }
 
 test.group("UserService.updateAsEmployee", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("clears the confirm-details task when the saved details are complete", async ({
     assert,

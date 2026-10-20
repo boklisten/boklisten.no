@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Branch from "#models/branch";
 import CustomerItem from "#models/customer_item";
@@ -67,10 +67,9 @@ async function buyoutFlags() {
 }
 
 test.group("invoice status changes", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let placeOrder: sinon.SinonStub;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createBranch({ id: "branch1" });
     await createUser({ id: CUSTOMER_ID });
@@ -86,13 +85,9 @@ test.group("invoice status changes", (group) => {
       blid: "blid0002",
       returned: true,
     });
-    sandbox = createSandbox();
-    placeOrder = sandbox
-      .stub(OrderPlacedHandler.prototype, "placeOrder")
-      .callsFake((order: Order) => Promise.resolve(order));
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
+    placeOrder = stub(OrderPlacedHandler.prototype, "placeOrder").callsFake((order: Order) =>
+      Promise.resolve(order),
+    );
   });
 
   test("order line amounts are whole kroner truncated to tens, as legacy bl-admin's price service did", ({

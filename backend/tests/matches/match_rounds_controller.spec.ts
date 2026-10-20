@@ -21,7 +21,7 @@ import {
 } from "#tests/matches/match-testing-utils";
 
 test.group("match round management", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers(["5d765db5fc8c47001c408d81", "5d765db5fc8c47001c408d82"]));
 

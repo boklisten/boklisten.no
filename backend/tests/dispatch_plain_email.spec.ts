@@ -2,7 +2,7 @@ import sgMail from "@sendgrid/mail";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { test } from "@japa/runner";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import Message from "#models/message";
 import User from "#models/user";
@@ -21,29 +21,24 @@ const PLAIN_MAIL = {
   context: { messageType: "employee-monitoring" as const, customerId: CUSTOMER_ID },
 };
 
-function runAsProduction(sandbox: sinon.SinonSandbox) {
+function runAsProduction() {
   const originalGet = env.get.bind(env);
-  sandbox
-    .stub(env, "get")
-    .callsFake(
-      unchecked((key: string) => (key === "API_ENV" ? "production" : originalGet(unchecked(key)))),
-    );
+  stub(env, "get").callsFake(
+    unchecked((key: string) => (key === "API_ENV" ? "production" : originalGet(unchecked(key)))),
+  );
 }
 
 test.group("DispatchService.sendPlainEmail", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let send: sinon.SinonStub;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createUser({ id: CUSTOMER_ID });
   });
   group.each.setup(() => {
-    sandbox = createSandbox();
-    send = sandbox.stub(sgMail, "send").resolves(unchecked([{ statusCode: 202 }, {}]));
-    sandbox.stub(User, "byEmail").resolves(null);
+    send = stub(sgMail, "send").resolves(unchecked([{ statusCode: 202 }, {}]));
+    stub(User, "byEmail").resolves(null);
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("outside production a mail to a non-employee address is logged as skipped, not sent", async ({
     assert,
@@ -64,7 +59,7 @@ test.group("DispatchService.sendPlainEmail", (group) => {
   test("in production the raw subject and text go to SendGrid and the log row is marked sent", async ({
     assert,
   }) => {
-    runAsProduction(sandbox);
+    runAsProduction();
 
     const { success } = await DispatchService.sendPlainEmail(PLAIN_MAIL);
 
@@ -85,7 +80,7 @@ test.group("DispatchService.sendPlainEmail", (group) => {
   test("a SendGrid failure is recorded on the log row and reported as unsuccessful", async ({
     assert,
   }) => {
-    runAsProduction(sandbox);
+    runAsProduction();
     send.rejects(new Error("boom"));
 
     const { success } = await DispatchService.sendPlainEmail(PLAIN_MAIL);

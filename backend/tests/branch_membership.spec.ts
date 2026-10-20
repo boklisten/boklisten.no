@@ -1,7 +1,6 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import User from "#models/user";
 import { BranchMembershipService } from "#services/branch_membership_service";
@@ -23,15 +22,10 @@ function homedAtRoot(permission: UserPermission) {
 }
 
 test.group("assertMembershipAllowed", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("registration refuses a membership in a hidden branch", async ({ assert }) => {
-    sandbox.stub(DispatchService, "sendEmailVerification").resolves();
+    stub(DispatchService, "sendEmailVerification").resolves();
     const wang = await createBranch({ visibleToCustomers: false });
 
     await assert.rejects(
@@ -148,15 +142,10 @@ test.group("assertMembershipAllowed", (group) => {
 });
 
 test.group("Membership defaults to the root", (group) => {
-  let sandbox: sinon.SinonSandbox;
-  group.each.setup(() => testUtils.db().truncate());
-  group.each.setup(() => {
-    sandbox = createSandbox();
-  });
-  group.each.teardown(() => sandbox.restore());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a sign-up that names no school lands on the root", async ({ assert }) => {
-    sandbox.stub(DispatchService, "sendEmailVerification").resolves();
+    stub(DispatchService, "sendEmailVerification").resolves();
     const root = await rootBranch();
 
     const user = await UserService.createSmsUser(
@@ -176,7 +165,7 @@ test.group("Membership defaults to the root", (group) => {
   });
 
   test("a sign-up that names a school keeps it", async ({ assert }) => {
-    sandbox.stub(DispatchService, "sendEmailVerification").resolves();
+    stub(DispatchService, "sendEmailVerification").resolves();
     const ullern = await createBranch({ visibleToCustomers: true });
 
     const user = await UserService.createSmsUser(
@@ -225,7 +214,7 @@ test.group("Membership defaults to the root", (group) => {
 });
 
 test.group("BranchMembershipService.moveMembersToRoot", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("moves the direct members of a branch to the root, nobody else", async ({ assert }) => {
     const root = await rootBranch();
@@ -267,7 +256,7 @@ test.group("BranchMembershipService.moveMembersToRoot", (group) => {
 });
 
 test.group("BranchMembershipService.getPage", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("lists the members of the branches below the node by name, with the node's counts", async ({
     assert,

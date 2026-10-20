@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import BadRequestException from "#exceptions/bad_request_exception";
 import type CustomerItem from "#models/customer_item";
@@ -219,7 +219,6 @@ const checkout = (overrides: Partial<StandCartCheckoutRequest> = {}) =>
   StandCartCheckoutService.checkout(request(overrides), EMPLOYEE, NOW);
 
 test.group("StandCartCheckoutService.checkout", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let resolve: sinon.SinonStub;
   let place: sinon.SinonStub;
   let paymentsAtPlacement: number | null;
@@ -233,7 +232,7 @@ test.group("StandCartCheckoutService.checkout", (group) => {
     refund: sinon.SinonStub;
   };
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(async () => {
     await createWorld();
     await createCustomerItem(customerItemColumns);
@@ -243,34 +242,32 @@ test.group("StandCartCheckoutService.checkout", (group) => {
       branchId: BRANCH_ID,
       orderItems: [{ itemId: item.id }],
     });
-    sandbox = createSandbox();
-    plan = sandbox.stub(StandCartRefund, "plan").resolves(null);
-    sendRefundRequest = sandbox.stub(RefundRequestService, "send").resolves();
-    resolve = sandbox
-      .stub(StandCartLineResolver, "resolveWithContext")
-      .resolves(resolution(ORDER_SOURCE, [rentOption()], { blid: BLID }));
-    sandbox
-      .stub(User, "find")
-      .resolves(userDouble({ id: CUSTOMER_ID, name: "Ola", taskSignAgreement: false }));
+    plan = stub(StandCartRefund, "plan").resolves(null);
+    sendRefundRequest = stub(RefundRequestService, "send").resolves();
+    resolve = stub(StandCartLineResolver, "resolveWithContext").resolves(
+      resolution(ORDER_SOURCE, [rentOption()], { blid: BLID }),
+    );
+    stub(User, "find").resolves(
+      userDouble({ id: CUSTOMER_ID, name: "Ola", taskSignAgreement: false }),
+    );
     paymentsAtPlacement = null;
-    place = sandbox.stub(StandCartPlacement, "place").callsFake(async (order: Order) => {
+    place = stub(StandCartPlacement, "place").callsFake(async (order: Order) => {
       paymentsAtPlacement = (await Payment.ofOrder(order.id)).length;
       order.placed = true;
       return order;
     });
-    sandbox.stub(OrderHistoryService, "getOne").resolves(unchecked({ id: NEW_ORDER_ID }));
-    sandbox.stub(Signature, "validForCustomer").resolves(unchecked({}));
-    sandbox.stub(Signature, "newestForCustomer").resolves(null);
+    stub(OrderHistoryService, "getOne").resolves(unchecked({ id: NEW_ORDER_ID }));
+    stub(Signature, "validForCustomer").resolves(unchecked({}));
+    stub(Signature, "newestForCustomer").resolves(null);
     vipps = {
-      create: sandbox.stub().resolves({ reference: NEW_ORDER_ID }),
-      info: sandbox.stub().resolves({ state: "CREATED" }),
-      cancel: sandbox.stub().resolves({}),
-      capture: sandbox.stub().resolves({}),
-      refund: sandbox.stub().resolves({}),
+      create: stub().resolves({ reference: NEW_ORDER_ID }),
+      info: stub().resolves({ state: "CREATED" }),
+      cancel: stub().resolves({}),
+      capture: stub().resolves({}),
+      refund: stub().resolves({}),
     };
-    sandbox.stub(VippsPaymentService, "payment").value(vipps);
+    stub(VippsPaymentService, "payment").value(vipps);
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("refuses a branch outside the employee's scope before touching the cart", async ({
     assert,
@@ -807,21 +804,16 @@ test.group("StandCartCheckoutService.checkout", (group) => {
 });
 
 test.group("StandCartCheckoutService.refundPlan", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let plan: sinon.SinonStub;
 
   group.each.setup(() => {
-    sandbox = createSandbox();
-    sandbox
-      .stub(StandCartLineResolver, "resolveWithContext")
-      .resolves(
-        resolution(ORDER_SOURCE, [
-          { type: "cancel", price: -250, available: true, monitored: false },
-        ]),
-      );
-    plan = sandbox.stub(StandCartRefund, "plan").resolves({ kind: "manual", reasons: ["x"] });
+    stub(StandCartLineResolver, "resolveWithContext").resolves(
+      resolution(ORDER_SOURCE, [
+        { type: "cancel", price: -250, available: true, monitored: false },
+      ]),
+    );
+    plan = stub(StandCartRefund, "plan").resolves({ kind: "manual", reasons: ["x"] });
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("re-resolves the lines the way checkout does and returns their refund plan", async ({
     assert,
@@ -863,7 +855,6 @@ const updatePendingOrder = (columns: Partial<Pick<Order, "placed" | "checkoutSta
 const checkoutStateOf = async () => (await Order.findOrFail(NEW_ORDER_ID)).checkoutState;
 
 test.group("StandCartCheckoutService.status and cancel", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let place: sinon.SinonStub;
   let vipps: {
     create: sinon.SinonStub;
@@ -872,6 +863,9 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
     capture: sinon.SinonStub;
   };
 
+  // Truncated, not rolled back: the parallel test needs separate connections to contend for the
+  // advisory lock; one shared transaction runs the calls one after another, so it would pass even
+  // without the lock.
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(async () => {
     await createWorld();
@@ -886,24 +880,20 @@ test.group("StandCartCheckoutService.status and cancel", (group) => {
       checkoutState: "SessionCreated",
       orderItems: [{ itemId: item.id, amount: 250, unitPrice: 250 }],
     });
-    sandbox = createSandbox();
-    place = sandbox.stub(StandCartPlacement, "place").callsFake((order: Order) => {
+    place = stub(StandCartPlacement, "place").callsFake((order: Order) => {
       order.placed = true;
       return Promise.resolve(order);
     });
-    sandbox
-      .stub(User, "find")
-      .resolves(userDouble({ id: EMPLOYEE.userId, permission: "employee" }));
-    sandbox.stub(OrderHistoryService, "getOne").resolves(unchecked({ id: NEW_ORDER_ID }));
+    stub(User, "find").resolves(userDouble({ id: EMPLOYEE.userId, permission: "employee" }));
+    stub(OrderHistoryService, "getOne").resolves(unchecked({ id: NEW_ORDER_ID }));
     vipps = {
-      create: sandbox.stub().resolves({}),
-      info: sandbox.stub().resolves({ state: "CREATED" }),
-      cancel: sandbox.stub().resolves({}),
-      capture: sandbox.stub().resolves({}),
+      create: stub().resolves({}),
+      info: stub().resolves({ state: "CREATED" }),
+      cancel: stub().resolves({}),
+      capture: stub().resolves({}),
     };
-    sandbox.stub(VippsPaymentService, "payment").value(vipps);
+    stub(VippsPaymentService, "payment").value(vipps);
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("status reports a placed order as paid without asking Vipps again", async ({ assert }) => {
     await updatePendingOrder({ placed: true });

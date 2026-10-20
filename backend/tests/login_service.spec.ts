@@ -26,7 +26,7 @@ async function storedActivity(user: User) {
 }
 
 test.group("LoginService.trackActivity()", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("tags the session the remember-me cookie restored with the user's id", async ({
     assert,

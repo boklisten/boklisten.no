@@ -58,6 +58,9 @@ jobs:
   test_backend:
     name: Test Backend
     runs-on: ubuntu-latest
+    env:
+      # The service below; without it the test runner starts its own embedded Postgres
+      POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/boklisten_test
     services:
       postgres:
         image: postgres:18

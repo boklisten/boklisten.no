@@ -11,7 +11,7 @@ import { createOrder } from "#tests/order_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 test.group("Order model", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("createWithItems stores the lines in receipt order with an ObjectId-shaped id", async ({
     assert,
@@ -142,7 +142,7 @@ async function openLinesWorld() {
 }
 
 test.group("Order.hasOpenLines", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("is false without orders or with only unplaced ones", async ({ assert }) => {
     const { customer, order } = await openLinesWorld();

@@ -19,7 +19,7 @@ async function customerIdsInScope(nodeId: string): Promise<string[]> {
 }
 
 test.group("BranchScope.subtreeIds", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("holds the node itself and every branch below it", async ({ assert }) => {
     const school = await createBranch();
@@ -40,7 +40,7 @@ test.group("BranchScope.subtreeIds", (group) => {
 });
 
 test.group("BranchScope.ancestorIds", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("walks up to the root, nearest first, and is empty for the root", async ({ assert }) => {
     const root = await rootBranch();
@@ -55,7 +55,7 @@ test.group("BranchScope.ancestorIds", (group) => {
 });
 
 test.group("BranchScope.customersInScope", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("finds a member of a descendant", async ({ assert }) => {
     const school = await createBranch();
@@ -146,7 +146,7 @@ function sliceIds(slice: SliceNode[]) {
 }
 
 test.group("BranchScope.slice", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a manager homed at a school gets the path above greyed and the subtree, no siblings", async ({
     assert,
@@ -224,7 +224,7 @@ test.group("BranchScope.slice", (group) => {
 });
 
 test.group("BranchScope.assertSelectable", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("lets a node in the subtree through and refuses a sibling school as unknown (404)", async ({
     assert,
@@ -257,7 +257,7 @@ test.group("BranchScope.assertSelectable", (group) => {
 });
 
 test.group("BranchScope.customerInScope", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a member of the subtree and a privatist who ordered there are in scope, a sibling's pupil is not", async ({
     assert,
@@ -323,7 +323,7 @@ test.group("BranchScope.customerInScope", (group) => {
 });
 
 test.group("BranchScope.placeInScope", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a place is in scope at or below the home node only", async ({ assert }) => {
     const { root, ullern, ullernVg1, nydalen } = await createMiniatureTree();
@@ -337,7 +337,7 @@ test.group("BranchScope.placeInScope", (group) => {
 });
 
 test.group("BranchScope.blidInScope", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a blid is in scope when nobody holds it, its holder is a customer in scope, or its history touches the subtree", async ({
     assert,
@@ -382,7 +382,7 @@ test.group("BranchScope.blidInScope", (group) => {
 });
 
 test.group("BranchScope.customerItemInScope and orderInScope", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("a book or order is in scope by its place or by its customer", async ({ assert }) => {
     const { ullern, ullernVg1, nydalen } = await createMiniatureTree();
@@ -424,7 +424,7 @@ test.group("BranchScope.customerItemInScope and orderInScope", (group) => {
 });
 
 test.group("BranchScope.manageableAmong", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("holds the people in scope whose level is not above the viewer's", async ({ assert }) => {
     const { root, ullern, ullernVg1, nydalen } = await createMiniatureTree();

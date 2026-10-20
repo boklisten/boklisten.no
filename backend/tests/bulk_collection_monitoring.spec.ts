@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import { BulkCollectionMonitoring } from "#services/bulk_collection_monitoring";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
@@ -36,14 +36,11 @@ function customerItem({
 }
 
 test.group("BulkCollectionMonitoring.reportOverdueBooks", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
 
   group.each.setup(() => {
-    sandbox = createSandbox();
-    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
+    report = stub(EmployeeMonitoringService, "report").resolves();
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("every overdue book is reported on its own, to its own customer", async ({ assert }) => {
     await BulkCollectionMonitoring.reportOverdueBooks({

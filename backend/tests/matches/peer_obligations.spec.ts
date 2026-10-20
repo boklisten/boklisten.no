@@ -37,7 +37,7 @@ async function discharge(obligation: MatchObligation, half: "sender" | "receiver
 test.group("PeerObligations", (group) => {
   let round: MatchRound;
 
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([A, B, C]));
   group.each.setup(async () => {

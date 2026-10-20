@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import BookHandover from "#models/book_handover";
 import type Order from "#models/order";
@@ -75,18 +75,13 @@ test.group("OrderPlaceService", (group) => {
   let placeOrderStub: sinon.SinonStub;
   let generateCustomerItemStub: sinon.SinonStub;
   let validateOrderStub: sinon.SinonStub;
-  let sandbox: sinon.SinonSandbox;
 
   group.each.setup(() => {
-    sandbox = createSandbox();
-    placeOrderStub = sandbox.stub(orderPlacedHandler, "placeOrder");
-    generateCustomerItemStub = sandbox.stub(orderToCustomerItemGenerator, "createFor").resolves([]);
-    validateOrderStub = sandbox.stub(orderValidator, "validate");
+    placeOrderStub = stub(orderPlacedHandler, "placeOrder");
+    generateCustomerItemStub = stub(orderToCustomerItemGenerator, "createFor").resolves([]);
+    validateOrderStub = stub(orderValidator, "validate");
   });
-  group.each.teardown(() => {
-    sandbox.restore();
-  });
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([CUSTOMER]));
   group.each.setup(async () => {

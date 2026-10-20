@@ -1,6 +1,5 @@
 import { test } from "@japa/runner";
-import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import type Order from "#models/order";
 import User from "#models/user";
@@ -14,19 +13,12 @@ test.group("OrderUserValidator", (group) => {
   const customer = userDouble({ id: "user1" });
   let testOrder: Order;
 
-  let sandbox: sinon.SinonSandbox;
   group.each.setup(() => {
     testOrder = mock<Order>({
       id: "order1",
       customerId: "user1",
     });
-    sandbox = createSandbox();
-    sandbox
-      .stub(User, "find")
-      .callsFake((id) => Promise.resolve(id === customer.id ? customer : null));
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
+    stub(User, "find").callsFake((id) => Promise.resolve(id === customer.id ? customer : null));
   });
 
   test("should reject if the user is not found", async ({ assert }) => {

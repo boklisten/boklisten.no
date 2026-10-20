@@ -150,7 +150,7 @@ test.group("BranchInsightsService.buildBookMovements()", () => {
 });
 
 test.group("BranchInsightsService: SQL rows", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("counts movement lines per Oslo year, kind, handout and customer-item link", async ({
     assert,

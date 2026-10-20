@@ -2,7 +2,7 @@ import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import { DateTime } from "luxon";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import type OrderItem from "#models/order_item";
 import Payment from "#models/payment";
@@ -61,19 +61,14 @@ let paymentsExistStub: sinon.SinonStub;
 
 test.group("OrderItemRentPeriodValidator", (group) => {
   const orderItemRentPeriodValidator = new OrderItemRentPeriodValidator();
-  let sandbox: sinon.SinonSandbox;
   let branchPaymentInfo: any;
 
   group.each.setup(() => {
     branchPaymentInfo = {
       paymentResponsible: true,
     };
-    sandbox = createSandbox();
-    paymentsExistStub = sandbox.stub(Payment, "existFor").resolves(false);
-    return testUtils.db().truncate();
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
+    paymentsExistStub = stub(Payment, "existFor").resolves(false);
+    return testUtils.db().wrapInGlobalTransaction();
   });
 
   test("should reject if period is not found on the branch", async ({ assert }) => {

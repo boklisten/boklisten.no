@@ -1,7 +1,7 @@
 import { test } from "@japa/runner";
 import testUtils from "@adonisjs/core/services/test_utils";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import type Item from "#models/item";
 import Order from "#models/order";
@@ -14,16 +14,14 @@ import { createOrder } from "#tests/order_fixtures";
 import { createUser } from "#tests/user_fixtures";
 
 test.group("OrderCancellationService", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let sendOrderReceiptStub: sinon.SinonStub;
   let originalOrder: Order;
   let item: Item;
   let employee: User;
 
   group.each.setup(async () => {
-    const truncate = await testUtils.db().truncate();
-    sandbox = createSandbox();
-    sendOrderReceiptStub = sandbox.stub(OrderEmailHandler, "sendOrderReceipt").resolves();
+    const rollback = await testUtils.db().wrapInGlobalTransaction();
+    sendOrderReceiptStub = stub(OrderEmailHandler, "sendOrderReceipt").resolves();
 
     const [branch, customer] = await Promise.all([createBranch(), createUser()]);
     [item, employee] = await Promise.all([
@@ -35,10 +33,7 @@ test.group("OrderCancellationService", (group) => {
       customerId: customer.id,
       orderItems: [{ itemId: item.id }],
     });
-    return truncate;
-  });
-  group.each.teardown(() => {
-    sandbox.restore();
+    return rollback;
   });
 
   function cancel(options: { employeeId?: string; notifyCustomer: boolean }) {
@@ -110,7 +105,7 @@ test.group("OrderCancellationService", (group) => {
   });
 
   test("still cancels when the customer no longer exists", async ({ assert }) => {
-    sandbox.stub(User, "find").resolves(null);
+    stub(User, "find").resolves(null);
 
     const cancelOrder = await cancel({ notifyCustomer: true });
 

@@ -1,6 +1,6 @@
 import { test } from "@japa/runner";
 import type sinon from "sinon";
-import { createSandbox } from "sinon";
+import { stub } from "sinon";
 
 import { ActiveItemMonitoring } from "#services/active_item_monitoring";
 import { EmployeeMonitoringService } from "#services/employee_monitoring_service";
@@ -10,14 +10,11 @@ const EMPLOYEE = monitoredEmployeeDouble({ userId: "5f7f7f7f7f7f7f7f7f7f7f7e" })
 const CUSTOMER_ID = "5f7f7f7f7f7f7f7f7f7f7f7f";
 
 test.group("ActiveItemMonitoring", (group) => {
-  let sandbox: sinon.SinonSandbox;
   let report: sinon.SinonStub;
 
   group.each.setup(() => {
-    sandbox = createSandbox();
-    report = sandbox.stub(EmployeeMonitoringService, "report").resolves();
+    report = stub(EmployeeMonitoringService, "report").resolves();
   });
-  group.each.teardown(() => sandbox.restore());
 
   test("a changed deadline is reported with both dates", async ({ assert }) => {
     await ActiveItemMonitoring.reportDeadlineChange({

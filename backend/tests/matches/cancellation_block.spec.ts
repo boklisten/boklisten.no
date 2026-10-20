@@ -77,7 +77,7 @@ async function createStandMatch({
 }
 
 test.group("cancellation block: itemIdsInActiveUserMatches", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([CUSTOMER, PEER, OTHER]));
 
@@ -146,7 +146,7 @@ test.group("cancellation block: itemIdsInActiveUserMatches", (group) => {
 });
 
 test.group("cancellation block: assertNotBlockedByUserMatch", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([CUSTOMER, PEER, OTHER]));
 

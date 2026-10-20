@@ -31,8 +31,8 @@ function customerParticipant(match: Match): MatchParticipant {
 test.group("sendMatchToStand", (group) => {
   let round: MatchRound;
 
-  // `truncate()` returns the cleanup hook, so this empties the tables after each test.
-  group.each.setup(() => testUtils.db().truncate());
+  // `wrapInGlobalTransaction()` returns the rollback hook, so nothing a test writes outlives it.
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
   group.each.setup(seedTestCatalogue);
   group.each.setup(() => ensureUsers([PETTER, MAYA]));
   group.each.setup(async () => {

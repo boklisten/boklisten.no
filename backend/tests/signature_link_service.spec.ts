@@ -22,7 +22,7 @@ async function expireIn(userId: string, days: number) {
 }
 
 test.group("SignatureLinkService", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("issues a random token, not the customer's id, and stores only its hash in the clear", async ({
     assert,

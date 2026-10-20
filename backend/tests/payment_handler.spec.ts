@@ -21,7 +21,7 @@ async function refundOrder(byCustomer: boolean) {
 }
 
 test.group("PaymentHandler.confirmPayments", (group) => {
-  group.each.setup(() => testUtils.db().truncate());
+  group.each.setup(() => testUtils.db().wrapInGlobalTransaction());
 
   test("confirms a refund the administrator makes by bank transfer", async ({ assert }) => {
     const order = await refundOrder(false);
