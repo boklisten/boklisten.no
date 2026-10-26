@@ -63,6 +63,7 @@ export default defineRailway((ctx) => {
   });
 
   const resources: ProjectResourceInput[] = [frontend, backend, postgresDb, postgresVolume];
+  /*
   if (isProduction) {
     resources.push(
       service("Copy Postgres to Staging", {
@@ -80,6 +81,7 @@ export default defineRailway((ctx) => {
       }),
     );
   }
+   */
 
   return project("boklisten.no", { resources });
 });
