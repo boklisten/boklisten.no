@@ -44,10 +44,6 @@ export default await Env.create(new URL("../", import.meta.url), {
   VIPPS_CLIENT_ID: Env.schema.string(),
   VIPPS_SECRET: Env.schema.secret(),
   VIPPS_SUBSCRIPTION_KEY: Env.schema.secret(),
-  VIPPS_MT_MSN: Env.schema.string(),
-  VIPPS_MT_CLIENT_ID: Env.schema.string(),
-  VIPPS_MT_SECRET: Env.schema.secret(),
-  VIPPS_MT_SUBSCRIPTION_KEY: Env.schema.secret(),
   SENDGRID_API_KEY: Env.schema.secret(),
   SENDGRID_WEBHOOK_PUBLIC_KEY: Env.schema.string.optional(),
   /** Dedicated key with only the "Email Address Validation" scope; form feedback is skipped without it. */

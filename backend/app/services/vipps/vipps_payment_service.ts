@@ -6,12 +6,10 @@ import env from "#start/env";
 
 const isProduction = env.get("API_ENV") === "production";
 const vippsEnv = {
-  msn: env.get(isProduction ? "VIPPS_MSN" : "VIPPS_MT_MSN"),
-  clientId: env.get(isProduction ? "VIPPS_CLIENT_ID" : "VIPPS_MT_CLIENT_ID"),
-  clientSecret: env.get(isProduction ? "VIPPS_SECRET" : "VIPPS_MT_SECRET").release(),
-  subscriptionKey: env
-    .get(isProduction ? "VIPPS_SUBSCRIPTION_KEY" : "VIPPS_MT_SUBSCRIPTION_KEY")
-    .release(),
+  msn: env.get("VIPPS_MSN"),
+  clientId: env.get("VIPPS_CLIENT_ID"),
+  clientSecret: env.get("VIPPS_SECRET").release(),
+  subscriptionKey: env.get("VIPPS_SUBSCRIPTION_KEY").release(),
 } as const satisfies Record<string, string>;
 
 const client = Client({

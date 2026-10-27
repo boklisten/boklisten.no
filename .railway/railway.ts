@@ -10,11 +10,6 @@ export default defineRailway((ctx) => {
   const host = (domain: string) => (isProduction ? domain : `staging.${domain}`);
 
   const postgresDb = postgres("Postgres", { region: REGION });
-  if (!isProduction) {
-    postgresDb.networking = { tcpProxies: { "5432": {} } };
-    // Do not sleep Postgres in staging to allow for migrations
-  }
-
   const postgresVolume = volume("postgres-volume", { region: REGION, sizeMB: 50_000 });
 
   const backend = service("api.boklisten.no", {
@@ -39,10 +34,6 @@ export default defineRailway((ctx) => {
       TWILIO_SMS_SID: preserve(),
       VIPPS_CLIENT_ID: preserve(),
       VIPPS_MSN: preserve(),
-      VIPPS_MT_CLIENT_ID: preserve(),
-      VIPPS_MT_MSN: preserve(),
-      VIPPS_MT_SECRET: preserve(),
-      VIPPS_MT_SUBSCRIPTION_KEY: preserve(),
       VIPPS_SECRET: preserve(),
       VIPPS_SUBSCRIPTION_KEY: preserve(),
     },
