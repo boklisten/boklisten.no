@@ -6,7 +6,7 @@ import { stub } from "sinon";
 import SmsCode from "#models/sms_code";
 import DispatchService from "#services/dispatch_service";
 import type { SmsCodeTarget } from "#services/sms_code_service";
-import { LOCAL_CODE, SmsCodeService } from "#services/sms_code_service";
+import { DeployedSmsCodeService, SmsCodeService } from "#services/sms_code_service";
 import { createUser } from "#tests/user_fixtures";
 
 const LOGIN: SmsCodeTarget = { phone: "91234567", purpose: "login", userId: null };
@@ -29,7 +29,6 @@ test.group("SmsCodeService", (group) => {
   group.each.setup(() => testUtils.db().truncate());
   group.each.setup(() => {
     sendSmsCode = stub(DispatchService, "sendSmsCode").resolves();
-    stub(SmsCodeService, "localCode").value(null);
   });
 
   /** The code from the text of the SMS sent last. */
@@ -41,7 +40,7 @@ test.group("SmsCodeService", (group) => {
   test("sends a six-digit code, stores only its hash and keeps it out of the log", async ({
     assert,
   }) => {
-    assert.isNull(await SmsCodeService.issue(LOGIN, null));
+    assert.isNull(await DeployedSmsCodeService.issue(LOGIN, null));
 
     const code = lastCode();
     assert.match(code, /^\d{6}$/);
@@ -53,38 +52,38 @@ test.group("SmsCodeService", (group) => {
   });
 
   test("a valid code is used up", async ({ assert }) => {
-    await SmsCodeService.issue(LOGIN, null);
+    await DeployedSmsCodeService.issue(LOGIN, null);
     const code = lastCode();
 
-    assert.equal(await SmsCodeService.check(LOGIN, code), "valid");
-    assert.equal(await SmsCodeService.check(LOGIN, code), "expired");
+    assert.equal(await DeployedSmsCodeService.check(LOGIN, code), "valid");
+    assert.equal(await DeployedSmsCodeService.check(LOGIN, code), "expired");
   });
 
   test("a code survives five wrong guesses, not a sixth", async ({ assert }) => {
-    await SmsCodeService.issue(LOGIN, null);
+    await DeployedSmsCodeService.issue(LOGIN, null);
     const code = lastCode();
     const wrong = code === "000000" ? "111111" : "000000";
 
     for (let attempt = 0; attempt < 4; attempt++) {
-      assert.equal(await SmsCodeService.check(LOGIN, wrong), "wrong");
+      assert.equal(await DeployedSmsCodeService.check(LOGIN, wrong), "wrong");
     }
-    assert.equal(await SmsCodeService.check(LOGIN, code), "valid");
+    assert.equal(await DeployedSmsCodeService.check(LOGIN, code), "valid");
 
     await backdate(1);
-    await SmsCodeService.issue(LOGIN, null);
+    await DeployedSmsCodeService.issue(LOGIN, null);
     for (let attempt = 0; attempt < 5; attempt++) {
-      await SmsCodeService.check(LOGIN, wrong);
+      await DeployedSmsCodeService.check(LOGIN, wrong);
     }
-    assert.equal(await SmsCodeService.check(LOGIN, lastCode()), "expired");
+    assert.equal(await DeployedSmsCodeService.check(LOGIN, lastCode()), "expired");
   });
 
   test("parallel requests for one number leave one live code and send one SMS", async ({
     assert,
   }) => {
     const answers = await Promise.all([
-      SmsCodeService.issue(LOGIN, null),
-      SmsCodeService.issue(LOGIN, null),
-      SmsCodeService.issue(LOGIN, null),
+      DeployedSmsCodeService.issue(LOGIN, null),
+      DeployedSmsCodeService.issue(LOGIN, null),
+      DeployedSmsCodeService.issue(LOGIN, null),
     ]);
 
     assert.lengthOf(await SmsCode.all(), 1);
@@ -93,36 +92,36 @@ test.group("SmsCodeService", (group) => {
       answers.filter((answer) => answer === null),
       1,
     );
-    assert.equal(await SmsCodeService.check(LOGIN, lastCode()), "valid");
+    assert.equal(await DeployedSmsCodeService.check(LOGIN, lastCode()), "valid");
   });
 
   test("an expired code is refused", async ({ assert }) => {
-    await SmsCodeService.issue(LOGIN, null);
+    await DeployedSmsCodeService.issue(LOGIN, null);
     await SmsCode.query().update({
       expiresAt: SmsCode.query().client.raw(`now() - interval '1 second'`),
     });
 
-    assert.equal(await SmsCodeService.check(LOGIN, lastCode()), "expired");
+    assert.equal(await DeployedSmsCodeService.check(LOGIN, lastCode()), "expired");
   });
 
   test("asks for a pause between codes, then replaces the old one", async ({ assert }) => {
-    await SmsCodeService.issue(LOGIN, null);
+    await DeployedSmsCodeService.issue(LOGIN, null);
     const first = lastCode();
 
-    assert.match((await SmsCodeService.issue(LOGIN, null)) ?? "", /^Vent \d+ sekunder/);
+    assert.match((await DeployedSmsCodeService.issue(LOGIN, null)) ?? "", /^Vent \d+ sekunder/);
     assert.equal(sendSmsCode.callCount, 1);
 
     await backdate(1);
-    assert.isNull(await SmsCodeService.issue(LOGIN, null));
+    assert.isNull(await DeployedSmsCodeService.issue(LOGIN, null));
     assert.lengthOf(await SmsCode.all(), 1);
     if (first !== lastCode()) {
-      assert.equal(await SmsCodeService.check(LOGIN, first), "wrong");
+      assert.equal(await DeployedSmsCodeService.check(LOGIN, first), "wrong");
     }
-    assert.equal(await SmsCodeService.check(LOGIN, lastCode()), "valid");
+    assert.equal(await DeployedSmsCodeService.check(LOGIN, lastCode()), "valid");
   });
 
   test("fits one SMS on the longest host", async ({ assert }) => {
-    await SmsCodeService.issue(
+    await DeployedSmsCodeService.issue(
       { ...LOGIN, purpose: "phone-change", userId: (await createUser()).id },
       null,
     );
@@ -132,30 +131,29 @@ test.group("SmsCodeService", (group) => {
     assert.isAtMost(longest.length, 160);
   });
 
-  test("undeployed, every code is the fixed one and nothing is sent or awaited", async ({
-    assert,
-  }) => {
-    stub(SmsCodeService, "localCode").value(LOCAL_CODE);
-
+  test("locally, nothing is sent or awaited and any code is valid", async ({ assert }) => {
     assert.isNull(await SmsCodeService.issue(LOGIN, null));
     assert.isNull(await SmsCodeService.issue(LOGIN, null));
 
     assert.isTrue(sendSmsCode.notCalled);
-    assert.equal(await SmsCodeService.check(LOGIN, LOCAL_CODE), "valid");
+    assert.equal(await SmsCodeService.check(LOGIN, "123456"), "valid");
   });
 
   test("a phone-change code proves the number only to the user who asked", async ({ assert }) => {
     const kari = await createUser();
     const ola = await createUser();
     const forKari: SmsCodeTarget = { phone: "41234567", purpose: "phone-change", userId: kari.id };
-    await SmsCodeService.issue(forKari, kari.id);
+    await DeployedSmsCodeService.issue(forKari, kari.id);
     const code = lastCode();
 
-    assert.equal(await SmsCodeService.check({ ...forKari, userId: ola.id }, code), "expired");
     assert.equal(
-      await SmsCodeService.check({ ...forKari, purpose: "login", userId: null }, code),
+      await DeployedSmsCodeService.check({ ...forKari, userId: ola.id }, code),
       "expired",
     );
-    assert.equal(await SmsCodeService.check(forKari, code), "valid");
+    assert.equal(
+      await DeployedSmsCodeService.check({ ...forKari, purpose: "login", userId: null }, code),
+      "expired",
+    );
+    assert.equal(await DeployedSmsCodeService.check(forKari, code), "valid");
   });
 });

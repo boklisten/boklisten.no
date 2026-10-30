@@ -22,8 +22,6 @@ const RESEND_AFTER_SECONDS = 30;
  * busiest hour of sign-ups so far had 359. Sending carries on; someone decides what to do.
  */
 const HOURLY_WARNING = 500;
-/** Undeployed, every code is this one and no SMS goes out. */
-export const LOCAL_CODE = "000000";
 
 /** Who a code is for: a number, and for a phone change also the user changing to it. */
 export interface SmsCodeTarget {
@@ -68,9 +66,8 @@ async function warnOnHourlyVolume(): Promise<void> {
   }
 }
 
-export const SmsCodeService = {
-  localCode: isDeployed ? null : (LOCAL_CODE as string | null),
-
+/** What `SmsCodeService` is in staging and production; locally a stand-in takes its place. */
+export const DeployedSmsCodeService = {
   /**
    * Sends a fresh code to the number, replacing any earlier one for the same target. When the
    * last code went out too recently nothing is sent, and the answer is what to tell the user.
@@ -78,8 +75,7 @@ export const SmsCodeService = {
   async issue(target: SmsCodeTarget, customerId: string | null): Promise<string | null> {
     await SmsCode.query().whereRaw("expires_at < now()").delete();
 
-    const { localCode } = SmsCodeService;
-    const code = localCode ?? String(randomInt(0, 10 ** CODE_LENGTH)).padStart(CODE_LENGTH, "0");
+    const code = String(randomInt(0, 10 ** CODE_LENGTH)).padStart(CODE_LENGTH, "0");
     const codeHash = await hash.make(code);
     // One request per target at a time, so the pause between codes holds for parallel requests
     // too; the unique index on the target is the backstop.
@@ -90,7 +86,7 @@ export const SmsCodeService = {
       ]);
       const latest = await codesFor(target, trx).first();
       const waited = latest ? DateTime.now().diff(latest.createdAt, "seconds").seconds : Infinity;
-      if (localCode === null && waited < RESEND_AFTER_SECONDS) {
+      if (waited < RESEND_AFTER_SECONDS) {
         return `Vent ${Math.ceil(RESEND_AFTER_SECONDS - waited)} sekunder før du ber om en ny kode.`;
       }
       await latest?.delete();
@@ -100,7 +96,7 @@ export const SmsCodeService = {
       );
       return null;
     });
-    if (refusal || localCode !== null) {
+    if (refusal) {
       return refusal;
     }
     await DispatchService.sendSmsCode({
@@ -137,3 +133,11 @@ export const SmsCodeService = {
     return "valid";
   },
 };
+
+/** Locally, no SMS goes out and any code is valid. */
+const LocalSmsCodeService: typeof DeployedSmsCodeService = {
+  issue: async () => null,
+  check: async () => "valid",
+};
+
+export const SmsCodeService = isDeployed ? DeployedSmsCodeService : LocalSmsCodeService;
