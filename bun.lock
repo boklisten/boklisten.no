@@ -142,6 +142,7 @@
     },
   },
   "trustedDependencies": [
+    "@railway/cli",
     "@embedded-postgres/darwin-x64",
     "@embedded-postgres/darwin-arm64",
     "@embedded-postgres/linux-arm64",
