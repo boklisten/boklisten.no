@@ -50,7 +50,7 @@ Rule of thumb: use a `vp` built-in whenever one exists; `package.json` scripts e
 
 ````
 
-Backend commands (tests, lint, `vpr fix`) require **Node 24** (root `.node-version`), but non-interactive shells here default to v22 with cryptic `.ts`-extension errors — prefix with `fnm exec --using=24 <cmd>` if `node -v` disagrees.
+Node comes from the root `.node-version` (currently 26), installed and put on `PATH` by Vite+ (`vp install`); no other version manager is involved.
 
 **Run a single backend test file:**
 

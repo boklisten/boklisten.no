@@ -434,11 +434,11 @@ async function computeStandBranchHierarchy(
     const chain = ancestorChain(customerBranchId.get(customer), branchById);
     let level = roots;
     for (const { id, name } of chain) {
-      let node = level.get(id);
-      if (!node) {
-        node = { name, students: 0, children: new Map() };
-        level.set(id, node);
-      }
+      const node = level.getOrInsertComputed(id, () => ({
+        name,
+        students: 0,
+        children: new Map(),
+      }));
       node.students++;
       level = node.children;
     }

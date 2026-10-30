@@ -14,7 +14,7 @@ The frontend only depends on the shared types located in backend/shared. Code st
 ## Setup and development
 
 ```bash
-# Install dependencies with Vite+ (Node 24 from .node-version, Bun from packageManager)
+# Install dependencies with Vite+ (Node from .node-version, Bun from packageManager)
 $ vp install
 
 # Copy .env.example to .env.local for both packages and fill in the correct keys

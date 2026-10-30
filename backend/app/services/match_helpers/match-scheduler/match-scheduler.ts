@@ -126,22 +126,13 @@ function commit(
   state: SchedulerState,
 ) {
   for (const person of participants) {
-    let occupied = state.occupancy.get(person);
-    if (occupied === undefined) {
-      occupied = new Map();
-      state.occupancy.set(person, occupied);
-    }
+    const occupied = state.occupancy.getOrInsertComputed(person, () => new Map());
     if (!occupied.has(slot)) {
       occupied.set(slot, location);
       state.peopleInSlot[slot]!++;
       state.peopleInCell[slot]![location]!++;
     }
-    let used = state.usedLocations.get(person);
-    if (used === undefined) {
-      used = new Set();
-      state.usedLocations.set(person, used);
-    }
-    used.add(location);
+    state.usedLocations.getOrInsertComputed(person, () => new Set()).add(location);
   }
   state.cohortPairs[slot]!.add(cohortKey);
 }

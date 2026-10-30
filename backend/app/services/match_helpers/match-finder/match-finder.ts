@@ -112,12 +112,9 @@ export class MatchFinder {
             throw new BlError("group A and B cannot be undefined");
           }
           const cacheKey = `${groupA}(${fingerprint(usersA)})|${groupB}(${fingerprint(usersB)})`;
-          let ratio = ratioCache.get(cacheKey);
-          if (!ratio) {
-            ratio = this.evaluateTwoWayMatchRatio([...usersA, ...usersB]);
-            ratioCache.set(cacheKey, ratio);
-          }
-          const { successRate, numberOfMatches } = ratio;
+          const { successRate, numberOfMatches } = ratioCache.getOrInsertComputed(cacheKey, () =>
+            this.evaluateTwoWayMatchRatio([...usersA, ...usersB]),
+          );
           if (
             bestGrouping === null ||
             (successRate > bestGrouping.successRate &&

@@ -117,7 +117,7 @@ async function getWantedBooks(branchIds: string[]): Promise<ScopedBook[]> {
 }
 
 function add(byCustomer: BooksByCustomer, customerId: string, itemId: string) {
-  byCustomer.set(customerId, (byCustomer.get(customerId) ?? new Set()).add(itemId));
+  byCustomer.getOrInsertComputed(customerId, () => new Set()).add(itemId);
 }
 
 /**

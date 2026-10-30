@@ -132,7 +132,7 @@ export default class CustomerItem extends CustomerItemSchema {
       .select("order_items.customer_item_id as customerItemId", "order_items.order_id as orderId");
     const byCustomerItem = new Map<string, string[]>();
     for (const { customerItemId, orderId } of rows) {
-      byCustomerItem.set(customerItemId, [...(byCustomerItem.get(customerItemId) ?? []), orderId]);
+      byCustomerItem.getOrInsertComputed(customerItemId, () => []).push(orderId);
     }
     return byCustomerItem;
   }

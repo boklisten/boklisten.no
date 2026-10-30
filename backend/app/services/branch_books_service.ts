@@ -374,7 +374,7 @@ export const BranchBooksService = {
       .orderBy("order_items.position");
     const itemIdsByOrder = new Map<string, string[]>();
     for (const line of lines) {
-      itemIdsByOrder.set(line.orderId, [...(itemIdsByOrder.get(line.orderId) ?? []), line.itemId]);
+      itemIdsByOrder.getOrInsertComputed(line.orderId, () => []).push(line.itemId);
     }
     const orders = await Order.byIds(itemIdsByOrder.keys());
     const candidates = [...orders.values()].map((order) => ({

@@ -199,7 +199,7 @@ export default class BulkCollectionController {
     const groups = new Map<string, CustomerItem[]>();
     for (const customerItem of customerItems) {
       const key = `${customerItem.customerId}__${customerItem.handoutBranchId}`;
-      groups.set(key, [...(groups.get(key) ?? []), customerItem]);
+      groups.getOrInsertComputed(key, () => []).push(customerItem);
     }
     return groups;
   }
