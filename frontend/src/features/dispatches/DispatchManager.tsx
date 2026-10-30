@@ -29,7 +29,9 @@ const RECIPIENT_COLUMNS: Column[] = [
     id: "phone",
     label: "Mobilnummer",
     description: "8 siffer uten +47, f.eks. 41234567. Trengs for SMS",
-    validators: [{ type: "regex", pattern: "^[49]\\d{7}$", message: "Må være 8 siffer uten +47" }],
+    validators: [
+      { type: "regex", pattern: String.raw`^[49]\d{7}$`, message: "Må være 8 siffer uten +47" },
+    ],
     transformations: [{ type: "custom", fn: normalizeNorwegianPhone, stage: "pre" }],
   },
   {

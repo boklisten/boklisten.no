@@ -2,7 +2,7 @@ import type { Branch, PublicBranchNode } from "@boklisten/backend/shared/branch"
 import { Table } from "@mantine/core";
 import { IconArrowBack, IconMapPin } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import type { Route } from "@tuyau/core/types";
+import type { Route } from "@boklisten/backend/registry";
 
 import BranchWalkHeader from "@/features/branch-walk/BranchWalkHeader";
 import classes from "@/features/branch-walk/walk.module.css";

@@ -5,7 +5,7 @@ import { useAppForm } from "@/shared/hooks/form";
 import useAutoSave from "@/shared/hooks/useAutoSave";
 import { api, apiClient } from "@/shared/utils/apiClient";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import type { Route } from "@tuyau/core/types";
+import type { Route } from "@boklisten/backend/registry";
 
 export type EditableText = Route.Response<"editable_texts.index">[number];
 

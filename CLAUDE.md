@@ -37,7 +37,7 @@ vp lint / vp fmt     # Lint or format alone (`--fix` / `--check`); there are no 
 vpr dev              # Start frontend (:3000, `vp dev`) and backend (:3333) in parallel
 vpr build            # Build both workspaces (frontend builds with `vp build`)
 vpr test             # Run backend tests (Japa via `node ace test`; `vp test` is Vitest and has no suites)
-vpr typecheck        # Per-workspace `tsc --noEmit` (backend TS 6, frontend TS 7); also covers lint-ignored generated files
+vpr typecheck        # Per-workspace `bun check` (Bun's port of tsc, same errors, ~4× faster); also covers lint-ignored generated files
 vpr check            # `vp check && vpr typecheck` — what CI runs
 vpr fix              # `vp check --fix && vpr typecheck`
 vpr ace              # AdonisJS CLI (e.g. vpr ace make:controller Foo)
@@ -73,7 +73,7 @@ Copy `backend/.env.example` → `backend/.env.local` and fill in `POSTGRES_URL`,
 
 ### Toolchain (Vite+)
 
-Lint, format, staged-file and Vitest settings live in the root `vite.config.ts` (`lint`, `fmt`, `staged`, `test` blocks); `frontend/vite.config.ts` only configures the app build. There are no separate oxlint/oxfmt config files — `vp check` is the only reader of those blocks, and `vp test` (Vitest) is scoped to `frontend/**` so it never touches the backend's Japa specs. `vp check` really type-checks (verified 2026-09-30: it reports TS2322/TS6133 in app code, tests and `frontend/vite.config.ts` exactly like tsc), but only for files oxlint visits, so errors inside `lint.ignorePatterns` (`.adonisjs`, `**/database/schema.ts`, `openapi`) surface only through `tsc`. That is why `vpr check` (CI) and `vpr fix` run `vp check` and then `bun typecheck`; don't drop the second step. `vp check --no-lint` is not a typecheck-only mode (it still runs type-aware rules). `vite` resolves to `@voidzero-dev/vite-plus-core` through the root `catalog`/`overrides`; keep those entries and the `vite-plus` pin in sync. Pre-commit runs `vp staged` (`.vite-hooks/pre-commit` → `vp check --fix` on staged files).
+Lint, format, staged-file and Vitest settings live in the root `vite.config.ts` (`lint`, `fmt`, `staged`, `test` blocks); `frontend/vite.config.ts` only configures the app build. There are no separate oxlint/oxfmt config files — `vp check` is the only reader of those blocks, and `vp test` (Vitest) is scoped to `frontend/**` so it never touches the backend's Japa specs. `vp check` really type-checks (verified 2026-09-30: it reports TS2322/TS6133 in app code, tests and `frontend/vite.config.ts` exactly like tsc), but only for files oxlint visits, so errors inside `lint.ignorePatterns` (`.adonisjs`, `**/database/schema.ts`, `openapi`) surface only through `tsc`. That is why `vpr check` (CI) and `vpr fix` run `vp check` and then `bun typecheck`; don't drop the second step. `typescript` (7.x) is a root `catalog` entry referenced as `catalog:` from both workspaces; the backend needs the package because `node ace build` emits with the project's `tsc`, and Bun also nests a stray TS 6 for `@adonisjs/assembler`'s stale `^5 || ^6` peer range (harmless). `vp check --no-lint` is not a typecheck-only mode (it still runs type-aware rules). `vite` resolves to `@voidzero-dev/vite-plus-core` through the root `catalog`/`overrides`; keep those entries and the `vite-plus` pin in sync. Pre-commit runs `vp staged` (`.vite-hooks/pre-commit` → `vp check --fix` on staged files).
 
 ## Architecture
 
@@ -168,6 +168,10 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 ## Built-in Commands vs Scripts
 
 `vp <name>` runs a built-in command. `vp run <name>` runs a `package.json` script or a `vite.config.ts` task. Scripts cannot overwrite built-ins, so `vp dev` and `vp run dev` may do different things. Check `package.json` and `vite.config.ts` first, and run `vp run <name>` when the project defines a script or task with that name.
+
+## Running Scripts
+
+Run TypeScript and JavaScript files with `vpx <file>`, for example `vpx ./scripts/seed.ts --dry-run`. It handles enums, decorators, JSX, and tsconfig `paths`, so do not add `tsx` or `ts-node` to run scripts. `vpx --watch <file>` reruns the file when a file it uses changes, in place of `tsx watch`. `vp node <file>` runs plain Node.js.
 
 ## Tool Versions
 

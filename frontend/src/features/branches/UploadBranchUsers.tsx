@@ -53,7 +53,7 @@ const IMPORT_COLUMNS: Column[] = [
       { type: "required", message: "Mobilnummer er påkrevd" },
       {
         type: "regex",
-        pattern: "^[49]\\d{7}$",
+        pattern: String.raw`^[49]\d{7}$`,
         message: "Må være 8 siffer uten +47",
       },
     ],
@@ -83,7 +83,7 @@ const IMPORT_COLUMNS: Column[] = [
     id: "postalCode",
     label: "Postnummer",
     description: "Valgfri. 4 siffer, f.eks. 0563",
-    validators: [{ type: "regex", pattern: "^(\\d{4})?$", message: "Må være 4 siffer" }],
+    validators: [{ type: "regex", pattern: String.raw`^(\d{4})?$`, message: "Må være 4 siffer" }],
     transformations: [{ type: "trim" }],
   },
   {
@@ -93,7 +93,7 @@ const IMPORT_COLUMNS: Column[] = [
     validators: [
       {
         type: "regex",
-        pattern: "^(\\d{4}-\\d{2}-\\d{2})?$",
+        pattern: String.raw`^(\d{4}-\d{2}-\d{2})?$`,
         message: "Må være på formatet åååå-mm-dd, f.eks. 2008-01-31",
       },
     ],

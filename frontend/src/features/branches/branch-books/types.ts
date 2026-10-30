@@ -1,4 +1,4 @@
-import type { Route } from "@tuyau/core/types";
+import type { Route } from "@boklisten/backend/registry";
 
 export type BranchBooksSummary = Route.Response<"branch_books.get_active_books">;
 export type BranchBooksGroup = BranchBooksSummary["groups"][number];

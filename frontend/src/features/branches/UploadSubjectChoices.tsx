@@ -78,7 +78,7 @@ const IMPORT_COLUMNS: Column[] = [
       { type: "required", message: "Frist er påkrevd" },
       {
         type: "regex",
-        pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+        pattern: String.raw`^\d{4}-\d{2}-\d{2}$`,
         message: "Må være en dato, f.eks. 2027-07-01 eller 01.07.2027",
       },
     ],

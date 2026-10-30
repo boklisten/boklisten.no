@@ -102,7 +102,7 @@ export const BOOK_IMPORT_COLUMNS: Column[] = [
     validators: [
       {
         type: "regex",
-        pattern: "^(?:97[89]\\d{10})?$",
+        pattern: String.raw`^(?:97[89]\d{10})?$`,
         message: "Må være 13 siffer som begynner med 978 eller 979",
       },
     ],
@@ -130,7 +130,7 @@ export const BOOK_IMPORT_COLUMNS: Column[] = [
     description: "Årstall, f.eks. 2020",
     validators: [
       ...required(FIELDS.year),
-      { type: "regex", pattern: "^(19|20)\\d{2}$", message: "Må være et årstall" },
+      { type: "regex", pattern: String.raw`^(19|20)\d{2}$`, message: "Må være et årstall" },
     ],
     transformations: [{ type: "trim" }],
   },

@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AG_GRID_LOCALE_NO } from "@ag-grid-community/locale";
 import type { ICellRendererParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import type { Route } from "@tuyau/core/types";
+import type { Route } from "@boklisten/backend/registry";
 
 import CreateWaitingListEntry from "@/features/waiting-list/CreateWaitingListEntry";
 import { api } from "@/shared/utils/apiClient";

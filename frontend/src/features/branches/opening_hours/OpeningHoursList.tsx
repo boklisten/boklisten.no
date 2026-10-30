@@ -7,7 +7,7 @@ import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { formatOpeningHour } from "@/shared/utils/dates";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import type { Route } from "@tuyau/core/types";
+import type { Route } from "@boklisten/backend/registry";
 
 function OpeningHourRow({
   openingHour,

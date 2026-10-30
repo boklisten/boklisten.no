@@ -45,7 +45,7 @@ test.group("CanMiddleware", () => {
       (error: unknown) => error,
     );
     if (!(failure instanceof errors.E_AUTHORIZATION_FAILURE)) {
-      throw new Error("expected an authorization failure");
+      throw new TypeError("expected an authorization failure");
     }
     assert.equal(failure.status, 403);
     await assert.rejects(

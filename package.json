@@ -26,7 +26,7 @@
     "prepare": "vp config"
   },
   "devDependencies": {
-    "@railway/cli": "^5.70.0",
+    "@railway/cli": "^5.71.0",
     "railway": "^3.16.0",
     "vite": "catalog:",
     "vite-plus": "catalog:"
@@ -36,8 +36,9 @@
   },
   "packageManager": "bun@1.4.4",
   "catalog": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
-    "vite-plus": "1.3.0"
+    "typescript": "7.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0",
+    "vite-plus": "1.4.0"
   },
   "trustedDependencies": [
     "@embedded-postgres/darwin-arm64",

@@ -1,6 +1,6 @@
 import { Button, Group, Skeleton, Table, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import type { Route } from "@tuyau/core/types";
+import type { Route } from "@boklisten/backend/registry";
 
 import MoveBranchMemberModal from "@/features/branches/MoveBranchMemberModal";
 import CustomerLink from "@/features/kasse/CustomerLink";

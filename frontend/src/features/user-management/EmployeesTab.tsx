@@ -2,7 +2,7 @@ import type { UserPermission } from "@boklisten/backend/shared/user-permission";
 import { Button, Group, Select, Skeleton, Stack, Table, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconUserPlus } from "@tabler/icons-react";
-import type { Route } from "@tuyau/core/types";
+import type { Route } from "@boklisten/backend/registry";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 

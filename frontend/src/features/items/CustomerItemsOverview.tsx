@@ -28,7 +28,7 @@ import useCart from "@/shared/hooks/useCart";
 import { api } from "@/shared/utils/apiClient";
 import { PLEASE_TRY_AGAIN_TEXT } from "@/shared/utils/constants";
 import { showErrorNotification, showSuccessNotification } from "@/shared/utils/notifications";
-import type { Route } from "@tuyau/core/types";
+import type { Route } from "@boklisten/backend/registry";
 
 type CustomerBook = Route.Response<"customer_items.me">[number];
 type OrderedBook = Route.Response<"orders.open_items_me">[number];
